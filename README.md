@@ -73,4 +73,4 @@ This project is optimized for **Vercel**.
 
 ## 📄 License
 
-© 2026 The Moveee. All rights reserved.
+© 2026 The Moveee. All rights reserved..
