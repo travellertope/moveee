@@ -13,16 +13,34 @@ import type { NextRequest } from 'next/server'
 // Add to this set as you create new pages.
 const APP_ROUTES = new Set([
   'magazine',
+  'events',
+  'origins',
+  'lifestyle',
   'about',
   'contact',
-  'shop',
   'newsletter',
   'account',
   'membership',
   'privacy',
   'terms',
   'search',
+  'community',
+  'podcast',
+  'gallery',
+  'faq',
+  'careers',
+  'partners',
+  'press',
+  'advertise',
+  'donate',
 ])
+
+// Alias redirects — old or alternative slugs that should map
+// to their canonical Next.js route.
+const ROUTE_ALIASES: Record<string, string> = {
+  'tours': '/origins',
+  'shop': '/lifestyle',
+}
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -114,10 +132,16 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/magazine', request.url), 301)
   }
 
+  // ── Route aliases (e.g. /tours → /origins, /shop → /lifestyle) ──
+  const cleanPath = pathname.replace(/^\/|\/$/g, '')
+  const aliasTarget = ROUTE_ALIASES[cleanPath.toLowerCase()]
+  if (aliasTarget) {
+    return NextResponse.redirect(new URL(aliasTarget, request.url), 301)
+  }
+
   // ── Root-level post slugs (/%postname%/) ─────────────────────
   // This is the old WordPress permalink structure.
   // Only redirect single-segment paths that don't match known app routes.
-  const cleanPath = pathname.replace(/^\/|\/$/g, '')
   if (cleanPath && !cleanPath.includes('/') && !APP_ROUTES.has(cleanPath.toLowerCase())) {
     return NextResponse.redirect(
       new URL(`/magazine/${cleanPath}`, request.url),
