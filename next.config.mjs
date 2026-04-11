@@ -14,6 +14,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'secure.gravatar.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'mltvzlykp9yb.i.optimole.com',
+      },
     ],
   },
 };

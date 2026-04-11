@@ -10,9 +10,10 @@ export const dynamic = "force-dynamic";
 export default async function MagazineArchive({ 
   searchParams 
 }: { 
-  searchParams: { category?: string } 
+  searchParams: Promise<{ category?: string }> 
 }) {
-  const currentCategory = searchParams.category;
+  const resolvedParams = await searchParams;
+  const currentCategory = resolvedParams?.category;
   let stories: any[] = [];
   try {
     const data = await getWPData(GET_STORIES, { 

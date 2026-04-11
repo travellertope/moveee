@@ -6,16 +6,18 @@ import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
-export default async function StoryPage({ params }: { params: { slug: string } }) {
+export default async function StoryPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
   let data;
   try {
-    data = await getWPData(GET_STORY_BY_SLUG, { slug: params.slug });
-  } catch {
-    // CMS unreachable
+    data = await getWPData(GET_STORY_BY_SLUG, { slug: resolvedParams.slug });
+  } catch (err: any) {
+    console.error("StoryPage getWPData error:", err);
   }
   const post = data?.post;
 
   if (!post) {
+    console.error("StoryPage returning 404. Requested slug:", resolvedParams.slug, "Returned data:", JSON.stringify(data));
     notFound();
   }
 
