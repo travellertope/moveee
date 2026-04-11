@@ -4,6 +4,8 @@ import ComponentMapper from "@/components/ComponentMapper";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 
+export const dynamic = "force-dynamic";
+
 export default async function StoryPage({ params }: { params: { slug: string } }) {
   let data;
   try {

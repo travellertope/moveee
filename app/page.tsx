@@ -3,6 +3,8 @@ import Image from "next/image";
 import { getWPData, GET_STORIES } from "@/lib/wp";
 import Hero from "@/components/Hero";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   let stories: any[] = [];
   try {
