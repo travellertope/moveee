@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server'
  * Moveee SEO Redirect Middleware
  * Handles legacy WordPress permalinks and site-wide redirects.
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Redirect legacy /category/slug to /magazine?category=slug

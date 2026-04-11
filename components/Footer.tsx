@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Instagram, Twitter, Mail } from "lucide-react";
+import { Camera, X, Mail } from "lucide-react";
 
 interface FooterProps {
   variant?: "light" | "dark";
@@ -34,10 +34,10 @@ const Footer = ({ variant = "light" }: FooterProps) => {
             </p>
             <div className="flex gap-4">
               <Link href="#" className="p-2 border border-rule rounded-full hover:bg-ink hover:text-paper transition-all">
-                <Instagram size={16} />
+                <Camera size={16} />
               </Link>
               <Link href="#" className="p-2 border border-rule rounded-full hover:bg-ink hover:text-paper transition-all">
-                <Twitter size={16} />
+                <X size={16} />
               </Link>
               <Link href="#" className="p-2 border border-rule rounded-full hover:bg-ink hover:text-paper transition-all">
                 <Mail size={16} />
