@@ -1,8 +1,9 @@
 import React from "react";
 import { getWPData, GET_STORY_BY_SLUG } from "@/lib/wp";
-import ComponentMapper from "@/components/ComponentMapper";
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
+import ComponentMapper from "@/components/ComponentMapper"; // Keeping this if they still have ACF flexible content later
 
 export const dynamic = "force-dynamic";
 
@@ -17,111 +18,145 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const post = data?.post;
 
   if (!post) {
-    console.error("StoryPage returning 404. Requested slug:", resolvedParams.slug, "Returned data:", JSON.stringify(data));
     notFound();
   }
 
-  const isCoverStory = post.categories.nodes.some((cat: any) => cat.slug === "cover-story");
+  // Cover story logic
+  const isCoverStory = post.categories.nodes.some((cat: any) => cat.slug === "cover-story" || cat.name.toLowerCase() === "cover story");
+  const publishedDate = new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
-    <article className={`min-h-screen pb-24 ${isCoverStory ? 'bg-ink text-paper' : 'bg-paper text-ink'}`}>
+    <article className="min-h-screen">
+      
+      {/* ── BREADCRUMB ── */}
+      <div className="breadcrumb">
+        <Link href="/magazine">Magazine</Link>
+        <span className="sep">/</span>
+        <Link href={`/magazine?category=${post.categories?.nodes[0]?.slug}`}>{post.categories.nodes[0]?.name || "Article"}</Link>
+        <span className="sep">/</span>
+        <span>{post.title}</span>
+      </div>
+
       {isCoverStory ? (
-        /* Immersive Cover Hero */
-        <header className="relative min-h-screen flex flex-col justify-end px-6 pb-12 md:pb-24 overflow-hidden">
-          {post.featuredImage && (
-            <div className="absolute inset-0 z-0">
+        /* ========== COVER HERO ========== */
+        <header className="cover-hero">
+          <div className="cover-frame">
+            {post.featuredImage && (
               <Image 
                 src={post.featuredImage.node.sourceUrl} 
-                alt={post.featuredImage.node.altText || ""} 
+                alt={post.featuredImage.node.altText || post.title} 
                 fill 
-                className="object-cover brightness-75 transition-transform duration-1000 hover:scale-105"
+                className="object-cover"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-transparent opacity-80" />
-            </div>
-          )}
-          
-          <div className="relative z-10 max-w-[1440px] mx-auto w-full">
-            <div className="flex flex-wrap items-center gap-4 text-[11px] uppercase tracking-[0.4em] font-bold text-ochre mb-8">
-              {post.series.nodes.length > 0 && (
-                <span className="bg-paper text-ink px-2 py-0.5 rounded-sm">Series: {post.series.nodes[0].name}</span>
-              )}
-              <span className="text-paper/60">{post.categories.nodes[0]?.name || "Cover Story"}</span>
-            </div>
+            )}
             
-            <h1 className="text-6xl md:text-9xl font-serif font-black leading-[0.85] tracking-tight mb-12 max-w-5xl">
-              {post.title}
-            </h1>
-
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-t border-paper/20 pt-8">
-              <div className="flex items-center gap-6 text-[10px] uppercase tracking-[0.2em] font-mono text-paper/50">
-                <span>By The Moveee Editorial</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-ochre" />
-                <span>{new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            <div className="cover-top-bar">
+              <div className="issue-label">
+                <span className="star">✦</span>
+                <span>Issue N°014</span>
               </div>
-              <p className="max-w-md text-sm md:text-base font-serif italic text-paper/80 leading-relaxed">
-                {post.excerpt?.replace(/<[^>]*>?/gm, '') || ""}
-              </p>
+              <div>The Document</div>
+            </div>
+
+            <div className="cover-title-block">
+              <div className="cover-kicker">
+                Cover Story · Vol II
+              </div>
+              <h1 className="cover-title">
+                {post.title.includes(" ") ? (
+                  <>
+                    {post.title.split(" ").slice(0, -1).join(" ")} <em className="text-gold italic">{post.title.split(" ").slice(-1)}</em>
+                  </>
+                ) : (
+                  post.title
+                )}
+              </h1>
+            </div>
+
+            <div className="cover-lines hidden md:block">
+              <div className="line"><span className="num">01.</span> New Editorial Archive</div>
+              <div className="line"><span className="num">02.</span> Visual Language</div>
+              <div className="line"><span className="num">03.</span> The Next Generation</div>
             </div>
           </div>
         </header>
       ) : (
-        /* Standard Regular Hero */
-        <header className="px-6 pt-24 pb-16 md:pt-32 md:pb-24 border-b border-rule">
-          <div className="max-w-4xl mx-auto flex flex-col items-center text-center">
-            <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] uppercase tracking-[0.3em] font-bold text-ochre mb-8">
-              {post.series.nodes.length > 0 && (
-                <span className="bg-ink text-paper px-2 py-0.5 rounded-sm flex items-center gap-2">
-                  Series: {post.series.nodes[0].name}
-                </span>
-              )}
-              <span>{post.categories.nodes[0]?.name || "Culture"}</span>
-              {post.industries.nodes.length > 0 && (
-                <span className="text-mute">• {post.industries.nodes[0].name}</span>
-              )}
-              {post.countries.nodes.length > 0 && (
-                <span className="text-mute px-2 py-0.5 border border-rule/20">{post.countries.nodes[0].name}</span>
-              )}
+        /* ========== STANDARD HERO ========== */
+        <header className="cover-hero" style={{ maxWidth: '1000px' }}>
+          <div className="cover-title-block" style={{ position: 'relative', left: 0, right: 0, bottom: 0, color: 'var(--ink)' }}>
+            <div className="cover-kicker" style={{ color: 'var(--mute)' }}>
+              {post.categories.nodes[0]?.name || "Article"}
             </div>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-medium leading-[0.95] tracking-tight text-ink mb-12">
+            <h1 className="cover-title" style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}>
               {post.title}
             </h1>
-            <div className="flex items-center gap-6 text-[10px] uppercase tracking-[0.2em] font-mono text-mute">
-              <span>By The Moveee Editorial</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-rule" />
-              <span>{new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-            </div>
           </div>
+          {post.featuredImage && (
+            <div className="cover-frame" style={{ marginTop: '30px' }}>
+              <Image 
+                src={post.featuredImage.node.sourceUrl} 
+                alt={post.featuredImage.node.altText || post.title} 
+                fill 
+                className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                priority
+              />
+            </div>
+          )}
         </header>
       )}
 
-      {/* Featured Image (Only for Regular posts, Cover posts use it as hero background) */}
-      {!isCoverStory && post.featuredImage && (
-        <div className="w-full max-w-[1440px] mx-auto px-6 -mt-8 mb-24">
-          <div className="aspect-[21/9] bg-paper-deep overflow-hidden relative group">
-            <Image 
-              src={post.featuredImage.node.sourceUrl} 
-              alt={post.featuredImage.node.altText || ""} 
-              fill 
-              className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
-              priority
-            />
+      {/* ── STANDFIRST BAND ── */}
+      <section className="standfirst-band">
+        <div className="standfirst-grid">
+          <div className="standfirst-label">
+            <strong>In Summary</strong>
+            The Dispatch
+          </div>
+          <div className="standfirst-text font-serif italic" dangerouslySetInnerHTML={{ __html: post.excerpt }} />
+        </div>
+      </section>
+
+      {/* ── BYLINE ROW ── */}
+      <section className="byline-row">
+        <div className="byline-inner flex-col md:flex-row items-center border-t border-b border-rule py-[28px] gap-[40px]">
+          <div className="byline-item">
+            <div className="label">Words By</div>
+            <div className="value">The Moveee Editorial</div>
+          </div>
+          <div className="byline-item">
+            <div className="label">Published Date</div>
+            <div className="value">{publishedDate}</div>
+          </div>
+          <div className="byline-item">
+            <div className="label">Category</div>
+            <div className="value">{post.categories.nodes[0]?.name || "General"}</div>
           </div>
         </div>
-      )}
+      </section>
 
-      {/* Story Body */}
-      <div className={`max-w-3xl mx-auto px-6 ${isCoverStory ? 'mt-24' : ''}`}>
-        {/* Render standard content if no blocks, otherwise use mapper */}
-        {post.flexibleContent?.contentBlocks ? (
-          <ComponentMapper blocks={post.flexibleContent.contentBlocks} />
-        ) : (
-          <div 
-            className={`prose prose-lg max-w-none leading-relaxed font-serif ${isCoverStory ? 'prose-invert prose-stone text-paper/90' : 'prose-stone text-ink-soft'}`}
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
-        )}
-      </div>
+      {/* ── ARTICLE BODY ── */}
+      <section className="article-body flex flex-col lg:grid lg:grid-cols-[1fr_720px_1fr] gap-[60px] max-w-[1440px] px-10 pb-[100px] mx-auto">
+        <aside className="article-sidebar hidden lg:block sticky top-10 self-start">
+          <div className="label text-[9px] uppercase tracking-[0.15em] border-b border-rule pb-2.5 mb-4">Jump To</div>
+          <ul className="toc-list list-none">
+            <li><a href="#" className="flex gap-2.5 font-serif italic text-sm hover:text-ochre transition-colors"><span className="num pt-1 text-[9px] text-ochre not-italic">01</span> Introduction</a></li>
+            <li><a href="#" className="flex gap-2.5 font-serif italic text-sm hover:text-ochre transition-colors"><span className="num pt-1 text-[9px] text-ochre not-italic">02</span> Early Frameworks</a></li>
+            <li><a href="#" className="flex gap-2.5 font-serif italic text-sm hover:text-ochre transition-colors"><span className="num pt-1 text-[9px] text-ochre not-italic">03</span> Future Contexts</a></li>
+          </ul>
+        </aside>
+
+        <div className="article-prose">
+          {post.flexibleContent?.contentBlocks ? (
+            <ComponentMapper blocks={post.flexibleContent.contentBlocks} />
+          ) : (
+            <div dangerouslySetInnerHTML={{ __html: post.content }} className="prose-content" />
+          )}
+        </div>
+
+        <aside className="article-sidebar hidden lg:block" />
+      </section>
+
     </article>
   );
 }

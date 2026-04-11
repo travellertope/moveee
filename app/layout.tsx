@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import "./editorial.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -35,16 +36,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable} antialiased bg-paper text-ink selection:bg-ochre selection:text-paper`}
+        className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}
       >
-        {/* Paper Texture Overlay */}
-        <div className="fixed inset-0 pointer-events-none z-[9999] opacity-[0.03] mix-blend-multiply bg-[url('https://www.transparenttextures.com/patterns/p6.png')]" />
-        
-        <div className="relative flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-grow">{children}</main>
-          <Footer />
-        </div>
+        <Header />
+        <main>{children}</main>
+        <Footer />
       </body>
     </html>
   );

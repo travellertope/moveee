@@ -1,126 +1,355 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getWPData, GET_STORIES } from "@/lib/wp";
-import Hero from "@/components/Hero";
+import { getWPData, GET_STORIES, GET_JOURNEYS } from "@/lib/wp";
+import Marquee from "@/components/Marquee";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   let stories: any[] = [];
+  let events: any[] = [];
+  let origins: any[] = [];
+  let products: any[] = [];
+
   try {
-    const data = await getWPData(GET_STORIES, { first: 6 });
+    const data = await getWPData(GET_STORIES, { first: 5 });
     stories = data?.posts?.nodes || [];
-  } catch {
-    // CMS unreachable — render with empty stories
+  } catch (err) {
+    console.error(err);
   }
-  const featuredStory = stories[0];
-  const remainingStories = stories.slice(1);
+
+  try {
+    const eventsData = await getWPData(GET_STORIES, { first: 3, categoryName: "events" });
+    events = eventsData?.posts?.nodes || [];
+  } catch (err) {
+    console.error(err);
+  }
+
+  try {
+    const originsData = await getWPData(GET_JOURNEYS, { first: 4 });
+    origins = originsData?.posts?.nodes || [];
+  } catch (err) {
+    console.error(err);
+  }
+
+  try {
+    // Attempting to fetch WooCommerce Products via WPGraphQL WooCommerce (wooCommerce Extension)
+    // If it fails (e.g. extension not active), it will gracefully catch and default to empty.
+    const productsData = await getWPData(`
+      query GetProducts {
+        products(first: 4) {
+          nodes {
+            id
+            name
+            slug
+            image {
+              sourceUrl
+            }
+            ... on SimpleProduct {
+              price
+            }
+            ... on VariableProduct {
+              price
+            }
+          }
+        }
+      }
+    `, {});
+    products = productsData?.products?.nodes || [];
+  } catch (err) {
+    console.error("WooCommerce missing or products fetch failed:", err);
+  }
+
+  const featuredStory = stories[0] || null;
+  const magLeadStory = stories[1] || featuredStory; // Lead for Mag Pillar
+  const remainingStories = stories.slice(2, 5); // Right side 3 stories
 
   return (
-    <div className="min-h-screen bg-paper">
-      <Hero />
-      
-      {/* Featured Story / Series Spotlight */}
-      {featuredStory && (
-        <section className="px-6 py-24 border-b border-rule">
-          <div className="max-w-[1440px] mx-auto">
-            <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.4em] font-bold text-ochre mb-8">
-              <span className="w-8 h-[1px] bg-ochre" />
-              Spotlight
+    <>
+      <section className="hero">
+        <div className="hero-grid">
+          <div className="hero-lede">
+            <div className="section-label mono">The Dispatch · N°01</div>
+            <h2>
+              A field guide to <em>daring</em><br/>
+              <span className="underline">moves</span> in culture,<br/>
+              from Africa to the world.
+            </h2>
+            <p className="hero-standfirst">
+              We document and celebrate the most considered work in film, music, visual art, literature, design, food and fashion from Africa and its diaspora — then we take you inside it. Read the magazine. Attend the events. Travel the origins. Wear the craft. Meet the community.
+            </p>
+            <div className="hero-cta-row">
+              <Link href="#magazine" className="btn-primary">Enter the Issue <span className="arrow">→</span></Link>
+              <Link href="/connect" className="btn-ghost">Become a Member</Link>
+            </div>
+          </div>
+
+          <div className="hero-visual">
+            <div className="hero-frame">
+              <div className="hero-ticker">
+                <span>Frame · 01 / 05</span>
+                <span>Shot on 35mm</span>
+              </div>
+              
+              {featuredStory?.featuredImage && (
+                <Image 
+                  src={featuredStory.featuredImage.node.sourceUrl} 
+                  alt={featuredStory.featuredImage.node.altText || featuredStory.title} 
+                  fill 
+                  className="object-cover transition-transform duration-1000 hover:scale-105"
+                  priority
+                />
+              )}
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              <div className="order-2 lg:order-1">
-                <h2 className="text-6xl md:text-[100px] font-serif font-black uppercase leading-[0.85] tracking-tight text-ink mb-10">
-                  {featuredStory.title.split(' ').slice(0, -1).join(' ')}<br/>
-                  <span className="italic font-light">{featuredStory.title.split(' ').slice(-1)}</span>
-                </h2>
-                <div 
-                  className="text-xl md:text-2xl font-serif text-ink-soft leading-relaxed mb-12 max-w-xl italic line-clamp-3"
-                  dangerouslySetInnerHTML={{ __html: featuredStory.excerpt }}
-                />
-                <Link href={`/magazine/${featuredStory.slug}`} className="inline-block border border-ink px-10 py-4 text-[11px] uppercase font-bold tracking-[0.3em] hover:bg-ink hover:text-paper transition-all">
-                  Read the Feature
-                </Link>
-              </div>
-              <div className="order-1 lg:order-2 aspect-[4/5] bg-paper-deep relative overflow-hidden">
-                {featuredStory.featuredImage && (
-                  <Image 
-                    src={featuredStory.featuredImage.node.sourceUrl} 
-                    alt={featuredStory.featuredImage.node.altText || featuredStory.title} 
-                    fill 
-                    className="object-cover transition-transform duration-1000 hover:scale-105"
-                  />
-                )}
-              </div>
-            </div>
+            {featuredStory && (
+              <Link href={`/magazine/${featuredStory.slug}`} className="hero-caption" style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
+                <span>Cover Story<br />{featuredStory.title}</span>
+                <span>↗ Read feature</span>
+              </Link>
+            )}
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
-      {/* Latest Dispatches Grid */}
-      <section className="px-6 py-24 bg-paper-deep/30">
-        <div className="max-w-[1440px] mx-auto">
-          <div className="flex items-end justify-between border-b border-rule pb-8 mb-16 gap-8">
-            <div>
-              <h3 className="text-[11px] uppercase tracking-[0.4em] font-bold text-ochre mb-4">Latest Dispatches</h3>
-              <p className="text-3xl md:text-5xl font-serif font-medium leading-none">News from the Frontlines</p>
-            </div>
-            <Link href="/magazine" className="text-[10px] uppercase font-bold tracking-[0.2em] border-b border-ink pb-2 hover:text-ochre hover:border-ochre transition-all whitespace-nowrap">
-              Visit The Archive
-            </Link>
+      <Marquee />
+
+      {/* ========== N°02 · MAGAZINE ========== */}
+      <section className="pillar" id="magazine">
+        <div className="pillar-header">
+          <div className="pillar-num">N°02</div>
+          <div className="pillar-title">
+            <h3>Moveee <em>Magazine</em></h3>
+            <p>Long-form essays, interviews and cultural commentary. The editorial heart of the platform.</p>
           </div>
+          <Link href="/magazine" className="pillar-link">All Stories →</Link>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-20">
-            {stories.map((story: any) => (
-              <Link key={story.id} href={`/magazine/${story.slug}`} className="flex flex-col group cursor-pointer">
-                <div className="aspect-[4/5] bg-paper overflow-hidden relative mb-8">
-                  {story.featuredImage ? (
-                    <Image 
-                      src={story.featuredImage.node.sourceUrl} 
-                      alt={story.featuredImage.node.altText || ""} 
-                      fill 
-                      className="object-cover grayscale hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-ink/5" />
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center gap-3 text-[10px] uppercase font-bold tracking-[0.2em] text-ochre mb-3">
-                    <span>{story.categories.nodes[0]?.name || "Cultural"}</span>
-                    {story.series.nodes.length > 0 && (
-                       <span className="text-mute px-2 py-0.5 border border-rule/20 text-[8px] tracking-[0.1em]">
-                        {story.series.nodes[0].name}
-                      </span>
+        <div className="pillar-body">
+          <div className="mag-grid">
+            {magLeadStory && (
+              <Link href={`/magazine/${magLeadStory.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <article className="mag-lead">
+                  <div className="cover">
+                    {magLeadStory.featuredImage && (
+                      <Image 
+                        src={magLeadStory.featuredImage.node.sourceUrl} 
+                        alt={magLeadStory.featuredImage.node.altText || ""} 
+                        fill 
+                        className="object-cover"
+                      />
                     )}
                   </div>
-                  <h4 className="text-3xl font-serif font-medium leading-[1.1] mb-4 group-hover:text-ochre transition-colors">
-                    {story.title}
-                  </h4>
-                  <div className="text-[9px] uppercase tracking-[0.2em] text-mute font-mono flex items-center gap-4">
-                    <span>{new Date(story.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}</span>
-                    <span className="w-1 h-1 bg-rule rounded-full" />
-                    <span>Editorial</span>
+                  <div className="mag-kicker">★ Featured · {magLeadStory.categories?.nodes[0]?.name || "Culture"}</div>
+                  <h4>{magLeadStory.title}</h4>
+                  <div 
+                    className="text-sm text-ink-soft mb-4 line-clamp-3"
+                    dangerouslySetInnerHTML={{ __html: magLeadStory.excerpt }}
+                  />
+                  <div className="mag-byline">
+                    {new Date(magLeadStory.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </div>
-                </div>
+                </article>
               </Link>
-            ))}
+            )}
+
+            <div className="mag-list col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
+              {remainingStories.map((story: any, idx: number) => (
+                <Link key={story.id} href={`/magazine/${story.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <article className="mag-item h-full">
+                    <div className="mag-item-thumb">
+                      {story.featuredImage && (
+                        <Image 
+                          src={story.featuredImage.node.sourceUrl} 
+                          alt={story.featuredImage.node.altText || ""} 
+                          fill 
+                          className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                        />
+                      )}
+                    </div>
+                    <div className="num">0{idx + 1}</div>
+                    <h5>{story.title}</h5>
+                    <div className="meta">
+                      {story.categories?.nodes[0]?.name || "Culture"}
+                      {story.countries?.nodes[0]?.name ? ` · ${story.countries.nodes[0].name}` : ''}
+                    </div>
+                  </article>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Narrative Section */}
-      <section className="px-6 py-40 border-t border-rule text-center">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-5xl md:text-7xl font-serif italic font-light leading-tight mb-12">
-            The archive is ever-evolving, a living document of where we have been and where we are <span className="font-medium not-italic underline decoration-ochre underline-offset-8">becoming.</span>
-          </h2>
-          <div className="text-[11px] uppercase tracking-[0.4em] font-bold text-ink-soft">
-            Explore the Diaspora
+      {/* ========== N°03 · EVENTS ========== */}
+      <section className="pillar" id="events">
+        <div className="pillar-header">
+          <div className="pillar-num">N°03</div>
+          <div className="pillar-title">
+            <h3>Moveee <em>Events</em></h3>
+            <p>Curated culture happenings — openings, listening sessions, film screenings and community dinners.</p>
+          </div>
+          <Link href="/events" className="pillar-link">Full Calendar →</Link>
+        </div>
+
+        <div className="pillar-body">
+          {events.length > 0 ? (
+            <div className="events-grid">
+              {events.map((event: any) => {
+                const eventDate = new Date(event.date);
+                return (
+                  <article key={event.id} className="event-card">
+                    <div className="event-date">
+                      <span className="day">{eventDate.getDate().toString().padStart(2, '0')}</span>
+                      <span className="month">{eventDate.toLocaleDateString('en-GB', { month: 'long' })}</span>
+                    </div>
+                    <h4>{event.title}</h4>
+                    <div className="event-meta">
+                      <div dangerouslySetInnerHTML={{ __html: event.excerpt }} className="line-clamp-2" />
+                    </div>
+                    <span className="event-tag">RSVP</span>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="py-12 border border-rule/20 text-center text-ink-soft italic">
+              New happenings will be announced soon.
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ========== N°04 · ORIGINS ========== */}
+      <section className="pillar" id="origins">
+        <div className="pillar-header">
+          <div className="pillar-num">N°04</div>
+          <div className="pillar-title">
+            <h3>Moveee <em>Origins</em></h3>
+            <p>Slow, writer-led cultural journeys. Not tours — invitations into the places where the work is made.</p>
+          </div>
+          <Link href="/origins" className="pillar-link">All Journeys →</Link>
+        </div>
+
+        <div className="pillar-body">
+          <div className="origins-wrap">
+            <div className="origins-intro">
+              <p>Every Origins journey is designed with a resident editor — an artist, chef, writer or curator — who takes a small group (max. 12) into the rooms, studios, markets and kitchens that shape a place. No buses. No scripts. Just time.</p>
+              <div className="origins-stats">
+                <div className="stat">
+                  <div className="num">12</div>
+                  <div className="label">Cities · 2026</div>
+                </div>
+                <div className="stat">
+                  <div className="num">38</div>
+                  <div className="label">Resident hosts</div>
+                </div>
+                <div className="stat">
+                  <div className="num">09</div>
+                  <div className="label">Countries</div>
+                </div>
+                <div className="stat">
+                  <div className="num">4.9</div>
+                  <div className="label">Guest rating</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="origins-list">
+              {origins.length > 0 ? origins.map((origin: any, idx: number) => (
+                <Link key={origin.id} href={`/origins/${origin.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className="origin-row">
+                    <div className="origin-idx">0{idx + 1}</div>
+                    <div className="origin-name">{origin.title}</div>
+                    <div className="origin-country">{origin.categories?.nodes[0]?.name || "Destination"}</div>
+                    <div className="origin-price">
+                      ↗
+                      <small>View Itinerary</small>
+                    </div>
+                  </div>
+                </Link>
+              )) : (
+                <div className="py-12 text-center text-ink-soft italic border-t border-rule/20">
+                  New origins itineraries are being curated.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
-    </div>
+
+      {/* ========== LIFESTYLE (shop) ========== */}
+      <section className="pillar" id="lifestyle" style={{ paddingBottom: '160px' }}>
+        <div className="pillar-header">
+          <div className="pillar-num">N°05</div>
+          <div className="pillar-title">
+            <h3>Moveee <em>Shop</em></h3>
+            <p>Hand-vetted objects, prints, literary editions and artifacts from creators shaping the diaspora.</p>
+          </div>
+          <Link href="/shop" className="pillar-link">Visit Shop →</Link>
+        </div>
+
+        <div className="pillar-body">
+          {products.length > 0 ? (
+            <div className="lifestyle-grid">
+              {products.map((product: any) => (
+                <Link key={product.id} href={`/shop/${product.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className="product">
+                    <div className="product-img">
+                      {product.image && (
+                        <Image src={product.image.sourceUrl} alt={product.name} fill className="object-cover" />
+                      )}
+                      <div className="product-vetted">MOVEEE VETTED</div>
+                    </div>
+                    <div className="product-vendor">The Moveee Editions</div>
+                    <div className="product-name">{product.name}</div>
+                    <div className="product-price">{product.price || "Price on Request"}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="py-12 border border-rule/20 text-center text-ink-soft italic">
+              Our curated shop collection is launching soon.
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ========== CONNECT (membership) ========== */}
+      <section className="connect" id="connect">
+        <div className="connect-inner">
+          <div className="connect-left">
+            <div className="connect-num">N°06 · CONNECT</div>
+            <h3>An archive <em>alive</em>.</h3>
+            <p>
+              The Moveee is entirely independent. Moveee Connect is our membership tier — supporting our editorial independence while granting you access to the physical manifestations of the magazine.
+            </p>
+          </div>
+
+          <div className="connect-right">
+            <div className="perks">
+              <div className="perk">
+                <span className="n">1.</span>
+                <p>The biannual physical print issue delivered worldwide.</p>
+              </div>
+              <div className="perk">
+                <span className="n">2.</span>
+                <p>Priority access and discounted tickets to <em>Moveee Events</em> and <em>Origins</em> journeys.</p>
+              </div>
+              <div className="perk">
+                <span className="n">3.</span>
+                <p>Full digital access to the entire editorial archive.</p>
+              </div>
+            </div>
+            
+            <div className="connect-cta">
+              <Link href="/connect" className="btn-gold">Join Now <span className="arrow">→</span></Link>
+              <div className="connect-price">$80 / year (Cancel anytime)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

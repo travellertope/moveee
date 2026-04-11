@@ -12,22 +12,20 @@
   --color-ochre-deep: #8a2d10;
   --color-moss: #3d4a2a;
   --color-gold: #b38238;
-  --color-indigo: #1e2b42;
-  --color-indigo-deep: #0f1826;
-  --color-night: #0c0a07;
 
   /* Fonts */
   --font-serif: "Fraunces", serif;
   --font-sans: "DM Sans", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  /* Animations */
-  --animate-marquee: marquee 40s linear infinite;
+}
 
-  @keyframes marquee {
-    0% { transform: translateX(0%); }
-    100% { transform: translateX(-100%); }
-  }
+@utility container-custom {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 40px;
+  position: relative;
+  z-index: 2;
 }
 
 :root {
@@ -43,59 +41,101 @@
   --gold: #b38238;
 }
 
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
 body {
   background: var(--paper);
   color: var(--ink);
   font-family: 'DM Sans', sans-serif;
-  text-rendering: optimizeLegibility;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(197, 73, 31, 0.04), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(61, 74, 42, 0.04), transparent 40%);
 }
 
-h1, h2, h3, h4, .font-serif {
+/* Subtle paper grain */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+}
+
+h1, h2, h3, h4 {
   font-family: 'Fraunces', serif;
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  font-variation-settings: "opsz" 144, "SOFT" 30;
 }
 
-/* Custom Rule for Type */
-.text-serif { font-family: 'Fraunces', serif; }
-.text-sans { font-family: 'DM Sans', sans-serif; }
-.text-mono { font-family: 'JetBrains Mono', monospace; }
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--ochre);
+  color: var(--paper);
+  padding: 16px 28px;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.3s;
+}
+.btn-primary:hover { background: var(--ochre-deep); }
+
+.btn-ghost {
+  color: var(--ink);
+  padding: 16px 0;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 500;
+  border-bottom: 1px solid var(--ink);
+}
+
+.btn-gold {
+  background: var(--gold);
+  color: var(--ink);
+  padding: 18px 32px;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.3s;
+}
+.btn-gold:hover { background: var(--paper); }
 
 /* Custom Scrollbar for Paper aesthetic */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: var(--paper-deep);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--mute);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--ink-soft);
-}
-
-/* Base Grids */
-.page-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 2rem;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 2rem;
-}
-
-@media (max-width: 768px) {
-  .page-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-    padding: 0 1rem;
-  }
-}
-
-@utility no-scrollbar {
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--paper-deep); }
+::-webkit-scrollbar-thumb { background: var(--mute); }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
