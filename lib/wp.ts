@@ -57,6 +57,7 @@ export const STORY_FIELDS = `
         slug
       }
     }
+    # These taxonomies (industry, country, series) are bridged via the moveee-graphql-bridge plugin
     industries {
       nodes {
         name
