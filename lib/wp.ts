@@ -40,7 +40,7 @@ export async function getWPData(query: string, variables = {}) {
 /**
  * Common Fragments for Editorial Components
  */
-export const STORY_FIELDS = `
+const STORY_FIELDS_FRAGMENT = `
   fragment StoryFields on Post {
     id
     title
@@ -59,7 +59,6 @@ export const STORY_FIELDS = `
         slug
       }
     }
-    # These taxonomies (industry, country, series) are bridged via the moveee-graphql-bridge plugin
     industries {
       nodes {
         name
@@ -81,34 +80,16 @@ export const STORY_FIELDS = `
   }
 `;
 
+export const STORY_FIELDS = STORY_FIELDS_FRAGMENT;
+
 export const GET_STORY_BY_SLUG = `
   query GetStoryBySlug($slug: ID!) {
     post(id: $slug, idType: SLUG) {
       ...StoryFields
       content
-      flexibleContent {
-        contentBlocks {
-          ... on Post_Flexiblecontent_ContentBlocks_DropCap {
-            fieldGroupName
-            text
-          }
-          ... on Post_Flexiblecontent_ContentBlocks_PullQuote {
-            fieldGroupName
-            quote
-            author
-          }
-          ... on Post_Flexiblecontent_ContentBlocks_Gallery {
-            fieldGroupName
-            images {
-              sourceUrl
-              altText
-            }
-          }
-        }
-      }
     }
   }
-  \${STORY_FIELDS}
+  ${STORY_FIELDS_FRAGMENT}
 `;
 
 export const GET_STORIES = `
@@ -119,10 +100,10 @@ export const GET_STORIES = `
       }
     }
   }
-  \${STORY_FIELDS}
+  ${STORY_FIELDS_FRAGMENT}
 `;
 
-export const JOURNEY_FIELDS = `
+const JOURNEY_FIELDS_FRAGMENT = `
   fragment JourneyFields on Post {
     id
     title
@@ -142,6 +123,8 @@ export const JOURNEY_FIELDS = `
   }
 `;
 
+export const JOURNEY_FIELDS = JOURNEY_FIELDS_FRAGMENT;
+
 export const GET_JOURNEYS = `
   query GetJourneys($first: Int) {
     posts(first: $first, where: { categoryName: "origins" }) {
@@ -150,5 +133,5 @@ export const GET_JOURNEYS = `
       }
     }
   }
-  \${JOURNEY_FIELDS}
+  ${JOURNEY_FIELDS_FRAGMENT}
 `;
