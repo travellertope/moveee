@@ -1,3 +1,8 @@
+import Link from "next/link";
+import Image from "next/image";
+import { getWPData, GET_STORIES } from "@/lib/wp";
+import Hero from "@/components/Hero";
+
 export default async function Home() {
   const data = await getWPData(GET_STORIES, { first: 6 });
   const stories = data?.posts?.nodes || [];
