@@ -8,6 +8,10 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'cms.themoveee.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'secure.gravatar.com',
       },
     ],

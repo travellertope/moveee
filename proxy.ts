@@ -2,26 +2,127 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Moveee SEO Redirect Middleware
- * Handles legacy WordPress permalinks and site-wide redirects.
+ * Moveee SEO Redirect Proxy
+ *
+ * Handles legacy WordPress permalinks (/%postname%/) and taxonomy
+ * archives so old links from Google, social media, and backlinks
+ * redirect to the correct Next.js routes with 301 permanent redirects.
  */
+
+// Routes that exist (or will exist) in the Next.js app.
+// Add to this set as you create new pages.
+const APP_ROUTES = new Set([
+  'magazine',
+  'about',
+  'contact',
+  'shop',
+  'newsletter',
+  'account',
+  'membership',
+  'privacy',
+  'terms',
+  'search',
+])
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Redirect legacy /category/slug to /magazine?category=slug
+  // ── WordPress taxonomy archives ──────────────────────────────
+  // /category/slug → /magazine?category=slug
   if (pathname.startsWith('/category/')) {
-    const slug = pathname.replace('/category/', '')
-    return NextResponse.redirect(new URL(`/magazine?category=${slug}`, request.url))
+    const slug = pathname.replace('/category/', '').replace(/\/$/, '')
+    return NextResponse.redirect(
+      new URL(`/magazine?category=${slug}`, request.url),
+      301
+    )
   }
 
-  // Handle common legacy single post patterns if they don't exist in Next.js
-  // Note: Actual 1:1 mapping often requires a lookup, but we can handle standard structural shifts.
-  // Example: /2023/10/12/post-slug/ -> /magazine/post-slug
-  const legacyPostPattern = /^\/\d{4}\/\d{2}\/\d{2}\/([^\/]+)\/$/
-  const match = pathname.match(legacyPostPattern)
-  if (match) {
-    const slug = match[1]
-    return NextResponse.redirect(new URL(`/magazine/${slug}`, request.url))
+  // /tag/slug → /magazine
+  if (pathname.startsWith('/tag/')) {
+    return NextResponse.redirect(new URL('/magazine', request.url), 301)
+  }
+
+  // /author/slug → /magazine
+  if (pathname.startsWith('/author/')) {
+    return NextResponse.redirect(new URL('/magazine', request.url), 301)
+  }
+
+  // /series/slug → /magazine (JetEngine taxonomy)
+  if (pathname.startsWith('/series/')) {
+    return NextResponse.redirect(new URL('/magazine', request.url), 301)
+  }
+
+  // /country/slug → /magazine (JetEngine taxonomy)
+  if (pathname.startsWith('/country/')) {
+    return NextResponse.redirect(new URL('/magazine', request.url), 301)
+  }
+
+  // /industry/slug → /magazine (JetEngine taxonomy)
+  if (pathname.startsWith('/industry/')) {
+    return NextResponse.redirect(new URL('/magazine', request.url), 301)
+  }
+
+  // ── WordPress date archives ──────────────────────────────────
+  // /2023/10/12/post-slug → /magazine/post-slug
+  const datePostPattern = /^\/\d{4}\/\d{2}\/\d{2}\/([^/]+)\/?$/
+  const datePostMatch = pathname.match(datePostPattern)
+  if (datePostMatch) {
+    return NextResponse.redirect(
+      new URL(`/magazine/${datePostMatch[1]}`, request.url),
+      301
+    )
+  }
+
+  // /2023/10/post-slug → /magazine/post-slug
+  const monthPostPattern = /^\/\d{4}\/\d{2}\/([^/]+)\/?$/
+  const monthPostMatch = pathname.match(monthPostPattern)
+  if (monthPostMatch && !/^\d+$/.test(monthPostMatch[1])) {
+    return NextResponse.redirect(
+      new URL(`/magazine/${monthPostMatch[1]}`, request.url),
+      301
+    )
+  }
+
+  // /2023/10 → /magazine (date archive)
+  const monthArchivePattern = /^\/\d{4}\/\d{2}\/?$/
+  if (monthArchivePattern.test(pathname)) {
+    return NextResponse.redirect(new URL('/magazine', request.url), 301)
+  }
+
+  // ── WordPress pagination ─────────────────────────────────────
+  // /page/2 → /magazine
+  if (pathname.startsWith('/page/')) {
+    return NextResponse.redirect(new URL('/magazine', request.url), 301)
+  }
+
+  // ── WordPress admin → CMS subdomain ──────────────────────────
+  if (pathname.startsWith('/wp-admin')) {
+    return NextResponse.redirect(
+      new URL(pathname, 'https://cms.themoveee.com'),
+      302
+    )
+  }
+  if (pathname === '/wp-login.php') {
+    return NextResponse.redirect(
+      new URL('/wp-login.php', 'https://cms.themoveee.com'),
+      302
+    )
+  }
+
+  // ── WordPress feed → magazine ────────────────────────────────
+  if (pathname === '/feed' || pathname.startsWith('/feed/')) {
+    return NextResponse.redirect(new URL('/magazine', request.url), 301)
+  }
+
+  // ── Root-level post slugs (/%postname%/) ─────────────────────
+  // This is the old WordPress permalink structure.
+  // Only redirect single-segment paths that don't match known app routes.
+  const cleanPath = pathname.replace(/^\/|\/$/g, '')
+  if (cleanPath && !cleanPath.includes('/') && !APP_ROUTES.has(cleanPath.toLowerCase())) {
+    return NextResponse.redirect(
+      new URL(`/magazine/${cleanPath}`, request.url),
+      301
+    )
   }
 
   return NextResponse.next()
@@ -29,13 +130,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
   ],
 }
