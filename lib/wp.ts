@@ -1,4 +1,4 @@
-const WP_GRAPHQL_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || "https://themoveee.com/graphql";
+const WP_GRAPHQL_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || "https://cms.themoveee.com/graphql";
 
 export async function getWPData(query: string, variables = {}) {
   try {
