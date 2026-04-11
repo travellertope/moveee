@@ -67,13 +67,17 @@ npm run build
 
 ## 📡 Deployment
 
-This project is optimized for **Vercel**. 
+This project is optimized for **Vercel**.
 
 ### Vercel Configuration (Mandatory)
-If you encounter a `getaddrinfo ENOTFOUND cms.themoveee.com` error during build, it is because Vercel has an incorrect environment variable. 
-1. Go to **Settings > Environment Variables** in Vercel.
-2. Ensure `NEXT_PUBLIC_WORDPRESS_API_URL` is set to exactly: `https://themoveee.com/graphql`.
-3. Do **NOT** use `cms.themoveee.com`.
+Ensure the following environment variable is set in the Vercel Dashboard:
+- `NEXT_PUBLIC_WORDPRESS_API_URL`: `https://cms.themoveee.com/graphql`
+
+### Troubleshooting `ENOTFOUND`
+If the Vercel build fails with `getaddrinfo ENOTFOUND cms.themoveee.com`, it is a DNS resolution issue:
+1. **Check for Typos**: Ensure there are no hidden spaces or typos in the Vercel Environment Variables.
+2. **Clear Build Cache**: When redeploying, check the **"Clear Build Cache"** option to ensure Vercel refreshes its DNS and environment settings.
+3. **Check Build Logs**: Detailed logs in `lib/wp.ts` will now output exactly which URL is being fetched to help identify typos.
 
 - **Middleware**: Uses `proxy.ts` (Next.js 16 edge convention) for request handling.
 - **ISR**: Pages are revalidated every hour to ensure editorial content is fresh without sacrifice to performance.
