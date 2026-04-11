@@ -4,8 +4,13 @@ import { getWPData, GET_STORIES } from "@/lib/wp";
 import Hero from "@/components/Hero";
 
 export default async function Home() {
-  const data = await getWPData(GET_STORIES, { first: 6 });
-  const stories = data?.posts?.nodes || [];
+  let stories: any[] = [];
+  try {
+    const data = await getWPData(GET_STORIES, { first: 6 });
+    stories = data?.posts?.nodes || [];
+  } catch {
+    // CMS unreachable — render with empty stories
+  }
   const featuredStory = stories[0];
   const remainingStories = stories.slice(1);
 

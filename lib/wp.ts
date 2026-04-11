@@ -18,20 +18,22 @@ export async function getWPData(query: string, variables = {}) {
 
     if (!res.ok) {
       console.error(`Fetch failed for ${WP_GRAPHQL_URL}: ${res.statusText}`);
-      throw new Error(`Failed to fetch API: ${res.statusText}`);
+      return null;
     }
 
     const json = await res.json();
 
     if (json.errors) {
       console.error(`GraphQL errors for ${WP_GRAPHQL_URL}:`, json.errors);
-      throw new Error("Failed to fetch API due to GraphQL errors");
+      return null;
     }
 
     return json.data;
   } catch (error: any) {
+    // Return null instead of throwing so the build doesn't crash
+    // when the CMS is unreachable (e.g. DNS not configured yet)
     console.error(`Network or Parsing Error for ${WP_GRAPHQL_URL}:`, error.message);
-    throw error;
+    return null;
   }
 }
 

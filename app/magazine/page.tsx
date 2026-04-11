@@ -3,17 +3,26 @@ import { getWPData, GET_STORIES } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 
+// Don't statically pre-render — render on request so the build
+// doesn't fail when the CMS is unreachable.
+export const dynamic = "force-dynamic";
+
 export default async function MagazineArchive({ 
   searchParams 
 }: { 
   searchParams: { category?: string } 
 }) {
   const currentCategory = searchParams.category;
-  const data = await getWPData(GET_STORIES, { 
-    first: 12, 
-    categoryName: currentCategory 
-  });
-  const stories = data?.posts?.nodes || [];
+  let stories: any[] = [];
+  try {
+    const data = await getWPData(GET_STORIES, { 
+      first: 12, 
+      categoryName: currentCategory 
+    });
+    stories = data?.posts?.nodes || [];
+  } catch {
+    // CMS unreachable — render with empty stories
+  }
 
   const categories = [
     { name: "All Stories", slug: "" },

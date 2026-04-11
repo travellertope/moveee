@@ -5,7 +5,12 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 
 export default async function StoryPage({ params }: { params: { slug: string } }) {
-  const data = await getWPData(GET_STORY_BY_SLUG, { slug: params.slug });
+  let data;
+  try {
+    data = await getWPData(GET_STORY_BY_SLUG, { slug: params.slug });
+  } catch {
+    // CMS unreachable
+  }
   const post = data?.post;
 
   if (!post) {
