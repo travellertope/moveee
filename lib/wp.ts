@@ -1,28 +1,38 @@
 const WP_GRAPHQL_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || "https://themoveee.com/graphql";
 
 export async function getWPData(query: string, variables = {}) {
-  const res = await fetch(WP_GRAPHQL_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    next: {
-      revalidate: 3600, // ISR: Revalidate every hour
-    },
-    body: JSON.stringify({
-      query,
-      variables,
-    }),
-  });
+  try {
+    const res = await fetch(WP_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      next: {
+        revalidate: 3600, // ISR: Revalidate every hour
+      },
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
 
-  const json = await res.json();
+    if (!res.ok) {
+      console.error(`Fetch failed for ${WP_GRAPHQL_URL}: ${res.statusText}`);
+      throw new Error(`Failed to fetch API: ${res.statusText}`);
+    }
 
-  if (json.errors) {
-    console.error(json.errors);
-    throw new Error("Failed to fetch API");
+    const json = await res.json();
+
+    if (json.errors) {
+      console.error(`GraphQL errors for ${WP_GRAPHQL_URL}:`, json.errors);
+      throw new Error("Failed to fetch API due to GraphQL errors");
+    }
+
+    return json.data;
+  } catch (error: any) {
+    console.error(`Network or Parsing Error for ${WP_GRAPHQL_URL}:`, error.message);
+    throw error;
   }
-
-  return json.data;
 }
 
 /**
