@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #f3ece0;
+  --paper-deep: #ebe1d0;
+  --ink: #14110d;
+  --ink-soft: #3a342b;
+  --mute: #7a6f5c;
+  --rule: #2a241c;
+  --ochre: #c5491f;
+  --ochre-deep: #8a2d10;
+  --moss: #3d4a2a;
+  --gold: #b38238;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-serif {
+  font-family: 'Fraunces', serif;
+}
+
+/* Custom Rule for Type */
+.text-serif { font-family: 'Fraunces', serif; }
+.text-sans { font-family: 'DM Sans', sans-serif; }
+.text-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Custom Scrollbar for Paper aesthetic */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--paper-deep);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--mute);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-soft);
+}
+
+/* Base Grids */
+.page-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2rem;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+@media (max-width: 768px) {
+  .page-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+}
+/* Animations */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 40s linear infinite;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

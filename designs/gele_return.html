@@ -1,0 +1,2023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Return of the Gele — The Moveee</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f3ece0;
+    --paper-deep: #ebe1d0;
+    --ink: #14110d;
+    --ink-soft: #3a342b;
+    --mute: #7a6f5c;
+    --rule: #2a241c;
+    --ochre: #c5491f;
+    --ochre-deep: #8a2d10;
+    --moss: #3d4a2a;
+    --gold: #b38238;
+    --indigo: #1e2b42;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.35;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ========== MASTHEAD ========== */
+  .masthead-bar {
+    border-bottom: 1px solid var(--rule);
+    padding: 14px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 3;
+  }
+  .masthead-bar .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ochre);
+    margin-right: 8px;
+    vertical-align: middle;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+  .masthead-bar-left span + span { margin-left: 24px; }
+  .masthead-bar-right span + span { margin-left: 24px; }
+
+  .masthead {
+    border-bottom: 2px solid var(--rule);
+    padding: 22px 40px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 30px;
+    position: relative;
+    z-index: 3;
+  }
+  .masthead-left, .masthead-right {
+    display: flex;
+    gap: 26px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .masthead-left { justify-content: flex-start; }
+  .masthead-right { justify-content: flex-end; align-items: center; }
+  .masthead-left a, .masthead-right a {
+    padding-bottom: 2px;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s;
+  }
+  .masthead-left a:hover, .masthead-right a:hover { border-bottom-color: var(--ochre); }
+
+  .wordmark { text-align: center; }
+  .wordmark .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-bottom: 4px;
+  }
+  .wordmark h1 {
+    font-size: 38px;
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1;
+  }
+  .wordmark h1 em { font-style: italic; font-weight: 400; color: var(--ochre); }
+
+  .join-btn {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  .join-btn:hover { background: var(--ochre); }
+
+  /* ========== BREADCRUMB ========== */
+  .breadcrumb {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 24px 40px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+    position: relative;
+    z-index: 2;
+  }
+  .breadcrumb a:hover { color: var(--ochre); }
+  .breadcrumb .sep { margin: 0 10px; color: var(--ochre); }
+
+  /* ========== COVER HERO ========== */
+  /* Full-bleed magazine-cover-style hero — title overlaid on image */
+  .cover-hero {
+    position: relative;
+    margin: 40px auto 0;
+    max-width: 1440px;
+    padding: 0 40px;
+    z-index: 2;
+  }
+
+  .cover-frame {
+    position: relative;
+    aspect-ratio: 16/10;
+    background: var(--ink);
+    overflow: hidden;
+  }
+  .cover-frame > svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Scrims for legibility of overlay text */
+  .cover-frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(20, 17, 13, 0.55) 0%,
+      rgba(20, 17, 13, 0.15) 25%,
+      rgba(20, 17, 13, 0.1) 60%,
+      rgba(20, 17, 13, 0.75) 100%
+    );
+    z-index: 1;
+  }
+
+  .cover-top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 26px 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 2;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--paper);
+  }
+  .cover-top-bar .issue-label { display: flex; align-items: center; gap: 10px; }
+  .cover-top-bar .star { color: var(--ochre); font-size: 12px; }
+
+  .cover-title-block {
+    position: absolute;
+    left: 36px;
+    right: 36px;
+    bottom: 36px;
+    z-index: 2;
+    color: var(--paper);
+  }
+
+  .cover-kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .cover-kicker::before {
+    content: '';
+    width: 40px;
+    height: 1px;
+    background: var(--ochre);
+  }
+
+  .cover-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(56px, 9vw, 148px);
+    font-weight: 400;
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    max-width: 1100px;
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+  }
+  .cover-title em {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--gold);
+  }
+  .cover-title .amp {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    color: var(--ochre);
+  }
+
+  .cover-subtitle {
+    margin-top: 22px;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(18px, 1.5vw, 24px);
+    line-height: 1.35;
+    color: rgba(243, 236, 224, 0.85);
+    max-width: 680px;
+  }
+
+  /* Rotating cover-lines — like the lines on a magazine cover */
+  .cover-lines {
+    position: absolute;
+    top: 100px;
+    right: 36px;
+    width: 200px;
+    text-align: right;
+    z-index: 2;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--paper);
+    line-height: 1.8;
+  }
+  .cover-lines .line { margin-bottom: 14px; }
+  .cover-lines .line .num { color: var(--ochre); margin-right: 8px; }
+
+  /* ========== STANDFIRST BAND ========== */
+  .standfirst-band {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 70px 40px 50px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .standfirst-grid {
+    display: grid;
+    grid-template-columns: 1fr 2.4fr;
+    gap: 80px;
+    align-items: start;
+  }
+
+  .standfirst-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mute);
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+  }
+  .standfirst-label strong {
+    display: block;
+    color: var(--ochre);
+    margin-bottom: 6px;
+  }
+
+  .standfirst-text {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(22px, 2vw, 30px);
+    font-weight: 300;
+    line-height: 1.35;
+    color: var(--ink);
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    font-variation-settings: "opsz" 144;
+  }
+  .standfirst-text em { font-style: italic; color: var(--ochre); }
+
+  /* ========== BYLINE ROW ========== */
+  .byline-row {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 40px 60px;
+    position: relative;
+    z-index: 2;
+  }
+  .byline-inner {
+    display: grid;
+    grid-template-columns: auto auto auto auto 1fr;
+    gap: 40px;
+    padding-top: 28px;
+    padding-bottom: 28px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    align-items: center;
+  }
+  .byline-item .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-bottom: 4px;
+  }
+  .byline-item .value {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-style: italic;
+    color: var(--ink);
+  }
+  .byline-share {
+    justify-self: end;
+    display: flex;
+    gap: 12px;
+  }
+  .share-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    background: transparent;
+    transition: background 0.3s, color 0.3s;
+  }
+  .share-btn:hover { background: var(--ink); color: var(--paper); }
+
+  /* ========== ARTICLE BODY ========== */
+  .article-body {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 30px 40px 100px;
+    display: grid;
+    grid-template-columns: 1fr 720px 1fr;
+    gap: 60px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .article-sidebar {
+    position: sticky;
+    top: 40px;
+    align-self: start;
+    padding-top: 12px;
+  }
+  .article-sidebar .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .toc-list { list-style: none; }
+  .toc-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(42, 36, 28, 0.15);
+  }
+  .toc-list a {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--ink-soft);
+    display: flex;
+    gap: 10px;
+    transition: color 0.3s;
+  }
+  .toc-list a:hover { color: var(--ochre); }
+  .toc-list .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-style: normal;
+    color: var(--ochre);
+    padding-top: 3px;
+  }
+
+  .article-prose { max-width: 720px; }
+
+  .article-prose p {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    line-height: 1.6;
+    margin-bottom: 26px;
+    color: var(--ink);
+    font-variation-settings: "opsz" 144;
+  }
+  .article-prose p:first-of-type::first-letter {
+    font-family: 'Fraunces', serif;
+    font-size: 96px;
+    font-weight: 400;
+    float: left;
+    line-height: 0.85;
+    padding: 8px 14px 0 0;
+    color: var(--ochre);
+  }
+
+  .article-prose h3 {
+    font-size: 40px;
+    font-weight: 500;
+    line-height: 1;
+    margin: 70px 0 28px;
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+  }
+  .article-prose h3 em { font-style: italic; font-weight: 400; color: var(--ochre); }
+  .article-prose h3 .num {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--ochre);
+    font-style: normal;
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+
+  /* Blockquote — cited to different voices in this piece */
+  .article-prose blockquote {
+    margin: 55px -40px;
+    padding: 0 40px;
+    border-left: 3px solid var(--ochre);
+  }
+  .article-prose blockquote p {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+  .article-prose blockquote cite {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-style: normal;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mute);
+    display: block;
+  }
+  .article-prose blockquote cite .name {
+    color: var(--ochre);
+    margin-right: 10px;
+  }
+
+  .article-prose .inline-image { margin: 55px 0; }
+  .article-prose .inline-image .frame {
+    background: var(--ink);
+    aspect-ratio: 4/3;
+    overflow: hidden;
+  }
+  .article-prose .inline-image svg { width: 100%; height: 100%; display: block; }
+  .article-prose .inline-image .cap {
+    margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .article-prose .inline-image .cap em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ochre);
+    font-size: 11px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* ========== ANATOMY DIAGRAM — editorial info-moment ========== */
+  .anatomy {
+    margin: 70px -40px;
+    background: var(--paper-deep);
+    padding: 50px 40px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .anatomy-head {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin-bottom: 10px;
+  }
+  .anatomy h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 400;
+    margin-bottom: 8px;
+  }
+  .anatomy h4 em { font-style: italic; }
+  .anatomy .anatomy-intro {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin-bottom: 32px;
+    max-width: 540px;
+  }
+
+  .anatomy-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+
+  .anatomy-diagram {
+    aspect-ratio: 1;
+    background: var(--ink);
+    position: relative;
+    overflow: hidden;
+  }
+  .anatomy-diagram svg { width: 100%; height: 100%; display: block; }
+
+  .anatomy-legend {
+    list-style: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .anatomy-legend li {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 14px;
+    padding: 14px 0;
+    border-top: 1px solid rgba(42, 36, 28, 0.2);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .anatomy-legend li:last-child { border-bottom: 1px solid rgba(42, 36, 28, 0.2); }
+  .anatomy-legend .key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ochre);
+    padding-top: 3px;
+  }
+  .anatomy-legend strong {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 500;
+    color: var(--ink);
+    display: block;
+    font-size: 16px;
+    margin-bottom: 2px;
+  }
+
+  .article-aside {
+    position: sticky;
+    top: 40px;
+    align-self: start;
+    padding-top: 12px;
+  }
+  .aside-block {
+    background: var(--paper-deep);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+  .aside-block.ink {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .aside-block.ink .label { color: var(--gold); }
+  .aside-block.ink p { color: rgba(243, 236, 224, 0.7); }
+  .aside-block.ink a.link { color: var(--paper); border-color: var(--paper); }
+  .aside-block .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin-bottom: 14px;
+  }
+  .aside-block h4 {
+    font-size: 22px;
+    line-height: 1.05;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .aside-block h4 em { font-style: italic; font-weight: 400; }
+  .aside-block p {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .aside-block a.link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 2px;
+  }
+
+  /* ========== THE GALLERY — six sitters ========== */
+  .gallery {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 100px 40px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+    z-index: 2;
+  }
+  .gallery-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 40px;
+    align-items: end;
+    margin-bottom: 50px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .gallery-num {
+    font-family: 'Fraunces', serif;
+    font-size: 80px;
+    font-weight: 300;
+    font-style: italic;
+    line-height: 0.8;
+    color: var(--ochre);
+  }
+  .gallery-title h3 {
+    font-size: 54px;
+    font-weight: 400;
+    line-height: 0.95;
+    margin-bottom: 8px;
+  }
+  .gallery-title h3 em { font-style: italic; color: var(--mute); font-weight: 300; }
+  .gallery-title p {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-style: italic;
+    color: var(--ink-soft);
+    max-width: 500px;
+    margin-top: 10px;
+  }
+  .gallery-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mute);
+    white-space: nowrap;
+  }
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  .sitter {
+    cursor: pointer;
+    transition: transform 0.4s ease;
+  }
+  .sitter:hover { transform: translateY(-4px); }
+  .sitter .img {
+    aspect-ratio: 4/5;
+    background: var(--ink);
+    margin-bottom: 18px;
+    overflow: hidden;
+    position: relative;
+  }
+  .sitter .img svg { width: 100%; height: 100%; display: block; }
+  .sitter .idx {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--paper);
+    background: rgba(20, 17, 13, 0.6);
+    padding: 4px 8px;
+    backdrop-filter: blur(4px);
+  }
+  .sitter .name {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    line-height: 1.05;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .sitter .name em { font-style: italic; font-weight: 400; }
+  .sitter .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-bottom: 10px;
+  }
+  .sitter .q {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+
+  /* ========== PULL STAT DIVIDER ========== */
+  .pull-divider {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 60px;
+    align-items: center;
+  }
+  .pull-divider .stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 180px;
+    font-weight: 300;
+    line-height: 0.8;
+    color: var(--ochre);
+    font-style: italic;
+  }
+  .pull-divider .stat-text {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    line-height: 1.2;
+    font-weight: 400;
+    max-width: 640px;
+  }
+  .pull-divider .stat-text em { font-style: italic; color: var(--ochre); }
+  .pull-divider .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-bottom: 16px;
+  }
+
+  /* ========== AUTHOR CARD ========== */
+  .author-card {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 80px 40px;
+    display: grid;
+    grid-template-columns: 180px 1fr auto;
+    gap: 40px;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+  .author-avatar {
+    width: 180px;
+    height: 180px;
+    background: var(--ink);
+    overflow: hidden;
+    border-radius: 50%;
+  }
+  .author-avatar svg { width: 100%; height: 100%; display: block; }
+  .author-info .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin-bottom: 10px;
+  }
+  .author-info h4 {
+    font-size: 38px;
+    font-weight: 400;
+    margin-bottom: 10px;
+  }
+  .author-info h4 em { font-style: italic; }
+  .author-info p {
+    font-size: 15px;
+    color: var(--ink-soft);
+    max-width: 560px;
+  }
+  .author-cta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: 1px solid var(--ink);
+    padding: 14px 20px;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s;
+  }
+  .author-cta:hover { background: var(--ink); color: var(--paper); }
+
+  /* ========== RELATED ========== */
+  .related {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 60px 40px 100px;
+    border-top: 1px solid var(--rule);
+    position: relative;
+    z-index: 2;
+  }
+  .related-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    margin-bottom: 40px;
+  }
+  .related-header h3 {
+    font-size: 48px;
+    font-weight: 400;
+  }
+  .related-header h3 em { font-style: italic; color: var(--ochre); }
+  .related-header a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 2px;
+  }
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+  }
+  .related-card { cursor: pointer; }
+  .related-card .img-frame {
+    background: var(--ink);
+    aspect-ratio: 4/5;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: transform 0.4s;
+  }
+  .related-card:hover .img-frame { transform: translateY(-4px); }
+  .related-card .img-frame svg { width: 100%; height: 100%; display: block; }
+  .related-card .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin-bottom: 8px;
+  }
+  .related-card h4 {
+    font-size: 24px;
+    line-height: 1.1;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .related-card h4 em { font-style: italic; font-weight: 400; }
+  .related-card .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+
+  /* ========== FOOTER ========== */
+  footer {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 70px 40px 40px;
+    position: relative;
+    z-index: 2;
+  }
+  .footer-top {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 60px;
+    padding-bottom: 50px;
+    border-bottom: 1px solid rgba(243, 236, 224, 0.15);
+  }
+  .footer-top h5 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    color: var(--ochre);
+    font-weight: 500;
+  }
+  .footer-top ul { list-style: none; }
+  .footer-top li { margin-bottom: 10px; }
+  .footer-top a {
+    font-size: 14px;
+    color: rgba(243, 236, 224, 0.75);
+    transition: color 0.3s;
+  }
+  .footer-top a:hover { color: var(--ochre); }
+  .footer-brand h4 {
+    font-size: 40px;
+    font-weight: 500;
+    line-height: 0.95;
+    margin-bottom: 14px;
+    color: var(--paper);
+  }
+  .footer-brand h4 em { font-style: italic; color: var(--ochre); }
+  .footer-brand p {
+    font-size: 14px;
+    color: rgba(243, 236, 224, 0.6);
+    max-width: 340px;
+  }
+  .footer-bottom {
+    max-width: 1440px;
+    margin: 30px auto 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(243, 236, 224, 0.5);
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 1180px) {
+    .article-body {
+      grid-template-columns: 1fr;
+      max-width: 780px;
+    }
+    .article-sidebar, .article-aside {
+      position: static;
+      max-width: 720px;
+    }
+    .article-sidebar { margin-bottom: 20px; }
+    .article-aside { margin-top: 40px; }
+  }
+  @media (max-width: 1024px) {
+    .masthead-left, .masthead-right { display: none; }
+    .masthead { grid-template-columns: 1fr; }
+    .cover-lines { display: none; }
+    .cover-title-block { bottom: 24px; left: 24px; right: 24px; }
+    .cover-top-bar { padding: 18px 24px; }
+    .standfirst-grid { grid-template-columns: 1fr; gap: 24px; }
+    .byline-inner { grid-template-columns: 1fr 1fr; gap: 20px; }
+    .byline-share { grid-column: 1 / -1; justify-self: start; }
+    .anatomy-grid { grid-template-columns: 1fr; }
+    .gallery-grid { grid-template-columns: 1fr 1fr; }
+    .gallery-header { grid-template-columns: 1fr; gap: 20px; }
+    .gallery-meta { align-self: start; }
+    .gallery-num { font-size: 56px; }
+    .gallery-title h3 { font-size: 40px; }
+    .related-grid { grid-template-columns: 1fr 1fr; }
+    .author-card { grid-template-columns: 120px 1fr; }
+    .author-avatar { width: 120px; height: 120px; }
+    .author-cta { grid-column: 1 / -1; justify-self: start; }
+    .pull-divider { grid-template-columns: 1fr; gap: 20px; }
+    .pull-divider .stat-num { font-size: 120px; }
+  }
+  @media (max-width: 640px) {
+    .masthead-bar, .masthead, .cover-hero, .standfirst-band, .byline-row, .article-body, .pull-divider, .author-card, .related, .gallery, footer {
+      padding-left: 22px;
+      padding-right: 22px;
+    }
+    .wordmark h1 { font-size: 30px; }
+    .cover-title { font-size: 52px; }
+    .article-prose p { font-size: 17px; }
+    .article-prose blockquote { margin: 40px 0; padding: 0 20px; }
+    .article-prose blockquote p { font-size: 24px; }
+    .anatomy { margin: 50px -22px; padding: 40px 22px; }
+    .pull-divider .stat-num { font-size: 88px; }
+    .pull-divider .stat-text { font-size: 20px; }
+    .related-grid, .gallery-grid { grid-template-columns: 1fr; }
+    .masthead-bar { flex-direction: column; gap: 8px; text-align: center; }
+    .masthead-bar-left span + span { margin-left: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="masthead-bar">
+  <div class="masthead-bar-left">
+    <span><span class="dot"></span>Issue N°014</span>
+    <span>Fri, 10 April 2026</span>
+    <span>Lagos · London · Accra · NYC</span>
+  </div>
+  <div class="masthead-bar-right">
+    <span>Culture Narratives Vol I out now</span>
+    <span>EN / FR</span>
+  </div>
+</div>
+
+<!-- Masthead -->
+<header class="masthead">
+  <nav class="masthead-left">
+    <a href="moveee-homepage.html">Home</a>
+    <a href="moveee-homepage.html#magazine">Magazine</a>
+    <a href="moveee-homepage.html#events">Events</a>
+    <a href="moveee-homepage.html#origins">Origins</a>
+    <a href="moveee-homepage.html#lifestyle">Lifestyle</a>
+  </nav>
+  <div class="wordmark">
+    <div class="kicker">Est. 2022 · Best in Culture</div>
+    <h1>The M<em>o</em>veee</h1>
+  </div>
+  <div class="masthead-right">
+    <a href="#">Search</a>
+    <a href="#">Sign in</a>
+    <button class="join-btn">Join Connect →</button>
+  </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="moveee-homepage.html">Home</a>
+  <span class="sep">/</span>
+  <a href="moveee-homepage.html#magazine">Magazine</a>
+  <span class="sep">/</span>
+  <a href="#">Cover Story</a>
+  <span class="sep">/</span>
+  <span style="color:var(--ink)">The Return of the Gele</span>
+</div>
+
+<article>
+
+<!-- COVER HERO -->
+<section class="cover-hero">
+  <div class="cover-frame">
+    <!-- Cover image: three women in gele, Lagos -->
+    <svg viewBox="0 0 1600 1000" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="coverBg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#8a2d10"/>
+          <stop offset="50%" stop-color="#5a1a08"/>
+          <stop offset="100%" stop-color="#1e0a04"/>
+        </linearGradient>
+        <linearGradient id="skin2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#5a2818"/>
+          <stop offset="100%" stop-color="#2a1208"/>
+        </linearGradient>
+        <linearGradient id="skin3" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6b3020"/>
+          <stop offset="100%" stop-color="#3a1a10"/>
+        </linearGradient>
+        <linearGradient id="skin4" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4a2010"/>
+          <stop offset="100%" stop-color="#1a0a04"/>
+        </linearGradient>
+        <pattern id="dotsCover" width="12" height="12" patternUnits="userSpaceOnUse">
+          <circle cx="3" cy="3" r="1" fill="#f3ece0" opacity="0.18"/>
+        </pattern>
+        <!-- Gele fabric patterns -->
+        <pattern id="geleA" width="40" height="40" patternUnits="userSpaceOnUse">
+          <rect width="40" height="40" fill="#c5491f"/>
+          <circle cx="20" cy="20" r="6" fill="#b38238"/>
+          <circle cx="20" cy="20" r="3" fill="#14110d"/>
+        </pattern>
+        <pattern id="geleB" width="50" height="50" patternUnits="userSpaceOnUse">
+          <rect width="50" height="50" fill="#1e2b42"/>
+          <path d="M 0 25 L 25 0 L 50 25 L 25 50 Z" fill="none" stroke="#b38238" stroke-width="2"/>
+          <circle cx="25" cy="25" r="3" fill="#b38238"/>
+        </pattern>
+        <pattern id="geleC" width="36" height="36" patternUnits="userSpaceOnUse">
+          <rect width="36" height="36" fill="#b38238"/>
+          <rect x="8" y="8" width="20" height="20" fill="none" stroke="#14110d" stroke-width="2"/>
+          <rect x="14" y="14" width="8" height="8" fill="#14110d"/>
+        </pattern>
+      </defs>
+
+      <rect width="1600" height="1000" fill="url(#coverBg)"/>
+      <rect width="1600" height="1000" fill="url(#dotsCover)"/>
+
+      <!-- Warm atmospheric light from top -->
+      <ellipse cx="800" cy="-100" rx="900" ry="400" fill="#c5491f" opacity="0.3"/>
+      <ellipse cx="800" cy="100" rx="600" ry="200" fill="#b38238" opacity="0.15"/>
+
+      <!-- Abstract adire pattern, top left -->
+      <g opacity="0.1" fill="none" stroke="#f3ece0" stroke-width="1.5">
+        <circle cx="140" cy="160" r="40"/>
+        <circle cx="140" cy="160" r="28"/>
+        <circle cx="140" cy="160" r="16"/>
+        <circle cx="140" cy="160" r="6"/>
+      </g>
+      <g opacity="0.08" fill="none" stroke="#f3ece0" stroke-width="1.5">
+        <rect x="1400" y="140" width="80" height="80"/>
+        <rect x="1412" y="152" width="56" height="56"/>
+        <rect x="1424" y="164" width="32" height="32"/>
+      </g>
+
+      <!-- LEFT WOMAN — yellow/gold gele, looking forward -->
+      <g transform="translate(360, 620)">
+        <!-- Neck + shoulders -->
+        <rect x="-55" y="140" width="110" height="80" fill="url(#skin2)"/>
+        <!-- Dark garment -->
+        <path d="M -180 220 Q -150 180 -70 185 L 70 185 Q 150 180 180 220 L 180 400 L -180 400 Z" fill="#0c0502"/>
+        <!-- Head -->
+        <ellipse cx="0" cy="0" rx="130" ry="165" fill="url(#skin2)"/>
+
+        <!-- Gele — tall, sculptural yellow/gold -->
+        <path d="M -140 -30 Q -180 -180 -100 -260 Q -50 -310 0 -320 Q 60 -315 120 -270 Q 190 -200 150 -40 Q 140 -70 120 -90 Q 80 -180 0 -200 Q -80 -180 -120 -90 Q -140 -70 -140 -30 Z"
+              fill="url(#geleC)"/>
+        <!-- Fold highlights -->
+        <path d="M -130 -60 Q -70 -200 0 -220 Q 70 -200 130 -60" stroke="#14110d" stroke-width="2.5" fill="none" opacity="0.35"/>
+        <path d="M -110 -100 Q -50 -210 0 -220" stroke="#14110d" stroke-width="2" fill="none" opacity="0.35"/>
+        <!-- Gele wing/flare on right -->
+        <path d="M 110 -200 Q 200 -250 240 -180 Q 220 -120 150 -100 Z" fill="url(#geleC)"/>
+        <path d="M 110 -200 Q 200 -250 240 -180" stroke="#14110d" stroke-width="2" fill="none" opacity="0.4"/>
+
+        <!-- Facial features -->
+        <ellipse cx="-45" cy="-8" rx="14" ry="7" fill="#f3ece0" opacity="0.9"/>
+        <ellipse cx="45" cy="-8" rx="14" ry="7" fill="#f3ece0" opacity="0.9"/>
+        <circle cx="-40" cy="-8" r="6" fill="#14110d"/>
+        <circle cx="50" cy="-8" r="6" fill="#14110d"/>
+        <path d="M -60 -32 Q -45 -38 -28 -32" stroke="#14110d" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M 28 -32 Q 45 -38 60 -32" stroke="#14110d" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M -25 72 Q 0 82 25 72" stroke="#2a1208" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- Earrings -->
+        <circle cx="-125" cy="20" r="8" fill="#b38238"/>
+        <circle cx="125" cy="20" r="8" fill="#b38238"/>
+      </g>
+
+      <!-- CENTER WOMAN — red/ochre gele, the largest, slight turn -->
+      <g transform="translate(820, 600)">
+        <!-- Neck -->
+        <rect x="-65" y="165" width="130" height="90" fill="url(#skin3)"/>
+        <!-- Garment -->
+        <path d="M -220 255 Q -180 210 -90 215 L 90 215 Q 180 210 220 255 L 220 440 L -220 440 Z" fill="#14110d"/>
+        <!-- Necklace -->
+        <g fill="#b38238">
+          <circle cx="-40" cy="220" r="5"/>
+          <circle cx="-20" cy="225" r="5"/>
+          <circle cx="0" cy="228" r="5"/>
+          <circle cx="20" cy="225" r="5"/>
+          <circle cx="40" cy="220" r="5"/>
+        </g>
+        <!-- Head -->
+        <ellipse cx="0" cy="0" rx="155" ry="195" fill="url(#skin3)"/>
+
+        <!-- Gele — the statement piece, elaborate red/ochre -->
+        <path d="M -170 -40 Q -230 -220 -120 -310 Q -40 -360 20 -365 Q 100 -350 180 -280 Q 250 -180 210 -40 Q 195 -90 170 -120 Q 120 -210 20 -230 Q -80 -210 -140 -120 Q -165 -90 -170 -40 Z"
+              fill="url(#geleA)"/>
+        <!-- Dramatic flare/fan on top -->
+        <path d="M 50 -340 Q 180 -420 280 -320 Q 310 -220 210 -200 Q 150 -260 80 -290 Z" fill="url(#geleA)"/>
+        <path d="M 50 -340 Q 180 -420 280 -320" stroke="#14110d" stroke-width="2.5" fill="none" opacity="0.5"/>
+        <path d="M 100 -330 Q 200 -380 260 -310" stroke="#14110d" stroke-width="2" fill="none" opacity="0.4"/>
+        <!-- Additional fold on left -->
+        <path d="M -140 -250 Q -200 -200 -180 -120 Q -150 -140 -130 -180 Z" fill="url(#geleA)"/>
+        <path d="M -140 -250 Q -200 -200 -180 -120" stroke="#14110d" stroke-width="2" fill="none" opacity="0.4"/>
+        <!-- Horizontal fold lines -->
+        <path d="M -165 -80 Q 0 -150 205 -80" stroke="#14110d" stroke-width="2.5" fill="none" opacity="0.4"/>
+        <path d="M -155 -130 Q 0 -210 195 -130" stroke="#14110d" stroke-width="2" fill="none" opacity="0.4"/>
+
+        <!-- Facial features -->
+        <ellipse cx="-55" cy="-10" rx="17" ry="8" fill="#f3ece0" opacity="0.92"/>
+        <ellipse cx="55" cy="-10" rx="17" ry="8" fill="#f3ece0" opacity="0.92"/>
+        <circle cx="-48" cy="-10" r="7" fill="#14110d"/>
+        <circle cx="60" cy="-10" r="7" fill="#14110d"/>
+        <circle cx="-46" cy="-13" r="2" fill="#f3ece0"/>
+        <circle cx="62" cy="-13" r="2" fill="#f3ece0"/>
+        <path d="M -75 -40 Q -55 -48 -35 -40" stroke="#14110d" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M 35 -40 Q 55 -48 75 -40" stroke="#14110d" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <!-- Nose -->
+        <path d="M 0 -5 Q -6 30 -3 50 Q 0 58 7 50 Q 10 30 3 -5" stroke="#2a1208" stroke-width="2" fill="none" opacity="0.55"/>
+        <!-- Full lips -->
+        <path d="M -30 88 Q -15 100 0 100 Q 15 100 30 88 Q 0 105 -30 88" fill="#4a1a08" opacity="0.85"/>
+        <path d="M -30 88 Q 0 100 30 88" stroke="#14110d" stroke-width="2.5" fill="none"/>
+        <!-- Cheekbones -->
+        <ellipse cx="-90" cy="30" rx="28" ry="14" fill="#c5491f" opacity="0.3"/>
+        <ellipse cx="90" cy="30" rx="28" ry="14" fill="#c5491f" opacity="0.3"/>
+        <!-- Large gold earrings -->
+        <circle cx="-150" cy="20" r="13" fill="none" stroke="#b38238" stroke-width="4"/>
+        <circle cx="-150" cy="40" r="6" fill="#b38238"/>
+        <circle cx="150" cy="20" r="13" fill="none" stroke="#b38238" stroke-width="4"/>
+        <circle cx="150" cy="40" r="6" fill="#b38238"/>
+      </g>
+
+      <!-- RIGHT WOMAN — indigo gele, slight angle -->
+      <g transform="translate(1280, 640)">
+        <!-- Neck -->
+        <rect x="-50" y="130" width="100" height="70" fill="url(#skin4)"/>
+        <!-- Garment -->
+        <path d="M -170 200 Q -140 165 -70 170 L 70 170 Q 140 165 170 200 L 170 380 L -170 380 Z" fill="#0c0502"/>
+        <!-- Head -->
+        <ellipse cx="0" cy="0" rx="120" ry="150" fill="url(#skin4)"/>
+
+        <!-- Gele — indigo blue, more vertical, architectural -->
+        <path d="M -130 -25 Q -170 -170 -90 -240 Q -30 -280 10 -285 Q 70 -275 130 -220 Q 180 -140 140 -30 Q 130 -60 110 -80 Q 70 -160 10 -180 Q -60 -160 -110 -80 Q -130 -60 -130 -25 Z"
+              fill="url(#geleB)"/>
+        <!-- Top peak/fold -->
+        <path d="M -40 -270 Q 20 -320 80 -270 Q 60 -240 20 -245 Q -20 -240 -40 -270 Z" fill="url(#geleB)"/>
+        <path d="M -40 -270 Q 20 -320 80 -270" stroke="#14110d" stroke-width="2" fill="none" opacity="0.4"/>
+        <!-- Fold lines -->
+        <path d="M -125 -60 Q 0 -140 135 -60" stroke="#14110d" stroke-width="2" fill="none" opacity="0.35"/>
+        <path d="M -115 -110 Q 0 -180 125 -110" stroke="#14110d" stroke-width="1.8" fill="none" opacity="0.35"/>
+
+        <!-- Facial features -->
+        <ellipse cx="-40" cy="-5" rx="13" ry="6" fill="#f3ece0" opacity="0.9"/>
+        <ellipse cx="42" cy="-5" rx="13" ry="6" fill="#f3ece0" opacity="0.9"/>
+        <circle cx="-36" cy="-5" r="5.5" fill="#14110d"/>
+        <circle cx="46" cy="-5" r="5.5" fill="#14110d"/>
+        <path d="M -55 -28 Q -40 -34 -25 -28" stroke="#14110d" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+        <path d="M 25 -28 Q 40 -34 55 -28" stroke="#14110d" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+        <path d="M -22 70 Q 0 80 22 70" stroke="#2a1208" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+        <!-- Silver hoops -->
+        <circle cx="-115" cy="15" r="9" fill="none" stroke="#d4c4a0" stroke-width="3"/>
+        <circle cx="115" cy="15" r="9" fill="none" stroke="#d4c4a0" stroke-width="3"/>
+      </g>
+
+      <!-- Editorial footer text -->
+      <text x="40" y="970" fill="#f3ece0" opacity="0.4" font-family="monospace" font-size="11" letter-spacing="3">
+        COVER STORY · ISSUE 014 · APRIL 2026 · PHOTOGRAPHED IN LAGOS
+      </text>
+    </svg>
+
+    <!-- Top bar overlay -->
+    <div class="cover-top-bar">
+      <div class="issue-label">
+        <span class="star">★</span>
+        <span>The Moveee · Issue N°014 · April 2026</span>
+      </div>
+      <div>Cover Story</div>
+    </div>
+
+    <!-- Cover lines (right side, like a magazine) -->
+    <div class="cover-lines">
+      <div class="line"><span class="num">P.14</span>Cover Story</div>
+      <div class="line"><span class="num">P.32</span>Ifeoma Okoli</div>
+      <div class="line"><span class="num">P.58</span>Dakar Biennale</div>
+      <div class="line"><span class="num">P.76</span>What to eat in Cotonou</div>
+    </div>
+
+    <!-- Title block at bottom -->
+    <div class="cover-title-block">
+      <div class="cover-kicker">Cover Story · Fashion & Identity · 14 min</div>
+      <h1 class="cover-title">
+        The Return of the <em>Gele</em>.
+      </h1>
+      <p class="cover-subtitle">How a headwrap became a manifesto for a new generation of Nigerian women — from Lagos ateliers to Brooklyn brownstones.</p>
+    </div>
+  </div>
+</section>
+
+<!-- STANDFIRST BAND -->
+<section class="standfirst-band">
+  <div class="standfirst-grid">
+    <div class="standfirst-label">
+      <strong>The Argument</strong>
+      By Adaeze Nwosu<br>
+      Photographs by Stephen Tayo
+    </div>
+    <p class="standfirst-text">
+      For decades, the <em>gele</em> was ceremony — Sunday clothes, wedding fabric, the thing your mother tied for you before a party. Now a generation of women is wearing it differently, and meaning something different by it. This is not <em>nostalgia</em>. This is <em>instruction</em>.
+    </p>
+  </div>
+</section>
+
+<!-- BYLINE -->
+<section class="byline-row">
+  <div class="byline-inner">
+    <div class="byline-item">
+      <div class="label">Words by</div>
+      <div class="value">Adaeze Nwosu</div>
+    </div>
+    <div class="byline-item">
+      <div class="label">Photography</div>
+      <div class="value">Stephen Tayo</div>
+    </div>
+    <div class="byline-item">
+      <div class="label">Published</div>
+      <div class="value">10 April 2026</div>
+    </div>
+    <div class="byline-item">
+      <div class="label">Reading time</div>
+      <div class="value">14 minutes</div>
+    </div>
+    <div class="byline-share">
+      <button class="share-btn" title="Copy link">↗</button>
+      <button class="share-btn" title="Share">✦</button>
+      <button class="share-btn" title="Save">☆</button>
+    </div>
+  </div>
+</section>
+
+<!-- ARTICLE BODY -->
+<section class="article-body">
+
+  <!-- TOC sidebar -->
+  <aside class="article-sidebar">
+    <div class="label">In this story</div>
+    <ul class="toc-list">
+      <li><a href="#i"><span class="num">I</span>Sunday clothes, undone</a></li>
+      <li><a href="#ii"><span class="num">II</span>Anatomy of a wrap</a></li>
+      <li><a href="#iii"><span class="num">III</span>The Brooklyn problem</a></li>
+      <li><a href="#iv"><span class="num">IV</span>Not a costume</a></li>
+      <li><a href="#v"><span class="num">V</span>What we mean by return</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main prose -->
+  <div class="article-prose">
+    <p>Wuraola Ajetunmobi ties her first gele of the morning while her kettle is still boiling. She is thirty-four, a tax attorney, and she has been wearing a headwrap to work, in some form, every day for the past two years. She is not doing this for Instagram. She is not doing it for her mother. She is doing it, she tells me, because she got tired of explaining her head to other people.</p>
+
+    <p>"There was this specific moment," she says, pouring the tea. "I was in a client meeting in Victoria Island, the room was full of suits, and one of the partners kept looking at my hair like it was a question he hadn't been asked. And I thought — I can make this a question, or I can make this a statement. The gele was a statement."</p>
+
+    <p>Across Lagos, Abuja, Accra, and — increasingly — in London, Brooklyn, Toronto and Berlin, a generation of Nigerian women in their late twenties and thirties are doing something their mothers would recognise and their grandmothers would probably approve of: they are putting a gele on their heads on ordinary days, for ordinary reasons, and watching what happens.</p>
+
+    <h3 id="i"><span class="num">Chapter I</span>Sunday <em>clothes</em>, undone</h3>
+
+    <p>To understand the return, you have to understand the leaving. For most of the twentieth century, among the Yoruba, Igbo, Edo and others across southern Nigeria, the gele was a codified object. It belonged to specific days — Sundays, weddings, funerals, naming ceremonies, chieftaincy installations. It was tied by specialists, or by an aunt who knew. It was, in the broadest sense, ceremony clothes.</p>
+
+    <p>Then came everything else. Structural adjustment. The relative straightening of Nigerian hair under pressure from school and the office. The migration wave of the 1990s and 2000s that scattered a generation across the diaspora. A global fashion industry that briefly — between roughly 2010 and 2016 — discovered West African prints, attached them to Western silhouettes, and moved on.</p>
+
+    <div class="inline-image">
+      <div class="frame">
+        <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="marketBg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#c5491f"/>
+              <stop offset="100%" stop-color="#3a1a10"/>
+            </linearGradient>
+          </defs>
+          <rect width="800" height="600" fill="url(#marketBg)"/>
+
+          <!-- Market canopy lines -->
+          <g opacity="0.3">
+            <line x1="0" y1="100" x2="800" y2="80" stroke="#f3ece0" stroke-width="2"/>
+            <line x1="0" y1="140" x2="800" y2="120" stroke="#f3ece0" stroke-width="1"/>
+          </g>
+
+          <!-- Stacks of fabric on a table -->
+          <rect x="50" y="360" width="700" height="14" fill="#3a1a10"/>
+          <g>
+            <!-- Fabric stack 1 -->
+            <rect x="80" y="280" width="160" height="80" fill="#b38238"/>
+            <rect x="85" y="295" width="150" height="6" fill="#14110d" opacity="0.3"/>
+            <rect x="85" y="315" width="150" height="6" fill="#14110d" opacity="0.3"/>
+            <rect x="85" y="335" width="150" height="6" fill="#14110d" opacity="0.3"/>
+            <!-- Fabric stack 2 -->
+            <rect x="260" y="250" width="180" height="110" fill="#1e2b42"/>
+            <circle cx="300" cy="290" r="8" fill="#b38238"/>
+            <circle cx="350" cy="290" r="8" fill="#b38238"/>
+            <circle cx="400" cy="290" r="8" fill="#b38238"/>
+            <circle cx="300" cy="320" r="8" fill="#b38238"/>
+            <circle cx="350" cy="320" r="8" fill="#b38238"/>
+            <circle cx="400" cy="320" r="8" fill="#b38238"/>
+            <!-- Fabric stack 3 -->
+            <rect x="460" y="270" width="150" height="90" fill="#c5491f"/>
+            <g opacity="0.8" fill="#f3ece0">
+              <rect x="475" y="285" width="20" height="20"/>
+              <rect x="515" y="285" width="20" height="20"/>
+              <rect x="555" y="285" width="20" height="20"/>
+              <rect x="475" y="325" width="20" height="20"/>
+              <rect x="515" y="325" width="20" height="20"/>
+              <rect x="555" y="325" width="20" height="20"/>
+            </g>
+            <!-- Fabric stack 4 -->
+            <rect x="630" y="290" width="130" height="70" fill="#3d4a2a"/>
+          </g>
+
+          <!-- Hanging fabrics above -->
+          <g opacity="0.85">
+            <path d="M 100 80 L 100 250 L 170 250 L 170 80 Z" fill="#8a2d10"/>
+            <path d="M 220 80 L 220 240 L 280 240 L 280 80 Z" fill="#b38238"/>
+            <path d="M 330 80 L 330 230 L 390 230 L 390 80 Z" fill="#1e2b42"/>
+            <path d="M 440 80 L 440 250 L 510 250 L 510 80 Z" fill="#c5491f"/>
+            <path d="M 560 80 L 560 240 L 620 240 L 620 80 Z" fill="#3d4a2a"/>
+            <path d="M 670 80 L 670 250 L 740 250 L 740 80 Z" fill="#b38238"/>
+          </g>
+
+          <!-- Figure silhouette of woman browsing -->
+          <g transform="translate(380, 500)">
+            <ellipse cx="0" cy="0" rx="18" ry="22" fill="#1a0f08"/>
+            <!-- Small gele on head -->
+            <path d="M -18 -14 Q -22 -40 0 -48 Q 22 -40 18 -14 Q 12 -20 0 -24 Q -12 -20 -18 -14 Z" fill="#c5491f"/>
+            <rect x="-25" y="22" width="50" height="80" fill="#14110d"/>
+          </g>
+        </svg>
+      </div>
+      <div class="cap">↑ Fig. 01 — Balogun Market, Lagos Island. Where most of the fabric in this story begins its life. <em>Photograph by Stephen Tayo.</em></div>
+    </div>
+
+    <p>Somewhere in all of that, the gele — the everyday, everyday-ish, workplace, non-ceremonial gele — quietly went away. It became a thing you owned for events. It lived in the top of your wardrobe, in a zip-lock bag, beside the shoes you only wore to weddings.</p>
+
+    <p>"My mother's generation wore gele every Sunday to church," says Fola Akande, a Lagos-based stylist who has been documenting the resurgence on her Substack for the past year. "My generation wore it twice a year. This generation — the one coming up now — they are wearing it on a Tuesday to the bank. That is the whole argument, right there."</p>
+
+    <blockquote>
+      <p>"My mother wore it on Sundays. I wore it twice a year. These women are wearing it on a Tuesday to the bank. That is the whole argument."</p>
+      <cite><span class="name">Fola Akande</span>Stylist, Lagos</cite>
+    </blockquote>
+
+    <h3 id="ii"><span class="num">Chapter II</span>Anatomy of a <em>wrap</em></h3>
+
+    <p>Before we go any further: the gele is not one thing. The word, Yoruba in origin, covers a wide family of head coverings that differ in fabric, method, meaning, and occasion. A gele is not a turban. A gele is not a headscarf. A gele is not a headwrap in the African-American sense, though it is cousin to all of them.</p>
+
+    <!-- ANATOMY DIAGRAM -->
+    <div class="anatomy">
+      <div class="anatomy-head">★ Field Guide · 01</div>
+      <h4>How to read a <em>gele</em></h4>
+      <p class="anatomy-intro">A brief visual glossary, because the shape is carrying more information than most foreign readers can see.</p>
+
+      <div class="anatomy-grid">
+        <div class="anatomy-diagram">
+          <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="diagramBg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#2a1208"/>
+                <stop offset="100%" stop-color="#14110d"/>
+              </linearGradient>
+            </defs>
+            <rect width="500" height="500" fill="url(#diagramBg)"/>
+
+            <!-- Grid -->
+            <g opacity="0.1" stroke="#f3ece0" stroke-width="0.5">
+              <line x1="0" y1="125" x2="500" y2="125"/>
+              <line x1="0" y1="250" x2="500" y2="250"/>
+              <line x1="0" y1="375" x2="500" y2="375"/>
+              <line x1="125" y1="0" x2="125" y2="500"/>
+              <line x1="250" y1="0" x2="250" y2="500"/>
+              <line x1="375" y1="0" x2="375" y2="500"/>
+            </g>
+
+            <!-- Head silhouette -->
+            <ellipse cx="250" cy="340" rx="90" ry="115" fill="#6b3020"/>
+            <rect x="210" y="430" width="80" height="70" fill="#6b3020"/>
+
+            <!-- Gele form -->
+            <path d="M 150 255 Q 110 100 230 50 Q 280 42 340 70 Q 410 140 360 270 Q 350 220 320 180 Q 260 100 230 100 Q 180 130 170 200 Q 155 235 150 255 Z" fill="#c5491f"/>
+            <!-- Flare/wing -->
+            <path d="M 320 80 Q 420 40 450 110 Q 430 180 360 170 Z" fill="#c5491f"/>
+            <!-- Fold lines -->
+            <path d="M 145 220 Q 250 130 360 220" stroke="#14110d" stroke-width="2" fill="none" opacity="0.5"/>
+            <path d="M 155 180 Q 250 90 355 180" stroke="#14110d" stroke-width="1.5" fill="none" opacity="0.5"/>
+
+            <!-- Labels with lines -->
+            <g font-family="JetBrains Mono, monospace" font-size="10" fill="#f3ece0" letter-spacing="1.5">
+              <!-- A: Flare -->
+              <line x1="420" y1="90" x2="470" y2="60" stroke="#c5491f" stroke-width="1"/>
+              <circle cx="420" cy="90" r="3" fill="#c5491f"/>
+              <text x="475" y="63" fill="#c5491f">A</text>
+
+              <!-- B: Crown -->
+              <line x1="245" y1="70" x2="245" y2="20" stroke="#b38238" stroke-width="1"/>
+              <circle cx="245" cy="70" r="3" fill="#b38238"/>
+              <text x="238" y="16" fill="#b38238">B</text>
+
+              <!-- C: Fold line -->
+              <line x1="250" y1="140" x2="70" y2="140" stroke="#f3ece0" stroke-width="1"/>
+              <circle cx="250" cy="140" r="3" fill="#f3ece0"/>
+              <text x="48" y="144" fill="#f3ece0">C</text>
+
+              <!-- D: Base band -->
+              <line x1="155" y1="250" x2="30" y2="290" stroke="#b38238" stroke-width="1"/>
+              <circle cx="155" cy="250" r="3" fill="#b38238"/>
+              <text x="15" y="294" fill="#b38238">D</text>
+
+              <!-- E: Earring line -->
+              <line x1="335" y1="340" x2="470" y2="380" stroke="#c5491f" stroke-width="1"/>
+              <circle cx="335" cy="340" r="3" fill="#c5491f"/>
+              <text x="475" y="384" fill="#c5491f">E</text>
+            </g>
+          </svg>
+        </div>
+
+        <ul class="anatomy-legend">
+          <li>
+            <span class="key">A</span>
+            <div>
+              <strong>The flare</strong>
+              The tail or fan left deliberately loose. Its direction and height signal the wearer's confidence — and, historically, her marital status.
+            </div>
+          </li>
+          <li>
+            <span class="key">B</span>
+            <div>
+              <strong>The crown</strong>
+              The highest point of the wrap. A higher crown means a more formal occasion; a soft, low crown reads as everyday.
+            </div>
+          </li>
+          <li>
+            <span class="key">C</span>
+            <div>
+              <strong>The principal fold</strong>
+              Where the aso-oke or fabric is bent back on itself. The sharpness of this line reveals the skill of the tier.
+            </div>
+          </li>
+          <li>
+            <span class="key">D</span>
+            <div>
+              <strong>The base band</strong>
+              The tight foundation around the hairline that holds the structure. In a day-wear gele, this is usually softer and lower.
+            </div>
+          </li>
+          <li>
+            <span class="key">E</span>
+            <div>
+              <strong>The frame</strong>
+              How the ears, jawline and earrings are revealed or hidden. Exposing the ears is a modern, street-level move.
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <p>The distinctions matter because the new gele-wearers are choosing very specifically. Most are wearing softer fabrics — cotton, linen, adire, sometimes silk — rather than the rigid aso-oke of formal occasions. The base is lower. The flare is usually smaller. The whole composition is built to survive an actual day: a commute, a meeting, three hours at a desk, the harmattan wind.</p>
+
+    <h3 id="iii"><span class="num">Chapter III</span>The Brooklyn <em>problem</em></h3>
+
+    <p>Among the women I spoke to for this story, roughly half live outside Nigeria. Some have never lived there. For them, the return of the gele carries a weight that the Lagos-based wearers, talking to me over bean soup in Yaba, describe with more amusement than anxiety.</p>
+
+    <p>"Here in Lagos, when I tie my gele on a Tuesday, I am having a conversation with my mother and my aunt and the woman at the ATM," says Amara Onyekwere, twenty-nine, a product manager in Ikeja. "We all know what we are talking about. In Brooklyn my friend Tolu ties her gele on a Tuesday and she is having a conversation with, like, the entire history of Black women in America who were told their hair was unprofessional. She has to carry all of that."</p>
+
+    <p>Tolu — Tolulope Alabi, thirty-one, a public defender in Brooklyn — agrees, but with a shrug. "I know what it looks like to my co-workers. I have had to explain it more times than I can count. But I also know what it looks like to me in the mirror at six in the morning, and that is the conversation I am actually having."</p>
+
+    <blockquote>
+      <p>"I know what it looks like to my co-workers. I also know what it looks like to me in the mirror at six in the morning. That is the conversation I am actually having."</p>
+      <cite><span class="name">Tolulope Alabi</span>Public defender, Brooklyn</cite>
+    </blockquote>
+
+    <h3 id="iv"><span class="num">Chapter IV</span>Not a <em>costume</em></h3>
+
+    <p>There is a charge that gets levelled at any revival of traditional dress, and the gele-wearers hear it often: that they are cosplaying, that they are aestheticising heritage, that they are turning their grandmothers' clothing into branding. The women I spoke to took this charge seriously and almost all of them, in different words, rejected it.</p>
+
+    <p>The distinction they drew was between <em>performance</em> and <em>practice</em>. Performance is what you do once, for a camera. Practice is what you do on Tuesdays, in the dark, before anyone sees you. The gele, these women insist, is a practice. Nobody is watching when you tie it the first time in the morning. Nobody is watching when you fix it at lunch. The wrap happens whether or not anyone validates it.</p>
+
+    <p>"My mother tied my first gele for me when I was five," says Ajetunmobi. "She was teaching me something. When I tie one now, I am finishing what she started. It is not <em>because of</em> her and it is not <em>for</em> her. It is the thing itself. She happened to be the first person to show it to me."</p>
+
+    <h3 id="v"><span class="num">Chapter V</span>What we mean by <em>return</em></h3>
+
+    <p>The word return implies a thing that once left. But the gele never fully left. It stayed in Sunday clothes, in wedding albums, in the top shelves of wardrobes, in the muscle memory of the women who still tied each other's wraps before parties. What returned, rather, was the weekday version — the casual gele, the undramatic gele, the gele that does not announce.</p>
+
+    <p>This is what a living tradition looks like. A thing that stays close enough to be picked up, put down, picked up again. The women who are tying their wraps on ordinary mornings are not restoring something lost. They are choosing, deliberately, to keep something alive.</p>
+
+    <p>On my last day reporting, I meet Ajetunmobi again at a café in Lekki. She has come straight from court. The gele is indigo today, softer than the one she tied at breakfast. She sees me looking at it and smiles.</p>
+
+    <p>"I tie a different one after lunch," she says, as if this were the most ordinary thing in the world. And for her, increasingly, it is.</p>
+  </div>
+
+  <!-- Aside column -->
+  <aside class="article-aside">
+    <div class="aside-block">
+      <div class="label">★ Shop the story</div>
+      <h4>Adire <em>Silk Scarf</em>, Indigo</h4>
+      <p>From Ile Oluji Studio, Lagos — one of the makers featured in this piece. Hand-dyed in small batches.</p>
+      <a href="adire-scarf.html" class="link">View in shop →</a>
+    </div>
+
+    <div class="aside-block ink">
+      <div class="label">Origins journey</div>
+      <h4>Lagos, <em>After Hours</em></h4>
+      <p>Our 5-day Lagos journey includes a fabric-sourcing visit to Balogun Market with Fola Akande and a private gele-tying session.</p>
+      <a href="moveee-homepage.html#origins" class="link">View journey →</a>
+    </div>
+
+    <div class="aside-block">
+      <div class="label">Keep reading</div>
+      <h4>Inside the Studio of <em>Amoako Boafo</em></h4>
+      <p>Another cover-adjacent feature from Issue 014, on the Ghanaian painter's treatment of hair and adornment.</p>
+      <a href="#" class="link">Read feature →</a>
+    </div>
+  </aside>
+</section>
+
+</article>
+
+<!-- PULL STAT DIVIDER -->
+<section class="pull-divider">
+  <div class="stat-num">06</div>
+  <div>
+    <div class="stat-label">Women interviewed</div>
+    <div class="stat-text">Across Lagos, Abuja, Brooklyn and London — all photographed by Stephen Tayo, <em>all tying the wrap themselves</em>.</div>
+  </div>
+</section>
+
+<!-- THE GALLERY — six sitters -->
+<section class="gallery">
+  <div class="gallery-header">
+    <div class="gallery-num">N°01</div>
+    <div class="gallery-title">
+      <h3>The <em>Gallery</em></h3>
+      <p>Six of the women who shaped this story, in their own wraps, in their own rooms.</p>
+    </div>
+    <div class="gallery-meta">Photographed Mar – Apr 2026</div>
+  </div>
+
+  <div class="gallery-grid">
+    <!-- Sitter 1 -->
+    <article class="sitter">
+      <div class="img">
+        <span class="idx">01 / 06</span>
+        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="s1bg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#8a2d10"/>
+              <stop offset="100%" stop-color="#2a1208"/>
+            </linearGradient>
+          </defs>
+          <rect width="400" height="500" fill="url(#s1bg)"/>
+          <g transform="translate(200, 300)">
+            <rect x="-55" y="140" width="110" height="80" fill="#4a2010"/>
+            <path d="M -140 220 Q -110 180 -50 185 L 50 185 Q 110 180 140 220 L 140 380 L -140 380 Z" fill="#0c0502"/>
+            <ellipse cx="0" cy="0" rx="105" ry="130" fill="#5a2818"/>
+            <!-- Indigo gele -->
+            <path d="M -115 -25 Q -150 -160 -70 -220 Q -20 -250 20 -252 Q 70 -245 120 -200 Q 165 -130 130 -30 Q 120 -55 100 -75 Q 60 -145 20 -160 Q -50 -145 -95 -75 Q -115 -55 -115 -25 Z" fill="#1e2b42"/>
+            <path d="M -30 -240 Q 30 -275 70 -240" stroke="#14110d" stroke-width="2" fill="none" opacity="0.4"/>
+            <path d="M -105 -60 Q 0 -140 120 -60" stroke="#14110d" stroke-width="1.5" fill="none" opacity="0.4"/>
+            <circle cx="75" cy="-30" r="4" fill="#b38238"/>
+            <circle cx="-60" cy="-50" r="4" fill="#b38238"/>
+            <!-- Face -->
+            <ellipse cx="-32" cy="-5" rx="11" ry="5" fill="#f3ece0" opacity="0.9"/>
+            <ellipse cx="32" cy="-5" rx="11" ry="5" fill="#f3ece0" opacity="0.9"/>
+            <circle cx="-28" cy="-5" r="5" fill="#14110d"/>
+            <circle cx="36" cy="-5" r="5" fill="#14110d"/>
+            <path d="M -45 -25 Q -32 -32 -18 -25" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <path d="M 18 -25 Q 32 -32 45 -25" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <path d="M -20 58 Q 0 66 20 58" stroke="#2a1208" stroke-width="2.5" fill="none"/>
+            <circle cx="-100" cy="15" r="7" fill="none" stroke="#b38238" stroke-width="2.5"/>
+            <circle cx="100" cy="15" r="7" fill="none" stroke="#b38238" stroke-width="2.5"/>
+          </g>
+        </svg>
+      </div>
+      <div class="name">Wuraola <em>Ajetunmobi</em></div>
+      <div class="meta">Tax attorney · Lagos · 34</div>
+      <div class="q">"I got tired of explaining my head to other people."</div>
+    </article>
+
+    <!-- Sitter 2 -->
+    <article class="sitter">
+      <div class="img">
+        <span class="idx">02 / 06</span>
+        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="s2bg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#c5491f"/>
+              <stop offset="100%" stop-color="#3a1a10"/>
+            </linearGradient>
+            <pattern id="s2pat" width="20" height="20" patternUnits="userSpaceOnUse">
+              <rect width="20" height="20" fill="#b38238"/>
+              <circle cx="10" cy="10" r="3" fill="#14110d"/>
+            </pattern>
+          </defs>
+          <rect width="400" height="500" fill="url(#s2bg)"/>
+          <g transform="translate(200, 310)">
+            <rect x="-55" y="140" width="110" height="80" fill="#6b3020"/>
+            <path d="M -140 220 Q -110 180 -50 185 L 50 185 Q 110 180 140 220 L 140 380 L -140 380 Z" fill="#14110d"/>
+            <ellipse cx="0" cy="0" rx="105" ry="130" fill="#6b3020"/>
+            <!-- Gold/yellow gele -->
+            <path d="M -115 -30 Q -155 -175 -70 -225 Q -20 -255 20 -258 Q 80 -248 130 -200 Q 175 -130 140 -30 Q 125 -60 105 -80 Q 65 -150 20 -165 Q -50 -150 -95 -80 Q -115 -60 -115 -30 Z" fill="url(#s2pat)"/>
+            <path d="M 80 -230 Q 170 -260 200 -200 Q 180 -150 130 -155 Z" fill="url(#s2pat)"/>
+            <path d="M 80 -230 Q 170 -260 200 -200" stroke="#14110d" stroke-width="2" fill="none" opacity="0.4"/>
+            <path d="M -105 -70 Q 0 -150 130 -70" stroke="#14110d" stroke-width="2" fill="none" opacity="0.4"/>
+            <!-- Face -->
+            <ellipse cx="-32" cy="-5" rx="11" ry="5" fill="#f3ece0" opacity="0.9"/>
+            <ellipse cx="32" cy="-5" rx="11" ry="5" fill="#f3ece0" opacity="0.9"/>
+            <circle cx="-28" cy="-5" r="5" fill="#14110d"/>
+            <circle cx="36" cy="-5" r="5" fill="#14110d"/>
+            <path d="M -45 -25 Q -32 -32 -18 -25" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <path d="M 18 -25 Q 32 -32 45 -25" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <path d="M -20 58 Q 0 66 20 58" stroke="#2a1208" stroke-width="2.5" fill="none"/>
+            <circle cx="-100" cy="15" r="8" fill="#b38238"/>
+            <circle cx="100" cy="15" r="8" fill="#b38238"/>
+          </g>
+        </svg>
+      </div>
+      <div class="name">Amara <em>Onyekwere</em></div>
+      <div class="meta">Product manager · Lagos · 29</div>
+      <div class="q">"We all know what we are talking about."</div>
+    </article>
+
+    <!-- Sitter 3 -->
+    <article class="sitter">
+      <div class="img">
+        <span class="idx">03 / 06</span>
+        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="s3bg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1e2b42"/>
+              <stop offset="100%" stop-color="#0c0a08"/>
+            </linearGradient>
+          </defs>
+          <rect width="400" height="500" fill="url(#s3bg)"/>
+          <g transform="translate(200, 300)">
+            <rect x="-55" y="140" width="110" height="80" fill="#4a2010"/>
+            <path d="M -140 220 Q -110 180 -50 185 L 50 185 Q 110 180 140 220 L 140 380 L -140 380 Z" fill="#3d4a2a"/>
+            <ellipse cx="0" cy="0" rx="105" ry="130" fill="#5a2818"/>
+            <!-- Red gele with fan -->
+            <path d="M -115 -25 Q -150 -160 -70 -220 Q -20 -250 20 -252 Q 80 -240 130 -190 Q 170 -120 130 -30 Q 120 -55 100 -75 Q 60 -145 20 -160 Q -50 -145 -95 -75 Q -115 -55 -115 -25 Z" fill="#c5491f"/>
+            <path d="M 40 -240 Q 140 -290 180 -210 Q 160 -160 110 -175 Z" fill="#c5491f"/>
+            <path d="M 40 -240 Q 140 -290 180 -210" stroke="#14110d" stroke-width="2" fill="none" opacity="0.4"/>
+            <path d="M -100 -60 Q 0 -140 125 -60" stroke="#14110d" stroke-width="1.5" fill="none" opacity="0.4"/>
+            <!-- Face -->
+            <ellipse cx="-32" cy="-5" rx="11" ry="5" fill="#f3ece0" opacity="0.9"/>
+            <ellipse cx="32" cy="-5" rx="11" ry="5" fill="#f3ece0" opacity="0.9"/>
+            <circle cx="-28" cy="-5" r="5" fill="#14110d"/>
+            <circle cx="36" cy="-5" r="5" fill="#14110d"/>
+            <path d="M -45 -25 Q -32 -32 -18 -25" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <path d="M 18 -25 Q 32 -32 45 -25" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <path d="M -20 58 Q 0 66 20 58" stroke="#2a1208" stroke-width="2.5" fill="none"/>
+            <circle cx="-100" cy="15" r="9" fill="none" stroke="#d4c4a0" stroke-width="3"/>
+            <circle cx="100" cy="15" r="9" fill="none" stroke="#d4c4a0" stroke-width="3"/>
+          </g>
+        </svg>
+      </div>
+      <div class="name">Tolulope <em>Alabi</em></div>
+      <div class="meta">Public defender · Brooklyn · 31</div>
+      <div class="q">"That is the conversation I am actually having."</div>
+    </article>
+
+    <!-- Sitter 4 -->
+    <article class="sitter">
+      <div class="img">
+        <span class="idx">04 / 06</span>
+        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="s4bg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3d4a2a"/>
+              <stop offset="100%" stop-color="#0c0805"/>
+            </linearGradient>
+          </defs>
+          <rect width="400" height="500" fill="url(#s4bg)"/>
+          <g transform="translate(200, 310)">
+            <rect x="-55" y="140" width="110" height="80" fill="#6b3020"/>
+            <path d="M -140 220 Q -110 180 -50 185 L 50 185 Q 110 180 140 220 L 140 380 L -140 380 Z" fill="#c5491f"/>
+            <ellipse cx="0" cy="0" rx="105" ry="130" fill="#6b3020"/>
+            <!-- Green gele, soft architectural -->
+            <path d="M -115 -25 Q -145 -150 -70 -210 Q -20 -240 20 -242 Q 70 -235 120 -190 Q 160 -120 130 -30 Q 120 -55 100 -75 Q 60 -135 20 -150 Q -50 -135 -95 -75 Q -115 -55 -115 -25 Z" fill="#3d4a2a"/>
+            <path d="M -15 -230 Q 45 -260 85 -215" stroke="#14110d" stroke-width="2" fill="none" opacity="0.4"/>
+            <path d="M -100 -60 Q 0 -130 125 -60" stroke="#14110d" stroke-width="1.5" fill="none" opacity="0.4"/>
+            <!-- Face -->
+            <ellipse cx="-32" cy="-5" rx="11" ry="5" fill="#f3ece0" opacity="0.9"/>
+            <ellipse cx="32" cy="-5" rx="11" ry="5" fill="#f3ece0" opacity="0.9"/>
+            <circle cx="-28" cy="-5" r="5" fill="#14110d"/>
+            <circle cx="36" cy="-5" r="5" fill="#14110d"/>
+            <path d="M -45 -25 Q -32 -32 -18 -25" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <path d="M 18 -25 Q 32 -32 45 -25" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <path d="M -20 58 Q 0 66 20 58" stroke="#2a1208" stroke-width="2.5" fill="none"/>
+            <circle cx="-100" cy="15" r="6" fill="#b38238"/>
+            <circle cx="100" cy="15" r="6" fill="#b38238"/>
+          </g>
+        </svg>
+      </div>
+      <div class="name">Fola <em>Akande</em></div>
+      <div class="meta">Stylist · Lagos · 36</div>
+      <div class="q">"A Tuesday to the bank. That is the whole argument."</div>
+    </article>
+
+    <!-- Sitter 5 -->
+    <article class="sitter">
+      <div class="img">
+        <span class="idx">05 / 06</span>
+        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="s5bg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#b38238"/>
+              <stop offset="100%" stop-color="#3a1a10"/>
+            </linearGradient>
+            <pattern id="s5pat" width="18" height="18" patternUnits="userSpaceOnUse">
+              <rect width="18" height="18" fill="#c5491f"/>
+              <path d="M 0 9 L 9 0 L 18 9 L 9 18 Z" fill="none" stroke="#f3ece0" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <rect width="400" height="500" fill="url(#s5bg)"/>
+          <g transform="translate(200, 305)">
+            <rect x="-55" y="140" width="110" height="80" fill="#5a2818"/>
+            <path d="M -140 220 Q -110 180 -50 185 L 50 185 Q 110 180 140 220 L 140 380 L -140 380 Z" fill="#14110d"/>
+            <ellipse cx="0" cy="0" rx="105" ry="130" fill="#5a2818"/>
+            <!-- Patterned red/white gele -->
+            <path d="M -115 -25 Q -150 -160 -70 -220 Q -20 -250 20 -252 Q 80 -240 130 -190 Q 170 -120 130 -30 Q 120 -55 100 -75 Q 60 -145 20 -160 Q -50 -145 -95 -75 Q -115 -55 -115 -25 Z" fill="url(#s5pat)"/>
+            <path d="M 50 -230 Q 150 -280 180 -200 Q 160 -150 115 -165 Z" fill="url(#s5pat)"/>
+            <path d="M -100 -60 Q 0 -140 125 -60" stroke="#14110d" stroke-width="2" fill="none" opacity="0.45"/>
+            <!-- Face -->
+            <ellipse cx="-32" cy="-5" rx="11" ry="5" fill="#f3ece0" opacity="0.9"/>
+            <ellipse cx="32" cy="-5" rx="11" ry="5" fill="#f3ece0" opacity="0.9"/>
+            <circle cx="-28" cy="-5" r="5" fill="#14110d"/>
+            <circle cx="36" cy="-5" r="5" fill="#14110d"/>
+            <path d="M -45 -25 Q -32 -32 -18 -25" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <path d="M 18 -25 Q 32 -32 45 -25" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <path d="M -20 58 Q 0 66 20 58" stroke="#2a1208" stroke-width="2.5" fill="none"/>
+            <circle cx="-100" cy="15" r="10" fill="none" stroke="#b38238" stroke-width="3"/>
+            <circle cx="100" cy="15" r="10" fill="none" stroke="#b38238" stroke-width="3"/>
+          </g>
+        </svg>
+      </div>
+      <div class="name">Ngozi <em>Eze</em></div>
+      <div class="meta">Architect · London · 33</div>
+      <div class="q">"I am finishing what she started."</div>
+    </article>
+
+    <!-- Sitter 6 -->
+    <article class="sitter">
+      <div class="img">
+        <span class="idx">06 / 06</span>
+        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="s6bg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#5a1a08"/>
+              <stop offset="100%" stop-color="#14110d"/>
+            </linearGradient>
+          </defs>
+          <rect width="400" height="500" fill="url(#s6bg)"/>
+          <g transform="translate(200, 305)">
+            <rect x="-55" y="140" width="110" height="80" fill="#6b3020"/>
+            <path d="M -140 220 Q -110 180 -50 185 L 50 185 Q 110 180 140 220 L 140 380 L -140 380 Z" fill="#1e2b42"/>
+            <ellipse cx="0" cy="0" rx="105" ry="130" fill="#6b3020"/>
+            <!-- Black and gold gele -->
+            <path d="M -115 -30 Q -155 -170 -70 -225 Q -20 -255 20 -258 Q 80 -248 130 -200 Q 170 -130 140 -30 Q 125 -60 105 -80 Q 65 -150 20 -165 Q -50 -150 -95 -80 Q -115 -60 -115 -30 Z" fill="#14110d"/>
+            <path d="M 60 -230 Q 160 -270 190 -200 Q 170 -160 125 -170 Z" fill="#14110d"/>
+            <path d="M 60 -230 Q 160 -270 190 -200" stroke="#b38238" stroke-width="1.5" fill="none" opacity="0.8"/>
+            <path d="M -105 -60 Q 0 -140 130 -60" stroke="#b38238" stroke-width="1.5" fill="none" opacity="0.8"/>
+            <path d="M -100 -100 Q 0 -170 125 -100" stroke="#b38238" stroke-width="1" fill="none" opacity="0.6"/>
+            <circle cx="-40" cy="-100" r="3" fill="#b38238"/>
+            <circle cx="40" cy="-100" r="3" fill="#b38238"/>
+            <circle cx="0" cy="-130" r="3" fill="#b38238"/>
+            <!-- Face -->
+            <ellipse cx="-32" cy="-5" rx="11" ry="5" fill="#f3ece0" opacity="0.9"/>
+            <ellipse cx="32" cy="-5" rx="11" ry="5" fill="#f3ece0" opacity="0.9"/>
+            <circle cx="-28" cy="-5" r="5" fill="#14110d"/>
+            <circle cx="36" cy="-5" r="5" fill="#14110d"/>
+            <path d="M -45 -25 Q -32 -32 -18 -25" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <path d="M 18 -25 Q 32 -32 45 -25" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <path d="M -20 58 Q 0 66 20 58" stroke="#2a1208" stroke-width="2.5" fill="none"/>
+            <circle cx="-100" cy="15" r="12" fill="none" stroke="#b38238" stroke-width="4"/>
+            <circle cx="100" cy="15" r="12" fill="none" stroke="#b38238" stroke-width="4"/>
+          </g>
+        </svg>
+      </div>
+      <div class="name">Chiamaka <em>Okafor</em></div>
+      <div class="meta">Journalist · Abuja · 28</div>
+      <div class="q">"Nobody is watching when you tie it the first time."</div>
+    </article>
+  </div>
+</section>
+
+<!-- AUTHOR -->
+<section class="author-card">
+  <div class="author-avatar">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="authGrad2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#8a2d10"/>
+          <stop offset="100%" stop-color="#14110d"/>
+        </linearGradient>
+      </defs>
+      <rect width="200" height="200" fill="url(#authGrad2)"/>
+      <ellipse cx="100" cy="95" rx="60" ry="75" fill="#6b3020"/>
+      <path d="M 40 70 Q 50 20 100 15 Q 150 20 160 70 Q 150 40 100 40 Q 50 40 40 70 Z" fill="#1a0f08"/>
+      <circle cx="82" cy="90" r="5" fill="#14110d"/>
+      <circle cx="118" cy="90" r="5" fill="#14110d"/>
+      <path d="M 88 125 Q 100 132 112 125" stroke="#14110d" stroke-width="2" fill="none"/>
+      <path d="M 30 170 Q 50 140 100 140 Q 150 140 170 170 L 170 200 L 30 200 Z" fill="#c5491f"/>
+    </svg>
+  </div>
+  <div class="author-info">
+    <div class="label">Words by</div>
+    <h4>Adaeze <em>Nwosu</em></h4>
+    <p>Adaeze Nwosu is a contributing editor at The Moveee, based between Lagos and Accra. She writes on contemporary African visual art, literature, and the economies that sustain them. Her work has appeared in Granta, The Republic, and Brittle Paper.</p>
+  </div>
+  <button class="author-cta">More by Adaeze →</button>
+</section>
+
+<!-- RELATED -->
+<section class="related">
+  <div class="related-header">
+    <h3>Keep <em>reading</em></h3>
+    <a href="moveee-homepage.html#magazine">All stories →</a>
+  </div>
+  <div class="related-grid">
+    <article class="related-card" onclick="window.location='ifeoma-okoli.html'" style="cursor:pointer;">
+      <div class="img-frame">
+        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="500" fill="#8a2d10"/>
+          <g transform="translate(200, 280)">
+            <ellipse cx="0" cy="0" rx="100" ry="125" fill="#6b3020"/>
+            <path d="M -105 -25 Q -120 -140 0 -150 Q 120 -140 105 -25 Q 95 -45 85 -60 Q 55 -110 0 -115 Q -55 -110 -85 -60 Q -95 -45 -105 -25 Z" fill="#1a0f08"/>
+            <rect x="-85" y="130" width="170" height="90" fill="#14110d"/>
+            <circle cx="-30" cy="-5" r="6" fill="#14110d"/>
+            <circle cx="30" cy="-5" r="6" fill="#14110d"/>
+            <path d="M -18 55 Q 0 65 18 55" stroke="#14110d" stroke-width="3" fill="none"/>
+          </g>
+          <text x="40" y="470" fill="#f3ece0" opacity="0.5" font-family="monospace" font-size="9" letter-spacing="2">PORTRAIT N°14</text>
+        </svg>
+      </div>
+      <div class="kicker">Portrait Series</div>
+      <h4>The Quiet <em>Insurgency</em> of Ifeoma Okoli</h4>
+      <div class="meta">Visual Art · Lagos · 14 min</div>
+    </article>
+
+    <article class="related-card">
+      <div class="img-frame">
+        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="500" fill="#3d4a2a"/>
+          <circle cx="200" cy="220" r="120" fill="#b38238" opacity="0.9"/>
+          <circle cx="200" cy="220" r="80" fill="#c5491f" opacity="0.8"/>
+          <circle cx="200" cy="220" r="40" fill="#14110d"/>
+          <rect x="60" y="380" width="280" height="3" fill="#f3ece0"/>
+          <text x="60" y="420" fill="#f3ece0" font-family="Fraunces, serif" font-size="22" font-style="italic">Amoako Boafo</text>
+        </svg>
+      </div>
+      <div class="kicker">Interview · N°01</div>
+      <h4>Inside the Studio of <em>Amoako Boafo</em></h4>
+      <div class="meta">Visual Art · Accra · 8 min</div>
+    </article>
+
+    <article class="related-card">
+      <div class="img-frame">
+        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="500" fill="#8a2d10"/>
+          <rect x="0" y="0" width="400" height="250" fill="#c5491f"/>
+          <rect x="50" y="150" width="300" height="200" fill="#14110d"/>
+          <text x="200" y="280" fill="#f3ece0" font-family="Fraunces, serif" font-size="26" font-style="italic" text-anchor="middle">Dakar</text>
+          <text x="200" y="320" fill="#b38238" font-family="Fraunces, serif" font-size="22" text-anchor="middle">Biennale</text>
+          <circle cx="200" cy="400" r="40" fill="#b38238"/>
+        </svg>
+      </div>
+      <div class="kicker">Feature · N°04</div>
+      <h4>The Dakar Biennale Is <em>Still</em> the Most Important Show on Earth</h4>
+      <div class="meta">Art · Dakar · 9 min</div>
+    </article>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <h4>The M<em>o</em>veee</h4>
+      <p>A community-based culture platform documenting and celebrating the daring moves of Africa and its diaspora. Since 2022.</p>
+    </div>
+    <div>
+      <h5>Platform</h5>
+      <ul>
+        <li><a href="moveee-homepage.html#magazine">Magazine</a></li>
+        <li><a href="moveee-homepage.html#events">Events</a></li>
+        <li><a href="moveee-homepage.html#origins">Origins</a></li>
+        <li><a href="moveee-homepage.html#lifestyle">Lifestyle</a></li>
+        <li><a href="moveee-homepage.html#connect">Connect</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>The Moveee</h5>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Culture Narratives</a></li>
+        <li><a href="#">Submit Work</a></li>
+        <li><a href="#">Press</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Follow</h5>
+      <ul>
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">LinkedIn</a></li>
+        <li><a href="#">Substack</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 The Moveee · Lagos, NG</span>
+    <span>Best in Culture</span>
+    <span>Privacy · Terms</span>
+  </div>
+</footer>
+
+</body>
+</html>

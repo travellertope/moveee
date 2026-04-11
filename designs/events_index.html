@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Moveee Events — Culture Happenings | The Moveee</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f3ece0;--paper-deep:#ebe1d0;--ink:#14110d;--ink-soft:#3a342b;--mute:#7a6f5c;--rule:#2a241c;--ochre:#c5491f;--ochre-deep:#8a2d10;--moss:#3d4a2a;--gold:#b38238;--indigo:#1e2b42}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.3;mix-blend-mode:multiply;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E")}
+h1,h2,h3,h4{font-family:'Fraunces',serif;line-height:.95;letter-spacing:-.02em;font-variation-settings:"opsz" 144,"SOFT" 30}
+a{color:inherit;text-decoration:none}
+
+/* MASTHEAD */
+.masthead-bar{border-bottom:1px solid var(--rule);padding:13px 40px;display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;position:relative;z-index:10}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ochre);margin-right:8px;vertical-align:middle;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.85)}}
+.masthead-bar-left span+span{margin-left:24px}
+.masthead{border-bottom:2px solid var(--rule);padding:22px 40px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:30px;position:relative;z-index:10}
+.masthead-nav{display:flex;gap:26px;font-size:13px;font-weight:500}
+.masthead-nav a{border-bottom:1px solid transparent;padding-bottom:2px;transition:border-color .3s}
+.masthead-nav a:hover{border-bottom-color:var(--ochre)}
+.masthead-nav a.active{color:var(--ochre);border-bottom-color:var(--ochre)}
+.masthead-right{justify-content:flex-end;align-items:center}
+.wordmark{text-align:center}
+.wordmark .kicker{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
+.wordmark h2{font-size:38px;font-weight:600;letter-spacing:-.035em;line-height:1}
+.wordmark h2 em{font-style:italic;font-weight:400;color:var(--ochre)}
+.join-btn{background:var(--ink);color:var(--paper);padding:10px 18px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;border:none;cursor:pointer;transition:background .3s}
+.join-btn:hover{background:var(--ochre)}
+
+/* ═══ PAGE HERO ═══ */
+.events-hero{position:relative;background:var(--ink);overflow:hidden;z-index:2}
+.events-hero svg{position:absolute;inset:0;width:100%;height:100%}
+.events-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(20,17,13,.4) 0%,rgba(20,17,13,.65) 50%,rgba(20,17,13,.95) 100%);z-index:1}
+.hero-inner{position:relative;z-index:2;max-width:1440px;margin:0 auto;padding:120px 40px 80px;display:grid;grid-template-columns:1.3fr .7fr;gap:80px;align-items:end}
+.hero-eyebrow{display:flex;align-items:center;gap:14px;margin-bottom:32px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ochre)}
+.hero-eyebrow::before{content:'';width:40px;height:1px;background:var(--ochre)}
+.hero-title{font-size:clamp(60px,8vw,128px);font-weight:400;line-height:.88;letter-spacing:-.04em;color:var(--paper);margin-bottom:20px}
+.hero-title em{font-style:italic;font-weight:300;color:var(--gold)}
+.hero-standfirst{font-family:'Fraunces',serif;font-size:20px;font-weight:300;font-style:italic;color:rgba(243,236,224,.7);line-height:1.45;max-width:580px}
+.hero-stats{display:flex;flex-direction:column;gap:30px;padding-bottom:10px}
+.hero-stat .num{font-family:'Fraunces',serif;font-size:64px;font-weight:300;font-style:italic;color:var(--ochre);line-height:.85}
+.hero-stat .label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:rgba(243,236,224,.5);margin-top:8px}
+
+/* ═══ MARQUEE ═══ */
+.marquee{overflow:hidden;border-bottom:1px solid var(--rule);padding:16px 0;background:var(--ink);position:relative;z-index:2}
+.marquee-track{display:flex;gap:60px;white-space:nowrap;animation:scroll 50s linear infinite;font-family:'Fraunces',serif;font-size:26px;font-weight:400;font-style:italic;color:var(--paper)}
+.marquee-track .star{color:var(--ochre);font-style:normal;font-size:20px}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* ═══ FEATURED EVENT (spotlight) ═══ */
+.spotlight{max-width:1440px;margin:0 auto;padding:100px 40px;position:relative;z-index:2}
+.spotlight-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ochre);margin-bottom:40px;padding-bottom:14px;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:14px}
+.spotlight-label::before{content:'★';font-size:12px}
+
+.spotlight-card{display:grid;grid-template-columns:1.1fr .9fr;gap:60px;cursor:pointer;transition:transform .4s}
+.spotlight-card:hover .spot-image{transform:translateY(-5px)}
+.spot-image{aspect-ratio:16/10;background:var(--ink);overflow:hidden;position:relative;transition:transform .4s}
+.spot-image svg{width:100%;height:100%;display:block}
+.spot-badge{position:absolute;top:20px;left:20px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;padding:8px 14px;z-index:2;display:flex;align-items:center;gap:8px}
+.spot-badge.upcoming{background:var(--ochre);color:var(--paper)}
+.spot-badge.members{background:var(--ink);color:var(--paper);border:1px solid rgba(243,236,224,.3)}
+.spot-counter{position:absolute;bottom:16px;right:16px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--paper);background:rgba(20,17,13,.6);backdrop-filter:blur(6px);padding:6px 12px}
+
+.spot-info{display:flex;flex-direction:column;justify-content:center}
+.spot-date{display:flex;align-items:baseline;gap:14px;margin-bottom:24px}
+.spot-date .day{font-family:'Fraunces',serif;font-size:88px;font-weight:300;line-height:.8;color:var(--ochre)}
+.spot-date .month-year{font-family:'Fraunces',serif;font-size:18px;font-style:italic;color:var(--ink-soft)}
+.spot-title{font-size:clamp(38px,3.5vw,58px);font-weight:400;line-height:.95;margin-bottom:12px}
+.spot-title em{font-style:italic;font-weight:300;color:var(--ochre)}
+.spot-sub{font-family:'Fraunces',serif;font-size:17px;font-style:italic;color:var(--ink-soft);margin-bottom:24px}
+.spot-meta{display:flex;flex-wrap:wrap;gap:24px;padding:20px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:28px}
+.spot-meta-item .label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
+.spot-meta-item .value{font-family:'Fraunces',serif;font-size:15px;font-style:italic}
+.spot-cta{display:flex;gap:14px;flex-wrap:wrap}
+.btn-primary{background:var(--ochre);color:var(--paper);padding:16px 24px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.15em;text-transform:uppercase;border:none;cursor:pointer;transition:background .3s;display:inline-flex;align-items:center;gap:10px}
+.btn-primary:hover{background:var(--ochre-deep)}
+.btn-ghost{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink);padding:15px 24px;border:1px solid var(--ink);background:transparent;cursor:pointer;transition:all .3s}
+.btn-ghost:hover{background:var(--ink);color:var(--paper)}
+
+/* ═══ FILTERS ═══ */
+.filter-bar{max-width:1440px;margin:0 auto;padding:0 40px;position:relative;z-index:2}
+.filter-inner{display:flex;align-items:center;gap:16px;padding:24px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.filter-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--mute);margin-right:8px}
+.filter-btn{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:8px 16px;border:1px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer;transition:all .25s}
+.filter-btn:hover{border-color:var(--ink)}
+.filter-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.filter-count{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--mute)}
+
+/* ═══ EVENTS GRID ═══ */
+.events-section{max-width:1440px;margin:0 auto;padding:60px 40px 100px;position:relative;z-index:2}
+.month-group{margin-bottom:70px}
+.month-label{display:flex;align-items:center;gap:20px;margin-bottom:32px}
+.month-label h3{font-family:'Fraunces',serif;font-size:44px;font-weight:400;font-style:italic;color:var(--ink)}
+.month-label h3 em{color:var(--ochre)}
+.month-label .line{flex:1;height:1px;background:var(--rule)}
+.month-label .count{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--mute)}
+
+.events-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+
+/* EVENT CARD */
+.event-card{background:var(--paper-deep);padding:0;cursor:pointer;transition:transform .4s,background .4s;position:relative;overflow:hidden;border:1px solid transparent}
+.event-card:hover{transform:translateY(-5px);background:var(--ink);color:var(--paper)}
+.event-card:hover .ec-date .day{color:var(--ochre)}
+.event-card:hover .ec-meta{color:rgba(243,236,224,.6)}
+.event-card:hover .ec-title{color:var(--paper)}
+.event-card:hover .ec-tag{border-color:rgba(243,236,224,.3);color:rgba(243,236,224,.7)}
+.event-card:hover .ec-tag.members{border-color:var(--ochre);color:var(--ochre)}
+.event-card:hover .ec-cta{color:var(--ochre)}
+
+.ec-image{aspect-ratio:16/10;background:var(--ink);overflow:hidden;position:relative}
+.ec-image svg{width:100%;height:100%;display:block}
+.ec-badge{position:absolute;top:12px;left:12px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.15em;text-transform:uppercase;padding:5px 10px;z-index:2}
+.ec-badge.upcoming{background:var(--ochre);color:var(--paper)}
+.ec-badge.live{background:var(--moss);color:var(--paper);animation:pulse 1.5s ease-in-out infinite}
+.ec-badge.past{background:var(--mute);color:var(--paper)}
+.ec-badge.members-badge{background:var(--ink);color:var(--gold);border:1px solid var(--gold)}
+
+.ec-body{padding:24px 26px 28px}
+.ec-date{display:flex;align-items:baseline;gap:10px;margin-bottom:18px}
+.ec-date .day{font-family:'Fraunces',serif;font-size:50px;font-weight:400;line-height:.8;color:var(--ochre)}
+.ec-date .month{font-family:'Fraunces',serif;font-size:14px;font-style:italic;color:var(--ink-soft)}
+
+.ec-title{font-family:'Fraunces',serif;font-size:23px;font-weight:500;line-height:1.05;margin-bottom:8px;transition:color .3s}
+.ec-title em{font-style:italic;font-weight:400}
+
+.ec-meta{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);line-height:1.8;margin-bottom:20px;transition:color .3s}
+
+.ec-bottom{display:flex;justify-content:space-between;align-items:center}
+.ec-tags{display:flex;gap:8px;flex-wrap:wrap}
+.ec-tag{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--rule);color:var(--ink-soft);transition:all .3s}
+.ec-tag.members{border-color:var(--ochre);color:var(--ochre)}
+.ec-tag.free{border-color:var(--moss);color:var(--moss)}
+.ec-cta{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);transition:color .3s}
+
+/* ═══ CONNECT CTA BAND ═══ */
+.connect-band{background:var(--ink);color:var(--paper);padding:100px 40px;position:relative;z-index:2;overflow:hidden}
+.connect-band::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 15% 40%,rgba(197,73,31,.18),transparent 45%),radial-gradient(circle at 85% 60%,rgba(179,130,56,.12),transparent 40%);pointer-events:none}
+.connect-inner{max-width:1440px;margin:0 auto;position:relative;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.connect-num{font-family:'Fraunces',serif;font-style:italic;font-weight:300;font-size:16px;color:var(--ochre);margin-bottom:24px;display:flex;align-items:center;gap:14px}
+.connect-num::before{content:'';width:40px;height:1px;background:var(--ochre)}
+.connect-band h3{font-size:clamp(44px,5vw,80px);font-weight:400;line-height:.92;margin-bottom:20px}
+.connect-band h3 em{font-style:italic;font-weight:300;color:var(--gold)}
+.connect-band>div p{font-size:17px;color:rgba(243,236,224,.7);max-width:440px;line-height:1.55}
+.connect-perks{display:flex;flex-direction:column;gap:16px}
+.perk{display:grid;grid-template-columns:28px 1fr;gap:16px;align-items:baseline}
+.perk .n{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ochre)}
+.perk p{font-size:15px;color:var(--paper)}
+.perk p em{font-family:'Fraunces',serif;font-style:italic;color:var(--gold)}
+.connect-cta{margin-top:32px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.btn-gold{background:var(--gold);color:var(--ink);padding:18px 28px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:600;border:none;cursor:pointer;transition:background .3s;display:inline-flex;align-items:center;gap:10px}
+.btn-gold:hover{background:var(--paper)}
+
+/* ═══ FOOTER ═══ */
+footer{background:var(--paper);color:var(--ink);padding:70px 40px 40px;position:relative;z-index:2}
+.footer-top{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:60px;padding-bottom:50px;border-bottom:1px solid var(--rule)}
+.footer-top h5{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:18px;color:var(--mute);font-weight:500}
+.footer-top ul{list-style:none}
+.footer-top li{margin-bottom:10px}
+.footer-top a{font-size:14px;transition:color .3s}
+.footer-top a:hover{color:var(--ochre)}
+.footer-brand h4{font-size:40px;font-weight:500;line-height:.95;margin-bottom:14px}
+.footer-brand h4 em{font-style:italic;color:var(--ochre)}
+.footer-brand p{font-size:14px;color:var(--ink-soft);max-width:340px}
+.footer-bottom{max-width:1440px;margin:30px auto 0;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1100px){
+  .hero-inner{grid-template-columns:1fr;gap:40px;padding:80px 40px 60px}
+  .hero-stats{flex-direction:row;gap:40px}
+  .spotlight-card{grid-template-columns:1fr;gap:40px}
+  .events-grid{grid-template-columns:1fr 1fr}
+  .connect-inner{grid-template-columns:1fr;gap:40px}
+  .footer-top{grid-template-columns:1fr 1fr}
+}
+@media(max-width:768px){
+  .masthead{grid-template-columns:1fr}
+  .masthead-nav,.masthead-right{display:none}
+  .masthead-bar{padding:13px 22px;font-size:9px}
+  .hero-inner{padding:60px 22px 50px}
+  .hero-title{font-size:52px}
+  .hero-stats{flex-direction:column;gap:24px}
+  .spotlight,.filter-bar,.events-section,.connect-band,footer{padding-left:22px;padding-right:22px}
+  .events-grid{grid-template-columns:1fr}
+  .filter-inner{gap:10px}
+  .footer-top{grid-template-columns:1fr}
+  .footer-bottom{flex-direction:column;gap:8px}
+  .spot-date .day{font-size:64px}
+}
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD BAR -->
+<div class="masthead-bar">
+  <div class="masthead-bar-left">
+    <span><span class="dot"></span>Moveee Events</span>
+    <span>April 2026</span>
+    <span>Lagos · London · Accra · NYC</span>
+  </div>
+  <div style="display:flex;gap:20px">
+    <span>Issue N°014</span>
+    <span>EN / FR</span>
+  </div>
+</div>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <nav class="masthead-nav">
+    <a href="moveee-homepage.html">Home</a>
+    <a href="moveee-homepage.html#magazine">Magazine</a>
+    <a href="#" class="active">Events</a>
+    <a href="moveee-homepage.html#origins">Origins</a>
+    <a href="moveee-homepage.html#lifestyle">Lifestyle</a>
+  </nav>
+  <div class="wordmark">
+    <div class="kicker">Est. 2022 · Best in Culture</div>
+    <h2>The M<em>o</em>veee</h2>
+  </div>
+  <div class="masthead-nav masthead-right" style="display:flex;">
+    <a href="#">Search</a>
+    <a href="#">Sign in</a>
+    <button class="join-btn">Join Connect →</button>
+  </div>
+</header>
+
+<!-- ═══ HERO ═══ -->
+<section class="events-hero">
+  <!-- Abstract background: gallery wall / cultural event collage -->
+  <svg viewBox="0 0 1440 620" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="heroBg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#2a1208"/>
+        <stop offset="50%" stop-color="#14110d"/>
+        <stop offset="100%" stop-color="#0c0805"/>
+      </linearGradient>
+      <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="6" stroke="#f3ece0" stroke-width=".4" opacity=".06"/>
+      </pattern>
+      <radialGradient id="glow1" cx="25%" cy="40%" r="40%">
+        <stop offset="0%" stop-color="#c5491f" stop-opacity=".35"/>
+        <stop offset="100%" stop-color="#14110d" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="glow2" cx="75%" cy="60%" r="35%">
+        <stop offset="0%" stop-color="#b38238" stop-opacity=".2"/>
+        <stop offset="100%" stop-color="#14110d" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="1440" height="620" fill="url(#heroBg)"/>
+    <rect width="1440" height="620" fill="url(#hatch)"/>
+    <rect width="1440" height="620" fill="url(#glow1)"/>
+    <rect width="1440" height="620" fill="url(#glow2)"/>
+
+    <!-- Abstract gallery wall lines -->
+    <g opacity=".06" stroke="#f3ece0" stroke-width="1">
+      <line x1="240" y1="0" x2="240" y2="620"/>
+      <line x1="480" y1="0" x2="480" y2="620"/>
+      <line x1="720" y1="0" x2="720" y2="620"/>
+      <line x1="960" y1="0" x2="960" y2="620"/>
+      <line x1="1200" y1="0" x2="1200" y2="620"/>
+    </g>
+
+    <!-- Suggestion of hanging artworks -->
+    <g opacity=".15">
+      <rect x="280" y="120" width="140" height="200" fill="#c5491f"/>
+      <rect x="540" y="160" width="120" height="160" fill="#b38238"/>
+      <rect x="780" y="100" width="180" height="240" fill="#1e2b42"/>
+      <rect x="1060" y="140" width="130" height="190" fill="#3d4a2a"/>
+    </g>
+
+    <!-- Adinkra motif -->
+    <g opacity=".08" fill="none" stroke="#f3ece0" stroke-width="1.5" transform="translate(100,450)">
+      <circle cx="0" cy="0" r="38"/><circle cx="0" cy="0" r="24"/><circle cx="0" cy="0" r="10"/>
+      <line x1="-50" y1="0" x2="50" y2="0"/><line x1="0" y1="-50" x2="0" y2="50"/>
+    </g>
+  </svg>
+
+  <div class="hero-inner">
+    <div>
+      <div class="hero-eyebrow">N°03 · Culture Happenings</div>
+      <h1 class="hero-title">Moveee<br><em>Events</em>.</h1>
+      <p class="hero-standfirst">Curated openings, listening sessions, film screenings, supper clubs and community gatherings — across Africa and the diaspora. Not everything happens online.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="num">14</div>
+        <div class="label">Events · April–June 2026</div>
+      </div>
+      <div class="hero-stat">
+        <div class="num">06</div>
+        <div class="label">Cities this quarter</div>
+      </div>
+      <div class="hero-stat">
+        <div class="num">04</div>
+        <div class="label">Members-only experiences</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee">
+  <div class="marquee-track">
+    <span>Openings <span class="star">✦</span> Film Screenings <span class="star">✦</span> Listening Sessions <span class="star">✦</span> Supper Clubs <span class="star">✦</span> Community Dinners <span class="star">✦</span> Gallery Walks <span class="star">✦</span> Book Launches <span class="star">✦</span></span>
+    <span>Openings <span class="star">✦</span> Film Screenings <span class="star">✦</span> Listening Sessions <span class="star">✦</span> Supper Clubs <span class="star">✦</span> Community Dinners <span class="star">✦</span> Gallery Walks <span class="star">✦</span> Book Launches <span class="star">✦</span></span>
+  </div>
+</div>
+
+<!-- ═══ FEATURED EVENT ═══ -->
+<section class="spotlight">
+  <div class="spotlight-label">Featured Event · This Month</div>
+
+  <a href="mother-tongue-event.html" class="spotlight-card">
+    <div class="spot-image">
+      <span class="spot-badge upcoming">● Upcoming</span>
+      <span class="spot-counter">6 of 23 works previewed</span>
+      <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="spotBg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#2a1208"/>
+            <stop offset="40%" stop-color="#8a2d10"/>
+            <stop offset="100%" stop-color="#14110d"/>
+          </linearGradient>
+          <linearGradient id="spotSkin" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#6b3020"/>
+            <stop offset="100%" stop-color="#3a1a10"/>
+          </linearGradient>
+          <radialGradient id="spotGlow" cx="65%" cy="30%" r="50%">
+            <stop offset="0%" stop-color="#c5491f" stop-opacity=".3"/>
+            <stop offset="100%" stop-color="#14110d" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="800" height="500" fill="url(#spotBg)"/>
+        <rect width="800" height="500" fill="url(#spotGlow)"/>
+        <!-- Gallery wall suggestion -->
+        <g opacity=".06" stroke="#f3ece0" stroke-width="1">
+          <line x1="160" y1="0" x2="160" y2="500"/>
+          <line x1="320" y1="0" x2="320" y2="500"/>
+          <line x1="480" y1="0" x2="480" y2="500"/>
+          <line x1="640" y1="0" x2="640" y2="500"/>
+        </g>
+        <!-- Portrait figure -->
+        <g transform="translate(540,260)">
+          <ellipse cx="0" cy="0" rx="100" ry="130" fill="url(#spotSkin)"/>
+          <path d="M -110 -30 Q -125 -170 0 -180 Q 125 -170 110 -30 Q 100 -65 80 -80 Q 50 -130 0 -135 Q -50 -130 -80 -80 Q -100 -65 -110 -30 Z" fill="#1a0f08"/>
+          <!-- Closed eyes -->
+          <path d="M -45 -8 Q -28 -2 -10 -8" stroke="#1a0f08" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M 10 -8 Q 28 -2 45 -8" stroke="#1a0f08" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M -20 55 Q 0 65 20 55" stroke="#2a1208" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <circle cx="-105" cy="-10" r="8" fill="none" stroke="#b38238" stroke-width="2.5"/>
+          <circle cx="105" cy="-10" r="8" fill="none" stroke="#b38238" stroke-width="2.5"/>
+          <!-- Garment -->
+          <path d="M -160 160 Q -120 130 -60 135 L 60 135 Q 120 130 160 160 L 160 260 L -160 260 Z" fill="#14110d"/>
+          <circle cx="-60" cy="180" r="10" fill="#c5491f" opacity=".8"/>
+          <circle cx="40" cy="200" r="6" fill="#b38238" opacity=".7"/>
+        </g>
+        <!-- Canvas frames in background -->
+        <g opacity=".25">
+          <rect x="60" y="80" width="150" height="200" fill="#14110d" stroke="#f3ece0" stroke-width="1.5"/>
+          <rect x="240" y="110" width="120" height="170" fill="#14110d" stroke="#f3ece0" stroke-width="1.5"/>
+        </g>
+        <text x="40" y="480" fill="#f3ece0" opacity=".3" font-family="monospace" font-size="10" letter-spacing="2">MOTHER TONGUE · KÓ GALLERY · 19 APR – 14 JUN 2026</text>
+      </svg>
+    </div>
+
+    <div class="spot-info">
+      <div class="spot-date">
+        <span class="day">19</span>
+        <span class="month-year">April 2026<br>Saturday</span>
+      </div>
+      <h3 class="spot-title">Mother <em>Tongue</em></h3>
+      <p class="spot-sub">Paintings by Ifeoma Okoli · First Solo Exhibition · Kó Gallery, Ikoyi</p>
+      <div class="spot-meta">
+        <div class="spot-meta-item">
+          <div class="label">Venue</div>
+          <div class="value">Kó Gallery, Ikoyi</div>
+        </div>
+        <div class="spot-meta-item">
+          <div class="label">Time</div>
+          <div class="value">Doors 6 PM (members) / 7:30 PM</div>
+        </div>
+        <div class="spot-meta-item">
+          <div class="label">Admission</div>
+          <div class="value">Free · RSVP required</div>
+        </div>
+      </div>
+      <div class="spot-cta">
+        <span class="btn-primary">RSVP Now →</span>
+        <span class="btn-ghost">View Details</span>
+      </div>
+    </div>
+  </a>
+</section>
+
+<!-- ═══ FILTER BAR ═══ -->
+<div class="filter-bar">
+  <div class="filter-inner">
+    <span class="filter-label">Filter</span>
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="visual-art">Visual Art</button>
+    <button class="filter-btn" data-filter="music">Music</button>
+    <button class="filter-btn" data-filter="film">Film</button>
+    <button class="filter-btn" data-filter="food">Food</button>
+    <button class="filter-btn" data-filter="literature">Literature</button>
+    <button class="filter-btn" data-filter="members">Members Only</button>
+    <span class="filter-count">Showing 11 events</span>
+  </div>
+</div>
+
+<!-- ═══ EVENTS LISTING ═══ -->
+<section class="events-section">
+
+  <!-- APRIL 2026 -->
+  <div class="month-group">
+    <div class="month-label">
+      <h3>April <em>2026</em></h3>
+      <div class="line"></div>
+      <span class="count">4 events</span>
+    </div>
+
+    <div class="events-grid">
+
+      <!-- Event 1: Mother Tongue (smaller card — already spotlighted above) -->
+      <a href="mother-tongue-event.html" class="event-card" data-cat="visual-art">
+        <div class="ec-image">
+          <span class="ec-badge upcoming">● Upcoming</span>
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="250" fill="#8a2d10"/>
+            <ellipse cx="300" cy="130" rx="80" ry="100" fill="#6b3020"/>
+            <path d="M 220 100 Q 225 40 300 35 Q 375 40 380 100 Q 368 65 300 62 Q 232 65 220 100 Z" fill="#1a0f08"/>
+            <path d="M 260 95 Q 280 90 300 95" stroke="#1a0f08" stroke-width="2" fill="none"/>
+            <path d="M 300 95 Q 320 90 340 95" stroke="#1a0f08" stroke-width="2" fill="none"/>
+            <rect x="30" y="50" width="140" height="160" fill="#14110d" stroke="#f3ece0" stroke-width="1" opacity=".35"/>
+          </svg>
+        </div>
+        <div class="ec-body">
+          <div class="ec-date"><span class="day">19</span><span class="month">April</span></div>
+          <h4 class="ec-title">Opening: <em>Mother Tongue</em> — Ifeoma Okoli</h4>
+          <div class="ec-meta">Kó Gallery · Ikoyi, Lagos<br>18:00 – 21:00 WAT · Visual Art</div>
+          <div class="ec-bottom">
+            <div class="ec-tags">
+              <span class="ec-tag free">Free</span>
+              <span class="ec-tag">RSVP</span>
+            </div>
+            <span class="ec-cta">View →</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Event 2: Asake Listening Session -->
+      <div class="event-card" data-cat="music">
+        <div class="ec-image">
+          <span class="ec-badge members-badge">★ Members</span>
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="250" fill="#14110d"/>
+            <ellipse cx="200" cy="100" rx="200" ry="120" fill="#c5491f" opacity=".15"/>
+            <!-- Speakers/stage suggestion -->
+            <rect x="60" y="80" width="30" height="60" fill="#1a1a1a"/>
+            <rect x="310" y="80" width="30" height="60" fill="#1a1a1a"/>
+            <circle cx="75" cy="100" r="10" fill="#2a2a2a"/>
+            <circle cx="325" cy="100" r="10" fill="#2a2a2a"/>
+            <!-- Spotlight -->
+            <polygon points="200,40 160,250 240,250" fill="#b38238" opacity=".1"/>
+            <!-- Crowd silhouette -->
+            <g fill="#0c0805">
+              <ellipse cx="100" cy="210" rx="25" ry="30"/>
+              <ellipse cx="150" cy="215" rx="22" ry="28"/>
+              <ellipse cx="200" cy="208" rx="24" ry="32"/>
+              <ellipse cx="250" cy="215" rx="22" ry="28"/>
+              <ellipse cx="300" cy="210" rx="25" ry="30"/>
+            </g>
+          </svg>
+        </div>
+        <div class="ec-body">
+          <div class="ec-date"><span class="day">26</span><span class="month">April</span></div>
+          <h4 class="ec-title">Listening Session: <em>Asake</em> at the Shrine</h4>
+          <div class="ec-meta">New Afrika Shrine · Ikeja, Lagos<br>20:00 – 23:00 WAT · Music</div>
+          <div class="ec-bottom">
+            <div class="ec-tags"><span class="ec-tag members">Members + Guest</span></div>
+            <span class="ec-cta">View →</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event 3: Film Screening -->
+      <div class="event-card" data-cat="film">
+        <div class="ec-image">
+          <span class="ec-badge upcoming">● Upcoming</span>
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="250" fill="#0c0805"/>
+            <!-- Screen -->
+            <rect x="40" y="30" width="320" height="180" fill="#1e2b42"/>
+            <!-- Film strip perforations -->
+            <g fill="#14110d" opacity=".5">
+              <rect x="30" y="30" width="8" height="8" rx="1"/>
+              <rect x="30" y="52" width="8" height="8" rx="1"/>
+              <rect x="30" y="74" width="8" height="8" rx="1"/>
+              <rect x="30" y="96" width="8" height="8" rx="1"/>
+              <rect x="362" y="30" width="8" height="8" rx="1"/>
+              <rect x="362" y="52" width="8" height="8" rx="1"/>
+              <rect x="362" y="74" width="8" height="8" rx="1"/>
+              <rect x="362" y="96" width="8" height="8" rx="1"/>
+            </g>
+            <!-- Play triangle -->
+            <polygon points="175,95 235,120 175,145" fill="#f3ece0" opacity=".6"/>
+            <!-- Seats -->
+            <g fill="#14110d" opacity=".4">
+              <rect x="60" y="225" width="50" height="20" rx="3"/>
+              <rect x="125" y="225" width="50" height="20" rx="3"/>
+              <rect x="190" y="225" width="50" height="20" rx="3"/>
+              <rect x="255" y="225" width="50" height="20" rx="3"/>
+              <rect x="320" y="225" width="50" height="20" rx="3"/>
+            </g>
+          </svg>
+        </div>
+        <div class="ec-body">
+          <div class="ec-date"><span class="day">28</span><span class="month">April</span></div>
+          <h4 class="ec-title">Screening: <em>Eyimofe</em> + Director Q&A</h4>
+          <div class="ec-meta">Terra Kulture · Victoria Island, Lagos<br>19:00 – 22:00 WAT · Film</div>
+          <div class="ec-bottom">
+            <div class="ec-tags">
+              <span class="ec-tag free">Free</span>
+              <span class="ec-tag">RSVP</span>
+            </div>
+            <span class="ec-cta">View →</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event 4: Book Launch -->
+      <div class="event-card" data-cat="literature">
+        <div class="ec-image">
+          <span class="ec-badge upcoming">● Upcoming</span>
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="250" fill="#3d4a2a"/>
+            <!-- Book -->
+            <g transform="translate(200,120)">
+              <path d="M -80 -60 L 0 -80 L 80 -60 L 80 60 L 0 80 L -80 60 Z" fill="#14110d"/>
+              <path d="M 0 -80 L 0 80" stroke="#b38238" stroke-width="2"/>
+              <text x="-50" y="-20" fill="#f3ece0" font-family="Fraunces, serif" font-size="11" font-style="italic" opacity=".8">The</text>
+              <text x="-50" y="0" fill="#f3ece0" font-family="Fraunces, serif" font-size="14" font-style="italic">Furrows</text>
+              <text x="-50" y="20" fill="#b38238" font-family="monospace" font-size="7" letter-spacing="1.5">SERPELL</text>
+            </g>
+          </svg>
+        </div>
+        <div class="ec-body">
+          <div class="ec-date"><span class="day">30</span><span class="month">April</span></div>
+          <h4 class="ec-title">Book Club: <em>The Furrows</em> with Namwali Serpell</h4>
+          <div class="ec-meta">Quintessence · Ikoyi, Lagos<br>18:30 – 20:30 WAT · Literature</div>
+          <div class="ec-bottom">
+            <div class="ec-tags">
+              <span class="ec-tag free">Free</span>
+              <span class="ec-tag">Open to All</span>
+            </div>
+            <span class="ec-cta">View →</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MAY 2026 -->
+  <div class="month-group">
+    <div class="month-label">
+      <h3>May <em>2026</em></h3>
+      <div class="line"></div>
+      <span class="count">4 events</span>
+    </div>
+
+    <div class="events-grid">
+
+      <!-- Event 5: Supper Club -->
+      <div class="event-card" data-cat="food">
+        <div class="ec-image">
+          <span class="ec-badge members-badge">★ Members</span>
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="250" fill="#2a1208"/>
+            <ellipse cx="200" cy="140" rx="300" ry="100" fill="#c5491f" opacity=".12"/>
+            <!-- Table from above -->
+            <ellipse cx="200" cy="130" rx="150" ry="70" fill="#3a1a10"/>
+            <!-- Place settings -->
+            <g fill="none" stroke="#f3ece0" stroke-width="1" opacity=".6">
+              <circle cx="100" cy="100" r="16"/><circle cx="140" cy="75" r="16"/><circle cx="200" cy="68" r="16"/>
+              <circle cx="260" cy="75" r="16"/><circle cx="300" cy="100" r="16"/>
+              <circle cx="100" cy="160" r="16"/><circle cx="140" cy="185" r="16"/><circle cx="200" cy="192" r="16"/>
+              <circle cx="260" cy="185" r="16"/><circle cx="300" cy="160" r="16"/>
+            </g>
+            <!-- Candle lights -->
+            <circle cx="170" cy="130" r="4" fill="#b38238" opacity=".9"/>
+            <circle cx="230" cy="130" r="4" fill="#b38238" opacity=".9"/>
+          </svg>
+        </div>
+        <div class="ec-body">
+          <div class="ec-date"><span class="day">03</span><span class="month">May</span></div>
+          <h4 class="ec-title">Moveee Supper Club · <em>Volume IX</em></h4>
+          <div class="ec-meta">A private residence · Accra, Ghana<br>19:30 GMT · Food & Conversation</div>
+          <div class="ec-bottom">
+            <div class="ec-tags"><span class="ec-tag members">Members Only</span></div>
+            <span class="ec-cta">View →</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event 6: Gallery Walk London -->
+      <div class="event-card" data-cat="visual-art">
+        <div class="ec-image">
+          <span class="ec-badge upcoming">● Upcoming</span>
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="250" fill="#ebe1d0"/>
+            <!-- Gallery walls with art -->
+            <rect x="30" y="40" width="100" height="130" fill="#c5491f"/>
+            <rect x="160" y="55" width="80" height="100" fill="#1e2b42"/>
+            <rect x="270" y="35" width="100" height="140" fill="#3d4a2a"/>
+            <!-- Floor line -->
+            <line x1="0" y1="200" x2="400" y2="200" stroke="#14110d" stroke-width="1" opacity=".2"/>
+            <!-- Walking figures (silhouettes) -->
+            <g fill="#14110d" opacity=".35">
+              <ellipse cx="120" cy="180" rx="12" ry="16"/>
+              <rect x="114" y="196" width="12" height="30" rx="3"/>
+              <ellipse cx="250" cy="175" rx="14" ry="18"/>
+              <rect x="244" y="193" width="12" height="34" rx="3"/>
+            </g>
+          </svg>
+        </div>
+        <div class="ec-body">
+          <div class="ec-date"><span class="day">10</span><span class="month">May</span></div>
+          <h4 class="ec-title">Gallery Walk: <em>African Art</em> in Mayfair</h4>
+          <div class="ec-meta">Meeting: October Gallery · London<br>11:00 – 14:00 BST · Visual Art</div>
+          <div class="ec-bottom">
+            <div class="ec-tags">
+              <span class="ec-tag free">Free</span>
+              <span class="ec-tag">Open to All</span>
+            </div>
+            <span class="ec-cta">View →</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event 7: Listening Session Accra -->
+      <div class="event-card" data-cat="music">
+        <div class="ec-image">
+          <span class="ec-badge upcoming">● Upcoming</span>
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="250" fill="#14110d"/>
+            <!-- Vinyl record -->
+            <g transform="translate(200,125)">
+              <circle cx="0" cy="0" r="100" fill="#1a1a1a"/>
+              <circle cx="0" cy="0" r="90" fill="none" stroke="#2a2a2a" stroke-width="1"/>
+              <circle cx="0" cy="0" r="70" fill="none" stroke="#2a2a2a" stroke-width="1"/>
+              <circle cx="0" cy="0" r="50" fill="none" stroke="#2a2a2a" stroke-width="1"/>
+              <circle cx="0" cy="0" r="30" fill="none" stroke="#2a2a2a" stroke-width="1"/>
+              <circle cx="0" cy="0" r="20" fill="#b38238"/>
+              <circle cx="0" cy="0" r="3" fill="#14110d"/>
+            </g>
+          </svg>
+        </div>
+        <div class="ec-body">
+          <div class="ec-date"><span class="day">17</span><span class="month">May</span></div>
+          <h4 class="ec-title">Vinyl Night: <em>Highlife</em> Origins</h4>
+          <div class="ec-meta">Alliance Française · Accra, Ghana<br>20:00 – 23:00 GMT · Music</div>
+          <div class="ec-bottom">
+            <div class="ec-tags">
+              <span class="ec-tag free">Free</span>
+              <span class="ec-tag">Open to All</span>
+            </div>
+            <span class="ec-cta">View →</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event 8: Photography Exhibition -->
+      <div class="event-card" data-cat="visual-art">
+        <div class="ec-image">
+          <span class="ec-badge upcoming">● Upcoming</span>
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="250" fill="#0c0805"/>
+            <!-- Hanging photo prints -->
+            <line x1="40" y1="30" x2="360" y2="30" stroke="#8a6d48" stroke-width="2"/>
+            <g>
+              <rect x="55" y="32" width="70" height="90" fill="#f3ece0" opacity=".9"/>
+              <rect x="60" y="37" width="60" height="40" fill="#c5491f" opacity=".6"/>
+              <rect x="60" y="82" width="60" height="6" fill="#14110d" opacity=".15"/>
+            </g>
+            <g>
+              <rect x="155" y="32" width="90" height="115" fill="#f3ece0" opacity=".9"/>
+              <rect x="160" y="37" width="80" height="55" fill="#3d4a2a" opacity=".6"/>
+              <rect x="160" y="100" width="80" height="6" fill="#14110d" opacity=".15"/>
+            </g>
+            <g>
+              <rect x="275" y="32" width="70" height="85" fill="#f3ece0" opacity=".9"/>
+              <rect x="280" y="37" width="60" height="38" fill="#1e2b42" opacity=".6"/>
+              <rect x="280" y="80" width="60" height="6" fill="#14110d" opacity=".15"/>
+            </g>
+            <!-- String/wire holding prints -->
+            <line x1="90" y1="30" x2="90" y2="32" stroke="#8a6d48" stroke-width="1"/>
+            <line x1="200" y1="30" x2="200" y2="32" stroke="#8a6d48" stroke-width="1"/>
+            <line x1="310" y1="30" x2="310" y2="32" stroke="#8a6d48" stroke-width="1"/>
+          </svg>
+        </div>
+        <div class="ec-body">
+          <div class="ec-date"><span class="day">24</span><span class="month">May</span></div>
+          <h4 class="ec-title">Opening: <em>Lagos Nocturnals</em> — Stephen Tayo</h4>
+          <div class="ec-meta">Rele Gallery · Onikan, Lagos<br>18:00 – 21:00 WAT · Photography</div>
+          <div class="ec-bottom">
+            <div class="ec-tags">
+              <span class="ec-tag free">Free</span>
+              <span class="ec-tag">RSVP</span>
+            </div>
+            <span class="ec-cta">View →</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JUNE 2026 -->
+  <div class="month-group">
+    <div class="month-label">
+      <h3>June <em>2026</em></h3>
+      <div class="line"></div>
+      <span class="count">3 events</span>
+    </div>
+
+    <div class="events-grid">
+
+      <!-- Event 9: Brooklyn Dinner -->
+      <div class="event-card" data-cat="food">
+        <div class="ec-image">
+          <span class="ec-badge members-badge">★ Members</span>
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="250" fill="#1a0f08"/>
+            <!-- Brownstone window suggestion -->
+            <rect x="100" y="30" width="200" height="180" fill="#2a1a10"/>
+            <rect x="108" y="38" width="84" height="80" fill="#3a2a18"/>
+            <rect x="208" y="38" width="84" height="80" fill="#3a2a18"/>
+            <rect x="108" y="126" width="84" height="76" fill="#3a2a18"/>
+            <rect x="208" y="126" width="84" height="76" fill="#3a2a18"/>
+            <!-- Warm light from inside -->
+            <rect x="118" y="136" width="64" height="56" fill="#b38238" opacity=".25"/>
+            <rect x="218" y="136" width="64" height="56" fill="#b38238" opacity=".25"/>
+            <!-- Steps -->
+            <rect x="150" y="210" width="100" height="40" fill="#2a1a10"/>
+          </svg>
+        </div>
+        <div class="ec-body">
+          <div class="ec-date"><span class="day">07</span><span class="month">June</span></div>
+          <h4 class="ec-title">Moveee Supper Club · <em>Brooklyn</em></h4>
+          <div class="ec-meta">A private brownstone · Bed-Stuy, NYC<br>19:00 – 22:00 EST · Food & Culture</div>
+          <div class="ec-bottom">
+            <div class="ec-tags"><span class="ec-tag members">Members Only</span></div>
+            <span class="ec-cta">View →</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event 10: Dakar Biennale Walk -->
+      <div class="event-card" data-cat="visual-art">
+        <div class="ec-image">
+          <span class="ec-badge upcoming">● Upcoming</span>
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="250" fill="#c5491f"/>
+            <rect x="0" y="0" width="400" height="125" fill="#1e2b42"/>
+            <text x="200" y="90" fill="#f3ece0" font-family="Fraunces, serif" font-size="32" font-style="italic" text-anchor="middle" opacity=".9">Dakar</text>
+            <text x="200" y="120" fill="#b38238" font-family="Fraunces, serif" font-size="20" text-anchor="middle">Biennale 2026</text>
+            <circle cx="200" cy="195" r="35" fill="#b38238" opacity=".8"/>
+            <circle cx="200" cy="195" r="22" fill="#c5491f"/>
+          </svg>
+        </div>
+        <div class="ec-body">
+          <div class="ec-date"><span class="day">14</span><span class="month">June</span></div>
+          <h4 class="ec-title">Moveee at the <em>Dakar Biennale</em></h4>
+          <div class="ec-meta">Multiple venues · Dakar, Senegal<br>All day · Visual Art & Performance</div>
+          <div class="ec-bottom">
+            <div class="ec-tags">
+              <span class="ec-tag free">Free</span>
+              <span class="ec-tag">Open to All</span>
+            </div>
+            <span class="ec-cta">View →</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event 11: London Screening -->
+      <div class="event-card" data-cat="film">
+        <div class="ec-image">
+          <span class="ec-badge upcoming">● Upcoming</span>
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="250" fill="#14110d"/>
+            <!-- Cinema screen -->
+            <rect x="50" y="20" width="300" height="170" fill="#3d4a2a" opacity=".4"/>
+            <!-- Film title on screen -->
+            <text x="200" y="90" fill="#f3ece0" font-family="Fraunces, serif" font-size="20" font-style="italic" text-anchor="middle" opacity=".7">Atlantics</text>
+            <text x="200" y="120" fill="#b38238" font-family="monospace" font-size="8" letter-spacing="2" text-anchor="middle" opacity=".6">MATI DIOP · 2019</text>
+            <!-- Row of heads -->
+            <g fill="#0c0805">
+              <ellipse cx="80" cy="218" rx="18" ry="22"/>
+              <ellipse cx="130" cy="220" rx="16" ry="20"/>
+              <ellipse cx="180" cy="215" rx="18" ry="24"/>
+              <ellipse cx="230" cy="220" rx="16" ry="20"/>
+              <ellipse cx="280" cy="218" rx="18" ry="22"/>
+              <ellipse cx="330" cy="220" rx="16" ry="20"/>
+            </g>
+          </svg>
+        </div>
+        <div class="ec-body">
+          <div class="ec-date"><span class="day">21</span><span class="month">June</span></div>
+          <h4 class="ec-title">Screening: <em>Atlantics</em> + Panel Discussion</h4>
+          <div class="ec-meta">ICA · The Mall, London<br>19:00 – 21:30 BST · Film & Diaspora</div>
+          <div class="ec-bottom">
+            <div class="ec-tags">
+              <span class="ec-tag free">Free</span>
+              <span class="ec-tag">RSVP</span>
+            </div>
+            <span class="ec-cta">View →</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ CONNECT CTA BAND ═══ -->
+<section class="connect-band">
+  <div class="connect-inner">
+    <div>
+      <div class="connect-num">Moveee Connect</div>
+      <h3>Members go <em>first</em>.</h3>
+      <p>Private views, supper tables, and early RSVP access — all yours with a Connect membership. The culture doesn't wait; neither should you.</p>
+    </div>
+    <div>
+      <div class="connect-perks">
+        <div class="perk"><span class="n">01</span><p>Early RSVP on <em>all events</em> — 48 hours before public</p></div>
+        <div class="perk"><span class="n">02</span><p>Access to <em>private views</em> and members-only dinners</p></div>
+        <div class="perk"><span class="n">03</span><p>Priority for <em>Origins journeys</em> and supper tables</p></div>
+        <div class="perk"><span class="n">04</span><p>15% off everything in the <em>Lifestyle</em> shop, always</p></div>
+      </div>
+      <div class="connect-cta">
+        <a href="moveee-homepage.html#connect" class="btn-gold">Become a Member →</a>
+        <span style="font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:rgba(243,236,224,.5)">from $9 / month</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <h4>The M<em>o</em>veee</h4>
+      <p>A community-based culture platform documenting and celebrating the daring moves of Africa and its diaspora. Since 2022.</p>
+    </div>
+    <div>
+      <h5>Platform</h5>
+      <ul>
+        <li><a href="moveee-homepage.html#magazine">Magazine</a></li>
+        <li><a href="#">Events</a></li>
+        <li><a href="moveee-homepage.html#origins">Origins</a></li>
+        <li><a href="moveee-homepage.html#lifestyle">Lifestyle</a></li>
+        <li><a href="moveee-homepage.html#connect">Connect</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>The Moveee</h5>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Submit an event</a></li>
+        <li><a href="#">Venue partnerships</a></li>
+        <li><a href="#">Press</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Follow</h5>
+      <ul>
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">LinkedIn</a></li>
+        <li><a href="#">Substack</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 The Moveee · Lagos, NG</span>
+    <span>Best in Culture</span>
+    <span>Privacy · Terms</span>
+  </div>
+</footer>
+
+<script>
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const filter = btn.dataset.filter;
+    const cards = document.querySelectorAll('.event-card');
+    let visible = 0;
+    cards.forEach(card => {
+      const cat = card.dataset.cat;
+      if (filter === 'all') {
+        card.style.display = '';
+        visible++;
+      } else if (filter === 'members') {
+        const isMembers = card.querySelector('.ec-tag.members') || card.querySelector('.ec-badge.members-badge');
+        card.style.display = isMembers ? '' : 'none';
+        if (isMembers) visible++;
+      } else {
+        card.style.display = (cat === filter) ? '' : 'none';
+        if (cat === filter) visible++;
+      }
+    });
+    document.querySelector('.filter-count').textContent = `Showing ${visible} event${visible !== 1 ? 's' : ''}`;
+  });
+});
+</script>
+
+</body>
+</html>

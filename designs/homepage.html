@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Moveee — Best in Culture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f3ece0;
+    --paper-deep: #ebe1d0;
+    --ink: #14110d;
+    --ink-soft: #3a342b;
+    --mute: #7a6f5c;
+    --rule: #2a241c;
+    --ochre: #c5491f;
+    --ochre-deep: #8a2d10;
+    --moss: #3d4a2a;
+    --gold: #b38238;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(197, 73, 31, 0.04), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(61, 74, 42, 0.04), transparent 40%);
+  }
+
+  /* Subtle paper grain */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.35;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 40px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ========== MASTHEAD ========== */
+  .masthead-bar {
+    border-bottom: 1px solid var(--rule);
+    padding: 14px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 3;
+  }
+
+  .masthead-bar .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ochre);
+    margin-right: 8px;
+    vertical-align: middle;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  .masthead-bar-left span + span { margin-left: 24px; }
+  .masthead-bar-right span + span { margin-left: 24px; }
+
+  .masthead {
+    border-bottom: 2px solid var(--rule);
+    padding: 28px 40px 24px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 30px;
+    position: relative;
+    z-index: 3;
+  }
+
+  .masthead-left, .masthead-right {
+    display: flex;
+    gap: 28px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .masthead-left { justify-content: flex-start; }
+  .masthead-right { justify-content: flex-end; align-items: center; }
+
+  .masthead-left a, .masthead-right a {
+    color: var(--ink);
+    text-decoration: none;
+    padding-bottom: 2px;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s;
+  }
+  .masthead-left a:hover, .masthead-right a:hover {
+    border-bottom-color: var(--ochre);
+  }
+
+  .wordmark {
+    text-align: center;
+  }
+  .wordmark .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-bottom: 8px;
+  }
+  .wordmark-logo {
+    display: inline-block;
+    height: 44px;
+    width: auto;
+  }
+
+  .join-btn {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  .join-btn:hover { background: var(--ochre); }
+
+  /* ========== HERO ========== */
+  .hero {
+    padding: 70px 40px 90px;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-grid {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 60px;
+    align-items: end;
+  }
+
+  .hero-lede .section-label {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+  .hero-lede .section-label::before {
+    content: '';
+    width: 40px;
+    height: 1px;
+    background: var(--ink);
+  }
+
+  .hero h2 {
+    font-size: clamp(54px, 7.2vw, 118px);
+    font-weight: 400;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    margin-bottom: 32px;
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+  }
+  .hero h2 em {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--ochre);
+  }
+  .hero h2 .underline {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 10px;
+    text-decoration-color: var(--ochre);
+  }
+
+  .hero-standfirst {
+    max-width: 520px;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin-bottom: 40px;
+  }
+
+  .hero-cta-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--ochre);
+    color: var(--paper);
+    padding: 16px 28px;
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.3s;
+  }
+  .btn-primary:hover { background: var(--ochre-deep); }
+  .btn-primary .arrow { font-size: 14px; }
+
+  .btn-ghost {
+    color: var(--ink);
+    padding: 16px 0;
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 500;
+    border-bottom: 1px solid var(--ink);
+  }
+
+  /* Hero artwork side */
+  .hero-visual {
+    position: relative;
+    aspect-ratio: 4/5;
+  }
+
+  .hero-frame {
+    position: absolute;
+    inset: 0;
+    background: var(--ink);
+    overflow: hidden;
+  }
+
+  /* Stylised portrait illustration (SVG) */
+  .hero-frame svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .hero-caption {
+    position: absolute;
+    bottom: -32px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+    transition: color 0.3s;
+  }
+  .hero-caption:hover { color: var(--ochre); }
+
+  .hero-ticker {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: var(--paper);
+    opacity: 0.75;
+  }
+
+  /* ========== MARQUEE ========== */
+  .marquee {
+    overflow: hidden;
+    border-bottom: 1px solid var(--rule);
+    padding: 18px 0;
+    background: var(--ink);
+    color: var(--paper);
+    position: relative;
+    z-index: 2;
+  }
+  .marquee-track {
+    display: flex;
+    gap: 60px;
+    white-space: nowrap;
+    animation: scroll 50s linear infinite;
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 400;
+    font-style: italic;
+  }
+  .marquee-track span {
+    display: inline-flex;
+    align-items: center;
+    gap: 60px;
+  }
+  .marquee-track .star {
+    color: var(--ochre);
+    font-style: normal;
+    font-size: 22px;
+  }
+  @keyframes scroll {
+    to { transform: translateX(-50%); }
+  }
+
+  /* ========== SECTIONS: the five pillars ========== */
+  .pillar {
+    padding: 100px 40px;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+    z-index: 2;
+  }
+
+  .pillar-header {
+    max-width: 1440px;
+    margin: 0 auto 60px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 40px;
+    align-items: end;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 30px;
+  }
+
+  .pillar-num {
+    font-family: 'Fraunces', serif;
+    font-size: 80px;
+    font-weight: 300;
+    font-style: italic;
+    line-height: 0.8;
+    color: var(--ochre);
+  }
+
+  .pillar-title h3 {
+    font-size: 58px;
+    font-weight: 400;
+    line-height: 0.95;
+    margin-bottom: 8px;
+  }
+  .pillar-title h3 em { font-style: italic; font-weight: 300; color: var(--mute); }
+  .pillar-title p {
+    font-size: 15px;
+    color: var(--ink-soft);
+    max-width: 480px;
+    margin-top: 10px;
+  }
+
+  .pillar-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-decoration: none;
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--ink);
+    white-space: nowrap;
+  }
+
+  .pillar-body {
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+
+  /* ========== MAGAZINE SECTION ========== */
+  .mag-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .mag-lead {
+    border-right: 1px solid var(--rule);
+    padding-right: 40px;
+  }
+  .mag-lead .cover {
+    width: 100%;
+    aspect-ratio: 4/5;
+    background: linear-gradient(160deg, #2a1f15 0%, #0c0805 100%);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .mag-lead .cover svg { width: 100%; height: 100%; display: block; }
+
+  .mag-kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin-bottom: 10px;
+  }
+  .mag-lead h4 {
+    font-size: 34px;
+    line-height: 1;
+    margin-bottom: 14px;
+    font-weight: 400;
+  }
+  .mag-lead h4 em { font-style: italic; }
+  .mag-lead p {
+    font-size: 14px;
+    color: var(--ink-soft);
+    max-width: 480px;
+    margin-bottom: 16px;
+  }
+  .mag-byline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+
+  .mag-list {
+    display: grid;
+    grid-template-rows: repeat(3, 1fr);
+    gap: 0;
+    height: 100%;
+  }
+  .mag-item {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(42, 36, 28, 0.2);
+    padding-top: 4px;
+  }
+  .mag-item:last-child { border: none; padding-bottom: 0; }
+  .mag-item-thumb {
+    width: 100%;
+    flex-shrink: 0;
+    aspect-ratio: 16/9;
+    margin-bottom: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+  .mag-item-thumb svg { width: 100%; height: 100%; display: block; }
+  .mag-item .num {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ochre);
+    margin-bottom: 6px;
+  }
+  .mag-item h5 {
+    font-size: 20px;
+    line-height: 1.1;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .mag-item h5 em { font-style: italic; font-weight: 400; }
+  .mag-item .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+
+  /* ========== EVENTS SECTION ========== */
+  .events-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  .event-card {
+    background: var(--paper-deep);
+    padding: 28px;
+    position: relative;
+    transition: transform 0.4s ease, background 0.4s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .event-card:hover {
+    transform: translateY(-4px);
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .event-card:hover h4,
+  .event-card:hover .event-meta,
+  .event-card:hover .event-date { color: var(--paper); }
+  .event-card:hover .event-date .day { color: var(--ochre); }
+  .event-card:hover .event-tag {
+    background: var(--ochre);
+    color: var(--paper);
+    border-color: var(--ochre);
+  }
+
+  .event-date {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 32px;
+    font-family: 'Fraunces', serif;
+  }
+  .event-date .day {
+    font-size: 58px;
+    font-weight: 400;
+    line-height: 0.8;
+    color: var(--ochre);
+  }
+  .event-date .month {
+    font-size: 14px;
+    font-style: italic;
+    color: var(--ink-soft);
+  }
+
+  .event-card h4 {
+    font-size: 24px;
+    line-height: 1.05;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .event-card h4 em { font-style: italic; font-weight: 400; }
+  .event-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+    line-height: 1.8;
+    margin-bottom: 24px;
+  }
+  .event-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+  }
+
+  /* ========== ORIGINS SECTION (travel) ========== */
+  .origins-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 60px;
+    align-items: start;
+  }
+
+  .origins-intro p {
+    font-size: 15px;
+    color: var(--ink-soft);
+    margin-bottom: 28px;
+    max-width: 420px;
+  }
+  .origins-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(42, 36, 28, 0.25);
+  }
+  .stat .num {
+    font-family: 'Fraunces', serif;
+    font-size: 56px;
+    font-weight: 300;
+    line-height: 0.9;
+    color: var(--ochre);
+  }
+  .stat .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-top: 8px;
+  }
+
+  .origins-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .origin-row {
+    display: grid;
+    grid-template-columns: 60px 1fr auto auto;
+    gap: 30px;
+    align-items: center;
+    padding: 28px 0;
+    border-top: 1px solid var(--rule);
+    cursor: pointer;
+    transition: padding 0.4s ease;
+  }
+  .origin-row:last-child { border-bottom: 1px solid var(--rule); }
+  .origin-row:hover { padding-left: 16px; }
+  .origin-row:hover .origin-name { color: var(--ochre); }
+
+  .origin-idx {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--mute);
+  }
+  .origin-name {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 1;
+    transition: color 0.3s;
+  }
+  .origin-name em { font-style: italic; font-weight: 300; }
+  .origin-country {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .origin-price {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-style: italic;
+    color: var(--ink);
+    text-align: right;
+  }
+  .origin-price small {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-style: normal;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-top: 2px;
+  }
+
+  /* ========== LIFESTYLE (shop) ========== */
+  .lifestyle-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+  }
+  .product {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+  }
+  .product-img {
+    aspect-ratio: 4/5;
+    margin-bottom: 16px;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.4s ease;
+  }
+  .product:hover .product-img { transform: translateY(-4px); }
+  .product-img svg { width: 100%; height: 100%; display: block; }
+
+  .product-vendor {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin-bottom: 6px;
+  }
+  .product-name {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .product-name em { font-style: italic; }
+  .product-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .product-vetted {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 5px 8px;
+    border: 1px solid var(--ink);
+  }
+
+  /* ========== CONNECT (membership) — CLOSING STATEMENT ========== */
+  .connect {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 120px 40px;
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+    border-bottom: 1px solid var(--rule);
+  }
+  .connect::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(197, 73, 31, 0.18), transparent 40%),
+      radial-gradient(circle at 85% 75%, rgba(179, 130, 56, 0.12), transparent 40%);
+    pointer-events: none;
+  }
+
+  .connect-inner {
+    max-width: 1440px;
+    margin: 0 auto;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: end;
+  }
+
+  .connect-num {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 18px;
+    color: var(--ochre);
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .connect-num::before {
+    content: '';
+    width: 40px;
+    height: 1px;
+    background: var(--ochre);
+  }
+
+  .connect h3 {
+    font-size: clamp(48px, 6vw, 96px);
+    font-weight: 400;
+    line-height: 0.92;
+    margin-bottom: 36px;
+    letter-spacing: -0.03em;
+  }
+  .connect h3 em { font-style: italic; font-weight: 300; color: var(--gold); }
+
+  .connect p {
+    font-size: 17px;
+    line-height: 1.55;
+    color: rgba(243, 236, 224, 0.75);
+    max-width: 440px;
+  }
+
+  .connect-right {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .perks {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(243, 236, 224, 0.15);
+  }
+  .perk {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 18px;
+    align-items: baseline;
+  }
+  .perk .n {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ochre);
+    letter-spacing: 0.1em;
+  }
+  .perk p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--paper);
+    max-width: none;
+  }
+  .perk p em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .connect-cta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .btn-gold {
+    background: var(--gold);
+    color: var(--ink);
+    padding: 18px 32px;
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.3s;
+  }
+  .btn-gold:hover { background: var(--paper); }
+
+  .connect-price {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: rgba(243, 236, 224, 0.6);
+  }
+
+  /* ========== FOOTER ========== */
+  footer {
+    background: var(--paper);
+    color: var(--ink);
+    padding: 70px 40px 40px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .footer-top {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 60px;
+    padding-bottom: 50px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .footer-top h5 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    color: var(--mute);
+    font-weight: 500;
+  }
+  .footer-top ul { list-style: none; }
+  .footer-top li { margin-bottom: 10px; }
+  .footer-top a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s;
+  }
+  .footer-top a:hover { color: var(--ochre); }
+
+  .footer-brand-logo {
+    display: block;
+    height: 36px;
+    width: auto;
+    margin-bottom: 14px;
+    filter: invert(1);
+  }
+  .footer-brand p {
+    font-size: 14px;
+    color: var(--ink-soft);
+    max-width: 340px;
+    margin-bottom: 22px;
+  }
+
+  .newsletter {
+    display: flex;
+    border: 1px solid var(--ink);
+    max-width: 340px;
+  }
+  .newsletter input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+  }
+  .newsletter input::placeholder { color: var(--mute); }
+  .newsletter button {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 0 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .footer-bottom {
+    max-width: 1440px;
+    margin: 30px auto 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 1024px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+    .mag-grid { grid-template-columns: 1fr; }
+    .mag-lead { border-right: none; padding-right: 0; border-bottom: 1px solid var(--rule); padding-bottom: 40px; }
+    .events-grid { grid-template-columns: 1fr 1fr; }
+    .origins-wrap { grid-template-columns: 1fr; }
+    .lifestyle-grid { grid-template-columns: 1fr 1fr; }
+    .connect-inner { grid-template-columns: 1fr; gap: 40px; }
+    .footer-top { grid-template-columns: 1fr 1fr; }
+    .masthead-left, .masthead-right { display: none; }
+    .masthead { grid-template-columns: 1fr; }
+    .pillar-header { grid-template-columns: 1fr; gap: 20px; }
+    .pillar-num { font-size: 52px; }
+    .pillar-title h3 { font-size: 42px; }
+  }
+
+  @media (max-width: 640px) {
+    .container, .hero, .pillar, .connect, footer, .masthead, .masthead-bar { padding-left: 22px; padding-right: 22px; }
+    .wordmark h1 { font-size: 38px; }
+    .hero h2 { font-size: 48px; }
+    .events-grid, .lifestyle-grid { grid-template-columns: 1fr; }
+    .footer-top { grid-template-columns: 1fr; }
+    .origin-row { grid-template-columns: 40px 1fr; gap: 14px; }
+    .origin-country, .origin-price { display: none; }
+    .origin-name { font-size: 22px; }
+    .connect h3 { font-size: 44px; }
+    .masthead-bar { flex-direction: column; gap: 8px; text-align: center; }
+    .masthead-bar-left span + span, .masthead-bar-right span + span { margin-left: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top utility bar -->
+<div class="masthead-bar">
+  <div class="masthead-bar-left">
+    <span><span class="dot"></span>Issue N°014</span>
+    <span>Fri, 10 April 2026</span>
+    <span>Lagos · London · Accra · NYC</span>
+  </div>
+  <div class="masthead-bar-right">
+    <span>Culture Narratives Vol I out now</span>
+    <span>EN / FR</span>
+  </div>
+</div>
+
+<!-- Masthead -->
+<header class="masthead">
+  <nav class="masthead-left">
+    <a href="#magazine">Magazine</a>
+    <a href="#events">Events</a>
+    <a href="#origins">Origins</a>
+    <a href="#lifestyle">Lifestyle</a>
+  </nav>
+  <div class="wordmark">
+    <div class="kicker">Est. 2022 · Best in Culture</div>
+    <h1>The M<em>o</em>veee</h1>
+  </div>
+  <div class="masthead-right">
+    <a href="#">Search</a>
+    <a href="#">Sign in</a>
+    <button class="join-btn">Join Connect →</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid">
+    <div class="hero-lede">
+      <div class="section-label mono">The Dispatch · N°01</div>
+      <h2>
+        A field guide to <em>daring</em><br>
+        <span class="underline">moves</span> in culture,<br>
+        from Africa to the world.
+      </h2>
+      <p class="hero-standfirst">
+        We document and celebrate the most considered work in film, music, visual art, literature, design, food and fashion from Africa and its diaspora — then we take you inside it. Read the magazine. Attend the events. Travel the origins. Wear the craft. Meet the community.
+      </p>
+      <div class="hero-cta-row">
+        <a href="#magazine" class="btn-primary">Enter the Issue <span class="arrow">→</span></a>
+        <a href="#connect" class="btn-ghost">Become a Member</a>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-frame">
+        <div class="hero-ticker">
+          <span>Frame · 01 / 05</span>
+          <span>Shot on 35mm</span>
+        </div>
+        <!-- Stylised editorial portrait in SVG -->
+        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#c5491f"/>
+              <stop offset="50%" stop-color="#8a2d10"/>
+              <stop offset="100%" stop-color="#2a1208"/>
+            </linearGradient>
+            <linearGradient id="skinGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#6b3020"/>
+              <stop offset="100%" stop-color="#3a1a10"/>
+            </linearGradient>
+            <pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="0.8" fill="#f3ece0" opacity="0.3"/>
+            </pattern>
+          </defs>
+          <rect width="400" height="500" fill="url(#bgGrad)"/>
+          <rect width="400" height="500" fill="url(#dots)"/>
+
+          <!-- Abstract geometric pattern (inspired by adinkra / adire) -->
+          <g opacity="0.12" fill="none" stroke="#f3ece0" stroke-width="1">
+            <circle cx="80" cy="80" r="30"/>
+            <circle cx="80" cy="80" r="20"/>
+            <circle cx="80" cy="80" r="10"/>
+            <line x1="40" y1="80" x2="120" y2="80"/>
+            <line x1="80" y1="40" x2="80" y2="120"/>
+          </g>
+          <g opacity="0.1" fill="none" stroke="#f3ece0" stroke-width="1">
+            <rect x="300" y="380" width="60" height="60"/>
+            <rect x="310" y="390" width="40" height="40"/>
+            <rect x="320" y="400" width="20" height="20"/>
+          </g>
+
+          <!-- Portrait silhouette -->
+          <g transform="translate(200, 260)">
+            <!-- Neck -->
+            <rect x="-28" y="80" width="56" height="60" fill="url(#skinGrad)"/>
+            <!-- Head -->
+            <ellipse cx="0" cy="0" rx="85" ry="105" fill="url(#skinGrad)"/>
+            <!-- Headwrap / gele -->
+            <path d="M -95 -20 Q -110 -110 0 -130 Q 110 -110 95 -20 Q 80 -40 60 -50 Q 30 -90 0 -85 Q -30 -90 -60 -50 Q -80 -40 -95 -20 Z"
+                  fill="#b38238"/>
+            <path d="M -95 -20 Q -110 -110 0 -130 Q 110 -110 95 -20 L 80 -30 Q 60 -100 0 -110 Q -60 -100 -80 -30 Z"
+                  fill="#c5491f"/>
+            <!-- Headwrap folds -->
+            <path d="M -80 -40 Q -40 -90 0 -95 Q 40 -90 80 -40" stroke="#3a1a10" stroke-width="2" fill="none" opacity="0.4"/>
+            <path d="M -70 -60 Q -35 -100 0 -102 Q 35 -100 70 -60" stroke="#3a1a10" stroke-width="2" fill="none" opacity="0.4"/>
+
+            <!-- Shoulders / garment -->
+            <path d="M -140 140 Q -120 90 -40 100 L 40 100 Q 120 90 140 140 L 140 200 L -140 200 Z" fill="#14110d"/>
+            <!-- Garment pattern -->
+            <g opacity="0.3">
+              <line x1="-120" y1="110" x2="120" y2="110" stroke="#b38238" stroke-width="0.5"/>
+              <line x1="-120" y1="130" x2="120" y2="130" stroke="#b38238" stroke-width="0.5"/>
+              <line x1="-120" y1="150" x2="120" y2="150" stroke="#b38238" stroke-width="0.5"/>
+              <line x1="-120" y1="170" x2="120" y2="170" stroke="#b38238" stroke-width="0.5"/>
+            </g>
+
+            <!-- Facial features (minimal, editorial) -->
+            <ellipse cx="-30" cy="-5" rx="6" ry="3" fill="#14110d"/>
+            <ellipse cx="30" cy="-5" rx="6" ry="3" fill="#14110d"/>
+            <path d="M -8 25 Q 0 32 8 25" stroke="#14110d" stroke-width="2" fill="none"/>
+            <path d="M -18 55 Q 0 62 18 55" stroke="#14110d" stroke-width="2.5" fill="none"/>
+            <!-- Cheekbone highlight -->
+            <ellipse cx="-45" cy="25" rx="12" ry="6" fill="#c5491f" opacity="0.3"/>
+            <ellipse cx="45" cy="25" rx="12" ry="6" fill="#c5491f" opacity="0.3"/>
+
+            <!-- Earring -->
+            <circle cx="-80" cy="15" r="5" fill="#b38238"/>
+            <circle cx="80" cy="15" r="5" fill="#b38238"/>
+          </g>
+
+          <!-- Vertical text overlay -->
+          <text x="22" y="480" fill="#f3ece0" opacity="0.5" font-family="monospace" font-size="9" letter-spacing="2">
+            MOVEEE · PORTRAIT SERIES · 2026
+          </text>
+        </svg>
+      </div>
+      <a href="ifeoma-okoli.html" class="hero-caption" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <span>Portrait No. 14 · Ifeoma Okoli<br>Photographed in Lagos</span>
+        <span>↗ Read feature</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee">
+  <div class="marquee-track">
+    <span>Visual Art <span class="star">✦</span> Film <span class="star">✦</span> Literature <span class="star">✦</span> Music <span class="star">✦</span> Fashion <span class="star">✦</span> Food <span class="star">✦</span> Design <span class="star">✦</span> Craft <span class="star">✦</span></span>
+    <span>Visual Art <span class="star">✦</span> Film <span class="star">✦</span> Literature <span class="star">✦</span> Music <span class="star">✦</span> Fashion <span class="star">✦</span> Food <span class="star">✦</span> Design <span class="star">✦</span> Craft <span class="star">✦</span></span>
+  </div>
+</div>
+
+<!-- ========== N°02 · MAGAZINE ========== -->
+<section class="pillar" id="magazine">
+  <div class="pillar-header">
+    <div class="pillar-num">N°02</div>
+    <div class="pillar-title">
+      <h3>Moveee <em>Magazine</em></h3>
+      <p>Long-form essays, interviews and cultural commentary. The editorial heart of the platform.</p>
+    </div>
+    <a href="#" class="pillar-link">All Stories →</a>
+  </div>
+
+  <div class="pillar-body">
+    <div class="mag-grid">
+      <!-- Lead story -->
+      <a href="the-return-of-the-gele.html" style="text-decoration:none;color:inherit;">
+      <article class="mag-lead">
+        <div class="cover">
+          <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="coverGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#1a1208"/>
+                <stop offset="100%" stop-color="#14110d"/>
+              </linearGradient>
+            </defs>
+            <rect width="400" height="500" fill="url(#coverGrad)"/>
+            <!-- Abstract composition -->
+            <circle cx="200" cy="200" r="120" fill="#c5491f" opacity="0.85"/>
+            <circle cx="280" cy="280" r="80" fill="#b38238" opacity="0.7"/>
+            <rect x="80" y="320" width="240" height="4" fill="#f3ece0"/>
+            <!-- Magazine title -->
+            <text x="40" y="60" fill="#f3ece0" font-family="Fraunces, serif" font-size="28" font-weight="400" font-style="italic">The Moveee</text>
+            <text x="40" y="84" fill="#c5491f" font-family="monospace" font-size="9" letter-spacing="2">ISSUE 014 · APRIL 2026</text>
+            <text x="40" y="420" fill="#f3ece0" font-family="Fraunces, serif" font-size="34" font-weight="500">The Return</text>
+            <text x="40" y="452" fill="#f3ece0" font-family="Fraunces, serif" font-size="24" font-style="italic" opacity="0.8">of the Gele</text>
+          </svg>
+        </div>
+        <div class="mag-kicker">★ Cover Story · Culture Narratives</div>
+        <h4>The Return of the <em>Gele</em>: How a Headwrap Became a Manifesto</h4>
+        <p>From Lagos ateliers to Brooklyn brownstones, a new generation of women is reclaiming the headwrap as a living archive — not nostalgia, but instruction.</p>
+        <div class="mag-byline">By Adaeze Nwosu · 14 min read</div>
+      </article>
+      </a>
+
+      <!-- Column 1 -->
+      <div class="mag-list">
+        <article class="mag-item">
+          <div class="mag-item-thumb">
+            <svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+              <rect width="600" height="400" fill="#1a1208"/>
+              <!-- Studio backdrop with warm light -->
+              <rect x="0" y="200" width="600" height="200" fill="#0c0805"/>
+              <ellipse cx="300" cy="160" rx="200" ry="120" fill="#c5491f" opacity="0.18"/>
+              <!-- Canvas on easel -->
+              <rect x="190" y="60" width="140" height="180" fill="#f3ece0" rx="2"/>
+              <rect x="195" y="65" width="130" height="170" fill="#e8ddd0"/>
+              <!-- Abstract painting on canvas (Boafo-style figure) -->
+              <ellipse cx="260" cy="130" rx="35" ry="45" fill="#5c2d0a"/>
+              <ellipse cx="260" cy="95" rx="22" ry="28" fill="#6b3520"/>
+              <circle cx="260" cy="88" r="18" fill="#7a3d1a"/>
+              <path d="M 242 155 Q 230 180 235 200 L 285 200 Q 290 180 278 155 Z" fill="#4a2008"/>
+              <g fill="#b38238" opacity="0.9">
+                <rect x="215" y="80" width="15" height="4" rx="2"/>
+                <rect x="215" y="95" width="20" height="4" rx="2"/>
+                <rect x="215" y="110" width="12" height="4" rx="2"/>
+              </g>
+              <!-- Easel legs -->
+              <line x1="190" y1="240" x2="170" y2="320" stroke="#3a2a1a" stroke-width="4"/>
+              <line x1="330" y1="240" x2="350" y2="320" stroke="#3a2a1a" stroke-width="4"/>
+              <line x1="210" y1="280" x2="330" y2="280" stroke="#3a2a1a" stroke-width="3"/>
+              <!-- Artist silhouette -->
+              <ellipse cx="440" cy="200" rx="24" ry="30" fill="#2a1a0a"/>
+              <circle cx="440" cy="168" rx="18" fill="#3a2010"/>
+              <rect x="416" y="230" width="48" height="100" fill="#1a0f08"/>
+              <!-- Paint palette -->
+              <ellipse cx="395" cy="235" rx="25" ry="15" fill="#2a1a0a"/>
+              <circle cx="385" cy="228" r="5" fill="#c5491f"/>
+              <circle cx="395" cy="225" r="5" fill="#b38238"/>
+              <circle cx="405" cy="230" r="5" fill="#3d4a2a"/>
+              <!-- Studio details -->
+              <rect x="30" y="60" width="80" height="120" fill="#14110d" opacity="0.8"/>
+              <rect x="40" y="70" width="60" height="100" fill="#c5491f" opacity="0.5"/>
+              <text x="20" y="380" fill="#f3ece0" opacity="0.35" font-family="monospace" font-size="8" letter-spacing="2">STUDIO · ACCRA · 2026</text>
+            </svg>
+          </div>
+          <div class="num">Interview · 01</div>
+          <h5>Inside the Studio of <em>Amoako Boafo</em></h5>
+          <div class="meta">Visual Art · Accra · 8 min</div>
+        </article>
+        <article class="mag-item">
+          <div class="mag-item-thumb">
+            <svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+              <defs>
+                <linearGradient id="stageGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#0a0608"/>
+                  <stop offset="100%" stop-color="#1a0c10"/>
+                </linearGradient>
+              </defs>
+              <rect width="600" height="400" fill="url(#stageGrad)"/>
+              <!-- Stage lights -->
+              <ellipse cx="150" cy="0" rx="120" ry="80" fill="#c5491f" opacity="0.22"/>
+              <ellipse cx="450" cy="0" rx="120" ry="80" fill="#b38238" opacity="0.18"/>
+              <ellipse cx="300" cy="0" rx="100" ry="60" fill="#f3ece0" opacity="0.08"/>
+              <!-- Stage floor -->
+              <rect x="0" y="300" width="600" height="100" fill="#14110d"/>
+              <line x1="0" y1="300" x2="600" y2="300" stroke="#c5491f" stroke-width="2" opacity="0.6"/>
+              <!-- Performer silhouette 1 (centre) -->
+              <ellipse cx="300" cy="210" rx="22" ry="30" fill="#f3ece0" opacity="0.9"/>
+              <circle cx="300" cy="178" rx="18" fill="#f3ece0" opacity="0.9"/>
+              <path d="M 278 240 Q 265 290 260 300 L 340 300 Q 335 290 322 240 Z" fill="#f3ece0" opacity="0.9"/>
+              <!-- Arms raised -->
+              <line x1="278" y1="225" x2="248" y2="195" stroke="#f3ece0" stroke-width="8" stroke-linecap="round" opacity="0.9"/>
+              <line x1="322" y1="225" x2="352" y2="195" stroke="#f3ece0" stroke-width="8" stroke-linecap="round" opacity="0.9"/>
+              <!-- Performer silhouette 2 (left) -->
+              <ellipse cx="175" cy="230" rx="16" ry="22" fill="#c5491f" opacity="0.8"/>
+              <circle cx="175" cy="206" rx="14" fill="#c5491f" opacity="0.8"/>
+              <path d="M 159 252 Q 148 290 144 300 L 206 300 Q 202 290 191 252 Z" fill="#c5491f" opacity="0.8"/>
+              <!-- Performer silhouette 3 (right) -->
+              <ellipse cx="425" cy="230" rx="16" ry="22" fill="#b38238" opacity="0.8"/>
+              <circle cx="425" cy="206" rx="14" fill="#b38238" opacity="0.8"/>
+              <path d="M 409 252 Q 398 290 394 300 L 456 300 Q 452 290 441 252 Z" fill="#b38238" opacity="0.8"/>
+              <!-- Saxophone shape -->
+              <path d="M 316 210 Q 330 220 326 250 Q 322 270 310 275 Q 298 270 300 255 Q 302 235 310 225 Z" fill="#b38238" opacity="0.7"/>
+              <!-- Crowd suggestion -->
+              <g opacity="0.3" fill="#f3ece0">
+                <circle cx="60" cy="360" r="12"/>
+                <circle cx="100" cy="355" r="14"/>
+                <circle cx="140" cy="362" r="11"/>
+                <circle cx="460" cy="360" r="12"/>
+                <circle cx="500" cy="355" r="14"/>
+                <circle cx="540" cy="362" r="11"/>
+              </g>
+              <text x="20" y="390" fill="#f3ece0" opacity="0.35" font-family="monospace" font-size="8" letter-spacing="2">LIVE · LAGOS · FELA SHRINE</text>
+            </svg>
+          </div>
+          <div class="num">Essay · 02</div>
+          <h5>On the Quiet Radicalism of Fela's Daughters</h5>
+          <div class="meta">Music · Lagos · 11 min</div>
+        </article>
+        <article class="mag-item">
+          <div class="mag-item-thumb">
+            <svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+              <rect width="600" height="400" fill="#ebe1d0"/>
+              <!-- Open book spread -->
+              <rect x="60" y="60" width="220" height="280" fill="#f3ece0" rx="3"/>
+              <rect x="320" y="60" width="220" height="280" fill="#f9f4ee" rx="3"/>
+              <rect x="275" y="55" width="50" height="290" fill="#e0d5c5"/>
+              <!-- Spine shadow -->
+              <rect x="278" y="55" width="44" height="290" fill="#d5c9b5" opacity="0.5"/>
+              <!-- Text lines left page -->
+              <g fill="#14110d" opacity="0.15">
+                <rect x="80" y="90" width="180" height="8" rx="2"/>
+                <rect x="80" y="108" width="160" height="8" rx="2"/>
+                <rect x="80" y="126" width="175" height="8" rx="2"/>
+                <rect x="80" y="144" width="140" height="8" rx="2"/>
+                <rect x="80" y="162" width="180" height="8" rx="2"/>
+                <rect x="80" y="180" width="155" height="8" rx="2"/>
+              </g>
+              <!-- Drop cap -->
+              <text x="80" y="100" fill="#c5491f" font-family="Fraunces,serif" font-size="42" font-weight="600" font-style="italic">T</text>
+              <!-- Text lines left page continued -->
+              <g fill="#14110d" opacity="0.15">
+                <rect x="80" y="210" width="180" height="8" rx="2"/>
+                <rect x="80" y="228" width="165" height="8" rx="2"/>
+                <rect x="80" y="246" width="178" height="8" rx="2"/>
+                <rect x="80" y="264" width="150" height="8" rx="2"/>
+                <rect x="80" y="282" width="170" height="8" rx="2"/>
+                <rect x="80" y="300" width="90" height="8" rx="2"/>
+              </g>
+              <!-- Right page — book title block -->
+              <text x="340" y="120" fill="#14110d" font-family="Fraunces,serif" font-size="22" font-weight="500">The Furrows</text>
+              <text x="340" y="148" fill="#c5491f" font-family="monospace" font-size="9" letter-spacing="2">NAMWALI SERPELL</text>
+              <rect x="340" y="162" width="60" height="2" fill="#c5491f"/>
+              <g fill="#14110d" opacity="0.12">
+                <rect x="340" y="180" width="175" height="7" rx="2"/>
+                <rect x="340" y="196" width="160" height="7" rx="2"/>
+                <rect x="340" y="212" width="170" height="7" rx="2"/>
+                <rect x="340" y="228" width="145" height="7" rx="2"/>
+                <rect x="340" y="244" width="175" height="7" rx="2"/>
+                <rect x="340" y="260" width="130" height="7" rx="2"/>
+                <rect x="340" y="276" width="168" height="7" rx="2"/>
+                <rect x="340" y="292" width="100" height="7" rx="2"/>
+              </g>
+              <!-- Page numbers -->
+              <text x="210" y="330" fill="#7a6f5c" font-family="monospace" font-size="10">214</text>
+              <text x="490" y="330" fill="#7a6f5c" font-family="monospace" font-size="10">215</text>
+              <!-- Background shadows -->
+              <rect x="54" y="68" width="10" height="272" fill="#c5b9a5" opacity="0.5" rx="2"/>
+              <rect x="536" y="68" width="10" height="272" fill="#c5b9a5" opacity="0.5" rx="2"/>
+            </svg>
+          </div>
+          <div class="num">Review · 03</div>
+          <h5>A Second Reading of Namwali Serpell's <em>The Furrows</em></h5>
+          <div class="meta">Literature · 6 min</div>
+        </article>
+      </div>
+
+      <!-- Column 2 -->
+      <div class="mag-list">
+        <article class="mag-item">
+          <div class="mag-item-thumb">
+            <svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+              <defs>
+                <linearGradient id="dakarGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#1a1208"/>
+                  <stop offset="100%" stop-color="#0c0a06"/>
+                </linearGradient>
+              </defs>
+              <rect width="600" height="400" fill="url(#dakarGrad)"/>
+              <!-- Gallery space -->
+              <rect x="0" y="280" width="600" height="120" fill="#14110d"/>
+              <rect x="0" y="278" width="600" height="4" fill="#2a241c"/>
+              <!-- Back wall -->
+              <rect x="0" y="0" width="600" height="280" fill="#1e1810"/>
+              <!-- Artworks on wall -->
+              <!-- Large canvas left -->
+              <rect x="40" y="40" width="160" height="220" fill="#3d4a2a"/>
+              <ellipse cx="120" cy="150" rx="55" ry="70" fill="#c5491f" opacity="0.9"/>
+              <ellipse cx="120" cy="130" rx="30" ry="20" fill="#f3ece0" opacity="0.4"/>
+              <!-- Medium canvas centre -->
+              <rect x="220" y="60" width="160" height="180" fill="#b38238"/>
+              <rect x="235" y="75" width="130" height="150" fill="#8a6228"/>
+              <!-- Abstract pattern -->
+              <g fill="#f3ece0" opacity="0.3">
+                <circle cx="300" cy="120" r="25"/>
+                <circle cx="300" cy="175" r="18"/>
+                <line x1="265" y1="100" x2="335" y2="210" stroke="#f3ece0" stroke-width="2"/>
+              </g>
+              <!-- Right canvas -->
+              <rect x="400" y="30" width="140" height="240" fill="#2a1208"/>
+              <rect x="410" y="40" width="120" height="220" fill="#14110d"/>
+              <g fill="#c5491f" opacity="0.8">
+                <rect x="425" y="80" width="90" height="3"/>
+                <rect x="425" y="110" width="70" height="3"/>
+                <rect x="425" y="140" width="85" height="3"/>
+                <rect x="425" y="170" width="60" height="3"/>
+                <rect x="425" y="200" width="80" height="3"/>
+                <rect x="425" y="230" width="45" height="3"/>
+              </g>
+              <!-- Spotlights -->
+              <path d="M 120 0 L 80 280 L 160 280 Z" fill="#f3ece0" opacity="0.04"/>
+              <path d="M 300 0 L 255 280 L 345 280 Z" fill="#f3ece0" opacity="0.04"/>
+              <path d="M 470 0 L 430 280 L 510 280 Z" fill="#f3ece0" opacity="0.04"/>
+              <!-- Gallery visitors (silhouettes) -->
+              <ellipse cx="200" cy="255" rx="14" ry="20" fill="#0a0806"/>
+              <circle cx="200" cy="233" rx="12" fill="#0a0806"/>
+              <ellipse cx="360" cy="260" rx="12" ry="17" fill="#0a0806"/>
+              <circle cx="360" cy="241" rx="10" fill="#0a0806"/>
+              <!-- DAK'ART label -->
+              <text x="20" y="390" fill="#f3ece0" opacity="0.35" font-family="monospace" font-size="8" letter-spacing="2">DAK'ART BIENNALE · DAKAR · 2026</text>
+            </svg>
+          </div>
+          <div class="num">Feature · 04</div>
+          <h5>The Dakar Biennale Is <em>Still</em> the Most Important Show on Earth</h5>
+          <div class="meta">Art · Dakar · 9 min</div>
+        </article>
+        <article class="mag-item">
+          <div class="mag-item-thumb">
+            <svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+              <defs>
+                <linearGradient id="nightGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#0a0810"/>
+                  <stop offset="60%" stop-color="#1a1025"/>
+                  <stop offset="100%" stop-color="#0c0810"/>
+                </linearGradient>
+              </defs>
+              <rect width="600" height="400" fill="url(#nightGrad)"/>
+              <!-- Stars -->
+              <g fill="#f3ece0" opacity="0.6">
+                <circle cx="50" cy="30" r="1.5"/>
+                <circle cx="150" cy="20" r="1"/>
+                <circle cx="250" cy="45" r="1.5"/>
+                <circle cx="400" cy="25" r="1"/>
+                <circle cx="520" cy="15" r="1.5"/>
+                <circle cx="570" cy="50" r="1"/>
+                <circle cx="80" cy="70" r="1"/>
+                <circle cx="480" cy="60" r="1.5"/>
+              </g>
+              <!-- Riad architecture silhouette -->
+              <rect x="0" y="200" width="600" height="200" fill="#14110d"/>
+              <!-- Central arch -->
+              <path d="M 200 400 L 200 250 Q 200 160 300 160 Q 400 160 400 250 L 400 400 Z" fill="#1a1408"/>
+              <!-- Arch cutout (opening) -->
+              <path d="M 220 400 L 220 260 Q 220 185 300 185 Q 380 185 380 260 L 380 400 Z" fill="#0a0810"/>
+              <!-- Warm light in arch -->
+              <path d="M 240 400 L 240 268 Q 240 205 300 205 Q 360 205 360 268 L 360 400 Z" fill="#c5491f" opacity="0.3"/>
+              <!-- Side walls -->
+              <rect x="0" y="200" width="200" height="200" fill="#1a1408"/>
+              <rect x="400" y="200" width="200" height="200" fill="#1a1408"/>
+              <!-- Decorative tiles -->
+              <g fill="none" stroke="#b38238" stroke-width="1" opacity="0.4">
+                <rect x="30" y="220" width="40" height="40"/>
+                <rect x="40" y="230" width="20" height="20"/>
+                <rect x="80" y="220" width="40" height="40"/>
+                <rect x="90" y="230" width="20" height="20"/>
+                <rect x="460" y="220" width="40" height="40"/>
+                <rect x="470" y="230" width="20" height="20"/>
+                <rect x="510" y="220" width="40" height="40"/>
+                <rect x="520" y="230" width="20" height="20"/>
+              </g>
+              <!-- Film reel overlay suggestion -->
+              <circle cx="490" cy="100" rx="55" ry="55" fill="none" stroke="#f3ece0" stroke-width="2" opacity="0.15"/>
+              <circle cx="490" cy="100" rx="20" ry="20" fill="none" stroke="#f3ece0" stroke-width="2" opacity="0.15"/>
+              <g opacity="0.12" fill="#f3ece0">
+                <rect x="488" y="50" width="4" height="20" rx="2"/>
+                <rect x="488" y="130" width="4" height="20" rx="2"/>
+                <rect x="448" y="98" width="20" height="4" rx="2"/>
+                <rect x="528" y="98" width="20" height="4" rx="2"/>
+              </g>
+              <!-- Moon -->
+              <circle cx="100" cy="80" rx="28" fill="#f3ece0" opacity="0.9"/>
+              <circle cx="112" cy="72" rx="22" fill="#1a1025"/>
+              <text x="20" y="390" fill="#f3ece0" opacity="0.35" font-family="monospace" font-size="8" letter-spacing="2">MARRAKECH FILM FEST · MOROCCO</text>
+            </svg>
+          </div>
+          <div class="num">Diary · 05</div>
+          <h5>Three Nights at the Marrakech Film Festival</h5>
+          <div class="meta">Film · Morocco · 7 min</div>
+        </article>
+        <article class="mag-item">
+          <div class="mag-item-thumb">
+            <svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+              <rect width="600" height="400" fill="#3d2a10"/>
+              <!-- Table surface -->
+              <ellipse cx="300" cy="280" rx="260" ry="80" fill="#2a1a08"/>
+              <ellipse cx="300" cy="275" rx="255" ry="75" fill="#3a2210"/>
+              <!-- Wood grain -->
+              <g stroke="#2a1a08" stroke-width="1" opacity="0.4">
+                <path d="M 50 260 Q 300 245 550 265"/>
+                <path d="M 60 275 Q 300 258 540 278"/>
+                <path d="M 75 290 Q 300 272 525 292"/>
+              </g>
+              <!-- Dishes -->
+              <!-- Bowl of amiwo (tomato stew) -->
+              <ellipse cx="200" cy="258" rx="65" ry="20" fill="#1a1208"/>
+              <ellipse cx="200" cy="252" rx="62" ry="18" fill="#8a2d10"/>
+              <ellipse cx="200" cy="248" rx="55" ry="14" fill="#c5491f"/>
+              <ellipse cx="200" cy="245" rx="42" ry="10" fill="#e05a28" opacity="0.8"/>
+              <!-- Garnish dots -->
+              <circle cx="190" cy="244" r="3" fill="#3d4a2a"/>
+              <circle cx="210" cy="246" r="2" fill="#3d4a2a"/>
+              <!-- Bowl of rice -->
+              <ellipse cx="400" cy="255" rx="65" ry="20" fill="#1a1208"/>
+              <ellipse cx="400" cy="249" rx="62" ry="18" fill="#c5b090"/>
+              <ellipse cx="400" cy="244" rx="55" ry="14" fill="#ddd0b0"/>
+              <!-- Bread/baguette -->
+              <ellipse cx="300" cy="230" rx="80" ry="18" fill="#b38238" rx="8"/>
+              <g stroke="#8a6228" stroke-width="1.5" opacity="0.6">
+                <line x1="240" y1="225" x2="255" y2="235"/>
+                <line x1="270" y1="218" x2="285" y2="228"/>
+                <line x1="300" y1="215" x2="315" y2="225"/>
+                <line x1="330" y1="218" x2="345" y2="228"/>
+              </g>
+              <!-- Drinks / bottles -->
+              <rect x="130" y="190" width="22" height="70" fill="#3d4a2a" rx="3"/>
+              <rect x="134" y="185" width="14" height="12" fill="#2a3520" rx="2"/>
+              <rect x="136" y="180" width="10" height="8" fill="#1a2515" rx="1"/>
+              <ellipse cx="141" cy="255" rx="11" ry="4" fill="#2a3520"/>
+              <!-- Cutlery suggestion -->
+              <line x1="480" y1="220" x2="490" y2="290" stroke="#b38238" stroke-width="2" opacity="0.7"/>
+              <line x1="500" y1="220" x2="505" y2="290" stroke="#b38238" stroke-width="2" opacity="0.7"/>
+              <!-- Ambient warm light -->
+              <ellipse cx="300" cy="200" rx="200" ry="80" fill="#c5491f" opacity="0.08"/>
+              <text x="20" y="390" fill="#f3ece0" opacity="0.35" font-family="monospace" font-size="8" letter-spacing="2">TABLE · COTONOU · BENIN REPUBLIC</text>
+            </svg>
+          </div>
+          <div class="num">Guide · 06</div>
+          <h5>What to Eat in Cotonou (and Who to Eat It With)</h5>
+          <div class="meta">Food · Benin · 5 min</div>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== N°03 · EVENTS ========== -->
+<section class="pillar" id="events">
+  <div class="pillar-header">
+    <div class="pillar-num">N°03</div>
+    <div class="pillar-title">
+      <h3>Moveee <em>Events</em></h3>
+      <p>Curated culture happenings — openings, listening sessions, film screenings and community dinners.</p>
+    </div>
+    <a href="#" class="pillar-link">Full Calendar →</a>
+  </div>
+
+  <div class="pillar-body">
+    <div class="events-grid">
+      <article class="event-card">
+        <div class="event-date">
+          <span class="day">19</span>
+          <span class="month">April</span>
+        </div>
+        <h4>Opening: <em>Soft Machines</em> — Nengi Omuku</h4>
+        <div class="event-meta">
+          Kó Gallery · Ikoyi, Lagos<br>
+          18:00 – 21:00 WAT · Visual Art
+        </div>
+        <span class="event-tag">RSVP · Free</span>
+      </article>
+
+      <article class="event-card">
+        <div class="event-date">
+          <span class="day">26</span>
+          <span class="month">April</span>
+        </div>
+        <h4>Listening Session: <em>Asake</em> at the Shrine</h4>
+        <div class="event-meta">
+          New Afrika Shrine · Ikeja<br>
+          20:00 – 23:00 WAT · Music
+        </div>
+        <span class="event-tag">Members + Guest</span>
+      </article>
+
+      <article class="event-card">
+        <div class="event-date">
+          <span class="day">03</span>
+          <span class="month">May</span>
+        </div>
+        <h4>Moveee Supper Club · <em>Volume IX</em></h4>
+        <div class="event-meta">
+          A private residence · Accra<br>
+          19:30 WAT · Food & Conversation
+        </div>
+        <span class="event-tag">Members Only</span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ========== N°04 · ORIGINS ========== -->
+<section class="pillar" id="origins">
+  <div class="pillar-header">
+    <div class="pillar-num">N°04</div>
+    <div class="pillar-title">
+      <h3>Moveee <em>Origins</em></h3>
+      <p>Slow, writer-led cultural journeys. Not tours — invitations into the places where the work is made.</p>
+    </div>
+    <a href="#" class="pillar-link">All Journeys →</a>
+  </div>
+
+  <div class="pillar-body">
+    <div class="origins-wrap">
+      <div class="origins-intro">
+        <p>Every Origins journey is designed with a resident editor — an artist, chef, writer or curator — who takes a small group (max. 12) into the rooms, studios, markets and kitchens that shape a place. No buses. No scripts. Just time.</p>
+        <div class="origins-stats">
+          <div class="stat">
+            <div class="num">12</div>
+            <div class="label">Cities · 2026</div>
+          </div>
+          <div class="stat">
+            <div class="num">38</div>
+            <div class="label">Resident hosts</div>
+          </div>
+          <div class="stat">
+            <div class="num">7</div>
+            <div class="label">Days average</div>
+          </div>
+          <div class="stat">
+            <div class="num">12</div>
+            <div class="label">Travellers max</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="origins-list">
+        <div class="origin-row">
+          <div class="origin-idx">01</div>
+          <div>
+            <div class="origin-name">Marrakech, <em>the Painters' Route</em></div>
+          </div>
+          <div class="origin-country">Morocco · 7 days</div>
+          <div class="origin-price">$2,400 <small>from</small></div>
+        </div>
+        <div class="origin-row">
+          <div class="origin-idx">02</div>
+          <div>
+            <div class="origin-name">Lagos, <em>After Hours</em></div>
+          </div>
+          <div class="origin-country">Nigeria · 5 days</div>
+          <div class="origin-price">$1,800 <small>from</small></div>
+        </div>
+        <div class="origin-row">
+          <div class="origin-idx">03</div>
+          <div>
+            <div class="origin-name">Dakar during the <em>Biennale</em></div>
+          </div>
+          <div class="origin-country">Senegal · 6 days</div>
+          <div class="origin-price">$2,650 <small>from</small></div>
+        </div>
+        <div class="origin-row">
+          <div class="origin-idx">04</div>
+          <div>
+            <div class="origin-name">Salvador, <em>Bahia in Full</em></div>
+          </div>
+          <div class="origin-country">Brazil · 9 days</div>
+          <div class="origin-price">$3,400 <small>from</small></div>
+        </div>
+        <div class="origin-row">
+          <div class="origin-idx">05</div>
+          <div>
+            <div class="origin-name">Accra, <em>A Writer's Week</em></div>
+          </div>
+          <div class="origin-country">Ghana · 6 days</div>
+          <div class="origin-price">$1,950 <small>from</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== N°05 · LIFESTYLE ========== -->
+<section class="pillar" id="lifestyle">
+  <div class="pillar-header">
+    <div class="pillar-num">N°05</div>
+    <div class="pillar-title">
+      <h3>Moveee <em>Lifestyle</em></h3>
+      <p>Fashion, homeware and craft from a tightly vetted roster of independent makers across the continent and diaspora.</p>
+    </div>
+    <a href="#" class="pillar-link">Enter Shop →</a>
+  </div>
+
+  <div class="pillar-body">
+    <div class="lifestyle-grid">
+      <article class="product">
+        <div class="product-img">
+          <span class="product-vetted">✓ Vetted</span>
+          <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="500" fill="#c5491f"/>
+            <rect x="60" y="80" width="280" height="340" fill="#8a2d10"/>
+            <!-- Adire pattern -->
+            <g fill="#f3ece0" opacity="0.85">
+              <circle cx="120" cy="160" r="18"/>
+              <circle cx="200" cy="160" r="18"/>
+              <circle cx="280" cy="160" r="18"/>
+              <circle cx="120" cy="250" r="18"/>
+              <circle cx="200" cy="250" r="18"/>
+              <circle cx="280" cy="250" r="18"/>
+              <circle cx="120" cy="340" r="18"/>
+              <circle cx="200" cy="340" r="18"/>
+              <circle cx="280" cy="340" r="18"/>
+            </g>
+            <g fill="none" stroke="#f3ece0" stroke-width="1" opacity="0.5">
+              <path d="M 80 130 L 320 130"/>
+              <path d="M 80 220 L 320 220"/>
+              <path d="M 80 310 L 320 310"/>
+              <path d="M 80 400 L 320 400"/>
+            </g>
+          </svg>
+        </div>
+        <div class="product-vendor">Ile Oluji Studio · Lagos</div>
+        <div class="product-name">Adire <em>Silk Scarf</em>, Indigo</div>
+        <div class="product-price">₦ 48,000 · $32</div>
+      </article>
+
+      <article class="product">
+        <div class="product-img">
+          <span class="product-vetted">✓ Vetted</span>
+          <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="500" fill="#3d4a2a"/>
+            <!-- Clay pot -->
+            <ellipse cx="200" cy="480" rx="150" ry="20" fill="#000" opacity="0.3"/>
+            <path d="M 120 200 Q 100 300 120 440 Q 150 470 250 470 Q 300 470 280 440 Q 300 300 280 200 Q 260 180 200 180 Q 140 180 120 200 Z" fill="#6b3020"/>
+            <path d="M 140 220 Q 125 300 140 420 Q 160 440 240 440 Q 280 440 260 420 Q 275 300 260 220" fill="none" stroke="#b38238" stroke-width="2" opacity="0.6"/>
+            <path d="M 150 280 Q 200 290 250 280" stroke="#b38238" stroke-width="1.5" fill="none" opacity="0.5"/>
+            <path d="M 145 330 Q 200 340 255 330" stroke="#b38238" stroke-width="1.5" fill="none" opacity="0.5"/>
+            <path d="M 140 380 Q 200 390 260 380" stroke="#b38238" stroke-width="1.5" fill="none" opacity="0.5"/>
+            <ellipse cx="200" cy="190" rx="60" ry="8" fill="#3a1a10"/>
+          </svg>
+        </div>
+        <div class="product-vendor">Kofi Clay Works · Kumasi</div>
+        <div class="product-name">Hand-thrown <em>Serving Bowl</em></div>
+        <div class="product-price">₵ 420 · $48</div>
+      </article>
+
+      <article class="product">
+        <div class="product-img">
+          <span class="product-vetted">✓ Vetted</span>
+          <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="500" fill="#ebe1d0"/>
+            <!-- Jacket flat -->
+            <path d="M 100 140 L 160 110 L 200 130 L 240 110 L 300 140 L 320 180 L 300 420 L 220 440 L 180 440 L 100 420 L 80 180 Z" fill="#14110d"/>
+            <path d="M 160 110 L 200 140 L 200 440" stroke="#b38238" stroke-width="1.5" opacity="0.4"/>
+            <path d="M 240 110 L 200 140" stroke="#b38238" stroke-width="1.5" opacity="0.4"/>
+            <!-- Buttons -->
+            <circle cx="200" cy="180" r="4" fill="#b38238"/>
+            <circle cx="200" cy="230" r="4" fill="#b38238"/>
+            <circle cx="200" cy="280" r="4" fill="#b38238"/>
+            <circle cx="200" cy="330" r="4" fill="#b38238"/>
+            <!-- Pocket -->
+            <rect x="230" y="290" width="50" height="40" fill="none" stroke="#b38238" stroke-width="1" opacity="0.4"/>
+            <rect x="120" y="290" width="50" height="40" fill="none" stroke="#b38238" stroke-width="1" opacity="0.4"/>
+          </svg>
+        </div>
+        <div class="product-vendor">Orange Culture · Lagos</div>
+        <div class="product-name">Utility <em>Work Jacket</em>, Black</div>
+        <div class="product-price">$285</div>
+      </article>
+
+      <article class="product">
+        <div class="product-img">
+          <span class="product-vetted">✓ Vetted</span>
+          <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="400" height="500" fill="#b38238"/>
+            <!-- Beaded necklace -->
+            <g fill="#14110d">
+              <circle cx="200" cy="160" r="14"/>
+              <circle cx="175" cy="170" r="12"/>
+              <circle cx="225" cy="170" r="12"/>
+              <circle cx="150" cy="190" r="11"/>
+              <circle cx="250" cy="190" r="11"/>
+              <circle cx="130" cy="220" r="10"/>
+              <circle cx="270" cy="220" r="10"/>
+              <circle cx="115" cy="255" r="10"/>
+              <circle cx="285" cy="255" r="10"/>
+              <circle cx="108" cy="295" r="10"/>
+              <circle cx="292" cy="295" r="10"/>
+              <circle cx="115" cy="335" r="11"/>
+              <circle cx="285" cy="335" r="11"/>
+              <circle cx="135" cy="365" r="12"/>
+              <circle cx="265" cy="365" r="12"/>
+              <circle cx="165" cy="385" r="13"/>
+              <circle cx="235" cy="385" r="13"/>
+              <circle cx="200" cy="395" r="18" fill="#c5491f"/>
+            </g>
+          </svg>
+        </div>
+        <div class="product-vendor">Maki Oh · Lagos</div>
+        <div class="product-name">Oxblood <em>Beaded</em> Necklace</div>
+        <div class="product-price">$140</div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ========== N°06 · CONNECT (membership) ========== -->
+<section class="connect" id="connect">
+  <div class="connect-inner">
+    <div>
+      <div class="connect-num">N°06 · The Membership</div>
+      <h3>Moveee <em>Connect</em>.<br>For people who take culture seriously.</h3>
+      <p>A members' platform for discovering and meeting other culture lovers — in supper clubs, gallery openings, cinema nights and group chats that actually go somewhere. Virtual and IRL. Lagos to London, Accra to New York.</p>
+    </div>
+
+    <div class="connect-right">
+      <div class="perks">
+        <div class="perk">
+          <span class="n">01</span>
+          <p>Full access to <em>Culture Narratives</em>, our quarterly essay archive</p>
+        </div>
+        <div class="perk">
+          <span class="n">02</span>
+          <p>Priority invitations to <em>Moveee Events</em> — including members-only dinners</p>
+        </div>
+        <div class="perk">
+          <span class="n">03</span>
+          <p>First access to <em>Origins</em> journeys before public release</p>
+        </div>
+        <div class="perk">
+          <span class="n">04</span>
+          <p>A members-only directory and <em>group chats</em> by city and interest</p>
+        </div>
+        <div class="perk">
+          <span class="n">05</span>
+          <p>15% off everything in the <em>Lifestyle</em> shop, always</p>
+        </div>
+      </div>
+
+      <div class="connect-cta">
+        <a href="#" class="btn-gold">Become a Member →</a>
+        <span class="connect-price">from $9 / month · cancel anytime</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <img src="https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png" class="footer-brand-logo" alt="Moveee">
+      <p>A community-based culture platform documenting and celebrating the daring moves of Africa and its diaspora. Since 2022.</p>
+      <form class="newsletter" onsubmit="event.preventDefault()">
+        <input type="email" placeholder="your@email.com" />
+        <button type="submit">Subscribe</button>
+      </form>
+    </div>
+
+    <div>
+      <h5>Platform</h5>
+      <ul>
+        <li><a href="#magazine">Magazine</a></li>
+        <li><a href="#events">Events</a></li>
+        <li><a href="#origins">Origins</a></li>
+        <li><a href="#lifestyle">Lifestyle</a></li>
+        <li><a href="#connect">Connect</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h5>The Moveee</h5>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Culture Narratives</a></li>
+        <li><a href="#">Submit Work</a></li>
+        <li><a href="#">Become a Vendor</a></li>
+        <li><a href="#">Press</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h5>Follow</h5>
+      <ul>
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">LinkedIn</a></li>
+        <li><a href="#">Substack</a></li>
+        <li><a href="#">YouTube</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span>© 2026 The Moveee · Lagos, NG</span>
+    <span>Best in Culture</span>
+    <span>Privacy · Terms</span>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,173 @@
+/**
+ * Culture Community - Analytics Dashboard Styles
+ */
+
+.culture-analytics__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 20px 0 30px;
+}
+
+.culture-analytics__card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    border-left: 4px solid #2c3e50;
+}
+
+.culture-analytics__card--accent {
+    border-left-color: #e67e22;
+}
+
+.culture-analytics__card--success {
+    border-left-color: #27ae60;
+}
+
+.culture-analytics__card--warning {
+    border-left-color: #f39c12;
+}
+
+.culture-analytics__card-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2c3e50;
+    line-height: 1.2;
+}
+
+.culture-analytics__card--accent .culture-analytics__card-value {
+    color: #e67e22;
+}
+
+.culture-analytics__card--success .culture-analytics__card-value {
+    color: #27ae60;
+}
+
+.culture-analytics__card--warning .culture-analytics__card-value {
+    color: #f39c12;
+}
+
+.culture-analytics__card-label {
+    font-size: 13px;
+    color: #7f8c8d;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Charts */
+.culture-analytics__charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 1200px) {
+    .culture-analytics__charts {
+        grid-template-columns: 1fr;
+    }
+}
+
+.culture-analytics__chart-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    overflow: hidden;
+}
+
+.culture-analytics__chart-box h2 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    color: #2c3e50;
+}
+
+.culture-analytics__chart-wrap {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+.culture-analytics__chart-box canvas {
+    width: 100% !important;
+    max-height: 300px;
+}
+
+/* Tables */
+.culture-analytics__tables {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 1200px) {
+    .culture-analytics__tables {
+        grid-template-columns: 1fr;
+    }
+}
+
+.culture-analytics__table-box,
+.culture-analytics__section {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.culture-analytics__table-box h2,
+.culture-analytics__section h2 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    color: #2c3e50;
+}
+
+.culture-analytics__empty {
+    text-align: center;
+    color: #7f8c8d;
+    padding: 20px;
+}
+
+/* Tier badges */
+.culture-analytics__tier {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.culture-analytics__tier--patron {
+    background: #fef0e0;
+    color: #e67e22;
+}
+
+.culture-analytics__tier--citizen {
+    background: #ecf0f1;
+    color: #7f8c8d;
+}
+
+/* Event type */
+.culture-analytics__event-type {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.culture-analytics__event-type--physical {
+    background: #fef0e0;
+    color: #e67e22;
+}
+
+.culture-analytics__event-type--virtual {
+    background: #ecf0f1;
+    color: #2c3e50;
+}

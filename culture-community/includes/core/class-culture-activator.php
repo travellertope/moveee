@@ -1,0 +1,81 @@
+<?php
+/**
+ * Plugin activator - handles DB table creation, role setup, and cleanup.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+class Culture_Activator {
+
+    /**
+     * Run on plugin activation.
+     */
+    public static function activate() {
+        self::create_tables();
+        self::create_roles();
+        Culture_Cron::schedule();
+        flush_rewrite_rules();
+    }
+
+    /**
+     * Run on plugin deactivation.
+     */
+    public static function deactivate() {
+        Culture_Cron::unschedule();
+        flush_rewrite_rules();
+    }
+
+    /**
+     * Create the custom attendance table.
+     */
+    public static function create_tables() {
+        global $wpdb;
+
+        $table_name      = $wpdb->prefix . 'culture_attendance';
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE {$table_name} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            event_id bigint(20) NOT NULL,
+            status varchar(20) DEFAULT 'checked_in',
+            checkin_time datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY user_event (user_id, event_id)
+        ) {$charset_collate};";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta( $sql );
+
+        update_option( 'culture_db_version', CULTURE_VERSION );
+    }
+
+    /**
+     * Create the Chapter Leader role with specific capabilities.
+     */
+    public static function create_roles() {
+        // Remove existing role first to update capabilities cleanly.
+        remove_role( 'chapter_leader' );
+
+        add_role( 'chapter_leader', __( 'Chapter Leader', 'culture-community' ), array(
+            'read'                     => true,
+            'edit_posts'               => true,
+            'upload_files'             => true,
+            'culture_manage_events'    => true,
+            'culture_scan_qr'          => true,
+            'culture_manage_chapter'   => true,
+            'culture_view_attendance'  => true,
+        ) );
+
+        // Grant admins the culture capabilities.
+        $admin_role = get_role( 'administrator' );
+        if ( $admin_role ) {
+            $admin_role->add_cap( 'culture_manage_events' );
+            $admin_role->add_cap( 'culture_scan_qr' );
+            $admin_role->add_cap( 'culture_manage_chapter' );
+            $admin_role->add_cap( 'culture_view_attendance' );
+        }
+    }
+}
