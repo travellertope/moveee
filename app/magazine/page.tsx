@@ -3,6 +3,7 @@ import { getWPData, GET_STORIES, GET_FILTERS, GET_TAX_STORIES } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 import Ticker from "@/components/Ticker";
+import CategoryNav from "@/components/CategoryNav";
 import MagazineFilters from "@/components/MagazineFilters";
 import "../magazine.css";
 
@@ -83,20 +84,11 @@ export default async function MagazineArchive({
           </div>
         </div>
         <div className="mag-tabs-container">
-          <div className="mag-nav-primary overflow-visible">
-            {topCategories.map((cat) => {
-              const isActive = (currentCategory === cat.slug) || (!currentCategory && !currentIndustry && !currentCountry && !currentSeries && !cat.slug);
-              return (
-                <Link key={cat.name} href={cat.slug ? `/magazine?category=${cat.slug}` : "/magazine"} style={{ textDecoration: 'none' }}>
-                  <button className={`tab ${isActive ? 'active' : ''}`}>
-                    {cat.name}
-                  </button>
-                </Link>
-              );
-            })}
-            
-            {/* Expanded categories are rendered above */}
-          </div>
+          <CategoryNav 
+            categories={topCategories} 
+            currentCategory={currentCategory}
+            activeFilter={!!(currentIndustry || currentCountry || currentSeries)}
+          />
           
           <div className="secondary-filters-wrap">
             <MagazineFilters filters={filters} />
