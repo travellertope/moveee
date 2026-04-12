@@ -3,7 +3,7 @@ import { getWPData, GET_NEWSLETTERS } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 import SubscribeForm from "@/components/SubscribeForm";
-import "../digest.css";
+import "../newsletter.css";
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +65,7 @@ export default async function DigestArchive() {
           {/* ── HERO ISSUE ── */}
           {heroIssue && (
             <section className="digest-hero">
-              <Link href={`/digest/${heroIssue.slug}`} className="digest-hero-link">
+              <Link href={`/newsletter/${heroIssue.slug}`} className="digest-hero-link">
                 <div className="digest-hero-img">
                   {heroIssue.featuredImage?.node?.sourceUrl ? (
                     <Image
@@ -104,7 +104,7 @@ export default async function DigestArchive() {
               <div className="digest-section-label">Recent Issues</div>
               <div className="digest-grid-3">
                 {latestIssues.map((issue: any) => (
-                  <Link key={issue.id} href={`/digest/${issue.slug}`} className="digest-card">
+                  <Link key={issue.id} href={`/newsletter/${issue.slug}`} className="digest-card">
                     <div className="digest-card-img">
                       {issue.featuredImage?.node?.sourceUrl ? (
                         <Image
@@ -146,7 +146,7 @@ export default async function DigestArchive() {
               <div className="digest-section-label">Archive</div>
               <div className="digest-archive-list">
                 {archiveIssues.map((issue: any, idx: number) => (
-                  <Link key={issue.id} href={`/digest/${issue.slug}`} className="digest-archive-row">
+                  <Link key={issue.id} href={`/newsletter/${issue.slug}`} className="digest-archive-row">
                     <span className="digest-archive-num">{String(archiveIssues.length - idx).padStart(2, "0")}</span>
                     <span className="digest-archive-date">
                       {new Date(issue.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}

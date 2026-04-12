@@ -67,7 +67,7 @@ export default async function DigestIssuePage({ params }: { params: Promise<{ sl
       {/* ── BREADCRUMB ── */}
       <div className="breadcrumb">
         <Link href="/">Home</Link><span className="sep">/</span>
-        <Link href="/digest">The Cultural Digest</Link><span className="sep">/</span>
+        <Link href="/newsletter">The Cultural Digest</Link><span className="sep">/</span>
         <span className="breadcrumb-current" dangerouslySetInnerHTML={{ __html: issue.title }} />
       </div>
 
@@ -150,7 +150,7 @@ export default async function DigestIssuePage({ params }: { params: Promise<{ sl
           <div className="digest-sidebar-card dark">
             <div className="digest-sidebar-label">The Archive</div>
             <h4>Read past issues</h4>
-            <Link href="/digest" className="digest-sidebar-link">Browse all issues →</Link>
+            <Link href="/newsletter" className="digest-sidebar-link">Browse all issues →</Link>
           </div>
         </aside>
       </div>
@@ -158,7 +158,7 @@ export default async function DigestIssuePage({ params }: { params: Promise<{ sl
       {/* ── PREV / NEXT NAV ── */}
       <nav className="digest-issue-nav">
         {prevIssue ? (
-          <Link href={`/digest/${prevIssue.slug}`} className="digest-nav-item prev">
+          <Link href={`/newsletter/${prevIssue.slug}`} className="digest-nav-item prev">
             <span className="digest-nav-label">← Previous Issue</span>
             <span className="digest-nav-title" dangerouslySetInnerHTML={{ __html: prevIssue.title }} />
             <span className="digest-nav-date">
@@ -167,7 +167,7 @@ export default async function DigestIssuePage({ params }: { params: Promise<{ sl
           </Link>
         ) : <div />}
         {nextIssue ? (
-          <Link href={`/digest/${nextIssue.slug}`} className="digest-nav-item next">
+          <Link href={`/newsletter/${nextIssue.slug}`} className="digest-nav-item next">
             <span className="digest-nav-label">Next Issue →</span>
             <span className="digest-nav-title" dangerouslySetInnerHTML={{ __html: nextIssue.title }} />
             <span className="digest-nav-date">
