@@ -3,8 +3,6 @@ import { getWPData, GET_STORIES } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 import Ticker from "@/components/Ticker";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import "../magazine.css";
 
 export const dynamic = "force-dynamic";
@@ -46,8 +44,6 @@ export default async function MagazineArchive({
 
   return (
     <>
-      <Header />
-
       {/* ── MAGAZINE MASTHEAD ── */}
       <section className="mag-head">
         <div className="mag-head-inner">
@@ -292,8 +288,6 @@ export default async function MagazineArchive({
           </div>
         </div>
       </section>
-      
-      <Footer />
     </>
   );
 }

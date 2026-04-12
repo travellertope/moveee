@@ -3,8 +3,6 @@ import { getWPData, GET_AUTHOR_STORIES } from "@/lib/wp";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import Marquee from "@/components/Marquee";
 import "@/app/homepage.css";
 
@@ -48,7 +46,6 @@ export default async function AuthorArchivePage({ params }: { params: Promise<{ 
 
   return (
     <div className="bg-paper min-h-screen text-ink font-sans relative flex flex-col">
-      <Header />
       <Marquee />
 
       <main className="flex-grow pt-8 lg:pt-[60px] pb-20">
@@ -106,8 +103,6 @@ export default async function AuthorArchivePage({ params }: { params: Promise<{ 
         </section>
 
       </main>
-
-      <Footer />
     </div>
   );
 }
