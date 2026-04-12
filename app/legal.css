@@ -1,0 +1,190 @@
+/* ========== LEGAL / POLICY PAGES ========== */
+
+.legal-wrap {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 60px 40px 120px;
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Page header ── */
+.legal-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.legal-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 32px;
+  height: 1px;
+  background: var(--ochre);
+}
+
+.legal-wrap h1 {
+  font-size: clamp(38px, 5vw, 68px);
+  font-weight: 300;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  margin-bottom: 20px;
+}
+.legal-wrap h1 em { font-style: italic; color: var(--ochre); }
+
+.legal-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mute);
+  padding-bottom: 36px;
+  border-bottom: 2px solid var(--rule);
+  margin-bottom: 52px;
+}
+
+/* ── Body ── */
+.legal-body {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+.legal-body h2 {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(22px, 2.5vw, 30px);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ink);
+  margin-top: 48px;
+  margin-bottom: 14px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.legal-body h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-top: 28px;
+  margin-bottom: 8px;
+}
+
+.legal-body p {
+  margin-bottom: 18px;
+}
+
+.legal-body ul, .legal-body ol {
+  padding-left: 22px;
+  margin-bottom: 18px;
+}
+.legal-body li {
+  margin-bottom: 8px;
+}
+
+.legal-body a {
+  color: var(--ochre);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(197,73,31,.35);
+  padding-bottom: 1px;
+  transition: border-color 0.2s;
+}
+.legal-body a:hover { border-bottom-color: var(--ochre); }
+
+.legal-body strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.legal-divider {
+  border: none;
+  border-top: 1px solid rgba(42,36,28,.15);
+  margin: 40px 0;
+}
+
+/* ── Contact grid ── */
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin: 36px 0;
+}
+.contact-card {
+  background: var(--paper);
+  padding: 28px 24px;
+}
+.contact-card-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-bottom: 8px;
+}
+.contact-card h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ink);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+.contact-card p {
+  font-size: 13px;
+  color: var(--mute);
+  line-height: 1.55;
+  margin-bottom: 12px;
+}
+.contact-card a {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.contact-card a:hover { color: var(--ochre); border-color: var(--ochre); }
+
+/* ── Cookie type pills ── */
+.cookie-type {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--rule);
+  color: var(--mute);
+  margin-right: 6px;
+  margin-bottom: 6px;
+}
+.cookie-type--required {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.cookie-type--analytics {
+  background: var(--ochre);
+  color: var(--paper);
+  border-color: var(--ochre);
+}
+
+@media (max-width: 640px) {
+  .legal-wrap { padding: 40px 22px 80px; }
+  .contact-grid { grid-template-columns: 1fr; }
+}
