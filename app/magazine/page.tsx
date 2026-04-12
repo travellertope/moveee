@@ -145,13 +145,13 @@ export default async function MagazineArchive({
               {heroStory.categories?.nodes?.[0]?.name || "Featured"}
             </div>
             
-            <Link href={`/magazine/${heroStory.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link href={`/magazine/${heroStory.slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
               <div className="hf-img tall">
                 {heroStory.featuredImage?.node?.sourceUrl ? (
-                  <Image 
-                    src={heroStory.featuredImage.node.sourceUrl} 
-                    alt={heroStory.featuredImage.node.altText || ""} 
-                    fill 
+                  <Image
+                    src={heroStory.featuredImage.node.sourceUrl}
+                    alt={heroStory.featuredImage.node.altText || ""}
+                    fill
                     style={{ objectFit: 'cover' }}
                     priority
                   />
@@ -164,7 +164,7 @@ export default async function MagazineArchive({
               <h2 className="hf-title" dangerouslySetInnerHTML={{ __html: heroStory.title }} />
             </Link>
 
-            <div className="hf-standfirst" dangerouslySetInnerHTML={{ __html: heroStory.excerpt }} />
+            <div className="hf-standfirst" dangerouslySetInnerHTML={{ __html: heroStory.excerpt?.replace(/<[^>]*>/g, '') || '' }} />
             
             <div className="hf-meta">
               <span>{new Date(heroStory.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
