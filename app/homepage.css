@@ -1079,13 +1079,19 @@
     .pillar-num { font-size: 52px; }
     .pillar-title h3 { font-size: 42px; }
 
-    /* Masthead: logo + hamburger on mobile */
+    /* Masthead: logo left-aligned + hamburger on mobile */
     .masthead-left, .masthead-right { display: none; }
     .masthead {
       grid-template-columns: 1fr auto;
       padding: 16px 24px;
       gap: 0;
     }
+    .wordmark {
+      align-items: flex-start;
+      text-align: left;
+    }
+    .wordmark img { height: 32px; }
+    .wordmark .kicker { font-size: 7px; margin-bottom: 5px; }
     .masthead-hamburger { display: block; }
     .mobile-menu { display: block; }
   }

@@ -51,7 +51,7 @@ const Ticker = ({
   );
 
   return (
-    <div className="bg-black text-white py-6 overflow-hidden whitespace-nowrap border-b border-white/10 uppercase text-[10px] tracking-[0.2em] font-sans font-medium">
+    <div className="bg-black text-white py-2 overflow-hidden whitespace-nowrap border-b border-white/10 uppercase text-[10px] tracking-[0.2em] font-sans font-medium">
       <div className="flex w-max animate-marquee">
         {/* Two copies: animation translates -50% (= one copy width) for seamless loop */}
         {Array(2).fill(null).map((_, i) => (
