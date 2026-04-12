@@ -70,6 +70,24 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     });
   }
 
+  // Intercept and rewrite internal WP links to use proper Next.js routing
+  const cleanContent = (html: string) => {
+    if (!html) return html;
+    return html.replace(
+      /href="https?:\/\/(?:18\.175\.121\.188|cms\.themoveee\.com)\/([^"]*)"/gi,
+      (match, path) => {
+        // Exclude direct media assets
+        if (path.startsWith('wp-content/')) return match;
+        // Map native categorisation
+        if (path.startsWith('category/')) return `href="/magazine?category=${path.replace('category/', '').replace(/\/$/, '')}"`;
+        if (path.startsWith('author/')) return `href="/author/${path.replace('author/', '')}"`;
+        // Assume all other native links are relative to magazine
+        return `href="/magazine/${path}"`;
+      }
+    );
+  };
+  const processedContent = cleanContent(post.content);
+
   return (
     <>
       <ProgressBar />
@@ -230,7 +248,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         <div className="prose" id="article-body">
           <div
             className="prose-content"
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: processedContent }}
           />
         </div>
 
