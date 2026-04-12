@@ -1333,8 +1333,14 @@
   @media (max-width: 640px) {
     .container, .hero, .pillar, .connect, footer, .masthead, .masthead-bar { padding-left: 22px; padding-right: 22px; }
     .wordmark h1 { font-size: 32px; }
-    .hero { padding: 50px 22px 60px; }
-    .hero h2 { font-size: 36px; line-height: 1.0; margin-bottom: 24px; }
+    .hero { padding: 48px 20px 60px; }
+    .hero h2 { 
+      font-size: clamp(28px, 9vw, 32px); 
+      line-height: 1.05; 
+      margin-bottom: 24px; 
+      word-wrap: break-word; 
+      overflow-wrap: break-word;
+    }
     .hero-standfirst { font-size: 15px; margin-bottom: 32px; }
     .events-grid, .lifestyle-grid { grid-template-columns: 1fr; gap: 24px; }
     .footer-top { grid-template-columns: 1fr; }
