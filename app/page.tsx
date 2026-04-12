@@ -135,7 +135,7 @@ export default async function Home() {
                         src={magLeadStory.featuredImage.node.sourceUrl} 
                         alt={magLeadStory.featuredImage.node.altText || ""} 
                         fill 
-                        className="object-cover"
+                        className="object-cover grayscale-0 hover:grayscale transition-all duration-700"
                       />
                     )}
                   </div>
@@ -162,7 +162,7 @@ export default async function Home() {
                           src={story.featuredImage.node.sourceUrl} 
                           alt={story.featuredImage.node.altText || ""} 
                           fill 
-                          className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                          className="object-cover grayscale-0 hover:grayscale transition-all duration-700"
                         />
                       )}
                     </div>
