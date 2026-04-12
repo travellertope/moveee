@@ -1229,8 +1229,8 @@
 
   .search-result-arrow {
     color: var(--mute);
-    font-size: 14px;
     flex-shrink: 0;
+    display: flex;
     transition: color 0.2s;
   }
   .search-result-item:hover .search-result-arrow { color: var(--ochre); }
