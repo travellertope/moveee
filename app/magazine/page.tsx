@@ -86,7 +86,7 @@ export default async function MagazineArchive({
         <div className="mag-tabs-container">
           <CategoryNav 
             categories={topCategories} 
-            currentCategory={currentCategory}
+            currentCategory={currentCategory || null}
             activeFilter={!!(currentIndustry || currentCountry || currentSeries)}
           />
           
