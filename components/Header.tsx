@@ -24,8 +24,8 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const tickerData = siteSettings?.mastheadTicker || {};
 
   return (
-    <>
-      <div className="relative z-50 group">
+    <div className="sticky top-0 z-50">
+      <div className="relative group">
         <Ticker 
           issueText={tickerData.issueText}
           issueUrl={tickerData.issueUrl}
@@ -66,8 +66,8 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         <div className="wordmark">
           <div className="kicker">Est. 2022 · Best in Culture</div>
           <Link href="/" className="hover:opacity-80 transition-opacity flex justify-center">
-            <img 
-              src="https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png" 
+            <img
+              src="https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png"
               alt="The Moveee Logo"
               style={{ maxHeight: '48px', width: 'auto' }}
             />
@@ -79,7 +79,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           <Link href="/connect" className="join-btn" style={{ textDecoration: 'none' }}>Join Connect →</Link>
         </div>
       </header>
-    </>
+    </div>
   );
 };
 
