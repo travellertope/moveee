@@ -168,6 +168,10 @@ export default async function Home() {
                     </div>
                     <div className="num">0{idx + 1}</div>
                     <h5>{story.title}</h5>
+                    <div 
+                      className="text-xs text-ink-soft mb-3 line-clamp-2 opacity-80"
+                      dangerouslySetInnerHTML={{ __html: story.excerpt }}
+                    />
                     <div className="meta">
                       {story.categories?.nodes[0]?.name || "Culture"}
                       {story.countries?.nodes[0]?.name ? ` · ${story.countries.nodes[0].name}` : ''}
