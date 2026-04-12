@@ -278,10 +278,11 @@ class Culture_Newsletter_Importer {
 
         $campaign = $wpdb->get_row( $wpdb->prepare(
             "SELECT n.id, n.subject, n.preheader, n.body, n.sent_at, n.newsletter_date,
-                    q.newsletter_rendered_body
+                    ( SELECT q.newsletter_rendered_body
+                      FROM {$wpdb->prefix}mailpoet_sending_queues q
+                      WHERE q.newsletter_id = n.id AND q.status = 'completed'
+                      ORDER BY q.id DESC LIMIT 1 ) AS newsletter_rendered_body
              FROM {$wpdb->prefix}mailpoet_newsletters n
-             LEFT JOIN {$wpdb->prefix}mailpoet_sending_queues q
-                    ON q.newsletter_id = n.id AND q.status = 'completed'
              WHERE n.id = %d AND n.type = 'standard' AND n.deleted_at IS NULL
              LIMIT 1",
             $mp_id
@@ -474,27 +475,25 @@ class Culture_Newsletter_Importer {
     private static function get_mailpoet_campaigns() {
         global $wpdb;
 
-        // Broad query: include 'sent' and 'sending' statuses, plus any newsletter
-        // that has a completed queue entry regardless of its status flag.
-        // This handles cases where MailPoet gets stuck mid-send or uses a
-        // slightly different status string in newer versions.
+        // Include 'sent' and 'sending' so campaigns mid-send are visible too.
+        // All non-aggregated columns are listed in GROUP BY to satisfy
+        // MySQL's ONLY_FULL_GROUP_BY mode (default since MySQL 5.7).
         $rows = $wpdb->get_results(
             "SELECT
                 n.id,
                 n.subject,
                 n.preheader,
                 n.status,
-                COALESCE( n.sent_at, MAX( q.created_at ) ) AS sent_at,
-                COALESCE( SUM( q.count_total ), 0 )        AS recipients
+                n.sent_at,
+                COALESCE( SUM( q.count_total ), 0 ) AS recipients
              FROM {$wpdb->prefix}mailpoet_newsletters n
              LEFT JOIN {$wpdb->prefix}mailpoet_sending_queues q
                     ON q.newsletter_id = n.id AND q.status = 'completed'
              WHERE n.type = 'standard'
                AND n.status IN ( 'sent', 'sending' )
                AND n.deleted_at IS NULL
-             GROUP BY n.id
-             HAVING recipients > 0 OR n.status = 'sent'
-             ORDER BY sent_at DESC"
+             GROUP BY n.id, n.subject, n.preheader, n.status, n.sent_at
+             ORDER BY n.sent_at DESC"
         );
 
         if ( empty( $rows ) ) {
