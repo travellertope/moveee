@@ -152,7 +152,7 @@ export default async function Home() {
               </Link>
             )}
 
-            <div className="mag-list col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
+            <div className="mag-list grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
               {remainingStories.map((story: any, idx: number) => (
                 <Link key={story.id} href={`/magazine/${story.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <article className="mag-item h-full">

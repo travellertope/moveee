@@ -505,12 +505,12 @@
 
   .pillar-header {
     max-width: 1440px;
-    margin: 0 auto 64px;
+    margin: 0 auto 72px;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 48px;
     border-bottom: 1px solid var(--rule);
-    padding-bottom: 32px;
+    padding-bottom: 36px;
   }
 
   .pillar-num {
@@ -524,7 +524,7 @@
 
   .pillar-title {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 48px;
     flex: 1;
   }
@@ -570,18 +570,19 @@
   /* ========== MAGAZINE SECTION ========== */
   .mag-grid {
     display: grid;
-    grid-template-columns: 1.4fr 1.6fr;
-    gap: 60px;
-    align-items: start;
+    grid-template-columns: 1.15fr 1.85fr;
+    gap: 64px;
+    align-items: stretch;
   }
 
   .mag-lead {
-    border-right: 1px solid var(--rule);
-    padding-right: 40px;
+    border-right: 1px solid rgba(42, 36, 28, 0.15);
+    padding-right: 64px;
+    height: 100%;
   }
   .mag-lead .cover {
     width: 100%;
-    aspect-ratio: 3/4;
+    aspect-ratio: 0.82;
     background: linear-gradient(160deg, #2a1f15 0%, #0c0805 100%);
     margin-bottom: 24px;
     position: relative;
