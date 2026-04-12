@@ -109,7 +109,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <div className="byline-bar">
               <div className="b-item">
                 <div className="b-label">Words by</div>
-                <div className="b-val">The Moveee</div>
+                <div className="b-val">{post.author?.node?.name || "The Moveee"}</div>
               </div>
               <div className="b-item">
                 <div className="b-label">Published</div>
