@@ -4,7 +4,7 @@ import "./globals.css";
 import "./homepage.css";
 import "./editorial.css";
 import "./not-found.css";
-import "./digest.css";
+import "./newsletter.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { GoogleAnalytics } from '@next/third-parties/google';
