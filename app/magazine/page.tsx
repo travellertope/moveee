@@ -1,8 +1,9 @@
 import React from "react";
-import { getWPData, GET_STORIES } from "@/lib/wp";
+import { getWPData, GET_STORIES, GET_FILTERS, GET_TAX_STORIES } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 import Ticker from "@/components/Ticker";
+import MagazineFilters from "@/components/MagazineFilters";
 import "../magazine.css";
 
 export const dynamic = "force-dynamic";
@@ -10,28 +11,48 @@ export const dynamic = "force-dynamic";
 export default async function MagazineArchive({ 
   searchParams 
 }: { 
-  searchParams: Promise<{ category?: string }> 
+  searchParams: Promise<{ category?: string, industry?: string, country?: string, series?: string }> 
 }) {
   const resolvedParams = await searchParams;
   const currentCategory = resolvedParams?.category;
+  const currentIndustry = resolvedParams?.industry;
+  const currentCountry = resolvedParams?.country;
+  const currentSeries = resolvedParams?.series;
+
   let stories: any[] = [];
+  let filters: any = null;
+
   try {
-    const data = await getWPData(GET_STORIES, { 
-      first: 24, 
-      categoryName: currentCategory 
-    });
-    stories = data?.posts?.nodes || [];
+    filters = await getWPData(GET_FILTERS);
+
+    if (currentIndustry || currentCountry || currentSeries) {
+      const taxData = await getWPData(GET_TAX_STORIES, {
+        industry: currentIndustry || null,
+        country: currentCountry || null,
+        series: currentSeries || null,
+      });
+
+      if (currentIndustry) stories = taxData?.industry?.posts?.nodes || [];
+      else if (currentCountry) stories = taxData?.country?.posts?.nodes || [];
+      else if (currentSeries) stories = taxData?.seriesItem?.posts?.nodes || [];
+    } else {
+      const data = await getWPData(GET_STORIES, { 
+        first: 24, 
+        categoryName: currentCategory 
+      });
+      stories = data?.posts?.nodes || [];
+    }
   } catch {
     // CMS unreachable
   }
 
+  // Construct dynamic categories wrapper from WP taxonomy fetch
   const categories = [
     { name: "All Stories", slug: "" },
-    { name: "Culture", slug: "culture" },
-    { name: "Lifestyle", slug: "lifestyle" },
-    { name: "Interviews", slug: "interviews" },
-    { name: "Portraits", slug: "portraits" },
-    { name: "Dispatches", slug: "dispatches" }
+    ...(filters?.categories?.nodes?.map((c: any) => ({
+      name: c.name,
+      slug: c.slug
+    })) || [])
   ];
 
   const heroStory = stories[0] || null;
@@ -60,17 +81,21 @@ export default async function MagazineArchive({
             <div className="issue-num">N°02</div>
           </div>
         </div>
-        <div className="mag-head-tabs">
-          {categories.map((cat) => {
-            const isActive = currentCategory === cat.slug || (!currentCategory && !cat.slug);
-            return (
-              <Link key={cat.name} href={cat.slug ? `/magazine?category=${cat.slug}` : "/magazine"} style={{ textDecoration: 'none' }}>
-                <button className={`tab ${isActive ? 'active' : ''}`}>
-                  {cat.name}
-                </button>
-              </Link>
-            );
-          })}
+        <div className="flex flex-col md:flex-row md:items-center justify-between border-t border-rule mt-[60px] md:mt-0">
+          <div className="mag-head-tabs border-t-0 flex-1">
+            {categories.map((cat) => {
+              const isActive = (currentCategory === cat.slug) || (!currentCategory && !currentIndustry && !currentCountry && !currentSeries && !cat.slug);
+              return (
+                <Link key={cat.name} href={cat.slug ? `/magazine?category=${cat.slug}` : "/magazine"} style={{ textDecoration: 'none' }}>
+                  <button className={`tab ${isActive ? 'active' : ''}`}>
+                    {cat.name}
+                  </button>
+                </Link>
+              );
+            })}
+          </div>
+          
+          <MagazineFilters filters={filters} />
         </div>
       </section>
 

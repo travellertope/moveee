@@ -110,6 +110,25 @@ export const GET_STORIES = `
       }
     }
   }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
+export const GET_FILTERS = `
+  query GetFilters {
+    categories(where: { hideEmpty: true }, first: 100) { nodes { name, slug } }
+    industries(where: { hideEmpty: true }, first: 100) { nodes { name, slug } }
+    countries(where: { hideEmpty: true }, first: 100) { nodes { name, slug } }
+    series(where: { hideEmpty: true }, first: 100) { nodes { name, slug } }
+  }
+`;
+
+export const GET_TAX_STORIES = `
+  query GetTaxStories($category: String, $series: ID, $industry: ID, $country: ID) {
+    seriesItem(id: $series, idType: SLUG) { posts(first: 24) { nodes { ...StoryFields } } }
+    industry(id: $industry, idType: SLUG) { posts(first: 24) { nodes { ...StoryFields } } }
+    country(id: $country, idType: SLUG) { posts(first: 24) { nodes { ...StoryFields } } }
+  }
   ${STORY_FIELDS_FRAGMENT}
 `;
 
