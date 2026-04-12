@@ -114,10 +114,10 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
         {/* ── Results ── */}
         {hasResults && (
           <div className="search-results">
-            <ResultSection label="Magazine" items={results!.magazine} basePath="/magazine" />
-            <ResultSection label="Events"   items={results!.events}   basePath="/events" />
-            <ResultSection label="Origins"  items={results!.origins}  basePath="/origins" />
-            <ResultSection label="Shop"     items={results!.products} basePath="/shop" isProduct />
+            <ResultSection label="Magazine" items={results!.magazine} basePath="/magazine" onClose={onClose} />
+            <ResultSection label="Events"   items={results!.events}   basePath="/events"   onClose={onClose} />
+            <ResultSection label="Origins"  items={results!.origins}  basePath="/origins"  onClose={onClose} />
+            <ResultSection label="Shop"     items={results!.products} basePath="/shop"     isProduct onClose={onClose} />
           </div>
         )}
 
@@ -144,11 +144,13 @@ function ResultSection({
   items,
   basePath,
   isProduct = false,
+  onClose,
 }: {
   label: string;
   items: SearchResult[];
   basePath: string;
   isProduct?: boolean;
+  onClose: () => void;
 }) {
   if (!items || items.length === 0) return null;
   return (
@@ -160,7 +162,7 @@ function ResultSection({
         const cat    = !isProduct ? item.categories?.nodes?.[0]?.name : undefined;
         const meta   = isProduct ? item.price : cat;
         return (
-          <Link key={item.id} href={`${basePath}/${item.slug}`} className="search-result-item">
+          <Link key={item.id} href={`${basePath}/${item.slug}`} className="search-result-item" onClick={onClose}>
             {imgSrc ? (
               <div className="search-result-thumb">
                 <img src={imgSrc} alt={title ?? ''} />
