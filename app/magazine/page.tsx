@@ -47,13 +47,13 @@ export default async function MagazineArchive({
   }
 
   // Construct dynamic categories wrapper from WP taxonomy fetch
-  const categories = [
-    { name: "All Stories", slug: "" },
-    ...(filters?.categories?.nodes?.map((c: any) => ({
-      name: c.name,
-      slug: c.slug
-    })) || [])
-  ];
+  const allFetchedCats = filters?.categories?.nodes?.map((c: any) => ({
+    name: c.name,
+    slug: c.slug
+  })) || [];
+
+  const topCategories = [{ name: "All Stories", slug: "" }, ...allFetchedCats.slice(0, 5)];
+  const moreCategories = allFetchedCats.slice(5);
 
   const heroStory = stories[0] || null;
   const sidebarStories = stories.slice(1, 4);
@@ -62,6 +62,8 @@ export default async function MagazineArchive({
   const editorialStories = stories.slice(12, 14);
   const digestStories = stories.slice(14, 18);
   const opinionStories = stories.slice(18, 21);
+
+  const isFiltered = !!(currentCategory || currentIndustry || currentCountry || currentSeries);
 
   return (
     <>
@@ -81,9 +83,9 @@ export default async function MagazineArchive({
             <div className="issue-num">N°02</div>
           </div>
         </div>
-        <div className="flex flex-col md:flex-row md:items-center justify-between border-t border-rule mt-[60px] md:mt-0">
-          <div className="mag-head-tabs border-t-0 flex-1">
-            {categories.map((cat) => {
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between border-t border-rule mt-[60px] xl:mt-0">
+          <div className="mag-head-tabs border-t-0 flex flex-1 overflow-visible">
+            {topCategories.map((cat) => {
               const isActive = (currentCategory === cat.slug) || (!currentCategory && !currentIndustry && !currentCountry && !currentSeries && !cat.slug);
               return (
                 <Link key={cat.name} href={cat.slug ? `/magazine?category=${cat.slug}` : "/magazine"} style={{ textDecoration: 'none' }}>
@@ -93,13 +95,67 @@ export default async function MagazineArchive({
                 </Link>
               );
             })}
+            
+            {moreCategories.length > 0 && (
+              <div className="group relative">
+                <button className="tab border-r-0 flex items-center gap-1 cursor-pointer hover:text-ochre">
+                  More ▾
+                </button>
+                <div className="absolute top-full left-0 hidden group-hover:flex flex-col bg-ink text-paper z-50 min-w-[200px] border border-rule">
+                  {moreCategories.map((cat: any) => (
+                    <Link key={cat.name} href={`/magazine?category=${cat.slug}`} className="px-5 py-3 font-mono text-[9px] uppercase tracking-[0.15em] border-b border-rule/20 hover:bg-paper-deep hover:text-ink transition-colors" style={{ textDecoration: 'none' }}>
+                      {cat.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           
-          <MagazineFilters filters={filters} />
+          <div className="flex justify-end xl:border-l border-rule w-full xl:w-auto overflow-x-auto no-scrollbar">
+            <MagazineFilters filters={filters} />
+          </div>
         </div>
       </section>
 
-      {/* ── TICKER ── */}
+      {/* ── CONDITIONAL LAYOUT MAP ── */}
+      {isFiltered ? (
+        <section className="section-band pt-[80px] pb-[160px] bg-paper relative z-[2]">
+          <div className="sec-label">Filtered Results</div>
+          <div className="sec-header mb-16">
+            <h3>Stories from <em>{currentCategory || currentSeries || currentIndustry || currentCountry}</em></h3>
+            <Link href="/magazine">Clear Filters ✕</Link>
+          </div>
+          
+          {stories.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {stories.map((story) => (
+                <Link key={story.id} href={`/magazine/${story.slug}`} className="card group" style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className="img r-port relative aspect-[3/4] bg-ink overflow-hidden mb-3.5 transition-transform duration-400 group-hover:-translate-y-1">
+                    {story.featuredImage?.node?.sourceUrl && (
+                      <Image src={story.featuredImage.node.sourceUrl} alt={story.title} fill className="object-cover" />
+                    )}
+                  </div>
+                  <div className="kicker font-mono text-[9px] tracking-[0.14em] uppercase text-ochre mb-2">
+                    {story.categories?.nodes[0]?.name || "Article"}
+                  </div>
+                  <h4 className="font-serif text-[22px] font-normal leading-[1.05] mb-2 group-hover:text-ochre transition-colors" dangerouslySetInnerHTML={{ __html: story.title }} />
+                  <div className="dek text-ink-soft text-[13px] line-clamp-2" dangerouslySetInnerHTML={{ __html: story.excerpt.replace(/<[^>]*>/g, "") }} />
+                  <div className="meta font-mono text-[8px] tracking-[0.12em] uppercase text-mute mt-2">
+                    {new Date(story.date).toLocaleDateString()}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-mute font-serif italic text-2xl py-20">
+              No stories found with this filter constraint.
+            </div>
+          )}
+        </section>
+      ) : (
+        <>
+          {/* ── TICKER ── */}
       <div className="ticker-wrap">
         <div className="ticker-track">
           {[...Array(2)].map((_, i) => (
@@ -313,6 +369,8 @@ export default async function MagazineArchive({
           </div>
         </div>
       </section>
+        </>
+      )}
     </>
   );
 }

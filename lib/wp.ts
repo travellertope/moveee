@@ -116,7 +116,7 @@ export const GET_STORIES = `
 
 export const GET_FILTERS = `
   query GetFilters {
-    categories(where: { hideEmpty: true }, first: 100) { nodes { name, slug } }
+    categories(where: { hideEmpty: true, orderby: COUNT, order: DESC }, first: 100) { nodes { name, slug } }
     industries(where: { hideEmpty: true }, first: 100) { nodes { name, slug } }
     countries(where: { hideEmpty: true }, first: 100) { nodes { name, slug } }
     series(where: { hideEmpty: true }, first: 100) { nodes { name, slug } }
