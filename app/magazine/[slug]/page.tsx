@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
+import SubscribeForm from "@/components/SubscribeForm";
 
 export const dynamic = "force-dynamic";
 
@@ -258,8 +259,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <div className="s-label">★ The Moveee Weekly</div>
             <h4>Culture in your inbox, every Friday.</h4>
             <p>Film picks, exhibition openings, music worth your time. No noise.</p>
-            <input type="email" placeholder="your@email.com" />
-            <button>Subscribe free →</button>
+            <SubscribeForm placeholder="your@email.com" buttonLabel="Subscribe free →" />
           </div>
 
           {relatedStories.slice(0, 2).map((story: any) => (

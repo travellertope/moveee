@@ -5,6 +5,7 @@ import Image from "next/image";
 import Ticker from "@/components/Ticker";
 import CategoryNav from "@/components/CategoryNav";
 import MagazineFilters from "@/components/MagazineFilters";
+import SubscribeForm from "@/components/SubscribeForm";
 import "../magazine.css";
 
 export const dynamic = "force-dynamic";
@@ -335,8 +336,11 @@ export default async function MagazineArchive({
           </div>
           <div className="sub-form">
             <div className="sf-label">Newsletter</div>
-            <input type="email" placeholder="Enter your email address..." />
-            <button className="sub-btn">Subscribe Free →</button>
+            <SubscribeForm
+              placeholder="Enter your email address..."
+              buttonLabel="Subscribe Free →"
+              buttonClassName="sub-btn"
+            />
             <div className="sub-note">First issue arrives this Friday.</div>
           </div>
         </div>

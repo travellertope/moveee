@@ -184,6 +184,64 @@ export const GET_AUTHOR_STORIES = `
   ${STORY_FIELDS_FRAGMENT}
 `;
 
+const NEWSLETTER_FIELDS_FRAGMENT = `
+  fragment NewsletterFields on CultureNewsletter {
+    id
+    databaseId
+    title
+    slug
+    date
+    excerpt
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+  }
+`;
+
+export const NEWSLETTER_FIELDS = NEWSLETTER_FIELDS_FRAGMENT;
+
+export const GET_NEWSLETTERS = `
+  query GetNewsletters($first: Int) {
+    cultureNewsletters(first: $first, where: { status: PUBLISH }) {
+      nodes {
+        ...NewsletterFields
+      }
+    }
+  }
+  ${NEWSLETTER_FIELDS_FRAGMENT}
+`;
+
+export const GET_NEWSLETTER_BY_SLUG = `
+  query GetNewsletterBySlug($slug: ID!) {
+    cultureNewsletter(id: $slug, idType: SLUG) {
+      ...NewsletterFields
+      content
+    }
+  }
+  ${NEWSLETTER_FIELDS_FRAGMENT}
+`;
+
+export const GET_ADJACENT_NEWSLETTERS = `
+  query GetAdjacentNewsletters($notIn: [ID], $first: Int) {
+    cultureNewsletters(first: $first, where: { status: PUBLISH, notIn: $notIn }) {
+      nodes {
+        title
+        slug
+        date
+      }
+    }
+  }
+`;
+
 export const GET_SITE_SETTINGS = `
   query GetSiteSettings {
     allSettings {

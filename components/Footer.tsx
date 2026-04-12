@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import SubscribeForm from "@/components/SubscribeForm";
 
 const Footer = () => {
   return (
@@ -39,10 +40,13 @@ const Footer = () => {
         </div>
         <div>
           <h5>Weekly Digest</h5>
-          <div className="newsletter">
-            <input type="email" placeholder="EMAIL ADDRESS" />
-            <button>Subscribe</button>
-          </div>
+          <form className="newsletter">
+            <SubscribeForm
+              placeholder="EMAIL ADDRESS"
+              buttonLabel="Subscribe"
+              successMessage="You're in — first issue Friday."
+            />
+          </form>
         </div>
       </div>
       <div className="footer-bottom">
