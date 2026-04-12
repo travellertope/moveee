@@ -164,19 +164,17 @@ export const GET_JOURNEYS = `
   ${JOURNEY_FIELDS_FRAGMENT}
 `;
 export const GET_AUTHOR_STORIES = `
-  query GetAuthorStories($first: Int, $authorName: String!) {
-    posts(first: $first, where: { authorName: $authorName }) {
-      nodes {
-        ...StoryFields
+  query GetAuthorStories($first: Int, $slug: String!) {
+    user(id: $slug, idType: SLUG) {
+      name
+      description
+      slug
+      avatar {
+        url
       }
-    }
-    users(where: { search: $authorName }) {
-      nodes {
-        name
-        description
-        slug
-        avatar {
-          url
+      posts(first: $first) {
+        nodes {
+          ...StoryFields
         }
       }
     }
