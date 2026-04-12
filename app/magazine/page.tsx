@@ -71,16 +71,10 @@ export default async function MagazineArchive({
       <section className="mag-head">
         <div className="mag-head-inner">
           <div className="mag-head-left">
-            <div className="issue-tag">Vol. II — The Document</div>
-            <h1>
-              Moveee<br /><em>Magazine</em>
-            </h1>
+            <h1>Moveee <em>Magazine</em></h1>
             <p className="mag-desc">
               Long-form essays, interviews, and cultural commentary. The editorial heart of the platform.
             </p>
-          </div>
-          <div className="mag-head-right">
-            <div className="issue-num">N°02</div>
           </div>
         </div>
         <div className="mag-tabs-container">
