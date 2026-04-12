@@ -28,15 +28,17 @@ class Culture_Activator {
     }
 
     /**
-     * Create the custom attendance table.
+     * Create all custom DB tables.
      */
     public static function create_tables() {
         global $wpdb;
 
-        $table_name      = $wpdb->prefix . 'culture_attendance';
         $charset_collate = $wpdb->get_charset_collate();
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-        $sql = "CREATE TABLE {$table_name} (
+        // Attendance table.
+        $table_name = $wpdb->prefix . 'culture_attendance';
+        dbDelta( "CREATE TABLE {$table_name} (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             user_id bigint(20) NOT NULL,
             event_id bigint(20) NOT NULL,
@@ -44,10 +46,10 @@ class Culture_Activator {
             checkin_time datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             KEY user_event (user_id, event_id)
-        ) {$charset_collate};";
+        ) {$charset_collate};" );
 
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-        dbDelta( $sql );
+        // Newsletter analytics tables.
+        Culture_NL_Analytics::create_tables();
 
         update_option( 'culture_db_version', CULTURE_VERSION );
     }

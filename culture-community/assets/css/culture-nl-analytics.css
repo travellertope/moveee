@@ -1,0 +1,247 @@
+/* ── Newsletter Analytics Admin ────────────────────────────────────────────── */
+
+/* Page wrapper */
+.culture-nla-wrap {
+    max-width: 1200px;
+}
+
+/* Back link */
+.culture-nla-back {
+    font-size: 13px;
+    color: #646970;
+    text-decoration: none;
+}
+.culture-nla-back:hover {
+    color: #2271b1;
+    text-decoration: underline;
+}
+
+/* Page title */
+.culture-nla-page-title {
+    font-size: 23px;
+    font-weight: 400;
+    color: #1d2327;
+    margin: 6px 0 4px;
+    line-height: 1.3;
+}
+.culture-nla-subtitle {
+    font-size: 13px;
+    color: #646970;
+    margin: 0 0 20px;
+}
+.culture-nla-subtitle-note {
+    font-size: 12px;
+    font-weight: 400;
+    color: #646970;
+    margin-left: 8px;
+}
+
+/* Sub-header row (title + engagement badge) */
+.culture-nla-sub-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+/* Subscriber dates row */
+.culture-nla-sub-dates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    font-size: 12px;
+    color: #646970;
+    margin: 0 0 20px;
+}
+
+/* Section heading */
+.culture-nla-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #1d2327;
+    border-bottom: 1px solid #dcdcde;
+    padding-bottom: 8px;
+    margin: 28px 0 12px;
+}
+
+/* Empty state */
+.culture-nla-empty {
+    color: #646970;
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* ── Stat Cards ─────────────────────────────────────────────────────────────── */
+
+.culture-nla-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 20px 0 24px;
+}
+
+.culture-nla-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 14px 18px;
+    min-width: 130px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex: 1 1 130px;
+    max-width: 180px;
+}
+
+.culture-nla-card-icon {
+    font-size: 20px;
+    color: #a7aaad;
+    margin-top: 4px;
+    flex-shrink: 0;
+}
+
+.culture-nla-card-value {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #1d2327;
+}
+
+.culture-nla-card-value.good    { color: #008a20; }
+.culture-nla-card-value.average { color: #996800; }
+.culture-nla-card-value.poor    { color: #b32d2e; }
+
+.culture-nla-card-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646970;
+    margin-top: 3px;
+}
+
+/* ── Rate Badges (table cells) ───────────────────────────────────────────────  */
+
+.culture-nla-rate {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 3px;
+}
+.culture-nla-rate.good    { background: #edfaef; color: #008a20; }
+.culture-nla-rate.average { background: #fff8e5; color: #996800; }
+.culture-nla-rate.poor    { background: #fce8e8; color: #b32d2e; }
+
+/* ── Table ───────────────────────────────────────────────────────────────────  */
+
+.culture-nla-table th,
+.culture-nla-table td {
+    font-size: 12px;
+    vertical-align: middle;
+    padding: 8px 12px;
+}
+
+.culture-nla-table .col-date   { width: 140px; }
+.culture-nla-table .col-num    { width: 100px; text-align: right; }
+.culture-nla-table .col-rate   { width: 120px; }
+.culture-nla-table .col-center { width: 80px;  text-align: center; }
+
+.culture-nla-yes { color: #008a20; font-weight: 700; }
+.culture-nla-no  { color: #a7aaad; }
+
+/* ── Link Activity Bar ───────────────────────────────────────────────────────  */
+
+.culture-nla-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.culture-nla-bar {
+    height: 6px;
+    background: #2271b1;
+    border-radius: 3px;
+    min-width: 2px;
+    max-width: 60px;
+    flex-shrink: 0;
+}
+.culture-nla-bar-wrap span {
+    font-size: 11px;
+    color: #646970;
+    white-space: nowrap;
+}
+
+/* ── Charts ──────────────────────────────────────────────────────────────────  */
+
+.culture-nla-charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.culture-nla-chart-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 16px 20px;
+}
+
+.culture-nla-chart-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #646970;
+    margin: 0 0 12px;
+}
+
+/* ── Engagement Tier Badges ──────────────────────────────────────────────────  */
+
+.culture-nla-engagement-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    padding: 3px 10px;
+    border-radius: 3px;
+}
+.culture-nla-tier-hot      { background: #fce8e8; color: #b32d2e; }
+.culture-nla-tier-warm     { background: #fff8e5; color: #996800; }
+.culture-nla-tier-cold     { background: #f0f6fc; color: #2271b1; }
+.culture-nla-tier-unengaged{ background: #f0f0f1; color: #646970; }
+
+/* ── Pagination ──────────────────────────────────────────────────────────────  */
+
+.culture-nla-pagination {
+    margin: 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.culture-nla-pagination .page-numbers {
+    font-size: 12px;
+    padding: 4px 8px;
+    background: #f0f0f1;
+    border-radius: 3px;
+    text-decoration: none;
+    color: #1d2327;
+}
+.culture-nla-pagination .page-numbers.current {
+    background: #2271b1;
+    color: #fff;
+}
+.culture-nla-pagination .page-numbers:hover:not(.current) {
+    background: #dcdcde;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .culture-nla-charts-row {
+        grid-template-columns: 1fr;
+    }
+    .culture-nla-card {
+        max-width: none;
+    }
+}

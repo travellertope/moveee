@@ -59,6 +59,34 @@ class Culture_REST_API {
                 ),
             ),
         ) );
+
+        // Newsletter unsubscribe endpoint — called by the Next.js frontend page.
+        // Token is verified here so the CMS backend is never exposed to subscribers.
+        register_rest_route( 'culture/v1', '/newsletter-unsubscribe', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_newsletter_unsubscribe' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                    'validate_callback' => function( $value ) {
+                        return is_email( $value );
+                    },
+                ),
+                'token' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'campaign_id' => array(
+                    'required'          => false,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                ),
+            ),
+        ) );
     }
 
     /**
@@ -169,6 +197,46 @@ class Culture_REST_API {
                 'display_name' => $user->display_name,
                 'points'       => Culture_Gamification::get_points( $user_id ),
             ),
+        ) );
+    }
+
+    /**
+     * Handle newsletter unsubscribe request from the Next.js frontend.
+     *
+     * Validates the HMAC token (generated when the email was sent) then removes
+     * the subscriber and records the event. Returns JSON — never redirects to a
+     * WordPress page — so subscribers only ever see the Next.js UI.
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public static function handle_newsletter_unsubscribe( $request ) {
+        $email       = $request->get_param( 'email' );
+        $token       = $request->get_param( 'token' );
+        $campaign_id = $request->get_param( 'campaign_id' ) ?: null;
+
+        if ( ! Culture_Newsletter_Queue::verify_unsub_token( $email, $token ) ) {
+            return new WP_Error(
+                'invalid_token',
+                __( 'Invalid or expired unsubscribe link.', 'culture-community' ),
+                array( 'status' => 403 )
+            );
+        }
+
+        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
+        $updated     = array_values( array_filter( $subscribers, function ( $s ) use ( $email ) {
+            return strtolower( trim( $s ) ) !== strtolower( $email );
+        } ) );
+        update_option( 'culture_newsletter_subscribers', $updated );
+
+        // Log for analytics — this lets us attribute unsubs to the campaign that triggered them.
+        if ( class_exists( 'Culture_NL_Analytics' ) ) {
+            Culture_NL_Analytics::log_unsub( $email, $campaign_id );
+        }
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'message' => __( 'You have been successfully unsubscribed.', 'culture-community' ),
         ) );
     }
 

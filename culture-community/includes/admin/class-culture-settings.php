@@ -53,6 +53,7 @@ class Culture_Settings {
 
         // General.
         'culture_registration_page'    => '',
+        'culture_frontend_url'         => '',
         'culture_analytics_limit_top_members' => 10,
         'culture_analytics_limit_events'      => 10,
     );
@@ -177,6 +178,7 @@ class Culture_Settings {
 
         // General.
         register_setting( self::OPTION_GROUP, 'culture_registration_page', $text );
+        register_setting( self::OPTION_GROUP, 'culture_frontend_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
         register_setting( self::OPTION_GROUP, 'culture_analytics_limit_top_members', $int );
         register_setting( self::OPTION_GROUP, 'culture_analytics_limit_events', $int );
     }
@@ -482,6 +484,16 @@ class Culture_Settings {
         ?>
         <h2><?php esc_html_e( 'General Settings', 'culture-community' ); ?></h2>
         <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_frontend_url"><?php esc_html_e( 'Frontend Site URL', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="url" id="culture_frontend_url" name="culture_frontend_url"
+                           value="<?php echo esc_attr( self::get( 'culture_frontend_url' ) ); ?>" class="large-text" placeholder="https://themoveee.com" />
+                    <p class="description">
+                        <?php esc_html_e( 'The public-facing Next.js frontend URL (no trailing slash). All subscriber-facing links in newsletter emails — unsubscribe, read online — will point here, never to the CMS backend.', 'culture-community' ); ?>
+                    </p>
+                </td>
+            </tr>
             <tr>
                 <th scope="row"><label for="culture_registration_page"><?php esc_html_e( 'Registration Page URL', 'culture-community' ); ?></label></th>
                 <td>
