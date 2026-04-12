@@ -49,6 +49,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-analytics.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-email-templates.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-send.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-subscribers.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-importer.php';
 
 // Payment includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
@@ -87,6 +88,7 @@ function culture_community_init() {
     Culture_Newsletter_Queue::init();
     Culture_Newsletter_Send::init();
     Culture_Subscribers::init();
+    Culture_Newsletter_Importer::init();
     Culture_Settings::init();
     Culture_Analytics::init();
     Culture_Email_Templates::init();
