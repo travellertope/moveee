@@ -61,6 +61,7 @@ export default async function MagazineArchive({
   const portraitStories = stories.slice(7, 12);
   const editorialStories = stories.slice(12, 14);
   const digestStories = stories.slice(14, 18);
+  const opinionStories = stories.slice(18, 21);
   const isFiltered = !!(currentCategory || currentIndustry || currentCountry || currentSeries);
   const activeFilterName = currentCategory || currentIndustry || currentCountry || currentSeries || "";
 
