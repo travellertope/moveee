@@ -39,6 +39,16 @@ const Footer = () => {
           </ul>
         </div>
         <div>
+          <h5>Company</h5>
+          <ul>
+            <li><Link href="/contact">Contact Us</Link></li>
+            <li><Link href="/privacy">Privacy Policy</Link></li>
+            <li><Link href="/cookie-policy">Cookie Policy</Link></li>
+            <li><Link href="/terms">Terms of Use</Link></li>
+            <li><Link href="/ai-use">AI Use Policy</Link></li>
+          </ul>
+        </div>
+        <div>
           <h5>Weekly Digest</h5>
           <form className="newsletter">
             <SubscribeForm
@@ -53,7 +63,9 @@ const Footer = () => {
         <div>© 2026 THE MOVEEE — DESIGNED FOR THE DIASPORA</div>
         <div>
           <Link href="/privacy" style={{ color: 'var(--mute)', textDecoration: 'none', marginLeft: '14px' }}>Privacy</Link>
+          <Link href="/cookie-policy" style={{ color: 'var(--mute)', textDecoration: 'none', marginLeft: '14px' }}>Cookies</Link>
           <Link href="/terms" style={{ color: 'var(--mute)', textDecoration: 'none', marginLeft: '14px' }}>Terms</Link>
+          <Link href="/ai-use" style={{ color: 'var(--mute)', textDecoration: 'none', marginLeft: '14px' }}>AI Use</Link>
           <Link href="/contact" style={{ color: 'var(--mute)', textDecoration: 'none', marginLeft: '14px' }}>Contact</Link>
         </div>
       </div>

@@ -1291,7 +1291,22 @@
 
   /* ========== RESPONSIVE ========== */
   @media (max-width: 1024px) {
-    .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+    .hero-grid { grid-template-columns: 1fr; gap: 0; }
+    /* Image leads on mobile; text appears below it */
+    .hero-visual { order: -1; margin-bottom: 32px; }
+    .hero-lede { order: 0; }
+    /* Caption sits inline below the image, not absolutely positioned */
+    .hero-caption {
+      position: static;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 12px 0 28px;
+      border-bottom: 1px solid rgba(42,36,28,.15);
+      margin-bottom: 0;
+    }
+    /* Shrink the visual aspect-ratio a bit so it doesn't swamp the screen */
+    .hero-visual { aspect-ratio: 4/3; }
     .mag-grid { grid-template-columns: 1fr; }
     .mag-lead { border-right: none; padding-right: 0; border-bottom: 1px solid var(--rule); padding-bottom: 40px; }
     .events-grid { grid-template-columns: 1fr 1fr; }
@@ -1338,17 +1353,17 @@
     .container, .hero, .pillar, .connect, footer, .masthead, .masthead-bar { padding-left: 22px; padding-right: 22px; }
     .wordmark h1 { font-size: 32px; }
     .hero { padding: 48px 20px 60px; overflow: hidden; }
-    .hero h2 { 
-      font-size: clamp(26px, 8.5vw, 30px); 
-      line-height: 1.05; 
-      margin-bottom: 24px; 
-      word-wrap: break-word; 
+    .hero h2 {
+      font-size: clamp(26px, 8.5vw, 30px);
+      line-height: 1.05;
+      margin-bottom: 24px;
+      word-wrap: break-word;
       overflow-wrap: break-word;
       max-width: 100%;
     }
-    .hero-standfirst { 
-      font-size: 15px; 
-      margin-bottom: 32px; 
+    .hero-standfirst {
+      font-size: 15px;
+      margin-bottom: 32px;
       max-width: 100%;
       word-wrap: break-word;
     }
@@ -1357,18 +1372,22 @@
       height: 48vh;
       max-height: 480px;
       aspect-ratio: 1;
-      margin-bottom: 60px; /* Space for the static caption */
+      margin-bottom: 0;
+      order: -1; /* Image leads on mobile */
     }
+    .hero-lede { order: 0; }
     .hero-caption {
       position: static;
       display: flex;
-      margin-top: 16px;
+      margin-top: 12px;
+      margin-bottom: 28px;
       gap: 12px;
+      order: -1; /* Caption stays with the image */
     }
     .hero-grid {
       display: flex;
       flex-direction: column;
-      gap: 32px;
+      gap: 24px;
       width: 100%;
     }
     .events-grid, .lifestyle-grid { grid-template-columns: 1fr; gap: 24px; }
