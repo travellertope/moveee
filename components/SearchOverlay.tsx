@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, X, Loader2, ArrowUpRight } from 'lucide-react';
 
 interface SearchResult {
   id: string;
@@ -172,7 +172,7 @@ function ResultSection({
               <p className="search-result-title">{title}</p>
               {meta && <p className="search-result-meta">{meta}</p>}
             </div>
-            <span className="search-result-arrow">↗</span>
+            <ArrowUpRight size={14} strokeWidth={1.5} className="search-result-arrow" />
           </Link>
         );
       })}

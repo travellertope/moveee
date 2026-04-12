@@ -40,7 +40,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           />
           {/* Language Toggle */}
           <div className="absolute right-0 top-0 bottom-0 flex items-center bg-black px-6 border-l border-white/10 z-10 transition-colors">
-            <div className="flex items-center space-x-3 text-[10px] tracking-[0.2em] font-sans font-medium text-white">
+            <div className="flex items-center space-x-1.5 text-[10px] tracking-[0.2em] font-sans font-medium text-white">
               <button
                 onClick={() => setLanguage("EN")}
                 className={`${language === "EN" ? "text-white" : "text-white/40 hover:text-white transition-colors underline-offset-4"}`}
