@@ -26,8 +26,12 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://themoveee.com"),
   title: "The Moveee — Best in Culture",
   description: "Curated lifestyle, magazine, and community for the moveee.",
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default function RootLayout({
