@@ -1333,15 +1333,34 @@
   @media (max-width: 640px) {
     .container, .hero, .pillar, .connect, footer, .masthead, .masthead-bar { padding-left: 22px; padding-right: 22px; }
     .wordmark h1 { font-size: 32px; }
-    .hero { padding: 48px 20px 60px; }
+    .hero { padding: 48px 20px 60px; overflow: hidden; }
     .hero h2 { 
-      font-size: clamp(28px, 9vw, 32px); 
+      font-size: clamp(26px, 8.5vw, 30px); 
       line-height: 1.05; 
       margin-bottom: 24px; 
       word-wrap: break-word; 
       overflow-wrap: break-word;
+      max-width: 100%;
     }
-    .hero-standfirst { font-size: 15px; margin-bottom: 32px; }
+    .hero-standfirst { 
+      font-size: 15px; 
+      margin-bottom: 32px; 
+      max-width: 100%;
+      word-wrap: break-word;
+    }
+    .hero-visual {
+      width: 100%;
+      height: 40vh;
+      max-height: 400px;
+      aspect-ratio: 1;
+      margin-bottom: 40px;
+    }
+    .hero-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      width: 100%;
+    }
     .events-grid, .lifestyle-grid { grid-template-columns: 1fr; gap: 24px; }
     .footer-top { grid-template-columns: 1fr; }
     .origin-row { grid-template-columns: 32px 1fr; gap: 12px; padding: 20px 0; }
