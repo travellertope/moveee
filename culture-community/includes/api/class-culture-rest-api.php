@@ -174,6 +174,44 @@ class Culture_REST_API {
                 ),
             ),
         ) );
+
+        // Forgot-password — generates a reset key and emails it.
+        register_rest_route( 'culture/v1', '/forgot-password', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_forgot_password' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                    'validate_callback' => function( $v ) { return is_email( $v ); },
+                ),
+            ),
+        ) );
+
+        // Reset-password — validates the key and sets the new password.
+        register_rest_route( 'culture/v1', '/reset-password', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reset_password' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'login' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_user',
+                ),
+                'key' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'password' => array(
+                    'required' => true,
+                    'type'     => 'string',
+                ),
+            ),
+        ) );
     }
 
     /**
@@ -523,5 +561,82 @@ class Culture_REST_API {
             'secondary_chapter'=> array( 'id' => $secondary_id, 'name' => $secondary_name ),
             'referral_code'    => get_user_meta( $user->ID, '_culture_referral_code', true ) ?: '',
         );
+    }
+
+    /**
+     * Send a password-reset email.
+     * Never reveals whether the email exists to avoid user enumeration.
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response
+     */
+    public static function handle_forgot_password( $request ) {
+        $email = $request->get_param( 'email' );
+        $user  = get_user_by( 'email', $email );
+
+        // Always respond with success to prevent user-enumeration attacks.
+        if ( ! $user ) {
+            return rest_ensure_response( array( 'success' => true ) );
+        }
+
+        $key = get_password_reset_key( $user );
+        if ( is_wp_error( $key ) ) {
+            return rest_ensure_response( array( 'success' => true ) );
+        }
+
+        $frontend_url = rtrim( get_option( 'culture_frontend_url', home_url( '/' ) ), '/' );
+        $reset_url    = $frontend_url
+            . '/reset-password?key=' . rawurlencode( $key )
+            . '&login='              . rawurlencode( $user->user_login );
+
+        $site_name = get_bloginfo( 'name' );
+        $subject   = sprintf( __( 'Reset your password — %s', 'culture-community' ), $site_name );
+        $message   = sprintf(
+            /* translators: 1: display name, 2: site name, 3: reset URL */
+            __( "Hi %1\$s,\n\nSomeone requested a password reset for your account on %2\$s. If this was you, click the link below:\n\n%3\$s\n\nThis link expires in 24 hours. If you did not request a reset, you can safely ignore this email.\n\n— %2\$s", 'culture-community' ),
+            $user->display_name,
+            $site_name,
+            $reset_url
+        );
+
+        wp_mail( $user->user_email, $subject, $message );
+
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /**
+     * Validate a password-reset key and set a new password.
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public static function handle_reset_password( $request ) {
+        $login    = $request->get_param( 'login' );
+        $key      = $request->get_param( 'key' );
+        $password = $request->get_param( 'password' );
+
+        if ( strlen( $password ) < 8 ) {
+            return new WP_Error(
+                'weak_password',
+                __( 'Password must be at least 8 characters.', 'culture-community' ),
+                array( 'status' => 422 )
+            );
+        }
+
+        $user = check_password_reset_key( $key, $login );
+        if ( is_wp_error( $user ) ) {
+            return new WP_Error(
+                'invalid_key',
+                __( 'This reset link has expired or is invalid. Please request a new one.', 'culture-community' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        reset_password( $user, $password );
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'message' => __( 'Password updated. You can now sign in.', 'culture-community' ),
+        ) );
     }
 }

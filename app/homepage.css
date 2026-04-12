@@ -180,6 +180,26 @@
   }
   .join-btn:hover { background: var(--ochre); }
 
+  /* Auth icon button (user icon in masthead) */
+  .auth-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 0;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s;
+  }
+  .auth-icon-btn:hover { border-bottom-color: var(--ochre); }
+  .auth-icon-label { font-size: 13px; }
+
   /* ========== HERO ========== */
   .hero {
     padding: 70px 40px 90px;
