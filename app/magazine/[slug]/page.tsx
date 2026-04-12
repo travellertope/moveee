@@ -74,17 +74,16 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     <>
       <ProgressBar />
 
-      {/* ── BREADCRUMB ── */}
-      <div className="breadcrumb">
-        <Link href="/">Home</Link><span className="sep">/</span>
-        <Link href="/magazine">Magazine</Link><span className="sep">/</span>
-        <Link href={`/magazine?category=${categorySlug}`}>{categoryName}</Link><span className="sep">/</span>
-        <span style={{ color: 'var(--ink)' }}>{post.title}</span>
-      </div>
-
       {/* ── HERO ── */}
       {hasFeaturedImage ? (
         <section className="article-hero">
+          {/* BREADCRUMB overlaid on hero */}
+          <div className="breadcrumb overlay">
+            <Link href="/">Home</Link><span className="sep">/</span>
+            <Link href="/magazine">Magazine</Link><span className="sep">/</span>
+            <Link href={`/magazine?category=${categorySlug}`}>{categoryName}</Link><span className="sep">/</span>
+            <span className="breadcrumb-current">{post.title}</span>
+          </div>
           <Image
             src={post.featuredImage.node.sourceUrl}
             alt={post.featuredImage.node.altText || post.title}
@@ -133,7 +132,14 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           </div>
         </section>
       ) : (
-        <header className="standard-hero">
+        <>
+          <div className="breadcrumb">
+            <Link href="/">Home</Link><span className="sep">/</span>
+            <Link href="/magazine">Magazine</Link><span className="sep">/</span>
+            <Link href={`/magazine?category=${categorySlug}`}>{categoryName}</Link><span className="sep">/</span>
+            <span className="breadcrumb-current">{post.title}</span>
+          </div>
+          <header className="standard-hero">
           <div className="hero-eyebrow" style={{ color: 'var(--ochre)', marginBottom: '20px' }}>
             <span>★ {categoryName}</span>
           </div>
@@ -165,6 +171,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             </div>
           </div>
         </header>
+        </>
       )}
 
       {/* ── ARTICLE 3-COLUMN LAYOUT ── */}
