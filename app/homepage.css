@@ -136,6 +136,9 @@
 
   .wordmark {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .wordmark .kicker {
     font-family: 'JetBrains Mono', monospace;
@@ -145,10 +148,22 @@
     color: var(--mute);
     margin-bottom: 8px;
   }
-  .wordmark-logo {
-    display: inline-block;
-    height: 44px;
+  .wordmark img {
+    height: 48px;
     width: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .footer-brand-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .footer-logo {
+    height: 40px;
+    width: auto;
+    display: block;
   }
 
   .join-btn {
