@@ -1354,16 +1354,23 @@
     }
     .hero-visual {
       width: 100%;
-      height: 48vh;
-      max-height: 480px;
+      height: auto;
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 40px;
+    }
+    .hero-frame {
+      position: relative;
+      width: 100%;
       aspect-ratio: 1;
-      margin-bottom: 60px; /* Space for the static caption */
+      margin-bottom: 12px;
     }
     .hero-caption {
       position: static;
       display: flex;
-      margin-top: 16px;
-      gap: 12px;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 0;
     }
     .hero-grid {
       display: flex;
