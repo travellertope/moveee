@@ -415,15 +415,16 @@
 
   /* Hero artwork side */
   .hero-visual {
-    position: relative;
-    aspect-ratio: 0.82; /* Slightly taller for the full-height hero */
-    height: 70vh;
-    max-height: 700px;
+    display: flex;
+    flex-direction: column;
   }
 
   .hero-frame {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 0.82; /* Slightly taller for the full-height hero */
+    height: 70vh;
+    max-height: 700px;
     background: var(--ink);
     overflow: hidden;
   }
@@ -436,10 +437,7 @@
   }
 
   .hero-caption {
-    position: absolute;
-    bottom: -32px;
-    left: 0;
-    right: 0;
+    position: static;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -449,6 +447,8 @@
     text-transform: uppercase;
     color: var(--mute);
     transition: opacity 0.3s;
+    margin-top: 24px;
+    width: 100%;
   }
   .hero-caption span:last-child {
     color: var(--ochre);
