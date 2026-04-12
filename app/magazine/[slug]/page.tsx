@@ -3,9 +3,9 @@ import { getWPData, GET_STORY_BY_SLUG, GET_STORIES } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import ProgressBar from "@/components/ProgressBar";
 import SubscribeForm from "@/components/SubscribeForm";
+import ArticleActions from "@/components/ArticleActions";
 
 export const dynamic = "force-dynamic";
 
@@ -143,11 +143,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                 <div className="b-label">Category</div>
                 <div className="b-val">{categoryName}</div>
               </div>
-              <div className="share-row">
-                <button className="sh-btn" aria-label="Share"><ArrowUpRight size={15} strokeWidth={1.5} /></button>
-                <button className="sh-btn" aria-label="Bookmark">✦</button>
-                <button className="sh-btn" aria-label="Favourite">☆</button>
-              </div>
+              <ArticleActions />
             </div>
           </div>
         </section>
@@ -184,11 +180,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               <div className="b-label">Category</div>
               <div className="b-val">{categoryName}</div>
             </div>
-            <div className="share-row">
-              <button className="sh-btn" aria-label="Share">↗</button>
-              <button className="sh-btn" aria-label="Bookmark">✦</button>
-              <button className="sh-btn" aria-label="Favourite">☆</button>
-            </div>
+            <ArticleActions />
           </div>
         </header>
         </>
