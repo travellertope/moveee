@@ -61,9 +61,8 @@ export default async function MagazineArchive({
   const portraitStories = stories.slice(7, 12);
   const editorialStories = stories.slice(12, 14);
   const digestStories = stories.slice(14, 18);
-  const opinionStories = stories.slice(18, 21);
-
   const isFiltered = !!(currentCategory || currentIndustry || currentCountry || currentSeries);
+  const activeFilterName = currentCategory || currentIndustry || currentCountry || currentSeries || "";
 
   return (
     <>
@@ -123,8 +122,8 @@ export default async function MagazineArchive({
         <section className="section-band pt-[80px] pb-[160px] bg-paper relative z-[2]">
           <div className="sec-label">Filtered Results</div>
           <div className="sec-header mb-16">
-            <h3>Stories from <em>{currentCategory || currentSeries || currentIndustry || currentCountry}</em></h3>
-            <Link href="/magazine">Clear Filters ✕</Link>
+            <h3>Stories from <em>{activeFilterName}</em></h3>
+            <Link href="/magazine" className="font-mono text-[9px] uppercase tracking-[0.1em] text-ochre border-b border-ochre pb-1 transition-colors hover:text-ochre-deep hover:border-ochre-deep">Clear Filters ✕</Link>
           </div>
           
           {stories.length > 0 ? (

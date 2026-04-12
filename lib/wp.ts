@@ -110,7 +110,6 @@ export const GET_STORIES = `
       }
     }
   }
-  }
   ${STORY_FIELDS_FRAGMENT}
 `;
 
