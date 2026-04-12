@@ -52,8 +52,7 @@ export default async function MagazineArchive({
     slug: c.slug
   })) || [];
 
-  const topCategories = [{ name: "All Stories", slug: "" }, ...allFetchedCats.slice(0, 5)];
-  const moreCategories = allFetchedCats.slice(5);
+  const topCategories = [{ name: "All Stories", slug: "" }, ...allFetchedCats];
 
   const heroStory = stories[0] || null;
   const sidebarStories = stories.slice(1, 4);
@@ -96,20 +95,7 @@ export default async function MagazineArchive({
               );
             })}
             
-            {moreCategories.length > 0 && (
-              <div className="more-group">
-                <button className="tab border-r-0 flex items-center gap-1 cursor-pointer">
-                  More ▾
-                </button>
-                <div className="more-dropdown">
-                  {moreCategories.map((cat: any) => (
-                    <Link key={cat.name} href={`/magazine?category=${cat.slug}`} className="more-dropdown-link">
-                      {cat.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Expanded categories are rendered above */}
           </div>
           
           <div className="secondary-filters-wrap">
