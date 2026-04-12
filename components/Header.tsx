@@ -24,7 +24,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const tickerData = siteSettings?.mastheadTicker || {};
 
   return (
-    <div className="sticky top-0 z-50">
+    <div className="relative z-50">
       <div className="relative group">
         <Ticker 
           issueText={tickerData.issueText}
