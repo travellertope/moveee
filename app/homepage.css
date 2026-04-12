@@ -470,7 +470,7 @@
   .marquee {
     overflow: hidden;
     border-bottom: 1px solid var(--rule);
-    padding: 18px 0;
+    padding: 12px 0;
     background: var(--ink);
     color: var(--paper);
     position: relative;
@@ -482,7 +482,7 @@
     white-space: nowrap;
     animation: scroll 50s linear infinite;
     font-family: 'Fraunces', serif;
-    font-size: 28px;
+    font-size: 20px;
     font-weight: 400;
     font-style: italic;
   }
