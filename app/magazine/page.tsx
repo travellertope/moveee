@@ -6,6 +6,7 @@ import Ticker from "@/components/Ticker";
 import CategoryNav from "@/components/CategoryNav";
 import MagazineFilters from "@/components/MagazineFilters";
 import SubscribeForm from "@/components/SubscribeForm";
+import EditorialSection from "@/components/EditorialSection";
 import "../magazine.css";
 
 export const dynamic = "force-dynamic";
@@ -38,8 +39,8 @@ export default async function MagazineArchive({
       else if (currentCountry) stories = taxData?.country?.posts?.nodes || [];
       else if (currentSeries) stories = taxData?.seriesItem?.posts?.nodes || [];
     } else {
-      const data = await getWPData(GET_STORIES, { 
-        first: 24, 
+      const data = await getWPData(GET_STORIES, {
+        first: 25,
         categoryName: currentCategory || null
       });
       stories = data?.posts?.nodes || [];
@@ -60,9 +61,9 @@ export default async function MagazineArchive({
   const sidebarStories = stories.slice(1, 4);
   const sectionBandStories = stories.slice(4, 7);
   const portraitStories = stories.slice(7, 12);
-  const editorialStories = stories.slice(12, 14);
-  const digestStories = stories.slice(14, 18);
-  const opinionStories = stories.slice(18, 21);
+  const editorialStories = stories.slice(12, 16);
+  const digestStories = stories.slice(16, 20);
+  const opinionStories = stories.slice(20, 24);
   const isFiltered = !!(currentCategory || currentIndustry || currentCountry || currentSeries);
   const activeFilterName = currentCategory || currentIndustry || currentCountry || currentSeries || "";
 
@@ -257,28 +258,7 @@ export default async function MagazineArchive({
 
       {/* ── EDITORIAL — full-bleed dark ── */}
       {editorialStories.length > 0 && (
-        <section className="editorial">
-          <div className="editorial-inner">
-            <div className="ed-left">
-              <h3>The <em>Edit</em></h3>
-              <p>Curated perspectives on the most important cultural moments happening right now.</p>
-              <div className="ed-grid">
-                {editorialStories.map((story) => (
-                  <Link key={story.id} href={`/magazine/${story.slug}`} className="ed-item">
-                    <div className="ek">{story.categories?.nodes?.[0]?.name || "Opinion"}</div>
-                    <h4 dangerouslySetInnerHTML={{ __html: story.title }} />
-                    <div className="em">{new Date(story.date).toLocaleDateString('en-GB')}</div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-            <div className="ed-visual">
-              {editorialStories[0]?.featuredImage?.node?.sourceUrl && (
-                <Image src={editorialStories[0].featuredImage.node.sourceUrl} alt="Editorial Visual" fill style={{ objectFit: 'cover' }} />
-              )}
-            </div>
-          </div>
-        </section>
+        <EditorialSection stories={editorialStories} />
       )}
 
       {/* ── DIGEST ROW — small cards ── */}

@@ -409,8 +409,9 @@
 .ed-left h3 em { font-style:italic; color:var(--ochre); }
 .ed-left p { font-family:'Fraunces',serif; font-size:17px; font-weight:300; font-style:italic; color:rgba(243,236,224,.6); line-height:1.6; margin-bottom:28px; max-width:520px; }
 .ed-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.ed-item { background:rgba(243,236,224,.05); padding:22px; border:1px solid rgba(243,236,224,.08); cursor:pointer; transition:background .3s; display:flex; flex-direction:column; justify-content:space-between; }
-.ed-item:hover { background:rgba(243,236,224,.1); }
+.ed-item { background:rgba(243,236,224,.05); padding:22px; border:1px solid rgba(243,236,224,.08); cursor:pointer; transition:background .3s, border-color .3s; display:flex; flex-direction:column; justify-content:space-between; }
+.ed-item:hover, .ed-item--active { background:rgba(243,236,224,.1); border-color:rgba(197,73,31,.4); }
+.ed-item--active { border-left:3px solid var(--ochre); }
 .ed-item .ek { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.14em; text-transform:uppercase; color:var(--ochre); margin-bottom:8px; }
 .ed-item h4 { font-family:'Fraunces',serif; font-size:17px; font-style:italic; font-weight:400; color:var(--paper); line-height:1.2; margin-bottom:16px; }
 .ed-item .em { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.1em; text-transform:uppercase; color:rgba(243,236,224,.3); }
