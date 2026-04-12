@@ -123,7 +123,7 @@ class Culture_Newsletter_Queue {
                       . '&token=' . rawurlencode( $unsub_token )
                       . '&c='    . $post_id;
 
-        $content = apply_filters( 'the_content', $post->post_content );
+        $content = self::render_content( $post );
         $body    = self::build_email( $title, $content, $permalink, $unsub_url, false, $post_id, $tracking_token );
 
         wp_mail(
@@ -152,9 +152,10 @@ class Culture_Newsletter_Queue {
             return false;
         }
 
+        $frontend_url = rtrim( get_option( 'culture_frontend_url', home_url( '/' ) ), '/' );
         $title     = '[TEST] ' . get_the_title( $post_id );
-        $permalink = get_permalink( $post_id );
-        $content   = apply_filters( 'the_content', $post->post_content );
+        $permalink = $frontend_url . '/newsletter/' . $post->post_name;
+        $content   = self::render_content( $post );
         // Pass $is_test = true → no tracking pixel, no link rewriting.
         $body      = self::build_email( $title, $content, $permalink, '#', true );
 
@@ -164,6 +165,63 @@ class Culture_Newsletter_Queue {
             $body,
             array( 'Content-Type: text/html; charset=UTF-8' )
         );
+    }
+
+    /**
+     * Render a post's content for email delivery.
+     *
+     * Runs `the_content` filters (so blocks and shortcodes work) but forces
+     * $more = 1 so WordPress never truncates at a <!--more--> tag and never
+     * injects a "Continue Reading" link pointing at the CMS domain.
+     *
+     * After rendering, any leftover <!--more--> HTML comments are stripped and
+     * any remaining references to the CMS domain are replaced with the
+     * configured frontend URL.
+     *
+     * @param WP_Post $post
+     * @return string Rendered HTML, safe for email.
+     */
+    private static function render_content( $post ) {
+        // Set up the global loop state so content filters treat this as a
+        // single-post view — prevents <!--more--> truncation.
+        global $more, $page, $pages, $multipage, $preview;
+        $prev_more      = $more;
+        $prev_page      = isset( $page )      ? $page      : 1;
+        $prev_pages     = isset( $pages )     ? $pages     : array();
+        $prev_multipage = isset( $multipage ) ? $multipage : false;
+
+        $more      = 1;
+        $page      = 1;
+        $pages     = array( $post->post_content );
+        $multipage = false;
+
+        // Some page builders / themes check the global post.
+        $prev_post = isset( $GLOBALS['post'] ) ? $GLOBALS['post'] : null;
+        $GLOBALS['post'] = $post;
+        setup_postdata( $post );
+
+        $content = apply_filters( 'the_content', $post->post_content );
+
+        // Restore globals.
+        $more      = $prev_more;
+        $page      = $prev_page;
+        $pages     = $prev_pages;
+        $multipage = $prev_multipage;
+        $GLOBALS['post'] = $prev_post;
+        wp_reset_postdata();
+
+        // Strip any residual <!--more--> HTML comments.
+        $content = preg_replace( '/<!--more(.*?)-->/i', '', $content );
+
+        // Replace any lingering CMS-domain URLs with the frontend URL so no
+        // cms.* link can accidentally end up in subscriber inboxes.
+        $cms_url      = rtrim( home_url( '/' ), '/' );
+        $frontend_url = rtrim( get_option( 'culture_frontend_url', '' ), '/' );
+        if ( $frontend_url && $cms_url !== $frontend_url ) {
+            $content = str_replace( $cms_url, $frontend_url, $content );
+        }
+
+        return $content;
     }
 
     /**
