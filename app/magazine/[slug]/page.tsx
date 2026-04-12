@@ -150,7 +150,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           <div className="byline-bar">
             <div className="b-item">
               <div className="b-label">Words by</div>
-              <div className="b-val">The Moveee</div>
+              <div className="b-val">{post.author?.node?.name || "The Moveee"}</div>
             </div>
             <div className="b-item">
               <div className="b-label">Published</div>
@@ -199,7 +199,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           <div className="toc-meta">
             <div className="tm-item">
               <div className="tm-label">Writer</div>
-              <div className="tm-val">The Moveee</div>
+              <div className="tm-val">{post.author?.node?.name || "The Moveee"}</div>
             </div>
             {post.countries?.nodes?.[0]?.name && (
               <div className="tm-item">
@@ -211,6 +211,18 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               <div className="tm-label">Section</div>
               <div className="tm-val">{categoryName}</div>
             </div>
+            {post.series?.nodes?.[0]?.name && (
+              <div className="tm-item">
+                <div className="tm-label">Series</div>
+                <div className="tm-val">{post.series.nodes[0].name}</div>
+              </div>
+            )}
+            {post.industries?.nodes?.[0]?.name && (
+              <div className="tm-item">
+                <div className="tm-label">Industry</div>
+                <div className="tm-val">{post.industries.nodes[0].name}</div>
+              </div>
+            )}
           </div>
         </aside>
 
@@ -269,22 +281,48 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       {/* ── AUTHOR BAND ── */}
       <div className="author-band">
         <div className="author-avatar">
-          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-            <rect width="120" height="120" fill="#3d4a2a" />
-            <ellipse cx="60" cy="52" rx="32" ry="40" fill="#6b3020" />
-            <path d="M 30 44 Q 35 14 60 10 Q 85 14 90 44 Q 84 26 60 24 Q 36 26 30 44 Z" fill="#14110d" />
-            <path d="M 10 120 Q 28 80 44 72 L 76 72 Q 92 80 110 120 Z" fill="#c5491f" />
-            <circle cx="49" cy="52" r="4" fill="#14110d" />
-            <circle cx="71" cy="52" r="4" fill="#14110d" />
-            <path d="M 48 72 Q 60 80 72 72" stroke="#14110d" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-          </svg>
+          {post.author?.node?.avatar?.url ? (
+            <Image 
+              src={post.author.node.avatar.url} 
+              alt={post.author.node.name || "Author"} 
+              width={120} 
+              height={120} 
+              style={{ objectFit: 'cover', width: '100%', height: '100%' }} 
+            />
+          ) : (
+            <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+              <rect width="120" height="120" fill="#3d4a2a" />
+              <ellipse cx="60" cy="52" rx="32" ry="40" fill="#6b3020" />
+              <path d="M 30 44 Q 35 14 60 10 Q 85 14 90 44 Q 84 26 60 24 Q 36 26 30 44 Z" fill="#14110d" />
+              <path d="M 10 120 Q 28 80 44 72 L 76 72 Q 92 80 110 120 Z" fill="#c5491f" />
+              <circle cx="49" cy="52" r="4" fill="#14110d" />
+              <circle cx="71" cy="52" r="4" fill="#14110d" />
+              <path d="M 48 72 Q 60 80 72 72" stroke="#14110d" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            </svg>
+          )}
         </div>
         <div className="author-info">
           <div className="a-label">Words by</div>
-          <h4>The <em>Moveee</em></h4>
-          <p>Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and the diaspora. Long-form essays and visual stories that document the things that matter.</p>
+          <h4>
+            {post.author?.node?.name ? (
+              post.author.node.name.includes(" ") ? (
+                <>
+                  {post.author.node.name.split(" ").slice(0, -1).join(" ")} <em>{post.author.node.name.split(" ").slice(-1)}</em>
+                </>
+              ) : (
+                post.author.node.name
+              )
+            ) : (
+              <>The <em>Moveee</em></>
+            )}
+          </h4>
+          <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and the diaspora. Long-form essays and visual stories that document the things that matter."}</p>
         </div>
-        <Link href="/magazine" className="author-cta">More stories →</Link>
+        {post.author?.node?.slug ? (
+            <Link href={`/author/${post.author.node.slug}`} className="author-cta">More by {post.author.node.name.split(" ")[0]} →</Link>
+        ) : (
+            <Link href="/magazine" className="author-cta">More stories →</Link>
+        )}
       </div>
 
       {/* ── RELATED ── */}

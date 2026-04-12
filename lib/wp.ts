@@ -53,6 +53,16 @@ const STORY_FIELDS_FRAGMENT = `
         altText
       }
     }
+    author {
+      node {
+        name
+        slug
+        description
+        avatar {
+          url
+        }
+      }
+    }
     categories {
       nodes {
         name
@@ -134,4 +144,24 @@ export const GET_JOURNEYS = `
     }
   }
   ${JOURNEY_FIELDS_FRAGMENT}
+`;
+export const GET_AUTHOR_STORIES = `
+  query GetAuthorStories($first: Int, $authorName: String!) {
+    posts(first: $first, where: { authorName: $authorName }) {
+      nodes {
+        ...StoryFields
+      }
+    }
+    users(where: { search: $authorName }) {
+      nodes {
+        name
+        description
+        slug
+        avatar {
+          url
+        }
+      }
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
 `;
