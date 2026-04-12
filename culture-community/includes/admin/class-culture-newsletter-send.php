@@ -1,0 +1,287 @@
+<?php
+/**
+ * Newsletter send meta box with Send Test and Send Issue buttons.
+ * Registers AJAX handlers for test, send, and status polling.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+class Culture_Newsletter_Send {
+
+    public static function init() {
+        add_action( 'add_meta_boxes',       array( __CLASS__, 'register_meta_box' ) );
+        add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+
+        add_action( 'wp_ajax_culture_nl_send_test',  array( __CLASS__, 'ajax_send_test' ) );
+        add_action( 'wp_ajax_culture_nl_send_issue', array( __CLASS__, 'ajax_send_issue' ) );
+        add_action( 'wp_ajax_culture_nl_get_status', array( __CLASS__, 'ajax_get_status' ) );
+    }
+
+    /**
+     * Register meta box on the culture_newsletter edit screen.
+     */
+    public static function register_meta_box() {
+        add_meta_box(
+            'culture_nl_send',
+            __( 'Send Newsletter', 'culture-community' ),
+            array( __CLASS__, 'render_meta_box' ),
+            'culture_newsletter',
+            'side',
+            'high'
+        );
+    }
+
+    /**
+     * Enqueue CSS + JS only on the newsletter edit screen.
+     *
+     * @param string $hook
+     */
+    public static function enqueue_assets( $hook ) {
+        if ( ! in_array( $hook, array( 'post.php', 'post-new.php' ), true ) ) {
+            return;
+        }
+
+        $screen = get_current_screen();
+        if ( ! $screen || 'culture_newsletter' !== $screen->post_type ) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'culture-nl-send',
+            CULTURE_PLUGIN_URL . 'assets/css/culture-newsletter-send.css',
+            array(),
+            CULTURE_VERSION
+        );
+
+        wp_enqueue_script(
+            'culture-nl-send',
+            CULTURE_PLUGIN_URL . 'assets/js/culture-newsletter-send.js',
+            array( 'jquery' ),
+            CULTURE_VERSION,
+            true
+        );
+
+        wp_localize_script( 'culture-nl-send', 'cultureNLSend', array(
+            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+            'nonce'   => wp_create_nonce( 'culture_nl_send_nonce' ),
+            'postId'  => get_the_ID(),
+            'i18n'    => array(
+                'confirmSend'   => __( 'Send this issue to all subscribers now? This cannot be undone.', 'culture-community' ),
+                'confirmResend' => __( 'Resend to all current subscribers? They may receive a duplicate.', 'culture-community' ),
+                'sending'       => __( 'Sending…', 'culture-community' ),
+                'sendTest'      => __( 'Send Test', 'culture-community' ),
+            ),
+        ) );
+    }
+
+    /**
+     * Render the meta box HTML.
+     *
+     * @param WP_Post $post
+     */
+    public static function render_meta_box( $post ) {
+        $status_data  = Culture_Newsletter_Queue::get_send_status( $post->ID );
+        $status       = $status_data['status'];
+        $total        = $status_data['total'];
+        $offset       = $status_data['offset'];
+        $percent      = $status_data['percent'];
+        $sent_at      = $status_data['sent_at'];
+        $sub_count    = count( get_option( 'culture_newsletter_subscribers', array() ) );
+        $current_user = wp_get_current_user();
+        ?>
+        <div class="culture-nl-box" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
+
+            <div class="culture-nl-sub-count">
+                <span class="culture-nl-stat-num"><?php echo esc_html( number_format( $sub_count ) ); ?></span>
+                <span class="culture-nl-stat-label"><?php esc_html_e( 'Subscribers', 'culture-community' ); ?></span>
+            </div>
+
+            <hr class="culture-nl-sep">
+
+            <?php /* ── SEND STATUS ── */ ?>
+            <div class="culture-nl-status-wrap js-nl-status" data-status="<?php echo esc_attr( $status ); ?>">
+                <?php if ( 'sent' === $status ) : ?>
+                    <div class="culture-nl-badge sent">
+                        <span class="dashicons dashicons-yes-alt"></span>
+                        <?php esc_html_e( 'Issue sent', 'culture-community' ); ?>
+                    </div>
+                    <p class="culture-nl-sent-detail">
+                        <?php
+                        printf(
+                            /* translators: 1: subscriber count, 2: date/time */
+                            esc_html__( '%1$s subscribers · %2$s', 'culture-community' ),
+                            number_format( $total ),
+                            date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $sent_at ) )
+                        );
+                        ?>
+                    </p>
+                <?php elseif ( 'sending' === $status ) : ?>
+                    <div class="culture-nl-badge sending">
+                        <span class="dashicons dashicons-update-alt"></span>
+                        <?php esc_html_e( 'Sending…', 'culture-community' ); ?>
+                    </div>
+                    <div class="culture-nl-progress">
+                        <div class="culture-nl-progress-bar">
+                            <div class="culture-nl-progress-fill js-nl-fill" style="width:<?php echo esc_attr( $percent ); ?>%"></div>
+                        </div>
+                        <span class="culture-nl-progress-text js-nl-progress-text">
+                            <?php echo esc_html( number_format( $offset ) ); ?> / <?php echo esc_html( number_format( $total ) ); ?>
+                        </span>
+                    </div>
+                <?php else : ?>
+                    <div class="culture-nl-badge idle">
+                        <?php esc_html_e( 'Not yet sent', 'culture-community' ); ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <?php if ( 'sending' !== $status ) : ?>
+
+                <hr class="culture-nl-sep">
+
+                <?php /* ── SEND TEST ── */ ?>
+                <div class="culture-nl-section">
+                    <label class="culture-nl-label" for="culture-nl-test-email">
+                        <?php esc_html_e( 'Send Test Email', 'culture-community' ); ?>
+                    </label>
+                    <input
+                        type="email"
+                        id="culture-nl-test-email"
+                        class="widefat"
+                        value="<?php echo esc_attr( $current_user->user_email ); ?>"
+                        placeholder="test@example.com"
+                    >
+                    <button type="button" class="button button-secondary js-nl-test-btn" style="margin-top:6px;width:100%;">
+                        <span class="dashicons dashicons-email" style="margin-top:3px;"></span>
+                        <?php esc_html_e( 'Send Test', 'culture-community' ); ?>
+                    </button>
+                </div>
+
+                <hr class="culture-nl-sep">
+
+                <?php /* ── SEND TO ALL ── */ ?>
+                <div class="culture-nl-section">
+                    <label class="culture-nl-label">
+                        <?php esc_html_e( 'Send to All Subscribers', 'culture-community' ); ?>
+                    </label>
+
+                    <?php if ( 0 === $sub_count ) : ?>
+                        <p class="culture-nl-notice"><?php esc_html_e( 'No subscribers yet.', 'culture-community' ); ?></p>
+                    <?php else : ?>
+                        <p class="culture-nl-notice">
+                            <?php
+                            printf(
+                                /* translators: %s: formatted subscriber count */
+                                esc_html__( 'Will email %s subscribers in batches of 50 per minute via your connected SMTP.', 'culture-community' ),
+                                '<strong>' . number_format( $sub_count ) . '</strong>'
+                            );
+                            ?>
+                        </p>
+                        <?php if ( 'sent' === $status ) : ?>
+                            <button type="button" class="button button-secondary js-nl-send-btn" style="width:100%;">
+                                <span class="dashicons dashicons-controls-repeat" style="margin-top:3px;"></span>
+                                <?php esc_html_e( 'Resend to All Subscribers', 'culture-community' ); ?>
+                            </button>
+                        <?php else : ?>
+                            <button type="button" class="button button-primary js-nl-send-btn" style="width:100%;height:36px;line-height:34px;">
+                                <span class="dashicons dashicons-megaphone" style="margin-top:7px;"></span>
+                                <?php esc_html_e( 'Send Issue', 'culture-community' ); ?>
+                            </button>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+
+            <?php endif; ?>
+
+            <div class="culture-nl-feedback js-nl-feedback" style="display:none;"></div>
+
+        </div>
+        <?php
+    }
+
+    /**
+     * AJAX: Send a test email.
+     */
+    public static function ajax_send_test() {
+        check_ajax_referer( 'culture_nl_send_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Permission denied.', 'culture-community' ) ) );
+        }
+
+        $post_id    = absint( $_POST['post_id'] ?? 0 );
+        $test_email = sanitize_email( $_POST['test_email'] ?? '' );
+
+        if ( ! $post_id ) {
+            wp_send_json_error( array( 'message' => __( 'Invalid post.', 'culture-community' ) ) );
+        }
+
+        if ( ! is_email( $test_email ) ) {
+            wp_send_json_error( array( 'message' => __( 'Please enter a valid email address.', 'culture-community' ) ) );
+        }
+
+        $sent = Culture_Newsletter_Queue::send_test( $post_id, $test_email );
+
+        if ( $sent ) {
+            wp_send_json_success( array(
+                /* translators: %s: email address */
+                'message' => sprintf( __( 'Test sent to %s — check your inbox.', 'culture-community' ), $test_email ),
+            ) );
+        } else {
+            wp_send_json_error( array( 'message' => __( 'Send failed. Please check your SMTP settings.', 'culture-community' ) ) );
+        }
+    }
+
+    /**
+     * AJAX: Queue the full send.
+     */
+    public static function ajax_send_issue() {
+        check_ajax_referer( 'culture_nl_send_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Permission denied.', 'culture-community' ) ) );
+        }
+
+        $post_id = absint( $_POST['post_id'] ?? 0 );
+
+        if ( ! $post_id ) {
+            wp_send_json_error( array( 'message' => __( 'Invalid post.', 'culture-community' ) ) );
+        }
+
+        $count = Culture_Newsletter_Queue::schedule_send( $post_id );
+
+        if ( false === $count ) {
+            wp_send_json_error( array( 'message' => __( 'No subscribers found.', 'culture-community' ) ) );
+        }
+
+        wp_send_json_success( array(
+            'message' => sprintf(
+                /* translators: %s: formatted subscriber count */
+                __( 'Queued for %s subscribers. Batches of 50 will go out every minute.', 'culture-community' ),
+                number_format( $count )
+            ),
+            'total' => $count,
+        ) );
+    }
+
+    /**
+     * AJAX: Return current send status for progress polling.
+     */
+    public static function ajax_get_status() {
+        check_ajax_referer( 'culture_nl_send_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error();
+        }
+
+        $post_id = absint( $_POST['post_id'] ?? 0 );
+
+        if ( ! $post_id ) {
+            wp_send_json_error();
+        }
+
+        wp_send_json_success( Culture_Newsletter_Queue::get_send_status( $post_id ) );
+    }
+}
