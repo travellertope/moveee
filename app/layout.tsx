@@ -6,6 +6,7 @@ import "./editorial.css";
 import "./not-found.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -47,6 +48,7 @@ export default function RootLayout({
         <Header />
         <main>{children}</main>
         <Footer />
+        <GoogleAnalytics gaId="G-DNRGCXBBF4" />
       </body>
     </html>
   );
