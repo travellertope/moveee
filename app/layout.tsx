@@ -10,6 +10,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { LanguageProvider } from "@/context/LanguageContext";
+import SessionProvider from "@/components/SessionProvider";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -52,11 +53,13 @@ export default async function RootLayout({
       <body
         className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}
       >
-        <LanguageProvider>
-          <Header siteSettings={siteData} />
-          <main>{children}</main>
-          <Footer />
-        </LanguageProvider>
+        <SessionProvider>
+          <LanguageProvider>
+            <Header siteSettings={siteData} />
+            <main>{children}</main>
+            <Footer />
+          </LanguageProvider>
+        </SessionProvider>
         <GoogleAnalytics gaId="G-DNRGCXBBF4" />
       </body>
     </html>

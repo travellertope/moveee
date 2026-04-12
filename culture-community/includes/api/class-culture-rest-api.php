@@ -87,6 +87,93 @@ class Culture_REST_API {
                 ),
             ),
         ) );
+
+        // Chapter list for the Next.js registration form.
+        register_rest_route( 'culture/v1', '/chapters', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_chapters' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        // Login endpoint — validates WP credentials, returns user profile.
+        register_rest_route( 'culture/v1', '/login', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_login' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'username' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'password' => array(
+                    'required' => true,
+                    'type'     => 'string',
+                ),
+            ),
+        ) );
+
+        // Registration endpoint for the Next.js frontend.
+        register_rest_route( 'culture/v1', '/register', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_register' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'username' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_user',
+                ),
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                    'validate_callback' => function( $v ) { return is_email( $v ); },
+                ),
+                'password' => array(
+                    'required' => true,
+                    'type'     => 'string',
+                ),
+                'display_name' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'phone' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'whatsapp' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'tier' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_key',
+                    'default'           => 'citizen',
+                ),
+                'primary_chapter' => array(
+                    'required'          => false,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                    'default'           => 0,
+                ),
+                'secondary_chapter' => array(
+                    'required'          => false,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                    'default'           => 0,
+                ),
+                'referral_code' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_key',
+                ),
+            ),
+        ) );
     }
 
     /**
@@ -262,5 +349,179 @@ class Culture_REST_API {
             'success' => true,
             'message' => __( 'Subscribed successfully.', 'culture-community' ),
         ) );
+    }
+
+    /**
+     * Return list of published chapters for the Next.js registration form.
+     *
+     * @return WP_REST_Response
+     */
+    public static function handle_get_chapters( $request ) {
+        $posts = get_posts( array(
+            'post_type'      => 'culture_chapter',
+            'posts_per_page' => -1,
+            'orderby'        => 'title',
+            'order'          => 'ASC',
+            'post_status'    => 'publish',
+        ) );
+
+        $chapters = array_map( function( $p ) {
+            return array(
+                'id'   => $p->ID,
+                'name' => $p->post_title,
+                'slug' => $p->post_name,
+            );
+        }, $posts );
+
+        return rest_ensure_response( $chapters );
+    }
+
+    /**
+     * Authenticate a user via WordPress credentials.
+     * Returns a minimal user profile — never the password hash.
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public static function handle_login( $request ) {
+        $username = $request->get_param( 'username' );
+        $password = $request->get_param( 'password' );
+
+        // wp_authenticate accepts username or email.
+        $user = wp_authenticate( $username, $password );
+
+        if ( is_wp_error( $user ) ) {
+            return new WP_Error(
+                'invalid_credentials',
+                __( 'Invalid username or password.', 'culture-community' ),
+                array( 'status' => 401 )
+            );
+        }
+
+        return rest_ensure_response( self::user_profile( $user ) );
+    }
+
+    /**
+     * Register a new user from the Next.js frontend.
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public static function handle_register( $request ) {
+        $username  = $request->get_param( 'username' );
+        $email     = $request->get_param( 'email' );
+        $password  = $request->get_param( 'password' );
+        $display   = $request->get_param( 'display_name' ) ?: $username;
+        $phone     = $request->get_param( 'phone' ) ?: '';
+        $whatsapp  = $request->get_param( 'whatsapp' ) ?: '';
+        $tier      = $request->get_param( 'tier' ) ?: 'citizen';
+        $primary   = (int) $request->get_param( 'primary_chapter' );
+        $secondary = (int) $request->get_param( 'secondary_chapter' );
+        $referral  = $request->get_param( 'referral_code' ) ?: '';
+
+        if ( strlen( $password ) < 8 ) {
+            return new WP_Error(
+                'weak_password',
+                __( 'Password must be at least 8 characters.', 'culture-community' ),
+                array( 'status' => 422 )
+            );
+        }
+
+        if ( ! in_array( $tier, array( 'citizen', 'patron' ), true ) ) {
+            $tier = 'citizen';
+        }
+
+        if ( 'citizen' === $tier ) {
+            $secondary = 0;
+        }
+
+        if ( $secondary && $secondary === $primary ) {
+            return new WP_Error(
+                'chapter_conflict',
+                __( 'Secondary chapter must differ from primary.', 'culture-community' ),
+                array( 'status' => 422 )
+            );
+        }
+
+        $user_id = wp_create_user( $username, $password, $email );
+        if ( is_wp_error( $user_id ) ) {
+            return new WP_Error(
+                'registration_failed',
+                $user_id->get_error_message(),
+                array( 'status' => 422 )
+            );
+        }
+
+        wp_update_user( array( 'ID' => $user_id, 'display_name' => $display ) );
+        update_user_meta( $user_id, '_culture_membership_tier', 'citizen' );
+
+        if ( $phone ) {
+            update_user_meta( $user_id, '_culture_phone', $phone );
+        }
+        if ( $whatsapp ) {
+            update_user_meta( $user_id, '_culture_whatsapp', $whatsapp );
+        }
+        if ( $primary ) {
+            update_user_meta( $user_id, '_culture_primary_chapter_id', $primary );
+        }
+        if ( $secondary ) {
+            update_user_meta( $user_id, '_culture_secondary_chapter_id', $secondary );
+        }
+
+        update_user_meta( $user_id, '_culture_points', 0 );
+        update_user_meta( $user_id, '_culture_badges', array() );
+
+        // Fire user_register hooks so referrals and auto-subscribe run.
+        do_action( 'user_register', $user_id );
+
+        // Process referral if present.
+        if ( ! empty( $referral ) && class_exists( 'Culture_Referrals' ) ) {
+            $_COOKIE['culture_ref'] = $referral;
+            Culture_Referrals::process_referral( $user_id );
+        }
+
+        $user = get_userdata( $user_id );
+
+        // Patron tier — return Paystack checkout URL so Next.js can redirect.
+        if ( 'patron' === $tier && class_exists( 'Culture_Paystack' ) ) {
+            return rest_ensure_response( array_merge(
+                self::user_profile( $user ),
+                array(
+                    'requires_payment' => true,
+                    'checkout_url'     => Culture_Paystack::get_checkout_url( $user_id ),
+                )
+            ) );
+        }
+
+        return rest_ensure_response( array_merge(
+            self::user_profile( $user ),
+            array( 'requires_payment' => false )
+        ) );
+    }
+
+    /**
+     * Build a safe user profile array (no password hash, no secrets).
+     *
+     * @param WP_User $user
+     * @return array
+     */
+    private static function user_profile( $user ) {
+        $primary_id   = (int) get_user_meta( $user->ID, '_culture_primary_chapter_id', true );
+        $secondary_id = (int) get_user_meta( $user->ID, '_culture_secondary_chapter_id', true );
+
+        $primary_name   = $primary_id   ? get_the_title( $primary_id )   : '';
+        $secondary_name = $secondary_id ? get_the_title( $secondary_id ) : '';
+
+        return array(
+            'id'               => $user->ID,
+            'username'         => $user->user_login,
+            'email'            => $user->user_email,
+            'display_name'     => $user->display_name,
+            'tier'             => get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen',
+            'points'           => (int) get_user_meta( $user->ID, '_culture_points', true ),
+            'primary_chapter'  => array( 'id' => $primary_id, 'name' => $primary_name ),
+            'secondary_chapter'=> array( 'id' => $secondary_id, 'name' => $secondary_name ),
+            'referral_code'    => get_user_meta( $user->ID, '_culture_referral_code', true ) ?: '',
+        );
     }
 }
