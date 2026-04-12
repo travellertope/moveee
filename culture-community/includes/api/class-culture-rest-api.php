@@ -42,6 +42,23 @@ class Culture_REST_API {
             'callback'            => array( 'Culture_Paystack', 'handle_webhook' ),
             'permission_callback' => '__return_true',
         ) );
+
+        // Newsletter subscribe endpoint (public).
+        register_rest_route( 'culture/v1', '/newsletter-subscribe', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_newsletter_subscribe' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                    'validate_callback' => function( $value ) {
+                        return is_email( $value );
+                    },
+                ),
+            ),
+        ) );
     }
 
     /**
@@ -152,6 +169,30 @@ class Culture_REST_API {
                 'display_name' => $user->display_name,
                 'points'       => Culture_Gamification::get_points( $user_id ),
             ),
+        ) );
+    }
+
+    /**
+     * Handle newsletter subscription.
+     */
+    public static function handle_newsletter_subscribe( $request ) {
+        $email = $request->get_param( 'email' );
+
+        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
+
+        if ( in_array( $email, $subscribers, true ) ) {
+            return rest_ensure_response( array(
+                'success' => true,
+                'message' => __( 'You are already subscribed.', 'culture-community' ),
+            ) );
+        }
+
+        $subscribers[] = $email;
+        update_option( 'culture_newsletter_subscribers', $subscribers );
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'message' => __( 'Subscribed successfully.', 'culture-community' ),
         ) );
     }
 }

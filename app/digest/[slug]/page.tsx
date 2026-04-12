@@ -1,0 +1,181 @@
+import React from "react";
+import { getWPData, GET_NEWSLETTER_BY_SLUG, GET_NEWSLETTERS } from "@/lib/wp";
+import { notFound } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import ProgressBar from "@/components/ProgressBar";
+import SubscribeForm from "@/components/SubscribeForm";
+
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
+  let data;
+  try {
+    data = await getWPData(GET_NEWSLETTER_BY_SLUG, { slug: resolvedParams.slug });
+  } catch {}
+  const issue = data?.cultureNewsletter;
+  if (!issue) return { title: "Cultural Digest · The Moveee" };
+  return {
+    title: `${issue.title} · The Cultural Digest`,
+    description: issue.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
+  };
+}
+
+export default async function DigestIssuePage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
+  let data;
+  try {
+    data = await getWPData(GET_NEWSLETTER_BY_SLUG, { slug: resolvedParams.slug });
+  } catch (err: any) {
+    console.error("DigestIssuePage getWPData error:", err);
+  }
+
+  const issue = data?.cultureNewsletter;
+
+  if (!issue) {
+    notFound();
+  }
+
+  // Fetch sibling issues for prev/next nav
+  let allIssues: any[] = [];
+  try {
+    const listData = await getWPData(GET_NEWSLETTERS, { first: 50 });
+    allIssues = listData?.cultureNewsletters?.nodes || [];
+  } catch {}
+
+  const currentIdx = allIssues.findIndex((n: any) => n.slug === resolvedParams.slug);
+  const prevIssue = currentIdx < allIssues.length - 1 ? allIssues[currentIdx + 1] : null;
+  const nextIssue = currentIdx > 0 ? allIssues[currentIdx - 1] : null;
+
+  const publishedDate = new Date(issue.date).toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const wordCount = issue.content?.replace(/<[^>]*>/g, "").split(/\s+/).length || 0;
+  const readingTime = Math.max(1, Math.ceil(wordCount / 250));
+
+  const hasFeaturedImage = !!issue.featuredImage?.node?.sourceUrl;
+
+  return (
+    <>
+      <ProgressBar />
+
+      {/* ── BREADCRUMB ── */}
+      <div className="breadcrumb">
+        <Link href="/">Home</Link><span className="sep">/</span>
+        <Link href="/digest">The Cultural Digest</Link><span className="sep">/</span>
+        <span className="breadcrumb-current" dangerouslySetInnerHTML={{ __html: issue.title }} />
+      </div>
+
+      {/* ── ISSUE HERO ── */}
+      {hasFeaturedImage ? (
+        <section className="digest-issue-hero with-img">
+          <Image
+            src={issue.featuredImage.node.sourceUrl}
+            alt={issue.featuredImage.node.altText || issue.title}
+            fill
+            style={{ objectFit: "cover" }}
+            priority
+          />
+          <div className="digest-issue-hero-overlay" />
+          <div className="digest-issue-hero-text">
+            <div className="digest-issue-eyebrow">★ The Cultural Digest</div>
+            <h1 className="digest-issue-title" dangerouslySetInnerHTML={{ __html: issue.title }} />
+            {issue.excerpt && (
+              <p className="digest-issue-standfirst" dangerouslySetInnerHTML={{ __html: issue.excerpt.replace(/<[^>]*>/g, "") }} />
+            )}
+            <div className="digest-issue-meta-bar">
+              <span>{publishedDate}</span>
+              <span>{readingTime} min read</span>
+              {issue.cultureInterests?.nodes?.map((t: any) => (
+                <span key={t.slug} className="digest-tag-light">{t.name}</span>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : (
+        <header className="digest-issue-hero no-img">
+          <div className="digest-issue-eyebrow">★ The Cultural Digest</div>
+          <h1 className="digest-issue-title" dangerouslySetInnerHTML={{ __html: issue.title }} />
+          {issue.excerpt && (
+            <p className="digest-issue-standfirst" dangerouslySetInnerHTML={{ __html: issue.excerpt.replace(/<[^>]*>/g, "") }} />
+          )}
+          <div className="digest-issue-meta-bar">
+            <span>{publishedDate}</span>
+            <span>{readingTime} min read</span>
+            {issue.cultureInterests?.nodes?.map((t: any) => (
+              <span key={t.slug} className="digest-tag">{t.name}</span>
+            ))}
+          </div>
+        </header>
+      )}
+
+      {/* ── ISSUE BODY ── */}
+      <div className="digest-issue-wrap">
+        {/* CONTENT */}
+        <div className="digest-issue-body" id="issue-body">
+          <div
+            className="prose-content digest-prose"
+            dangerouslySetInnerHTML={{ __html: issue.content || "" }}
+          />
+        </div>
+
+        {/* SIDEBAR */}
+        <aside className="digest-issue-sidebar">
+          <div className="digest-sidebar-card">
+            <div className="digest-sidebar-label">★ The Moveee Weekly</div>
+            <h4>Culture in your inbox, every Friday.</h4>
+            <p>Film picks, exhibition openings, music worth your time. No noise.</p>
+            <SubscribeForm
+              placeholder="your@email.com"
+              buttonLabel="Subscribe free →"
+            />
+          </div>
+
+          {issue.cultureInterests?.nodes?.length > 0 && (
+            <div className="digest-sidebar-card">
+              <div className="digest-sidebar-label">Topics in this issue</div>
+              <div className="digest-sidebar-tags">
+                {issue.cultureInterests.nodes.map((t: any) => (
+                  <span key={t.slug} className="digest-tag">{t.name}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="digest-sidebar-card dark">
+            <div className="digest-sidebar-label">The Archive</div>
+            <h4>Read past issues</h4>
+            <Link href="/digest" className="digest-sidebar-link">Browse all issues →</Link>
+          </div>
+        </aside>
+      </div>
+
+      {/* ── PREV / NEXT NAV ── */}
+      <nav className="digest-issue-nav">
+        {prevIssue ? (
+          <Link href={`/digest/${prevIssue.slug}`} className="digest-nav-item prev">
+            <span className="digest-nav-label">← Previous Issue</span>
+            <span className="digest-nav-title" dangerouslySetInnerHTML={{ __html: prevIssue.title }} />
+            <span className="digest-nav-date">
+              {new Date(prevIssue.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+            </span>
+          </Link>
+        ) : <div />}
+        {nextIssue ? (
+          <Link href={`/digest/${nextIssue.slug}`} className="digest-nav-item next">
+            <span className="digest-nav-label">Next Issue →</span>
+            <span className="digest-nav-title" dangerouslySetInnerHTML={{ __html: nextIssue.title }} />
+            <span className="digest-nav-date">
+              {new Date(nextIssue.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+            </span>
+          </Link>
+        ) : <div />}
+      </nav>
+    </>
+  );
+}

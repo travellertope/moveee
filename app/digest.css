@@ -1,0 +1,648 @@
+/* ========== THE CULTURAL DIGEST ========== */
+
+/* ── ARCHIVE: MASTHEAD ── */
+.digest-head {
+  border-bottom: 2px solid var(--rule);
+  background: var(--paper);
+  position: relative;
+  z-index: 10;
+}
+.digest-head-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 64px 60px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.digest-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ochre);
+}
+.digest-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(48px, 6vw, 88px);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -.04em;
+  margin: 0;
+}
+.digest-title em { font-style: italic; color: var(--ochre); }
+
+.digest-desc {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--mute);
+  max-width: 560px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Subscribe band in masthead */
+.digest-subscribe-band {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(42,36,28,0.12);
+}
+.digest-sub-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--mute);
+  white-space: nowrap;
+}
+.digest-sub-form {
+  display: flex;
+  gap: 0;
+  flex: 1;
+  max-width: 480px;
+}
+.digest-sub-form input[type="email"] {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid var(--rule);
+  border-right: none;
+  background: transparent;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink);
+  outline: none;
+}
+.digest-sub-form input[type="email"]::placeholder { color: var(--mute); }
+.digest-sub-btn {
+  padding: 12px 24px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .2s, color .2s;
+}
+.digest-sub-btn:hover { background: var(--ochre); border-color: var(--ochre); }
+.digest-sub-btn:disabled { opacity: .6; cursor: default; }
+.digest-sub-note {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .1em;
+  color: var(--mute);
+}
+
+.digest-head-rule {
+  height: 1px;
+  background: var(--rule);
+  opacity: .15;
+  margin: 0 60px;
+}
+.digest-issue-count {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 12px 60px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* ── ARCHIVE: HERO ISSUE ── */
+.digest-hero {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 60px 60px 0;
+}
+.digest-hero-link {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+}
+.digest-hero-link:hover .digest-read-cta { color: var(--ochre); }
+
+.digest-hero-img {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--ink);
+  overflow: hidden;
+}
+.digest-hero-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--moss), var(--ink));
+}
+.digest-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(20,17,13,0.3), transparent 60%);
+}
+.digest-hero-body { display: flex; flex-direction: column; gap: 16px; }
+
+.digest-issue-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ochre);
+}
+.digest-hero-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(28px, 3vw, 48px);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  margin: 0;
+}
+.digest-hero-excerpt {
+  font-family: 'Fraunces', serif;
+  font-size: 15px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--mute);
+  line-height: 1.5;
+  margin: 0;
+}
+.digest-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.digest-read-cta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 1px;
+  transition: color .2s, border-color .2s;
+  align-self: flex-start;
+}
+
+/* ── ARCHIVE: TAGS ── */
+.digest-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border: 1px solid rgba(42,36,28,0.2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.digest-tag-light {
+  display: inline-block;
+  padding: 3px 8px;
+  border: 1px solid rgba(243,236,224,0.3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(243,236,224,0.7);
+}
+
+/* ── ARCHIVE: SECTION LABEL ── */
+.digest-section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--mute);
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 32px;
+}
+
+/* ── ARCHIVE: LATEST 3 GRID ── */
+.digest-latest {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 60px 60px 0;
+}
+.digest-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+.digest-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-decoration: none;
+  color: inherit;
+}
+.digest-card:hover .digest-card-title { color: var(--ochre); }
+.digest-card:hover .digest-card-cta { color: var(--ochre); border-color: var(--ochre); }
+
+.digest-card-img {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  background: var(--ink);
+  overflow: hidden;
+}
+.digest-card-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #3d4a2a, #14110d);
+}
+.digest-card-body { display: flex; flex-direction: column; gap: 10px; }
+.digest-card-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.digest-card-title {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -.01em;
+  margin: 0;
+  transition: color .2s;
+}
+.digest-card-excerpt {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--mute);
+  line-height: 1.5;
+  margin: 0;
+}
+.digest-card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.digest-card-cta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+  align-self: flex-start;
+  transition: color .2s;
+}
+
+/* ── ARCHIVE: LIST ── */
+.digest-archive {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 60px 60px 80px;
+}
+.digest-archive-list { display: flex; flex-direction: column; }
+.digest-archive-row {
+  display: grid;
+  grid-template-columns: 40px 140px 1fr auto 24px;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(42,36,28,0.1);
+  text-decoration: none;
+  color: inherit;
+  transition: background .2s;
+}
+.digest-archive-row:hover { background: rgba(42,36,28,0.02); }
+.digest-archive-row:hover .digest-archive-title { color: var(--ochre); }
+.digest-archive-row:hover .digest-archive-arrow { color: var(--ochre); }
+
+.digest-archive-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--mute);
+  letter-spacing: .05em;
+}
+.digest-archive-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  white-space: nowrap;
+}
+.digest-archive-title {
+  font-family: 'Fraunces', serif;
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1.2;
+  transition: color .2s;
+}
+.digest-archive-tags { display: flex; gap: 6px; justify-content: flex-end; }
+.digest-archive-arrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: var(--mute);
+  transition: color .2s;
+}
+
+/* ── ARCHIVE: EMPTY ── */
+.digest-empty {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 80px 60px;
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 20px;
+  color: var(--mute);
+  text-align: center;
+}
+
+/* ── SINGLE ISSUE: HERO ── */
+.digest-issue-hero.with-img {
+  position: relative;
+  height: 560px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+.digest-issue-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(20,17,13,0.85) 0%, rgba(20,17,13,0.3) 50%, transparent 100%);
+  z-index: 1;
+}
+.digest-issue-hero-text {
+  position: relative;
+  z-index: 2;
+  padding: 60px;
+  max-width: 900px;
+  color: var(--paper);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.digest-issue-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ochre);
+}
+.digest-issue-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(32px, 4vw, 60px);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -.03em;
+  margin: 0;
+}
+.digest-issue-hero.with-img .digest-issue-title { color: var(--paper); }
+.digest-issue-hero.no-img .digest-issue-title { color: var(--ink); }
+
+.digest-issue-hero.no-img {
+  padding: 60px;
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.digest-issue-standfirst {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.4;
+  margin: 0;
+  max-width: 680px;
+}
+.digest-issue-hero.with-img .digest-issue-standfirst { color: rgba(243,236,224,0.8); }
+.digest-issue-hero.no-img .digest-issue-standfirst { color: var(--mute); }
+
+.digest-issue-meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.digest-issue-hero.with-img .digest-issue-meta-bar { color: rgba(243,236,224,0.6); }
+.digest-issue-hero.no-img .digest-issue-meta-bar { color: var(--mute); }
+
+/* ── SINGLE ISSUE: BODY LAYOUT ── */
+.digest-issue-wrap {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 60px 60px 80px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 60px;
+  align-items: start;
+}
+
+/* Prose content shared with magazine */
+.digest-issue-body .prose-content,
+.digest-prose {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+.digest-prose p { margin-bottom: 1.5em; }
+.digest-prose h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: -.02em;
+  color: var(--ink);
+  margin: 2em 0 0.8em;
+}
+.digest-prose h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--ink);
+  margin: 1.5em 0 0.6em;
+}
+.digest-prose blockquote {
+  border-left: 3px solid var(--ochre);
+  padding-left: 24px;
+  margin: 2em 0;
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 20px;
+  color: var(--ink);
+}
+.digest-prose img {
+  width: 100%;
+  height: auto;
+  margin: 2em 0;
+}
+
+/* ── SINGLE ISSUE: SIDEBAR ── */
+.digest-issue-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 100px;
+}
+.digest-sidebar-card {
+  padding: 28px;
+  border: 1px solid rgba(42,36,28,0.15);
+  background: var(--paper-deep);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.digest-sidebar-card.dark {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.digest-sidebar-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ochre);
+}
+.digest-sidebar-card h4 {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.2;
+  margin: 0;
+}
+.digest-sidebar-card.dark h4 { color: var(--paper); }
+.digest-sidebar-card p {
+  font-size: 13px;
+  color: var(--mute);
+  line-height: 1.5;
+  margin: 0;
+}
+.digest-sidebar-card.dark p { color: rgba(243,236,224,0.5); }
+
+.digest-sidebar-card input[type="email"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(42,36,28,0.2);
+  background: var(--paper);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink);
+  outline: none;
+}
+.digest-sidebar-card input[type="email"]::placeholder { color: var(--mute); }
+.digest-sidebar-card button {
+  padding: 10px 16px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .2s;
+}
+.digest-sidebar-card button:hover { background: var(--ochre); }
+.digest-sidebar-card button:disabled { opacity: .6; cursor: default; }
+
+.digest-sidebar-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.digest-sidebar-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--paper);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(243,236,224,0.3);
+  padding-bottom: 1px;
+  align-self: flex-start;
+  transition: border-color .2s;
+}
+.digest-sidebar-link:hover { border-color: var(--ochre); color: var(--ochre); }
+
+/* ── SINGLE ISSUE: PREV / NEXT ── */
+.digest-issue-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 2px solid var(--rule);
+  max-width: 1440px;
+  margin: 0 auto;
+}
+.digest-nav-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 40px 60px;
+  text-decoration: none;
+  color: inherit;
+  transition: background .2s;
+}
+.digest-nav-item:hover { background: var(--paper-deep); }
+.digest-nav-item.next { border-left: 1px solid var(--rule); text-align: right; align-items: flex-end; }
+.digest-nav-item.prev { align-items: flex-start; }
+
+.digest-nav-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--ochre);
+}
+.digest-nav-title {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1.15;
+}
+.digest-nav-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .digest-head-inner { padding: 48px 32px 36px; }
+  .digest-hero { padding: 40px 32px 0; }
+  .digest-hero-link { grid-template-columns: 1fr; gap: 32px; }
+  .digest-latest { padding: 40px 32px 0; }
+  .digest-grid-3 { grid-template-columns: 1fr 1fr; gap: 24px; }
+  .digest-archive { padding: 40px 32px 60px; }
+  .digest-issue-wrap { grid-template-columns: 1fr; padding: 40px 32px 60px; }
+  .digest-issue-sidebar { position: static; }
+  .digest-issue-hero.no-img { padding: 40px 32px; }
+  .digest-issue-hero-text { padding: 40px 32px; }
+  .digest-archive-row { grid-template-columns: 32px 1fr 24px; }
+  .digest-archive-date, .digest-archive-tags { display: none; }
+  .digest-issue-nav { grid-template-columns: 1fr; }
+  .digest-nav-item { padding: 28px 32px; }
+  .digest-nav-item.next { border-left: none; border-top: 1px solid var(--rule); text-align: left; align-items: flex-start; }
+  .digest-head-rule, .digest-issue-count { margin: 0 32px; }
+  .digest-issue-count { padding: 12px 32px; }
+}
+@media (max-width: 640px) {
+  .digest-grid-3 { grid-template-columns: 1fr; }
+  .digest-subscribe-band { flex-direction: column; align-items: flex-start; }
+  .digest-sub-form { max-width: 100%; width: 100%; }
+  .digest-archive-row { grid-template-columns: 1fr 24px; }
+  .digest-archive-num { display: none; }
+}

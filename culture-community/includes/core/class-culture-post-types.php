@@ -80,14 +80,18 @@ class Culture_Post_Types {
                 'search_items'       => __( 'Search Newsletters', 'culture-community' ),
                 'not_found'          => __( 'No newsletters found', 'culture-community' ),
             ),
-            'public'       => true,
-            'has_archive'  => true,
-            'show_in_menu' => 'culture-community',
-            'menu_icon'    => 'dashicons-email-alt',
-            'supports'     => array( 'title', 'editor', 'thumbnail', 'comments' ),
-            'rewrite'      => array( 'slug' => 'digest' ),
-            'show_in_rest' => true,
-            'capability_type' => 'post',
+            'public'              => true,
+            'has_archive'         => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-email-alt',
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'comments' ),
+            'rewrite'             => array( 'slug' => 'digest' ),
+            'show_in_rest'        => true,
+            'capability_type'     => 'post',
+            // WPGraphQL support.
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'cultureNewsletter',
+            'graphql_plural_name' => 'cultureNewsletters',
         ) );
     }
 
@@ -104,11 +108,15 @@ class Culture_Post_Types {
                 'edit_item'     => __( 'Edit Interest', 'culture-community' ),
                 'add_new_item'  => __( 'Add New Interest', 'culture-community' ),
             ),
-            'hierarchical'  => false,
-            'public'        => true,
-            'show_in_rest'  => true,
-            'show_in_menu'  => true,
-            'rewrite'       => array( 'slug' => 'interest' ),
+            'hierarchical'        => false,
+            'public'              => true,
+            'show_in_rest'        => true,
+            'show_in_menu'        => true,
+            'rewrite'             => array( 'slug' => 'interest' ),
+            // WPGraphQL support.
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'cultureInterest',
+            'graphql_plural_name' => 'cultureInterests',
         ) );
     }
 
