@@ -117,6 +117,26 @@ class Culture_Newsletter_Send {
                         );
                         ?>
                     </p>
+                    <?php
+                    // Quick analytics snapshot.
+                    $quick = Culture_NL_Analytics::get_campaign_stats( $post->ID );
+                    if ( $quick['unique_opens'] > 0 || $quick['unique_clicks'] > 0 ) :
+                        $analytics_url = admin_url( 'admin.php?page=culture-nl-analytics&campaign=' . $post->ID );
+                    ?>
+                    <div class="culture-nl-quick-analytics">
+                        <span class="culture-nl-qa-chip" title="<?php esc_attr_e( 'Open rate', 'culture-community' ); ?>">
+                            <span class="dashicons dashicons-visibility"></span>
+                            <?php echo esc_html( $quick['open_rate'] ); ?>%
+                        </span>
+                        <span class="culture-nl-qa-chip" title="<?php esc_attr_e( 'Click-through rate', 'culture-community' ); ?>">
+                            <span class="dashicons dashicons-admin-links"></span>
+                            <?php echo esc_html( $quick['ctr'] ); ?>%
+                        </span>
+                        <a href="<?php echo esc_url( $analytics_url ); ?>" class="culture-nl-qa-link">
+                            <?php esc_html_e( 'Full analytics →', 'culture-community' ); ?>
+                        </a>
+                    </div>
+                    <?php endif; ?>
                 <?php elseif ( 'sending' === $status ) : ?>
                     <div class="culture-nl-badge sending">
                         <span class="dashicons dashicons-update-alt"></span>

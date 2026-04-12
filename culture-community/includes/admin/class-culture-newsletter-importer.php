@@ -45,8 +45,9 @@ class Culture_Newsletter_Importer {
             return;
         }
 
-        $campaigns = self::get_mailpoet_campaigns();
-        $notice    = '';
+        $campaigns  = self::get_mailpoet_campaigns();
+        $diagnostic = self::get_mailpoet_diagnostic();
+        $notice     = '';
 
         if ( isset( $_GET['imported'] ) ) {
             $n      = absint( $_GET['imported'] );
@@ -71,6 +72,36 @@ class Culture_Newsletter_Importer {
 
             <?php if ( $notice ) : ?>
                 <div class="notice notice-success is-dismissible"><p><?php echo esc_html( $notice ); ?></p></div>
+            <?php endif; ?>
+
+            <?php /* ── Diagnostic block ─────────────────────────────────── */ ?>
+            <?php if ( $diagnostic ) : ?>
+                <details style="margin:0 0 16px;font-size:12px;color:#646970;">
+                    <summary style="cursor:pointer;font-weight:600;color:#1d2327;">
+                        <?php esc_html_e( 'MailPoet table summary (expand to diagnose empty list)', 'culture-community' ); ?>
+                    </summary>
+                    <table class="wp-list-table widefat fixed striped" style="max-width:500px;margin-top:8px;">
+                        <thead>
+                            <tr>
+                                <th><?php esc_html_e( 'Type', 'culture-community' ); ?></th>
+                                <th><?php esc_html_e( 'Status', 'culture-community' ); ?></th>
+                                <th><?php esc_html_e( 'Count', 'culture-community' ); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ( $diagnostic as $row ) : ?>
+                                <tr>
+                                    <td><?php echo esc_html( $row->type ); ?></td>
+                                    <td><?php echo esc_html( $row->status ); ?></td>
+                                    <td><?php echo esc_html( $row->cnt ); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                    <p style="margin-top:8px;">
+                        <?php esc_html_e( 'If your newsletters appear above but are not listed below, check that their Type is "standard" and Status is "sent" or "sending".', 'culture-community' ); ?>
+                    </p>
+                </details>
             <?php endif; ?>
 
             <?php if ( empty( $campaigns ) ) : ?>
@@ -443,21 +474,27 @@ class Culture_Newsletter_Importer {
     private static function get_mailpoet_campaigns() {
         global $wpdb;
 
+        // Broad query: include 'sent' and 'sending' statuses, plus any newsletter
+        // that has a completed queue entry regardless of its status flag.
+        // This handles cases where MailPoet gets stuck mid-send or uses a
+        // slightly different status string in newer versions.
         $rows = $wpdb->get_results(
             "SELECT
                 n.id,
                 n.subject,
                 n.preheader,
-                n.sent_at,
-                COALESCE( SUM( q.count_total ), 0 ) AS recipients
+                n.status,
+                COALESCE( n.sent_at, MAX( q.created_at ) ) AS sent_at,
+                COALESCE( SUM( q.count_total ), 0 )        AS recipients
              FROM {$wpdb->prefix}mailpoet_newsletters n
              LEFT JOIN {$wpdb->prefix}mailpoet_sending_queues q
                     ON q.newsletter_id = n.id AND q.status = 'completed'
              WHERE n.type = 'standard'
-               AND n.status = 'sent'
+               AND n.status IN ( 'sent', 'sending' )
                AND n.deleted_at IS NULL
              GROUP BY n.id
-             ORDER BY n.sent_at DESC"
+             HAVING recipients > 0 OR n.status = 'sent'
+             ORDER BY sent_at DESC"
         );
 
         if ( empty( $rows ) ) {
@@ -492,6 +529,29 @@ class Culture_Newsletter_Importer {
         }
 
         return $campaigns;
+    }
+
+    /**
+     * Return a summary of newsletter types/statuses in the MailPoet table.
+     * Used as a diagnostic aid when the main list comes back empty.
+     *
+     * @return array|null Rows with type, status, cnt — or null if table doesn't exist.
+     */
+    private static function get_mailpoet_diagnostic() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'mailpoet_newsletters';
+        // Silently check the table exists first.
+        $exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+        if ( ! $exists ) {
+            return null;
+        }
+        return $wpdb->get_results(
+            "SELECT type, status, COUNT(*) AS cnt
+             FROM {$table}
+             WHERE deleted_at IS NULL
+             GROUP BY type, status
+             ORDER BY cnt DESC"
+        ) ?: null;
     }
 
     /**
