@@ -15,7 +15,11 @@
 
   @layer base {
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+    scroll-behavior: smooth;
   }
 
   body {
@@ -1293,17 +1297,20 @@
     .pillar-header {
       flex-direction: column;
       align-items: flex-start;
-      gap: 24px;
+      gap: 16px;
       padding-bottom: 24px;
+      margin-bottom: 48px;
     }
-    .pillar-num { font-size: 52px; }
+    .pillar-num { font-size: 40px; }
     .pillar-title {
       flex-direction: column;
       align-items: flex-start;
-      gap: 12px;
+      gap: 8px;
     }
-    .pillar-title h3 { font-size: 42px; white-space: normal; }
-    .pillar-title p { padding-left: 0; border-left: none; }
+    .pillar-title h3 { font-size: 32px; white-space: normal; }
+    .pillar-title p { padding-left: 0; border-left: none; font-size: 14px; max-width: 100%; }
+    .mag-grid { gap: 32px; }
+    .mag-lead { padding-right: 0; }
 
     /* Masthead: logo left-aligned + icons + hamburger on mobile */
     .masthead-left, .masthead-right { display: none; }
@@ -1324,14 +1331,16 @@
 
   @media (max-width: 640px) {
     .container, .hero, .pillar, .connect, footer, .masthead, .masthead-bar { padding-left: 22px; padding-right: 22px; }
-    .wordmark h1 { font-size: 38px; }
-    .hero h2 { font-size: 48px; }
-    .events-grid, .lifestyle-grid { grid-template-columns: 1fr; }
+    .wordmark h1 { font-size: 32px; }
+    .hero { padding: 50px 22px 60px; }
+    .hero h2 { font-size: 36px; line-height: 1.0; margin-bottom: 24px; }
+    .hero-standfirst { font-size: 15px; margin-bottom: 32px; }
+    .events-grid, .lifestyle-grid { grid-template-columns: 1fr; gap: 24px; }
     .footer-top { grid-template-columns: 1fr; }
-    .origin-row { grid-template-columns: 40px 1fr; gap: 14px; }
+    .origin-row { grid-template-columns: 32px 1fr; gap: 12px; padding: 20px 0; }
     .origin-country, .origin-price { display: none; }
-    .origin-name { font-size: 22px; }
-    .connect h3 { font-size: 44px; }
+    .origin-name { font-size: 18px; line-height: 1.1; }
+    .connect h3 { font-size: 36px; }
     .masthead-bar { flex-direction: column; gap: 8px; text-align: center; }
     .masthead-bar-left span + span, .masthead-bar-right span + span { margin-left: 12px; }
 
