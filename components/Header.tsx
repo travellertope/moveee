@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Ticker from "./Ticker";
 import { useLanguage } from "@/context/LanguageContext";
@@ -12,6 +12,7 @@ interface HeaderProps {
 
 const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const { language, setLanguage } = useLanguage();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Determine current datestamp
   const today = new Date().toLocaleDateString('en-GB', {
@@ -24,7 +25,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const tickerData = siteSettings?.mastheadTicker || {};
 
   return (
-    <div className="sticky top-0 z-50">
+    <div className="relative z-50">
       <div className="relative group">
         <Ticker 
           issueText={tickerData.issueText}
@@ -78,7 +79,34 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           <Link href="/account">Sign in</Link>
           <Link href="/connect" className="join-btn" style={{ textDecoration: 'none' }}>Join Connect →</Link>
         </div>
+        <button
+          className="masthead-hamburger"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle menu"
+          aria-expanded={mobileMenuOpen}
+        >
+          <span className={`hamburger-icon ${mobileMenuOpen ? "open" : ""}`}>
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
       </header>
+
+      {/* Mobile menu */}
+      <nav className={`mobile-menu ${mobileMenuOpen ? "mobile-menu--open" : ""}`}>
+        <div className="mobile-menu-links">
+          <Link href="/magazine" onClick={() => setMobileMenuOpen(false)}>Magazine</Link>
+          <Link href="/events" onClick={() => setMobileMenuOpen(false)}>Events</Link>
+          <Link href="/origins" onClick={() => setMobileMenuOpen(false)}>Origins</Link>
+          <Link href="/shop" onClick={() => setMobileMenuOpen(false)}>Lifestyle</Link>
+        </div>
+        <div className="mobile-menu-actions">
+          <button onClick={() => setMobileMenuOpen(false)}>Search</button>
+          <Link href="/account" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
+          <Link href="/connect" className="join-btn" style={{ textDecoration: 'none' }} onClick={() => setMobileMenuOpen(false)}>Join Connect →</Link>
+        </div>
+      </nav>
     </div>
   );
 };
