@@ -126,16 +126,30 @@
   .masthead-left { justify-content: flex-start; }
   .masthead-right { justify-content: flex-end; }
 
-  .masthead-left a, .masthead-right a {
+  .masthead-left a, .masthead-right a:not(.join-btn):not(.masthead-icon-btn) {
     color: var(--ink);
     text-decoration: none;
     padding-bottom: 2px;
     border-bottom: 1px solid transparent;
     transition: border-color 0.3s;
   }
-  .masthead-left a:hover, .masthead-right a:hover {
+  .masthead-left a:hover, .masthead-right a:not(.join-btn):not(.masthead-icon-btn):hover {
     border-bottom-color: var(--ochre);
   }
+
+  /* Icon buttons — search & sign-in */
+  .masthead-icon-btn {
+    display: flex;
+    align-items: center;
+    color: var(--ink);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .masthead-icon-btn:hover { opacity: 0.5; }
 
   .wordmark {
     text-align: center;
@@ -184,13 +198,19 @@
   }
   .join-btn:hover { background: var(--ochre); }
 
-  /* Hamburger — hidden on desktop, shown at ≤1024px */
-  .masthead-hamburger {
+  /* Mobile icon + hamburger group — hidden on desktop */
+  .masthead-mobile-actions {
     display: none;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Hamburger — part of mobile-actions */
+  .masthead-hamburger {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 8px;
+    padding: 6px;
   }
 
   .hamburger-icon {
@@ -1079,20 +1099,20 @@
     .pillar-num { font-size: 52px; }
     .pillar-title h3 { font-size: 42px; }
 
-    /* Masthead: logo left-aligned + hamburger on mobile */
+    /* Masthead: logo left-aligned + icons + hamburger on mobile */
     .masthead-left, .masthead-right { display: none; }
     .masthead {
       grid-template-columns: 1fr auto;
-      padding: 16px 24px;
+      padding: 14px 20px;
       gap: 0;
     }
     .wordmark {
       align-items: flex-start;
       text-align: left;
     }
-    .wordmark img { height: 32px; }
-    .wordmark .kicker { font-size: 7px; margin-bottom: 5px; }
-    .masthead-hamburger { display: block; }
+    .wordmark img { height: 28px; }
+    .wordmark .kicker { font-size: 7px; margin-bottom: 4px; }
+    .masthead-mobile-actions { display: flex; }
     .mobile-menu { display: block; }
   }
 
