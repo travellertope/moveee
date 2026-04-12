@@ -350,6 +350,72 @@ function culture_theme_customize_register( $wp_customize ) {
         'input_attrs' => array( 'min' => 12, 'max' => 120, 'step' => 1 ),
     ) );
 
+    // ── Masthead Ticker Section ──
+    $wp_customize->add_section( 'culture_ticker', array(
+        'title'       => __( 'Masthead Ticker', 'culture-theme' ),
+        'panel'       => 'culture_theme_options',
+        'description' => __( 'Manage the scrolling ticker at the top of the site.', 'culture-theme' ),
+        'priority'    => 7,
+    ) );
+
+    // Issue Text
+    $wp_customize->add_setting( 'culture_ticker_issue_text', array(
+        'default'           => 'Issue N°014',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ) );
+    $wp_customize->add_control( 'culture_ticker_issue_text', array(
+        'label'   => __( 'Issue Number Text', 'culture-theme' ),
+        'section' => 'culture_ticker',
+        'type'    => 'text',
+    ) );
+
+    // Issue URL
+    $wp_customize->add_setting( 'culture_ticker_issue_url', array(
+        'default'           => '',
+        'sanitize_callback' => 'esc_url_raw',
+    ) );
+    $wp_customize->add_control( 'culture_ticker_issue_url', array(
+        'label'   => __( 'Issue Number Link (optional)', 'culture-theme' ),
+        'section' => 'culture_ticker',
+        'type'    => 'url',
+    ) );
+
+    // Announcement Text
+    $wp_customize->add_setting( 'culture_ticker_announcement_text', array(
+        'default'           => 'Culture Narratives Vol I out now',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ) );
+    $wp_customize->add_control( 'culture_ticker_announcement_text', array(
+        'label'   => __( 'Announcement Text', 'culture-theme' ),
+        'section' => 'culture_ticker',
+        'type'    => 'text',
+    ) );
+
+    // Announcement URL
+    $wp_customize->add_setting( 'culture_ticker_announcement_url', array(
+        'default'           => '',
+        'sanitize_callback' => 'esc_url_raw',
+    ) );
+    $wp_customize->add_control( 'culture_ticker_announcement_url', array(
+        'label'   => __( 'Announcement Link (optional)', 'culture-theme' ),
+        'section' => 'culture_ticker',
+        'type'    => 'url',
+    ) );
+
+    // Locations
+    $wp_customize->add_setting( 'culture_ticker_locations', array(
+        'default'           => 'Lagos · London · Accra · NYC',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ) );
+    $wp_customize->add_control( 'culture_ticker_locations', array(
+        'label'   => __( 'Locations Text', 'culture-theme' ),
+        'section' => 'culture_ticker',
+        'type'    => 'text',
+    ) );
+
     // ═══════════════════════════════════════════
     //  Hero Section
     // ═══════════════════════════════════════════

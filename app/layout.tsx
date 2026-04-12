@@ -7,6 +7,7 @@ import "./not-found.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { GoogleAnalytics } from '@next/third-parties/google';
+import { LanguageProvider } from "@/context/LanguageContext";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -35,19 +36,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+import { getWPData, GET_SITE_SETTINGS } from "@/lib/wp";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const siteData = await getWPData(GET_SITE_SETTINGS);
+
   return (
     <html lang="en" className="scroll-smooth">
       <body
         className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}
       >
-        <Header />
-        <main>{children}</main>
-        <Footer />
+        <LanguageProvider>
+          <Header siteSettings={siteData} />
+          <main>{children}</main>
+          <Footer />
+        </LanguageProvider>
         <GoogleAnalytics gaId="G-DNRGCXBBF4" />
       </body>
     </html>

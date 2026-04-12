@@ -522,3 +522,33 @@ require get_template_directory() . '/inc/customizer.php';
 
 // Load template tags.
 require get_template_directory() . '/inc/template-tags.php';
+
+/**
+ * Expose Masthead Ticker settings to WPGraphQL.
+ */
+add_action( 'graphql_register_types', function() {
+    register_graphql_object_type( 'MastheadTicker', [
+        'description' => __( 'Site masthead ticker settings', 'culture-theme' ),
+        'fields' => [
+            'issueText'        => [ 'type' => 'String' ],
+            'issueUrl'         => [ 'type' => 'String' ],
+            'announcementText' => [ 'type' => 'String' ],
+            'announcementUrl'  => [ 'type' => 'String' ],
+            'locations'        => [ 'type' => 'String' ],
+        ],
+    ] );
+
+    register_graphql_field( 'RootQuery', 'mastheadTicker', [
+        'type' => 'MastheadTicker',
+        'description' => __( 'Site masthead ticker settings', 'culture-theme' ),
+        'resolve' => function() {
+            return [
+                'issueText'        => get_theme_mod( 'culture_ticker_issue_text', 'Issue N°014' ),
+                'issueUrl'         => get_theme_mod( 'culture_ticker_issue_url', '' ),
+                'announcementText' => get_theme_mod( 'culture_ticker_announcement_text', 'Culture Narratives Vol I out now' ),
+                'announcementUrl'  => get_theme_mod( 'culture_ticker_announcement_url', '' ),
+                'locations'        => get_theme_mod( 'culture_ticker_locations', 'Lagos · London · Accra · NYC' ),
+            ];
+        }
+    ] );
+} );

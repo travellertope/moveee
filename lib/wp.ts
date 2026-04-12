@@ -183,3 +183,19 @@ export const GET_AUTHOR_STORIES = `
   }
   ${STORY_FIELDS_FRAGMENT}
 `;
+
+export const GET_SITE_SETTINGS = `
+  query GetSiteSettings {
+    allSettings {
+      generalSettingsTitle
+      generalSettingsDescription
+    }
+    mastheadTicker {
+      issueText
+      issueUrl
+      announcementText
+      announcementUrl
+      locations
+    }
+  }
+`;
