@@ -40,8 +40,12 @@ const Header = ({ variant = "light" }: HeaderProps) => {
         </nav>
         <div className="wordmark">
           <div className="kicker">Est. 2022 · Best in Culture</div>
-          <Link href="/" className="hover:opacity-80 transition-opacity">
-            <h1>The M<em>o</em>veee</h1>
+          <Link href="/" className="hover:opacity-80 transition-opacity flex justify-center">
+            <img 
+              src="https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png" 
+              alt="The Moveee Logo"
+              style={{ maxHeight: '48px', width: 'auto' }}
+            />
           </Link>
         </div>
         <div className="masthead-right">

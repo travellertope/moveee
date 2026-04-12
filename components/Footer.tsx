@@ -6,11 +6,15 @@ const Footer = () => {
   return (
     <footer>
       <div className="footer-top">
-        <div>
-          {/* Re-using the wordmark or a bold label for brand if no white logo image is available */}
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: 900, marginBottom: '14px', letterSpacing: '-0.03em' }}>
-            THE MOVEEE
-          </h2>
+        <div className="footer-brand-wrap">
+          <Link href="/">
+            <img 
+              src="https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png" 
+              alt="The Moveee"
+              className="footer-logo"
+              style={{ maxHeight: '40px', width: 'auto', marginBottom: '24px' }}
+            />
+          </Link>
           <div className="footer-brand">
             <p>Navigating the intersection of culture, lifestyle, and African heritage through curated visual stories and vetted commerce.</p>
           </div>
