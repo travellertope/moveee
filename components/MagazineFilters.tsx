@@ -1,13 +1,25 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function MagazineFilters({ filters }: { filters: any }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeAccordion, setActiveAccordion] = useState<string | null>("industry");
+  const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
+
+  // Lock background scroll when sidebar is open
+  useEffect(() => {
+    if (isSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isSidebarOpen]);
 
   const handleSelect = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
