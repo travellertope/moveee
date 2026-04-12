@@ -43,6 +43,28 @@
   padding-left: 40px;
   border-left: 1px solid rgba(42,36,28,0.15);
 }
+
+@media (max-width: 768px) {
+  .mag-head-inner {
+    padding: 32px 24px;
+  }
+  .mag-head-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .mag-title-main {
+    white-space: normal;
+    font-size: 42px;
+  }
+  .mag-head-left .mag-desc {
+    padding-left: 0;
+    border-left: none;
+    font-size: 14px;
+    max-width: 100%;
+  }
+}
+
 .mag-head-tabs { display:flex; gap:0; border-top:1px solid var(--rule); overflow-x:auto; }
 .mag-head-tabs::-webkit-scrollbar { display:none; }
 .tab { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.15em; text-transform:uppercase; padding:12px 18px; border-right:1px solid var(--rule); cursor:pointer; color:var(--mute); background:transparent; transition:background .25s, color .25s; border-bottom:none; white-space:nowrap; outline:none; }
