@@ -1,0 +1,135 @@
+/* ── Newsletter Send Meta Box ── */
+
+.culture-nl-box {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* Subscriber count stat */
+.culture-nl-sub-count {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 0 12px;
+}
+.culture-nl-stat-num {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1d2327;
+    line-height: 1;
+}
+.culture-nl-stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646970;
+}
+
+/* Divider */
+.culture-nl-sep {
+    border: none;
+    border-top: 1px solid #dcdcde;
+    margin: 12px 0;
+}
+
+/* Status badge */
+.culture-nl-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 4px 10px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+}
+.culture-nl-badge.idle    { background: #f0f0f1; color: #646970; }
+.culture-nl-badge.sending { background: #fff8e5; color: #996800; }
+.culture-nl-badge.sent    { background: #edfaef; color: #008a20; }
+
+.culture-nl-badge .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+.culture-nl-badge.sending .dashicons {
+    animation: nl-spin 1.4s linear infinite;
+}
+@keyframes nl-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* Sent detail text */
+.culture-nl-sent-detail {
+    margin: 0;
+    font-size: 12px;
+    color: #646970;
+}
+
+/* Progress bar */
+.culture-nl-progress {
+    margin-top: 4px;
+}
+.culture-nl-progress-bar {
+    height: 6px;
+    background: #dcdcde;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+.culture-nl-progress-fill {
+    height: 100%;
+    background: #2271b1;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+.culture-nl-progress-text {
+    font-size: 11px;
+    color: #646970;
+}
+
+/* Section */
+.culture-nl-section {
+    margin: 0;
+}
+.culture-nl-label {
+    display: block;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #1d2327;
+    margin-bottom: 8px;
+}
+.culture-nl-notice {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: #646970;
+    line-height: 1.5;
+}
+
+/* Feedback message */
+.culture-nl-feedback {
+    padding: 8px 12px;
+    border-radius: 3px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.culture-nl-feedback.success {
+    background: #edfaef;
+    color: #008a20;
+    border-left: 3px solid #008a20;
+}
+.culture-nl-feedback.error {
+    background: #fce8e8;
+    color: #b32d2e;
+    border-left: 3px solid #b32d2e;
+}
+.culture-nl-feedback.info {
+    background: #f0f6fc;
+    color: #2271b1;
+    border-left: 3px solid #2271b1;
+}
