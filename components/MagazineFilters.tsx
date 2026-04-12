@@ -23,8 +23,7 @@ export default function MagazineFilters({ filters }: { filters: any }) {
     }
     
     router.push(`/magazine?${params.toString()}`);
-    // Optionally close sidebar on select
-    // setIsSidebarOpen(false);
+    setIsSidebarOpen(false);
   };
 
   const toggleAccordion = (id: string) => {
