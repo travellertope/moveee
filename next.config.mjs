@@ -18,6 +18,18 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'mltvzlykp9yb.i.optimole.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'i2.wp.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i0.wp.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i1.wp.com',
+      },
     ],
   },
 };
