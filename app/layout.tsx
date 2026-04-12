@@ -3,6 +3,7 @@ import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import "./homepage.css";
 import "./editorial.css";
+import "./not-found.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 

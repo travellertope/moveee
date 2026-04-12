@@ -1,0 +1,112 @@
+/* ── 404 NOT FOUND PAGE ── */
+.nf-container {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 24px;
+  background: var(--paper);
+  position: relative;
+  overflow: hidden;
+}
+
+.nf-bg-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-fraunces), serif;
+  font-size: clamp(200px, 40vw, 600px);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--ochre);
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.nf-content {
+  position: relative;
+  z-index: 2;
+  max-width: 600px;
+}
+
+.nf-label {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-bottom: 24px;
+}
+
+.nf-title {
+  font-family: var(--font-fraunces), serif;
+  font-size: clamp(48px, 6vw, 84px);
+  font-weight: 300;
+  line-height: 1;
+  margin-bottom: 24px;
+}
+
+.nf-title em {
+  font-style: italic;
+  color: var(--ochre);
+}
+
+.nf-desc {
+  font-family: var(--font-fraunces), serif;
+  font-size: 18px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--mute);
+  line-height: 1.6;
+  margin-bottom: 48px;
+}
+
+.nf-actions {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+}
+
+.nf-btn {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 16px 32px;
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.nf-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.nf-btn.primary {
+  background: var(--ochre);
+  border-color: var(--ochre);
+  color: var(--paper);
+}
+
+.nf-btn.primary:hover {
+  background: var(--ochre-deep);
+  border-color: var(--ochre-deep);
+}
+
+@media (max-width: 768px) {
+  .nf-actions {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+  .nf-btn {
+    width: 100%;
+  }
+}
