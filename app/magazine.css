@@ -16,6 +16,116 @@
 .tab.active { background:var(--ink); color:var(--paper); }
 .tab:first-child { border-left:none; }
 
+/* ── TABS LAYOUT & MORE DROPDOWN ── */
+.mag-tabs-container { 
+  display: flex; 
+  flex-direction: column; 
+}
+@media(min-width: 1200px) {
+  .mag-tabs-container { flex-direction: row; align-items: center; }
+}
+
+.mag-nav-primary {
+  display: flex;
+  flex: 1;
+  border-top: 1px solid var(--rule);
+}
+
+.more-group { position: relative; display: inline-block; }
+.more-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: none;
+  flex-direction: column;
+  background: var(--ink);
+  min-width: 220px;
+  z-index: 100;
+  border: 1px solid var(--rule);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+.more-group:hover .more-dropdown { display: flex; }
+.more-dropdown-link {
+  padding: 14px 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--paper);
+  border-bottom: 1px solid rgba(243,236,224,0.1);
+  text-decoration: none;
+  transition: background .2s, color .2s;
+}
+.more-dropdown-link:hover {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+.secondary-filters-wrap {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--rule);
+  background: var(--paper);
+}
+@media(min-width: 1200px) {
+  .secondary-filters-wrap { 
+    border-top: none; 
+    width: auto; 
+  }
+}
+
+.sec-filter-container {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 0 24px 0 24px;
+  overflow-x: auto;
+}
+@media(min-width: 1200px) {
+  .sec-filter-container { padding: 0 60px 0 24px; }
+}
+.sec-filter-container::-webkit-scrollbar { display: none; }
+
+.sec-filter-item {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.sec-filter-item + .sec-filter-item {
+  padding-left: 1rem;
+  border-left: 1px solid rgba(42,36,28,0.1);
+}
+
+.sec-filter-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--mute);
+  margin-right: 0.5rem;
+}
+
+.sec-filter-select {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--ink);
+  cursor: pointer;
+  transition: color 0.25s;
+  padding-right: 1rem;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+.sec-filter-select:hover {
+  color: var(--ochre);
+}
+
+
 /* ── TICKER ── */
 .ticker-wrap { overflow:hidden; border-bottom:1px solid var(--rule); background:var(--ink); padding:13px 0; position:relative; z-index:2; }
 .ticker-track { display:flex; animation:ticker 30s linear infinite; white-space:nowrap; }

@@ -38,7 +38,7 @@ export default async function MagazineArchive({
     } else {
       const data = await getWPData(GET_STORIES, { 
         first: 24, 
-        categoryName: currentCategory 
+        categoryName: currentCategory || null
       });
       stories = data?.posts?.nodes || [];
     }
@@ -83,8 +83,8 @@ export default async function MagazineArchive({
             <div className="issue-num">N°02</div>
           </div>
         </div>
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between border-t border-rule mt-[60px] xl:mt-0">
-          <div className="mag-head-tabs border-t-0 flex flex-1 overflow-visible">
+        <div className="mag-tabs-container">
+          <div className="mag-nav-primary overflow-visible">
             {topCategories.map((cat) => {
               const isActive = (currentCategory === cat.slug) || (!currentCategory && !currentIndustry && !currentCountry && !currentSeries && !cat.slug);
               return (
@@ -97,13 +97,13 @@ export default async function MagazineArchive({
             })}
             
             {moreCategories.length > 0 && (
-              <div className="group relative">
-                <button className="tab border-r-0 flex items-center gap-1 cursor-pointer hover:text-ochre">
+              <div className="more-group">
+                <button className="tab border-r-0 flex items-center gap-1 cursor-pointer">
                   More ▾
                 </button>
-                <div className="absolute top-full left-0 hidden group-hover:flex flex-col bg-ink text-paper z-50 min-w-[200px] border border-rule">
+                <div className="more-dropdown">
                   {moreCategories.map((cat: any) => (
-                    <Link key={cat.name} href={`/magazine?category=${cat.slug}`} className="px-5 py-3 font-mono text-[9px] uppercase tracking-[0.15em] border-b border-rule/20 hover:bg-paper-deep hover:text-ink transition-colors" style={{ textDecoration: 'none' }}>
+                    <Link key={cat.name} href={`/magazine?category=${cat.slug}`} className="more-dropdown-link">
                       {cat.name}
                     </Link>
                   ))}
@@ -112,7 +112,7 @@ export default async function MagazineArchive({
             )}
           </div>
           
-          <div className="flex justify-end xl:border-l border-rule w-full xl:w-auto overflow-x-auto no-scrollbar">
+          <div className="secondary-filters-wrap">
             <MagazineFilters filters={filters} />
           </div>
         </div>

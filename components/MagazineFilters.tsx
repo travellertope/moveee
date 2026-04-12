@@ -23,12 +23,12 @@ export default function MagazineFilters({ filters }: { filters: any }) {
   };
 
   return (
-    <div className="flex gap-4 items-center pr-6 md:pr-[60px] pb-3 pt-3 md:pt-0 md:pb-0 overflow-x-auto no-scrollbar" style={{ borderLeft: '1px solid var(--rule)' }}>
+    <div className="sec-filter-container">
       {/* Industry Dropdown */}
-      <div className="relative flex items-center min-w-max">
-        <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-mute mr-2 pl-6">Industry:</span>
+      <div className="sec-filter-item">
+        <span className="sec-filter-label">Industry:</span>
         <select 
-          className="bg-transparent border-none outline-none font-mono text-[10px] uppercase tracking-[0.15em] text-ink cursor-pointer hover:text-ochre appearance-none pr-4 relative"
+          className="sec-filter-select"
           value={searchParams.get('industry') || ""}
           onChange={(e) => handleSelect('industry', e.target.value)}
         >
@@ -40,10 +40,10 @@ export default function MagazineFilters({ filters }: { filters: any }) {
       </div>
 
       {/* Location Dropdown */}
-      <div className="relative flex items-center min-w-max">
-        <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-mute mr-2 pl-4 border-l border-rule/20">Location:</span>
+      <div className="sec-filter-item">
+        <span className="sec-filter-label">Location:</span>
         <select 
-          className="bg-transparent border-none outline-none font-mono text-[10px] uppercase tracking-[0.15em] text-ink cursor-pointer hover:text-ochre appearance-none pr-4 relative"
+          className="sec-filter-select"
           value={searchParams.get('country') || ""}
           onChange={(e) => handleSelect('country', e.target.value)}
         >
@@ -55,10 +55,10 @@ export default function MagazineFilters({ filters }: { filters: any }) {
       </div>
 
       {/* Series Dropdown */}
-      <div className="relative flex items-center min-w-max">
-        <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-mute mr-2 pl-4 border-l border-rule/20">Series:</span>
+      <div className="sec-filter-item">
+        <span className="sec-filter-label">Series:</span>
         <select 
-          className="bg-transparent border-none outline-none font-mono text-[10px] uppercase tracking-[0.15em] text-ink cursor-pointer hover:text-ochre appearance-none pr-4 relative"
+          className="sec-filter-select"
           value={searchParams.get('series') || ""}
           onChange={(e) => handleSelect('series', e.target.value)}
         >
