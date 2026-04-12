@@ -84,22 +84,22 @@ export default async function Home() {
           </div>
 
           <div className="hero-visual">
-            <div className="hero-frame">
-              <div className="hero-ticker">
-                <span>Frame · 01 / 05</span>
-                <span>Shot on 35mm</span>
-              </div>
-              
-              {featuredStory?.featuredImage && (
-                <Image 
-                  src={featuredStory.featuredImage.node.sourceUrl} 
-                  alt={featuredStory.featuredImage.node.altText || featuredStory.title} 
-                  fill 
-                  className="object-cover transition-transform duration-1000 hover:scale-105"
-                  priority
-                />
-              )}
-            </div>
+              <Link href={`/magazine/${featuredStory.slug}`} className="hero-frame">
+                <div className="hero-ticker">
+                  <span>Frame · 01 / 05</span>
+                  <span>Shot on 35mm</span>
+                </div>
+                
+                {featuredStory?.featuredImage && (
+                  <Image 
+                    src={featuredStory.featuredImage.node.sourceUrl} 
+                    alt={featuredStory.featuredImage.node.altText || featuredStory.title} 
+                    fill 
+                    className="object-cover transition-transform duration-1000 hover:scale-105"
+                    priority
+                  />
+                )}
+              </Link>
             
             {featuredStory && (
               <Link href={`/magazine/${featuredStory.slug}`} className="hero-caption" style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
