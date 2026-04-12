@@ -10,6 +10,7 @@
     --ochre-deep: #8a2d10;
     --moss: #3d4a2a;
     --gold: #b38238;
+    --masthead-height: 180px; /* Approximate height of masthead-bar + masthead */
   }
 
   @layer base {
@@ -304,18 +305,29 @@
   /* ========== HERO ========== */
   .hero {
     padding: 70px 40px 90px;
-    border-bottom: 1px solid var(--rule);
+    border-bottom: 2px solid var(--rule);
     position: relative;
     z-index: 2;
+    background: var(--paper);
+  }
+
+  @media (min-width: 1024px) {
+    .hero {
+      padding: 0 40px;
+      min-height: calc(100vh - var(--masthead-height));
+      display: flex;
+      align-items: center;
+    }
   }
 
   .hero-grid {
     max-width: 1440px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: 60px;
-    align-items: end;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 80px;
+    align-items: center;
+    width: 100%;
   }
 
   .hero-lede .section-label {
@@ -332,11 +344,11 @@
   }
 
   .hero h2 {
-    font-size: clamp(54px, 7.2vw, 118px);
+    font-size: clamp(54px, 6.5vw, 108px);
     font-weight: 400;
-    line-height: 0.9;
-    letter-spacing: -0.04em;
-    margin-bottom: 32px;
+    line-height: 0.88;
+    letter-spacing: -0.045em;
+    margin-bottom: 36px;
     font-variation-settings: "opsz" 144, "SOFT" 30;
   }
   .hero h2 em {
@@ -399,7 +411,9 @@
   /* Hero artwork side */
   .hero-visual {
     position: relative;
-    aspect-ratio: 4/5;
+    aspect-ratio: 0.82; /* Slightly taller for the full-height hero */
+    height: 70vh;
+    max-height: 700px;
   }
 
   .hero-frame {
@@ -491,13 +505,12 @@
 
   .pillar-header {
     max-width: 1440px;
-    margin: 0 auto 60px;
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 40px;
-    align-items: end;
+    margin: 0 auto 64px;
+    display: flex;
+    align-items: flex-end;
+    gap: 48px;
     border-bottom: 1px solid var(--rule);
-    padding-bottom: 30px;
+    padding-bottom: 32px;
   }
 
   .pillar-num {
@@ -509,18 +522,32 @@
     color: var(--ochre);
   }
 
+  .pillar-title {
+    display: flex;
+    align-items: flex-end;
+    gap: 48px;
+    flex: 1;
+  }
+
   .pillar-title h3 {
     font-size: 58px;
     font-weight: 400;
     line-height: 0.95;
-    margin-bottom: 8px;
+    margin-bottom: 0;
+    white-space: nowrap;
   }
   .pillar-title h3 em { font-style: italic; font-weight: 300; color: var(--mute); }
+
   .pillar-title p {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-style: italic;
     font-size: 15px;
-    color: var(--ink-soft);
-    max-width: 480px;
-    margin-top: 10px;
+    color: var(--mute);
+    max-width: 440px;
+    line-height: 1.4;
+    padding-left: 40px;
+    border-left: 1px solid rgba(42,36,28,0.15);
   }
 
   .pillar-link {
@@ -543,8 +570,8 @@
   /* ========== MAGAZINE SECTION ========== */
   .mag-grid {
     display: grid;
-    grid-template-columns: 1.6fr 1fr 1fr;
-    gap: 40px;
+    grid-template-columns: 1.4fr 1.6fr;
+    gap: 60px;
     align-items: start;
   }
 
@@ -554,7 +581,7 @@
   }
   .mag-lead .cover {
     width: 100%;
-    aspect-ratio: 4/5;
+    aspect-ratio: 3/4;
     background: linear-gradient(160deg, #2a1f15 0%, #0c0805 100%);
     margin-bottom: 24px;
     position: relative;
@@ -593,16 +620,17 @@
 
   .mag-list {
     display: grid;
-    grid-template-rows: repeat(3, 1fr);
-    gap: 0;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto auto;
+    gap: 40px;
     height: 100%;
   }
   .mag-item {
     display: flex;
     flex-direction: column;
-    padding-bottom: 24px;
-    border-bottom: 1px solid rgba(42, 36, 28, 0.2);
-    padding-top: 4px;
+    padding-bottom: 0;
+    border-bottom: none;
+    padding-top: 0;
   }
   .mag-item:last-child { border: none; padding-bottom: 0; }
   .mag-item-thumb {
@@ -1261,9 +1289,20 @@
     .lifestyle-grid { grid-template-columns: 1fr 1fr; }
     .connect-inner { grid-template-columns: 1fr; gap: 40px; }
     .footer-top { grid-template-columns: 1fr 1fr; }
-    .pillar-header { grid-template-columns: 1fr; gap: 20px; }
+    .pillar-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 24px;
+      padding-bottom: 24px;
+    }
     .pillar-num { font-size: 52px; }
-    .pillar-title h3 { font-size: 42px; }
+    .pillar-title {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .pillar-title h3 { font-size: 42px; white-space: normal; }
+    .pillar-title p { padding-left: 0; border-left: none; }
 
     /* Masthead: logo left-aligned + icons + hamburger on mobile */
     .masthead-left, .masthead-right { display: none; }

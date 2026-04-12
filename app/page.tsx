@@ -12,7 +12,7 @@ export default async function Home() {
   let products: any[] = [];
 
   try {
-    const data = await getWPData(GET_STORIES, { first: 5 });
+    const data = await getWPData(GET_STORIES, { first: 6 });
     stories = data?.posts?.nodes || [];
   } catch (err) {
     console.error(err);
@@ -62,14 +62,13 @@ export default async function Home() {
 
   const featuredStory = stories[0] || null;
   const magLeadStory = stories[1] || featuredStory; // Lead for Mag Pillar
-  const remainingStories = stories.slice(2, 5); // Right side 3 stories
+  const remainingStories = stories.slice(2, 6); // Right side 4 stories
 
   return (
     <>
       <section className="hero">
         <div className="hero-grid">
           <div className="hero-lede">
-            <div className="section-label mono">The Dispatch · N°01</div>
             <h2>
               A field guide to <em>daring</em><br/>
               <span className="underline">moves</span> in culture,<br/>
