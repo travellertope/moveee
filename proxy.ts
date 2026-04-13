@@ -33,6 +33,18 @@ const APP_ROUTES = new Set([
   'press',
   'advertise',
   'donate',
+  // Auth + member routes
+  'login',
+  'register',
+  'member',
+  'reset-password',
+  'connect',
+  // Additional app pages
+  'author',
+  'api',
+  'ai-use',
+  'cookie-policy',
+  'shop',
 ])
 
 // Alias redirects — old or alternative slugs that should map
