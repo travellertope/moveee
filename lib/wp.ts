@@ -397,10 +397,6 @@ const QUOTE_FIELDS_FRAGMENT = `
         slug
       }
     }
-    quoteSource
-    quoteLikes
-    quoteReports
-    quoteUserId
   }
 `;
 

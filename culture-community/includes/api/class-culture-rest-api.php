@@ -836,6 +836,35 @@ class Culture_REST_API {
             }
         }
 
+        // Chapter updates — validate the chapter ID is a published culture_chapter post.
+        if ( $request->has_param( 'primary_chapter' ) ) {
+            $primary_id = absint( $request->get_param( 'primary_chapter' ) );
+            if ( $primary_id ) {
+                $chapter = get_post( $primary_id );
+                if ( $chapter && $chapter->post_type === 'culture_chapter' && $chapter->post_status === 'publish' ) {
+                    update_user_meta( $user_id, '_culture_primary_chapter_id', $primary_id );
+                }
+            } else {
+                delete_user_meta( $user_id, '_culture_primary_chapter_id' );
+            }
+        }
+
+        if ( $request->has_param( 'secondary_chapter' ) ) {
+            $secondary_id = absint( $request->get_param( 'secondary_chapter' ) );
+            $tier = get_user_meta( $user_id, '_culture_membership_tier', true ) ?: 'citizen';
+            if ( $tier === 'patron' && $secondary_id ) {
+                $chapter = get_post( $secondary_id );
+                if ( $chapter && $chapter->post_type === 'culture_chapter' && $chapter->post_status === 'publish' ) {
+                    $primary_id_current = (int) get_user_meta( $user_id, '_culture_primary_chapter_id', true );
+                    if ( $secondary_id !== $primary_id_current ) {
+                        update_user_meta( $user_id, '_culture_secondary_chapter_id', $secondary_id );
+                    }
+                }
+            } else {
+                delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
+            }
+        }
+
         $updated_user = get_userdata( $user_id );
         return rest_ensure_response( self::user_profile( $updated_user ) );
     }
