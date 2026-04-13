@@ -1,16 +1,65 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Share2, Bookmark, Heart } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 interface ArticleActionsProps {
-  postId?: number;
+  postId: number;
 }
 
 export default function ArticleActions({ postId }: ArticleActionsProps) {
+  const { data: session } = useSession();
   const [bookmarked, setBookmarked] = useState(false);
   const [liked, setLiked] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Sync state with backend on mount
+  useEffect(() => {
+    if (session?.user) {
+      fetch("/api/user/interactions")
+        .then(res => res.json())
+        .then(data => {
+          if (data.liked_articles?.includes(postId)) setLiked(true);
+          if (data.bookmarked_articles?.includes(postId)) setBookmarked(true);
+        })
+        .catch(() => {});
+    }
+  }, [postId, session]);
+
+  const toggleAction = async (type: 'like' | 'bookmark') => {
+    if (!session) {
+      window.dispatchEvent(new CustomEvent('open-auth-modal'));
+      return;
+    }
+    if (isSyncing) return;
+
+    setIsSyncing(true);
+    // Optimistic update
+    if (type === 'like') setLiked(!liked);
+    else setBookmarked(!bookmarked);
+
+    try {
+      const res = await fetch("/api/user/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: postId, type, kind: 'article' }),
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        // Revert on error
+        if (type === 'like') setLiked(liked);
+        else setBookmarked(bookmarked);
+      }
+    } catch (err) {
+      if (type === 'like') setLiked(liked);
+      else setBookmarked(bookmarked);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -24,8 +73,8 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
         setTimeout(() => setCopied(false), 2000);
       }
 
-      // Award points for sharing if postId is provided
-      if (postId) {
+      // Award points for sharing
+      if (session) {
         fetch("/api/points/award", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -33,7 +82,7 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
             action: "magazine_share",
             post_id: postId,
           }),
-        }).catch(() => {}); // Fire and forget
+        }).catch(() => {});
       }
     } catch {
       // user cancelled — do nothing
@@ -55,7 +104,8 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
       <button
         className="sh-btn"
         aria-label={bookmarked ? "Remove bookmark" : "Bookmark"}
-        onClick={() => setBookmarked(b => !b)}
+        onClick={() => toggleAction('bookmark')}
+        disabled={isSyncing}
         title={bookmarked ? "Remove bookmark" : "Bookmark this article"}
         style={bookmarked ? { background: 'var(--gold)', borderColor: 'var(--gold)' } : {}}
       >
@@ -65,7 +115,8 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
       <button
         className="sh-btn"
         aria-label={liked ? "Unlike" : "Like"}
-        onClick={() => setLiked(l => !l)}
+        onClick={() => toggleAction('like')}
+        disabled={isSyncing}
         title={liked ? "Unlike this article" : "Like this article"}
         style={liked ? { background: 'var(--ochre)', borderColor: 'var(--ochre)' } : {}}
       >

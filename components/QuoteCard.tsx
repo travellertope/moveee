@@ -1,7 +1,6 @@
-'use client';
-
-import { useState } from 'react';
-import { Heart, Flag, Share2, Quote as QuoteIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Heart, Flag, Share2, Bookmark, Quote as QuoteIcon } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
 
@@ -22,31 +21,69 @@ interface QuoteCardProps {
 }
 
 export default function QuoteCard({ quote }: QuoteCardProps) {
+  const { data: session } = useSession();
   const [likes, setLikes] = useState(Number(quote.quoteLikes) || 0);
   const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
   const [isReported, setIsReported] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const author = quote.quoteAuthors?.nodes[0]?.name || 'Unknown Author';
   const authorSlug = quote.quoteAuthors?.nodes[0]?.slug;
 
-  const handleLike = async () => {
-    if (isLiked || isSubmitting) return;
+  // Sync state with backend on mount
+  useEffect(() => {
+    if (session?.user) {
+      fetch("/api/user/interactions")
+        .then(res => res.json())
+        .then(data => {
+          if (data.liked_quotes?.includes(quote.databaseId)) setIsLiked(true);
+          if (data.bookmarked_quotes?.includes(quote.databaseId)) setIsBookmarked(true);
+        })
+        .catch(() => {});
+    }
+  }, [quote.databaseId, session]);
+
+  const handleAction = async (type: 'like' | 'bookmark') => {
+    if (!session) {
+      window.dispatchEvent(new CustomEvent('open-auth-modal'));
+      return;
+    }
+    if (isSubmitting) return;
+
     setIsSubmitting(true);
+    // Optimistic update
+    if (type === 'like') {
+      setIsLiked(!isLiked);
+      setLikes(prev => isLiked ? prev - 1 : prev + 1);
+    } else {
+      setIsBookmarked(!isBookmarked);
+    }
 
     try {
-      const res = await fetch('/api/quotes/like', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quoteId: quote.databaseId }),
+      const res = await fetch("/api/user/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: quote.databaseId, type, kind: 'quote' }),
       });
-      const data = await res.json();
-      if (data.success) {
-        setLikes(data.likes);
-        setIsLiked(true);
+      
+      if (!res.ok) {
+        // Revert
+        if (type === 'like') {
+          setIsLiked(isLiked);
+          setLikes(prev => isLiked ? prev + 1 : prev - 1);
+        } else {
+          setIsBookmarked(isBookmarked);
+        }
       }
     } catch (err) {
-      console.error('Failed to like quote:', err);
+      if (type === 'like') {
+        setIsLiked(isLiked);
+        setLikes(prev => isLiked ? prev + 1 : prev - 1);
+      } else {
+        setIsBookmarked(isBookmarked);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -75,6 +112,24 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
     }
   };
 
+  const handleShare = async () => {
+    const url = `${window.location.origin}/quotes/${quote.id}-${quote.slug}`;
+    const title = `Quote via The Moveee`;
+    const text = quote.content.replace(/<[^>]*>/g, '');
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <article className="quote-card">
       <Link href={`/quotes/${quote.id}-${quote.slug}`} className="quote-content-link" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -97,12 +152,22 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
 
         <div className="quote-actions">
           <button 
-            className={clsx('quote-action-btn', isLiked && 'text-gold')} 
-            onClick={handleLike}
-            disabled={isLiked || isSubmitting}
+            className={clsx('quote-action-btn', isLiked && 'active')} 
+            onClick={() => handleAction('like')}
+            disabled={isSubmitting}
+            title={isLiked ? "Unlike" : "Like"}
           >
-            <Heart className={clsx(isLiked && 'fill-gold stroke-gold')} />
+            <Heart className={clsx(isLiked && 'fill-gold stroke-gold')} size={18} />
             <span>{likes}</span>
+          </button>
+
+          <button 
+            className={clsx('quote-action-btn', isBookmarked && 'active')} 
+            onClick={() => handleAction('bookmark')}
+            disabled={isSubmitting}
+            title={isBookmarked ? "Remove bookmark" : "Bookmark"}
+          >
+            <Bookmark className={clsx(isBookmarked && 'fill-gold stroke-gold')} size={18} />
           </button>
           
           <button 
@@ -111,11 +176,15 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
             disabled={isReported || isSubmitting}
             title="Report this quote"
           >
-            <Flag className={clsx(isReported && 'fill-current')} />
+            <Flag className={clsx(isReported && 'fill-current')} size={18} />
           </button>
 
-          <button className="quote-action-btn" title="Share quote">
-            <Share2 />
+          <button 
+            className={clsx('quote-action-btn', copied && 'active')} 
+            onClick={handleShare}
+            title={copied ? "Link copied!" : "Share quote"}
+          >
+            <Share2 size={18} />
           </button>
         </div>
       </div>

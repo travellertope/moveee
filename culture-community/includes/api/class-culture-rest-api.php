@@ -125,23 +125,47 @@ class Culture_REST_API {
             ),
         ) );
 
-        // Quote liking (logged-in users).
+        // Quote liking (Next.js server-side).
         register_rest_route( 'culture/v1', '/quotes/like', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_like_quote' ),
-            'permission_callback' => array( __CLASS__, 'user_permission' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'quote_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'user_id'  => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Quote reporting (Next.js server-side).
+        register_rest_route( 'culture/v1', '/quotes/report', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_report_quote' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             'args'                => array(
                 'quote_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
 
-        // Quote reporting (public).
-        register_rest_route( 'culture/v1', '/quotes/report', array(
+        // Toggle Post Interactions (Like/Bookmark) for articles and quotes.
+        register_rest_route( 'culture/v1', '/user/toggle-interaction', array(
             'methods'             => 'POST',
-            'callback'            => array( __CLASS__, 'handle_report_quote' ),
-            'permission_callback' => '__return_true',
+            'callback'            => array( __CLASS__, 'handle_toggle_interaction' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             'args'                => array(
-                'quote_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'type'    => array( 'required' => true, 'type' => 'string' ), // 'like' or 'bookmark'
+                'kind'    => array( 'required' => true, 'type' => 'string' ), // 'article' or 'quote'
+            ),
+        ) );
+
+        // Get all interactions for a user.
+        register_rest_route( 'culture/v1', '/user/interactions', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_interactions' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
 
@@ -1020,29 +1044,42 @@ class Culture_REST_API {
      * Handle liking a quote.
      */
     public static function handle_like_quote( $request ) {
-        $quote_id = $request->get_param( 'quote_id' );
-        $user_id  = get_current_user_id();
+        $quote_id = (int) $request->get_param( 'quote_id' );
+        $user_id  = (int) $request->get_param( 'user_id' );
 
-        $quote = get_post( $quote_id );
-        if ( ! $quote || 'culture_quote' !== $quote->post_type ) {
-            return new WP_Error( 'invalid_quote', __( 'Quote not found.', 'culture-community' ), array( 'status' => 404 ) );
+        // Track user-specific like to prevent double-point awarding.
+        $liked_quotes = get_user_meta( $user_id, '_liked_quote_ids', true );
+        if ( ! is_array( $liked_quotes ) ) {
+            $liked_quotes = array();
         }
 
-        // Increment likes.
-        $likes = (int) get_post_meta( $quote_id, '_quote_likes', true );
-        update_post_meta( $quote_id, '_quote_likes', $likes + 1 );
+        $active = false;
+        $index = array_search( $quote_id, $liked_quotes );
 
-        // Award points to the quote author (submitter).
-        $submitter_id = (int) get_post_meta( $quote_id, '_quote_user_id', true );
-        if ( $submitter_id && $submitter_id !== $user_id ) {
+        if ( false !== $index ) {
+            unset( $liked_quotes[ $index ] );
+            $liked_quotes = array_values( $liked_quotes );
+        } else {
+            $liked_quotes[] = $quote_id;
+            $active = true;
+
+            // Award points for Liking a quote.
             if ( class_exists( 'Culture_Gamification' ) ) {
-                Culture_Gamification::award_points( $submitter_id, 'quote_like' );
+                Culture_Gamification::award_points( $user_id, 'quote_like' );
             }
         }
 
+        update_user_meta( $user_id, '_liked_quote_ids', $liked_quotes );
+
+        // Update global count.
+        $likes = (int) get_post_meta( $quote_id, '_quote_likes', true );
+        $new_likes = $active ? $likes + 1 : max( 0, $likes - 1 );
+        update_post_meta( $quote_id, '_quote_likes', $new_likes );
+
         return rest_ensure_response( array(
             'success' => true,
-            'likes'   => $likes + 1,
+            'active'  => $active,
+            'likes'   => $new_likes
         ) );
     }
 
@@ -1050,28 +1087,80 @@ class Culture_REST_API {
      * Handle reporting a quote.
      */
     public static function handle_report_quote( $request ) {
-        $quote_id = $request->get_param( 'quote_id' );
+        $quote_id = (int) $request->get_param( 'quote_id' );
 
         $quote = get_post( $quote_id );
         if ( ! $quote || 'culture_quote' !== $quote->post_type ) {
-            return new WP_Error( 'invalid_quote', __( 'Quote not found.', 'culture-community' ), array( 'status' => 404 ) );
+            return new WP_Error( 'invalid_quote', 'Quote not found.', array( 'status' => 404 ) );
         }
 
         // Increment reports.
         $reports = (int) get_post_meta( $quote_id, '_quote_reports', true ) + 1;
         update_post_meta( $quote_id, '_quote_reports', $reports );
 
-        // Hide if threshold met (5 reports).
-        if ( $reports >= 5 ) {
+        // Hide if threshold met (e.g. 10 reports).
+        if ( $reports >= 10 ) {
             wp_update_post( array(
                 'ID'          => $quote_id,
-                'post_status' => 'pending', // Hide from public but keep for admin review.
+                'post_status' => 'pending',
             ) );
         }
 
         return rest_ensure_response( array(
             'success' => true,
-            'message' => __( 'Quote reported.', 'culture-community' ),
+            'message' => 'Quote reported.',
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/user/toggle-interaction
+     */
+    public static function handle_toggle_interaction( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+        $type    = $request->get_param( 'type' ); // 'like' or 'bookmark'
+        $kind    = $request->get_param( 'kind' ); // 'article' or 'quote'
+
+        $meta_key = "_culture_" . $type . "_" . $kind . "_ids";
+        $ids = get_user_meta( $user_id, $meta_key, true );
+        if ( ! is_array( $ids ) ) { $ids = array(); }
+
+        $index = array_search( $post_id, $ids );
+        $active = false;
+
+        if ( false !== $index ) {
+            unset( $ids[ $index ] );
+            $ids = array_values( $ids );
+        } else {
+            $ids[] = $post_id;
+            $active = true;
+
+            // Award points for Liking an article.
+            if ( $active && 'like' === $type && 'article' === $kind && class_exists( 'Culture_Gamification' ) ) {
+                Culture_Gamification::award_points( $user_id, 'magazine_like' );
+            }
+        }
+
+        update_user_meta( $user_id, $meta_key, $ids );
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'active'  => $active,
+            'count'   => count( $ids )
+        ) );
+    }
+
+    /**
+     * GET /culture/v1/user/interactions
+     */
+    public static function handle_get_interactions( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        
+        return rest_ensure_response( array(
+            'liked_articles'      => get_user_meta( $user_id, '_culture_like_article_ids', true ) ?: array(),
+            'bookmarked_articles' => get_user_meta( $user_id, '_culture_bookmark_article_ids', true ) ?: array(),
+            'liked_quotes'        => get_user_meta( $user_id, '_culture_like_quote_ids', true ) ?: array(),
+            'bookmarked_quotes'   => get_user_meta( $user_id, '_culture_bookmark_quote_ids', true ) ?: array(),
         ) );
     }
 
