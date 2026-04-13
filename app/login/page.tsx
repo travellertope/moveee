@@ -89,6 +89,11 @@ function LoginForm() {
           </button>
         </form>
 
+        <p style={{ ...styles.footer, marginTop: 12 }}>
+          <Link href="/forgot-password" style={styles.link}>
+            Forgot your password?
+          </Link>
+        </p>
         <p style={styles.footer}>
           New to the community?{" "}
           <Link href="/register" style={styles.link}>

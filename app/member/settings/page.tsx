@@ -89,7 +89,7 @@ export default async function MemberSettingsPage() {
                     </div>
                   </div>
                   <Link
-                    href={`/reset-password?email=${encodeURIComponent(email)}`}
+                    href={`/forgot-password?email=${encodeURIComponent(email)}`}
                     className="mem-field-btn"
                   >
                     Change →
