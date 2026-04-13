@@ -38,6 +38,7 @@ const APP_ROUTES = new Set([
   'register',
   'member',
   'reset-password',
+  'forgot-password',
   'connect',
   // Section routes
   'events',

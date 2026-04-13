@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { CountrySelect, CitySelect } from "@/components/LocationSelect";
 
 interface Chapter {
   id: number;
@@ -332,24 +333,22 @@ function RegisterForm() {
               <div style={styles.row}>
                 <div style={{ ...styles.field, flex: 1 }}>
                   <label style={styles.label} htmlFor="nationality">Nationality <span style={{ color: "#c5491f" }}>*</span></label>
-                  <input
+                  <CountrySelect
                     id="nationality"
-                    type="text"
-                    required
                     value={nationality}
-                    onChange={(e) => setNationality(e.target.value)}
-                    style={styles.input}
+                    onChange={setNationality}
+                    inputStyle={styles.input}
+                    placeholder="Search countries…"
                   />
                 </div>
                 <div style={{ ...styles.field, flex: 1 }}>
                   <label style={styles.label} htmlFor="country">Country of Residence <span style={{ color: "#c5491f" }}>*</span></label>
-                  <input
+                  <CountrySelect
                     id="country"
-                    type="text"
-                    required
                     value={countryOfResidence}
-                    onChange={(e) => setCountryOfResidence(e.target.value)}
-                    style={styles.input}
+                    onChange={setCountryOfResidence}
+                    inputStyle={styles.input}
+                    placeholder="Search countries…"
                   />
                 </div>
               </div>
@@ -357,12 +356,12 @@ function RegisterForm() {
               <div style={styles.row}>
                 <div style={{ ...styles.field, flex: 1 }}>
                   <label style={styles.label} htmlFor="city">City</label>
-                  <input
+                  <CitySelect
                     id="city"
-                    type="text"
+                    country={countryOfResidence}
                     value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    style={styles.input}
+                    onChange={setCity}
+                    inputStyle={styles.input}
                   />
                 </div>
                 <div style={{ ...styles.field, flex: 1 }}>
