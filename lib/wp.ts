@@ -1,6 +1,6 @@
 const WP_GRAPHQL_URL = "https://cms.themoveee.com/graphql";
 
-export async function getWPData(query: string, variables = {}) {
+export async function getWPData(query: string, variables = {}, options: any = {}) {
   try {
     const res = await fetch(WP_GRAPHQL_URL, {
       method: "POST",
@@ -8,7 +8,7 @@ export async function getWPData(query: string, variables = {}) {
         "Content-Type": "application/json",
       },
       next: {
-        revalidate: 3600, // ISR: Revalidate every hour
+        revalidate: options.revalidate !== undefined ? options.revalidate : 3600,
       },
       body: JSON.stringify({
         query,
@@ -43,6 +43,7 @@ export async function getWPData(query: string, variables = {}) {
 const STORY_FIELDS_FRAGMENT = `
   fragment StoryFields on Post {
     id
+    databaseId
     title
     slug
     date

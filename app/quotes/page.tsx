@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { getWPData, GET_QUOTES } from '@/lib/wp';
 import QuoteCard from '@/components/QuoteCard';
 import SubmitQuoteTrigger from '@/components/SubmitQuoteTrigger';
-import '@/app/quote.css';
+import '@/app/quotes.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function QuoteHub() {
-  const data = await getWPData(GET_QUOTES, { first: 50 });
+  const data = await getWPData(GET_QUOTES, { first: 50 }, { revalidate: 0 });
   const quotes = data?.cultureQuotes?.nodes || [];
 
   return (

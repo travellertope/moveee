@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getWPData, GET_QUOTE_BY_SLUG } from '@/lib/wp';
 import QuoteCard from '@/components/QuoteCard';
-import '@/app/quote.css';
+import '@/app/quotes.css';
 
 interface QuotePageProps {
   params: {
@@ -64,7 +64,7 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
       />
       
       <div className="max-w-4xl mx-auto">
-        <Link href="/quote" className="text-xs uppercase tracking-widest text-ink-soft mb-12 inline-block hover:text-ink">
+        <Link href="/quotes" className="text-xs uppercase tracking-widest text-ink-soft mb-12 inline-block hover:text-ink">
           ← Back to Archive
         </Link>
         
@@ -73,7 +73,7 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
         <div className="mt-24 border-t border-rule pt-12">
           <h4 className="num mb-8">MORE FROM THE ARCHIVE</h4>
           {/* We could fetch related quotes here later */}
-          <Link href="/quote" className="btn-ghost">View All Quotes</Link>
+          <Link href="/quotes" className="btn-ghost">View All Quotes</Link>
         </div>
       </div>
     </div>

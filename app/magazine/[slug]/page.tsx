@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
+import ParagraphCommentSystem from "@/components/ParagraphCommentSystem";
+import FinishReading from "@/components/FinishReading";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import ArticleActions from "@/components/ArticleActions";
 import ContentGate from "@/components/ContentGate";
@@ -159,7 +161,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                 <div className="b-label">Category</div>
                 <div className="b-val">{categoryName}</div>
               </div>
-              <ArticleActions />
+              <ArticleActions postId={parseInt(post.databaseId)} />
             </div>
           </div>
         </section>
@@ -196,7 +198,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               <div className="b-label">Category</div>
               <div className="b-val">{categoryName}</div>
             </div>
-            <ArticleActions />
+            <ArticleActions postId={parseInt(post.databaseId)} />
           </div>
         </header>
         </>
@@ -254,12 +256,12 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           </div>
         </aside>
 
-        {/* CENTER — PROSE */}
+        {/* CENTER — PROSE (Interactive Paragraph Comments) */}
         <div className="prose" id="article-body">
           {canView ? (
-            <div
-              className="prose-content"
-              dangerouslySetInnerHTML={{ __html: processedContent }}
+            <ParagraphCommentSystem 
+              postId={parseInt(post.databaseId)} 
+              content={processedContent || ""} 
             />
           ) : (
             <>
@@ -292,6 +294,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               />
             </>
           )}
+          {canView && <FinishReading postId={parseInt(post.databaseId)} />}
         </div>
 
         {/* RIGHT — SIDEBAR */}

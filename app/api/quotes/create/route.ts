@@ -27,12 +27,15 @@ export async function POST(req: NextRequest) {
   try {
     const res = await fetch(WP_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.CULTURE_API_SECRET}`
+      },
       body: JSON.stringify({ 
         text, 
         author, 
         source, 
-        user_id: (session.user as any).id 
+        user_id: parseInt((session.user as any).id) 
       }),
     });
 

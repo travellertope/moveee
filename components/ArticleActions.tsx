@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { Share2, Bookmark, Heart } from "lucide-react";
 
-export default function ArticleActions() {
+interface ArticleActionsProps {
+  postId?: number;
+}
+
+export default function ArticleActions({ postId }: ArticleActionsProps) {
   const [bookmarked, setBookmarked] = useState(false);
   const [liked, setLiked] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -18,6 +22,18 @@ export default function ArticleActions() {
         await navigator.clipboard.writeText(url);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+      }
+
+      // Award points for sharing if postId is provided
+      if (postId) {
+        fetch("/api/points/award", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "magazine_share",
+            post_id: postId,
+          }),
+        }).catch(() => {}); // Fire and forget
       }
     } catch {
       // user cancelled — do nothing

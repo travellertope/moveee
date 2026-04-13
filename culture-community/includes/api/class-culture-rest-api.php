@@ -117,7 +117,7 @@ class Culture_REST_API {
         register_rest_route( 'culture/v1', '/quotes', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_create_quote' ),
-            'permission_callback' => array( __CLASS__, 'user_permission' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             'args'                => array(
                 'text'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
                 'author' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
@@ -293,6 +293,48 @@ class Culture_REST_API {
                 'methods'             => 'POST',
                 'callback'            => array( __CLASS__, 'handle_update_newsletter_preferences' ),
                 'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+        ) );
+
+        // Directory Entry submission — requires API key auth.
+        register_rest_route( 'culture/v1', '/directory/submit', array(
+            'methods'             => 'POST',
+            'callback'            => array( 'Culture_Directory', 'handle_submit' ),
+            'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
+        ) );
+
+        // Paragraph comments — GET (public) and POST (auth/shared secret).
+        register_rest_route( 'culture/v1', '/comments/paragraph', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_paragraph_comments' ),
+                'permission_callback' => '__return_true',
+                'args'                => array(
+                    'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_post_paragraph_comment' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+                'args'                => array(
+                    'post_id'       => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                    'paragraph_idx' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                    'user_id'       => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                    'content'       => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
+                ),
+            ),
+        ) );
+
+        // Award points — requires API key auth.
+        register_rest_route( 'culture/v1', '/points/award', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_award_points' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'action'  => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_key' ),
+                'post_id' => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
     }
@@ -1020,6 +1062,131 @@ class Culture_REST_API {
         return rest_ensure_response( array(
             'success' => true,
             'message' => __( 'Quote reported.', 'culture-community' ),
+        ) );
+    }
+
+    /**
+     * GET /culture/v1/comments/paragraph?post_id=X
+     * Returns comments grouped by paragraph index.
+     */
+    public static function handle_get_paragraph_comments( $request ) {
+        $post_id = $request->get_param( 'post_id' );
+        
+        $comments = get_comments( array(
+            'post_id' => $post_id,
+            'status'  => 'approve',
+            'orderby' => 'comment_date',
+            'order'   => 'ASC',
+        ) );
+
+        $partitioned = array();
+        foreach ( $comments as $comment ) {
+            $idx = get_comment_meta( $comment->comment_ID, '_culture_paragraph_idx', true );
+            if ( '' === $idx ) continue;
+            
+            $idx = (int) $idx;
+            if ( ! isset( $partitioned[ $idx ] ) ) {
+                $partitioned[ $idx ] = array();
+            }
+
+            $partitioned[ $idx ][] = array(
+                'id'      => $comment->comment_ID,
+                'author'  => $comment->comment_author,
+                'content' => wpautop( $comment->comment_content ),
+                'date'    => $comment->comment_date,
+            );
+        }
+
+        return rest_ensure_response( $partitioned );
+    }
+
+    /**
+     * POST /culture/v1/comments/paragraph
+     * Insert a new comment for a specific paragraph.
+     */
+    public static function handle_post_paragraph_comment( $request ) {
+        $post_id       = (int) $request->get_param( 'post_id' );
+        $paragraph_idx = (int) $request->get_param( 'paragraph_idx' );
+        $user_id       = (int) $request->get_param( 'user_id' );
+        $content       = $request->get_param( 'content' );
+
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'invalid_user', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $comment_id = wp_insert_comment( array(
+            'comment_post_ID'      => $post_id,
+            'comment_author'       => $user->display_name,
+            'comment_author_email' => $user->user_email,
+            'comment_content'      => $content,
+            'user_id'              => $user_id,
+            'comment_approved'     => 1,
+        ) );
+
+        if ( ! $comment_id ) {
+            return new WP_Error( 'save_failed', 'Could not save comment.', array( 'status' => 500 ) );
+        }
+
+        update_comment_meta( $comment_id, '_culture_paragraph_idx', $paragraph_idx );
+        
+        // Award points.
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            $post_type = get_post_type( $post_id );
+            $action = ( 'culture_newsletter' === $post_type ) ? 'newsletter_comment' : 'magazine_comment';
+            Culture_Gamification::award_points( $user_id, $action );
+        }
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'comment' => array(
+                'id'      => $comment_id,
+                'author'  => $user->display_name,
+                'content' => wpautop( $content ),
+                'date'    => current_time( 'mysql' ),
+            ),
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/points/award
+     * Award points for a specific action (read, share, etc).
+     */
+    public static function handle_award_points( $request ) {
+        $user_id = $request->get_param( 'user_id' );
+        $action  = $request->get_param( 'action' );
+        $post_id = $request->get_param( 'post_id' );
+
+        if ( ! class_exists( 'Culture_Gamification' ) ) {
+            return new WP_Error( 'internal_error', 'Gamification system missing.', array( 'status' => 500 ) );
+        }
+
+        // Prevent double-awarding for read/share actions on the same post.
+        if ( $post_id && in_array( $action, array( 'magazine_read', 'magazine_share' ), true ) ) {
+            $meta_key = "_culture_{$action}_{$post_id}";
+            $awarded = get_user_meta( $user_id, $meta_key, true );
+            if ( $awarded ) {
+                return rest_ensure_response( array( 'success' => false, 'message' => 'Already awarded.' ) );
+            }
+            update_user_meta( $user_id, $meta_key, true );
+
+            // Increment separate counters for badge tracking.
+            if ( 'magazine_read' === $action ) {
+                $count = (int) get_user_meta( $user_id, '_magazine_read_count', true ) + 1;
+                update_user_meta( $user_id, '_magazine_read_count', $count );
+            } elseif ( 'magazine_share' === $action ) {
+                $count = (int) get_user_meta( $user_id, '_magazine_share_count', true ) + 1;
+                update_user_meta( $user_id, '_magazine_share_count', $count );
+            }
+        }
+
+        $new_total = Culture_Gamification::award_points( $user_id, $action );
+
+        return rest_ensure_response( array(
+            'success'   => true,
+            'points'    => $new_total,
+            'awarded'   => Culture_Gamification::get_point_value( $action ),
+            'new_badges' => array(), // Logic for detecting newly awarded badges could go here if needed.
         ) );
     }
 }
