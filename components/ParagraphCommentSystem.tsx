@@ -58,6 +58,12 @@ export default function ParagraphCommentSystem({ postId, content }: ParagraphCom
     e.preventDefault();
     if (!session || !activeParagraph || !newComment.trim() || isSubmitting) return;
 
+    console.log("Submitting paragraph comment:", {
+      postId,
+      paragraphIdx: activeParagraph.index,
+      content: newComment
+    });
+
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/comments/paragraph", {
@@ -70,8 +76,10 @@ export default function ParagraphCommentSystem({ postId, content }: ParagraphCom
         }),
       });
 
+      const data = await res.json();
+      console.log("Paragraph comment response:", data);
+
       if (res.ok) {
-        const data = await res.json();
         const savedComment = data.comment;
         
         // Update local state
@@ -80,9 +88,12 @@ export default function ParagraphCommentSystem({ postId, content }: ParagraphCom
           [activeParagraph.index]: [...(prev[activeParagraph.index] || []), savedComment]
         }));
         setNewComment("");
+      } else {
+        alert(data.error || "Failed to post comment");
       }
     } catch (err) {
       console.error("Failed to submit comment:", err);
+      alert("An error occurred while posting your comment.");
     } finally {
       setIsSubmitting(false);
     }
@@ -94,8 +105,8 @@ export default function ParagraphCommentSystem({ postId, content }: ParagraphCom
   const parseContent = (html: string) => {
     if (!html) return null;
 
-    // Split by </p> and filter empty strings
-    const parts = html.split("</p>");
+    // Split by </p> case-insensitively and filter empty strings
+    const parts = html.split(/<\/p>/i);
     let pCounter = 0;
 
     return parts.map((part, index) => {

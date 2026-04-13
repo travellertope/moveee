@@ -117,7 +117,7 @@ class Culture_REST_API {
         register_rest_route( 'culture/v1', '/quotes', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_create_quote' ),
-            'permission_callback' => array( __CLASS__, 'user_permission' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             'args'                => array(
                 'text'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
                 'author' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
