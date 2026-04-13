@@ -19,6 +19,7 @@ export default function QuoteSubmissionModal({ onClose }: ModalProps) {
     source: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!session) {
@@ -41,6 +42,7 @@ export default function QuoteSubmissionModal({ onClose }: ModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting || submitted) return;
     setIsSubmitting(true);
     setError(null);
 
@@ -50,10 +52,11 @@ export default function QuoteSubmissionModal({ onClose }: ModalProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
+        setSubmitted(true);
         alert('Quote shared! It is now live in the community archive.');
         onClose();
         window.location.reload();
@@ -117,9 +120,9 @@ export default function QuoteSubmissionModal({ onClose }: ModalProps) {
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <div className="pt-4">
-            <button 
-              type="submit" 
-              disabled={isSubmitting}
+            <button
+              type="submit"
+              disabled={isSubmitting || submitted}
               className="btn-primary w-full md:w-auto px-12 py-4 flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? 'Spreading the word...' : (

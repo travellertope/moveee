@@ -74,13 +74,17 @@ export default function QuoteCard({ quote, initialLiked = false, initialBookmark
       });
 
       if (!res.ok) {
-        // Revert
+        // Revert optimistic update
         if (type === 'like') {
           setIsLiked(isLiked);
           setLikes(prev => isLiked ? prev + 1 : prev - 1);
         } else {
           setIsBookmarked(isBookmarked);
         }
+      } else if (type === 'like') {
+        // Use the authoritative count from the server
+        const data = await res.json();
+        if (typeof data.count === 'number') setLikes(data.count);
       }
     } catch {
       if (type === 'like') {

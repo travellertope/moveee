@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
 
 export const geminiFlash = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
+  model: "gemini-2.0-flash",
 });
 
 export const ENTRY_TYPE_SLUGS = [
@@ -45,7 +45,20 @@ The JSON must match this exact structure:
 Focus on African, Caribbean, and global diaspora contexts. Be factual, culturally respectful, and celebratory in tone. Use approximate language (e.g. "in the late 1970s") rather than fabricating specific dates you are unsure of.`;
 
 /**
- * Generate a Culture Directory stub via Gemini 1.5 Flash.
+ * Extract the first complete JSON object from a string.
+ * Handles cases where the model prefixes/suffixes text around the JSON.
+ */
+function extractJson(raw: string): string {
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error("No JSON object found in model response");
+  }
+  return raw.slice(start, end + 1);
+}
+
+/**
+ * Generate a Culture Directory stub via Gemini 2.0 Flash.
  * Must only be called from server-side code (API routes, server components).
  */
 export async function generateDirectoryStub(
@@ -56,16 +69,9 @@ export async function generateDirectoryStub(
     `Generate a Culture Directory entry for: "${topic}"`,
   ]);
 
-  const text = result.response.text().trim();
-
-  // Strip accidental markdown code fences Gemini sometimes adds.
-  const cleaned = text
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
-
-  const parsed = JSON.parse(cleaned) as DirectoryStub;
+  const raw = result.response.text().trim();
+  const jsonStr = extractJson(raw);
+  const parsed = JSON.parse(jsonStr) as DirectoryStub;
 
   // Normalise entry type to a known slug.
   if (!ENTRY_TYPE_SLUGS.includes(parsed.entryType as EntryType)) {
