@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import NewsletterPreferences from "./NewsletterPreferences";
 import ProfileEditor from "./ProfileEditor";
+import ChapterSelector from "@/components/ChapterSelector";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -100,34 +101,14 @@ export default async function MemberSettingsPage() {
 
             {/* ── 4. CHAPTER ── */}
             <section className="mem-card">
-              <div className="mem-card-header">
-                <div className="mem-card-label">Chapter</div>
-                {!isPatron && (
-                  <span className="mem-settings-coming">Secondary chapter requires Patron</span>
-                )}
-              </div>
-              <div className="mem-field-list">
-                <div className="mem-field">
-                  <div className="mem-field-label">Primary chapter</div>
-                  <div className="mem-field-value">
-                    {user.primaryChapter?.name || "Not set"}
-                  </div>
-                </div>
-                {isPatron && (
-                  <div className="mem-field">
-                    <div className="mem-field-label">Secondary chapter</div>
-                    <div className="mem-field-value mem-field-value--muted">
-                      {user.secondaryChapter?.name || "Not set"}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <p className="mem-settings-note">
-                To change your chapter, contact us at{" "}
-                <a href="mailto:hello@themoveee.com" className="mem-settings-mailto">
-                  hello@themoveee.com
-                </a>
-              </p>
+              <div className="mem-card-label">Chapter</div>
+              <ChapterSelector
+                currentPrimaryId={user.primaryChapter?.id ?? 0}
+                currentPrimaryName={user.primaryChapter?.name ?? ""}
+                currentSecondaryId={user.secondaryChapter?.id ?? 0}
+                currentSecondaryName={user.secondaryChapter?.name ?? ""}
+                isPatron={isPatron}
+              />
             </section>
 
             {/* ── 5. DANGER ZONE ── */}

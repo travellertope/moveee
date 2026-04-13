@@ -15,9 +15,9 @@ interface QuoteCardProps {
     quoteAuthors?: {
       nodes: Array<{ name: string; slug: string }>;
     };
-    quoteSource: string;
-    quoteLikes: number | string;
-    quoteReports: number | string;
+    quoteSource?: string;
+    quoteLikes?: number | string;
+    quoteReports?: number | string;
   };
 }
 

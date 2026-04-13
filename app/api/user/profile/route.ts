@@ -82,11 +82,20 @@ export async function PATCH(req: NextRequest) {
   const allowed = [
     "display_name", "phone", "whatsapp", "gender",
     "date_of_birth", "nationality", "country_of_residence", "city", "occupation",
+    "primary_chapter", "secondary_chapter",
   ];
 
-  const payload: Record<string, string> = { user_id: String(u.id) };
+  const payload: Record<string, string | number> = { user_id: String(u.id) };
   for (const key of allowed) {
-    if (body[key] !== undefined) payload[key] = String(body[key]).trim();
+    if (body[key] !== undefined) {
+      // Chapter IDs are integers; all other fields are strings
+      if (key === "primary_chapter" || key === "secondary_chapter") {
+        const id = parseInt(String(body[key]), 10);
+        if (!isNaN(id)) payload[key] = id;
+      } else {
+        payload[key] = String(body[key]).trim();
+      }
+    }
   }
 
   try {
