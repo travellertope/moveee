@@ -1,38 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-
-// ── Country list (ISO 3166-1) ─────────────────────────────────────────────────
-const COUNTRIES = [
-  "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda",
-  "Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain",
-  "Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia",
-  "Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso",
-  "Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic",
-  "Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia",
-  "Cuba","Cyprus","Czechia","Democratic Republic of the Congo","Denmark","Djibouti",
-  "Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea",
-  "Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon",
-  "Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea",
-  "Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia",
-  "Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan",
-  "Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho",
-  "Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi",
-  "Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius",
-  "Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco",
-  "Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand",
-  "Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman",
-  "Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru",
-  "Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda",
-  "Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa",
-  "San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles",
-  "Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia",
-  "South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname",
-  "Sweden","Switzerland","Syria","Tajikistan","Tanzania","Thailand","Timor-Leste",
-  "Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu",
-  "Uganda","Ukraine","United Arab Emirates","United Kingdom","United States",
-  "Uruguay","Uzbekistan","Vanuatu","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe",
-];
+import { useState } from "react";
+import { CountrySelect, CitySelect } from "@/components/LocationSelect";
 
 const GENDERS = ["Prefer not to say", "Male", "Female", "Non-binary", "Other"];
 
@@ -61,190 +30,6 @@ interface Props {
     city: string;
     occupation: string;
   };
-}
-
-// ── Searchable Combobox ───────────────────────────────────────────────────────
-function SearchableCombobox({
-  options,
-  value,
-  onChange,
-  placeholder = "Type to search…",
-}: {
-  options: string[];
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}) {
-  const [query, setQuery] = useState(value);
-  const [open, setOpen] = useState(true);
-  const [highlighted, setHighlighted] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
-
-  const filtered = query
-    ? options.filter(o => o.toLowerCase().includes(query.toLowerCase())).slice(0, 60)
-    : options.slice(0, 60);
-
-  // Scroll highlighted item into view
-  useEffect(() => {
-    const el = listRef.current?.children[highlighted] as HTMLElement | undefined;
-    el?.scrollIntoView({ block: "nearest" });
-  }, [highlighted]);
-
-  // Close on click outside
-  useEffect(() => {
-    function onDown(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, []);
-
-  function select(opt: string) {
-    onChange(opt);
-    setQuery(opt);
-    setOpen(false);
-  }
-
-  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (!open) { setOpen(true); return; }
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setHighlighted(h => Math.min(h + 1, filtered.length - 1));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setHighlighted(h => Math.max(h - 1, 0));
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (filtered[highlighted]) select(filtered[highlighted]);
-    } else if (e.key === "Escape") {
-      setOpen(false);
-    }
-  }
-
-  return (
-    <div ref={containerRef} style={{ position: "relative" }}>
-      <input
-        type="text"
-        className="mem-field-input"
-        value={query}
-        placeholder={placeholder}
-        autoFocus
-        autoComplete="off"
-        onChange={e => {
-          setQuery(e.target.value);
-          setOpen(true);
-          setHighlighted(0);
-        }}
-        onFocus={() => setOpen(true)}
-        onKeyDown={onKeyDown}
-      />
-      {open && filtered.length > 0 && (
-        <ul
-          ref={listRef}
-          style={{
-            position: "absolute",
-            top: "calc(100% + 2px)",
-            left: 0,
-            right: 0,
-            background: "#fff",
-            border: "1px solid #d4cbbf",
-            borderRadius: 3,
-            maxHeight: 200,
-            overflowY: "auto",
-            zIndex: 200,
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            boxShadow: "0 4px 12px rgba(20,17,13,.08)",
-          }}
-        >
-          {filtered.map((opt, i) => (
-            <li
-              key={opt}
-              onMouseDown={() => select(opt)}
-              style={{
-                padding: "8px 12px",
-                cursor: "pointer",
-                fontSize: 14,
-                color: "#14110d",
-                background: i === highlighted ? "#f5f0e8" : "transparent",
-                borderBottom: i < filtered.length - 1 ? "1px solid #f0ebe3" : "none",
-              }}
-            >
-              {opt}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-// ── City Combobox (fetches dynamically by country) ────────────────────────────
-function CityCombobox({
-  country,
-  value,
-  onChange,
-}: {
-  country: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const [cities, setCities] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!country) return;
-    setLoading(true);
-    setCities([]);
-    fetch(`/api/cities?country=${encodeURIComponent(country)}`)
-      .then(r => r.json())
-      .then(d => { setCities(d.cities ?? []); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [country]);
-
-  if (loading) {
-    return (
-      <input
-        type="text"
-        className="mem-field-input"
-        value={value}
-        disabled
-        placeholder="Loading cities…"
-        onChange={() => {}}
-      />
-    );
-  }
-
-  if (cities.length === 0) {
-    // No country set or API unavailable — plain text input
-    return (
-      <input
-        type="text"
-        className="mem-field-input"
-        value={value}
-        autoFocus
-        placeholder={country ? "Enter your city" : "Set country first, then city"}
-        onChange={e => onChange(e.target.value)}
-        onKeyDown={e => {
-          if (e.key === "Escape") (e.target as HTMLInputElement).blur();
-        }}
-      />
-    );
-  }
-
-  return (
-    <SearchableCombobox
-      options={cities}
-      value={value}
-      onChange={onChange}
-      placeholder="Search cities…"
-    />
-  );
 }
 
 // ── ProfileEditor ─────────────────────────────────────────────────────────────
@@ -359,17 +144,19 @@ function EditableField({
               ))}
             </select>
           ) : field.type === "country" ? (
-            <SearchableCombobox
-              options={COUNTRIES}
+            <CountrySelect
               value={draft}
               onChange={setDraft}
-              placeholder="Search countries…"
+              inputClassName="mem-field-input"
+              autoFocus
             />
           ) : field.type === "city" ? (
-            <CityCombobox
+            <CitySelect
               country={countryContext ?? ""}
               value={draft}
               onChange={setDraft}
+              inputClassName="mem-field-input"
+              autoFocus
             />
           ) : (
             <input
