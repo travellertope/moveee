@@ -8,7 +8,7 @@ import "../../member.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Newsletter Preferences · The Moveee",
+  title: "Settings · The Moveee",
 };
 
 export default async function MemberSettingsPage() {
@@ -23,12 +23,12 @@ export default async function MemberSettingsPage() {
 
   return (
     <>
-      {/* ── PROFILE HERO ── */}
+      {/* ── HERO ── */}
       <div className="mem-hero">
         <div className="mem-hero-inner">
           <div className="mem-avatar">{initial}</div>
           <div className="mem-hero-body">
-            <div className="mem-eyebrow">The Moveee &mdash; Newsletter Preferences</div>
+            <div className="mem-eyebrow">The Moveee &mdash; Account Settings</div>
             <h1 className="mem-name">{displayName}</h1>
             <div className="mem-meta">
               <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
@@ -49,28 +49,126 @@ export default async function MemberSettingsPage() {
         </div>
 
         <div className="mem-settings-grid">
+          {/* ── MAIN COLUMN ── */}
           <div className="mem-col-main">
-            <NewsletterPreferences email={email} />
+
+            {/* ── 1. PROFILE ── */}
+            <section className="mem-card">
+              <div className="mem-card-header">
+                <div className="mem-card-label">Profile</div>
+                <span className="mem-settings-coming">Editing coming soon</span>
+              </div>
+              <div className="mem-field-list">
+                <div className="mem-field">
+                  <div className="mem-field-label">Display name</div>
+                  <div className="mem-field-value">{displayName}</div>
+                </div>
+                <div className="mem-field">
+                  <div className="mem-field-label">Email address</div>
+                  <div className="mem-field-value">{email}</div>
+                </div>
+                <div className="mem-field">
+                  <div className="mem-field-label">Username</div>
+                  <div className="mem-field-value mem-field-value--muted">
+                    {user.username || "—"}
+                  </div>
+                </div>
+                <div className="mem-field">
+                  <div className="mem-field-label">Phone</div>
+                  <div className="mem-field-value mem-field-value--muted">
+                    {user.phone || "—"}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ── 2. NOTIFICATIONS ── */}
+            <section className="mem-card">
+              <div className="mem-card-label">Newsletter Subscriptions</div>
+              <NewsletterPreferences email={email} />
+            </section>
+
+            {/* ── 3. SECURITY ── */}
+            <section className="mem-card">
+              <div className="mem-card-label">Security</div>
+              <div className="mem-field-list">
+                <div className="mem-field mem-field--action">
+                  <div>
+                    <div className="mem-field-label">Password</div>
+                    <div className="mem-field-value mem-field-value--muted">
+                      Change your password via email reset
+                    </div>
+                  </div>
+                  <Link
+                    href={`/reset-password?email=${encodeURIComponent(email)}`}
+                    className="mem-field-btn"
+                  >
+                    Change →
+                  </Link>
+                </div>
+              </div>
+            </section>
+
+            {/* ── 4. CHAPTER ── */}
+            <section className="mem-card">
+              <div className="mem-card-header">
+                <div className="mem-card-label">Chapter</div>
+                {!isPatron && (
+                  <span className="mem-settings-coming">Secondary chapter requires Patron</span>
+                )}
+              </div>
+              <div className="mem-field-list">
+                <div className="mem-field">
+                  <div className="mem-field-label">Primary chapter</div>
+                  <div className="mem-field-value">
+                    {user.primaryChapter?.name || "Not set"}
+                  </div>
+                </div>
+                {isPatron && (
+                  <div className="mem-field">
+                    <div className="mem-field-label">Secondary chapter</div>
+                    <div className="mem-field-value mem-field-value--muted">
+                      {user.secondaryChapter?.name || "Not set"}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <p className="mem-settings-note">
+                To change your chapter, contact us at{" "}
+                <a href="mailto:hello@themoveee.com" className="mem-settings-mailto">
+                  hello@themoveee.com
+                </a>
+              </p>
+            </section>
+
+            {/* ── 5. DANGER ZONE ── */}
+            <section className="mem-card mem-card--rule">
+              <div className="mem-card-label" style={{ color: "var(--mute)" }}>Account</div>
+              <div className="mem-field-list">
+                <div className="mem-field mem-field--action">
+                  <div>
+                    <div className="mem-field-label">Sign out</div>
+                    <div className="mem-field-value mem-field-value--muted">
+                      Sign out of your account on this device
+                    </div>
+                  </div>
+                  <Link href="/api/auth/signout" className="mem-field-btn mem-field-btn--muted">
+                    Sign out →
+                  </Link>
+                </div>
+              </div>
+            </section>
+
           </div>
 
+          {/* ── SIDE COLUMN ── */}
           <div className="mem-col-side">
-            {/* Quick links */}
             <section className="mem-card mem-links-card">
-              <Link href="/member" className="mem-link">
-                Dashboard →
-              </Link>
-              <Link href="/newsletter" className="mem-link">
-                The Cultural Digest →
-              </Link>
-              <Link href="/events" className="mem-link">
-                Upcoming Events →
-              </Link>
-              <Link
-                href="/api/auth/signout"
-                className="mem-link mem-link--muted"
-              >
-                Sign out
-              </Link>
+              <Link href="/member" className="mem-link">Dashboard →</Link>
+              <Link href="/newsletter" className="mem-link">The Cultural Digest →</Link>
+              <Link href="/events" className="mem-link">Upcoming Events →</Link>
+              <Link href="/magazine" className="mem-link">Magazine →</Link>
+              <Link href="/api/auth/signout" className="mem-link mem-link--muted">Sign out</Link>
             </section>
           </div>
         </div>
