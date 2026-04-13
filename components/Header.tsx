@@ -127,9 +127,15 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
               </button>
             )}
 
-            <Link href="/register" className="join-btn" style={{ textDecoration: "none" }}>
-              Join →
-            </Link>
+            {loggedIn ? (
+              <Link href="/connect" className="join-btn" style={{ textDecoration: "none" }}>
+                Connect →
+              </Link>
+            ) : (
+              <Link href="/register" className="join-btn" style={{ textDecoration: "none" }}>
+                Join →
+              </Link>
+            )}
           </div>
 
           {/* Mobile: search + sign-in icons + hamburger */}
@@ -178,14 +184,25 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
             <Link href="/shop"     onClick={() => setMobileMenuOpen(false)}>Lifestyle</Link>
           </div>
           <div className="mobile-menu-actions">
-            <Link
-              href="/register"
-              className="join-btn"
-              style={{ textDecoration: "none" }}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Join →
-            </Link>
+            {loggedIn ? (
+              <Link
+                href="/connect"
+                className="join-btn"
+                style={{ textDecoration: "none" }}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Connect →
+              </Link>
+            ) : (
+              <Link
+                href="/register"
+                className="join-btn"
+                style={{ textDecoration: "none" }}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Join →
+              </Link>
+            )}
           </div>
         </nav>
       </div>
