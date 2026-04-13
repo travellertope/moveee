@@ -86,6 +86,8 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   // Intercept and rewrite internal WP links to use proper Next.js routing
   const cleanContent = (html: string) => {
     if (!html) return html;
+    // Known top-level app routes that should NOT be prefixed with /magazine
+    const appRoutes = ['quote', 'directory', 'events', 'origins', 'connect', 'register', 'login', 'member', 'shop', 'newsletter', 'contact', 'privacy', 'terms'];
     return html.replace(
       /href="https?:\/\/(?:18\.175\.121\.188|cms\.themoveee\.com)\/([^"]*)"/gi,
       (match, path) => {
@@ -94,6 +96,9 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         // Map native categorisation
         if (path.startsWith('category/')) return `href="/magazine?category=${path.replace('category/', '').replace(/\/$/, '')}"`;
         if (path.startsWith('author/')) return `href="/author/${path.replace('author/', '')}"`;
+        // Preserve known Next.js app routes
+        const topSegment = path.split('/')[0];
+        if (appRoutes.includes(topSegment)) return `href="/${path}"`;
         // Assume all other native links are relative to magazine
         return `href="/magazine/${path}"`;
       }
