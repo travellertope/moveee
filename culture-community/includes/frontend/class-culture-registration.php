@@ -488,6 +488,11 @@ class Culture_Registration {
             Culture_Referrals::process_referral( $user_id );
         }
 
+        // Send welcome email once, now that all metadata is in place.
+        if ( class_exists( 'Culture_Emails' ) ) {
+            Culture_Emails::send_welcome_email( $user_id );
+        }
+
         // Log the user in.
         wp_set_current_user( $user_id );
         wp_set_auth_cookie( $user_id );

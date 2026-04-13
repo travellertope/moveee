@@ -2,10 +2,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { getWPData, GET_STORIES, GET_JOURNEYS } from "@/lib/wp";
 import Marquee from "@/components/Marquee";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
+  const session = await getServerSession(authOptions);
+  const isLoggedIn = !!session?.user;
   let stories: any[] = [];
   let events: any[] = [];
   let origins: any[] = [];
@@ -79,7 +83,11 @@ export default async function Home() {
             </p>
             <div className="hero-cta-row">
               <Link href="#magazine" className="btn-primary">Enter the Issue <span className="arrow">→</span></Link>
-              <Link href="/connect" className="btn-ghost">Become a Member</Link>
+              {isLoggedIn ? (
+                <Link href="/member" className="btn-ghost">My Dashboard</Link>
+              ) : (
+                <Link href="/connect" className="btn-ghost">Become a Member</Link>
+              )}
             </div>
           </div>
 
@@ -347,8 +355,14 @@ export default async function Home() {
             </div>
             
             <div className="connect-cta">
-              <Link href="/connect" className="btn-gold">Join Now <span className="arrow">→</span></Link>
-              <div className="connect-price">$80 / year (Cancel anytime)</div>
+              {isLoggedIn ? (
+                <Link href="/member" className="btn-gold">Go to Dashboard <span className="arrow">→</span></Link>
+              ) : (
+                <>
+                  <Link href="/connect" className="btn-gold">Join Now <span className="arrow">→</span></Link>
+                  <div className="connect-price">$80 / year (Cancel anytime)</div>
+                </>
+              )}
             </div>
           </div>
         </div>

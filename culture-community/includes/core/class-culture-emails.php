@@ -46,9 +46,25 @@ class Culture_Emails {
         return class_exists( 'Culture_Settings' ) ? Culture_Settings::get( 'culture_email_button_color' ) : '#e67e22';
     }
 
+    /**
+     * Get the public-facing frontend URL.
+     *
+     * Uses the culture_frontend_url option (set in plugin settings) so that
+     * email links point to the Next.js frontend rather than the WordPress CMS.
+     * Falls back to home_url('/') if the option is not configured.
+     *
+     * @return string Trailing-slashed URL.
+     */
+    private static function get_frontend_url() {
+        $url = get_option( 'culture_frontend_url', '' );
+        return $url ? trailingslashit( esc_url_raw( $url ) ) : home_url( '/' );
+    }
+
     public static function init() {
-        // Welcome email after registration completes.
-        add_action( 'user_register', array( __CLASS__, 'send_welcome_email' ), 30 );
+        // Welcome email is sent explicitly by each registration handler after
+        // all user meta has been saved.  Do NOT hook it to user_register here —
+        // wp_create_user() fires that action before meta is written, which would
+        // produce an email with empty chapter / tier data and duplicate sends.
 
         // Referral confirmation to the referrer.
         add_action( 'culture_referral_completed', array( __CLASS__, 'send_referral_confirmation' ), 10, 2 );
@@ -95,7 +111,7 @@ class Culture_Emails {
 
         $body  = self::get_header( Culture_Email_Templates::merge( $tpl['heading'], $merge ) );
         $body .= Culture_Email_Templates::merge( $tpl['body'], $merge );
-        $body .= self::get_button( home_url( '/' ), Culture_Email_Templates::merge( $tpl['button'], $merge ) );
+        $body .= self::get_button( self::get_frontend_url(), Culture_Email_Templates::merge( $tpl['button'], $merge ) );
         $body .= self::get_footer();
 
         self::send( $user->user_email, $subject, $body );
@@ -130,7 +146,7 @@ class Culture_Emails {
 
         $body  = self::get_header( Culture_Email_Templates::merge( $tpl['heading'], $merge ) );
         $body .= Culture_Email_Templates::merge( $tpl['body'], $merge );
-        $body .= self::get_button( home_url( '/' ), Culture_Email_Templates::merge( $tpl['button'], $merge ) );
+        $body .= self::get_button( self::get_frontend_url(), Culture_Email_Templates::merge( $tpl['button'], $merge ) );
         $body .= self::get_footer();
 
         self::send( $referrer->user_email, $subject, $body );
@@ -167,7 +183,7 @@ class Culture_Emails {
 
         $body  = self::get_header( Culture_Email_Templates::merge( $tpl['heading'], $merge ) );
         $body .= Culture_Email_Templates::merge( $tpl['body'], $merge );
-        $body .= self::get_button( home_url( '/' ), Culture_Email_Templates::merge( $tpl['button'], $merge ) );
+        $body .= self::get_button( self::get_frontend_url(), Culture_Email_Templates::merge( $tpl['button'], $merge ) );
         $body .= self::get_footer();
 
         self::send( $user->user_email, $subject, $body );
@@ -196,7 +212,7 @@ class Culture_Emails {
 
         $body  = self::get_header( Culture_Email_Templates::merge( $tpl['heading'], $merge ) );
         $body .= Culture_Email_Templates::merge( $tpl['body'], $merge );
-        $body .= self::get_button( home_url( '/' ), Culture_Email_Templates::merge( $tpl['button'], $merge ) );
+        $body .= self::get_button( self::get_frontend_url(), Culture_Email_Templates::merge( $tpl['button'], $merge ) );
         $body .= self::get_footer();
 
         self::send( $user->user_email, $subject, $body );
@@ -222,7 +238,7 @@ class Culture_Emails {
 
         $body  = self::get_header( Culture_Email_Templates::merge( $tpl['heading'], $merge ) );
         $body .= Culture_Email_Templates::merge( $tpl['body'], $merge );
-        $body .= self::get_button( home_url( '/' ), Culture_Email_Templates::merge( $tpl['button'], $merge ) );
+        $body .= self::get_button( self::get_frontend_url(), Culture_Email_Templates::merge( $tpl['button'], $merge ) );
         $body .= self::get_footer();
 
         self::send( $user->user_email, $subject, $body );

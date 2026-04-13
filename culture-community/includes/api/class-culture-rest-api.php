@@ -599,13 +599,16 @@ class Culture_REST_API {
         update_user_meta( $user_id, '_culture_points', 0 );
         update_user_meta( $user_id, '_culture_badges', array() );
 
-        // Fire user_register hooks so referrals and auto-subscribe run.
-        do_action( 'user_register', $user_id );
-
-        // Process referral if present.
+        // Process referral if present (cookie/POST not available in REST context,
+        // so inject the code directly and call the handler).
         if ( ! empty( $referral ) && class_exists( 'Culture_Referrals' ) ) {
             $_COOKIE['culture_ref'] = $referral;
             Culture_Referrals::process_referral( $user_id );
+        }
+
+        // Send welcome email once, now that all metadata is in place.
+        if ( class_exists( 'Culture_Emails' ) ) {
+            Culture_Emails::send_welcome_email( $user_id );
         }
 
         $user = get_userdata( $user_id );
@@ -644,7 +647,7 @@ class Culture_REST_API {
         $referral_code  = get_user_meta( $user->ID, '_culture_referral_code', true ) ?: '';
         $referral_count = 0;
         if ( $referral_code && class_exists( 'Culture_Referrals' ) ) {
-            $referral_count = Culture_Referrals::count_referrals( $user->ID );
+            $referral_count = Culture_Referrals::get_referral_count( $user->ID );
         }
 
         return array(
