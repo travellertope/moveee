@@ -7,37 +7,37 @@ import '@/app/quotes.css';
 
 interface QuotePageProps {
   params: {
-    slug: string; // Combined as [id]-[real-slug]
+    slug: string; // Format: [databaseId]-[real-slug]
   };
 }
 
+/** Extract the numeric database ID from the URL segment. */
+function parseId(segment: string): string {
+  return segment.split('-')[0];
+}
+
 export async function generateMetadata({ params }: QuotePageProps): Promise<Metadata> {
-  const parts = params.slug.split('-');
-  const id = parts[0];
-  const slug = parts.slice(1).join('-');
-  
+  const id = parseId(params.slug);
   const data = await getWPData(GET_QUOTE_BY_ID, { id });
   const quote = data?.cultureQuote;
 
   if (!quote) return { title: 'Quote Not Found' };
 
   const author = quote.quoteAuthors?.nodes[0]?.name || 'Unknown Author';
-  
+
   return {
     title: `Quote by ${author} — The Moveee`,
-    description: quote.title, // Post title is the excerpt
+    description: quote.title,
     openGraph: {
       type: 'article',
       title: `Quote by ${author}`,
       description: quote.title,
-    }
+    },
   };
 }
 
 export default async function IndividualQuotePage({ params }: QuotePageProps) {
-  const parts = params.slug.split('-');
-  const id = parts[0];
-  
+  const id = parseId(params.slug);
   const data = await getWPData(GET_QUOTE_BY_ID, { id });
   const quote = data?.cultureQuote;
 
@@ -51,9 +51,8 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
     'text': quote.content.replace(/<[^>]*>/g, ''),
     'author': {
       '@type': 'Person',
-      'name': author
+      'name': author,
     },
-    'citation': quote.quoteSource || ''
   };
 
   return (
@@ -62,17 +61,19 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      
+
       <div className="max-w-4xl mx-auto">
-        <Link href="/quotes" className="text-xs uppercase tracking-widest text-ink-soft mb-12 inline-block hover:text-ink">
+        <Link
+          href="/quotes"
+          className="text-xs uppercase tracking-widest text-ink-soft mb-12 inline-block hover:text-ink"
+        >
           ← Back to Archive
         </Link>
-        
+
         <QuoteCard quote={quote} />
-        
+
         <div className="mt-24 border-t border-rule pt-12">
           <h4 className="num mb-8">MORE FROM THE ARCHIVE</h4>
-          {/* We could fetch related quotes here later */}
           <Link href="/quotes" className="btn-ghost">View All Quotes</Link>
         </div>
       </div>

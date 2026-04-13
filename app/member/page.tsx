@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import MemberReferralCopy from "@/components/MemberReferralCopy";
 import MemberDashboard from "@/components/MemberDashboard";
+import MemberBadges from "@/components/MemberBadges";
 import "../member.css";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +52,7 @@ export default async function MemberPage() {
       </div>
 
       <div className="mem-body">
+        {/* ── STATS (live data) ── */}
         <MemberDashboard
           initialPoints={user.points ?? 0}
           initialBadges={user.badges ?? []}
@@ -61,6 +63,9 @@ export default async function MemberPage() {
         <div className="mem-grid">
           {/* ── MAIN COLUMN ── */}
           <div className="mem-col-main">
+
+            {/* Badges (live data) */}
+            <MemberBadges initialBadges={user.badges ?? []} />
 
             {/* How to earn points */}
             <section className="mem-card">
@@ -152,6 +157,12 @@ export default async function MemberPage() {
 
             {/* Quick links */}
             <section className="mem-card mem-links-card">
+              <Link href="/member/collection" className="mem-link">
+                My Collection →
+              </Link>
+              <Link href="/member/settings" className="mem-link">
+                Account Settings →
+              </Link>
               <Link href="/newsletter" className="mem-link">
                 The Cultural Digest →
               </Link>

@@ -371,6 +371,38 @@ class Culture_REST_API {
                 'post_id' => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
+
+        // Like toggle — any post type (quotes, magazine articles).
+        register_rest_route( 'culture/v1', '/content/like', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_toggle_like' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Bookmark toggle — any post type.
+        register_rest_route( 'culture/v1', '/content/bookmark', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_toggle_bookmark' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // User saved content — liked and bookmarked posts.
+        register_rest_route( 'culture/v1', '/user/saved', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_user_saved' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
     }
 
     /**
@@ -758,6 +790,13 @@ class Culture_REST_API {
             $referral_count = Culture_Referrals::get_referral_count( $user->ID );
         }
 
+        // WP super-admins and admins always get patron access on the frontend
+        // so they're never blocked by tier-gated features.
+        $stored_tier = get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen';
+        $tier = ( is_super_admin( $user->ID ) || user_can( $user, 'manage_options' ) )
+            ? 'patron'
+            : $stored_tier;
+
         return array(
             // Core identity
             'id'                  => $user->ID,
@@ -775,7 +814,7 @@ class Culture_REST_API {
             'city'                => get_user_meta( $user->ID, '_culture_city', true ) ?: '',
             'occupation'          => get_user_meta( $user->ID, '_culture_occupation', true ) ?: '',
             // Membership
-            'tier'                => get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen',
+            'tier'                => $tier,
             'primary_chapter'     => array( 'id' => $primary_id, 'name' => $primary_name ),
             'secondary_chapter'   => array( 'id' => $secondary_id, 'name' => $secondary_name ),
             // Gamification
@@ -1319,23 +1358,168 @@ class Culture_REST_API {
     }
 
     /**
+     * POST /culture/v1/content/like
+     * Toggles a like on any post for a user. Tracks user→post association so
+     * a single user can only like once, and can un-like. Returns new like count
+     * and whether the post is now liked.
+     */
+    public static function handle_toggle_like( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+
+        $post = get_post( $post_id );
+        if ( ! $post || ! in_array( $post->post_status, array( 'publish' ), true ) ) {
+            return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
+        }
+
+        $liked_ids     = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
+        $already_liked = in_array( $post_id, $liked_ids, true );
+
+        if ( $already_liked ) {
+            // Unlike — remove from list, decrement count.
+            $liked_ids = array_values( array_diff( $liked_ids, array( $post_id ) ) );
+            $new_count = max( 0, (int) get_post_meta( $post_id, '_culture_like_count', true ) - 1 );
+            if ( 'culture_quote' === $post->post_type ) {
+                update_post_meta( $post_id, '_quote_likes', max( 0, (int) get_post_meta( $post_id, '_quote_likes', true ) - 1 ) );
+            }
+        } else {
+            // Like — add to list, increment count, award points to creator.
+            $liked_ids[] = $post_id;
+            $new_count   = (int) get_post_meta( $post_id, '_culture_like_count', true ) + 1;
+            if ( 'culture_quote' === $post->post_type ) {
+                update_post_meta( $post_id, '_quote_likes', (int) get_post_meta( $post_id, '_quote_likes', true ) + 1 );
+                $submitter_id = (int) get_post_meta( $post_id, '_quote_user_id', true );
+                if ( $submitter_id && $submitter_id !== $user_id && class_exists( 'Culture_Gamification' ) ) {
+                    Culture_Gamification::award_points( $submitter_id, 'quote_like' );
+                }
+            }
+        }
+
+        update_user_meta( $user_id, '_culture_liked_posts', $liked_ids );
+        update_post_meta( $post_id, '_culture_like_count', $new_count );
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'liked'   => ! $already_liked,
+            'count'   => $new_count,
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/content/bookmark
+     * Toggles a bookmark (private save) on any post for a user.
+     */
+    public static function handle_toggle_bookmark( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+
+        $post = get_post( $post_id );
+        if ( ! $post || ! in_array( $post->post_status, array( 'publish' ), true ) ) {
+            return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
+        }
+
+        $bookmarked_ids     = (array) get_user_meta( $user_id, '_culture_bookmarked_posts', true );
+        $already_bookmarked = in_array( $post_id, $bookmarked_ids, true );
+
+        if ( $already_bookmarked ) {
+            $bookmarked_ids = array_values( array_diff( $bookmarked_ids, array( $post_id ) ) );
+        } else {
+            $bookmarked_ids[] = $post_id;
+        }
+
+        update_user_meta( $user_id, '_culture_bookmarked_posts', $bookmarked_ids );
+
+        return rest_ensure_response( array(
+            'success'    => true,
+            'bookmarked' => ! $already_bookmarked,
+        ) );
+    }
+
+    /**
+     * GET /culture/v1/user/saved?user_id=X
+     * Returns the user's liked and bookmarked posts with basic data,
+     * plus the raw ID lists so the frontend can check state instantly.
+     */
+    public static function handle_get_user_saved( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+
+        if ( ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $liked_ids      = array_map( 'intval', (array) get_user_meta( $user_id, '_culture_liked_posts', true ) );
+        $bookmarked_ids = array_map( 'intval', (array) get_user_meta( $user_id, '_culture_bookmarked_posts', true ) );
+
+        $liked      = array();
+        $bookmarked = array();
+
+        if ( ! empty( $liked_ids ) ) {
+            $posts = get_posts( array(
+                'post__in'       => $liked_ids,
+                'post_type'      => array( 'post', 'culture_quote' ),
+                'post_status'    => 'publish',
+                'posts_per_page' => -1,
+                'orderby'        => 'post__in',
+            ) );
+            foreach ( $posts as $p ) {
+                $liked[] = self::saved_post_summary( $p );
+            }
+        }
+
+        if ( ! empty( $bookmarked_ids ) ) {
+            $posts = get_posts( array(
+                'post__in'       => $bookmarked_ids,
+                'post_type'      => array( 'post', 'culture_quote' ),
+                'post_status'    => 'publish',
+                'posts_per_page' => -1,
+                'orderby'        => 'post__in',
+            ) );
+            foreach ( $posts as $p ) {
+                $bookmarked[] = self::saved_post_summary( $p );
+            }
+        }
+
+        return rest_ensure_response( array(
+            'liked'          => $liked,
+            'bookmarked'     => $bookmarked,
+            'liked_ids'      => $liked_ids,
+            'bookmarked_ids' => $bookmarked_ids,
+        ) );
+    }
+
+    /** Build a minimal summary for a saved post. */
+    private static function saved_post_summary( $post ) {
+        $is_quote = ( 'culture_quote' === $post->post_type );
+        return array(
+            'id'      => $post->ID,
+            'type'    => $is_quote ? 'quote' : 'article',
+            'title'   => $post->post_title,
+            'slug'    => $post->post_name,
+            'url'     => $is_quote
+                ? '/quotes/' . $post->ID . '-' . $post->post_name
+                : '/magazine/' . $post->post_name,
+            'excerpt' => wp_trim_words( wp_strip_all_tags( $post->post_content ), 20 ),
+            'date'    => get_the_date( 'Y-m-d', $post ),
+            'likes'   => (int) get_post_meta( $post->ID, '_culture_like_count', true ),
+        );
+    }
+
+    /**
      * GET /culture/v1/user/profile?user_id=X
-     * Returns live points and badges for a user.
+     * Returns the full live user profile (points, badges, chapters, etc.).
      */
     public static function handle_get_user_profile( $request ) {
         $user_id = $request->get_param( 'user_id' );
-        
-        if ( ! $user_id || ! get_userdata( $user_id ) ) {
-            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 444 ) );
+
+        if ( ! $user_id ) {
+            return new WP_Error( 'missing_user_id', 'user_id is required.', array( 'status' => 400 ) );
         }
 
-        $points = (int) get_user_meta( $user_id, '_culture_points', true );
-        $badges = get_user_meta( $user_id, '_culture_badges', true ) ?: array();
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
 
-        return rest_ensure_response( array(
-            'id'     => $user_id,
-            'points' => $points,
-            'badges' => $badges,
-        ) );
+        return rest_ensure_response( self::user_profile( $user ) );
     }
 }
