@@ -391,6 +391,8 @@ const QUOTE_FIELDS_FRAGMENT = `
     slug
     content
     date
+    quoteSource
+    quoteLikes
     quoteAuthors {
       nodes {
         name
