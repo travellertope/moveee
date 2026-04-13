@@ -302,6 +302,29 @@ class Culture_REST_API {
             'callback'            => array( 'Culture_Directory', 'handle_submit' ),
             'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
         ) );
+
+        // Paragraph comments — GET (public) and POST (auth/shared secret).
+        register_rest_route( 'culture/v1', '/comments/paragraph', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_paragraph_comments' ),
+                'permission_callback' => '__return_true',
+                'args'                => array(
+                    'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_post_paragraph_comment' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+                'args'                => array(
+                    'post_id'       => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                    'paragraph_idx' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                    'user_id'       => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                    'content'       => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
+                ),
+            ),
+        ) );
     }
 
     /**
@@ -1027,6 +1050,87 @@ class Culture_REST_API {
         return rest_ensure_response( array(
             'success' => true,
             'message' => __( 'Quote reported.', 'culture-community' ),
+        ) );
+    }
+
+    /**
+     * GET /culture/v1/comments/paragraph?post_id=X
+     * Returns comments grouped by paragraph index.
+     */
+    public static function handle_get_paragraph_comments( $request ) {
+        $post_id = $request->get_param( 'post_id' );
+        
+        $comments = get_comments( array(
+            'post_id' => $post_id,
+            'status'  => 'approve',
+            'orderby' => 'comment_date',
+            'order'   => 'ASC',
+        ) );
+
+        $partitioned = array();
+        foreach ( $comments as $comment ) {
+            $idx = get_comment_meta( $comment->comment_ID, '_culture_paragraph_idx', true );
+            if ( '' === $idx ) continue;
+            
+            $idx = (int) $idx;
+            if ( ! isset( $partitioned[ $idx ] ) ) {
+                $partitioned[ $idx ] = array();
+            }
+
+            $partitioned[ $idx ][] = array(
+                'id'      => $comment->comment_ID,
+                'author'  => $comment->comment_author,
+                'content' => wpautop( $comment->comment_content ),
+                'date'    => $comment->comment_date,
+            );
+        }
+
+        return rest_ensure_response( $partitioned );
+    }
+
+    /**
+     * POST /culture/v1/comments/paragraph
+     * Insert a new comment for a specific paragraph.
+     */
+    public static function handle_post_paragraph_comment( $request ) {
+        $post_id       = (int) $request->get_param( 'post_id' );
+        $paragraph_idx = (int) $request->get_param( 'paragraph_idx' );
+        $user_id       = (int) $request->get_param( 'user_id' );
+        $content       = $request->get_param( 'content' );
+
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'invalid_user', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $comment_id = wp_insert_comment( array(
+            'comment_post_ID'      => $post_id,
+            'comment_author'       => $user->display_name,
+            'comment_author_email' => $user->user_email,
+            'comment_content'      => $content,
+            'user_id'              => $user_id,
+            'comment_approved'     => 1,
+        ) );
+
+        if ( ! $comment_id ) {
+            return new WP_Error( 'save_failed', 'Could not save comment.', array( 'status' => 500 ) );
+        }
+
+        update_comment_meta( $comment_id, '_culture_paragraph_idx', $paragraph_idx );
+        
+        // Award points.
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::award_points( $user_id, 'newsletter_comment' );
+        }
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'comment' => array(
+                'id'      => $comment_id,
+                'author'  => $user->display_name,
+                'content' => wpautop( $content ),
+                'date'    => current_time( 'mysql' ),
+            ),
         ) );
     }
 }

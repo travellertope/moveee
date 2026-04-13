@@ -43,6 +43,7 @@ export async function getWPData(query: string, variables = {}) {
 const STORY_FIELDS_FRAGMENT = `
   fragment StoryFields on Post {
     id
+    databaseId
     title
     slug
     date
