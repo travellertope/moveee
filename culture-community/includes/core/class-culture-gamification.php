@@ -62,6 +62,41 @@ class Culture_Gamification {
             'trigger'     => 'points',
             'threshold'   => 100,
         ),
+        'wordsmith' => array(
+            'name'        => 'Wordsmith',
+            'description' => 'Shared your first quote.',
+            'icon'        => 'dashicons-editor-quote',
+            'trigger'     => 'quote_count',
+            'threshold'   => 1,
+        ),
+        'librarian' => array(
+            'name'        => 'Librarian',
+            'description' => 'Shared 10 quotes.',
+            'icon'        => 'dashicons-book-alt',
+            'trigger'     => 'quote_count',
+            'threshold'   => 10,
+        ),
+        'philosopher' => array(
+            'name'        => 'Philosopher',
+            'description' => 'Shared 50 quotes.',
+            'icon'        => 'dashicons-welcome-learn-more',
+            'trigger'     => 'quote_count',
+            'threshold'   => 50,
+        ),
+        'influencer' => array(
+            'name'        => 'Influencer',
+            'description' => 'Your quotes received 10 likes.',
+            'icon'        => 'dashicons-thumbs-up',
+            'trigger'     => 'quote_likes_count',
+            'threshold'   => 10,
+        ),
+        'thought_leader' => array(
+            'name'        => 'Thought Leader',
+            'description' => 'Your quotes received 100 likes.',
+            'icon'        => 'dashicons-megaphone',
+            'trigger'     => 'quote_likes_count',
+            'threshold'   => 100,
+        ),
     );
 
     /**
@@ -237,6 +272,21 @@ class Culture_Gamification {
 
             case 'points':
                 return self::get_points( $user_id );
+            
+            case 'quote_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_author = %d AND post_type = 'culture_quote' AND post_status = 'publish'",
+                    $user_id
+                ) );
+
+            case 'quote_likes_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT SUM(CAST(pm.meta_value AS UNSIGNED))
+                     FROM {$wpdb->postmeta} pm
+                     INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+                     WHERE p.post_author = %d AND p.post_type = 'culture_quote' AND pm.meta_key = '_quote_likes' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
 
             default:
                 return 0;
