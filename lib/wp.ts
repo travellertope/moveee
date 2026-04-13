@@ -325,9 +325,6 @@ export const GET_PRODUCT_BY_SLUG = `
   ${PRODUCT_FIELDS_FRAGMENT}
 `;
 
-  ${PRODUCT_FIELDS_FRAGMENT}
-`;
-
 const QUOTE_FIELDS_FRAGMENT = `
   fragment QuoteFields on CultureQuote {
     id
