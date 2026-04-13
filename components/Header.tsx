@@ -32,6 +32,14 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const user = session?.user as any;
   const loggedIn = status === "authenticated";
 
+  React.useEffect(() => {
+    const handleOpenModal = () => {
+      if (!loggedIn) setModalOpen(true);
+    };
+    window.addEventListener('open-auth-modal', handleOpenModal);
+    return () => window.removeEventListener('open-auth-modal', handleOpenModal);
+  }, [loggedIn]);
+
   return (
     <>
       {/* Auth modal — renders only when open and not logged in */}

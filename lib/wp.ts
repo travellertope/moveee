@@ -417,10 +417,25 @@ export const GET_QUOTES = `
   ${QUOTE_FIELDS_FRAGMENT}
 `;
 
-export const GET_QUOTE_BY_SLUG = `
-  query GetQuoteBySlug($slug: ID!) {
-    cultureQuote(id: $slug, idType: SLUG) {
+export const GET_QUOTE_BY_ID = `
+  query GetQuoteByID($id: ID!) {
+    cultureQuote(id: $id, idType: ID) {
       ...QuoteFields
+    }
+  }
+  ${QUOTE_FIELDS_FRAGMENT}
+`;
+
+export const GET_QUOTES_BY_AUTHOR = `
+  query GetQuotesByAuthor($slug: ID!) {
+    quoteAuthor(id: $slug, idType: SLUG) {
+      name
+      description
+      cultureQuotes(first: 100) {
+        nodes {
+          ...QuoteFields
+        }
+      }
     }
   }
   ${QUOTE_FIELDS_FRAGMENT}

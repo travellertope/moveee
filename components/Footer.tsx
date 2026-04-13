@@ -57,17 +57,6 @@ const Footer = () => {
             <li><Link href="/ai-use">AI Use Policy</Link></li>
           </ul>
         </div>
-        <div>
-          <h5>Weekly Digest</h5>
-          <div className="newsletter">
-            <NewsletterSubscribeWidget
-              placeholder="EMAIL ADDRESS"
-              buttonLabel="Subscribe"
-              successMessage="You're in — first issue Friday."
-              variant="dark"
-            />
-          </div>
-        </div>
       </div>
       <div className="footer-bottom">
         <div>© 2026 THE MOVEEE — DESIGNED FOR THE DIASPORA</div>

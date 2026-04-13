@@ -108,8 +108,9 @@
   transition: color 0.2s ease;
 }
 
-.quote-action-btn:hover {
-  color: var(--color-ink);
+.quote-action-btn:hover,
+.quote-action-btn.active {
+  color: var(--color-gold, var(--ochre));
 }
 
 .quote-action-btn svg {
