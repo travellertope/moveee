@@ -6,6 +6,10 @@ import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import ArticleActions from "@/components/ArticleActions";
+import ContentGate from "@/components/ContentGate";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getAccessLevel, canViewContent } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +40,13 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   if (!post) {
     notFound();
   }
+
+  // Access control
+  const session = await getServerSession(authOptions);
+  const user = session?.user as any;
+  const accessLevel = getAccessLevel(post);
+  const canView = canViewContent(accessLevel, user);
+  const isLoggedIn = !!user;
 
   // Fetch related stories
   const primaryCategory = post.categories?.nodes?.[0]?.name || "";
@@ -240,10 +251,42 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
         {/* CENTER — PROSE */}
         <div className="prose" id="article-body">
-          <div
-            className="prose-content"
-            dangerouslySetInnerHTML={{ __html: processedContent }}
-          />
+          {canView ? (
+            <div
+              className="prose-content"
+              dangerouslySetInnerHTML={{ __html: processedContent }}
+            />
+          ) : (
+            <>
+              {/* Faded excerpt teaser */}
+              {post.excerpt && (
+                <div style={{ position: "relative", marginBottom: 0 }}>
+                  <div
+                    className="prose-content"
+                    style={{ maxHeight: 120, overflow: "hidden" }}
+                    dangerouslySetInnerHTML={{
+                      __html: post.excerpt.replace(/<[^>]*>/g, ""),
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: 80,
+                      background:
+                        "linear-gradient(to bottom, transparent, var(--paper, #f5f0e8))",
+                    }}
+                  />
+                </div>
+              )}
+              <ContentGate
+                accessLevel={accessLevel as "member-only" | "patron-only"}
+                isLoggedIn={isLoggedIn}
+              />
+            </>
+          )}
         </div>
 
         {/* RIGHT — SIDEBAR */}

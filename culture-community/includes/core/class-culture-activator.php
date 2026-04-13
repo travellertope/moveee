@@ -16,6 +16,11 @@ class Culture_Activator {
         self::create_tables();
         self::create_roles();
         Culture_Cron::schedule();
+        // Taxonomy must be registered before we can insert terms.
+        if ( class_exists( 'Culture_Post_Types' ) ) {
+            Culture_Post_Types::register_taxonomies();
+        }
+        self::seed_access_levels();
         flush_rewrite_rules();
     }
 
@@ -52,6 +57,28 @@ class Culture_Activator {
         Culture_NL_Analytics::create_tables();
 
         update_option( 'culture_db_version', CULTURE_VERSION );
+    }
+
+    /**
+     * Seed the two default culture_access taxonomy terms.
+     *
+     * Safe to call multiple times — skips any term that already exists.
+     */
+    public static function seed_access_levels() {
+        if ( ! taxonomy_exists( 'culture_access' ) ) {
+            return;
+        }
+
+        $terms = array(
+            'member-only' => __( 'Member Only', 'culture-community' ),
+            'patron-only' => __( 'Patron Only', 'culture-community' ),
+        );
+
+        foreach ( $terms as $slug => $name ) {
+            if ( ! term_exists( $slug, 'culture_access' ) ) {
+                wp_insert_term( $name, 'culture_access', array( 'slug' => $slug ) );
+            }
+        }
     }
 
     /**
