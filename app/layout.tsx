@@ -8,7 +8,7 @@ import "./newsletter.css";
 import "./legal.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { GoogleAnalytics } from '@next/third-parties/google';
+import CookieConsent from "@/components/CookieConsent";
 import { LanguageProvider } from "@/context/LanguageContext";
 import SessionProvider from "@/components/SessionProvider";
 
@@ -58,9 +58,9 @@ export default async function RootLayout({
             <Header siteSettings={siteData} />
             <main>{children}</main>
             <Footer />
+            <CookieConsent />
           </LanguageProvider>
         </SessionProvider>
-        <GoogleAnalytics gaId="G-DNRGCXBBF4" />
       </body>
     </html>
   );
