@@ -379,6 +379,89 @@
 .mem-link:hover { background: var(--paper-deep); color: var(--ochre); }
 .mem-link--muted { color: var(--mute); }
 
+/* ── Settings: field list ── */
+.mem-field-list { display: flex; flex-direction: column; }
+.mem-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(42,36,28,.08);
+}
+.mem-field:last-child { border-bottom: none; }
+.mem-field--action {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.mem-field-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ochre);
+}
+.mem-field-value {
+  font-size: 15px;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.mem-field-value--muted {
+  font-size: 13px;
+  color: var(--mute);
+}
+.mem-field-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(42,36,28,.25);
+  padding-bottom: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color .15s, border-color .15s;
+}
+.mem-field-btn:hover { color: var(--ochre); border-color: var(--ochre); }
+.mem-field-btn--muted { color: var(--mute); border-color: rgba(42,36,28,.15); }
+.mem-field-btn--muted:hover { color: var(--ochre); border-color: var(--ochre); }
+
+.mem-settings-coming {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--mute);
+  font-style: italic;
+}
+.mem-settings-note {
+  font-size: 13px;
+  color: var(--mute);
+  margin: 4px 0 0;
+  font-style: italic;
+}
+.mem-settings-mailto {
+  color: var(--ochre);
+  text-decoration: none;
+}
+.mem-settings-mailto:hover { text-decoration: underline; }
+
+.mem-card--rule {
+  border-top: 2px solid var(--rule);
+}
+
+/* Feedback badges */
+.mem-fb {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.mem-fb--ok { color: var(--moss, #5a7a5a); }
+.mem-fb--err { color: var(--ochre); }
+
 /* ── Settings page ── */
 .mem-settings-back {
   padding: 24px 0 0;

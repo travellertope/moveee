@@ -242,6 +242,74 @@ export const GET_ADJACENT_NEWSLETTERS = `
   }
 `;
 
+export const GET_EVENTS = `
+  query GetEvents($first: Int) {
+    posts(first: $first, where: { categoryName: "events", status: PUBLISH }) {
+      nodes {
+        ...StoryFields
+      }
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
+export const GET_EVENT_BY_SLUG = `
+  query GetEventBySlug($slug: ID!) {
+    post(id: $slug, idType: SLUG) {
+      ...StoryFields
+      content
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
+export const GET_JOURNEY_BY_SLUG = `
+  query GetJourneyBySlug($slug: ID!) {
+    post(id: $slug, idType: SLUG) {
+      ...JourneyFields
+      content
+    }
+  }
+  ${JOURNEY_FIELDS_FRAGMENT}
+`;
+
+const PRODUCT_FIELDS_FRAGMENT = `
+  fragment ProductFields on Product {
+    id
+    databaseId
+    name
+    slug
+    description
+    shortDescription
+    image { sourceUrl altText }
+    galleryImages { nodes { sourceUrl altText } }
+    ... on SimpleProduct { price regularPrice salePrice }
+    ... on VariableProduct { price }
+  }
+`;
+
+export const PRODUCT_FIELDS = PRODUCT_FIELDS_FRAGMENT;
+
+export const GET_PRODUCTS = `
+  query GetProducts($first: Int) {
+    products(first: $first) {
+      nodes {
+        ...ProductFields
+      }
+    }
+  }
+  ${PRODUCT_FIELDS_FRAGMENT}
+`;
+
+export const GET_PRODUCT_BY_SLUG = `
+  query GetProductBySlug($slug: ID!) {
+    product(id: $slug, idType: SLUG) {
+      ...ProductFields
+    }
+  }
+  ${PRODUCT_FIELDS_FRAGMENT}
+`;
+
 export const GET_SITE_SETTINGS = `
   query GetSiteSettings {
     allSettings {
