@@ -1,7 +1,7 @@
 {
   "redirects": [
     {
-      "source": "/:slug((?!(login|register|member|newsletter|magazine|author|api|events|origins|shop|connect|_next)(/|$))[^/]+)",
+      "source": "/:slug((?!(login|register|member|newsletter|magazine|author|api|events|origins|shop|connect|reset-password|_next)(/|$))[^/]+)",
       "destination": "/magazine/:slug",
       "permanent": false
     }
