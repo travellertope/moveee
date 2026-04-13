@@ -65,6 +65,12 @@ class Culture_Directory {
                     'type'              => 'boolean',
                     'default'           => false,
                 ),
+                'improving_slug' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_title',
+                    'default'           => '',
+                ),
             ),
         ) );
     }
@@ -111,13 +117,14 @@ class Culture_Directory {
      * Handle a new directory entry submission from the Next.js frontend.
      */
     public static function handle_submit( WP_REST_Request $request ) {
-        $user_id    = $request->get_param( 'user_id' );
-        $title      = $request->get_param( 'title' );
-        $excerpt    = $request->get_param( 'excerpt' );
-        $content    = $request->get_param( 'content' );
-        $entry_type = $request->get_param( 'entry_type' );
-        $interests  = (array) $request->get_param( 'interests' );
-        $ai_gen     = (bool) $request->get_param( 'ai_generated' );
+        $user_id        = $request->get_param( 'user_id' );
+        $title          = $request->get_param( 'title' );
+        $excerpt        = $request->get_param( 'excerpt' );
+        $content        = $request->get_param( 'content' );
+        $entry_type     = $request->get_param( 'entry_type' );
+        $interests      = (array) $request->get_param( 'interests' );
+        $ai_gen         = (bool) $request->get_param( 'ai_generated' );
+        $improving_slug = $request->get_param( 'improving_slug' );
 
         // Validate the submitting user exists.
         if ( $user_id > 0 && ! get_userdata( $user_id ) ) {
@@ -149,6 +156,11 @@ class Culture_Directory {
         // Persist meta.
         update_post_meta( $post_id, '_culture_dir_submitted_by', $user_id );
         update_post_meta( $post_id, '_culture_dir_ai_generated', $ai_gen ? '1' : '0' );
+
+        // When this is an improvement of an existing entry, record the reference.
+        if ( ! empty( $improving_slug ) ) {
+            update_post_meta( $post_id, '_culture_dir_improves', sanitize_title( $improving_slug ) );
+        }
 
         // Assign entry type term.
         if ( $entry_type && taxonomy_exists( 'culture_dir_type' ) ) {

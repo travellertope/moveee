@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const ENTRY_TYPES = [
@@ -14,14 +14,23 @@ const ENTRY_TYPES = [
   { slug: "fashion", label: "Fashion" },
 ] as const;
 
-type Step = "input" | "generating" | "review" | "submitting" | "done";
+type Step = "input" | "generating" | "review" | "submitting" | "done" | "loading-entry";
 
 interface Props {
   isLoggedIn: boolean;
+  userTier: string | null;
+  improvingSlug: string | null;
 }
 
-export default function DirectorySubmitForm({ isLoggedIn }: Props) {
-  const [step, setStep] = useState<Step>("input");
+export default function DirectorySubmitForm({
+  isLoggedIn,
+  userTier,
+  improvingSlug,
+}: Props) {
+  const isImproveMode = !!improvingSlug;
+  const isPatron = userTier === "patron";
+
+  const [step, setStep] = useState<Step>(isImproveMode ? "loading-entry" : "input");
   const [topic, setTopic] = useState("");
   const [error, setError] = useState("");
 
@@ -32,7 +41,31 @@ export default function DirectorySubmitForm({ isLoggedIn }: Props) {
   const [entryType, setEntryType] = useState<string>("concept");
   const [pointsAwarded, setPointsAwarded] = useState(0);
 
-  // Not logged in — show auth gate
+  // Pre-populate form when in improve mode
+  useEffect(() => {
+    if (!isImproveMode || !isLoggedIn || !isPatron) return;
+
+    fetch(`/api/directory/entry?slug=${encodeURIComponent(improvingSlug!)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) {
+          setError(data.error);
+          setStep("input");
+          return;
+        }
+        setTitle(data.title ?? "");
+        setExcerpt(data.excerpt ?? "");
+        setContent(data.content ?? "");
+        setEntryType(data.entryType ?? "concept");
+        setStep("review");
+      })
+      .catch(() => {
+        setError("Could not load entry for improvement. You can still submit a new entry below.");
+        setStep("input");
+      });
+  }, [isImproveMode, improvingSlug, isLoggedIn, isPatron]);
+
+  // ── Auth gate — not logged in ────────────────────────────────────────────
   if (!isLoggedIn) {
     return (
       <div className="dir-submit-wrap">
@@ -57,6 +90,64 @@ export default function DirectorySubmitForm({ isLoggedIn }: Props) {
               Create free account
             </Link>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Tier gate — logged in but not Patron ─────────────────────────────────
+  if (!isPatron) {
+    return (
+      <div className="dir-submit-wrap">
+        <Link href="/directory" className="dir-back">
+          ← Culture Directory
+        </Link>
+        <div className="dir-submit-auth-gate">
+          <div className="dir-eyebrow">★ Patron Members</div>
+          <h2>Patron membership required</h2>
+          <p>
+            Building the Culture Directory is a Patron privilege. Upgrade your
+            membership to contribute entries, earn points, and shape what goes
+            in the archive.
+          </p>
+          <div style={{ display: "flex", gap: 12 }}>
+            <Link href="/connect" className="dir-submit-btn">
+              Upgrade to Patron →
+            </Link>
+            <Link href="/directory" className="dir-secondary-btn">
+              Browse the directory
+            </Link>
+          </div>
+          <p
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 10,
+              color: "rgba(20,17,13,.35)",
+              marginTop: 18,
+            }}
+          >
+            Patron · $80 / year · Cancel anytime
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Loading existing entry for improve mode ──────────────────────────────
+  if (step === "loading-entry") {
+    return (
+      <div className="dir-submit-wrap">
+        <div
+          style={{
+            padding: "64px 0",
+            textAlign: "center",
+            color: "rgba(20,17,13,.4)",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 11,
+            letterSpacing: ".1em",
+          }}
+        >
+          Loading entry…
         </div>
       </div>
     );
@@ -105,7 +196,8 @@ export default function DirectorySubmitForm({ isLoggedIn }: Props) {
           excerpt: excerpt.trim(),
           content: content.trim(),
           entryType,
-          aiGenerated: true,
+          aiGenerated: !isImproveMode,
+          ...(isImproveMode && { improvingSlug }),
         }),
       });
 
@@ -141,17 +233,21 @@ export default function DirectorySubmitForm({ isLoggedIn }: Props) {
         <Link href="/directory" className="dir-back">
           ← Culture Directory
         </Link>
-        <div className="dir-eyebrow">★ Community Contribution</div>
-        <h1 className="dir-submit-heading">Add a Directory Entry</h1>
+        <div className="dir-eyebrow">
+          {isImproveMode ? "★ Improve Entry" : "★ Community Contribution"}
+        </div>
+        <h1 className="dir-submit-heading">
+          {isImproveMode ? "Improve a Directory Entry" : "Add a Directory Entry"}
+        </h1>
         <p className="dir-submit-desc">
-          Type a name or topic below. Gemini AI will draft a starter entry —
-          review and edit it before submitting. Every approved entry earns you
-          culture points.
+          {isImproveMode
+            ? "Review and improve the entry below. Your revised version will be sent for editorial review. Approved improvements earn you culture points."
+            : "Type a name or topic below. Gemini AI will draft a starter entry — review and edit it before submitting. Every approved entry earns you culture points."}
         </p>
       </div>
 
-      {/* ── Step: Input / Generating ── */}
-      {(step === "input" || step === "generating") && (
+      {/* ── Step: Input / Generating (new entry only) ── */}
+      {!isImproveMode && (step === "input" || step === "generating") && (
         <div className="dir-generate-section">
           <label className="dir-field-label" htmlFor="dir-topic">
             Name or topic
@@ -188,10 +284,17 @@ export default function DirectorySubmitForm({ isLoggedIn }: Props) {
       {/* ── Step: Review & Edit ── */}
       {(step === "review" || step === "submitting") && (
         <div className="dir-review-section">
-          <div className="dir-review-notice">
-            AI-generated stub — review and edit before submitting. Your
-            corrections and additions are welcome.
-          </div>
+          {!isImproveMode && (
+            <div className="dir-review-notice">
+              AI-generated stub — review and edit before submitting. Your
+              corrections and additions are welcome.
+            </div>
+          )}
+          {isImproveMode && (
+            <div className="dir-review-notice">
+              You are improving an existing entry. Edit any section and submit — your version goes to editorial review.
+            </div>
+          )}
 
           <div className="dir-field">
             <label className="dir-field-label" htmlFor="dir-title">
@@ -228,7 +331,10 @@ export default function DirectorySubmitForm({ isLoggedIn }: Props) {
 
           <div className="dir-field">
             <label className="dir-field-label" htmlFor="dir-excerpt">
-              Summary <span style={{ fontWeight: 400, opacity: 0.6 }}>(1–2 sentences, plain text)</span>
+              Summary{" "}
+              <span style={{ fontWeight: 400, opacity: 0.6 }}>
+                (1–2 sentences, plain text)
+              </span>
             </label>
             <textarea
               id="dir-excerpt"
@@ -270,15 +376,26 @@ export default function DirectorySubmitForm({ isLoggedIn }: Props) {
                 !content.trim()
               }
             >
-              {step === "submitting" ? "Submitting…" : "Submit for Review →"}
+              {step === "submitting"
+                ? "Submitting…"
+                : isImproveMode
+                ? "Submit Improvement →"
+                : "Submit for Review →"}
             </button>
-            <button
-              className="dir-secondary-btn"
-              onClick={handleReset}
-              disabled={step === "submitting"}
-            >
-              ← Start over
-            </button>
+            {!isImproveMode && (
+              <button
+                className="dir-secondary-btn"
+                onClick={handleReset}
+                disabled={step === "submitting"}
+              >
+                ← Start over
+              </button>
+            )}
+            {isImproveMode && (
+              <Link href="/directory" className="dir-secondary-btn">
+                Cancel
+              </Link>
+            )}
           </div>
         </div>
       )}
@@ -287,21 +404,29 @@ export default function DirectorySubmitForm({ isLoggedIn }: Props) {
       {step === "done" && (
         <div className="dir-success">
           <div className="dir-success-icon">✓</div>
-          <h2>Entry submitted!</h2>
+          <h2>
+            {isImproveMode ? "Improvement submitted!" : "Entry submitted!"}
+          </h2>
           <p>
-            Your entry is pending editorial review. Once approved, it will
-            appear in the Culture Directory.
+            {isImproveMode
+              ? "Your improved version is pending editorial review. Once accepted, the entry will be updated."
+              : "Your entry is pending editorial review. Once approved, it will appear in the Culture Directory."}
           </p>
           <div className="dir-success-points">
             +{pointsAwarded} culture points earned
           </div>
-          <div className="dir-review-actions" style={{ justifyContent: "center" }}>
+          <div
+            className="dir-review-actions"
+            style={{ justifyContent: "center" }}
+          >
             <Link href="/directory" className="dir-submit-btn">
               Browse the Directory →
             </Link>
-            <button className="dir-secondary-btn" onClick={handleReset}>
-              Add another entry
-            </button>
+            {!isImproveMode && (
+              <button className="dir-secondary-btn" onClick={handleReset}>
+                Add another entry
+              </button>
+            )}
           </div>
         </div>
       )}
