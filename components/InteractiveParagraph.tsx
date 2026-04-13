@@ -8,6 +8,7 @@ interface InteractiveParagraphProps {
   htmlContent: string;
   commentCount: number;
   isActive: boolean;
+  isFirst: boolean;
   onOpenComments: (index: number, text: string) => void;
 }
 
@@ -16,13 +17,14 @@ export default function InteractiveParagraph({
   htmlContent,
   commentCount,
   isActive,
+  isFirst,
   onOpenComments,
 }: InteractiveParagraphProps) {
   // Strip HTML for the sidebar's "context" preview
   const plainText = htmlContent.replace(/<[^>]*>/g, "");
 
   return (
-    <div className="interactive-paragraph-wrapper">
+    <div className={`interactive-paragraph-wrapper ${isFirst ? 'is-first-paragraph' : ''}`}>
       <p 
         dangerouslySetInnerHTML={{ __html: htmlContent }} 
         style={isActive ? { backgroundColor: 'rgba(189, 163, 121, 0.08)' } : {}}

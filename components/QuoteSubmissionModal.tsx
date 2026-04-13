@@ -56,7 +56,7 @@ export default function QuoteSubmissionModal({ onClose }: ModalProps) {
       if (data.success) {
         alert('Quote shared! It is now live in the community archive.');
         onClose();
-        router.refresh();
+        window.location.reload();
       } else {
         setError(data.error || 'Something went wrong.');
       }
