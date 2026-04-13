@@ -128,8 +128,8 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
             )}
 
             {loggedIn ? (
-              <Link href="/connect" className="join-btn" style={{ textDecoration: "none" }}>
-                Connect →
+              <Link href="/member" className="join-btn" style={{ textDecoration: "none" }}>
+                My Account →
               </Link>
             ) : (
               <Link href="/register" className="join-btn" style={{ textDecoration: "none" }}>
@@ -186,12 +186,12 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           <div className="mobile-menu-actions">
             {loggedIn ? (
               <Link
-                href="/connect"
+                href="/member"
                 className="join-btn"
                 style={{ textDecoration: "none" }}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Connect →
+                My Account →
               </Link>
             ) : (
               <Link

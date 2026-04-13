@@ -2,189 +2,247 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import MemberReferralCopy from "@/components/MemberReferralCopy";
+import "../member.css";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Member Dashboard · The Moveee",
+  title: "My Account · The Moveee",
 };
+
+const ALL_BADGES = [
+  {
+    slug: "first-steps",
+    name: "First Steps",
+    desc: "Attended your first event",
+  },
+  {
+    slug: "regular",
+    name: "Regular",
+    desc: "Attended 5 events",
+  },
+  {
+    slug: "culture-vulture",
+    name: "Culture Vulture",
+    desc: "Attended 25 events",
+  },
+  {
+    slug: "explorer",
+    name: "Explorer",
+    desc: "Events in 3 chapters",
+  },
+  {
+    slug: "globetrotter",
+    name: "Globetrotter",
+    desc: "Events in 10 chapters",
+  },
+  {
+    slug: "commentator",
+    name: "Commentator",
+    desc: "10 newsletter comments",
+  },
+  {
+    slug: "century-club",
+    name: "Century Club",
+    desc: "Earned 100 points",
+  },
+];
 
 export default async function MemberPage() {
   const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    redirect("/login?callbackUrl=/member");
-  }
+  if (!session?.user) redirect("/login?callbackUrl=/member");
 
   const user = session.user as any;
+  const isPatron = user.tier === "patron";
+  const earnedBadges: string[] = user.badges || [];
+  const earnedCount = earnedBadges.length;
+  const displayName = user.displayName || user.name || user.username || "Member";
+  const initial = displayName.charAt(0).toUpperCase();
+  const referralUrl = user.referralCode
+    ? `https://themoveee.com/register?ref=${user.referralCode}`
+    : null;
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f5f0e8",
-        padding: "60px 24px",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}
-    >
-      <div style={{ maxWidth: 680, margin: "0 auto" }}>
-        <p
-          style={{
-            fontSize: 11,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "#7a6f5c",
-            margin: "0 0 16px",
-          }}
-        >
-          The Moveee &mdash; Culture Community
-        </p>
-
-        <h1
-          style={{
-            fontSize: 32,
-            fontWeight: 300,
-            fontFamily: "Georgia, serif",
-            margin: "0 0 6px",
-            color: "#14110d",
-          }}
-        >
-          Welcome back, {user.displayName || user.name || user.username}.
-        </h1>
-
-        <p style={{ fontSize: 15, color: "#7a6f5c", margin: "0 0 40px" }}>
-          {user.tier === "patron" ? "Patron Member" : "Citizen Member"} &mdash;{" "}
-          {user.primaryChapter?.name || "No chapter set"}
-        </p>
-
-        {/* Stats row */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-            gap: 16,
-            marginBottom: 40,
-          }}
-        >
-          {[
-            { label: "Points", value: user.points ?? 0 },
-            { label: "Tier", value: user.tier === "patron" ? "Patron" : "Citizen" },
-            { label: "Primary Chapter", value: user.primaryChapter?.name || "—" },
-            ...(user.secondaryChapter?.name
-              ? [{ label: "Secondary Chapter", value: user.secondaryChapter.name }]
-              : []),
-          ].map(({ label, value }) => (
-            <div
-              key={label}
-              style={{
-                background: "#fffdf8",
-                border: "1px solid #e8e0d4",
-                borderRadius: 4,
-                padding: "20px 20px 16px",
-                textAlign: "center",
-              }}
-            >
-              <span
-                style={{
-                  display: "block",
-                  fontSize: 22,
-                  fontWeight: 600,
-                  color: "#14110d",
-                  lineHeight: 1.2,
-                  marginBottom: 6,
-                }}
-              >
-                {value}
+    <>
+      {/* ── PROFILE HERO ── */}
+      <div className="mem-hero">
+        <div className="mem-hero-inner">
+          <div className="mem-avatar">{initial}</div>
+          <div className="mem-hero-body">
+            <div className="mem-eyebrow">The Moveee &mdash; Culture Community</div>
+            <h1 className="mem-name">{displayName}</h1>
+            <div className="mem-meta">
+              <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
+                {isPatron ? "Patron" : "Citizen"}
               </span>
-              <span
-                style={{
-                  fontSize: 11,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  color: "#7a6f5c",
-                }}
-              >
-                {label}
-              </span>
+              <span className="mem-sep">·</span>
+              <span>{user.primaryChapter?.name || "No chapter"}</span>
+              {user.secondaryChapter?.name && (
+                <>
+                  <span className="mem-sep">·</span>
+                  <span>{user.secondaryChapter.name}</span>
+                </>
+              )}
             </div>
-          ))}
-        </div>
-
-        {/* Referral block */}
-        {user.referralCode && (
-          <div
-            style={{
-              background: "#fffdf8",
-              border: "1px solid #e8e0d4",
-              borderRadius: 4,
-              padding: "24px 28px",
-              marginBottom: 28,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 14,
-                fontWeight: 600,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "#14110d",
-                margin: "0 0 10px",
-              }}
-            >
-              Invite a Friend
-            </h2>
-            <p style={{ fontSize: 14, color: "#7a6f5c", margin: "0 0 12px" }}>
-              Share your referral link and earn points when they join.
-            </p>
-            <code
-              style={{
-                display: "block",
-                background: "#f5f0e8",
-                padding: "10px 14px",
-                borderRadius: 3,
-                fontSize: 13,
-                color: "#14110d",
-                letterSpacing: "0.05em",
-                wordBreak: "break-all",
-              }}
-            >
-              {`https://themoveee.com/register?ref=${user.referralCode}`}
-            </code>
           </div>
-        )}
-
-        {/* Quick links */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <Link
-            href="/newsletter"
-            style={{
-              fontSize: 11,
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              color: "#14110d",
-              textDecoration: "none",
-              borderBottom: "1px solid currentColor",
-              paddingBottom: 2,
-            }}
-          >
-            The Cultural Digest
-          </Link>
-          <Link
-            href="/api/auth/signout"
-            style={{
-              fontSize: 11,
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              color: "#7a6f5c",
-              textDecoration: "none",
-              borderBottom: "1px solid currentColor",
-              paddingBottom: 2,
-            }}
-          >
-            Sign out
-          </Link>
         </div>
       </div>
-    </div>
+
+      <div className="mem-body">
+        {/* ── STATS ── */}
+        <div className="mem-stats">
+          <div className="mem-stat">
+            <span className="mem-stat-value">{user.points ?? 0}</span>
+            <span className="mem-stat-label">Culture Points</span>
+          </div>
+          <div className="mem-stat">
+            <span className="mem-stat-value">{earnedCount} / {ALL_BADGES.length}</span>
+            <span className="mem-stat-label">Badges Earned</span>
+          </div>
+          <div className="mem-stat">
+            <span className="mem-stat-value">{user.referralCount ?? 0}</span>
+            <span className="mem-stat-label">Referrals</span>
+          </div>
+          <div className="mem-stat">
+            <span className="mem-stat-value">{isPatron ? "Patron" : "Citizen"}</span>
+            <span className="mem-stat-label">Membership</span>
+          </div>
+        </div>
+
+        <div className="mem-grid">
+          {/* ── MAIN COLUMN ── */}
+          <div className="mem-col-main">
+
+            {/* Badges */}
+            <section className="mem-card">
+              <div className="mem-card-header">
+                <div className="mem-card-label">Achievements</div>
+                <span className="mem-card-count">
+                  {earnedCount} of {ALL_BADGES.length} earned
+                </span>
+              </div>
+              <div className="mem-badges-grid">
+                {ALL_BADGES.map((badge) => {
+                  const earned = earnedBadges.includes(badge.slug);
+                  return (
+                    <div
+                      key={badge.slug}
+                      className={`mem-badge ${earned ? "earned" : "locked"}`}
+                    >
+                      <div className="mem-badge-icon">{earned ? "★" : "○"}</div>
+                      <div className="mem-badge-name">{badge.name}</div>
+                      <div className="mem-badge-desc">{badge.desc}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* How to earn points */}
+            <section className="mem-card">
+              <div className="mem-card-label">How to Earn Points</div>
+              <div className="mem-points-list">
+                {[
+                  ["Event RSVP", "+5 pts"],
+                  ["Event check-in", "+15 pts"],
+                  ["Refer a member", "+25 pts"],
+                  ["Newsletter comment", "+10 pts"],
+                  ["Newsletter reaction", "+2 pts"],
+                ].map(([action, pts]) => (
+                  <div key={action} className="mem-points-row">
+                    <span>{action}</span>
+                    <span className="mem-points-val">{pts}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* ── SIDE COLUMN ── */}
+          <div className="mem-col-side">
+
+            {/* Upgrade CTA — Citizens only */}
+            {!isPatron && (
+              <section className="mem-card mem-card--dark">
+                <div className="mem-card-label" style={{ color: "var(--ochre)" }}>
+                  Upgrade to Patron
+                </div>
+                <h3 className="mem-upgrade-title">
+                  Unlock the full experience.
+                </h3>
+                <ul className="mem-upgrade-perks">
+                  <li>Physical events in your chapter</li>
+                  <li>Secondary chapter membership</li>
+                  <li>Priority RSVP</li>
+                  <li>Exclusive Patron-only content</li>
+                </ul>
+                <Link href="/register?upgrade=patron" className="mem-upgrade-btn">
+                  Become a Patron →
+                </Link>
+              </section>
+            )}
+
+            {/* Referral */}
+            {referralUrl && (
+              <section className="mem-card">
+                <div className="mem-card-label">Invite a Friend</div>
+                <p className="mem-card-desc">
+                  Share your link. Earn 25 points for every member who joins.
+                </p>
+                <MemberReferralCopy url={referralUrl} />
+                <div className="mem-referral-count">
+                  {user.referralCount ?? 0} successful referral
+                  {(user.referralCount ?? 0) !== 1 ? "s" : ""}
+                </div>
+              </section>
+            )}
+
+            {/* Chapter(s) */}
+            <section className="mem-card">
+              <div className="mem-card-label">
+                Your Chapter{user.secondaryChapter?.name ? "s" : ""}
+              </div>
+              <div className="mem-chapter-item">
+                <div className="mem-chapter-role">Primary</div>
+                <div className="mem-chapter-name">
+                  {user.primaryChapter?.name || "Not set"}
+                </div>
+              </div>
+              {user.secondaryChapter?.name && (
+                <div className="mem-chapter-item">
+                  <div className="mem-chapter-role">Secondary</div>
+                  <div className="mem-chapter-name">{user.secondaryChapter.name}</div>
+                </div>
+              )}
+              {!isPatron && (
+                <p className="mem-chapter-note">
+                  Patron members can join a second chapter.
+                </p>
+              )}
+            </section>
+
+            {/* Quick links */}
+            <section className="mem-card mem-links-card">
+              <Link href="/newsletter" className="mem-link">
+                The Cultural Digest →
+              </Link>
+              <Link href="/events" className="mem-link">
+                Upcoming Events →
+              </Link>
+              <Link href="/magazine" className="mem-link">
+                Magazine →
+              </Link>
+              <Link
+                href="/api/auth/signout"
+                className="mem-link mem-link--muted"
+              >
+                Sign out
+              </Link>
+            </section>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
