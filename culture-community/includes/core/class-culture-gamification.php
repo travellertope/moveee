@@ -278,7 +278,16 @@ class Culture_Gamification {
      */
     public static function evaluate_badges( $user_id ) {
         foreach ( self::BADGES as $slug => $badge ) {
-            $threshold = class_exists( 'Culture_Settings' ) ? Culture_Settings::get_badge_threshold( $slug ) : $badge['threshold'];
+            // Always start with the hard-coded const threshold.
+            // Only use the admin setting if it has been explicitly saved above 0 —
+            // an unconfigured (0) setting would make 0 >= 0 true for every badge.
+            $threshold = $badge['threshold'];
+            if ( class_exists( 'Culture_Settings' ) ) {
+                $setting_threshold = Culture_Settings::get_badge_threshold( $slug );
+                if ( $setting_threshold > 0 ) {
+                    $threshold = $setting_threshold;
+                }
+            }
             $current_value = self::get_stat_for_trigger( $user_id, $badge['trigger'] );
             if ( $current_value >= $threshold ) {
                 self::award_badge( $user_id, $slug );

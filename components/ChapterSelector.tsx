@@ -38,10 +38,25 @@ export default function ChapterSelector({
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
-    fetch('/api/chapters')
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setChapters(data); })
-      .catch(() => {});
+    // Fetch available chapters and live chapter assignment in parallel
+    Promise.all([
+      fetch('/api/chapters').then((r) => r.json()).catch(() => []),
+      fetch('/api/user/profile', { cache: 'no-store' }).then((r) => r.json()).catch(() => null),
+    ]).then(([chaptersData, profileData]) => {
+      if (Array.isArray(chaptersData)) setChapters(chaptersData);
+      if (profileData) {
+        if (profileData.primaryChapter?.id) {
+          setPrimaryId(profileData.primaryChapter.id);
+          setDraftPrimary(profileData.primaryChapter.id);
+          setPrimaryName(profileData.primaryChapter.name || 'Not set');
+        }
+        if (profileData.secondaryChapter?.id) {
+          setSecondaryId(profileData.secondaryChapter.id);
+          setDraftSecondary(profileData.secondaryChapter.id);
+          setSecondaryName(profileData.secondaryChapter.name || 'Not set');
+        }
+      }
+    });
   }, []);
 
   async function saveChapter(primary: number, secondary?: number) {

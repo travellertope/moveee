@@ -415,7 +415,7 @@ export const GET_QUOTES = `
 
 export const GET_QUOTE_BY_ID = `
   query GetQuoteByID($id: ID!) {
-    cultureQuote(id: $id, idType: ID) {
+    cultureQuote(id: $id, idType: DATABASE_ID) {
       ...QuoteFields
     }
   }

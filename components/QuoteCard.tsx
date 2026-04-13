@@ -134,7 +134,7 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
 
   return (
     <article className="quote-card">
-      <Link href={`/quotes/${quote.id}-${quote.slug}`} className="quote-content-link" style={{ textDecoration: 'none', color: 'inherit' }}>
+      <Link href={`/quotes/${quote.databaseId}-${quote.slug}`} className="quote-content-link" style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className="quote-content" dangerouslySetInnerHTML={{ __html: quote.content }} />
       </Link>
 

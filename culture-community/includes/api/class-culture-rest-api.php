@@ -758,6 +758,13 @@ class Culture_REST_API {
             $referral_count = Culture_Referrals::get_referral_count( $user->ID );
         }
 
+        // WP super-admins and admins always get patron access on the frontend
+        // so they're never blocked by tier-gated features.
+        $stored_tier = get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen';
+        $tier = ( is_super_admin( $user->ID ) || user_can( $user, 'manage_options' ) )
+            ? 'patron'
+            : $stored_tier;
+
         return array(
             // Core identity
             'id'                  => $user->ID,
@@ -775,7 +782,7 @@ class Culture_REST_API {
             'city'                => get_user_meta( $user->ID, '_culture_city', true ) ?: '',
             'occupation'          => get_user_meta( $user->ID, '_culture_occupation', true ) ?: '',
             // Membership
-            'tier'                => get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen',
+            'tier'                => $tier,
             'primary_chapter'     => array( 'id' => $primary_id, 'name' => $primary_name ),
             'secondary_chapter'   => array( 'id' => $secondary_id, 'name' => $secondary_name ),
             // Gamification
@@ -1320,22 +1327,20 @@ class Culture_REST_API {
 
     /**
      * GET /culture/v1/user/profile?user_id=X
-     * Returns live points and badges for a user.
+     * Returns the full live user profile (points, badges, chapters, etc.).
      */
     public static function handle_get_user_profile( $request ) {
         $user_id = $request->get_param( 'user_id' );
-        
-        if ( ! $user_id || ! get_userdata( $user_id ) ) {
-            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 444 ) );
+
+        if ( ! $user_id ) {
+            return new WP_Error( 'missing_user_id', 'user_id is required.', array( 'status' => 400 ) );
         }
 
-        $points = (int) get_user_meta( $user_id, '_culture_points', true );
-        $badges = get_user_meta( $user_id, '_culture_badges', true ) ?: array();
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
 
-        return rest_ensure_response( array(
-            'id'     => $user_id,
-            'points' => $points,
-            'badges' => $badges,
-        ) );
+        return rest_ensure_response( self::user_profile( $user ) );
     }
 }
