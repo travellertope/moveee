@@ -1,16 +1,30 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 export default function GmlCTAForm() {
+  const { status } = useSession();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  if (status === "authenticated") {
+    return (
+      <div className="nl-manage nl-manage--dark" style={{ padding: "8px 0 16px" }}>
+        <p className="nl-manage-note">✓ Subscribed as a member</p>
+        <Link href="/member/settings" className="nl-manage-btn" style={{ fontSize: "11px" }}>
+          Manage Newsletter Preferences →
+        </Link>
+      </div>
+    );
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!email) return;
-    setStatus("loading");
+    setSubmitStatus("loading");
     try {
       const res = await fetch("/api/newsletter/subscribe", {
         method: "POST",
@@ -18,18 +32,18 @@ export default function GmlCTAForm() {
         body: JSON.stringify({ email, name }),
       });
       if (res.ok) {
-        setStatus("success");
+        setSubmitStatus("success");
         setName("");
         setEmail("");
       } else {
-        setStatus("error");
+        setSubmitStatus("error");
       }
     } catch {
-      setStatus("error");
+      setSubmitStatus("error");
     }
   }
 
-  if (status === "success") {
+  if (submitStatus === "success") {
     return (
       <p style={{
         fontFamily: "'JetBrains Mono', monospace",
@@ -51,7 +65,7 @@ export default function GmlCTAForm() {
         placeholder="First name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        disabled={status === "loading"}
+        disabled={submitStatus === "loading"}
       />
       <input
         type="email"
@@ -59,16 +73,16 @@ export default function GmlCTAForm() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
-        disabled={status === "loading"}
+        disabled={submitStatus === "loading"}
       />
       <button
         type="submit"
         className="gml-signup-submit"
-        disabled={status === "loading"}
+        disabled={submitStatus === "loading"}
       >
-        {status === "loading" ? "Subscribing…" : "Get Me Lit →"}
+        {submitStatus === "loading" ? "Subscribing…" : "Get Me Lit →"}
       </button>
-      {status === "error" && (
+      {submitStatus === "error" && (
         <p style={{
           fontFamily: "'JetBrains Mono', monospace",
           fontSize: "9px",
