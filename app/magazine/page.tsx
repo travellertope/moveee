@@ -39,7 +39,7 @@ export default async function MagazineArchive({
       else if (currentSeries) stories = taxData?.seriesItem?.posts?.nodes || [];
     } else {
       const data = await getWPData(GET_STORIES, {
-        first: 25,
+        first: 27,
         categoryName: currentCategory || null
       });
       stories = data?.posts?.nodes || [];
@@ -62,7 +62,7 @@ export default async function MagazineArchive({
   const portraitStories = stories.slice(7, 12);
   const editorialStories = stories.slice(12, 16);
   const digestStories = stories.slice(16, 20);
-  const opinionStories = stories.slice(20, 24);
+  const opinionStories = stories.slice(20, 26);
   const isFiltered = !!(currentCategory || currentIndustry || currentCountry || currentSeries);
   const activeFilterName = currentCategory || currentIndustry || currentCountry || currentSeries || "";
 
