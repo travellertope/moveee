@@ -11,7 +11,7 @@ interface Chapter {
   slug: string;
 }
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
 function RegisterForm() {
   const router = useRouter();
@@ -29,6 +29,13 @@ function RegisterForm() {
   const [phone, setPhone] = useState("");
   const [diffWhatsapp, setDiffWhatsapp] = useState(false);
   const [whatsapp, setWhatsapp] = useState("");
+  // KYC
+  const [gender, setGender] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [nationality, setNationality] = useState("");
+  const [countryOfResidence, setCountryOfResidence] = useState("");
+  const [city, setCity] = useState("");
+  const [occupation, setOccupation] = useState("");
   const [tier, setTier] = useState<"citizen" | "patron">("citizen");
   const [primaryChapter, setPrimaryChapter] = useState(0);
   const [secondaryChapter, setSecondaryChapter] = useState(0);
@@ -52,7 +59,12 @@ function RegisterForm() {
       if (password.length < 8) return "Password must be at least 8 characters.";
       if (!phone.trim()) return "Phone number is required.";
     }
-    if (s === 3) {
+    if (s === 2) {
+      if (!dateOfBirth) return "Date of birth is required.";
+      if (!nationality.trim()) return "Nationality is required.";
+      if (!countryOfResidence.trim()) return "Country of residence is required.";
+    }
+    if (s === 4) {
       if (!primaryChapter) return "Please select your primary chapter.";
       if (tier === "patron" && secondaryChapter && secondaryChapter === primaryChapter)
         return "Secondary chapter must differ from primary.";
@@ -64,7 +76,7 @@ function RegisterForm() {
     const err = validateStep(step);
     if (err) { setError(err); return; }
     setError("");
-    setStep((s) => (s < 3 ? ((s + 1) as Step) : s));
+    setStep((s) => (s < 4 ? ((s + 1) as Step) : s));
   }
 
   function prevStep() {
@@ -74,7 +86,7 @@ function RegisterForm() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const err = validateStep(3);
+    const err = validateStep(4);
     if (err) { setError(err); return; }
 
     setError("");
@@ -86,6 +98,12 @@ function RegisterForm() {
       password,
       display_name: displayName.trim() || username.trim(),
       phone: phone.trim(),
+      gender,
+      date_of_birth: dateOfBirth,
+      nationality: nationality.trim(),
+      country_of_residence: countryOfResidence.trim(),
+      city: city.trim(),
+      occupation: occupation.trim(),
       tier,
       primary_chapter: primaryChapter,
     };
@@ -137,7 +155,7 @@ function RegisterForm() {
     }
   }
 
-  const progressPercent = ((step - 1) / 2) * 100;
+  const progressPercent = ((step - 1) / 3) * 100;
 
   return (
     <div style={styles.page}>
@@ -147,7 +165,7 @@ function RegisterForm() {
 
         {/* Progress bar */}
         <div style={styles.progressWrap}>
-          {(["Account", "Membership", "Chapter"] as const).map((label, i) => (
+          {(["Account", "About You", "Membership", "Chapter"] as const).map((label, i) => (
             <div key={label} style={styles.progressStep}>
               <div
                 style={{
@@ -277,8 +295,92 @@ function RegisterForm() {
             </div>
           )}
 
-          {/* Step 2: Membership tier */}
+          {/* Step 2: About You (KYC) */}
           {step === 2 && (
+            <div>
+              <h2 style={styles.stepHeading}>About You</h2>
+
+              <div style={styles.row}>
+                <div style={{ ...styles.field, flex: 1 }}>
+                  <label style={styles.label} htmlFor="gender">Gender</label>
+                  <select
+                    id="gender"
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    style={styles.input}
+                  >
+                    <option value="">Prefer not to say</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-binary">Non-binary</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div style={{ ...styles.field, flex: 1 }}>
+                  <label style={styles.label} htmlFor="dob">Date of Birth <span style={{ color: "#c5491f" }}>*</span></label>
+                  <input
+                    id="dob"
+                    type="date"
+                    required
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    style={styles.input}
+                  />
+                </div>
+              </div>
+
+              <div style={styles.row}>
+                <div style={{ ...styles.field, flex: 1 }}>
+                  <label style={styles.label} htmlFor="nationality">Nationality <span style={{ color: "#c5491f" }}>*</span></label>
+                  <input
+                    id="nationality"
+                    type="text"
+                    required
+                    value={nationality}
+                    onChange={(e) => setNationality(e.target.value)}
+                    style={styles.input}
+                  />
+                </div>
+                <div style={{ ...styles.field, flex: 1 }}>
+                  <label style={styles.label} htmlFor="country">Country of Residence <span style={{ color: "#c5491f" }}>*</span></label>
+                  <input
+                    id="country"
+                    type="text"
+                    required
+                    value={countryOfResidence}
+                    onChange={(e) => setCountryOfResidence(e.target.value)}
+                    style={styles.input}
+                  />
+                </div>
+              </div>
+
+              <div style={styles.row}>
+                <div style={{ ...styles.field, flex: 1 }}>
+                  <label style={styles.label} htmlFor="city">City</label>
+                  <input
+                    id="city"
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    style={styles.input}
+                  />
+                </div>
+                <div style={{ ...styles.field, flex: 1 }}>
+                  <label style={styles.label} htmlFor="occupation">Occupation</label>
+                  <input
+                    id="occupation"
+                    type="text"
+                    value={occupation}
+                    onChange={(e) => setOccupation(e.target.value)}
+                    style={styles.input}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Membership tier */}
+          {step === 3 && (
             <div>
               <h2 style={styles.stepHeading}>Choose Your Membership</h2>
 
@@ -341,8 +443,8 @@ function RegisterForm() {
             </div>
           )}
 
-          {/* Step 3: Chapter */}
-          {step === 3 && (
+          {/* Step 4: Chapter */}
+          {step === 4 && (
             <div>
               <h2 style={styles.stepHeading}>Select Your Chapter</h2>
 
@@ -409,7 +511,7 @@ function RegisterForm() {
               <span />
             )}
 
-            {step < 3 ? (
+            {step < 4 ? (
               <button type="button" onClick={nextStep} style={styles.btnPrimary}>
                 Continue →
               </button>

@@ -172,6 +172,36 @@ class Culture_REST_API {
                     'type'              => 'string',
                     'sanitize_callback' => 'sanitize_key',
                 ),
+                'gender' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'date_of_birth' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'nationality' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'country_of_residence' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'city' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'occupation' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
             ),
         ) );
 
@@ -212,6 +242,42 @@ class Culture_REST_API {
                 ),
             ),
         ) );
+
+        // Update user profile — requires API key auth.
+        register_rest_route( 'culture/v1', '/user/update', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_update_user_profile' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
+        // Newsletter preferences — GET returns state, POST updates it. Requires API key.
+        register_rest_route( 'culture/v1', '/newsletter-preferences', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_newsletter_preferences' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_update_newsletter_preferences' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+        ) );
+    }
+
+    /**
+     * Verify the shared API key sent by the Next.js server.
+     * Key is stored in WP option 'culture_api_secret'.
+     * Next.js sends:  Authorization: Bearer {CULTURE_API_SECRET}
+     */
+    public static function api_key_permission( $request ) {
+        $stored = get_option( 'culture_api_secret', '' );
+        if ( empty( $stored ) ) {
+            return new WP_Error( 'no_api_secret', 'API secret not configured.', array( 'status' => 500 ) );
+        }
+        $header   = $request->get_header( 'Authorization' );
+        $expected = 'Bearer ' . $stored;
+        return hash_equals( $expected, (string) $header );
     }
 
     /**
@@ -450,9 +516,15 @@ class Culture_REST_API {
         $email     = $request->get_param( 'email' );
         $password  = $request->get_param( 'password' );
         $display   = $request->get_param( 'display_name' ) ?: $username;
-        $phone     = $request->get_param( 'phone' ) ?: '';
-        $whatsapp  = $request->get_param( 'whatsapp' ) ?: '';
-        $tier      = $request->get_param( 'tier' ) ?: 'citizen';
+        $phone      = $request->get_param( 'phone' ) ?: '';
+        $whatsapp   = $request->get_param( 'whatsapp' ) ?: '';
+        $gender     = $request->get_param( 'gender' ) ?: '';
+        $dob        = $request->get_param( 'date_of_birth' ) ?: '';
+        $nationality= $request->get_param( 'nationality' ) ?: '';
+        $country    = $request->get_param( 'country_of_residence' ) ?: '';
+        $city       = $request->get_param( 'city' ) ?: '';
+        $occupation = $request->get_param( 'occupation' ) ?: '';
+        $tier       = $request->get_param( 'tier' ) ?: 'citizen';
         $primary   = (int) $request->get_param( 'primary_chapter' );
         $secondary = (int) $request->get_param( 'secondary_chapter' );
         $referral  = $request->get_param( 'referral_code' ) ?: '';
@@ -499,6 +571,24 @@ class Culture_REST_API {
         if ( $whatsapp ) {
             update_user_meta( $user_id, '_culture_whatsapp', $whatsapp );
         }
+        if ( $gender ) {
+            update_user_meta( $user_id, '_culture_gender', sanitize_text_field( $gender ) );
+        }
+        if ( $dob ) {
+            update_user_meta( $user_id, '_culture_dob', sanitize_text_field( $dob ) );
+        }
+        if ( $nationality ) {
+            update_user_meta( $user_id, '_culture_nationality', sanitize_text_field( $nationality ) );
+        }
+        if ( $country ) {
+            update_user_meta( $user_id, '_culture_country_of_residence', sanitize_text_field( $country ) );
+        }
+        if ( $city ) {
+            update_user_meta( $user_id, '_culture_city', sanitize_text_field( $city ) );
+        }
+        if ( $occupation ) {
+            update_user_meta( $user_id, '_culture_occupation', sanitize_text_field( $occupation ) );
+        }
         if ( $primary ) {
             update_user_meta( $user_id, '_culture_primary_chapter_id', $primary );
         }
@@ -539,6 +629,7 @@ class Culture_REST_API {
 
     /**
      * Build a safe user profile array (no password hash, no secrets).
+     * Includes all KYC fields and gamification data.
      *
      * @param WP_User $user
      * @return array
@@ -550,17 +641,165 @@ class Culture_REST_API {
         $primary_name   = $primary_id   ? get_the_title( $primary_id )   : '';
         $secondary_name = $secondary_id ? get_the_title( $secondary_id ) : '';
 
+        $referral_code  = get_user_meta( $user->ID, '_culture_referral_code', true ) ?: '';
+        $referral_count = 0;
+        if ( $referral_code && class_exists( 'Culture_Referrals' ) ) {
+            $referral_count = Culture_Referrals::count_referrals( $user->ID );
+        }
+
         return array(
-            'id'               => $user->ID,
-            'username'         => $user->user_login,
-            'email'            => $user->user_email,
-            'display_name'     => $user->display_name,
-            'tier'             => get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen',
-            'points'           => (int) get_user_meta( $user->ID, '_culture_points', true ),
-            'primary_chapter'  => array( 'id' => $primary_id, 'name' => $primary_name ),
-            'secondary_chapter'=> array( 'id' => $secondary_id, 'name' => $secondary_name ),
-            'referral_code'    => get_user_meta( $user->ID, '_culture_referral_code', true ) ?: '',
+            // Core identity
+            'id'                  => $user->ID,
+            'username'            => $user->user_login,
+            'email'               => $user->user_email,
+            'display_name'        => $user->display_name,
+            // Contact
+            'phone'               => get_user_meta( $user->ID, '_culture_phone', true ) ?: '',
+            'whatsapp'            => get_user_meta( $user->ID, '_culture_whatsapp', true ) ?: '',
+            // KYC
+            'gender'              => get_user_meta( $user->ID, '_culture_gender', true ) ?: '',
+            'date_of_birth'       => get_user_meta( $user->ID, '_culture_dob', true ) ?: '',
+            'nationality'         => get_user_meta( $user->ID, '_culture_nationality', true ) ?: '',
+            'country_of_residence'=> get_user_meta( $user->ID, '_culture_country_of_residence', true ) ?: '',
+            'city'                => get_user_meta( $user->ID, '_culture_city', true ) ?: '',
+            'occupation'          => get_user_meta( $user->ID, '_culture_occupation', true ) ?: '',
+            // Membership
+            'tier'                => get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen',
+            'primary_chapter'     => array( 'id' => $primary_id, 'name' => $primary_name ),
+            'secondary_chapter'   => array( 'id' => $secondary_id, 'name' => $secondary_name ),
+            // Gamification
+            'points'              => (int) get_user_meta( $user->ID, '_culture_points', true ),
+            'badges'              => (array) get_user_meta( $user->ID, '_culture_badges', true ),
+            'referral_code'       => $referral_code,
+            'referral_count'      => $referral_count,
         );
+    }
+
+    /**
+     * Update writable profile fields for the authenticated user.
+     * Accepts: display_name, phone, whatsapp, gender, date_of_birth,
+     *          nationality, country_of_residence, city, occupation.
+     * Email changes are intentionally excluded — they require a separate
+     * confirmation flow to avoid account takeover.
+     */
+    public static function handle_update_user_profile( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        if ( ! $user_id ) {
+            return new WP_Error( 'missing_user_id', 'user_id is required.', array( 'status' => 400 ) );
+        }
+
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $wp_update = array( 'ID' => $user_id );
+
+        if ( $request->has_param( 'display_name' ) ) {
+            $name = sanitize_text_field( $request->get_param( 'display_name' ) );
+            if ( $name ) $wp_update['display_name'] = $name;
+        }
+
+        if ( count( $wp_update ) > 1 ) {
+            $result = wp_update_user( $wp_update );
+            if ( is_wp_error( $result ) ) {
+                return new WP_Error( 'update_failed', $result->get_error_message(), array( 'status' => 422 ) );
+            }
+        }
+
+        // Meta fields
+        $meta_map = array(
+            'phone'                => '_culture_phone',
+            'whatsapp'             => '_culture_whatsapp',
+            'gender'               => '_culture_gender',
+            'date_of_birth'        => '_culture_dob',
+            'nationality'          => '_culture_nationality',
+            'country_of_residence' => '_culture_country_of_residence',
+            'city'                 => '_culture_city',
+            'occupation'           => '_culture_occupation',
+        );
+
+        foreach ( $meta_map as $param => $meta_key ) {
+            if ( $request->has_param( $param ) ) {
+                update_user_meta( $user_id, $meta_key, sanitize_text_field( $request->get_param( $param ) ) );
+            }
+        }
+
+        $updated_user = get_userdata( $user_id );
+        return rest_ensure_response( self::user_profile( $updated_user ) );
+    }
+
+    /**
+     * GET /culture/v1/newsletter-preferences
+     * Returns per-newsletter subscription state for the given email address.
+     * State is stored in user meta '_culture_newsletter_prefs' as an assoc array.
+     */
+    public static function handle_get_newsletter_preferences( $request ) {
+        $email = sanitize_email( $request->get_param( 'email' ) );
+        if ( ! is_email( $email ) ) {
+            return new WP_Error( 'invalid_email', 'A valid email is required.', array( 'status' => 400 ) );
+        }
+
+        $user  = get_user_by( 'email', $email );
+        $prefs = array(
+            'cultural-digest' => true,
+            'getmelit'        => true,
+            'events'          => true,
+        );
+
+        if ( $user ) {
+            $stored = get_user_meta( $user->ID, '_culture_newsletter_prefs', true );
+            if ( is_array( $stored ) ) {
+                $prefs = array_merge( $prefs, $stored );
+            }
+        }
+
+        return rest_ensure_response( array( 'subscriptions' => $prefs ) );
+    }
+
+    /**
+     * POST /culture/v1/newsletter-preferences
+     * Saves per-newsletter subscription state for a user.
+     * Body: { email, subscriptions: { 'cultural-digest': bool, ... } }
+     */
+    public static function handle_update_newsletter_preferences( $request ) {
+        $email = sanitize_email( $request->get_param( 'email' ) );
+        if ( ! is_email( $email ) ) {
+            return new WP_Error( 'invalid_email', 'A valid email is required.', array( 'status' => 400 ) );
+        }
+
+        $subs = $request->get_param( 'subscriptions' );
+        if ( ! is_array( $subs ) ) {
+            return new WP_Error( 'invalid_subs', 'subscriptions must be an object.', array( 'status' => 400 ) );
+        }
+
+        $allowed = array( 'cultural-digest', 'getmelit', 'events' );
+        $clean   = array();
+        foreach ( $allowed as $key ) {
+            if ( isset( $subs[ $key ] ) ) {
+                $clean[ $key ] = (bool) $subs[ $key ];
+            }
+        }
+
+        $user = get_user_by( 'email', $email );
+        if ( $user ) {
+            update_user_meta( $user->ID, '_culture_newsletter_prefs', $clean );
+
+            // Mirror to global subscriber list based on 'cultural-digest' state.
+            $subscribers = get_option( 'culture_newsletter_subscribers', array() );
+            $in_list     = in_array( $email, $subscribers, true );
+            $wants_main  = $clean['cultural-digest'] ?? true;
+
+            if ( $wants_main && ! $in_list ) {
+                $subscribers[] = $email;
+                update_option( 'culture_newsletter_subscribers', $subscribers );
+            } elseif ( ! $wants_main && $in_list ) {
+                $subscribers = array_values( array_filter( $subscribers, fn( $s ) => strtolower( $s ) !== strtolower( $email ) ) );
+                update_option( 'culture_newsletter_subscribers', $subscribers );
+            }
+        }
+
+        return rest_ensure_response( array( 'success' => true, 'subscriptions' => $clean ) );
     }
 
     /**
