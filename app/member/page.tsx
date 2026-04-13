@@ -178,7 +178,13 @@ export default async function MemberPage() {
                 </span>
               </div>
               <div className="mem-badges-grid">
-                {ALL_BADGES.map((badge) => {
+                {[...ALL_BADGES]
+                  .sort((a, b) => {
+                    const aEarned = earnedBadges.includes(a.slug) ? 0 : 1;
+                    const bEarned = earnedBadges.includes(b.slug) ? 0 : 1;
+                    return aEarned - bEarned;
+                  })
+                  .map((badge) => {
                   const earned = earnedBadges.includes(badge.slug);
                   return (
                     <div
