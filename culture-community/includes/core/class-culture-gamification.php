@@ -183,7 +183,13 @@ class Culture_Gamification {
      */
     public static function get_point_value( $action ) {
         if ( class_exists( 'Culture_Settings' ) ) {
-            return Culture_Settings::get_points( $action );
+            $setting_value = Culture_Settings::get_points( $action );
+            // Only use the setting if it is explicitly configured above 0.
+            // If the admin left it at 0 (or it was never saved), fall back
+            // to the hard-coded defaults so actions always reward points.
+            if ( $setting_value > 0 ) {
+                return $setting_value;
+            }
         }
         return self::POINTS[ $action ] ?? 0;
     }

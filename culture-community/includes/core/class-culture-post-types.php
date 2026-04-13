@@ -15,6 +15,37 @@ class Culture_Post_Types {
         self::register_taxonomies();
         add_action( 'add_meta_boxes', array( __CLASS__, 'register_meta_boxes' ) );
         add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
+        add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
+    }
+
+    /**
+     * Register custom meta fields on WPGraphQL types so the Next.js frontend
+     * can query them. Without this, querying quoteSource/quoteLikes/etc. on
+     * CultureQuote returns GraphQL errors and getWPData returns null.
+     */
+    public static function register_graphql_fields() {
+        if ( ! function_exists( 'register_graphql_field' ) ) {
+            return;
+        }
+
+        $quote_fields = array(
+            'quoteSource'  => array( 'type' => 'String', 'meta_key' => '_quote_source' ),
+            'quoteLikes'   => array( 'type' => 'Int',    'meta_key' => '_quote_likes' ),
+            'quoteReports' => array( 'type' => 'Int',    'meta_key' => '_quote_reports' ),
+            'quoteUserId'  => array( 'type' => 'Int',    'meta_key' => '_quote_user_id' ),
+        );
+
+        foreach ( $quote_fields as $field_name => $config ) {
+            $meta_key = $config['meta_key'];
+            $type     = $config['type'];
+            register_graphql_field( 'CultureQuote', $field_name, array(
+                'type'    => $type,
+                'resolve' => function( $post ) use ( $meta_key, $type ) {
+                    $value = get_post_meta( $post->databaseId, $meta_key, true );
+                    return $type === 'Int' ? (int) $value : (string) $value;
+                },
+            ) );
+        }
     }
 
     /**
