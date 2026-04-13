@@ -407,12 +407,6 @@ h1, h2, h3, h4 {
 }
 
 .comment-bubble-trigger.active {
-  opacity: 1;
-  background: var(--ochre);
-  color: var(--paper);
-  transform: translateY(-50%) translateX(0);
-}
-
 .comment-count-badge {
   position: absolute;
   top: -5px;
@@ -632,4 +626,16 @@ h1, h2, h3, h4 {
   color: var(--ochre);
   font-weight: 700;
   text-decoration: underline;
+}
+
+.prose-content .interactive-paragraph-wrapper:first-of-type p::first-letter {
+  float: left;
+  font-family: var(--font-fraunces);
+  font-size: 5.5rem;
+  line-height: 0.8;
+  margin: 0.1em 0.15em 0 0;
+  color: var(--ochre);
+  font-weight: 200;
+  font-style: italic;
+  text-transform: uppercase;
 }

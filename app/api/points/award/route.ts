@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-const WP_API_URL = process.env.NEXT_PUBLIC_WP_URL + "/wp-json/culture/v1";
+const WP_API_URL = (process.env.NEXT_PUBLIC_WP_URL || "https://cms.themoveee.com") + "/wp-json/culture/v1";
 const CULTURE_API_SECRET = process.env.CULTURE_API_SECRET;
 
 export async function POST(request: Request) {

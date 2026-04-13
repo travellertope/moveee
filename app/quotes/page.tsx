@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function QuoteHub() {
-  const data = await getWPData(GET_QUOTES, { first: 50 });
+  const data = await getWPData(GET_QUOTES, { first: 50 }, { revalidate: 0 });
   const quotes = data?.cultureQuotes?.nodes || [];
 
   return (
