@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import NewsletterPreferences from "./NewsletterPreferences";
+import ProfileEditor from "./ProfileEditor";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -54,32 +55,20 @@ export default async function MemberSettingsPage() {
 
             {/* ── 1. PROFILE ── */}
             <section className="mem-card">
-              <div className="mem-card-header">
-                <div className="mem-card-label">Profile</div>
-                <span className="mem-settings-coming">Editing coming soon</span>
-              </div>
-              <div className="mem-field-list">
-                <div className="mem-field">
-                  <div className="mem-field-label">Display name</div>
-                  <div className="mem-field-value">{displayName}</div>
-                </div>
-                <div className="mem-field">
-                  <div className="mem-field-label">Email address</div>
-                  <div className="mem-field-value">{email}</div>
-                </div>
-                <div className="mem-field">
-                  <div className="mem-field-label">Username</div>
-                  <div className="mem-field-value mem-field-value--muted">
-                    {user.username || "—"}
-                  </div>
-                </div>
-                <div className="mem-field">
-                  <div className="mem-field-label">Phone</div>
-                  <div className="mem-field-value mem-field-value--muted">
-                    {user.phone || "—"}
-                  </div>
-                </div>
-              </div>
+              <div className="mem-card-label">Profile</div>
+              <ProfileEditor user={{
+                displayName,
+                email,
+                username: user.username ?? "",
+                phone: user.phone ?? "",
+                whatsapp: user.whatsapp ?? "",
+                gender: user.gender ?? "",
+                dateOfBirth: user.dateOfBirth ?? "",
+                nationality: user.nationality ?? "",
+                countryOfResidence: user.countryOfResidence ?? "",
+                city: user.city ?? "",
+                occupation: user.occupation ?? "",
+              }} />
             </section>
 
             {/* ── 2. NOTIFICATIONS ── */}

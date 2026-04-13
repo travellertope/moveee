@@ -452,6 +452,34 @@
   border-top: 2px solid var(--rule);
 }
 
+/* ── Editable profile fields ── */
+.mem-field--editable .mem-field-view-row,
+.mem-field--editable .mem-field-edit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+.mem-field-input {
+  flex: 1;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper-deep);
+  border: 1px solid rgba(42,36,28,.2);
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color .15s;
+}
+.mem-field-input:focus { border-color: var(--ochre); }
+select.mem-field-input { cursor: pointer; }
+.mem-field-edit-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 /* Feedback badges */
 .mem-fb {
   font-family: 'JetBrains Mono', monospace;

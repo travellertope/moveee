@@ -8,11 +8,25 @@ export interface CultureUser {
   username: string;
   email: string;
   displayName: string;
+  // Contact
+  phone: string;
+  whatsapp: string;
+  // KYC
+  gender: string;
+  dateOfBirth: string;
+  nationality: string;
+  countryOfResidence: string;
+  city: string;
+  occupation: string;
+  // Membership
   tier: "citizen" | "patron";
-  points: number;
   primaryChapter: { id: number; name: string };
   secondaryChapter: { id: number; name: string };
+  // Gamification
+  points: number;
+  badges: string[];
   referralCode: string;
+  referralCount: number;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -46,11 +60,21 @@ export const authOptions: NextAuthOptions = {
             name: data.display_name,
             email: data.email,
             username: data.username,
+            phone: data.phone ?? "",
+            whatsapp: data.whatsapp ?? "",
+            gender: data.gender ?? "",
+            dateOfBirth: data.date_of_birth ?? "",
+            nationality: data.nationality ?? "",
+            countryOfResidence: data.country_of_residence ?? "",
+            city: data.city ?? "",
+            occupation: data.occupation ?? "",
             tier: data.tier,
-            points: data.points,
             primaryChapter: data.primary_chapter,
             secondaryChapter: data.secondary_chapter,
-            referralCode: data.referral_code,
+            points: data.points,
+            badges: data.badges ?? [],
+            referralCode: data.referral_code ?? "",
+            referralCount: data.referral_count ?? 0,
           };
         } catch {
           return null;
@@ -62,25 +86,47 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.username = (user as any).username;
-        token.tier = (user as any).tier;
-        token.points = (user as any).points;
-        token.primaryChapter = (user as any).primaryChapter;
-        token.secondaryChapter = (user as any).secondaryChapter;
-        token.referralCode = (user as any).referralCode;
+        const u = user as any;
+        token.id = u.id;
+        token.username = u.username;
+        token.phone = u.phone;
+        token.whatsapp = u.whatsapp;
+        token.gender = u.gender;
+        token.dateOfBirth = u.dateOfBirth;
+        token.nationality = u.nationality;
+        token.countryOfResidence = u.countryOfResidence;
+        token.city = u.city;
+        token.occupation = u.occupation;
+        token.tier = u.tier;
+        token.primaryChapter = u.primaryChapter;
+        token.secondaryChapter = u.secondaryChapter;
+        token.points = u.points;
+        token.badges = u.badges;
+        token.referralCode = u.referralCode;
+        token.referralCount = u.referralCount;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).username = token.username;
-        (session.user as any).tier = token.tier;
-        (session.user as any).points = token.points;
-        (session.user as any).primaryChapter = token.primaryChapter;
-        (session.user as any).secondaryChapter = token.secondaryChapter;
-        (session.user as any).referralCode = token.referralCode;
+        const s = session.user as any;
+        s.id = token.id;
+        s.username = token.username;
+        s.phone = token.phone;
+        s.whatsapp = token.whatsapp;
+        s.gender = token.gender;
+        s.dateOfBirth = token.dateOfBirth;
+        s.nationality = token.nationality;
+        s.countryOfResidence = token.countryOfResidence;
+        s.city = token.city;
+        s.occupation = token.occupation;
+        s.tier = token.tier;
+        s.primaryChapter = token.primaryChapter;
+        s.secondaryChapter = token.secondaryChapter;
+        s.points = token.points;
+        s.badges = token.badges;
+        s.referralCode = token.referralCode;
+        s.referralCount = token.referralCount;
       }
       return session;
     },
