@@ -132,7 +132,13 @@ class Culture_Post_Types {
             'show_in_nav_menus'   => false,
             'show_tagcloud'       => false,
             'show_in_quick_edit'  => true,
-            'show_in_rest'        => false,  // excluded from WP REST API
+            // Must be true so the block editor (Gutenberg) renders the taxonomy
+            // panel on post / newsletter edit screens.  The taxonomy terms
+            // themselves are not sensitive, so REST exposure is fine.
+            // Archive pages and public WP_Query usage are still disabled via
+            // public => false and publicly_queryable => false above.
+            'show_in_rest'        => true,
+            'rest_base'           => 'culture-access',
             'rewrite'             => false,  // no URL rewrites
             'query_var'           => false,
             // WPGraphQL — exposes as cultureAccesses { nodes { slug } } on Post
