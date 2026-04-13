@@ -70,7 +70,7 @@ class Culture_Post_Types {
         // Culture Directory CPT – wiki-like entries for people, places, movements, etc.
         register_post_type( 'culture_directory', array(
             'labels' => array(
-                'name'               => __( 'Directory', 'culture-community' ),
+                'name'               => __( 'Community Directory', 'culture-community' ),
                 'singular_name'      => __( 'Directory Entry', 'culture-community' ),
                 'add_new'            => __( 'Add New', 'culture-community' ),
                 'add_new_item'       => __( 'Add New Entry', 'culture-community' ),
@@ -81,6 +81,7 @@ class Culture_Post_Types {
                 'not_found'          => __( 'No entries found', 'culture-community' ),
             ),
             'public'              => true,
+            'show_ui'             => true,
             'has_archive'         => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-book-alt',

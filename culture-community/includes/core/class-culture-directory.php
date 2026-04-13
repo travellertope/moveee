@@ -15,66 +15,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Culture_Directory {
 
-    public static function init() {
-        add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
-    }
-
-    /**
-     * Register REST routes.
-     */
-    public static function register_routes() {
-        register_rest_route( 'culture/v1', '/directory/submit', array(
-            'methods'             => 'POST',
-            'callback'            => array( __CLASS__, 'handle_submit' ),
-            'permission_callback' => array( __CLASS__, 'verify_secret' ),
-            'args'                => array(
-                'user_id' => array(
-                    'required'          => true,
-                    'type'              => 'integer',
-                    'sanitize_callback' => 'absint',
-                ),
-                'title' => array(
-                    'required'          => true,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'sanitize_text_field',
-                ),
-                'excerpt' => array(
-                    'required'          => true,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'wp_kses_post',
-                ),
-                'content' => array(
-                    'required'          => true,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'wp_kses_post',
-                ),
-                'entry_type' => array(
-                    'required'          => false,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'sanitize_key',
-                    'default'           => 'concept',
-                ),
-                'interests' => array(
-                    'required'          => false,
-                    'type'              => 'array',
-                    'default'           => array(),
-                    'items'             => array( 'type' => 'string' ),
-                ),
-                'ai_generated' => array(
-                    'required'          => false,
-                    'type'              => 'boolean',
-                    'default'           => false,
-                ),
-                'improving_slug' => array(
-                    'required'          => false,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'sanitize_title',
-                    'default'           => '',
-                ),
-            ),
-        ) );
-    }
-
     /**
      * Verify the shared bearer secret sent from the Next.js backend.
      *

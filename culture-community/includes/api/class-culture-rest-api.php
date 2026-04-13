@@ -295,6 +295,13 @@ class Culture_REST_API {
                 'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             ),
         ) );
+
+        // Directory Entry submission — requires API key auth.
+        register_rest_route( 'culture/v1', '/directory/submit', array(
+            'methods'             => 'POST',
+            'callback'            => array( 'Culture_Directory', 'handle_submit' ),
+            'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
+        ) );
     }
 
     /**

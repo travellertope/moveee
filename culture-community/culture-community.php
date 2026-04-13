@@ -80,7 +80,6 @@ function culture_community_init() {
     Culture_Post_Types::init();
     Culture_Gamification::init();
     Culture_REST_API::init();
-    Culture_Directory::init();
     Culture_Ajax::init();
     Culture_Shortcodes::init();
     Culture_Paystack::init();
