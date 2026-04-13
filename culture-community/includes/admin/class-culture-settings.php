@@ -54,6 +54,7 @@ class Culture_Settings {
         // General.
         'culture_registration_page'    => '',
         'culture_frontend_url'         => '',
+        'culture_api_secret'           => '',
         'culture_analytics_limit_top_members' => 10,
         'culture_analytics_limit_events'      => 10,
     );
@@ -179,6 +180,7 @@ class Culture_Settings {
         // General.
         register_setting( self::OPTION_GROUP, 'culture_registration_page', $text );
         register_setting( self::OPTION_GROUP, 'culture_frontend_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
+        register_setting( self::OPTION_GROUP, 'culture_api_secret', $text );
         register_setting( self::OPTION_GROUP, 'culture_analytics_limit_top_members', $int );
         register_setting( self::OPTION_GROUP, 'culture_analytics_limit_events', $int );
     }
@@ -484,6 +486,18 @@ class Culture_Settings {
         ?>
         <h2><?php esc_html_e( 'General Settings', 'culture-community' ); ?></h2>
         <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_api_secret"><?php esc_html_e( 'Next.js API Secret', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="password" id="culture_api_secret" name="culture_api_secret"
+                           value="<?php echo esc_attr( self::get( 'culture_api_secret' ) ); ?>" class="regular-text"
+                           autocomplete="new-password" />
+                    <p class="description">
+                        <?php esc_html_e( 'Shared secret between this plugin and the Next.js frontend. Must match the CULTURE_API_SECRET environment variable on Vercel. Used to authenticate profile update and newsletter preference requests.', 'culture-community' ); ?>
+                        <br><strong><?php esc_html_e( 'Generate a strong random string and paste the same value in both places.', 'culture-community' ); ?></strong>
+                    </p>
+                </td>
+            </tr>
             <tr>
                 <th scope="row"><label for="culture_frontend_url"><?php esc_html_e( 'Frontend Site URL', 'culture-community' ); ?></label></th>
                 <td>
