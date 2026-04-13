@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap');
+
+.quote-hub {
+  padding-top: 120px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.quote-header {
+  text-align: center;
+  margin-bottom: 80px;
+  padding: 0 20px;
+}
+
+.quote-header h1 {
+  font-family: var(--font-fraunces), serif;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 300;
+  line-height: 1;
+  margin-bottom: 24px;
+}
+
+.quote-header p {
+  font-size: 1.1rem;
+  color: var(--color-ink-soft);
+  max-width: 600px;
+  margin: 0 auto 40px;
+}
+
+.quote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 2px;
+  background-color: var(--color-rule, #e5e5e5);
+  border: 1px solid var(--color-rule, #e5e5e5);
+}
+
+.quote-card {
+  background-color: var(--color-paper, #fff);
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: background-color 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.quote-card:hover {
+  background-color: #fafafa;
+}
+
+.quote-content {
+  font-family: var(--font-fraunces), serif;
+  font-size: 1.75rem;
+  line-height: 1.4;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 1;
+}
+
+.quote-content::before {
+  content: '“';
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  font-size: 5rem;
+  opacity: 0.1;
+  font-family: var(--font-fraunces), serif;
+}
+
+.quote-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: auto;
+}
+
+.quote-author-info cite {
+  font-style: italic;
+  font-family: var(--font-fraunces), serif;
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.quote-author-info .source {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-soft);
+}
+
+.quote-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.quote-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--color-ink-soft);
+  transition: color 0.2s ease;
+}
+
+.quote-action-btn:hover {
+  color: var(--color-ink);
+}
+
+.quote-action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.submit-trigger {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  background: var(--color-gold, #c4a77d);
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  cursor: pointer;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.submit-trigger:hover {
+  transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .quote-grid {
+    grid-template-columns: 1fr;
+  }
+  .quote-card {
+    padding: 40px 24px;
+  }
+  .quote-content {
+    font-size: 1.5rem;
+  }
+}
