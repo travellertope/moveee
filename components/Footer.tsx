@@ -30,6 +30,15 @@ const Footer = () => {
           </ul>
         </div>
         <div>
+          <h5>Community</h5>
+          <ul>
+            <li><Link href="/directory">Culture Directory</Link></li>
+            <li><Link href="/quotes">Moveee Quotes</Link></li>
+            <li><Link href="/connect">Become a Member</Link></li>
+            <li><Link href="/member">Member Profiler</Link></li>
+          </ul>
+        </div>
+        <div>
           <h5>Lifestyle & Shop</h5>
           <ul>
             <li><Link href="/shop">Vetted Makers</Link></li>
