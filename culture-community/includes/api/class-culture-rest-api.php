@@ -1074,6 +1074,29 @@ class Culture_REST_API {
         $source  = $request->get_param( 'source' );
         $user_id = get_current_user_id();
 
+        // Duplicate detection: compare normalised content hash.
+        $hash = md5( strtolower( trim( wp_strip_all_tags( $text ) ) ) );
+        $existing = get_posts( array(
+            'post_type'      => 'culture_quote',
+            'post_status'    => array( 'publish', 'pending' ),
+            'posts_per_page' => 1,
+            'meta_query'     => array(
+                array(
+                    'key'     => '_quote_content_hash',
+                    'value'   => $hash,
+                    'compare' => '=',
+                ),
+            ),
+        ) );
+
+        if ( ! empty( $existing ) ) {
+            return new WP_Error(
+                'duplicate_quote',
+                'This quote already exists in the archive.',
+                array( 'status' => 409 )
+            );
+        }
+
         // Create the post.
         $post_id = wp_insert_post( array(
             'post_title'   => wp_trim_words( $text, 10 ),
@@ -1095,6 +1118,8 @@ class Culture_REST_API {
         update_post_meta( $post_id, '_quote_user_id', $user_id );
         update_post_meta( $post_id, '_quote_likes', 0 );
         update_post_meta( $post_id, '_quote_reports', 0 );
+        update_post_meta( $post_id, '_quote_content_hash', $hash );
+        update_post_meta( $post_id, '_culture_like_count', 0 );
 
         // Award points.
         if ( class_exists( 'Culture_Gamification' ) ) {
@@ -1189,11 +1214,12 @@ class Culture_REST_API {
         $type    = $request->get_param( 'type' ); // 'like' or 'bookmark'
         $kind    = $request->get_param( 'kind' ); // 'article' or 'quote'
 
+        // ── Per-kind user list (drives isLiked / isBookmarked state) ─────────
         $meta_key = "_culture_" . $type . "_" . $kind . "_ids";
         $ids = get_user_meta( $user_id, $meta_key, true );
         if ( ! is_array( $ids ) ) { $ids = array(); }
 
-        $index = array_search( $post_id, $ids );
+        $index  = array_search( $post_id, $ids );
         $active = false;
 
         if ( false !== $index ) {
@@ -1202,19 +1228,52 @@ class Culture_REST_API {
         } else {
             $ids[] = $post_id;
             $active = true;
-
-            // Award points for Liking an article.
-            if ( $active && 'like' === $type && 'article' === $kind && class_exists( 'Culture_Gamification' ) ) {
-                Culture_Gamification::award_points( $user_id, 'magazine_like' );
-            }
         }
 
         update_user_meta( $user_id, $meta_key, $ids );
 
+        // ── Sync unified "saved" lists (drives /member/collection page) ──────
+        $unified_key  = ( 'like' === $type ) ? '_culture_liked_posts' : '_culture_bookmarked_posts';
+        $unified_ids  = get_user_meta( $user_id, $unified_key, true );
+        if ( ! is_array( $unified_ids ) ) { $unified_ids = array(); }
+        $u_idx = array_search( $post_id, $unified_ids );
+        if ( $active && false === $u_idx ) {
+            $unified_ids[] = $post_id;
+        } elseif ( ! $active && false !== $u_idx ) {
+            unset( $unified_ids[ $u_idx ] );
+            $unified_ids = array_values( $unified_ids );
+        }
+        update_user_meta( $user_id, $unified_key, $unified_ids );
+
+        // ── Update post-level like count (drives public like display) ────────
+        $post_like_count = 0;
+        if ( 'like' === $type ) {
+            $post_like_count = max( 0, (int) get_post_meta( $post_id, '_culture_like_count', true ) );
+            $post_like_count = $active ? $post_like_count + 1 : max( 0, $post_like_count - 1 );
+            update_post_meta( $post_id, '_culture_like_count', $post_like_count );
+
+            // Quotes: keep _quote_likes in sync (read by WPGraphQL as quoteLikes)
+            if ( 'quote' === $kind ) {
+                update_post_meta( $post_id, '_quote_likes', $post_like_count );
+                // Award points to the quote's original submitter
+                if ( $active && class_exists( 'Culture_Gamification' ) ) {
+                    $submitter_id = (int) get_post_meta( $post_id, '_quote_user_id', true );
+                    if ( $submitter_id && $submitter_id !== $user_id ) {
+                        Culture_Gamification::award_points( $submitter_id, 'quote_like' );
+                    }
+                }
+            }
+
+            // Award magazine-engagement points for liking an article
+            if ( $active && 'article' === $kind && class_exists( 'Culture_Gamification' ) ) {
+                Culture_Gamification::award_points( $user_id, 'magazine_like' );
+            }
+        }
+
         return rest_ensure_response( array(
             'success' => true,
             'active'  => $active,
-            'count'   => count( $ids )
+            'count'   => $post_like_count, // post-level like count for display
         ) );
     }
 
