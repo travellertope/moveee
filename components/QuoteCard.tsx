@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { Heart, Flag, Share2, Bookmark, Quote as QuoteIcon } from 'lucide-react';
 import { useSession } from 'next-auth/react';
