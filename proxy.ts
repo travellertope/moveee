@@ -39,6 +39,9 @@ const APP_ROUTES = new Set([
   'member',
   'reset-password',
   'connect',
+  // Section routes
+  'events',
+  'origins',
   // Additional app pages
   'author',
   'api',
@@ -51,7 +54,7 @@ const APP_ROUTES = new Set([
 // to their canonical Next.js route.
 const ROUTE_ALIASES: Record<string, string> = {
   'tours': '/origins',
-  'shop': '/lifestyle',
+  'lifestyle': '/shop',
 }
 
 export function proxy(request: NextRequest) {
