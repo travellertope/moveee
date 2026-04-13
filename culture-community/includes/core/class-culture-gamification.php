@@ -97,6 +97,28 @@ class Culture_Gamification {
             'trigger'     => 'quote_likes_count',
             'threshold'   => 100,
         ),
+        // ── Culture Directory badges ─────────────────────────────────────
+        'culture_archivist' => array(
+            'name'        => 'Culture Archivist',
+            'description' => 'Submitted your first Culture Directory entry.',
+            'icon'        => 'dashicons-archive',
+            'trigger'     => 'dir_entry_count',
+            'threshold'   => 1,
+        ),
+        'knowledge_keeper' => array(
+            'name'        => 'Knowledge Keeper',
+            'description' => 'Submitted 5 Culture Directory entries.',
+            'icon'        => 'dashicons-book-alt',
+            'trigger'     => 'dir_entry_count',
+            'threshold'   => 5,
+        ),
+        'cultural_encyclopaedist' => array(
+            'name'        => 'Cultural Encyclopaedist',
+            'description' => 'Submitted 20 Culture Directory entries.',
+            'icon'        => 'dashicons-welcome-learn-more',
+            'trigger'     => 'dir_entry_count',
+            'threshold'   => 20,
+        ),
     );
 
     /**
@@ -285,6 +307,17 @@ class Culture_Gamification {
                      FROM {$wpdb->postmeta} pm
                      INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
                      WHERE p.post_author = %d AND p.post_type = 'culture_quote' AND pm.meta_key = '_quote_likes' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            case 'dir_entry_count':
+                // Count both published and pending directory posts so the badge
+                // fires immediately on submission, not only after admin approval.
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->posts}
+                     WHERE post_author = %d
+                       AND post_type = 'culture_directory'
+                       AND post_status IN ('publish', 'pending')",
                     $user_id
                 ) );
 

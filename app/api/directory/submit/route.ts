@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const { title, excerpt, content, entryType, interests, aiGenerated } = body;
+  const { title, excerpt, content, entryType, interests, aiGenerated, improvingSlug } = body;
 
   if (!title?.trim()) {
     return NextResponse.json({ error: "title is required." }, { status: 400 });
@@ -42,6 +42,17 @@ export async function POST(req: NextRequest) {
 
   const u = session.user as any;
 
+  // Directory submissions are a Patron-tier privilege.
+  if (u.tier !== "patron") {
+    return NextResponse.json(
+      {
+        error:
+          "Patron membership required to submit directory entries. Upgrade your membership to contribute.",
+      },
+      { status: 403 }
+    );
+  }
+
   try {
     const res = await fetch(`${WP_URL}/wp-json/culture/v1/directory/submit`, {
       method: "POST",
@@ -54,6 +65,7 @@ export async function POST(req: NextRequest) {
         entry_type: entryType ?? "concept",
         interests: Array.isArray(interests) ? interests : [],
         ai_generated: aiGenerated === true,
+        improving_slug: improvingSlug ?? "",
       }),
       cache: "no-store",
     });
