@@ -125,6 +125,7 @@ export default function ParagraphCommentSystem({ postId, content }: ParagraphCom
           index={currentIdx}
           htmlContent={cleanPart}
           commentCount={commentCount}
+          isFirst={currentIdx === 0}
           isActive={activeParagraph?.index === currentIdx && isSidebarOpen}
           onOpenComments={handleOpenComments}
         />
