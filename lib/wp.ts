@@ -426,6 +426,21 @@ export const GET_QUOTE_BY_ID = `
   ${QUOTE_FIELDS_FRAGMENT}
 `;
 
+export const GET_QUOTES_BY_AUTHOR = `
+  query GetQuotesByAuthor($slug: ID!) {
+    quoteAuthor(id: $slug, idType: SLUG) {
+      name
+      description
+      cultureQuotes(first: 100) {
+        nodes {
+          ...QuoteFields
+        }
+      }
+    }
+  }
+  ${QUOTE_FIELDS_FRAGMENT}
+`;
+
 export const GET_SITE_SETTINGS = `
   query GetSiteSettings {
     allSettings {
