@@ -99,6 +99,49 @@ class Culture_Post_Types {
      * Register custom taxonomies.
      */
     public static function register_taxonomies() {
+        /**
+         * Content access-level taxonomy.
+         *
+         * Non-public (no archive URLs, not in WP REST API) but visible in the
+         * WordPress admin and exposed via WPGraphQL so the Next.js frontend can
+         * read it and enforce access gates.
+         *
+         * Terms:
+         *   member-only  – logged-in users of any tier (Citizen + Patron)
+         *   patron-only  – Patron-tier members only
+         *
+         * No term = fully public (default for all content).
+         */
+        register_taxonomy( 'culture_access', array( 'post', 'culture_newsletter' ), array(
+            'labels' => array(
+                'name'              => __( 'Access Level', 'culture-community' ),
+                'singular_name'     => __( 'Access Level', 'culture-community' ),
+                'search_items'      => __( 'Search Access Levels', 'culture-community' ),
+                'all_items'         => __( 'All Access Levels', 'culture-community' ),
+                'edit_item'         => __( 'Edit Access Level', 'culture-community' ),
+                'add_new_item'      => __( 'Add New Access Level', 'culture-community' ),
+                'not_found'         => __( 'No access levels found', 'culture-community' ),
+                'choose_from_most_used' => __( 'Choose from common access levels', 'culture-community' ),
+            ),
+            'hierarchical'        => true,   // shown as a checklist like categories
+            'public'              => false,  // no public archive pages
+            'publicly_queryable'  => false,  // not queryable via standard WP REST
+            'show_ui'             => true,   // visible in WP admin editor
+            'show_in_menu'        => true,
+            'show_admin_column'   => true,   // appear in post list tables
+            'show_in_nav_menus'   => false,
+            'show_tagcloud'       => false,
+            'show_in_quick_edit'  => true,
+            'show_in_rest'        => false,  // excluded from WP REST API
+            'rewrite'             => false,  // no URL rewrites
+            'query_var'           => false,
+            // WPGraphQL — exposes as cultureAccesses { nodes { slug } } on Post
+            // and CultureNewsletter types.
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'cultureAccess',
+            'graphql_plural_name' => 'cultureAccesses',
+        ) );
+
         register_taxonomy( 'culture_interest', array( 'culture_event', 'culture_newsletter', 'culture_chapter' ), array(
             'labels' => array(
                 'name'          => __( 'Interests', 'culture-community' ),

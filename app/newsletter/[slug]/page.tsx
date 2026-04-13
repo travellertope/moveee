@@ -5,6 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
+import ContentGate from "@/components/ContentGate";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getAccessLevel, canViewContent } from "@/lib/access";
 import "../../newsletter.css";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +70,13 @@ export default async function GmlIssuePage({
 
   const issue = data?.cultureNewsletter;
   if (!issue) notFound();
+
+  // Access control
+  const session = await getServerSession(authOptions);
+  const user = session?.user as any;
+  const accessLevel = getAccessLevel(issue);
+  const canView = canViewContent(accessLevel, user);
+  const isLoggedIn = !!user;
 
   // Fetch sibling issues for prev/next nav + issue numbering
   let allIssues: any[] = [];
@@ -148,12 +159,44 @@ export default async function GmlIssuePage({
       <div className="gml-issue-wrap">
         {/* Main content */}
         <article id="issue-body">
-          <div
-            className="gml-issue-prose"
-            dangerouslySetInnerHTML={{
-              __html: sanitiseContent(issue.content || ""),
-            }}
-          />
+          {canView ? (
+            <div
+              className="gml-issue-prose"
+              dangerouslySetInnerHTML={{
+                __html: sanitiseContent(issue.content || ""),
+              }}
+            />
+          ) : (
+            <>
+              {/* Faded excerpt teaser */}
+              {issue.excerpt && (
+                <div style={{ position: "relative", marginBottom: 0 }}>
+                  <div
+                    className="gml-issue-prose"
+                    style={{ maxHeight: 100, overflow: "hidden" }}
+                    dangerouslySetInnerHTML={{
+                      __html: issue.excerpt.replace(/<[^>]*>/g, ""),
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: 70,
+                      background:
+                        "linear-gradient(to bottom, transparent, var(--paper, #f5f0e8))",
+                    }}
+                  />
+                </div>
+              )}
+              <ContentGate
+                accessLevel={accessLevel as "member-only" | "patron-only"}
+                isLoggedIn={isLoggedIn}
+              />
+            </>
+          )}
         </article>
 
         {/* Sidebar */}

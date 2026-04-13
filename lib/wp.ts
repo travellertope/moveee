@@ -87,6 +87,11 @@ const STORY_FIELDS_FRAGMENT = `
         slug
       }
     }
+    cultureAccesses {
+      nodes {
+        slug
+      }
+    }
   }
 `;
 
@@ -148,6 +153,11 @@ const JOURNEY_FIELDS_FRAGMENT = `
         slug
       }
     }
+    cultureAccesses {
+      nodes {
+        slug
+      }
+    }
   }
 `;
 
@@ -201,6 +211,11 @@ const NEWSLETTER_FIELDS_FRAGMENT = `
     cultureInterests {
       nodes {
         name
+        slug
+      }
+    }
+    cultureAccesses {
+      nodes {
         slug
       }
     }
