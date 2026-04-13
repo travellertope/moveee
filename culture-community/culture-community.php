@@ -33,6 +33,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cron.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-emails.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-newsletter-queue.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-nl-analytics.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
 
 // API includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-rest-api.php';
@@ -79,6 +80,7 @@ function culture_community_init() {
     Culture_Post_Types::init();
     Culture_Gamification::init();
     Culture_REST_API::init();
+    Culture_Directory::init();
     Culture_Ajax::init();
     Culture_Shortcodes::init();
     Culture_Paystack::init();
