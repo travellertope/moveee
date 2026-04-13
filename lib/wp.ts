@@ -382,6 +382,49 @@ export const GET_DIRECTORY_ENTRY_BY_SLUG = `
   ${DIRECTORY_FIELDS_FRAGMENT}
 `;
 
+const QUOTE_FIELDS_FRAGMENT = `
+  fragment QuoteFields on CultureQuote {
+    id
+    databaseId
+    title
+    slug
+    content
+    date
+    quoteAuthors {
+      nodes {
+        name
+        slug
+      }
+    }
+    quoteSource
+    quoteLikes
+    quoteReports
+    quoteUserId
+  }
+`;
+
+export const QUOTE_FIELDS = QUOTE_FIELDS_FRAGMENT;
+
+export const GET_QUOTES = `
+  query GetQuotes($first: Int) {
+    cultureQuotes(first: $first, where: { status: PUBLISH }) {
+      nodes {
+        ...QuoteFields
+      }
+    }
+  }
+  ${QUOTE_FIELDS_FRAGMENT}
+`;
+
+export const GET_QUOTE_BY_SLUG = `
+  query GetQuoteBySlug($slug: ID!) {
+    cultureQuote(id: $slug, idType: SLUG) {
+      ...QuoteFields
+    }
+  }
+  ${QUOTE_FIELDS_FRAGMENT}
+`;
+
 export const GET_SITE_SETTINGS = `
   query GetSiteSettings {
     allSettings {

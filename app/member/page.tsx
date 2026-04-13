@@ -47,6 +47,31 @@ const ALL_BADGES = [
     name: "Century Club",
     desc: "Earned 100 points",
   },
+  {
+    slug: "wordsmith",
+    name: "Wordsmith",
+    desc: "Shared your first quote",
+  },
+  {
+    slug: "librarian",
+    name: "Librarian",
+    desc: "Shared 10 quotes",
+  },
+  {
+    slug: "philosopher",
+    name: "Philosopher",
+    desc: "Shared 50 quotes",
+  },
+  {
+    slug: "influencer",
+    name: "Influencer",
+    desc: "Received 10 quote likes",
+  },
+  {
+    slug: "thought-leader",
+    name: "Thought Leader",
+    desc: "Received 100 quote likes",
+  },
 ];
 
 export default async function MemberPage() {
@@ -149,6 +174,8 @@ export default async function MemberPage() {
                   ["Refer a member", "+25 pts"],
                   ["Newsletter comment", "+10 pts"],
                   ["Newsletter reaction", "+2 pts"],
+                  ["Share a quote", "+10 pts"],
+                  ["Quote liked", "+1 pt"],
                 ].map(([action, pts]) => (
                   <div key={action} className="mem-points-row">
                     <span>{action}</span>
