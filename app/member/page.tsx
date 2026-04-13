@@ -13,7 +13,7 @@ export const metadata = {
 
 const ALL_BADGES = [
   {
-    slug: "first-steps",
+    slug: "first_steps",
     name: "First Steps",
     desc: "Attended your first event",
   },
@@ -23,7 +23,7 @@ const ALL_BADGES = [
     desc: "Attended 5 events",
   },
   {
-    slug: "culture-vulture",
+    slug: "culture_vulture",
     name: "Culture Vulture",
     desc: "Attended 25 events",
   },
@@ -43,7 +43,7 @@ const ALL_BADGES = [
     desc: "10 newsletter comments",
   },
   {
-    slug: "century-club",
+    slug: "century_club",
     name: "Century Club",
     desc: "Earned 100 points",
   },
@@ -68,9 +68,24 @@ const ALL_BADGES = [
     desc: "Received 10 quote likes",
   },
   {
-    slug: "thought-leader",
+    slug: "thought_leader",
     name: "Thought Leader",
     desc: "Received 100 quote likes",
+  },
+  {
+    slug: "culture_archivist",
+    name: "Culture Archivist",
+    desc: "Submitted your first directory entry",
+  },
+  {
+    slug: "knowledge_keeper",
+    name: "Knowledge Keeper",
+    desc: "Submitted 5 directory entries",
+  },
+  {
+    slug: "cultural_encyclopaedist",
+    name: "Cultural Encyclopaedist",
+    desc: "Submitted 20 directory entries",
   },
 ];
 
@@ -176,6 +191,7 @@ export default async function MemberPage() {
                   ["Newsletter reaction", "+2 pts"],
                   ["Share a quote", "+10 pts"],
                   ["Quote liked", "+1 pt"],
+                  ["Directory submission", "+25 pts"],
                 ].map(([action, pts]) => (
                   <div key={action} className="mem-points-row">
                     <span>{action}</span>
@@ -259,6 +275,12 @@ export default async function MemberPage() {
               </Link>
               <Link href="/magazine" className="mem-link">
                 Magazine →
+              </Link>
+              <Link href="/directory" className="mem-link">
+                Culture Directory →
+              </Link>
+              <Link href="/quote" className="mem-link">
+                Quotes Archive →
               </Link>
               <Link
                 href="/api/auth/signout"
