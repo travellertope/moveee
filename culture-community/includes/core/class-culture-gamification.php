@@ -73,6 +73,8 @@ class Culture_Gamification {
         'newsletter_comment'  => 10,
         'newsletter_reaction' => 2,
         'referral'            => 25,
+        'quote_submission'    => 10,
+        'quote_like'          => 1,
     );
 
     /**

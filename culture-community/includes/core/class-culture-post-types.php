@@ -93,6 +93,33 @@ class Culture_Post_Types {
             'graphql_single_name' => 'cultureNewsletter',
             'graphql_plural_name' => 'cultureNewsletters',
         ) );
+
+        // Quote CPT – nested under Culture Community menu.
+        register_post_type( 'culture_quote', array(
+            'labels' => array(
+                'name'               => __( 'Quotes', 'culture-community' ),
+                'singular_name'      => __( 'Quote', 'culture-community' ),
+                'add_new'            => __( 'Add New', 'culture-community' ),
+                'add_new_item'       => __( 'Add New Quote', 'culture-community' ),
+                'edit_item'          => __( 'Edit Quote', 'culture-community' ),
+                'view_item'          => __( 'View Quote', 'culture-community' ),
+                'all_items'          => __( 'Quotes', 'culture-community' ),
+                'search_items'       => __( 'Search Quotes', 'culture-community' ),
+                'not_found'          => __( 'No quotes found', 'culture-community' ),
+            ),
+            'public'              => true,
+            'has_archive'         => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-format-quote',
+            'supports'            => array( 'title', 'editor' ),
+            'rewrite'             => array( 'slug' => 'quote' ),
+            'show_in_rest'        => true,
+            'capability_type'     => 'post',
+            // WPGraphQL support.
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'cultureQuote',
+            'graphql_plural_name' => 'cultureQuotes',
+        ) );
     }
 
     /**
@@ -148,6 +175,26 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'cultureAccesses',
         ) );
 
+        register_taxonomy( 'culture_quote_author', array( 'culture_quote' ), array(
+            'labels' => array(
+                'name'          => __( 'Quote Authors', 'culture-community' ),
+                'singular_name' => __( 'Quote Author', 'culture-community' ),
+                'search_items'  => __( 'Search Authors', 'culture-community' ),
+                'all_items'     => __( 'All Authors', 'culture-community' ),
+                'edit_item'     => __( 'Edit Author', 'culture-community' ),
+                'add_new_item'  => __( 'Add New Author', 'culture-community' ),
+            ),
+            'hierarchical'        => false,
+            'public'              => true,
+            'show_in_rest'        => true,
+            'show_in_menu'        => true,
+            'rewrite'             => array( 'slug' => 'quote-author' ),
+            // WPGraphQL support.
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'quoteAuthor',
+            'graphql_plural_name' => 'quoteAuthors',
+        ) );
+
         register_taxonomy( 'culture_interest', array( 'culture_event', 'culture_newsletter', 'culture_chapter' ), array(
             'labels' => array(
                 'name'          => __( 'Interests', 'culture-community' ),
@@ -189,6 +236,16 @@ class Culture_Post_Types {
             __( 'Event Details', 'culture-community' ),
             array( __CLASS__, 'render_event_meta_box' ),
             'culture_event',
+            'normal',
+            'high'
+        );
+
+        // Quote meta box.
+        add_meta_box(
+            'culture_quote_meta',
+            __( 'Quote Details', 'culture-community' ),
+            array( __CLASS__, 'render_quote_meta_box' ),
+            'culture_quote',
             'normal',
             'high'
         );
@@ -278,6 +335,37 @@ class Culture_Post_Types {
     }
 
     /**
+     * Render the Quote meta box.
+     */
+    public static function render_quote_meta_box( $post ) {
+        wp_nonce_field( 'culture_quote_meta', 'culture_quote_meta_nonce' );
+
+        $source  = get_post_meta( $post->ID, '_quote_source', true );
+        $user_id = get_post_meta( $post->ID, '_quote_user_id', true );
+        $likes   = get_post_meta( $post->ID, '_quote_likes', true ) ?: 0;
+        $reports = get_post_meta( $post->ID, '_quote_reports', true ) ?: 0;
+        ?>
+        <table class="form-table">
+            <tr>
+                <th><label for="quote_source"><?php esc_html_e( 'Source', 'culture-community' ); ?></label></th>
+                <td><input type="text" id="quote_source" name="quote_source" value="<?php echo esc_attr( $source ); ?>" class="regular-text" placeholder="e.g. Things Fall Apart" /></td>
+            </tr>
+            <tr>
+                <th><label for="quote_user_id"><?php esc_html_e( 'Submitted By (User ID)', 'culture-community' ); ?></label></th>
+                <td><input type="number" id="quote_user_id" name="quote_user_id" value="<?php echo esc_attr( $user_id ); ?>" /></td>
+            </tr>
+            <tr>
+                <th><?php esc_html_e( 'Stats', 'culture-community' ); ?></th>
+                <td>
+                    <strong><?php esc_html_e( 'Likes:', 'culture-community' ); ?></strong> <?php echo absint( $likes ); ?> | 
+                    <strong><?php esc_html_e( 'Reports:', 'culture-community' ); ?></strong> <?php echo absint( $reports ); ?>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    /**
      * Save meta box data.
      */
     public static function save_meta_boxes( $post_id ) {
@@ -310,6 +398,18 @@ class Culture_Post_Types {
             update_post_meta( $post_id, '_culture_is_physical', $is_physical );
             if ( isset( $_POST['culture_capacity'] ) ) {
                 update_post_meta( $post_id, '_culture_capacity', absint( $_POST['culture_capacity'] ) );
+            }
+        }
+
+        // Quote meta.
+        if ( isset( $_POST['culture_quote_meta_nonce'] )
+            && wp_verify_nonce( $_POST['culture_quote_meta_nonce'], 'culture_quote_meta' ) ) {
+
+            if ( isset( $_POST['quote_source'] ) ) {
+                update_post_meta( $post_id, '_quote_source', sanitize_text_field( $_POST['quote_source'] ) );
+            }
+            if ( isset( $_POST['quote_user_id'] ) ) {
+                update_post_meta( $post_id, '_quote_user_id', absint( $_POST['quote_user_id'] ) );
             }
         }
     }

@@ -113,6 +113,38 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Quote creation (logged-in users).
+        register_rest_route( 'culture/v1', '/quotes', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_create_quote' ),
+            'permission_callback' => array( __CLASS__, 'user_permission' ),
+            'args'                => array(
+                'text'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
+                'author' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'source' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+
+        // Quote liking (logged-in users).
+        register_rest_route( 'culture/v1', '/quotes/like', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_like_quote' ),
+            'permission_callback' => array( __CLASS__, 'user_permission' ),
+            'args'                => array(
+                'quote_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Quote reporting (public).
+        register_rest_route( 'culture/v1', '/quotes/report', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_report_quote' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'quote_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Registration endpoint for the Next.js frontend.
         register_rest_route( 'culture/v1', '/register', array(
             'methods'             => 'POST',
@@ -879,6 +911,115 @@ class Culture_REST_API {
         return rest_ensure_response( array(
             'success' => true,
             'message' => __( 'Password updated. You can now sign in.', 'culture-community' ),
+        ) );
+    }
+
+    /**
+     * Permission check: user must be logged in.
+     */
+    public static function user_permission( $request ) {
+        return is_user_logged_in();
+    }
+
+    /**
+     * Handle creating a new quote.
+     */
+    public static function handle_create_quote( $request ) {
+        $text    = $request->get_param( 'text' );
+        $author  = $request->get_param( 'author' );
+        $source  = $request->get_param( 'source' );
+        $user_id = get_current_user_id();
+
+        // Create the post.
+        $post_id = wp_insert_post( array(
+            'post_title'   => wp_trim_words( $text, 10 ),
+            'post_content' => $text,
+            'post_status'  => 'publish',
+            'post_type'    => 'culture_quote',
+            'post_author'  => $user_id,
+        ) );
+
+        if ( is_wp_error( $post_id ) ) {
+            return $post_id;
+        }
+
+        // Set author taxonomy.
+        wp_set_object_terms( $post_id, $author, 'culture_quote_author' );
+
+        // Set meta.
+        update_post_meta( $post_id, '_quote_source', $source );
+        update_post_meta( $post_id, '_quote_user_id', $user_id );
+        update_post_meta( $post_id, '_quote_likes', 0 );
+        update_post_meta( $post_id, '_quote_reports', 0 );
+
+        // Award points.
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::award_points( $user_id, 'quote_submission' );
+        }
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'id'      => $post_id,
+            'message' => __( 'Quote published successfully.', 'culture-community' ),
+        ) );
+    }
+
+    /**
+     * Handle liking a quote.
+     */
+    public static function handle_like_quote( $request ) {
+        $quote_id = $request->get_param( 'quote_id' );
+        $user_id  = get_current_user_id();
+
+        $quote = get_post( $quote_id );
+        if ( ! $quote || 'culture_quote' !== $quote->post_type ) {
+            return new WP_Error( 'invalid_quote', __( 'Quote not found.', 'culture-community' ), array( 'status' => 404 ) );
+        }
+
+        // Increment likes.
+        $likes = (int) get_post_meta( $quote_id, '_quote_likes', true );
+        update_post_meta( $quote_id, '_quote_likes', $likes + 1 );
+
+        // Award points to the quote author (submitter).
+        $submitter_id = (int) get_post_meta( $quote_id, '_quote_user_id', true );
+        if ( $submitter_id && $submitter_id !== $user_id ) {
+            if ( class_exists( 'Culture_Gamification' ) ) {
+                Culture_Gamification::award_points( $submitter_id, 'quote_like' );
+            }
+        }
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'likes'   => $likes + 1,
+        ) );
+    }
+
+    /**
+     * Handle reporting a quote.
+     */
+    public static function handle_report_quote( $request ) {
+        $quote_id = $request->get_param( 'quote_id' );
+
+        $quote = get_post( $quote_id );
+        if ( ! $quote || 'culture_quote' !== $quote->post_type ) {
+            return new WP_Error( 'invalid_quote', __( 'Quote not found.', 'culture-community' ), array( 'status' => 404 ) );
+        }
+
+        // Increment reports.
+        $reports = (int) get_post_meta( $quote_id, '_quote_reports', true ) + 1;
+        update_post_meta( $quote_id, '_quote_reports', $reports );
+
+        // Hide if threshold met (5 reports).
+        if ( $reports >= 5 ) {
+            wp_update_post( array(
+                'ID'          => $quote_id,
+                'post_status' => 'pending', // Hide from public but keep for admin review.
+            ) );
+        }
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'message' => __( 'Quote reported.', 'culture-community' ),
         ) );
     }
 }
