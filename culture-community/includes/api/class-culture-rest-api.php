@@ -1198,6 +1198,8 @@ class Culture_REST_API {
             'awarded'   => Culture_Gamification::get_point_value( $action ),
             'new_badges' => array(), // Logic for detecting newly awarded badges could go here if needed.
         ) );
+    }
+
     /**
      * GET /culture/v1/user/profile?user_id=X
      * Returns live points and badges for a user.
