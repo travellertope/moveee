@@ -269,15 +269,7 @@
   color: var(--ink);
   font-variation-settings: "opsz" 144;
 }
-.prose p:first-of-type::first-letter {
-  font-size: 94px;
-  font-weight: 400;
-  float: left;
-  line-height: .82;
-  padding: 10px 14px 0 0;
-  color: var(--ochre);
-  font-family: 'Fraunces', serif;
-}
+
 .prose h3 {
   font-size: clamp(28px,3vw,44px);
   font-weight: 400;
@@ -625,15 +617,7 @@
   color: var(--ink);
   font-variation-settings: "opsz" 144;
 }
-.prose-content p:first-of-type::first-letter {
-  font-size: 94px;
-  font-weight: 400;
-  float: left;
-  line-height: .82;
-  padding: 10px 14px 0 0;
-  color: var(--ochre);
-  font-family: 'Fraunces', serif;
-}
+
 .prose-content h2, .prose-content h3 {
   font-size: clamp(28px,3vw,44px);
   font-weight: 400;

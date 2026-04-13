@@ -87,6 +87,21 @@ const ALL_BADGES = [
     name: "Cultural Encyclopaedist",
     desc: "Submitted 20 directory entries",
   },
+  {
+    slug: "cultural_specialist",
+    name: "Cultural Specialist",
+    desc: "Left 10 comments on articles",
+  },
+  {
+    slug: "deep_diver",
+    name: "Deep Diver",
+    desc: "Read 10 magazine articles",
+  },
+  {
+    slug: "culture_liaison",
+    name: "Culture Liaison",
+    desc: "Shared 10 magazine articles",
+  },
 ];
 
 export default async function MemberPage() {
@@ -163,7 +178,13 @@ export default async function MemberPage() {
                 </span>
               </div>
               <div className="mem-badges-grid">
-                {ALL_BADGES.map((badge) => {
+                {[...ALL_BADGES]
+                  .sort((a, b) => {
+                    const aEarned = earnedBadges.includes(a.slug) ? 0 : 1;
+                    const bEarned = earnedBadges.includes(b.slug) ? 0 : 1;
+                    return aEarned - bEarned;
+                  })
+                  .map((badge) => {
                   const earned = earnedBadges.includes(badge.slug);
                   return (
                     <div
@@ -191,6 +212,8 @@ export default async function MemberPage() {
                   ["Newsletter reaction", "+2 pts"],
                   ["Share a quote", "+10 pts"],
                   ["Quote liked", "+1 pt"],
+                  ["Read a magazine article", "+5 pts"],
+                  ["Share a magazine article", "+5 pts"],
                   ["Directory submission", "+25 pts"],
                 ].map(([action, pts]) => (
                   <div key={action} className="mem-points-row">
