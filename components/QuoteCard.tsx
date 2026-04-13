@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Heart, Flag, Share2, Bookmark, Quote as QuoteIcon } from 'lucide-react';
+import { Heart, Flag, Share2, Bookmark } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
@@ -20,13 +20,16 @@ interface QuoteCardProps {
     quoteLikes?: number | string;
     quoteReports?: number | string;
   };
+  /** Pre-populate liked/bookmarked state (e.g. on the collection page). */
+  initialLiked?: boolean;
+  initialBookmarked?: boolean;
 }
 
-export default function QuoteCard({ quote }: QuoteCardProps) {
+export default function QuoteCard({ quote, initialLiked = false, initialBookmarked = false }: QuoteCardProps) {
   const { data: session } = useSession();
   const [likes, setLikes] = useState(Number(quote.quoteLikes) || 0);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isLiked, setIsLiked] = useState(initialLiked);
+  const [isBookmarked, setIsBookmarked] = useState(initialBookmarked);
   const [isReported, setIsReported] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -69,7 +72,7 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ post_id: quote.databaseId, type, kind: 'quote' }),
       });
-      
+
       if (!res.ok) {
         // Revert
         if (type === 'like') {
@@ -79,7 +82,7 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
           setIsBookmarked(isBookmarked);
         }
       }
-    } catch (err) {
+    } catch {
       if (type === 'like') {
         setIsLiked(isLiked);
         setLikes(prev => isLiked ? prev + 1 : prev - 1);
@@ -115,7 +118,7 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
   };
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/quotes/${quote.id}-${quote.slug}`;
+    const url = `${window.location.origin}/quotes/${quote.databaseId}-${quote.slug}`;
     const title = `Quote via The Moveee`;
     const text = quote.content.replace(/<[^>]*>/g, '');
 
@@ -153,8 +156,8 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
         </div>
 
         <div className="quote-actions">
-          <button 
-            className={clsx('quote-action-btn', isLiked && 'active')} 
+          <button
+            className={clsx('quote-action-btn', isLiked && 'active')}
             onClick={() => handleAction('like')}
             disabled={isSubmitting}
             title={isLiked ? "Unlike" : "Like"}
@@ -163,16 +166,16 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
             <span>{likes}</span>
           </button>
 
-          <button 
-            className={clsx('quote-action-btn', isBookmarked && 'active')} 
+          <button
+            className={clsx('quote-action-btn', isBookmarked && 'active')}
             onClick={() => handleAction('bookmark')}
             disabled={isSubmitting}
-            title={isBookmarked ? "Remove bookmark" : "Bookmark"}
+            title={isBookmarked ? "Remove bookmark" : "Save to collection"}
           >
             <Bookmark className={clsx(isBookmarked && 'fill-gold stroke-gold')} size={18} />
           </button>
-          
-          <button 
+
+          <button
             className={clsx('quote-action-btn', isReported && 'opacity-50')}
             onClick={handleReport}
             disabled={isReported || isSubmitting}
@@ -181,8 +184,8 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
             <Flag className={clsx(isReported && 'fill-current')} size={18} />
           </button>
 
-          <button 
-            className={clsx('quote-action-btn', copied && 'active')} 
+          <button
+            className={clsx('quote-action-btn', copied && 'active')}
             onClick={handleShare}
             title={copied ? "Link copied!" : "Share quote"}
           >

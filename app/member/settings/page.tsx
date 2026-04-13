@@ -135,6 +135,7 @@ export default async function MemberSettingsPage() {
           <div className="mem-col-side">
             <section className="mem-card mem-links-card">
               <Link href="/member" className="mem-link">Dashboard →</Link>
+              <Link href="/member/collection" className="mem-link">My Collection →</Link>
               <Link href="/newsletter" className="mem-link">The Cultural Digest →</Link>
               <Link href="/events" className="mem-link">Upcoming Events →</Link>
               <Link href="/magazine" className="mem-link">Magazine →</Link>

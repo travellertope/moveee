@@ -157,6 +157,12 @@ export default async function MemberPage() {
 
             {/* Quick links */}
             <section className="mem-card mem-links-card">
+              <Link href="/member/collection" className="mem-link">
+                My Collection →
+              </Link>
+              <Link href="/member/settings" className="mem-link">
+                Account Settings →
+              </Link>
               <Link href="/newsletter" className="mem-link">
                 The Cultural Digest →
               </Link>

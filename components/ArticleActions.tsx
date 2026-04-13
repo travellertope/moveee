@@ -12,6 +12,7 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
   const { data: session } = useSession();
   const [bookmarked, setBookmarked] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
   const [copied, setCopied] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -23,6 +24,7 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
         .then(data => {
           if (data.liked_articles?.includes(postId)) setLiked(true);
           if (data.bookmarked_articles?.includes(postId)) setBookmarked(true);
+          if (typeof data.like_counts?.[postId] === 'number') setLikeCount(data.like_counts[postId]);
         })
         .catch(() => {});
     }
@@ -37,8 +39,12 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
 
     setIsSyncing(true);
     // Optimistic update
-    if (type === 'like') setLiked(!liked);
-    else setBookmarked(!bookmarked);
+    if (type === 'like') {
+      setLiked(prev => !prev);
+      setLikeCount(prev => liked ? Math.max(0, prev - 1) : prev + 1);
+    } else {
+      setBookmarked(prev => !prev);
+    }
 
     try {
       const res = await fetch("/api/user/action", {
@@ -46,16 +52,23 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ post_id: postId, type, kind: 'article' }),
       });
-      
-      const data = await res.json();
+
       if (!res.ok) {
         // Revert on error
-        if (type === 'like') setLiked(liked);
-        else setBookmarked(bookmarked);
+        if (type === 'like') {
+          setLiked(liked);
+          setLikeCount(prev => liked ? prev + 1 : Math.max(0, prev - 1));
+        } else {
+          setBookmarked(bookmarked);
+        }
       }
-    } catch (err) {
-      if (type === 'like') setLiked(liked);
-      else setBookmarked(bookmarked);
+    } catch {
+      if (type === 'like') {
+        setLiked(liked);
+        setLikeCount(prev => liked ? prev + 1 : Math.max(0, prev - 1));
+      } else {
+        setBookmarked(bookmarked);
+      }
     } finally {
       setIsSyncing(false);
     }
@@ -73,19 +86,15 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
         setTimeout(() => setCopied(false), 2000);
       }
 
-      // Award points for sharing
       if (session) {
         fetch("/api/points/award", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "magazine_share",
-            post_id: postId,
-          }),
+          body: JSON.stringify({ action: "magazine_share", post_id: postId }),
         }).catch(() => {});
       }
     } catch {
-      // user cancelled — do nothing
+      // user cancelled
     }
   };
 
@@ -96,7 +105,7 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
         aria-label={copied ? "Link copied!" : "Share"}
         onClick={handleShare}
         title={copied ? "Link copied!" : "Share this article"}
-        style={copied ? { background: 'var(--gold)', borderColor: 'var(--gold)' } : {}}
+        style={copied ? { background: "var(--gold)", borderColor: "var(--gold)" } : {}}
       >
         <Share2 size={14} strokeWidth={1.5} />
       </button>
@@ -106,8 +115,8 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
         aria-label={bookmarked ? "Remove bookmark" : "Bookmark"}
         onClick={() => toggleAction('bookmark')}
         disabled={isSyncing}
-        title={bookmarked ? "Remove bookmark" : "Bookmark this article"}
-        style={bookmarked ? { background: 'var(--gold)', borderColor: 'var(--gold)' } : {}}
+        title={bookmarked ? "Remove bookmark" : "Save to collection"}
+        style={bookmarked ? { background: "var(--gold)", borderColor: "var(--gold)" } : {}}
       >
         <Bookmark size={14} strokeWidth={1.5} fill={bookmarked ? "currentColor" : "none"} />
       </button>
@@ -118,9 +127,10 @@ export default function ArticleActions({ postId }: ArticleActionsProps) {
         onClick={() => toggleAction('like')}
         disabled={isSyncing}
         title={liked ? "Unlike this article" : "Like this article"}
-        style={liked ? { background: 'var(--ochre)', borderColor: 'var(--ochre)' } : {}}
+        style={liked ? { background: "var(--ochre)", borderColor: "var(--ochre)" } : {}}
       >
         <Heart size={14} strokeWidth={1.5} fill={liked ? "currentColor" : "none"} />
+        {likeCount > 0 && <span style={{ fontSize: "11px", marginLeft: 3 }}>{likeCount}</span>}
       </button>
     </div>
   );
