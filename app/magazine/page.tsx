@@ -5,7 +5,6 @@ import Image from "next/image";
 import Ticker from "@/components/Ticker";
 import CategoryNav from "@/components/CategoryNav";
 import MagazineFilters from "@/components/MagazineFilters";
-import SubscribeForm from "@/components/SubscribeForm";
 import EditorialSection from "@/components/EditorialSection";
 import "../magazine.css";
 
@@ -204,7 +203,7 @@ export default async function MagazineArchive({
 
       {/* ── FEATURED SECTION — 3 col ── */}
       {sectionBandStories.length > 0 && (
-        <section className="section-band">
+        <section className="section-band featured-band">
           <div className="sec-label">Selected</div>
           <div className="sec-header">
             <h3>Featured <em>Stories</em></h3>
@@ -263,7 +262,7 @@ export default async function MagazineArchive({
 
       {/* ── DIGEST ROW — small cards ── */}
       {digestStories.length > 0 && (
-        <section className="digest pt-16">
+        <section className="digest">
           <div className="sec-label">Digest</div>
           <div className="sec-header">
             <h3>Quick <em>Reads</em></h3>
@@ -307,21 +306,29 @@ export default async function MagazineArchive({
         </section>
       )}
 
-      {/* ── SUBSCRIBE BAND ── */}
-      <section className="sub-band">
-        <div className="sub-inner">
-          <div className="sub-left">
-            <h3>Join <em>The Moveee</em></h3>
-            <p>Get our weekly dispatch covering film, art, fashion, and the stories defining culture on the continent and beyond.</p>
+      {/* ── NEWSLETTER CTA BAND ── */}
+      <section className="cta-band">
+        <div className="cta-band-inner">
+          <div className="cta-band-left">
+            <div className="cta-band-label">Weekly Dispatch</div>
+            <h3>The Moveee <em>Newsletter</em></h3>
           </div>
-          <div className="sub-form">
-            <div className="sf-label">Newsletter</div>
-            <SubscribeForm
-              placeholder="Enter your email address..."
-              buttonLabel="Subscribe Free →"
-              buttonClassName="sub-btn"
-            />
-            <div className="sub-note">First issue arrives this Friday.</div>
+          <div className="cta-band-mid">
+            <p>
+              Culture, art, heritage, and the stories worth reading — curated from Lagos, London,
+              Accra, and the diaspora. In your inbox every Friday.
+            </p>
+            <div className="cta-band-tags">
+              <span>Film</span>
+              <span>Art</span>
+              <span>Fashion</span>
+              <span>Heritage</span>
+              <span>Music</span>
+            </div>
+          </div>
+          <div className="cta-band-right">
+            <Link href="/newsletter" className="cta-band-btn">Browse Issues →</Link>
+            <div className="cta-band-note">Free · Published every Friday</div>
           </div>
         </div>
       </section>
