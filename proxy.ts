@@ -40,17 +40,15 @@ const APP_ROUTES = new Set([
   'reset-password',
   'forgot-password',
   'connect',
-  // Section routes
-  'events',
-  'origins',
+  // Community features
+  'quotes',
+  'directory',
   // Additional app pages
   'author',
   'api',
   'ai-use',
   'cookie-policy',
   'shop',
-  'quotes',
-  'directory',
 ])
 
 // Alias redirects — old or alternative slugs that should map
