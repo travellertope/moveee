@@ -819,7 +819,7 @@ class Culture_REST_API {
             'secondary_chapter'   => array( 'id' => $secondary_id, 'name' => $secondary_name ),
             // Gamification
             'points'              => (int) get_user_meta( $user->ID, '_culture_points', true ),
-            'badges'              => (array) get_user_meta( $user->ID, '_culture_badges', true ),
+            'badges'              => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_badges( $user->ID ) : array(),
             'referral_code'       => $referral_code,
             'referral_count'      => $referral_count,
         );

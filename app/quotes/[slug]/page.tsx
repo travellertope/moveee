@@ -6,9 +6,7 @@ import QuoteCard from '@/components/QuoteCard';
 import '@/app/quotes.css';
 
 interface QuotePageProps {
-  params: {
-    slug: string; // Format: [databaseId]-[real-slug]
-  };
+  params: Promise<{ slug: string }>; // Format: [databaseId]-[real-slug]
 }
 
 /** Extract the numeric database ID from the URL segment. */
@@ -17,7 +15,8 @@ function parseId(segment: string): string {
 }
 
 export async function generateMetadata({ params }: QuotePageProps): Promise<Metadata> {
-  const id = parseId(params.slug);
+  const { slug } = await params;
+  const id = parseId(slug);
   const data = await getWPData(GET_QUOTE_BY_ID, { id });
   const quote = data?.cultureQuote;
 
@@ -37,7 +36,8 @@ export async function generateMetadata({ params }: QuotePageProps): Promise<Meta
 }
 
 export default async function IndividualQuotePage({ params }: QuotePageProps) {
-  const id = parseId(params.slug);
+  const { slug } = await params;
+  const id = parseId(slug);
   const data = await getWPData(GET_QUOTE_BY_ID, { id });
   const quote = data?.cultureQuote;
 

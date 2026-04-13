@@ -44,8 +44,8 @@ export default function CollectionTabs() {
   }, []);
 
   const items = data?.[tab] ?? [];
-  const likedCount = data?.liked.length ?? 0;
-  const bookmarkedCount = data?.bookmarked.length ?? 0;
+  const likedCount = data?.liked?.length ?? 0;
+  const bookmarkedCount = data?.bookmarked?.length ?? 0;
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
