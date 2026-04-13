@@ -325,6 +325,63 @@ export const GET_PRODUCT_BY_SLUG = `
   ${PRODUCT_FIELDS_FRAGMENT}
 `;
 
+const DIRECTORY_FIELDS_FRAGMENT = `
+  fragment DirectoryFields on CultureDirectory {
+    id
+    databaseId
+    title
+    slug
+    date
+    excerpt
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureDirectoryTypes {
+      nodes {
+        name
+        slug
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+    cultureAccesses {
+      nodes {
+        slug
+      }
+    }
+  }
+`;
+
+export const DIRECTORY_FIELDS = DIRECTORY_FIELDS_FRAGMENT;
+
+export const GET_DIRECTORY_ENTRIES = `
+  query GetDirectoryEntries($first: Int) {
+    cultureDirectories(first: $first, where: { status: PUBLISH }) {
+      nodes {
+        ...DirectoryFields
+      }
+    }
+  }
+  ${DIRECTORY_FIELDS_FRAGMENT}
+`;
+
+export const GET_DIRECTORY_ENTRY_BY_SLUG = `
+  query GetDirectoryEntryBySlug($slug: ID!) {
+    cultureDirectory(id: $slug, idType: SLUG) {
+      ...DirectoryFields
+      content
+    }
+  }
+  ${DIRECTORY_FIELDS_FRAGMENT}
+`;
+
 export const GET_SITE_SETTINGS = `
   query GetSiteSettings {
     allSettings {

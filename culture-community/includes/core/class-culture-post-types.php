@@ -67,6 +67,33 @@ class Culture_Post_Types {
             'capability_type' => 'post',
         ) );
 
+        // Culture Directory CPT – wiki-like entries for people, places, movements, etc.
+        register_post_type( 'culture_directory', array(
+            'labels' => array(
+                'name'               => __( 'Directory', 'culture-community' ),
+                'singular_name'      => __( 'Directory Entry', 'culture-community' ),
+                'add_new'            => __( 'Add New', 'culture-community' ),
+                'add_new_item'       => __( 'Add New Entry', 'culture-community' ),
+                'edit_item'          => __( 'Edit Entry', 'culture-community' ),
+                'view_item'          => __( 'View Entry', 'culture-community' ),
+                'all_items'          => __( 'All Entries', 'culture-community' ),
+                'search_items'       => __( 'Search Directory', 'culture-community' ),
+                'not_found'          => __( 'No entries found', 'culture-community' ),
+            ),
+            'public'              => true,
+            'has_archive'         => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-book-alt',
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'revisions' ),
+            'rewrite'             => array( 'slug' => 'directory' ),
+            'show_in_rest'        => true,
+            'capability_type'     => 'post',
+            // WPGraphQL support.
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'cultureDirectory',
+            'graphql_plural_name' => 'cultureDirectories',
+        ) );
+
         // Newsletter / Cultural Digest CPT – nested under Culture Community menu.
         register_post_type( 'culture_newsletter', array(
             'labels' => array(
@@ -112,7 +139,7 @@ class Culture_Post_Types {
          *
          * No term = fully public (default for all content).
          */
-        register_taxonomy( 'culture_access', array( 'post', 'culture_newsletter' ), array(
+        register_taxonomy( 'culture_access', array( 'post', 'culture_newsletter', 'culture_directory' ), array(
             'labels' => array(
                 'name'              => __( 'Access Level', 'culture-community' ),
                 'singular_name'     => __( 'Access Level', 'culture-community' ),
@@ -148,7 +175,7 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'cultureAccesses',
         ) );
 
-        register_taxonomy( 'culture_interest', array( 'culture_event', 'culture_newsletter', 'culture_chapter' ), array(
+        register_taxonomy( 'culture_interest', array( 'culture_event', 'culture_newsletter', 'culture_chapter', 'culture_directory' ), array(
             'labels' => array(
                 'name'          => __( 'Interests', 'culture-community' ),
                 'singular_name' => __( 'Interest', 'culture-community' ),
@@ -166,6 +193,42 @@ class Culture_Post_Types {
             'show_in_graphql'     => true,
             'graphql_single_name' => 'cultureInterest',
             'graphql_plural_name' => 'cultureInterests',
+        ) );
+
+        /**
+         * Directory entry type taxonomy.
+         *
+         * Classifies culture_directory entries by kind:
+         *   person, place, movement, genre, concept, artwork, food, fashion
+         *
+         * Non-public (no archive URLs), shown in block editor sidebar and admin.
+         * Exposed via WPGraphQL so the Next.js frontend can display the type badge.
+         */
+        register_taxonomy( 'culture_dir_type', array( 'culture_directory' ), array(
+            'labels' => array(
+                'name'          => __( 'Entry Type', 'culture-community' ),
+                'singular_name' => __( 'Entry Type', 'culture-community' ),
+                'search_items'  => __( 'Search Types', 'culture-community' ),
+                'all_items'     => __( 'All Types', 'culture-community' ),
+                'edit_item'     => __( 'Edit Type', 'culture-community' ),
+                'add_new_item'  => __( 'Add New Type', 'culture-community' ),
+            ),
+            'hierarchical'        => false,
+            'public'              => false,
+            'publicly_queryable'  => false,
+            'show_ui'             => true,
+            'show_admin_column'   => true,
+            'show_in_nav_menus'   => false,
+            'show_tagcloud'       => false,
+            'show_in_quick_edit'  => true,
+            'show_in_rest'        => true,
+            'rest_base'           => 'culture-dir-type',
+            'rewrite'             => false,
+            'query_var'           => false,
+            // WPGraphQL.
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'cultureDirectoryType',
+            'graphql_plural_name' => 'cultureDirectoryTypes',
         ) );
     }
 
@@ -190,6 +253,16 @@ class Culture_Post_Types {
             array( __CLASS__, 'render_event_meta_box' ),
             'culture_event',
             'normal',
+            'high'
+        );
+
+        // Directory entry meta box.
+        add_meta_box(
+            'culture_directory_meta',
+            __( 'Directory Entry Details', 'culture-community' ),
+            array( __CLASS__, 'render_directory_meta_box' ),
+            'culture_directory',
+            'side',
             'high'
         );
     }
@@ -278,6 +351,38 @@ class Culture_Post_Types {
     }
 
     /**
+     * Render the Directory Entry meta box.
+     */
+    public static function render_directory_meta_box( $post ) {
+        wp_nonce_field( 'culture_directory_meta', 'culture_directory_meta_nonce' );
+
+        $ai_generated  = get_post_meta( $post->ID, '_culture_dir_ai_generated', true );
+        $submitted_by  = get_post_meta( $post->ID, '_culture_dir_submitted_by', true );
+        $submitter     = $submitted_by ? get_userdata( (int) $submitted_by ) : null;
+        ?>
+        <table class="form-table">
+            <tr>
+                <th><label for="culture_dir_ai_generated"><?php esc_html_e( 'AI Generated', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="checkbox" id="culture_dir_ai_generated" name="culture_dir_ai_generated" value="1" <?php checked( $ai_generated, '1' ); ?> />
+                    <span class="description"><?php esc_html_e( 'Stub was generated by Gemini AI', 'culture-community' ); ?></span>
+                </td>
+            </tr>
+            <?php if ( $submitter ) : ?>
+            <tr>
+                <th><?php esc_html_e( 'Submitted By', 'culture-community' ); ?></th>
+                <td>
+                    <a href="<?php echo esc_url( get_edit_user_link( $submitter->ID ) ); ?>">
+                        <?php echo esc_html( $submitter->display_name ); ?>
+                    </a>
+                </td>
+            </tr>
+            <?php endif; ?>
+        </table>
+        <?php
+    }
+
+    /**
      * Save meta box data.
      */
     public static function save_meta_boxes( $post_id ) {
@@ -294,6 +399,14 @@ class Culture_Post_Types {
             if ( isset( $_POST['culture_chapter_leader_id'] ) ) {
                 update_post_meta( $post_id, '_culture_chapter_leader_id', absint( $_POST['culture_chapter_leader_id'] ) );
             }
+        }
+
+        // Directory entry meta.
+        if ( isset( $_POST['culture_directory_meta_nonce'] )
+            && wp_verify_nonce( $_POST['culture_directory_meta_nonce'], 'culture_directory_meta' ) ) {
+
+            $ai_generated = isset( $_POST['culture_dir_ai_generated'] ) ? '1' : '0';
+            update_post_meta( $post_id, '_culture_dir_ai_generated', $ai_generated );
         }
 
         // Event meta.

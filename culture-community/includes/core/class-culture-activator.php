@@ -18,9 +18,11 @@ class Culture_Activator {
         Culture_Cron::schedule();
         // Taxonomy must be registered before we can insert terms.
         if ( class_exists( 'Culture_Post_Types' ) ) {
+            Culture_Post_Types::register_post_types();
             Culture_Post_Types::register_taxonomies();
         }
         self::seed_access_levels();
+        self::seed_dir_types();
         flush_rewrite_rules();
     }
 
@@ -77,6 +79,34 @@ class Culture_Activator {
         foreach ( $terms as $slug => $name ) {
             if ( ! term_exists( $slug, 'culture_access' ) ) {
                 wp_insert_term( $name, 'culture_access', array( 'slug' => $slug ) );
+            }
+        }
+    }
+
+    /**
+     * Seed the eight default culture_dir_type taxonomy terms.
+     *
+     * Safe to call multiple times — skips terms that already exist.
+     */
+    public static function seed_dir_types() {
+        if ( ! taxonomy_exists( 'culture_dir_type' ) ) {
+            return;
+        }
+
+        $terms = array(
+            'person'   => __( 'Person', 'culture-community' ),
+            'place'    => __( 'Place', 'culture-community' ),
+            'movement' => __( 'Movement', 'culture-community' ),
+            'genre'    => __( 'Genre', 'culture-community' ),
+            'concept'  => __( 'Concept', 'culture-community' ),
+            'artwork'  => __( 'Artwork', 'culture-community' ),
+            'food'     => __( 'Food & Drink', 'culture-community' ),
+            'fashion'  => __( 'Fashion', 'culture-community' ),
+        );
+
+        foreach ( $terms as $slug => $name ) {
+            if ( ! term_exists( $slug, 'culture_dir_type' ) ) {
+                wp_insert_term( $name, 'culture_dir_type', array( 'slug' => $slug ) );
             }
         }
     }
