@@ -119,6 +119,28 @@ class Culture_Gamification {
             'trigger'     => 'dir_entry_count',
             'threshold'   => 20,
         ),
+        // ── Magazine & Engagement badges ─────────────────────────────────
+        'cultural_specialist' => array(
+            'name'        => 'Cultural Specialist',
+            'description' => 'Left 10 total comments on articles.',
+            'icon'        => 'dashicons-format-chat',
+            'trigger'     => 'total_comment_count',
+            'threshold'   => 10,
+        ),
+        'deep_diver' => array(
+            'name'        => 'Deep Diver',
+            'description' => 'Read 10 Magazine articles.',
+            'icon'        => 'dashicons-visibility',
+            'trigger'     => 'magazine_read_count',
+            'threshold'   => 10,
+        ),
+        'culture_liaison' => array(
+            'name'        => 'Culture Liaison',
+            'description' => 'Shared 10 Magazine articles.',
+            'icon'        => 'dashicons-share',
+            'trigger'     => 'magazine_share_count',
+            'threshold'   => 10,
+        ),
     );
 
     /**
@@ -132,6 +154,8 @@ class Culture_Gamification {
         'referral'            => 25,
         'quote_submission'    => 10,
         'quote_like'          => 1,
+        'magazine_read'       => 5,
+        'magazine_share'      => 5,
     );
 
     /**
@@ -320,6 +344,20 @@ class Culture_Gamification {
                        AND post_status IN ('publish', 'pending')",
                     $user_id
                 ) );
+
+            case 'total_comment_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*)
+                     FROM {$wpdb->comments}
+                     WHERE user_id = %d AND comment_approved = '1'",
+                    $user_id
+                ) );
+
+            case 'magazine_read_count':
+                return (int) get_user_meta( $user_id, '_magazine_read_count', true );
+
+            case 'magazine_share_count':
+                return (int) get_user_meta( $user_id, '_magazine_share_count', true );
 
             default:
                 return 0;

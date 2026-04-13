@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
+import ParagraphCommentSystem from "@/components/ParagraphCommentSystem";
 import ContentGate from "@/components/ContentGate";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -157,14 +158,12 @@ export default async function GmlIssuePage({
 
       {/* ── ISSUE BODY + SIDEBAR ── */}
       <div className="gml-issue-wrap">
-        {/* Main content */}
+        {/* Main content (Interactive Paragraph Comments) */}
         <article id="issue-body">
           {canView ? (
-            <div
-              className="gml-issue-prose"
-              dangerouslySetInnerHTML={{
-                __html: sanitiseContent(issue.content || ""),
-              }}
+            <ParagraphCommentSystem 
+              postId={parseInt(issue.databaseId)} 
+              content={sanitiseContent(issue.content || "")} 
             />
           ) : (
             <>

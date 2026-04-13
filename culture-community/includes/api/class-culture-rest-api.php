@@ -325,6 +325,18 @@ class Culture_REST_API {
                 ),
             ),
         ) );
+
+        // Award points — requires API key auth.
+        register_rest_route( 'culture/v1', '/points/award', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_award_points' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'action'  => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_key' ),
+                'post_id' => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
     }
 
     /**
@@ -1131,6 +1143,48 @@ class Culture_REST_API {
                 'content' => wpautop( $content ),
                 'date'    => current_time( 'mysql' ),
             ),
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/points/award
+     * Award points for a specific action (read, share, etc).
+     */
+    public static function handle_award_points( $request ) {
+        $user_id = $request->get_param( 'user_id' );
+        $action  = $request->get_param( 'action' );
+        $post_id = $request->get_param( 'post_id' );
+
+        if ( ! class_exists( 'Culture_Gamification' ) ) {
+            return new WP_Error( 'internal_error', 'Gamification system missing.', array( 'status' => 500 ) );
+        }
+
+        // Prevent double-awarding for read/share actions on the same post.
+        if ( $post_id && in_array( $action, array( 'magazine_read', 'magazine_share' ), true ) ) {
+            $meta_key = "_culture_{$action}_{$post_id}";
+            $awarded = get_user_meta( $user_id, $meta_key, true );
+            if ( $awarded ) {
+                return rest_ensure_response( array( 'success' => false, 'message' => 'Already awarded.' ) );
+            }
+            update_user_meta( $user_id, $meta_key, true );
+
+            // Increment separate counters for badge tracking.
+            if ( 'magazine_read' === $action ) {
+                $count = (int) get_user_meta( $user_id, '_magazine_read_count', true ) + 1;
+                update_user_meta( $user_id, '_magazine_read_count', $count );
+            } elseif ( 'magazine_share' === $action ) {
+                $count = (int) get_user_meta( $user_id, '_magazine_share_count', true ) + 1;
+                update_user_meta( $user_id, '_magazine_share_count', $count );
+            }
+        }
+
+        $new_total = Culture_Gamification::award_points( $user_id, $action );
+
+        return rest_ensure_response( array(
+            'success'   => true,
+            'points'    => $new_total,
+            'awarded'   => Culture_Gamification::get_point_value( $action ),
+            'new_badges' => array(), // Logic for detecting newly awarded badges could go here if needed.
         ) );
     }
 }

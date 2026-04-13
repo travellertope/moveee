@@ -368,14 +368,13 @@ h1, h2, h3, h4 {
 .interactive-paragraph-wrapper p {
   position: relative;
   transition: background-color 0.3s ease;
-  padding-right: 40px;
+  /* Remove the forced padding-right that narrrowed the content */
 }
 
 .comment-bubble-trigger {
   position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%) translateX(10px);
+  right: -32px; /* Positioned outside the text container by default */
+  top: 0;
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -392,10 +391,19 @@ h1, h2, h3, h4 {
   z-index: 10;
 }
 
+@media (max-width: 768px) {
+  .comment-bubble-trigger {
+    right: 0px; /* On mobile, keep it at the edge but not outside */
+    width: 22px;
+    height: 22px;
+    font-size: 10px;
+    background: rgba(245, 240, 232, 0.9); /* More transparent */
+  }
+}
+
 .interactive-paragraph-wrapper:hover .comment-bubble-trigger,
 .comment-bubble-trigger:focus-visible {
   opacity: 1;
-  transform: translateY(-50%) translateX(0);
 }
 
 .comment-bubble-trigger.active {
