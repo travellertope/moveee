@@ -35,7 +35,7 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/quote/like', {
+      const res = await fetch('/api/quotes/like', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quoteId: quote.databaseId }),
@@ -58,7 +58,7 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/quote/report', {
+      const res = await fetch('/api/quotes/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quoteId: quote.databaseId }),
@@ -77,7 +77,7 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
 
   return (
     <article className="quote-card">
-      <Link href={`/quote/${quote.id}-${quote.slug}`} className="quote-content-link" style={{ textDecoration: 'none', color: 'inherit' }}>
+      <Link href={`/quotes/${quote.id}-${quote.slug}`} className="quote-content-link" style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className="quote-content" dangerouslySetInnerHTML={{ __html: quote.content }} />
       </Link>
 

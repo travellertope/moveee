@@ -139,7 +139,7 @@ class Culture_Post_Types {
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-format-quote',
             'supports'            => array( 'title', 'editor' ),
-            'rewrite'             => array( 'slug' => 'quote' ),
+            'rewrite'             => array( 'slug' => 'quotes' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',
             // WPGraphQL support.

@@ -49,7 +49,7 @@ const APP_ROUTES = new Set([
   'ai-use',
   'cookie-policy',
   'shop',
-  'quote',
+  'quotes',
   'directory',
 ])
 

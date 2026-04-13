@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { getWPData, GET_QUOTES } from '@/lib/wp';
 import QuoteCard from '@/components/QuoteCard';
 import SubmitQuoteTrigger from '@/components/SubmitQuoteTrigger';
-import '@/app/quote.css';
+import '@/app/quotes.css';
 
 export const dynamic = 'force-dynamic';
 
