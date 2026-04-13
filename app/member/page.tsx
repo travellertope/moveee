@@ -279,7 +279,7 @@ export default async function MemberPage() {
               <Link href="/directory" className="mem-link">
                 Culture Directory →
               </Link>
-              <Link href="/quote" className="mem-link">
+              <Link href="/quotes" className="mem-link">
                 Quotes Archive →
               </Link>
               <Link

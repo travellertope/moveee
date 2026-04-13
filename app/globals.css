@@ -407,6 +407,11 @@ h1, h2, h3, h4 {
 }
 
 .comment-bubble-trigger.active {
+  background: var(--ochre);
+  color: var(--paper);
+  opacity: 1;
+}
+
 .comment-count-badge {
   position: absolute;
   top: -5px;
