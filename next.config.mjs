@@ -1,15 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Explicit rewrites so Vercel/platform routing never intercepts these
-  // paths and incorrectly maps them to /magazine/[slug].
-  async rewrites() {
-    return [
-      { source: '/quote',              destination: '/quote' },
-      { source: '/quote/:path*',       destination: '/quote/:path*' },
-      { source: '/directory',          destination: '/directory' },
-      { source: '/directory/:path*',   destination: '/directory/:path*' },
-    ];
-  },
   images: {
     remotePatterns: [
       {

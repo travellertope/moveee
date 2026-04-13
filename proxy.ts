@@ -43,6 +43,9 @@ const APP_ROUTES = new Set([
   // Section routes
   'events',
   'origins',
+  // Community features
+  'quote',
+  'directory',
   // Additional app pages
   'author',
   'api',
