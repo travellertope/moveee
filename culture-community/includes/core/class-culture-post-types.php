@@ -215,7 +215,7 @@ class Culture_Post_Types {
             'public'              => true,
             'show_in_rest'        => true,
             'show_in_menu'        => true,
-            'rewrite'             => array( 'slug' => 'quote-author' ),
+            'rewrite'             => array( 'slug' => 'quotes-author' ),
             // WPGraphQL support.
             'show_in_graphql'     => true,
             'graphql_single_name' => 'quoteAuthor',

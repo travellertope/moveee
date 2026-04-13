@@ -85,7 +85,7 @@ export default function QuoteCard({ quote }: QuoteCardProps) {
         <div className="quote-author-info">
           <cite>
             {authorSlug ? (
-              <Link href={`/quote/author/${authorSlug}`} className="hover:underline">
+              <Link href={`/quotes/author/${authorSlug}`} className="hover:underline">
                 — {author}
               </Link>
             ) : (
