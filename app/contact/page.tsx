@@ -1,5 +1,4 @@
 import Link from "next/link";
-import "@/app/legal.css";
 
 export const metadata = {
   title: "Contact Us · The Moveee",
@@ -15,9 +14,10 @@ export default function ContactPage() {
 
       <div className="legal-body">
         <p>
-          We are a small, independent editorial team operating across four cities. Whether you have
-          a story pitch, a partnership idea, a press enquiry, or just want to say hello — we want to
-          hear from you. Use the contacts below to reach the right team directly.
+          We are a small, independent editorial team operating across four cities, headquartered in
+          Lagos. Whether you have a story pitch, a partnership idea, a press enquiry, or just want
+          to say hello — we want to hear from you. Use the contacts below to reach the right team
+          directly.
         </p>
 
         <h2>Editorial</h2>
@@ -57,7 +57,7 @@ export default function ContactPage() {
           <div className="contact-card">
             <div className="contact-card-label">Events</div>
             <h3>Events Team</h3>
-            <p>Cultural events, screenings, talks, and community gatherings. Venue and production partnerships welcome.</p>
+            <p>Cultural events, screenings, talks, and community gatherings across Lagos and the diaspora. Venue and production partnerships welcome.</p>
             <a href="mailto:events@themoveee.com">events@themoveee.com</a>
           </div>
           <div className="contact-card">
@@ -89,7 +89,7 @@ export default function ContactPage() {
         <h2>Data & Privacy</h2>
         <p>
           For privacy-related enquiries, data subject access requests, or to exercise your rights
-          under UK GDPR, please contact{" "}
+          under the Nigeria Data Protection Regulation (NDPR), please contact{" "}
           <a href="mailto:privacy@themoveee.com">privacy@themoveee.com</a>. See our{" "}
           <Link href="/privacy">Privacy Policy</Link> for full details.
         </p>
