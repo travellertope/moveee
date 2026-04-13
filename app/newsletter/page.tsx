@@ -1,7 +1,7 @@
 import React from "react";
 import { getWPData, GET_NEWSLETTERS } from "@/lib/wp";
 import Link from "next/link";
-import SubscribeForm from "@/components/SubscribeForm";
+import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import GmlCTAForm from "@/components/GmlCTAForm";
 import GmlWaitlistForm from "@/components/GmlWaitlistForm";
 import "../newsletter.css";
@@ -52,10 +52,11 @@ export default async function NewsletterArchive() {
               two weeks by The Moveee.
             </p>
             <div className="gml-hero-form">
-              <SubscribeForm
+              <NewsletterSubscribeWidget
                 placeholder="your@email.com"
                 buttonLabel="Subscribe →"
                 buttonClassName="gml-hero-btn"
+                variant="dark"
               />
             </div>
             <div className="gml-hero-note">

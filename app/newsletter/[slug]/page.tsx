@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
-import SubscribeForm from "@/components/SubscribeForm";
+import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import "../../newsletter.css";
 
 export const dynamic = "force-dynamic";
@@ -165,7 +165,7 @@ export default async function GmlIssuePage({
               Essays, picks, music, and events from across the African
               diaspora.
             </p>
-            <SubscribeForm
+            <NewsletterSubscribeWidget
               placeholder="your@email.com"
               buttonLabel="Subscribe free →"
             />
@@ -213,10 +213,11 @@ export default async function GmlIssuePage({
           </div>
           <div className="gml-signup-right">
             <div className="gml-form-label">Subscribe to GetMeLit</div>
-            <SubscribeForm
+            <NewsletterSubscribeWidget
               placeholder="your@email.com"
               buttonLabel="Get Me Lit →"
               buttonClassName="gml-signup-submit"
+              variant="dark"
             />
             <div className="gml-signup-note">
               Free · Biweekly · Unsubscribe anytime
