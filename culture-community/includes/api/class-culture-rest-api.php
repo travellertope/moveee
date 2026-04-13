@@ -1132,7 +1132,9 @@ class Culture_REST_API {
         
         // Award points.
         if ( class_exists( 'Culture_Gamification' ) ) {
-            Culture_Gamification::award_points( $user_id, 'newsletter_comment' );
+            $post_type = get_post_type( $post_id );
+            $action = ( 'culture_newsletter' === $post_type ) ? 'newsletter_comment' : 'magazine_comment';
+            Culture_Gamification::award_points( $user_id, $action );
         }
 
         return rest_ensure_response( array(
