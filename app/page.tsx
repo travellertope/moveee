@@ -12,7 +12,7 @@ export default async function Home() {
   let products: any[] = [];
 
   try {
-    const data = await getWPData(GET_STORIES, { first: 5 });
+    const data = await getWPData(GET_STORIES, { first: 6 });
     stories = data?.posts?.nodes || [];
   } catch (err) {
     console.error(err);
@@ -62,14 +62,13 @@ export default async function Home() {
 
   const featuredStory = stories[0] || null;
   const magLeadStory = stories[1] || featuredStory; // Lead for Mag Pillar
-  const remainingStories = stories.slice(2, 5); // Right side 3 stories
+  const remainingStories = stories.slice(2, 6); // Right side 4 stories
 
   return (
     <>
       <section className="hero">
         <div className="hero-grid">
           <div className="hero-lede">
-            <div className="section-label mono">The Dispatch · N°01</div>
             <h2>
               A field guide to <em>daring</em><br/>
               <span className="underline">moves</span> in culture,<br/>
@@ -85,22 +84,22 @@ export default async function Home() {
           </div>
 
           <div className="hero-visual">
-            <div className="hero-frame">
-              <div className="hero-ticker">
-                <span>Frame · 01 / 05</span>
-                <span>Shot on 35mm</span>
-              </div>
-              
-              {featuredStory?.featuredImage && (
-                <Image 
-                  src={featuredStory.featuredImage.node.sourceUrl} 
-                  alt={featuredStory.featuredImage.node.altText || featuredStory.title} 
-                  fill 
-                  className="object-cover transition-transform duration-1000 hover:scale-105"
-                  priority
-                />
-              )}
-            </div>
+              <Link href={`/magazine/${featuredStory.slug}`} className="hero-frame">
+                <div className="hero-ticker">
+                  <span>Frame · 01 / 05</span>
+                  <span>Shot on 35mm</span>
+                </div>
+                
+                {featuredStory?.featuredImage && (
+                  <Image 
+                    src={featuredStory.featuredImage.node.sourceUrl} 
+                    alt={featuredStory.featuredImage.node.altText || featuredStory.title} 
+                    fill 
+                    className="object-cover transition-transform duration-1000 hover:scale-105"
+                    priority
+                  />
+                )}
+              </Link>
             
             {featuredStory && (
               <Link href={`/magazine/${featuredStory.slug}`} className="hero-caption" style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
@@ -136,7 +135,7 @@ export default async function Home() {
                         src={magLeadStory.featuredImage.node.sourceUrl} 
                         alt={magLeadStory.featuredImage.node.altText || ""} 
                         fill 
-                        className="object-cover"
+                        className="object-cover grayscale-0 hover:grayscale transition-all duration-700"
                       />
                     )}
                   </div>
@@ -153,7 +152,7 @@ export default async function Home() {
               </Link>
             )}
 
-            <div className="mag-list col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
+            <div className="mag-list grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
               {remainingStories.map((story: any, idx: number) => (
                 <Link key={story.id} href={`/magazine/${story.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <article className="mag-item h-full">
@@ -163,12 +162,16 @@ export default async function Home() {
                           src={story.featuredImage.node.sourceUrl} 
                           alt={story.featuredImage.node.altText || ""} 
                           fill 
-                          className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                          className="object-cover grayscale-0 hover:grayscale transition-all duration-700"
                         />
                       )}
                     </div>
                     <div className="num">0{idx + 1}</div>
                     <h5>{story.title}</h5>
+                    <div 
+                      className="text-xs text-ink-soft mb-3 line-clamp-2 opacity-80"
+                      dangerouslySetInnerHTML={{ __html: story.excerpt }}
+                    />
                     <div className="meta">
                       {story.categories?.nodes[0]?.name || "Culture"}
                       {story.countries?.nodes[0]?.name ? ` · ${story.countries.nodes[0].name}` : ''}

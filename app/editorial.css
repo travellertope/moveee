@@ -39,7 +39,7 @@
   z-index: 2;
   margin-top: 0;
 }
-.article-hero svg {
+.article-hero > svg {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -680,6 +680,44 @@
   text-transform: uppercase;
   color: var(--mute);
   line-height: 1.7;
+}
+
+/* ── RESPONSIVE EMBEDS & IMAGES ── */
+/* Constrain all images in post content */
+.prose-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Make iframes (YouTube, Vimeo, etc.) fluid within the content column */
+.prose-content iframe {
+  max-width: 100%;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  display: block;
+}
+
+/* WordPress block embed wrapper — override any inline width/height */
+.prose-content .wp-block-embed,
+.prose-content figure.wp-block-embed {
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+.prose-content .wp-block-embed__wrapper {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 */
+  height: 0;
+  overflow: hidden;
+}
+.prose-content .wp-block-embed__wrapper iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: unset; /* already sized by the padding-bottom trick */
 }
 
 /* ── RESPONSIVE ── */

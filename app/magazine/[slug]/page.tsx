@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
 import SubscribeForm from "@/components/SubscribeForm";
+import ArticleActions from "@/components/ArticleActions";
 
 export const dynamic = "force-dynamic";
 
@@ -142,11 +143,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                 <div className="b-label">Category</div>
                 <div className="b-val">{categoryName}</div>
               </div>
-              <div className="share-row">
-                <button className="sh-btn" aria-label="Share">↗</button>
-                <button className="sh-btn" aria-label="Bookmark">✦</button>
-                <button className="sh-btn" aria-label="Favourite">☆</button>
-              </div>
+              <ArticleActions />
             </div>
           </div>
         </section>
@@ -183,11 +180,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               <div className="b-label">Category</div>
               <div className="b-val">{categoryName}</div>
             </div>
-            <div className="share-row">
-              <button className="sh-btn" aria-label="Share">↗</button>
-              <button className="sh-btn" aria-label="Bookmark">✦</button>
-              <button className="sh-btn" aria-label="Favourite">☆</button>
-            </div>
+            <ArticleActions />
           </div>
         </header>
         </>
@@ -336,10 +329,13 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           </h4>
           <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and the diaspora. Long-form essays and visual stories that document the things that matter."}</p>
         </div>
-        {post.author?.node?.slug ? (
-            <Link href={`/author/${post.author.node.slug}`} className="author-cta">More by {post.author.node.name.split(" ")[0]} →</Link>
-        ) : (
-            <Link href="/magazine" className="author-cta">More stories →</Link>
+        {post.author?.node && (
+          <Link
+            href={`/author/${post.author.node.slug || post.author.node.name?.toLowerCase().replace(/\s+/g, '-')}`}
+            className="author-cta"
+          >
+            More by {post.author.node.name?.split(" ")[0]} →
+          </Link>
         )}
       </div>
 

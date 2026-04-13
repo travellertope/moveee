@@ -22,40 +22,43 @@ const Ticker = ({
 }: TickerProps) => {
 
   const content = (
-    <span className="inline-flex items-center">
-      <span className="ticker-item px-6 flex items-center">
+    <div className="flex items-center space-x-24 px-12">
+      <div className="flex items-center gap-3">
+        <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
         {issueUrl ? (
-          <Link href={issueUrl} className="hover:underline flex items-center">
-            <span className="w-1.5 h-1.5 bg-white rounded-full mr-2"></span>{issueText}
+          <Link href={issueUrl} className="hover:underline whitespace-nowrap">
+            {issueText}
           </Link>
         ) : (
-          <span className="flex items-center">
-            <span className="w-1.5 h-1.5 bg-white rounded-full mr-2"></span>{issueText}
-          </span>
+          <span className="whitespace-nowrap">{issueText}</span>
         )}
+      </div>
+      <span className="whitespace-nowrap text-white/70">{date}</span>
+      <span className="whitespace-nowrap text-white/70 tracking-[0.2em]">
+        {locations}
       </span>
-      <span className="ticker-item px-6">{date}</span>
-      <span className="ticker-item px-6">{locations}</span>
-      <span className="ticker-item px-6">
+      <div className="flex items-center gap-3">
         {announcementUrl ? (
-          <Link href={announcementUrl} className="hover:underline">
+          <Link href={announcementUrl} className="hover:underline whitespace-nowrap">
             {announcementText}
           </Link>
         ) : (
-          announcementText
+          <span className="whitespace-nowrap">{announcementText}</span>
         )}
-      </span>
-      <span className="px-6">·</span>
-    </span>
+      </div>
+      <span className="px-6 text-white/20">|</span>
+    </div>
   );
 
   return (
-    <div className="bg-black text-white py-2 overflow-hidden whitespace-nowrap border-b border-white/10 uppercase text-[10px] tracking-[0.15em] font-sans font-medium">
-      <div className="inline-block animate-marquee whitespace-nowrap">
-        {content}
-        {content}
-        {content}
-        {content}
+    <div className="bg-black text-white py-2 overflow-hidden whitespace-nowrap border-b border-white/10 uppercase text-[10px] tracking-[0.2em] font-sans font-medium">
+      <div className="flex w-max animate-marquee">
+        {/* Two copies: animation translates -50% (= one copy width) for seamless loop */}
+        {Array(2).fill(null).map((_, i) => (
+          <div key={i} className="flex shrink-0 items-center">
+            {content}
+          </div>
+        ))}
       </div>
     </div>
   );
