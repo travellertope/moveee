@@ -43,6 +43,8 @@ const ALL_BADGES = [
     desc: "10 newsletter comments",
   },
   {
+    slug: "century-club",
+    name: "Century Club",
     desc: "Earned 100 points",
   },
   {
