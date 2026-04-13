@@ -282,6 +282,16 @@ class Culture_REST_API {
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
 
+        // Get user profile (live data) — requires API key auth.
+        register_rest_route( 'culture/v1', '/user/profile', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_user_profile' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Newsletter preferences — GET returns state, POST updates it. Requires API key.
         register_rest_route( 'culture/v1', '/newsletter-preferences', array(
             array(
@@ -1187,6 +1197,25 @@ class Culture_REST_API {
             'points'    => $new_total,
             'awarded'   => Culture_Gamification::get_point_value( $action ),
             'new_badges' => array(), // Logic for detecting newly awarded badges could go here if needed.
+        ) );
+    /**
+     * GET /culture/v1/user/profile?user_id=X
+     * Returns live points and badges for a user.
+     */
+    public static function handle_get_user_profile( $request ) {
+        $user_id = $request->get_param( 'user_id' );
+        
+        if ( ! $user_id || ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 444 ) );
+        }
+
+        $points = (int) get_user_meta( $user_id, '_culture_points', true );
+        $badges = get_user_meta( $user_id, '_culture_badges', true ) ?: array();
+
+        return rest_ensure_response( array(
+            'id'     => $user_id,
+            'points' => $points,
+            'badges' => $badges,
         ) );
     }
 }

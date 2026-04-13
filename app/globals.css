@@ -549,9 +549,22 @@ h1, h2, h3, h4 {
 }
 
 .comment-body {
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--ink);
+}
+
+.comment-body p {
+  margin-bottom: 0.5em;
+}
+
+.comment-body p::first-letter {
+  all: unset !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  color: inherit !important;
+  float: none !important;
+  margin: 0 !important;
 }
 
 .comment-sidebar-footer {
@@ -633,7 +646,7 @@ h1, h2, h3, h4 {
   text-decoration: underline;
 }
 
-.prose-content .interactive-paragraph-wrapper:first-of-type p::first-letter {
+.interactive-paragraph-wrapper.is-first-paragraph p:not(.comment-body p)::first-letter {
   float: left;
   font-family: var(--font-fraunces);
   font-size: 5.5rem;

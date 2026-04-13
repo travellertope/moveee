@@ -12,13 +12,31 @@ function wpAuthHeaders() {
   };
 }
 
-/** GET /api/user/profile — returns current session data (no extra WP call needed) */
+/** GET /api/user/profile — returns current session data + LIVE points/badges from WP */
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
   const u = session.user as any;
+
+  // Fetch live points and badges from WP to ensure UI is always in sync with DB
+  let liveData = { points: u.points, badges: u.badges };
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/profile?user_id=${u.id}`, {
+      headers: wpAuthHeaders(),
+      cache: 'no-store'
+    });
+    if (res.ok) {
+      const data = await res.json();
+      liveData.points = data.points;
+      liveData.badges = data.badges;
+    }
+  } catch (err) {
+    console.error("Failed to fetch live profile data:", err);
+  }
+
   return NextResponse.json({
     id: u.id,
     email: u.email,
@@ -34,8 +52,8 @@ export async function GET() {
     city: u.city ?? "",
     occupation: u.occupation ?? "",
     tier: u.tier,
-    points: u.points ?? 0,
-    badges: u.badges ?? [],
+    points: liveData.points,
+    badges: liveData.badges,
     primaryChapter: u.primaryChapter ?? null,
     secondaryChapter: u.secondaryChapter ?? null,
     referralCode: u.referralCode ?? null,
