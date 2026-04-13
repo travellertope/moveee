@@ -1,5 +1,4 @@
 import Link from "next/link";
-import "@/app/legal.css";
 
 export const metadata = {
   title: "AI Use Policy · The Moveee",

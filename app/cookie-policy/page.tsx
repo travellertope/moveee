@@ -1,5 +1,4 @@
 import Link from "next/link";
-import "@/app/legal.css";
 
 export const metadata = {
   title: "Cookie Policy · The Moveee",
@@ -120,6 +119,14 @@ export default function CookiePolicyPage() {
           <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">
             Google Analytics Opt-out Browser Add-on
           </a>.
+        </p>
+
+        <h2>Nigerian Data Protection</h2>
+        <p>
+          Our use of cookies is governed by the Nigeria Data Protection Regulation (NDPR) 2019. If you
+          have concerns about how your data is handled, you may contact NITDA (National Information
+          Technology Development Agency) at{" "}
+          <a href="https://nitda.gov.ng" target="_blank" rel="noopener noreferrer">nitda.gov.ng</a>.
         </p>
 
         <h2>Changes to This Policy</h2>

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import "@/app/legal.css";
 
 export const metadata = {
   title: "Privacy Policy · The Moveee",
@@ -60,16 +59,21 @@ export default function PrivacyPage() {
 
         <hr className="legal-divider" />
 
-        <h2>3. Legal Basis for Processing (UK & EU Users)</h2>
+        <h2>3. Legal Basis for Processing</h2>
         <p>
-          Where the UK GDPR or EU GDPR applies, we process your data on the following lawful bases:
+          We process your personal data in accordance with the Nigeria Data Protection Regulation
+          (NDPR) 2019, administered by the National Information Technology Development Agency (NITDA).
+          Our lawful bases for processing include:
         </p>
         <ul>
           <li><strong>Consent</strong> — for newsletters and optional communications (you may withdraw at any time).</li>
           <li><strong>Contract</strong> — to fulfil orders and membership obligations.</li>
           <li><strong>Legitimate interests</strong> — for site analytics, fraud prevention, and service improvement, balanced against your rights.</li>
-          <li><strong>Legal obligation</strong> — where required by law.</li>
+          <li><strong>Legal obligation</strong> — where required by applicable Nigerian law.</li>
         </ul>
+        <p>
+          For users in the EU or UK, we also comply with the EU GDPR and UK GDPR as applicable.
+        </p>
 
         <hr className="legal-divider" />
 
@@ -78,13 +82,13 @@ export default function PrivacyPage() {
         <ul>
           <li><strong>Email delivery platforms</strong> (e.g. Mailchimp, Klaviyo) — for newsletter dispatch.</li>
           <li><strong>Analytics providers</strong> (e.g. Google Analytics) — for aggregated site usage reporting.</li>
-          <li><strong>Payment processors</strong> (e.g. Stripe) — for secure transaction handling.</li>
+          <li><strong>Payment processors</strong> (e.g. Paystack, Stripe) — for secure transaction handling.</li>
           <li><strong>Event platforms</strong> — for ticket management and guest communications.</li>
           <li><strong>Hosting and infrastructure providers</strong> — for secure data storage and platform operation.</li>
         </ul>
         <p>
           All third-party processors are contractually required to handle your data in compliance with
-          applicable data protection laws and only for the purposes we specify.
+          the NDPR and other applicable data protection laws, and only for the purposes we specify.
         </p>
 
         <hr className="legal-divider" />
@@ -92,8 +96,9 @@ export default function PrivacyPage() {
         <h2>5. International Transfers</h2>
         <p>
           The Moveee operates across Lagos, London, Accra, and New York. Your data may be processed
-          in countries outside the UK or EEA. Where this occurs, we ensure appropriate safeguards are
-          in place (such as Standard Contractual Clauses) to protect your information.
+          in countries outside Nigeria. Where this occurs, we ensure appropriate safeguards are
+          in place to protect your information in accordance with NDPR requirements and international
+          data protection standards.
         </p>
 
         <hr className="legal-divider" />
@@ -101,19 +106,19 @@ export default function PrivacyPage() {
         <h2>6. Data Retention</h2>
         <p>
           We retain your personal data only for as long as necessary for the purposes set out in this
-          policy, or as required by law. Newsletter subscriber data is retained until you unsubscribe.
-          Order data is retained for seven years for tax and legal compliance. You may request deletion
-          at any time (see Your Rights below).
+          policy, or as required by Nigerian law. Newsletter subscriber data is retained until you
+          unsubscribe. Order data is retained for seven years for tax and legal compliance. You may
+          request deletion at any time (see Your Rights below).
         </p>
 
         <hr className="legal-divider" />
 
         <h2>7. Your Rights</h2>
-        <p>Depending on your location, you have the right to:</p>
+        <p>Under the NDPR and applicable law, you have the right to:</p>
         <ul>
           <li><strong>Access</strong> the personal data we hold about you.</li>
           <li><strong>Rectify</strong> inaccurate or incomplete data.</li>
-          <li><strong>Erase</strong> your data ("right to be forgotten") in certain circumstances.</li>
+          <li><strong>Erase</strong> your data in certain circumstances.</li>
           <li><strong>Restrict</strong> or object to processing.</li>
           <li><strong>Data portability</strong> — receive your data in a machine-readable format.</li>
           <li><strong>Withdraw consent</strong> at any time where processing is based on consent.</li>
@@ -137,8 +142,8 @@ export default function PrivacyPage() {
 
         <h2>9. Children</h2>
         <p>
-          The Moveee is not directed at children under 16. We do not knowingly collect personal data
-          from anyone under 16. If you believe a child has provided us with personal information,
+          The Moveee is not directed at children under 18. We do not knowingly collect personal data
+          from anyone under 18. If you believe a child has provided us with personal information,
           please contact us immediately.
         </p>
 
@@ -157,12 +162,13 @@ export default function PrivacyPage() {
         <p>
           For privacy-related enquiries, contact our data team at{" "}
           <a href="mailto:privacy@themoveee.com">privacy@themoveee.com</a>, or write to:
-          Moveee Media Ltd, London, United Kingdom.
+          Moveee Media Ltd, Lagos, Nigeria.
         </p>
         <p>
-          If you are unsatisfied with our response, you have the right to lodge a complaint with the
-          UK Information Commissioner's Office (ICO) at{" "}
-          <a href="https://ico.org.uk" target="_blank" rel="noopener noreferrer">ico.org.uk</a>.
+          If you are unsatisfied with our response, you have the right to lodge a complaint with
+          NITDA (National Information Technology Development Agency), the regulatory body responsible
+          for data protection in Nigeria, at{" "}
+          <a href="https://nitda.gov.ng" target="_blank" rel="noopener noreferrer">nitda.gov.ng</a>.
         </p>
       </div>
     </div>

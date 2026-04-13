@@ -1,5 +1,4 @@
 import Link from "next/link";
-import "@/app/legal.css";
 
 export const metadata = {
   title: "Terms of Use · The Moveee",
@@ -25,8 +24,9 @@ export default function TermsPage() {
         <p>
           The Moveee is an independent editorial and lifestyle platform dedicated to African and
           diaspora culture. We publish long-form journalism, curate cultural events, facilitate origin
-          journeys, and operate a vetted commerce platform. Our registered company is Moveee Media Ltd,
-          England & Wales.
+          journeys, and operate a vetted commerce platform. Moveee Media Ltd is registered and
+          primarily operates in the Federal Republic of Nigeria, with presence across Lagos, London,
+          Accra, and New York.
         </p>
 
         <h2>2. Intellectual Property</h2>
@@ -64,7 +64,7 @@ export default function TermsPage() {
           <li>Use automated tools to access, index, or download content at scale.</li>
           <li>Engage in any activity that disrupts or damages our infrastructure.</li>
           <li>Submit false, misleading, or fraudulent information in any form.</li>
-          <li>Violate any applicable law or regulation.</li>
+          <li>Violate any applicable Nigerian law or regulation, including the Cybercrimes (Prohibition, Prevention, Etc.) Act 2015.</li>
         </ul>
 
         <h2>5. User-Generated Content</h2>
@@ -88,7 +88,7 @@ export default function TermsPage() {
         <h2>7. Shop & Commerce</h2>
         <p>
           Products available through The Moveee Shop are sold subject to our separate{" "}
-          <Link href="/shop/shipping">Shipping & Returns policy</Link>. Prices are displayed in GBP
+          <Link href="/shop/shipping">Shipping & Returns policy</Link>. Prices are displayed in NGN (₦)
           unless otherwise stated. We reserve the right to refuse or cancel any order at our discretion.
         </p>
 
@@ -117,16 +117,16 @@ export default function TermsPage() {
 
         <h2>11. Limitation of Liability</h2>
         <p>
-          To the fullest extent permitted by law, Moveee Media Ltd shall not be liable for any
-          indirect, incidental, special, or consequential damages arising from your use of the Site
-          or services, even if we have been advised of the possibility of such damages.
+          To the fullest extent permitted by Nigerian law, Moveee Media Ltd shall not be liable for
+          any indirect, incidental, special, or consequential damages arising from your use of the
+          Site or services, even if we have been advised of the possibility of such damages.
         </p>
 
         <h2>12. Governing Law</h2>
         <p>
-          These Terms are governed by the laws of England and Wales. Any disputes arising under
-          these Terms shall be subject to the exclusive jurisdiction of the courts of England and
-          Wales.
+          These Terms are governed by the laws of the Federal Republic of Nigeria. Any disputes
+          arising under these Terms shall be subject to the exclusive jurisdiction of the courts of
+          Nigeria, with Lagos State as the preferred venue.
         </p>
 
         <h2>13. Changes to These Terms</h2>
