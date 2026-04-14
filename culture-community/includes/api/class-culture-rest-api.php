@@ -337,6 +337,13 @@ class Culture_REST_API {
             'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
         ) );
 
+        // Attach a generated image to a directory entry as its featured image.
+        register_rest_route( 'culture/v1', '/directory/attach-image', array(
+            'methods'             => 'POST',
+            'callback'            => array( 'Culture_Directory', 'handle_attach_image' ),
+            'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
+        ) );
+
         // Paragraph comments — GET (public) and POST (auth/shared secret).
         register_rest_route( 'culture/v1', '/comments/paragraph', array(
             array(

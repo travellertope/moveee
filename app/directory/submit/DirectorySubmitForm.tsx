@@ -3,32 +3,42 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-const ENTRY_TYPES = [
-  { slug: "person", label: "Person" },
-  { slug: "place", label: "Place" },
+// Fallback types used when WordPress taxonomy terms cannot be fetched.
+const FALLBACK_ENTRY_TYPES = [
+  { slug: "person",   label: "Person" },
+  { slug: "place",    label: "Place" },
   { slug: "movement", label: "Movement" },
-  { slug: "genre", label: "Genre" },
-  { slug: "concept", label: "Concept" },
-  { slug: "artwork", label: "Artwork" },
-  { slug: "food", label: "Food & Drink" },
-  { slug: "fashion", label: "Fashion" },
-] as const;
+  { slug: "genre",    label: "Genre" },
+  { slug: "concept",  label: "Concept" },
+  { slug: "artwork",  label: "Artwork" },
+  { slug: "food",     label: "Food & Drink" },
+  { slug: "fashion",  label: "Fashion" },
+];
 
 type Step = "input" | "generating" | "review" | "submitting" | "done" | "loading-entry";
+
+interface EntryTypeOption {
+  slug: string;
+  label: string;
+}
 
 interface Props {
   isLoggedIn: boolean;
   userTier: string | null;
   improvingSlug: string | null;
+  /** Entry types fetched from WordPress — any type created in WP Admin appears here automatically. */
+  entryTypes?: EntryTypeOption[];
 }
 
 export default function DirectorySubmitForm({
   isLoggedIn,
   userTier,
   improvingSlug,
+  entryTypes,
 }: Props) {
   const isImproveMode = !!improvingSlug;
   const isPatron = userTier === "patron";
+  const ENTRY_TYPES = entryTypes?.length ? entryTypes : FALLBACK_ENTRY_TYPES;
 
   const [step, setStep] = useState<Step>(isImproveMode ? "loading-entry" : "input");
   const [topic, setTopic] = useState("");
@@ -321,7 +331,7 @@ export default function DirectorySubmitForm({
               onChange={(e) => setEntryType(e.target.value)}
               disabled={step === "submitting"}
             >
-              {ENTRY_TYPES.map((t) => (
+              {ENTRY_TYPES.map(t => (
                 <option key={t.slug} value={t.slug}>
                   {t.label}
                 </option>

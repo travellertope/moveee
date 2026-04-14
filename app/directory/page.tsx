@@ -1,20 +1,9 @@
-import { getWPData, GET_DIRECTORY_ENTRIES } from "@/lib/wp";
+import { getWPData, GET_DIRECTORY_ENTRIES, GET_DIRECTORY_TYPES } from "@/lib/wp";
 import Link from "next/link";
-import Image from "next/image";
 import "../directory.css";
+import DirectoryGrid from "@/components/DirectoryGrid";
 
 export const revalidate = 3600;
-
-const TYPE_LABELS: Record<string, string> = {
-  person: "Person",
-  place: "Place",
-  movement: "Movement",
-  genre: "Genre",
-  concept: "Concept",
-  artwork: "Artwork",
-  food: "Food & Drink",
-  fashion: "Fashion",
-};
 
 export const metadata = {
   title: "Culture Directory · The Moveee",
@@ -23,11 +12,20 @@ export const metadata = {
 };
 
 export default async function DirectoryPage() {
-  let entries: any[] = [];
-  try {
-    const data = await getWPData(GET_DIRECTORY_ENTRIES, { first: 100 });
-    entries = data?.cultureDirectories?.nodes ?? [];
-  } catch {}
+  const [entriesData, typesData] = await Promise.allSettled([
+    getWPData(GET_DIRECTORY_ENTRIES, { first: 200 }),
+    getWPData(GET_DIRECTORY_TYPES, {}),
+  ]);
+
+  const entries: any[] =
+    entriesData.status === "fulfilled"
+      ? (entriesData.value?.cultureDirectories?.nodes ?? [])
+      : [];
+
+  const types: any[] =
+    typesData.status === "fulfilled"
+      ? (typesData.value?.cultureDirectoryTypes?.nodes ?? [])
+      : [];
 
   return (
     <>
@@ -46,7 +44,7 @@ export default async function DirectoryPage() {
         </div>
       </section>
 
-      {/* ── GRID ── */}
+      {/* ── GRID + FILTERS ── */}
       <div className="dir-wrap">
         {entries.length === 0 ? (
           <div className="dir-empty">
@@ -56,63 +54,7 @@ export default async function DirectoryPage() {
             </p>
           </div>
         ) : (
-          <div className="dir-grid">
-            {entries.map((entry: any) => {
-              const type = entry.cultureDirectoryTypes?.nodes?.[0];
-              const img = entry.featuredImage?.node?.sourceUrl;
-              const rawExcerpt = (entry.excerpt ?? "")
-                .replace(/<[^>]*>/g, "")
-                .trim();
-              const excerpt =
-                rawExcerpt.length > 120
-                  ? rawExcerpt.slice(0, 120) + "…"
-                  : rawExcerpt;
-
-              return (
-                <Link
-                  key={entry.slug}
-                  href={`/directory/${entry.slug}`}
-                  className="dir-card"
-                >
-                  <div className={`dir-card-img${img ? "" : " dir-card-img--placeholder"}`}>
-                    {img && (
-                      <Image
-                        src={img}
-                        alt={entry.title ?? ""}
-                        fill
-                        style={{ objectFit: "cover" }}
-                      />
-                    )}
-                  </div>
-                  <div className="dir-card-body">
-                    {type && (
-                      <span className="dir-card-type">
-                        {TYPE_LABELS[type.slug] ?? type.name}
-                      </span>
-                    )}
-                    <h3
-                      className="dir-card-title"
-                      dangerouslySetInnerHTML={{ __html: entry.title }}
-                    />
-                    {excerpt && (
-                      <p className="dir-card-excerpt">{excerpt}</p>
-                    )}
-                    {entry.cultureInterests?.nodes?.length > 0 && (
-                      <div className="dir-card-tags">
-                        {entry.cultureInterests.nodes
-                          .slice(0, 3)
-                          .map((t: any) => (
-                            <span key={t.slug} className="dir-tag">
-                              {t.name}
-                            </span>
-                          ))}
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          <DirectoryGrid entries={entries} types={types} />
         )}
 
         <div className="dir-submit-cta">
