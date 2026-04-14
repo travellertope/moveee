@@ -111,11 +111,40 @@ const STYLE_MODIFIERS =
   "Generous negative space, print-quality composition.";
 
 /**
- * Build a context-aware Imagen 3 prompt based on the entry type.
+ * Classify any entry-type slug (including admin-defined ones from WordPress)
+ * into one of the three illustration templates.
  *
- * person   → portrait template
- * place / movement / genre / concept → scene template
- * food / fashion / artwork            → object/product template
+ * portrait  — individual human subjects, biographical entries
+ * object    — tangible items: food, fashion, craft, instruments, artefacts
+ * scene     — everything else: places, movements, genres, concepts, events
+ */
+function classifyTemplateType(
+  entryType: string
+): "portrait" | "object" | "scene" {
+  const t = entryType.toLowerCase().replace(/[-_\s]+/g, " ").trim();
+
+  // Portrait: individual people and biographical figures
+  if (
+    /\b(person|people|figure|artist|musician|singer|rapper|writer|author|poet|novelist|activist|filmmaker|director|actor|actress|politician|philosopher|leader|thinker|sculptor|painter|photographer|dancer|athlete|architect|designer|chef|scholar|academic|intellectual|icon|legend|pioneer)\b/.test(t)
+  ) {
+    return "portrait";
+  }
+
+  // Object/product: tangible items and material culture
+  if (
+    /\b(food|dish|cuisine|drink|beverage|meal|snack|recipe|ingredient|fashion|clothing|garment|textile|fabric|cloth|print|pattern|weave|embroidery|craft|jewellery|jewelry|accessory|artefact|artifact|instrument|tool|object|product|sculpture|painting|installation|film|novel|book|album|song|artwork|piece|collection|ceramic|pottery|bead|wax print|kente|gele|headwrap|adire)\b/.test(t)
+  ) {
+    return "object";
+  }
+
+  // Scene: places, movements, genres, concepts, traditions, events, etc.
+  return "scene";
+}
+
+/**
+ * Build a context-aware Imagen 3 prompt based on the entry type.
+ * Works with both the built-in type slugs and any new types added
+ * in WordPress — classifyTemplateType() handles unknown slugs gracefully.
  */
 function buildImagePrompt(
   title: string,
@@ -123,8 +152,9 @@ function buildImagePrompt(
   excerpt: string
 ): string {
   const context = excerpt.slice(0, 180);
+  const template = classifyTemplateType(entryType);
 
-  if (entryType === "person") {
+  if (template === "portrait") {
     return (
       `Flat geometric portrait illustration of ${title}, an African or diaspora cultural figure. ` +
       `Simplified minimalist editorial style. Figures rendered with flat-fill ellipses for heads, ` +
@@ -139,11 +169,11 @@ function buildImagePrompt(
     );
   }
 
-  if (entryType === "food" || entryType === "fashion" || entryType === "artwork") {
+  if (template === "object") {
     const bgColour =
-      entryType === "fashion"
+      /fashion|cloth|garment|textile|fabric|wear|dress|gele|headwrap|kente|adire|wax/.test(entryType.toLowerCase())
         ? "deep indigo-black background"
-        : entryType === "food"
+        : /food|dish|cuisine|drink|beverage|meal|snack|recipe/.test(entryType.toLowerCase())
         ? "warm ochre background with subtle shadow"
         : "dark ink background with soft warm spotlight";
     return (
@@ -158,10 +188,18 @@ function buildImagePrompt(
     );
   }
 
-  // Default: scene (place, movement, genre, concept)
+  // Default: scene (place, movement, genre, concept, and any new admin-defined types)
+  const sceneDesc =
+    /place|city|town|neighbourhood|location|landmark|market|district|village/.test(entryType.toLowerCase())
+      ? "a culturally significant location"
+      : /festival|ceremony|ritual|celebration|event|gathering/.test(entryType.toLowerCase())
+      ? "an outdoor cultural gathering or ceremony"
+      : /dance|movement|sport|performance/.test(entryType.toLowerCase())
+      ? "figures in motion capturing the energy of the practice"
+      : `a cultural ${entryType}`;
+
   return (
-    `Flat geometric scene illustration evoking ${title} — ` +
-    `${entryType === "place" ? "a culturally significant location" : `a cultural ${entryType}`} ` +
+    `Flat geometric scene illustration evoking ${title} — ${sceneDesc} ` +
     `in African or diaspora culture. ` +
     `Simplified architectural or environmental forms rendered as flat rectangles and geometric shapes. ` +
     `Human figures as minimal silhouettes with flat colour garments, placed off-centre. ` +
