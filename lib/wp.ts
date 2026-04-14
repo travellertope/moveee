@@ -94,6 +94,11 @@ const STORY_FIELDS_FRAGMENT = `
         slug
       }
     }
+    # Event specific fields (expected from ACF/JetEngine)
+    location
+    eventStatus: status
+    isFeatured
+    admission
   }
 `;
 

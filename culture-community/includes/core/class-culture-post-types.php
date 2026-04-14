@@ -46,6 +46,26 @@ class Culture_Post_Types {
                 },
             ) );
         }
+
+        // Event fields on Post type (to support both standard posts and culture_event CPT in StoryFields)
+        $event_fields = array(
+            'location'    => array( 'type' => 'String', 'meta_key' => 'location' ),
+            'isFeatured'  => array( 'type' => 'Boolean', 'meta_key' => 'is_featured' ),
+            'admission'   => array( 'type' => 'String', 'meta_key' => 'admission' ),
+        );
+
+        foreach ( $event_fields as $field_name => $config ) {
+            $meta_key = $config['meta_key'];
+            $type     = $config['type'];
+            register_graphql_field( 'Post', $field_name, array(
+                'type'    => $type,
+                'resolve' => function( $post ) use ( $meta_key, $type ) {
+                    $value = get_post_meta( $post->databaseId, $meta_key, true );
+                    if ( $type === 'Boolean' ) return (bool) $value;
+                    return (string) $value;
+                },
+            ) );
+        }
     }
 
     /**
