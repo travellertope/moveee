@@ -76,8 +76,13 @@ const IMAGE_STYLE_PROMPT =
   "to anything photographic or AI-default. No text, no borders.";
 
 /**
- * Generate a styled editorial illustration for a directory entry via Imagen.
- * Returns a base64-encoded JPEG string, or null when the API key is absent.
+ * Generate a styled editorial illustration for a directory entry.
+ *
+ * Uses Gemini 2.0 Flash's native image generation (responseModalities).
+ * Imagen 3 (imagen-3.0-generate-002) requires Vertex AI and is NOT available
+ * via a standard GEMINI_API_KEY — hence this approach.
+ *
+ * Returns a base64-encoded image string, or null when GEMINI_API_KEY is absent.
  * Throws on all other failures so callers can surface the real error message.
  *
  * Must only be called from server-side code.
@@ -92,28 +97,25 @@ export async function generateDirectoryImage(
   const subject = `${title} — a ${entryType} in African and diaspora culture`;
   const prompt = `${IMAGE_STYLE_PROMPT} Subject: ${subject}. Context: ${excerpt.slice(0, 200)}.`;
 
-  const result = await (ai.models as any).generateImages({
-    model: "imagen-3.0-generate-002",
-    prompt,
+  const response = await ai.models.generateContent({
+    model: "gemini-2.0-flash-exp",
+    contents: prompt,
     config: {
-      numberOfImages: 1,
-      aspectRatio: "4:3",
-    },
+      responseModalities: ["IMAGE"],
+    } as any,
   });
 
-  const imageData = result?.generatedImages?.[0]?.image?.imageBytes;
-  if (!imageData) {
-    throw new Error("Imagen returned no image bytes");
+  // The image is in candidates[0].content.parts as an inlineData part.
+  const parts: any[] =
+    (response as any).candidates?.[0]?.content?.parts ?? [];
+
+  for (const part of parts) {
+    if (part.inlineData?.data) {
+      return part.inlineData.data as string; // already base64-encoded
+    }
   }
 
-  // SDK may return a base64 string or a Uint8Array depending on version.
-  if (typeof imageData === "string") return imageData;
-
-  // Convert Uint8Array / Buffer → base64 string.
-  const bytes = imageData instanceof Uint8Array ? imageData : new Uint8Array(imageData);
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
+  throw new Error("Gemini returned no image in the response");
 }
 
 /**
