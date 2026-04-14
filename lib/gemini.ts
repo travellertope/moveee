@@ -1,6 +1,33 @@
 import { GoogleGenAI } from "@google/genai";
 
+// Google AI Studio client — used for all text generation.
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
+
+/**
+ * Lazily create a Vertex AI client for Imagen 3 image generation.
+ * Requires VERTEX_PROJECT, VERTEX_CLIENT_EMAIL, and VERTEX_PRIVATE_KEY env vars.
+ * Returns null when any required variable is absent so image generation
+ * degrades gracefully rather than crashing at startup.
+ */
+function createVertexClient(): GoogleGenAI | null {
+  const project     = process.env.VERTEX_PROJECT;
+  const location    = process.env.VERTEX_LOCATION ?? "us-central1";
+  const clientEmail = process.env.VERTEX_CLIENT_EMAIL;
+  // Vercel stores the private key with literal \n — normalise to real newlines.
+  const privateKey  = process.env.VERTEX_PRIVATE_KEY?.replace(/\\n/g, "\n");
+
+  if (!project || !clientEmail || !privateKey) return null;
+
+  return new GoogleGenAI({
+    vertexai: true,
+    project,
+    location,
+    googleAuthOptions: {
+      credentials: { client_email: clientEmail, private_key: privateKey },
+      scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+    },
+  } as any);
+}
 
 // Gemini 3 Flash Preview — Pro-level reasoning at Flash speed/cost.
 // If a stable GA variant becomes available (e.g. "gemini-3-flash"), swap here.
@@ -76,8 +103,11 @@ const IMAGE_STYLE_PROMPT =
   "to anything photographic or AI-default. No text, no borders.";
 
 /**
- * Generate a styled editorial illustration for a directory entry via Imagen.
- * Returns a base64-encoded JPEG string, or null when the API key is absent.
+ * Generate a styled editorial illustration for a directory entry via Imagen 3
+ * on Vertex AI.
+ *
+ * Returns a base64-encoded JPEG string, or null when Vertex AI credentials are
+ * absent (VERTEX_PROJECT / VERTEX_CLIENT_EMAIL / VERTEX_PRIVATE_KEY).
  * Throws on all other failures so callers can surface the real error message.
  *
  * Must only be called from server-side code.
@@ -87,12 +117,13 @@ export async function generateDirectoryImage(
   entryType: string,
   excerpt: string
 ): Promise<string | null> {
-  if (!process.env.GEMINI_API_KEY) return null;
+  const vertexClient = createVertexClient();
+  if (!vertexClient) return null;
 
   const subject = `${title} — a ${entryType} in African and diaspora culture`;
   const prompt = `${IMAGE_STYLE_PROMPT} Subject: ${subject}. Context: ${excerpt.slice(0, 200)}.`;
 
-  const result = await (ai.models as any).generateImages({
+  const result = await (vertexClient.models as any).generateImages({
     model: "imagen-3.0-generate-002",
     prompt,
     config: {
@@ -103,7 +134,7 @@ export async function generateDirectoryImage(
 
   const imageData = result?.generatedImages?.[0]?.image?.imageBytes;
   if (!imageData) {
-    throw new Error("Imagen returned no image bytes");
+    throw new Error("Imagen 3 returned no image bytes");
   }
 
   // SDK may return a base64 string or a Uint8Array depending on version.

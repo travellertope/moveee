@@ -21,9 +21,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  if (!process.env.GEMINI_API_KEY) {
+  if (!process.env.VERTEX_PROJECT || !process.env.VERTEX_CLIENT_EMAIL || !process.env.VERTEX_PRIVATE_KEY) {
     return NextResponse.json(
-      { error: "Image generation not configured (GEMINI_API_KEY missing)." },
+      { error: "Image generation not configured (VERTEX_PROJECT / VERTEX_CLIENT_EMAIL / VERTEX_PRIVATE_KEY missing)." },
       { status: 503 }
     );
   }
