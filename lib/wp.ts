@@ -402,6 +402,25 @@ const QUOTE_FIELDS_FRAGMENT = `
   }
 `;
 
+// Basic fragment without plugin-registered fields (quoteSource, quoteLikes).
+// Used as a fallback when the culture-community plugin is not active.
+const QUOTE_FIELDS_BASIC_FRAGMENT = `
+  fragment QuoteFieldsBasic on CultureQuote {
+    id
+    databaseId
+    title
+    slug
+    content
+    date
+    quoteAuthors {
+      nodes {
+        name
+        slug
+      }
+    }
+  }
+`;
+
 export const QUOTE_FIELDS = QUOTE_FIELDS_FRAGMENT;
 
 export const GET_QUOTES = `
@@ -415,6 +434,17 @@ export const GET_QUOTES = `
   ${QUOTE_FIELDS_FRAGMENT}
 `;
 
+const GET_QUOTES_BASIC = `
+  query GetQuotesBasic($first: Int) {
+    cultureQuotes(first: $first, where: { status: PUBLISH }) {
+      nodes {
+        ...QuoteFieldsBasic
+      }
+    }
+  }
+  ${QUOTE_FIELDS_BASIC_FRAGMENT}
+`;
+
 export const GET_QUOTE_BY_ID = `
   query GetQuoteByID($id: ID!) {
     cultureQuote(id: $id, idType: DATABASE_ID) {
@@ -422,6 +452,15 @@ export const GET_QUOTE_BY_ID = `
     }
   }
   ${QUOTE_FIELDS_FRAGMENT}
+`;
+
+const GET_QUOTE_BY_ID_BASIC = `
+  query GetQuoteByIDBasic($id: ID!) {
+    cultureQuote(id: $id, idType: DATABASE_ID) {
+      ...QuoteFieldsBasic
+    }
+  }
+  ${QUOTE_FIELDS_BASIC_FRAGMENT}
 `;
 
 export const GET_QUOTES_BY_AUTHOR = `
@@ -438,6 +477,23 @@ export const GET_QUOTES_BY_AUTHOR = `
   }
   ${QUOTE_FIELDS_FRAGMENT}
 `;
+
+/**
+ * Try the primary query; if it returns null (e.g. schema validation error
+ * because the culture-community plugin is not active and quoteSource /
+ * quoteLikes are not registered), transparently fall back to the simpler query.
+ */
+export async function getWPQuotes(variables: { first?: number }) {
+  const primary = await getWPData(GET_QUOTES, variables, { revalidate: 0 });
+  if (primary !== null) return primary;
+  return getWPData(GET_QUOTES_BASIC, variables, { revalidate: 0 });
+}
+
+export async function getWPQuoteById(variables: { id: string }) {
+  const primary = await getWPData(GET_QUOTE_BY_ID, variables);
+  if (primary !== null) return primary;
+  return getWPData(GET_QUOTE_BY_ID_BASIC, variables);
+}
 
 export const GET_SITE_SETTINGS = `
   query GetSiteSettings {

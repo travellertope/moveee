@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { getWPData, GET_QUOTES } from '@/lib/wp';
+import { getWPQuotes } from '@/lib/wp';
 import QuoteCard from '@/components/QuoteCard';
 import SubmitQuoteTrigger from '@/components/SubmitQuoteTrigger';
 import '@/app/quotes.css';
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function QuoteHub() {
-  const data = await getWPData(GET_QUOTES, { first: 50 }, { revalidate: 0 });
+  const data = await getWPQuotes({ first: 50 });
   const quotes = data?.cultureQuotes?.nodes || [];
 
   return (
