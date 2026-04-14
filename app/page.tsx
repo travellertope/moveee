@@ -92,7 +92,7 @@ export default async function Home() {
           </div>
 
           <div className="hero-visual">
-              <Link href={`/magazine/${featuredStory.slug}`} className="hero-frame">
+              <Link href={featuredStory ? `/magazine/${featuredStory.slug}` : '#'} className="hero-frame">
                 <div className="hero-ticker">
                   <span>Frame · 01 / 05</span>
                   <span>Shot on 35mm</span>
