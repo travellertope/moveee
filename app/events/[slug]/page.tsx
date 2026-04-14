@@ -2,6 +2,7 @@ import { getWPData, GET_EVENT_BY_SLUG } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import RSVPForm from "../components/RSVPForm";
 import "@/app/events.css";
 
 export const dynamic = "force-dynamic";
