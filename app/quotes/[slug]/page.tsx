@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getWPData, GET_QUOTE_BY_ID } from '@/lib/wp';
+import { getWPQuoteById } from '@/lib/wp';
 import QuoteCard from '@/components/QuoteCard';
 import '@/app/quotes.css';
 
@@ -17,7 +17,7 @@ function parseId(segment: string): string {
 export async function generateMetadata({ params }: QuotePageProps): Promise<Metadata> {
   const { slug } = await params;
   const id = parseId(slug);
-  const data = await getWPData(GET_QUOTE_BY_ID, { id });
+  const data = await getWPQuoteById({ id });
   const quote = data?.cultureQuote;
 
   if (!quote) return { title: 'Quote Not Found' };
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: QuotePageProps): Promise<Meta
 export default async function IndividualQuotePage({ params }: QuotePageProps) {
   const { slug } = await params;
   const id = parseId(slug);
-  const data = await getWPData(GET_QUOTE_BY_ID, { id });
+  const data = await getWPQuoteById({ id });
   const quote = data?.cultureQuote;
 
   if (!quote) notFound();
