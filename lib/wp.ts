@@ -58,6 +58,7 @@ const STORY_FIELDS_FRAGMENT = `
       node {
         name
         slug
+        databaseId
         description
         avatar {
           url
@@ -175,11 +176,12 @@ export const GET_JOURNEYS = `
   ${JOURNEY_FIELDS_FRAGMENT}
 `;
 export const GET_AUTHOR_STORIES = `
-  query GetAuthorStories($first: Int, $slug: ID!) {
-    user(id: $slug, idType: SLUG) {
+  query GetAuthorStories($first: Int, $id: ID!) {
+    user(id: $id, idType: DATABASE_ID) {
       name
       description
       slug
+      databaseId
       avatar {
         url
       }

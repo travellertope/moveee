@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const resolvedParams = await params;
   let data;
   try {
-    data = await getWPData(GET_AUTHOR_STORIES, { first: 1, slug: resolvedParams.slug });
+    data = await getWPData(GET_AUTHOR_STORIES, { first: 1, id: resolvedParams.slug });
   } catch {}
 
   const author = data?.user;
@@ -28,7 +28,7 @@ export default async function AuthorArchivePage({ params }: { params: Promise<{ 
   const resolvedParams = await params;
   let data;
   try {
-    data = await getWPData(GET_AUTHOR_STORIES, { first: 50, slug: resolvedParams.slug });
+    data = await getWPData(GET_AUTHOR_STORIES, { first: 50, id: resolvedParams.slug });
   } catch (err: any) {
     console.error("AuthorArchivePage getWPData error:", err);
   }

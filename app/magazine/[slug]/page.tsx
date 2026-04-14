@@ -380,9 +380,9 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           </h4>
           <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and the diaspora. Long-form essays and visual stories that document the things that matter."}</p>
         </div>
-        {post.author?.node && (
+        {post.author?.node?.databaseId && (
           <Link
-            href={`/author/${post.author.node.slug || post.author.node.name?.toLowerCase().replace(/\s+/g, '-')}`}
+            href={`/author/${post.author.node.databaseId}`}
             className="author-cta"
           >
             More by {post.author.node.name?.split(" ")[0]} →
