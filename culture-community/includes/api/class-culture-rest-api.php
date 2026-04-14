@@ -1506,8 +1506,32 @@ class Culture_REST_API {
             return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
         }
 
-        $liked_ids      = array_map( 'intval', (array) get_user_meta( $user_id, '_culture_liked_posts', true ) );
-        $bookmarked_ids = array_map( 'intval', (array) get_user_meta( $user_id, '_culture_bookmarked_posts', true ) );
+        /**
+         * Merge all like/bookmark sources so that interactions recorded before
+         * and after plugin updates all appear in the collection.
+         *
+         * Sources:
+         *   _culture_liked_posts          – unified list written by current toggle-interaction
+         *   _culture_like_quote_ids       – per-kind list from original PR toggle code
+         *   _culture_like_article_ids     – per-kind list from original PR toggle code
+         */
+        $safe_intval_array = function( $meta_key ) use ( $user_id ) {
+            $raw = get_user_meta( $user_id, $meta_key, true );
+            if ( ! is_array( $raw ) ) { return array(); }
+            return array_values( array_filter( array_map( 'intval', $raw ) ) );
+        };
+
+        $liked_ids = array_unique( array_merge(
+            $safe_intval_array( '_culture_liked_posts' ),
+            $safe_intval_array( '_culture_like_quote_ids' ),
+            $safe_intval_array( '_culture_like_article_ids' )
+        ) );
+
+        $bookmarked_ids = array_unique( array_merge(
+            $safe_intval_array( '_culture_bookmarked_posts' ),
+            $safe_intval_array( '_culture_bookmark_quote_ids' ),
+            $safe_intval_array( '_culture_bookmark_article_ids' )
+        ) );
 
         $liked      = array();
         $bookmarked = array();
