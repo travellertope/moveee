@@ -76,10 +76,6 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/magazine', request.url), 301)
   }
 
-  // /author/slug → /magazine
-  if (pathname.startsWith('/author/')) {
-    return NextResponse.redirect(new URL('/magazine', request.url), 301)
-  }
 
   // /series/slug → /magazine (JetEngine taxonomy)
   if (pathname.startsWith('/series/')) {
