@@ -175,19 +175,17 @@ export const GET_JOURNEYS = `
   ${JOURNEY_FIELDS_FRAGMENT}
 `;
 export const GET_AUTHOR_STORIES = `
-  query GetAuthorStories($first: Int, $slug: String!) {
-    users(where: { nicename: $slug }) {
-      nodes {
-        name
-        description
-        slug
-        avatar {
-          url
-        }
-        posts(first: $first) {
-          nodes {
-            ...StoryFields
-          }
+  query GetAuthorStories($first: Int, $slug: ID!) {
+    user(id: $slug, idType: SLUG) {
+      name
+      description
+      slug
+      avatar {
+        url
+      }
+      posts(first: $first) {
+        nodes {
+          ...StoryFields
         }
       }
     }
