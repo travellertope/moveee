@@ -1,13 +1,10 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
 
-export const geminiFlash = genAI.getGenerativeModel({
-  model: "gemini-2.0-flash",
-  generationConfig: {
-    responseMimeType: "application/json",
-  },
-});
+// Gemini 3 Flash Preview — Pro-level reasoning at Flash speed/cost.
+// If a stable GA variant becomes available (e.g. "gemini-3-flash"), swap here.
+const MODEL_ID = "gemini-3-flash-preview";
 
 export const ENTRY_TYPE_SLUGS = [
   "person",
@@ -61,18 +58,26 @@ function extractJson(raw: string): string {
 }
 
 /**
- * Generate a Culture Directory stub via Gemini 2.0 Flash.
+ * Generate a Culture Directory stub via Gemini 3 Flash.
  * Must only be called from server-side code (API routes, server components).
  */
 export async function generateDirectoryStub(
   topic: string
 ): Promise<DirectoryStub> {
-  const result = await geminiFlash.generateContent([
-    SYSTEM_PROMPT,
-    `Generate a Culture Directory entry for: "${topic}"`,
-  ]);
+  const response = await ai.models.generateContent({
+    model: MODEL_ID,
+    contents: `Generate a Culture Directory entry for: "${topic}"`,
+    config: {
+      systemInstruction: SYSTEM_PROMPT,
+      responseMimeType: "application/json",
+    },
+  });
 
-  const raw = result.response.text().trim();
+  const raw = (response.text ?? "").trim();
+  if (!raw) {
+    throw new Error("Empty response from Gemini");
+  }
+
   const jsonStr = extractJson(raw);
   const parsed = JSON.parse(jsonStr) as DirectoryStub;
 
