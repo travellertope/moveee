@@ -75,12 +75,17 @@ class Culture_Directory {
             );
         }
 
-        // Create the post in pending status — admin must publish it.
+        // auto_publish flag: set by the auto-populate system job only.
+        // Human submissions always go to pending for editorial review.
+        $auto_publish = (bool) $request->get_param( 'auto_publish' );
+        $post_status  = $auto_publish ? 'publish' : 'pending';
+
+        // Create the post.
         $post_id = wp_insert_post( array(
             'post_title'   => $title,
             'post_excerpt' => $excerpt,
             'post_content' => $content,
-            'post_status'  => 'pending',
+            'post_status'  => $post_status,
             'post_type'    => 'culture_directory',
             'post_author'  => $user_id > 0 ? $user_id : 0,
         ), true );
@@ -136,6 +141,100 @@ class Culture_Directory {
             'post_id'        => $post_id,
             'slug'           => $slug,
             'points_awarded' => $points_awarded,
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/directory/attach-image
+     *
+     * Accepts a base64-encoded JPEG image, uploads it to the WordPress
+     * media library, and sets it as the featured image of the given post.
+     *
+     * Request body:
+     *   post_id      int     Required. The culture_directory post ID.
+     *   image_base64 string  Required. Base64-encoded JPEG data.
+     *   filename     string  Optional. Suggested filename (default: image.jpg).
+     */
+    public static function handle_attach_image( WP_REST_Request $request ) {
+        $post_id      = (int) $request->get_param( 'post_id' );
+        $image_base64 = $request->get_param( 'image_base64' );
+        $filename     = sanitize_file_name( $request->get_param( 'filename' ) ?: 'directory-image.jpg' );
+
+        if ( ! $post_id || ! $image_base64 ) {
+            return new WP_Error(
+                'missing_params',
+                __( 'post_id and image_base64 are required.', 'culture-community' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        // Verify the target post exists and is a directory entry.
+        $post = get_post( $post_id );
+        if ( ! $post || 'culture_directory' !== $post->post_type ) {
+            return new WP_Error(
+                'invalid_post',
+                __( 'Post not found or is not a directory entry.', 'culture-community' ),
+                array( 'status' => 404 )
+            );
+        }
+
+        // Decode the base64 image data.
+        $image_data = base64_decode( $image_base64, true );
+        if ( false === $image_data ) {
+            return new WP_Error(
+                'invalid_image',
+                __( 'Could not decode base64 image data.', 'culture-community' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        // Upload into the WordPress uploads directory.
+        $upload = wp_upload_bits( $filename, null, $image_data );
+        if ( ! empty( $upload['error'] ) ) {
+            return new WP_Error(
+                'upload_failed',
+                $upload['error'],
+                array( 'status' => 500 )
+            );
+        }
+
+        // Determine MIME type from the filename extension.
+        $mime = wp_check_filetype( $filename );
+
+        // Create the media attachment post.
+        $attachment_id = wp_insert_attachment(
+            array(
+                'post_mime_type' => $mime['type'] ?: 'image/jpeg',
+                'post_title'     => sanitize_text_field( pathinfo( $filename, PATHINFO_FILENAME ) ),
+                'post_content'   => '',
+                'post_status'    => 'inherit',
+            ),
+            $upload['file'],
+            $post_id
+        );
+
+        if ( is_wp_error( $attachment_id ) ) {
+            return new WP_Error(
+                'attachment_failed',
+                $attachment_id->get_error_message(),
+                array( 'status' => 500 )
+            );
+        }
+
+        // Generate image size metadata (thumbnails etc.).
+        if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/image.php';
+        }
+        $meta = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
+        wp_update_attachment_metadata( $attachment_id, $meta );
+
+        // Set as the post's featured image.
+        set_post_thumbnail( $post_id, $attachment_id );
+
+        return rest_ensure_response( array(
+            'success'       => true,
+            'attachment_id' => $attachment_id,
+            'url'           => $upload['url'],
         ) );
     }
 }

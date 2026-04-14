@@ -373,6 +373,24 @@ export const GET_DIRECTORY_ENTRIES = `
   ${DIRECTORY_FIELDS_FRAGMENT}
 `;
 
+/**
+ * Fetch all entry-type taxonomy terms (culture_dir_type).
+ * Used to populate filter buttons on the listing page and the
+ * type select in the submission form — any type added in WP Admin
+ * automatically appears without code changes.
+ */
+export const GET_DIRECTORY_TYPES = `
+  query GetDirectoryTypes {
+    cultureDirectoryTypes(first: 50) {
+      nodes {
+        name
+        slug
+        count
+      }
+    }
+  }
+`;
+
 export const GET_DIRECTORY_ENTRY_BY_SLUG = `
   query GetDirectoryEntryBySlug($slug: ID!) {
     cultureDirectory(id: $slug, idType: SLUG) {

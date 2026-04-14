@@ -57,6 +57,52 @@ function extractJson(raw: string): string {
   return raw.slice(start, end + 1);
 }
 
+// ── Image generation ────────────────────────────────────────────────────────
+
+const IMAGE_STYLE_PROMPT =
+  "Flat geometric portraiture and scene illustration using a restricted " +
+  "earth-tone palette (ochre, terracotta, deep umber, sand, forest green), " +
+  "rendered with simplified bold forms and no photorealism. Strong editorial " +
+  "print-magazine sensibility — closer to Malika Favre or Emiliano Ponzi than " +
+  "to anything photographic or AI-default. No text, no borders.";
+
+/**
+ * Generate a styled editorial illustration for a directory entry via Imagen.
+ * Returns a base64-encoded JPEG string, or null if image generation is
+ * unavailable (API key missing, quota exceeded, model error).
+ *
+ * Must only be called from server-side code.
+ */
+export async function generateDirectoryImage(
+  title: string,
+  entryType: string,
+  excerpt: string
+): Promise<string | null> {
+  if (!process.env.GEMINI_API_KEY) return null;
+
+  const subject = `${title} — a ${entryType} in African and diaspora culture`;
+  const prompt = `${IMAGE_STYLE_PROMPT} Subject: ${subject}. Context: ${excerpt.slice(0, 200)}.`;
+
+  try {
+    const result = await (ai.models as any).generateImages({
+      model: "imagen-3.0-generate-002",
+      prompt,
+      config: {
+        numberOfImages: 1,
+        aspectRatio: "4:3",
+        outputMimeType: "image/jpeg",
+      },
+    });
+
+    const imageBytes: string | undefined =
+      result?.generatedImages?.[0]?.image?.imageBytes;
+    return imageBytes ?? null;
+  } catch {
+    // Image generation is best-effort; never fail the main submission flow.
+    return null;
+  }
+}
+
 /**
  * Generate a Culture Directory stub via Gemini 3 Flash.
  * Must only be called from server-side code (API routes, server components).
