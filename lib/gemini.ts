@@ -40,6 +40,8 @@ export const ENTRY_TYPE_SLUGS = [
   "genre",
   "concept",
   "artwork",
+  "film",
+  "book",
   "food",
   "fashion",
 ] as const;
@@ -64,7 +66,7 @@ The JSON must match this exact structure:
   "title": "The canonical name of the entry",
   "excerpt": "One or two sentences summarising this entry (plain text, no HTML tags)",
   "content": "Full HTML body using ONLY <p>, <h2>, <ul>, <li> tags. Must include: an overview paragraph, a Cultural Significance section, and a Legacy or Related Works section. Minimum 4 paragraphs total.",
-  "entryType": "exactly one of: person, place, movement, genre, concept, artwork, food, fashion",
+  "entryType": "exactly one of the following — choose the most specific match:\n  person   = an individual human being (musician, writer, artist, activist, filmmaker, philosopher, etc.)\n  place    = a geographic location (city, neighbourhood, landmark, region, market)\n  movement = a cultural, political, or artistic movement or era (Pan-Africanism, Harlem Renaissance)\n  genre    = a musical or artistic genre or style (Afrobeats, Highlife, Amapiano, Nollywood as a film industry)\n  concept  = an idea, philosophy, practice, or tradition (Ubuntu, Sankofa, Griot tradition, Adinkra symbols)\n  film     = a specific film or documentary (feature film, short film, documentary — NOT a genre or industry)\n  book     = a specific published book (novel, essay collection, poetry collection, memoir)\n  artwork  = a specific visual artwork, sculpture, installation, or album/music recording\n  food     = a specific dish, ingredient, or food tradition\n  fashion  = a specific garment, textile, fabric, or fashion tradition",
   "interests": ["2-5 relevant interest slugs, lowercase, hyphenated. Choose from: music, visual-art, food-drink, fashion, literature, film, history, politics, spirituality, dance, theatre, sport, architecture, photography"],
   "suggestedLinks": ["2-4 names of related topics that would make good linked entries in the same directory"]
 }
@@ -95,12 +97,129 @@ function extractJson(raw: string): string {
 
 // ── Image generation ────────────────────────────────────────────────────────
 
-const IMAGE_STYLE_PROMPT =
-  "Flat geometric portraiture and scene illustration using a restricted " +
-  "earth-tone palette (ochre, terracotta, deep umber, sand, forest green), " +
-  "rendered with simplified bold forms and no photorealism. Strong editorial " +
-  "print-magazine sensibility — closer to Malika Favre or Emiliano Ponzi than " +
-  "to anything photographic or AI-default. No text, no borders.";
+/**
+ * Shared style modifiers included in every image prompt regardless of subject.
+ * Palette hex values are provided so the model has the exact target colours.
+ */
+const STYLE_MODIFIERS =
+  "restricted earth-tone palette only: deep ink (#14110d), burnt ochre (#c5491f), " +
+  "dark ochre (#8a2d10), gold brass (#b38238), moss green (#3d4a2a), " +
+  "cream paper (#f3ece0), indigo (#1e2b42) — no other colours, no bright or " +
+  "saturated hues, no white, no gradients into blue or purple. " +
+  "Flat colour fills with no shading, no highlights, no drop shadows. " +
+  "Editorial magazine illustration style. Inspired by Malika Favre and Emiliano Ponzi. " +
+  "No photorealism, no 3D rendering, no outlines as primary rendering method, " +
+  "no complex lighting, no anime or Western proportions, matte finish. " +
+  "Generous negative space, print-quality composition.";
+
+/**
+ * Classify any entry-type slug (including admin-defined ones from WordPress)
+ * into one of the three illustration templates.
+ *
+ * portrait  — individual human subjects, biographical entries
+ * object    — tangible items: food, fashion, craft, instruments, artefacts
+ * scene     — everything else: places, movements, genres, concepts, events
+ */
+function classifyTemplateType(
+  entryType: string
+): "portrait" | "object" | "scene" {
+  const t = entryType.toLowerCase().replace(/[-_\s]+/g, " ").trim();
+
+  // Portrait: individual people and biographical figures
+  if (
+    /\b(person|people|figure|artist|musician|singer|rapper|writer|author|poet|novelist|activist|filmmaker|director|actor|actress|politician|philosopher|leader|thinker|sculptor|painter|photographer|dancer|athlete|architect|designer|chef|scholar|academic|intellectual|icon|legend|pioneer)\b/.test(t)
+  ) {
+    return "portrait";
+  }
+
+  // Film: cinematic works → scene template (a visual moment from the work)
+  if (/\b(film|documentary|movie|cinema|short film)\b/.test(t)) {
+    return "scene";
+  }
+
+  // Object/product: tangible items, material culture, and literary/music works
+  if (
+    /\b(food|dish|cuisine|drink|beverage|meal|snack|recipe|ingredient|fashion|clothing|garment|textile|fabric|cloth|print|pattern|weave|embroidery|craft|jewellery|jewelry|accessory|artefact|artifact|instrument|tool|object|product|sculpture|painting|installation|novel|book|album|song|artwork|piece|collection|ceramic|pottery|bead|wax print|kente|gele|headwrap|adire)\b/.test(t)
+  ) {
+    return "object";
+  }
+
+  // Scene: places, movements, genres, concepts, traditions, events, etc.
+  return "scene";
+}
+
+/**
+ * Build a context-aware Imagen 3 prompt based on the entry type.
+ * Works with both the built-in type slugs and any new types added
+ * in WordPress — classifyTemplateType() handles unknown slugs gracefully.
+ */
+function buildImagePrompt(
+  title: string,
+  entryType: string,
+  excerpt: string
+): string {
+  const context = excerpt.slice(0, 180);
+  const template = classifyTemplateType(entryType);
+
+  if (template === "portrait") {
+    return (
+      `Flat geometric portrait illustration of ${title}, an African or diaspora cultural figure. ` +
+      `Simplified minimalist editorial style. Figures rendered with flat-fill ellipses for heads, ` +
+      `minimal facial features (2–3 strokes for eyes, single curved line for mouth, no detailed nose), ` +
+      `geometric clothing shapes as flat colour blocks. ` +
+      `Hair as a single dark shape. Brass hoop or geometric earrings where appropriate. ` +
+      `Headwraps or gele rendered as architectural forms with fold lines suggested by 2–3 darker strokes. ` +
+      `Warm atmospheric gradient background in ochre and deep brown. ` +
+      `Subtle dot texture overlay at very low opacity. ` +
+      `Context: ${context}. ` +
+      STYLE_MODIFIERS
+    );
+  }
+
+  if (template === "object") {
+    const bgColour =
+      /fashion|cloth|garment|textile|fabric|wear|dress|gele|headwrap|kente|adire|wax/.test(entryType.toLowerCase())
+        ? "deep indigo-black background"
+        : /food|dish|cuisine|drink|beverage|meal|snack|recipe/.test(entryType.toLowerCase())
+        ? "warm ochre background with subtle shadow"
+        : "dark ink background with soft warm spotlight";
+    return (
+      `Flat graphic editorial illustration of ${title}. ` +
+      `Object shown against a ${bgColour}. ` +
+      `Geometric details rendered as simple repeated shapes — circles, diamonds, lines. ` +
+      `Textile or surface texture suggested through 2–3 darker fold or pattern lines. ` +
+      `Colour palette limited to indigo, cream, brass gold, burnt ochre, and moss green. ` +
+      `No photorealism, no 3D rendering, matte flat-fill style, magazine editorial aesthetic. ` +
+      `Context: ${context}. ` +
+      STYLE_MODIFIERS
+    );
+  }
+
+  // Default: scene (place, movement, genre, concept, and any new admin-defined types)
+  const sceneDesc =
+    /^film$|documentary|movie/.test(entryType.toLowerCase())
+      ? "a key cinematic moment or visual theme from the film"
+      : /place|city|town|neighbourhood|location|landmark|market|district|village/.test(entryType.toLowerCase())
+      ? "a culturally significant location"
+      : /festival|ceremony|ritual|celebration|event|gathering/.test(entryType.toLowerCase())
+      ? "an outdoor cultural gathering or ceremony"
+      : /dance|movement|sport|performance/.test(entryType.toLowerCase())
+      ? "figures in motion capturing the energy of the practice"
+      : `a cultural ${entryType}`;
+
+  return (
+    `Flat geometric scene illustration evoking ${title} — ${sceneDesc} ` +
+    `in African or diaspora culture. ` +
+    `Simplified architectural or environmental forms rendered as flat rectangles and geometric shapes. ` +
+    `Human figures as minimal silhouettes with flat colour garments, placed off-centre. ` +
+    `Environmental details suggested through minimal geometric elements: ` +
+    `rectangles for buildings, circles for vessels, vertical lines for structures. ` +
+    `Warm atmospheric light through soft radial gradients and subtle polygon shapes. ` +
+    `Subtle halftone dot texture and fine crosshatch lines at very low opacity. ` +
+    `Context: ${context}. ` +
+    STYLE_MODIFIERS
+  );
+}
 
 /**
  * Generate a styled editorial illustration for a directory entry via Imagen 3
@@ -120,8 +239,7 @@ export async function generateDirectoryImage(
   const vertexClient = createVertexClient();
   if (!vertexClient) return null;
 
-  const subject = `${title} — a ${entryType} in African and diaspora culture`;
-  const prompt = `${IMAGE_STYLE_PROMPT} Subject: ${subject}. Context: ${excerpt.slice(0, 200)}.`;
+  const prompt = buildImagePrompt(title, entryType, excerpt);
 
   const result = await (vertexClient.models as any).generateImages({
     model: "imagen-3.0-generate-002",
