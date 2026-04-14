@@ -222,12 +222,15 @@ function buildImagePrompt(
 }
 
 /**
- * Generate a styled editorial illustration for a directory entry via Imagen 3
- * on Vertex AI.
+ * Generate a styled editorial illustration for a directory entry.
  *
- * Returns a base64-encoded JPEG string, or null when Vertex AI credentials are
- * absent (VERTEX_PROJECT / VERTEX_CLIENT_EMAIL / VERTEX_PRIVATE_KEY).
- * Throws on all other failures so callers can surface the real error message.
+ * Two-tier approach:
+ *   1. Imagen 3 via Vertex AI  — best quality, uses VERTEX_* credentials.
+ *      Falls back automatically on quota exhaustion (429 / RESOURCE_EXHAUSTED).
+ *   2. Gemini 2.0 Flash        — fallback, uses GEMINI_API_KEY, generous quota.
+ *
+ * Returns null only when neither backend is configured.
+ * Throws on unexpected failures so callers can surface the real error.
  *
  * Must only be called from server-side code.
  */
@@ -236,33 +239,60 @@ export async function generateDirectoryImage(
   entryType: string,
   excerpt: string
 ): Promise<string | null> {
-  const vertexClient = createVertexClient();
-  if (!vertexClient) return null;
-
   const prompt = buildImagePrompt(title, entryType, excerpt);
 
-  const result = await (vertexClient.models as any).generateImages({
-    model: "imagen-3.0-generate-002",
-    prompt,
-    config: {
-      numberOfImages: 1,
-      aspectRatio: "4:3",
-    },
-  });
+  // ── Tier 1: Imagen 3 via Vertex AI ────────────────────────────────────────
+  const vertexClient = createVertexClient();
+  if (vertexClient) {
+    try {
+      const result = await (vertexClient.models as any).generateImages({
+        model: "imagen-3.0-generate-002",
+        prompt,
+        config: { numberOfImages: 1, aspectRatio: "4:3" },
+      });
 
-  const imageData = result?.generatedImages?.[0]?.image?.imageBytes;
-  if (!imageData) {
-    throw new Error("Imagen 3 returned no image bytes");
+      const imageData = result?.generatedImages?.[0]?.image?.imageBytes;
+      if (imageData) {
+        if (typeof imageData === "string") return imageData;
+        const bytes =
+          imageData instanceof Uint8Array ? imageData : new Uint8Array(imageData);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++)
+          binary += String.fromCharCode(bytes[i]);
+        return btoa(binary);
+      }
+    } catch (err: any) {
+      const msg: string = err?.message ?? "";
+      const isQuotaError =
+        msg.includes("429") ||
+        msg.includes("RESOURCE_EXHAUSTED") ||
+        msg.includes("Quota exceeded");
+
+      if (!isQuotaError) throw err; // Surface unexpected errors immediately.
+      // Quota exhausted — fall through to Gemini 2.0 Flash.
+      console.warn(
+        "Imagen 3 quota exceeded — falling back to Gemini 2.0 Flash."
+      );
+    }
   }
 
-  // SDK may return a base64 string or a Uint8Array depending on version.
-  if (typeof imageData === "string") return imageData;
+  // ── Tier 2: Gemini 2.0 Flash image generation ─────────────────────────────
+  if (!process.env.GEMINI_API_KEY) return null;
 
-  // Convert Uint8Array / Buffer → base64 string.
-  const bytes = imageData instanceof Uint8Array ? imageData : new Uint8Array(imageData);
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
+  const response = await ai.models.generateContent({
+    model: "gemini-2.0-flash-exp",
+    contents: prompt,
+    config: { responseModalities: ["IMAGE"] } as any,
+  });
+
+  const parts: any[] =
+    (response as any).candidates?.[0]?.content?.parts ?? [];
+
+  for (const part of parts) {
+    if (part.inlineData?.data) return part.inlineData.data as string;
+  }
+
+  throw new Error("Both Imagen 3 and Gemini 2.0 Flash returned no image.");
 }
 
 /**
