@@ -40,6 +40,8 @@ export const ENTRY_TYPE_SLUGS = [
   "genre",
   "concept",
   "artwork",
+  "film",
+  "book",
   "food",
   "fashion",
 ] as const;
@@ -64,7 +66,7 @@ The JSON must match this exact structure:
   "title": "The canonical name of the entry",
   "excerpt": "One or two sentences summarising this entry (plain text, no HTML tags)",
   "content": "Full HTML body using ONLY <p>, <h2>, <ul>, <li> tags. Must include: an overview paragraph, a Cultural Significance section, and a Legacy or Related Works section. Minimum 4 paragraphs total.",
-  "entryType": "exactly one of: person, place, movement, genre, concept, artwork, food, fashion",
+  "entryType": "exactly one of the following — choose the most specific match:\n  person   = an individual human being (musician, writer, artist, activist, filmmaker, philosopher, etc.)\n  place    = a geographic location (city, neighbourhood, landmark, region, market)\n  movement = a cultural, political, or artistic movement or era (Pan-Africanism, Harlem Renaissance)\n  genre    = a musical or artistic genre or style (Afrobeats, Highlife, Amapiano, Nollywood as a film industry)\n  concept  = an idea, philosophy, practice, or tradition (Ubuntu, Sankofa, Griot tradition, Adinkra symbols)\n  film     = a specific film or documentary (feature film, short film, documentary — NOT a genre or industry)\n  book     = a specific published book (novel, essay collection, poetry collection, memoir)\n  artwork  = a specific visual artwork, sculpture, installation, or album/music recording\n  food     = a specific dish, ingredient, or food tradition\n  fashion  = a specific garment, textile, fabric, or fashion tradition",
   "interests": ["2-5 relevant interest slugs, lowercase, hyphenated. Choose from: music, visual-art, food-drink, fashion, literature, film, history, politics, spirituality, dance, theatre, sport, architecture, photography"],
   "suggestedLinks": ["2-4 names of related topics that would make good linked entries in the same directory"]
 }
@@ -130,9 +132,14 @@ function classifyTemplateType(
     return "portrait";
   }
 
-  // Object/product: tangible items and material culture
+  // Film: cinematic works → scene template (a visual moment from the work)
+  if (/\b(film|documentary|movie|cinema|short film)\b/.test(t)) {
+    return "scene";
+  }
+
+  // Object/product: tangible items, material culture, and literary/music works
   if (
-    /\b(food|dish|cuisine|drink|beverage|meal|snack|recipe|ingredient|fashion|clothing|garment|textile|fabric|cloth|print|pattern|weave|embroidery|craft|jewellery|jewelry|accessory|artefact|artifact|instrument|tool|object|product|sculpture|painting|installation|film|novel|book|album|song|artwork|piece|collection|ceramic|pottery|bead|wax print|kente|gele|headwrap|adire)\b/.test(t)
+    /\b(food|dish|cuisine|drink|beverage|meal|snack|recipe|ingredient|fashion|clothing|garment|textile|fabric|cloth|print|pattern|weave|embroidery|craft|jewellery|jewelry|accessory|artefact|artifact|instrument|tool|object|product|sculpture|painting|installation|novel|book|album|song|artwork|piece|collection|ceramic|pottery|bead|wax print|kente|gele|headwrap|adire)\b/.test(t)
   ) {
     return "object";
   }
@@ -190,7 +197,9 @@ function buildImagePrompt(
 
   // Default: scene (place, movement, genre, concept, and any new admin-defined types)
   const sceneDesc =
-    /place|city|town|neighbourhood|location|landmark|market|district|village/.test(entryType.toLowerCase())
+    /^film$|documentary|movie/.test(entryType.toLowerCase())
+      ? "a key cinematic moment or visual theme from the film"
+      : /place|city|town|neighbourhood|location|landmark|market|district|village/.test(entryType.toLowerCase())
       ? "a culturally significant location"
       : /festival|ceremony|ritual|celebration|event|gathering/.test(entryType.toLowerCase())
       ? "an outdoor cultural gathering or ceremony"
