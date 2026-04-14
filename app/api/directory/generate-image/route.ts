@@ -43,16 +43,25 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Generate the image
-  const imageBase64 = await generateDirectoryImage(
-    title,
-    entryType ?? "entry",
-    excerpt ?? ""
-  );
+  // Generate the image — throws on API/model errors, returns null only when
+  // GEMINI_API_KEY is absent (already checked above, so null won't occur here).
+  let imageBase64: string | null;
+  try {
+    imageBase64 = await generateDirectoryImage(
+      title,
+      entryType ?? "entry",
+      excerpt ?? ""
+    );
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: `Image generation failed: ${err?.message ?? "unknown error"}` },
+      { status: 502 }
+    );
+  }
 
   if (!imageBase64) {
     return NextResponse.json(
-      { error: "Image generation failed or returned no result." },
+      { error: "Image generation returned no result (API key missing?)." },
       { status: 502 }
     );
   }

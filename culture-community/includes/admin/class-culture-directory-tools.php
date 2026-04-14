@@ -59,8 +59,9 @@ class Culture_Directory_Tools {
 
     public static function init() {
         add_action( 'admin_menu',            array( __CLASS__, 'register_menu' ) );
-        add_action( 'wp_ajax_culture_dir_run_seeder',      array( __CLASS__, 'ajax_run_seeder' ) );
-        add_action( 'wp_ajax_culture_dir_generate_image',  array( __CLASS__, 'ajax_generate_image' ) );
+        add_action( 'wp_ajax_culture_dir_run_seeder',       array( __CLASS__, 'ajax_run_seeder' ) );
+        add_action( 'wp_ajax_culture_dir_generate_image',   array( __CLASS__, 'ajax_generate_image' ) );
+        add_action( 'wp_ajax_culture_dir_save_extra_topics', array( __CLASS__, 'ajax_save_extra_topics' ) );
         add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
     }
 
@@ -227,6 +228,49 @@ class Culture_Directory_Tools {
         wp_send_json_success( $body );
     }
 
+    // ── AJAX: save extra topics ───────────────────────────────────────────────
+
+    public static function ajax_save_extra_topics() {
+        check_ajax_referer( 'culture_dir_tools', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Forbidden.' ) );
+        }
+
+        $raw_input = sanitize_textarea_field( $_POST['topics'] ?? '' );
+        $lines     = array_filter(
+            array_map( 'trim', explode( "\n", $raw_input ) )
+        );
+
+        if ( empty( $lines ) ) {
+            wp_send_json_error( array( 'message' => 'No topics provided.' ) );
+        }
+
+        // Merge with existing stored topics.
+        $stored   = get_option( 'culture_dir_extra_topics', '[]' );
+        $existing = json_decode( $stored, true );
+        if ( ! is_array( $existing ) ) {
+            $existing = array();
+        }
+
+        $existing_lower = array_map( 'strtolower', $existing );
+        $added          = 0;
+        foreach ( $lines as $topic ) {
+            $topic = sanitize_text_field( $topic );
+            if ( ! in_array( strtolower( $topic ), $existing_lower, true ) ) {
+                $existing[]       = $topic;
+                $existing_lower[] = strtolower( $topic );
+                $added++;
+            }
+        }
+
+        update_option( 'culture_dir_extra_topics', wp_json_encode( array_values( $existing ) ) );
+
+        wp_send_json_success( array(
+            'added' => $added,
+            'total' => count( $existing ),
+        ) );
+    }
+
     // ── Page renderer ─────────────────────────────────────────────────────────
 
     public static function render_page() {
@@ -235,6 +279,13 @@ class Culture_Directory_Tools {
         $total          = count( self::$seed_topics );
         $seeded_count   = 0;
         $remaining      = array();
+
+        // Load extra (admin-added + AI-generated) topics.
+        $extra_topics_raw  = get_option( 'culture_dir_extra_topics', '[]' );
+        $extra_topics      = json_decode( $extra_topics_raw, true );
+        if ( ! is_array( $extra_topics ) ) {
+            $extra_topics = array();
+        }
 
         foreach ( self::$seed_topics as $topic ) {
             if ( in_array( strtolower( trim( $topic ) ), $seeded_titles, true ) ) {
@@ -324,6 +375,37 @@ class Culture_Directory_Tools {
                 </p>
 
                 <div id="cdt-seeder-result" class="cdt-result" style="display:none;"></div>
+            </div>
+
+            <?php /* ── CUSTOM TOPICS PANEL ── */ ?>
+            <div class="cdt-panel">
+                <h2><?php esc_html_e( 'Custom Topic Seeds', 'culture-community' ); ?></h2>
+                <p class="description">
+                    <?php esc_html_e( 'Add your own topics for the AI to generate entries for. One topic per line. These are merged with the built-in seed list — duplicates are ignored.', 'culture-community' ); ?>
+                    <?php esc_html_e( 'The AI also auto-appends new suggestions here whenever the seed list runs out.', 'culture-community' ); ?>
+                </p>
+
+                <?php if ( ! empty( $extra_topics ) ) : ?>
+                <p class="description">
+                    <strong><?php echo esc_html( count( $extra_topics ) ); ?></strong>
+                    <?php esc_html_e( ' extra topics currently stored:', 'culture-community' ); ?>
+                    <span style="color:#646970;">
+                        <?php echo esc_html( implode( ', ', array_slice( $extra_topics, 0, 12 ) ) ); ?>
+                        <?php echo count( $extra_topics ) > 12 ? esc_html( ' … +' . ( count( $extra_topics ) - 12 ) . ' more' ) : ''; ?>
+                    </span>
+                </p>
+                <?php endif; ?>
+
+                <textarea id="cdt-extra-topics" rows="8" style="width:100%;max-width:600px;font-family:monospace;font-size:13px;"
+                          placeholder="<?php esc_attr_e( "Afro Punk\nSapeur culture\nOctavia Butler\nKuramo Beach\nYorubaland", 'culture-community' ); ?>"></textarea>
+
+                <p>
+                    <button id="cdt-save-topics" class="button button-primary">
+                        <?php esc_html_e( 'Add Topics', 'culture-community' ); ?>
+                    </button>
+                    <span id="cdt-topics-spinner" class="spinner" style="float:none;vertical-align:middle;display:none;"></span>
+                </p>
+                <div id="cdt-topics-result" style="display:none;margin-top:8px;"></div>
             </div>
 
             <?php /* ── IMAGES PANEL ── */ ?>
@@ -489,6 +571,45 @@ class Culture_Directory_Tools {
                     });
                 }
                 next();
+            });
+
+            /* ── Custom topics save ── */
+            $('#cdt-save-topics').on('click', function() {
+                var topics = $('#cdt-extra-topics').val().trim();
+                if (!topics) return;
+
+                var $btn     = $(this).prop('disabled', true);
+                var $spinner = $('#cdt-topics-spinner').show();
+                var $result  = $('#cdt-topics-result').hide();
+
+                $.post(ajaxUrl, {
+                    action: 'culture_dir_save_extra_topics',
+                    nonce:  nonce,
+                    topics: topics,
+                })
+                .done(function(res) {
+                    if (res.success) {
+                        $result.html(
+                            '<div class="notice notice-success inline"><p>' +
+                            res.data.added + ' topic(s) added. ' +
+                            res.data.total + ' total extra topics stored.</p></div>'
+                        ).show();
+                        $('#cdt-extra-topics').val('');
+                        setTimeout(function() { location.reload(); }, 2000);
+                    } else {
+                        $result.html(
+                            '<div class="notice notice-error inline"><p>' +
+                            $('<span>').text(res.data.message).html() + '</p></div>'
+                        ).show();
+                    }
+                })
+                .fail(function() {
+                    $result.html('<div class="notice notice-error inline"><p>Request failed.</p></div>').show();
+                })
+                .always(function() {
+                    $btn.prop('disabled', false);
+                    $spinner.hide();
+                });
             });
 
         }(jQuery));

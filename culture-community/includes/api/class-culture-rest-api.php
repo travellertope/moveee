@@ -344,6 +344,27 @@ class Culture_REST_API {
             'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
         ) );
 
+        // Extra / AI-generated seed topics store.
+        register_rest_route( 'culture/v1', '/directory/extra-topics', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( 'Culture_Directory', 'handle_get_extra_topics' ),
+                'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( 'Culture_Directory', 'handle_post_extra_topics' ),
+                'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
+                'args'                => array(
+                    'topics' => array(
+                        'required' => true,
+                        'type'     => 'array',
+                        'items'    => array( 'type' => 'string' ),
+                    ),
+                ),
+            ),
+        ) );
+
         // Paragraph comments — GET (public) and POST (auth/shared secret).
         register_rest_route( 'culture/v1', '/comments/paragraph', array(
             array(
