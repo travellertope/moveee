@@ -195,6 +195,46 @@ export const GET_AUTHOR_STORIES = `
   ${STORY_FIELDS_FRAGMENT}
 `;
 
+export const GET_AUTHOR_STORIES_BY_SLUG = `
+  query GetAuthorStoriesBySlug($first: Int, $slug: ID!) {
+    user(id: $slug, idType: SLUG) {
+      name
+      description
+      slug
+      databaseId
+      avatar {
+        url
+      }
+      posts(first: $first) {
+        nodes {
+          ...StoryFields
+        }
+      }
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
+export const GET_AUTHOR_STORIES_BY_LOGIN = `
+  query GetAuthorStoriesByLogin($first: Int, $login: ID!) {
+    user(id: $login, idType: USERNAME) {
+      name
+      description
+      slug
+      databaseId
+      avatar {
+        url
+      }
+      posts(first: $first) {
+        nodes {
+          ...StoryFields
+        }
+      }
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
 const NEWSLETTER_FIELDS_FRAGMENT = `
   fragment NewsletterFields on CultureNewsletter {
     id
