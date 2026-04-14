@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     data = await getWPData(GET_AUTHOR_STORIES, { first: 1, slug: resolvedParams.slug });
   } catch {}
 
-  const author = data?.users?.nodes?.[0];
+  const author = data?.user;
   if (!author) return { title: "Author Archive · The Moveee" };
 
   return {
@@ -33,7 +33,7 @@ export default async function AuthorArchivePage({ params }: { params: Promise<{ 
     console.error("AuthorArchivePage getWPData error:", err);
   }
 
-  const author = data?.users?.nodes?.[0];
+  const author = data?.user;
   const stories = author?.posts?.nodes || [];
 
   if (!author && stories.length === 0) {

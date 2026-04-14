@@ -8,11 +8,17 @@ const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  // Must be signed in (patron check happens server-side; anyone previewing
-  // their own entry can trigger this — WordPress post access is gated).
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorised." }, { status: 401 });
+  // Accept either a valid Next.js session (user-facing) or the CRON_SECRET
+  // (server-to-server calls from the WordPress admin tools panel).
+  const cronSecret = process.env.CRON_SECRET ?? "";
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const hasCronAuth = cronSecret && authHeader === `Bearer ${cronSecret}`;
+
+  if (!hasCronAuth) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorised." }, { status: 401 });
+    }
   }
 
   if (!process.env.GEMINI_API_KEY) {
