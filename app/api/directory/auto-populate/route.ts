@@ -1,31 +1,31 @@
 /**
  * POST /api/directory/auto-populate
  *
- * Background job that seeds the Culture Directory with well-known entries
- * from African and diaspora culture. Designed to be called by:
- *   - Vercel Cron (configured in vercel.json)
- *   - Manual trigger via curl/Postman during setup
+ * Background job that seeds the Culture Directory. Each run:
+ *   1. Pulls SEED_TOPICS (hardcoded) + extra topics stored in WordPress.
+ *   2. Filters out titles already published in the directory.
+ *   3. If pending topics remain, generates up to `batchSize` stubs via Gemini.
+ *   4. If ALL topics are exhausted, asks Gemini to suggest 20 new ones,
+ *      saves them to WordPress, and runs the first batch immediately.
  *
  * Auth: requires Authorization: Bearer {CRON_SECRET} header.
- *
- * Each run picks up to `batchSize` topics from the seed list that don't
- * already have a published entry, generates a stub via Gemini, optionally
- * generates a featured image via Imagen, and submits the entry to WordPress
- * in "publish" status (skipping the usual pending/review queue).
+ * Configured in vercel.json to run every Monday at 03:00 UTC.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { generateDirectoryStub, generateDirectoryImage } from "@/lib/gemini";
+import {
+  generateDirectoryStub,
+  generateDirectoryImage,
+  generateTopicSuggestions,
+} from "@/lib/gemini";
 
 export const runtime = "nodejs";
-export const maxDuration = 300; // Vercel Pro: up to 5 min for batch runs
+export const maxDuration = 300;
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const WP_GRAPHQL = `${WP_URL}/graphql`;
 
-// ── Seed list ──────────────────────────────────────────────────────────────
-// Authoritative, notable entries spanning people, places, movements, etc.
-// Add freely — already-existing slugs are skipped automatically each run.
+// ── Hardcoded seed list ────────────────────────────────────────────────────
 const SEED_TOPICS = [
   // People
   "Fela Kuti", "Miriam Makeba", "Chinua Achebe", "Wole Soyinka",
@@ -60,11 +60,12 @@ const SEED_TOPICS = [
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-async function getExistingSlugs(): Promise<Set<string>> {
+/** Titles of all published directory entries (lowercased). */
+async function getExistingTitles(): Promise<Set<string>> {
   const query = `
-    query GetAllDirectorySlugs {
+    query GetAllDirectoryTitles {
       cultureDirectories(first: 500, where: { status: PUBLISH }) {
-        nodes { slug title }
+        nodes { title }
       }
     }
   `;
@@ -83,7 +84,44 @@ async function getExistingSlugs(): Promise<Set<string>> {
   }
 }
 
-async function submitEntry(stub: any, generateImage: boolean): Promise<{ success: boolean; postId?: number; title: string }> {
+/** Extra / AI-generated topics stored in WordPress. */
+async function getExtraTopics(): Promise<string[]> {
+  const secret = process.env.CULTURE_API_SECRET ?? "";
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/directory/extra-topics`, {
+      headers: { Authorization: `Bearer ${secret}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json.topics) ? json.topics : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Persist newly AI-generated topics back to WordPress. */
+async function saveExtraTopics(topics: string[]): Promise<void> {
+  const secret = process.env.CULTURE_API_SECRET ?? "";
+  try {
+    await fetch(`${WP_URL}/wp-json/culture/v1/directory/extra-topics`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${secret}`,
+      },
+      body: JSON.stringify({ topics }),
+      cache: "no-store",
+    });
+  } catch {
+    // Non-fatal — the run continues even if the save fails.
+  }
+}
+
+async function submitEntry(
+  stub: any,
+  generateImage: boolean
+): Promise<{ success: boolean; postId?: number; title: string }> {
   const secret = process.env.CULTURE_API_SECRET ?? "";
 
   const res = await fetch(`${WP_URL}/wp-json/culture/v1/directory/submit`, {
@@ -93,14 +131,14 @@ async function submitEntry(stub: any, generateImage: boolean): Promise<{ success
       Authorization: `Bearer ${secret}`,
     },
     body: JSON.stringify({
-      user_id: 0,            // system submission, no user
-      title: stub.title,
-      excerpt: stub.excerpt,
-      content: stub.content,
-      entry_type: stub.entryType,
-      interests: stub.interests,
+      user_id:      0,
+      title:        stub.title,
+      excerpt:      stub.excerpt,
+      content:      stub.content,
+      entry_type:   stub.entryType,
+      interests:    stub.interests,
       ai_generated: true,
-      auto_publish: true,    // PHP checks this flag to publish directly
+      auto_publish: true,
     }),
     cache: "no-store",
   });
@@ -109,7 +147,6 @@ async function submitEntry(stub: any, generateImage: boolean): Promise<{ success
   const data = await res.json();
   const postId: number = data.post_id;
 
-  // Generate + attach featured image (best-effort, never blocks)
   if (generateImage && postId) {
     try {
       const imageBase64 = await generateDirectoryImage(
@@ -130,7 +167,7 @@ async function submitEntry(stub: any, generateImage: boolean): Promise<{ success
         });
       }
     } catch {
-      // Image failure never fails the entry
+      // Image failure is best-effort; never blocks the entry.
     }
   }
 
@@ -140,7 +177,6 @@ async function submitEntry(stub: any, generateImage: boolean): Promise<{ success
 // ── Route handler ──────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // Auth: CRON_SECRET set in env (same value configured in vercel.json cron headers)
   const cronSecret = process.env.CRON_SECRET ?? "";
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
@@ -148,27 +184,49 @@ export async function POST(req: NextRequest) {
   }
 
   if (!process.env.GEMINI_API_KEY) {
-    return NextResponse.json(
-      { error: "GEMINI_API_KEY not configured." },
-      { status: 503 }
-    );
+    return NextResponse.json({ error: "GEMINI_API_KEY not configured." }, { status: 503 });
   }
 
   const body = await req.json().catch(() => ({}));
   const batchSize: number = Math.min(Number(body.batchSize) || 5, 20);
   const generateImages: boolean = body.generateImages !== false;
 
-  // Find topics not yet in the directory
-  const existing = await getExistingSlugs();
-  const pending = SEED_TOPICS.filter(t => !existing.has(t.toLowerCase().trim()));
+  // Build the full topic list: hardcoded seeds + WP-stored extras.
+  const [existing, extraTopics] = await Promise.all([
+    getExistingTitles(),
+    getExtraTopics(),
+  ]);
 
+  const allTopics = [...SEED_TOPICS, ...extraTopics];
+  let pending = allTopics.filter((t) => !existing.has(t.toLowerCase().trim()));
+
+  // When every known topic is covered, ask Gemini to generate new ones.
+  let aiGeneratedNewTopics = false;
   if (pending.length === 0) {
-    return NextResponse.json({ message: "All seed topics already exist.", created: 0 });
+    let newTopics: string[] = [];
+    try {
+      newTopics = await generateTopicSuggestions([...existing]);
+    } catch (err: any) {
+      return NextResponse.json(
+        { error: `All topics seeded. Topic generation failed: ${err?.message}` },
+        { status: 500 }
+      );
+    }
+
+    if (newTopics.length === 0) {
+      return NextResponse.json({
+        message: "All topics seeded and Gemini returned no new suggestions.",
+        created: 0,
+      });
+    }
+
+    await saveExtraTopics(newTopics);
+    pending = newTopics.filter((t) => !existing.has(t.toLowerCase().trim()));
+    aiGeneratedNewTopics = true;
   }
 
-  // Shuffle so each run picks a varied batch
-  const shuffled = [...pending].sort(() => Math.random() - 0.5);
-  const batch = shuffled.slice(0, batchSize);
+  // Shuffle for variety, take up to batchSize.
+  const batch = [...pending].sort(() => Math.random() - 0.5).slice(0, batchSize);
 
   const results: Array<{ title: string; success: boolean; postId?: number }> = [];
 
@@ -177,17 +235,17 @@ export async function POST(req: NextRequest) {
       const stub = await generateDirectoryStub(topic);
       const result = await submitEntry(stub, generateImages);
       results.push(result);
-    } catch (err: any) {
+    } catch {
       results.push({ title: topic, success: false });
     }
-    // Brief pause between entries to respect API rate limits
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 1500));
   }
 
-  const created = results.filter(r => r.success).length;
+  const created = results.filter((r) => r.success).length;
   return NextResponse.json({
     created,
     remaining: pending.length - created,
+    aiGeneratedNewTopics,
     results,
   });
 }

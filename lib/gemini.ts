@@ -45,16 +45,25 @@ The JSON must match this exact structure:
 Focus on African, Caribbean, and global diaspora contexts. Be factual, culturally respectful, and celebratory in tone. Use approximate language (e.g. "in the late 1970s") rather than fabricating specific dates you are unsure of.`;
 
 /**
- * Extract the first complete JSON object from a string.
+ * Extract the first complete JSON value (object or array) from a string.
  * Handles cases where the model prefixes/suffixes text around the JSON.
  */
 function extractJson(raw: string): string {
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start === -1 || end === -1 || end < start) {
-    throw new Error("No JSON object found in model response");
+  const objStart = raw.indexOf("{");
+  const arrStart = raw.indexOf("[");
+
+  // Prefer whichever opener appears first.
+  if (arrStart !== -1 && (objStart === -1 || arrStart < objStart)) {
+    const end = raw.lastIndexOf("]");
+    if (end > arrStart) return raw.slice(arrStart, end + 1);
   }
-  return raw.slice(start, end + 1);
+
+  if (objStart !== -1) {
+    const end = raw.lastIndexOf("}");
+    if (end > objStart) return raw.slice(objStart, end + 1);
+  }
+
+  throw new Error("No JSON value found in model response");
 }
 
 // ── Image generation ────────────────────────────────────────────────────────
@@ -68,8 +77,8 @@ const IMAGE_STYLE_PROMPT =
 
 /**
  * Generate a styled editorial illustration for a directory entry via Imagen.
- * Returns a base64-encoded JPEG string, or null if image generation is
- * unavailable (API key missing, quota exceeded, model error).
+ * Returns a base64-encoded JPEG string, or null when the API key is absent.
+ * Throws on all other failures so callers can surface the real error message.
  *
  * Must only be called from server-side code.
  */
@@ -83,24 +92,28 @@ export async function generateDirectoryImage(
   const subject = `${title} — a ${entryType} in African and diaspora culture`;
   const prompt = `${IMAGE_STYLE_PROMPT} Subject: ${subject}. Context: ${excerpt.slice(0, 200)}.`;
 
-  try {
-    const result = await (ai.models as any).generateImages({
-      model: "imagen-3.0-generate-002",
-      prompt,
-      config: {
-        numberOfImages: 1,
-        aspectRatio: "4:3",
-        outputMimeType: "image/jpeg",
-      },
-    });
+  const result = await (ai.models as any).generateImages({
+    model: "imagen-3.0-generate-002",
+    prompt,
+    config: {
+      numberOfImages: 1,
+      aspectRatio: "4:3",
+    },
+  });
 
-    const imageBytes: string | undefined =
-      result?.generatedImages?.[0]?.image?.imageBytes;
-    return imageBytes ?? null;
-  } catch {
-    // Image generation is best-effort; never fail the main submission flow.
-    return null;
+  const imageData = result?.generatedImages?.[0]?.image?.imageBytes;
+  if (!imageData) {
+    throw new Error("Imagen returned no image bytes");
   }
+
+  // SDK may return a base64 string or a Uint8Array depending on version.
+  if (typeof imageData === "string") return imageData;
+
+  // Convert Uint8Array / Buffer → base64 string.
+  const bytes = imageData instanceof Uint8Array ? imageData : new Uint8Array(imageData);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
 }
 
 /**
@@ -137,4 +150,53 @@ export async function generateDirectoryStub(
   if (!Array.isArray(parsed.suggestedLinks)) parsed.suggestedLinks = [];
 
   return parsed;
+}
+
+/**
+ * Ask Gemini to suggest new Culture Directory topics that align with
+ * The Moveee's focus, excluding topics already in the directory.
+ *
+ * Returns up to 20 topic name strings, deduplicated against existingTitles.
+ */
+export async function generateTopicSuggestions(
+  existingTitles: string[]
+): Promise<string[]> {
+  const sample = existingTitles.slice(0, 80).join(", ");
+
+  const prompt = `You are a curator for The Moveee's Culture Directory — a growing wiki celebrating African and diaspora culture globally.
+
+The directory already has entries for: ${sample}${existingTitles.length > 80 ? ` … and ${existingTitles.length - 80} more` : ""}.
+
+Suggest 20 NEW topics not yet covered. Prioritise:
+- Influential people: musicians, writers, visual artists, filmmakers, activists, philosophers
+- Places with strong cultural significance: neighbourhoods, cities, markets, landmarks
+- Cultural movements, art forms, and musical genres
+- Foods, textiles, crafts, and fashion traditions
+- Films, novels, or artworks of lasting cultural importance
+
+Aim for geographic diversity across West Africa, East Africa, Southern Africa, the Caribbean, Black Britain, the US, Brazil, and the wider diaspora. The Moveee audience is culturally curious, internationally minded, and broadly aged 25-40.
+
+Return ONLY a JSON array of strings — topic names only, no descriptions, no numbering. Example format:
+["Zanele Muholi", "Kuduro", "Brixton Market", "Afrocomix"]`;
+
+  const response = await ai.models.generateContent({
+    model: MODEL_ID,
+    contents: prompt,
+    config: { responseMimeType: "application/json" },
+  });
+
+  const raw = (response.text ?? "").trim();
+  if (!raw) throw new Error("Empty response from Gemini");
+
+  const jsonStr = extractJson(raw);
+  const topics: unknown = JSON.parse(jsonStr);
+
+  if (!Array.isArray(topics)) throw new Error("Gemini did not return a JSON array");
+
+  // Deduplicate against existing titles.
+  const existingLower = new Set(existingTitles.map((t) => t.toLowerCase().trim()));
+  return (topics as unknown[])
+    .filter((t): t is string => typeof t === "string" && t.trim().length > 0)
+    .filter((t) => !existingLower.has(t.toLowerCase().trim()))
+    .slice(0, 20);
 }

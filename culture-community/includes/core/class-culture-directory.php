@@ -145,6 +145,54 @@ class Culture_Directory {
     }
 
     /**
+     * GET /culture/v1/directory/extra-topics
+     *
+     * Returns the list of manually- or AI-added seed topics stored in the
+     * `culture_dir_extra_topics` WP option.
+     */
+    public static function handle_get_extra_topics( WP_REST_Request $request ) {
+        $raw    = get_option( 'culture_dir_extra_topics', '[]' );
+        $topics = json_decode( $raw, true );
+        if ( ! is_array( $topics ) ) {
+            $topics = array();
+        }
+        return rest_ensure_response( array( 'topics' => array_values( $topics ) ) );
+    }
+
+    /**
+     * POST /culture/v1/directory/extra-topics
+     *
+     * Merges the supplied topics array into the stored list (no duplicates).
+     * Body: { "topics": ["Topic A", "Topic B", …] }
+     */
+    public static function handle_post_extra_topics( WP_REST_Request $request ) {
+        $new_topics = (array) $request->get_param( 'topics' );
+        $new_topics = array_filter( array_map( 'sanitize_text_field', $new_topics ) );
+
+        $raw      = get_option( 'culture_dir_extra_topics', '[]' );
+        $existing = json_decode( $raw, true );
+        if ( ! is_array( $existing ) ) {
+            $existing = array();
+        }
+
+        $existing_lower = array_map( 'strtolower', $existing );
+        foreach ( $new_topics as $topic ) {
+            if ( ! in_array( strtolower( $topic ), $existing_lower, true ) ) {
+                $existing[]       = $topic;
+                $existing_lower[] = strtolower( $topic );
+            }
+        }
+
+        update_option( 'culture_dir_extra_topics', wp_json_encode( array_values( $existing ) ) );
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'count'   => count( $existing ),
+            'topics'  => array_values( $existing ),
+        ) );
+    }
+
+    /**
      * POST /culture/v1/directory/attach-image
      *
      * Accepts a base64-encoded JPEG image, uploads it to the WordPress
