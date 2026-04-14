@@ -95,12 +95,84 @@ function extractJson(raw: string): string {
 
 // ── Image generation ────────────────────────────────────────────────────────
 
-const IMAGE_STYLE_PROMPT =
-  "Flat geometric portraiture and scene illustration using a restricted " +
-  "earth-tone palette (ochre, terracotta, deep umber, sand, forest green), " +
-  "rendered with simplified bold forms and no photorealism. Strong editorial " +
-  "print-magazine sensibility — closer to Malika Favre or Emiliano Ponzi than " +
-  "to anything photographic or AI-default. No text, no borders.";
+/**
+ * Shared style modifiers included in every image prompt regardless of subject.
+ * Palette hex values are provided so the model has the exact target colours.
+ */
+const STYLE_MODIFIERS =
+  "restricted earth-tone palette only: deep ink (#14110d), burnt ochre (#c5491f), " +
+  "dark ochre (#8a2d10), gold brass (#b38238), moss green (#3d4a2a), " +
+  "cream paper (#f3ece0), indigo (#1e2b42) — no other colours, no bright or " +
+  "saturated hues, no white, no gradients into blue or purple. " +
+  "Flat colour fills with no shading, no highlights, no drop shadows. " +
+  "Editorial magazine illustration style. Inspired by Malika Favre and Emiliano Ponzi. " +
+  "No photorealism, no 3D rendering, no outlines as primary rendering method, " +
+  "no complex lighting, no anime or Western proportions, matte finish. " +
+  "Generous negative space, print-quality composition.";
+
+/**
+ * Build a context-aware Imagen 3 prompt based on the entry type.
+ *
+ * person   → portrait template
+ * place / movement / genre / concept → scene template
+ * food / fashion / artwork            → object/product template
+ */
+function buildImagePrompt(
+  title: string,
+  entryType: string,
+  excerpt: string
+): string {
+  const context = excerpt.slice(0, 180);
+
+  if (entryType === "person") {
+    return (
+      `Flat geometric portrait illustration of ${title}, an African or diaspora cultural figure. ` +
+      `Simplified minimalist editorial style. Figures rendered with flat-fill ellipses for heads, ` +
+      `minimal facial features (2–3 strokes for eyes, single curved line for mouth, no detailed nose), ` +
+      `geometric clothing shapes as flat colour blocks. ` +
+      `Hair as a single dark shape. Brass hoop or geometric earrings where appropriate. ` +
+      `Headwraps or gele rendered as architectural forms with fold lines suggested by 2–3 darker strokes. ` +
+      `Warm atmospheric gradient background in ochre and deep brown. ` +
+      `Subtle dot texture overlay at very low opacity. ` +
+      `Context: ${context}. ` +
+      STYLE_MODIFIERS
+    );
+  }
+
+  if (entryType === "food" || entryType === "fashion" || entryType === "artwork") {
+    const bgColour =
+      entryType === "fashion"
+        ? "deep indigo-black background"
+        : entryType === "food"
+        ? "warm ochre background with subtle shadow"
+        : "dark ink background with soft warm spotlight";
+    return (
+      `Flat graphic editorial illustration of ${title}. ` +
+      `Object shown against a ${bgColour}. ` +
+      `Geometric details rendered as simple repeated shapes — circles, diamonds, lines. ` +
+      `Textile or surface texture suggested through 2–3 darker fold or pattern lines. ` +
+      `Colour palette limited to indigo, cream, brass gold, burnt ochre, and moss green. ` +
+      `No photorealism, no 3D rendering, matte flat-fill style, magazine editorial aesthetic. ` +
+      `Context: ${context}. ` +
+      STYLE_MODIFIERS
+    );
+  }
+
+  // Default: scene (place, movement, genre, concept)
+  return (
+    `Flat geometric scene illustration evoking ${title} — ` +
+    `${entryType === "place" ? "a culturally significant location" : `a cultural ${entryType}`} ` +
+    `in African or diaspora culture. ` +
+    `Simplified architectural or environmental forms rendered as flat rectangles and geometric shapes. ` +
+    `Human figures as minimal silhouettes with flat colour garments, placed off-centre. ` +
+    `Environmental details suggested through minimal geometric elements: ` +
+    `rectangles for buildings, circles for vessels, vertical lines for structures. ` +
+    `Warm atmospheric light through soft radial gradients and subtle polygon shapes. ` +
+    `Subtle halftone dot texture and fine crosshatch lines at very low opacity. ` +
+    `Context: ${context}. ` +
+    STYLE_MODIFIERS
+  );
+}
 
 /**
  * Generate a styled editorial illustration for a directory entry via Imagen 3
@@ -120,8 +192,7 @@ export async function generateDirectoryImage(
   const vertexClient = createVertexClient();
   if (!vertexClient) return null;
 
-  const subject = `${title} — a ${entryType} in African and diaspora culture`;
-  const prompt = `${IMAGE_STYLE_PROMPT} Subject: ${subject}. Context: ${excerpt.slice(0, 200)}.`;
+  const prompt = buildImagePrompt(title, entryType, excerpt);
 
   const result = await (vertexClient.models as any).generateImages({
     model: "imagen-3.0-generate-002",
