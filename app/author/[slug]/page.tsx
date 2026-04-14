@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_AUTHOR_STORIES } from "@/lib/wp";
+import { getWPData, GET_AUTHOR_STORIES, GET_AUTHOR_STORIES_BY_SLUG, GET_AUTHOR_STORIES_BY_LOGIN } from "@/lib/wp";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,11 +8,31 @@ import "@/app/magazine.css";
 
 export const dynamic = "force-dynamic";
 
+async function fetchAuthorData(slug: string, first: number) {
+  const isNumeric = /^\d+$/.test(slug);
+
+  // 1. Try DATABASE_ID if param looks numeric
+  if (isNumeric) {
+    const data = await getWPData(GET_AUTHOR_STORIES, { first, id: slug });
+    if (data?.user) return data;
+  }
+
+  // 2. Try SLUG (user_nicename)
+  const bySlug = await getWPData(GET_AUTHOR_STORIES_BY_SLUG, { first, slug });
+  if (bySlug?.user) return bySlug;
+
+  // 3. Try USERNAME (user_login — WordPress author URL uses this)
+  const byLogin = await getWPData(GET_AUTHOR_STORIES_BY_LOGIN, { first, login: slug });
+  if (byLogin?.user) return byLogin;
+
+  return null;
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
   let data;
   try {
-    data = await getWPData(GET_AUTHOR_STORIES, { first: 1, id: resolvedParams.slug });
+    data = await fetchAuthorData(resolvedParams.slug, 1);
   } catch {}
 
   const author = data?.user;
@@ -28,9 +48,9 @@ export default async function AuthorArchivePage({ params }: { params: Promise<{ 
   const resolvedParams = await params;
   let data;
   try {
-    data = await getWPData(GET_AUTHOR_STORIES, { first: 50, id: resolvedParams.slug });
+    data = await fetchAuthorData(resolvedParams.slug, 50);
   } catch (err: any) {
-    console.error("AuthorArchivePage getWPData error:", err);
+    console.error("AuthorArchivePage fetchAuthorData error:", err);
   }
 
   const author = data?.user;

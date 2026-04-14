@@ -1400,6 +1400,8 @@
     }
     .events-grid, .lifestyle-grid { grid-template-columns: 1fr; gap: 24px; }
     .footer-top { grid-template-columns: 1fr; }
+    .footer-bottom { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .footer-bottom > div:last-child a:first-child { margin-left: 0; }
     .origin-row { grid-template-columns: 32px 1fr; gap: 12px; padding: 20px 0; }
     .origin-country, .origin-price { display: none; }
     .origin-name { font-size: 18px; line-height: 1.1; }
