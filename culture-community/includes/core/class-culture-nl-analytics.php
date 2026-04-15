@@ -513,7 +513,8 @@ class Culture_NL_Analytics {
             ? round( array_sum( array_column( $campaign_data, 'ctr' ) ) / $n, 1 )
             : 0.0;
         $total_sent    = array_sum( array_column( $campaign_data, 'sent' ) );
-        $subscribers   = count( get_option( 'culture_newsletter_subscribers', array() ) );
+        $subscribers_list = get_option( 'culture_newsletter_subscribers', array() );
+        $subscribers      = is_array( $subscribers_list ) ? count( $subscribers_list ) : 0;
 
         return array(
             'campaigns'     => $campaign_data,

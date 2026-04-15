@@ -619,6 +619,10 @@ class Culture_REST_API {
         $token       = $request->get_param( 'token' );
         $campaign_id = $request->get_param( 'campaign_id' ) ?: null;
 
+        if ( ! $email ) {
+            return new WP_Error( 'invalid_email', 'Invalid email address', array( 'status' => 400 ) );
+        }
+
         if ( ! Culture_Newsletter_Queue::verify_unsub_token( $email, $token ) ) {
             return new WP_Error(
                 'invalid_token',
@@ -629,7 +633,8 @@ class Culture_REST_API {
 
         $subscribers = get_option( 'culture_newsletter_subscribers', array() );
         $updated     = array_values( array_filter( $subscribers, function ( $s ) use ( $email ) {
-            return strtolower( trim( $s ) ) !== strtolower( $email );
+            $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
+            return strtolower( trim( $sub_email ) ) !== strtolower( $email );
         } ) );
         update_option( 'culture_newsletter_subscribers', $updated );
 
@@ -1040,14 +1045,30 @@ class Culture_REST_API {
 
             // Mirror to global subscriber list based on 'cultural-digest' state.
             $subscribers = get_option( 'culture_newsletter_subscribers', array() );
-            $in_list     = in_array( $email, $subscribers, true );
-            $wants_main  = $clean['cultural-digest'] ?? true;
+            $in_list     = false;
+            foreach ( $subscribers as $sub ) {
+                $sub_email = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
+                if ( strtolower( $sub_email ) === strtolower( $email ) ) {
+                    $in_list = true;
+                    break;
+                }
+            }
+
+            $wants_main = $clean['cultural-digest'] ?? true;
 
             if ( $wants_main && ! $in_list ) {
-                $subscribers[] = $email;
+                $subscribers[] = array(
+                    'email'    => $email,
+                    'name'     => $user->display_name,
+                    'location' => '',
+                    'date'     => current_time( 'mysql' ),
+                );
                 update_option( 'culture_newsletter_subscribers', $subscribers );
             } elseif ( ! $wants_main && $in_list ) {
-                $subscribers = array_values( array_filter( $subscribers, fn( $s ) => strtolower( $s ) !== strtolower( $email ) ) );
+                $subscribers = array_values( array_filter( $subscribers, function ( $s ) use ( $email ) {
+                    $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
+                    return strtolower( trim( $sub_email ) ) !== strtolower( $email );
+                } ) );
                 update_option( 'culture_newsletter_subscribers', $subscribers );
             }
         }

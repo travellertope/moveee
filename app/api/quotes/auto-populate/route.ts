@@ -8,9 +8,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { generateSeedQuotes } from "@/lib/gemini";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
-const SEED_QUOTES = [
+const DEFAULT_SEED_QUOTES = [
   {
     text: "History is not the past. It is the present. We carry our history with us. We are our history.",
     author: "James Baldwin",
@@ -74,13 +75,52 @@ export async function POST(req: NextRequest) {
   const results: Array<{ title: string; success: boolean; error?: string }> = [];
   const secret = process.env.CULTURE_API_SECRET ?? "";
 
-  for (const quote of SEED_QUOTES) {
+  // 1. Initial attempt: Try to seed the 10 high-impact defaults
+  let quotesToSeed = [...DEFAULT_SEED_QUOTES];
+
+  try {
+    const batchResults = await seedBatch(quotesToSeed, secret);
+    
+    // If most of them failed with "already exists", try to get AI suggestions instead
+    const existingCount = batchResults.filter(r => r.error?.includes("already exists")).length;
+    
+    if (existingCount >= 8) {
+      console.log("Most seed quotes already exist. Fetching AI suggestions...");
+      const aiQuotes = await generateSeedQuotes(10);
+      if (aiQuotes && aiQuotes.length > 0) {
+        const aiResults = await seedBatch(aiQuotes, secret);
+        return NextResponse.json({
+          created: aiResults.filter(r => r.success).length,
+          results: [...batchResults, ...aiResults],
+          mode: "ai-generated"
+        });
+      }
+    }
+
+    return NextResponse.json({
+      created: batchResults.filter(r => r.success).length,
+      results: batchResults,
+      mode: "default-curated"
+    });
+
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+/**
+ * Helper to POST a batch of quotes to WordPress
+ */
+async function seedBatch(quotes: any[], secret: string) {
+  const results: Array<{ title: string; success: boolean; error?: string }> = [];
+
+  for (const quote of quotes) {
     try {
       const res = await fetch(`${WP_URL}/wp-json/culture/v1/quotes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${secret}`,
+          "Authorization": `Bearer ${secret}`,
           "X-Culture-API-Secret": secret,
         },
         body: JSON.stringify({
@@ -91,10 +131,10 @@ export async function POST(req: NextRequest) {
         }),
       });
 
+      const data = await res.json();
       if (res.ok) {
         results.push({ title: `${quote.author}: ${quote.text.slice(0, 30)}...`, success: true });
       } else {
-        const data = await res.json();
         results.push({ 
           title: quote.author, 
           success: false, 
@@ -104,14 +144,7 @@ export async function POST(req: NextRequest) {
     } catch (err: any) {
       results.push({ title: quote.author, success: false, error: err.message });
     }
-    
-    // Brief delay to prevent rate issues
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 300));
   }
-
-  const created = results.filter((r) => r.success).length;
-  return NextResponse.json({
-    created,
-    results,
-  });
+  return results;
 }

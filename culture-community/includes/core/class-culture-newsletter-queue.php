@@ -30,20 +30,31 @@ class Culture_Newsletter_Queue {
             return false;
         }
 
-        $subscribers = array_values( array_filter( $subscribers, 'is_email' ) );
+        // Standardize to email strings for the snapshot
+        $emails = array();
+        foreach ( $subscribers as $sub ) {
+            $e = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
+            if ( is_email( $e ) ) {
+                $emails[] = $e;
+            }
+        }
+
+        if ( empty( $emails ) ) {
+            return false;
+        }
 
         // Snapshot into a transient so changes to the list mid-send don't affect this job.
-        set_transient( "culture_nl_job_{$post_id}", $subscribers, DAY_IN_SECONDS );
+        set_transient( "culture_nl_job_{$post_id}", $emails, DAY_IN_SECONDS );
 
         update_post_meta( $post_id, '_culture_nl_send_status', 'sending' );
-        update_post_meta( $post_id, '_culture_nl_send_total', count( $subscribers ) );
+        update_post_meta( $post_id, '_culture_nl_send_total', count( $emails ) );
         update_post_meta( $post_id, '_culture_nl_send_offset', 0 );
         delete_post_meta( $post_id, '_culture_nl_sent_at' );
 
         // Fire first batch after 5 seconds to allow the AJAX response to return first.
         wp_schedule_single_event( time() + 5, self::CRON_HOOK, array( $post_id, 0 ) );
 
-        return count( $subscribers );
+        return count( $emails );
     }
 
     /**
@@ -68,6 +79,7 @@ class Culture_Newsletter_Queue {
         }
 
         foreach ( $batch as $email ) {
+            // $email is already a string here from the snapshot
             self::send_to( $email, $post_id );
         }
 
@@ -268,7 +280,8 @@ class Culture_Newsletter_Queue {
 
         $subscribers = get_option( 'culture_newsletter_subscribers', array() );
         $updated     = array_values( array_filter( $subscribers, function ( $s ) use ( $email ) {
-            return strtolower( trim( $s ) ) !== strtolower( $email );
+            $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
+            return strtolower( trim( $sub_email ) ) !== strtolower( $email );
         } ) );
         update_option( 'culture_newsletter_subscribers', $updated );
 

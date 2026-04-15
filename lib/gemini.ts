@@ -428,3 +428,71 @@ Return ONLY a JSON array of strings — topic names only, no descriptions, no nu
 
   throw new Error(`Failed to generate topic suggestions: ${lastError?.message || "Unknown error"}`);
 }
+
+/**
+ * Ask Gemini to suggest high-impact, culturally relevant quotes from 
+ * African and Diaspora thinkers, artists, and leaders.
+ *
+ * Returns an array of { text, author, source }.
+ */
+export async function generateSeedQuotes(
+  count: number = 10
+): Promise<Array<{ text: string; author: string; source: string }>> {
+  const prompt = `You are a curator for The Moveee's Quote Archive — a place for wisdom, creativity, and cultural reflection.
+
+Generate ${count} unique, high-impact quotes from notable African, Caribbean, or Diaspora figures (writers, musicians, leaders, artists, activists). 
+
+Focus on themes of:
+- Heritage and Identity
+- Creativity and Expression
+- Resilience and Freedom
+- Future-facing optimism
+
+Return ONLY a JSON array of objects. Each object must have:
+- "text": The full quote text (no descriptions, just the quote)
+- "author": The name of the person who said/wrote it
+- "source": The book, film, song, or event where it originated
+
+Example format:
+[
+  { "text": "...", "author": "...", "source": "..." }
+]`;
+
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents: prompt,
+        config: { 
+          responseMimeType: "application/json",
+          safetySettings: SAFETY_SETTINGS,
+        },
+      });
+
+      const raw = (response.text ?? "").trim();
+      if (!raw) continue;
+
+      const jsonStr = extractJson(raw);
+      const quotes: any = JSON.parse(jsonStr);
+
+      if (!Array.isArray(quotes)) continue;
+
+      return quotes
+        .filter((q: any) => q.text && q.author)
+        .map((q: any) => ({
+          text: String(q.text),
+          author: String(q.author),
+          source: String(q.source || ""),
+        }))
+        .slice(0, count);
+    } catch (err: any) {
+      console.warn(`Model ${modelId} failed for quotes generation:`, err?.message);
+      lastError = err;
+      continue;
+    }
+  }
+
+  throw new Error(`Failed to generate seed quotes: ${lastError?.message || "Unknown error"}`);
+}

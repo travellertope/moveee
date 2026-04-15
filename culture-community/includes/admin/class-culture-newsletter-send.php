@@ -88,7 +88,8 @@ class Culture_Newsletter_Send {
         $offset       = $status_data['offset'];
         $percent      = $status_data['percent'];
         $sent_at      = $status_data['sent_at'];
-        $sub_count    = count( get_option( 'culture_newsletter_subscribers', array() ) );
+        $subscribers  = get_option( 'culture_newsletter_subscribers', array() );
+        $sub_count    = is_array( $subscribers ) ? count( $subscribers ) : 0;
         $current_user = wp_get_current_user();
         ?>
         <div class="culture-nl-box" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
