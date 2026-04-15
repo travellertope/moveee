@@ -47,19 +47,27 @@ class Culture_Paystack {
         return add_query_arg( array(
             'culture_action' => 'paystack_checkout',
             'user_id'        => $user_id,
-            'nonce'          => wp_create_nonce( 'culture_paystack_checkout_' . $user_id ),
+            'token'          => self::get_checkout_token( $user_id ),
         ), home_url( '/' ) );
     }
 
     /**
+     * Generate a session-independent security token for checkout redirects.
+     */
+    private static function get_checkout_token( $user_id ) {
+        $salt = defined( 'NONCE_SALT' ) ? NONCE_SALT : 'culture_fallback_salt';
+        return wp_hash( $user_id . '|paystack_checkout|' . $salt, 'nonce' );
+    }
+
+    /**
      * Process the paystack_checkout action.
-     * Verifies the nonce and then redirects the user to the Paystack authorization URL.
+     * Verifies the token and then redirects the user to the Paystack authorization URL.
      */
     private static function process_checkout_action() {
         $user_id = isset( $_GET['user_id'] ) ? absint( $_GET['user_id'] ) : 0;
-        $nonce   = isset( $_GET['nonce'] ) ? sanitize_text_field( $_GET['nonce'] ) : '';
+        $token   = isset( $_GET['token'] ) ? sanitize_text_field( $_GET['token'] ) : '';
 
-        if ( ! $user_id || ! wp_verify_nonce( $nonce, 'culture_paystack_checkout_' . $user_id ) ) {
+        if ( ! $user_id || ! hash_equals( self::get_checkout_token( $user_id ), $token ) ) {
             wp_die( esc_html__( 'Invalid security token.', 'culture-community' ) );
         }
 
