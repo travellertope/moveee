@@ -93,7 +93,7 @@ export default async function Home() {
               from Africa to the world.
             </h2>
             <p className="hero-standfirst">
-              We document and celebrate the most considered work in film, music, visual art, literature, design, food and fashion from Africa and its diaspora — then we take you inside it. Read the magazine. Attend the events. Travel the origins. Wear the craft. Meet the community.
+              We documents and celebrate the most considered work in film, music, visual art, literature, design, food and fashion from Africa and its diaspora — then we take you inside it.
             </p>
             <div className="hero-cta-row">
               <Link href="#magazine" className="btn-primary">Enter the Issue <span className="arrow">→</span></Link>
