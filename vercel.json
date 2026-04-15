@@ -3,6 +3,10 @@
     {
       "path": "/api/directory/auto-populate",
       "schedule": "0 3 * * 1"
+    },
+    {
+      "path": "/api/quotes/auto-populate",
+      "schedule": "0 4 * * 1"
     }
   ]
 }

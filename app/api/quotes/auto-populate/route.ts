@@ -10,6 +10,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateSeedQuotes } from "@/lib/gemini";
 
+export const runtime = "nodejs";
+export const maxDuration = 300;
+
+export async function GET() {
+  return NextResponse.json({ status: "Quote Seeder API is active.", method: "POST required for seeding." });
+}
+
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const DEFAULT_SEED_QUOTES = [
   {
