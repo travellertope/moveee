@@ -16,6 +16,9 @@ export default function VisualsSingleClient({ entry, user }: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isPatron = user?.tier === 'patron' || user?.tier === 'leader';
+  const limitReached = !isPatron && downloadCount >= 5;
+
   // Sync the download count with the server on mount to avoid stale session data (fixed 0/5 issue)
   useEffect(() => {
     if (user && !isPatron) {
@@ -29,9 +32,6 @@ export default function VisualsSingleClient({ entry, user }: Props) {
         .catch(err => console.error('Sync failed:', err));
     }
   }, [user, isPatron]);
-
-  const isPatron = user?.tier === 'patron' || user?.tier === 'leader';
-  const limitReached = !isPatron && downloadCount >= 5;
 
   const handleDownload = async () => {
     if (!user) {
