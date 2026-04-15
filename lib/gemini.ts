@@ -29,9 +29,21 @@ function createVertexClient(): GoogleGenAI | null {
   } as any);
 }
 
-// Gemini 3 Flash Preview — Pro-level reasoning at Flash speed/cost.
-// If a stable GA variant becomes available (e.g. "gemini-3-flash"), swap here.
-const MODEL_ID = "gemini-3-flash-preview";
+// Model Fallback Chain: We try the latest available models sequentially.
+const TEXT_MODELS = [
+  "gemini-2.0-flash-exp",   // Tier 1: Fastest & Latest
+  "gemini-1.5-flash",       // Tier 2: Stable Workhorse
+  "gemini-1.5-pro",         // Tier 3: High Reasoning
+  "gemini-3-flash-preview", // Tier 4: Future/Preview fallback
+];
+
+// Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
+const SAFETY_SETTINGS = [
+  { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+  { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+  { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+  { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+];
 
 export const ENTRY_TYPE_SLUGS = [
   "person",
@@ -282,7 +294,10 @@ export async function generateDirectoryImage(
   const response = await ai.models.generateContent({
     model: "gemini-2.0-flash-exp",
     contents: prompt,
-    config: { responseModalities: ["IMAGE"] } as any,
+    config: { 
+      responseModalities: ["IMAGE"],
+      safetySettings: SAFETY_SETTINGS,
+    } as any,
   });
 
   const parts: any[] =
@@ -302,33 +317,44 @@ export async function generateDirectoryImage(
 export async function generateDirectoryStub(
   topic: string
 ): Promise<DirectoryStub> {
-  const response = await ai.models.generateContent({
-    model: MODEL_ID,
-    contents: `Generate a Culture Directory entry for: "${topic}"`,
-    config: {
-      systemInstruction: SYSTEM_PROMPT,
-      responseMimeType: "application/json",
-    },
-  });
+  let lastError: any = null;
 
-  const raw = (response.text ?? "").trim();
-  if (!raw) {
-    throw new Error("Empty response from Gemini");
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents: `Generate a Culture Directory entry for: "${topic}"`,
+        config: {
+          systemInstruction: SYSTEM_PROMPT,
+          responseMimeType: "application/json",
+          safetySettings: SAFETY_SETTINGS,
+        },
+      });
+
+      const raw = (response.text ?? "").trim();
+      if (!raw) continue; // Try next model
+
+      const jsonStr = extractJson(raw);
+      const parsed = JSON.parse(jsonStr) as DirectoryStub;
+
+      // Normalise entry type to a known slug.
+      if (!ENTRY_TYPE_SLUGS.includes(parsed.entryType as EntryType)) {
+        parsed.entryType = "concept";
+      }
+
+      // Ensure arrays are arrays.
+      if (!Array.isArray(parsed.interests)) parsed.interests = [];
+      if (!Array.isArray(parsed.suggestedLinks)) parsed.suggestedLinks = [];
+
+      return parsed;
+    } catch (err: any) {
+      console.warn(`Model ${modelId} failed for "${topic}":`, err?.message);
+      lastError = err;
+      continue; // Try next model
+    }
   }
 
-  const jsonStr = extractJson(raw);
-  const parsed = JSON.parse(jsonStr) as DirectoryStub;
-
-  // Normalise entry type to a known slug.
-  if (!ENTRY_TYPE_SLUGS.includes(parsed.entryType as EntryType)) {
-    parsed.entryType = "concept";
-  }
-
-  // Ensure arrays are arrays.
-  if (!Array.isArray(parsed.interests)) parsed.interests = [];
-  if (!Array.isArray(parsed.suggestedLinks)) parsed.suggestedLinks = [];
-
-  return parsed;
+  throw new Error(`All models failed for "${topic}". Last error: ${lastError?.message || "Unknown error"}`);
 }
 
 /**
@@ -358,24 +384,39 @@ Aim for geographic diversity across West Africa, East Africa, Southern Africa, t
 Return ONLY a JSON array of strings — topic names only, no descriptions, no numbering. Example format:
 ["Zanele Muholi", "Kuduro", "Brixton Market", "Afrocomix"]`;
 
-  const response = await ai.models.generateContent({
-    model: MODEL_ID,
-    contents: prompt,
-    config: { responseMimeType: "application/json" },
-  });
+  let lastError: any = null;
 
-  const raw = (response.text ?? "").trim();
-  if (!raw) throw new Error("Empty response from Gemini");
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents: prompt,
+        config: { 
+          responseMimeType: "application/json",
+          safetySettings: SAFETY_SETTINGS,
+        },
+      });
 
-  const jsonStr = extractJson(raw);
-  const topics: unknown = JSON.parse(jsonStr);
+      const raw = (response.text ?? "").trim();
+      if (!raw) continue;
 
-  if (!Array.isArray(topics)) throw new Error("Gemini did not return a JSON array");
+      const jsonStr = extractJson(raw);
+      const topics: unknown = JSON.parse(jsonStr);
 
-  // Deduplicate against existing titles.
-  const existingLower = new Set(existingTitles.map((t) => t.toLowerCase().trim()));
-  return (topics as unknown[])
-    .filter((t): t is string => typeof t === "string" && t.trim().length > 0)
-    .filter((t) => !existingLower.has(t.toLowerCase().trim()))
-    .slice(0, 20);
+      if (!Array.isArray(topics)) continue;
+
+      // Deduplicate against existing titles.
+      const existingLower = new Set(existingTitles.map((t) => t.toLowerCase().trim()));
+      return (topics as unknown[])
+        .filter((t): t is string => typeof t === "string" && t.trim().length > 0)
+        .filter((t) => !existingLower.has(t.toLowerCase().trim()))
+        .slice(0, 20);
+    } catch (err: any) {
+      console.warn(`Model ${modelId} failed for topics suggestion:`, err?.message);
+      lastError = err;
+      continue;
+    }
+  }
+
+  throw new Error(`Failed to generate topic suggestions: ${lastError?.message || "Unknown error"}`);
 }

@@ -9,7 +9,7 @@ import "@/app/events.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Events · The Moveee",
+  title: "Events",
   description: "Curated openings, listening sessions, film screenings, and community gatherings across Africa and the diaspora.",
 };
 

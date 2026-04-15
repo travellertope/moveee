@@ -235,10 +235,15 @@ export async function POST(req: NextRequest) {
       const stub = await generateDirectoryStub(topic);
       const result = await submitEntry(stub, generateImages);
       results.push(result);
-    } catch {
-      results.push({ title: topic, success: false });
+    } catch (err: any) {
+      results.push({ 
+        title: topic, 
+        success: false,
+        error: err?.message || "Unknown error during generation"
+      } as any);
     }
-    await new Promise((r) => setTimeout(r, 1500));
+    // Increased delay to 2.5s to reduce pressure on API quotas and ensure DB sync
+    await new Promise((r) => setTimeout(r, 2500));
   }
 
   const created = results.filter((r) => r.success).length;

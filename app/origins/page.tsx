@@ -6,7 +6,7 @@ import "../sections.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Origins · The Moveee",
+  title: "Origins",
   description: "Journeys through culture, place, and identity.",
 };
 

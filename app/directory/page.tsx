@@ -6,7 +6,7 @@ import DirectoryGrid from "@/components/DirectoryGrid";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: "Culture Directory · The Moveee",
+  title: "Culture Directory",
   description:
     "A living wiki of African and diaspora culture — people, places, movements, genres, and more.",
 };

@@ -5,7 +5,7 @@ import Link from "next/link";
 import "../sections.css";
 
 export const metadata = {
-  title: "Join the Community · The Moveee",
+  title: "Join the Community",
   description: "Become a member of The Moveee — a culture community for the curious.",
 };
 

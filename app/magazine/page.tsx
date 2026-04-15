@@ -7,8 +7,14 @@ import CategoryNav from "@/components/CategoryNav";
 import MagazineFilters from "@/components/MagazineFilters";
 import EditorialSection from "@/components/EditorialSection";
 import "../magazine.css";
+import { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Magazine",
+  description: "Long-form essays, interviews, and cultural commentary from The Moveee.",
+};
 
 export default async function MagazineArchive({ 
   searchParams 

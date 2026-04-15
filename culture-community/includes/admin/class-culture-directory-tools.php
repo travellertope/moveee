@@ -499,7 +499,8 @@ class Culture_Directory_Tools {
                         if (d.results && d.results.length) {
                             html += '<ul style="margin-top:8px;">';
                             d.results.forEach(function(r) {
-                                html += '<li>' + (r.success ? '&#10003;' : '&#10007;') + ' ' + $('<span>').text(r.title).html() + '</li>';
+                                var errSpan = r.error ? ' <span style="color:#d63638;font-size:11px;">(' + $('<span>').text(r.error).html() + ')</span>' : '';
+                                html += '<li>' + (r.success ? '&#10003;' : '&#10007;') + ' ' + $('<span>').text(r.title).html() + errSpan + '</li>';
                             });
                             html += '</ul>';
                         }

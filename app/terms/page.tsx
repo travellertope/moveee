@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Terms of Use · The Moveee",
+  title: "Terms of Use",
   description: "The terms and conditions governing use of The Moveee platform.",
 };
 

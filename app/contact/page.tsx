@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Contact Us · The Moveee",
+  title: "Contact Us",
   description: "Get in touch with The Moveee editorial, partnerships, events, and community teams.",
 };
 

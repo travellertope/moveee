@@ -8,7 +8,7 @@ import '@/app/quotes.css';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Quotes — The Moveee',
+  title: 'Quotes',
   description: 'A directory of user-submitted quotes relevant to the culture, themes, and vibe of The Moveee community.',
 };
 
