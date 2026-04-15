@@ -242,8 +242,8 @@ export async function POST(req: NextRequest) {
         error: err?.message || "Unknown error during generation"
       } as any);
     }
-    // Increased delay to 2.5s to reduce pressure on API quotas and ensure DB sync
-    await new Promise((r) => setTimeout(r, 2500));
+    // Increased delay to 3.5s to reduce pressure on API quotas and ensure DB sync
+    await new Promise((r) => setTimeout(r, 3500));
   }
 
   const created = results.filter((r) => r.success).length;

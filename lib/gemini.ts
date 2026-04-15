@@ -31,10 +31,9 @@ function createVertexClient(): GoogleGenAI | null {
 
 // Model Fallback Chain: We try the latest available models sequentially.
 const TEXT_MODELS = [
-  "gemini-2.0-flash-exp",   // Tier 1: Fastest & Latest
-  "gemini-1.5-flash",       // Tier 2: Stable Workhorse
+  "gemini-1.5-flash",       // Tier 1: Highest Free-Tier Quota (1,500 RPD typically)
+  "gemini-2.0-flash-exp",   // Tier 2: Latest Experimental
   "gemini-1.5-pro",         // Tier 3: High Reasoning
-  "gemini-3-flash-preview", // Tier 4: Future/Preview fallback
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
