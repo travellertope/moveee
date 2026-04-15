@@ -459,11 +459,21 @@ class Culture_REST_API {
      * Next.js sends:  Authorization: Bearer {CULTURE_API_SECRET}
      */
     public static function api_key_permission( $request ) {
+        return self::verify_bearer_token( $request->get_header( 'Authorization' ) );
+    }
+
+    /**
+     * Raw verification of a Bearer token string.
+     * Useful for non-REST contexts (like template_redirect handlers).
+     *
+     * @param string $header The Authorization header string.
+     * @return bool
+     */
+    public static function verify_bearer_token( $header ) {
         $stored = get_option( 'culture_api_secret', '' );
-        if ( empty( $stored ) ) {
-            return new WP_Error( 'no_api_secret', 'API secret not configured.', array( 'status' => 500 ) );
+        if ( empty( $stored ) || ! $header ) {
+            return false;
         }
-        $header   = $request->get_header( 'Authorization' );
         $expected = 'Bearer ' . $stored;
         return hash_equals( $expected, (string) $header );
     }

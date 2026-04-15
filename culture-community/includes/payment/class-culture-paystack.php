@@ -61,14 +61,28 @@ class Culture_Paystack {
 
     /**
      * Process the paystack_checkout action.
-     * Verifies the token and then redirects the user to the Paystack authorization URL.
+     * Verifies the token OR Authorization header and then redirects the user to the Paystack authorization URL.
      */
     private static function process_checkout_action() {
         $user_id = isset( $_GET['user_id'] ) ? absint( $_GET['user_id'] ) : 0;
         $token   = isset( $_GET['token'] ) ? sanitize_text_field( $_GET['token'] ) : '';
 
-        if ( ! $user_id || ! hash_equals( self::get_checkout_token( $user_id ), $token ) ) {
-            wp_die( esc_html__( 'Invalid security token.', 'culture-community' ) );
+        // Prioritize Authorization Header if available (useful for API testing).
+        $auth_header   = '';
+        if ( function_exists( 'getallheaders' ) ) {
+            $all_headers = getallheaders();
+            $auth_header = $all_headers['Authorization'] ?? $all_headers['authorization'] ?? '';
+        } elseif ( isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
+            $auth_header = $_SERVER['HTTP_AUTHORIZATION'];
+        }
+
+        $is_authorized = false;
+        if ( ! empty( $auth_header ) && class_exists( 'Culture_REST_API' ) ) {
+            $is_authorized = Culture_REST_API::verify_bearer_token( $auth_header );
+        }
+
+        if ( ! $is_authorized && ( ! $user_id || ! hash_equals( self::get_checkout_token( $user_id ), $token ) ) ) {
+            wp_die( esc_html__( 'Invalid security token or unauthorized request.', 'culture-community' ) );
         }
 
         $user = get_userdata( $user_id );
