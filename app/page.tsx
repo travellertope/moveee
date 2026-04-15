@@ -11,13 +11,28 @@ export default async function Home() {
   const session = await getServerSession(authOptions);
   const isLoggedIn = !!session?.user;
   let stories: any[] = [];
+  let coverStory: any = null;
   let events: any[] = [];
   let origins: any[] = [];
   let products: any[] = [];
 
   try {
-    const data = await getWPData(GET_STORIES, { first: 6 });
-    stories = data?.posts?.nodes || [];
+    // 1. Fetch specifically for the Cover Story tag
+    const coverData = await getWPData(GET_STORIES, { first: 1, tag: "cover-story" });
+    coverStory = coverData?.posts?.nodes?.[0] || null;
+
+    // 2. Fetch latest stories (we fetch 7 to be safe in case we filter out the cover story)
+    const data = await getWPData(GET_STORIES, { first: 7 });
+    const allStories = data?.posts?.nodes || [];
+    
+    // If no specific cover story was found by tag, use the latest one as fallback
+    if (!coverStory) {
+      coverStory = allStories[0];
+      stories = allStories.slice(1, 7);
+    } else {
+      // Filter out the cover story from the general list to avoid duplication
+      stories = allStories.filter((s: any) => s.id !== coverStory.id).slice(0, 6);
+    }
   } catch (err) {
     console.error(err);
   }
@@ -64,9 +79,8 @@ export default async function Home() {
     console.error("WooCommerce missing or products fetch failed:", err);
   }
 
-  const featuredStory = stories[0] || null;
-  const magLeadStory = stories[1] || featuredStory; // Lead for Mag Pillar
-  const remainingStories = stories.slice(2, 6); // Right side 4 stories
+  const magLeadStory = stories[0] || coverStory; // Lead for Mag Pillar
+  const remainingStories = stories.slice(1, 5); // Right side 4 stories
 
   return (
     <>
@@ -92,16 +106,16 @@ export default async function Home() {
           </div>
 
           <div className="hero-visual">
-              <Link href={featuredStory ? `/magazine/${featuredStory.slug}` : '#'} className="hero-frame">
+              <Link href={coverStory ? `/magazine/${coverStory.slug}` : '#'} className="hero-frame">
                 <div className="hero-ticker">
                   <span>Frame · 01 / 05</span>
                   <span>Shot on 35mm</span>
                 </div>
                 
-                {featuredStory?.featuredImage && (
+                {coverStory?.featuredImage && (
                   <Image 
-                    src={featuredStory.featuredImage.node.sourceUrl} 
-                    alt={featuredStory.featuredImage.node.altText || featuredStory.title} 
+                    src={coverStory.featuredImage.node.sourceUrl} 
+                    alt={coverStory.featuredImage.node.altText || coverStory.title} 
                     fill 
                     className="object-cover transition-transform duration-1000 hover:scale-105"
                     priority
@@ -109,9 +123,9 @@ export default async function Home() {
                 )}
               </Link>
             
-            {featuredStory && (
-              <Link href={`/magazine/${featuredStory.slug}`} className="hero-caption" style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
-                <span>Cover Story<br />{featuredStory.title}</span>
+            {coverStory && (
+              <Link href={`/magazine/${coverStory.slug}`} className="hero-caption" style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
+                <span>Cover Story<br />{coverStory.title}</span>
                 <span>↗ Read feature</span>
               </Link>
             )}

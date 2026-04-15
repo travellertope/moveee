@@ -28,9 +28,29 @@ export async function generateMetadata({
   } catch {}
   const issue = data?.cultureNewsletter;
   if (!issue) return { title: "GetMeLit · The Moveee" };
+
+  const imageUrl = issue.featuredImage?.node?.sourceUrl || "/og-fallback.png";
+
   return {
     title: `${issue.title} · GetMeLit`,
     description: issue.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
+    openGraph: {
+      title: issue.title,
+      description: issue.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: issue.title,
+      description: issue.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
+      images: [imageUrl],
+    },
   };
 }
 

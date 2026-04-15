@@ -31,6 +31,13 @@ export async function generateMetadata({ params }: QuotePageProps): Promise<Meta
       type: 'article',
       title: `Quote by ${author}`,
       description: quote.title,
+      images: ['/og-fallback.png'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `Quote by ${author}`,
+      description: quote.title,
+      images: ['/og-fallback.png'],
     },
   };
 }

@@ -32,10 +32,33 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://themoveee.com"),
-  title: "The Moveee — Best in Culture",
+  title: {
+    default: "The Moveee — Best in Culture",
+    template: "%s | The Moveee",
+  },
   description: "Curated lifestyle, magazine, and community for the moveee.",
   alternates: {
     canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://themoveee.com",
+    siteName: "The Moveee",
+    images: [
+      {
+        url: "/og-fallback.png",
+        width: 1200,
+        height: 630,
+        alt: "The Moveee — Best in Culture",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "The Moveee — Best in Culture",
+    description: "Curated lifestyle, magazine, and community for the moveee.",
+    images: ["/og-fallback.png"],
   },
 };
 

@@ -115,8 +115,8 @@ export const GET_STORY_BY_SLUG = `
 `;
 
 export const GET_STORIES = `
-  query GetStories($first: Int, $categoryName: String) {
-    posts(first: $first, where: { categoryName: $categoryName }) {
+  query GetStories($first: Int, $categoryName: String, $tag: String) {
+    posts(first: $first, where: { categoryName: $categoryName, tag: $tag }) {
       nodes {
         ...StoryFields
       }
