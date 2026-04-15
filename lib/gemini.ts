@@ -31,10 +31,10 @@ function createVertexClient(): GoogleGenAI | null {
 
 // Model Fallback Chain: Aligned with Google AI Studio dashboard visibility.
 const TEXT_MODELS = [
-  "gemini-2.5-flash",       // Tier 1: Primary (stable, high quota)
-  "gemini-2-flash",         // Tier 2: High-speed fallback
-  "gemini-2.5-pro",         // Tier 3: Reasoning fallback
-  "gemini-3-flash",         // Tier 4: Experimental (low quota fallback)
+  "gemini-2.0-flash",       // Tier 1: Primary (stable, high quota)
+  "gemini-1.5-flash",       // Tier 2: High-speed fallback
+  "gemini-1.5-pro",         // Tier 3: Reasoning fallback
+  "gemini-1.5-flash-8b",    // Tier 4: Lightweight fallback
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
@@ -300,7 +300,7 @@ export async function generateDirectoryImage(
   if (!process.env.GEMINI_API_KEY) return null;
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash-exp",
+    model: "gemini-2.0-flash",
     contents: prompt,
     config: { 
       responseModalities: ["IMAGE"],
