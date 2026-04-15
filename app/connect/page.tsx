@@ -11,7 +11,6 @@ export const metadata = {
 
 export default async function ConnectPage() {
   const session = await getServerSession(authOptions);
-  if (session?.user) redirect("/member");
 
   return (
     <>
