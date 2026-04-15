@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
   try {
     const res = await fetch(`${WP_URL}?user_id=${user.id}`, {
       headers: { 
-        "Authorization": `Bearer ${CULTURE_API_SECRET}`
+        "Authorization": `Bearer ${CULTURE_API_SECRET}`,
+        "X-Culture-API-Secret": CULTURE_API_SECRET || "",
       },
       next: { revalidate: 0 } // Always fresh
     });

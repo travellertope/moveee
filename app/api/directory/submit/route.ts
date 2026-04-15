@@ -9,6 +9,7 @@ function wpAuthHeaders() {
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${secret}`,
+    "X-Culture-API-Secret": secret,
   };
 }
 

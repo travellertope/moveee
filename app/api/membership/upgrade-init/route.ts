@@ -17,6 +17,7 @@ export async function POST() {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${API_SECRET}`,
+        "X-Culture-API-Secret": API_SECRET || "",
       },
       body: JSON.stringify({ user_id: (session.user as any).id }),
     });

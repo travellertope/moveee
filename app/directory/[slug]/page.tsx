@@ -102,14 +102,14 @@ export default async function DirectoryEntryPage({
       {/* ── ENTRY HERO ── */}
       <div className="dir-single-hero">
         {img && (
-          <div className="dir-single-img">
+          <Link href={`/visuals/${slug}`} className="dir-single-img">
             <Image
               src={img}
               alt={entry.title ?? ""}
               fill
               style={{ objectFit: "cover" }}
             />
-          </div>
+          </Link>
         )}
 
         {type && (

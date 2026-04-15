@@ -43,6 +43,7 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${CULTURE_API_SECRET}`,
+        "X-Culture-API-Secret": CULTURE_API_SECRET || "",
       },
       body: JSON.stringify({
         post_id,

@@ -5,9 +5,11 @@ import { authOptions } from "@/lib/auth";
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
 function wpAuthHeaders() {
+  const secret = process.env.CULTURE_API_SECRET ?? "";
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${process.env.CULTURE_API_SECRET ?? ""}`,
+    Authorization: `Bearer ${secret}`,
+    "X-Culture-API-Secret": secret,
   };
 }
 

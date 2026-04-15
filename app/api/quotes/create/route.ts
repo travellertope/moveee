@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.CULTURE_API_SECRET}`
+        "Authorization": `Bearer ${process.env.CULTURE_API_SECRET}`,
+        "X-Culture-API-Secret": process.env.CULTURE_API_SECRET || ""
       },
       body: JSON.stringify({ 
         text, 

@@ -464,18 +464,33 @@ class Culture_REST_API {
 
     /**
      * Raw verification of a Bearer token string.
-     * Useful for non-REST contexts (like template_redirect handlers).
+     * Supports both standard 'Authorization' and fallback 'X-Culture-API-Secret' headers.
      *
      * @param string $header The Authorization header string.
      * @return bool
      */
     public static function verify_bearer_token( $header ) {
         $stored = get_option( 'culture_api_secret', '' );
-        if ( empty( $stored ) || ! $header ) {
+        if ( empty( $stored ) ) {
             return false;
         }
-        $expected = 'Bearer ' . $stored;
-        return hash_equals( $expected, (string) $header );
+
+        // 1. Try standard 'Authorization: Bearer ...' header.
+        if ( ! empty( $header ) ) {
+            $expected = 'Bearer ' . $stored;
+            if ( hash_equals( $expected, (string) $header ) ) {
+                return true;
+            }
+        }
+
+        // 2. Try fallback 'X-Culture-API-Secret' header (bypasses server header stripping).
+        if ( isset( $_SERVER['HTTP_X_CULTURE_API_SECRET'] ) ) {
+            if ( hash_equals( $stored, (string) $_SERVER['HTTP_X_CULTURE_API_SECRET'] ) ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
