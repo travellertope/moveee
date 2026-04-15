@@ -12,15 +12,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Culture_ACF_Fields {
 
     public static function init() {
-        if ( function_exists( 'acf_add_local_field_group' ) ) {
-            add_action( 'acf/init', array( __CLASS__, 'register_field_groups' ) );
-        }
+        // Register field groups when ACF is ready.
+        add_action( 'acf/init', array( __CLASS__, 'register_field_groups' ) );
     }
 
     /**
      * Register ACF Field Groups
      */
     public static function register_field_groups() {
+        // Check if ACF is available before registering.
+        if ( ! function_exists( 'acf_add_local_field_group' ) ) {
+            return;
+        }
+
         // Event Editorial Details
         acf_add_local_field_group( array(
             'key' => 'group_culture_event_details',
