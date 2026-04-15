@@ -19,6 +19,16 @@ export async function POST(req: Request) {
     }
 
     const user = session.user as any;
+    const isPatron = user.tier === 'patron' || user.tier === 'leader';
+    
+    // Optional: Pre-check limit in session to save a WP hit
+    if (!isPatron && user.visual_downloads_today >= 5) {
+      return NextResponse.json({ 
+        error: "Daily limit reached", 
+        count: user.visual_downloads_today,
+        limit_reached: true 
+      }, { status: 403 });
+    }
 
     const wpRes = await fetch(`${WP_URL}/wp-json/culture/v1/visuals/track-download`, {
       method: "POST",
@@ -32,13 +42,16 @@ export async function POST(req: Request) {
       cache: 'no-store'
     });
 
+    const data = await wpRes.json();
+
     if (!wpRes.ok) {
-      const errorText = await wpRes.text();
-      console.error(`[Visuals Track] WordPress API Error (${wpRes.status}):`, errorText);
-      return NextResponse.json({ error: "WordPress Tracking failed" }, { status: wpRes.status });
+      console.error(`[Visuals Track] WordPress API Error (${wpRes.status}):`, data);
+      return NextResponse.json({ 
+        error: data.message || "Tracking failed", 
+        limit_reached: wpRes.status === 403 
+      }, { status: wpRes.status });
     }
 
-    const data = await wpRes.json();
     return NextResponse.json(data);
   } catch (error: any) {
     console.error("[Visuals Track] Unexpected Error:", error.message);

@@ -1621,10 +1621,18 @@ class Culture_REST_API {
 
         $today = current_time( 'Y-m-d' );
         $meta  = get_user_meta( $user_id, '_culture_visual_downloads', true );
+        $tier  = get_user_meta( $user_id, '_culture_membership_tier', true ) ?: 'citizen';
+
+        // Unlimited Tiers: patron, leader, admin (WordPress role check as fallback)
+        $is_unlimited = in_array( $tier, array( 'patron', 'leader' ) ) || user_can( $user_id, 'manage_options' );
 
         if ( ! is_array( $meta ) || ! isset( $meta['date'] ) || $meta['date'] !== $today ) {
             $meta = array( 'date' => $today, 'count' => 1 );
         } else {
+            // Check limit for non-unlimited users
+            if ( ! $is_unlimited && $meta['count'] >= 5 ) {
+                return new WP_Error( 'limit_reached', 'Daily download limit reached.', array( 'status' => 403 ) );
+            }
             $meta['count']++;
         }
 

@@ -16,8 +16,7 @@ export default function VisualsSingleClient({ entry, user }: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const img = entry.featuredImage?.node?.sourceUrl;
-  const isPatron = user?.tier === 'patron';
+  const isPatron = user?.tier === 'patron' || user?.tier === 'leader';
   const limitReached = !isPatron && downloadCount >= 5;
 
   const handleDownload = async () => {
@@ -26,6 +25,7 @@ export default function VisualsSingleClient({ entry, user }: Props) {
       return;
     }
 
+    // Hard block if limit is reached
     if (limitReached) {
       setIsModalOpen(true);
       return;
@@ -35,11 +35,17 @@ export default function VisualsSingleClient({ entry, user }: Props) {
     setError(null);
 
     try {
-      // 1. Track the download usage
+      // 1. Track the download usage (Enforced server-side)
       const res = await fetch('/api/visuals/track', { method: 'POST' });
       const data = await res.json();
 
       if (!res.ok) {
+        // Handle server-side limit enforcement
+        if (res.status === 403 || data.limit_reached) {
+          setDownloadCount(data.count ?? 5);
+          setIsModalOpen(true);
+          throw new Error('Limit reached');
+        }
         throw new Error(data.error || 'Tracking failed');
       }
 
@@ -47,7 +53,6 @@ export default function VisualsSingleClient({ entry, user }: Props) {
         setDownloadCount(data.count ?? (downloadCount + 1));
 
         // 2. Trigger cross-origin aware download (Optimole Support)
-        // We fetch the image as a blob to bypass a[download] CORS security restrictions
         const imageRes = await fetch(img);
         const blob = await imageRes.blob();
         const blobUrl = window.URL.createObjectURL(blob);
@@ -64,7 +69,10 @@ export default function VisualsSingleClient({ entry, user }: Props) {
       }
     } catch (err: any) {
       console.error('Download process failed:', err);
-      setError('Download failed. Please try again or check your account status.');
+      // Only show error if it's not a limit-reach (which opens the modal)
+      if (err.message !== 'Limit reached') {
+        setError('Download failed. Please try again or check your account status.');
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -76,6 +84,8 @@ export default function VisualsSingleClient({ entry, user }: Props) {
     navigator.clipboard.writeText(credit);
     setTimeout(() => setIsCopying(false), 2000);
   };
+
+  const img = entry.featuredImage?.node?.sourceUrl;
 
   return (
     <>
@@ -115,8 +125,7 @@ export default function VisualsSingleClient({ entry, user }: Props) {
                 disabled={isProcessing}
                 className={`visual-btn visual-btn-primary ${isProcessing ? 'opacity-70 cursor-wait' : ''}`}
               >
-                <span>{isProcessing ? 'Processing...' : 'Download High-Res'}</span>
-                {limitReached && <span className="text-xs opacity-60 ml-2">(Limit Reached)</span>}
+                <span>{isProcessing ? 'Processing...' : (limitReached ? 'Limit Reached' : 'Download High-Res')}</span>
               </button>
               
               <button 
