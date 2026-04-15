@@ -235,33 +235,35 @@ class Culture_Directory_Tools {
             wp_send_json_error( array( 'message' => 'No data or file provided.' ) );
         }
 
-        // Robust CSV parsing using a temporary stream.
-        $stream = fopen( 'php://temp', 'r+' );
-        fwrite( $stream, $raw_data );
-        rewind( $stream );
+        // Normalise and clean up the raw data first.
+        $raw_data = str_replace( array( "\r\n", "\r" ), "\n", $raw_data );
+        $lines    = explode( "\n", $raw_data );
 
         $created = 0;
         $skipped = 0;
         $results = array();
         $is_first_row = true;
 
-        while ( ( $data = fgetcsv( $stream ) ) !== false ) {
-            // Check for empty rows.
-            if ( empty( $data ) || ( count( $data ) === 1 && empty( $data[0] ) ) ) {
+        foreach ( $lines as $line ) {
+            $line = self::normalize_csv_line( $line );
+            if ( empty( $line ) ) {
                 continue;
             }
+
+            // Parse using str_getcsv on the cleaned line.
+            $data = str_getcsv( $line, ',', '"' );
 
             // Detect and skip header rows.
             if ( $is_first_row ) {
                 $is_first_row = false;
-                $first_val = strtolower( trim( $data[0] ) );
+                $first_val = strtolower( trim( $data[0] ?? '' ) );
                 if ( $first_val === 'quote' || $first_val === 'text' || $first_val === 'content' ) {
                     continue;
                 }
             }
 
             if ( count( $data ) < 2 ) {
-                $line_preview = substr( implode( ',', $data ), 0, 30 ) . '...';
+                $line_preview = substr( $line, 0, 30 ) . '...';
                 $results[] = array( 'title' => $line_preview, 'success' => false, 'error' => 'Invalid format.' );
                 $skipped++;
                 continue;
@@ -326,8 +328,6 @@ class Culture_Directory_Tools {
             $results[] = array( 'title' => $author, 'success' => true );
             $created++;
         }
-
-        fclose( $stream );
 
         wp_send_json_success( array(
             'created' => $created,
@@ -969,5 +969,19 @@ class Culture_Directory_Tools {
         .cdt-img-table th,
         .cdt-img-table td { vertical-align: middle; }
         ';
+    /**
+     * Normalise smart quotes, curly apostrophes, and padding in a CSV line.
+     */
+    private static function normalize_csv_line( $line ) {
+        // Replace smart/curly quotes and apostrophes.
+        $search  = array( '“', '”', '«', '»', '‘', '’', '–', '—' );
+        $replace = array( '"', '"', '"', '"', "'", "'", '-', '-' );
+        $line    = str_replace( $search, $replace, $line );
+
+        // Remove spaces specifically after commas that are followed by quotes.
+        // This fixes the ", "Author"" problem that breaks many CSV parsers.
+        $line = preg_replace( '/,\s+"/', ',"', $line );
+        
+        return trim( $line );
     }
 }
