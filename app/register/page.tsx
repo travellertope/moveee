@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, FormEvent, Suspense } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CountrySelect, CitySelect } from "@/components/LocationSelect";
@@ -16,12 +16,25 @@ type Step = 1 | 2 | 3 | 4;
 
 function RegisterForm() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const referralFromUrl = searchParams.get("ref") || "";
+  const tierFromUrl = searchParams.get("tier") as "citizen" | "patron" | null;
+  const isUpgrade = searchParams.get("upgrade") === "patron";
 
   // Form state
   const [step, setStep] = useState<Step>(1);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+
+  // If upgrading or Tier pre-selected, handle step routing
+  useEffect(() => {
+    if (isUpgrade && session) {
+      setStep(3); // Skip to Membership
+      setTier("patron");
+    } else if (tierFromUrl) {
+      setTier(tierFromUrl);
+    }
+  }, [isUpgrade, session, tierFromUrl]);
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -37,7 +50,7 @@ function RegisterForm() {
   const [countryOfResidence, setCountryOfResidence] = useState("");
   const [city, setCity] = useState("");
   const [occupation, setOccupation] = useState("");
-  const [tier, setTier] = useState<"citizen" | "patron">("citizen");
+  const [tier, setTier] = useState<"citizen" | "patron">(tierFromUrl || "citizen");
   const [primaryChapter, setPrimaryChapter] = useState(0);
   const [secondaryChapter, setSecondaryChapter] = useState(0);
   const [referralCode] = useState(referralFromUrl);
@@ -85,8 +98,35 @@ function RegisterForm() {
     setStep((s) => (s > 1 ? ((s - 1) as Step) : s));
   }
 
+  async function handleUpgrade() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/membership/upgrade-init", { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        setError(data.message || "Upgrade failed to initialize.");
+        setLoading(false);
+      }
+    } catch {
+      setError("Service temporarily unavailable.");
+      setLoading(false);
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+
+    if (isUpgrade && session) {
+      handleUpgrade();
+      return;
+    }
+
     const err = validateStep(4);
     if (err) { setError(err); return; }
 
@@ -162,37 +202,39 @@ function RegisterForm() {
     <div style={styles.page}>
       <div style={styles.card}>
         <p style={styles.eyebrow}>The Moveee &mdash; Culture Community</p>
-        <h1 style={styles.heading}>Join the Community</h1>
+        <h1 style={styles.heading}>{isUpgrade ? "Upgrade to Patron" : "Join the Community"}</h1>
 
         {/* Progress bar */}
-        <div style={styles.progressWrap}>
-          {(["Account", "About You", "Membership", "Chapter"] as const).map((label, i) => (
-            <div key={label} style={styles.progressStep}>
-              <div
-                style={{
-                  ...styles.progressDot,
-                  background: step > i ? "#14110d" : step === i + 1 ? "#14110d" : "#d4cbbf",
-                  color: step >= i + 1 ? "#f5f0e8" : "#7a6f5c",
-                  border: step === i + 1 ? "2px solid #14110d" : "2px solid transparent",
-                }}
-              >
-                {step > i + 1 ? "✓" : i + 1}
+        {!isUpgrade && (
+          <div style={styles.progressWrap}>
+            {(["Account", "About You", "Membership", "Chapter"] as const).map((label, i) => (
+              <div key={label} style={styles.progressStep}>
+                <div
+                  style={{
+                    ...styles.progressDot,
+                    background: step > i ? "#14110d" : step === i + 1 ? "#14110d" : "#d4cbbf",
+                    color: step >= i + 1 ? "#f5f0e8" : "#7a6f5c",
+                    border: step === i + 1 ? "2px solid #14110d" : "2px solid transparent",
+                  }}
+                >
+                  {step > i + 1 ? "✓" : i + 1}
+                </div>
+                <span
+                  style={{
+                    ...styles.progressLabel,
+                    color: step >= i + 1 ? "#14110d" : "#7a6f5c",
+                    fontWeight: step === i + 1 ? 600 : 400,
+                  }}
+                >
+                  {label}
+                </span>
               </div>
-              <span
-                style={{
-                  ...styles.progressLabel,
-                  color: step >= i + 1 ? "#14110d" : "#7a6f5c",
-                  fontWeight: step === i + 1 ? 600 : 400,
-                }}
-              >
-                {label}
-              </span>
+            ))}
+            <div style={styles.progressBar}>
+              <div style={{ ...styles.progressFill, width: `${progressPercent}%` }} />
             </div>
-          ))}
-          <div style={styles.progressBar}>
-            <div style={{ ...styles.progressFill, width: `${progressPercent}%` }} />
           </div>
-        </div>
+        )}
 
         <form onSubmit={handleSubmit} noValidate>
           {/* Step 1: Account */}

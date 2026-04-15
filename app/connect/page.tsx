@@ -27,10 +27,20 @@ export default async function ConnectPage() {
               events, newsletters, conversations, and the people who make it all happen.
             </p>
             <div className="con-cta-row">
-              <Link href="/register" className="con-btn-primary">Join Now →</Link>
-              <Link href="/login" className="con-btn-ghost">Already a member? Sign in</Link>
+              {session ? (
+                <Link href="/member" className="con-btn-primary">Go to Member Dashboard →</Link>
+              ) : (
+                <>
+                  <Link href="/register" className="con-btn-primary">Join Now →</Link>
+                  <Link href="/login" className="con-btn-ghost">Already a member? Sign in</Link>
+                </>
+              )}
             </div>
-            <p className="con-price">Citizen — Free · Patron — $80 / year</p>
+            {session ? (
+              <p className="con-price">Welcome back, {session.user?.name}</p>
+            ) : (
+              <p className="con-price">Citizen — Free · Patron — $80 / year</p>
+            )}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {[
@@ -61,7 +71,15 @@ export default async function ConnectPage() {
             <li>Community forum access</li>
             <li>Culture points &amp; badges</li>
           </ul>
-          <Link href="/register?tier=citizen" className="con-tier-btn">Become a Citizen →</Link>
+          {!session && (
+            <Link href="/register?tier=citizen" className="con-tier-btn">Become a Citizen →</Link>
+          )}
+          {session && (session.user as any).tier === "citizen" && (
+            <span className="con-tier-status">Active Membership</span>
+          )}
+          {session && (session.user as any).tier === "patron" && (
+            <span className="con-tier-status con-tier-status--prev">Basic Membership</span>
+          )}
         </div>
 
         <div className="con-tier-card con-tier-card--patron">
@@ -76,7 +94,15 @@ export default async function ConnectPage() {
             <li>Exclusive Patron-only content</li>
             <li>Direct access to community leaders</li>
           </ul>
-          <Link href="/register?tier=patron" className="con-tier-btn">Become a Patron →</Link>
+          {!session && (
+            <Link href="/register?tier=patron" className="con-tier-btn">Become a Patron →</Link>
+          )}
+          {session && (session.user as any).tier === "citizen" && (
+            <Link href="/register?upgrade=patron" className="con-tier-btn">Upgrade to Patron →</Link>
+          )}
+          {session && (session.user as any).tier === "patron" && (
+            <span className="con-tier-status">Active Membership</span>
+          )}
         </div>
       </div>
     </>

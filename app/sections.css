@@ -387,6 +387,28 @@
 }
 .con-tier-card--patron .con-tier-btn:hover { background: var(--ochre-deep, #a83d1a); border-color: var(--ochre-deep, #a83d1a); }
 
+.con-tier-status {
+  display: inline-block;
+  padding: 12px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--mute);
+  background: rgba(42,36,28,.05);
+  border: 1px dashed rgba(42,36,28,.2);
+  align-self: flex-start;
+  pointer-events: none;
+}
+.con-tier-card--patron .con-tier-status {
+  color: rgba(243,236,224,.4);
+  background: rgba(243,236,224,.05);
+  border-color: rgba(243,236,224,.1);
+}
+.con-tier-status--prev {
+  opacity: 0.5;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .con-hero-inner { padding: 60px 32px 68px; gap: 48px; }

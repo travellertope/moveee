@@ -46,8 +46,55 @@ class Culture_Paystack {
     public static function get_checkout_url( $user_id ) {
         return add_query_arg( array(
             'culture_action' => 'paystack_checkout',
+            'user_id'        => $user_id,
             'nonce'          => wp_create_nonce( 'culture_paystack_checkout_' . $user_id ),
         ), home_url( '/' ) );
+    }
+
+    /**
+     * Process the paystack_checkout action.
+     * Verifies the nonce and then redirects the user to the Paystack authorization URL.
+     */
+    private static function process_checkout_action() {
+        $user_id = isset( $_GET['user_id'] ) ? absint( $_GET['user_id'] ) : 0;
+        $nonce   = isset( $_GET['nonce'] ) ? sanitize_text_field( $_GET['nonce'] ) : '';
+
+        if ( ! $user_id || ! wp_verify_nonce( $nonce, 'culture_paystack_checkout_' . $user_id ) ) {
+            wp_die( esc_html__( 'Invalid security token.', 'culture-community' ) );
+        }
+
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            wp_die( esc_html__( 'User not found.', 'culture-community' ) );
+        }
+
+        $response = self::api_request( 'POST', '/transaction/initialize', array(
+            'email'        => $user->user_email,
+            'plan'         => self::get_plan_code(),
+            'callback_url' => add_query_arg( 'culture_paystack_callback', '1', home_url( '/' ) ),
+            'metadata'     => array(
+                'user_id'    => $user_id,
+                'custom_fields' => array(
+                    array(
+                        'display_name'  => 'WordPress User ID',
+                        'variable_name' => 'user_id',
+                        'value'         => $user_id,
+                    ),
+                ),
+            ),
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            wp_die( esc_html( $response->get_error_message() ) );
+        }
+
+        if ( ! empty( $response['data']['authorization_url'] ) ) {
+            update_user_meta( $user_id, '_culture_paystack_reference', $response['data']['reference'] );
+            wp_safe_redirect( $response['data']['authorization_url'] );
+            exit;
+        }
+
+        wp_die( esc_html__( 'Could not initialize payment.', 'culture-community' ) );
     }
 
     /**
@@ -96,6 +143,11 @@ class Culture_Paystack {
      * Handle Paystack callback after payment.
      */
     public static function handle_payment_callback() {
+        if ( isset( $_GET['culture_action'] ) && 'paystack_checkout' === $_GET['culture_action'] ) {
+            self::process_checkout_action();
+            return;
+        }
+
         if ( ! isset( $_GET['culture_paystack_callback'] ) ) {
             return;
         }

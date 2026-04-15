@@ -441,6 +441,16 @@ class Culture_REST_API {
                 'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
+
+        // Initiate membership upgrade for an existing user.
+        register_rest_route( 'culture/v1', '/user/upgrade-init', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_upgrade_init' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
     }
 
     /**
@@ -1674,6 +1684,28 @@ class Culture_REST_API {
             'date'    => get_the_date( 'Y-m-d', $post ),
             'likes'   => (int) get_post_meta( $post->ID, '_culture_like_count', true ),
         );
+    }
+
+    /**
+     * POST /culture/v1/user/upgrade-init
+     * Initiates a Paystack session for an existing user to upgrade to Patron.
+     */
+    public static function handle_upgrade_init( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $user    = get_userdata( $user_id );
+
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        if ( ! class_exists( 'Culture_Paystack' ) ) {
+            return new WP_Error( 'missing_plugin', 'Payment module not available.', array( 'status' => 500 ) );
+        }
+
+        return rest_ensure_response( array(
+            'success'      => true,
+            'checkout_url' => Culture_Paystack::get_checkout_url( $user_id ),
+        ) );
     }
 
     /**
