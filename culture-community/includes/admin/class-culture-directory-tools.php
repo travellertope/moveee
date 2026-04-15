@@ -969,6 +969,8 @@ class Culture_Directory_Tools {
         .cdt-img-table th,
         .cdt-img-table td { vertical-align: middle; }
         ';
+    }
+
     /**
      * Normalise smart quotes, curly apostrophes, and padding in a CSV line.
      */
