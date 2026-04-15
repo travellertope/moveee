@@ -61,6 +61,7 @@ class Culture_Directory_Tools {
         add_action( 'admin_menu',            array( __CLASS__, 'register_menu' ) );
         add_action( 'wp_ajax_culture_dir_run_seeder',         array( __CLASS__, 'ajax_run_seeder' ) );
         add_action( 'wp_ajax_culture_run_quote_seeder',      array( __CLASS__, 'ajax_run_quote_seeder' ) );
+        add_action( 'wp_ajax_culture_import_quotes',         array( __CLASS__, 'ajax_import_quotes' ) );
         add_action( 'wp_ajax_culture_dir_generate_image',     array( __CLASS__, 'ajax_generate_image' ) );
         add_action( 'wp_ajax_culture_dir_save_extra_topics', array( __CLASS__, 'ajax_save_extra_topics' ) );
         add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
@@ -207,6 +208,118 @@ class Culture_Directory_Tools {
         }
 
         wp_send_json_success( $body );
+    }
+
+    /**
+     * AJAX handler to bulk-import quotes from CSV text or uploaded file.
+     * Expected format: "Quote Text", "Author", "Source"
+     */
+    public static function ajax_import_quotes() {
+        check_ajax_referer( 'culture_dir_tools', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Forbidden.' ) );
+        }
+
+        $raw_data = '';
+
+        // Case 1: File upload.
+        if ( ! empty( $_FILES['csv_file']['tmp_name'] ) ) {
+            $raw_data = file_get_contents( $_FILES['csv_file']['tmp_name'] );
+        }
+        // Case 2: Manual text paste.
+        elseif ( ! empty( $_POST['csv_text'] ) ) {
+            $raw_data = $_POST['csv_text'];
+        }
+
+        if ( empty( $raw_data ) ) {
+            wp_send_json_error( array( 'message' => 'No data or file provided.' ) );
+        }
+
+        // Normalise line endings and parse.
+        $lines   = explode( "\n", str_replace( "\r", "", $raw_data ) );
+        $created = 0;
+        $skipped = 0;
+        $results = array();
+
+        foreach ( $lines as $line ) {
+            $line = trim( $line );
+            if ( empty( $line ) ) {
+                continue;
+            }
+
+            // Simple CSV parser for "text", "author", "source"
+            $data = str_getcsv( $line );
+            if ( count( $data ) < 2 ) {
+                $results[] = array( 'title' => substr( $line, 0, 30 ) . '...', 'success' => false, 'error' => 'Invalid format.' );
+                $skipped++;
+                continue;
+            }
+
+            $text   = trim( $data[0] );
+            $author = trim( $data[1] );
+            $source = trim( $data[2] ?? '' );
+
+            if ( empty( $text ) || empty( $author ) ) {
+                $skipped++;
+                continue;
+            }
+
+            // Duplicate detection: compare normalised content hash.
+            $hash = md5( strtolower( trim( wp_strip_all_tags( $text ) ) ) );
+            $existing = get_posts( array(
+                'post_type'      => 'culture_quote',
+                'post_status'    => array( 'publish', 'pending' ),
+                'posts_per_page' => 1,
+                'meta_query'     => array(
+                    array(
+                        'key'     => '_quote_content_hash',
+                        'value'   => $hash,
+                        'compare' => '=',
+                    ),
+                ),
+            ) );
+
+            if ( ! empty( $existing ) ) {
+                $results[] = array( 'title' => $author, 'success' => false, 'error' => 'Already exists.' );
+                $skipped++;
+                continue;
+            }
+
+            // Create the post.
+            $post_id = wp_insert_post( array(
+                'post_title'   => wp_trim_words( $text, 10 ),
+                'post_content' => $text,
+                'post_status'  => 'publish',
+                'post_type'    => 'culture_quote',
+                'post_author'  => get_current_user_id(),
+            ) );
+
+            if ( is_wp_error( $post_id ) ) {
+                $results[] = array( 'title' => $author, 'success' => false, 'error' => $post_id->get_error_message() );
+                $skipped++;
+                continue;
+            }
+
+            // Set author taxonomy.
+            wp_set_object_terms( $post_id, $author, 'culture_quote_author' );
+
+            // Set meta.
+            update_post_meta( $post_id, '_quote_source', $source );
+            update_post_meta( $post_id, '_quote_user_id', get_current_user_id() );
+            update_post_meta( $post_id, '_quote_likes', 0 );
+            update_post_meta( $post_id, '_quote_reports', 0 );
+            update_post_meta( $post_id, '_quote_content_hash', $hash );
+            update_post_meta( $post_id, '_culture_like_count', 0 );
+
+            $results[] = array( 'title' => $author, 'success' => true );
+            $created++;
+        }
+
+        wp_send_json_success( array(
+            'created' => $created,
+            'skipped' => $skipped,
+            'results' => $results,
+        ) );
     }
 
     // ── AJAX: generate image for one post ─────────────────────────────────────
@@ -431,6 +544,34 @@ class Culture_Directory_Tools {
                 </p>
 
                 <div id="cdt-quote-result" class="cdt-result" style="display:none;"></div>
+            </div>
+
+            <?php /* ── BULK QUOTE IMPORTER PANEL ── */ ?>
+            <div class="cdt-panel">
+                <h2><?php esc_html_e( 'Bulk Quote Importer', 'culture-community' ); ?></h2>
+                <p class="description">
+                    <?php esc_html_e( 'Manually import quotes in bulk. Use the text area to paste CSV data, or upload a .csv file.', 'culture-community' ); ?>
+                    <br><strong><?php esc_html_e( 'Format:', 'culture-community' ); ?></strong> <code>"Quote Text", "Author", "Source"</code>
+                </p>
+
+                <div style="margin-top:15px;">
+                    <textarea id="cdt-quote-csv-text" rows="5" style="width:100%;max-width:600px;font-family:monospace;" 
+                              placeholder="<?php esc_attr_e( '"Success is not final...", "Winston Churchill", "Speech"' , 'culture-community' ); ?>"></textarea>
+                </div>
+
+                <div style="margin-top:10px;">
+                    <label for="cdt-quote-csv-file"><strong><?php esc_html_e( 'Or upload CSV file:', 'culture-community' ); ?></strong></label><br>
+                    <input type="file" id="cdt-quote-csv-file" accept=".csv" style="margin-top:5px;">
+                </div>
+
+                <p style="margin-top:20px;">
+                    <button id="cdt-import-quotes-btn" class="button button-primary" <?php echo $configured ? '' : 'disabled'; ?>>
+                        <?php esc_html_e( 'Import Quotes', 'culture-community' ); ?>
+                    </button>
+                    <span id="cdt-import-spinner" class="spinner" style="float:none;vertical-align:middle;display:none;"></span>
+                </p>
+
+                <div id="cdt-import-result" class="cdt-result" style="display:none;"></div>
             </div>
 
             <?php /* ── CUSTOM TOPICS PANEL ── */ ?>
@@ -708,6 +849,66 @@ class Culture_Directory_Tools {
                 .always(function() {
                     $btn.prop('disabled', false);
                     $spinner.hide();
+                });
+            });
+
+            /* ── Bulk Quote Import ── */
+            $('#cdt-import-quotes-btn').on('click', function() {
+                var $btn     = $(this);
+                var $spinner = $('#cdt-import-spinner');
+                var $result  = $('#cdt-import-result');
+                var csvText  = $('#cdt-quote-csv-text').val().trim();
+                var fileInput = $('#cdt-quote-csv-file')[0];
+
+                if (!csvText && (!fileInput.files || !fileInput.files.length)) {
+                    alert('Please provide CSV text or select a file.');
+                    return;
+                }
+
+                $btn.prop('disabled', true);
+                $spinner.show();
+                $result.hide().html('');
+
+                var formData = new FormData();
+                formData.append('action', 'culture_import_quotes');
+                formData.append('nonce', nonce);
+                if (csvText) formData.append('csv_text', csvText);
+                if (fileInput.files.length) formData.append('csv_file', fileInput.files[0]);
+
+                $.ajax({
+                    url:         ajaxUrl,
+                    type:        'POST',
+                    data:        formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        if (res.success) {
+                            var d = res.data;
+                            var html = '<div class="notice notice-success inline"><p><strong>' +
+                                d.created + ' quote(s) imported.</strong> ' + d.skipped + ' skipped.</p></div>';
+                            
+                            if (d.results && d.results.length) {
+                                html += '<ul style="margin-top:8px;max-height:200px;overflow-y:auto;border:1px solid #f0f0f1;padding:10px;background:#f6f7f7;">';
+                                d.results.forEach(function(r) {
+                                    var errSpan = r.error ? ' <span style="color:#d63638;font-size:11px;">(' + $('<span>').text(r.error).html() + ')</span>' : '';
+                                    html += '<li>' + (r.success ? '&#10003;' : '&#10007;') + ' ' + $('<span>').text(r.title).html() + errSpan + '</li>';
+                                });
+                                html += '</ul>';
+                            }
+                            $result.html(html).show();
+                            $('#cdt-quote-csv-text').val('');
+                            $('#cdt-quote-csv-file').val('');
+                        } else {
+                            $result.html('<div class="notice notice-error inline"><p>' + $('<span>').text(res.data.message).html() + '</p></div>').show();
+                        }
+                    },
+                    error: function() {
+                        $result.html('<div class="notice notice-error inline"><p>Request failed.</p></div>').show();
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false);
+                        $spinner.hide();
+                    }
                 });
             });
 
