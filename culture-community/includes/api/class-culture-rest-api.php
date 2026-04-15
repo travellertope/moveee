@@ -431,6 +431,16 @@ class Culture_REST_API {
                 'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
+
+        // Track visual download usage (daily limit).
+        register_rest_route( 'culture/v1', '/visuals/track-download', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_track_visual_download' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
     }
 
     /**
@@ -850,6 +860,7 @@ class Culture_REST_API {
             'badges'              => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_badges( $user->ID ) : array(),
             'referral_code'       => $referral_code,
             'referral_count'      => $referral_count,
+            'visual_downloads_today' => self::get_daily_visual_downloads( $user->ID ),
         );
     }
 
@@ -1596,6 +1607,48 @@ class Culture_REST_API {
             'liked_ids'      => $liked_ids,
             'bookmarked_ids' => $bookmarked_ids,
         ) );
+    }
+
+    /**
+     * POST /culture/v1/visuals/track-download
+     * Increments the daily download count for a user.
+     */
+    public static function handle_track_visual_download( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        if ( ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $today = current_time( 'Y-m-d' );
+        $meta  = get_user_meta( $user_id, '_culture_visual_downloads', true );
+
+        if ( ! is_array( $meta ) || ! isset( $meta['date'] ) || $meta['date'] !== $today ) {
+            $meta = array( 'date' => $today, 'count' => 1 );
+        } else {
+            $meta['count']++;
+        }
+
+        update_user_meta( $user_id, '_culture_visual_downloads', $meta );
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'count'   => $meta['count'],
+            'date'    => $meta['date'],
+        ) );
+    }
+
+    /**
+     * Helper to get the current daily download count.
+     */
+    private static function get_daily_visual_downloads( $user_id ) {
+        $today = current_time( 'Y-m-d' );
+        $meta  = get_user_meta( $user_id, '_culture_visual_downloads', true );
+
+        if ( is_array( $meta ) && isset( $meta['date'] ) && $meta['date'] === $today ) {
+            return (int) $meta['count'];
+        }
+
+        return 0;
     }
 
     /** Build a minimal summary for a saved post. */

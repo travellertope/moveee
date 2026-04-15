@@ -33,6 +33,7 @@ const Footer = () => {
           <h5>Community</h5>
           <ul>
             <li><Link href="/directory">Culture Directory</Link></li>
+            <li><Link href="/visuals">Moveee Visuals</Link></li>
             <li><Link href="/quotes">Moveee Quotes</Link></li>
             <li><Link href="/connect">Become a Member</Link></li>
             <li><Link href="/member">Member Profiler</Link></li>
