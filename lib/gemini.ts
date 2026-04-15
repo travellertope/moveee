@@ -125,57 +125,23 @@ function extractJson(raw: string): string {
  * Shared style modifiers included in every image prompt regardless of subject.
  * Palette hex values are provided so the model has the exact target colours.
  */
-const STYLE_MODIFIERS =
-  "restricted earth-tone palette only: deep ink (#14110d), burnt ochre (#c5491f), " +
-  "dark ochre (#8a2d10), gold brass (#b38238), moss green (#3d4a2a), " +
-  "cream paper (#f3ece0), indigo (#1e2b42) — no other colours, no bright or " +
-  "saturated hues, no white, no gradients into blue or purple. " +
-  "Flat colour fills with no shading, no highlights, no drop shadows. " +
-  "Editorial magazine illustration style. Inspired by Malika Favre and Emiliano Ponzi. " +
-  "No photorealism, no 3D rendering, no outlines as primary rendering method, " +
-  "no complex lighting, no anime or Western proportions, matte finish. " +
-  "Generous negative space, print-quality composition.";
-
 /**
- * Classify any entry-type slug (including admin-defined ones from WordPress)
- * into one of the three illustration templates.
- *
- * portrait  — individual human subjects, biographical entries
- * object    — tangible items: food, fashion, craft, instruments, artefacts
- * scene     — everything else: places, movements, genres, concepts, events
+ * Shared style modifiers included in every image prompt.
+ * Focuses on 'vibe' and technical execution (texture, shading) 
+ * while maintaining a strict premium palette.
  */
-function classifyTemplateType(
-  entryType: string
-): "portrait" | "object" | "scene" {
-  const t = entryType.toLowerCase().replace(/[-_\s]+/g, " ").trim();
-
-  // Portrait: individual people and biographical figures
-  if (
-    /\b(person|people|figure|artist|musician|singer|rapper|writer|author|poet|novelist|activist|filmmaker|director|actor|actress|politician|philosopher|leader|thinker|sculptor|painter|photographer|dancer|athlete|architect|designer|chef|scholar|academic|intellectual|icon|legend|pioneer)\b/.test(t)
-  ) {
-    return "portrait";
-  }
-
-  // Film: cinematic works → scene template (a visual moment from the work)
-  if (/\b(film|documentary|movie|cinema|short film)\b/.test(t)) {
-    return "scene";
-  }
-
-  // Object/product: tangible items, material culture, and literary/music works
-  if (
-    /\b(food|dish|cuisine|drink|beverage|meal|snack|recipe|ingredient|fashion|clothing|garment|textile|fabric|cloth|print|pattern|weave|embroidery|craft|jewellery|jewelry|accessory|artefact|artifact|instrument|tool|object|product|sculpture|painting|installation|novel|book|album|song|artwork|piece|collection|ceramic|pottery|bead|wax print|kente|gele|headwrap|adire)\b/.test(t)
-  ) {
-    return "object";
-  }
-
-  // Scene: places, movements, genres, concepts, traditions, events, etc.
-  return "scene";
-}
+const STYLE_MODIFIERS =
+  "strictly restricted palette: deep ink (#14110d), burnt ochre (#c5491f), " +
+  "dark ochre (#8a2d10), gold brass (#b38238), moss green (#3d4a2a), " +
+  "cream paper (#f3ece0), indigo (#1e2b42) — no saturated blues/purples, no white. " +
+  "Premium editorial magazine illustration style. Flat geometric shapes with " +
+  "intentional textures: dry-brush paper grain, coarse stippling, or fine ink bleeds. " +
+  "Shading via sharp geometric shadow blocks, no soft gradients. " +
+  "No photorealism, no 3D rendering, matte finish with generous negative space.";
 
 /**
  * Build a context-aware Imagen 3 prompt based on the entry type.
- * Works with both the built-in type slugs and any new types added
- * in WordPress — classifyTemplateType() handles unknown slugs gracefully.
+ * Randomizes compositions and backgrounds to ensure a diverse directory.
  */
 function buildImagePrompt(
   title: string,
@@ -185,61 +151,55 @@ function buildImagePrompt(
   const context = excerpt.slice(0, 180);
   const template = classifyTemplateType(entryType);
 
+  // Background varieties for randomization
+  const bgVarieties = [
+    "minimalist textured paper background",
+    "abstract architectural geometry in ochre and ink",
+    "moody indigo-black void with a geometric spotlight",
+    "split-background using dynamic diagonal color blocks",
+    "background featuring stylized silhouettes of cityscapes or palms",
+  ];
+  const bg = bgVarieties[Math.floor(Math.random() * bgVarieties.length)];
+
+  // Composition varieties
+  const portraitComps = ["heroic low-angle shot", "side-profile silhouette", "minimalist centered portrait"];
+  const objectComps = ["dynamic bird's-eye view", "dramatic side-lighting", "heroic 3/4 view"];
+
   if (template === "portrait") {
+    const comp = portraitComps[Math.floor(Math.random() * portraitComps.length)];
     return (
-      `Flat geometric portrait illustration of ${title}, an African or diaspora cultural figure. ` +
-      `Simplified minimalist editorial style. Figures rendered with flat-fill ellipses for heads, ` +
-      `minimal facial features (2–3 strokes for eyes, single curved line for mouth, no detailed nose), ` +
-      `geometric clothing shapes as flat colour blocks. ` +
-      `Hair as a single dark shape. Brass hoop or geometric earrings where appropriate. ` +
-      `Headwraps or gele rendered as architectural forms with fold lines suggested by 2–3 darker strokes. ` +
-      `Warm atmospheric gradient background in ochre and deep brown. ` +
-      `Subtle dot texture overlay at very low opacity. ` +
+      `Flat geometric editorial portrait of ${title} (${entryType}). ` +
+      `${comp} against a ${bg}. ` +
+      `Face as a simplified architectural form with sharp shadow shapes. ` +
+      `Minimal facial features (2-3 iconic lines for eyes and mouth). ` +
+      `Stylized hair as a single dark shape with coarse texture. ` +
+      `Geometric clothing as flat color masses. ` +
       `Context: ${context}. ` +
       STYLE_MODIFIERS
     );
   }
 
   if (template === "object") {
-    const bgColour =
-      /fashion|cloth|garment|textile|fabric|wear|dress|gele|headwrap|kente|adire|wax/.test(entryType.toLowerCase())
-        ? "deep indigo-black background"
-        : /food|dish|cuisine|drink|beverage|meal|snack|recipe/.test(entryType.toLowerCase())
-        ? "warm ochre background with subtle shadow"
-        : "dark ink background with soft warm spotlight";
+    const comp = objectComps[Math.floor(Math.random() * objectComps.length)];
     return (
-      `Flat graphic editorial illustration of ${title}. ` +
-      `Object shown against a ${bgColour}. ` +
-      `Geometric details rendered as simple repeated shapes — circles, diamonds, lines. ` +
-      `Textile or surface texture suggested through 2–3 darker fold or pattern lines. ` +
-      `Colour palette limited to indigo, cream, brass gold, burnt ochre, and moss green. ` +
-      `No photorealism, no 3D rendering, matte flat-fill style, magazine editorial aesthetic. ` +
+      `Flat graphic editorial illustration of ${title} (${entryType}). ` +
+      `${comp} shown against a ${bg}. ` +
+      `The subject is rendered as a clean geometric icon. ` +
+      `Use sharp, high-contrast shadow shapes to suggest volume. ` +
+      `Stylized textures (crosshatching or dots) for surface details. ` +
       `Context: ${context}. ` +
       STYLE_MODIFIERS
     );
   }
 
-  // Default: scene (place, movement, genre, concept, and any new admin-defined types)
-  const sceneDesc =
-    /^film$|documentary|movie/.test(entryType.toLowerCase())
-      ? "a key cinematic moment or visual theme from the film"
-      : /place|city|town|neighbourhood|location|landmark|market|district|village/.test(entryType.toLowerCase())
-      ? "a culturally significant location"
-      : /festival|ceremony|ritual|celebration|event|gathering/.test(entryType.toLowerCase())
-      ? "an outdoor cultural gathering or ceremony"
-      : /dance|movement|sport|performance/.test(entryType.toLowerCase())
-      ? "figures in motion capturing the energy of the practice"
-      : `a cultural ${entryType}`;
-
+  // Default: scene (place, movement, genre, etc.)
   return (
-    `Flat geometric scene illustration evoking ${title} — ${sceneDesc} ` +
-    `in African or diaspora culture. ` +
-    `Simplified architectural or environmental forms rendered as flat rectangles and geometric shapes. ` +
-    `Human figures as minimal silhouettes with flat colour garments, placed off-centre. ` +
-    `Environmental details suggested through minimal geometric elements: ` +
-    `rectangles for buildings, circles for vessels, vertical lines for structures. ` +
-    `Warm atmospheric light through soft radial gradients and subtle polygon shapes. ` +
-    `Subtle halftone dot texture and fine crosshatch lines at very low opacity. ` +
+    `Abstract geometric scene illustration representing ${title} (${entryType}). ` +
+    `Wide editorial composition against a ${bg}. ` +
+    `Human figures as minimal silhouettes in the middle ground. ` +
+    `Environment suggested through large blocks of color and sharp geometric shapes (circles, triangles, lines). ` +
+    `Dramatic lighting through sharp diagonal shadow-planes. ` +
+    `Fine stippling and ink-bleed effects for depth. ` +
     `Context: ${context}. ` +
     STYLE_MODIFIERS
   );
