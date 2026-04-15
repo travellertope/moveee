@@ -13,6 +13,8 @@ export default function VisualsSingleClient({ entry, user }: Props) {
   const [downloadCount, setDownloadCount] = useState(user?.visual_downloads_today ?? 0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const img = entry.featuredImage?.node?.sourceUrl;
   const isPatron = user?.tier === 'patron';
@@ -29,21 +31,42 @@ export default function VisualsSingleClient({ entry, user }: Props) {
       return;
     }
 
+    setIsProcessing(true);
+    setError(null);
+
     try {
+      // 1. Track the download usage
       const res = await fetch('/api/visuals/track', { method: 'POST' });
       const data = await res.json();
-      if (data.success) {
-        setDownloadCount(data.count);
-        // Trigger download
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Tracking failed');
+      }
+
+      if (data.success || isPatron) {
+        setDownloadCount(data.count ?? (downloadCount + 1));
+
+        // 2. Trigger cross-origin aware download (Optimole Support)
+        // We fetch the image as a blob to bypass a[download] CORS security restrictions
+        const imageRes = await fetch(img);
+        const blob = await imageRes.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        
         const link = document.createElement('a');
-        link.href = img;
+        link.href = blobUrl;
         link.download = `${entry.slug}.jpg`;
         document.body.appendChild(link);
         link.click();
+        
+        // Cleanup
         document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
       }
-    } catch (err) {
-      console.error('Download tracking failed:', err);
+    } catch (err: any) {
+      console.error('Download process failed:', err);
+      setError('Download failed. Please try again or check your account status.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -89,10 +112,11 @@ export default function VisualsSingleClient({ entry, user }: Props) {
             <div className="visual-single-actions">
               <button 
                 onClick={handleDownload}
-                className="visual-btn visual-btn-primary"
+                disabled={isProcessing}
+                className={`visual-btn visual-btn-primary ${isProcessing ? 'opacity-70 cursor-wait' : ''}`}
               >
-                <span>Download High-Res</span>
-                {limitReached && <span className="text-xs opacity-60">(Limit Reached)</span>}
+                <span>{isProcessing ? 'Processing...' : 'Download High-Res'}</span>
+                {limitReached && <span className="text-xs opacity-60 ml-2">(Limit Reached)</span>}
               </button>
               
               <button 
@@ -101,6 +125,10 @@ export default function VisualsSingleClient({ entry, user }: Props) {
               >
                 {isCopying ? 'Link Copied!' : 'Copy Attribution Link'}
               </button>
+
+              {error && (
+                <p className="text-red-400 text-xs mt-2 italic">{error}</p>
+              )}
             </div>
 
             <div className="visual-meta-grid">

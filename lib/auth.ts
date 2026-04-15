@@ -27,6 +27,7 @@ export interface CultureUser {
   badges: string[];
   referralCode: string;
   referralCount: number;
+  visual_downloads_today: number;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -75,6 +76,7 @@ export const authOptions: NextAuthOptions = {
             badges: data.badges ?? [],
             referralCode: data.referral_code ?? "",
             referralCount: data.referral_count ?? 0,
+            visual_downloads_today: data.visual_downloads_today ?? 0,
           };
         } catch {
           return null;
@@ -104,6 +106,7 @@ export const authOptions: NextAuthOptions = {
         token.badges = u.badges;
         token.referralCode = u.referralCode;
         token.referralCount = u.referralCount;
+        token.visualDownloadsToday = u.visual_downloads_today;
       }
       return token;
     },
@@ -127,6 +130,7 @@ export const authOptions: NextAuthOptions = {
         s.badges = token.badges;
         s.referralCode = token.referralCode;
         s.referralCount = token.referralCount;
+        s.visual_downloads_today = token.visualDownloadsToday;
       }
       return session;
     },
