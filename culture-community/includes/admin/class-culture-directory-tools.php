@@ -235,36 +235,46 @@ class Culture_Directory_Tools {
             wp_send_json_error( array( 'message' => 'No data or file provided.' ) );
         }
 
-        // Normalise and clean up the raw data first.
+        // 1. Pre-Normalization: Resolve smart quotes and inconsistent padding.
+        $search   = array( '“', '”', '«', '»', '‘', '’', '–', '—' );
+        $replace  = array( '"', '"', '"', '"', "'", "'", '-', '-' );
+        $raw_data = str_replace( $search, $replace, $raw_data );
+
+        // Remove spaces after commas ONLY if they precede a quote.
+        // This fixes the ", "Author"" issue that splits fields in many PHP versions.
+        $raw_data = preg_replace( '/,\s+"/', ',"', $raw_data );
+        
+        // Ensure consistent line endings for the stream parser.
         $raw_data = str_replace( array( "\r\n", "\r" ), "\n", $raw_data );
-        $lines    = explode( "\n", $raw_data );
+
+        // 2. Stream-based Parsing: Handles multi-line quotes and internal commas.
+        $stream = fopen( 'php://temp', 'r+' );
+        fwrite( $stream, $raw_data );
+        rewind( $stream );
 
         $created = 0;
         $skipped = 0;
         $results = array();
         $is_first_row = true;
 
-        foreach ( $lines as $line ) {
-            $line = self::normalize_csv_line( $line );
-            if ( empty( $line ) ) {
+        while ( ( $data = fgetcsv( $stream, 0, ',', '"' ) ) !== false ) {
+            // Skip empty rows.
+            if ( empty( $data ) || ( count( $data ) === 1 && empty( $data[0] ) ) ) {
                 continue;
             }
-
-            // Parse using str_getcsv on the cleaned line.
-            $data = str_getcsv( $line, ',', '"' );
 
             // Detect and skip header rows.
             if ( $is_first_row ) {
                 $is_first_row = false;
                 $first_val = strtolower( trim( $data[0] ?? '' ) );
-                if ( $first_val === 'quote' || $first_val === 'text' || $first_val === 'content' ) {
+                if ( in_array( $first_val, array( 'quote', 'text', 'content' ), true ) ) {
                     continue;
                 }
             }
 
             if ( count( $data ) < 2 ) {
-                $line_preview = substr( $line, 0, 30 ) . '...';
-                $results[] = array( 'title' => $line_preview, 'success' => false, 'error' => 'Invalid format.' );
+                $line_preview = substr( trim( $data[0] ), 0, 30 ) . '...';
+                $results[] = array( 'title' => $line_preview, 'success' => false, 'error' => 'Invalid format or line split.' );
                 $skipped++;
                 continue;
             }
@@ -328,6 +338,8 @@ class Culture_Directory_Tools {
             $results[] = array( 'title' => $author, 'success' => true );
             $created++;
         }
+
+        fclose( $stream );
 
         wp_send_json_success( array(
             'created' => $created,
