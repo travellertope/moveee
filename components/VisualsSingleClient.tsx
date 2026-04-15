@@ -25,7 +25,6 @@ export default function VisualsSingleClient({ entry, user }: Props) {
       return;
     }
 
-    // Hard block if limit is reached
     if (limitReached) {
       setIsModalOpen(true);
       return;
@@ -35,12 +34,10 @@ export default function VisualsSingleClient({ entry, user }: Props) {
     setError(null);
 
     try {
-      // 1. Track the download usage (Enforced server-side)
       const res = await fetch('/api/visuals/track', { method: 'POST' });
       const data = await res.json();
 
       if (!res.ok) {
-        // Handle server-side limit enforcement
         if (res.status === 403 || data.limit_reached) {
           setDownloadCount(data.count ?? 5);
           setIsModalOpen(true);
@@ -52,7 +49,6 @@ export default function VisualsSingleClient({ entry, user }: Props) {
       if (data.success || isPatron) {
         setDownloadCount(data.count ?? (downloadCount + 1));
 
-        // 2. Trigger cross-origin aware download (Optimole Support)
         const imageRes = await fetch(img);
         const blob = await imageRes.blob();
         const blobUrl = window.URL.createObjectURL(blob);
@@ -63,13 +59,11 @@ export default function VisualsSingleClient({ entry, user }: Props) {
         document.body.appendChild(link);
         link.click();
         
-        // Cleanup
         document.body.removeChild(link);
         window.URL.revokeObjectURL(blobUrl);
       }
     } catch (err: any) {
       console.error('Download process failed:', err);
-      // Only show error if it's not a limit-reach (which opens the modal)
       if (err.message !== 'Limit reached') {
         setError('Download failed. Please try again or check your account status.');
       }
@@ -102,8 +96,8 @@ export default function VisualsSingleClient({ entry, user }: Props) {
               <Image 
                 src={img} 
                 alt={entry.title} 
-                width={1200} 
-                height={1500} 
+                width={entry.featuredImage?.node?.mediaDetails?.width || 1200} 
+                height={entry.featuredImage?.node?.mediaDetails?.height || 1500} 
                 className="w-full h-auto"
                 priority
               />
@@ -175,6 +169,7 @@ export default function VisualsSingleClient({ entry, user }: Props) {
       {isModalOpen && (
         <div className="visual-modal-backdrop" onClick={() => setIsModalOpen(false)}>
           <div className="visual-modal" onClick={e => e.stopPropagation()}>
+            <button className="visual-modal-close" onClick={() => setIsModalOpen(false)}>×</button>
             <div className="visual-modal-icon">★</div>
             <h3>Daily Limit Reached</h3>
             <p>
@@ -185,7 +180,7 @@ export default function VisualsSingleClient({ entry, user }: Props) {
                 Upgrade to Patron
               </Link>
               <button onClick={() => setIsModalOpen(false)} className="text-sm text-zinc-500 hover:text-white transition-colors">
-                Dismiss
+                Maybe Later
               </button>
             </div>
           </div>

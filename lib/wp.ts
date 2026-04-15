@@ -383,6 +383,10 @@ const DIRECTORY_FIELDS_FRAGMENT = `
       node {
         sourceUrl
         altText
+        mediaDetails {
+          width
+          height
+        }
       }
     }
     cultureDirectoryTypes {

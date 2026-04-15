@@ -11,6 +11,10 @@ interface VisualEntry {
     node: {
       sourceUrl: string;
       altText: string;
+      mediaDetails?: {
+        width: number;
+        height: number;
+      };
     };
   };
   cultureDirectoryTypes?: {
@@ -31,11 +35,11 @@ export default function VisualsGrid({ entries }: Props) {
 
   return (
     <>
-      <div className="flex justify-center mb-12">
+      <div className="flex justify-center mb-16">
         <input 
           type="text" 
           placeholder="Search illustrations..." 
-          className="bg-zinc-900/50 border border-white/10 rounded-full px-6 py-3 w-full max-w-md text-white focus:outline-none focus:border-zinc-500 transition-colors"
+          className="bg-zinc-900 border border-white/10 rounded-full px-8 py-4 w-full max-w-lg text-white text-lg focus:outline-none focus:border-white/30 transition-all font-light"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -43,25 +47,33 @@ export default function VisualsGrid({ entries }: Props) {
 
       <div className="visuals-grid">
         {filtered.length > 0 ? (
-          filtered.map((entry) => (
-            <Link key={entry.slug} href={`/visuals/${entry.slug}`} className="visual-card">
-              <div className="visual-card-img">
-                <Image
-                  src={entry.featuredImage.node.sourceUrl}
-                  alt={entry.featuredImage.node.altText || entry.title}
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-              </div>
-              <div className="visual-card-overlay">
-                <span className="visual-card-meta">
-                  {entry.cultureDirectoryTypes?.nodes?.[0]?.name || 'Illustration'}
-                </span>
-                <h3 className="visual-card-title" dangerouslySetInnerHTML={{ __html: entry.title }} />
-              </div>
-            </Link>
-          ))
+          filtered.map((entry) => {
+            const node = entry.featuredImage.node;
+            // Use provided dimensions or fallback
+            const width = node.mediaDetails?.width || 800;
+            const height = node.mediaDetails?.height || 1000;
+            
+            return (
+              <Link key={entry.slug} href={`/visuals/${entry.slug}`} className="visual-card">
+                <div className="visual-card-img">
+                  <Image
+                    src={node.sourceUrl}
+                    alt={node.altText || entry.title}
+                    width={width}
+                    height={height}
+                    className="w-full h-auto"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 33vw"
+                  />
+                </div>
+                <div className="visual-card-overlay">
+                  <span className="visual-card-meta">
+                    {entry.cultureDirectoryTypes?.nodes?.[0]?.name || 'Illustration'}
+                  </span>
+                  <h3 className="visual-card-title" dangerouslySetInnerHTML={{ __html: entry.title }} />
+                </div>
+              </Link>
+            );
+          })
         ) : (
           <div className="col-span-full py-20 text-center text-zinc-500 italic">
             No matching illustrations found.
