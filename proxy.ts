@@ -49,6 +49,7 @@ const APP_ROUTES = new Set([
   'ai-use',
   'cookie-policy',
   'shop',
+  'visuals',
 ])
 
 // Alias redirects — old or alternative slugs that should map
