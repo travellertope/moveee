@@ -1,6 +1,4 @@
-'use client';
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -15,6 +13,20 @@ export default function VisualsSingleClient({ entry, user }: Props) {
   const [isCopying, setIsCopying] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync the download count with the server on mount to avoid stale session data (fixed 0/5 issue)
+  useEffect(() => {
+    if (user && !isPatron) {
+      fetch('/api/user/downloads')
+        .then(res => res.json())
+        .then(data => {
+          if (data.count !== undefined) {
+            setDownloadCount(data.count);
+          }
+        })
+        .catch(err => console.error('Sync failed:', err));
+    }
+  }, [user, isPatron]);
 
   const isPatron = user?.tier === 'patron' || user?.tier === 'leader';
   const limitReached = !isPatron && downloadCount >= 5;
