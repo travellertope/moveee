@@ -235,22 +235,34 @@ class Culture_Directory_Tools {
             wp_send_json_error( array( 'message' => 'No data or file provided.' ) );
         }
 
-        // Normalise line endings and parse.
-        $lines   = explode( "\n", str_replace( "\r", "", $raw_data ) );
+        // Robust CSV parsing using a temporary stream.
+        $stream = fopen( 'php://temp', 'r+' );
+        fwrite( $stream, $raw_data );
+        rewind( $stream );
+
         $created = 0;
         $skipped = 0;
         $results = array();
+        $is_first_row = true;
 
-        foreach ( $lines as $line ) {
-            $line = trim( $line );
-            if ( empty( $line ) ) {
+        while ( ( $data = fgetcsv( $stream ) ) !== false ) {
+            // Check for empty rows.
+            if ( empty( $data ) || ( count( $data ) === 1 && empty( $data[0] ) ) ) {
                 continue;
             }
 
-            // Simple CSV parser for "text", "author", "source"
-            $data = str_getcsv( $line );
+            // Detect and skip header rows.
+            if ( $is_first_row ) {
+                $is_first_row = false;
+                $first_val = strtolower( trim( $data[0] ) );
+                if ( $first_val === 'quote' || $first_val === 'text' || $first_val === 'content' ) {
+                    continue;
+                }
+            }
+
             if ( count( $data ) < 2 ) {
-                $results[] = array( 'title' => substr( $line, 0, 30 ) . '...', 'success' => false, 'error' => 'Invalid format.' );
+                $line_preview = substr( implode( ',', $data ), 0, 30 ) . '...';
+                $results[] = array( 'title' => $line_preview, 'success' => false, 'error' => 'Invalid format.' );
                 $skipped++;
                 continue;
             }
@@ -314,6 +326,8 @@ class Culture_Directory_Tools {
             $results[] = array( 'title' => $author, 'success' => true );
             $created++;
         }
+
+        fclose( $stream );
 
         wp_send_json_success( array(
             'created' => $created,
