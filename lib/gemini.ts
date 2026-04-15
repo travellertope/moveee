@@ -29,11 +29,12 @@ function createVertexClient(): GoogleGenAI | null {
   } as any);
 }
 
-// Model Fallback Chain: We try the latest available models sequentially.
+// Model Fallback Chain: Aligned with Google AI Studio dashboard visibility.
 const TEXT_MODELS = [
-  "gemini-1.5-flash",       // Tier 1: Highest Free-Tier Quota (1,500 RPD typically)
-  "gemini-2.0-flash-exp",   // Tier 2: Latest Experimental
-  "gemini-1.5-pro",         // Tier 3: High Reasoning
+  "gemini-2.5-flash",       // Tier 1: Primary (stable, high quota)
+  "gemini-2-flash",         // Tier 2: High-speed fallback
+  "gemini-2.5-pro",         // Tier 3: Reasoning fallback
+  "gemini-3-flash",         // Tier 4: Experimental (low quota fallback)
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
