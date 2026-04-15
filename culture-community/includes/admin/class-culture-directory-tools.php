@@ -240,48 +240,35 @@ class Culture_Directory_Tools {
         $replace  = array( '"', '"', '"', '"', "'", "'", '-', '-' );
         $raw_data = str_replace( $search, $replace, $raw_data );
 
-        // Remove spaces after commas ONLY if they precede a quote.
-        // This fixes the ", "Author"" issue that splits fields in many PHP versions.
-        $raw_data = preg_replace( '/,\s+"/', ',"', $raw_data );
-        
-        // Ensure consistent line endings for the stream parser.
-        $raw_data = str_replace( array( "\r\n", "\r" ), "\n", $raw_data );
-
-        // 2. Stream-based Parsing: Handles multi-line quotes and internal commas.
-        $stream = fopen( 'php://temp', 'r+' );
-        fwrite( $stream, $raw_data );
-        rewind( $stream );
+        // 2. Global Pattern Matching: Handles multi-line quotes and internal commas.
+        /**
+         * This regex looks for three (or two) double-quoted fields separated by commas.
+         * The /s modifier allows the dot to match newlines (multi-line quotes).
+         * The /m modifier allows ^ and $ to match start/end of lines.
+         */
+        $pattern = '/"(.*?)"\s*,\s*"(.*?)"(?:\s*,\s*"(.*?)")?\s*(?:\n|$)/s';
+        preg_match_all( $pattern, $raw_data, $matches, PREG_SET_ORDER );
 
         $created = 0;
         $skipped = 0;
         $results = array();
-        $is_first_row = true;
+        
+        if ( empty( $matches ) ) {
+            wp_send_json_error( array( 'message' => 'No valid quoted quotes found. Ensure your data uses "Quote", "Author", "Source" format.' ) );
+        }
 
-        while ( ( $data = fgetcsv( $stream, 0, ',', '"' ) ) !== false ) {
-            // Skip empty rows.
-            if ( empty( $data ) || ( count( $data ) === 1 && empty( $data[0] ) ) ) {
-                continue;
-            }
+        foreach ( $matches as $i => $m ) {
+            $text   = trim( $m[1] );
+            $author = trim( $m[2] );
+            $source = isset( $m[3] ) ? trim( $m[3] ) : '';
 
-            // Detect and skip header rows.
-            if ( $is_first_row ) {
-                $is_first_row = false;
-                $first_val = strtolower( trim( $data[0] ?? '' ) );
+            // Detect and skip header row.
+            if ( $i === 0 ) {
+                $first_val = strtolower( $text );
                 if ( in_array( $first_val, array( 'quote', 'text', 'content' ), true ) ) {
                     continue;
                 }
             }
-
-            if ( count( $data ) < 2 ) {
-                $line_preview = substr( trim( $data[0] ), 0, 30 ) . '...';
-                $results[] = array( 'title' => $line_preview, 'success' => false, 'error' => 'Invalid format or line split.' );
-                $skipped++;
-                continue;
-            }
-
-            $text   = trim( $data[0] );
-            $author = trim( $data[1] );
-            $source = trim( $data[2] ?? '' );
 
             if ( empty( $text ) || empty( $author ) ) {
                 $skipped++;
@@ -338,8 +325,6 @@ class Culture_Directory_Tools {
             $results[] = array( 'title' => $author, 'success' => true );
             $created++;
         }
-
-        fclose( $stream );
 
         wp_send_json_success( array(
             'created' => $created,
