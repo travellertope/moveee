@@ -1146,7 +1146,13 @@ class Culture_REST_API {
         $text    = $request->get_param( 'text' );
         $author  = $request->get_param( 'author' );
         $source  = $request->get_param( 'source' );
-        $user_id = get_current_user_id();
+        
+        // If user_id is passed and we're authenticated via API key, use it.
+        // Otherwise, fallback to the logged-in session user.
+        $user_id = (int) $request->get_param( 'user_id' );
+        if ( ! $user_id ) {
+            $user_id = get_current_user_id();
+        }
 
         // Duplicate detection: compare normalised content hash.
         $hash = md5( strtolower( trim( wp_strip_all_tags( $text ) ) ) );

@@ -59,8 +59,9 @@ class Culture_Directory_Tools {
 
     public static function init() {
         add_action( 'admin_menu',            array( __CLASS__, 'register_menu' ) );
-        add_action( 'wp_ajax_culture_dir_run_seeder',       array( __CLASS__, 'ajax_run_seeder' ) );
-        add_action( 'wp_ajax_culture_dir_generate_image',   array( __CLASS__, 'ajax_generate_image' ) );
+        add_action( 'wp_ajax_culture_dir_run_seeder',         array( __CLASS__, 'ajax_run_seeder' ) );
+        add_action( 'wp_ajax_culture_run_quote_seeder',      array( __CLASS__, 'ajax_run_quote_seeder' ) );
+        add_action( 'wp_ajax_culture_dir_generate_image',     array( __CLASS__, 'ajax_generate_image' ) );
         add_action( 'wp_ajax_culture_dir_save_extra_topics', array( __CLASS__, 'ajax_save_extra_topics' ) );
         add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
     }
@@ -165,6 +166,44 @@ class Culture_Directory_Tools {
 
         if ( $code !== 200 ) {
             wp_send_json_error( array( 'message' => $body['error'] ?? "HTTP $code from seeder." ) );
+        }
+
+        wp_send_json_success( $body );
+    }
+
+    // ── AJAX: run quote seeder ────────────────────────────────────────────────
+
+    public static function ajax_run_quote_seeder() {
+        check_ajax_referer( 'culture_dir_tools', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Forbidden.' ) );
+        }
+
+        if ( ! self::is_configured() ) {
+            wp_send_json_error( array( 'message' => 'Frontend URL or Cron Secret not configured.' ) );
+        }
+
+        $response = wp_remote_post(
+            self::get_frontend_url() . '/api/quotes/auto-populate',
+            array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . self::get_cron_secret(),
+                    'Content-Type'  => 'application/json',
+                ),
+                'body'    => wp_json_encode( array() ),
+                'timeout' => 120,
+            )
+        );
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( array( 'message' => $response->get_error_message() ) );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( $code !== 200 ) {
+            wp_send_json_error( array( 'message' => $body['error'] ?? "HTTP $code from quote seeder." ) );
         }
 
         wp_send_json_success( $body );
@@ -377,6 +416,23 @@ class Culture_Directory_Tools {
                 <div id="cdt-seeder-result" class="cdt-result" style="display:none;"></div>
             </div>
 
+            <?php /* ── QUOTE SEEDER PANEL ── */ ?>
+            <div class="cdt-panel">
+                <h2><?php esc_html_e( 'Quote Seeder', 'culture-community' ); ?></h2>
+                <p class="description">
+                    <?php esc_html_e( 'Populate the Moveee Quote Database with a curated selection of 10 high-impact quotes from James Baldwin, Chimamanda Ngozi Adichie, Toni Morrison, and more.', 'culture-community' ); ?>
+                </p>
+
+                <p>
+                    <button id="cdt-run-quote-seeder" class="button button-primary" <?php echo $configured ? '' : 'disabled'; ?>>
+                        <?php esc_html_e( 'Seed Moveee Quotes', 'culture-community' ); ?>
+                    </button>
+                    <span id="cdt-quote-spinner" class="spinner" style="float:none;vertical-align:middle;display:none;"></span>
+                </p>
+
+                <div id="cdt-quote-result" class="cdt-result" style="display:none;"></div>
+            </div>
+
             <?php /* ── CUSTOM TOPICS PANEL ── */ ?>
             <div class="cdt-panel">
                 <h2><?php esc_html_e( 'Custom Topic Seeds', 'culture-community' ); ?></h2>
@@ -513,6 +569,48 @@ class Culture_Directory_Tools {
                 })
                 .fail(function() {
                     $result.html('<div class="notice notice-error inline"><p>Request failed. The batch may have timed out — check the directory for new entries before retrying.</p></div>').show();
+                })
+                .always(function() {
+                    $btn.prop('disabled', false);
+                    $spinner.hide();
+                });
+            });
+
+            /* ── Quote Seeder ── */
+            $('#cdt-run-quote-seeder').on('click', function() {
+                var $btn = $(this);
+                var $spinner = $('#cdt-quote-spinner');
+                var $result  = $('#cdt-quote-result');
+
+                $btn.prop('disabled', true);
+                $spinner.show();
+                $result.hide().html('');
+
+                $.post(ajaxUrl, {
+                    action: 'culture_run_quote_seeder',
+                    nonce:  nonce,
+                })
+                .done(function(res) {
+                    if (res.success) {
+                        var d = res.data;
+                        var html = '<div class="notice notice-success inline"><p><strong>' +
+                            d.created + ' quote(s) created successfully.</strong></p></div>';
+
+                        if (d.results && d.results.length) {
+                            html += '<ul style="margin-top:8px;max-height:200px;overflow-y:auto;border:1px solid #f0f0f1;padding:10px;background:#f6f7f7;">';
+                            d.results.forEach(function(r) {
+                                var errSpan = r.error ? ' <span style="color:#d63638;font-size:11px;">(' + $('<span>').text(r.error).html() + ')</span>' : '';
+                                html += '<li>' + (r.success ? '&#10003;' : '&#10007;') + ' ' + $('<span>').text(r.title).html() + errSpan + '</li>';
+                            });
+                            html += '</ul>';
+                        }
+                        $result.html(html).show();
+                    } else {
+                        $result.html('<div class="notice notice-error inline"><p>' + $('<span>').text(res.data.message).html() + '</p></div>').show();
+                    }
+                })
+                .fail(function() {
+                    $result.html('<div class="notice notice-error inline"><p>Request failed.</p></div>').show();
                 })
                 .always(function() {
                     $btn.prop('disabled', false);
