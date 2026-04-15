@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getWPData, GET_EVENTS } from "@/lib/wp";
 import EventHero from "./components/EventHero";
 import SpotlightCard from "./components/SpotlightCard";
