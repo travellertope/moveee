@@ -1,7 +1,7 @@
 import { getWPData, GET_DIRECTORY_ENTRIES } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
-import "../visuals.css";
+import "@/app/visuals.css";
 import VisualsGrid from "@/components/VisualsGrid";
 
 export const revalidate = 3600;

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import VisualsSingleClient from "@/components/VisualsSingleClient";
-import "../visuals.css";
+import "@/app/visuals.css";
 
 export const dynamic = "force-dynamic";
 
