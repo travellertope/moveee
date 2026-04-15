@@ -90,11 +90,13 @@ export default function VisualsSingleClient({ entry, user }: Props) {
   return (
     <>
       <div className="visual-single">
-        <div className="visual-single-container">
+        <div className="max-w-[1200px] mx-auto px-6 mb-12">
           <Link href="/visuals" className="visual-single-back">
             ← Back to Visuals
           </Link>
-          
+        </div>
+        
+        <div className="visual-single-container">
           <div className="visual-single-preview">
             {img && (
               <Image 
