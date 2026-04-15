@@ -140,6 +140,42 @@ const STYLE_MODIFIERS =
   "No photorealism, no 3D rendering, matte finish with generous negative space.";
 
 /**
+ * Classify any entry-type slug (including admin-defined ones from WordPress)
+ * into one of the three illustration templates.
+ *
+ * portrait  — individual human subjects, biographical entries
+ * object    — tangible items: food, fashion, craft, instruments, artefacts
+ * scene     — everything else: places, movements, genres, concepts, events
+ */
+function classifyTemplateType(
+  entryType: string
+): "portrait" | "object" | "scene" {
+  const t = entryType.toLowerCase().replace(/[-_\s]+/g, " ").trim();
+
+  // Portrait: individual people and biographical figures
+  if (
+    /\b(person|people|figure|artist|musician|singer|rapper|writer|author|poet|novelist|activist|filmmaker|director|actor|actress|politician|philosopher|leader|thinker|sculptor|painter|photographer|dancer|athlete|architect|designer|chef|scholar|academic|intellectual|icon|legend|pioneer)\b/.test(t)
+  ) {
+    return "portrait";
+  }
+
+  // Film: cinematic works → scene template (a visual moment from the work)
+  if (/\b(film|documentary|movie|cinema|short film)\b/.test(t)) {
+    return "scene";
+  }
+
+  // Object/product: tangible items, material culture, and literary/music works
+  if (
+    /\b(food|dish|cuisine|drink|beverage|meal|snack|recipe|ingredient|fashion|clothing|garment|textile|fabric|cloth|print|pattern|weave|embroidery|craft|jewellery|jewelry|accessory|artefact|artifact|instrument|tool|object|product|sculpture|painting|installation|novel|book|album|song|artwork|piece|collection|ceramic|pottery|bead|wax print|kente|gele|headwrap|adire)\b/.test(t)
+  ) {
+    return "object";
+  }
+
+  // Scene: places, movements, genres, concepts, traditions, events, etc.
+  return "scene";
+}
+
+/**
  * Build a context-aware Imagen 3 prompt based on the entry type.
  * Randomizes compositions and backgrounds to ensure a diverse directory.
  */
