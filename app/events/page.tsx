@@ -41,7 +41,7 @@ function groupEventsByMonth(events: any[]) {
 export default async function EventsPage() {
   let events: any[] = [];
   try {
-    const data = await getWPData(GET_EVENTS, { first: 50 });
+    const data = await getWPData(GET_EVENTS, { first: 50 }, { revalidate: 0 });
     events = data?.cultureEvents?.nodes ?? [];
   } catch { /* CMS unreachable */ }
 

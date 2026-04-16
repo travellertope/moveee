@@ -303,6 +303,8 @@ export const GET_ADJACENT_NEWSLETTERS = `
   }
 `;
 
+// ── COMMUNITY CHAPTERS & EVENTS ───────────────────────────────────────────
+
 const EVENT_FIELDS_FRAGMENT = `
   fragment EventFields on CultureEvent {
     id
@@ -310,7 +312,6 @@ const EVENT_FIELDS_FRAGMENT = `
     title
     slug
     date
-    # Use the specific eventDate meta field if available
     eventDate
     excerpt
     featuredImage {
@@ -319,7 +320,7 @@ const EVENT_FIELDS_FRAGMENT = `
         altText
       }
     }
-    categories {
+    cultureInterests {
       nodes {
         name
         slug
@@ -327,10 +328,11 @@ const EVENT_FIELDS_FRAGMENT = `
     }
     location
     eventLocation
-    eventStatus: status
     isFeatured
     admission
     isPhysical
+    chapterId
+    capacity
   }
 `;
 
@@ -355,106 +357,59 @@ export const GET_EVENT_BY_SLUG = `
   ${EVENT_FIELDS_FRAGMENT}
 `;
 
-// ── CultureEvent CPT queries ──────────────────────────────────────────────────
-// Events are stored as the culture_event custom post type, not standard posts.
-// These queries use the cultureEvents() root field exposed by WPGraphQL once
-// show_in_graphql is set on the CPT.
-
-const CULTURE_EVENT_FIELDS_FRAGMENT = `
-  fragment CultureEventFields on CultureEvent {
+const CHAPTER_FIELDS_FRAGMENT = `
+  fragment ChapterFields on CultureChapter {
     id
     databaseId
     title
     slug
     date
+    content
     excerpt
-    featuredImage {
-      node {
-        sourceUrl
-        altText
-      }
-    }
-    cultureInterests {
-      nodes {
-        name
-        slug
-      }
-    }
-    location
-    isFeatured
-    admission
-    eventDate
-    isPhysical
-    capacity
-  }
-`;
-
-export const GET_CULTURE_EVENTS = `
-  query GetCultureEvents($first: Int) {
-    cultureEvents(first: $first, where: { status: PUBLISH }) {
-      nodes {
-        ...CultureEventFields
-      }
-    }
-  }
-  ${CULTURE_EVENT_FIELDS_FRAGMENT}
-`;
-
-export const GET_CULTURE_EVENT_BY_SLUG = `
-  query GetCultureEventBySlug($slug: ID!) {
-    cultureEvent(id: $slug, idType: SLUG) {
-      ...CultureEventFields
-      content
-    }
-  }
-  ${CULTURE_EVENT_FIELDS_FRAGMENT}
-`;
-
-// ── CultureChapter CPT queries ────────────────────────────────────────────────
-
-const CULTURE_CHAPTER_FIELDS_FRAGMENT = `
-  fragment CultureChapterFields on CultureChapter {
-    id
-    databaseId
-    title
-    slug
-    excerpt
-    featuredImage {
-      node {
-        sourceUrl
-        altText
-      }
-    }
-    cultureInterests {
-      nodes {
-        name
-        slug
-      }
-    }
+    latitude
+    longitude
     lat
     lng
-  }
-`;
-
-export const GET_CULTURE_CHAPTERS = `
-  query GetCultureChapters($first: Int) {
-    cultureChapters(first: $first, where: { status: PUBLISH }) {
+    leaderId
+    leaderName
+    memberCount
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureInterests {
       nodes {
-        ...CultureChapterFields
+        name
+        slug
       }
     }
   }
-  ${CULTURE_CHAPTER_FIELDS_FRAGMENT}
 `;
 
-export const GET_CULTURE_CHAPTER_BY_SLUG = `
-  query GetCultureChapterBySlug($slug: ID!) {
-    cultureChapter(id: $slug, idType: SLUG) {
-      ...CultureChapterFields
-      content
+export const GET_CHAPTERS = `
+  query GetChapters($first: Int) {
+    cultureChapters(first: $first) {
+      nodes {
+        ...ChapterFields
+      }
     }
   }
-  ${CULTURE_CHAPTER_FIELDS_FRAGMENT}
+  ${CHAPTER_FIELDS_FRAGMENT}
+`;
+
+export const GET_CHAPTER_BY_SLUG = `
+  query GetChapterBySlug($slug: ID!) {
+    cultureChapter(id: $slug, idType: SLUG) {
+      ...ChapterFields
+      relatedEvents {
+        ...StoryFields
+      }
+    }
+  }
+  ${CHAPTER_FIELDS_FRAGMENT}
+  ${STORY_FIELDS_FRAGMENT}
 `;
 
 export const GET_JOURNEY_BY_SLUG = `
@@ -711,55 +666,4 @@ export const GET_SITE_SETTINGS = `
   }
 `;
 
-const CHAPTER_FIELDS_FRAGMENT = `
-  fragment ChapterFields on CultureChapter {
-    id
-    databaseId
-    title
-    slug
-    date
-    content
-    excerpt
-    latitude
-    longitude
-    leaderId
-    leaderName
-    memberCount
-    featuredImage {
-      node {
-        sourceUrl
-        altText
-      }
-    }
-    cultureInterests {
-      nodes {
-        name
-        slug
-      }
-    }
-  }
-`;
 
-export const GET_CHAPTERS = `
-  query GetChapters($first: Int) {
-    cultureChapters(first: $first) {
-      nodes {
-        ...ChapterFields
-      }
-    }
-  }
-  ${CHAPTER_FIELDS_FRAGMENT}
-`;
-
-export const GET_CHAPTER_BY_SLUG = `
-  query GetChapterBySlug($slug: ID!) {
-    cultureChapter(id: $slug, idType: SLUG) {
-      ...ChapterFields
-      relatedEvents {
-        ...StoryFields
-      }
-    }
-  }
-  ${CHAPTER_FIELDS_FRAGMENT}
-  ${STORY_FIELDS_FRAGMENT}
-`;

@@ -14,7 +14,7 @@ export const metadata = {
 export default async function ChaptersPage() {
   let chapters: any[] = [];
   try {
-    const data = await getWPData(GET_CHAPTERS, { first: 100 });
+    const data = await getWPData(GET_CHAPTERS, { first: 100 }, { revalidate: 0 });
     chapters = data?.cultureChapters?.nodes ?? [];
   } catch (error) {
     console.error("Error fetching chapters:", error);
