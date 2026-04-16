@@ -33,11 +33,10 @@ export async function POST(req: NextRequest) {
   
   let createdCount = 0;
   const TARGET_BATCH_SIZE = 15; // Aim to add 15 fresh quotes per run
-  const MAX_ATTEMPTS = 60;     // Don't scan more than 60 in one go to keep it fast
 
   try {
-    // 1. Prioritize curated list
-    for (let i = 0; i < SEED_QUOTES.length && createdCount < TARGET_BATCH_SIZE && i < MAX_ATTEMPTS; i++) {
+    // 1. Prioritize curated list - scan entire list until we hit target batch size
+    for (let i = 0; i < SEED_QUOTES.length && createdCount < TARGET_BATCH_SIZE; i++) {
         const quote = SEED_QUOTES[i];
         const res = await fetch(`${WP_URL}/wp-json/culture/v1/quotes`, {
           method: "POST",

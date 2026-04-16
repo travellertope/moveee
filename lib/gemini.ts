@@ -31,10 +31,9 @@ function createVertexClient(): GoogleGenAI | null {
 
 // Model Fallback Chain: Aligned with Google AI Studio dashboard visibility.
 const TEXT_MODELS = [
-  "gemini-2.0-flash",       // Tier 1: Primary (stable, high quota)
-  "gemini-1.5-flash",       // Tier 2: High-speed fallback
-  "gemini-1.5-pro",         // Tier 3: Reasoning fallback
-  "gemini-1.5-flash-8b",    // Tier 4: Lightweight fallback
+  "gemini-1.5-flash",       // Primary stable model
+  "gemini-1.5-pro",         // Reasoning fallback
+  "gemini-2.0-flash-exp",   // Next-gen experimental
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
