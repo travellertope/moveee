@@ -184,6 +184,10 @@ class Culture_Directory_Tools {
             wp_send_json_error( array( 'message' => 'Frontend URL or Cron Secret not configured.' ) );
         }
 
+        // Pass persisted offset so the seeder continues where it left off
+        // rather than re-scanning from index 0 every run.
+        $offset = (int) get_option( 'culture_quote_seeder_offset', 0 );
+
         $response = wp_remote_post(
             self::get_frontend_url() . '/api/quotes/auto-populate',
             array(
@@ -191,7 +195,7 @@ class Culture_Directory_Tools {
                     'Authorization' => 'Bearer ' . self::get_cron_secret(),
                     'Content-Type'  => 'application/json',
                 ),
-                'body'    => wp_json_encode( array() ),
+                'body'    => wp_json_encode( array( 'offset' => $offset ) ),
                 'timeout' => 120,
             )
         );
@@ -205,6 +209,17 @@ class Culture_Directory_Tools {
 
         if ( $code !== 200 ) {
             wp_send_json_error( array( 'message' => $body['error'] ?? "HTTP $code from quote seeder." ) );
+        }
+
+        // Persist the next-scan offset returned by the API.
+        if ( isset( $body['nextOffset'] ) ) {
+            update_option( 'culture_quote_seeder_offset', (int) $body['nextOffset'] );
+        }
+
+        // When the list is fully exhausted and AI took over, reset the cursor
+        // so the curated list is re-checked on future runs.
+        if ( isset( $body['mode'] ) && in_array( $body['mode'], array( 'exhausted', 'ai-generated' ), true ) ) {
+            update_option( 'culture_quote_seeder_offset', 0 );
         }
 
         wp_send_json_success( $body );
@@ -563,7 +578,7 @@ class Culture_Directory_Tools {
             <div class="cdt-panel">
                 <h2><?php esc_html_e( 'Quote Seeder', 'culture-community' ); ?></h2>
                 <p class="description">
-                    <?php esc_html_e( 'Populate the Moveee Quote Database with a curated selection of 10 high-impact quotes from James Baldwin, Chimamanda Ngozi Adichie, Toni Morrison, and more.', 'culture-community' ); ?>
+                    <?php esc_html_e( 'Populate the Moveee Quote Database with up to 15 fresh quotes per click from a curated list of 240+ quotes by James Baldwin, Chimamanda Ngozi Adichie, Toni Morrison, and more. Duplicates are skipped automatically. Once the full list is imported, new quotes are AI-generated.', 'culture-community' ); ?>
                 </p>
 
                 <p>
@@ -764,8 +779,15 @@ class Culture_Directory_Tools {
                 .done(function(res) {
                     if (res.success) {
                         var d = res.data;
+                        var modeLabel = '';
+                        if (d.mode === 'ai-generated') {
+                            modeLabel = ' <em style="color:#646970;font-size:11px;">(AI-generated — curated list fully imported)</em>';
+                        } else if (d.mode === 'exhausted') {
+                            modeLabel = ' <em style="color:#d63638;font-size:11px;">(all curated quotes already imported — AI fallback unavailable)</em>';
+                        }
+                        var skipNote = d.skipped > 0 ? ', ' + d.skipped + ' already existed' : '';
                         var html = '<div class="notice notice-success inline"><p><strong>' +
-                            d.created + ' quote(s) created successfully.</strong></p></div>';
+                            d.created + ' quote(s) added.' + skipNote + '</strong>' + modeLabel + '</p></div>';
 
                         if (d.results && d.results.length) {
                             html += '<ul style="margin-top:8px;max-height:200px;overflow-y:auto;border:1px solid #f0f0f1;padding:10px;background:#f6f7f7;">';
