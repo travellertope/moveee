@@ -303,25 +303,56 @@ export const GET_ADJACENT_NEWSLETTERS = `
   }
 `;
 
+const EVENT_FIELDS_FRAGMENT = `
+  fragment EventFields on CultureEvent {
+    id
+    databaseId
+    title
+    slug
+    date
+    # Use the specific eventDate meta field if available
+    eventDate
+    excerpt
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    categories {
+      nodes {
+        name
+        slug
+      }
+    }
+    location
+    eventLocation
+    eventStatus: status
+    isFeatured
+    admission
+    isPhysical
+  }
+`;
+
 export const GET_EVENTS = `
   query GetEvents($first: Int) {
-    posts(first: $first, where: { categoryName: "events", status: PUBLISH }) {
+    cultureEvents(first: $first) {
       nodes {
-        ...StoryFields
+        ...EventFields
       }
     }
   }
-  ${STORY_FIELDS_FRAGMENT}
+  ${EVENT_FIELDS_FRAGMENT}
 `;
 
 export const GET_EVENT_BY_SLUG = `
   query GetEventBySlug($slug: ID!) {
-    post(id: $slug, idType: SLUG) {
-      ...StoryFields
+    cultureEvent(id: $slug, idType: SLUG) {
+      ...EventFields
       content
     }
   }
-  ${STORY_FIELDS_FRAGMENT}
+  ${EVENT_FIELDS_FRAGMENT}
 `;
 
 // ── CultureEvent CPT queries ──────────────────────────────────────────────────
@@ -678,4 +709,57 @@ export const GET_SITE_SETTINGS = `
       locations
     }
   }
+`;
+
+const CHAPTER_FIELDS_FRAGMENT = `
+  fragment ChapterFields on CultureChapter {
+    id
+    databaseId
+    title
+    slug
+    date
+    content
+    excerpt
+    latitude
+    longitude
+    leaderId
+    leaderName
+    memberCount
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+  }
+`;
+
+export const GET_CHAPTERS = `
+  query GetChapters($first: Int) {
+    cultureChapters(first: $first) {
+      nodes {
+        ...ChapterFields
+      }
+    }
+  }
+  ${CHAPTER_FIELDS_FRAGMENT}
+`;
+
+export const GET_CHAPTER_BY_SLUG = `
+  query GetChapterBySlug($slug: ID!) {
+    cultureChapter(id: $slug, idType: SLUG) {
+      ...ChapterFields
+      relatedEvents {
+        ...StoryFields
+      }
+    }
+  }
+  ${CHAPTER_FIELDS_FRAGMENT}
+  ${STORY_FIELDS_FRAGMENT}
 `;

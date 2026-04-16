@@ -47,13 +47,19 @@ class Culture_Post_Types {
             ) );
         }
 
-        // Event fields on Post type (backwards-compat for any standard posts tagged as events).
-        $post_event_fields = array(
-            'location'    => array( 'type' => 'String',  'meta_key' => 'location' ),
-            'isFeatured'  => array( 'type' => 'Boolean', 'meta_key' => 'is_featured' ),
-            'admission'   => array( 'type' => 'String',  'meta_key' => 'admission' ),
+        $event_fields = array(
+            'location'      => array( 'type' => 'String',  'meta_key' => 'location' ),
+            'eventLocation' => array( 'type' => 'String',  'meta_key' => 'location' ), // alias
+            'eventDate'     => array( 'type' => 'String',  'meta_key' => '_culture_event_date' ),
+            'isFeatured'    => array( 'type' => 'Boolean', 'meta_key' => 'is_featured' ),
+            'admission'     => array( 'type' => 'String',  'meta_key' => 'admission' ),
+            'isPhysical'    => array( 'type' => 'Boolean', 'meta_key' => '_culture_is_physical' ),
+            'chapterId'     => array( 'type' => 'Int',     'meta_key' => '_culture_chapter_id' ),
+            'capacity'      => array( 'type' => 'Int',     'meta_key' => '_culture_capacity' ),
         );
-        foreach ( $post_event_fields as $field_name => $config ) {
+
+        // Event fields on Post type (backwards-compat)
+        foreach ( $event_fields as $field_name => $config ) {
             $meta_key = $config['meta_key'];
             $type     = $config['type'];
             register_graphql_field( 'Post', $field_name, array(
@@ -61,22 +67,14 @@ class Culture_Post_Types {
                 'resolve' => function( $post ) use ( $meta_key, $type ) {
                     $value = get_post_meta( $post->databaseId, $meta_key, true );
                     if ( $type === 'Boolean' ) return (bool) $value;
+                    if ( $type === 'Int' ) return (int) $value;
                     return (string) $value;
                 },
             ) );
         }
 
-        // CultureEvent fields – ACF meta + meta-box meta surfaced to WPGraphQL.
-        $culture_event_fields = array(
-            'location'    => array( 'type' => 'String',  'meta_key' => 'location' ),
-            'isFeatured'  => array( 'type' => 'Boolean', 'meta_key' => 'is_featured' ),
-            'admission'   => array( 'type' => 'String',  'meta_key' => 'admission' ),
-            'eventDate'   => array( 'type' => 'String',  'meta_key' => '_culture_event_date' ),
-            'chapterId'   => array( 'type' => 'Int',     'meta_key' => '_culture_chapter_id' ),
-            'isPhysical'  => array( 'type' => 'Boolean', 'meta_key' => '_culture_is_physical' ),
-            'capacity'    => array( 'type' => 'Int',     'meta_key' => '_culture_capacity' ),
-        );
-        foreach ( $culture_event_fields as $field_name => $config ) {
+        // Specific fields on CultureEvent type
+        foreach ( $event_fields as $field_name => $config ) {
             $meta_key = $config['meta_key'];
             $type     = $config['type'];
             register_graphql_field( 'CultureEvent', $field_name, array(
@@ -90,21 +88,83 @@ class Culture_Post_Types {
             ) );
         }
 
-        // CultureChapter fields – coordinates and leader.
-        $culture_chapter_fields = array(
-            'lat'      => array( 'meta_key' => '_culture_location_lat' ),
-            'lng'      => array( 'meta_key' => '_culture_location_lng' ),
-            'leaderId' => array( 'meta_key' => '_culture_chapter_leader_id' ),
+        // Chapter fields on cultureChapter type
+        $chapter_fields = array(
+            'latitude'  => array( 'type' => 'String', 'meta_key' => '_culture_location_lat' ),
+            'longitude' => array( 'type' => 'String', 'meta_key' => '_culture_location_lng' ),
+            'lat'       => array( 'type' => 'String', 'meta_key' => '_culture_location_lat' ), // alias
+            'lng'       => array( 'type' => 'String', 'meta_key' => '_culture_location_lng' ), // alias
+            'leaderId'  => array( 'type' => 'Int',    'meta_key' => '_culture_chapter_leader_id' ),
         );
-        foreach ( $culture_chapter_fields as $field_name => $config ) {
+
+        foreach ( $chapter_fields as $field_name => $config ) {
             $meta_key = $config['meta_key'];
+            $type     = $config['type'];
             register_graphql_field( 'CultureChapter', $field_name, array(
-                'type'    => 'String',
-                'resolve' => function( $post ) use ( $meta_key ) {
-                    return (string) get_post_meta( $post->databaseId, $meta_key, true );
+                'type'    => $type,
+                'resolve' => function( $post ) use ( $meta_key, $type ) {
+                    $value = get_post_meta( $post->databaseId, $meta_key, true );
+                    if ( $type === 'Int' ) return (int) $value;
+                    return (string) $value;
                 },
             ) );
         }
+
+        // Leader Name (convenience field)
+        register_graphql_field( 'CultureChapter', 'leaderName', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                $leader_id = get_post_meta( $post->databaseId, '_culture_chapter_leader_id', true );
+                if ( ! $leader_id ) return null;
+                $leader = get_userdata( $leader_id );
+                return $leader ? $leader->display_name : null;
+            },
+        ) );
+
+        // Member Count (total primary + secondary)
+        register_graphql_field( 'CultureChapter', 'memberCount', array(
+            'type'    => 'Int',
+            'resolve' => function( $post ) {
+                $p_count = count( get_users( array(
+                    'meta_key'   => '_culture_primary_chapter_id',
+                    'meta_value' => $post->databaseId,
+                    'fields'     => 'ID',
+                ) ) );
+                $s_count = count( get_users( array(
+                    'meta_key'   => '_culture_secondary_chapter_id',
+                    'meta_value' => $post->databaseId,
+                    'fields'     => 'ID',
+                ) ) );
+                return $p_count + $s_count;
+            },
+        ) );
+
+        // Related Upcoming Events for a Chapter
+        register_graphql_field( 'CultureChapter', 'relatedEvents', array(
+            'type'    => array( 'list_of' => 'Post' ),
+            'resolve' => function( $post ) {
+                $events = get_posts( array(
+                    'post_type'      => 'culture_event',
+                    'posts_per_page' => 10,
+                    'meta_query'     => array(
+                        array(
+                            'key'   => '_culture_chapter_id',
+                            'value' => $post->databaseId,
+                        ),
+                        array(
+                            'key'     => '_culture_event_date',
+                            'value'   => current_time( 'Y-m-d\TH:i' ),
+                            'compare' => '>=',
+                            'type'    => 'DATETIME',
+                        ),
+                    ),
+                    'meta_key' => '_culture_event_date',
+                    'orderby'  => 'meta_value',
+                    'order'    => 'ASC',
+                ) );
+                return $events;
+            },
+        ) );
     }
 
     /**
@@ -132,7 +192,7 @@ class Culture_Post_Types {
             'rewrite'             => array( 'slug' => 'chapters' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',
-            // WPGraphQL support – required for Next.js to query via cultureChapters().
+            // WPGraphQL support.
             'show_in_graphql'     => true,
             'graphql_single_name' => 'cultureChapter',
             'graphql_plural_name' => 'cultureChapters',
@@ -159,7 +219,7 @@ class Culture_Post_Types {
             'rewrite'             => array( 'slug' => 'events' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',
-            // WPGraphQL support – required for Next.js to query via cultureEvents().
+            // WPGraphQL support.
             'show_in_graphql'     => true,
             'graphql_single_name' => 'cultureEvent',
             'graphql_plural_name' => 'cultureEvents',

@@ -1,122 +1,126 @@
-import { getWPData, GET_CULTURE_CHAPTER_BY_SLUG } from "@/lib/wp";
+import { getWPData, GET_CHAPTER_BY_SLUG } from "@/lib/wp";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import ChapterHero from "../components/ChapterHero";
+import ChapterMap from "../components/ChapterMap";
+import EventCard from "../../events/components/EventCard";
+import "@/app/chapters.css";
 
 export const dynamic = "force-dynamic";
 
-export default async function ChapterPage({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const data = await getWPData(GET_CHAPTER_BY_SLUG, { slug });
+  const chapter = data?.cultureChapter;
+  
+  return {
+    title: chapter?.title ? `${chapter.title} | Moveee Chapters` : "Chapter",
+    description: chapter?.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160) || "Join a Moveee chapter.",
+  };
+}
+
+export default async function ChapterSinglePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   let chapter: any = null;
+  
   try {
-    const data = await getWPData(GET_CULTURE_CHAPTER_BY_SLUG, { slug });
+    const data = await getWPData(GET_CHAPTER_BY_SLUG, { slug });
     chapter = data?.cultureChapter ?? null;
-  } catch { /* CMS unreachable */ }
+  } catch (error) {
+    console.error("Error fetching single chapter:", error);
+  }
 
   if (!chapter) notFound();
 
-  const img = chapter.featuredImage?.node?.sourceUrl;
-  const interests = chapter.cultureInterests?.nodes ?? [];
+  const featuredImg = chapter.featuredImage?.node?.sourceUrl;
+  const upcomingEvents = chapter.relatedEvents || [];
 
   return (
-    <article className="bg-paper min-h-screen">
-
-      {/* ── HERO ── */}
-      <section
-        className="relative overflow-hidden flex items-end"
-        style={{ minHeight: 480, background: "#14110d" }}
-      >
-        {img ? (
-          <Image src={img} alt={chapter.title} fill className="object-cover opacity-50" priority />
+    <article className="chapter-single bg-paper">
+      {/* ── IMMERSIVE HERO ── */}
+      <section className="chapter-single-hero">
+        {featuredImg ? (
+          <Image src={featuredImg} alt={chapter.title} fill className="object-cover" priority />
         ) : (
-          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #2a1208, #14110d)" }} />
+          <div className="absolute inset-0 bg-ink" />
         )}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #14110d 20%, transparent 70%)" }} />
-
-        <div className="relative z-10 max-w-4xl mx-auto px-6 pb-14 pt-24 w-full">
-          <div className="flex gap-2 flex-wrap mb-4">
-            <span className="font-mono text-[9px] uppercase tracking-widest px-2 py-1"
-              style={{ background: "#c5491f", color: "#f3ece0" }}>
-              Chapter
-            </span>
-            {interests.map((i: any) => (
-              <span key={i.slug} className="font-mono text-[9px] uppercase tracking-widest px-2 py-1 border border-paper/20 text-paper/60">
-                {i.name}
-              </span>
-            ))}
-          </div>
-          <h1
-            className="font-serif text-paper leading-tight mb-4"
-            style={{ fontSize: "clamp(2rem, 5vw, 4rem)" }}
-            dangerouslySetInnerHTML={{ __html: chapter.title }}
-          />
-          {chapter.excerpt && (
-            <p
-              className="font-serif italic text-paper/60 text-lg max-w-2xl"
-              dangerouslySetInnerHTML={{ __html: chapter.excerpt.replace(/<[^>]*>/g, "") }}
-            />
-          )}
+        <div className="overlay" />
+        <div className="content">
+          <ChapterHero title={chapter.title} isSingle={true} />
         </div>
       </section>
 
-      {/* ── BODY ── */}
-      <div className="max-w-4xl mx-auto px-6 py-16 grid md:grid-cols-[1fr_280px] gap-12">
+      <div className="chapter-body-grid">
+        {/* ── CONTENT AREA ── */}
+        <div className="chapter-content-wrap">
+          <div 
+            className="chapter-content prose-content"
+            dangerouslySetInnerHTML={{ __html: chapter.content }}
+          />
 
-        {/* Content */}
-        <div>
-          {chapter.content ? (
-            <div
-              className="prose-content font-serif text-lg leading-relaxed text-ink/80"
-              dangerouslySetInnerHTML={{ __html: chapter.content }}
-            />
-          ) : (
-            <p className="font-serif italic text-ink/40 text-lg">
-              More details about this chapter coming soon.
-            </p>
+          {chapter.latitude && chapter.longitude && (
+            <div className="chapter-location-section mt-16">
+              <h2 className="font-serif italic text-3xl mb-8">Location</h2>
+              <ChapterMap 
+                lat={chapter.latitude} 
+                lng={chapter.longitude} 
+                title={chapter.title} 
+              />
+            </div>
+          )}
+
+          {/* ── EVENTS INTEGRATION ── */}
+          {upcomingEvents.length > 0 && (
+            <div className="chapter-upcoming-events mt-16">
+              <h2 className="font-serif italic text-3xl mb-8">Upcoming Events</h2>
+              <div className="events-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                {upcomingEvents.map((event: any) => (
+                  <EventCard 
+                    key={event.id}
+                    slug={event.slug}
+                    title={event.title}
+                    date={new Date(event.date).toLocaleDateString("en-GB", { day: "numeric", month: "long" })}
+                    location={event.location || "Venue TBA"}
+                    time="18:00" // Default time
+                    category={event.cultureInterests?.nodes[0]?.name || "Chapter Event"}
+                    image={event.featuredImage?.node?.sourceUrl}
+                  />
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Sidebar */}
-        <aside className="flex flex-col gap-6">
-          <div className="border border-rule/10 p-6">
-            <div className="font-mono text-[9px] uppercase tracking-widest text-ochre mb-4">Chapter Info</div>
-
-            {(chapter.lat && chapter.lng) && (
-              <div className="mb-4">
-                <div className="font-mono text-[9px] text-ink/40 uppercase mb-1">Coordinates</div>
-                <p className="font-serif italic text-ink text-sm">
-                  {parseFloat(chapter.lat).toFixed(4)}, {parseFloat(chapter.lng).toFixed(4)}
-                </p>
+        {/* ── SIDEBAR ── */}
+        <aside className="chapter-sidebar">
+          <div className="sidebar-widget chapter-stats">
+            <h3>Community Stats</h3>
+            <div className="stat">
+              <span className="value">{chapter.memberCount || 0}</span>
+              <span className="label">Registered Members</span>
+            </div>
+            {chapter.leaderName && (
+              <div className="stat">
+                <span className="value" style={{ fontSize: '24px' }}>{chapter.leaderName}</span>
+                <span className="label">Chapter Leader</span>
               </div>
             )}
-
-            {interests.length > 0 && (
-              <div className="mb-4">
-                <div className="font-mono text-[9px] text-ink/40 uppercase mb-2">Interests</div>
-                <div className="flex flex-wrap gap-2">
-                  {interests.map((i: any) => (
-                    <span key={i.slug}
-                      className="font-mono text-[9px] uppercase tracking-widest px-2 py-1 border border-rule/20 text-ink/60">
-                      {i.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <Link
-              href="/connect"
-              className="block w-full text-center font-mono text-[10px] uppercase tracking-widest px-4 py-3 mt-4 border border-ink hover:bg-ink hover:text-paper transition-colors"
-            >
-              Join this Chapter →
-            </Link>
           </div>
 
-          <Link
-            href="/chapters"
-            className="font-mono text-[10px] border-b border-ink/20 hover:border-ochre transition-colors self-start"
-          >
-            ← All Chapters
+          <div className="sidebar-widget">
+            <h3>Interests</h3>
+            <div className="cc-interests flex-wrap">
+              {chapter.cultureInterests?.nodes.map((interest: any) => (
+                <span key={interest.slug} className="cc-tag px-3 py-1 border border-rule mb-2">
+                  {interest.name}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <Link href="/chapters" className="font-mono text-[10px] uppercase border-b border-ink self-start mt-4">
+            ← View All Chapters
           </Link>
         </aside>
       </div>
