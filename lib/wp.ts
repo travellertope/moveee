@@ -253,12 +253,12 @@ const EVENT_FIELDS_FRAGMENT = `
         sourceUrl
       }
     }
-    featuredHost {
-      ...DirectoryFields
-    }
-    associatedJourney {
-      ...JourneyFields
-    }
+    # featuredHost {
+    #   ...DirectoryFields
+    # }
+    # associatedJourney {
+    #   ...JourneyFields
+    # }
     pressDetails {
       eyebrow
       title
