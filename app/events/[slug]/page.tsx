@@ -18,130 +18,190 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   if (!event) notFound();
 
   const img = event.featuredImage?.node?.sourceUrl;
-  const cat = event.cultureInterests?.nodes?.[0]?.name || "Culture";
-  const dateObj = new Date(event.date);
+  const cat = event.cultureInterests?.nodes?.[0]?.name || "Happening";
+  const dateObj = new Date(event.eventDate || event.date);
   const dateFormatted = dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-  const dayName = dateObj.toLocaleDateString("en-GB", { weekday: "long" });
+  
+  const endObj = event.endDate ? new Date(event.endDate) : null;
+  const endFormatted = endObj ? endObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
+
+  const hasMetrics = event.metrics && event.metrics.length > 0;
+  const hasSchedule = event.schedule && event.schedule.length > 0;
+  const hasShowcase = event.showcase && event.showcase.length > 0;
+  const host = event.featuredHost;
 
   return (
-    <article className="bg-paper min-h-screen">
-      {/* ── IMMERSIVE HERO ── */}
-      <section className="event-hero-single">
-        {img ? (
-          <Image src={img} alt={event.title} fill className="object-cover" priority />
-        ) : (
-          <div className="absolute inset-0 bg-ink" />
-        )}
-        <div className="hero-overlay" />
-        
-        <div className="hero-content-single">
-          <div className="hero-eyebrow">
-            <span className="pill">Event</span>
-            <span className="sep">/</span>
-            <span>{dateFormatted}</span>
+    <article className="bg-paper min-h-screen selection:bg-gold selection:text-ink">
+      {/* ── IMMERSIVE HAPPENING HERO ── */}
+      <section className="happening-hero">
+        {img && (
+          <div className="happening-hero-bg">
+            <Image src={img} alt={event.title} fill className="object-cover grayscale hover:grayscale-0 transition-all duration-700" priority />
           </div>
+        )}
+        
+        <div className="happening-hero-content">
+          <span className="tag">{cat}</span>
+          <h1 dangerouslySetInnerHTML={{ __html: event.title.replace(/ /g, ' <em class="font-serif italic text-gold">') + '</em>' }} />
           
-          <h1 className="hero-title" dangerouslySetInnerHTML={{ __html: event.title }} />
-          <p className="hero-subtitle">{event.excerpt?.replace(/<[^>]*>/g, "") || "Curated culture happenings by The Moveee."}</p>
-          
-          <div className="hero-meta-row">
-            <div className="hero-meta-item">
-              <div className="label">Venue</div>
+          {event.attribution && (
+            <div className="attribution">— {event.attribution}</div>
+          )}
+
+          <div className="happening-meta-grid">
+            <div className="item">
+              <div className="label">Date</div>
+              <div className="value">{dateFormatted}</div>
+            </div>
+            <div className="item">
+              <div className="label">Location</div>
               <div className="value">{event.location || "Venue TBA"}</div>
             </div>
-            <div className="hero-meta-item">
-              <div className="label">Date</div>
-              <div className="value">{dateFormatted} · {dayName}</div>
-            </div>
-            <div className="hero-meta-item">
-              <div className="label">Category</div>
-              <div className="value">{cat}</div>
+            {endFormatted && (
+              <div className="item">
+                <div className="label">On View Until</div>
+                <div className="value">{endFormatted}</div>
+              </div>
+            )}
+            <div className="item">
+              <div className="label">Admission</div>
+              <div className="value">{event.admission || "Free"}</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── TICKER ── */}
-      <div className="ticker-wrap">
-        <div className="ticker-track">
-          <span>{event.title} <span className="text-ochre">✦</span> {cat} <span className="text-ochre">✦</span> {event.location || 'Ikoyi, Lagos'} <span className="text-ochre">✦</span> RSVP Now <span className="text-ochre">✦</span></span>
-          <span>{event.title} <span className="text-ochre">✦</span> {cat} <span className="text-ochre">✦</span> {event.location || 'Ikoyi, Lagos'} <span className="text-ochre">✦</span> RSVP Now <span className="text-ochre">✦</span></span>
-        </div>
-      </div>
-
-      {/* ── CONTENT GRID ── */}
-      <div className="page-body-grid">
-        {/* Left Column: Content */}
-        <div className="content-area">
-          <div className="section-label">Overview</div>
-          {event.content && (
-            <div
-              className="prose-content font-serif text-xl leading-relaxed text-ink-soft mb-12"
-              dangerouslySetInnerHTML={{ __html: event.content }}
-            />
-          )}
-
-          {/* Placeholder for Schedule/Programme */}
-          <div className="programme mt-16">
-            <div className="section-label">Programme</div>
-            <div className="flex flex-col border-t border-rule/10">
-               <div className="flex gap-8 py-6 border-b border-rule/10">
-                 <div className="font-mono text-ochre text-xs pt-1">18:00</div>
-                 <div>
-                   <h4 className="font-serif italic text-lg">Doors Open</h4>
-                   <p className="text-sm text-mute">Member preview and cocktail reception.</p>
-                 </div>
-               </div>
-               <div className="flex gap-8 py-6 border-b border-rule/10">
-                 <div className="font-mono text-ochre text-xs pt-1">19:30</div>
-                 <div>
-                   <h4 className="font-serif italic text-lg">Event Starts</h4>
-                   <p className="text-sm text-mute">Main session and performances.</p>
-                 </div>
-               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: RSVP Sidebar */}
-        <aside className="sidebar-sticky">
-          <div className="rsvp-card">
-            <div className="top-label">RSVP Status</div>
-            <h3 className="font-serif italic">Secure <em>Access</em></h3>
-            <div className="event-date text-paper/60 font-serif italic mb-8">{dateFormatted}</div>
-
-            <div className="capacity-bar">
-              <div className="cap-label">
-                <span>Availability</span>
-                <span className="spots">73% Full</span>
-              </div>
-              <div className="bar-track">
-                <div className="bar-fill" style={{ width: '73%' }}></div>
-              </div>
-            </div>
-
-            <div className="ticket-type flex justify-between py-4 border-t border-paper/10">
-               <div>
-                  <div className="font-serif italic text-lg">Standard Entry</div>
-                  <div className="font-mono text-[9px] text-paper/40">Open to all</div>
-               </div>
-               <div className="font-serif italic text-xl text-moss brightness-150">Free</div>
-            </div>
-
-            <RSVPForm eventSlug={event.slug} eventTitle={event.title} />
-          </div>
-
-          <div className="bg-paper-deep p-8 mb-4">
-             <div className="font-mono text-[9px] text-ochre uppercase tracking-widest mb-4">Location</div>
-             <p className="font-serif italic text-ink-soft mb-2">{event.location || "Venue TBA"}</p>
-             <button className="text-[9px] font-mono border-b border-ink uppercase">Open in Maps</button>
+      {/* ── NARRATIVE & QUOTE ── */}
+      <section className="happening-narrative">
+        <div className="narrative-grid">
+          <div className="narrative-content prose-custom">
+            <div className="section-label mb-8">Concept</div>
+            <div dangerouslySetInnerHTML={{ __html: event.content }} />
           </div>
           
-          <Link href="/events" className="inline-block mt-4 font-mono text-[10px] border-b border-ink uppercase tracking-wider">
-            ← Back to all Events
-          </Link>
-        </aside>
-      </div>
+          <div className="sidebar-meta">
+             {event.tagline && (
+               <div className="narrative-quote pt-0 border-t-0 mt-0">
+                 <blockquote className="italic font-serif text-3xl leading-tight">
+                    "{event.tagline}"
+                 </blockquote>
+               </div>
+             )}
+             
+             {hasSchedule && (
+               <div className="mt-16 bg-paper-deep p-8 border-l-2 border-ochre">
+                 <div className="section-label mb-6">Program</div>
+                 <div className="space-y-8">
+                   {event.schedule.map((item: any, i: number) => (
+                     <div key={i} className="session">
+                       <div className="font-mono text-[10px] text-ochre uppercase mb-1">{item.time}</div>
+                       <h4 className="font-serif italic text-xl mb-1">{item.title}</h4>
+                       <p className="text-sm text-ink-soft mb-2">{item.description}</p>
+                       <span className="text-[9px] font-mono border border-ink/20 px-2 py-0.5 uppercase opacity-60">
+                         {item.access?.replace('_', ' ')}
+                       </span>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+             )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SHOWCASE GRID (Smart Hiding) ── */}
+      {hasShowcase && (
+        <section className="happening-showcase">
+          <div className="showcase-header">
+            <h2>{cat === 'Art' ? 'Selected' : 'Event'} <em>Works</em></h2>
+            <div className="font-mono text-[10px] opacity-40 uppercase tracking-widest">Gallery v.01</div>
+          </div>
+          
+          <div className="showcase-grid">
+            {event.showcase.map((item: any, i: number) => (
+              <div key={i} className="showcase-card group">
+                <div className="showcase-img">
+                  {item.image?.sourceUrl && (
+                    <Image src={item.image.sourceUrl} alt={item.title} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
+                  )}
+                </div>
+                <div className="showcase-info">
+                  <span className="num">N°0{i+1}</span>
+                  <h4>{item.title}</h4>
+                  <div className="showcase-meta">
+                    {item.media && <span>{item.media}</span>}
+                    {item.dimensions && <span>{item.dimensions}</span>}
+                    {item.year && <span>{item.year}</span>}
+                    {item.price && <span className="text-ochre mt-2">{item.price}</span>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── SUMMARY & RSVP ── */}
+      <section className="happening-summary">
+        <div className="summary-visual">
+          {img && <Image src={img} alt="Summary" fill className="object-cover opacity-50 contrast-125 grayscale" />}
+          <div className="absolute inset-0 bg-ink/40" />
+        </div>
+        
+        <div className="summary-content">
+          <div className="eyebrow">Participation</div>
+          <h3 dangerouslySetInnerHTML={{ __html: `Join the<em> ${cat}</em> Experience` }} />
+          
+          {hasMetrics && (
+            <div className="summary-metrics">
+              {event.metrics.map((m: any, i: number) => (
+                <div key={i} className="metric">
+                  <div className="label">{m.label}</div>
+                  <div className="value">{m.value}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="rsvp-box max-w-md">
+            <RSVPForm eventSlug={event.slug} eventTitle={event.title} />
+          </div>
+        </div>
+      </section>
+
+      {/* ── TALENT BIO (Smart Hiding) ── */}
+      {host && (
+        <section className="happening-host border-t border-rule/10">
+          <div className="host-avatar">
+             {host.featuredImage?.node?.sourceUrl ? (
+               <Image src={host.featuredImage.node.sourceUrl} alt={host.title} fill className="object-cover" />
+             ) : (
+               <div className="bg-paper-deep w-full h-full flex items-center justify-center font-serif italic opacity-40">Profile</div>
+             )}
+          </div>
+          <div className="host-info">
+            <span className="label">The Host</span>
+            <h4>{host.title} <em>{host.instagramHandle ? `@${host.instagramHandle}` : ''}</em></h4>
+            <div className="bio" dangerouslySetInnerHTML={{ __html: host.excerpt }} />
+            <div className="host-socials">
+              {host.websiteUrl && <a href={host.websiteUrl} target="_blank">Website</a>}
+              {host.instagramHandle && <a href={`https://instagram.com/${host.instagramHandle}`} target="_blank">Instagram</a>}
+              {host.twitterHandle && <a href={`https://twitter.com/${host.twitterHandle}`} target="_blank">Twitter</a>}
+              <Link href={`/directory/${host.slug}`}>View Profile</Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── FOOTER NAV ── */}
+      <footer className="py-20 px-10 flex justify-between items-center border-t border-rule/5">
+        <Link href="/events" className="font-mono text-xs uppercase tracking-widest border-b border-ink">
+          ← Back to Events
+        </Link>
+        <div className="font-mono text-[10px] opacity-30 text-right">
+          © 2026 THE MOVEEE<br/>CULTURE ARCHIVE
+        </div>
+      </footer>
     </article>
   );
 }

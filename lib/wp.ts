@@ -333,6 +333,43 @@ const EVENT_FIELDS_FRAGMENT = `
     isPhysical
     chapterId
     capacity
+    endDate
+    attribution
+    tagline
+    metrics {
+      label
+      value
+    }
+    schedule {
+      time
+      title
+      description
+      access
+    }
+    showcase {
+      title
+      media
+      dimensions
+      year
+      price
+      image {
+        sourceUrl
+      }
+    }
+    featuredHost {
+      title
+      excerpt
+      featuredImage {
+        node {
+          sourceUrl
+        }
+      }
+      databaseId
+      slug
+      websiteUrl
+      instagramHandle
+      twitterHandle
+    }
   }
 `;
 

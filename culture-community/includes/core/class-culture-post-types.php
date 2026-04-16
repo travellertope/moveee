@@ -53,6 +53,9 @@ class Culture_Post_Types {
             'location'      => array( 'type' => 'String',  'meta_key' => 'location' ),
             'eventLocation' => array( 'type' => 'String',  'meta_key' => 'location' ), // alias
             'eventDate'     => array( 'type' => 'String',  'meta_key' => '_culture_event_date' ),
+            'endDate'       => array( 'type' => 'String',  'meta_key' => 'end_date' ),
+            'attribution'   => array( 'type' => 'String',  'meta_key' => 'attribution' ),
+            'tagline'       => array( 'type' => 'String',  'meta_key' => 'tagline' ),
             'isFeatured'    => array( 'type' => 'Boolean', 'meta_key' => 'is_featured' ),
             'admission'     => array( 'type' => 'String',  'meta_key' => 'admission' ),
             'isPhysical'    => array( 'type' => 'Boolean', 'meta_key' => '_culture_is_physical' ),
@@ -167,6 +170,87 @@ class Culture_Post_Types {
                 ) );
                 return $events;
             },
+        ) );
+
+        /**
+         * Complex Repeater & Object Registrations for CultureEvent
+         */
+        register_graphql_object_type( 'CultureEventMetric', array(
+            'fields' => array(
+                'label' => array( 'type' => 'String' ),
+                'value' => array( 'type' => 'String' ),
+            ),
+        ) );
+
+        register_graphql_object_type( 'CultureEventScheduleItem', array(
+            'fields' => array(
+                'time'        => array( 'type' => 'String' ),
+                'title'       => array( 'type' => 'String' ),
+                'description' => array( 'type' => 'String' ),
+                'access'      => array( 'type' => 'String' ),
+            ),
+        ) );
+
+        register_graphql_object_type( 'CultureEventShowcaseItem', array(
+            'fields' => array(
+                'title'      => array( 'type' => 'String' ),
+                'media'      => array( 'type' => 'String' ),
+                'dimensions' => array( 'type' => 'String' ),
+                'year'       => array( 'type' => 'String' ),
+                'price'      => array( 'type' => 'String' ),
+                'image'      => array(
+                    'type'    => 'MediaItem',
+                    'resolve' => function( $item ) {
+                        return isset( $item['image'] ) ? get_post( $item['image'] ) : null;
+                    },
+                ),
+            ),
+        ) );
+
+        register_graphql_field( 'CultureEvent', 'metrics', array(
+            'type'    => array( 'list_of' => 'CultureEventMetric' ),
+            'resolve' => function( $post ) {
+                return get_field( 'metrics', $post->databaseId );
+            },
+        ) );
+
+        register_graphql_field( 'CultureEvent', 'schedule', array(
+            'type'    => array( 'list_of' => 'CultureEventScheduleItem' ),
+            'resolve' => function( $post ) {
+                return get_field( 'schedule', $post->databaseId );
+            },
+        ) );
+
+        register_graphql_field( 'CultureEvent', 'showcase', array(
+            'type'    => array( 'list_of' => 'CultureEventShowcaseItem' ),
+            'resolve' => function( $post ) {
+                return get_field( 'showcase', $post->databaseId );
+            },
+        ) );
+
+        // Host Talent Entry linking
+        register_graphql_field( 'CultureEvent', 'featuredHost', array(
+            'type'    => 'CultureDirectory',
+            'resolve' => function( $post ) {
+                $host_id = get_field( 'featured_host', $post->databaseId );
+                return $host_id ? get_post( $host_id ) : null;
+            },
+        ) );
+
+        /**
+         * CultureDirectory Extensions (Talent Profiles)
+         */
+        register_graphql_field( 'CultureDirectory', 'websiteUrl', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) { return get_field( 'website_url', $post->databaseId ); },
+        ) );
+        register_graphql_field( 'CultureDirectory', 'instagramHandle', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) { return get_field( 'instagram_handle', $post->databaseId ); },
+        ) );
+        register_graphql_field( 'CultureDirectory', 'twitterHandle', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) { return get_field( 'twitter_handle', $post->databaseId ); },
         ) );
     }
 
