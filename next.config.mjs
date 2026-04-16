@@ -33,6 +33,50 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/cat/:slug*',
+        destination: '/magazine/category/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/tag/:slug*',
+        destination: '/magazine/tag/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/series/:slug*',
+        destination: '/magazine/series/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/industries/:slug*',
+        destination: '/magazine/industry/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/countries/:slug*',
+        destination: '/magazine/country/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/pcat/:slug*',
+        destination: '/shop/category/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/brand/:slug*',
+        destination: '/shop/brand/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/ptag/:slug*',
+        destination: '/shop/tag/:slug*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
