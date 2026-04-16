@@ -647,7 +647,7 @@
   color: var(--paper);
   padding: 100px 80px;
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1fr 1.2fr;
   gap: 120px;
   align-items: center;
 }
@@ -762,28 +762,84 @@
   padding-bottom: 2px;
 }
 
+/* Extra Community Blocks */
+.happening-comm-blocks {
+  padding: 0 80px 120px;
+  max-width: 1440px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.comm-card {
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+}
+
+.comm-card.journey {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.comm-card.press {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+.comm-card .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.comm-card .eyebrow::before { content: '✦'; }
+
+.comm-card h3 {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-style: italic;
+  font-weight: 300;
+  margin-bottom: 24px;
+}
+
+.comm-card p {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.5;
+  opacity: 0.8;
+  margin-bottom: 40px;
+  max-width: 480px;
+}
+
+.comm-card .cta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 4px;
+  align-self: flex-start;
+  transition: opacity 0.3s;
+}
+
+.comm-card .cta:hover { opacity: 0.6; }
+
 @media (max-width: 1024px) {
-  .happening-hero, .happening-narrative, .happening-showcase, .happening-summary, .happening-host {
+  .happening-comm-blocks {
     padding-left: 40px;
     padding-right: 40px;
-  }
-  .narrative-grid, .happening-summary {
     grid-template-columns: 1fr;
-    gap: 60px;
-  }
-  .happening-meta-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .showcase-grid {
-    grid-template-columns: 1fr 1fr;
   }
 }
 
 @media (max-width: 640px) {
-  .happening-hero h1 { font-size: 56px; }
-  .happening-meta-grid { grid-template-columns: 1fr; }
-  .showcase-grid { grid-template-columns: 1fr; }
-  .happening-host { flex-direction: column; text-align: center; }
-  .host-info .bio { margin: 0 auto 24px; }
-  .host-socials { justify-content: center; }
+  .comm-card { padding: 40px 30px; }
 }

@@ -61,6 +61,7 @@ class Culture_Post_Types {
             'isPhysical'    => array( 'type' => 'Boolean', 'meta_key' => '_culture_is_physical' ),
             'chapterId'     => array( 'type' => 'Int',     'meta_key' => '_culture_chapter_id' ),
             'capacity'      => array( 'type' => 'Int',     'meta_key' => '_culture_capacity' ),
+            'openingHours'  => array( 'type' => 'String',  'meta_key' => 'opening_hours' ),
         );
 
         // Event fields on Post type (backwards-compat)
@@ -252,6 +253,33 @@ class Culture_Post_Types {
             'type'    => 'String',
             'resolve' => function( $post ) { return get_field( 'twitter_handle', $post->databaseId ); },
         ) );
+
+        /**
+         * Press & Journey Object Registrations
+         */
+        register_graphql_object_type( 'CultureEventPressDetails', array(
+            'fields' => array(
+                'eyebrow' => array( 'type' => 'String' ),
+                'title'   => array( 'type' => 'String' ),
+                'content' => array( 'type' => 'String' ),
+                'link'    => array( 'type' => 'String' ),
+            ),
+        ) );
+
+        register_graphql_field( 'CultureEvent', 'pressDetails', array(
+            'type'    => 'CultureEventPressDetails',
+            'resolve' => function( $post ) {
+                return get_field( 'press_details', $post->databaseId );
+            },
+        ) );
+
+        register_graphql_field( 'CultureEvent', 'associatedJourney', array(
+            'type'    => 'CultureJourney',
+            'resolve' => function( $post ) {
+                $journey_id = get_field( 'associated_journey', $post->databaseId );
+                return $journey_id ? get_post( $journey_id ) : null;
+            },
+        ) );
     }
 
     /**
@@ -392,6 +420,32 @@ class Culture_Post_Types {
             'show_in_graphql'     => true,
             'graphql_single_name' => 'cultureQuote',
             'graphql_plural_name' => 'cultureQuotes',
+        ) );
+
+        // Journey CPT – curated cultural journeys.
+        register_post_type( 'culture_journey', array(
+            'labels' => array(
+                'name'               => __( 'Journeys', 'culture-community' ),
+                'singular_name'      => __( 'Journey', 'culture-community' ),
+                'add_new'            => __( 'Add New', 'culture-community' ),
+                'add_new_item'       => __( 'Add New Journey', 'culture-community' ),
+                'edit_item'          => __( 'Edit Journey', 'culture-community' ),
+                'view_item'          => __( 'View Journey', 'culture-community' ),
+                'all_items'          => __( 'All Journeys', 'culture-community' ),
+                'search_items'       => __( 'Search Journeys', 'culture-community' ),
+                'not_found'          => __( 'No journeys found', 'culture-community' ),
+            ),
+            'public'              => true,
+            'has_archive'         => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-palmtree',
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+            'rewrite'             => array( 'slug' => 'journeys' ),
+            'show_in_rest'        => true,
+            'capability_type'     => 'post',
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'cultureJourney',
+            'graphql_plural_name' => 'cultureJourneys',
         ) );
     }
 

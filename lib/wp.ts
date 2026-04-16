@@ -336,6 +336,7 @@ const EVENT_FIELDS_FRAGMENT = `
     endDate
     attribution
     tagline
+    openingHours
     metrics {
       label
       value
@@ -369,6 +370,22 @@ const EVENT_FIELDS_FRAGMENT = `
       websiteUrl
       instagramHandle
       twitterHandle
+    }
+    associatedJourney {
+      title
+      excerpt
+      slug
+      featuredImage {
+        node {
+          sourceUrl
+        }
+      }
+    }
+    pressDetails {
+      eyebrow
+      title
+      content
+      link
     }
   }
 `;

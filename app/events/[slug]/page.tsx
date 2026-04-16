@@ -57,6 +57,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <div className="label">Location</div>
               <div className="value">{event.location || "Venue TBA"}</div>
             </div>
+            {event.openingHours && (
+              <div className="item">
+                <div className="label">Opening Hours</div>
+                <div className="value whitespace-pre-line">{event.openingHours}</div>
+              </div>
+            )}
             {endFormatted && (
               <div className="item">
                 <div className="label">On View Until</div>
@@ -141,31 +147,79 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         </section>
       )}
 
-      {/* ── SUMMARY & RSVP ── */}
-      <section className="happening-summary">
-        <div className="summary-visual">
-          {img && <Image src={img} alt="Summary" fill className="object-cover opacity-50 contrast-125 grayscale" />}
-          <div className="absolute inset-0 bg-ink/40" />
-        </div>
-        
-        <div className="summary-content">
-          <div className="eyebrow">Participation</div>
-          <h3 dangerouslySetInnerHTML={{ __html: `Join the<em> ${cat}</em> Experience` }} />
-          
-          {hasMetrics && (
-            <div className="summary-metrics">
-              {event.metrics.map((m: any, i: number) => (
-                <div key={i} className="metric">
-                  <div className="label">{m.label}</div>
-                  <div className="value">{m.value}</div>
-                </div>
-              ))}
+      {/* ── JOURNEY & PRESS (New Blocks) ── */}
+      {(event.associatedJourney || (event.pressDetails && event.pressDetails.content)) && (
+        <section className="happening-comm-blocks bg-paper">
+          {event.associatedJourney && (
+            <div className="comm-card journey">
+               <span className="eyebrow">Origins Journey</span>
+               <h3>{event.associatedJourney.title}</h3>
+               <p>{event.associatedJourney.excerpt?.replace(/<[^>]*>/g, "")}</p>
+               <Link href={`/journeys/${event.associatedJourney.slug}`} className="cta">
+                 View Journey →
+               </Link>
             </div>
           )}
+          
+          {event.pressDetails && event.pressDetails.content && (
+            <div className="comm-card press">
+               <span className="eyebrow">{event.pressDetails.eyebrow || 'Press & Media'}</span>
+               <h3>{event.pressDetails.title || 'Press enquiries'}</h3>
+               <p>{event.pressDetails.content}</p>
+               {event.pressDetails.link && (
+                 <a href={event.pressDetails.link} className="cta">
+                   {event.pressDetails.link.includes('@') ? event.pressDetails.link.replace('mailto:', '') : 'Contact PR'} →
+                 </a>
+               )}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ── SUMMARY & RSVP ── */}
+      <section className="happening-summary">
+        <div className="summary-content">
+          <div className="eyebrow">Participation</div>
+          <h3 dangerouslySetInnerHTML={{ 
+            __html: endFormatted 
+              ? (cat === 'Art' ? `On view through <em>${endFormatted}</em>` 
+                 : cat === 'Music' ? `Sessions through <em>${endFormatted}</em>` 
+                 : cat === 'Food' ? `Available through <em>${endFormatted}</em>`
+                 : `Running through <em>${endFormatted}</em>`)
+              : `Join the<em> ${cat}</em> Experience`
+          }} />
+          
+          <div className="summary-metrics">
+            <div className="metric">
+              <div className="label">Opens</div>
+              <div className="value">{dateFormatted}</div>
+            </div>
+            {endFormatted && (
+              <div className="metric">
+                <div className="label">Closes</div>
+                <div className="value">{endFormatted}</div>
+              </div>
+            )}
+            {hasMetrics && event.metrics.map((m: any, i: number) => (
+              <div key={i} className="metric">
+                <div className="label">{m.label}</div>
+                <div className="value">{m.value}</div>
+              </div>
+            ))}
+            <div className="metric">
+              <div className="label">Admission</div>
+              <div className="value">{event.admission || "Free"}</div>
+            </div>
+          </div>
 
           <div className="rsvp-box max-w-md">
             <RSVPForm eventSlug={event.slug} eventTitle={event.title} />
           </div>
+        </div>
+
+        <div className="summary-visual">
+          {img && <Image src={img} alt="Summary" fill className="object-cover opacity-50 contrast-125 grayscale" />}
+          <div className="absolute inset-0 bg-ink/40" />
         </div>
       </section>
 
