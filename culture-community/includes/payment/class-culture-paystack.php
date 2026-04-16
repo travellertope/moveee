@@ -76,6 +76,54 @@ class Culture_Paystack {
     }
 
     /**
+     * Re-usable internal logic to initialize a Paystack session and return the direct URL.
+     * Prevents headless users from being bounced through the CMS.
+     */
+    public static function init_checkout_session( $user_id, $plan_key = 'monthly_ngn' ) {
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'User not found.' );
+        }
+
+        $parts    = explode( '_', $plan_key );
+        $cycle    = $parts[0] ?? 'monthly';
+        $currency = strtoupper( $parts[1] ?? 'NGN' );
+
+        $frontend_url = get_option( 'culture_frontend_url', home_url( '/' ) );
+        $callback_url = add_query_arg( 'culture_upgraded', '1', $frontend_url );
+
+        $response = self::api_request( 'POST', '/transaction/initialize', array(
+            'email'        => $user->user_email,
+            'amount'       => self::get_amount_lowest( $cycle, $currency ),
+            'currency'     => $currency,
+            'plan'         => self::get_plan_code( $cycle, $currency ),
+            'callback_url' => $callback_url,
+            'metadata'     => array(
+                'user_id'    => $user_id,
+                'plan_key'   => $plan_key,
+                'custom_fields' => array(
+                    array(
+                        'display_name'  => 'WordPress User ID',
+                        'variable_name' => 'user_id',
+                        'value'         => $user_id,
+                    ),
+                ),
+            ),
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        if ( ! empty( $response['data']['authorization_url'] ) ) {
+            update_user_meta( $user_id, '_culture_paystack_reference', $response['data']['reference'] );
+            return $response['data']['authorization_url'];
+        }
+
+        return new WP_Error( 'paystack_error', 'Could not initialize Paystack session.' );
+    }
+
+    /**
      * Generate a session-independent security token for checkout redirects.
      */
     private static function get_checkout_token( $user_id ) {

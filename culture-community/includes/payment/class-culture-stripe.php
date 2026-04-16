@@ -44,11 +44,14 @@ class Culture_Stripe {
             return new WP_Error( 'missing_price_id', __( 'Stripe Price ID not configured.', 'culture-community' ) );
         }
 
+        $user = get_userdata( $user_id );
+        $frontend_url = get_option( 'culture_frontend_url', home_url( '/' ) );
+
         $response = self::api_request( 'POST', '/checkout/sessions', array(
             'mode'                => 'subscription',
             'client_reference_id' => (string) $user_id,
-            'success_url'         => add_query_arg( 'culture_upgraded', '1', home_url( '/' ) ),
-            'cancel_url'          => add_query_arg( 'culture_upgraded', '0', home_url( '/' ) ),
+            'success_url'         => add_query_arg( 'culture_upgraded', '1', $frontend_url ),
+            'cancel_url'          => add_query_arg( 'culture_upgraded', '0', $frontend_url ),
             'line_items'          => array(
                 array(
                     'price'    => $price_id,

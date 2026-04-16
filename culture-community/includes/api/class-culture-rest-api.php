@@ -1769,13 +1769,32 @@ class Culture_REST_API {
             return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
         }
 
-        $plan_key     = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
+        $plan_key          = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
+        $primary_chapter   = (int) $request->get_param( 'primary_chapter' );
+        $secondary_chapter = (int) $request->get_param( 'secondary_chapter' );
+
+        // Save chapter selections if provided (important for upgrades where user picks new chapters).
+        if ( $primary_chapter ) {
+            update_user_meta( $user_id, '_culture_primary_chapter_id', $primary_chapter );
+        }
+        if ( $secondary_chapter ) {
+            update_user_meta( $user_id, '_culture_secondary_chapter_id', $secondary_chapter );
+        }
+
         $checkout_url = '';
 
+        // If Paystack.
         if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
-            $checkout_url = Culture_Paystack::get_checkout_url( $user_id, $plan_key );
-        } elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {
+            // We'll call a new method that returns the direct authorization URL.
+            $checkout_url = Culture_Paystack::init_checkout_session( $user_id, $plan_key );
+        } 
+        // If Stripe.
+        elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {
             $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key );
+        }
+
+        if ( is_wp_error( $checkout_url ) ) {
+            return $checkout_url;
         }
 
         if ( $checkout_url ) {

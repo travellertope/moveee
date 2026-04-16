@@ -353,40 +353,6 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h3><?php esc_html_e( 'International (USD) Plans', 'culture-community' ); ?></h3>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><label for="culture_paystack_plan_monthly_usd"><?php esc_html_e( 'Monthly Plan Code (USD)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="text" id="culture_paystack_plan_monthly_usd" name="culture_paystack_plan_monthly_usd"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_monthly_usd' ) ); ?>" class="regular-text" />
-                    <p class="description"><?php esc_html_e( 'Paystack plan code for USD Monthly (PLN_...).', 'culture-community' ); ?></p>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_paystack_amount_monthly_usd"><?php esc_html_e( 'Monthly Price (USD)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="number" id="culture_paystack_amount_monthly_usd" name="culture_paystack_amount_monthly_usd"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_amount_monthly_usd' ) ); ?>" class="small-text" />
-                    <p class="description"><?php esc_html_e( 'Price in USD (e.g. 4).', 'culture-community' ); ?></p>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_paystack_plan_yearly_usd"><?php esc_html_e( 'Yearly Plan Code (USD)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="text" id="culture_paystack_plan_yearly_usd" name="culture_paystack_plan_yearly_usd"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_yearly_usd' ) ); ?>" class="regular-text" />
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_paystack_amount_yearly_usd"><?php esc_html_e( 'Yearly Price (USD)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="number" id="culture_paystack_amount_yearly_usd" name="culture_paystack_amount_yearly_usd"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_amount_yearly_usd' ) ); ?>" class="small-text" />
-                </td>
-            </tr>
-        </table>
-
         <hr />
         <h3><?php esc_html_e( 'Stripe Configuration (International Gateway)', 'culture-community' ); ?></h3>
         <p class="description"><?php esc_html_e( 'If configured, USD transactions will use Stripe instead of Paystack.', 'culture-community' ); ?></p>

@@ -117,7 +117,9 @@ function RegisterForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          plan_key: `${billingCycle}_${currency.toLowerCase()}` 
+          plan_key: `${billingCycle}_${currency.toLowerCase()}`,
+          primary_chapter: primaryChapter,
+          secondary_chapter: secondaryChapter
         })
       });
       const data = await res.json();
@@ -137,6 +139,10 @@ function RegisterForm() {
     e.preventDefault();
 
     if (isUpgrade && session) {
+      if (step < 4) {
+        nextStep();
+        return;
+      }
       handleUpgrade();
       return;
     }
