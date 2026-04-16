@@ -32,192 +32,233 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const host = event.featuredHost;
 
   return (
-    <article className="bg-paper min-h-screen selection:bg-gold selection:text-ink">
-      {/* ── IMMERSIVE HAPPENING HERO ── */}
-      <section className="happening-hero">
-        {img && (
-          <div className="happening-hero-bg">
-            <Image src={img} alt={event.title} fill className="object-cover grayscale hover:grayscale-0 transition-all duration-700" priority />
-            <div className="absolute inset-0 bg-ink/60" />
-          </div>
-        )}
+    <div className="events-page-wrapper">
+      {/* ── HERO ── */}
+      <section className="event-hero">
+        {img && <Image src={img} alt={event.title} fill className="hero-image" priority />}
+        <div className="hero-overlay" />
         
-        <div className="happening-hero-content">
-          <span className="tag">{cat}</span>
-          <h1 dangerouslySetInnerHTML={{ __html: event.title.replace(/ /g, ' <em class="font-serif italic text-gold">') + '</em>' }} />
-          
-          {event.attribution && (
-            <div className="attribution">— {event.attribution}</div>
-          )}
-
-          <div className="happening-hero-actions">
-            <button className="btn-secondary">Save for Later</button>
-            <button className="btn-gold">RSVP Connect</button>
+        <div className="hero-content">
+          <div className="hero-eyebrow">
+            <span className="pill">● Upcoming</span>
+            <span className="sep">·</span>
+            <span>{cat} Opening</span>
+            <span className="sep">·</span>
+            <span>Moveee Events</span>
           </div>
 
-          <div className="happening-meta-grid">
-            <div className="item">
-              <div className="label">Date</div>
+          <h1 className="hero-title" dangerouslySetInnerHTML={{ __html: event.title.replace(/ /g, '<br/>') }} />
+          <p className="hero-subtitle">{event.tagline || `${cat} by ${host?.title || "Moveee Talent"}`}</p>
+
+          <div className="hero-meta-row">
+            <div className="hero-meta-item">
+              <div className="label">Opening Night</div>
               <div className="value">{dateFormatted}</div>
             </div>
-            <div className="item">
-              <div className="label">Location</div>
+            <div className="hero-meta-item">
+              <div className="label">Venue</div>
               <div className="value">{event.location || "Venue TBA"}</div>
             </div>
-            <div className="item">
-              <div className="label">Doors</div>
-              <div className="value">18h00 — 22h00</div>
+            <div className="hero-meta-item">
+              <div className="label">Exhibition Run</div>
+              <div className="value">{dateFormatted} — {endFormatted || "TBA"}</div>
             </div>
-            <div className="item">
-              <div className="label">Admission</div>
-              <div className="value">{event.admission || "Free"}</div>
+            <div className="hero-cta-group">
+              <button className="btn-outline">View schedule</button>
+              <button className="btn-primary">RSVP Now →</button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── NARRATIVE ── */}
-      <section className="happening-narrative">
-        <div className="narrative-content prose-custom">
-          <div className="section-label">Concept</div>
-          <div dangerouslySetInnerHTML={{ __html: event.content }} />
+      {/* ── TICKER ── */}
+      <div className="ticker-wrap">
+        <div className="ticker-track">
+          <span className="accent">{event.title}</span>
+          <span>{host?.title}</span>
+          <span className="accent">★</span>
+          <span>{event.location}</span>
+          <span className="accent">{dateFormatted}</span>
+          <span>{hasShowcase ? `${event.showcase.length} Works` : "Culture Archive"}</span>
+          <span className="accent">★</span>
+          <span>Limited Capacity</span>
+          <span>Moveee Members: Private View Access</span>
+          <span className="accent">★</span>
+          <span>{event.admission || "Free Admission"}</span>
+          <span className="accent">★</span>
+          {/* duplicate for seamless loop */}
+          <span className="accent">{event.title}</span>
+          <span>{host?.title}</span>
+          <span className="accent">★</span>
+          <span>{event.location}</span>
+          <span className="accent">{dateFormatted}</span>
+          <span>{hasShowcase ? `${event.showcase.length} Works` : "Culture Archive"}</span>
+          <span className="accent">★</span>
+          <span>Limited Capacity</span>
+          <span>Moveee Members: Private View Access</span>
+          <span className="accent">★</span>
+          <span>{event.admission || "Free Admission"}</span>
+          <span className="accent">★</span>
         </div>
-      </section>
+      </div>
 
-      {/* ── QUOTE BLOCK ── */}
-      {event.tagline && (
-        <section className="happening-quote">
-          <blockquote className="italic font-serif">
-             "{event.tagline}"
-          </blockquote>
-        </section>
-      )}
+      {/* ── BODY ── */}
+      <main className="page-body">
+        {/* LEFT COLUMN */}
+        <div className="left-col">
+          <div className="section-label">About the exhibition</div>
+          <div className="about-text prose-custom" dangerouslySetInnerHTML={{ __html: event.content }} />
 
-      {/* ── PROGRAM (Un-nested) ── */}
-      {hasSchedule && (
-        <section className="happening-program">
-          <div className="section-label">Program</div>
-          <div className="program-list">
-            {event.schedule.map((item: any, i: number) => (
-              <div key={i} className="program-item">
-                <div className="time">{item.time}</div>
-                <div className="details">
-                  <h4>{item.title}</h4>
-                  <p>{item.description}</p>
-                  <span className="access-tag">{item.access?.replace('_', ' ')}</span>
-                </div>
+          {/* Pull Quote */}
+          {event.tagline && (
+            <div className="pull-quote">
+              <div className="bar" />
+              <div>
+                <blockquote>"{event.tagline}"</blockquote>
+                <cite>— {host?.title}, on the work at hand</cite>
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+            </div>
+          )}
 
-      {/* ── SHOWCASE GRID ── */}
-      {hasShowcase && (
-        <section className="happening-showcase">
-          <div className="showcase-header">
-            <h2>Selected <em>works</em></h2>
-            <div className="font-mono text-[10px] opacity-40 uppercase tracking-widest">Gallery v.01</div>
-          </div>
-          
-          <div className="showcase-grid">
-            {event.showcase.map((item: any, i: number) => (
-              <div key={i} className="showcase-card group">
-                <div className="showcase-img">
-                  {item.image?.sourceUrl && (
-                    <Image src={item.image.sourceUrl} alt={item.title} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
-                  )}
-                </div>
-                <div className="showcase-info">
-                  <span className="num">N°0{i+1}</span>
-                  <h4>{item.title}</h4>
-                  <div className="showcase-meta">
-                    {item.media && <span>{item.media}</span>}
-                    {item.dimensions && <span>{item.dimensions}</span>}
-                    {item.year && <span>{item.year}</span>}
-                    {item.price && <span className="text-ochre mt-2">{item.price}</span>}
+          {/* Selected Works */}
+          {hasShowcase && (
+            <div className="works-section">
+              <div className="works-header">
+                <h3>Selected <em>works</em></h3>
+                <small>Preview · {event.showcase.length} items</small>
+              </div>
+              <div className="works-grid">
+                {event.showcase.map((item: any, i: number) => (
+                  <div key={i} className="work-card">
+                    <div className="work-frame">
+                      {item.image?.sourceUrl && (
+                        <Image src={item.image.sourceUrl} alt={item.title} fill className="object-cover" />
+                      )}
+                    </div>
+                    <div className="work-num">N°0{i+1}</div>
+                    <div className="work-title">{item.title}</div>
+                    <div className="work-meta">{item.media} · {item.dimensions} · {item.year}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Programme */}
+          {hasSchedule && (
+            <div className="programme">
+              <div className="section-label">Opening night programme</div>
+              {event.schedule.map((item: any, i: number) => (
+                <div key={i} className="programme-row">
+                  <div className="prog-time">{item.time}</div>
+                  <div>
+                    <div className="prog-event-title">{item.title}</div>
+                    <div className="prog-event-desc">{item.description}</div>
+                    <span className={`prog-tag ${item.access === 'members_only' ? 'members' : 'open'}`}>
+                      {item.access?.replace('_', ' ')}
+                    </span>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── SUMMARY & RSVP ── */}
-      <section className="happening-summary">
-        <div className="summary-content">
-          <div className="eyebrow">Participation</div>
-          <h3 dangerouslySetInnerHTML={{ 
-            __html: endFormatted 
-              ? `On view through <em class="block text-gold">${endFormatted}</em>` 
-              : `Join the <em class="block text-gold">${cat}</em> Experience`
-          }} />
-          
-          <div className="summary-metrics">
-            <div className="metric">
-              <div className="label">Opens</div>
-              <div className="value">{dateFormatted}</div>
+              ))}
             </div>
-            {endFormatted && (
-              <div className="metric">
-                <div className="label">Closes</div>
-                <div className="value">{endFormatted}</div>
-              </div>
-            )}
-            {hasMetrics && event.metrics.map((m: any, i: number) => (
-              <div key={i} className="metric">
-                <div className="label">{m.label}</div>
-                <div className="value">{m.value}</div>
-              </div>
-            ))}
-            <div className="metric">
-              <div className="label">Admission</div>
-              <div className="value">{event.admission || "Free"}</div>
-            </div>
-          </div>
-
-          <div className="rsvp-box">
-             <button className="btn-gold-lg">RSVP for a Studio Visit →</button>
-          </div>
+          )}
         </div>
 
-        <div className="summary-visual">
-          {img && <Image src={img} alt="Summary" fill className="object-cover opacity-80" />}
+        {/* SIDEBAR */}
+        <aside className="sidebar">
+          <div className="rsvp-card">
+            <div className="top-label">RSVP · {dateFormatted}</div>
+            <h3>Secure your <em>place</em></h3>
+            <div className="event-date">{event.location} · {event.openingHours || "Doors from 18:00"}</div>
+            
+            <div className="rsvp-form mt-8">
+              <RSVPForm eventSlug={event.slug} eventTitle={event.title} />
+            </div>
+          </div>
+
+          <div className="info-card">
+            <div className="label">📍 Venue</div>
+            <p>{event.location}</p>
+            <small>Please check your confirmation email for exact entry directions.</small>
+          </div>
+
+          <div className="info-card">
+            <div className="label">📅 Exhibition dates</div>
+            <p>{dateFormatted} — {endFormatted || "TBA"}</p>
+            <small>{event.openingHours || "General Hours TBA"}<br/>Free Admission</small>
+          </div>
+
+          {event.associatedJourney && (
+            <div className="info-card bg-ink text-paper">
+              <div className="label text-gold">★ {event.associatedJourney.title}</div>
+              <p className="text-paper opacity-80">Join the exclusive journey</p>
+              <Link href={`/origins/${event.associatedJourney.slug}`} className="inline-block mt-4 border-b border-paper text-[10px] uppercase font-mono">
+                View Journey →
+              </Link>
+            </div>
+          )}
+        </aside>
+      </main>
+
+      {/* GALLERY RUN */}
+      <section className="gallery-run">
+        <div className="gallery-run-inner">
+          <div>
+            <div className="section-label !border-paper/10">The exhibition</div>
+            <h3>On view through<br/><em>{endFormatted || dateFormatted}</em></h3>
+            <p>Admission is free and strictly by RSVP for the opening night. The archive remains open for visitors thereafter during regular gallery hours.</p>
+            
+            <div className="run-dates">
+              <div className="run-date-item">
+                <div className="d-label opacity-40 uppercase text-[9px] font-mono">Opens</div>
+                <div className="text-xl font-serif italic">{dateFormatted}</div>
+              </div>
+              <div className="run-date-item">
+                <div className="d-label opacity-40 uppercase text-[9px] font-mono">Admission</div>
+                <div className="text-xl font-serif italic">{event.admission || "Free"}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="relative aspect-[3/4] bg-ochre-deep overflow-hidden">
+            {img && <Image src={img} alt="Gallery" fill className="object-cover opacity-60 mix-blend-multiply" />}
+          </div>
         </div>
       </section>
 
-      {/* ── TALENT BIO ── */}
+      {/* ARTIST STRIP */}
       {host && (
-        <section className="happening-host">
-          <div className="host-avatar">
-             {host.featuredImage?.node?.sourceUrl ? (
-               <Image src={host.featuredImage.node.sourceUrl} alt={host.title} fill className="object-cover" />
-             ) : (
-               <div className="bg-paper-deep w-full h-full flex items-center justify-center font-serif italic opacity-40">Profile</div>
-             )}
+        <section className="artist-strip">
+          <div className="artist-avatar">
+            {host.featuredImage?.node?.sourceUrl && (
+              <Image src={host.featuredImage.node.sourceUrl} alt={host.title} fill className="object-cover" />
+            )}
           </div>
-          <div className="host-info">
-            <span className="label">The Host</span>
-            <h4>{host.title.split(' ')[0]} <em>{host.title.split(' ')[1]}</em></h4>
-            <div className="bio" dangerouslySetInnerHTML={{ __html: host.excerpt }} />
-            <div className="host-socials">
-              <Link href={`/directory/${host.slug}`}>View Profile →</Link>
-              {host.instagramHandle && <a href={`https://instagram.com/${host.instagramHandle}`} target="_blank">Instagram</a>}
-            </div>
+          <div className="artist-info">
+            <div className="section-label">The artist</div>
+            <h3>{host.title.split(' ')[0]} <em>{host.title.split(' ')[1]}</em></h3>
+            <div className="font-serif italic text-lg text-ink-soft opacity-80" dangerouslySetInnerHTML={{ __html: host.excerpt }} />
+            <Link href={`/directory/${host.slug}`} className="inline-block mt-6 border-b border-ink text-[10px] uppercase font-mono">
+              Read the full portrait →
+            </Link>
           </div>
         </section>
       )}
 
-      {/* ── FOOTER NAV ── */}
-      <footer className="py-20 px-10 flex justify-between items-center border-t border-rule/10">
-        <Link href="/events" className="font-mono text-xs uppercase tracking-widest border-b border-ink">
-          ← Back to Events
-        </Link>
-        <div className="font-mono text-[10px] opacity-30 text-right">
-          © 2026 THE MOVEEE<br/>CULTURE ARCHIVE
+      {/* FOOTER RAWMIN */}
+      <footer className="bg-ink text-paper py-20 px-10">
+        <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+           <Link href="/" className="text-2xl font-serif italic text-gold">Moveee</Link>
+           <div className="flex gap-8 text-xs font-mono uppercase opacity-40">
+             <Link href="/events">Events</Link>
+             <Link href="/origins">Origins</Link>
+             <Link href="/magazine">Magazine</Link>
+           </div>
+           <div className="text-[10px] font-mono opacity-30 text-right">
+             © 2026 THE MOVEEE<br/>CULTURE ARCHIVE
+           </div>
         </div>
       </footer>
-    </article>
+    </div>
   );
 }
