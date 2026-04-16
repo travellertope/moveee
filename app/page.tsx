@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getWPData, GET_STORIES, GET_JOURNEYS, GET_EVENTS } from "@/lib/wp";
+import { getWPData, GET_STORIES, GET_JOURNEYS, getEventsWithFallback } from "@/lib/wp";
 import Marquee from "@/components/Marquee";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -38,8 +38,7 @@ export default async function Home() {
   }
 
   try {
-    const data = await getWPData(GET_EVENTS, { first: 3 }, { revalidate: 0 });
-    events = data?.cultureEvents?.nodes || [];
+    events = await getEventsWithFallback(3, { revalidate: 0 });
   } catch (err) {
     console.error(err);
   }

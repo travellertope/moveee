@@ -1,4 +1,5 @@
 const WP_GRAPHQL_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || "https://cms.themoveee.com/graphql";
+const WP_BASE_URL = WP_GRAPHQL_URL.replace(/\/graphql\/?$/, "");
 
 export async function getWPData(query: string, variables = {}, options: any = {}) {
   try {
@@ -35,6 +36,56 @@ export async function getWPData(query: string, variables = {}, options: any = {}
     // when the CMS is unreachable (e.g. DNS not configured yet)
     console.error(`Network or Parsing Error for ${WP_GRAPHQL_URL}:`, error.message);
     return null;
+  }
+}
+
+function mapRestEventToFrontendShape(item: any) {
+  const embeddedMedia = item?._embedded?.["wp:featuredmedia"]?.[0];
+  return {
+    id: String(item?.id ?? ""),
+    databaseId: item?.id,
+    slug: item?.slug ?? "",
+    title: item?.title?.rendered ?? "Untitled",
+    date: item?.date ?? null,
+    excerpt: item?.excerpt?.rendered ?? "",
+    content: item?.content?.rendered ?? "",
+    eventDate: item?.meta?.event_date || item?.meta?._culture_event_date || item?.date || null,
+    endDate: item?.meta?.end_date || item?.meta?._culture_end_date || null,
+    location: item?.meta?.location || item?.meta?._culture_location || null,
+    admission: item?.meta?.admission || item?.meta?._culture_admission || null,
+    isFeatured: Boolean(item?.meta?.is_featured || item?.meta?._culture_is_featured),
+    featuredImage: embeddedMedia?.source_url
+      ? {
+          node: {
+            sourceUrl: embeddedMedia.source_url,
+            altText: embeddedMedia.alt_text || "",
+          },
+        }
+      : null,
+    cultureInterests: { nodes: [] },
+  };
+}
+
+export async function getEventsWithFallback(first = 50, options: any = {}) {
+  const gql = await getWPData(GET_EVENTS, { first }, options);
+  const gqlEvents = gql?.cultureEvents?.nodes ?? [];
+  if (gqlEvents.length > 0) return gqlEvents;
+
+  try {
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: {
+        revalidate: options.revalidate !== undefined ? options.revalidate : 3600,
+      },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    return json.map(mapRestEventToFrontendShape);
+  } catch {
+    return [];
   }
 }
 
