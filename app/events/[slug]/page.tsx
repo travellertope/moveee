@@ -1,4 +1,4 @@
-import { getWPData, GET_CULTURE_EVENT_BY_SLUG } from "@/lib/wp";
+import { getWPData, GET_EVENT_BY_SLUG } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,7 +11,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   let event: any = null;
   try {
-    const data = await getWPData(GET_CULTURE_EVENT_BY_SLUG, { slug });
+    const data = await getWPData(GET_EVENT_BY_SLUG, { slug });
     event = data?.cultureEvent ?? null;
   } catch { /* CMS unreachable */ }
 
