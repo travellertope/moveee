@@ -204,15 +204,15 @@ class Culture_Post_Types {
         // Event CPT – nested under Culture Community menu.
         register_post_type( 'culture_event', array(
             'labels' => array(
-                'name'               => __( 'Events', 'culture-community' ),
-                'singular_name'      => __( 'Event', 'culture-community' ),
+                'name'               => __( 'Community Events', 'culture-community' ),
+                'singular_name'      => __( 'Community Event', 'culture-community' ),
                 'add_new'            => __( 'Add New', 'culture-community' ),
-                'add_new_item'       => __( 'Add New Event', 'culture-community' ),
-                'edit_item'          => __( 'Edit Event', 'culture-community' ),
-                'view_item'          => __( 'View Event', 'culture-community' ),
-                'all_items'          => __( 'Events', 'culture-community' ),
-                'search_items'       => __( 'Search Events', 'culture-community' ),
-                'not_found'          => __( 'No events found', 'culture-community' ),
+                'add_new_item'       => __( 'Add New Community Event', 'culture-community' ),
+                'edit_item'          => __( 'Edit Community Event', 'culture-community' ),
+                'view_item'          => __( 'View Community Event', 'culture-community' ),
+                'all_items'          => __( 'All Community Events', 'culture-community' ),
+                'search_items'       => __( 'Search Community Events', 'culture-community' ),
+                'not_found'          => __( 'No community events found', 'culture-community' ),
             ),
             'public'              => true,
             'has_archive'         => true,
