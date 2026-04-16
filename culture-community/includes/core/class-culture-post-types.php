@@ -24,7 +24,9 @@ class Culture_Post_Types {
      * CultureQuote returns GraphQL errors and getWPData returns null.
      */
     public static function register_graphql_fields() {
+        error_log( 'Culture Community: Registering GraphQL fields...' );
         if ( ! function_exists( 'register_graphql_field' ) ) {
+            error_log( 'Culture Community: register_graphql_field function not found!' );
             return;
         }
 
@@ -138,6 +140,7 @@ class Culture_Post_Types {
                 return $p_count + $s_count;
             },
         ) );
+        error_log( 'Culture Community: Registered Chapter fields and resolvers.' );
 
         // Related Upcoming Events for a Chapter
         register_graphql_field( 'CultureChapter', 'relatedEvents', array(

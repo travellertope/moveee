@@ -102,7 +102,7 @@ function culture_community_init() {
     Culture_Email_Templates::init();
     Culture_Templates::init();
 }
-add_action( 'init', 'culture_community_init' );
+add_action( 'init', 'culture_community_init', 5 );
 
 // Initialize ACF fields immediately to catch acf/init hook correctly.
 Culture_ACF_Fields::init();
