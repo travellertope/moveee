@@ -54,6 +54,9 @@ function mapRestEventToFrontendShape(item: any) {
     location: item?.meta?.location || item?.meta?._culture_location || null,
     admission: item?.meta?.admission || item?.meta?._culture_admission || null,
     isFeatured: Boolean(item?.meta?.is_featured || item?.meta?._culture_is_featured),
+    openingHours: item?.meta?.opening_hours || item?.meta?._culture_opening_hours || null,
+    tagline: item?.meta?.tagline || item?.meta?._culture_tagline || null,
+    attribution: item?.meta?.attribution || item?.meta?._culture_attribution || null,
     featuredImage: embeddedMedia?.source_url
       ? {
           node: {
@@ -63,6 +66,13 @@ function mapRestEventToFrontendShape(item: any) {
         }
       : null,
     cultureInterests: { nodes: [] },
+    // Repeaters are harder in REST; default to empty arrays to prevent crashes
+    metrics: [], 
+    schedule: [],
+    showcase: [],
+    featuredHost: null,
+    associatedJourney: null,
+    pressDetails: null,
   };
 }
 
@@ -86,6 +96,28 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
     return json.map(mapRestEventToFrontendShape);
   } catch {
     return [];
+  }
+}
+
+export async function getEventBySlugWithFallback(slug: string, options: any = {}) {
+  const gql = await getWPData(GET_EVENT_BY_SLUG, { slug }, options);
+  if (gql?.cultureEvent) return gql.cultureEvent;
+
+  try {
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_embed=1`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: {
+        revalidate: options.revalidate !== undefined ? options.revalidate : 3600,
+      },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!Array.isArray(json) || json.length === 0) return null;
+    return mapRestEventToFrontendShape(json[0]);
+  } catch {
+    return null;
   }
 }
 
@@ -304,12 +336,12 @@ const EVENT_FIELDS_FRAGMENT = `
         sourceUrl
       }
     }
-    # featuredHost {
-    #   ...DirectoryFields
-    # }
-    # associatedJourney {
-    #   ...JourneyFields
-    # }
+    featuredHost {
+      ...DirectoryFields
+    }
+    associatedJourney {
+      ...JourneyFields
+    }
     pressDetails {
       eyebrow
       title
