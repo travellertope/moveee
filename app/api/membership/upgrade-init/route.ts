@@ -1,10 +1,12 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+import { NextRequest } from "next/server";
+
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const API_SECRET = process.env.CULTURE_API_SECRET;
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
