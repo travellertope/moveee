@@ -44,6 +44,7 @@ const APP_ROUTES = new Set([
   'quotes',
   'directory',
   // Additional app pages
+  'chapters',
   'author',
   'api',
   'ai-use',

@@ -14,13 +14,14 @@ export const metadata = {
 };
 
 /** Group events by Month Year */
+/** Group events by Month Year */
 function groupEventsByMonth(events: any[]) {
   const groups: { month: string; events: any[] }[] = [];
   
   events.forEach(event => {
-    // Note: WordPress event date should ideally be a custom field, 
-    // but we use post date as fallback for now.
-    const dateObj = new Date(event.date);
+    // Prefer the specific event metadata date over the post publication date
+    const targetDate = event.eventDate || event.date;
+    const dateObj = new Date(targetDate);
     const month = dateObj.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
     
     let group = groups.find(g => g.month === month);
@@ -31,6 +32,9 @@ function groupEventsByMonth(events: any[]) {
     group.events.push(event);
   });
   
+  // Sort months chronologically
+  groups.sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime());
+  
   return groups;
 }
 
@@ -38,7 +42,7 @@ export default async function EventsPage() {
   let events: any[] = [];
   try {
     const data = await getWPData(GET_EVENTS, { first: 50 });
-    events = data?.posts?.nodes ?? [];
+    events = data?.cultureEvents?.nodes ?? [];
   } catch { /* CMS unreachable */ }
 
   const spotlightEvent = events.find(e => e.isFeatured) || events[0];
