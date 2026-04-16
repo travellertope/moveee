@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getWPData, GET_EVENTS } from "@/lib/wp";
+import { getEventsWithFallback } from "@/lib/wp";
 import EventHero from "./components/EventHero";
 import SpotlightCard from "./components/SpotlightCard";
 import EventCard from "./components/EventCard";
@@ -51,8 +51,7 @@ function groupEventsByMonth(events: any[]) {
 export default async function EventsPage() {
   let events: any[] = [];
   try {
-    const data = await getWPData(GET_EVENTS, { first: 50 }, { revalidate: 0 });
-    events = data?.cultureEvents?.nodes ?? [];
+    events = await getEventsWithFallback(50, { revalidate: 0 });
   } catch { /* CMS unreachable */ }
 
   const spotlightEvent = events.find(e => e.isFeatured) || events[0];
