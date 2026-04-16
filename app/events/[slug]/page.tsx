@@ -11,7 +11,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   let event: any = null;
   try {
-    const data = await getWPData(GET_EVENT_BY_SLUG, { slug });
+    const data = await getWPData(GET_EVENT_BY_SLUG, { slug }, { revalidate: 0 });
     event = data?.cultureEvent ?? null;
   } catch { /* CMS unreachable */ }
 

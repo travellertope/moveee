@@ -38,14 +38,14 @@ export default async function Home() {
   }
 
   try {
-    const data = await getWPData(GET_EVENTS, { first: 3 });
+    const data = await getWPData(GET_EVENTS, { first: 3 }, { revalidate: 0 });
     events = data?.cultureEvents?.nodes || [];
   } catch (err) {
     console.error(err);
   }
 
   try {
-    const originsData = await getWPData(GET_JOURNEYS, { first: 4 });
+    const originsData = await getWPData(GET_JOURNEYS, { first: 4 }, { revalidate: 0 });
     origins = originsData?.cultureJourneys?.nodes || [];
   } catch (err) {
     console.error(err);

@@ -226,7 +226,34 @@ class Culture_Post_Types {
             },
         ) );
 
-        // 6. Directory Profile Extensions
+        // 6. Core Event Fields (for both CPT and Post fallback)
+        $event_meta_fields = array(
+            'eventDate'    => array( 'type' => 'String', 'meta_key' => '_culture_event_date' ),
+            'endDate'      => array( 'type' => 'String', 'meta_key' => '_culture_end_date' ),
+            'location'     => array( 'type' => 'String', 'meta_key' => '_culture_location' ),
+            'admission'    => array( 'type' => 'String', 'meta_key' => '_culture_admission' ),
+            'isFeatured'   => array( 'type' => 'Boolean', 'meta_key' => '_culture_is_featured' ),
+            'tagline'      => array( 'type' => 'String', 'meta_key' => '_culture_tagline' ),
+            'attribution'  => array( 'type' => 'String', 'meta_key' => '_culture_attribution' ),
+            'openingHours' => array( 'type' => 'String', 'meta_key' => '_culture_opening_hours' ),
+        );
+
+        foreach ( array( 'Post', 'CultureEvent' ) as $type_name ) {
+            foreach ( $event_meta_fields as $field_name => $config ) {
+                $meta_key = $config['meta_key'];
+                $field_type = $config['type'];
+                register_graphql_field( $type_name, $field_name, array(
+                    'type'    => $field_type,
+                    'resolve' => function( $post ) use ( $meta_key, $field_type ) {
+                        $value = get_post_meta( $post->databaseId, $meta_key, true );
+                        if ( $field_type === 'Boolean' ) return (bool) $value;
+                        return (string) $value;
+                    },
+                ) );
+            }
+        }
+
+        // 7. Directory Profile Extensions
         register_graphql_field( 'CultureDirectory', 'websiteUrl', array(
             'type'    => 'String',
             'resolve' => function( $post ) { return get_field( 'website_url', $post->databaseId ); },

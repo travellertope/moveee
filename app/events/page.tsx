@@ -70,8 +70,8 @@ export default async function EventsPage() {
           slug={spotlightEvent.slug}
           title={spotlightEvent.title}
           subtitle={spotlightEvent.excerpt?.replace(/<[^>]*>/g, "").slice(0, 120)}
-          date={new Date(spotlightEvent.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
-          dayName={new Date(spotlightEvent.date).toLocaleDateString("en-GB", { weekday: "long" })}
+          date={new Date(spotlightEvent.eventDate || spotlightEvent.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+          dayName={new Date(spotlightEvent.eventDate || spotlightEvent.date).toLocaleDateString("en-GB", { weekday: "long" })}
           venue={spotlightEvent.location || "Venue TBA"}
           time="Doors 6 PM"
           admission={spotlightEvent.admission || "Free · RSVP required"}
@@ -115,7 +115,7 @@ export default async function EventsPage() {
                     key={event.id}
                     slug={event.slug}
                     title={event.title}
-                    date={new Date(event.date).toLocaleDateString("en-GB", { day: "numeric", month: "long" })}
+                    date={new Date(event.eventDate || event.date).toLocaleDateString("en-GB", { day: "numeric", month: "long" })}
                     location={event.location || "Lagos, Nigeria"}
                     time="18:00 – 21:00"
                     category={event.cultureInterests?.nodes[0]?.name || "Culture"}
