@@ -220,26 +220,6 @@ class Culture_Post_Types {
             },
         ) );
 
-        // Relationship Resolvers (using native WPGraphQL model loader for stable ID resolution)
-        register_graphql_field( 'CultureEvent', 'featuredHost', array(
-            'type'    => 'CultureDirectory',
-            'resolve' => function( $post ) {
-                $host_id = function_exists('get_field') ? get_field( 'featured_host', $post->databaseId ) : null;
-                if ( ! $host_id ) return null;
-                // Use the Global ID loader to ensure the object is correctly mapped to the CultureDirectory type
-                return \WPGraphQL\Data\Loader::get_model_by_id( $host_id, 'post' );
-            },
-        ) );
-        register_graphql_field( 'CultureEvent', 'associatedJourney', array(
-            'type'    => 'CultureJourney',
-            'resolve' => function( $post ) {
-                $journey_id = function_exists('get_field') ? get_field( 'associated_journey', $post->databaseId ) : null;
-                if ( ! $journey_id ) return null;
-                // Use the Global ID loader to ensure the object is correctly mapped to the CultureJourney type
-                return \WPGraphQL\Data\Loader::get_model_by_id( $journey_id, 'post' );
-            },
-        ) );
-
         // 6. Core Event Fields (Hybrid: Priority on ACF, fallback to Native Meta)
         $event_meta_fields = array(
             'eventDate'    => array( 'type' => 'String',  'acf_key' => 'event_date',  'meta_key' => '_culture_event_date' ),
