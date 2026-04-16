@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getWPData, GET_STORIES, GET_JOURNEYS, getEventsWithFallback } from "@/lib/wp";
+import { getWPData, GET_STORIES, GET_JOURNEYS } from "@/lib/wp";
+import { getEventsWithFallback } from "@/lib/events";
 import Marquee from "@/components/Marquee";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
