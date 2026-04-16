@@ -143,144 +143,7 @@ export const GET_TAX_STORIES = `
   ${STORY_FIELDS_FRAGMENT}
 `;
 
-
-
-export const JOURNEY_FIELDS = JOURNEY_FIELDS_FRAGMENT;
-
-export const GET_JOURNEYS = `
-  query GetJourneys($first: Int) {
-    cultureJourneys(first: $first) {
-      nodes {
-        ...JourneyFields
-      }
-    }
-  }
-  ${JOURNEY_FIELDS_FRAGMENT}
-`;
-export const GET_AUTHOR_STORIES = `
-  query GetAuthorStories($first: Int, $id: ID!) {
-    user(id: $id, idType: DATABASE_ID) {
-      name
-      description
-      slug
-      databaseId
-      avatar {
-        url
-      }
-      posts(first: $first) {
-        nodes {
-          ...StoryFields
-        }
-      }
-    }
-  }
-  ${STORY_FIELDS_FRAGMENT}
-`;
-
-export const GET_AUTHOR_STORIES_BY_SLUG = `
-  query GetAuthorStoriesBySlug($first: Int, $slug: ID!) {
-    user(id: $slug, idType: SLUG) {
-      name
-      description
-      slug
-      databaseId
-      avatar {
-        url
-      }
-      posts(first: $first) {
-        nodes {
-          ...StoryFields
-        }
-      }
-    }
-  }
-  ${STORY_FIELDS_FRAGMENT}
-`;
-
-export const GET_AUTHOR_STORIES_BY_LOGIN = `
-  query GetAuthorStoriesByLogin($first: Int, $login: ID!) {
-    user(id: $login, idType: USERNAME) {
-      name
-      description
-      slug
-      databaseId
-      avatar {
-        url
-      }
-      posts(first: $first) {
-        nodes {
-          ...StoryFields
-        }
-      }
-    }
-  }
-  ${STORY_FIELDS_FRAGMENT}
-`;
-
-const NEWSLETTER_FIELDS_FRAGMENT = `
-  fragment NewsletterFields on CultureNewsletter {
-    id
-    databaseId
-    title
-    slug
-    date
-    excerpt
-    featuredImage {
-      node {
-        sourceUrl
-        altText
-      }
-    }
-    cultureInterests {
-      nodes {
-        name
-        slug
-      }
-    }
-    cultureAccesses {
-      nodes {
-        slug
-      }
-    }
-  }
-`;
-
-export const NEWSLETTER_FIELDS = NEWSLETTER_FIELDS_FRAGMENT;
-
-export const GET_NEWSLETTERS = `
-  query GetNewsletters($first: Int) {
-    cultureNewsletters(first: $first, where: { status: PUBLISH }) {
-      nodes {
-        ...NewsletterFields
-      }
-    }
-  }
-  ${NEWSLETTER_FIELDS_FRAGMENT}
-`;
-
-export const GET_NEWSLETTER_BY_SLUG = `
-  query GetNewsletterBySlug($slug: ID!) {
-    cultureNewsletter(id: $slug, idType: SLUG) {
-      ...NewsletterFields
-      content
-    }
-  }
-  ${NEWSLETTER_FIELDS_FRAGMENT}
-`;
-
-export const GET_ADJACENT_NEWSLETTERS = `
-  query GetAdjacentNewsletters($notIn: [ID], $first: Int) {
-    cultureNewsletters(first: $first, where: { status: PUBLISH, notIn: $notIn }) {
-      nodes {
-        title
-        slug
-        date
-      }
-    }
-  }
-`;
-
-// ── COMMUNITY CHAPTERS & EVENTS ───────────────────────────────────────────
+// ── COMMUNITY CHAPTERS & EVENTS FRAGMENTS ─────────────────────────────────
 
 const DIRECTORY_FIELDS_FRAGMENT = `
   fragment DirectoryFields on CultureDirectory {
@@ -400,6 +263,142 @@ const EVENT_FIELDS_FRAGMENT = `
       title
       content
       link
+    }
+  }
+`;
+
+export const JOURNEY_FIELDS = JOURNEY_FIELDS_FRAGMENT;
+
+export const GET_JOURNEYS = `
+  query GetJourneys($first: Int) {
+    cultureJourneys(first: $first) {
+      nodes {
+        ...JourneyFields
+      }
+    }
+  }
+  ${JOURNEY_FIELDS_FRAGMENT}
+`;
+
+export const GET_AUTHOR_STORIES = `
+  query GetAuthorStories($first: Int, $id: ID!) {
+    user(id: $id, idType: DATABASE_ID) {
+      name
+      description
+      slug
+      databaseId
+      avatar {
+        url
+      }
+      posts(first: $first) {
+        nodes {
+          ...StoryFields
+        }
+      }
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
+export const GET_AUTHOR_STORIES_BY_SLUG = `
+  query GetAuthorStoriesBySlug($first: Int, $slug: ID!) {
+    user(id: $slug, idType: SLUG) {
+      name
+      description
+      slug
+      databaseId
+      avatar {
+        url
+      }
+      posts(first: $first) {
+        nodes {
+          ...StoryFields
+        }
+      }
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
+export const GET_AUTHOR_STORIES_BY_LOGIN = `
+  query GetAuthorStoriesByLogin($first: Int, $login: ID!) {
+    user(id: $login, idType: USERNAME) {
+      name
+      description
+      slug
+      databaseId
+      avatar {
+        url
+      }
+      posts(first: $first) {
+        nodes {
+          ...StoryFields
+        }
+      }
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
+const NEWSLETTER_FIELDS_FRAGMENT = `
+  fragment NewsletterFields on CultureNewsletter {
+    id
+    databaseId
+    title
+    slug
+    date
+    excerpt
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+    cultureAccesses {
+      nodes {
+        slug
+      }
+    }
+  }
+`;
+
+export const NEWSLETTER_FIELDS = NEWSLETTER_FIELDS_FRAGMENT;
+
+export const GET_NEWSLETTERS = `
+  query GetNewsletters($first: Int) {
+    cultureNewsletters(first: $first, where: { status: PUBLISH }) {
+      nodes {
+        ...NewsletterFields
+      }
+    }
+  }
+  ${NEWSLETTER_FIELDS_FRAGMENT}
+`;
+
+export const GET_NEWSLETTER_BY_SLUG = `
+  query GetNewsletterBySlug($slug: ID!) {
+    cultureNewsletter(id: $slug, idType: SLUG) {
+      ...NewsletterFields
+      content
+    }
+  }
+  ${NEWSLETTER_FIELDS_FRAGMENT}
+`;
+
+export const GET_ADJACENT_NEWSLETTERS = `
+  query GetAdjacentNewsletters($notIn: [ID], $first: Int) {
+    cultureNewsletters(first: $first, where: { status: PUBLISH, notIn: $notIn }) {
+      nodes {
+        title
+        slug
+        date
+      }
     }
   }
 `;
@@ -699,5 +698,3 @@ export const GET_SITE_SETTINGS = `
     }
   }
 `;
-
-
