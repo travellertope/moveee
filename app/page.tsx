@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getWPData, GET_STORIES, GET_JOURNEYS } from "@/lib/wp";
+import { getWPData, GET_STORIES, GET_JOURNEYS, GET_EVENTS } from "@/lib/wp";
 import Marquee from "@/components/Marquee";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -38,8 +38,8 @@ export default async function Home() {
   }
 
   try {
-    const eventsData = await getWPData(GET_STORIES, { first: 3, categoryName: "events" });
-    events = eventsData?.posts?.nodes || [];
+    const data = await getWPData(GET_EVENTS, { first: 3 });
+    events = data?.cultureEvents?.nodes || [];
   } catch (err) {
     console.error(err);
   }
@@ -221,18 +221,20 @@ export default async function Home() {
           {events.length > 0 ? (
             <div className="events-grid">
               {events.map((event: any) => {
-                const eventDate = new Date(event.date);
+                const targetDate = event.eventDate || event.date;
+                const eventDate = new Date(targetDate);
                 return (
                   <article key={event.id} className="event-card">
                     <div className="event-date">
                       <span className="day">{eventDate.getDate().toString().padStart(2, '0')}</span>
-                      <span className="month">{eventDate.toLocaleDateString('en-GB', { month: 'long' })}</span>
+                      <span className="month">{eventDate.toLocaleDateString('en-GB', { month: 'short' })}</span>
                     </div>
                     <h4>{event.title}</h4>
                     <div className="event-meta">
                       <div dangerouslySetInnerHTML={{ __html: event.excerpt }} className="line-clamp-2" />
                     </div>
-                    <span className="event-tag">RSVP</span>
+                    {/* Link to events page */}
+                    <Link href={`/events`} className="event-tag">RSVP</Link>
                   </article>
                 );
               })}
