@@ -220,14 +220,14 @@ class Culture_Post_Types {
             },
         ) );
 
-        // Relationship Resolvers (using ID fallback to avoid internal schema errors)
+        // Relationship Resolvers (using native WPGraphQL model loader for stable ID resolution)
         register_graphql_field( 'CultureEvent', 'featuredHost', array(
             'type'    => 'CultureDirectory',
             'resolve' => function( $post ) {
                 $host_id = function_exists('get_field') ? get_field( 'featured_host', $post->databaseId ) : null;
                 if ( ! $host_id ) return null;
-                $host_post = get_post( $host_id );
-                return ( $host_post && $host_post->post_type === 'culture_directory' ) ? $host_post : null;
+                // Use the Global ID loader to ensure the object is correctly mapped to the CultureDirectory type
+                return \WPGraphQL\Data\Loader::get_model_by_id( $host_id, 'post' );
             },
         ) );
         register_graphql_field( 'CultureEvent', 'associatedJourney', array(
@@ -235,8 +235,8 @@ class Culture_Post_Types {
             'resolve' => function( $post ) {
                 $journey_id = function_exists('get_field') ? get_field( 'associated_journey', $post->databaseId ) : null;
                 if ( ! $journey_id ) return null;
-                $journey_post = get_post( $journey_id );
-                return ( $journey_post && $journey_post->post_type === 'culture_journey' ) ? $journey_post : null;
+                // Use the Global ID loader to ensure the object is correctly mapped to the CultureJourney type
+                return \WPGraphQL\Data\Loader::get_model_by_id( $journey_id, 'post' );
             },
         ) );
 
