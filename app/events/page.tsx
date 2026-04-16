@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getWPData, GET_EVENTS } from "@/lib/wp";
+import { getWPData, GET_CULTURE_EVENTS } from "@/lib/wp";
 import EventHero from "./components/EventHero";
 import SpotlightCard from "./components/SpotlightCard";
 import EventCard from "./components/EventCard";
@@ -37,8 +37,8 @@ function groupEventsByMonth(events: any[]) {
 export default async function EventsPage() {
   let events: any[] = [];
   try {
-    const data = await getWPData(GET_EVENTS, { first: 50 });
-    events = data?.posts?.nodes ?? [];
+    const data = await getWPData(GET_CULTURE_EVENTS, { first: 50 });
+    events = data?.cultureEvents?.nodes ?? [];
   } catch { /* CMS unreachable */ }
 
   const spotlightEvent = events.find(e => e.isFeatured) || events[0];
@@ -114,7 +114,7 @@ export default async function EventsPage() {
                     date={new Date(event.date).toLocaleDateString("en-GB", { day: "numeric", month: "long" })}
                     location={event.location || "Lagos, Nigeria"}
                     time="18:00 – 21:00"
-                    category={event.categories?.nodes[0]?.name || "Culture"}
+                    category={event.cultureInterests?.nodes[0]?.name || "Culture"}
                     image={event.featuredImage?.node?.sourceUrl}
                     status={event.status || 'upcoming'}
                     tags={['RSVP']}

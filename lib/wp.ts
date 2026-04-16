@@ -324,6 +324,108 @@ export const GET_EVENT_BY_SLUG = `
   ${STORY_FIELDS_FRAGMENT}
 `;
 
+// ── CultureEvent CPT queries ──────────────────────────────────────────────────
+// Events are stored as the culture_event custom post type, not standard posts.
+// These queries use the cultureEvents() root field exposed by WPGraphQL once
+// show_in_graphql is set on the CPT.
+
+const CULTURE_EVENT_FIELDS_FRAGMENT = `
+  fragment CultureEventFields on CultureEvent {
+    id
+    databaseId
+    title
+    slug
+    date
+    excerpt
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+    location
+    isFeatured
+    admission
+    eventDate
+    isPhysical
+    capacity
+  }
+`;
+
+export const GET_CULTURE_EVENTS = `
+  query GetCultureEvents($first: Int) {
+    cultureEvents(first: $first, where: { status: PUBLISH }) {
+      nodes {
+        ...CultureEventFields
+      }
+    }
+  }
+  ${CULTURE_EVENT_FIELDS_FRAGMENT}
+`;
+
+export const GET_CULTURE_EVENT_BY_SLUG = `
+  query GetCultureEventBySlug($slug: ID!) {
+    cultureEvent(id: $slug, idType: SLUG) {
+      ...CultureEventFields
+      content
+    }
+  }
+  ${CULTURE_EVENT_FIELDS_FRAGMENT}
+`;
+
+// ── CultureChapter CPT queries ────────────────────────────────────────────────
+
+const CULTURE_CHAPTER_FIELDS_FRAGMENT = `
+  fragment CultureChapterFields on CultureChapter {
+    id
+    databaseId
+    title
+    slug
+    excerpt
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+    lat
+    lng
+  }
+`;
+
+export const GET_CULTURE_CHAPTERS = `
+  query GetCultureChapters($first: Int) {
+    cultureChapters(first: $first, where: { status: PUBLISH }) {
+      nodes {
+        ...CultureChapterFields
+      }
+    }
+  }
+  ${CULTURE_CHAPTER_FIELDS_FRAGMENT}
+`;
+
+export const GET_CULTURE_CHAPTER_BY_SLUG = `
+  query GetCultureChapterBySlug($slug: ID!) {
+    cultureChapter(id: $slug, idType: SLUG) {
+      ...CultureChapterFields
+      content
+    }
+  }
+  ${CULTURE_CHAPTER_FIELDS_FRAGMENT}
+`;
+
 export const GET_JOURNEY_BY_SLUG = `
   query GetJourneyBySlug($slug: ID!) {
     post(id: $slug, idType: SLUG) {

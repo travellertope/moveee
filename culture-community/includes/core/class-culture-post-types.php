@@ -47,14 +47,13 @@ class Culture_Post_Types {
             ) );
         }
 
-        // Event fields on Post type (to support both standard posts and culture_event CPT in StoryFields)
-        $event_fields = array(
-            'location'    => array( 'type' => 'String', 'meta_key' => 'location' ),
+        // Event fields on Post type (backwards-compat for any standard posts tagged as events).
+        $post_event_fields = array(
+            'location'    => array( 'type' => 'String',  'meta_key' => 'location' ),
             'isFeatured'  => array( 'type' => 'Boolean', 'meta_key' => 'is_featured' ),
-            'admission'   => array( 'type' => 'String', 'meta_key' => 'admission' ),
+            'admission'   => array( 'type' => 'String',  'meta_key' => 'admission' ),
         );
-
-        foreach ( $event_fields as $field_name => $config ) {
+        foreach ( $post_event_fields as $field_name => $config ) {
             $meta_key = $config['meta_key'];
             $type     = $config['type'];
             register_graphql_field( 'Post', $field_name, array(
@@ -63,6 +62,46 @@ class Culture_Post_Types {
                     $value = get_post_meta( $post->databaseId, $meta_key, true );
                     if ( $type === 'Boolean' ) return (bool) $value;
                     return (string) $value;
+                },
+            ) );
+        }
+
+        // CultureEvent fields – ACF meta + meta-box meta surfaced to WPGraphQL.
+        $culture_event_fields = array(
+            'location'    => array( 'type' => 'String',  'meta_key' => 'location' ),
+            'isFeatured'  => array( 'type' => 'Boolean', 'meta_key' => 'is_featured' ),
+            'admission'   => array( 'type' => 'String',  'meta_key' => 'admission' ),
+            'eventDate'   => array( 'type' => 'String',  'meta_key' => '_culture_event_date' ),
+            'chapterId'   => array( 'type' => 'Int',     'meta_key' => '_culture_chapter_id' ),
+            'isPhysical'  => array( 'type' => 'Boolean', 'meta_key' => '_culture_is_physical' ),
+            'capacity'    => array( 'type' => 'Int',     'meta_key' => '_culture_capacity' ),
+        );
+        foreach ( $culture_event_fields as $field_name => $config ) {
+            $meta_key = $config['meta_key'];
+            $type     = $config['type'];
+            register_graphql_field( 'CultureEvent', $field_name, array(
+                'type'    => $type,
+                'resolve' => function( $post ) use ( $meta_key, $type ) {
+                    $value = get_post_meta( $post->databaseId, $meta_key, true );
+                    if ( $type === 'Boolean' ) return (bool) $value;
+                    if ( $type === 'Int' ) return (int) $value;
+                    return (string) $value;
+                },
+            ) );
+        }
+
+        // CultureChapter fields – coordinates and leader.
+        $culture_chapter_fields = array(
+            'lat'      => array( 'meta_key' => '_culture_location_lat' ),
+            'lng'      => array( 'meta_key' => '_culture_location_lng' ),
+            'leaderId' => array( 'meta_key' => '_culture_chapter_leader_id' ),
+        );
+        foreach ( $culture_chapter_fields as $field_name => $config ) {
+            $meta_key = $config['meta_key'];
+            register_graphql_field( 'CultureChapter', $field_name, array(
+                'type'    => 'String',
+                'resolve' => function( $post ) use ( $meta_key ) {
+                    return (string) get_post_meta( $post->databaseId, $meta_key, true );
                 },
             ) );
         }
@@ -85,14 +124,18 @@ class Culture_Post_Types {
                 'search_items'       => __( 'Search Chapters', 'culture-community' ),
                 'not_found'          => __( 'No chapters found', 'culture-community' ),
             ),
-            'public'       => true,
-            'has_archive'  => true,
-            'show_in_menu' => 'culture-community',
-            'menu_icon'    => 'dashicons-location-alt',
-            'supports'     => array( 'title', 'editor', 'thumbnail' ),
-            'rewrite'      => array( 'slug' => 'chapters' ),
-            'show_in_rest' => true,
-            'capability_type' => 'post',
+            'public'              => true,
+            'has_archive'         => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-location-alt',
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+            'rewrite'             => array( 'slug' => 'chapters' ),
+            'show_in_rest'        => true,
+            'capability_type'     => 'post',
+            // WPGraphQL support – required for Next.js to query via cultureChapters().
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'cultureChapter',
+            'graphql_plural_name' => 'cultureChapters',
         ) );
 
         // Event CPT – nested under Culture Community menu.
@@ -108,14 +151,18 @@ class Culture_Post_Types {
                 'search_items'       => __( 'Search Events', 'culture-community' ),
                 'not_found'          => __( 'No events found', 'culture-community' ),
             ),
-            'public'       => true,
-            'has_archive'  => true,
-            'show_in_menu' => 'culture-community',
-            'menu_icon'    => 'dashicons-calendar-alt',
-            'supports'     => array( 'title', 'editor', 'thumbnail' ),
-            'rewrite'      => array( 'slug' => 'events' ),
-            'show_in_rest' => true,
-            'capability_type' => 'post',
+            'public'              => true,
+            'has_archive'         => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-calendar-alt',
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+            'rewrite'             => array( 'slug' => 'events' ),
+            'show_in_rest'        => true,
+            'capability_type'     => 'post',
+            // WPGraphQL support – required for Next.js to query via cultureEvents().
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'cultureEvent',
+            'graphql_plural_name' => 'cultureEvents',
         ) );
 
         // Culture Directory CPT – wiki-like entries for people, places, movements, etc.
