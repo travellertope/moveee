@@ -134,22 +134,27 @@ function RegisterForm() {
       setLoading(false);
     }
   }
+  async function handleSubmit(e?: any) {
+    if (e && e.preventDefault) e.preventDefault();
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+    // Common validation for all flows (including upgrades)
+    const err = validateStep(step);
+    if (err) {
+      setError(err);
+      return;
+    }
 
     if (isUpgrade && session) {
       if (step < 4) {
         nextStep();
         return;
       }
+      if (loading) return;
       handleUpgrade();
       return;
     }
 
-    const err = validateStep(4);
-    if (err) { setError(err); return; }
-
+    if (loading) return;
     setError("");
     setLoading(true);
 
@@ -629,12 +634,13 @@ function RegisterForm() {
               </button>
             ) : (
               <button
-                type="submit"
+                type="button"
+                onClick={handleSubmit}
                 style={{ ...styles.btnPrimary, opacity: loading ? 0.7 : 1 }}
                 disabled={loading}
               >
                 {loading
-                  ? "Creating account…"
+                  ? "Initializing…"
                   : tier === "patron"
                   ? "Continue to payment →"
                   : "Create account →"}
