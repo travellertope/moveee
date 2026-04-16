@@ -55,8 +55,19 @@ function RegisterForm() {
   const [secondaryChapter, setSecondaryChapter] = useState(0);
   const [referralCode] = useState(referralFromUrl);
 
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [currency, setCurrency] = useState<"NGN" | "USD">("NGN");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Auto-detect currency based on country
+  useEffect(() => {
+    if (countryOfResidence) {
+      const isNigeria = countryOfResidence.toLowerCase().includes("nigeria") || countryOfResidence === "NG";
+      setCurrency(isNigeria ? "NGN" : "USD");
+    }
+  }, [countryOfResidence]);
 
   useEffect(() => {
     fetch("/api/chapters")
@@ -104,7 +115,10 @@ function RegisterForm() {
     try {
       const res = await fetch("/api/membership/upgrade-init", { 
         method: "POST",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          plan_key: `${billingCycle}_${currency.toLowerCase()}` 
+        })
       });
       const data = await res.json();
       if (data.checkout_url) {
@@ -150,7 +164,10 @@ function RegisterForm() {
     };
 
     if (diffWhatsapp && whatsapp.trim()) body.whatsapp = whatsapp.trim();
-    if (tier === "patron" && secondaryChapter) body.secondary_chapter = secondaryChapter;
+    if (tier === "patron") {
+      if (secondaryChapter) body.secondary_chapter = secondaryChapter;
+      body.plan_key = `${billingCycle}_${currency.toLowerCase()}`;
+    }
     if (referralCode) body.referral_code = referralCode;
 
     try {
@@ -425,6 +442,37 @@ function RegisterForm() {
             <div>
               <h2 style={styles.stepHeading}>Choose Your Membership</h2>
 
+              {/* Billing Cycle Toggle (only for Patrons) */}
+              <div style={{ ...styles.billingToggle, opacity: tier === "patron" ? 1 : 0.5 }}>
+                <button
+                  type="button"
+                  onClick={() => setBillingCycle("monthly")}
+                  style={{
+                    ...styles.cycleBtn,
+                    background: billingCycle === "monthly" ? "#14110d" : "transparent",
+                    color: billingCycle === "monthly" ? "#f5f0e8" : "#7a6f5c",
+                  }}
+                  disabled={tier !== "patron"}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillingCycle("yearly")}
+                  style={{
+                    ...styles.cycleBtn,
+                    background: billingCycle === "yearly" ? "#14110d" : "transparent",
+                    color: billingCycle === "yearly" ? "#f5f0e8" : "#7a6f5c",
+                  }}
+                  disabled={tier !== "patron"}
+                >
+                  Annually
+                </button>
+                <div style={styles.savingsTag}>
+                  {currency === "NGN" ? "Save ₦9,000" : "Save $8"}
+                </div>
+              </div>
+
               <div style={styles.tierGrid}>
                 {(
                   [
@@ -442,7 +490,10 @@ function RegisterForm() {
                     {
                       value: "patron",
                       label: "Patron",
-                      price: "Paid",
+                      price: currency === "NGN" 
+                        ? (billingCycle === "monthly" ? "₦4,500" : "₦45,000")
+                        : (billingCycle === "monthly" ? "$4" : "$40"),
+                      period: billingCycle === "monthly" ? "/ mo" : "/ yr",
                       perks: [
                         "Everything in Citizen",
                         "Dual chapter membership",
@@ -451,7 +502,7 @@ function RegisterForm() {
                       ],
                     },
                   ] as const
-                ).map(({ value, label, price, perks }) => (
+                ).map(({ value, label, price, perks, ...rest }) => (
                   <label
                     key={value}
                     style={{
@@ -471,7 +522,10 @@ function RegisterForm() {
                     />
                     <div>
                       <h3 style={styles.tierLabel}>{label}</h3>
-                      <span style={styles.tierPrice}>{price}</span>
+                      <div style={styles.priceContainer}>
+                        <span style={styles.tierPrice}>{price}</span>
+                        {"period" in rest && <span style={styles.pricePeriod}>{rest.period}</span>}
+                      </div>
                       <ul style={styles.tierPerks}>
                         {perks.map((p) => (
                           <li key={p}>{p}</li>
@@ -480,6 +534,17 @@ function RegisterForm() {
                     </div>
                   </label>
                 ))}
+              </div>
+
+              <div style={styles.currencyNotice}>
+                Pricing based on residence: <strong>{currency}</strong>. 
+                <button 
+                  type="button" 
+                  onClick={() => setCurrency(c => c === "NGN" ? "USD" : "NGN")} 
+                  style={styles.currencySwitch}
+                >
+                   Switch
+                </button>
               </div>
             </div>
           )}
@@ -753,6 +818,37 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#14110d",
     cursor: "pointer",
   },
+  // Billing cycle
+  billingToggle: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 20,
+    background: "#f0ede6",
+    padding: 4,
+    borderRadius: 6,
+    width: "fit-content",
+    transition: "opacity 0.2s",
+  },
+  cycleBtn: {
+    padding: "6px 16px",
+    border: "none",
+    borderRadius: 4,
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s",
+    fontFamily: "inherit",
+  },
+  savingsTag: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: "#c5491f",
+    background: "#fdf2f0",
+    padding: "2px 8px",
+    borderRadius: 10,
+    marginLeft: 4,
+  },
   // Tier cards
   tierGrid: {
     display: "grid",
@@ -779,8 +875,18 @@ const styles: Record<string, React.CSSProperties> = {
     display: "inline-block",
     fontWeight: 700,
     color: "#8b6f47",
+    fontSize: 18,
+  },
+  priceContainer: {
+    display: "flex",
+    alignItems: "baseline",
+    gap: 4,
     marginBottom: 12,
-    fontSize: 14,
+  },
+  pricePeriod: {
+    fontSize: 13,
+    color: "#7a6f5c",
+    fontWeight: 400,
   },
   tierPerks: {
     margin: 0,
@@ -788,6 +894,28 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
     color: "#7a6f5c",
     lineHeight: 1.7,
+  },
+  currencyNotice: {
+    marginTop: 20,
+    fontSize: 12,
+    color: "#7a6f5c",
+    borderTop: "1px dashed #e8e0d4",
+    paddingTop: 12,
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  currencySwitch: {
+    background: "none",
+    border: "none",
+    padding: 0,
+    color: "#14110d",
+    textDecoration: "underline",
+    fontSize: 11,
+    cursor: "pointer",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+    fontWeight: 600,
   },
   // Nav
   nav: {

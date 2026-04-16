@@ -18,9 +18,22 @@ class Culture_Settings {
     /** Default values for all settings. */
     private static $defaults = array(
         // Payment (Paystack).
-        'culture_paystack_public_key'  => '',
-        'culture_paystack_secret_key'  => '',
-        'culture_paystack_plan_code'   => '',
+        'culture_paystack_public_key'          => '',
+        'culture_paystack_secret_key'          => '',
+        'culture_paystack_plan_monthly_ngn'    => '',
+        'culture_paystack_plan_yearly_ngn'     => '',
+        'culture_paystack_plan_monthly_usd'    => '',
+        'culture_paystack_plan_yearly_usd'     => '',
+        'culture_paystack_amount_monthly_ngn'  => 4500,
+        'culture_paystack_amount_yearly_ngn'   => 45000,
+        'culture_paystack_amount_monthly_usd'  => 4,
+        'culture_paystack_amount_yearly_usd'   => 40,
+
+        // Payment (Stripe).
+        'culture_stripe_publishable_key'       => '',
+        'culture_stripe_secret_key'            => '',
+        'culture_stripe_price_monthly_usd'     => '',
+        'culture_stripe_price_yearly_usd'      => '',
 
         // Gamification – point values.
         'culture_points_event_rsvp'          => 5,
@@ -160,46 +173,59 @@ class Culture_Settings {
         $color   = array( 'sanitize_callback' => 'sanitize_hex_color' );
 
         // Payment.
-        register_setting( self::OPTION_GROUP, 'culture_paystack_public_key', $text );
-        register_setting( self::OPTION_GROUP, 'culture_paystack_secret_key', $text );
-        register_setting( self::OPTION_GROUP, 'culture_paystack_plan_code', $text );
+        register_setting( 'culture_settings_payment', 'culture_paystack_public_key', $text );
+        register_setting( 'culture_settings_payment', 'culture_paystack_secret_key', $text );
+        register_setting( 'culture_settings_payment', 'culture_paystack_plan_monthly_ngn', $text );
+        register_setting( 'culture_settings_payment', 'culture_paystack_plan_yearly_ngn', $text );
+        register_setting( 'culture_settings_payment', 'culture_paystack_plan_monthly_usd', $text );
+        register_setting( 'culture_settings_payment', 'culture_paystack_plan_yearly_usd', $text );
+        register_setting( 'culture_settings_payment', 'culture_paystack_amount_monthly_ngn', $int );
+        register_setting( 'culture_settings_payment', 'culture_paystack_amount_yearly_ngn', $int );
+        register_setting( 'culture_settings_payment', 'culture_paystack_amount_monthly_usd', $int );
+        register_setting( 'culture_settings_payment', 'culture_paystack_amount_yearly_usd', $int );
+
+        // Stripe.
+        register_setting( 'culture_settings_payment', 'culture_stripe_publishable_key', $text );
+        register_setting( 'culture_settings_payment', 'culture_stripe_secret_key', $text );
+        register_setting( 'culture_settings_payment', 'culture_stripe_price_monthly_usd', $text );
+        register_setting( 'culture_settings_payment', 'culture_stripe_price_yearly_usd', $text );
 
         // Gamification – points.
-        register_setting( self::OPTION_GROUP, 'culture_points_event_rsvp', $int );
-        register_setting( self::OPTION_GROUP, 'culture_points_event_checkin', $int );
-        register_setting( self::OPTION_GROUP, 'culture_points_newsletter_comment', $int );
-        register_setting( self::OPTION_GROUP, 'culture_points_newsletter_reaction', $int );
-        register_setting( self::OPTION_GROUP, 'culture_points_referral', $int );
+        register_setting( 'culture_settings_gamification', 'culture_points_event_rsvp', $int );
+        register_setting( 'culture_settings_gamification', 'culture_points_event_checkin', $int );
+        register_setting( 'culture_settings_gamification', 'culture_points_newsletter_comment', $int );
+        register_setting( 'culture_settings_gamification', 'culture_points_newsletter_reaction', $int );
+        register_setting( 'culture_settings_gamification', 'culture_points_referral', $int );
 
         // Gamification – badge thresholds.
-        register_setting( self::OPTION_GROUP, 'culture_badge_first_steps', $int );
-        register_setting( self::OPTION_GROUP, 'culture_badge_regular', $int );
-        register_setting( self::OPTION_GROUP, 'culture_badge_culture_vulture', $int );
-        register_setting( self::OPTION_GROUP, 'culture_badge_explorer', $int );
-        register_setting( self::OPTION_GROUP, 'culture_badge_globetrotter', $int );
-        register_setting( self::OPTION_GROUP, 'culture_badge_commentator', $int );
-        register_setting( self::OPTION_GROUP, 'culture_badge_century_club', $int );
+        register_setting( 'culture_settings_gamification', 'culture_badge_first_steps', $int );
+        register_setting( 'culture_settings_gamification', 'culture_badge_regular', $int );
+        register_setting( 'culture_settings_gamification', 'culture_badge_culture_vulture', $int );
+        register_setting( 'culture_settings_gamification', 'culture_badge_explorer', $int );
+        register_setting( 'culture_settings_gamification', 'culture_badge_globetrotter', $int );
+        register_setting( 'culture_settings_gamification', 'culture_badge_commentator', $int );
+        register_setting( 'culture_settings_gamification', 'culture_badge_century_club', $int );
 
         // Referrals.
-        register_setting( self::OPTION_GROUP, 'culture_referral_cookie_days', $int );
+        register_setting( 'culture_settings_referrals', 'culture_referral_cookie_days', $int );
 
         // Emails.
-        register_setting( self::OPTION_GROUP, 'culture_email_from_name', $text );
-        register_setting( self::OPTION_GROUP, 'culture_email_header_color', $color );
-        register_setting( self::OPTION_GROUP, 'culture_email_button_color', $color );
+        register_setting( 'culture_settings_emails', 'culture_email_from_name', $text );
+        register_setting( 'culture_settings_emails', 'culture_email_header_color', $color );
+        register_setting( 'culture_settings_emails', 'culture_email_button_color', $color );
 
         // Membership.
-        register_setting( self::OPTION_GROUP, 'culture_grace_period_days', $int );
-        register_setting( self::OPTION_GROUP, 'culture_patron_label', $text );
-        register_setting( self::OPTION_GROUP, 'culture_citizen_label', $text );
+        register_setting( 'culture_settings_membership', 'culture_grace_period_days', $int );
+        register_setting( 'culture_settings_membership', 'culture_patron_label', $text );
+        register_setting( 'culture_settings_membership', 'culture_citizen_label', $text );
 
         // General.
-        register_setting( self::OPTION_GROUP, 'culture_registration_page', $text );
-        register_setting( self::OPTION_GROUP, 'culture_frontend_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
-        register_setting( self::OPTION_GROUP, 'culture_api_secret', $text );
-        register_setting( self::OPTION_GROUP, 'culture_cron_secret', $text );
-        register_setting( self::OPTION_GROUP, 'culture_analytics_limit_top_members', $int );
-        register_setting( self::OPTION_GROUP, 'culture_analytics_limit_events', $int );
+        register_setting( 'culture_settings_general', 'culture_registration_page', $text );
+        register_setting( 'culture_settings_general', 'culture_frontend_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
+        register_setting( 'culture_settings_general', 'culture_api_secret', $text );
+        register_setting( 'culture_settings_general', 'culture_cron_secret', $text );
+        register_setting( 'culture_settings_general', 'culture_analytics_limit_top_members', $int );
+        register_setting( 'culture_settings_general', 'culture_analytics_limit_events', $int );
     }
 
     /**
@@ -229,7 +255,7 @@ class Culture_Settings {
             </nav>
 
             <form method="post" action="options.php">
-                <?php settings_fields( self::OPTION_GROUP ); ?>
+                <?php settings_fields( 'culture_settings_' . $active_tab ); ?>
 
                 <?php
                 switch ( $active_tab ) {
@@ -291,12 +317,108 @@ class Culture_Settings {
                     <p class="description"><?php esc_html_e( 'Your Paystack secret/test key (starts with sk_). Keep this private.', 'culture-community' ); ?></p>
                 </td>
             </tr>
+        </table>
+
+        <h3><?php esc_html_e( 'Nigeria (NGN) Plans', 'culture-community' ); ?></h3>
+        <table class="form-table">
             <tr>
-                <th scope="row"><label for="culture_paystack_plan_code"><?php esc_html_e( 'Plan Code (Patron)', 'culture-community' ); ?></label></th>
+                <th scope="row"><label for="culture_paystack_plan_monthly_ngn"><?php esc_html_e( 'Monthly Plan Code (NGN)', 'culture-community' ); ?></label></th>
                 <td>
-                    <input type="text" id="culture_paystack_plan_code" name="culture_paystack_plan_code"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_code' ) ); ?>" class="regular-text" />
-                    <p class="description"><?php esc_html_e( 'The Paystack subscription plan code for the Patron tier (starts with PLN_).', 'culture-community' ); ?></p>
+                    <input type="text" id="culture_paystack_plan_monthly_ngn" name="culture_paystack_plan_monthly_ngn"
+                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_monthly_ngn' ) ); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e( 'Paystack plan code for NGN Monthly (PLN_...).', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_paystack_amount_monthly_ngn"><?php esc_html_e( 'Monthly Price (NGN)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_paystack_amount_monthly_ngn" name="culture_paystack_amount_monthly_ngn"
+                           value="<?php echo esc_attr( self::get( 'culture_paystack_amount_monthly_ngn' ) ); ?>" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Price in Naira (e.g. 4500). Used for display and as fallback.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_paystack_plan_yearly_ngn"><?php esc_html_e( 'Yearly Plan Code (NGN)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_paystack_plan_yearly_ngn" name="culture_paystack_plan_yearly_ngn"
+                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_yearly_ngn' ) ); ?>" class="regular-text" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_paystack_amount_yearly_ngn"><?php esc_html_e( 'Yearly Price (NGN)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_paystack_amount_yearly_ngn" name="culture_paystack_amount_yearly_ngn"
+                           value="<?php echo esc_attr( self::get( 'culture_paystack_amount_yearly_ngn' ) ); ?>" class="small-text" />
+                </td>
+            </tr>
+        </table>
+
+        <h3><?php esc_html_e( 'International (USD) Plans', 'culture-community' ); ?></h3>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_paystack_plan_monthly_usd"><?php esc_html_e( 'Monthly Plan Code (USD)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_paystack_plan_monthly_usd" name="culture_paystack_plan_monthly_usd"
+                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_monthly_usd' ) ); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e( 'Paystack plan code for USD Monthly (PLN_...).', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_paystack_amount_monthly_usd"><?php esc_html_e( 'Monthly Price (USD)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_paystack_amount_monthly_usd" name="culture_paystack_amount_monthly_usd"
+                           value="<?php echo esc_attr( self::get( 'culture_paystack_amount_monthly_usd' ) ); ?>" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Price in USD (e.g. 4).', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_paystack_plan_yearly_usd"><?php esc_html_e( 'Yearly Plan Code (USD)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_paystack_plan_yearly_usd" name="culture_paystack_plan_yearly_usd"
+                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_yearly_usd' ) ); ?>" class="regular-text" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_paystack_amount_yearly_usd"><?php esc_html_e( 'Yearly Price (USD)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_paystack_amount_yearly_usd" name="culture_paystack_amount_yearly_usd"
+                           value="<?php echo esc_attr( self::get( 'culture_paystack_amount_yearly_usd' ) ); ?>" class="small-text" />
+                </td>
+            </tr>
+        </table>
+
+        <hr />
+        <h3><?php esc_html_e( 'Stripe Configuration (International Gateway)', 'culture-community' ); ?></h3>
+        <p class="description"><?php esc_html_e( 'If configured, USD transactions will use Stripe instead of Paystack.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_stripe_publishable_key"><?php esc_html_e( 'Publishable Key', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_stripe_publishable_key" name="culture_stripe_publishable_key"
+                           value="<?php echo esc_attr( self::get( 'culture_stripe_publishable_key' ) ); ?>" class="regular-text" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_stripe_secret_key"><?php esc_html_e( 'Secret Key', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="password" id="culture_stripe_secret_key" name="culture_stripe_secret_key"
+                           value="<?php echo esc_attr( self::get( 'culture_stripe_secret_key' ) ); ?>" class="regular-text" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_stripe_price_monthly_usd"><?php esc_html_e( 'Monthly Price ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_stripe_price_monthly_usd" name="culture_stripe_price_monthly_usd"
+                           value="<?php echo esc_attr( self::get( 'culture_stripe_price_monthly_usd' ) ); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e( 'The Stripe Price ID for the $4 subscription (price_...).', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_stripe_price_yearly_usd"><?php esc_html_e( 'Yearly Price ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_stripe_price_yearly_usd" name="culture_stripe_price_yearly_usd"
+                           value="<?php echo esc_attr( self::get( 'culture_stripe_price_yearly_usd' ) ); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e( 'The Stripe Price ID for the $40 subscription (price_...).', 'culture-community' ); ?></p>
                 </td>
             </tr>
         </table>

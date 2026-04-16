@@ -58,6 +58,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-acf-fields.php';
 
 // Payment includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-stripe.php';
 
 /**
  * Plugin activation hook.

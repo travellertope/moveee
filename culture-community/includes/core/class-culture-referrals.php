@@ -78,7 +78,14 @@ class Culture_Referrals {
      */
     public static function get_referral_url( $user_id ) {
         $code = self::get_referral_code( $user_id );
-        return add_query_arg( 'ref', $code, home_url( '/register/' ) );
+        
+        // Use configured registration page if available, fallback to default.
+        $reg_url = class_exists( 'Culture_Settings' ) ? Culture_Settings::get( 'culture_registration_page' ) : '';
+        if ( empty( $reg_url ) ) {
+            $reg_url = home_url( '/register/' );
+        }
+
+        return add_query_arg( 'ref', $code, $reg_url );
     }
 
     /**

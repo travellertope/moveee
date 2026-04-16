@@ -41,10 +41,16 @@ export async function POST(req: Request) {
     );
   }
 
+  const API_SECRET = process.env.CULTURE_API_SECRET;
+
   try {
     const res = await fetch(`${WP_URL}/wp-json/culture/v1/register`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_SECRET}`,
+        "X-Culture-API-Secret": API_SECRET || "",
+      },
       body: JSON.stringify(body),
       cache: "no-store",
     });

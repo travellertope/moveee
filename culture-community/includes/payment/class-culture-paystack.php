@@ -31,22 +31,46 @@ class Culture_Paystack {
     }
 
     /**
-     * Get the Patron plan code.
+     * Get the plan code based on cycle and currency.
+     *
+     * @param string $cycle 'monthly' or 'yearly'.
+     * @param string $currency 'NGN' or 'USD'.
+     * @return string
      */
-    private static function get_plan_code() {
-        return get_option( 'culture_paystack_plan_code', '' );
+    private static function get_plan_code( $cycle = 'monthly', $currency = 'NGN' ) {
+        $key = 'culture_paystack_plan_' . strtolower( $cycle ) . '_' . strtolower( $currency );
+        return get_option( $key, '' );
+    }
+
+    /**
+     * Get the amount in lowest units (kobo/cents).
+     *
+     * @param string $cycle
+     * @param string $currency
+     * @return int
+     */
+    private static function get_amount_lowest( $cycle = 'monthly', $currency = 'NGN' ) {
+        $key      = 'culture_paystack_amount_' . strtolower( $cycle ) . '_' . strtolower( $currency );
+        $fallback = ( 'yearly' === $cycle ) ? 45000 : 4500;
+        if ( 'USD' === strtoupper( $currency ) ) {
+            $fallback = ( 'yearly' === $cycle ) ? 40 : 4;
+        }
+        $amount = (int) get_option( $key, $fallback );
+        return $amount * 100;
     }
 
     /**
      * Generate checkout URL for upgrading to Patron.
      *
-     * @param int $user_id
+     * @param int    $user_id
+     * @param string $plan_key e.g. 'monthly_ngn'
      * @return string
      */
-    public static function get_checkout_url( $user_id ) {
+    public static function get_checkout_url( $user_id, $plan_key = 'monthly_ngn' ) {
         return add_query_arg( array(
             'culture_action' => 'paystack_checkout',
             'user_id'        => $user_id,
+            'plan_key'       => $plan_key,
             'token'          => self::get_checkout_token( $user_id ),
         ), home_url( '/' ) );
     }
@@ -90,12 +114,20 @@ class Culture_Paystack {
             wp_die( esc_html__( 'User not found.', 'culture-community' ) );
         }
 
+        $plan_key = isset( $_GET['plan_key'] ) ? sanitize_key( $_GET['plan_key'] ) : 'monthly_ngn';
+        $parts    = explode( '_', $plan_key );
+        $cycle    = $parts[0] ?? 'monthly';
+        $currency = strtoupper( $parts[1] ?? 'NGN' );
+
         $response = self::api_request( 'POST', '/transaction/initialize', array(
             'email'        => $user->user_email,
-            'plan'         => self::get_plan_code(),
+            'amount'       => self::get_amount_lowest( $cycle, $currency ),
+            'currency'     => $currency,
+            'plan'         => self::get_plan_code( $cycle, $currency ),
             'callback_url' => add_query_arg( 'culture_paystack_callback', '1', home_url( '/' ) ),
             'metadata'     => array(
                 'user_id'    => $user_id,
+                'plan_key'   => $plan_key,
                 'custom_fields' => array(
                     array(
                         'display_name'  => 'WordPress User ID',
@@ -132,12 +164,20 @@ class Culture_Paystack {
         $user_id = get_current_user_id();
         $user    = wp_get_current_user();
 
+        $plan_key = isset( $_POST['plan_key'] ) ? sanitize_key( $_POST['plan_key'] ) : 'monthly_ngn';
+        $parts    = explode( '_', $plan_key );
+        $cycle    = $parts[0] ?? 'monthly';
+        $currency = strtoupper( $parts[1] ?? 'NGN' );
+
         $response = self::api_request( 'POST', '/transaction/initialize', array(
             'email'        => $user->user_email,
-            'plan'         => self::get_plan_code(),
+            'amount'       => self::get_amount_lowest( $cycle, $currency ),
+            'currency'     => $currency,
+            'plan'         => self::get_plan_code( $cycle, $currency ),
             'callback_url' => add_query_arg( 'culture_paystack_callback', '1', home_url( '/' ) ),
             'metadata'     => array(
                 'user_id'    => $user_id,
+                'plan_key'   => $plan_key,
                 'custom_fields' => array(
                     array(
                         'display_name'  => 'WordPress User ID',

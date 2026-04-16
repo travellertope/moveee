@@ -43,6 +43,13 @@ class Culture_REST_API {
             'permission_callback' => '__return_true',
         ) );
 
+        // Stripe webhook endpoint (public).
+        register_rest_route( 'culture/v1', '/stripe-webhook', array(
+            'methods'             => 'POST',
+            'callback'            => array( 'Culture_Stripe', 'handle_webhook' ),
+            'permission_callback' => '__return_true',
+        ) );
+
         // Newsletter subscribe endpoint (public).
         register_rest_route( 'culture/v1', '/newsletter-subscribe', array(
             'methods'             => 'POST',
@@ -92,7 +99,7 @@ class Culture_REST_API {
         register_rest_route( 'culture/v1', '/chapters', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_chapters' ),
-            'permission_callback' => '__return_true',
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
 
         // Login endpoint — validates WP credentials, returns user profile.
@@ -173,7 +180,7 @@ class Culture_REST_API {
         register_rest_route( 'culture/v1', '/register', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_register' ),
-            'permission_callback' => '__return_true',
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             'args'                => array(
                 'username' => array(
                     'required'          => true,
@@ -746,6 +753,7 @@ class Culture_REST_API {
         $primary   = (int) $request->get_param( 'primary_chapter' );
         $secondary = (int) $request->get_param( 'secondary_chapter' );
         $referral  = $request->get_param( 'referral_code' ) ?: '';
+        $plan_key  = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
 
         if ( strlen( $password ) < 8 ) {
             return new WP_Error(
@@ -832,14 +840,25 @@ class Culture_REST_API {
         $user = get_userdata( $user_id );
 
         // Patron tier — return Paystack checkout URL so Next.js can redirect.
-        if ( 'patron' === $tier && class_exists( 'Culture_Paystack' ) ) {
-            return rest_ensure_response( array_merge(
-                self::user_profile( $user ),
-                array(
-                    'requires_payment' => true,
-                    'checkout_url'     => Culture_Paystack::get_checkout_url( $user_id ),
-                )
-            ) );
+        if ( 'patron' === $tier ) {
+            $checkout_url = '';
+            
+            // Route to appropriate gateway
+            if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
+                $checkout_url = Culture_Paystack::get_checkout_url( $user_id, $plan_key );
+            } elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {
+                $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key );
+            }
+
+            if ( $checkout_url ) {
+                return rest_ensure_response( array_merge(
+                    self::user_profile( $user ),
+                    array(
+                        'requires_payment' => true,
+                        'checkout_url'     => $checkout_url,
+                    )
+                ) );
+            }
         }
 
         return rest_ensure_response( array_merge(
@@ -1750,14 +1769,23 @@ class Culture_REST_API {
             return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
         }
 
-        if ( ! class_exists( 'Culture_Paystack' ) ) {
-            return new WP_Error( 'missing_plugin', 'Payment module not available.', array( 'status' => 500 ) );
+        $plan_key     = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
+        $checkout_url = '';
+
+        if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
+            $checkout_url = Culture_Paystack::get_checkout_url( $user_id, $plan_key );
+        } elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {
+            $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key );
         }
 
-        return rest_ensure_response( array(
-            'success'      => true,
-            'checkout_url' => Culture_Paystack::get_checkout_url( $user_id ),
-        ) );
+        if ( $checkout_url ) {
+            return rest_ensure_response( array(
+                'success'      => true,
+                'checkout_url' => $checkout_url,
+            ) );
+        }
+
+        return new WP_Error( 'missing_gateway', 'Payment gateway not configured for this plan.', array( 'status' => 500 ) );
     }
 
     /**
