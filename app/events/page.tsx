@@ -13,16 +13,22 @@ export const metadata = {
   description: "Curated openings, listening sessions, film screenings, and community gatherings across Africa and the diaspora.",
 };
 
-/** Group events by Month Year */
-/** Group events by Month Year */
+/** Group events by Month Year with robust fallback */
 function groupEventsByMonth(events: any[]) {
   const groups: { month: string; events: any[] }[] = [];
   
   events.forEach(event => {
-    // Prefer the specific event metadata date over the post publication date
-    const targetDate = event.eventDate || event.date;
-    const dateObj = new Date(targetDate);
-    const month = dateObj.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+    // Prefer metadata eventDate, then post publication date, then "now"
+    const targetDate = event.eventDate || event.date || new Date().toISOString();
+    let dateObj = new Date(targetDate);
+    
+    // Check for "Invalid Date"
+    if (isNaN(dateObj.getTime())) {
+      dateObj = new Date(); // Fallback to now
+    }
+    
+    const monthStr = dateObj.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+    const month = monthStr === "Invalid Date" ? "Happening Soon" : monthStr;
     
     let group = groups.find(g => g.month === month);
     if (!group) {
@@ -33,7 +39,11 @@ function groupEventsByMonth(events: any[]) {
   });
   
   // Sort months chronologically
-  groups.sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime());
+  groups.sort((a, b) => {
+    if (a.month === "Happening Soon") return -1;
+    if (b.month === "Happening Soon") return 1;
+    return new Date(a.month).getTime() - new Date(b.month).getTime();
+  });
   
   return groups;
 }
@@ -70,8 +80,14 @@ export default async function EventsPage() {
           slug={spotlightEvent.slug}
           title={spotlightEvent.title}
           subtitle={spotlightEvent.excerpt?.replace(/<[^>]*>/g, "").slice(0, 120)}
-          date={new Date(spotlightEvent.eventDate || spotlightEvent.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
-          dayName={new Date(spotlightEvent.eventDate || spotlightEvent.date).toLocaleDateString("en-GB", { weekday: "long" })}
+          date={(() => {
+            const d = new Date(spotlightEvent.eventDate || spotlightEvent.date || Date.now());
+            return isNaN(d.getTime()) ? "TBA Date" : d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+          })()}
+          dayName={(() => {
+            const d = new Date(spotlightEvent.eventDate || spotlightEvent.date || Date.now());
+            return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB", { weekday: "long" });
+          })()}
           venue={spotlightEvent.location || "Venue TBA"}
           time="Doors 6 PM"
           admission={spotlightEvent.admission || "Free · RSVP required"}
@@ -115,7 +131,10 @@ export default async function EventsPage() {
                     key={event.id}
                     slug={event.slug}
                     title={event.title}
-                    date={new Date(event.eventDate || event.date).toLocaleDateString("en-GB", { day: "numeric", month: "long" })}
+                    date={(() => {
+                      const d = new Date(event.eventDate || event.date || Date.now());
+                      return isNaN(d.getTime()) ? "TBA Date" : d.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+                    })()}
                     location={event.location || "Lagos, Nigeria"}
                     time="18:00 – 21:00"
                     category={event.cultureInterests?.nodes[0]?.name || "Culture"}

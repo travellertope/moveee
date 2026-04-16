@@ -29,8 +29,9 @@ const SpotlightCard: React.FC<SpotlightCardProps> = ({
   statusBadge = "Upcoming",
   counterText
 }) => {
-  const day = date.split(' ')[0];
-  const monthYear = date.split(' ').slice(1).join(' ');
+  const parts = date ? date.split(' ') : ["TBA", "Date", ""];
+  const day = parts[0] || "TBA";
+  const monthYear = parts.slice(1).join(' ') || "Date";
 
   return (
     <div className="spotlight">

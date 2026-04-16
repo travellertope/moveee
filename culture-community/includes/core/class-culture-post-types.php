@@ -220,6 +220,26 @@ class Culture_Post_Types {
             },
         ) );
 
+        // Relationship Resolvers (using native WP_Post objects for maximum stability)
+        register_graphql_field( 'CultureEvent', 'featuredHost', array(
+            'type'    => 'CultureDirectory',
+            'resolve' => function( $post ) {
+                $host_id = function_exists('get_field') ? get_field( 'featured_host', $post->databaseId ) : null;
+                if ( ! $host_id ) return null;
+                $host_obj = get_post( $host_id );
+                return ( $host_obj && $host_obj->post_type === 'culture_directory' ) ? $host_obj : null;
+            },
+        ) );
+        register_graphql_field( 'CultureEvent', 'associatedJourney', array(
+            'type'    => 'CultureJourney',
+            'resolve' => function( $post ) {
+                $journey_id = function_exists('get_field') ? get_field( 'associated_journey', $post->databaseId ) : null;
+                if ( ! $journey_id ) return null;
+                $journey_obj = get_post( $journey_id );
+                return ( $journey_obj && $journey_obj->post_type === 'culture_journey' ) ? $journey_obj : null;
+            },
+        ) );
+
         // 6. Core Event Fields (Hybrid: Priority on ACF, fallback to Native Meta)
         $event_meta_fields = array(
             'eventDate'    => array( 'type' => 'String',  'acf_key' => 'event_date',  'meta_key' => '_culture_event_date' ),
@@ -240,16 +260,16 @@ class Culture_Post_Types {
                 register_graphql_field( $type_name, $field_name, array(
                     'type'    => $field_type,
                     'resolve' => function( $post ) use ( $acf_key, $meta_key, $field_type ) {
-                        // Priority 1: ACF field
+                        // Priority 1: ACF field (non-prefixed)
                         $value = function_exists('get_field') ? get_field( $acf_key, $post->databaseId ) : null;
                         
-                        // Priority 2: Native meta fallback
+                        // Priority 2: Native meta fallback (prefixed with _culture_)
                         if ( empty($value) ) {
                             $value = get_post_meta( $post->databaseId, $meta_key, true );
                         }
 
                         // Special Fallback for eventDate -> use post publication date
-                        if ( $acf_key === 'event_date' && empty($value) ) {
+                        if ( $field_name === 'eventDate' && empty($value) ) {
                             $value = get_the_date( 'Y-m-d\TH:i:s', $post->databaseId );
                         }
 

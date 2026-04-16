@@ -24,8 +24,9 @@ export async function getWPData(query: string, variables = {}, options: any = {}
     const json = await res.json();
 
     if (json.errors) {
-      console.error(`GraphQL errors for ${WP_GRAPHQL_URL}:`, json.errors);
-      return null;
+      console.warn(`GraphQL partial errors for ${WP_GRAPHQL_URL}:`, json.errors);
+      // Return data anyway if it exists (standard GraphQL behavior)
+      return json.data || null;
     }
 
     return json.data;

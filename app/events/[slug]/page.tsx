@@ -19,11 +19,13 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   const img = event.featuredImage?.node?.sourceUrl;
   const cat = event.cultureInterests?.nodes?.[0]?.name || "Happening";
-  const dateObj = new Date(event.eventDate || event.date);
-  const dateFormatted = dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const dateRaw = event.eventDate || event.date || new Date().toISOString();
+  const dateObj = new Date(dateRaw);
+  const dateValid = !isNaN(dateObj.getTime()) ? dateObj : new Date();
+  const dateFormatted = dateValid.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   
   const endObj = event.endDate ? new Date(event.endDate) : null;
-  const endFormatted = endObj ? endObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
+  const endFormatted = (endObj && !isNaN(endObj.getTime())) ? endObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
 
   const hasMetrics = event.metrics && event.metrics.length > 0;
   const hasSchedule = event.schedule && event.schedule.length > 0;

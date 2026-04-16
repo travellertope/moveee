@@ -25,8 +25,9 @@ const EventCard: React.FC<EventCardProps> = ({
   status = 'upcoming',
   tags = []
 }) => {
-  const day = date.split(' ')[0];
-  const month = date.split(' ')[1];
+  const parts = date ? date.split(' ') : ["TBA", "Date"];
+  const day = parts[0] || "TBA";
+  const month = parts[1] || "Date";
 
   return (
     <Link href={`/events/${slug}`} className="event-card">
