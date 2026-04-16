@@ -194,58 +194,85 @@ class Culture_Post_Types {
             ),
         ) );
 
-        // 5. Advanced Event Fields
+        // 5. Advanced Event Fields (ACF Based)
         register_graphql_field( 'CultureEvent', 'metrics', array(
             'type'    => array( 'list_of' => 'CultureEventMetric' ),
-            'resolve' => function( $post ) { return get_field( 'metrics', $post->databaseId ); },
+            'resolve' => function( $post ) { 
+                return function_exists('get_field') ? get_field( 'metrics', $post->databaseId ) : null; 
+            },
         ) );
         register_graphql_field( 'CultureEvent', 'schedule', array(
             'type'    => array( 'list_of' => 'CultureEventScheduleItem' ),
-            'resolve' => function( $post ) { return get_field( 'schedule', $post->databaseId ); },
+            'resolve' => function( $post ) { 
+                return function_exists('get_field') ? get_field( 'schedule', $post->databaseId ) : null; 
+            },
         ) );
         register_graphql_field( 'CultureEvent', 'showcase', array(
             'type'    => array( 'list_of' => 'CultureEventShowcaseItem' ),
-            'resolve' => function( $post ) { return get_field( 'showcase', $post->databaseId ); },
+            'resolve' => function( $post ) { 
+                return function_exists('get_field') ? get_field( 'showcase', $post->databaseId ) : null; 
+            },
         ) );
         register_graphql_field( 'CultureEvent', 'pressDetails', array(
             'type'    => 'CultureEventPressDetails',
-            'resolve' => function( $post ) { return get_field( 'press_details', $post->databaseId ); },
+            'resolve' => function( $post ) { 
+                return function_exists('get_field') ? get_field( 'press_details', $post->databaseId ) : null; 
+            },
         ) );
+
+        // Relationship Resolvers (using ID fallback to avoid internal schema errors)
         register_graphql_field( 'CultureEvent', 'featuredHost', array(
             'type'    => 'CultureDirectory',
             'resolve' => function( $post ) {
-                $host_id = get_field( 'featured_host', $post->databaseId );
-                return $host_id ? get_post( $host_id ) : null;
+                $host_id = function_exists('get_field') ? get_field( 'featured_host', $post->databaseId ) : null;
+                if ( ! $host_id ) return null;
+                $host_post = get_post( $host_id );
+                return ( $host_post && $host_post->post_type === 'culture_directory' ) ? $host_post : null;
             },
         ) );
         register_graphql_field( 'CultureEvent', 'associatedJourney', array(
             'type'    => 'CultureJourney',
             'resolve' => function( $post ) {
-                $journey_id = get_field( 'associated_journey', $post->databaseId );
-                return $journey_id ? get_post( $journey_id ) : null;
+                $journey_id = function_exists('get_field') ? get_field( 'associated_journey', $post->databaseId ) : null;
+                if ( ! $journey_id ) return null;
+                $journey_post = get_post( $journey_id );
+                return ( $journey_post && $journey_post->post_type === 'culture_journey' ) ? $journey_post : null;
             },
         ) );
 
-        // 6. Core Event Fields (for both CPT and Post fallback)
+        // 6. Core Event Fields (Hybrid: Priority on ACF, fallback to Native Meta)
         $event_meta_fields = array(
-            'eventDate'    => array( 'type' => 'String', 'meta_key' => '_culture_event_date' ),
-            'endDate'      => array( 'type' => 'String', 'meta_key' => '_culture_end_date' ),
-            'location'     => array( 'type' => 'String', 'meta_key' => '_culture_location' ),
-            'admission'    => array( 'type' => 'String', 'meta_key' => '_culture_admission' ),
-            'isFeatured'   => array( 'type' => 'Boolean', 'meta_key' => '_culture_is_featured' ),
-            'tagline'      => array( 'type' => 'String', 'meta_key' => '_culture_tagline' ),
-            'attribution'  => array( 'type' => 'String', 'meta_key' => '_culture_attribution' ),
-            'openingHours' => array( 'type' => 'String', 'meta_key' => '_culture_opening_hours' ),
+            'eventDate'    => array( 'type' => 'String',  'acf_key' => 'event_date',  'meta_key' => '_culture_event_date' ),
+            'endDate'      => array( 'type' => 'String',  'acf_key' => 'end_date',    'meta_key' => '_culture_end_date' ),
+            'location'     => array( 'type' => 'String',  'acf_key' => 'location',    'meta_key' => '_culture_location' ),
+            'admission'    => array( 'type' => 'String',  'acf_key' => 'admission',   'meta_key' => '_culture_admission' ),
+            'isFeatured'   => array( 'type' => 'Boolean', 'acf_key' => 'is_featured', 'meta_key' => '_culture_is_featured' ),
+            'tagline'      => array( 'type' => 'String',  'acf_key' => 'tagline',     'meta_key' => '_culture_tagline' ),
+            'attribution'  => array( 'type' => 'String',  'acf_key' => 'attribution', 'meta_key' => '_culture_attribution' ),
+            'openingHours' => array( 'type' => 'String',  'acf_key' => 'opening_hours', 'meta_key' => '_culture_opening_hours' ),
         );
 
         foreach ( array( 'Post', 'CultureEvent' ) as $type_name ) {
             foreach ( $event_meta_fields as $field_name => $config ) {
+                $acf_key  = $config['acf_key'];
                 $meta_key = $config['meta_key'];
                 $field_type = $config['type'];
                 register_graphql_field( $type_name, $field_name, array(
                     'type'    => $field_type,
-                    'resolve' => function( $post ) use ( $meta_key, $field_type ) {
-                        $value = get_post_meta( $post->databaseId, $meta_key, true );
+                    'resolve' => function( $post ) use ( $acf_key, $meta_key, $field_type ) {
+                        // Priority 1: ACF field
+                        $value = function_exists('get_field') ? get_field( $acf_key, $post->databaseId ) : null;
+                        
+                        // Priority 2: Native meta fallback
+                        if ( empty($value) ) {
+                            $value = get_post_meta( $post->databaseId, $meta_key, true );
+                        }
+
+                        // Special Fallback for eventDate -> use post publication date
+                        if ( $acf_key === 'event_date' && empty($value) ) {
+                            $value = get_the_date( 'Y-m-d\TH:i:s', $post->databaseId );
+                        }
+
                         if ( $field_type === 'Boolean' ) return (bool) $value;
                         return (string) $value;
                     },
@@ -256,15 +283,21 @@ class Culture_Post_Types {
         // 7. Directory Profile Extensions
         register_graphql_field( 'CultureDirectory', 'websiteUrl', array(
             'type'    => 'String',
-            'resolve' => function( $post ) { return get_field( 'website_url', $post->databaseId ); },
+            'resolve' => function( $post ) { 
+                return function_exists('get_field') ? get_field( 'website_url', $post->databaseId ) : get_post_meta($post->databaseId, 'website_url', true); 
+            },
         ) );
         register_graphql_field( 'CultureDirectory', 'instagramHandle', array(
             'type'    => 'String',
-            'resolve' => function( $post ) { return get_field( 'instagram_handle', $post->databaseId ); },
+            'resolve' => function( $post ) { 
+                return function_exists('get_field') ? get_field( 'instagram_handle', $post->databaseId ) : get_post_meta($post->databaseId, 'instagram_handle', true); 
+            },
         ) );
         register_graphql_field( 'CultureDirectory', 'twitterHandle', array(
             'type'    => 'String',
-            'resolve' => function( $post ) { return get_field( 'twitter_handle', $post->databaseId ); },
+            'resolve' => function( $post ) { 
+                return function_exists('get_field') ? get_field( 'twitter_handle', $post->databaseId ) : get_post_meta($post->databaseId, 'twitter_handle', true); 
+            },
         ) );
 
         error_log( 'Culture Community: GraphQL fields registration completed.' );
