@@ -38,6 +38,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         {img && (
           <div className="happening-hero-bg">
             <Image src={img} alt={event.title} fill className="object-cover grayscale hover:grayscale-0 transition-all duration-700" priority />
+            <div className="absolute inset-0 bg-ink/60" />
           </div>
         )}
         
@@ -49,6 +50,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <div className="attribution">— {event.attribution}</div>
           )}
 
+          <div className="happening-hero-actions">
+            <button className="btn-secondary">Save for Later</button>
+            <button className="btn-gold">RSVP Connect</button>
+          </div>
+
           <div className="happening-meta-grid">
             <div className="item">
               <div className="label">Date</div>
@@ -58,18 +64,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <div className="label">Location</div>
               <div className="value">{event.location || "Venue TBA"}</div>
             </div>
-            {event.openingHours && (
-              <div className="item">
-                <div className="label">Opening Hours</div>
-                <div className="value whitespace-pre-line">{event.openingHours}</div>
-              </div>
-            )}
-            {endFormatted && (
-              <div className="item">
-                <div className="label">On View Until</div>
-                <div className="value">{endFormatted}</div>
-              </div>
-            )}
+            <div className="item">
+              <div className="label">Doors</div>
+              <div className="value">18h00 — 22h00</div>
+            </div>
             <div className="item">
               <div className="label">Admission</div>
               <div className="value">{event.admission || "Free"}</div>
@@ -78,49 +76,47 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         </div>
       </section>
 
-      {/* ── NARRATIVE & QUOTE ── */}
+      {/* ── NARRATIVE ── */}
       <section className="happening-narrative">
-        <div className="narrative-grid">
-          <div className="narrative-content prose-custom">
-            <div className="section-label mb-8">Concept</div>
-            <div dangerouslySetInnerHTML={{ __html: event.content }} />
-          </div>
-          
-          <div className="sidebar-meta">
-             {event.tagline && (
-               <div className="narrative-quote pt-0 border-t-0 mt-0">
-                 <blockquote className="italic font-serif text-3xl leading-tight">
-                    "{event.tagline}"
-                 </blockquote>
-               </div>
-             )}
-             
-             {hasSchedule && (
-               <div className="mt-16 bg-paper-deep p-8 border-l-2 border-ochre">
-                 <div className="section-label mb-6">Program</div>
-                 <div className="space-y-8">
-                   {event.schedule.map((item: any, i: number) => (
-                     <div key={i} className="session">
-                       <div className="font-mono text-[10px] text-ochre uppercase mb-1">{item.time}</div>
-                       <h4 className="font-serif italic text-xl mb-1">{item.title}</h4>
-                       <p className="text-sm text-ink-soft mb-2">{item.description}</p>
-                       <span className="text-[9px] font-mono border border-ink/20 px-2 py-0.5 uppercase opacity-60">
-                         {item.access?.replace('_', ' ')}
-                       </span>
-                     </div>
-                   ))}
-                 </div>
-               </div>
-             )}
-          </div>
+        <div className="narrative-content prose-custom">
+          <div className="section-label">Concept</div>
+          <div dangerouslySetInnerHTML={{ __html: event.content }} />
         </div>
       </section>
 
-      {/* ── SHOWCASE GRID (Smart Hiding) ── */}
+      {/* ── QUOTE BLOCK ── */}
+      {event.tagline && (
+        <section className="happening-quote">
+          <blockquote className="italic font-serif">
+             "{event.tagline}"
+          </blockquote>
+        </section>
+      )}
+
+      {/* ── PROGRAM (Un-nested) ── */}
+      {hasSchedule && (
+        <section className="happening-program">
+          <div className="section-label">Program</div>
+          <div className="program-list">
+            {event.schedule.map((item: any, i: number) => (
+              <div key={i} className="program-item">
+                <div className="time">{item.time}</div>
+                <div className="details">
+                  <h4>{item.title}</h4>
+                  <p>{item.description}</p>
+                  <span className="access-tag">{item.access?.replace('_', ' ')}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── SHOWCASE GRID ── */}
       {hasShowcase && (
         <section className="happening-showcase">
           <div className="showcase-header">
-            <h2>{cat === 'Art' ? 'Selected' : 'Event'} <em>Works</em></h2>
+            <h2>Selected <em>works</em></h2>
             <div className="font-mono text-[10px] opacity-40 uppercase tracking-widest">Gallery v.01</div>
           </div>
           
@@ -148,46 +144,14 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         </section>
       )}
 
-      {/* ── JOURNEY & PRESS (New Blocks) ── */}
-      {(event.associatedJourney || (event.pressDetails && event.pressDetails.content)) && (
-        <section className="happening-comm-blocks bg-paper">
-          {event.associatedJourney && (
-            <div className="comm-card journey">
-               <span className="eyebrow">Origins Journey</span>
-               <h3>{event.associatedJourney.title}</h3>
-               <p>{event.associatedJourney.excerpt?.replace(/<[^>]*>/g, "")}</p>
-               <Link href={`/origins/${event.associatedJourney.slug}`} className="cta">
-                 View Journey →
-               </Link>
-            </div>
-          )}
-          
-          {event.pressDetails && event.pressDetails.content && (
-            <div className="comm-card press">
-               <span className="eyebrow">{event.pressDetails.eyebrow || 'Press & Media'}</span>
-               <h3>{event.pressDetails.title || 'Press enquiries'}</h3>
-               <p>{event.pressDetails.content}</p>
-               {event.pressDetails.link && (
-                 <a href={event.pressDetails.link} className="cta">
-                   {event.pressDetails.link.includes('@') ? event.pressDetails.link.replace('mailto:', '') : 'Contact PR'} →
-                 </a>
-               )}
-            </div>
-          )}
-        </section>
-      )}
-
       {/* ── SUMMARY & RSVP ── */}
       <section className="happening-summary">
         <div className="summary-content">
           <div className="eyebrow">Participation</div>
           <h3 dangerouslySetInnerHTML={{ 
             __html: endFormatted 
-              ? (cat === 'Art' ? `On view through <em>${endFormatted}</em>` 
-                 : cat === 'Music' ? `Sessions through <em>${endFormatted}</em>` 
-                 : cat === 'Food' ? `Available through <em>${endFormatted}</em>`
-                 : `Running through <em>${endFormatted}</em>`)
-              : `Join the<em> ${cat}</em> Experience`
+              ? `On view through <em class="block text-gold">${endFormatted}</em>` 
+              : `Join the <em class="block text-gold">${cat}</em> Experience`
           }} />
           
           <div className="summary-metrics">
@@ -213,20 +177,19 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </div>
           </div>
 
-          <div className="rsvp-box max-w-md">
-            <RSVPForm eventSlug={event.slug} eventTitle={event.title} />
+          <div className="rsvp-box">
+             <button className="btn-gold-lg">RSVP for a Studio Visit →</button>
           </div>
         </div>
 
         <div className="summary-visual">
-          {img && <Image src={img} alt="Summary" fill className="object-cover opacity-50 contrast-125 grayscale" />}
-          <div className="absolute inset-0 bg-ink/40" />
+          {img && <Image src={img} alt="Summary" fill className="object-cover opacity-80" />}
         </div>
       </section>
 
-      {/* ── TALENT BIO (Smart Hiding) ── */}
+      {/* ── TALENT BIO ── */}
       {host && (
-        <section className="happening-host border-t border-rule/10">
+        <section className="happening-host">
           <div className="host-avatar">
              {host.featuredImage?.node?.sourceUrl ? (
                <Image src={host.featuredImage.node.sourceUrl} alt={host.title} fill className="object-cover" />
@@ -236,20 +199,18 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </div>
           <div className="host-info">
             <span className="label">The Host</span>
-            <h4>{host.title} <em>{host.instagramHandle ? `@${host.instagramHandle}` : ''}</em></h4>
+            <h4>{host.title.split(' ')[0]} <em>{host.title.split(' ')[1]}</em></h4>
             <div className="bio" dangerouslySetInnerHTML={{ __html: host.excerpt }} />
             <div className="host-socials">
-              {host.websiteUrl && <a href={host.websiteUrl} target="_blank">Website</a>}
+              <Link href={`/directory/${host.slug}`}>View Profile →</Link>
               {host.instagramHandle && <a href={`https://instagram.com/${host.instagramHandle}`} target="_blank">Instagram</a>}
-              {host.twitterHandle && <a href={`https://twitter.com/${host.twitterHandle}`} target="_blank">Twitter</a>}
-              <Link href={`/directory/${host.slug}`}>View Profile</Link>
             </div>
           </div>
         </section>
       )}
 
       {/* ── FOOTER NAV ── */}
-      <footer className="py-20 px-10 flex justify-between items-center border-t border-rule/5">
+      <footer className="py-20 px-10 flex justify-between items-center border-t border-rule/10">
         <Link href="/events" className="font-mono text-xs uppercase tracking-widest border-b border-ink">
           ← Back to Events
         </Link>
