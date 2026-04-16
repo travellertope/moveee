@@ -20,7 +20,7 @@
   background: linear-gradient(to bottom, rgba(20, 17, 13, 0.4) 0%, rgba(20, 17, 13, 0.65) 50%, rgba(20, 17, 13, 0.95) 100%);
   z-index: 1;
 }
-.hero-inner {
+.events-hero .hero-inner {
   position: relative;
   z-index: 2;
   max-width: 1440px;
@@ -31,7 +31,7 @@
   gap: 80px;
   align-items: end;
 }
-.hero-eyebrow {
+.events-hero .hero-eyebrow {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -42,13 +42,13 @@
   text-transform: uppercase;
   color: var(--ochre);
 }
-.hero-eyebrow::before {
+.events-hero .hero-eyebrow::before {
   content: '';
   width: 40px;
   height: 1px;
   background: var(--ochre);
 }
-.hero-title {
+.events-hero .hero-title {
   font-size: clamp(60px, 8vw, 128px);
   font-weight: 400;
   line-height: 0.88;
@@ -56,12 +56,12 @@
   color: var(--paper);
   margin-bottom: 20px;
 }
-.hero-title em {
+.events-hero .hero-title em {
   font-style: italic;
   font-weight: 300;
   color: var(--gold);
 }
-.hero-standfirst {
+.events-hero .hero-standfirst {
   font-family: var(--font-serif);
   font-size: 20px;
   font-weight: 300;
@@ -70,13 +70,13 @@
   line-height: 1.45;
   max-width: 580px;
 }
-.hero-stats {
+.events-hero .hero-stats {
   display: flex;
   flex-direction: column;
   gap: 30px;
   padding-bottom: 10px;
 }
-.hero-stat .num {
+.events-hero .hero-stat .num {
   font-family: var(--font-serif);
   font-size: 64px;
   font-weight: 300;
@@ -84,7 +84,7 @@
   color: var(--ochre);
   line-height: 0.85;
 }
-.hero-stat .label {
+.events-hero .hero-stat .label {
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.15em;
@@ -321,14 +321,14 @@
   color: var(--mute);
 }
 
-.events-grid {
+.events-page .events-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 32px;
 }
 
 /* ── CARD ── */
-.event-card {
+.events-page .event-card {
   background: var(--paper-deep);
   padding: 0;
   cursor: pointer;
@@ -338,16 +338,16 @@
   border: 1px solid transparent;
   display: block;
 }
-.event-card:hover {
+.events-page .event-card:hover {
   transform: translateY(-5px);
   background: var(--ink);
   color: var(--paper);
 }
-.event-card:hover .ec-date .day { color: var(--ochre); }
-.event-card:hover .ec-meta { color: rgba(243, 236, 224, 0.6); }
-.event-card:hover .ec-title { color: var(--paper); }
-.event-card:hover .ec-tag { border-color: rgba(243, 236, 224, 0.3); color: rgba(243, 236, 224, 0.7); }
-.event-card:hover .ec-cta { color: var(--ochre); }
+.events-page .event-card:hover .ec-date .day { color: var(--ochre); }
+.events-page .event-card:hover .ec-meta { color: rgba(243, 236, 224, 0.6); }
+.events-page .event-card:hover .ec-title { color: var(--paper); }
+.events-page .event-card:hover .ec-tag { border-color: rgba(243, 236, 224, 0.3); color: rgba(243, 236, 224, 0.7); }
+.events-page .event-card:hover .ec-cta { color: var(--ochre); }
 
 .ec-image {
   aspect-ratio: 16/10;

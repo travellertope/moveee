@@ -59,7 +59,7 @@ export default async function EventsPage() {
   const groupedEvents = groupEventsByMonth(otherEvents);
 
   return (
-    <div className="bg-paper pb-24">
+    <div className="events-page bg-paper pb-24">
       {/* ── HERO ── */}
       <EventHero 
         title="Moveee<br><em>Events</em>."
