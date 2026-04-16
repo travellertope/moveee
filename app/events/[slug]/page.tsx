@@ -155,7 +155,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                <span className="eyebrow">Origins Journey</span>
                <h3>{event.associatedJourney.title}</h3>
                <p>{event.associatedJourney.excerpt?.replace(/<[^>]*>/g, "")}</p>
-               <Link href={`/journeys/${event.associatedJourney.slug}`} className="cta">
+               <Link href={`/origins/${event.associatedJourney.slug}`} className="cta">
                  View Journey →
                </Link>
             </div>

@@ -143,36 +143,13 @@ export const GET_TAX_STORIES = `
   ${STORY_FIELDS_FRAGMENT}
 `;
 
-const JOURNEY_FIELDS_FRAGMENT = `
-  fragment JourneyFields on Post {
-    id
-    title
-    slug
-    date
-    featuredImage {
-      node {
-        sourceUrl
-      }
-    }
-    categories {
-      nodes {
-        name
-        slug
-      }
-    }
-    cultureAccesses {
-      nodes {
-        slug
-      }
-    }
-  }
-`;
+
 
 export const JOURNEY_FIELDS = JOURNEY_FIELDS_FRAGMENT;
 
 export const GET_JOURNEYS = `
   query GetJourneys($first: Int) {
-    posts(first: $first, where: { categoryName: "origins" }) {
+    cultureJourneys(first: $first) {
       nodes {
         ...JourneyFields
       }
@@ -305,6 +282,64 @@ export const GET_ADJACENT_NEWSLETTERS = `
 
 // ── COMMUNITY CHAPTERS & EVENTS ───────────────────────────────────────────
 
+const DIRECTORY_FIELDS_FRAGMENT = `
+  fragment DirectoryFields on CultureDirectory {
+    id
+    databaseId
+    title
+    slug
+    date
+    excerpt
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+        mediaDetails {
+          width
+          height
+        }
+      }
+    }
+    cultureDirectoryTypes {
+      nodes {
+        name
+        slug
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+    cultureAccesses {
+      nodes {
+        slug
+      }
+    }
+    websiteUrl
+    instagramHandle
+    twitterHandle
+  }
+`;
+
+const JOURNEY_FIELDS_FRAGMENT = `
+  fragment JourneyFields on CultureJourney {
+    id
+    databaseId
+    title
+    slug
+    date
+    excerpt
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+  }
+`;
+
 const EVENT_FIELDS_FRAGMENT = `
   fragment EventFields on CultureEvent {
     id
@@ -313,6 +348,14 @@ const EVENT_FIELDS_FRAGMENT = `
     slug
     date
     eventDate
+    endDate
+    location
+    eventLocation: location
+    admission
+    isFeatured
+    tagline
+    attribution
+    openingHours
     excerpt
     featuredImage {
       node {
@@ -326,17 +369,6 @@ const EVENT_FIELDS_FRAGMENT = `
         slug
       }
     }
-    location
-    eventLocation
-    isFeatured
-    admission
-    isPhysical
-    chapterId
-    capacity
-    endDate
-    attribution
-    tagline
-    openingHours
     metrics {
       label
       value
@@ -358,28 +390,10 @@ const EVENT_FIELDS_FRAGMENT = `
       }
     }
     featuredHost {
-      title
-      excerpt
-      featuredImage {
-        node {
-          sourceUrl
-        }
-      }
-      databaseId
-      slug
-      websiteUrl
-      instagramHandle
-      twitterHandle
+      ...DirectoryFields
     }
     associatedJourney {
-      title
-      excerpt
-      slug
-      featuredImage {
-        node {
-          sourceUrl
-        }
-      }
+      ...JourneyFields
     }
     pressDetails {
       eyebrow
@@ -399,6 +413,8 @@ export const GET_EVENTS = `
     }
   }
   ${EVENT_FIELDS_FRAGMENT}
+  ${DIRECTORY_FIELDS_FRAGMENT}
+  ${JOURNEY_FIELDS_FRAGMENT}
 `;
 
 export const GET_EVENT_BY_SLUG = `
@@ -409,6 +425,8 @@ export const GET_EVENT_BY_SLUG = `
     }
   }
   ${EVENT_FIELDS_FRAGMENT}
+  ${DIRECTORY_FIELDS_FRAGMENT}
+  ${JOURNEY_FIELDS_FRAGMENT}
 `;
 
 const CHAPTER_FIELDS_FRAGMENT = `
@@ -468,7 +486,7 @@ export const GET_CHAPTER_BY_SLUG = `
 
 export const GET_JOURNEY_BY_SLUG = `
   query GetJourneyBySlug($slug: ID!) {
-    post(id: $slug, idType: SLUG) {
+    cultureJourney(id: $slug, idType: SLUG) {
       ...JourneyFields
       content
     }
@@ -511,44 +529,6 @@ export const GET_PRODUCT_BY_SLUG = `
     }
   }
   ${PRODUCT_FIELDS_FRAGMENT}
-`;
-
-const DIRECTORY_FIELDS_FRAGMENT = `
-  fragment DirectoryFields on CultureDirectory {
-    id
-    databaseId
-    title
-    slug
-    date
-    excerpt
-    featuredImage {
-      node {
-        sourceUrl
-        altText
-        mediaDetails {
-          width
-          height
-        }
-      }
-    }
-    cultureDirectoryTypes {
-      nodes {
-        name
-        slug
-      }
-    }
-    cultureInterests {
-      nodes {
-        name
-        slug
-      }
-    }
-    cultureAccesses {
-      nodes {
-        slug
-      }
-    }
-  }
 `;
 
 export const DIRECTORY_FIELDS = DIRECTORY_FIELDS_FRAGMENT;

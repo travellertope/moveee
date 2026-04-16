@@ -46,7 +46,7 @@ export default async function Home() {
 
   try {
     const originsData = await getWPData(GET_JOURNEYS, { first: 4 });
-    origins = originsData?.posts?.nodes || [];
+    origins = originsData?.cultureJourneys?.nodes || [];
   } catch (err) {
     console.error(err);
   }
