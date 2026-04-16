@@ -3,7 +3,17 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 
-export default function MagazineFilters({ filters }: { filters: any }) {
+export default function MagazineFilters({ 
+  filters,
+  currentIndustry,
+  currentCountry,
+  currentSeries
+}: { 
+  filters: any,
+  currentIndustry?: string,
+  currentCountry?: string,
+  currentSeries?: string
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -22,19 +32,11 @@ export default function MagazineFilters({ filters }: { filters: any }) {
   }, [isSidebarOpen]);
 
   const handleSelect = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    
-    // Clear all filters first so they don't explicitly stack on WP GraphQL right now
-    params.delete('category');
-    params.delete('industry');
-    params.delete('country');
-    params.delete('series');
-
-    if (value) {
-      params.set(key, value);
+    if (!value) {
+      router.push('/magazine');
+    } else {
+      router.push(`/magazine/${key}/${value}`);
     }
-    
-    router.push(`/magazine?${params.toString()}`);
     setIsSidebarOpen(false);
   };
 
@@ -71,7 +73,7 @@ export default function MagazineFilters({ filters }: { filters: any }) {
             <div className="sidebar-acc-content">
               <div className="filter-options-grid">
                 <button 
-                  className={`opt-btn ${!searchParams.get('industry') ? 'active' : ''}`}
+                  className={`opt-btn ${!currentIndustry ? 'active' : ''}`}
                   onClick={() => handleSelect('industry', "")}
                 >
                   All Industries
@@ -79,7 +81,7 @@ export default function MagazineFilters({ filters }: { filters: any }) {
                 {filters?.industries?.nodes?.map((t: any) => (
                   <button 
                     key={t.slug}
-                    className={`opt-btn ${searchParams.get('industry') === t.slug ? 'active' : ''}`}
+                    className={`opt-btn ${currentIndustry === t.slug ? 'active' : ''}`}
                     onClick={() => handleSelect('industry', t.slug)}
                   >
                     {t.name}
@@ -98,7 +100,7 @@ export default function MagazineFilters({ filters }: { filters: any }) {
             <div className="sidebar-acc-content">
               <div className="filter-options-grid">
                 <button 
-                  className={`opt-btn ${!searchParams.get('country') ? 'active' : ''}`}
+                  className={`opt-btn ${!currentCountry ? 'active' : ''}`}
                   onClick={() => handleSelect('country', "")}
                 >
                   All Locations
@@ -106,7 +108,7 @@ export default function MagazineFilters({ filters }: { filters: any }) {
                 {filters?.countries?.nodes?.map((t: any) => (
                   <button 
                     key={t.slug}
-                    className={`opt-btn ${searchParams.get('country') === t.slug ? 'active' : ''}`}
+                    className={`opt-btn ${currentCountry === t.slug ? 'active' : ''}`}
                     onClick={() => handleSelect('country', t.slug)}
                   >
                     {t.name}
@@ -125,7 +127,7 @@ export default function MagazineFilters({ filters }: { filters: any }) {
             <div className="sidebar-acc-content">
               <div className="filter-options-grid">
                 <button 
-                  className={`opt-btn ${!searchParams.get('series') ? 'active' : ''}`}
+                  className={`opt-btn ${!currentSeries ? 'active' : ''}`}
                   onClick={() => handleSelect('series', "")}
                 >
                   All Series
@@ -133,7 +135,7 @@ export default function MagazineFilters({ filters }: { filters: any }) {
                 {filters?.series?.nodes?.map((t: any) => (
                   <button 
                     key={t.slug}
-                    className={`opt-btn ${searchParams.get('series') === t.slug ? 'active' : ''}`}
+                    className={`opt-btn ${currentSeries === t.slug ? 'active' : ''}`}
                     onClick={() => handleSelect('series', t.slug)}
                   >
                     {t.name}

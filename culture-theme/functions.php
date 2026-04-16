@@ -552,3 +552,44 @@ add_action( 'graphql_register_types', function() {
         }
     ] );
 } );
+
+/**
+ * Redirect WordPress taxonomy pages to Next.js SEO-optimized clean URLs.
+ */
+function moveee_redirect_taxonomies() {
+    $queried = get_queried_object();
+    if ( ! $queried || ! isset( $queried->taxonomy ) || ! isset( $queried->slug ) ) {
+        return;
+    }
+
+    $tax  = $queried->taxonomy;
+    $slug = $queried->slug;
+    
+    // Use MOVE_FRONTEND_URL constant if defined (for local testing), otherwise default to production
+    $frontend_url = defined('MOVE_FRONTEND_URL') ? MOVE_FRONTEND_URL : 'https://themoveee.com';
+    $redirect_url = '';
+
+    if ( $tax === 'category' ) {
+        $redirect_url = $frontend_url . '/magazine/category/' . $slug;
+    } elseif ( $tax === 'post_tag' ) {
+        $redirect_url = $frontend_url . '/magazine/tag/' . $slug;
+    } elseif ( $tax === 'series' ) {
+        $redirect_url = $frontend_url . '/magazine/series/' . $slug;
+    } elseif ( $tax === 'industry' || $tax === 'industries' ) {
+        $redirect_url = $frontend_url . '/magazine/industry/' . $slug;
+    } elseif ( $tax === 'country' || $tax === 'countries' ) {
+        $redirect_url = $frontend_url . '/magazine/country/' . $slug;
+    } elseif ( $tax === 'product_cat' ) {
+        $redirect_url = $frontend_url . '/shop/category/' . $slug;
+    } elseif ( $tax === 'product_tag' ) {
+        $redirect_url = $frontend_url . '/shop/tag/' . $slug;
+    } elseif ( $tax === 'product_brand' ) {
+        $redirect_url = $frontend_url . '/shop/brand/' . $slug;
+    }
+
+    if ( ! empty( $redirect_url ) ) {
+        wp_redirect( $redirect_url, 301 );
+        exit;
+    }
+}
+add_action( 'template_redirect', 'moveee_redirect_taxonomies' );

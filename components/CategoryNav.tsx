@@ -59,7 +59,7 @@ export default function CategoryNav({ categories, currentCategory, activeFilter 
         return (
           <Link 
             key={cat.name} 
-            href={cat.slug ? `/magazine?category=${cat.slug}` : "/magazine"} 
+            href={cat.slug ? `/magazine/category/${cat.slug}` : "/magazine"} 
             style={{ textDecoration: 'none' }}
             onClick={handleLinkClick}
           >

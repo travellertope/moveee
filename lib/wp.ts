@@ -1,4 +1,4 @@
-const WP_GRAPHQL_URL = "https://cms.themoveee.com/graphql";
+const WP_GRAPHQL_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || "https://cms.themoveee.com/graphql";
 
 export async function getWPData(query: string, variables = {}, options: any = {}) {
   try {
@@ -440,8 +440,8 @@ const PRODUCT_FIELDS_FRAGMENT = `
 export const PRODUCT_FIELDS = PRODUCT_FIELDS_FRAGMENT;
 
 export const GET_PRODUCTS = `
-  query GetProducts($first: Int) {
-    products(first: $first) {
+  query GetProducts($first: Int, $category: String, $tag: String, $brand: String) {
+    products(first: $first, where: { category: $category, tag: $tag, brand: $brand }) {
       nodes {
         ...ProductFields
       }

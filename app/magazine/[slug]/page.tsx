@@ -116,7 +116,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         // Exclude direct media assets
         if (path.startsWith('wp-content/')) return match;
         // Map native categorisation
-        if (path.startsWith('category/')) return `href="/magazine?category=${path.replace('category/', '').replace(/\/$/, '')}"`;
+        if (path.startsWith('category/')) return `href="/magazine/category/${path.replace('category/', '').replace(/\/$/, '')}"`;
         if (path.startsWith('author/')) return `href="/author/${path.replace('author/', '')}"`;
         // Preserve known Next.js app routes
         const topSegment = path.split('/')[0];
@@ -139,7 +139,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           <div className="breadcrumb overlay">
             <Link href="/">Home</Link><span className="sep">/</span>
             <Link href="/magazine">Magazine</Link><span className="sep">/</span>
-            <Link href={`/magazine?category=${categorySlug}`}>{categoryName}</Link><span className="sep">/</span>
+            <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep">/</span>
             <span className="breadcrumb-current">{post.title}</span>
           </div>
           <Image
@@ -190,7 +190,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           <div className="breadcrumb">
             <Link href="/">Home</Link><span className="sep">/</span>
             <Link href="/magazine">Magazine</Link><span className="sep">/</span>
-            <Link href={`/magazine?category=${categorySlug}`}>{categoryName}</Link><span className="sep">/</span>
+            <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep">/</span>
             <span className="breadcrumb-current">{post.title}</span>
           </div>
           <header className="standard-hero">
