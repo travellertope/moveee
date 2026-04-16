@@ -83,7 +83,7 @@ export default async function ChapterSinglePage({ params }: { params: Promise<{ 
                     date={new Date(event.date).toLocaleDateString("en-GB", { day: "numeric", month: "long" })}
                     location={event.location || "Venue TBA"}
                     time="18:00" // Default time
-                    category={event.categories?.nodes[0]?.name || "Chapter Event"}
+                    category={event.cultureInterests?.nodes[0]?.name || "Chapter Event"}
                     image={event.featuredImage?.node?.sourceUrl}
                   />
                 ))}

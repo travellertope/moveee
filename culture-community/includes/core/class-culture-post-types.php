@@ -47,16 +47,18 @@ class Culture_Post_Types {
             ) );
         }
 
-        // Event fields on Post type (to support both standard posts and culture_event CPT in StoryFields)
         $event_fields = array(
-            'location'    => array( 'type' => 'String', 'meta_key' => 'location' ),
-            'eventLocation' => array( 'type' => 'String', 'meta_key' => 'location' ), // alias
-            'eventDate'   => array( 'type' => 'String', 'meta_key' => '_culture_event_date' ),
-            'isFeatured'  => array( 'type' => 'Boolean', 'meta_key' => 'is_featured' ),
-            'admission'   => array( 'type' => 'String', 'meta_key' => 'admission' ),
-            'isPhysical'  => array( 'type' => 'Boolean', 'meta_key' => '_culture_is_physical' ),
+            'location'      => array( 'type' => 'String',  'meta_key' => 'location' ),
+            'eventLocation' => array( 'type' => 'String',  'meta_key' => 'location' ), // alias
+            'eventDate'     => array( 'type' => 'String',  'meta_key' => '_culture_event_date' ),
+            'isFeatured'    => array( 'type' => 'Boolean', 'meta_key' => 'is_featured' ),
+            'admission'     => array( 'type' => 'String',  'meta_key' => 'admission' ),
+            'isPhysical'    => array( 'type' => 'Boolean', 'meta_key' => '_culture_is_physical' ),
+            'chapterId'     => array( 'type' => 'Int',     'meta_key' => '_culture_chapter_id' ),
+            'capacity'      => array( 'type' => 'Int',     'meta_key' => '_culture_capacity' ),
         );
 
+        // Event fields on Post type (backwards-compat)
         foreach ( $event_fields as $field_name => $config ) {
             $meta_key = $config['meta_key'];
             $type     = $config['type'];
@@ -65,6 +67,7 @@ class Culture_Post_Types {
                 'resolve' => function( $post ) use ( $meta_key, $type ) {
                     $value = get_post_meta( $post->databaseId, $meta_key, true );
                     if ( $type === 'Boolean' ) return (bool) $value;
+                    if ( $type === 'Int' ) return (int) $value;
                     return (string) $value;
                 },
             ) );
@@ -79,6 +82,7 @@ class Culture_Post_Types {
                 'resolve' => function( $post ) use ( $meta_key, $type ) {
                     $value = get_post_meta( $post->databaseId, $meta_key, true );
                     if ( $type === 'Boolean' ) return (bool) $value;
+                    if ( $type === 'Int' ) return (int) $value;
                     return (string) $value;
                 },
             ) );
@@ -88,6 +92,8 @@ class Culture_Post_Types {
         $chapter_fields = array(
             'latitude'  => array( 'type' => 'String', 'meta_key' => '_culture_location_lat' ),
             'longitude' => array( 'type' => 'String', 'meta_key' => '_culture_location_lng' ),
+            'lat'       => array( 'type' => 'String', 'meta_key' => '_culture_location_lat' ), // alias
+            'lng'       => array( 'type' => 'String', 'meta_key' => '_culture_location_lng' ), // alias
             'leaderId'  => array( 'type' => 'Int',    'meta_key' => '_culture_chapter_leader_id' ),
         );
 
@@ -178,14 +184,14 @@ class Culture_Post_Types {
                 'search_items'       => __( 'Search Chapters', 'culture-community' ),
                 'not_found'          => __( 'No chapters found', 'culture-community' ),
             ),
-            'public'       => true,
-            'has_archive'  => true,
-            'show_in_menu' => 'culture-community',
-            'menu_icon'    => 'dashicons-location-alt',
-            'supports'     => array( 'title', 'editor', 'thumbnail' ),
-            'rewrite'      => array( 'slug' => 'chapters' ),
-            'show_in_rest' => true,
-            'capability_type' => 'post',
+            'public'              => true,
+            'has_archive'         => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-location-alt',
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+            'rewrite'             => array( 'slug' => 'chapters' ),
+            'show_in_rest'        => true,
+            'capability_type'     => 'post',
             // WPGraphQL support.
             'show_in_graphql'     => true,
             'graphql_single_name' => 'cultureChapter',
@@ -205,14 +211,14 @@ class Culture_Post_Types {
                 'search_items'       => __( 'Search Events', 'culture-community' ),
                 'not_found'          => __( 'No events found', 'culture-community' ),
             ),
-            'public'       => true,
-            'has_archive'  => true,
-            'show_in_menu' => 'culture-community',
-            'menu_icon'    => 'dashicons-calendar-alt',
-            'supports'     => array( 'title', 'editor', 'thumbnail' ),
-            'rewrite'      => array( 'slug' => 'events' ),
-            'show_in_rest' => true,
-            'capability_type' => 'post',
+            'public'              => true,
+            'has_archive'         => true,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-calendar-alt',
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+            'rewrite'             => array( 'slug' => 'events' ),
+            'show_in_rest'        => true,
+            'capability_type'     => 'post',
             // WPGraphQL support.
             'show_in_graphql'     => true,
             'graphql_single_name' => 'cultureEvent',
