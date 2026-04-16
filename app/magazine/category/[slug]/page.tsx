@@ -1,5 +1,5 @@
 import React from "react";
-import MagazineArchiveWrapper from "../../../MagazineArchiveWrapper";
+import MagazineArchiveWrapper from "../../MagazineArchiveWrapper";
 import { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
