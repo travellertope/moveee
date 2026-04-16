@@ -336,7 +336,7 @@ const EVENT_FIELDS_FRAGMENT = `
 
 export const GET_EVENTS = `
   query GetEvents($first: Int) {
-    cultureEvents(first: $first, where: { status: PUBLISH }) {
+    cultureEvents(first: $first) {
       nodes {
         ...EventFields
       }
@@ -640,7 +640,7 @@ const CHAPTER_FIELDS_FRAGMENT = `
 
 export const GET_CHAPTERS = `
   query GetChapters($first: Int) {
-    cultureChapters(first: $first, where: { status: PUBLISH }) {
+    cultureChapters(first: $first) {
       nodes {
         ...ChapterFields
       }
