@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getEventsWithFallback } from "@/lib/events";
+import { getEventsWithFallback } from "@/lib/wp";
 import EventHero from "./components/EventHero";
 import SpotlightCard from "./components/SpotlightCard";
 import EventCard from "./components/EventCard";
