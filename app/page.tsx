@@ -224,18 +224,19 @@ export default async function Home() {
                 const targetDate = event.eventDate || event.date;
                 const eventDate = new Date(targetDate);
                 return (
-                  <article key={event.id} className="event-card">
-                    <div className="event-date">
-                      <span className="day">{eventDate.getDate().toString().padStart(2, '0')}</span>
-                      <span className="month">{eventDate.toLocaleDateString('en-GB', { month: 'short' })}</span>
-                    </div>
-                    <h4>{event.title}</h4>
-                    <div className="event-meta">
-                      <div dangerouslySetInnerHTML={{ __html: event.excerpt }} className="line-clamp-2" />
-                    </div>
-                    {/* Link to events page */}
-                    <Link href={`/events`} className="event-tag">RSVP</Link>
-                  </article>
+                  <Link key={event.id} href={`/events/${event.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <article className="event-card">
+                      <div className="event-date">
+                        <span className="day">{eventDate.getDate().toString().padStart(2, '0')}</span>
+                        <span className="month">{eventDate.toLocaleDateString('en-GB', { month: 'short' })}</span>
+                      </div>
+                      <h4>{event.title}</h4>
+                      <div className="event-meta">
+                        <div dangerouslySetInnerHTML={{ __html: event.excerpt }} className="line-clamp-2" />
+                      </div>
+                      <span className="event-tag">RSVP</span>
+                    </article>
+                  </Link>
                 );
               })}
             </div>
