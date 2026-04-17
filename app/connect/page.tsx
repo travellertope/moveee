@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import "../sections.css";
+import PatronPrice from "@/components/PatronPrice";
 
 export const metadata = {
   title: "Join the Community",
@@ -39,7 +40,7 @@ export default async function ConnectPage() {
             {session ? (
               <p className="con-price">Welcome back, {session.user?.name}</p>
             ) : (
-              <p className="con-price">Citizen — Free · Patron — $80 / year</p>
+              <p className="con-price">Citizen — Free · <PatronPrice variant="yearly" showTierLabel={true} /></p>
             )}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -85,7 +86,9 @@ export default async function ConnectPage() {
         <div className="con-tier-card con-tier-card--patron">
           <div className="con-tier-label">Premium</div>
           <h2 className="con-tier-name">Patron</h2>
-          <div className="con-tier-price">$80 / year · Cancel anytime</div>
+          <div className="con-tier-price">
+            <PatronPrice variant="yearly" /> / <PatronPrice variant="monthly" /> · Cancel anytime
+          </div>
           <ul className="con-tier-perks">
             <li>Everything in Citizen</li>
             <li>Physical events in your chapter</li>

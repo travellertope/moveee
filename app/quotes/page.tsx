@@ -19,32 +19,33 @@ export default async function QuoteHub() {
   return (
     <div className="quote-hub">
       <header className="quote-header">
-        <div className="num">N°0X</div>
         <h1>Moveee <em>Quotes</em></h1>
         <p>
           A collective archive of words that move us. From African literature to global cinema, captured by the community.
         </p>
         
-        <div className="search-wrap max-w-xl mx-auto mb-12">
+        <div className="search-wrap max-w-xl mx-auto">
           <input 
             type="search" 
             placeholder="Search quotes, authors or sources..." 
-            className="w-full px-6 py-4 border-b border-rule bg-transparent font-light focus:outline-none focus:border-gold transition-colors"
+            className="w-full px-6 py-4 border-b border-rule bg-transparent font-light focus:outline-none focus:border-gold transition-colors text-white"
           />
         </div>
       </header>
 
-      <section className="quote-grid">
-        {quotes.length > 0 ? (
-          quotes.map((quote: any) => (
-            <QuoteCard key={quote.id} quote={quote} />
-          ))
-        ) : (
-          <div className="col-span-full py-32 text-center text-ink-soft italic bg-paper">
-            No quotes have been shared yet. Be the first to move the community.
-          </div>
-        )}
-      </section>
+      <main className="quote-body-wrap">
+        <section className="quote-grid">
+          {quotes.length > 0 ? (
+            quotes.map((quote: any) => (
+              <QuoteCard key={quote.id} quote={quote} />
+            ))
+          ) : (
+            <div className="col-span-full py-32 text-center text-ink-soft italic bg-paper">
+              No quotes have been shared yet. Be the first to move the community.
+            </div>
+          )}
+        </section>
+      </main>
 
       <SubmitQuoteTrigger />
     </div>

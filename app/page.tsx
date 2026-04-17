@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getWPData, GET_STORIES, GET_JOURNEYS, getEventsWithFallback } from "@/lib/wp";
 import Marquee from "@/components/Marquee";
+import PatronPrice from "@/components/PatronPrice";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -376,7 +377,7 @@ export default async function Home() {
               ) : (
                 <>
                   <Link href="/connect" className="btn-gold">Join Now <span className="arrow">→</span></Link>
-                  <div className="connect-price">$80 / year (Cancel anytime)</div>
+                  <div className="connect-price"><PatronPrice variant="yearly" /> (Cancel anytime)</div>
                 </>
               )}
             </div>

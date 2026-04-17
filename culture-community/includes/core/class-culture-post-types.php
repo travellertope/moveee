@@ -281,23 +281,38 @@ class Culture_Post_Types {
             }
         }
 
-        // 7. Directory Profile Extensions
-        register_graphql_field( 'CultureDirectory', 'websiteUrl', array(
-            'type'    => 'String',
-            'resolve' => function( $post ) { 
-                return function_exists('get_field') ? get_field( 'website_url', $post->databaseId ) : get_post_meta($post->databaseId, 'website_url', true); 
-            },
-        ) );
-        register_graphql_field( 'CultureDirectory', 'instagramHandle', array(
-            'type'    => 'String',
-            'resolve' => function( $post ) { 
-                return function_exists('get_field') ? get_field( 'instagram_handle', $post->databaseId ) : get_post_meta($post->databaseId, 'instagram_handle', true); 
-            },
-        ) );
         register_graphql_field( 'CultureDirectory', 'twitterHandle', array(
             'type'    => 'String',
             'resolve' => function( $post ) { 
                 return function_exists('get_field') ? get_field( 'twitter_handle', $post->databaseId ) : get_post_meta($post->databaseId, 'twitter_handle', true); 
+            },
+        ) );
+        
+        // 8. Global Membership Settings
+        register_graphql_object_type( 'CultureMembershipSettings', array(
+            'description' => __( 'Global membership pricing and tier labels', 'culture-community' ),
+            'fields'      => array(
+                'patronLabel' => array( 'type' => 'String' ),
+                'citizenLabel' => array( 'type' => 'String' ),
+                'monthlyNgn'  => array( 'type' => 'Int' ),
+                'yearlyNgn'   => array( 'type' => 'Int' ),
+                'monthlyUsd'  => array( 'type' => 'Int' ),
+                'yearlyUsd'   => array( 'type' => 'Int' ),
+            ),
+        ) );
+
+        register_graphql_field( 'RootQuery', 'membershipSettings', array(
+            'type'    => 'CultureMembershipSettings',
+            'resolve' => function() {
+                if ( ! class_exists( 'Culture_Settings' ) ) return null;
+                return array(
+                    'patronLabel' => Culture_Settings::get( 'culture_patron_label' ),
+                    'citizenLabel' => Culture_Settings::get( 'culture_citizen_label' ),
+                    'monthlyNgn'  => Culture_Settings::get( 'culture_paystack_amount_monthly_ngn' ),
+                    'yearlyNgn'   => Culture_Settings::get( 'culture_paystack_amount_yearly_ngn' ),
+                    'monthlyUsd'  => Culture_Settings::get( 'culture_paystack_amount_monthly_usd' ),
+                    'yearlyUsd'   => Culture_Settings::get( 'culture_paystack_amount_yearly_usd' ),
+                );
             },
         ) );
 

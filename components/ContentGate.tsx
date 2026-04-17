@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { AccessLevel } from "@/lib/access";
+import PatronPrice from "./PatronPrice";
 
 interface ContentGateProps {
   /** The access level required — never "public" (those don't need a gate). */
@@ -31,7 +31,7 @@ export default function ContentGate({ accessLevel, isLoggedIn }: ContentGateProp
   let body: string;
   let primaryBtn: { label: string; href: string };
   let secondaryBtn: { label: string; href: string } | null;
-  let footnote: string;
+  let footnote: React.ReactNode;
 
   if (isPatronGate && !isLoggedIn) {
     tierLabel = "Patron Members";
@@ -40,7 +40,11 @@ export default function ContentGate({ accessLevel, isLoggedIn }: ContentGateProp
       "Become a Patron to read this and all exclusive long-form content — plus in-person events, dual chapter membership, priority RSVPs, and more.";
     primaryBtn = { label: "Become a Patron →", href: "/register?tier=patron" };
     secondaryBtn = { label: "Sign in", href: "/login" };
-    footnote = "Patron · $80 / year · Cancel anytime";
+    footnote = (
+      <span>
+        Patron · <PatronPrice variant="yearly" /> · Cancel anytime
+      </span>
+    );
   } else if (isPatronGate && isLoggedIn) {
     // Logged in as Citizen (if they were Patron, canViewContent would be true)
     tierLabel = "Patron Members";
@@ -49,7 +53,11 @@ export default function ContentGate({ accessLevel, isLoggedIn }: ContentGateProp
       "Upgrade your membership to unlock this piece and all exclusive Patron content — plus in-person events and dual chapter access.";
     primaryBtn = { label: "Upgrade to Patron →", href: "/connect" };
     secondaryBtn = null;
-    footnote = "$80 / year · Cancel anytime";
+    footnote = (
+      <span>
+        <PatronPrice variant="yearly" /> · Cancel anytime
+      </span>
+    );
   } else {
     // member-only + visitor (logged-in members never see this state)
     tierLabel = "Members";

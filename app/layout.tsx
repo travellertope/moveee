@@ -10,7 +10,9 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 import SessionProvider from "@/components/SessionProvider";
+import { headers } from "next/headers";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -70,6 +72,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const siteData = await getWPData(GET_SITE_SETTINGS);
+  const headersList = headers();
+  const country = headersList.get("x-vercel-ip-country") || "US";
 
   return (
     <html lang="en" className="scroll-smooth">
@@ -77,12 +81,17 @@ export default async function RootLayout({
         className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}
       >
         <SessionProvider>
-          <LanguageProvider>
-            <Header siteSettings={siteData} />
-            <main>{children}</main>
-            <Footer />
-            <CookieConsent />
-          </LanguageProvider>
+          <CurrencyProvider 
+            detectedCountry={country} 
+            initialPricing={siteData?.membershipSettings || null}
+          >
+            <LanguageProvider>
+              <Header siteSettings={siteData} />
+              <main>{children}</main>
+              <Footer />
+              <CookieConsent />
+            </LanguageProvider>
+          </CurrencyProvider>
         </SessionProvider>
       </body>
     </html>
