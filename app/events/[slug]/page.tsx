@@ -2,10 +2,50 @@ import { getEventBySlugWithFallback } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Metadata } from "next";
 import RSVPForm from "../components/RSVPForm";
 import "@/app/events.css";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  let event: any = null;
+  try {
+    event = await getEventBySlugWithFallback(slug, { revalidate: 0 });
+  } catch { /* CMS unreachable */ }
+
+  if (!event) {
+    return {
+      title: "Event Not Found | The Moveee",
+      description: "This event could not be found.",
+    };
+  }
+
+  const dateRaw = event.eventDate || event.date || new Date().toISOString();
+  const dateObj = new Date(dateRaw);
+  const dateFormatted = !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "TBA";
+  const location = event.location || "Venue TBA";
+  const excerpt = event.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160) || event.tagline || "A curated cultural event from The Moveee";
+
+  return {
+    title: `${event.title} · ${dateFormatted} · ${location} | The Moveee Events`,
+    description: excerpt,
+    openGraph: {
+      title: event.title,
+      description: excerpt,
+      url: `https://themoveee.com/events/${slug}`,
+      type: "event",
+      images: event.featuredImage?.node?.sourceUrl ? [{ url: event.featuredImage.node.sourceUrl, width: 1200, height: 630 }] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: event.title,
+      description: excerpt,
+      images: event.featuredImage?.node?.sourceUrl ? [event.featuredImage.node.sourceUrl] : [],
+    },
+  };
+}
 
 export default async function EventPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -22,7 +62,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const dateObj = new Date(dateRaw);
   const dateValid = !isNaN(dateObj.getTime()) ? dateObj : new Date();
   const dateFormatted = dateValid.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-  
+
   const endObj = event.endDate ? new Date(event.endDate) : null;
   const endFormatted = (endObj && !isNaN(endObj.getTime())) ? endObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
 
@@ -38,7 +78,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       <section className="event-hero">
         {img && <Image src={img} alt={event.title} fill className="hero-image" priority />}
         <div className="hero-overlay" />
-        
+
         <div className="hero-content">
           <div className="hero-eyebrow">
             <span className="pill">● Upcoming</span>
@@ -71,15 +111,15 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               </div>
             ))}
           <div className="hero-cta-group">
-            <a 
+            <a
               href="#programme-section"
-              className="btn-outline" 
+              className="btn-outline"
             >
               View schedule
             </a>
-            <a 
+            <a
               href="#rsvp-section"
-              className="btn-primary" 
+              className="btn-primary"
             >
               RSVP Now →
             </a>
@@ -185,15 +225,15 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         <aside className="sidebar">
           <div className="rsvp-card" id="rsvp-section">
             <div className="top-label">RSVP · {dateFormatted}</div>
-            
+
             {event.ticketingUrl ? (
               <>
                 <h3 className="mb-4">Secure your <em>ticket</em></h3>
                 <div className="event-date mb-10">{event.location} · {event.admission || "Paid Entry"}</div>
-                <a 
-                  href={event.ticketingUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href={event.ticketingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="btn-primary w-full text-center block"
                 >
                   Buy Ticket Now →
@@ -204,7 +244,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <>
                 <h3>Secure your <em>place</em></h3>
                 <div className="event-date">{event.location} · {event.openingHours || "Doors from 18:00"}</div>
-                
+
                 <div className="rsvp-form mt-8">
                   <RSVPForm eventSlug={event.slug} eventTitle={event.title} />
                 </div>
@@ -243,7 +283,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <div className="section-label !border-paper/10">The exhibition</div>
             <h3>On view through<br/><em>{endFormatted || dateFormatted}</em></h3>
             <p>Admission is free and strictly by RSVP for the opening night. The archive remains open for visitors thereafter during regular gallery hours.</p>
-            
+
             <div className="run-dates">
               <div className="run-date-item">
                 <div className="d-label opacity-40 uppercase text-[9px] font-mono">Opens</div>
@@ -255,7 +295,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               </div>
             </div>
           </div>
-          
+
           <div className="relative aspect-[3/4] bg-ochre-deep overflow-hidden">
             {img && <Image src={img} alt="Gallery" fill className="object-cover opacity-60 mix-blend-multiply" />}
           </div>
