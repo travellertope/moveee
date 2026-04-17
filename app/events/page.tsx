@@ -61,53 +61,39 @@ export default async function EventsPage() {
   return (
     <div className="events-page bg-paper pb-24">
       {/* ── HERO ── */}
-      <EventHero
-        title="Moveee<br/><em>Events</em>."
+      <EventHero 
+        title="Moveee<br><em>Events</em>."
         standfirst="Curated openings, listening sessions, film screenings, supper clubs and community gatherings — across Africa and the diaspora. Not everything happens online."
-        stats={(() => {
-          const venues = new Set(
-            events
-              .map(e => (e.location || "").trim())
-              .filter((c): c is string => Boolean(c))
-          );
-          const featured = events.filter(e => e.isFeatured).length;
-          const all: { num: string | number; label: string }[] = [
-            { num: events.length, label: `Events · ${new Date().getFullYear()}` },
-          ];
-          if (venues.size > 0) {
-            all.push({ num: String(venues.size).padStart(2, "0"), label: venues.size === 1 ? "Venue on the map" : "Venues on the map" });
-          }
-          if (featured > 0) {
-            all.push({ num: String(featured).padStart(2, "0"), label: featured === 1 ? "Featured experience" : "Featured experiences" });
-          }
-          return all;
-        })()}
+        stats={[
+          { num: events.length, label: `Events · ${new Date().getFullYear()}` },
+          { num: "06", label: "Cities this quarter" },
+          { num: "04", label: "Members-only experiences" }
+        ]}
       />
 
       <Marquee />
 
       {/* ── SPOTLIGHT ── */}
-      {spotlightEvent && (() => {
-        const d = new Date(spotlightEvent.eventDate || spotlightEvent.date || Date.now());
-        const valid = !isNaN(d.getTime());
-        const time = valid
-          ? d.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: false })
-          : "TBA";
-        return (
-          <SpotlightCard
-            slug={spotlightEvent.slug}
-            title={spotlightEvent.title}
-            subtitle={spotlightEvent.tagline || spotlightEvent.excerpt?.replace(/<[^>]*>/g, "").trim().slice(0, 140)}
-            date={valid ? d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "TBA Date"}
-            dayName={valid ? d.toLocaleDateString("en-GB", { weekday: "long" }) : ""}
-            venue={spotlightEvent.location || "Venue TBA"}
-            time={time === "00:00" ? "TBA" : time}
-            admission={spotlightEvent.admission || "Free · RSVP required"}
-            image={spotlightEvent.featuredImage?.node?.sourceUrl}
-            statusBadge="Featured"
-          />
-        );
-      })()}
+      {spotlightEvent && (
+        <SpotlightCard 
+          slug={spotlightEvent.slug}
+          title={spotlightEvent.title}
+          subtitle={spotlightEvent.excerpt?.replace(/<[^>]*>/g, "").slice(0, 120)}
+          date={(() => {
+            const d = new Date(spotlightEvent.eventDate || spotlightEvent.date || Date.now());
+            return isNaN(d.getTime()) ? "TBA Date" : d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+          })()}
+          dayName={(() => {
+            const d = new Date(spotlightEvent.eventDate || spotlightEvent.date || Date.now());
+            return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB", { weekday: "long" });
+          })()}
+          venue={spotlightEvent.location || "Venue TBA"}
+          time="Doors 6 PM"
+          admission={spotlightEvent.admission || "Free · RSVP required"}
+          image={spotlightEvent.featuredImage?.node?.sourceUrl}
+          statusBadge="Featured"
+        />
+      )}
 
       {/* ── FILTERS (Placholder for now) ── */}
       <div className="filter-bar">
@@ -139,27 +125,23 @@ export default async function EventsPage() {
               </div>
 
               <div className="events-grid">
-                {group.events.map((event) => {
-                  const d = new Date(event.eventDate || event.date || Date.now());
-                  const valid = !isNaN(d.getTime());
-                  const time = valid
-                    ? d.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: false })
-                    : "";
-                  return (
-                    <EventCard
-                      key={event.id}
-                      slug={event.slug}
-                      title={event.title}
-                      date={valid ? d.toLocaleDateString("en-GB", { day: "numeric", month: "long" }) : "TBA Date"}
-                      location={event.location || "Location TBA"}
-                      time={time && time !== "00:00" ? time : "All day"}
-                      category={Array.isArray(event.cultureInterests?.nodes) && event.cultureInterests.nodes.length > 0 ? event.cultureInterests.nodes[0].name : "Culture"}
-                      image={event.featuredImage?.node?.sourceUrl}
-                      status={event.status || 'upcoming'}
-                      tags={[event.admission ? event.admission : 'RSVP']}
-                    />
-                  );
-                })}
+                {group.events.map((event) => (
+                  <EventCard 
+                    key={event.id}
+                    slug={event.slug}
+                    title={event.title}
+                    date={(() => {
+                      const d = new Date(event.eventDate || event.date || Date.now());
+                      return isNaN(d.getTime()) ? "TBA Date" : d.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+                    })()}
+                    location={event.location || "Lagos, Nigeria"}
+                    time="18:00 – 21:00"
+                    category={Array.isArray(event.cultureInterests?.nodes) && event.cultureInterests.nodes.length > 0 ? event.cultureInterests.nodes[0].name : "Culture"}
+                    image={event.featuredImage?.node?.sourceUrl}
+                    status={event.status || 'upcoming'}
+                    tags={['RSVP']}
+                  />
+                ))}
               </div>
             </div>
           ))
