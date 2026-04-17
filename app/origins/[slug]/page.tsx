@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   let journey: any = null;
   try {
-    const data = await getWPData(GET_JOURNEY_BY_SLUG, { slug });
+    const data = await getWPData(GET_JOURNEY_BY_SLUG, { slug }, { revalidate: 0 });
     journey = data?.cultureJourney ?? null;
   } catch { /* CMS unreachable */ }
 
@@ -50,9 +50,11 @@ export default async function JourneyPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   let journey: any = null;
   try {
-    const data = await getWPData(GET_JOURNEY_BY_SLUG, { slug });
+    const data = await getWPData(GET_JOURNEY_BY_SLUG, { slug }, { revalidate: 0 });
     journey = data?.cultureJourney ?? null;
-  } catch { /* CMS unreachable */ }
+  } catch (error) {
+    console.error('Error fetching journey:', error);
+  }
 
   if (!journey) notFound();
 

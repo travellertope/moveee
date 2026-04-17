@@ -14,9 +14,11 @@ export const metadata = {
 export default async function OriginsPage() {
   let journeys: any[] = [];
   try {
-    const data = await getWPData(GET_JOURNEYS, { first: 24 });
+    const data = await getWPData(GET_JOURNEYS, { first: 24 }, { revalidate: 0 });
     journeys = data?.cultureJourneys?.nodes ?? [];
-  } catch { /* CMS unreachable */ }
+  } catch (error) {
+    console.error('Error fetching journeys:', error);
+  }
 
   const currentJourney = journeys.find(j => j.journeyStatus === 'active') || journeys[0];
   const otherJourneys = currentJourney ? journeys.filter(j => j.id !== currentJourney.id) : journeys;
