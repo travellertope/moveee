@@ -1,62 +1,54 @@
 /* ORIGINS PAGE STYLES */
 
-/* ── HERO (Light Theme) ── */
+/* ── HERO (Magazine Style) ── */
 .origins-hero {
-  background: var(--paper);
-  padding: 60px 0;
+  border-bottom: 2px solid var(--rule);
   position: relative;
-  z-index: 2;
-}
-
-.origins-hero svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.03;
-  z-index: 0;
+  z-index: 100000;
+  background: var(--paper);
 }
 
 .origins-hero-inner {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 60px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
-  align-items: flex-start;
-  position: relative;
-  z-index: 1;
+  padding: 32px 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 48px;
 }
 
-.origins-hero-inner > div:last-child {
-  padding-top: 8px;
+.origins-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 48px;
 }
 
-.origins-hero h1 {
-  font-family: 'Fraunces', serif;
-  font-size: clamp(52px, 6vw, 88px);
+.origins-hero-title {
+  font-size: clamp(40px, 4vw, 64px);
   font-weight: 300;
-  line-height: 0.95;
-  letter-spacing: -0.02em;
-  color: var(--ink);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin: 0;
   white-space: nowrap;
-  margin-bottom: 0;
-}
-
-.origins-hero h1 em {
-  font-style: italic;
-  color: inherit;
-  font-size: 1em;
-}
-
-.origins-hero-standfirst {
   font-family: 'Fraunces', serif;
-  font-size: clamp(17px, 2vw, 24px);
+}
+
+.origins-hero-title em {
+  font-style: italic;
+  color: var(--ochre);
+}
+
+.origins-hero-desc {
+  font-family: 'Fraunces', serif;
+  font-size: 15px;
   font-weight: 300;
   font-style: italic;
-  color: var(--ink);
+  color: var(--mute);
   line-height: 1.55;
+  max-width: 340px;
+  padding-left: 40px;
+  border-left: 1px solid rgba(42,36,28,0.15);
   margin: 0;
 }
 
@@ -187,6 +179,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  background: var(--paper);
 }
 
 .origins-cj-label {
@@ -211,7 +204,7 @@
   font-family: 'Fraunces', serif;
   font-size: clamp(42px, 4.5vw, 78px);
   font-weight: 300;
-  color: var(--paper);
+  color: var(--ink);
   margin-bottom: 10px;
   line-height: 0.9;
   letter-spacing: -0.02em;
@@ -227,7 +220,7 @@
   font-size: 17px;
   font-weight: 300;
   font-style: italic;
-  color: rgba(243,236,224,.6);
+  color: var(--ink-soft);
   margin-bottom: 40px;
   line-height: 1.55;
   max-width: 460px;
@@ -245,7 +238,7 @@
   font-size: 9px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(243,236,224,.35);
+  color: var(--mute);
   margin-bottom: 6px;
 }
 
@@ -253,7 +246,7 @@
   font-family: 'Fraunces', serif;
   font-size: 17px;
   font-style: italic;
-  color: var(--paper);
+  color: var(--ink);
 }
 
 .origins-cj-bar-label {
@@ -263,7 +256,7 @@
   font-size: 9px;
   letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: rgba(243,236,224,.4);
+  color: var(--mute);
   margin-bottom: 8px;
 }
 
@@ -273,7 +266,7 @@
 
 .origins-cj-bar {
   height: 2px;
-  background: rgba(243,236,224,.1);
+  background: rgba(42,36,28,.1);
   margin-bottom: 32px;
 }
 
@@ -1776,9 +1769,25 @@
 
 @media (max-width: 768px) {
   .origins-hero-inner {
-    grid-template-columns: 1fr;
-    padding: 0 24px;
-    gap: 24px;
+    padding: 32px 24px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .origins-hero-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .origins-hero-title {
+    white-space: normal;
+    font-size: 42px;
+  }
+  .origins-hero-desc {
+    padding-left: 0;
+    border-left: none;
+    font-size: 14px;
+    max-width: 100%;
   }
   .origins-manifesto,
   .origins-journeys-section,
