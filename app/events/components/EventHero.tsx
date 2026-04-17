@@ -103,11 +103,7 @@ const EventHero: React.FC<EventHeroProps> = ({
       </svg>
 
       <div className="hero-inner">
-        <div>
-          <div className="hero-eyebrow" style={{ color: theme.accent }}>{issueNo} · Culture Happenings</div>
-          <h1 className="hero-title" dangerouslySetInnerHTML={{ __html: title }} />
-        </div>
-
+        <h1 className="hero-title" dangerouslySetInnerHTML={{ __html: title }} />
         <div>
           {standfirst && <p className="hero-standfirst">{standfirst}</p>}
         </div>
