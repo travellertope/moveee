@@ -328,10 +328,57 @@ const JOURNEY_FIELDS_FRAGMENT = `
     slug
     date
     excerpt
+    content
     featuredImage {
       node {
         sourceUrl
         altText
+      }
+    }
+    journeyMeta {
+      journeyEdition
+      journeyDates
+      journeyLocation
+      journeyPrice
+      journeySpots
+      journeyItinerary {
+        dayNumber
+        dayTitle
+        dayLocation
+        dayDescription
+        activities {
+          activityTime
+          activityTitle
+          activityDescription
+          activityType
+        }
+      }
+      journeyHosts {
+        hostName
+        hostRole
+        hostBio
+        hostImage {
+          sourceUrl
+        }
+      }
+      journeyInclusions
+      journeyExclusions
+      journeyStatus
+    }
+    categories {
+      nodes {
+        name
+        slug
+      }
+    }
+    countries {
+      nodes {
+        name
+      }
+    }
+    author {
+      node {
+        name
       }
     }
   }
