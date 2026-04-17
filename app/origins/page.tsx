@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getWPData, GET_JOURNEYS } from "@/lib/wp";
 import OriginHero from "./components/OriginHero";
+import Marquee from "@/components/Marquee";
 import "@/app/origins.css";
 
 export const dynamic = "force-dynamic";
@@ -16,143 +17,165 @@ export default async function OriginsPage() {
   try {
     const data = await getWPData(GET_JOURNEYS, { first: 24 }, { revalidate: 0 });
     journeys = data?.cultureJourneys?.nodes ?? [];
-    console.log('✅ /origins page - Journeys fetched:', journeys.length);
-    journeys.forEach((j: any) => console.log('  - ', j.title, '(status:', j.journeyStatus + ')'));
   } catch (error) {
-    console.error('❌ Error fetching journeys:', error);
+    console.error("❌ Error fetching journeys:", error);
   }
 
-  const currentJourney = journeys.find(j => j.journeyStatus === 'active') || journeys[0];
-  const otherJourneys = currentJourney ? journeys.filter(j => j.id !== currentJourney.id) : journeys;
+  // Featured = first active, otherwise first journey. Grid shows ALL journeys.
+  const featuredJourney = journeys.find(j => j.journeyStatus === "active") || journeys[0];
+  const completedCount = journeys.filter(j => j.journeyStatus === "completed").length;
+
+  const stripHtml = (html: string) => html?.replace(/<[^>]*>/g, "").trim() || "";
 
   return (
-    <div className="origins-page bg-paper">
+    <div className="origins-page">
+
       {/* ── HERO ── */}
       <OriginHero
         title="Origins · <em>Curated Journeys</em>"
         standfirst="Not tours. Slow, deep, culturally anchored journeys to the places African and Black diasporan culture is actually being made."
       />
 
+      <Marquee />
+
       {/* ── MANIFESTO ── */}
       <section className="origins-manifesto">
         <div className="origins-mf-left">
-          <div className="sec-tag">What Origins is</div>
-          <h3>This is not a tour.<br/>It's a <em>conversation.</em></h3>
-          <p>Origins journeys are built around a single cultural anchor — an exhibition opening, a musician's rehearsal session, a textile market before the city wakes up.</p>
+          <div className="origins-sec-tag">What Origins is</div>
+          <h3>This is not a tour.<br/>It&rsquo;s a <em>conversation.</em></h3>
+          <p>Origins journeys are built around a single cultural anchor — an exhibition opening, a musician&rsquo;s rehearsal session, a textile market before the city wakes up.</p>
         </div>
         <div className="origins-mf-right">
-          <div className="sec-tag">By the numbers</div>
+          <div className="origins-sec-tag">By the numbers</div>
           <div className="origins-mf-stat-grid">
-            <div className="origins-mf-stat"><div className="n">{journeys.filter(j => j.journeyStatus === 'completed').length}</div><div className="d">Journeys completed</div></div>
-            <div className="origins-mf-stat"><div className="n">48</div><div className="d">Travellers so far</div></div>
+            <div className="origins-mf-stat">
+              <div className="n">{completedCount || journeys.length}</div>
+              <div className="d">Journeys completed</div>
+            </div>
+            <div className="origins-mf-stat">
+              <div className="n">48</div>
+              <div className="d">Travellers so far</div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── CURRENT JOURNEY FEATURE ── */}
-      {currentJourney && (
+      {/* ── CURRENT / FEATURED JOURNEY ── */}
+      {featuredJourney && (
         <section className="origins-current-journey">
           <div className="origins-cj-inner">
             <div className="origins-cj-img">
-              {currentJourney.featuredImage?.node?.sourceUrl ? (
+              {featuredJourney.featuredImage?.node?.sourceUrl ? (
                 <Image
-                  src={currentJourney.featuredImage.node.sourceUrl}
-                  alt={currentJourney.title}
+                  src={featuredJourney.featuredImage.node.sourceUrl}
+                  alt={featuredJourney.title}
                   fill
-                  style={{ objectFit: 'cover' }}
+                  sizes="50vw"
+                  style={{ objectFit: "cover" }}
                   priority
                 />
               ) : (
-                <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-                  <rect width="800" height="600" fill="var(--ink)"/>
-                </svg>
+                <div className="origins-cj-img-placeholder" />
               )}
-              <div className="origins-cj-img-grad"></div>
+              <div className="origins-cj-img-grad" />
             </div>
             <div className="origins-cj-content">
               <div className="origins-cj-label">
-                <span className="live">● Live</span>
-                <span>{currentJourney.journeyEdition || 'Current'}</span>
+                <span className="live">● {featuredJourney.journeyStatus === "active" ? "Now Booking" : "Upcoming"}</span>
+                <span>{featuredJourney.journeyEdition || "N°01"}</span>
               </div>
-              <h2 className="origins-cj-title" dangerouslySetInnerHTML={{ __html: currentJourney.title }} />
-              <p className="origins-cj-sub">{currentJourney.excerpt}</p>
+              <h2 className="origins-cj-title" dangerouslySetInnerHTML={{ __html: featuredJourney.title }} />
+              <p className="origins-cj-sub">{stripHtml(featuredJourney.excerpt || "").slice(0, 160)}</p>
               <div className="origins-cj-details">
                 <div className="origins-cj-det">
                   <div className="dl">Dates</div>
-                  <div className="dv">{currentJourney.journeyDates || 'TBA'}</div>
+                  <div className="dv">{featuredJourney.journeyDates || "TBA"}</div>
                 </div>
                 <div className="origins-cj-det">
                   <div className="dl">Location</div>
-                  <div className="dv">{currentJourney.journeyLocation || 'TBA'}</div>
+                  <div className="dv">{featuredJourney.journeyLocation || "TBA"}</div>
                 </div>
                 <div className="origins-cj-det">
                   <div className="dl">Price</div>
-                  <div className="dv">{currentJourney.journeyPrice || 'TBA'}</div>
+                  <div className="dv">{featuredJourney.journeyPrice || "TBA"}</div>
                 </div>
                 <div className="origins-cj-det">
                   <div className="dl">Group Size</div>
                   <div className="dv">Max 12 travellers</div>
                 </div>
               </div>
-              <div className="origins-cj-bar-label">
-                <span>Availability</span>
-                <span className="spots">{currentJourney.journeySpots || '7'} spots remaining</span>
-              </div>
-              <div className="origins-cj-bar">
-                <div className="origins-cj-bar-fill"></div>
-              </div>
+              {featuredJourney.journeySpots && (
+                <>
+                  <div className="origins-cj-bar-label">
+                    <span>Availability</span>
+                    <span className="spots">{featuredJourney.journeySpots} spots remaining</span>
+                  </div>
+                  <div className="origins-cj-bar">
+                    <div className="origins-cj-bar-fill" />
+                  </div>
+                </>
+              )}
               <div className="origins-cj-ctas">
-                <button className="btn-ghost">See all journeys</button>
-                <button className="btn-gold">Book now →</button>
+                <Link href={`/origins/${featuredJourney.slug}`} className="btn-ghost-paper">View Journey →</Link>
+                <Link href={`/origins/${featuredJourney.slug}#booking`} className="btn-gold">Book now →</Link>
               </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* ── JOURNEY GRID ── */}
+      {/* ── JOURNEY GRID — all journeys ── */}
       <section className="origins-journeys-section">
         <div className="origins-js-header">
-          <h3>Every place we've <em>been.</em></h3>
+          <h3>Every place we&rsquo;ve <em>been.</em></h3>
+          {journeys.length > 0 && (
+            <p>{journeys.length} {journeys.length === 1 ? "journey" : "journeys"} · Africa &amp; Diaspora</p>
+          )}
         </div>
-        {otherJourneys.length === 0 ? (
-          <p style={{ textAlign: 'center', color: 'var(--mute)', marginTop: '60px' }}>
-            More journeys coming soon.
-          </p>
+
+        {journeys.length === 0 ? (
+          <p className="origins-empty">Journeys are being curated. Check back soon.</p>
         ) : (
           <div className="origins-journey-grid">
-            {otherJourneys.slice(0, 6).map((j: any) => (
-              <Link key={j.id} href={`/origins/${j.slug}`} className="origins-jcard">
-                <div className="origins-jcard-container">
-                  <div className="ji">
-                    <div className={`ji-status ${j.journeyStatus === 'completed' ? 'sold' : j.journeyStatus === 'upcoming' ? 'upcoming' : 'open'}`}>
-                      ● {j.journeyStatus === 'completed' ? 'Completed' : j.journeyStatus === 'upcoming' ? 'Upcoming' : j.journeySpots || '7'} spots
-                    </div>
-                    <div className="ji-num">{j.journeyEdition || 'N°01'}</div>
+            {journeys.slice(0, 6).map((j: any) => {
+              const statusClass = j.journeyStatus === "completed" ? "sold" : j.journeyStatus === "upcoming" ? "upcoming" : "open";
+              const statusLabel = j.journeyStatus === "completed" ? "Completed" : j.journeyStatus === "upcoming" ? "Upcoming" : `● ${j.journeySpots || "7"} spots`;
+              return (
+                <Link key={j.id} href={`/origins/${j.slug}`} className="origins-jcard">
+                  <div className="origins-ji">
+                    <div className={`origins-ji-status ${statusClass}`}>{statusLabel}</div>
+                    <div className="origins-ji-num">{j.journeyEdition || "N°01"}</div>
                     {j.featuredImage?.node?.sourceUrl ? (
                       <Image
                         src={j.featuredImage.node.sourceUrl}
                         alt={j.title}
                         fill
-                        style={{ objectFit: 'cover' }}
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        style={{ objectFit: "cover" }}
                       />
                     ) : (
-                      <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-                        <rect width="400" height="500" fill="var(--ink)"/>
-                      </svg>
+                      <div className="origins-ji-placeholder" />
                     )}
                   </div>
-                  <div className="j-num-tag">{j.journeyEdition || 'Origins'}</div>
-                  <h4 dangerouslySetInnerHTML={{ __html: j.title }} />
-                  {j.excerpt && <p className="j-desc">{j.excerpt.replace(/<[^>]*>/g, '').slice(0, 100)}</p>}
-                  <div className="j-meta-row">
-                    <div className="jm">Location<strong>{j.journeyLocation || 'TBA'}</strong></div>
-                    <div className="jm">Price<strong>{j.journeyPrice || 'TBA'}</strong></div>
+                  <div className="origins-jcard-body">
+                    <div className="origins-j-num-tag">{j.journeyEdition || "Origins"}</div>
+                    <h4 dangerouslySetInnerHTML={{ __html: j.title }} />
+                    {j.excerpt && (
+                      <p className="origins-j-desc">{stripHtml(j.excerpt).slice(0, 100)}</p>
+                    )}
+                    <div className="origins-j-meta-row">
+                      {j.journeyLocation && (
+                        <div className="origins-jm">Location<strong>{j.journeyLocation}</strong></div>
+                      )}
+                      {j.journeyPrice && (
+                        <div className="origins-jm">Price<strong>{j.journeyPrice}</strong></div>
+                      )}
+                    </div>
+                    <span className="origins-j-cta">View journey →</span>
                   </div>
-                  <span className="j-cta">View →</span>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>
@@ -161,31 +184,23 @@ export default async function OriginsPage() {
       <section className="origins-how">
         <div className="origins-how-inner">
           <div className="origins-how-header">
-            <div className="sec-tag">The Process</div>
+            <div className="origins-sec-tag">The Process</div>
             <h3>How <em>Origins</em> works</h3>
             <p>From discovery to departure, we handle every detail so you can focus on the experience.</p>
           </div>
           <div className="origins-how-grid">
-            <div className="origins-how-step">
-              <div className="sn">01</div>
-              <h4>Discover &<br/><em>Apply</em></h4>
-              <p>Browse upcoming journeys and apply to join. We accept 12 travellers per journey to ensure depth and intimacy.</p>
-            </div>
-            <div className="origins-how-step">
-              <div className="sn">02</div>
-              <h4>Meet Your<br/><em>Hosts</em></h4>
-              <p>Connect with your resident hosts — local creatives, curators, and culture-makers who anchor each journey.</p>
-            </div>
-            <div className="origins-how-step">
-              <div className="sn">03</div>
-              <h4>Prepare &<br/><em>Read</em></h4>
-              <p>Receive a custom reading list and pre-trip orientation to deepen context before you arrive.</p>
-            </div>
-            <div className="origins-how-step">
-              <div className="sn">04</div>
-              <h4>Experience &<br/><em>Connect</em></h4>
-              <p>Spend 4–5 days immersed in culture with your hosts and fellow travellers. No tourism. Just genuine connection.</p>
-            </div>
+            {[
+              { n: "01", title: "Discover & <em>Apply</em>", body: "Browse upcoming journeys and apply to join. We accept 12 travellers per journey to ensure depth and intimacy." },
+              { n: "02", title: "Meet Your <em>Hosts</em>", body: "Connect with your resident hosts — local creatives, curators, and culture-makers who anchor each journey." },
+              { n: "03", title: "Prepare & <em>Read</em>", body: "Receive a custom reading list and pre-trip orientation to deepen context before you arrive." },
+              { n: "04", title: "Experience & <em>Connect</em>", body: "Spend 4–5 days immersed in culture with your hosts and fellow travellers. No tourism. Just genuine connection." },
+            ].map((step) => (
+              <div key={step.n} className="origins-how-step">
+                <div className="origins-sn">{step.n}</div>
+                <h4 dangerouslySetInnerHTML={{ __html: step.title }} />
+                <p>{step.body}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -193,62 +208,70 @@ export default async function OriginsPage() {
       {/* ── ALWAYS INCLUDED ── */}
       <section className="origins-always-inc">
         <div className="origins-ai-header">
-          <h3>What's always <em>included</em></h3>
-          <p>Every Origins journey includes expert hosting, cultural context, and community. Here's what you get.</p>
+          <h3>What&rsquo;s always <em>included</em></h3>
+          <p>Every Origins journey includes expert hosting, cultural context, and community — woven in, not bolted on.</p>
         </div>
         <div className="origins-ai-grid">
-          <div className="origins-ai-item">
-            <div className="origins-ai-icon">🏨</div>
-            <div className="origins-ai-title">Accommodation &<br/><em>Meals</em></div>
-            <p className="origins-ai-desc">Boutique lodging and locally-sourced meals prepared by or with locals. No chain hotels.</p>
-          </div>
-          <div className="origins-ai-item">
-            <div className="origins-ai-icon">👥</div>
-            <div className="origins-ai-title">Resident<br/><em>Hosts</em></div>
-            <p className="origins-ai-desc">Access to curators, artists, musicians, and culture-makers at the heart of the scene.</p>
-          </div>
-          <div className="origins-ai-item">
-            <div className="origins-ai-icon">🎓</div>
-            <div className="origins-ai-title">Context &<br/><em>Learning</em></div>
-            <p className="origins-ai-desc">Pre-trip reading, daily briefings, and conversations that deepen understanding.</p>
-          </div>
+          {[
+            { icon: "🏨", title: "Accommodation & <em>Meals</em>", body: "Boutique lodging and locally-sourced meals prepared by or with locals. No chain hotels." },
+            { icon: "👥", title: "Resident <em>Hosts</em>", body: "Access to curators, artists, musicians, and culture-makers at the heart of the scene." },
+            { icon: "🎓", title: "Context & <em>Learning</em>", body: "Pre-trip reading, daily briefings, and conversations that deepen understanding." },
+            { icon: "🤝", title: "Community & <em>Connection</em>", body: "12 like-minded travellers. Relationships that last well beyond the journey." },
+            { icon: "📸", title: "Documentation & <em>Memory</em>", body: "A dedicated visual journal of the journey, shared with all travellers after." },
+            { icon: "✈️", title: "Ground <em>Logistics</em>", body: "All in-country transport, entry logistics, and on-the-ground coordination handled." },
+          ].map((item, idx) => (
+            <div key={idx} className="origins-ai-item">
+              <div className="origins-ai-icon">{item.icon}</div>
+              <div className="origins-ai-title" dangerouslySetInnerHTML={{ __html: item.title }} />
+              <p className="origins-ai-desc">{item.body}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ── CONNECT CTA ── */}
       <section className="origins-connect-band">
         <div className="origins-cb-left">
-          <div className="sec-tag">Moveee Connect</div>
+          <div className="origins-sec-tag">Moveee Connect</div>
           <h3>Members go <em>first.</em></h3>
-          <p>Connect members get priority booking, early access to journeys, and 15% off all prices.</p>
+          <p>Connect members get priority booking on all Origins journeys, early access 48 hours before the public, and 15% off all prices — always.</p>
           <div className="origins-cb-perks">
-            <div className="origins-cb-perk">
-              <div className="cp-icon">★</div>
-              <div>
-                <div className="cp-title">Early access</div>
-                <p className="cp-desc">Book journeys 48 hours before they open to the public</p>
+            {[
+              { icon: "★", title: "Priority booking", desc: "48 hours early access before journeys open to the public" },
+              { icon: "★", title: "15% off every journey", desc: "Applied automatically at checkout — no codes needed" },
+              { icon: "★", title: "Members-only experiences", desc: "Private dinners and events not open to the public" },
+            ].map((perk, idx) => (
+              <div key={idx} className="origins-cb-perk">
+                <div className="origins-cp-icon">{perk.icon}</div>
+                <div>
+                  <div className="origins-cp-title">{perk.title}</div>
+                  <p className="origins-cp-desc">{perk.desc}</p>
+                </div>
               </div>
-            </div>
-            <div className="origins-cb-perk">
-              <div className="cp-icon">★</div>
-              <div>
-                <div className="cp-title">15% discount</div>
-                <p className="cp-desc">On all journey prices, always</p>
-              </div>
-            </div>
-            <div className="origins-cb-perk">
-              <div className="cp-icon">★</div>
-              <div>
-                <div className="cp-title">Priority support</div>
-                <p className="cp-desc">Direct access to our team for custom travel planning</p>
-              </div>
-            </div>
+            ))}
+          </div>
+          <div className="origins-cb-ctas">
+            <Link href="/connect" className="btn-primary-ink">Become a Member →</Link>
+            <span className="origins-cb-price">from $9 / month</span>
           </div>
         </div>
         <div className="origins-cb-right">
           <svg viewBox="0 0 400 533" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <radialGradient id="cbGlow" cx="40%" cy="60%" r="50%">
+                <stop offset="0%" stopColor="#c5491f" stopOpacity=".25"/>
+                <stop offset="100%" stopColor="#0c0a07" stopOpacity="0"/>
+              </radialGradient>
+            </defs>
             <rect width="400" height="533" fill="var(--ink)"/>
+            <rect width="400" height="533" fill="url(#cbGlow)"/>
+            <text x="40" y="260" fontFamily="serif" fontSize="48" fontStyle="italic" fontWeight="300" fill="rgba(243,236,224,0.12)">Origins</text>
+            <text x="40" y="320" fontFamily="serif" fontSize="48" fontStyle="italic" fontWeight="300" fill="rgba(243,236,224,0.07)">Connect</text>
           </svg>
+          <div className="origins-cb-float">
+            <div className="origins-cb-float-tag">Moveee Connect</div>
+            <p className="origins-cb-float-text">The culture doesn&rsquo;t wait. Neither should you.</p>
+          </div>
         </div>
       </section>
 
@@ -256,11 +279,21 @@ export default async function OriginsPage() {
       <section className="origins-newsletter">
         <div className="origins-nl-inner">
           <div className="origins-nl-left">
-            <h3>Don't miss<br/>our next <em>journey.</em></h3>
-            <p>Sign up for news about upcoming Origins experiences, cultural essays, and early access to bookings.</p>
+            <h3>Don&rsquo;t miss<br/>our next <em>journey.</em></h3>
+            <p>Sign up for early access to Origins journeys, cultural dispatches, and insider announcements.</p>
+          </div>
+          <div className="origins-nl-form">
+            <div className="origins-nl-form-label">Stay in the loop</div>
+            <form method="POST" action="#">
+              <input type="text" name="name" placeholder="Full name" required />
+              <input type="email" name="email" placeholder="Email address" required />
+              <button type="submit" className="origins-nl-submit">Notify me of new journeys</button>
+            </form>
+            <p className="origins-nl-note">No spam. Unsubscribe anytime.</p>
           </div>
         </div>
       </section>
+
     </div>
   );
 }
