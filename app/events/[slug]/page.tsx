@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: event.title,
       description: excerpt,
       url: `https://themoveee.com/events/${slug}`,
-      type: "event",
+      type: "website",
       images: event.featuredImage?.node?.sourceUrl ? [{ url: event.featuredImage.node.sourceUrl, width: 1200, height: 630 }] : [],
     },
     twitter: {
