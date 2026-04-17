@@ -290,7 +290,7 @@ export default async function Home() {
                   <div className="origin-row">
                     <div className="origin-idx">0{idx + 1}</div>
                     <div className="origin-name">{origin.title}</div>
-                    <div className="origin-country">{origin.categories?.nodes[0]?.name || "Destination"}</div>
+                    <div className="origin-country">{origin.journeyLocation || "Destination"}</div>
                     <div className="origin-price">
                       ↗
                       <small>View Itinerary</small>

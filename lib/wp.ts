@@ -363,22 +363,6 @@ const JOURNEY_FIELDS_FRAGMENT = `
         sourceUrl
       }
     }
-    categories {
-      nodes {
-        name
-        slug
-      }
-    }
-    countries {
-      nodes {
-        name
-      }
-    }
-    author {
-      node {
-        name
-      }
-    }
   }
 `;
 
