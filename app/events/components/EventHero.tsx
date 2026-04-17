@@ -106,19 +106,11 @@ const EventHero: React.FC<EventHeroProps> = ({
         <div>
           <div className="hero-eyebrow" style={{ color: theme.accent }}>{issueNo} · Culture Happenings</div>
           <h1 className="hero-title" dangerouslySetInnerHTML={{ __html: title }} />
+        </div>
+
+        <div>
           {standfirst && <p className="hero-standfirst">{standfirst}</p>}
         </div>
-        
-        {stats.length > 0 && (
-          <div className="hero-stats">
-            {stats.map((stat, idx) => (
-              <div key={idx} className="hero-stat">
-                <div className="num" style={{ color: theme.accent }}>{stat.num}</div>
-                <div className="label">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </section>
   );
