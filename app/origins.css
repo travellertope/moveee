@@ -1518,7 +1518,7 @@
 }
 
 .journey-booking-left {
-  background: var(--night);
+  background: #0a0a0a;
   color: var(--paper);
   padding: 80px 80px;
   display: flex;
