@@ -250,6 +250,7 @@ class Culture_Post_Types {
             'tagline'      => array( 'type' => 'String',  'acf_key' => 'tagline',     'meta_key' => '_culture_tagline' ),
             'attribution'  => array( 'type' => 'String',  'acf_key' => 'attribution', 'meta_key' => '_culture_attribution' ),
             'openingHours' => array( 'type' => 'String',  'acf_key' => 'opening_hours', 'meta_key' => '_culture_opening_hours' ),
+            'ticketingUrl' => array( 'type' => 'String',  'acf_key' => 'ticketing_url', 'meta_key' => '_culture_ticketing_url' ),
         );
 
         foreach ( array( 'Post', 'CultureEvent' ) as $type_name ) {
