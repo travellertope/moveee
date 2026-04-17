@@ -27,9 +27,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const endFormatted = (endObj && !isNaN(endObj.getTime())) ? endObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
 
   const hasMetrics = event.metrics && event.metrics.length > 0;
-  const hasSchedule = event.schedule && event.schedule.length > 0;
-  const hasShowcase = event.showcase && event.showcase.length > 0;
-  const host = event.featuredHost;
+  const hasSchedule = Array.isArray(event.schedule) && event.schedule.length > 0;
+  const hasShowcase = Array.isArray(event.showcase) && event.showcase.length > 0;
+  const hasHost = event.featuredHost && typeof event.featuredHost === 'object' && event.featuredHost?.title;
+  const host = hasHost ? event.featuredHost : null;
 
   return (
     <div className="events-page-wrapper">
@@ -63,6 +64,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <div className="label">Exhibition Run</div>
               <div className="value">{dateFormatted} — {endFormatted || "TBA"}</div>
             </div>
+            {event.metrics?.map((m: any, i: number) => (
+              <div key={i} className="hero-meta-item">
+                <div className="label">{m.label}</div>
+                <div className="value">{m.value}</div>
+              </div>
+            ))}
           <div className="hero-cta-group">
             <a 
               href="#programme-section"
@@ -117,7 +124,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         {/* LEFT COLUMN */}
         <div className="left-col">
           <div className="section-label">About the exhibition</div>
-          <div className="about-text prose-custom" dangerouslySetInnerHTML={{ __html: event.content }} />
+          <div className="about-text prose-custom" dangerouslySetInnerHTML={{ __html: event.content || "<p>Exhibition details coming soon. Please check back for the full curatorial statement.</p>" }} />
 
           {/* Pull Quote */}
           {event.tagline && (
@@ -125,7 +132,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <div className="bar" />
               <div>
                 <blockquote>"{event.tagline}"</blockquote>
-                <cite>— {host?.title}, on the work at hand</cite>
+                <cite>— {host?.title || "Moveee Talent"}, on the work at hand</cite>
               </div>
             </div>
           )}
@@ -255,8 +262,24 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         </div>
       </section>
 
+      {/* PRESS SECTION */}
+      {event.pressDetails && event.pressDetails.title && (
+        <section className="press-section bg-paper-deep py-20 px-10 md:px-20 border-t border-ink/5">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="section-label mx-auto mb-8">{event.pressDetails.eyebrow || "Press & Media"}</div>
+            <h3 className="text-3xl md:text-5xl mb-6">{event.pressDetails.title}</h3>
+            <div className="prose-custom opacity-80 mb-10 mx-auto max-w-2xl" dangerouslySetInnerHTML={{ __html: event.pressDetails.content }} />
+            {event.pressDetails.link && (
+              <a href={event.pressDetails.link} className="btn-outline inline-block">
+                Inquire for Press Access →
+              </a>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* ARTIST STRIP */}
-      {host && (
+      {hasHost && (
         <section className="artist-strip">
           <div className="artist-avatar">
             {host.featuredImage?.node?.sourceUrl && (
@@ -265,7 +288,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </div>
           <div className="artist-info">
             <div className="section-label">The artist</div>
-            <h3>{host.title.split(' ')[0]} <em>{host.title.split(' ')[1]}</em></h3>
+            <h3>{host.title?.split(' ')[0] || "Featured"} <em>{host.title?.split(' ')[1] || "Artist"}</em></h3>
             <div className="font-serif italic text-lg text-ink-soft opacity-80" dangerouslySetInnerHTML={{ __html: host.excerpt }} />
             <Link href={`/directory/${host.slug}`} className="inline-block mt-6 border-b border-ink text-[10px] uppercase font-mono">
               Read the full portrait →
