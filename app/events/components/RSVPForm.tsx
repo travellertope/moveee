@@ -70,9 +70,19 @@ const RSVPForm: React.FC<RSVPFormProps> = ({ eventSlug, eventTitle }) => {
         onChange={(e) => setFormData({...formData, email: e.target.value})}
         disabled={status === 'loading'}
       />
+      <select 
+        value={formData.tickets}
+        onChange={(e) => setFormData({...formData, tickets: e.target.value})}
+        className="w-full bg-paper/5 border border-paper/10 text-paper px-4 py-3 font-mono text-xs uppercase mb-3 outline-none focus:border-ochre appearance-none cursor-pointer"
+        disabled={status === 'loading'}
+      >
+        <option value="general" className="bg-ink">General Admission — 19:30</option>
+        <option value="private" className="bg-ink">Members Private View — 18:00</option>
+        <option value="supper" className="bg-ink">Origins Supper Table (Members Only)</option>
+      </select>
       
-      <div className="members-note">
-        Connect members get priority entry.
+      <div className="members-note mb-4">
+        ★ Connect members: selection above unlocks 18h00 private view access.
       </div>
 
       <button 

@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { name, email, eventSlug, eventTitle } = payload;
+  const { name, email, eventSlug, eventTitle, ticketType } = payload;
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
         name,
         email,
         event_slug: eventSlug,
-        event_title: eventTitle
+        event_title: eventTitle,
+        ticket_type: ticketType
       }),
     });
 
