@@ -78,7 +78,6 @@ const SpotlightCard: React.FC<SpotlightCardProps> = ({
           
           <div className="spot-cta">
             <span className="btn-primary">RSVP Now →</span>
-            <span className="btn-ghost" style={{ border: '1px solid var(--ink)', padding: '15px 24px' }}>View Details</span>
           </div>
         </div>
       </Link>
