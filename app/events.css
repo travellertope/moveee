@@ -18,6 +18,10 @@
 }
 
 /* ── RESET & BASE ── */
+html {
+  scroll-behavior: smooth;
+}
+
 .events-page-wrapper, .events-page {
   background: var(--paper);
   color: var(--ink);

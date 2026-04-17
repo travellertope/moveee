@@ -64,18 +64,18 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <div className="value">{dateFormatted} — {endFormatted || "TBA"}</div>
             </div>
           <div className="hero-cta-group">
-            <button 
+            <a 
+              href="#programme-section"
               className="btn-outline" 
-              onClick={() => document.getElementById('programme-section')?.scrollIntoView({ behavior: 'smooth' })}
             >
               View schedule
-            </button>
-            <button 
+            </a>
+            <a 
+              href="#rsvp-section"
               className="btn-primary" 
-              onClick={() => document.getElementById('rsvp-section')?.scrollIntoView({ behavior: 'smooth' })}
             >
               RSVP Now →
-            </button>
+            </a>
           </div>
           </div>
         </div>
