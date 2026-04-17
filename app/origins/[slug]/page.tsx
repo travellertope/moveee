@@ -101,10 +101,8 @@ export default async function JourneyPage({ params }: { params: Promise<{ slug: 
           <h1 className="journey-hero-title" dangerouslySetInnerHTML={{ __html: journey.title }} />
           <p className="journey-hero-sub">{journey.excerpt?.replace(/<[^>]*>/g, "") || "A culturally anchored journey through Africa and the diaspora."}</p>
           <div className="journey-hero-row">
-            <div className="journey-hero-ctas">
-              <button className="btn-ghost">Back to Origins</button>
-              <button className="btn-gold">Book this journey →</button>
-            </div>
+            <Link href="/origins" className="btn-ghost-paper">← Back to Origins</Link>
+            <Link href="#booking" className="btn-gold">Book this journey →</Link>
           </div>
           <div className="journey-scroll-hint">Scroll</div>
         </div>
@@ -225,47 +223,19 @@ export default async function JourneyPage({ params }: { params: Promise<{ slug: 
       </section>
 
       {/* ── BOOKING PANEL ── */}
-      <section className="journey-booking">
+      <section className="journey-booking" id="booking">
         <div className="journey-booking-inner">
           <div className="journey-booking-left">
-            <h3>Ready to <em>book?</em></h3>
-            <p>Secure your spot on this journey. Our team will confirm your details and send you pre-trip prep materials.</p>
-            <div className="journey-booking-detail-row">
-              <div className="journey-bd-item">
-                <div className="journey-bd-label">Dates</div>
-                <div className="journey-bd-val">{dates}</div>
-              </div>
-              <div className="journey-bd-item">
-                <div className="journey-bd-label">Location</div>
-                <div className="journey-bd-val">{location}</div>
-              </div>
-            </div>
-            <div className="journey-booking-detail-row">
-              <div className="journey-bd-item">
-                <div className="journey-bd-label">Price per person</div>
-                <div className="journey-bd-val">{price}</div>
-              </div>
-              <div className="journey-bd-item">
-                <div className="journey-bd-label">Group size</div>
-                <div className="journey-bd-val">Max 12 travellers</div>
-              </div>
-            </div>
-            <div className="journey-capacity-row">
-              <span>Availability</span>
-              <span className="journey-spots">{spots} spots remaining</span>
-            </div>
-            <div className="journey-bar-track">
-              <div className="journey-bar-fill"></div>
-            </div>
+            <h3><em>book?</em></h3>
+            <div className="journey-booking-divider"></div>
           </div>
           <div className="journey-booking-card">
             <div className="journey-bc-label">Reserve your spot</div>
             <div className="journey-bc-price">
               <div className="journey-amount">{price}</div>
               <div className="journey-per">per traveller</div>
-              <div className="journey-member-note">Connect members: 15% off</div>
+              <div className="journey-member-note">connect members · 15% off</div>
             </div>
-            <div className="journey-bc-divider"></div>
             <form className="journey-bc-form">
               <input type="text" placeholder="Full name" required />
               <input type="email" placeholder="Email address" required />
