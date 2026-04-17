@@ -300,7 +300,7 @@ const EVENT_FIELDS_FRAGMENT = `
     location
     eventLocation: location
     admission
-    ticketingUrl: ticketing_url
+    ticketingUrl
     isFeatured
     tagline
     attribution
