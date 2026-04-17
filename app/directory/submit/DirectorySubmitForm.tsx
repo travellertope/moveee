@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import PatronPrice from "@/components/PatronPrice";
 
 // Fallback types used when WordPress taxonomy terms cannot be fetched.
 const FALLBACK_ENTRY_TYPES = [
@@ -136,7 +137,7 @@ export default function DirectorySubmitForm({
               marginTop: 18,
             }}
           >
-            Patron · $80 / year · Cancel anytime
+            Patron · <PatronPrice variant="yearly" /> · Cancel anytime
           </p>
         </div>
       </div>

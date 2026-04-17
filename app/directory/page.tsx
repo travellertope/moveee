@@ -32,7 +32,6 @@ export default async function DirectoryPage() {
       {/* ── HERO ── */}
       <section className="dir-hero">
         <div className="dir-hero-inner">
-          <div className="dir-eyebrow">★ The Moveee</div>
           <h1 className="dir-heading">Culture Directory</h1>
           <p className="dir-subheading">
             A living wiki of African and diaspora culture — people, places,

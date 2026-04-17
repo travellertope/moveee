@@ -7,7 +7,7 @@ import VisualsGrid from "@/components/VisualsGrid";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: "Moveee Visuals · The Visual Library",
+  title: "Moveee Visuals",
   description: "A curated library of AI-generated illustrations documenting African and diaspora culture. Free for creative use.",
 };
 
@@ -22,7 +22,6 @@ export default async function VisualsPage() {
   return (
     <div className="visuals-portal">
       <section className="visuals-hero">
-        <span className="visuals-eyebrow">The Visual Library</span>
         <h1 className="visuals-title">Moveee Visuals</h1>
         <p className="visuals-subtitle">
           A living archive of AI-generated illustrations celebrating African and 

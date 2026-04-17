@@ -831,5 +831,13 @@ export const GET_SITE_SETTINGS = `
       announcementUrl
       locations
     }
+    membershipSettings {
+      patronLabel
+      citizenLabel
+      monthlyNgn
+      yearlyNgn
+      monthlyUsd
+      yearlyUsd
+    }
   }
 `;
