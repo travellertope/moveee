@@ -62,7 +62,7 @@ export default async function EventsPage() {
     <div className="events-page bg-paper pb-24">
       {/* ── HERO ── */}
       <EventHero 
-        title="Moveee<br><em>Events</em>."
+        title="Moveee<br><em>Events</em>"
         standfirst="Curated openings, listening sessions, film screenings, supper clubs and community gatherings — across Africa and the diaspora. Not everything happens online."
         stats={[
           { num: events.length, label: `Events · ${new Date().getFullYear()}` },
