@@ -1503,8 +1503,8 @@
 
 /* ── BOOKING ── */
 .journey-booking {
-  background: var(--paper);
-  padding: 90px 80px;
+  background: transparent;
+  padding: 0;
   position: relative;
   z-index: 2;
 }
@@ -1513,76 +1513,195 @@
   max-width: 1440px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 460px;
-  gap: 100px;
-  align-items: start;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
 }
 
-.journey-booking-left h3 {
-  font-family: 'Fraunces', serif;
-  font-size: clamp(44px, 4.5vw, 80px);
-  font-weight: 300;
-  color: var(--ink);
-  margin-bottom: 40px;
-  line-height: 0.95;
-  letter-spacing: -0.02em;
+.journey-booking-left {
+  background: var(--night);
+  color: var(--paper);
+  padding: 80px 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.journey-booking-left h3 em {
-  font-style: italic;
-  color: var(--ochre);
-}
-
-.journey-booking-divider {
-  width: 100%;
-  max-width: 240px;
-  height: 1px;
-  background: linear-gradient(to right, var(--ochre), transparent);
-}
-
-.journey-booking-card {
-  background: transparent;
-  padding: 0;
-}
-
-.journey-bc-label {
+.journey-reserve-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--mute);
-  margin-bottom: 20px;
+  color: var(--ochre);
+  margin-bottom: 40px;
 }
 
-.journey-bc-price {
-  margin-bottom: 36px;
+.journey-availability {
+  margin-bottom: 50px;
 }
 
-.journey-amount {
+.journey-avail-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.journey-avail-num {
   font-family: 'Fraunces', serif;
-  font-size: 56px;
-  font-style: italic;
+  font-size: 80px;
   font-weight: 300;
-  color: var(--ink);
-  line-height: 0.9;
+  color: var(--paper);
+  line-height: 0.8;
 }
 
-.journey-per {
+.journey-avail-spots {
+  font-family: 'Fraunces', serif;
+  font-size: 80px;
+  font-weight: 300;
+  color: var(--gold);
+  font-style: italic;
+  line-height: 0.8;
+}
+
+.journey-avail-label {
+  font-family: 'Fraunces', serif;
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--paper);
+  margin-left: 8px;
+}
+
+.journey-avail-desc {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(243,236,224,.6);
+  line-height: 1.6;
+  margin-bottom: 50px;
+  max-width: 480px;
+}
+
+.journey-booking-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 50px;
+  padding-bottom: 50px;
+  border-bottom: 1px solid rgba(243,236,224,.15);
+}
+
+.journey-booking-detail {
+}
+
+.journey-bd-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--mute);
-  margin-top: 8px;
+  color: rgba(243,236,224,.35);
+  margin-bottom: 10px;
 }
 
-.journey-member-note {
+.journey-bd-val {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--paper);
+}
+
+.journey-capacity-section {
+  margin-bottom: 50px;
+}
+
+.journey-capacity-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(243,236,224,.35);
+  margin-bottom: 14px;
+}
+
+.journey-bar-track {
+  height: 2px;
+  background: rgba(243,236,224,.1);
+  margin-bottom: 12px;
+}
+
+.journey-bar-fill {
+  height: 2px;
+  background: var(--gold);
+  width: 58%;
+}
+
+.journey-capacity-note {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.journey-deposit-info {
+  font-family: 'Fraunces', serif;
+  font-size: 15px;
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(243,236,224,.5);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.journey-booking-card {
+  background: var(--paper);
+  padding: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.journey-bc-header {
+  margin-bottom: 50px;
+}
+
+.journey-bc-edition {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-bottom: 20px;
+  display: block;
+}
+
+.journey-bc-price-large {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(52px, 6vw, 80px);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 0.85;
+  margin-bottom: 8px;
+}
+
+.journey-bc-pricing-note {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--mute);
-  margin-top: 6px;
+}
+
+.journey-bc-member-note {
+  background: rgba(180,130,71,.08);
+  border-left: 2px solid var(--gold);
+  padding: 14px 18px;
+  margin-bottom: 36px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.5;
 }
 
 .journey-bc-form input,
@@ -1625,22 +1744,22 @@
 
 .journey-bc-submit {
   width: 100%;
-  background: #1a1a1a;
+  background: var(--ink);
   color: white;
   border: none;
-  padding: 18px;
+  padding: 20px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   cursor: pointer;
   transition: background 0.3s;
-  margin-top: 6px;
-  font-weight: 500;
+  margin-top: 10px;
+  font-weight: 600;
 }
 
 .journey-bc-submit:hover {
-  background: var(--ink);
+  background: var(--ochre);
 }
 
 .journey-bc-small {
@@ -1691,7 +1810,13 @@
   }
   .journey-booking-inner {
     grid-template-columns: 1fr;
-    gap: 60px;
+    min-height: auto;
+  }
+  .journey-booking-left {
+    padding: 60px 40px;
+  }
+  .journey-booking-card {
+    padding: 60px 40px;
   }
   .journey-included-grid {
     grid-template-columns: 1fr 1fr;

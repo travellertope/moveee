@@ -226,31 +226,73 @@ export default async function JourneyPage({ params }: { params: Promise<{ slug: 
       <section className="journey-booking" id="booking">
         <div className="journey-booking-inner">
           <div className="journey-booking-left">
-            <h3><em>book?</em></h3>
-            <div className="journey-booking-divider"></div>
-          </div>
-          <div className="journey-booking-card">
-            <div className="journey-bc-label">Reserve your spot</div>
-            <div className="journey-bc-price">
-              <div className="journey-amount">{price}</div>
-              <div className="journey-per">per traveller</div>
-              <div className="journey-member-note">connect members · 15% off</div>
+            <div className="journey-reserve-label">Reserve your place</div>
+            <div className="journey-availability">
+              <div className="journey-avail-stat">
+                <span className="journey-avail-num">12</span>
+                <span className="journey-avail-label">travellers.</span>
+              </div>
+              <div className="journey-avail-stat">
+                <span className="journey-avail-spots">{spots}</span>
+                <span className="journey-avail-label">spots left.</span>
+              </div>
             </div>
+            <p className="journey-avail-desc">Every Origins journey sells out. The Nairobi and Dakar editions both closed within three weeks of opening. We're telling you now so you don't read about it after.</p>
+
+            <div className="journey-booking-details">
+              <div className="journey-booking-detail">
+                <div className="journey-bd-label">Dates</div>
+                <div className="journey-bd-val">{dates}</div>
+              </div>
+              <div className="journey-booking-detail">
+                <div className="journey-bd-label">Price (USD)</div>
+                <div className="journey-bd-val">{price}</div>
+              </div>
+            </div>
+
+            <div className="journey-booking-details">
+              <div className="journey-booking-detail">
+                <div className="journey-bd-label">Connect member</div>
+                <div className="journey-bd-val">15% off</div>
+              </div>
+            </div>
+
+            <div className="journey-capacity-section">
+              <div className="journey-capacity-label">Journey Capacity</div>
+              <div className="journey-bar-track">
+                <div className="journey-bar-fill"></div>
+              </div>
+              <div className="journey-capacity-note">{spots} of 12 spots remaining</div>
+            </div>
+
+            <p className="journey-deposit-info">A deposit holds your place. Full payment due 4 weeks before departure. Full refund if we cancel. 50% refund if you cancel 21+ days before.</p>
+          </div>
+
+          <div className="journey-booking-card">
+            <div className="journey-bc-header">
+              <div className="journey-bc-edition">Reservation · {journey.journeyEdition || "N°04"}</div>
+              <div className="journey-bc-price-large">{price}</div>
+              <div className="journey-bc-pricing-note">per person · all inclusive (exc. flights)</div>
+            </div>
+
+            <div className="journey-bc-member-note">
+              ★ Connect member? Log in to apply your discount automatically
+            </div>
+
             <form className="journey-bc-form">
               <input type="text" placeholder="Full name" required />
               <input type="email" placeholder="Email address" required />
-              <input type="tel" placeholder="Phone number" required />
+              <input type="tel" placeholder="WhatsApp number (for coordination)" required />
+              <input type="text" placeholder="I'm travelling from..." />
               <select required>
-                <option>How did you hear about us?</option>
-                <option>Instagram</option>
-                <option>Friend / Referral</option>
-                <option>Email newsletter</option>
-                <option>The Moveee website</option>
+                <option value="">Ticket type</option>
+                <option value="single">Single traveller</option>
+                <option value="couple">Couple</option>
+                <option value="group">Group</option>
               </select>
-              <textarea placeholder="Tell us why you want to join this journey..." rows={4}></textarea>
-              <button type="submit" className="journey-bc-submit">Submit Application</button>
+              <textarea placeholder="Anything we should know? (dietary needs, accessibility, questions)" rows={4}></textarea>
+              <button type="submit" className="journey-bc-submit">Reserve my spot — deposit now →</button>
             </form>
-            <p className="journey-bc-small">We'll review your application and be in touch within 48 hours.</p>
           </div>
         </div>
       </section>
