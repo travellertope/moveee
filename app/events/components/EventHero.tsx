@@ -62,51 +62,9 @@ const EventHero: React.FC<EventHeroProps> = ({
 
   return (
     <section className="events-hero">
-      <svg viewBox="0 0 1440 620" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <linearGradient id="heroBg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor={theme.bg.split(' ')[2]}/>
-            <stop offset="50%" stopColor="#14110d"/>
-            <stop offset="100%" stopColor="#0c0805"/>
-          </linearGradient>
-          <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="6" stroke="#f3ece0" strokeWidth=".4" opacity=".06"/>
-          </pattern>
-          <radialGradient id="glow1" cx="25%" cy="40%" r="40%">
-            <stop offset="0%" stopColor={theme.glow1} stopOpacity=".35"/>
-            <stop offset="100%" stopColor="#14110d" stopOpacity="0"/>
-          </radialGradient>
-          <radialGradient id="glow2" cx="75%" cy="60%" r="35%">
-            <stop offset="0%" stopColor={theme.glow2} stopOpacity=".2"/>
-            <stop offset="100%" stopColor="#14110d" stopOpacity="0"/>
-          </radialGradient>
-        </defs>
-        <rect width="1440" height="620" fill="url(#heroBg)"/>
-        <rect width="1440" height="620" fill="url(#hatch)"/>
-        <rect width="1440" height="620" fill="url(#glow1)"/>
-        <rect width="1440" height="620" fill="url(#glow2)"/>
-
-        <g opacity=".06" stroke="#f3ece0" strokeWidth="1">
-          <line x1="240" y1="0" x2="240" y2="620"/>
-          <line x1="480" y1="0" x2="480" y2="620"/>
-          <line x1="720" y1="0" x2="720" y2="620"/>
-          <line x1="960" y1="0" x2="960" y2="620"/>
-          <line x1="1200" y1="0" x2="1200" y2="620"/>
-        </g>
-
-        <g opacity=".15">
-          <rect x="280" y="120" width="140" height="200" fill={theme.glow1}/>
-          <rect x="540" y="160" width="120" height="160" fill={theme.accent}/>
-          <rect x="780" y="100" width="180" height="240" fill={theme.glow2}/>
-          <rect x="1060" y="140" width="130" height="190" fill="#3d4a2a"/>
-        </g>
-      </svg>
-
       <div className="hero-inner">
         <h1 className="hero-title" dangerouslySetInnerHTML={{ __html: title }} />
-        <div>
-          {standfirst && <p className="hero-standfirst">{standfirst}</p>}
-        </div>
+        {standfirst && <p className="hero-standfirst">{standfirst}</p>}
       </div>
     </section>
   );
