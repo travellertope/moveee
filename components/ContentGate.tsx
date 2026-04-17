@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { AccessLevel } from "@/lib/access";
 import PatronPrice from "./PatronPrice";
 
