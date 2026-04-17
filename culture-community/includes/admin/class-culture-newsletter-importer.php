@@ -180,12 +180,30 @@ class Culture_Newsletter_Importer {
                         </tbody>
                     </table>
 
+                    <div style="margin-top:24px; background:#f6f7f7; padding:16px; border:1px solid #dcdcde; border-radius:4px; max-width:820px;">
+                        <h3 style="margin-top:0; font-size:14px;"><?php esc_html_e( 'Import Options', 'culture-community' ); ?></h3>
+                        <label style="display:block; margin-bottom:8px;">
+                            <input type="checkbox" name="publish_immediately" value="1" checked>
+                            <strong><?php esc_html_e( 'Publish immediately', 'culture-community' ); ?></strong>
+                            <span class="description" style="display:block; margin-left:24px;">
+                                <?php esc_html_e( 'Newsletters will be visible on the public archive immediately. If unchecked, they will be saved as Drafts.', 'culture-community' ); ?>
+                            </span>
+                        </label>
+                        <label style="display:block;">
+                            <input type="checkbox" name="sideload_images" value="1" checked>
+                            <strong><?php esc_html_e( 'Sideload images', 'culture-community' ); ?></strong>
+                            <span class="description" style="display:block; margin-left:24px;">
+                                <?php esc_html_e( 'Download images from the newsletters into your local Media Library to prevent broken links later.', 'culture-community' ); ?>
+                            </span>
+                        </label>
+                    </div>
+
                     <div style="margin-top:16px;">
                         <button type="submit" class="button button-primary" id="culture-import-btn">
                             <?php esc_html_e( 'Import Selected', 'culture-community' ); ?>
                         </button>
-                        <span style="margin-left:12px;font-size:12px;color:#646970;">
-                            <?php esc_html_e( 'Each campaign will be created as a draft culture_newsletter post — review and publish from the Newsletters list.', 'culture-community' ); ?>
+                        <span style="margin-left:12px; font-size:12px; color:#646970;">
+                            <?php esc_html_e( 'Data mapping includes sent date, recipient counts, and clean HTML extraction.', 'culture-community' ); ?>
                         </span>
                     </div>
                 </form>
@@ -229,11 +247,13 @@ class Culture_Newsletter_Importer {
             exit;
         }
 
+        $publish  = isset( $_POST['publish_immediately'] ) && '1' === $_POST['publish_immediately'];
+        $sideload = isset( $_POST['sideload_images'] ) && '1' === $_POST['sideload_images'];
         $imported = 0;
         $skipped  = 0;
 
         foreach ( $campaign_ids as $mp_id ) {
-            $result = self::import_campaign( $mp_id );
+            $result = self::import_campaign( $mp_id, $publish, $sideload );
             if ( 'imported' === $result ) {
                 $imported++;
             } elseif ( 'skipped' === $result ) {
@@ -254,13 +274,12 @@ class Culture_Newsletter_Importer {
     /**
      * Import a single MailPoet campaign as a culture_newsletter post.
      *
-     * Supports both MailPoet's legacy block-JSON format and its newer
-     * Block Editor (Gutenberg) format introduced in MailPoet 4.x+.
-     *
-     * @param int $mp_id MailPoet newsletter ID.
+     * @param int  $mp_id               MailPoet newsletter ID.
+     * @param bool $publish_immediately Whether to set post_status to publish.
+     * @param bool $sideload_images     Whether to download images to local media library.
      * @return string 'imported' | 'skipped' | 'error'
      */
-    private static function import_campaign( $mp_id ) {
+    public static function import_campaign( $mp_id, $publish_immediately = false, $sideload_images = false ) {
         global $wpdb;
 
         // Already imported?
@@ -281,7 +300,10 @@ class Culture_Newsletter_Importer {
                     ( SELECT q.newsletter_rendered_body
                       FROM {$wpdb->prefix}mailpoet_sending_queues q
                       WHERE q.newsletter_id = n.id AND q.status = 'completed'
-                      ORDER BY q.id DESC LIMIT 1 ) AS newsletter_rendered_body
+                      ORDER BY q.id DESC LIMIT 1 ) AS newsletter_rendered_body,
+                    ( SELECT SUM( q2.count_total )
+                      FROM {$wpdb->prefix}mailpoet_sending_queues q2
+                      WHERE q2.newsletter_id = n.id AND q2.status = 'completed' ) AS recipients
              FROM {$wpdb->prefix}mailpoet_newsletters n
              WHERE n.id = %d AND n.type = 'standard' AND n.deleted_at IS NULL
              LIMIT 1",
@@ -294,6 +316,10 @@ class Culture_Newsletter_Importer {
 
         $content = self::extract_content( $campaign->body, $campaign->newsletter_rendered_body );
 
+        if ( $sideload_images ) {
+            $content = self::sideload_campaign_images( $content );
+        }
+
         // Determine post date — prefer sent_at, fall back to newsletter_date.
         $post_date = ! empty( $campaign->sent_at )
             ? $campaign->sent_at
@@ -302,9 +328,9 @@ class Culture_Newsletter_Importer {
         $post_id = wp_insert_post( array(
             'post_type'     => 'culture_newsletter',
             'post_title'    => sanitize_text_field( $campaign->subject ),
-            'post_content'  => wp_kses_post( $content ),
+            'post_content'  => $content, // Keep original HTML if we sideloaded, or sanitized if not.
             'post_excerpt'  => sanitize_text_field( $campaign->preheader ),
-            'post_status'   => 'draft',
+            'post_status'   => $publish_immediately ? 'publish' : 'draft',
             'post_date'     => $post_date,
             'post_date_gmt' => get_gmt_from_date( $post_date ),
         ), true );
@@ -313,9 +339,53 @@ class Culture_Newsletter_Importer {
             return 'error';
         }
 
+        // Map metadata for Culture Community Newsletter Platform.
         update_post_meta( $post_id, '_culture_mailpoet_id', $mp_id );
+        update_post_meta( $post_id, '_culture_nl_send_status', 'sent' );
+        update_post_meta( $post_id, '_culture_nl_sent_at', $post_date );
+        
+        if ( ! empty( $campaign->recipients ) ) {
+            update_post_meta( $post_id, '_culture_nl_send_total', (int) $campaign->recipients );
+        }
 
         return 'imported';
+    }
+
+    /**
+     * Sideload images from the campaign content into the local WordPress Media Library.
+     *
+     * @param string $content
+     * @return string Updated content with local image URLs.
+     */
+    private static function sideload_campaign_images( $content ) {
+        if ( empty( $content ) || ! function_exists( 'media_sideload_image' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/media.php';
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+            require_once ABSPATH . 'wp-admin/includes/image.php';
+        }
+
+        if ( ! function_exists( 'media_sideload_image' ) ) {
+            return $content;
+        }
+
+        // Find all img tags.
+        if ( preg_match_all( '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $content, $matches ) ) {
+            $urls = array_unique( $matches[1] );
+            foreach ( $urls as $url ) {
+                // Skip local images.
+                if ( strpos( $url, home_url() ) !== false ) {
+                    continue;
+                }
+
+                // Sideload the image.
+                $local_url = media_sideload_image( $url, 0, null, 'src' );
+                if ( ! is_wp_error( $local_url ) ) {
+                    $content = str_replace( $url, $local_url, $content );
+                }
+            }
+        }
+
+        return $content;
     }
 
     /**
@@ -475,24 +545,22 @@ class Culture_Newsletter_Importer {
     private static function get_mailpoet_campaigns() {
         global $wpdb;
 
-        // Include 'sent' and 'sending' so campaigns mid-send are visible too.
-        // All non-aggregated columns are listed in GROUP BY to satisfy
-        // MySQL's ONLY_FULL_GROUP_BY mode (default since MySQL 5.7).
+        $table_newsletters = $wpdb->prefix . 'mailpoet_newsletters';
+        $table_queues      = $wpdb->prefix . 'mailpoet_sending_queues';
+
+        // Check if queues table exists so the join doesn't break the whole list.
+        $queues_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_queues ) );
+
+        $count_subquery = $queues_exists
+            ? ", ( SELECT SUM( count_total ) FROM {$table_queues} q WHERE q.newsletter_id = n.id AND q.status = 'completed' ) AS recipients"
+            : ", 0 AS recipients";
+
         $rows = $wpdb->get_results(
-            "SELECT
-                n.id,
-                n.subject,
-                n.preheader,
-                n.status,
-                n.sent_at,
-                COALESCE( SUM( q.count_total ), 0 ) AS recipients
-             FROM {$wpdb->prefix}mailpoet_newsletters n
-             LEFT JOIN {$wpdb->prefix}mailpoet_sending_queues q
-                    ON q.newsletter_id = n.id AND q.status = 'completed'
+            "SELECT n.id, n.subject, n.preheader, n.status, n.sent_at {$count_subquery}
+             FROM {$table_newsletters} n
              WHERE n.type = 'standard'
                AND n.status IN ( 'sent', 'sending' )
                AND n.deleted_at IS NULL
-             GROUP BY n.id, n.subject, n.preheader, n.status, n.sent_at
              ORDER BY n.sent_at DESC"
         );
 

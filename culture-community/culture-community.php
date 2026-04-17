@@ -34,6 +34,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-emails.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-newsletter-queue.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-nl-analytics.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cli.php';
 
 // API includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-rest-api.php';
@@ -102,6 +103,11 @@ function culture_community_init() {
     Culture_Analytics::init();
     Culture_Email_Templates::init();
     Culture_Templates::init();
+
+    // Register WP-CLI commands.
+    if ( defined( 'WP_CLI' ) && WP_CLI ) {
+        WP_CLI::add_command( 'culture', 'Culture_CLI' );
+    }
 }
 add_action( 'init', 'culture_community_init', 5 );
 
