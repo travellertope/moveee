@@ -57,6 +57,7 @@ function mapRestEventToFrontendShape(item: any) {
     openingHours: item?.meta?.opening_hours || item?.meta?._culture_opening_hours || null,
     tagline: item?.meta?.tagline || item?.meta?._culture_tagline || null,
     attribution: item?.meta?.attribution || item?.meta?._culture_attribution || null,
+    ticketingUrl: item?.meta?.ticketing_url || item?.meta?._culture_ticketing_url || null,
     featuredImage: embeddedMedia?.source_url
       ? {
           node: {
@@ -299,6 +300,7 @@ const EVENT_FIELDS_FRAGMENT = `
     location
     eventLocation: location
     admission
+    ticketingUrl: ticketing_url
     isFeatured
     tagline
     attribution

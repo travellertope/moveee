@@ -218,6 +218,14 @@ class Culture_ACF_Fields {
                     'wrapper' => array( 'width' => '25' ),
                 ),
                 array(
+                    'key' => 'field_event_ticketing_url',
+                    'label' => 'External Ticketing URL (Optional)',
+                    'name' => 'ticketing_url',
+                    'type' => 'url',
+                    'instructions' => 'If provided, the RSVP form will be replaced by a "Buy Ticket" button linking here.',
+                    'wrapper' => array( 'width' => '50' ),
+                ),
+                array(
                     'key' => 'field_event_metrics',
                     'label' => 'Key Highlights / Metrics',
                     'name' => 'metrics',

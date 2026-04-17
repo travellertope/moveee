@@ -63,10 +63,20 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <div className="label">Exhibition Run</div>
               <div className="value">{dateFormatted} — {endFormatted || "TBA"}</div>
             </div>
-            <div className="hero-cta-group">
-              <button className="btn-outline">View schedule</button>
-              <button className="btn-primary">RSVP Now →</button>
-            </div>
+          <div className="hero-cta-group">
+            <button 
+              className="btn-outline" 
+              onClick={() => document.getElementById('programme-section')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              View schedule
+            </button>
+            <button 
+              className="btn-primary" 
+              onClick={() => document.getElementById('rsvp-section')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              RSVP Now →
+            </button>
+          </div>
           </div>
         </div>
       </section>
@@ -146,7 +156,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
           {/* Programme */}
           {hasSchedule && (
-            <div className="programme">
+            <div className="programme" id="programme-section">
               <div className="section-label">Opening night programme</div>
               {event.schedule.map((item: any, i: number) => (
                 <div key={i} className="programme-row">
@@ -166,14 +176,33 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
         {/* SIDEBAR */}
         <aside className="sidebar">
-          <div className="rsvp-card">
+          <div className="rsvp-card" id="rsvp-section">
             <div className="top-label">RSVP · {dateFormatted}</div>
-            <h3>Secure your <em>place</em></h3>
-            <div className="event-date">{event.location} · {event.openingHours || "Doors from 18:00"}</div>
             
-            <div className="rsvp-form mt-8">
-              <RSVPForm eventSlug={event.slug} eventTitle={event.title} />
-            </div>
+            {event.ticketingUrl ? (
+              <>
+                <h3 className="mb-4">Secure your <em>ticket</em></h3>
+                <div className="event-date mb-10">{event.location} · {event.admission || "Paid Entry"}</div>
+                <a 
+                  href={event.ticketingUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="btn-primary w-full text-center block"
+                >
+                  Buy Ticket Now →
+                </a>
+                <div className="rsvp-small mt-6">Secure access via external partner</div>
+              </>
+            ) : (
+              <>
+                <h3>Secure your <em>place</em></h3>
+                <div className="event-date">{event.location} · {event.openingHours || "Doors from 18:00"}</div>
+                
+                <div className="rsvp-form mt-8">
+                  <RSVPForm eventSlug={event.slug} eventTitle={event.title} />
+                </div>
+              </>
+            )}
           </div>
 
           <div className="info-card">
@@ -244,21 +273,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </div>
         </section>
       )}
-
-      {/* FOOTER RAWMIN */}
-      <footer className="bg-ink text-paper py-20 px-10">
-        <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
-           <Link href="/" className="text-2xl font-serif italic text-gold">Moveee</Link>
-           <div className="flex gap-8 text-xs font-mono uppercase opacity-40">
-             <Link href="/events">Events</Link>
-             <Link href="/origins">Origins</Link>
-             <Link href="/magazine">Magazine</Link>
-           </div>
-           <div className="text-[10px] font-mono opacity-30 text-right">
-             © 2026 THE MOVEEE<br/>CULTURE ARCHIVE
-           </div>
-        </div>
-      </footer>
     </div>
   );
 }
