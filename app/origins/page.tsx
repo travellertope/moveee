@@ -32,8 +32,7 @@ export default async function OriginsPage() {
 
       {/* ── HERO ── */}
       <OriginHero
-        title="Origins · <em>Curated Journeys</em>"
-        standfirst="Not tours. Slow, deep, culturally anchored journeys to the places African and Black diasporan culture is actually being made."
+        description="Slow, writer-led cultural journeys. Not tours — invitations into the places where the work is made."
       />
 
       <Marquee />
