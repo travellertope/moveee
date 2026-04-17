@@ -47,8 +47,9 @@ export default async function Home() {
   try {
     const originsData = await getWPData(GET_JOURNEYS, { first: 4 }, { revalidate: 0 });
     origins = originsData?.cultureJourneys?.nodes || [];
+    console.log('✅ Journeys fetched:', origins.length, origins.map((j: any) => j.title));
   } catch (err) {
-    console.error(err);
+    console.error('❌ Error fetching journeys:', err);
   }
 
   try {

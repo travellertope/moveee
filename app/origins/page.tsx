@@ -16,8 +16,10 @@ export default async function OriginsPage() {
   try {
     const data = await getWPData(GET_JOURNEYS, { first: 24 }, { revalidate: 0 });
     journeys = data?.cultureJourneys?.nodes ?? [];
+    console.log('✅ /origins page - Journeys fetched:', journeys.length);
+    journeys.forEach((j: any) => console.log('  - ', j.title, '(status:', j.journeyStatus + ')'));
   } catch (error) {
-    console.error('Error fetching journeys:', error);
+    console.error('❌ Error fetching journeys:', error);
   }
 
   const currentJourney = journeys.find(j => j.journeyStatus === 'active') || journeys[0];
