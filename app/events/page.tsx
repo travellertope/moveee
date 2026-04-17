@@ -136,7 +136,7 @@ export default async function EventsPage() {
                     })()}
                     location={event.location || "Lagos, Nigeria"}
                     time="18:00 – 21:00"
-                    category={event.cultureInterests?.nodes[0]?.name || "Culture"}
+                    category={Array.isArray(event.cultureInterests?.nodes) && event.cultureInterests.nodes.length > 0 ? event.cultureInterests.nodes[0].name : "Culture"}
                     image={event.featuredImage?.node?.sourceUrl}
                     status={event.status || 'upcoming'}
                     tags={['RSVP']}

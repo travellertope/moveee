@@ -57,7 +57,7 @@ function mapRestEventToFrontendShape(item: any) {
     openingHours: item?.meta?.opening_hours || item?.meta?._culture_opening_hours || null,
     tagline: item?.meta?.tagline || item?.meta?._culture_tagline || null,
     attribution: item?.meta?.attribution || item?.meta?._culture_attribution || null,
-    ticketingUrl: item?.meta?.ticketing_url || item?.meta?._culture_ticketing_url || null,
+    ticketingUrl: item?.meta?.ticketing_url || item?.meta?._culture_ticketing_url || item?.acf?.ticketing_url || null,
     featuredImage: embeddedMedia?.source_url
       ? {
           node: {
@@ -66,14 +66,18 @@ function mapRestEventToFrontendShape(item: any) {
           },
         }
       : null,
-    cultureInterests: { nodes: [] },
-    // Repeaters are harder in REST; default to empty arrays to prevent crashes
-    metrics: [], 
-    schedule: [],
-    showcase: [],
-    featuredHost: null,
-    associatedJourney: null,
-    pressDetails: null,
+    cultureInterests: { 
+      nodes: Array.isArray(item?.culture_interests) 
+        ? item.culture_interests.map((c: any) => ({ name: c.name, slug: c.slug }))
+        : [] 
+    },
+    // Attempt to map ACF repeaters from REST
+    metrics: item?.acf?.metrics || item?.meta?.metrics || [], 
+    schedule: item?.acf?.schedule || item?.meta?.schedule || [],
+    showcase: item?.acf?.showcase || item?.meta?.showcase || [],
+    featuredHost: (typeof item?.acf?.featured_host === 'object') ? item.acf.featured_host : null,
+    associatedJourney: (typeof item?.acf?.associated_journey === 'object') ? item.acf.associated_journey : null,
+    pressDetails: item?.acf?.press_details || item?.meta?.press_details || null,
   };
 }
 
