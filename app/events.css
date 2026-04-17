@@ -160,8 +160,9 @@ html {
 
 .hero-inner {
   position: relative; z-index: 10; max-width: 1440px; width: 100%;
-  padding: 0 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+  padding: 0 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: flex-start;
 }
+.hero-inner > div:last-child { padding-top: 8px; }
 
 .hero-inner h1 { font-size: clamp(42px, 5vw, 72px); color: var(--ink); font-weight: 400; line-height: 1; white-space: nowrap; }
 .hero-inner h1 em { font-style: normal; font-weight: 400; color: var(--ochre); margin-left: 0.3em; }
