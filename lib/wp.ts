@@ -638,8 +638,29 @@ const PRODUCT_FIELDS_FRAGMENT = `
     shortDescription
     image { sourceUrl altText }
     galleryImages { nodes { sourceUrl altText } }
-    ... on SimpleProduct { price regularPrice salePrice }
-    ... on VariableProduct { price }
+    productCategories { nodes { name slug } }
+    productTags { nodes { name slug } }
+    metaData { key value }
+    ... on SimpleProduct {
+      price
+      regularPrice
+      salePrice
+      stockStatus
+      stockQuantity
+      onSale
+    }
+    ... on VariableProduct {
+      price
+      stockStatus
+      onSale
+      variations(first: 12) {
+        nodes {
+          price
+          stockStatus
+          attributes { nodes { name value } }
+        }
+      }
+    }
   }
 `;
 
@@ -663,6 +684,19 @@ export const GET_PRODUCT_BY_SLUG = `
     }
   }
   ${PRODUCT_FIELDS_FRAGMENT}
+`;
+
+export const GET_PRODUCT_CATEGORIES = `
+  query GetProductCategories {
+    productCategories(first: 20, where: { hideEmpty: true }) {
+      nodes {
+        name
+        slug
+        count
+        image { sourceUrl altText }
+      }
+    }
+  }
 `;
 
 export const DIRECTORY_FIELDS = DIRECTORY_FIELDS_FRAGMENT;
