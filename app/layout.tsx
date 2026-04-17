@@ -72,7 +72,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const siteData = await getWPData(GET_SITE_SETTINGS);
-  const headersList = headers();
+  const headersList = await headers();
   const country = headersList.get("x-vercel-ip-country") || "US";
 
   return (
