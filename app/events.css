@@ -164,7 +164,7 @@ html {
 }
 
 .hero-inner h1 { font-size: clamp(42px, 5vw, 72px); color: var(--ink); font-weight: 400; line-height: 1; white-space: nowrap; }
-.hero-inner h1 em { font-style: normal; font-weight: 400; color: var(--ochre); font-size: 0.7em; margin-left: 0.3em; }
+.hero-inner h1 em { font-style: normal; font-weight: 400; color: var(--ochre); margin-left: 0.3em; }
 .hero-standfirst { font-family: var(--font-serif); font-size: 20px; font-weight: 300; font-style: italic; color: var(--ink-soft); line-height: 1.45; max-width: 100%; }
 .hero-stats { display: none; }
 
