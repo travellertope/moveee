@@ -48,8 +48,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <span>Moveee Events</span>
           </div>
 
-          <h1 className="hero-title" dangerouslySetInnerHTML={{ __html: event.title.replace(/ /g, '<br/>') }} />
-          <p className="hero-subtitle">{event.tagline || `${cat} by ${host?.title || "Moveee Talent"}`}</p>
+          <h1 className="hero-title" dangerouslySetInnerHTML={{ __html: event.title }} />
+          <p className="hero-subtitle">{event.tagline || event.attribution || `${cat}${host?.title ? ` by ${host.title}` : ""}`}</p>
 
           <div className="hero-meta-row">
             <div className="hero-meta-item">
@@ -89,35 +89,33 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       </section>
 
       {/* ── TICKER ── */}
-      <div className="ticker-wrap">
-        <div className="ticker-track">
-          <span className="accent">{event.title}</span>
-          <span>{host?.title}</span>
-          <span className="accent">★</span>
-          <span>{event.location}</span>
-          <span className="accent">{dateFormatted}</span>
-          <span>{hasShowcase ? `${event.showcase.length} Works` : "Culture Archive"}</span>
-          <span className="accent">★</span>
-          <span>Limited Capacity</span>
-          <span>Moveee Members: Private View Access</span>
-          <span className="accent">★</span>
-          <span>{event.admission || "Free Admission"}</span>
-          <span className="accent">★</span>
-          {/* duplicate for seamless loop */}
-          <span className="accent">{event.title}</span>
-          <span>{host?.title}</span>
-          <span className="accent">★</span>
-          <span>{event.location}</span>
-          <span className="accent">{dateFormatted}</span>
-          <span>{hasShowcase ? `${event.showcase.length} Works` : "Culture Archive"}</span>
-          <span className="accent">★</span>
-          <span>Limited Capacity</span>
-          <span>Moveee Members: Private View Access</span>
-          <span className="accent">★</span>
-          <span>{event.admission || "Free Admission"}</span>
-          <span className="accent">★</span>
-        </div>
-      </div>
+      {(() => {
+        const tickerItems: Array<{ text: string; accent?: boolean }> = [];
+        const push = (text?: string | null, accent = false) => {
+          if (text && String(text).trim()) tickerItems.push({ text: String(text), accent });
+        };
+        push(event.title, true);
+        push(host?.title);
+        tickerItems.push({ text: "★", accent: true });
+        push(event.location);
+        push(dateFormatted, true);
+        push(hasShowcase ? `${event.showcase.length} Works` : "Culture Archive");
+        tickerItems.push({ text: "★", accent: true });
+        push("Limited Capacity");
+        push("Moveee Members: Private View Access");
+        tickerItems.push({ text: "★", accent: true });
+        push(event.admission || "Free Admission");
+        tickerItems.push({ text: "★", accent: true });
+        return (
+          <div className="ticker-wrap">
+            <div className="ticker-track">
+              {[...tickerItems, ...tickerItems].map((item, idx) => (
+                <span key={idx} className={item.accent ? "accent" : undefined}>{item.text}</span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── BODY ── */}
       <main className="page-body">
@@ -131,8 +129,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <div className="pull-quote">
               <div className="bar" />
               <div>
-                <blockquote>"{event.tagline}"</blockquote>
-                <cite>— {host?.title || "Moveee Talent"}, on the work at hand</cite>
+                <blockquote>&ldquo;{event.tagline}&rdquo;</blockquote>
+                {(host?.title || event.attribution) && (
+                  <cite>&mdash; {event.attribution || host?.title}</cite>
+                )}
               </div>
             </div>
           )}
@@ -165,18 +165,27 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           {hasSchedule && (
             <div className="programme" id="programme-section">
               <div className="section-label">Opening night programme</div>
-              {event.schedule.map((item: any, i: number) => (
-                <div key={i} className="programme-row">
-                  <div className="prog-time">{item.time}</div>
-                  <div>
-                    <div className="prog-event-title">{item.title}</div>
-                    <div className="prog-event-desc">{item.description}</div>
-                    <span className={`prog-tag ${item.access === 'members_only' ? 'members' : 'open'}`}>
-                      {item.access?.replace('_', ' ')}
-                    </span>
+              {event.schedule.map((item: any, i: number) => {
+                const accessRaw = (item.access || "").toLowerCase();
+                const accessLabel = accessRaw === "member"
+                  ? "Members only"
+                  : accessRaw === "patron"
+                    ? "Patrons only"
+                    : accessRaw === "public"
+                      ? "Open to all"
+                      : accessRaw.replace(/_/g, " ");
+                const accessClass = accessRaw === "member" || accessRaw === "patron" ? "members" : "open";
+                return (
+                  <div key={i} className="programme-row">
+                    <div className="prog-time">{item.time}</div>
+                    <div>
+                      <div className="prog-event-title">{item.title}</div>
+                      {item.description && <div className="prog-event-desc">{item.description}</div>}
+                      {accessLabel && <span className={`prog-tag ${accessClass}`}>{accessLabel}</span>}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -268,7 +277,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           <div className="max-w-4xl mx-auto text-center">
             <div className="section-label mx-auto mb-8">{event.pressDetails.eyebrow || "Press & Media"}</div>
             <h3 className="text-3xl md:text-5xl mb-6">{event.pressDetails.title}</h3>
-            <div className="prose-custom opacity-80 mb-10 mx-auto max-w-2xl" dangerouslySetInnerHTML={{ __html: event.pressDetails.content }} />
+            {event.pressDetails.content && (
+              <div className="prose-custom opacity-80 mb-10 mx-auto max-w-2xl" dangerouslySetInnerHTML={{ __html: event.pressDetails.content }} />
+            )}
             {event.pressDetails.link && (
               <a href={event.pressDetails.link} className="btn-outline inline-block">
                 Inquire for Press Access →
@@ -279,23 +290,30 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       )}
 
       {/* ARTIST STRIP */}
-      {hasHost && (
-        <section className="artist-strip">
-          <div className="artist-avatar">
-            {host.featuredImage?.node?.sourceUrl && (
-              <Image src={host.featuredImage.node.sourceUrl} alt={host.title} fill className="object-cover" />
-            )}
-          </div>
-          <div className="artist-info">
-            <div className="section-label">The artist</div>
-            <h3>{host.title?.split(' ')[0] || "Featured"} <em>{host.title?.split(' ')[1] || "Artist"}</em></h3>
-            <div className="font-serif italic text-lg text-ink-soft opacity-80" dangerouslySetInnerHTML={{ __html: host.excerpt }} />
-            <Link href={`/directory/${host.slug}`} className="inline-block mt-6 border-b border-ink text-[10px] uppercase font-mono">
-              Read the full portrait →
-            </Link>
-          </div>
-        </section>
-      )}
+      {hasHost && (() => {
+        const hostTitleParts = (host.title || "").trim().split(/\s+/);
+        const firstName = hostTitleParts[0] || "Featured";
+        const restName = hostTitleParts.slice(1).join(" ") || "Artist";
+        return (
+          <section className="artist-strip">
+            <div className="artist-avatar">
+              {host.featuredImage?.node?.sourceUrl && (
+                <Image src={host.featuredImage.node.sourceUrl} alt={host.title} fill className="object-cover" />
+              )}
+            </div>
+            <div className="artist-info">
+              <div className="section-label">The artist</div>
+              <h3>{firstName} <em>{restName}</em></h3>
+              {host.excerpt && (
+                <div className="artist-excerpt" dangerouslySetInnerHTML={{ __html: host.excerpt }} />
+              )}
+              <Link href={`/directory/${host.slug}`} className="artist-cta">
+                Read the full portrait →
+              </Link>
+            </div>
+          </section>
+        );
+      })()}
     </div>
   );
 }

@@ -41,6 +41,52 @@ export async function getWPData(query: string, variables = {}, options: any = {}
 
 function mapRestEventToFrontendShape(item: any) {
   const embeddedMedia = item?._embedded?.["wp:featuredmedia"]?.[0];
+  const acf = item?.acf || {};
+  const meta = item?.meta || {};
+  const pick = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== "" && v !== false) ?? null;
+
+  const toMediaItem = (img: any) => {
+    if (!img) return null;
+    if (typeof img === "string") return { sourceUrl: img };
+    if (typeof img === "object") {
+      const url = img.url || img.source_url || img.sizes?.full || img.sizes?.large;
+      return url ? { sourceUrl: url, altText: img.alt || "" } : null;
+    }
+    return null;
+  };
+
+  const normalizeShowcase = (arr: any) =>
+    Array.isArray(arr)
+      ? arr.map((s: any) => ({
+          title: s?.title || "",
+          media: s?.media || "",
+          dimensions: s?.dimensions || "",
+          year: s?.year || "",
+          price: s?.price || "",
+          image: toMediaItem(s?.image),
+        }))
+      : [];
+
+  const normalizeHost = (h: any) => {
+    if (!h || typeof h !== "object") return null;
+    return {
+      title: h.post_title || h.title || h.name || "",
+      slug: h.post_name || h.slug || "",
+      excerpt: h.post_excerpt || h.excerpt || "",
+      featuredImage: toMediaItem(h.featured_image || h.thumbnail)
+        ? { node: toMediaItem(h.featured_image || h.thumbnail) }
+        : null,
+    };
+  };
+
+  const normalizeJourney = (j: any) => {
+    if (!j || typeof j !== "object") return null;
+    return {
+      title: j.post_title || j.title || "",
+      slug: j.post_name || j.slug || "",
+    };
+  };
+
   return {
     id: String(item?.id ?? ""),
     databaseId: item?.id,
@@ -49,15 +95,15 @@ function mapRestEventToFrontendShape(item: any) {
     date: item?.date ?? null,
     excerpt: item?.excerpt?.rendered ?? "",
     content: item?.content?.rendered ?? "",
-    eventDate: item?.meta?.event_date || item?.meta?._culture_event_date || item?.date || null,
-    endDate: item?.meta?.end_date || item?.meta?._culture_end_date || null,
-    location: item?.meta?.location || item?.meta?._culture_location || null,
-    admission: item?.meta?.admission || item?.meta?._culture_admission || null,
-    isFeatured: Boolean(item?.meta?.is_featured || item?.meta?._culture_is_featured),
-    openingHours: item?.meta?.opening_hours || item?.meta?._culture_opening_hours || null,
-    tagline: item?.meta?.tagline || item?.meta?._culture_tagline || null,
-    attribution: item?.meta?.attribution || item?.meta?._culture_attribution || null,
-    ticketingUrl: item?.meta?.ticketing_url || item?.meta?._culture_ticketing_url || item?.acf?.ticketing_url || null,
+    eventDate: pick(acf.event_date, meta.event_date, meta._culture_event_date, item?.date),
+    endDate: pick(acf.end_date, meta.end_date, meta._culture_end_date),
+    location: pick(acf.location, meta.location, meta._culture_location),
+    admission: pick(acf.admission, meta.admission, meta._culture_admission),
+    isFeatured: Boolean(pick(acf.is_featured, meta.is_featured, meta._culture_is_featured)),
+    openingHours: pick(acf.opening_hours, meta.opening_hours, meta._culture_opening_hours),
+    tagline: pick(acf.tagline, meta.tagline, meta._culture_tagline),
+    attribution: pick(acf.attribution, meta.attribution, meta._culture_attribution),
+    ticketingUrl: pick(acf.ticketing_url, meta.ticketing_url, meta._culture_ticketing_url),
     featuredImage: embeddedMedia?.source_url
       ? {
           node: {
@@ -66,18 +112,17 @@ function mapRestEventToFrontendShape(item: any) {
           },
         }
       : null,
-    cultureInterests: { 
-      nodes: Array.isArray(item?.culture_interests) 
+    cultureInterests: {
+      nodes: Array.isArray(item?.culture_interests)
         ? item.culture_interests.map((c: any) => ({ name: c.name, slug: c.slug }))
-        : [] 
+        : [],
     },
-    // Attempt to map ACF repeaters from REST
-    metrics: item?.acf?.metrics || item?.meta?.metrics || [], 
-    schedule: item?.acf?.schedule || item?.meta?.schedule || [],
-    showcase: item?.acf?.showcase || item?.meta?.showcase || [],
-    featuredHost: (typeof item?.acf?.featured_host === 'object') ? item.acf.featured_host : null,
-    associatedJourney: (typeof item?.acf?.associated_journey === 'object') ? item.acf.associated_journey : null,
-    pressDetails: item?.acf?.press_details || item?.meta?.press_details || null,
+    metrics: Array.isArray(acf.metrics) ? acf.metrics : (Array.isArray(meta.metrics) ? meta.metrics : []),
+    schedule: Array.isArray(acf.schedule) ? acf.schedule : (Array.isArray(meta.schedule) ? meta.schedule : []),
+    showcase: normalizeShowcase(acf.showcase || meta.showcase),
+    featuredHost: normalizeHost(acf.featured_host),
+    associatedJourney: normalizeJourney(acf.associated_journey),
+    pressDetails: acf.press_details || meta.press_details || null,
   };
 }
 
