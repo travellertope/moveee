@@ -18,7 +18,7 @@ export default async function OriginsPage() {
     journeys = data?.cultureJourneys?.nodes ?? [];
   } catch { /* CMS unreachable */ }
 
-  const currentJourney = journeys.find(j => j.journeyMeta?.journeyStatus === 'active') || journeys[0];
+  const currentJourney = journeys.find(j => j.journeyStatus === 'active') || journeys[0];
   const otherJourneys = currentJourney ? journeys.filter(j => j.id !== currentJourney.id) : journeys;
 
   return (
@@ -39,7 +39,7 @@ export default async function OriginsPage() {
         <div className="origins-mf-right">
           <div className="sec-tag">By the numbers</div>
           <div className="origins-mf-stat-grid">
-            <div className="origins-mf-stat"><div className="n">{journeys.filter(j => j.journeyMeta?.journeyStatus === 'completed').length}</div><div className="d">Journeys completed</div></div>
+            <div className="origins-mf-stat"><div className="n">{journeys.filter(j => j.journeyStatus === 'completed').length}</div><div className="d">Journeys completed</div></div>
             <div className="origins-mf-stat"><div className="n">48</div><div className="d">Travellers so far</div></div>
           </div>
         </div>
@@ -68,22 +68,22 @@ export default async function OriginsPage() {
             <div className="origins-cj-content">
               <div className="origins-cj-label">
                 <span className="live">● Live</span>
-                <span>{currentJourney.journeyMeta?.journeyEdition || 'Current'}</span>
+                <span>{currentJourney.journeyEdition || 'Current'}</span>
               </div>
               <h2 className="origins-cj-title" dangerouslySetInnerHTML={{ __html: currentJourney.title }} />
               <p className="origins-cj-sub">{currentJourney.excerpt}</p>
               <div className="origins-cj-details">
                 <div className="origins-cj-det">
                   <div className="dl">Dates</div>
-                  <div className="dv">{currentJourney.journeyMeta?.journeyDates || 'TBA'}</div>
+                  <div className="dv">{currentJourney.journeyDates || 'TBA'}</div>
                 </div>
                 <div className="origins-cj-det">
                   <div className="dl">Location</div>
-                  <div className="dv">{currentJourney.journeyMeta?.journeyLocation || 'TBA'}</div>
+                  <div className="dv">{currentJourney.journeyLocation || 'TBA'}</div>
                 </div>
                 <div className="origins-cj-det">
                   <div className="dl">Price</div>
-                  <div className="dv">{currentJourney.journeyMeta?.journeyPrice || 'TBA'}</div>
+                  <div className="dv">{currentJourney.journeyPrice || 'TBA'}</div>
                 </div>
                 <div className="origins-cj-det">
                   <div className="dl">Group Size</div>
@@ -92,7 +92,7 @@ export default async function OriginsPage() {
               </div>
               <div className="origins-cj-bar-label">
                 <span>Availability</span>
-                <span className="spots">{currentJourney.journeyMeta?.journeySpots || '7'} spots remaining</span>
+                <span className="spots">{currentJourney.journeySpots || '7'} spots remaining</span>
               </div>
               <div className="origins-cj-bar">
                 <div className="origins-cj-bar-fill"></div>
@@ -121,10 +121,10 @@ export default async function OriginsPage() {
               <Link key={j.id} href={`/origins/${j.slug}`} className="origins-jcard">
                 <div className="origins-jcard-container">
                   <div className="ji">
-                    <div className={`ji-status ${j.journeyMeta?.journeyStatus === 'completed' ? 'sold' : j.journeyMeta?.journeyStatus === 'upcoming' ? 'upcoming' : 'open'}`}>
-                      ● {j.journeyMeta?.journeyStatus === 'completed' ? 'Completed' : j.journeyMeta?.journeyStatus === 'upcoming' ? 'Upcoming' : j.journeyMeta?.journeySpots || '7'} spots
+                    <div className={`ji-status ${j.journeyStatus === 'completed' ? 'sold' : j.journeyStatus === 'upcoming' ? 'upcoming' : 'open'}`}>
+                      ● {j.journeyStatus === 'completed' ? 'Completed' : j.journeyStatus === 'upcoming' ? 'Upcoming' : j.journeySpots || '7'} spots
                     </div>
-                    <div className="ji-num">{j.journeyMeta?.journeyEdition || 'N°01'}</div>
+                    <div className="ji-num">{j.journeyEdition || 'N°01'}</div>
                     {j.featuredImage?.node?.sourceUrl ? (
                       <Image
                         src={j.featuredImage.node.sourceUrl}
@@ -138,12 +138,12 @@ export default async function OriginsPage() {
                       </svg>
                     )}
                   </div>
-                  <div className="j-num-tag">{j.journeyMeta?.journeyEdition || 'Origins'}</div>
+                  <div className="j-num-tag">{j.journeyEdition || 'Origins'}</div>
                   <h4 dangerouslySetInnerHTML={{ __html: j.title }} />
                   {j.excerpt && <p className="j-desc">{j.excerpt.replace(/<[^>]*>/g, '').slice(0, 100)}</p>}
                   <div className="j-meta-row">
-                    <div className="jm">Location<strong>{j.journeyMeta?.journeyLocation || 'TBA'}</strong></div>
-                    <div className="jm">Price<strong>{j.journeyMeta?.journeyPrice || 'TBA'}</strong></div>
+                    <div className="jm">Location<strong>{j.journeyLocation || 'TBA'}</strong></div>
+                    <div className="jm">Price<strong>{j.journeyPrice || 'TBA'}</strong></div>
                   </div>
                   <span className="j-cta">View →</span>
                 </div>

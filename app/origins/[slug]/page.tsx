@@ -56,13 +56,14 @@ export default async function JourneyPage({ params }: { params: Promise<{ slug: 
 
   if (!journey) notFound();
 
-  const meta = journey.journeyMeta || {};
-  const dates = meta.journeyDates || "TBA";
-  const location = meta.journeyLocation || "TBA";
-  const price = meta.journeyPrice || "TBA";
-  const spots = meta.journeySpots || "7";
-  const itinerary = meta.journeyItinerary || [];
-  const hosts = meta.journeyHosts || [];
+  const dates = journey.journeyDates || "TBA";
+  const location = journey.journeyLocation || "TBA";
+  const price = journey.journeyPrice || "TBA";
+  const spots = journey.journeySpots || "7";
+  const itinerary = journey.journeyItinerary || [];
+  const hosts = journey.journeyHosts || [];
+  const inclusions = journey.journeyInclusions || "";
+  const exclusions = journey.journeyExclusions || "";
 
   return (
     <div className="journey-page bg-paper">
@@ -214,9 +215,9 @@ export default async function JourneyPage({ params }: { params: Promise<{ slug: 
             <p className="journey-inc-desc">Pre-trip prep, daily briefings, and expert guides.</p>
           </div>
         </div>
-        {meta.journeyExclusions && (
+        {exclusions && (
           <div className="journey-not-included">
-            <p><strong>Not included:</strong> {meta.journeyExclusions}</p>
+            <p><strong>Not included:</strong> {exclusions}</p>
           </div>
         )}
       </section>

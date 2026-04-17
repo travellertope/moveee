@@ -335,35 +335,33 @@ const JOURNEY_FIELDS_FRAGMENT = `
         altText
       }
     }
-    journeyMeta {
-      journeyEdition
-      journeyDates
-      journeyLocation
-      journeyPrice
-      journeySpots
-      journeyItinerary {
-        dayNumber
-        dayTitle
-        dayLocation
-        dayDescription
-        activities {
-          activityTime
-          activityTitle
-          activityDescription
-          activityType
-        }
+    journeyEdition
+    journeyDates
+    journeyLocation
+    journeyPrice
+    journeySpots
+    journeyStatus
+    journeyInclusions
+    journeyExclusions
+    journeyItinerary {
+      dayNumber
+      dayTitle
+      dayLocation
+      dayDescription
+      activities {
+        activityTime
+        activityTitle
+        activityDescription
+        activityType
       }
-      journeyHosts {
-        hostName
-        hostRole
-        hostBio
-        hostImage {
-          sourceUrl
-        }
+    }
+    journeyHosts {
+      hostName
+      hostRole
+      hostBio
+      hostImage {
+        sourceUrl
       }
-      journeyInclusions
-      journeyExclusions
-      journeyStatus
     }
     categories {
       nodes {
