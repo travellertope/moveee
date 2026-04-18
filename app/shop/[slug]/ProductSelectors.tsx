@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 interface Variation {
   price?: string;
@@ -28,6 +28,8 @@ const FALLBACK_SIZES = [
   { label: "L", dim: "54–56 cm" },
 ];
 
+type CartStatus = "idle" | "adding" | "added" | "error";
+
 export default function ProductSelectors({
   productId,
   price,
@@ -37,8 +39,22 @@ export default function ProductSelectors({
   const [selectedColor, setSelectedColor] = useState(0);
   const [selectedSize, setSelectedSize] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [cartStatus, setCartStatus] = useState<CartStatus>("idle");
+  const [nonce, setNonce] = useState<string | null>(null);
 
-  // Extract unique colors and sizes from variations if available
+  // Fetch WooCommerce nonce on mount by hitting /api/cart (GET)
+  useEffect(() => {
+    fetch("/api/cart")
+      .then((r) => r.json())
+      .then((data) => {
+        // WC Store API returns nonce in the cart response
+        if (data?.extensions?.["woocommerce-blocks"]?.nonce) {
+          setNonce(data.extensions["woocommerce-blocks"].nonce);
+        }
+      })
+      .catch(() => {/* nonce unavailable — will fall back to direct link */});
+  }, []);
+
   const colorAttrs = extractAttr(variations, "color");
   const sizeAttrs = extractAttr(variations, "size");
 
@@ -50,7 +66,35 @@ export default function ProductSelectors({
     ? sizeAttrs.map((v) => ({ label: v, dim: "" }))
     : FALLBACK_SIZES;
 
-  const addToCartUrl = `https://cms.themoveee.com/?add-to-cart=${productId}`;
+  const addToCart = useCallback(async () => {
+    setCartStatus("adding");
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (nonce) headers["X-WC-Store-Api-Nonce"] = nonce;
+
+      const res = await fetch("/api/cart?action=add", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ id: productId, quantity: 1 }),
+      });
+
+      if (res.ok) {
+        setCartStatus("added");
+        setTimeout(() => setCartStatus("idle"), 2500);
+      } else {
+        throw new Error("add failed");
+      }
+    } catch {
+      // Fall back to direct WooCommerce link when proxy unavailable
+      window.location.href = `https://cms.themoveee.com/?add-to-cart=${productId}`;
+    }
+  }, [productId, nonce]);
+
+  const btnLabel =
+    cartStatus === "adding" ? "Adding…" :
+    cartStatus === "added"  ? "Added ✓" :
+    cartStatus === "error"  ? "Try again" :
+    "Add to Cart";
 
   return (
     <>
@@ -114,14 +158,19 @@ export default function ProductSelectors({
       </div>
 
       {/* CTA */}
-      {/* NOTE: cart links directly to WooCommerce — requires cms.themoveee.com */}
       <div className="sp-cta-row">
-        <a href={addToCartUrl} className="sp-btn-add">
-          Add to Cart <span>→</span>
-        </a>
+        <button
+          className="sp-btn-add"
+          onClick={addToCart}
+          disabled={cartStatus === "adding"}
+          style={{ opacity: cartStatus === "adding" ? 0.7 : 1 }}
+        >
+          {btnLabel}
+          {cartStatus === "idle" && <span>→</span>}
+        </button>
         <button
           className="sp-btn-save"
-          onClick={() => setSaved((s) => !s)}
+          onClick={() => setSaved((s: boolean) => !s)}
           aria-label={saved ? "Remove from saved" : "Save item"}
         >
           {saved ? "♥" : "♡"}
