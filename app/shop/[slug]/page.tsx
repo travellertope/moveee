@@ -1,4 +1,4 @@
-import { getWPData, GET_PRODUCT_BY_SLUG, GET_PRODUCTS } from "@/lib/wp";
+import { getWPData, GET_PRODUCT_BY_SLUG, GET_PRODUCTS, GET_POST_BY_ID } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -66,11 +66,33 @@ export default async function ProductPage({
   const vname = vendorName(product);
   const variations = product.variations?.nodes ?? [];
 
-  // ACF fields — populated when moveee-graphql-bridge plugin is active
+  // ACF + vendor fields from moveee-graphql-bridge plugin
   const makerStory: string = meta(product.metaData, "maker_story") || "";
   const careInstructions: string = meta(product.metaData, "care_instructions") || "";
   const vendorCity: string = meta(product.metaData, "vendor_city") || meta(product.metaData, "_vendor_city") || "";
   const vendorDesc: string = meta(product.metaData, "vendor_description") || meta(product.metaData, "_vendor_description") || "";
+  const vendorYears: string = meta(product.metaData, "vendor_years") || meta(product.metaData, "_vendor_years") || "";
+  const vendorRating: string = meta(product.metaData, "vendor_rating") || meta(product.metaData, "_vendor_rating") || "";
+  const vendorProductCount: string = meta(product.metaData, "vendor_product_count") || meta(product.metaData, "_vendor_product_count") || "";
+
+  // Parse process_steps JSON (array of { title, desc, duration })
+  interface ProcessStep { title: string; desc: string; duration?: string }
+  let processSteps: ProcessStep[] = [];
+  try {
+    const raw = meta(product.metaData, "process_steps");
+    if (raw) processSteps = JSON.parse(raw);
+  } catch { /* malformed JSON — fall back to static */ }
+  if (!processSteps.length) processSteps = PROCESS_STEPS;
+
+  // Fetch the "As Seen In" linked magazine post if ID is set
+  let asSeenInPost: any = null;
+  const asSeenInId = meta(product.metaData, "as_seen_in_post_id");
+  try {
+    if (asSeenInId) {
+      const postData = await getWPData(GET_POST_BY_ID, { id: asSeenInId });
+      asSeenInPost = postData?.post ?? null;
+    }
+  } catch { /* CMS unreachable */ }
 
   const accordionItems = [
     {
@@ -184,11 +206,25 @@ export default async function ProductPage({
           <div className="sp-seen-in-label">As Seen In</div>
           <div>
             <div className="sp-seen-in-title">
-              <em>The Moveee Edit</em>
-              <span className="sp-seen-in-meta">Issue 014 · Craft &amp; Makers</span>
+              {asSeenInPost ? (
+                <>
+                  <em>{asSeenInPost.title}</em>
+                  {asSeenInPost.categories?.nodes?.[0] && (
+                    <span className="sp-seen-in-meta">{asSeenInPost.categories.nodes[0].name}</span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <em>The Moveee Edit</em>
+                  <span className="sp-seen-in-meta">Issue 014 · Craft &amp; Makers</span>
+                </>
+              )}
             </div>
           </div>
-          <Link href="/magazine" className="sp-seen-in-cta">
+          <Link
+            href={asSeenInPost ? `/magazine/${asSeenInPost.slug}` : "/magazine"}
+            className="sp-seen-in-cta"
+          >
             Read the Feature →
           </Link>
         </div>
@@ -246,29 +282,27 @@ export default async function ProductPage({
       </section>
 
       {/* ── PROCESS ── */}
-      {/* TODO: wire to ACF process_steps when moveee-graphql-bridge is active */}
       <section className="sp-process">
         <div className="sp-process-header">
           <div className="sp-process-label">How It&rsquo;s Made</div>
           <h2>From raw material <em>to your door</em></h2>
-          <p>A four-stage process — each step overseen by the maker themselves.</p>
+          <p>A {processSteps.length}-stage process — each step overseen by the maker themselves.</p>
         </div>
         <div className="sp-process-grid">
-          {PROCESS_STEPS.map((step, i) => (
+          {processSteps.map((step, i) => (
             <div key={step.title} className="sp-process-step">
               <div className="step-img">
                 <div className="step-num">0{i + 1}</div>
               </div>
               <h4>{step.title}</h4>
               <p>{step.desc}</p>
-              <span className="duration">{step.duration}</span>
+              {step.duration && <span className="duration">{step.duration}</span>}
             </div>
           ))}
         </div>
       </section>
 
       {/* ── VENDOR PROFILE ── */}
-      {/* TODO: wire vendor stats to multivendor API when available */}
       <section className="sp-vendor-profile">
         <div className="sp-vendor-inner">
           <div className="sp-vendor-visual">
@@ -282,7 +316,7 @@ export default async function ProductPage({
             )}
           </div>
           <div>
-            <div className="sp-vendor-tag">Vetted Maker</div>
+            <div className="sp-vendor-tag">Vetted Maker{vendorCity && ` · ${vendorCity}`}</div>
             <h2>{vname || <em>The Maker</em>}</h2>
             <p className="sp-vendor-body">
               {vendorDesc ||
@@ -290,21 +324,25 @@ export default async function ProductPage({
             </p>
             <div className="sp-vendor-stats">
               <div className="sp-vendor-stat">
-                <div className="num">7+</div>
+                <div className="num">{vendorYears ? `${vendorYears}` : "7+"}</div>
                 <span className="label">Years making</span>
               </div>
               <div className="sp-vendor-stat">
-                <div className="num">100%</div>
-                <span className="label">Handmade</span>
+                <div className="num">{vendorProductCount || relatedProducts.length + 1}</div>
+                <span className="label">Products in shop</span>
               </div>
               <div className="sp-vendor-stat">
-                <div className="num">★ 4.9</div>
-                <span className="label">Vetted rating</span>
+                <div className="num">{vendorRating ? `★ ${vendorRating}` : "★ Vetted"}</div>
+                <span className="label">Moveee rating</span>
               </div>
             </div>
             <div className="sp-vendor-cta-row">
               <Link href="/origins" className="btn-outline">Read their story</Link>
-              <Link href="/shop" className="btn-filled">More from this maker</Link>
+              {firstCategory && (
+                <Link href={`/shop/category/${firstCategory}`} className="btn-filled">
+                  More from {vname || "this maker"}
+                </Link>
+              )}
             </div>
           </div>
         </div>
