@@ -23,6 +23,47 @@ function vendorName(p: any): string {
   );
 }
 
+interface VendorCard {
+  name: string;
+  location: string;
+  desc: string;
+  count: number;
+  image: string | null;
+}
+
+function extractVendors(products: any[]): VendorCard[] {
+  const map = new Map<string, VendorCard>();
+  for (const p of products) {
+    const name = vendorName(p);
+    if (!name) continue;
+    if (map.has(name)) {
+      map.get(name)!.count += 1;
+    } else {
+      map.set(name, {
+        name,
+        location:
+          meta(p.metaData, "vendor_city") ||
+          meta(p.metaData, "_vendor_city") ||
+          "",
+        desc:
+          meta(p.metaData, "vendor_description") ||
+          meta(p.metaData, "_vendor_description") ||
+          "",
+        count: 1,
+        image: p.image?.sourceUrl ?? null,
+      });
+    }
+  }
+  return [...map.values()].slice(0, 4);
+}
+
+const FALLBACK_VENDORS: VendorCard[] = [
+  { name: "Studio Fern", location: "Oaxaca, Mexico", desc: "Ceramic vessels shaped by hand from local terracotta clay.", count: 14, image: null },
+  { name: "Atelier Moor", location: "Marrakech, Morocco", desc: "Brass and copper objects forged using centuries-old techniques.", count: 9, image: null },
+  { name: "Rye Workshop", location: "Rye, East Sussex", desc: "Handwoven baskets and textiles from natural British materials.", count: 11, image: null },
+  { name: "Kiso Forestry", location: "Nagano, Japan", desc: "Joinery and woodwork from sustainably managed Kiso hinoki cypress.", count: 7, image: null },
+];
+
 function isNew(p: any): boolean {
   return p.productTags?.nodes?.some((t: any) => t.slug === "new") ?? false;
 }
@@ -317,30 +358,35 @@ export default async function ShopArchiveWrapper({
         </div>
       </section>
 
-      {/* ── 9. VENDOR STRIP (static — TODO: wire to multivendor API) ── */}
-      <section className="shop-vendor-cards">
-        <div className="sec-hdr">
-          <h3>Meet the <em>Makers</em></h3>
-          <Link href="/origins">All makers →</Link>
-        </div>
-        <div className="vendor-cards">
-          {[
-            { name: "Studio Fern", location: "Oaxaca, Mexico", desc: "Ceramic vessels shaped by hand from local terracotta clay.", count: 14 },
-            { name: "Atelier Moor", location: "Marrakech, Morocco", desc: "Brass and copper objects forged using centuries-old techniques.", count: 9 },
-            { name: "Rye Workshop", location: "Rye, East Sussex", desc: "Handwoven baskets and textiles from natural British materials.", count: 11 },
-            { name: "Kiso Forestry", location: "Nagano, Japan", desc: "Joinery and woodwork from sustainably managed Kiso hinoki cypress.", count: 7 },
-          ].map((v) => (
-            <div key={v.name} className="vc">
-              <div className="vc-img" />
-              <div className="vc-vetted">★ Vetted Maker</div>
-              <h4>{v.name}</h4>
-              <div className="vc-loc">{v.location}</div>
-              <p className="vc-desc">{v.desc}</p>
-              <div className="vc-count">{v.count} products</div>
+      {/* ── 9. VENDOR STRIP ── */}
+      {(() => {
+        const vendors = extractVendors(products);
+        const display = vendors.length >= 2 ? vendors : FALLBACK_VENDORS;
+        return (
+          <section className="shop-vendor-cards">
+            <div className="sec-hdr">
+              <h3>Meet the <em>Makers</em></h3>
+              <Link href="/origins">All makers →</Link>
             </div>
-          ))}
-        </div>
-      </section>
+            <div className="vendor-cards">
+              {display.map((v) => (
+                <div key={v.name} className="vc">
+                  <div className="vc-img">
+                    {v.image && (
+                      <Image src={v.image} alt={v.name} fill style={{ objectFit: "cover" }} />
+                    )}
+                  </div>
+                  <div className="vc-vetted">★ Vetted Maker</div>
+                  <h4>{v.name}</h4>
+                  {v.location && <div className="vc-loc">{v.location}</div>}
+                  {v.desc && <p className="vc-desc">{v.desc}</p>}
+                  <div className="vc-count">{v.count} {v.count === 1 ? "product" : "products"}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ── 10. CONNECT MEMBER BAND ── */}
       <section className="shop-member-band">
