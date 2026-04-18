@@ -196,17 +196,33 @@ Full server component. Fetches product + related products. Renders:
 
 ---
 
-## Phase 2 — Deferred (requires CMS plugins)
+## Phase 2 — Plugin-dependent features (`moveee-graphql-bridge.zip` now active)
 
-These items are blocked until the WordPress CMS is live with the relevant plugins active:
+### metaData keys exposed by the bridge plugin
 
-| Task | Blocker |
-|------|---------|
-| Vendor strip — wire to real vendor data | `moveee-graphql-bridge.zip` metaData fields |
-| Product detail process steps — wire to ACF | `moveee-graphql-bridge.zip` `process_steps` field |
-| Vendor profile stats — wire to real counts | Multivendor plugin API |
-| Cart — migrate to WooCommerce Store API | Cross-domain session handling (`/wp-json/wc/store/v1/cart/add-item`) |
-| "As Seen In" — wire to ACF `as_seen_in_post_id` | `moveee-graphql-bridge.zip` |
+| Key | Used in |
+|-----|---------|
+| `_vendor_name` / `vendor_store_name` | Vendor cards, product detail |
+| `vendor_city` / `_vendor_city` | Vendor location |
+| `vendor_description` / `_vendor_description` | Vendor profile |
+| `vendor_product_count` | Vendor stats |
+| `maker_story` | Product detail story section |
+| `care_instructions` | Accordion: Materials & Care |
+| `process_steps` | Process grid (JSON array) |
+| `as_seen_in_post_id` | "As Seen In" bridge |
+
+### Phase 2 checklist
+
+| Task | Status |
+|------|--------|
+| Vendor cards — real data from product metaData | ✅ Done |
+| Product detail process steps — parse `process_steps` JSON | ✅ Done |
+| Vendor profile — real name, city, desc, count from metaData | ✅ Done |
+| Maker story — render `maker_story` ACF field | ✅ Done |
+| "As Seen In" — fetch post via `as_seen_in_post_id` | ✅ Done |
+| Cart — WooCommerce Store API via Next.js proxy route | ✅ Done |
+
+---
 
 ## Phase 3 — Future Enhancements
 

@@ -699,6 +699,31 @@ export const GET_PRODUCT_CATEGORIES = `
   }
 `;
 
+export const GET_POST_BY_ID = `
+  query GetPostById($id: ID!) {
+    post(id: $id, idType: DATABASE_ID) {
+      title
+      slug
+      excerpt
+      featuredImage { node { sourceUrl altText } }
+      categories { nodes { name slug } }
+    }
+  }
+`;
+
+export const GET_PRODUCTS_BY_VENDOR = `
+  query GetProductsByVendor($first: Int, $vendor: String) {
+    products(first: $first, where: { metaQuery: {
+      metaArray: [{ key: "_vendor_name", value: $vendor, compare: EQUAL_TO }]
+    }}) {
+      nodes {
+        ...ProductFields
+      }
+    }
+  }
+  ${PRODUCT_FIELDS_FRAGMENT}
+`;
+
 export const DIRECTORY_FIELDS = DIRECTORY_FIELDS_FRAGMENT;
 
 export const GET_DIRECTORY_ENTRIES = `
