@@ -223,16 +223,6 @@ const STORY_FIELDS_FRAGMENT = `
         slug
       }
     }
-    cultureAccesses {
-      nodes {
-        slug
-      }
-    }
-    # Event specific fields (expected from ACF/JetEngine)
-    location
-    eventStatus: status
-    isFeatured
-    admission
   }
 `;
 
@@ -306,11 +296,6 @@ const DIRECTORY_FIELDS_FRAGMENT = `
     cultureInterests {
       nodes {
         name
-        slug
-      }
-    }
-    cultureAccesses {
-      nodes {
         slug
       }
     }
@@ -521,11 +506,6 @@ const NEWSLETTER_FIELDS_FRAGMENT = `
     cultureInterests {
       nodes {
         name
-        slug
-      }
-    }
-    cultureAccesses {
-      nodes {
         slug
       }
     }
@@ -859,14 +839,6 @@ export const GET_SITE_SETTINGS = `
       announcementText
       announcementUrl
       locations
-    }
-    membershipSettings {
-      patronLabel
-      citizenLabel
-      monthlyNgn
-      yearlyNgn
-      monthlyUsd
-      yearlyUsd
     }
   }
 `;
