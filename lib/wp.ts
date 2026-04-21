@@ -696,8 +696,8 @@ const PRODUCT_FIELDS_FRAGMENT = `
 export const PRODUCT_FIELDS = PRODUCT_FIELDS_FRAGMENT;
 
 export const GET_PRODUCTS = `
-  query GetProducts($first: Int, $category: String, $tag: String, $brand: String) {
-    products(first: $first, where: { category: $category, tag: $tag, brand: $brand }) {
+  query GetProducts($first: Int, $category: String, $tag: String) {
+    products(first: $first, where: { category: $category, tag: $tag }) {
       nodes {
         ...ProductFields
       }
@@ -705,6 +705,7 @@ export const GET_PRODUCTS = `
   }
   ${PRODUCT_FIELDS_FRAGMENT}
 `;
+
 
 export const GET_PRODUCT_BY_SLUG = `
   query GetProductBySlug($slug: ID!) {

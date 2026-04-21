@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_PRODUCTS, GET_PRODUCT_CATEGORIES } from "@/lib/wp";
+import { getWPData, GET_PRODUCTS, GET_PRODUCTS_BY_VENDOR, GET_PRODUCT_CATEGORIES } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 import ShopFilterBar from "./components/ShopFilterBar";
@@ -98,12 +98,9 @@ export default async function ShopArchiveWrapper({
 
   try {
     const [prodData, catData] = await Promise.all([
-      getWPData(GET_PRODUCTS, {
-        first: 24,
-        category: category || null,
-        tag: tag || null,
-        brand: brand || null,
-      }),
+      brand
+        ? getWPData(GET_PRODUCTS_BY_VENDOR, { first: 24, vendor: brand })
+        : getWPData(GET_PRODUCTS, { first: 24, category: category || null, tag: tag || null }),
       getWPData(GET_PRODUCT_CATEGORIES, {}),
     ]);
     products = prodData?.products?.nodes ?? [];
