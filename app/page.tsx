@@ -19,11 +19,11 @@ export default async function Home() {
 
   try {
     // 1. Fetch specifically for the Cover Story tag
-    const coverData = await getWPData(GET_STORIES, { first: 1, tag: "cover-story" });
+    const coverData = await getWPData(GET_STORIES, { first: 1, tag: "cover-story" }, { revalidate: 0 });
     coverStory = coverData?.posts?.nodes?.[0] || null;
 
     // 2. Fetch latest stories (we fetch 7 to be safe in case we filter out the cover story)
-    const data = await getWPData(GET_STORIES, { first: 7 });
+    const data = await getWPData(GET_STORIES, { first: 7 }, { revalidate: 0 });
     const allStories = data?.posts?.nodes || [];
     
     // If no specific cover story was found by tag, use the latest one as fallback
