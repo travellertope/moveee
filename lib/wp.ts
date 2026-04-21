@@ -696,8 +696,23 @@ const PRODUCT_FIELDS_FRAGMENT = `
 export const PRODUCT_FIELDS = PRODUCT_FIELDS_FRAGMENT;
 
 export const GET_PRODUCTS = `
-  query GetProducts($first: Int, $category: String, $tag: String, $brand: String) {
-    products(first: $first, where: { category: $category, tag: $tag, brand: $brand }) {
+  query GetProducts($first: Int, $category: String, $tag: String) {
+    products(first: $first, where: { category: $category, tag: $tag }) {
+      nodes {
+        ...ProductFields
+      }
+    }
+  }
+  ${PRODUCT_FIELDS_FRAGMENT}
+`;
+
+export const GET_PRODUCTS_BY_BRAND = `
+  query GetProductsByBrand($first: Int, $brand: String) {
+    products(first: $first, where: {
+      taxonomyFilter: {
+        and: [{ taxonomy: PRODUCT_BRAND, terms: [$brand], operator: IN }]
+      }
+    }) {
       nodes {
         ...ProductFields
       }
