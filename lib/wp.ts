@@ -706,20 +706,6 @@ export const GET_PRODUCTS = `
   ${PRODUCT_FIELDS_FRAGMENT}
 `;
 
-export const GET_PRODUCTS_BY_BRAND = `
-  query GetProductsByBrand($first: Int, $brand: String) {
-    products(first: $first, where: {
-      taxonomyFilter: {
-        and: [{ taxonomy: PRODUCT_BRAND, terms: [$brand], operator: IN }]
-      }
-    }) {
-      nodes {
-        ...ProductFields
-      }
-    }
-  }
-  ${PRODUCT_FIELDS_FRAGMENT}
-`;
 
 export const GET_PRODUCT_BY_SLUG = `
   query GetProductBySlug($slug: ID!) {
