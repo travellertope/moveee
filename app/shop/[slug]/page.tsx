@@ -9,17 +9,6 @@ import "../shop.css";
 
 export const dynamic = "force-dynamic";
 
-const meta = (data: any[], key: string) =>
-  data?.find((m: any) => m.key === key)?.value ?? null;
-
-function vendorName(p: any): string {
-  return (
-    meta(p.metaData, "_vendor_name") ||
-    meta(p.metaData, "vendor_store_name") ||
-    meta(p.metaData, "_wcfm_vendor") ||
-    ""
-  );
-}
 
 const PROCESS_STEPS = [
   { title: "Source", desc: "Materials are chosen for provenance, sustainability, and sensory quality.", duration: "1–4 weeks" },
@@ -63,30 +52,33 @@ export default async function ProductPage({
     ...gallery,
   ].slice(0, 5);
 
-  const vname = vendorName(product);
-  const variations = product.variations?.nodes ?? [];
+  const vp = product.vendorProfile ?? {};
+  const pm = product.moveeeMeta ?? {};
 
-  // ACF + vendor fields from moveee-graphql-bridge plugin
-  const makerStory: string = meta(product.metaData, "maker_story") || "";
-  const careInstructions: string = meta(product.metaData, "care_instructions") || "";
-  const vendorCity: string = meta(product.metaData, "vendor_city") || meta(product.metaData, "_vendor_city") || "";
-  const vendorDesc: string = meta(product.metaData, "vendor_description") || meta(product.metaData, "_vendor_description") || "";
-  const vendorYears: string = meta(product.metaData, "vendor_years") || meta(product.metaData, "_vendor_years") || "";
-  const vendorRating: string = meta(product.metaData, "vendor_rating") || meta(product.metaData, "_vendor_rating") || "";
-  const vendorProductCount: string = meta(product.metaData, "vendor_product_count") || meta(product.metaData, "_vendor_product_count") || "";
+  const vname: string          = vp.storeName    || "";
+  const vendorDesc: string     = vp.bio          || "";
+  const vendorCity: string     = vp.city         || "";
+  const vendorYears: string    = vp.yearsActive  || "";
+  const vendorRating: string   = vp.rating       || "";
+  const vendorProductCount: string = vp.productCount ? String(vp.productCount) : "";
+  const vendorAvatarUrl: string = vp.avatarUrl   || "";
+
+  const makerStory: string      = pm.makerStory       || "";
+  const careInstructions: string = pm.careInstructions || "";
+  const deliveryInfo: string    = pm.deliveryInfo      || "";
+  const variations = product.variations?.nodes ?? [];
 
   // Parse process_steps JSON (array of { title, desc, duration })
   interface ProcessStep { title: string; desc: string; duration?: string }
   let processSteps: ProcessStep[] = [];
   try {
-    const raw = meta(product.metaData, "process_steps");
-    if (raw) processSteps = JSON.parse(raw);
+    if (pm.processSteps) processSteps = JSON.parse(pm.processSteps);
   } catch { /* malformed JSON — fall back to static */ }
   if (!processSteps.length) processSteps = PROCESS_STEPS;
 
   // Fetch the "As Seen In" linked magazine post if ID is set
   let asSeenInPost: any = null;
-  const asSeenInId = meta(product.metaData, "as_seen_in_post_id");
+  const asSeenInId = pm.asSeenInPostId || "";
   try {
     if (asSeenInId) {
       const postData = await getWPData(GET_POST_BY_ID, { id: asSeenInId });
@@ -119,7 +111,9 @@ export default async function ProductPage({
     },
     {
       title: "Delivery & Returns",
-      content: (
+      content: deliveryInfo ? (
+        <div dangerouslySetInnerHTML={{ __html: deliveryInfo }} />
+      ) : (
         <>
           <p>Free UK delivery on all orders. Delivered in 3–5 working days.</p>
           <p>Free returns within 30 days of receipt. Items must be unused and in original condition.</p>
@@ -306,9 +300,9 @@ export default async function ProductPage({
       <section className="sp-vendor-profile">
         <div className="sp-vendor-inner">
           <div className="sp-vendor-visual">
-            {mainImage?.sourceUrl && (
+            {(vendorAvatarUrl || mainImage?.sourceUrl) && (
               <Image
-                src={mainImage.sourceUrl}
+                src={vendorAvatarUrl || mainImage.sourceUrl}
                 alt={vname || product.name}
                 fill
                 style={{ objectFit: "cover" }}

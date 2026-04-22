@@ -11,16 +11,8 @@ interface ShopArchiveProps {
   brand?: string;
 }
 
-const meta = (data: any[], key: string) =>
-  data?.find((m: any) => m.key === key)?.value ?? null;
-
 function vendorName(p: any): string {
-  return (
-    meta(p.metaData, "_vendor_name") ||
-    meta(p.metaData, "vendor_store_name") ||
-    meta(p.metaData, "_wcfm_vendor") ||
-    ""
-  );
+  return p.vendorProfile?.storeName || "";
 }
 
 interface VendorCard {
@@ -41,16 +33,10 @@ function extractVendors(products: any[]): VendorCard[] {
     } else {
       map.set(name, {
         name,
-        location:
-          meta(p.metaData, "vendor_city") ||
-          meta(p.metaData, "_vendor_city") ||
-          "",
-        desc:
-          meta(p.metaData, "vendor_description") ||
-          meta(p.metaData, "_vendor_description") ||
-          "",
+        location: p.vendorProfile?.city    || "",
+        desc:     p.vendorProfile?.bio     || "",
         count: 1,
-        image: p.image?.sourceUrl ?? null,
+        image: p.vendorProfile?.avatarUrl || p.image?.sourceUrl || null,
       });
     }
   }

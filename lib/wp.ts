@@ -669,7 +669,23 @@ const PRODUCT_FIELDS_FRAGMENT = `
     galleryImages { nodes { sourceUrl altText } }
     productCategories { nodes { name slug } }
     productTags { nodes { name slug } }
-    metaData { key value }
+    vendorProfile {
+      storeName
+      bio
+      city
+      country
+      avatarUrl
+      yearsActive
+      rating
+      productCount
+    }
+    moveeeMeta {
+      makerStory
+      careInstructions
+      processSteps
+      asSeenInPostId
+      deliveryInfo
+    }
     ... on SimpleProduct {
       price
       regularPrice
