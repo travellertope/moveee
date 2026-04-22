@@ -9,25 +9,6 @@ import "../shop.css";
 
 export const dynamic = "force-dynamic";
 
-const meta = (data: any[], key: string) =>
-  data?.find((m: any) => m.key === key)?.value ?? null;
-
-function vendorName(p: any): string {
-  return (
-    meta(p.metaData, "_vendor_name") ||
-    meta(p.metaData, "vendor_store_name") ||
-    meta(p.metaData, "_wcfm_vendor") ||
-    ""
-  );
-}
-
-const PROCESS_STEPS = [
-  { title: "Source", desc: "Materials are chosen for provenance, sustainability, and sensory quality.", duration: "1–4 weeks" },
-  { title: "Shape", desc: "Each piece is formed by hand — no two are exactly alike.", duration: "2–8 weeks" },
-  { title: "Finish", desc: "Surfaces are treated, fired, or polished to the maker's exacting standard.", duration: "1–3 weeks" },
-  { title: "Inspect", desc: "Every item is individually checked before it leaves the studio.", duration: "1–2 days" },
-];
-
 export default async function ProductPage({
   params,
 }: {
@@ -57,43 +38,44 @@ export default async function ProductPage({
   } catch { /* CMS unreachable */ }
 
   const mainImage = product.image;
-  const gallery = product.galleryImages?.nodes ?? [];
-  const allImages = [
-    ...(mainImage ? [mainImage] : []),
-    ...gallery,
-  ].slice(0, 5);
+  const gallery   = product.galleryImages?.nodes ?? [];
+  const allImages = [...(mainImage ? [mainImage] : []), ...gallery].slice(0, 5);
 
-  const vname = vendorName(product);
+  // ── Vendor profile (from WCFM via moveee-graphql-bridge) ──────────────────
+  const vp = product.vendorProfile ?? {};
+  const vname: string           = vp.storeName    || "";
+  const vendorDesc: string      = vp.bio          || "";
+  const vendorCity: string      = vp.city         || "";
+  const vendorYears: string     = vp.yearsActive  || "";
+  const vendorRating: string    = vp.rating       || "";
+  const vendorProductCount: string = vp.productCount ? String(vp.productCount) : "";
+  const vendorAvatarUrl: string = vp.avatarUrl    || "";
+
+  // ── Product editorial meta (set as WooCommerce custom fields) ─────────────
+  const pm = product.moveeeMeta ?? {};
+  const makerStory: string       = pm.makerStory       || "";
+  const careInstructions: string = pm.careInstructions || "";
+  const deliveryInfo: string     = pm.deliveryInfo     || "";
+
   const variations = product.variations?.nodes ?? [];
 
-  // ACF + vendor fields from moveee-graphql-bridge plugin
-  const makerStory: string = meta(product.metaData, "maker_story") || "";
-  const careInstructions: string = meta(product.metaData, "care_instructions") || "";
-  const vendorCity: string = meta(product.metaData, "vendor_city") || meta(product.metaData, "_vendor_city") || "";
-  const vendorDesc: string = meta(product.metaData, "vendor_description") || meta(product.metaData, "_vendor_description") || "";
-  const vendorYears: string = meta(product.metaData, "vendor_years") || meta(product.metaData, "_vendor_years") || "";
-  const vendorRating: string = meta(product.metaData, "vendor_rating") || meta(product.metaData, "_vendor_rating") || "";
-  const vendorProductCount: string = meta(product.metaData, "vendor_product_count") || meta(product.metaData, "_vendor_product_count") || "";
-
-  // Parse process_steps JSON (array of { title, desc, duration })
+  // Process steps — only use if genuinely set in WordPress; never show generic fallback
   interface ProcessStep { title: string; desc: string; duration?: string }
   let processSteps: ProcessStep[] = [];
   try {
-    const raw = meta(product.metaData, "process_steps");
-    if (raw) processSteps = JSON.parse(raw);
-  } catch { /* malformed JSON — fall back to static */ }
-  if (!processSteps.length) processSteps = PROCESS_STEPS;
+    if (pm.processSteps) processSteps = JSON.parse(pm.processSteps);
+  } catch { /* malformed JSON */ }
 
-  // Fetch the "As Seen In" linked magazine post if ID is set
+  // "As Seen In" — only fetch if the post ID is actually set
   let asSeenInPost: any = null;
-  const asSeenInId = meta(product.metaData, "as_seen_in_post_id");
   try {
-    if (asSeenInId) {
-      const postData = await getWPData(GET_POST_BY_ID, { id: asSeenInId });
+    if (pm.asSeenInPostId) {
+      const postData = await getWPData(GET_POST_BY_ID, { id: pm.asSeenInPostId });
       asSeenInPost = postData?.post ?? null;
     }
   } catch { /* CMS unreachable */ }
 
+  // ── Accordion — only include tabs that have real content ─────────────────
   const accordionItems = [
     {
       title: "Description",
@@ -105,38 +87,34 @@ export default async function ProductPage({
         />
       ),
     },
-    {
+    // Materials & Care — only shown when the field is filled in WordPress
+    ...(careInstructions ? [{
       title: "Materials & Care",
-      content: careInstructions ? (
-        <p>{careInstructions}</p>
-      ) : (
-        <dl>
-          <dt>Material</dt><dd>Natural fibres — specific composition varies by piece</dd>
-          <dt>Care</dt><dd>Spot clean or hand wash in cold water</dd>
-          <dt>Origin</dt><dd>{vendorCity || "Handmade by a vetted maker"}</dd>
-        </dl>
-      ),
-    },
+      content: <p>{careInstructions}</p>,
+    }] : []),
     {
       title: "Delivery & Returns",
-      content: (
+      content: deliveryInfo ? (
+        <div dangerouslySetInnerHTML={{ __html: deliveryInfo }} />
+      ) : (
         <>
           <p>Free UK delivery on all orders. Delivered in 3–5 working days.</p>
           <p>Free returns within 30 days of receipt. Items must be unused and in original condition.</p>
         </>
       ),
     },
-    {
+    // About the Maker — only shown when vendor has a name or bio in WCFM
+    ...(vname || vendorDesc ? [{
       title: "About the Maker",
       content: vendorDesc ? (
         <p>{vendorDesc}</p>
       ) : (
         <p>
-          {vname || "This maker"} is a vetted Moveee partner. Every maker is personally reviewed
+          {vname} is a vetted Moveee partner. Every maker is personally reviewed
           for craft integrity, fair production practices, and lasting quality.
         </p>
       ),
-    },
+    }] : []),
   ];
 
   const firstCat = product.productCategories?.nodes?.[0];
@@ -163,7 +141,6 @@ export default async function ProductPage({
 
       {/* ── PRODUCT HERO ── */}
       <section className="sp-product-hero">
-        {/* Gallery */}
         {allImages.length > 0 ? (
           <ProductGallery images={allImages} productName={product.name} />
         ) : (
@@ -174,7 +151,6 @@ export default async function ProductPage({
           </div>
         )}
 
-        {/* Info */}
         <div className="sp-product-info">
           {vname && (
             <Link href="/origins" className="sp-vendor-link">{vname}</Link>
@@ -200,161 +176,146 @@ export default async function ProductPage({
         </div>
       </section>
 
-      {/* ── AS SEEN IN ── */}
-      <section className="sp-seen-in">
-        <div className="sp-seen-in-inner">
-          <div className="sp-seen-in-label">As Seen In</div>
-          <div>
-            <div className="sp-seen-in-title">
-              {asSeenInPost ? (
-                <>
-                  <em>{asSeenInPost.title}</em>
-                  {asSeenInPost.categories?.nodes?.[0] && (
-                    <span className="sp-seen-in-meta">{asSeenInPost.categories.nodes[0].name}</span>
-                  )}
-                </>
+      {/* ── AS SEEN IN — only when a linked magazine post is set ── */}
+      {asSeenInPost && (
+        <section className="sp-seen-in">
+          <div className="sp-seen-in-inner">
+            <div className="sp-seen-in-label">As Seen In</div>
+            <div>
+              <div className="sp-seen-in-title">
+                <em>{asSeenInPost.title}</em>
+                {asSeenInPost.categories?.nodes?.[0] && (
+                  <span className="sp-seen-in-meta">
+                    {asSeenInPost.categories.nodes[0].name}
+                  </span>
+                )}
+              </div>
+            </div>
+            <Link href={`/magazine/${asSeenInPost.slug}`} className="sp-seen-in-cta">
+              Read the Feature →
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {/* ── MAKER STORY — only when maker story text or vendor name exists ── */}
+      {(makerStory || vname) && (
+        <section className="sp-story">
+          <div className="sp-story-header">
+            <div className="sp-story-num">01</div>
+            <div>
+              <h2>The <em>maker</em> behind it</h2>
+              {vname && (
+                <p>A portrait of {vname} — their process, their place, their obsession with craft.</p>
+              )}
+            </div>
+            <div className="sp-story-meta">Origins Journal</div>
+          </div>
+          <div className="sp-story-body">
+            {(vendorAvatarUrl || mainImage?.sourceUrl) && (
+              <div className="sp-story-image">
+                <Image
+                  src={vendorAvatarUrl || mainImage.sourceUrl}
+                  alt={vname || product.name}
+                  fill
+                  style={{ objectFit: "cover" }}
+                />
+              </div>
+            )}
+            <div className="sp-story-text">
+              {makerStory ? (
+                <div dangerouslySetInnerHTML={{ __html: makerStory }} />
               ) : (
-                <>
-                  <em>The Moveee Edit</em>
-                  <span className="sp-seen-in-meta">Issue 014 · Craft &amp; Makers</span>
-                </>
+                <p>
+                  {vname} is a vetted Moveee partner — personally reviewed for craft
+                  integrity, fair production practices, and lasting quality.
+                  {vendorCity && ` Based in ${vendorCity}.`}
+                </p>
               )}
             </div>
           </div>
-          <Link
-            href={asSeenInPost ? `/magazine/${asSeenInPost.slug}` : "/magazine"}
-            className="sp-seen-in-cta"
-          >
-            Read the Feature →
-          </Link>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* ── MAKER STORY ── */}
-      <section className="sp-story">
-        <div className="sp-story-header">
-          <div className="sp-story-num">01</div>
-          <div>
-            <h2>
-              The <em>maker</em> behind it
-            </h2>
-            {vname && <p>A portrait of {vname} — their process, their place, their obsession with craft.</p>}
+      {/* ── PROCESS — only when process_steps is set in WordPress ── */}
+      {processSteps.length > 0 && (
+        <section className="sp-process">
+          <div className="sp-process-header">
+            <div className="sp-process-label">How It&rsquo;s Made</div>
+            <h2>From raw material <em>to your door</em></h2>
+            <p>A {processSteps.length}-stage process — each step overseen by the maker themselves.</p>
           </div>
-          <div className="sp-story-meta">Origins Journal</div>
-        </div>
-        <div className="sp-story-body">
-          {mainImage?.sourceUrl && (
-            <div className="sp-story-image">
-              <Image
-                src={mainImage.sourceUrl}
-                alt={mainImage.altText || product.name}
-                fill
-                style={{ objectFit: "cover" }}
-              />
-            </div>
-          )}
-          <div className="sp-story-text">
-            {makerStory ? (
-              <div dangerouslySetInnerHTML={{ __html: makerStory }} />
-            ) : (
-              <>
-                <p>
-                  Every object in the Moveee shop is the result of a deliberate choice —
-                  a maker who decided to do it properly, to take the slower path, to
-                  refuse the shortcut.
-                </p>
-                <blockquote>
-                  "We don&rsquo;t make things quickly. We make them right."
-                  <cite>
-                    <span className="name">{vname || "The Maker"}</span>
-                    {vendorCity && ` · ${vendorCity}`}
-                  </cite>
-                </blockquote>
-                <p>
-                  Moveee vets every maker personally — visiting studios, understanding
-                  supply chains, and ensuring every piece meets our standard for
-                  craft integrity and fair production.
-                </p>
-              </>
-            )}
+          <div className="sp-process-grid">
+            {processSteps.map((step, i) => (
+              <div key={step.title} className="sp-process-step">
+                <div className="step-img">
+                  <div className="step-num">0{i + 1}</div>
+                </div>
+                <h4>{step.title}</h4>
+                <p>{step.desc}</p>
+                {step.duration && <span className="duration">{step.duration}</span>}
+              </div>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* ── PROCESS ── */}
-      <section className="sp-process">
-        <div className="sp-process-header">
-          <div className="sp-process-label">How It&rsquo;s Made</div>
-          <h2>From raw material <em>to your door</em></h2>
-          <p>A {processSteps.length}-stage process — each step overseen by the maker themselves.</p>
-        </div>
-        <div className="sp-process-grid">
-          {processSteps.map((step, i) => (
-            <div key={step.title} className="sp-process-step">
-              <div className="step-img">
-                <div className="step-num">0{i + 1}</div>
-              </div>
-              <h4>{step.title}</h4>
-              <p>{step.desc}</p>
-              {step.duration && <span className="duration">{step.duration}</span>}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── VENDOR PROFILE ── */}
-      <section className="sp-vendor-profile">
-        <div className="sp-vendor-inner">
-          <div className="sp-vendor-visual">
-            {mainImage?.sourceUrl && (
-              <Image
-                src={mainImage.sourceUrl}
-                alt={vname || product.name}
-                fill
-                style={{ objectFit: "cover" }}
-              />
-            )}
-          </div>
-          <div>
-            <div className="sp-vendor-tag">Vetted Maker{vendorCity && ` · ${vendorCity}`}</div>
-            <h2>{vname || <em>The Maker</em>}</h2>
-            <p className="sp-vendor-body">
-              {vendorDesc ||
-                "A maker chosen for their commitment to craft integrity, sustainable materials, and timeless design. Personally vetted by the Moveee team."}
-            </p>
-            <div className="sp-vendor-stats">
-              <div className="sp-vendor-stat">
-                <div className="num">{vendorYears ? `${vendorYears}` : "7+"}</div>
-                <span className="label">Years making</span>
-              </div>
-              <div className="sp-vendor-stat">
-                <div className="num">{vendorProductCount || relatedProducts.length + 1}</div>
-                <span className="label">Products in shop</span>
-              </div>
-              <div className="sp-vendor-stat">
-                <div className="num">{vendorRating ? `★ ${vendorRating}` : "★ Vetted"}</div>
-                <span className="label">Moveee rating</span>
-              </div>
-            </div>
-            <div className="sp-vendor-cta-row">
-              <Link href="/origins" className="btn-outline">Read their story</Link>
-              {firstCategory && (
-                <Link href={`/shop/category/${firstCategory}`} className="btn-filled">
-                  More from {vname || "this maker"}
-                </Link>
+      {/* ── VENDOR PROFILE — only when the vendor has a name in WCFM ── */}
+      {vname && (
+        <section className="sp-vendor-profile">
+          <div className="sp-vendor-inner">
+            <div className="sp-vendor-visual">
+              {(vendorAvatarUrl || mainImage?.sourceUrl) && (
+                <Image
+                  src={vendorAvatarUrl || mainImage.sourceUrl}
+                  alt={vname}
+                  fill
+                  style={{ objectFit: "cover" }}
+                />
               )}
             </div>
+            <div>
+              <div className="sp-vendor-tag">
+                Vetted Maker{vendorCity && ` · ${vendorCity}`}
+              </div>
+              <h2>{vname}</h2>
+              {vendorDesc && <p className="sp-vendor-body">{vendorDesc}</p>}
+              <div className="sp-vendor-stats">
+                {vendorYears && (
+                  <div className="sp-vendor-stat">
+                    <div className="num">{vendorYears}</div>
+                    <span className="label">Years making</span>
+                  </div>
+                )}
+                <div className="sp-vendor-stat">
+                  <div className="num">{vendorProductCount || relatedProducts.length + 1}</div>
+                  <span className="label">Products in shop</span>
+                </div>
+                <div className="sp-vendor-stat">
+                  <div className="num">{vendorRating ? `★ ${vendorRating}` : "★ Vetted"}</div>
+                  <span className="label">Moveee rating</span>
+                </div>
+              </div>
+              <div className="sp-vendor-cta-row">
+                {makerStory && (
+                  <Link href="/origins" className="btn-outline">Read their story</Link>
+                )}
+                {firstCategory && (
+                  <Link href={`/shop/category/${firstCategory}`} className="btn-filled">
+                    More from {vname}
+                  </Link>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* ── MORE FROM STUDIO ── */}
+      {/* ── MORE FROM THIS CATEGORY ── */}
       {relatedProducts.length > 0 && (
         <section className="sp-more-from">
           <div className="sp-more-from-header">
-            <h2>
-              More from <em>{firstCat?.name ?? "the Shop"}</em>
-            </h2>
+            <h2>More from <em>{firstCat?.name ?? "the Shop"}</em></h2>
             <Link href={firstCat ? `/shop/category/${firstCat.slug}` : "/shop"}>
               View all →
             </Link>
@@ -374,8 +335,8 @@ export default async function ProductPage({
                     <div style={{ width: "100%", height: "100%", background: "var(--ink)" }} />
                   )}
                 </div>
-                {vendorName(p) && (
-                  <div className="vendor-tag">{vendorName(p)}</div>
+                {p.vendorProfile?.storeName && (
+                  <div className="vendor-tag">{p.vendorProfile.storeName}</div>
                 )}
                 <div className="name">{p.name}</div>
                 {p.price && <div className="price">{p.price}</div>}
