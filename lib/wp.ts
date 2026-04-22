@@ -669,23 +669,6 @@ const PRODUCT_FIELDS_FRAGMENT = `
     galleryImages { nodes { sourceUrl altText } }
     productCategories { nodes { name slug } }
     productTags { nodes { name slug } }
-    vendorProfile {
-      storeName
-      bio
-      city
-      country
-      avatarUrl
-      yearsActive
-      rating
-      productCount
-    }
-    moveeeMeta {
-      makerStory
-      careInstructions
-      processSteps
-      asSeenInPostId
-      deliveryInfo
-    }
     ... on SimpleProduct {
       price
       regularPrice
@@ -727,6 +710,23 @@ export const GET_PRODUCT_BY_SLUG = `
   query GetProductBySlug($slug: ID!) {
     product(id: $slug, idType: SLUG) {
       ...ProductFields
+      vendorProfile {
+        storeName
+        bio
+        city
+        country
+        avatarUrl
+        yearsActive
+        rating
+        productCount
+      }
+      moveeeMeta {
+        makerStory
+        careInstructions
+        processSteps
+        asSeenInPostId
+        deliveryInfo
+      }
     }
   }
   ${PRODUCT_FIELDS_FRAGMENT}
