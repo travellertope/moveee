@@ -29,12 +29,13 @@ function createVertexClient(): GoogleGenAI | null {
   } as any);
 }
 
-// Versioned model IDs — unversioned aliases (gemini-1.5-pro, gemini-1.5-flash)
-// were removed from the v1beta API. Use explicit version suffixes.
+// Use the most current stable models. responseMimeType is NOT used —
+// the system prompts enforce JSON via instruction instead, which works
+// across all API key tiers without silent empty-response failures.
 const TEXT_MODELS = [
-  "gemini-2.0-flash",        // Primary — stable
-  "gemini-1.5-flash-002",    // Versioned fallback
-  "gemini-1.5-pro-002",      // Versioned reasoning fallback
+  "gemini-2.5-flash-preview-04-17", // Latest (April 2026)
+  "gemini-2.0-flash",                // Stable fallback
+  "gemini-2.0-flash-lite",           // Lighter fallback
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
@@ -334,10 +335,10 @@ export async function generateDirectoryStub(
         contents: `Generate a Culture Directory entry for: "${topic}"`,
         config: {
           systemInstruction: SYSTEM_PROMPT,
-          responseMimeType: "application/json",
           safetySettings: SAFETY_SETTINGS,
         },
       });
+      console.log(`[gemini] ${modelId} response for "${topic}":`, JSON.stringify(response).slice(0, 200));
 
       // response.text can be null in SDK v1.x when responseMimeType is set —
       // fall back to the raw candidates structure as the image code does.
@@ -405,10 +406,7 @@ Return ONLY a JSON array of strings — topic names only, no descriptions, no nu
       const response = await ai.models.generateContent({
         model: modelId,
         contents: prompt,
-        config: { 
-          responseMimeType: "application/json",
-          safetySettings: SAFETY_SETTINGS,
-        },
+        config: { safetySettings: SAFETY_SETTINGS },
       });
 
       const raw = (
@@ -475,10 +473,7 @@ Example format:
       const response = await ai.models.generateContent({
         model: modelId,
         contents: prompt,
-        config: { 
-          responseMimeType: "application/json",
-          safetySettings: SAFETY_SETTINGS,
-        },
+        config: { safetySettings: SAFETY_SETTINGS },
       });
 
       const raw = (
