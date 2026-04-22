@@ -710,6 +710,16 @@ export const GET_PRODUCT_BY_SLUG = `
   query GetProductBySlug($slug: ID!) {
     product(id: $slug, idType: SLUG) {
       ...ProductFields
+    }
+  }
+  ${PRODUCT_FIELDS_FRAGMENT}
+`;
+
+// Fetched separately so the product page still renders if the
+// moveee-graphql-bridge plugin is not yet active.
+export const GET_PRODUCT_EXTRA = `
+  query GetProductExtra($slug: ID!) {
+    product(id: $slug, idType: SLUG) {
       vendorProfile {
         storeName
         bio
@@ -729,7 +739,6 @@ export const GET_PRODUCT_BY_SLUG = `
       }
     }
   }
-  ${PRODUCT_FIELDS_FRAGMENT}
 `;
 
 export const GET_PRODUCT_CATEGORIES = `
