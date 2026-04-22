@@ -29,11 +29,12 @@ function createVertexClient(): GoogleGenAI | null {
   } as any);
 }
 
-// Model Fallback Chain: gemini-2.0-flash-exp was removed from the API (404).
+// Versioned model IDs — unversioned aliases (gemini-1.5-pro, gemini-1.5-flash)
+// were removed from the v1beta API. Use explicit version suffixes.
 const TEXT_MODELS = [
-  "gemini-2.0-flash",   // Primary — stable, fast
-  "gemini-1.5-flash",   // Fallback
-  "gemini-1.5-pro",     // Reasoning fallback
+  "gemini-2.0-flash",        // Primary — stable
+  "gemini-1.5-flash-002",    // Versioned fallback
+  "gemini-1.5-pro-002",      // Versioned reasoning fallback
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
@@ -338,7 +339,13 @@ export async function generateDirectoryStub(
         },
       });
 
-      const raw = (response.text ?? "").trim();
+      // response.text can be null in SDK v1.x when responseMimeType is set —
+      // fall back to the raw candidates structure as the image code does.
+      const raw = (
+        response.text ??
+        (response as any).candidates?.[0]?.content?.parts?.[0]?.text ??
+        ""
+      ).trim();
       if (!raw) continue; // Try next model
 
       const jsonStr = extractJson(raw);
@@ -404,7 +411,11 @@ Return ONLY a JSON array of strings — topic names only, no descriptions, no nu
         },
       });
 
-      const raw = (response.text ?? "").trim();
+      const raw = (
+        response.text ??
+        (response as any).candidates?.[0]?.content?.parts?.[0]?.text ??
+        ""
+      ).trim();
       if (!raw) continue;
 
       const jsonStr = extractJson(raw);
@@ -470,7 +481,11 @@ Example format:
         },
       });
 
-      const raw = (response.text ?? "").trim();
+      const raw = (
+        response.text ??
+        (response as any).candidates?.[0]?.content?.parts?.[0]?.text ??
+        ""
+      ).trim();
       if (!raw) continue;
 
       const jsonStr = extractJson(raw);
