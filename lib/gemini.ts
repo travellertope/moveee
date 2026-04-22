@@ -29,11 +29,11 @@ function createVertexClient(): GoogleGenAI | null {
   } as any);
 }
 
-// Model Fallback Chain: Aligned with Google AI Studio dashboard visibility.
+// Model Fallback Chain: gemini-2.0-flash-exp was removed from the API (404).
 const TEXT_MODELS = [
-  "gemini-1.5-flash",       // Primary stable model
-  "gemini-1.5-pro",         // Reasoning fallback
-  "gemini-2.0-flash-exp",   // Next-gen experimental
+  "gemini-2.0-flash",   // Primary — stable, fast
+  "gemini-1.5-flash",   // Fallback
+  "gemini-1.5-pro",     // Reasoning fallback
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
