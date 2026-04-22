@@ -686,7 +686,7 @@ const PRODUCT_FIELDS_FRAGMENT = `
         nodes {
           price
           stockStatus
-          attributes { name value }
+          attributes { nodes { name value } }
         }
       }
     }
