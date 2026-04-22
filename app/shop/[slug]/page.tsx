@@ -1,4 +1,4 @@
-import { getWPData, GET_PRODUCT_BY_SLUG, GET_PRODUCTS, GET_POST_BY_ID } from "@/lib/wp";
+import { getWPData, GET_PRODUCT_BY_SLUG, GET_PRODUCT_EXTRA, GET_PRODUCTS, GET_POST_BY_ID } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,8 +20,18 @@ export default async function ProductPage({
   let relatedProducts: any[] = [];
 
   try {
-    const data = await getWPData(GET_PRODUCT_BY_SLUG, { slug });
-    product = data?.product ?? null;
+    // Fetch core product and extra vendor/meta in parallel.
+    // GET_PRODUCT_EXTRA silently returns null if moveee-graphql-bridge
+    // is not yet active — the page still renders without vendor sections.
+    const [coreData, extraData] = await Promise.all([
+      getWPData(GET_PRODUCT_BY_SLUG, { slug }),
+      getWPData(GET_PRODUCT_EXTRA, { slug }),
+    ]);
+    product = coreData?.product ?? null;
+    if (product && extraData?.product) {
+      product.vendorProfile = extraData.product.vendorProfile ?? null;
+      product.moveeeMeta    = extraData.product.moveeeMeta    ?? null;
+    }
   } catch { /* CMS unreachable */ }
 
   if (!product) notFound();
