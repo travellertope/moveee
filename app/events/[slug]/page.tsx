@@ -74,11 +74,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="events-page-wrapper">
-      {/* ── HERO ── */}
+      {/* ── HERO — left: content, right: featured image ── */}
       <section className="event-hero">
-        {img && <Image src={img} alt={event.title} fill className="hero-image" priority />}
-        <div className="hero-overlay" />
-
         <div className="hero-content">
           <div className="hero-eyebrow">
             <span className="pill">● Upcoming</span>
@@ -88,7 +85,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <span>Moveee Events</span>
           </div>
 
-          <h1 className="hero-title" dangerouslySetInnerHTML={{ __html: event.title.replace(/ /g, '<br/>') }} />
+          <h1 className="hero-title">{event.title}</h1>
           <p className="hero-subtitle">{event.tagline || `${cat} by ${host?.title || "Moveee Talent"}`}</p>
 
           <div className="hero-meta-row">
@@ -100,31 +97,31 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <div className="label">Venue</div>
               <div className="value">{event.location || "Venue TBA"}</div>
             </div>
-            <div className="hero-meta-item">
-              <div className="label">Exhibition Run</div>
-              <div className="value">{dateFormatted} — {endFormatted || "TBA"}</div>
-            </div>
+            {endFormatted && (
+              <div className="hero-meta-item">
+                <div className="label">Exhibition Run</div>
+                <div className="value">{dateFormatted} — {endFormatted}</div>
+              </div>
+            )}
             {event.metrics?.map((m: any, i: number) => (
               <div key={i} className="hero-meta-item">
                 <div className="label">{m.label}</div>
                 <div className="value">{m.value}</div>
               </div>
             ))}
+          </div>
+
           <div className="hero-cta-group">
-            <a
-              href="#programme-section"
-              className="btn-outline"
-            >
-              View schedule
-            </a>
-            <a
-              href="#rsvp-section"
-              className="btn-primary"
-            >
-              RSVP Now →
-            </a>
+            <a href="#programme-section" className="btn-outline">View schedule</a>
+            <a href="#rsvp-section" className="btn-primary">RSVP Now →</a>
           </div>
-          </div>
+        </div>
+
+        {/* Right panel: featured image */}
+        <div className="hero-image-panel">
+          {img && (
+            <Image src={img} alt={event.title} fill className="hero-image" priority style={{ objectFit: "cover" }} />
+          )}
         </div>
       </section>
 
@@ -228,26 +225,29 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
             {event.ticketingUrl ? (
               <>
-                <h3 className="mb-4">Secure your <em>ticket</em></h3>
-                <div className="event-date mb-10">{event.location} · {event.admission || "Paid Entry"}</div>
+                <h3>Secure your <em>ticket</em></h3>
+                <div className="event-date">{event.location} · {event.admission || "Paid Entry"}</div>
                 <a
                   href={event.ticketingUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-primary w-full text-center block"
+                  className="btn-primary"
+                  style={{ display: "block", textAlign: "center", marginTop: "24px" }}
                 >
                   Buy Ticket Now →
                 </a>
-                <div className="rsvp-small mt-6">Secure access via external partner</div>
+                <p className="rsvp-small">Secure access via external partner</p>
               </>
             ) : (
               <>
                 <h3>Secure your <em>place</em></h3>
-                <div className="event-date">{event.location} · {event.openingHours || "Doors from 18:00"}</div>
-
-                <div className="rsvp-form mt-8">
-                  <RSVPForm eventSlug={event.slug} eventTitle={event.title} />
-                </div>
+                <div className="event-date">{event.location} · {event.openingHours || "Doors from 19:30"}</div>
+                <RSVPForm
+                  eventSlug={event.slug}
+                  eventTitle={event.title}
+                  capacity={event.rsvpCapacity ?? undefined}
+                  spotsRemaining={event.spotsRemaining ?? undefined}
+                />
               </>
             )}
           </div>
@@ -265,58 +265,76 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </div>
 
           {event.associatedJourney && (
-            <div className="info-card bg-ink text-paper">
-              <div className="label text-gold">★ {event.associatedJourney.title}</div>
-              <p className="text-paper opacity-80">Join the exclusive journey</p>
-              <Link href={`/origins/${event.associatedJourney.slug}`} className="inline-block mt-4 border-b border-paper text-[10px] uppercase font-mono">
+            <div className="info-card" style={{ background: "var(--ink)", color: "var(--paper)" }}>
+              <span className="label" style={{ color: "var(--ochre)" }}>★ {event.associatedJourney.title}</span>
+              <p style={{ color: "rgba(243,236,224,0.85)" }}>Join the exclusive journey</p>
+              <Link href={`/origins/${event.associatedJourney.slug}`} style={{ color: "var(--paper)", borderColor: "var(--paper)" }}>
                 View Journey →
               </Link>
+            </div>
+          )}
+
+          {/* Press box — in sidebar per design */}
+          {event.pressDetails && (
+            <div className="info-card">
+              <span className="label">{event.pressDetails.eyebrow || "Press & Media"}</span>
+              <p>{event.pressDetails.title || "Press enquiries"}</p>
+              <small>
+                {event.pressDetails.content
+                  ? event.pressDetails.content.replace(/<[^>]*>/g, "")
+                  : "For accreditation, image requests, and interview coordination, contact Moveee PR."}
+              </small>
+              {event.pressDetails.link && (
+                <a href={event.pressDetails.link}>{event.pressDetails.link.replace(/^mailto:/, "")} →</a>
+              )}
             </div>
           )}
         </aside>
       </main>
 
-      {/* GALLERY RUN */}
+      {/* ON VIEW / GALLERY RUN */}
       <section className="gallery-run">
         <div className="gallery-run-inner">
           <div>
-            <div className="section-label !border-paper/10">The exhibition</div>
+            <div className="section-label">The exhibition</div>
             <h3>On view through<br/><em>{endFormatted || dateFormatted}</em></h3>
             <p>Admission is free and strictly by RSVP for the opening night. The archive remains open for visitors thereafter during regular gallery hours.</p>
 
             <div className="run-dates">
               <div className="run-date-item">
-                <div className="d-label opacity-40 uppercase text-[9px] font-mono">Opens</div>
-                <div className="text-xl font-serif italic">{dateFormatted}</div>
+                <div className="d-label">Opens</div>
+                <div className="d-val">{dateFormatted}</div>
               </div>
               <div className="run-date-item">
-                <div className="d-label opacity-40 uppercase text-[9px] font-mono">Admission</div>
-                <div className="text-xl font-serif italic">{event.admission || "Free"}</div>
+                <div className="d-label">Closes</div>
+                <div className="d-val">{endFormatted || "TBA"}</div>
+              </div>
+              <div className="run-date-item">
+                <div className="d-label">Hours</div>
+                <div className="d-val">{event.openingHours || "See venue"}</div>
+              </div>
+              <div className="run-date-item">
+                <div className="d-label">Admission</div>
+                <div className="d-val">{event.admission || "Free"}</div>
               </div>
             </div>
+
+            <a href="#rsvp-section" className="btn-primary">RSVP for Opening Night →</a>
           </div>
 
-          <div className="relative aspect-[3/4] bg-ochre-deep overflow-hidden">
-            {img && <Image src={img} alt="Gallery" fill className="object-cover opacity-60 mix-blend-multiply" />}
+          {/* On-view image — uses dedicated ACF field if set, falls back to featured image */}
+          <div className="gallery-portrait">
+            {(event.onViewImage?.node?.sourceUrl || img) && (
+              <Image
+                src={event.onViewImage?.node?.sourceUrl || img}
+                alt={event.onViewImage?.node?.altText || event.title}
+                fill
+                style={{ objectFit: "cover" }}
+              />
+            )}
           </div>
         </div>
       </section>
-
-      {/* PRESS SECTION */}
-      {event.pressDetails && event.pressDetails.title && (
-        <section className="press-section bg-paper-deep py-20 px-10 md:px-20 border-t border-ink/5">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="section-label mx-auto mb-8">{event.pressDetails.eyebrow || "Press & Media"}</div>
-            <h3 className="text-3xl md:text-5xl mb-6">{event.pressDetails.title}</h3>
-            <div className="prose-custom opacity-80 mb-10 mx-auto max-w-2xl" dangerouslySetInnerHTML={{ __html: event.pressDetails.content }} />
-            {event.pressDetails.link && (
-              <a href={event.pressDetails.link} className="btn-outline inline-block">
-                Inquire for Press Access →
-              </a>
-            )}
-          </div>
-        </section>
-      )}
 
       {/* ARTIST STRIP */}
       {hasHost && (
@@ -329,8 +347,14 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           <div className="artist-info">
             <div className="section-label">The artist</div>
             <h3>{host.title?.split(' ')[0] || "Featured"} <em>{host.title?.split(' ')[1] || "Artist"}</em></h3>
-            <div className="font-serif italic text-lg text-ink-soft opacity-80" dangerouslySetInnerHTML={{ __html: host.excerpt }} />
-            <Link href={`/directory/${host.slug}`} className="inline-block mt-6 border-b border-ink text-[10px] uppercase font-mono">
+            <div
+              style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: "18px", color: "var(--ink-soft)", lineHeight: 1.5, marginBottom: "20px" }}
+              dangerouslySetInnerHTML={{ __html: host.excerpt }}
+            />
+            <Link
+              href={`/directory/${host.slug}`}
+              style={{ display: "inline-block", fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.15em", borderBottom: "1px solid var(--ink)", paddingBottom: "2px", textDecoration: "none", color: "var(--ink)" }}
+            >
               Read the full portrait →
             </Link>
           </div>
