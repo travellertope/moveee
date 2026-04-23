@@ -221,11 +221,20 @@ class Culture_Newsletter_Queue {
         // Strip residual <!--more--> comments.
         $content = preg_replace( '/<!--more(.*?)-->/i', '', $content );
 
-        // Replace any CMS-domain URLs with the frontend URL.
+        // Rewrite CMS-domain page links → frontend URL.
+        // IMPORTANT: Use href-scoped regex, NOT a blanket str_replace.
+        // Optimole CDN URLs embed the original WordPress domain in their path:
+        //   https://cdn.optimole.com/.../https://cms.themoveee.com/wp-content/uploads/img.jpg
+        // A str_replace( $cms_url, $frontend_url ) would corrupt that embedded
+        // domain, making Optimole try to fetch from the Next.js server → 403.
         $cms_url      = rtrim( home_url( '/' ), '/' );
         $frontend_url = rtrim( get_option( 'culture_frontend_url', '' ), '/' );
         if ( $frontend_url && $cms_url !== $frontend_url ) {
-            $content = str_replace( $cms_url, $frontend_url, $content );
+            $content = preg_replace(
+                '/(href=["\'])' . preg_quote( $cms_url, '/' ) . '/',
+                '$1' . $frontend_url,
+                $content
+            );
         }
 
         return $content;
