@@ -536,7 +536,7 @@ export const NEWSLETTER_FIELDS = NEWSLETTER_FIELDS_FRAGMENT;
 
 export const GET_NEWSLETTERS = `
   query GetNewsletters($first: Int) {
-    cultureNewsletters(first: $first, where: { status: PUBLISH }) {
+    cultureNewsletters(first: $first, where: { status: PUBLISH, orderby: { field: DATE, order: DESC } }) {
       nodes {
         ...NewsletterFields
       }
@@ -566,6 +566,47 @@ export const GET_ADJACENT_NEWSLETTERS = `
     }
   }
 `;
+
+export async function getNewslettersWithFallback(first = 50, options: any = {}) {
+  const gql = await getWPData(GET_NEWSLETTERS, { first }, options);
+  const gqlItems = gql?.cultureNewsletters?.nodes ?? [];
+  if (gqlItems.length > 0) return gqlItems;
+
+  // REST API fallback – used if WPGraphQL schema doesn't expose cultureNewsletters
+  try {
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_newsletter?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: {
+        revalidate: options.revalidate !== undefined ? options.revalidate : 3600,
+      },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    return json.map((item: any) => ({
+      id: String(item?.id ?? ""),
+      databaseId: item?.id,
+      slug: item?.slug ?? "",
+      title: item?.title?.rendered ?? "Untitled",
+      date: item?.date ?? null,
+      excerpt: item?.excerpt?.rendered ?? "",
+      featuredImage: item?._embedded?.["wp:featuredmedia"]?.[0]?.source_url
+        ? {
+            node: {
+              sourceUrl: item._embedded["wp:featuredmedia"][0].source_url,
+              altText: item._embedded["wp:featuredmedia"][0].alt_text || "",
+            },
+          }
+        : null,
+      cultureInterests: { nodes: [] },
+      cultureAccesses: { nodes: [] },
+    }));
+  } catch {
+    return [];
+  }
+}
 
 export const GET_EVENTS = `
   query GetEvents($first: Int) {
