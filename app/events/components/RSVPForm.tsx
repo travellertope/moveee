@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 
 interface TicketType {
-  name: string;
-  info: string;
-  price: string | null; // null = free
+  ticketName: string;
+  ticketSlug: string;
+  ticketInfo: string;
+  ticketPrice: string | null;
 }
 
 interface RSVPFormProps {
@@ -14,34 +15,81 @@ interface RSVPFormProps {
   capacity?: number;
   spotsRemaining?: number;
   ticketTypes?: TicketType[];
+  membersNote?: string;
 }
 
 const DEFAULT_TICKETS: TicketType[] = [
-  { name: 'Members — Private View', info: '18:00 entry · includes supper eligibility', price: null },
-  { name: 'General Admission', info: '19:30 entry · open to all', price: null },
+  { ticketName: 'General Admission', ticketSlug: 'general', ticketInfo: 'Open to all', ticketPrice: null },
 ];
 
 const RSVPForm: React.FC<RSVPFormProps> = ({
   eventSlug,
   eventTitle,
   capacity,
-  spotsRemaining,
-  ticketTypes = DEFAULT_TICKETS,
+  spotsRemaining: initialSpotsRemaining,
+  ticketTypes,
+  membersNote,
 }) => {
+  const tickets = (ticketTypes && ticketTypes.length > 0) ? ticketTypes : DEFAULT_TICKETS;
+
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [formData, setFormData] = useState({ name: '', email: '', ticket: 'general', source: '' });
+  const [errorMsg, setErrorMsg] = useState('');
+  const [spotsRemaining, setSpotsRemaining] = useState(initialSpotsRemaining);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    ticket: tickets[0]?.ticketSlug ?? 'general',
+    source: '',
+  });
+
+  const refreshCapacity = async () => {
+    try {
+      const res = await fetch(`/api/events/capacity?event_slug=${encodeURIComponent(eventSlug)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.remaining != null) setSpotsRemaining(data.remaining);
+      }
+    } catch { /* non-critical */ }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
+    setErrorMsg('');
     try {
       const res = await fetch('/api/events/rsvp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, eventSlug, eventTitle }),
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          ticket: formData.ticket,
+          source: formData.source,
+          eventSlug,
+          eventTitle,
+        }),
       });
-      setStatus(res.ok ? 'success' : 'error');
+
+      if (res.ok) {
+        setStatus('success');
+        refreshCapacity();
+        return;
+      }
+
+      const data = await res.json().catch(() => ({}));
+      const code = data?.error ?? '';
+      const msg =
+        code === 'already_registered'
+          ? 'You are already registered for this event.'
+          : code === 'sold_out'
+          ? 'Sorry — this event is now fully booked.'
+          : data?.message || 'Something went wrong — please try again.';
+
+      setErrorMsg(msg);
+      setStatus('error');
+      refreshCapacity();
     } catch {
+      setErrorMsg('Something went wrong — please try again.');
       setStatus('error');
     }
   };
@@ -59,43 +107,44 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
     );
   }
 
-  const usedPercent = (capacity && spotsRemaining != null)
-    ? Math.round(((capacity - spotsRemaining) / capacity) * 100)
-    : null;
+  const usedPercent =
+    capacity != null && spotsRemaining != null && capacity > 0
+      ? Math.round(((capacity - spotsRemaining) / capacity) * 100)
+      : null;
 
   return (
     <>
       {/* Capacity bar */}
-      {capacity != null && spotsRemaining != null && (
+      {capacity != null && capacity > 0 && spotsRemaining != null && (
         <div className="capacity-bar">
           <div className="cap-label">
             <span>Capacity</span>
             <span className="spots">{spotsRemaining} spot{spotsRemaining !== 1 ? 's' : ''} remaining</span>
           </div>
           <div className="bar-track">
-            <div className="bar-fill" style={{ width: `${usedPercent}%` }} />
+            <div className="bar-fill" style={{ width: `${usedPercent ?? 0}%` }} />
           </div>
         </div>
       )}
 
       {/* Ticket type rows */}
-      {ticketTypes.map((t, i) => (
+      {tickets.map((t, i) => (
         <div className="ticket-type" key={i}>
           <div>
-            <div className="ticket-name">{t.name}</div>
-            <div className="ticket-info">{t.info}</div>
+            <div className="ticket-name">{t.ticketName}</div>
+            <div className="ticket-info">{t.ticketInfo}</div>
           </div>
-          <div className={`ticket-price${t.price === null ? ' free' : ''}`}>
-            {t.price ?? 'Free'}
+          <div className={`ticket-price${t.ticketPrice === null ? ' free' : ''}`}>
+            {t.ticketPrice ?? 'Free'}
           </div>
         </div>
       ))}
 
       {/* Form */}
       <form className="rsvp-form" onSubmit={handleSubmit}>
-        <div className="members-note">
-          ★ Connect members: select Private View above to unlock 18:00 early entry.
-        </div>
+        {membersNote && (
+          <div className="members-note">{membersNote}</div>
+        )}
 
         <input
           type="text"
@@ -113,16 +162,21 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           disabled={status === 'loading'}
         />
-        <select
-          value={formData.ticket}
-          onChange={(e) => setFormData({ ...formData, ticket: e.target.value })}
-          disabled={status === 'loading'}
-        >
-          <option value="" disabled>Select ticket type</option>
-          <option value="private">Moveee Connect Member — Private View (18:00)</option>
-          <option value="general">General Admission — Public Opening (19:30)</option>
-          <option value="supper">Origins Guest — Supper Table (pre-registered)</option>
-        </select>
+
+        {tickets.length > 1 && (
+          <select
+            value={formData.ticket}
+            onChange={(e) => setFormData({ ...formData, ticket: e.target.value })}
+            disabled={status === 'loading'}
+          >
+            {tickets.map((t) => (
+              <option key={t.ticketSlug} value={t.ticketSlug}>
+                {t.ticketName}{t.ticketInfo ? ` — ${t.ticketInfo}` : ''}
+              </option>
+            ))}
+          </select>
+        )}
+
         <input
           type="text"
           placeholder="How did you hear about this? (optional)"
@@ -137,13 +191,12 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
 
         {status === 'error' && (
           <p className="rsvp-small" style={{ color: 'var(--ochre)', marginTop: '10px' }}>
-            Something went wrong — please try again.
+            {errorMsg}
           </p>
         )}
 
         <p className="rsvp-small">
-          Free admission · Confirmation sent by email<br />
-          Doors open from 19:30 · Check your email for venue details
+          Confirmation sent by email · Please bring this email or your name at the door
         </p>
       </form>
     </>

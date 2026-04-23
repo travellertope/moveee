@@ -57,6 +57,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-nl-analytics-adm
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-directory-tools.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-acf-fields.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-redirects.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-event-rsvp.php';
 
 // Payment includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
@@ -105,6 +106,7 @@ function culture_community_init() {
     Culture_Email_Templates::init();
     Culture_Templates::init();
     Culture_Redirects::init();
+    Culture_Event_RSVP::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {

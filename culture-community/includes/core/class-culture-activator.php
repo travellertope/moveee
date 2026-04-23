@@ -55,6 +55,9 @@ class Culture_Activator {
             KEY user_event (user_id, event_id)
         ) {$charset_collate};" );
 
+        // Event RSVP table.
+        Culture_Event_RSVP::create_table();
+
         // Newsletter analytics tables.
         Culture_NL_Analytics::create_tables();
 

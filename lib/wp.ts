@@ -123,6 +123,20 @@ function mapRestEventToFrontendShape(item: any) {
     featuredHost: normalizeHost(acf.featured_host),
     associatedJourney: normalizeJourney(acf.associated_journey),
     pressDetails: acf.press_details || meta.press_details || null,
+    eventSubtype: pick(acf.event_subtype, meta.event_subtype),
+    aboutLabel: pick(acf.about_label, meta.about_label),
+    venueAddress: pick(acf.venue_address, meta.venue_address),
+    galleryRunText: pick(acf.gallery_run_text, meta.gallery_run_text),
+    rsvpCapacity: acf.rsvp_capacity ? parseInt(String(acf.rsvp_capacity), 10) : null,
+    rsvpMembersNote: pick(acf.rsvp_members_note, meta.rsvp_members_note),
+    rsvpTicketTypes: Array.isArray(acf.rsvp_ticket_types)
+      ? acf.rsvp_ticket_types.map((t: any) => ({
+          ticketName:  t.ticket_name  ?? '',
+          ticketSlug:  t.ticket_slug  ?? '',
+          ticketInfo:  t.ticket_info  ?? '',
+          ticketPrice: t.ticket_price ?? null,
+        }))
+      : [],
     onViewImage: (() => {
       const raw = acf.on_view_image || meta.on_view_image;
       const item = toMediaItem(raw);
@@ -403,6 +417,18 @@ const EVENT_FIELDS_FRAGMENT = `
       title
       content
       link
+    }
+    eventSubtype
+    aboutLabel
+    venueAddress
+    galleryRunText
+    rsvpCapacity
+    rsvpMembersNote
+    rsvpTicketTypes {
+      ticketName
+      ticketSlug
+      ticketInfo
+      ticketPrice
     }
     onViewImage {
       node {
