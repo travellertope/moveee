@@ -233,6 +233,39 @@ class Culture_Newsletter_Queue {
             $content = str_replace( $cms_url, $frontend_url, $content );
         }
 
+        // ── Restore Optimole lazy-loaded images ──────────────────────────────
+        // Optimole replaces <img src> with a placeholder and stores the real URL
+        // in data-src (or data-opt-src). Email clients don't run JavaScript so
+        // only the placeholder would display. We restore the original src here.
+        //
+        // Pattern 1 – WP Smush / Optimole: data-opt-src
+        $content = preg_replace_callback(
+            '/<img([^>]*?)\s+data-opt-src=(["\'])([^"\'>]+)\2([^>]*)>/i',
+            function ( $m ) {
+                // Remove any existing src=... and replace with the real URL.
+                $attrs = preg_replace( '/\s*src=(["\'])[^"\'>]*\1/i', '', $m[1] . $m[4] );
+                return '<img' . $attrs . ' src=' . $m[2] . $m[3] . $m[2] . '>';
+            },
+            $content
+        );
+
+        // Pattern 2 – generic lazy-load: data-src
+        $content = preg_replace_callback(
+            '/<img([^>]*?)\s+data-src=(["\'])([^"\'>]+)\2([^>]*)>/i',
+            function ( $m ) {
+                // Only replace if a non-empty data-src exists and src looks like a placeholder.
+                $real_url = $m[3];
+                $attrs    = $m[1] . $m[4];
+                // Remove placeholder src.
+                $attrs = preg_replace( '/\s*src=(["\'])[^"\'>]*\1/i', '', $attrs );
+                return '<img' . $attrs . ' src=' . $m[2] . $real_url . $m[2] . '>';
+            },
+            $content
+        );
+
+        // Remove noscript wrappers Optimole injects (they duplicate the image in email).
+        $content = preg_replace( '/<noscript>.*?<\/noscript>/is', '', $content );
+
         return $content;
     }
 
@@ -388,7 +421,7 @@ class Culture_Newsletter_Queue {
   .header { padding:36px 48px 28px; border-bottom:2px solid #14110d; }
   .header-label { font-family:-apple-system,BlinkMacSystemFont,'Courier New',monospace; font-size:10px; letter-spacing:.25em; text-transform:uppercase; color:#7a6f5c; margin:0 0 8px; }
   .header-title { font-size:26px; font-weight:400; line-height:1.25; margin:0; color:#14110d; }
-  .content { padding:40px 48px 32px; font-size:16px; line-height:1.75; }
+  .content { padding:24px 32px 24px; font-size:16px; line-height:1.75; }
   .content p { margin:0 0 20px; }
   .content h1,.content h2,.content h3 { font-weight:400; line-height:1.3; margin:32px 0 14px; }
   .content h2 { font-size:22px; }
