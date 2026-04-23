@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { name, email, eventSlug, eventTitle, ticketType } = payload;
+  const { name, email, eventSlug, eventTitle, ticket, source } = payload;
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
@@ -29,23 +29,23 @@ export async function POST(req: NextRequest) {
         name,
         email,
         event_slug: eventSlug,
-        event_title: eventTitle,
-        ticket_type: ticketType
+        event_title: eventTitle ?? "",
+        ticket_type: ticket ?? "general",
+        source: source ?? "",
       }),
     });
 
+    const data = await res.json().catch(() => ({}));
+
     if (!res.ok) {
-      console.error(`RSVP failed for ${eventSlug}: ${res.statusText}`);
-      // Fallback: If the endpoint is not yet configured, return success for now 
-      // but log the error so the user knows they need to register the endpoint in WP.
-      // This allows the UI to stay functional while they configure their backend.
-      // return NextResponse.json({ success: true, warning: 'Endpoint not yet registered in WP' });
-      return NextResponse.json({ error: "RSVP failed. Integration pending in WordPress." }, { status: 502 });
+      const errorCode = data?.error ?? "rsvp_failed";
+      const message = data?.message ?? "Could not complete your RSVP. Please try again.";
+      return NextResponse.json({ error: errorCode, message }, { status: res.status });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: data.message }, { status: 201 });
   } catch (error) {
     console.error("RSVP API Route Error:", error);
-    return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
+    return NextResponse.json({ error: "service_unavailable", message: "Service unavailable. Please try again later." }, { status: 503 });
   }
 }

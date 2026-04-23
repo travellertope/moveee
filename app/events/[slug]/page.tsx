@@ -66,11 +66,33 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const endObj = event.endDate ? new Date(event.endDate) : null;
   const endFormatted = (endObj && !isNaN(endObj.getTime())) ? endObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
 
+  // Status derived from event date
+  const now = new Date();
+  const eventStatus = dateValid > now ? "Upcoming" : (endObj && endObj > now ? "Current" : "Past");
+
+  const eventSubtype = event.eventSubtype || "";
+  const aboutLabel = event.aboutLabel || "About the event";
+  const galleryRunText = event.galleryRunText || "Admission is free and strictly by RSVP for the opening night. The archive remains open for visitors thereafter during regular gallery hours.";
+  const venueAddress = event.venueAddress || "";
+  const membersNote = event.rsvpMembersNote || "";
+  const rsvpTicketTypes = event.rsvpTicketTypes && event.rsvpTicketTypes.length > 0
+    ? event.rsvpTicketTypes.map((t: any) => ({
+        ticketName: t.ticketName,
+        ticketSlug: t.ticketSlug,
+        ticketInfo: t.ticketInfo,
+        ticketPrice: t.ticketPrice || null,
+      }))
+    : undefined;
+
   const hasMetrics = event.metrics && event.metrics.length > 0;
   const hasSchedule = Array.isArray(event.schedule) && event.schedule.length > 0;
   const hasShowcase = Array.isArray(event.showcase) && event.showcase.length > 0;
   const hasHost = event.featuredHost && typeof event.featuredHost === 'object' && event.featuredHost?.title;
   const host = hasHost ? event.featuredHost : null;
+
+  // Eyebrow pieces
+  const eyebrowType = eventSubtype || cat;
+  const eyebrowStatus = `● ${eventStatus}`;
 
   return (
     <div className="events-page-wrapper">
@@ -78,9 +100,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       <section className="event-hero">
         <div className="hero-content">
           <div className="hero-eyebrow">
-            <span className="pill">● Upcoming</span>
+            <span className="pill">{eyebrowStatus}</span>
             <span className="sep">·</span>
-            <span>{cat} Opening</span>
+            <span>{eyebrowType}</span>
             <span className="sep">·</span>
             <span>Moveee Events</span>
           </div>
@@ -90,7 +112,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
           <div className="hero-meta-row">
             <div className="hero-meta-item">
-              <div className="label">Opening Night</div>
+              <div className="label">{eventSubtype || "Opening Night"}</div>
               <div className="value">{dateFormatted}</div>
             </div>
             <div className="hero-meta-item">
@@ -99,7 +121,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </div>
             {endFormatted && (
               <div className="hero-meta-item">
-                <div className="label">Exhibition Run</div>
+                <div className="label">Event run</div>
                 <div className="value">{dateFormatted} — {endFormatted}</div>
               </div>
             )}
@@ -112,7 +134,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </div>
 
           <div className="hero-cta-group">
-            <a href="#programme-section" className="btn-outline">View schedule</a>
+            {hasSchedule && <a href="#programme-section" className="btn-outline">View schedule</a>}
             <a href="#rsvp-section" className="btn-primary">RSVP Now →</a>
           </div>
         </div>
@@ -129,27 +151,27 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       <div className="ticker-wrap">
         <div className="ticker-track">
           <span className="accent">{event.title}</span>
-          <span>{host?.title}</span>
+          {host?.title && <span>{host.title}</span>}
           <span className="accent">★</span>
-          <span>{event.location}</span>
+          {event.location && <span>{event.location}</span>}
           <span className="accent">{dateFormatted}</span>
-          <span>{hasShowcase ? `${event.showcase.length} Works` : "Culture Archive"}</span>
+          {hasShowcase ? <span>{event.showcase.length} Works</span> : <span>Culture Archive</span>}
           <span className="accent">★</span>
-          <span>Limited Capacity</span>
-          <span>Moveee Members: Private View Access</span>
+          {event.rsvpCapacity ? <span>Limited Capacity — {event.rsvpCapacity} Spots</span> : null}
+          {membersNote && <span>★ Members: early access</span>}
           <span className="accent">★</span>
           <span>{event.admission || "Free Admission"}</span>
           <span className="accent">★</span>
           {/* duplicate for seamless loop */}
           <span className="accent">{event.title}</span>
-          <span>{host?.title}</span>
+          {host?.title && <span>{host.title}</span>}
           <span className="accent">★</span>
-          <span>{event.location}</span>
+          {event.location && <span>{event.location}</span>}
           <span className="accent">{dateFormatted}</span>
-          <span>{hasShowcase ? `${event.showcase.length} Works` : "Culture Archive"}</span>
+          {hasShowcase ? <span>{event.showcase.length} Works</span> : <span>Culture Archive</span>}
           <span className="accent">★</span>
-          <span>Limited Capacity</span>
-          <span>Moveee Members: Private View Access</span>
+          {event.rsvpCapacity ? <span>Limited Capacity — {event.rsvpCapacity} Spots</span> : null}
+          {membersNote && <span>★ Members: early access</span>}
           <span className="accent">★</span>
           <span>{event.admission || "Free Admission"}</span>
           <span className="accent">★</span>
@@ -160,8 +182,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       <main className="page-body">
         {/* LEFT COLUMN */}
         <div className="left-col">
-          <div className="section-label">About the exhibition</div>
-          <div className="about-text prose-custom" dangerouslySetInnerHTML={{ __html: event.content || "<p>Exhibition details coming soon. Please check back for the full curatorial statement.</p>" }} />
+          <div className="section-label">{aboutLabel}</div>
+          <div className="about-text prose-custom" dangerouslySetInnerHTML={{ __html: event.content || "<p>Event details coming soon.</p>" }} />
 
           {/* Pull Quote */}
           {event.tagline && (
@@ -169,7 +191,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <div className="bar" />
               <div>
                 <blockquote>"{event.tagline}"</blockquote>
-                <cite>— {host?.title || "Moveee Talent"}, on the work at hand</cite>
+                {(host?.title || event.attribution) && (
+                  <cite>— {host?.title || event.attribution}</cite>
+                )}
               </div>
             </div>
           )}
@@ -201,7 +225,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           {/* Programme */}
           {hasSchedule && (
             <div className="programme" id="programme-section">
-              <div className="section-label">Opening night programme</div>
+              <div className="section-label">Programme</div>
               {event.schedule.map((item: any, i: number) => (
                 <div key={i} className="programme-row">
                   <div className="prog-time">{item.time}</div>
@@ -241,12 +265,14 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             ) : (
               <>
                 <h3>Secure your <em>place</em></h3>
-                <div className="event-date">{event.location} · {event.openingHours || "Doors from 19:30"}</div>
+                <div className="event-date">{event.location} · {event.openingHours || "See details"}</div>
                 <RSVPForm
                   eventSlug={event.slug}
                   eventTitle={event.title}
                   capacity={event.rsvpCapacity ?? undefined}
                   spotsRemaining={event.spotsRemaining ?? undefined}
+                  ticketTypes={rsvpTicketTypes}
+                  membersNote={membersNote || undefined}
                 />
               </>
             )}
@@ -254,14 +280,18 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
           <div className="info-card">
             <div className="label">📍 Venue</div>
-            <p>{event.location}</p>
-            <small>Please check your confirmation email for exact entry directions.</small>
+            <p>{event.location || "Venue TBA"}</p>
+            {venueAddress ? (
+              <small style={{ whiteSpace: "pre-line" }}>{venueAddress}</small>
+            ) : (
+              <small>Please check your confirmation email for exact entry directions.</small>
+            )}
           </div>
 
           <div className="info-card">
-            <div className="label">📅 Exhibition dates</div>
-            <p>{dateFormatted} — {endFormatted || "TBA"}</p>
-            <small>{event.openingHours || "General Hours TBA"}<br/>Free Admission</small>
+            <div className="label">📅 Event dates</div>
+            <p>{dateFormatted}{endFormatted ? ` — ${endFormatted}` : ""}</p>
+            <small>{event.openingHours || "Hours TBA"}<br/>{event.admission || "Free Admission"}</small>
           </div>
 
           {event.associatedJourney && (
@@ -274,31 +304,29 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </div>
           )}
 
-          {/* Press box — in sidebar per design */}
-          {event.pressDetails && (
-            <div className="info-card">
-              <span className="label">{event.pressDetails.eyebrow || "Press & Media"}</span>
-              <p>{event.pressDetails.title || "Press enquiries"}</p>
-              <small>
-                {event.pressDetails.content
-                  ? event.pressDetails.content.replace(/<[^>]*>/g, "")
-                  : "For accreditation, image requests, and interview coordination, contact Moveee PR."}
-              </small>
-              {event.pressDetails.link && (
-                <a href={event.pressDetails.link}>{event.pressDetails.link.replace(/^mailto:/, "")} →</a>
-              )}
-            </div>
-          )}
+          {/* Press box — always shown, uses defaults when not filled in WordPress */}
+          <div className="info-card">
+            <span className="label">{event.pressDetails?.eyebrow || "Press & Media"}</span>
+            <p>{event.pressDetails?.title || "Press enquiries"}</p>
+            <small>
+              {event.pressDetails?.content
+                ? event.pressDetails.content.replace(/<[^>]*>/g, "")
+                : "For accreditation, image requests, and interview coordination, contact Moveee PR."}
+            </small>
+            {event.pressDetails?.link && (
+              <a href={event.pressDetails.link}>{event.pressDetails.link.replace(/^mailto:/, "")} →</a>
+            )}
+          </div>
         </aside>
       </main>
 
-      {/* ON VIEW / GALLERY RUN */}
+      {/* ON VIEW / EVENT RUN */}
       <section className="gallery-run">
         <div className="gallery-run-inner">
           <div>
-            <div className="section-label">The exhibition</div>
+            <div className="section-label">{eyebrowType}</div>
             <h3>On view through<br/><em>{endFormatted || dateFormatted}</em></h3>
-            <p>Admission is free and strictly by RSVP for the opening night. The archive remains open for visitors thereafter during regular gallery hours.</p>
+            <p>{galleryRunText}</p>
 
             <div className="run-dates">
               <div className="run-date-item">
@@ -319,7 +347,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               </div>
             </div>
 
-            <a href="#rsvp-section" className="btn-primary">RSVP for Opening Night →</a>
+            <a href="#rsvp-section" className="btn-primary">RSVP Now →</a>
           </div>
 
           {/* On-view image — uses dedicated ACF field if set, falls back to featured image */}
@@ -346,7 +374,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </div>
           <div className="artist-info">
             <div className="section-label">The artist</div>
-            <h3>{host.title?.split(' ')[0] || "Featured"} <em>{host.title?.split(' ')[1] || "Artist"}</em></h3>
+            <h3>{host.title?.split(' ')[0] || "Featured"} <em>{host.title?.split(' ').slice(1).join(' ') || "Artist"}</em></h3>
             <div
               style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: "18px", color: "var(--ink-soft)", lineHeight: 1.5, marginBottom: "20px" }}
               dangerouslySetInnerHTML={{ __html: host.excerpt }}
