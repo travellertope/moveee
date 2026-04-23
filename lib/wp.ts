@@ -333,10 +333,39 @@ const JOURNEY_FIELDS_FRAGMENT = `
     slug
     date
     excerpt
+    content
     featuredImage {
       node {
         sourceUrl
         altText
+      }
+    }
+    journeyEdition
+    journeyDates
+    journeyLocation
+    journeyPrice
+    journeySpots
+    journeyStatus
+    journeyInclusions
+    journeyExclusions
+    journeyItinerary {
+      dayNumber
+      dayTitle
+      dayLocation
+      dayDescription
+      activities {
+        activityTime
+        activityTitle
+        activityDescription
+        activityType
+      }
+    }
+    journeyHosts {
+      hostName
+      hostRole
+      hostBio
+      hostImage {
+        sourceUrl
       }
     }
   }
@@ -518,7 +547,7 @@ export const NEWSLETTER_FIELDS = NEWSLETTER_FIELDS_FRAGMENT;
 
 export const GET_NEWSLETTERS = `
   query GetNewsletters($first: Int) {
-    cultureNewsletters(first: $first, where: { status: PUBLISH }) {
+    cultureNewsletters(first: $first, where: { status: PUBLISH, orderby: { field: DATE, order: DESC } }) {
       nodes {
         ...NewsletterFields
       }
@@ -548,6 +577,47 @@ export const GET_ADJACENT_NEWSLETTERS = `
     }
   }
 `;
+
+export async function getNewslettersWithFallback(first = 50, options: any = {}) {
+  const gql = await getWPData(GET_NEWSLETTERS, { first }, options);
+  const gqlItems = gql?.cultureNewsletters?.nodes ?? [];
+  if (gqlItems.length > 0) return gqlItems;
+
+  // REST API fallback – used if WPGraphQL schema doesn't expose cultureNewsletters
+  try {
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_newsletter?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: {
+        revalidate: options.revalidate !== undefined ? options.revalidate : 3600,
+      },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    return json.map((item: any) => ({
+      id: String(item?.id ?? ""),
+      databaseId: item?.id,
+      slug: item?.slug ?? "",
+      title: item?.title?.rendered ?? "Untitled",
+      date: item?.date ?? null,
+      excerpt: item?.excerpt?.rendered ?? "",
+      featuredImage: item?._embedded?.["wp:featuredmedia"]?.[0]?.source_url
+        ? {
+            node: {
+              sourceUrl: item._embedded["wp:featuredmedia"][0].source_url,
+              altText: item._embedded["wp:featuredmedia"][0].alt_text || "",
+            },
+          }
+        : null,
+      cultureInterests: { nodes: [] },
+      cultureAccesses: { nodes: [] },
+    }));
+  } catch {
+    return [];
+  }
+}
 
 export const GET_EVENTS = `
   query GetEvents($first: Int) {
@@ -651,7 +721,6 @@ const PRODUCT_FIELDS_FRAGMENT = `
     galleryImages { nodes { sourceUrl altText } }
     productCategories { nodes { name slug } }
     productTags { nodes { name slug } }
-    metaData { key value }
     ... on SimpleProduct {
       price
       regularPrice
@@ -678,8 +747,8 @@ const PRODUCT_FIELDS_FRAGMENT = `
 export const PRODUCT_FIELDS = PRODUCT_FIELDS_FRAGMENT;
 
 export const GET_PRODUCTS = `
-  query GetProducts($first: Int, $category: String, $tag: String, $brand: String) {
-    products(first: $first, where: { category: $category, tag: $tag, brand: $brand }) {
+  query GetProducts($first: Int, $category: String, $tag: String) {
+    products(first: $first, where: { category: $category, tag: $tag }) {
       nodes {
         ...ProductFields
       }
@@ -688,6 +757,7 @@ export const GET_PRODUCTS = `
   ${PRODUCT_FIELDS_FRAGMENT}
 `;
 
+
 export const GET_PRODUCT_BY_SLUG = `
   query GetProductBySlug($slug: ID!) {
     product(id: $slug, idType: SLUG) {
@@ -695,6 +765,32 @@ export const GET_PRODUCT_BY_SLUG = `
     }
   }
   ${PRODUCT_FIELDS_FRAGMENT}
+`;
+
+// Fetched separately so the product page still renders if the
+// moveee-graphql-bridge plugin is not yet active.
+export const GET_PRODUCT_EXTRA = `
+  query GetProductExtra($slug: ID!) {
+    product(id: $slug, idType: SLUG) {
+      vendorProfile {
+        storeName
+        bio
+        city
+        country
+        avatarUrl
+        yearsActive
+        rating
+        productCount
+      }
+      moveeeMeta {
+        makerStory
+        careInstructions
+        processSteps
+        asSeenInPostId
+        deliveryInfo
+      }
+    }
+  }
 `;
 
 export const GET_PRODUCT_CATEGORIES = `
@@ -708,6 +804,31 @@ export const GET_PRODUCT_CATEGORIES = `
       }
     }
   }
+`;
+
+export const GET_POST_BY_ID = `
+  query GetPostById($id: ID!) {
+    post(id: $id, idType: DATABASE_ID) {
+      title
+      slug
+      excerpt
+      featuredImage { node { sourceUrl altText } }
+      categories { nodes { name slug } }
+    }
+  }
+`;
+
+export const GET_PRODUCTS_BY_VENDOR = `
+  query GetProductsByVendor($first: Int, $vendor: String) {
+    products(first: $first, where: { metaQuery: {
+      metaArray: [{ key: "_vendor_name", value: $vendor, compare: EQUAL_TO }]
+    }}) {
+      nodes {
+        ...ProductFields
+      }
+    }
+  }
+  ${PRODUCT_FIELDS_FRAGMENT}
 `;
 
 export const DIRECTORY_FIELDS = DIRECTORY_FIELDS_FRAGMENT;

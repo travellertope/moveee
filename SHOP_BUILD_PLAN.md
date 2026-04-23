@@ -186,10 +186,50 @@ Full server component. Fetches product + related products. Renders:
 | File | Status |
 |------|--------|
 | `lib/wp.ts` — extended product fragment + GET_PRODUCT_CATEGORIES | ✅ Done |
-| `app/shop/shop.css` | ❌ Todo |
-| `app/shop/components/ShopFilterBar.tsx` | ❌ Todo |
-| `app/shop/ShopArchiveWrapper.tsx` | ❌ Todo |
-| `app/shop/[slug]/ProductGallery.tsx` | ❌ Todo |
-| `app/shop/[slug]/ProductSelectors.tsx` | ❌ Todo |
-| `app/shop/[slug]/ProductAccordion.tsx` | ❌ Todo |
-| `app/shop/[slug]/page.tsx` | ❌ Todo |
+| `app/shop/shop.css` | ✅ Done |
+| `app/shop/components/ShopFilterBar.tsx` | ✅ Done |
+| `app/shop/ShopArchiveWrapper.tsx` | ✅ Done |
+| `app/shop/[slug]/ProductGallery.tsx` | ✅ Done |
+| `app/shop/[slug]/ProductSelectors.tsx` | ✅ Done |
+| `app/shop/[slug]/ProductAccordion.tsx` | ✅ Done |
+| `app/shop/[slug]/page.tsx` | ✅ Done |
+
+---
+
+## Phase 2 — Plugin-dependent features (`moveee-graphql-bridge.zip` now active)
+
+### metaData keys exposed by the bridge plugin
+
+| Key | Used in |
+|-----|---------|
+| `_vendor_name` / `vendor_store_name` | Vendor cards, product detail |
+| `vendor_city` / `_vendor_city` | Vendor location |
+| `vendor_description` / `_vendor_description` | Vendor profile |
+| `vendor_product_count` | Vendor stats |
+| `maker_story` | Product detail story section |
+| `care_instructions` | Accordion: Materials & Care |
+| `process_steps` | Process grid (JSON array) |
+| `as_seen_in_post_id` | "As Seen In" bridge |
+
+### Phase 2 checklist
+
+| Task | Status |
+|------|--------|
+| Vendor cards — real data from product metaData | ✅ Done |
+| Product detail process steps — parse `process_steps` JSON | ✅ Done |
+| Vendor profile — real name, city, desc, count from metaData | ✅ Done |
+| Maker story — render `maker_story` ACF field | ✅ Done |
+| "As Seen In" — fetch post via `as_seen_in_post_id` | ✅ Done |
+| Cart — WooCommerce Store API via Next.js proxy route | ✅ Done |
+
+---
+
+## Phase 3 — Future Enhancements
+
+| Task | Notes |
+|------|-------|
+| Shipping page (`/shop/shipping`) | Exists as route stub — needs content |
+| Search / filter by price range | Client-side filter on product grid |
+| Wishlist / saved items | Persist to localStorage or user account |
+| Cart drawer | Full cart UX without leaving the page |
+| Product reviews | WooCommerce reviews via WPGraphQL |

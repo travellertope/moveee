@@ -194,6 +194,53 @@ class Culture_Post_Types {
             ),
         ) );
 
+        // Journey Object Types
+        register_graphql_object_type( 'CultureJourneyMeta', array(
+            'fields' => array(
+                'journeyEdition'    => array( 'type' => 'String' ),
+                'journeyDates'      => array( 'type' => 'String' ),
+                'journeyLocation'   => array( 'type' => 'String' ),
+                'journeyPrice'      => array( 'type' => 'String' ),
+                'journeySpots'      => array( 'type' => 'String' ),
+                'journeyStatus'     => array( 'type' => 'String' ),
+                'journeyInclusions' => array( 'type' => 'String' ),
+                'journeyExclusions' => array( 'type' => 'String' ),
+            ),
+        ) );
+
+        register_graphql_object_type( 'CultureJourneyDay', array(
+            'fields' => array(
+                'dayNumber'      => array( 'type' => 'String' ),
+                'dayTitle'       => array( 'type' => 'String' ),
+                'dayLocation'    => array( 'type' => 'String' ),
+                'dayDescription' => array( 'type' => 'String' ),
+                'activities'     => array( 'type' => array( 'list_of' => 'CultureJourneyActivity' ) ),
+            ),
+        ) );
+
+        register_graphql_object_type( 'CultureJourneyActivity', array(
+            'fields' => array(
+                'activityTime'        => array( 'type' => 'String' ),
+                'activityTitle'       => array( 'type' => 'String' ),
+                'activityDescription' => array( 'type' => 'String' ),
+                'activityType'        => array( 'type' => 'String' ),
+            ),
+        ) );
+
+        register_graphql_object_type( 'CultureJourneyHost', array(
+            'fields' => array(
+                'hostName' => array( 'type' => 'String' ),
+                'hostRole' => array( 'type' => 'String' ),
+                'hostBio'  => array( 'type' => 'String' ),
+                'hostImage' => array(
+                    'type'    => 'MediaItem',
+                    'resolve' => function( $host ) {
+                        return isset( $host['hostImage'] ) ? get_post( $host['hostImage'] ) : null;
+                    },
+                ),
+            ),
+        ) );
+
         // 5. Advanced Event Fields (ACF Based)
         register_graphql_field( 'CultureEvent', 'metrics', array(
             'type'    => array( 'list_of' => 'CultureEventMetric' ),
@@ -281,14 +328,70 @@ class Culture_Post_Types {
             }
         }
 
-        register_graphql_field( 'CultureDirectory', 'twitterHandle', array(
-            'type'    => 'String',
-            'resolve' => function( $post ) { 
-                return function_exists('get_field') ? get_field( 'twitter_handle', $post->databaseId ) : get_post_meta($post->databaseId, 'twitter_handle', true); 
+        // 7. Journey Fields – Curated cultural journeys metadata
+        register_graphql_field( 'CultureJourney', 'journeyMeta', array(
+            'type'    => 'CultureJourneyMeta',
+            'resolve' => function( $post ) {
+                return function_exists('get_field') ? get_field( 'journey_meta', $post->databaseId ) : null;
             },
         ) );
-        
-        // 8. Global Membership Settings
+        register_graphql_field( 'CultureJourney', 'journeyItinerary', array(
+            'type'    => array( 'list_of' => 'CultureJourneyDay' ),
+            'resolve' => function( $post ) {
+                return function_exists('get_field') ? get_field( 'journey_itinerary', $post->databaseId ) : array();
+            },
+        ) );
+        register_graphql_field( 'CultureJourney', 'journeyHosts', array(
+            'type'    => array( 'list_of' => 'CultureJourneyHost' ),
+            'resolve' => function( $post ) {
+                return function_exists('get_field') ? get_field( 'journey_hosts', $post->databaseId ) : array();
+            },
+        ) );
+
+        // Journey Meta Fields (individual properties for easier querying)
+        $journey_meta_fields = array(
+            'journeyEdition'    => array( 'type' => 'String',  'acf_key' => 'journey_edition' ),
+            'journeyDates'      => array( 'type' => 'String',  'acf_key' => 'journey_dates' ),
+            'journeyLocation'   => array( 'type' => 'String',  'acf_key' => 'journey_location' ),
+            'journeyPrice'      => array( 'type' => 'String',  'acf_key' => 'journey_price' ),
+            'journeySpots'      => array( 'type' => 'String',  'acf_key' => 'journey_spots' ),
+            'journeyStatus'     => array( 'type' => 'String',  'acf_key' => 'journey_status' ), // active, completed, upcoming
+            'journeyInclusions' => array( 'type' => 'String',  'acf_key' => 'journey_inclusions' ),
+            'journeyExclusions' => array( 'type' => 'String',  'acf_key' => 'journey_exclusions' ),
+        );
+
+        foreach ( $journey_meta_fields as $field_name => $config ) {
+            $acf_key = $config['acf_key'];
+            $field_type = $config['type'];
+            register_graphql_field( 'CultureJourney', $field_name, array(
+                'type'    => $field_type,
+                'resolve' => function( $post ) use ( $acf_key ) {
+                    return function_exists('get_field') ? get_field( $acf_key, $post->databaseId ) : null;
+                },
+            ) );
+        }
+
+        // 8. Directory Profile Extensions
+        register_graphql_field( 'CultureDirectory', 'websiteUrl', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                return function_exists('get_field') ? get_field( 'website_url', $post->databaseId ) : get_post_meta($post->databaseId, 'website_url', true);
+            },
+        ) );
+        register_graphql_field( 'CultureDirectory', 'instagramHandle', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                return function_exists('get_field') ? get_field( 'instagram_handle', $post->databaseId ) : get_post_meta($post->databaseId, 'instagram_handle', true);
+            },
+        ) );
+        register_graphql_field( 'CultureDirectory', 'twitterHandle', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                return function_exists('get_field') ? get_field( 'twitter_handle', $post->databaseId ) : get_post_meta($post->databaseId, 'twitter_handle', true);
+            },
+        ) );
+
+        // 9. Global Membership Settings
         register_graphql_object_type( 'CultureMembershipSettings', array(
             'description' => __( 'Global membership pricing and tier labels', 'culture-community' ),
             'fields'      => array(
@@ -422,7 +525,7 @@ class Culture_Post_Types {
             'has_archive'         => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-email-alt',
-            'supports'            => array( 'title', 'editor', 'thumbnail', 'comments' ),
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments' ),
             'rewrite'             => array( 'slug' => 'digest' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',

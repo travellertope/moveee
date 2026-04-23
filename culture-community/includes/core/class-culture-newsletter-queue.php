@@ -79,7 +79,6 @@ class Culture_Newsletter_Queue {
         }
 
         foreach ( $batch as $email ) {
-            // $email is already a string here from the snapshot
             self::send_to( $email, $post_id );
         }
 
@@ -107,7 +106,6 @@ class Culture_Newsletter_Queue {
 
     /**
      * Send the newsletter to a single email address.
-     * Embeds a per-subscriber tracking token for open and click analytics.
      *
      * @param string $email
      * @param int    $post_id
@@ -126,8 +124,6 @@ class Culture_Newsletter_Queue {
         $unsub_token    = self::generate_unsub_token( $email );
         $tracking_token = Culture_NL_Analytics::generate_token( $email, $post_id );
 
-        // Use the public Next.js frontend URL for all subscriber-facing links.
-        // The WordPress backend (cms.*) must never appear in emails.
         $frontend_url = rtrim( get_option( 'culture_frontend_url', home_url( '/' ) ), '/' );
         $permalink    = $frontend_url . '/newsletter/' . $post->post_name;
         $unsub_url    = $frontend_url . '/newsletter/unsubscribe'
@@ -148,7 +144,6 @@ class Culture_Newsletter_Queue {
 
     /**
      * Send a test copy to a specific address without touching send state.
-     * Test emails have tracking disabled — no pixel, no link rewriting.
      *
      * @param int    $post_id
      * @param string $test_email
@@ -168,7 +163,6 @@ class Culture_Newsletter_Queue {
         $title     = '[TEST] ' . get_the_title( $post_id );
         $permalink = $frontend_url . '/newsletter/' . $post->post_name;
         $content   = self::render_content( $post );
-        // Pass $is_test = true → no tracking pixel, no link rewriting.
         $body      = self::build_email( $title, $content, $permalink, '#', true );
 
         return wp_mail(
@@ -182,20 +176,17 @@ class Culture_Newsletter_Queue {
     /**
      * Render a post's content for email delivery.
      *
-     * Runs `the_content` filters (so blocks and shortcodes work) but forces
-     * $more = 1 so WordPress never truncates at a <!--more--> tag and never
-     * injects a "Continue Reading" link pointing at the CMS domain.
-     *
-     * After rendering, any leftover <!--more--> HTML comments are stripped and
-     * any remaining references to the CMS domain are replaced with the
-     * configured frontend URL.
+     * Runs the_content filters (so blocks/shortcodes work) but FIRST removes
+     * any image-optimisation or lazy-load hooks (Optimole, Smush, etc.) so
+     * that email clients receive real <img src> values. Those plugins rely on
+     * JavaScript to swap placeholder images for the real ones; email clients
+     * don't run JavaScript, so without this suspension images simply never
+     * appear.
      *
      * @param WP_Post $post
      * @return string Rendered HTML, safe for email.
      */
     private static function render_content( $post ) {
-        // Set up the global loop state so content filters treat this as a
-        // single-post view — prevents <!--more--> truncation.
         global $more, $page, $pages, $multipage, $preview;
         $prev_more      = $more;
         $prev_page      = isset( $page )      ? $page      : 1;
@@ -207,33 +198,121 @@ class Culture_Newsletter_Queue {
         $pages     = array( $post->post_content );
         $multipage = false;
 
-        // Some page builders / themes check the global post.
-        $prev_post = isset( $GLOBALS['post'] ) ? $GLOBALS['post'] : null;
+        $prev_post       = isset( $GLOBALS['post'] ) ? $GLOBALS['post'] : null;
         $GLOBALS['post'] = $post;
         setup_postdata( $post );
 
+        // Suspend Optimole / lazy-load hooks before running the_content so
+        // images are rendered with their real src URLs, not JS placeholders.
+        $suspended = self::suspend_image_filters();
+
         $content = apply_filters( 'the_content', $post->post_content );
 
-        // Restore globals.
-        $more      = $prev_more;
-        $page      = $prev_page;
-        $pages     = $prev_pages;
-        $multipage = $prev_multipage;
+        // Immediately restore so normal page rendering is unaffected.
+        self::restore_image_filters( $suspended );
+
+        $more            = $prev_more;
+        $page            = $prev_page;
+        $pages           = $prev_pages;
+        $multipage       = $prev_multipage;
         $GLOBALS['post'] = $prev_post;
         wp_reset_postdata();
 
-        // Strip any residual <!--more--> HTML comments.
+        // Strip residual <!--more--> comments.
         $content = preg_replace( '/<!--more(.*?)-->/i', '', $content );
 
-        // Replace any lingering CMS-domain URLs with the frontend URL so no
-        // cms.* link can accidentally end up in subscriber inboxes.
+        // Rewrite CMS-domain page links → frontend URL.
+        // IMPORTANT: Use href-scoped regex, NOT a blanket str_replace.
+        // Optimole CDN URLs embed the original WordPress domain in their path:
+        //   https://cdn.optimole.com/.../https://cms.themoveee.com/wp-content/uploads/img.jpg
+        // A str_replace( $cms_url, $frontend_url ) would corrupt that embedded
+        // domain, making Optimole try to fetch from the Next.js server → 403.
         $cms_url      = rtrim( home_url( '/' ), '/' );
         $frontend_url = rtrim( get_option( 'culture_frontend_url', '' ), '/' );
         if ( $frontend_url && $cms_url !== $frontend_url ) {
-            $content = str_replace( $cms_url, $frontend_url, $content );
+            $content = preg_replace(
+                '/(href=["\'])' . preg_quote( $cms_url, '/' ) . '/',
+                '$1' . $frontend_url,
+                $content
+            );
         }
 
         return $content;
+    }
+
+    /**
+     * Remove any image-optimisation / lazy-load callbacks from the_content.
+     *
+     * Scans all registered the_content callbacks and removes those whose
+     * class or function name contains a known image-plugin keyword. This is
+     * version-agnostic — it works regardless of how Optimole names its hooks
+     * internally.
+     *
+     * @return array Descriptors needed to re-add the callbacks.
+     */
+    private static function suspend_image_filters() {
+        global $wp_filter;
+
+        $suspended = array();
+
+        if ( empty( $wp_filter['the_content'] ) ) {
+            return $suspended;
+        }
+
+        // Keywords that identify image-optimisation / lazy-load plugins.
+        $keywords = array(
+            'optml',
+            'optimole',
+            'smush',
+            'lazyload',
+            'lazy_load',
+            'lazy-load',
+            'jetpack_lazy',
+            'rocket_lazy',
+            'bj_lazy',
+        );
+
+        foreach ( $wp_filter['the_content']->callbacks as $priority => $callbacks ) {
+            foreach ( $callbacks as $id => $callback ) {
+                $func = $callback['function'];
+
+                if ( is_string( $func ) ) {
+                    $cb_str = $func;
+                } elseif ( is_array( $func ) && isset( $func[1] ) ) {
+                    $obj    = $func[0];
+                    $cb_str = ( is_object( $obj ) ? get_class( $obj ) : (string) $obj ) . '::' . $func[1];
+                } else {
+                    $cb_str = $id; // Closure — use WP's internal unique key
+                }
+
+                $cb_lower = strtolower( $cb_str );
+
+                foreach ( $keywords as $kw ) {
+                    if ( strpos( $cb_lower, $kw ) !== false ) {
+                        remove_filter( 'the_content', $func, $priority );
+                        $suspended[] = array(
+                            'function'      => $func,
+                            'priority'      => $priority,
+                            'accepted_args' => $callback['accepted_args'],
+                        );
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $suspended;
+    }
+
+    /**
+     * Re-attach callbacks removed by suspend_image_filters().
+     *
+     * @param array $suspended Return value of suspend_image_filters().
+     */
+    private static function restore_image_filters( array $suspended ) {
+        foreach ( $suspended as $cb ) {
+            add_filter( 'the_content', $cb['function'], $cb['priority'], $cb['accepted_args'] );
+        }
     }
 
     /**
@@ -259,7 +338,6 @@ class Culture_Newsletter_Queue {
 
     /**
      * Handle ?culture_unsubscribe=1 on any page load.
-     * Removes the subscriber, logs the event, and shows a confirmation screen.
      */
     public static function handle_unsubscribe() {
         if ( empty( $_GET['culture_unsubscribe'] ) ) {
@@ -285,7 +363,6 @@ class Culture_Newsletter_Queue {
         } ) );
         update_option( 'culture_newsletter_subscribers', $updated );
 
-        // Record the unsubscribe event for analytics.
         Culture_NL_Analytics::log_unsub( $email, $campaign_id );
 
         $site_name = get_bloginfo( 'name' );
@@ -308,24 +385,14 @@ class Culture_Newsletter_Queue {
     /**
      * Build the full HTML email body.
      *
-     * When $campaign_id and $tracking_token are provided (i.e. a real send, not
-     * a test), this method:
-     *   1. Rewrites all http/https links in $content to pass through the
-     *      click-tracking endpoint, preserving the original destination as a
-     *      query parameter.
-     *   2. Appends a 1×1 transparent GIF tracking pixel so we can record opens.
-     *
-     * Test sends ($is_test = true) skip both steps so no phantom data appears
-     * in the analytics dashboard.
-     *
-     * @param string $title          Email / newsletter title.
-     * @param string $content        Rendered post HTML content.
-     * @param string $permalink      Public URL of the newsletter issue.
-     * @param string $unsub_url      Unsubscribe URL for this subscriber.
-     * @param bool   $is_test        Skip tracking when true.
-     * @param int    $campaign_id    Newsletter post ID (required for tracking).
-     * @param string $tracking_token Per-subscriber token (required for tracking).
-     * @return string Complete HTML email body.
+     * @param string $title
+     * @param string $content
+     * @param string $permalink
+     * @param string $unsub_url
+     * @param bool   $is_test
+     * @param int    $campaign_id
+     * @param string $tracking_token
+     * @return string
      */
     private static function build_email(
         $title,
@@ -346,7 +413,6 @@ class Culture_Newsletter_Queue {
                 '/href=(["\'])(https?:\/\/[^"\'>\s]+)\1/i',
                 function ( $m ) use ( $campaign_id, $tracking_token, $track_base ) {
                     $url = $m[2];
-                    // Never rewrite the unsubscribe link or existing tracking URLs.
                     if ( strpos( $url, 'culture_unsubscribe' ) !== false
                         || strpos( $url, 'track/click' ) !== false ) {
                         return $m[0];
@@ -388,7 +454,7 @@ class Culture_Newsletter_Queue {
   .header { padding:36px 48px 28px; border-bottom:2px solid #14110d; }
   .header-label { font-family:-apple-system,BlinkMacSystemFont,'Courier New',monospace; font-size:10px; letter-spacing:.25em; text-transform:uppercase; color:#7a6f5c; margin:0 0 8px; }
   .header-title { font-size:26px; font-weight:400; line-height:1.25; margin:0; color:#14110d; }
-  .content { padding:40px 48px 32px; font-size:16px; line-height:1.75; }
+  .content { padding:24px 32px 24px; font-size:16px; line-height:1.75; }
   .content p { margin:0 0 20px; }
   .content h1,.content h2,.content h3 { font-weight:400; line-height:1.3; margin:32px 0 14px; }
   .content h2 { font-size:22px; }

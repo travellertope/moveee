@@ -241,22 +241,45 @@ html {
    ========================================================================== */
 
 .events-hero {
-  position: relative; width: 100%; height: auto; background: var(--paper);
-  overflow: hidden; display: flex; align-items: center; justify-content: center;
-  padding: 0;
+  border-bottom: 2px solid var(--rule);
+  position: relative;
+  z-index: 100000;
+  background: var(--paper);
 }
-
-.events-hero svg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.03; }
 
 .hero-inner {
-  position: relative; z-index: 10; max-width: 1440px; width: 100%;
-  padding: 32px 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: flex-start;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 32px 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 48px;
 }
-.hero-inner > div:last-child { padding-top: 8px; }
 
-.hero-inner h1 { font-size: clamp(42px, 5vw, 72px); color: var(--ink); font-weight: 400; line-height: 1; white-space: nowrap; }
-.hero-inner h1 em { font-style: normal; font-weight: 400; color: var(--ochre); margin-left: 0.3em; }
-.hero-standfirst { font-family: var(--font-serif); font-size: 20px; font-weight: 300; font-style: italic; color: var(--ink-soft); line-height: 1.45; max-width: 100%; }
+.hero-inner h1 {
+  font-size: clamp(40px, 4vw, 64px);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -.04em;
+  margin: 0;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.hero-inner h1 em { font-style: italic; color: var(--ochre); margin-left: 0; }
+
+.hero-standfirst {
+  font-family: 'Fraunces', serif;
+  font-size: 15px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--mute);
+  max-width: 440px;
+  line-height: 1.4;
+  margin: 0;
+  padding-left: 40px;
+  border-left: 1px solid rgba(42,36,28,0.15);
+}
 .hero-stats { display: none; }
 
 /* SpotlightCard */
@@ -342,10 +365,14 @@ html {
 
   /* Events listing */
   .hero-inner { flex-direction: column; align-items: flex-start; gap: 40px; }
+  .gallery-run-inner { grid-template-columns: 1fr; }
+  .hero-inner { flex-direction: column; align-items: flex-start; gap: 20px; padding: 32px 24px; }
+  .hero-inner h1 { white-space: normal; }
+  .hero-standfirst { border-left: none; padding-left: 0; }
   .spotlight-card { grid-template-columns: 1fr; }
   .events-grid { grid-template-columns: 1fr 1fr; }
   .connect-inner { grid-template-columns: 1fr; }
-  .hero-inner, .spotlight, .filter-inner, .events-section, .connect-band { padding: 40px; }
+  .spotlight, .filter-inner, .events-section, .connect-band { padding: 40px; }
 }
 
 @media (max-width: 700px) {

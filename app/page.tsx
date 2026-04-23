@@ -19,11 +19,11 @@ export default async function Home() {
 
   try {
     // 1. Fetch specifically for the Cover Story tag
-    const coverData = await getWPData(GET_STORIES, { first: 1, tag: "cover-story" });
+    const coverData = await getWPData(GET_STORIES, { first: 1, tag: "cover-story" }, { revalidate: 0 });
     coverStory = coverData?.posts?.nodes?.[0] || null;
 
     // 2. Fetch latest stories (we fetch 7 to be safe in case we filter out the cover story)
-    const data = await getWPData(GET_STORIES, { first: 7 });
+    const data = await getWPData(GET_STORIES, { first: 7 }, { revalidate: 0 });
     const allStories = data?.posts?.nodes || [];
     
     // If no specific cover story was found by tag, use the latest one as fallback
@@ -48,7 +48,7 @@ export default async function Home() {
     const originsData = await getWPData(GET_JOURNEYS, { first: 4 }, { revalidate: 0 });
     origins = originsData?.cultureJourneys?.nodes || [];
   } catch (err) {
-    console.error(err);
+    console.error('❌ Error fetching journeys:', err);
   }
 
   try {
@@ -289,7 +289,7 @@ export default async function Home() {
                   <div className="origin-row">
                     <div className="origin-idx">0{idx + 1}</div>
                     <div className="origin-name">{origin.title}</div>
-                    <div className="origin-country">{origin.categories?.nodes[0]?.name || "Destination"}</div>
+                    <div className="origin-country">{origin.journeyLocation || "Destination"}</div>
                     <div className="origin-price">
                       ↗
                       <small>View Itinerary</small>

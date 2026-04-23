@@ -60,13 +60,19 @@ const FRONTEND_URL =
   process.env.NEXT_PUBLIC_FRONTEND_URL ?? "https://themoveee.com";
 
 function sanitiseContent(html: string): string {
+  const escapedWpUrl = WP_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return html
     .replace(/<!--more[^>]*-->/gi, "")
     .replace(/<!--\s*\/?wp:more[^>]*-->/gi, "")
     .replace(/<a[^>]+#more-\d+[^>]*>.*?<\/a>/gi, "")
+    // ⚠️  Only rewrite CMS links inside href attributes.
+    // A blanket replace would corrupt Optimole CDN URLs which store the original
+    // WordPress domain inside their CDN path, e.g.:
+    //   https://cdn.optimole.com/.../https://cms.themoveee.com/wp-content/uploads/img.jpg
+    // Replacing that embedded domain breaks the CDN URL → 403 Forbidden.
     .replace(
-      new RegExp(WP_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
-      FRONTEND_URL
+      new RegExp(`(href=["'])${escapedWpUrl}`, "g"),
+      `$1${FRONTEND_URL}`
     )
     .replace(
       /https?:\/\/[^"']+\/culture-newsletter\//g,
