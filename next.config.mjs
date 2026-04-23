@@ -18,9 +18,15 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'secure.gravatar.com',
       },
+      // Optimole CDN – uses dynamic per-site subdomains (e.g. mltvzlykp9yb.i.optimole.com)
+      // Wildcard covers all current and future Optimole-assigned hostnames.
       {
         protocol: 'https',
-        hostname: 'mltvzlykp9yb.i.optimole.com',
+        hostname: '**.i.optimole.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.optimole.com',
       },
       {
         protocol: 'https',
