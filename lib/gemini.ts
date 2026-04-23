@@ -29,13 +29,14 @@ function createVertexClient(): GoogleGenAI | null {
   } as any);
 }
 
-// Use the most current stable models. responseMimeType is NOT used —
-// the system prompts enforce JSON via instruction instead, which works
-// across all API key tiers without silent empty-response failures.
+// Only models confirmed reachable on this key's v1beta endpoint.
+// gemini-2.5-flash-preview-04-17, gemini-1.5-flash-002, gemini-1.5-pro-002
+// all return 404 on this API key — do not add them back.
+// NOTE: all calls will fail with 429 until billing is enabled on the
+// Google Cloud project at console.cloud.google.com → Billing.
 const TEXT_MODELS = [
-  "gemini-2.5-flash-preview-04-17", // Latest (April 2026)
-  "gemini-2.0-flash",                // Stable fallback
-  "gemini-2.0-flash-lite",           // Lighter fallback
+  "gemini-2.0-flash",      // Primary — confirmed reachable
+  "gemini-2.0-flash-lite", // Lighter fallback — confirmed reachable
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
