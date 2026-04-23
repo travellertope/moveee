@@ -63,7 +63,7 @@ class Culture_Redirects {
         check_admin_referer( self::NONCE );
         if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Forbidden' );
 
-        $from      = trailingslashit( '/' ) . ltrim( sanitize_text_field( wp_unslash( $_POST['from'] ?? '' ) ), '/' );
+        $from      = '/' . ltrim( untrailingslashit( sanitize_text_field( wp_unslash( $_POST['from'] ?? '' ) ) ), '/' );
         $to        = sanitize_text_field( wp_unslash( $_POST['to']   ?? '' ) );
         $permanent = ! empty( $_POST['permanent'] );
         $note      = sanitize_text_field( wp_unslash( $_POST['note'] ?? '' ) );

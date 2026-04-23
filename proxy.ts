@@ -7,7 +7,30 @@ import type { NextRequest } from 'next/server'
  * Handles legacy WordPress permalinks (/%postname%/) and taxonomy
  * archives so old links from Google, social media, and backlinks
  * redirect to the correct Next.js routes with 301 permanent redirects.
+ *
+ * Also applies runtime redirects managed via WP Admin → Culture Community → Redirects.
+ * Those take priority over the catch-all slug→magazine redirect below.
  */
+
+// ── WP Admin redirect cache ───────────────────────────────────
+const WP_REDIRECTS_URL = 'https://cms.themoveee.com/wp-json/culture/v1/redirects'
+
+let _wpRedirects: Array<{ from: string; to: string; permanent: boolean }> = []
+let _wpCacheUntil = 0
+
+async function getWPRedirects() {
+  if (Date.now() < _wpCacheUntil) return _wpRedirects
+  try {
+    const res = await fetch(WP_REDIRECTS_URL)
+    if (res.ok) {
+      _wpRedirects = await res.json()
+      _wpCacheUntil = Date.now() + 120_000
+    }
+  } catch {
+    // keep stale cache on network errors
+  }
+  return _wpRedirects
+}
 
 // Routes that exist (or will exist) in the Next.js app.
 // Add to this set as you create new pages.
@@ -60,8 +83,19 @@ const ROUTE_ALIASES: Record<string, string> = {
   'lifestyle': '/shop',
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // ── WP Admin redirect manager (checked first, highest priority) ──
+  const wpRedirects = await getWPRedirects()
+  const wpMatch = wpRedirects.find((r) => r.from === pathname)
+  if (wpMatch) {
+    const status = wpMatch.permanent ? 308 : 307
+    if (wpMatch.to.startsWith('http')) {
+      return NextResponse.redirect(wpMatch.to, { status })
+    }
+    return NextResponse.redirect(new URL(wpMatch.to, request.url), { status })
+  }
 
   // ── WordPress taxonomy archives ──────────────────────────────
   // /category/slug → /magazine?category=slug
