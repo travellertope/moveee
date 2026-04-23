@@ -2,107 +2,151 @@
 
 import React, { useState } from 'react';
 
+interface TicketType {
+  name: string;
+  info: string;
+  price: string | null; // null = free
+}
+
 interface RSVPFormProps {
   eventSlug: string;
   eventTitle: string;
+  capacity?: number;
+  spotsRemaining?: number;
+  ticketTypes?: TicketType[];
 }
 
-const RSVPForm: React.FC<RSVPFormProps> = ({ eventSlug, eventTitle }) => {
+const DEFAULT_TICKETS: TicketType[] = [
+  { name: 'Members — Private View', info: '18:00 entry · includes supper eligibility', price: null },
+  { name: 'General Admission', info: '19:30 entry · open to all', price: null },
+];
+
+const RSVPForm: React.FC<RSVPFormProps> = ({
+  eventSlug,
+  eventTitle,
+  capacity,
+  spotsRemaining,
+  ticketTypes = DEFAULT_TICKETS,
+}) => {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    tickets: '1'
-  });
+  const [formData, setFormData] = useState({ name: '', email: '', ticket: 'general', source: '' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
-
     try {
-      const response = await fetch('/api/events/rsvp', {
+      const res = await fetch('/api/events/rsvp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ...formData, 
-          eventSlug,
-          eventTitle 
-        }),
+        body: JSON.stringify({ ...formData, eventSlug, eventTitle }),
       });
-
-      if (response.ok) {
-        setStatus('success');
-      } else {
-        setStatus('error');
-      }
-    } catch (error) {
-      console.error('RSVP Error:', error);
+      setStatus(res.ok ? 'success' : 'error');
+    } catch {
       setStatus('error');
     }
   };
 
   if (status === 'success') {
     return (
-      <div className="bg-moss/20 p-6 border border-moss/30 text-center">
-        <h4 className="font-serif italic text-paper text-lg mb-2">You&rsquo;re on the list!</h4>
-        <p className="text-paper/70 text-sm font-mono uppercase tracking-wider">
-          Check your email for confirmation.
+      <div style={{ background: 'rgba(61,74,42,0.25)', border: '1px solid rgba(61,74,42,0.4)', padding: '28px', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '20px', color: 'var(--paper)', marginBottom: '8px' }}>
+          You&rsquo;re on the list.
+        </p>
+        <p className="rsvp-small" style={{ marginTop: 0 }}>
+          Confirmation sent by email · See you there.
         </p>
       </div>
     );
   }
 
+  const usedPercent = (capacity && spotsRemaining != null)
+    ? Math.round(((capacity - spotsRemaining) / capacity) * 100)
+    : null;
+
   return (
-    <form className="rsvp-form" onSubmit={handleSubmit}>
-      <input 
-        type="text" 
-        placeholder="Full Name" 
-        required 
-        value={formData.name}
-        onChange={(e) => setFormData({...formData, name: e.target.value})}
-        disabled={status === 'loading'}
-      />
-      <input 
-        type="email" 
-        placeholder="Email Address" 
-        required 
-        value={formData.email}
-        onChange={(e) => setFormData({...formData, email: e.target.value})}
-        disabled={status === 'loading'}
-      />
-      <select 
-        value={formData.tickets}
-        onChange={(e) => setFormData({...formData, tickets: e.target.value})}
-        className="w-full bg-paper/5 border border-paper/10 text-paper px-4 py-3 font-mono text-xs uppercase mb-3 outline-none focus:border-ochre appearance-none cursor-pointer"
-        disabled={status === 'loading'}
-      >
-        <option value="general" className="bg-ink">General Admission — 19:30</option>
-        <option value="private" className="bg-ink">Members Private View — 18:00</option>
-        <option value="supper" className="bg-ink">Origins Supper Table (Members Only)</option>
-      </select>
-      
-      <div className="members-note mb-4">
-        ★ Connect members: selection above unlocks 18h00 private view access.
-      </div>
-
-      <button 
-        type="submit" 
-        className="rsvp-submit"
-        disabled={status === 'loading'}
-      >
-        {status === 'loading' ? 'Processing...' : 'RSVP Now →'}
-      </button>
-
-      {status === 'error' && (
-        <p className="text-ochre text-[10px] font-mono mt-2 text-center uppercase">
-          Something went wrong. Please try again.
-        </p>
+    <>
+      {/* Capacity bar */}
+      {capacity != null && spotsRemaining != null && (
+        <div className="capacity-bar">
+          <div className="cap-label">
+            <span>Capacity</span>
+            <span className="spots">{spotsRemaining} spot{spotsRemaining !== 1 ? 's' : ''} remaining</span>
+          </div>
+          <div className="bar-track">
+            <div className="bar-fill" style={{ width: `${usedPercent}%` }} />
+          </div>
+        </div>
       )}
 
-      <p className="rsvp-small">
-        By clicking RSVP, you agree to our Terms of Culture.
-      </p>
-    </form>
+      {/* Ticket type rows */}
+      {ticketTypes.map((t, i) => (
+        <div className="ticket-type" key={i}>
+          <div>
+            <div className="ticket-name">{t.name}</div>
+            <div className="ticket-info">{t.info}</div>
+          </div>
+          <div className={`ticket-price${t.price === null ? ' free' : ''}`}>
+            {t.price ?? 'Free'}
+          </div>
+        </div>
+      ))}
+
+      {/* Form */}
+      <form className="rsvp-form" onSubmit={handleSubmit}>
+        <div className="members-note">
+          ★ Connect members: select Private View above to unlock 18:00 early entry.
+        </div>
+
+        <input
+          type="text"
+          placeholder="Full name"
+          required
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          disabled={status === 'loading'}
+        />
+        <input
+          type="email"
+          placeholder="Email address"
+          required
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          disabled={status === 'loading'}
+        />
+        <select
+          value={formData.ticket}
+          onChange={(e) => setFormData({ ...formData, ticket: e.target.value })}
+          disabled={status === 'loading'}
+        >
+          <option value="" disabled>Select ticket type</option>
+          <option value="private">Moveee Connect Member — Private View (18:00)</option>
+          <option value="general">General Admission — Public Opening (19:30)</option>
+          <option value="supper">Origins Guest — Supper Table (pre-registered)</option>
+        </select>
+        <input
+          type="text"
+          placeholder="How did you hear about this? (optional)"
+          value={formData.source}
+          onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+          disabled={status === 'loading'}
+        />
+
+        <button type="submit" className="rsvp-submit" disabled={status === 'loading'}>
+          {status === 'loading' ? 'Processing…' : 'Confirm RSVP →'}
+        </button>
+
+        {status === 'error' && (
+          <p className="rsvp-small" style={{ color: 'var(--ochre)', marginTop: '10px' }}>
+            Something went wrong — please try again.
+          </p>
+        )}
+
+        <p className="rsvp-small">
+          Free admission · Confirmation sent by email<br />
+          Doors open from 19:30 · Check your email for venue details
+        </p>
+      </form>
+    </>
   );
 };
 

@@ -123,6 +123,11 @@ function mapRestEventToFrontendShape(item: any) {
     featuredHost: normalizeHost(acf.featured_host),
     associatedJourney: normalizeJourney(acf.associated_journey),
     pressDetails: acf.press_details || meta.press_details || null,
+    onViewImage: (() => {
+      const raw = acf.on_view_image || meta.on_view_image;
+      const item = toMediaItem(raw);
+      return item ? { node: item } : null;
+    })(),
   };
 }
 
@@ -398,6 +403,12 @@ const EVENT_FIELDS_FRAGMENT = `
       title
       content
       link
+    }
+    onViewImage {
+      node {
+        sourceUrl
+        altText
+      }
     }
   }
 `;
