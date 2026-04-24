@@ -349,7 +349,6 @@ class Culture_ACF_Fields {
                         ),
                     ),
                 ),
-            ),
             // ── Display & RSVP fields ────────────────────────────────────
             array(
                 'key'           => 'field_event_subtype',
@@ -475,6 +474,7 @@ class Culture_ACF_Fields {
                         'wrapper'     => array( 'width' => '15' ),
                     ),
                 ),
+            ),
             ),
             'location' => array(
                 array(

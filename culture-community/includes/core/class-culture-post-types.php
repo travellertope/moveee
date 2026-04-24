@@ -153,6 +153,29 @@ class Culture_Post_Types {
         ) );
 
         // 4. Object Types (Register first)
+
+        register_graphql_object_type( 'CultureEventImageNode', array(
+            'fields' => array(
+                'sourceUrl' => array( 'type' => 'String' ),
+                'altText'   => array( 'type' => 'String' ),
+            ),
+        ) );
+
+        register_graphql_object_type( 'CultureEventImageWrapper', array(
+            'fields' => array(
+                'node' => array( 'type' => 'CultureEventImageNode' ),
+            ),
+        ) );
+
+        register_graphql_object_type( 'CultureEventTicketType', array(
+            'fields' => array(
+                'ticketName'  => array( 'type' => 'String' ),
+                'ticketSlug'  => array( 'type' => 'String' ),
+                'ticketInfo'  => array( 'type' => 'String' ),
+                'ticketPrice' => array( 'type' => 'String' ),
+            ),
+        ) );
+
         register_graphql_object_type( 'CultureEventMetric', array(
             'fields' => array(
                 'label' => array( 'type' => 'String' ),
@@ -217,6 +240,61 @@ class Culture_Post_Types {
             'type'    => 'CultureEventPressDetails',
             'resolve' => function( $post ) { 
                 return function_exists('get_field') ? get_field( 'press_details', $post->databaseId ) : null; 
+            },
+        ) );
+
+        // New display / RSVP fields
+        $new_event_acf_fields = array(
+            'eventSubtype'   => array( 'type' => 'String', 'acf_key' => 'event_subtype' ),
+            'aboutLabel'     => array( 'type' => 'String', 'acf_key' => 'about_label' ),
+            'venueAddress'   => array( 'type' => 'String', 'acf_key' => 'venue_address' ),
+            'galleryRunText' => array( 'type' => 'String', 'acf_key' => 'gallery_run_text' ),
+            'rsvpMembersNote' => array( 'type' => 'String', 'acf_key' => 'rsvp_members_note' ),
+            'rsvpCapacity'   => array( 'type' => 'Int',    'acf_key' => 'rsvp_capacity' ),
+        );
+
+        foreach ( $new_event_acf_fields as $field_name => $config ) {
+            $acf_key    = $config['acf_key'];
+            $field_type = $config['type'];
+            register_graphql_field( 'CultureEvent', $field_name, array(
+                'type'    => $field_type,
+                'resolve' => function( $post ) use ( $acf_key, $field_type ) {
+                    $value = function_exists('get_field') ? get_field( $acf_key, $post->databaseId ) : null;
+                    if ( $field_type === 'Int' ) return (int) $value;
+                    return (string) $value;
+                },
+            ) );
+        }
+
+        register_graphql_field( 'CultureEvent', 'rsvpTicketTypes', array(
+            'type'    => array( 'list_of' => 'CultureEventTicketType' ),
+            'resolve' => function( $post ) {
+                if ( ! function_exists('get_field') ) return null;
+                $rows = get_field( 'rsvp_ticket_types', $post->databaseId );
+                if ( ! is_array( $rows ) ) return null;
+                return array_map( function( $row ) {
+                    return array(
+                        'ticketName'  => $row['ticket_name']  ?? '',
+                        'ticketSlug'  => $row['ticket_slug']  ?? '',
+                        'ticketInfo'  => $row['ticket_info']  ?? '',
+                        'ticketPrice' => $row['ticket_price'] ?? null,
+                    );
+                }, $rows );
+            },
+        ) );
+
+        register_graphql_field( 'CultureEvent', 'onViewImage', array(
+            'type'    => 'CultureEventImageWrapper',
+            'resolve' => function( $post ) {
+                if ( ! function_exists('get_field') ) return null;
+                $img = get_field( 'on_view_image', $post->databaseId );
+                if ( empty( $img ) ) return null;
+                return array(
+                    'node' => array(
+                        'sourceUrl' => $img['url'] ?? '',
+                        'altText'   => $img['alt'] ?? '',
+                    ),
+                );
             },
         ) );
 
