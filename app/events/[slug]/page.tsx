@@ -77,10 +77,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const membersNote = event.rsvpMembersNote || "";
   const rsvpTicketTypes = event.rsvpTicketTypes && event.rsvpTicketTypes.length > 0
     ? event.rsvpTicketTypes.map((t: any) => ({
-        ticketName: t.ticketName,
-        ticketSlug: t.ticketSlug,
-        ticketInfo: t.ticketInfo,
-        ticketPrice: t.ticketPrice || null,
+        ticketName:     t.ticketName,
+        ticketSlug:     t.ticketSlug,
+        ticketInfo:     t.ticketInfo,
+        ticketPrice:    t.ticketPrice    || null,
+        ticketAmount:   t.ticketAmount   ?? 0,
+        ticketCurrency: t.ticketCurrency ?? 'NGN',
       }))
     : undefined;
 
