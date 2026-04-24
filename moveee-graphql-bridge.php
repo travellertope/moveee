@@ -3,7 +3,7 @@
  * Plugin Name: Moveee GraphQL Bridge
  * Description: Bridges JetEngine taxonomies, WCFM vendor profiles, and product
  *              editorial metadata to WPGraphQL for the Moveee headless frontend.
- * Version: 1.4.3
+ * Version: 1.4.4
  * Author: Antigravity
  */
 
@@ -65,16 +65,53 @@ add_action( 'graphql_register_types', function () {
         'description' => 'All active WCFM vendor profiles',
         'args'        => [ 'first' => [ 'type' => 'Int' ] ],
         'resolve'     => function ( $root, $args ) {
-            $first    = min( absint( $args['first'] ?? 50 ), 200 );
+            global $wpdb;
+            $first = min( absint( $args['first'] ?? 50 ), 200 );
+
+            // 1. By role — covers most WCFM configurations.
             $user_ids = get_users( [
-                'role__in' => [ 'wcfm_vendor', 'seller', 'vendor' ],
+                'role__in' => [ 'wcfm_vendor', 'seller', 'vendor', 'wcfm_affiliate' ],
                 'fields'   => 'ID',
                 'number'   => $first,
             ] );
+
+            // 2. By WCFM user meta — covers setups where the vendor role
+            //    has a non-standard slug or was assigned differently.
+            if ( empty( $user_ids ) ) {
+                $user_ids = $wpdb->get_col( $wpdb->prepare(
+                    "SELECT DISTINCT user_id FROM {$wpdb->usermeta}
+                      WHERE meta_key = '_wcfm_vendor_data'
+                      LIMIT %d",
+                    $first
+                ) );
+            }
+
+            // 3. By product authorship — any user attributed as vendor on
+            //    a published product, regardless of role or meta.
+            if ( empty( $user_ids ) ) {
+                $user_ids = $wpdb->get_col( $wpdb->prepare(
+                    "SELECT DISTINCT pm.meta_value
+                       FROM {$wpdb->postmeta} pm
+                       JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+                      WHERE pm.meta_key   = '_wcfm_product_author'
+                        AND p.post_type   = 'product'
+                        AND p.post_status = 'publish'
+                      LIMIT %d",
+                    $first
+                ) );
+            }
+
             $vendors = [];
+            $seen    = [];
             foreach ( $user_ids as $uid ) {
-                $profile = moveee_vendor_profile_by_id( (int) $uid );
-                if ( $profile ) $vendors[] = $profile;
+                $uid = (int) $uid;
+                if ( $uid && ! isset( $seen[ $uid ] ) ) {
+                    $seen[ $uid ] = true;
+                    $profile = moveee_vendor_profile_by_id( $uid );
+                    if ( $profile && ! empty( $profile['storeName'] ) ) {
+                        $vendors[] = $profile;
+                    }
+                }
             }
             return $vendors;
         },
