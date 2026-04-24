@@ -93,10 +93,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify(body),
       });
       const nonce = res.headers.get("x-wc-store-api-nonce");
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const text = await res.text();
+        console.error(`[cart] ${action} failed ${res.status}:`, text);
+        return false;
+      }
       applyCart(await res.json(), nonce);
       return true;
-    } catch {
+    } catch (err) {
+      console.error(`[cart] ${action} error:`, err);
       return false;
     } finally {
       setIsLoading(false);
@@ -105,7 +110,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(async (productId: number, quantity = 1) => {
     const ok = await mutate("add", { id: productId, quantity });
-    if (ok) setIsOpen(true);
+    if (ok) {
+      setIsOpen(true);
+    } else {
+      window.location.href = `https://cms.themoveee.com/?add-to-cart=${productId}`;
+    }
   }, [mutate]);
 
   const removeItem = useCallback(async (key: string) => {

@@ -3,13 +3,22 @@
  * Plugin Name: Moveee GraphQL Bridge
  * Description: Bridges JetEngine taxonomies, WCFM vendor profiles, and product
  *              editorial metadata to WPGraphQL for the Moveee headless frontend.
- * Version: 1.4.0
+ * Version: 1.4.1
  * Author: Antigravity
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 0. WooCommerce Store API — disable nonce check for headless proxy requests.
+//    The Next.js frontend proxies all cart calls through /api/cart (same origin
+//    as the frontend), so CSRF is handled at the proxy layer. Removing the
+//    nonce requirement avoids the cross-domain session/cookie complexity that
+//    prevents the Store API from working in a headless setup.
+// ─────────────────────────────────────────────────────────────────────────────
+add_filter( 'woocommerce_store_api_disable_nonce_check', '__return_true' );
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Bridge JetEngine taxonomies to WPGraphQL
