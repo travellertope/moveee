@@ -15,23 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Culture_NL_Analytics_Admin {
 
     public static function init() {
-        add_action( 'admin_menu',            array( __CLASS__, 'register_menu' ) );
         add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
     }
 
-    public static function register_menu() {
-        add_submenu_page(
-            'culture-community',
-            __( 'Newsletter Analytics', 'culture-community' ),
-            __( 'Analytics', 'culture-community' ),
-            'manage_options',
-            'culture-nl-analytics',
-            array( __CLASS__, 'render_page' )
-        );
-    }
-
     public static function enqueue_assets( $hook ) {
-        if ( 'culture-community_page_culture-nl-analytics' !== $hook ) {
+        if ( 'culture-community_page_culture-analytics' !== $hook ) {
             return;
         }
 
@@ -62,7 +50,11 @@ class Culture_NL_Analytics_Admin {
 
     // ── ROUTER ────────────────────────────────────────────────────────────────
 
-    public static function render_page() {
+    /**
+     * Called from the merged Analytics page (tab=newsletter).
+     * Renders content without its own <div class="wrap"> wrapper.
+     */
+    public static function render_for_tab(): void {
         if ( isset( $_GET['campaign'] ) ) {
             self::render_campaign_detail( absint( $_GET['campaign'] ) );
             return;
@@ -77,15 +69,17 @@ class Culture_NL_Analytics_Admin {
         self::render_overview();
     }
 
+    /** Kept for standalone use; delegates to render_for_tab(). */
+    public static function render_page() {
+        ?><div class="wrap culture-nla-wrap"><?php self::render_for_tab(); ?></div><?php
+    }
+
     // ── OVERVIEW ──────────────────────────────────────────────────────────────
 
     private static function render_overview() {
         $data = Culture_NL_Analytics::get_overview();
         ?>
-        <div class="wrap culture-nla-wrap">
-            <h1 class="culture-nla-page-title">
-                <?php esc_html_e( 'Newsletter Analytics', 'culture-community' ); ?>
-            </h1>
+        <div class="culture-nla-wrap">
 
             <?php /* ── Summary Stat Cards ── */ ?>
             <div class="culture-nla-cards">
@@ -198,7 +192,7 @@ class Culture_NL_Analytics_Admin {
             ),
         );
         ?>
-        <div class="wrap culture-nla-wrap">
+        <div class="culture-nla-wrap">
             <p>
                 <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-nl-analytics' ) ); ?>" class="culture-nla-back">
                     ← <?php esc_html_e( 'All Campaigns', 'culture-community' ); ?>
@@ -388,7 +382,7 @@ class Culture_NL_Analytics_Admin {
         );
         $tier = $stats['engagement'];
         ?>
-        <div class="wrap culture-nla-wrap">
+        <div class="culture-nla-wrap">
             <p>
                 <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-nl-analytics' ) ); ?>" class="culture-nla-back">
                     ← <?php esc_html_e( 'All Campaigns', 'culture-community' ); ?>
