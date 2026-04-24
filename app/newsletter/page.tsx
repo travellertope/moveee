@@ -281,11 +281,11 @@ export default async function NewsletterArchive() {
             <div className="gml-signup-perks">
               <div className="gml-perk">
                 <span className="gml-perk-n">✓</span>
-                <p>The <em>deep dive</em> — one essay that makes you think</p>
+                <p>The <em>deep dive</em> — intro cultural commentary</p>
               </div>
               <div className="gml-perk">
                 <span className="gml-perk-n">✓</span>
-                <p>The <em>list</em> — five things worth your time this week</p>
+                <p>The <em>list</em> — recommended things worth your time</p>
               </div>
               <div className="gml-perk">
                 <span className="gml-perk-n">✓</span>
