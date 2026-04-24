@@ -985,8 +985,9 @@
 .sp-lb-thumb.active { border-color: var(--ochre); }
 .sp-lb-thumb:hover  { border-color: rgba(255,255,255,.5); }
 
-/* Product info column */
-.sp-product-info { padding-top: 8px; }
+/* Product info column — min-width:0 allows the grid cell to shrink below content size */
+.sp-product-info { padding-top: 8px; min-width: 0; overflow-x: hidden; }
+.sp-gallery-wrap { min-width: 0; }
 
 .sp-vendor-link {
   display: inline-flex;
@@ -1666,15 +1667,76 @@
   .product-grid { grid-template-columns: 1fr; }
   .cat-grid { grid-template-columns: repeat(2, 1fr); }
   .featured-grid { grid-template-columns: 1fr; }
-  .sp-product-name { font-size: 36px; }
-  .sp-price-row { flex-wrap: wrap; }
+
+  /* ── Product page mobile fixes ── */
+  /* Contain the entire product info column */
+  .sp-product-info {
+    overflow-x: hidden;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* Price row: reduce size + stack the member-save line */
+  .sp-product-name { font-size: 30px; }
+  .sp-price        { font-size: 26px; }
+  .sp-price-row {
+    flex-wrap: wrap;
+    gap: 6px 12px;
+  }
+  .sp-price-member {
+    width: 100%;
+    margin-left: 0;
+    text-align: left;
+    font-size: 11px;
+  }
+
+  /* CTA */
   .sp-cta-row { grid-template-columns: 1fr; }
   .sp-btn-save { width: 100%; padding: 16px; }
+
+  /* Sizes grid */
   .sp-sizes { grid-template-columns: 1fr 1fr; }
+
+  /* Accordion content — constrain anything WordPress sends */
+  .sp-acc-body-inner {
+    overflow-x: hidden;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  .sp-acc-body-inner img,
+  .sp-acc-body-inner video,
+  .sp-acc-body-inner iframe,
+  .sp-acc-body-inner table,
+  .sp-acc-body-inner figure {
+    max-width: 100% !important;
+    height: auto !important;
+    overflow-x: auto;
+  }
+  .sp-acc-body-inner table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  /* Allow tall accordion bodies on mobile */
+  .sp-acc.open .sp-acc-body { max-height: 2000px; }
+
+  /* Other sections */
   .sp-process-grid,
   .sp-more-from-grid { grid-template-columns: 1fr; }
-  .sp-vendor-stats { grid-template-columns: 1fr; gap: 18px; }
-  .sp-breadcrumb { flex-direction: column; align-items: flex-start; gap: 12px; }
-  .sp-seen-in-inner { padding: 32px 24px; }
-  .sp-seen-in-title { font-size: 28px; }
+  .sp-vendor-stats   { grid-template-columns: 1fr; gap: 18px; }
+  .sp-breadcrumb     { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .sp-seen-in-inner  { padding: 32px 24px; }
+  .sp-seen-in-title  { font-size: 28px; }
+}
+
+/* Very small phones (≤ 390px) — tighten padding further */
+@media (max-width: 390px) {
+  .sp-breadcrumb,
+  .sp-product-hero,
+  .sp-seen-in,
+  .sp-story,
+  .sp-process,
+  .sp-vendor-profile,
+  .sp-more-from { padding-left: 16px; padding-right: 16px; }
+  .sp-price     { font-size: 24px; }
 }
