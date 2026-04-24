@@ -1,0 +1,341 @@
+/* ── Shared layout ─────────────────────────────────────────────────────────── */
+.makers-page,
+.maker-single {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px 96px;
+}
+
+/* ══ MAKERS ARCHIVE ══════════════════════════════════════════════════════════ */
+
+.makers-header {
+  padding: 64px 0 48px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 48px;
+}
+.makers-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 12px;
+}
+.makers-title {
+  font-family: var(--font-serif);
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.makers-title em { font-style: italic; color: var(--ochre); }
+.makers-header-right { max-width: 340px; flex-shrink: 0; }
+.makers-desc {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--mute);
+  line-height: 1.75;
+}
+
+/* Grid */
+.makers-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+}
+
+/* Card */
+.maker-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--paper);
+  transition: background 0.2s;
+}
+.maker-card:hover { background: var(--paper-deep); }
+
+.maker-card-img {
+  aspect-ratio: 3 / 4;
+  background: var(--paper-deep);
+  position: relative;
+  overflow: hidden;
+}
+.maker-card-vetted {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(243,236,224,0.9);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 4px 8px;
+  color: var(--ink);
+}
+.maker-card-body { padding: 20px 18px 22px; }
+.maker-card-name {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.maker-card-loc {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--mute);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.maker-card-desc {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--mute);
+  line-height: 1.65;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.maker-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--mute);
+}
+.maker-card-cta { color: var(--ochre); letter-spacing: 0.04em; }
+
+.makers-empty {
+  text-align: center;
+  padding: 96px 24px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--mute);
+}
+
+/* ══ SINGLE MAKER ════════════════════════════════════════════════════════════ */
+
+/* Breadcrumb */
+.maker-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--mute);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 0;
+}
+.maker-breadcrumb a { color: var(--mute); text-decoration: none; }
+.maker-breadcrumb a:hover { color: var(--ink); }
+.maker-breadcrumb .sep { opacity: 0.35; }
+
+/* Hero — two-column: image left, info right */
+.maker-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 520px;
+  margin-bottom: 80px;
+}
+.maker-hero-visual {
+  position: relative;
+  background: var(--paper-deep);
+  overflow: hidden;
+}
+.maker-hero-info {
+  padding: 56px 52px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid var(--rule);
+  border-left: none;
+}
+.maker-vetted-badge {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mute);
+  border: 1px solid var(--rule);
+  padding: 5px 10px;
+  margin-bottom: 22px;
+  width: fit-content;
+}
+.maker-hero-name {
+  font-family: var(--font-serif);
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+.maker-hero-location {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 28px;
+}
+.maker-hero-bio {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--mute);
+  line-height: 1.75;
+  margin-bottom: 32px;
+}
+
+/* Stats row */
+.maker-stats {
+  display: flex;
+  gap: 28px;
+  padding: 24px 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 32px;
+}
+.maker-stat-num {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 5px;
+}
+.maker-stat-label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* CTA */
+.maker-hero-cta {
+  display: inline-block;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 13px 28px;
+  text-decoration: none;
+  transition: background 0.2s;
+  width: fit-content;
+}
+.maker-hero-cta:hover { background: var(--ochre); }
+
+/* Products section */
+.maker-products-section { margin-top: 8px; }
+.maker-products-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 2px;
+}
+.maker-products-title {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.maker-products-title em { font-style: italic; color: var(--ochre); }
+.maker-products-count {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--mute);
+}
+
+.maker-products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+}
+.maker-product-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--paper);
+  transition: background 0.2s;
+}
+.maker-product-card:hover { background: var(--paper-deep); }
+.maker-product-img {
+  aspect-ratio: 1 / 1;
+  background: var(--paper-deep);
+  position: relative;
+  overflow: hidden;
+}
+.maker-product-body { padding: 12px 14px 16px; }
+.maker-product-name {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.maker-product-price {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--ink);
+}
+
+/* Not found */
+.maker-not-found {
+  text-align: center;
+  padding: 120px 24px;
+  font-family: var(--font-sans);
+}
+.maker-not-found h1 {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.maker-not-found p { color: var(--mute); font-size: 14px; margin-bottom: 24px; }
+.maker-not-found a {
+  color: var(--ochre);
+  font-size: 13px;
+  text-decoration: underline;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────*/
+@media (max-width: 1024px) {
+  .makers-grid          { grid-template-columns: repeat(3, 1fr); }
+  .maker-products-grid  { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  .makers-page,
+  .maker-single         { padding: 0 20px 64px; }
+
+  .makers-header        { flex-direction: column; align-items: flex-start; padding: 40px 0 32px; }
+  .makers-header-right  { max-width: 100%; }
+  .makers-grid          { grid-template-columns: repeat(2, 1fr); }
+
+  .maker-hero           { grid-template-columns: 1fr; }
+  .maker-hero-visual    { aspect-ratio: 4 / 3; min-height: 0; }
+  .maker-hero-info      { border-left: 1px solid var(--rule); padding: 32px 24px; }
+  .maker-stats          { gap: 20px; }
+  .maker-products-grid  { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .makers-grid          { grid-template-columns: repeat(2, 1fr); }
+}

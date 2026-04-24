@@ -676,13 +676,13 @@ const PRODUCT_FIELDS_FRAGMENT = `
       stockStatus
       stockQuantity
       onSale
-      vendorProfile { storeName bio city avatarUrl }
+      vendorProfile { slug storeName bio city avatarUrl }
     }
     ... on VariableProduct {
       price
       stockStatus
       onSale
-      vendorProfile { storeName bio city avatarUrl }
+      vendorProfile { slug storeName bio city avatarUrl }
       variations(first: 12) {
         nodes {
           price
@@ -723,6 +723,7 @@ export const GET_PRODUCT_EXTRA = `
   query GetProductExtra($slug: ID!) {
     product(id: $slug, idType: SLUG) {
       vendorProfile {
+        slug
         storeName
         bio
         city
@@ -777,6 +778,22 @@ export const GET_PRODUCTS_BY_VENDOR = `
     }
   }
   ${PRODUCT_FIELDS_FRAGMENT}
+`;
+
+const VENDOR_PROFILE_FIELDS = `
+  slug storeName bio city country avatarUrl yearsActive rating productCount
+`;
+
+export const GET_ALL_MAKERS = `
+  query GetAllMakers($first: Int) {
+    moveeeVendors(first: $first) { ${VENDOR_PROFILE_FIELDS} }
+  }
+`;
+
+export const GET_MAKER_BY_SLUG = `
+  query GetMakerBySlug($slug: String!) {
+    moveeeVendorBySlug(slug: $slug) { ${VENDOR_PROFILE_FIELDS} }
+  }
 `;
 
 export const DIRECTORY_FIELDS = DIRECTORY_FIELDS_FRAGMENT;

@@ -17,6 +17,7 @@ function vendorName(p: any): string {
 }
 
 interface VendorCard {
+  slug: string;
   name: string;
   location: string;
   desc: string;
@@ -33,9 +34,10 @@ function extractVendors(products: any[]): VendorCard[] {
       map.get(name)!.count += 1;
     } else {
       map.set(name, {
+        slug:     p.vendorProfile?.slug    || "",
         name,
-        location: p.vendorProfile?.city    || "",
-        desc:     p.vendorProfile?.bio     || "",
+        location: p.vendorProfile?.city   || "",
+        desc:     p.vendorProfile?.bio    || "",
         count: 1,
         image: p.vendorProfile?.avatarUrl || p.image?.sourceUrl || null,
       });
@@ -45,10 +47,10 @@ function extractVendors(products: any[]): VendorCard[] {
 }
 
 const FALLBACK_VENDORS: VendorCard[] = [
-  { name: "Studio Fern", location: "Oaxaca, Mexico", desc: "Ceramic vessels shaped by hand from local terracotta clay.", count: 14, image: null },
-  { name: "Atelier Moor", location: "Marrakech, Morocco", desc: "Brass and copper objects forged using centuries-old techniques.", count: 9, image: null },
-  { name: "Rye Workshop", location: "Rye, East Sussex", desc: "Handwoven baskets and textiles from natural British materials.", count: 11, image: null },
-  { name: "Kiso Forestry", location: "Nagano, Japan", desc: "Joinery and woodwork from sustainably managed Kiso hinoki cypress.", count: 7, image: null },
+  { slug: "", name: "Studio Fern",   location: "Oaxaca, Mexico",     desc: "Ceramic vessels shaped by hand from local terracotta clay.",                       count: 14, image: null },
+  { slug: "", name: "Atelier Moor",  location: "Marrakech, Morocco",  desc: "Brass and copper objects forged using centuries-old techniques.",                  count: 9,  image: null },
+  { slug: "", name: "Rye Workshop",  location: "Rye, East Sussex",    desc: "Handwoven baskets and textiles from natural British materials.",                   count: 11, image: null },
+  { slug: "", name: "Kiso Forestry", location: "Nagano, Japan",       desc: "Joinery and woodwork from sustainably managed Kiso hinoki cypress.",               count: 7,  image: null },
 ];
 
 function isNew(p: any): boolean {
@@ -352,11 +354,16 @@ export default async function ShopArchiveWrapper({
           <section className="shop-vendor-cards">
             <div className="sec-hdr">
               <h3>Meet the <em>Makers</em></h3>
-              <Link href="/origins">All makers →</Link>
+              <Link href="/makers">All makers →</Link>
             </div>
             <div className="vendor-cards">
               {display.map((v) => (
-                <div key={v.name} className="vc">
+                <Link
+                  key={v.name}
+                  href={v.slug ? `/makers/${v.slug}` : "/makers"}
+                  className="vc"
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
                   <div className="vc-img">
                     {v.image && (
                       <Image src={v.image} alt={v.name} fill style={{ objectFit: "cover" }} />
@@ -367,7 +374,7 @@ export default async function ShopArchiveWrapper({
                   {v.location && <div className="vc-loc">{v.location}</div>}
                   {v.desc && <p className="vc-desc">{v.desc}</p>}
                   <div className="vc-count">{v.count} {v.count === 1 ? "product" : "products"}</div>
-                </div>
+                </Link>
               ))}
             </div>
           </section>
