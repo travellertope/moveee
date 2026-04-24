@@ -6,6 +6,8 @@ import ShopFilterBar from "./components/ShopFilterBar";
 import AddToCartButton from "@/components/AddToCartButton";
 import "./shop.css";
 
+const CMS = "https://cms.themoveee.com";
+
 interface ShopArchiveProps {
   category?: string;
   tag?: string;
@@ -98,6 +100,21 @@ export default async function ShopArchiveWrapper({
   if (catResult.status === "fulfilled")  categories = catResult.value?.productCategories?.nodes ?? [];
   if (makersResult.status === "fulfilled") {
     makers = (makersResult.value?.moveeeVendors ?? []).filter((m: any) => m.storeName).slice(0, 4);
+  }
+
+  // REST fallback for vendor strip when GraphQL returns nothing.
+  if (makers.length === 0) {
+    try {
+      const res = await fetch(`${CMS}/wp-json/moveee/v1/vendors?first=4`, {
+        cache: "no-store",
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json)) {
+          makers = json.filter((m: any) => m.storeName).slice(0, 4);
+        }
+      }
+    } catch { /* fall through to FALLBACK_VENDORS */ }
   }
 
   if (!categories.length) categories = FALLBACK_CATEGORIES;
