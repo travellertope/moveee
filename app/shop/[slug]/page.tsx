@@ -102,17 +102,11 @@ export default async function ProductPage({
       title: "Materials & Care",
       content: <p>{careInstructions}</p>,
     }] : []),
-    {
+    // Delivery & Returns — only shown when the field is filled in WordPress
+    ...(deliveryInfo ? [{
       title: "Delivery & Returns",
-      content: deliveryInfo ? (
-        <div dangerouslySetInnerHTML={{ __html: deliveryInfo }} />
-      ) : (
-        <>
-          <p>Free UK delivery on all orders. Delivered in 3–5 working days.</p>
-          <p>Free returns within 30 days of receipt. Items must be unused and in original condition.</p>
-        </>
-      ),
-    },
+      content: <div dangerouslySetInnerHTML={{ __html: deliveryInfo }} />,
+    }] : []),
     // About the Maker — only shown when vendor has a name or bio in WCFM
     ...(vname || vendorDesc ? [{
       title: "About the Maker",

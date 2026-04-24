@@ -1,11 +1,12 @@
-"use client"
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 
+interface VariationAttribute { name: string; value: string; }
 interface Variation {
   price?: string;
   stockStatus?: string;
-  attributes?: { nodes: { name: string; value: string }[] };
+  attributes?: { nodes: VariationAttribute[] };
 }
 
 interface ProductSelectorsProps {
@@ -14,19 +15,6 @@ interface ProductSelectorsProps {
   regularPrice?: string;
   variations?: Variation[];
 }
-
-const FALLBACK_COLORS = [
-  { label: "Indigo", hex: "#1e2b42" },
-  { label: "Ochre", hex: "#c5491f" },
-  { label: "Moss", hex: "#3d4a2a" },
-  { label: "Ink", hex: "#14110d" },
-];
-
-const FALLBACK_SIZES = [
-  { label: "S", dim: "46–48 cm" },
-  { label: "M", dim: "50–52 cm" },
-  { label: "L", dim: "54–56 cm" },
-];
 
 type CartStatus = "idle" | "adding" | "added" | "error";
 
@@ -37,34 +25,34 @@ export default function ProductSelectors({
   variations,
 }: ProductSelectorsProps) {
   const [selectedColor, setSelectedColor] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(0);
-  const [saved, setSaved] = useState(false);
-  const [cartStatus, setCartStatus] = useState<CartStatus>("idle");
-  const [nonce, setNonce] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize]   = useState(0);
+  const [saved, setSaved]                 = useState(false);
+  const [cartStatus, setCartStatus]       = useState<CartStatus>("idle");
+  const [nonce, setNonce]                 = useState<string | null>(null);
 
-  // Fetch WooCommerce nonce on mount by hitting /api/cart (GET)
+  // Fetch WooCommerce nonce on mount.
+  // WC Store API returns it as the X-WC-Store-API-Nonce response header;
+  // some versions also include it in the JSON body as a fallback.
   useEffect(() => {
     fetch("/api/cart")
-      .then((r) => r.json())
-      .then((data) => {
-        // WC Store API returns nonce in the cart response
-        if (data?.extensions?.["woocommerce-blocks"]?.nonce) {
-          setNonce(data.extensions["woocommerce-blocks"].nonce);
+      .then((r) => {
+        const headerNonce = r.headers.get("x-wc-store-api-nonce");
+        if (headerNonce) setNonce(headerNonce);
+        return r.json().then((data) => ({ data, headerNonce }));
+      })
+      .then(({ data, headerNonce }) => {
+        if (!headerNonce) {
+          const bodyNonce = data?.extensions?.["woocommerce-blocks"]?.nonce;
+          if (bodyNonce) setNonce(bodyNonce);
         }
       })
-      .catch(() => {/* nonce unavailable — will fall back to direct link */});
+      .catch(() => { /* nonce unavailable — will fall back to direct link */ });
   }, []);
 
+  // Only extract attributes that are actually set in WooCommerce.
+  // When there are no variations, the selectors are hidden entirely.
   const colorAttrs = extractAttr(variations, "color");
-  const sizeAttrs = extractAttr(variations, "size");
-
-  const colors = colorAttrs.length
-    ? colorAttrs.map((v) => ({ label: v, hex: null }))
-    : FALLBACK_COLORS;
-
-  const sizes = sizeAttrs.length
-    ? sizeAttrs.map((v) => ({ label: v, dim: "" }))
-    : FALLBACK_SIZES;
+  const sizeAttrs  = extractAttr(variations, "size");
 
   const addToCart = useCallback(async () => {
     setCartStatus("adding");
@@ -80,19 +68,20 @@ export default function ProductSelectors({
 
       if (res.ok) {
         setCartStatus("added");
-        setTimeout(() => setCartStatus("idle"), 2500);
+        setTimeout(() => setCartStatus("idle"), 3000);
       } else {
         throw new Error("add failed");
       }
     } catch {
-      // Fall back to direct WooCommerce link when proxy unavailable
+      // Direct WooCommerce fallback keeps the user's cart intact even if the
+      // proxy fails (cross-domain session limitation).
       window.location.href = `https://cms.themoveee.com/?add-to-cart=${productId}`;
     }
   }, [productId, nonce]);
 
   const btnLabel =
-    cartStatus === "adding" ? "Adding…" :
-    cartStatus === "added"  ? "Added ✓" :
+    cartStatus === "adding" ? "Adding…"  :
+    cartStatus === "added"  ? "Added ✓"  :
     cartStatus === "error"  ? "Try again" :
     "Add to Cart";
 
@@ -114,48 +103,47 @@ export default function ProductSelectors({
         </div>
       </div>
 
-      {/* Colour selector */}
-      <div className="sp-selector-group">
-        <div className="sp-selector-label">
-          <span className="label">Colour</span>
-          <span className="value">{colors[selectedColor]?.label}</span>
+      {/* Colour selector — only rendered when WooCommerce has colour variations */}
+      {colorAttrs.length > 0 && (
+        <div className="sp-selector-group">
+          <div className="sp-selector-label">
+            <span className="label">Colour</span>
+            <span className="value">{colorAttrs[selectedColor]}</span>
+          </div>
+          <div className="sp-swatches">
+            {colorAttrs.map((c, i) => (
+              <button
+                key={i}
+                className={`sp-swatch${i === selectedColor ? " active" : ""}`}
+                onClick={() => setSelectedColor(i)}
+                aria-label={c}
+                style={{ border: "1px solid var(--rule)", cursor: "pointer" }}
+              />
+            ))}
+          </div>
         </div>
-        <div className="sp-swatches">
-          {colors.map((c, i) => (
-            <button
-              key={i}
-              className={`sp-swatch${i === selectedColor ? " active" : ""}`}
-              onClick={() => setSelectedColor(i)}
-              aria-label={c.label}
-              style={{
-                backgroundColor: c.hex ?? undefined,
-                border: "1px solid var(--rule)",
-                cursor: "pointer",
-              }}
-            />
-          ))}
-        </div>
-      </div>
+      )}
 
-      {/* Size selector */}
-      <div className="sp-selector-group">
-        <div className="sp-selector-label">
-          <span className="label">Size</span>
-          <span className="value">{sizes[selectedSize]?.label}</span>
+      {/* Size selector — only rendered when WooCommerce has size variations */}
+      {sizeAttrs.length > 0 && (
+        <div className="sp-selector-group">
+          <div className="sp-selector-label">
+            <span className="label">Size</span>
+            <span className="value">{sizeAttrs[selectedSize]}</span>
+          </div>
+          <div className="sp-sizes">
+            {sizeAttrs.map((s, i) => (
+              <button
+                key={i}
+                className={`sp-size-btn${i === selectedSize ? " active" : ""}`}
+                onClick={() => setSelectedSize(i)}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="sp-sizes">
-          {sizes.map((s, i) => (
-            <button
-              key={i}
-              className={`sp-size-btn${i === selectedSize ? " active" : ""}`}
-              onClick={() => setSelectedSize(i)}
-            >
-              {s.label}
-              {s.dim && <span className="dim">{s.dim}</span>}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* CTA */}
       <div className="sp-cta-row">
@@ -170,12 +158,24 @@ export default function ProductSelectors({
         </button>
         <button
           className="sp-btn-save"
-          onClick={() => setSaved((s: boolean) => !s)}
+          onClick={() => setSaved((s) => !s)}
           aria-label={saved ? "Remove from saved" : "Save item"}
         >
           {saved ? "♥" : "♡"}
         </button>
       </div>
+
+      {/* After add-to-cart success: show checkout link */}
+      {cartStatus === "added" && (
+        <div className="sp-checkout-prompt">
+          <a
+            href="https://cms.themoveee.com/checkout"
+            className="sp-checkout-link"
+          >
+            Proceed to Checkout →
+          </a>
+        </div>
+      )}
 
       <div className="sp-delivery-note">
         <div>
