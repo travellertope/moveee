@@ -1140,7 +1140,7 @@
   margin-bottom: 20px;
   color: var(--paper);
 }
-.gml-signup-left h3 em { font-style: italic; font-weight: 300; color: var(--gold); }
+.gml-signup-left h3 em { font-style: italic; font-weight: 300; color: var(--ochre); }
 .gml-signup-left p {
   font-size: 17px;
   color: rgba(243,236,224,.65);
