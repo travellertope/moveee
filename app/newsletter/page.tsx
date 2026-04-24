@@ -142,7 +142,6 @@ export default async function NewsletterArchive() {
       {/* ══ WHAT'S INSIDE ══ */}
       <section className="gml-whats-inside">
         <div className="gml-section-header">
-          <div className="gml-section-num">N°01</div>
           <div className="gml-section-title">
             <h3>What&apos;s <em>inside</em></h3>
             <p>
