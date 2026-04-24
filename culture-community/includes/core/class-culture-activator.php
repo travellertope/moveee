@@ -58,6 +58,9 @@ class Culture_Activator {
         // Event RSVP table.
         Culture_Event_RSVP::create_table();
 
+        // Paid ticket sales table.
+        Culture_Ticket_Payment::create_table();
+
         // Newsletter analytics tables.
         Culture_NL_Analytics::create_tables();
 

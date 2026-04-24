@@ -151,6 +151,13 @@ class Culture_Stripe {
     /**
      * Make an API request to Stripe.
      */
+    /**
+     * Create a one-time payment Checkout Session (used by ticket system).
+     */
+    public static function payment_session( array $params ): array|\WP_Error {
+        return self::api_request( 'POST', '/checkout/sessions', $params );
+    }
+
     private static function api_request( $method, $endpoint, $body = array() ) {
         $secret = self::get_secret_key();
         if ( empty( $secret ) ) {

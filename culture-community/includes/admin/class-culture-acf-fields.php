@@ -349,7 +349,6 @@ class Culture_ACF_Fields {
                         ),
                     ),
                 ),
-            ),
             // ── Display & RSVP fields ────────────────────────────────────
             array(
                 'key'           => 'field_event_subtype',
@@ -474,7 +473,33 @@ class Culture_ACF_Fields {
                         'placeholder' => 'e.g. ₦5,000',
                         'wrapper'     => array( 'width' => '15' ),
                     ),
+                    array(
+                        'key'          => 'field_ticket_amount',
+                        'label'        => 'Price Amount (numeric)',
+                        'name'         => 'ticket_amount',
+                        'type'         => 'number',
+                        'min'          => 0,
+                        'step'         => 1,
+                        'placeholder'  => 'e.g. 5000',
+                        'instructions' => 'Face value in major units (e.g. 5000 for ₦5,000). Leave 0 for free.',
+                        'wrapper'      => array( 'width' => '15' ),
+                    ),
+                    array(
+                        'key'           => 'field_ticket_currency',
+                        'label'         => 'Currency',
+                        'name'          => 'ticket_currency',
+                        'type'          => 'select',
+                        'choices'       => array(
+                            'NGN' => 'NGN (₦ Naira)',
+                            'USD' => 'USD ($ Dollar)',
+                            'GBP' => 'GBP (£ Pound)',
+                            'EUR' => 'EUR (€ Euro)',
+                        ),
+                        'default_value' => 'NGN',
+                        'wrapper'       => array( 'width' => '10' ),
+                    ),
                 ),
+            ),
             ),
             'location' => array(
                 array(
