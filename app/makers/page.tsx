@@ -11,19 +11,38 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function MakersArchivePage() {
-  let makers: any[] = [];
+const CMS = "https://cms.themoveee.com";
+
+async function fetchMakers(): Promise<any[]> {
+  // Try GraphQL first.
   try {
     const data = await getWPData(GET_ALL_MAKERS, { first: 60 });
-    makers = (data?.moveeeVendors ?? []).filter((m: any) => m.storeName);
-  } catch { /* CMS unreachable — render empty state */ }
+    const gql = (data?.moveeeVendors ?? []) as any[];
+    if (gql.length > 0) return gql;
+  } catch { /* fall through */ }
+
+  // Fall back to the plain REST endpoint added in plugin v1.4.6.
+  try {
+    const res = await fetch(`${CMS}/wp-json/moveee/v1/vendors?first=60`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json) && json.length > 0) return json;
+    }
+  } catch { /* fall through */ }
+
+  return [];
+}
+
+export default async function MakersArchivePage() {
+  const makers = await fetchMakers();
 
   return (
     <div className="makers-page">
       {/* ── Header ── */}
       <div className="makers-header">
         <div className="makers-header-left">
-          <div className="makers-eyebrow">N°05 · The Makers</div>
           <h1 className="makers-title">Meet the <em>Makers</em></h1>
         </div>
         <div className="makers-header-right">
@@ -40,6 +59,7 @@ export default async function MakersArchivePage() {
         <div className="makers-grid">
           {makers.map((maker: any) => {
             const location = [maker.city, maker.country].filter(Boolean).join(", ");
+            const name     = maker.storeName || maker.display_name || "Unnamed Maker";
             return (
               <Link
                 key={maker.slug}
@@ -50,7 +70,7 @@ export default async function MakersArchivePage() {
                   {maker.avatarUrl && (
                     <Image
                       src={maker.avatarUrl}
-                      alt={maker.storeName}
+                      alt={name}
                       fill
                       style={{ objectFit: "cover" }}
                       sizes="(max-width: 768px) 50vw, 25vw"
@@ -59,7 +79,7 @@ export default async function MakersArchivePage() {
                   <div className="maker-card-vetted">★ Vetted Maker</div>
                 </div>
                 <div className="maker-card-body">
-                  <div className="maker-card-name">{maker.storeName}</div>
+                  <div className="maker-card-name">{name}</div>
                   {location && <div className="maker-card-loc">{location}</div>}
                   {maker.bio && <p className="maker-card-desc">{maker.bio}</p>}
                   <div className="maker-card-footer">

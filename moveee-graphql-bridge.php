@@ -3,7 +3,7 @@
  * Plugin Name: Moveee GraphQL Bridge
  * Description: Bridges JetEngine taxonomies, WCFM vendor profiles, and product
  *              editorial metadata to WPGraphQL for the Moveee headless frontend.
- * Version: 1.4.5
+ * Version: 1.4.6
  * Author: Antigravity
  */
 
@@ -392,7 +392,69 @@ add_action( 'acf/init', function () {
 } );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. WCFM vendor store URLs → Next.js frontend
+// 6. REST API endpoint — /wp-json/moveee/v1/vendors
+//    Public endpoint that returns all WCFM vendor profiles as JSON.
+//    Used by the Next.js /makers page as a reliable fallback when the
+//    WPGraphQL moveeeVendors query is unavailable or returning empty.
+// ─────────────────────────────────────────────────────────────────────────────
+add_action( 'rest_api_init', function () {
+    register_rest_route( 'moveee/v1', '/vendors', [
+        'methods'             => 'GET',
+        'permission_callback' => '__return_true',
+        'args'                => [
+            'first' => [ 'default' => 50, 'sanitize_callback' => 'absint' ],
+        ],
+        'callback'            => function ( WP_REST_Request $req ) {
+            global $wpdb;
+            $first = min( $req->get_param( 'first' ), 200 );
+
+            // 1. By role.
+            $user_ids = get_users( [
+                'role__in' => [ 'wcfm_vendor', 'seller', 'vendor', 'wcfm_affiliate' ],
+                'fields'   => 'ID',
+                'number'   => $first,
+            ] );
+
+            // 2. By WCFM vendor meta.
+            if ( empty( $user_ids ) ) {
+                $user_ids = $wpdb->get_col( $wpdb->prepare(
+                    "SELECT DISTINCT user_id FROM {$wpdb->usermeta}
+                      WHERE meta_key = '_wcfm_vendor_data' LIMIT %d",
+                    $first
+                ) );
+            }
+
+            // 3. By _wcfm_product_author on published products.
+            if ( empty( $user_ids ) ) {
+                $user_ids = $wpdb->get_col( $wpdb->prepare(
+                    "SELECT DISTINCT pm.meta_value
+                       FROM {$wpdb->postmeta} pm
+                       JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+                      WHERE pm.meta_key   = '_wcfm_product_author'
+                        AND p.post_type   = 'product'
+                        AND p.post_status = 'publish'
+                      LIMIT %d",
+                    $first
+                ) );
+            }
+
+            $vendors = [];
+            $seen    = [];
+            foreach ( $user_ids as $uid ) {
+                $uid = (int) $uid;
+                if ( $uid && ! isset( $seen[ $uid ] ) ) {
+                    $seen[ $uid ] = true;
+                    $profile = moveee_vendor_profile_by_id( $uid );
+                    if ( $profile ) $vendors[] = $profile;
+                }
+            }
+            return rest_ensure_response( $vendors );
+        },
+    ] );
+} );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. WCFM vendor store URLs → Next.js frontend
 //    WCFM generates links like cms.themoveee.com/store/vendor-slug throughout
 //    WooCommerce (checkout page, product pages, emails). These filters rewrite
 //    the URL at the source so it already points to the Next.js shop.
