@@ -40,9 +40,9 @@ export default async function NewsletterArchive() {
         <div className="gml-hero-inner">
           {/* Left: copy + subscribe form */}
           <div>
-            <div className="gml-badge">★ Flagship Newsletter · Biweekly</div>
+            <div className="gml-badge">★ The Culture Dispatch</div>
             <h1 className="gml-hero-title">
-              Get<br />Me<span className="lit"><em>Lit</em></span>.
+              GetMe<span className="lit"><em>Lit</em></span>.
             </h1>
             <p className="gml-hero-sub">
               If you want to understand the true heartbeat of contemporary
