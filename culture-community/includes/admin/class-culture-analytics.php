@@ -78,16 +78,36 @@ class Culture_Analytics {
     }
 
     /**
-     * Render the analytics dashboard page.
+     * Render the analytics dashboard page (community + newsletter tabs).
      */
     public static function render_page() {
-        $stats    = self::get_member_stats();
-        $chapters = self::get_chapter_stats();
-        $top_members = self::get_top_members();
-        $recent_events = self::get_recent_event_stats();
+        $tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'community';
         ?>
         <div class="wrap culture-analytics">
-            <h1><?php esc_html_e( 'Culture Community Analytics', 'culture-community' ); ?></h1>
+            <h1><?php esc_html_e( 'Analytics', 'culture-community' ); ?></h1>
+
+            <nav class="nav-tab-wrapper" style="margin-bottom:20px;">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-analytics&tab=community' ) ); ?>"
+                   class="nav-tab<?php echo 'community' === $tab ? ' nav-tab-active' : ''; ?>">
+                    <?php esc_html_e( 'Community', 'culture-community' ); ?>
+                </a>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-analytics&tab=newsletter' ) ); ?>"
+                   class="nav-tab<?php echo 'newsletter' === $tab ? ' nav-tab-active' : ''; ?>">
+                    <?php esc_html_e( 'Newsletter', 'culture-community' ); ?>
+                </a>
+            </nav>
+
+            <?php if ( 'newsletter' === $tab ) : ?>
+                <?php Culture_NL_Analytics_Admin::render_for_tab(); ?>
+                </div><!-- .wrap -->
+            <?php return; endif; ?>
+
+        <?php
+        $stats         = self::get_member_stats();
+        $chapters      = self::get_chapter_stats();
+        $top_members   = self::get_top_members();
+        $recent_events = self::get_recent_event_stats();
+        ?>
 
             <!-- KPI Cards -->
             <div class="culture-analytics__cards">
