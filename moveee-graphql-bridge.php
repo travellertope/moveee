@@ -3,7 +3,7 @@
  * Plugin Name: Moveee GraphQL Bridge
  * Description: Bridges JetEngine taxonomies, WCFM vendor profiles, and product
  *              editorial metadata to WPGraphQL for the Moveee headless frontend.
- * Version: 1.4.1
+ * Version: 1.4.2
  * Author: Antigravity
  */
 
@@ -317,3 +317,27 @@ add_action( 'acf/init', function () {
     ] );
 
 } );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. WCFM vendor store URLs → Next.js frontend
+//    WCFM generates links like cms.themoveee.com/store/vendor-slug throughout
+//    WooCommerce (checkout page, product pages, emails). These filters rewrite
+//    the URL at the source so it already points to the Next.js shop.
+//    The template_redirect hook handles direct browser visits to the WP store page.
+// ─────────────────────────────────────────────────────────────────────────────
+function moveee_vendor_store_url( $url, $vendor_id ) {
+    $user = get_userdata( (int) $vendor_id );
+    if ( ! $user ) return $url;
+    return 'https://themoveee.com/shop/brand/' . rawurlencode( $user->user_nicename );
+}
+add_filter( 'wcfm_store_url',   'moveee_vendor_store_url', 10, 2 );
+add_filter( 'wcfmmp_store_url', 'moveee_vendor_store_url', 10, 2 );
+
+add_action( 'template_redirect', function () {
+    // WCFM registers the store endpoint under the 'wcfm-store' query var.
+    // Catch both the hyphenated var and the plain 'store' fallback.
+    $slug = get_query_var( 'wcfm-store' ) ?: get_query_var( 'store' );
+    if ( empty( $slug ) ) return;
+    wp_redirect( 'https://themoveee.com/shop/brand/' . rawurlencode( $slug ), 301 );
+    exit;
+}, 1 );

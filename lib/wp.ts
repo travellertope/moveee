@@ -676,11 +676,13 @@ const PRODUCT_FIELDS_FRAGMENT = `
       stockStatus
       stockQuantity
       onSale
+      vendorProfile { storeName bio city avatarUrl }
     }
     ... on VariableProduct {
       price
       stockStatus
       onSale
+      vendorProfile { storeName bio city avatarUrl }
       variations(first: 12) {
         nodes {
           price
@@ -768,9 +770,7 @@ export const GET_POST_BY_ID = `
 
 export const GET_PRODUCTS_BY_VENDOR = `
   query GetProductsByVendor($first: Int, $vendor: String) {
-    products(first: $first, where: { metaQuery: {
-      metaArray: [{ key: "_vendor_name", value: $vendor, compare: EQUAL_TO }]
-    }}) {
+    products(first: $first, where: { authorName: $vendor }) {
       nodes {
         ...ProductFields
       }
