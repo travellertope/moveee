@@ -708,12 +708,13 @@
 }
 .gml-hero-title {
   font-family: 'Fraunces', serif;
-  font-size: clamp(60px, 8vw, 120px);
+  font-size: clamp(48px, 7vw, 110px);
   font-weight: 400;
   line-height: .88;
   letter-spacing: -.04em;
   color: var(--paper);
   margin-bottom: 12px;
+  white-space: nowrap;
 }
 .gml-hero-title .lit { color: var(--ochre); font-style: normal; }
 .gml-hero-sub {
@@ -893,27 +894,25 @@
 }
 .gml-section-header {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   gap: 40px;
-  align-items: end;
+  align-items: center;
   padding-bottom: 30px;
   margin-bottom: 60px;
   border-bottom: 1px solid var(--rule);
 }
-.gml-section-num {
-  font-family: 'Fraunces', serif;
-  font-size: 80px;
-  font-weight: 300;
-  font-style: italic;
-  line-height: .8;
-  color: var(--ochre);
+.gml-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0;
 }
 .gml-section-title h3 {
   font-family: 'Fraunces', serif;
   font-size: 54px;
   font-weight: 400;
   line-height: .95;
-  margin-bottom: 8px;
+  flex-shrink: 0;
+  margin-bottom: 0;
 }
 .gml-section-title h3 em { font-style: italic; font-weight: 300; color: var(--mute); }
 .gml-section-title p {
@@ -921,8 +920,10 @@
   font-size: 16px;
   font-style: italic;
   color: var(--ink-soft);
-  max-width: 500px;
-  margin-top: 10px;
+  max-width: 420px;
+  margin: 0 0 0 48px;
+  padding-left: 48px;
+  border-left: 1px solid var(--rule);
 }
 .gml-section-meta {
   font-family: 'JetBrains Mono', monospace;
@@ -1008,7 +1009,7 @@
 /* ── RECENT ISSUES ── */
 .gml-recent {
   max-width: 1440px;
-  margin: 0 auto;
+  margin: 80px auto 0;
   padding: 0 60px 100px;
   position: relative;
   z-index: 2;
@@ -1140,7 +1141,7 @@
   margin-bottom: 20px;
   color: var(--paper);
 }
-.gml-signup-left h3 em { font-style: italic; font-weight: 300; color: var(--gold); }
+.gml-signup-left h3 em { font-style: italic; font-weight: 300; color: var(--ochre); }
 .gml-signup-left p {
   font-size: 17px;
   color: rgba(243,236,224,.65);
@@ -1594,7 +1595,8 @@
   .gml-signup-inner { grid-template-columns: 1fr; gap: 50px; }
   .gml-cs-grid { grid-template-columns: 1fr 1fr; }
   .gml-section-header { grid-template-columns: 1fr; gap: 20px; }
-  .gml-section-num { font-size: 56px; }
+  .gml-section-title { flex-direction: column; align-items: flex-start; }
+  .gml-section-title p { margin-left: 0; padding-left: 0; border-left: none; border-top: 1px solid var(--rule); padding-top: 20px; margin-top: 20px; max-width: 100%; }
   .gml-issue-wrap { grid-template-columns: 1fr; padding: 40px 32px 60px; }
   .gml-issue-sidebar { position: static; }
   .gml-issue-hero-inner { padding: 60px 32px 50px; }
@@ -1608,7 +1610,7 @@
 }
 @media (max-width: 768px) {
   .gml-hero-inner { padding: 60px 22px 50px; }
-  .gml-hero-title { font-size: 56px; }
+  .gml-hero-title { font-size: clamp(32px, 8vw, 56px); white-space: nowrap; }
   .gml-whats-inside, .gml-recent, .gml-pull-band, .gml-coming-soon { padding-left: 22px; padding-right: 22px; }
   .gml-signup-section { padding: 80px 22px; }
   .gml-pillars-grid, .gml-issues-grid, .gml-cs-grid { grid-template-columns: 1fr; }

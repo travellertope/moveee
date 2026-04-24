@@ -40,9 +40,9 @@ export default async function NewsletterArchive() {
         <div className="gml-hero-inner">
           {/* Left: copy + subscribe form */}
           <div>
-            <div className="gml-badge">★ Flagship Newsletter · Biweekly</div>
+            <div className="gml-badge">★ The Culture Dispatch</div>
             <h1 className="gml-hero-title">
-              Get<br />Me<span className="lit"><em>Lit</em></span>.
+              GetMe<span className="lit"><em>Lit</em></span>.
             </h1>
             <p className="gml-hero-sub">
               If you want to understand the true heartbeat of contemporary
@@ -116,11 +116,11 @@ export default async function NewsletterArchive() {
               <ul className="gml-mockup-items">
                 <li>
                   <span className="gml-mockup-num">01</span>
-                  <span className="gml-mockup-text">The Deep Dive — long-form cultural essay</span>
+                  <span className="gml-mockup-text">The Deep Dive — intro cultural commentary</span>
                 </li>
                 <li>
                   <span className="gml-mockup-num">02</span>
-                  <span className="gml-mockup-text">The List — five things worth your time</span>
+                  <span className="gml-mockup-text">The List — recommended things worth your time</span>
                 </li>
                 <li>
                   <span className="gml-mockup-num">03</span>
@@ -142,7 +142,6 @@ export default async function NewsletterArchive() {
       {/* ══ WHAT'S INSIDE ══ */}
       <section className="gml-whats-inside">
         <div className="gml-section-header">
-          <div className="gml-section-num">N°01</div>
           <div className="gml-section-title">
             <h3>What&apos;s <em>inside</em></h3>
             <p>
@@ -282,11 +281,11 @@ export default async function NewsletterArchive() {
             <div className="gml-signup-perks">
               <div className="gml-perk">
                 <span className="gml-perk-n">✓</span>
-                <p>The <em>deep dive</em> — one essay that makes you think</p>
+                <p>The <em>deep dive</em> — intro cultural commentary</p>
               </div>
               <div className="gml-perk">
                 <span className="gml-perk-n">✓</span>
-                <p>The <em>list</em> — five things worth your time this week</p>
+                <p>The <em>list</em> — recommended things worth your time</p>
               </div>
               <div className="gml-perk">
                 <span className="gml-perk-n">✓</span>

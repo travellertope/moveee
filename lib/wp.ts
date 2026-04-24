@@ -192,6 +192,73 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
   }
 }
 
+function mapRestNewsletterToFrontendShape(item: any) {
+  const embeddedMedia = item?._embedded?.["wp:featuredmedia"]?.[0];
+  const embeddedTerms: any[][] = item?._embedded?.["wp:term"] ?? [];
+  const interestTerms = embeddedTerms.flat().filter((t: any) => t?.taxonomy === "culture_interest");
+  const accessTerms   = embeddedTerms.flat().filter((t: any) => t?.taxonomy === "culture_access");
+
+  return {
+    id: String(item?.id ?? ""),
+    databaseId: item?.id,
+    slug: item?.slug ?? "",
+    title: item?.title?.rendered ?? "Untitled",
+    date: item?.date ?? null,
+    excerpt: item?.excerpt?.rendered ?? "",
+    content: item?.content?.rendered ?? "",
+    featuredImage: embeddedMedia?.source_url
+      ? { node: { sourceUrl: embeddedMedia.source_url, altText: embeddedMedia.alt_text || "" } }
+      : null,
+    cultureInterests: { nodes: interestTerms.map((t: any) => ({ name: t.name, slug: t.slug })) },
+    cultureAccesses:  { nodes: accessTerms.map((t: any) => ({ slug: t.slug })) },
+  };
+}
+
+export async function getNewslettersWithFallback(first = 50, options: any = {}) {
+  try {
+    const gql = await getWPData(GET_NEWSLETTERS, { first }, options);
+    const nodes = gql?.cultureNewsletters?.nodes ?? [];
+    if (nodes.length > 0) return nodes;
+  } catch {}
+
+  try {
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_newsletter?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate: options.revalidate !== undefined ? options.revalidate : 3600 },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    return json.map(mapRestNewsletterToFrontendShape);
+  } catch {
+    return [];
+  }
+}
+
+export async function getNewsletterBySlugWithFallback(slug: string, options: any = {}) {
+  try {
+    const gql = await getWPData(GET_NEWSLETTER_BY_SLUG, { slug }, options);
+    if (gql?.cultureNewsletter) return gql.cultureNewsletter;
+  } catch {}
+
+  try {
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_newsletter?slug=${encodeURIComponent(slug)}&status=publish&_embed=1`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate: options.revalidate !== undefined ? options.revalidate : 3600 },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!Array.isArray(json) || json.length === 0) return null;
+    return mapRestNewsletterToFrontendShape(json[0]);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Common Fragments for Editorial Components
  */
