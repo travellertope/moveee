@@ -3,7 +3,7 @@
  * Plugin Name: Moveee GraphQL Bridge
  * Description: Bridges JetEngine taxonomies, WCFM vendor profiles, and product
  *              editorial metadata to WPGraphQL for the Moveee headless frontend.
- * Version: 1.4.4
+ * Version: 1.4.5
  * Author: Antigravity
  */
 
@@ -108,7 +108,7 @@ add_action( 'graphql_register_types', function () {
                 if ( $uid && ! isset( $seen[ $uid ] ) ) {
                     $seen[ $uid ] = true;
                     $profile = moveee_vendor_profile_by_id( $uid );
-                    if ( $profile && ! empty( $profile['storeName'] ) ) {
+                    if ( $profile ) {
                         $vendors[] = $profile;
                     }
                 }
@@ -180,7 +180,8 @@ function moveee_vendor_profile_by_id( int $vendor_id ): ?array {
     $d = get_user_meta( $vendor_id, '_wcfm_vendor_data', true );
     if ( ! is_array( $d ) ) $d = [];
 
-    $store_name = $d['store_name']       ?? get_user_meta( $vendor_id, '_store_name',         true ) ?: '';
+    // Store name: WCFM data array → standalone meta → WP display name as last resort.
+    $store_name = $d['store_name'] ?? get_user_meta( $vendor_id, '_store_name', true ) ?: $user->display_name;
     $bio        = $d['shop_description'] ?? get_user_meta( $vendor_id, '_wcfmmp_profile_bio', true ) ?: '';
     $city       = $d['store_city']       ?? get_user_meta( $vendor_id, '_store_city',         true ) ?: '';
     $country    = $d['store_country']    ?? get_user_meta( $vendor_id, '_store_country',      true ) ?: '';
