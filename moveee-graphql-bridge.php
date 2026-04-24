@@ -3,7 +3,7 @@
  * Plugin Name: Moveee GraphQL Bridge
  * Description: Bridges JetEngine taxonomies, WCFM vendor profiles, and product
  *              editorial metadata to WPGraphQL for the Moveee headless frontend.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Author: Antigravity
  */
 
@@ -154,16 +154,157 @@ function moveee_vendor_profile( int $product_id ): ?array {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. Product editorial meta — reads from WooCommerce product custom fields
-//    Set these in WP Admin → Products → [product] → Custom Fields panel,
-//    or via the WCFM product editor if custom fields are added there.
+// 4. Product editorial meta — reads from WooCommerce product custom fields.
+//    When ACF is active the Repeater field for process_steps is stored as an
+//    ACF Repeater; otherwise falls back to the raw JSON string.
 // ─────────────────────────────────────────────────────────────────────────────
 function moveee_product_meta( int $product_id ): array {
+    // process_steps: prefer ACF Repeater (array of rows) → JSON-encode for GraphQL
+    $steps_raw = '';
+    if ( function_exists( 'get_field' ) ) {
+        $rows = get_field( 'process_steps', $product_id );
+        if ( is_array( $rows ) && ! empty( $rows ) ) {
+            $steps_raw = wp_json_encode( $rows ) ?: '';
+        }
+    }
+    if ( ! $steps_raw ) {
+        $steps_raw = (string) get_post_meta( $product_id, 'process_steps', true );
+    }
+
     return [
         'makerStory'       => (string) get_post_meta( $product_id, 'maker_story',        true ),
         'careInstructions' => (string) get_post_meta( $product_id, 'care_instructions',  true ),
-        'processSteps'     => (string) get_post_meta( $product_id, 'process_steps',      true ),
+        'processSteps'     => $steps_raw,
         'asSeenInPostId'   => (string) get_post_meta( $product_id, 'as_seen_in_post_id', true ),
         'deliveryInfo'     => (string) get_post_meta( $product_id, 'delivery_info',      true ),
     ];
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. ACF field groups — only registered when ACF (free or Pro) is active.
+//    Fields appear as a "Moveee" metabox on the product edit screen and as
+//    a "Vendor Info" section on the vendor's WP user profile.
+// ─────────────────────────────────────────────────────────────────────────────
+add_action( 'acf/init', function () {
+
+    if ( ! function_exists( 'acf_add_local_field_group' ) ) return;
+
+    // ── Product editorial fields ──────────────────────────────────────────────
+    acf_add_local_field_group( [
+        'key'      => 'group_moveee_product_meta',
+        'title'    => 'Moveee Product Details',
+        'location' => [ [ [ 'param' => 'post_type', 'operator' => '==', 'value' => 'product' ] ] ],
+        'menu_order'            => 10,
+        'position'              => 'normal',
+        'style'                 => 'default',
+        'label_placement'       => 'top',
+        'instruction_placement' => 'label',
+        'fields' => [
+            [
+                'key'          => 'field_moveee_maker_story',
+                'label'        => 'Maker Story',
+                'name'         => 'maker_story',
+                'type'         => 'wysiwyg',
+                'instructions' => 'Long-form narrative about the maker. Shown in the "Maker behind it" section.',
+                'required'     => 0,
+                'toolbar'      => 'basic',
+                'media_upload' => 0,
+            ],
+            [
+                'key'          => 'field_moveee_care_instructions',
+                'label'        => 'Materials & Care Instructions',
+                'name'         => 'care_instructions',
+                'type'         => 'textarea',
+                'instructions' => 'E.g. "Made from 100% organic linen. Hand wash cold." Shown in the Materials & Care accordion tab.',
+                'required'     => 0,
+                'rows'         => 4,
+            ],
+            [
+                'key'          => 'field_moveee_delivery_info',
+                'label'        => 'Delivery & Returns Info',
+                'name'         => 'delivery_info',
+                'type'         => 'textarea',
+                'instructions' => 'Custom delivery/returns text for this product. Replaces the default text in the Delivery & Returns tab.',
+                'required'     => 0,
+                'rows'         => 4,
+            ],
+            [
+                'key'          => 'field_moveee_as_seen_in_post_id',
+                'label'        => 'As Seen In — Magazine Post ID',
+                'name'         => 'as_seen_in_post_id',
+                'type'         => 'number',
+                'instructions' => 'Enter the WordPress post ID of the magazine article that features this product.',
+                'required'     => 0,
+                'min'          => 1,
+                'step'         => 1,
+            ],
+            [
+                'key'          => 'field_moveee_process_steps',
+                'label'        => 'How It\'s Made — Process Steps',
+                'name'         => 'process_steps',
+                'type'         => 'repeater',
+                'instructions' => 'Add each stage of the making process. Shown in the "How It\'s Made" section.',
+                'required'     => 0,
+                'min'          => 0,
+                'max'          => 10,
+                'layout'       => 'block',
+                'button_label' => 'Add Step',
+                'sub_fields'   => [
+                    [
+                        'key'      => 'field_moveee_step_title',
+                        'label'    => 'Step Title',
+                        'name'     => 'title',
+                        'type'     => 'text',
+                        'required' => 1,
+                    ],
+                    [
+                        'key'      => 'field_moveee_step_desc',
+                        'label'    => 'Description',
+                        'name'     => 'desc',
+                        'type'     => 'textarea',
+                        'rows'     => 3,
+                        'required' => 1,
+                    ],
+                    [
+                        'key'          => 'field_moveee_step_duration',
+                        'label'        => 'Duration (optional)',
+                        'name'         => 'duration',
+                        'type'         => 'text',
+                        'instructions' => 'E.g. "2–3 days" or "45 minutes".',
+                        'required'     => 0,
+                    ],
+                ],
+            ],
+        ],
+    ] );
+
+    // ── Vendor profile fields (shown on vendor WP user edit screen) ───────────
+    acf_add_local_field_group( [
+        'key'      => 'group_moveee_vendor_meta',
+        'title'    => 'Moveee Vendor Info',
+        'location' => [ [ [ 'param' => 'user_role', 'operator' => '==', 'value' => 'wcfm_vendor' ] ] ],
+        'menu_order'      => 10,
+        'position'        => 'normal',
+        'style'           => 'default',
+        'label_placement' => 'top',
+        'fields' => [
+            [
+                'key'          => 'field_moveee_vendor_years',
+                'label'        => 'Years Making',
+                'name'         => '_wcfm_vendor_years',
+                'type'         => 'text',
+                'instructions' => 'E.g. "12" or "12+" — displayed in the vendor stats block.',
+                'required'     => 0,
+            ],
+            [
+                'key'          => 'field_moveee_vendor_rating',
+                'label'        => 'Moveee Rating',
+                'name'         => '_wcfm_vendor_rating',
+                'type'         => 'text',
+                'instructions' => 'E.g. "4.9" — displayed as "★ 4.9" in vendor stats. Leave blank to show "★ Vetted".',
+                'required'     => 0,
+            ],
+        ],
+    ] );
+
+} );

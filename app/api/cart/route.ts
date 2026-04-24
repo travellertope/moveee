@@ -67,9 +67,13 @@ function forwardHeaders(req: NextRequest): Record<string, string> {
   return headers;
 }
 
-// Relay Set-Cookie headers back so the WC session persists in the browser
+// Relay Set-Cookie and X-WC-Store-API-Nonce so the browser can authenticate
+// subsequent cart mutations (add/remove/update require the nonce header).
 function collectCookies(res: Response): Record<string, string> {
+  const headers: Record<string, string> = {};
   const setCookie = res.headers.get("set-cookie");
-  if (setCookie) return { "Set-Cookie": setCookie };
-  return {};
+  if (setCookie) headers["Set-Cookie"] = setCookie;
+  const nonce = res.headers.get("x-wc-store-api-nonce");
+  if (nonce) headers["X-WC-Store-API-Nonce"] = nonce;
+  return headers;
 }
