@@ -3,11 +3,12 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Search, User } from "lucide-react";
+import { Search, User, ShoppingBag } from "lucide-react";
 import Ticker from "./Ticker";
 import AuthModal from "./AuthModal";
 import SearchOverlay from "./SearchOverlay";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCart } from "@/context/CartContext";
 
 interface HeaderProps {
   variant?: "light" | "dark";
@@ -17,6 +18,7 @@ interface HeaderProps {
 const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const { language, setLanguage } = useLanguage();
   const { data: session, status } = useSession();
+  const { itemCount, openDrawer } = useCart();
   const [modalOpen, setModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -110,6 +112,18 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
               <Search size={18} strokeWidth={1.5} />
             </button>
 
+            <button
+              className="masthead-icon-btn cart-icon-btn"
+              aria-label={itemCount > 0 ? `Cart — ${itemCount} item${itemCount !== 1 ? "s" : ""}` : "Cart"}
+              onClick={openDrawer}
+              style={{ position: "relative" }}
+            >
+              <ShoppingBag size={18} strokeWidth={1.5} />
+              {itemCount > 0 && (
+                <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>
+              )}
+            </button>
+
             {/* User icon — links to /member when logged in, opens modal when not */}
             {loggedIn ? (
               <Link
@@ -146,7 +160,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
             )}
           </div>
 
-          {/* Mobile: search + sign-in icons + hamburger */}
+          {/* Mobile: search + cart + sign-in icons + hamburger */}
           <div className="masthead-mobile-actions">
             <button
               className="masthead-icon-btn"
@@ -154,6 +168,17 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
               onClick={() => setSearchOpen(true)}
             >
               <Search size={18} strokeWidth={1.5} />
+            </button>
+            <button
+              className="masthead-icon-btn cart-icon-btn"
+              aria-label="Cart"
+              onClick={openDrawer}
+              style={{ position: "relative" }}
+            >
+              <ShoppingBag size={18} strokeWidth={1.5} />
+              {itemCount > 0 && (
+                <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>
+              )}
             </button>
             {loggedIn ? (
               <Link href="/member" className="masthead-icon-btn" aria-label="My account">

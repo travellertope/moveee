@@ -3,6 +3,7 @@ import { getWPData, GET_PRODUCTS, GET_PRODUCTS_BY_VENDOR, GET_PRODUCT_CATEGORIES
 import Link from "next/link";
 import Image from "next/image";
 import ShopFilterBar from "./components/ShopFilterBar";
+import AddToCartButton from "@/components/AddToCartButton";
 import "./shop.css";
 
 interface ShopArchiveProps {
@@ -290,7 +291,9 @@ export default async function ShopArchiveWrapper({
                       <span className="main">{p.price}</span>
                     </div>
                   )}
-                  <button className="padd" tabIndex={-1}>Add to Cart →</button>
+                  {!outOfStock && p.databaseId && (
+                    <AddToCartButton productId={p.databaseId} />
+                  )}
                 </Link>
               );
             })}

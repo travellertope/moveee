@@ -9,8 +9,10 @@ import "./legal.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
+import CartDrawer from "@/components/CartDrawer";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
+import { CartProvider } from "@/context/CartContext";
 import SessionProvider from "@/components/SessionProvider";
 import { headers } from "next/headers";
 
@@ -81,15 +83,18 @@ export default async function RootLayout({
         className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}
       >
         <SessionProvider>
-          <CurrencyProvider 
-            detectedCountry={country} 
+          <CurrencyProvider
+            detectedCountry={country}
             initialPricing={siteData?.membershipSettings || null}
           >
             <LanguageProvider>
-              <Header siteSettings={siteData} />
-              <main>{children}</main>
-              <Footer />
-              <CookieConsent />
+              <CartProvider>
+                <Header siteSettings={siteData} />
+                <main>{children}</main>
+                <Footer />
+                <CartDrawer />
+                <CookieConsent />
+              </CartProvider>
             </LanguageProvider>
           </CurrencyProvider>
         </SessionProvider>

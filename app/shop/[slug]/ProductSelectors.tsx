@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { useCart } from "@/context/CartContext";
 
 interface VariationAttribute { name: string; value: string; }
 interface Variation {
@@ -16,74 +17,19 @@ interface ProductSelectorsProps {
   variations?: Variation[];
 }
 
-type CartStatus = "idle" | "adding" | "added" | "error";
-
 export default function ProductSelectors({
   productId,
   price,
   regularPrice,
   variations,
 }: ProductSelectorsProps) {
+  const { addItem, isLoading } = useCart();
   const [selectedColor, setSelectedColor] = useState(0);
   const [selectedSize, setSelectedSize]   = useState(0);
   const [saved, setSaved]                 = useState(false);
-  const [cartStatus, setCartStatus]       = useState<CartStatus>("idle");
-  const [nonce, setNonce]                 = useState<string | null>(null);
 
-  // Fetch WooCommerce nonce on mount.
-  // WC Store API returns it as the X-WC-Store-API-Nonce response header;
-  // some versions also include it in the JSON body as a fallback.
-  useEffect(() => {
-    fetch("/api/cart")
-      .then((r) => {
-        const headerNonce = r.headers.get("x-wc-store-api-nonce");
-        if (headerNonce) setNonce(headerNonce);
-        return r.json().then((data) => ({ data, headerNonce }));
-      })
-      .then(({ data, headerNonce }) => {
-        if (!headerNonce) {
-          const bodyNonce = data?.extensions?.["woocommerce-blocks"]?.nonce;
-          if (bodyNonce) setNonce(bodyNonce);
-        }
-      })
-      .catch(() => { /* nonce unavailable — will fall back to direct link */ });
-  }, []);
-
-  // Only extract attributes that are actually set in WooCommerce.
-  // When there are no variations, the selectors are hidden entirely.
   const colorAttrs = extractAttr(variations, "color");
   const sizeAttrs  = extractAttr(variations, "size");
-
-  const addToCart = useCallback(async () => {
-    setCartStatus("adding");
-    try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (nonce) headers["X-WC-Store-Api-Nonce"] = nonce;
-
-      const res = await fetch("/api/cart?action=add", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ id: productId, quantity: 1 }),
-      });
-
-      if (res.ok) {
-        setCartStatus("added");
-        setTimeout(() => setCartStatus("idle"), 3000);
-      } else {
-        throw new Error("add failed");
-      }
-    } catch {
-      // Direct WooCommerce fallback keeps the user's cart intact even if the
-      // proxy fails (cross-domain session limitation).
-      window.location.href = `https://cms.themoveee.com/?add-to-cart=${productId}`;
-    }
-  }, [productId, nonce]);
-
-  const btnLabel =
-    cartStatus === "adding" ? "Adding…"  :
-    cartStatus === "added"  ? "Added ✓"  :
-    cartStatus === "error"  ? "Try again" :
-    "Add to Cart";
 
   return (
     <>
@@ -149,12 +95,12 @@ export default function ProductSelectors({
       <div className="sp-cta-row">
         <button
           className="sp-btn-add"
-          onClick={addToCart}
-          disabled={cartStatus === "adding"}
-          style={{ opacity: cartStatus === "adding" ? 0.7 : 1 }}
+          onClick={() => addItem(productId)}
+          disabled={isLoading}
+          style={{ opacity: isLoading ? 0.7 : 1 }}
         >
-          {btnLabel}
-          {cartStatus === "idle" && <span>→</span>}
+          {isLoading ? "Adding…" : "Add to Cart"}
+          {!isLoading && <span>→</span>}
         </button>
         <button
           className="sp-btn-save"
@@ -164,18 +110,6 @@ export default function ProductSelectors({
           {saved ? "♥" : "♡"}
         </button>
       </div>
-
-      {/* After add-to-cart success: show checkout link */}
-      {cartStatus === "added" && (
-        <div className="sp-checkout-prompt">
-          <a
-            href="https://cms.themoveee.com/checkout"
-            className="sp-checkout-link"
-          >
-            Proceed to Checkout →
-          </a>
-        </div>
-      )}
 
       <div className="sp-delivery-note">
         <div>
