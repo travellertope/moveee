@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_PRODUCTS, GET_PRODUCTS_BY_VENDOR, GET_PRODUCT_CATEGORIES } from "@/lib/wp";
+import { getWPData, GET_PRODUCTS, GET_PRODUCTS_BY_VENDOR, GET_PRODUCT_CATEGORIES, GET_ALL_MAKERS } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 import ShopFilterBar from "./components/ShopFilterBar";
@@ -84,18 +84,20 @@ export default async function ShopArchiveWrapper({
 }: ShopArchiveProps) {
   let products: any[] = [];
   let categories: any[] = [];
+  let makers: any[] = [];
 
-  try {
-    const [prodData, catData] = await Promise.all([
-      brand
-        ? getWPData(GET_PRODUCTS_BY_VENDOR, { first: 24, vendor: brand })
-        : getWPData(GET_PRODUCTS, { first: 24, category: category || null, tag: tag || null }),
-      getWPData(GET_PRODUCT_CATEGORIES, {}),
-    ]);
-    products = prodData?.products?.nodes ?? [];
-    categories = catData?.productCategories?.nodes ?? [];
-  } catch {
-    /* CMS unreachable — render with empty data */
+  const [prodResult, catResult, makersResult] = await Promise.allSettled([
+    brand
+      ? getWPData(GET_PRODUCTS_BY_VENDOR, { first: 24, vendor: brand })
+      : getWPData(GET_PRODUCTS, { first: 24, category: category || null, tag: tag || null }),
+    getWPData(GET_PRODUCT_CATEGORIES, {}),
+    getWPData(GET_ALL_MAKERS, { first: 4 }),
+  ]);
+
+  if (prodResult.status === "fulfilled") products = prodResult.value?.products?.nodes ?? [];
+  if (catResult.status === "fulfilled")  categories = catResult.value?.productCategories?.nodes ?? [];
+  if (makersResult.status === "fulfilled") {
+    makers = (makersResult.value?.moveeeVendors ?? []).filter((m: any) => m.storeName).slice(0, 4);
   }
 
   if (!categories.length) categories = FALLBACK_CATEGORIES;
@@ -348,8 +350,8 @@ export default async function ShopArchiveWrapper({
 
       {/* ── 9. VENDOR STRIP ── */}
       {(() => {
-        const vendors = extractVendors(products);
-        const display = vendors.length >= 2 ? vendors : FALLBACK_VENDORS;
+        const display = makers.length >= 2 ? makers : FALLBACK_VENDORS;
+        const isFallback = display === FALLBACK_VENDORS;
         return (
           <section className="shop-vendor-cards">
             <div className="sec-hdr">
@@ -357,25 +359,33 @@ export default async function ShopArchiveWrapper({
               <Link href="/makers">All makers →</Link>
             </div>
             <div className="vendor-cards">
-              {display.map((v) => (
-                <Link
-                  key={v.name}
-                  href={v.slug ? `/makers/${v.slug}` : "/makers"}
-                  className="vc"
-                  style={{ textDecoration: "none", color: "inherit" }}
-                >
-                  <div className="vc-img">
-                    {v.image && (
-                      <Image src={v.image} alt={v.name} fill style={{ objectFit: "cover" }} />
-                    )}
-                  </div>
-                  <div className="vc-vetted">★ Vetted Maker</div>
-                  <h4>{v.name}</h4>
-                  {v.location && <div className="vc-loc">{v.location}</div>}
-                  {v.desc && <p className="vc-desc">{v.desc}</p>}
-                  <div className="vc-count">{v.count} {v.count === 1 ? "product" : "products"}</div>
-                </Link>
-              ))}
+              {display.map((v: any) => {
+                const name  = isFallback ? v.name      : v.storeName;
+                const loc   = isFallback ? v.location  : [v.city, v.country].filter(Boolean).join(", ");
+                const desc  = isFallback ? v.desc       : v.bio;
+                const count = isFallback ? v.count      : (v.productCount ?? 0);
+                const img   = isFallback ? v.image      : v.avatarUrl;
+                const href  = isFallback ? "/makers"    : `/makers/${v.slug}`;
+                return (
+                  <Link
+                    key={name}
+                    href={href}
+                    className="vc"
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    <div className="vc-img">
+                      {img && (
+                        <Image src={img} alt={name} fill style={{ objectFit: "cover" }} />
+                      )}
+                    </div>
+                    <div className="vc-vetted">★ Vetted Maker</div>
+                    <h4>{name}</h4>
+                    {loc && <div className="vc-loc">{loc}</div>}
+                    {desc && <p className="vc-desc">{desc}</p>}
+                    <div className="vc-count">{count} {count === 1 ? "product" : "products"}</div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         );

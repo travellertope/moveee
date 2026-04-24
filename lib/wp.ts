@@ -676,13 +676,11 @@ const PRODUCT_FIELDS_FRAGMENT = `
       stockStatus
       stockQuantity
       onSale
-      vendorProfile { slug storeName bio city avatarUrl }
     }
     ... on VariableProduct {
       price
       stockStatus
       onSale
-      vendorProfile { slug storeName bio city avatarUrl }
       variations(first: 12) {
         nodes {
           price
