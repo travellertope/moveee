@@ -3,7 +3,7 @@
  * Plugin Name: Moveee GraphQL Bridge
  * Description: Bridges JetEngine taxonomies, WCFM vendor profiles, and product
  *              editorial metadata to WPGraphQL for the Moveee headless frontend.
- * Version: 1.4.1
+ * Version: 1.4.3
  * Author: Antigravity
  */
 
@@ -47,6 +47,7 @@ add_action( 'graphql_register_types', function () {
     register_graphql_object_type( 'MoveeeVendorProfile', [
         'description' => 'WCFM vendor / maker profile data',
         'fields'      => [
+            'slug'         => [ 'type' => 'String' ],
             'storeName'    => [ 'type' => 'String' ],
             'bio'          => [ 'type' => 'String' ],
             'city'         => [ 'type' => 'String' ],
@@ -56,6 +57,38 @@ add_action( 'graphql_register_types', function () {
             'rating'       => [ 'type' => 'String' ],
             'productCount' => [ 'type' => 'Int'    ],
         ],
+    ] );
+
+    // ── Root queries: list all vendors, and single vendor by slug ────────────
+    register_graphql_field( 'RootQuery', 'moveeeVendors', [
+        'type'        => [ 'list_of' => 'MoveeeVendorProfile' ],
+        'description' => 'All active WCFM vendor profiles',
+        'args'        => [ 'first' => [ 'type' => 'Int' ] ],
+        'resolve'     => function ( $root, $args ) {
+            $first    = min( absint( $args['first'] ?? 50 ), 200 );
+            $user_ids = get_users( [
+                'role__in' => [ 'wcfm_vendor', 'seller', 'vendor' ],
+                'fields'   => 'ID',
+                'number'   => $first,
+            ] );
+            $vendors = [];
+            foreach ( $user_ids as $uid ) {
+                $profile = moveee_vendor_profile_by_id( (int) $uid );
+                if ( $profile ) $vendors[] = $profile;
+            }
+            return $vendors;
+        },
+    ] );
+
+    register_graphql_field( 'RootQuery', 'moveeeVendorBySlug', [
+        'type'        => 'MoveeeVendorProfile',
+        'description' => 'Single WCFM vendor profile by WordPress user nicename (URL slug)',
+        'args'        => [ 'slug' => [ 'type' => 'String!' ] ],
+        'resolve'     => function ( $root, $args ) {
+            $user = get_user_by( 'slug', sanitize_title( $args['slug'] ?? '' ) );
+            if ( ! $user ) return null;
+            return moveee_vendor_profile_by_id( $user->ID );
+        },
     ] );
 
     // ── MoveeeProductMeta ─────────────────────────────────────────────────────
@@ -101,15 +134,12 @@ add_action( 'graphql_register_types', function () {
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. Vendor profile — reads from WCFM user meta
 // ─────────────────────────────────────────────────────────────────────────────
-function moveee_vendor_profile( int $product_id ): ?array {
 
-    // WCFM stores vendor user ID in product meta; fall back to post author.
-    $vendor_id = (int) ( get_post_meta( $product_id, '_wcfm_product_author', true )
-                      ?: get_post_field( 'post_author', $product_id ) );
+// Core helper: builds the full profile array from a vendor user ID.
+function moveee_vendor_profile_by_id( int $vendor_id ): ?array {
+    $user = get_userdata( $vendor_id );
+    if ( ! $user ) return null;
 
-    if ( ! $vendor_id ) return null;
-
-    // Main WCFM data array (serialised in user meta).
     $d = get_user_meta( $vendor_id, '_wcfm_vendor_data', true );
     if ( ! is_array( $d ) ) $d = [];
 
@@ -128,13 +158,9 @@ function moveee_vendor_profile( int $product_id ): ?array {
         $avatar_url = (string) get_avatar_url( $vendor_id, [ 'size' => 300 ] );
     }
 
-    // yearsActive / rating — set by admin on the vendor's WP user profile
-    // (WP Admin → Users → [vendor] → user meta _wcfm_vendor_years / _wcfm_vendor_rating).
     $years  = (string) get_user_meta( $vendor_id, '_wcfm_vendor_years',  true );
     $rating = (string) get_user_meta( $vendor_id, '_wcfm_vendor_rating', true );
 
-    // Product count — published products with this vendor's ID in meta.
-    // Falls back to authored posts if WCFM meta isn't populated.
     global $wpdb;
     $count = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(DISTINCT p.ID)
@@ -151,6 +177,7 @@ function moveee_vendor_profile( int $product_id ): ?array {
     }
 
     return [
+        'slug'         => $user->user_nicename,
         'storeName'    => $store_name,
         'bio'          => $bio,
         'city'         => $city,
@@ -160,6 +187,14 @@ function moveee_vendor_profile( int $product_id ): ?array {
         'rating'       => $rating,
         'productCount' => $count,
     ];
+}
+
+// Product-scoped wrapper used by the per-product GraphQL field resolver.
+function moveee_vendor_profile( int $product_id ): ?array {
+    $vendor_id = (int) ( get_post_meta( $product_id, '_wcfm_product_author', true )
+                      ?: get_post_field( 'post_author', $product_id ) );
+    if ( ! $vendor_id ) return null;
+    return moveee_vendor_profile_by_id( $vendor_id );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -317,3 +352,27 @@ add_action( 'acf/init', function () {
     ] );
 
 } );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. WCFM vendor store URLs → Next.js frontend
+//    WCFM generates links like cms.themoveee.com/store/vendor-slug throughout
+//    WooCommerce (checkout page, product pages, emails). These filters rewrite
+//    the URL at the source so it already points to the Next.js shop.
+//    The template_redirect hook handles direct browser visits to the WP store page.
+// ─────────────────────────────────────────────────────────────────────────────
+function moveee_vendor_store_url( $url, $vendor_id ) {
+    $user = get_userdata( (int) $vendor_id );
+    if ( ! $user ) return $url;
+    return 'https://themoveee.com/makers/' . rawurlencode( $user->user_nicename );
+}
+add_filter( 'wcfm_store_url',   'moveee_vendor_store_url', 10, 2 );
+add_filter( 'wcfmmp_store_url', 'moveee_vendor_store_url', 10, 2 );
+
+add_action( 'template_redirect', function () {
+    // WCFM registers the store endpoint under the 'wcfm-store' query var.
+    // Catch both the hyphenated var and the plain 'store' fallback.
+    $slug = get_query_var( 'wcfm-store' ) ?: get_query_var( 'store' );
+    if ( empty( $slug ) ) return;
+    wp_redirect( 'https://themoveee.com/makers/' . rawurlencode( $slug ), 301 );
+    exit;
+}, 1 );

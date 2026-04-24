@@ -157,7 +157,7 @@ export default async function ProductPage({
 
         <div className="sp-product-info">
           {vname && (
-            <Link href="/origins" className="sp-vendor-link">{vname}</Link>
+            <Link href={vp.slug ? `/makers/${vp.slug}` : "/makers"} className="sp-vendor-link">{vname}</Link>
           )}
 
           <h1 className="sp-product-name">{product.name}</h1>
@@ -301,9 +301,9 @@ export default async function ProductPage({
                 </div>
               </div>
               <div className="sp-vendor-cta-row">
-                {makerStory && (
-                  <Link href="/origins" className="btn-outline">Read their story</Link>
-                )}
+                <Link href={vp.slug ? `/makers/${vp.slug}` : "/makers"} className="btn-outline">
+                  View maker profile
+                </Link>
                 {firstCategory && (
                   <Link href={`/shop/category/${firstCategory}`} className="btn-filled">
                     More from {vname}
