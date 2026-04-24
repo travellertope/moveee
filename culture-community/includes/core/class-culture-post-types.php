@@ -504,7 +504,7 @@ class Culture_Post_Types {
             'has_archive'         => true,
             'show_in_menu'        => 'culture-community',
             'menu_icon'           => 'dashicons-email-alt',
-            'supports'            => array( 'title', 'editor', 'thumbnail', 'comments' ),
+            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments' ),
             'rewrite'             => array( 'slug' => 'digest' ),
             'show_in_rest'        => true,
             'capability_type'     => 'post',

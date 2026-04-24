@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_NEWSLETTER_BY_SLUG, GET_NEWSLETTERS } from "@/lib/wp";
+import { getNewsletterBySlugWithFallback, getNewslettersWithFallback } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,13 +20,10 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const resolvedParams = await params;
-  let data;
+  let issue;
   try {
-    data = await getWPData(GET_NEWSLETTER_BY_SLUG, {
-      slug: resolvedParams.slug,
-    });
+    issue = await getNewsletterBySlugWithFallback(resolvedParams.slug, { revalidate: 0 });
   } catch {}
-  const issue = data?.cultureNewsletter;
   if (!issue) return { title: "GetMeLit · The Moveee" };
 
   const imageUrl = issue.featuredImage?.node?.sourceUrl || "/og-fallback.png";
@@ -80,16 +77,13 @@ export default async function GmlIssuePage({
   params: Promise<{ slug: string }>;
 }) {
   const resolvedParams = await params;
-  let data;
+  let issue: any = null;
   try {
-    data = await getWPData(GET_NEWSLETTER_BY_SLUG, {
-      slug: resolvedParams.slug,
-    });
+    issue = await getNewsletterBySlugWithFallback(resolvedParams.slug, { revalidate: 0 });
   } catch (err: any) {
-    console.error("GmlIssuePage getWPData error:", err);
+    console.error("GmlIssuePage error:", err);
   }
 
-  const issue = data?.cultureNewsletter;
   if (!issue) notFound();
 
   // Access control
@@ -102,8 +96,7 @@ export default async function GmlIssuePage({
   // Fetch sibling issues for prev/next nav + issue numbering
   let allIssues: any[] = [];
   try {
-    const listData = await getWPData(GET_NEWSLETTERS, { first: 50 });
-    allIssues = listData?.cultureNewsletters?.nodes || [];
+    allIssues = await getNewslettersWithFallback(50, { revalidate: 0 });
   } catch {}
 
   const totalCount = allIssues.length;

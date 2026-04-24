@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_NEWSLETTERS } from "@/lib/wp";
+import { getNewslettersWithFallback } from "@/lib/wp";
 import Link from "next/link";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import GmlCTAForm from "@/components/GmlCTAForm";
@@ -17,8 +17,7 @@ export const metadata = {
 export default async function NewsletterArchive() {
   let newsletters: any[] = [];
   try {
-    const data = await getWPData(GET_NEWSLETTERS, { first: 50 });
-    newsletters = data?.cultureNewsletters?.nodes || [];
+    newsletters = await getNewslettersWithFallback(50, { revalidate: 0 });
   } catch {
     // CMS unreachable
   }
@@ -117,11 +116,11 @@ export default async function NewsletterArchive() {
               <ul className="gml-mockup-items">
                 <li>
                   <span className="gml-mockup-num">01</span>
-                  <span className="gml-mockup-text">The Deep Dive — long-form cultural essay</span>
+                  <span className="gml-mockup-text">The Deep Dive — intro cultural commentary</span>
                 </li>
                 <li>
                   <span className="gml-mockup-num">02</span>
-                  <span className="gml-mockup-text">The List — five things worth your time</span>
+                  <span className="gml-mockup-text">The List — recommended things worth your time</span>
                 </li>
                 <li>
                   <span className="gml-mockup-num">03</span>
