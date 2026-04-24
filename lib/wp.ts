@@ -131,10 +131,12 @@ function mapRestEventToFrontendShape(item: any) {
     rsvpMembersNote: pick(acf.rsvp_members_note, meta.rsvp_members_note),
     rsvpTicketTypes: Array.isArray(acf.rsvp_ticket_types)
       ? acf.rsvp_ticket_types.map((t: any) => ({
-          ticketName:  t.ticket_name  ?? '',
-          ticketSlug:  t.ticket_slug  ?? '',
-          ticketInfo:  t.ticket_info  ?? '',
-          ticketPrice: t.ticket_price ?? null,
+          ticketName:     t.ticket_name     ?? '',
+          ticketSlug:     t.ticket_slug     ?? '',
+          ticketInfo:     t.ticket_info     ?? '',
+          ticketPrice:    t.ticket_price    ?? null,
+          ticketAmount:   t.ticket_amount   != null ? parseInt(String(t.ticket_amount), 10) : 0,
+          ticketCurrency: t.ticket_currency ?? 'NGN',
         }))
       : [],
     onViewImage: (() => {
@@ -429,6 +431,8 @@ const EVENT_FIELDS_FRAGMENT = `
       ticketSlug
       ticketInfo
       ticketPrice
+      ticketAmount
+      ticketCurrency
     }
     onViewImage {
       node {

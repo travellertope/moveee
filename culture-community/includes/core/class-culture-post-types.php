@@ -169,10 +169,12 @@ class Culture_Post_Types {
 
         register_graphql_object_type( 'CultureEventTicketType', array(
             'fields' => array(
-                'ticketName'  => array( 'type' => 'String' ),
-                'ticketSlug'  => array( 'type' => 'String' ),
-                'ticketInfo'  => array( 'type' => 'String' ),
-                'ticketPrice' => array( 'type' => 'String' ),
+                'ticketName'     => array( 'type' => 'String' ),
+                'ticketSlug'     => array( 'type' => 'String' ),
+                'ticketInfo'     => array( 'type' => 'String' ),
+                'ticketPrice'    => array( 'type' => 'String' ),
+                'ticketAmount'   => array( 'type' => 'Int' ),
+                'ticketCurrency' => array( 'type' => 'String' ),
             ),
         ) );
 
@@ -274,10 +276,12 @@ class Culture_Post_Types {
                 if ( ! is_array( $rows ) ) return null;
                 return array_map( function( $row ) {
                     return array(
-                        'ticketName'  => $row['ticket_name']  ?? '',
-                        'ticketSlug'  => $row['ticket_slug']  ?? '',
-                        'ticketInfo'  => $row['ticket_info']  ?? '',
-                        'ticketPrice' => $row['ticket_price'] ?? null,
+                        'ticketName'     => $row['ticket_name']     ?? '',
+                        'ticketSlug'     => $row['ticket_slug']     ?? '',
+                        'ticketInfo'     => $row['ticket_info']     ?? '',
+                        'ticketPrice'    => $row['ticket_price']    ?? null,
+                        'ticketAmount'   => isset( $row['ticket_amount'] ) ? (int) $row['ticket_amount'] : 0,
+                        'ticketCurrency' => $row['ticket_currency'] ?? 'NGN',
                     );
                 }, $rows );
             },

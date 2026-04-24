@@ -422,6 +422,20 @@ class Culture_Paystack {
      * @param array  $body    Request body (for POST/PUT).
      * @return array|WP_Error Parsed response body or error.
      */
+    /**
+     * Initiate a one-time charge (used by ticket system).
+     */
+    public static function charge_initiate( array $params ): array|\WP_Error {
+        return self::api_request( 'POST', '/transaction/initialize', $params );
+    }
+
+    /**
+     * Verify a transaction by reference (used by ticket callback).
+     */
+    public static function verify_transaction( string $reference ): array|\WP_Error {
+        return self::api_request( 'GET', '/transaction/verify/' . rawurlencode( $reference ) );
+    }
+
     private static function api_request( $method, $endpoint, $body = array() ) {
         $args = array(
             'method'  => $method,

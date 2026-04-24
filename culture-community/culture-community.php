@@ -63,6 +63,8 @@ require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-event-rsvp.php';
 // Payment includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-stripe.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-ticket-payment.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-tickets-admin.php';
 
 /**
  * Plugin activation hook.
@@ -110,6 +112,8 @@ function culture_community_init() {
     Culture_Event_RSVP::init();
     Culture_RSVP_Admin::init();
     Culture_RSVP_Admin::init_post_handlers();
+    Culture_Ticket_Payment::init();
+    Culture_Tickets_Admin::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {
