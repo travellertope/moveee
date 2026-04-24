@@ -4,7 +4,54 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import "../makers.css";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+
+const CMS = "https://cms.themoveee.com";
+
+async function fetchMaker(slug: string): Promise<any | null> {
+  try {
+    const data = await getWPData(GET_MAKER_BY_SLUG, { slug });
+    const m = data?.moveeeVendorBySlug;
+    if (m) return m;
+  } catch { /* fall through */ }
+  try {
+    const res = await fetch(`${CMS}/wp-json/moveee/v1/vendors/${encodeURIComponent(slug)}`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json && !json.code) return json;
+    }
+  } catch { /* fall through */ }
+  return null;
+}
+
+async function fetchVendorProducts(slug: string): Promise<any[]> {
+  try {
+    const data = await getWPData(GET_PRODUCTS_BY_VENDOR, { first: 24, vendor: slug });
+    const nodes = data?.products?.nodes ?? [];
+    if (nodes.length > 0) return nodes;
+  } catch { /* fall through */ }
+  try {
+    const res = await fetch(
+      `${CMS}/wp-json/moveee/v1/vendors/${encodeURIComponent(slug)}/products?first=24`,
+      { cache: "no-store" }
+    );
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json)) {
+        return json.map((p: any) => ({
+          id:    p.id,
+          slug:  p.slug,
+          name:  p.name,
+          price: p.price,
+          image: p.imageUrl ? { sourceUrl: p.imageUrl, altText: p.imageAlt || "" } : null,
+        }));
+      }
+    }
+  } catch { /* fall through */ }
+  return [];
+}
 
 export async function generateMetadata({
   params,
@@ -12,14 +59,14 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const data = await getWPData(GET_MAKER_BY_SLUG, { slug }).catch(() => null);
-  const maker = data?.moveeeVendorBySlug;
+  const maker = await fetchMaker(slug);
   if (!maker) return { title: "Maker Not Found | The Moveee" };
+  const name = maker.storeName || maker.display_name || "Maker";
   return {
-    title: `${maker.storeName} | Makers | The Moveee`,
+    title: `${name} | Makers | The Moveee`,
     description:
       maker.bio ||
-      `Discover handcrafted pieces by ${maker.storeName} on The Moveee.`,
+      `Discover handcrafted pieces by ${name} on The Moveee.`,
   };
 }
 
@@ -30,17 +77,14 @@ export default async function SingleMakerPage({
 }) {
   const { slug } = await params;
 
-  const [vendorData, productsData] = await Promise.all([
-    getWPData(GET_MAKER_BY_SLUG, { slug }).catch(() => null),
-    getWPData(GET_PRODUCTS_BY_VENDOR, { first: 24, vendor: slug }).catch(
-      () => null
-    ),
+  const [maker, products] = await Promise.all([
+    fetchMaker(slug),
+    fetchVendorProducts(slug),
   ]);
 
-  const maker = vendorData?.moveeeVendorBySlug;
   if (!maker) notFound();
 
-  const products: any[] = productsData?.products?.nodes ?? [];
+  const storeName = maker.storeName || maker.display_name || "Unnamed Maker";
   const location = [maker.city, maker.country].filter(Boolean).join(", ");
   const productCount = maker.productCount ?? products.length;
 
@@ -52,7 +96,7 @@ export default async function SingleMakerPage({
         <span className="sep">→</span>
         <Link href="/makers">Makers</Link>
         <span className="sep">→</span>
-        <span>{maker.storeName}</span>
+        <span>{storeName}</span>
       </nav>
 
       {/* ── Hero ── */}
@@ -61,7 +105,7 @@ export default async function SingleMakerPage({
           {maker.avatarUrl && (
             <Image
               src={maker.avatarUrl}
-              alt={maker.storeName}
+              alt={storeName}
               fill
               style={{ objectFit: "cover" }}
               priority
@@ -72,7 +116,7 @@ export default async function SingleMakerPage({
 
         <div className="maker-hero-info">
           <div className="maker-vetted-badge">★ Vetted Maker</div>
-          <h1 className="maker-hero-name">{maker.storeName}</h1>
+          <h1 className="maker-hero-name">{storeName}</h1>
           {location && (
             <div className="maker-hero-location">{location}</div>
           )}
@@ -110,7 +154,7 @@ export default async function SingleMakerPage({
         <section className="maker-products-section">
           <div className="maker-products-header">
             <h2 className="maker-products-title">
-              Work by <em>{maker.storeName}</em>
+              Work by <em>{storeName}</em>
             </h2>
             <span className="maker-products-count">
               {products.length} {products.length === 1 ? "piece" : "pieces"}

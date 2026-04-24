@@ -3,7 +3,7 @@
  * Plugin Name: Moveee GraphQL Bridge
  * Description: Bridges JetEngine taxonomies, WCFM vendor profiles, and product
  *              editorial metadata to WPGraphQL for the Moveee headless frontend.
- * Version: 1.4.6
+ * Version: 1.4.7
  * Author: Antigravity
  */
 
@@ -450,6 +450,88 @@ add_action( 'rest_api_init', function () {
             }
             return rest_ensure_response( $vendors );
         },
+    ] );
+} );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6b. REST API — /wp-json/moveee/v1/vendors/{slug}
+//     Single vendor profile by user_nicename (URL slug).
+// ─────────────────────────────────────────────────────────────────────────────
+add_action( 'rest_api_init', function () {
+    register_rest_route( 'moveee/v1', '/vendors/(?P<slug>[a-z0-9\-_]+)', [
+        [
+            'methods'             => 'GET',
+            'permission_callback' => '__return_true',
+            'callback'            => function ( WP_REST_Request $req ) {
+                $slug = sanitize_title( $req->get_param( 'slug' ) );
+                $user = get_user_by( 'slug', $slug );
+                if ( ! $user ) {
+                    return new WP_Error( 'not_found', 'Vendor not found.', [ 'status' => 404 ] );
+                }
+                $profile = moveee_vendor_profile_by_id( (int) $user->ID );
+                if ( ! $profile ) {
+                    return new WP_Error( 'not_found', 'Vendor not found.', [ 'status' => 404 ] );
+                }
+                return rest_ensure_response( $profile );
+            },
+        ],
+    ] );
+} );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6c. REST API — /wp-json/moveee/v1/vendors/{slug}/products
+//     Published WooCommerce products belonging to a WCFM vendor.
+// ─────────────────────────────────────────────────────────────────────────────
+add_action( 'rest_api_init', function () {
+    register_rest_route( 'moveee/v1', '/vendors/(?P<slug>[a-z0-9\-_]+)/products', [
+        [
+            'methods'             => 'GET',
+            'permission_callback' => '__return_true',
+            'args'                => [
+                'first' => [ 'default' => 24, 'sanitize_callback' => 'absint' ],
+            ],
+            'callback'            => function ( WP_REST_Request $req ) {
+                global $wpdb;
+                $slug  = sanitize_title( $req->get_param( 'slug' ) );
+                $first = min( $req->get_param( 'first' ), 100 );
+                $user  = get_user_by( 'slug', $slug );
+                if ( ! $user ) {
+                    return new WP_Error( 'not_found', 'Vendor not found.', [ 'status' => 404 ] );
+                }
+                $uid = (int) $user->ID;
+
+                // Products authored by this user OR assigned via _wcfm_product_author.
+                $post_ids = $wpdb->get_col( $wpdb->prepare(
+                    "SELECT DISTINCT p.ID
+                       FROM {$wpdb->posts} p
+                  LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '_wcfm_product_author'
+                      WHERE p.post_type   = 'product'
+                        AND p.post_status = 'publish'
+                        AND ( p.post_author = %d OR pm.meta_value = %d )
+                      LIMIT %d",
+                    $uid, $uid, $first
+                ) );
+
+                $products = [];
+                foreach ( $post_ids as $pid ) {
+                    $product = wc_get_product( (int) $pid );
+                    if ( ! $product ) continue;
+
+                    $img_id  = $product->get_image_id();
+                    $img_url = $img_id ? wp_get_attachment_image_url( $img_id, 'woocommerce_single' ) : null;
+
+                    $products[] = [
+                        'id'        => $product->get_id(),
+                        'slug'      => $product->get_slug(),
+                        'name'      => $product->get_name(),
+                        'price'     => wc_price( $product->get_price() ),
+                        'imageUrl'  => $img_url ?: null,
+                        'imageAlt'  => $img_id ? get_post_meta( $img_id, '_wp_attachment_image_alt', true ) : '',
+                    ];
+                }
+                return rest_ensure_response( $products );
+            },
+        ],
     ] );
 } );
 
