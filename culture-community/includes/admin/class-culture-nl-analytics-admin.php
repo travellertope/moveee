@@ -135,7 +135,7 @@ class Culture_NL_Analytics_Admin {
                         <?php foreach ( $data['campaigns'] as $c ) : ?>
                             <tr>
                                 <td>
-                                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-nl-analytics&campaign=' . $c['id'] ) ); ?>">
+                                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-analytics&tab=newsletter&campaign=' . $c['id'] ) ); ?>">
                                         <strong><?php echo esc_html( $c['title'] ); ?></strong>
                                     </a>
                                 </td>
@@ -194,7 +194,7 @@ class Culture_NL_Analytics_Admin {
         ?>
         <div class="culture-nla-wrap">
             <p>
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-nl-analytics' ) ); ?>" class="culture-nla-back">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-analytics&tab=newsletter' ) ); ?>" class="culture-nla-back">
                     ← <?php esc_html_e( 'All Campaigns', 'culture-community' ); ?>
                 </a>
             </p>
@@ -323,7 +323,7 @@ class Culture_NL_Analytics_Admin {
                     </thead>
                     <tbody>
                         <?php foreach ( $openers['rows'] as $row ) :
-                            $sub_url = admin_url( 'admin.php?page=culture-nl-analytics&subscriber='
+                            $sub_url = admin_url( 'admin.php?page=culture-analytics&tab=newsletter&subscriber='
                                 . base64_encode( $row['subscriber'] ) );
                         ?>
                             <tr>
@@ -351,7 +351,7 @@ class Culture_NL_Analytics_Admin {
                 <?php if ( $openers['pages'] > 1 ) : ?>
                     <div class="culture-nla-pagination">
                         <?php
-                        $base = admin_url( 'admin.php?page=culture-nl-analytics&campaign=' . $campaign_id . '&paged=%#%' );
+                        $base = admin_url( 'admin.php?page=culture-analytics&tab=newsletter&campaign=' . $campaign_id . '&paged=%#%' );
                         echo paginate_links( array(
                             'base'      => $base,
                             'format'    => '',
@@ -384,7 +384,7 @@ class Culture_NL_Analytics_Admin {
         ?>
         <div class="culture-nla-wrap">
             <p>
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-nl-analytics' ) ); ?>" class="culture-nla-back">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-analytics&tab=newsletter' ) ); ?>" class="culture-nla-back">
                     ← <?php esc_html_e( 'All Campaigns', 'culture-community' ); ?>
                 </a>
             </p>
@@ -457,7 +457,7 @@ class Culture_NL_Analytics_Admin {
                         <?php foreach ( $stats['history'] as $row ) : ?>
                             <tr>
                                 <td>
-                                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-nl-analytics&campaign=' . $row['campaign_id'] ) ); ?>">
+                                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-analytics&tab=newsletter&campaign=' . $row['campaign_id'] ) ); ?>">
                                         <?php echo esc_html( $row['title'] ); ?>
                                     </a>
                                 </td>
