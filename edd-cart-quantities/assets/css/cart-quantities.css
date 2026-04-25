@@ -1,5 +1,6 @@
-/* ── EDD Cart Quantities controls ── */
+/* ── EDD Cart Quantities ── */
 
+/* Shared control strip */
 .eddcq-wrap {
   display: inline-flex;
   align-items: stretch;
@@ -16,7 +17,6 @@
   width: 32px;
   height: 32px;
   font-size: 18px;
-  font-weight: 400;
   cursor: pointer;
   padding: 0;
   color: #1a1814;
@@ -26,14 +26,8 @@
   justify-content: center;
   flex-shrink: 0;
 }
-
-.eddcq-btn:hover {
-  background: #e8e2da;
-}
-
-.eddcq-btn:active {
-  background: #d9d0c4;
-}
+.eddcq-btn:hover  { background: #e8e2da; }
+.eddcq-btn:active { background: #d9d0c4; }
 
 .eddcq-input {
   width: 48px;
@@ -50,28 +44,32 @@
   appearance: textfield;
   border-radius: 0;
 }
-
 .eddcq-input::-webkit-inner-spin-button,
-.eddcq-input::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+.eddcq-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.eddcq-input:focus { outline: none; background: #fafaf8; }
 
-.eddcq-input:focus {
-  outline: none;
-  background: #fafaf8;
-}
-
-/* ── Loading state while AJAX is in flight ── */
-
+/* Loading state */
 .eddcq-loading {
   opacity: 0.45;
   pointer-events: none;
   transition: opacity 0.2s ease;
 }
 
-/* ── Subtle animation on cart table during swap ── */
+/* ── Download page quantity ── */
+.eddcq-dl-qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
 
-#edd_checkout_cart {
-  transition: opacity 0.15s ease;
+.eddcq-dl-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1814;
+}
+
+/* Inline variant (no top margin, used on download page) */
+.eddcq-wrap--inline {
+  margin-top: 0;
 }
