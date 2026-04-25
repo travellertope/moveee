@@ -409,7 +409,7 @@ export default async function ShopArchiveWrapper({
                 { icon: "○", title: "Free Delivery", desc: "On all UK orders, always." },
                 { icon: "△", title: "Maker Events", desc: "Invitations to studio visits and openings." },
               ].map((perk) => (
-                <div key={perk.title} className="perk">
+                <div key={perk.title} className="sh-perk">
                   <div className="pk-icon">{perk.icon}</div>
                   <div className="pk-title">{perk.title}</div>
                   <p className="pk-desc">{perk.desc}</p>
