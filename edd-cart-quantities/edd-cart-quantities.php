@@ -3,7 +3,7 @@
  * Plugin Name:       EDD Cart Quantities
  * Plugin URI:        https://themoveee.com
  * Description:       Real-time quantity adjustment for Easy Digital Downloads cart items on the checkout page.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            The Moveee
  * License:           GPL-2.0-or-later
  * Requires at least: 5.8
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EDDCQ_VERSION', '1.0.0' );
+define( 'EDDCQ_VERSION', '1.0.1' );
 define( 'EDDCQ_URL', plugin_dir_url( __FILE__ ) );
 
 final class EDDCQ_Plugin {
