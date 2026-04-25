@@ -131,34 +131,20 @@ export default async function ShopArchiveWrapper({
       {/* ── 1. SHOP HEAD ── */}
       <section className="shop-head">
         <div className="shop-head-inner">
-          <div className="shop-head-left">
-            <h1>
-              {isFiltered ? (
-                <em>{activeLabel}</em>
-              ) : (
-                <>Moveee <em>Lifestyle</em></>
-              )}
-            </h1>
-            <p className="sh-desc">
-              {isFiltered
-                ? `A curated collection of ${activeLabel} goods from vetted makers.`
-                : "Every piece chosen for craft, longevity, and the story behind it."}
-            </p>
-          </div>
-          <div className="shop-head-right">
-            <div className="vetting-pledge">
-              <div className="vp-label">★ The Vetting Pledge</div>
-              <p className="vp-text">
-                Every maker on Moveee is personally vetted for craft integrity,
-                fair production, and lasting quality.
-              </p>
-              <a href="/about#vetting" className="vp-link">
-                How we vet →
-              </a>
-            </div>
-          </div>
+          <h1 className="sh-title">
+            {isFiltered ? (
+              <em>{activeLabel}</em>
+            ) : (
+              <>Moveee <em>Lifestyle</em></>
+            )}
+          </h1>
+          <div className="sh-rule" aria-hidden />
+          <p className="sh-desc">
+            {isFiltered
+              ? `A curated collection of ${activeLabel} goods from vetted makers.`
+              : "Every piece chosen for craft, longevity, and the story behind it. Every maker on Moveee is personally vetted for craft integrity, fair production, and lasting quality."}
+          </p>
         </div>
-        <div className="issue-ghost">014</div>
       </section>
 
       {/* ── 2. FILTER BAR ── */}
