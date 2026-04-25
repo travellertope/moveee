@@ -575,7 +575,7 @@
 }
 .vc { background: var(--paper); padding: 32px 28px; cursor: pointer; transition: background .25s; }
 .vc:hover { background: var(--paper-deep); }
-.vc .vc-img { aspect-ratio: 1; background: var(--ink); overflow: hidden; margin-bottom: 18px; }
+.vc .vc-img { position: relative; aspect-ratio: 1; background: var(--ink); overflow: hidden; margin-bottom: 18px; }
 .vc .vc-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .vc .vc-vetted {
   font-family: 'JetBrains Mono', monospace;
