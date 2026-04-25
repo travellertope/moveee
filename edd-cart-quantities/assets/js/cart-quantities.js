@@ -3,47 +3,54 @@
 jQuery(function ($) {
   'use strict';
 
-  // ── Currency formatter using WP-localised EDD settings ─────────────────────
+  // ── Currency helpers ────────────────────────────────────────────────────────
 
   function formatPrice(amount) {
-    var fixed     = parseFloat(amount).toFixed(eddcq.decimals);
-    var parts     = fixed.split('.');
-    var thousands = eddcq.thousandsSep;
-    var decimal   = eddcq.decimalSep;
+    var decimals  = parseInt(eddcq.decimals, 10) || 2;
+    var decSep    = eddcq.decimalSep   || '.';
+    var thouSep   = eddcq.thousandsSep || ',';
+    var symbol    = eddcq.currencySymbol || '$';
+    var pos       = eddcq.currencyPos    || 'before';
 
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousands);
-    var number = parts.join(decimal);
+    var fixed  = parseFloat(amount).toFixed(decimals);
+    var parts  = fixed.split('.');
+    parts[0]   = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thouSep);
+    var number = parts.join(decSep);
 
-    return eddcq.currencyPos === 'before'
-      ? eddcq.currencySymbol + number
-      : number + eddcq.currencySymbol;
+    return pos === 'before' ? symbol + number : number + symbol;
   }
 
-  // ── Parse a formatted price string back to a float ─────────────────────────
-
   function parsePrice(str) {
-    // Strip everything except digits and the decimal separator.
-    var dec     = eddcq.decimalSep || '.';
-    var escaped = dec.replace('.', '\\.');
-    var cleaned = str.replace(new RegExp('[^0-9' + escaped + ']', 'g'), '')
-                     .replace(dec, '.');
+    // Strip everything except digits and the first decimal point.
+    var cleaned = String(str).replace(/[^0-9.]/g, '');
+    // If the original string used a comma as decimal separator, handle that.
+    if (eddcq.decimalSep === ',') {
+      cleaned = String(str).replace(/[^0-9,]/g, '').replace(',', '.');
+    }
     return parseFloat(cleaned) || 0;
   }
 
-  // ── Cart page: inject +/− controls and handle qty changes ──────────────────
+  // ── Main object ─────────────────────────────────────────────────────────────
 
-  var Cart = {
+  var EddCQ = {
 
     debounceTimer: null,
 
     init: function () {
-      if (!$('#edd_checkout_cart, .edd_checkout_cart, #edd_cart_form, #edd_cart').length) return;
-      this.inject();
-      this.bindCart();
+      // Cart / checkout pages.
+      if ($('#edd_checkout_cart, .edd_checkout_cart, #edd_cart_form').length) {
+        this.injectCart();
+      }
+      // Download page (PHP renders .eddcq-dl-qty-wrap via hook).
+      if ($('.eddcq-dl-qty-wrap').length) {
+        this.injectDownload();
+      }
+      this.bind();
     },
 
-    inject: function () {
-      // Match rows by the edd_cart_item_ ID prefix (all EDD versions).
+    // ── Cart: inject +/− controls into each cart row ──────────────────────────
+
+    injectCart: function () {
       var $rows = $('tr[id^="edd_cart_item_"]');
       if (!$rows.length) $rows = $('tr.edd_cart_item, li.edd_cart_item');
 
@@ -59,32 +66,26 @@ jQuery(function ($) {
 
         if ($row.find('.eddcq-wrap').length) return; // already injected
 
-        // Read current qty from any existing EDD qty input; default 1.
         var currentQty = parseInt(
           $row.find('input[name*="quantity"], input[name*="qty"]').val() ||
-          $row.find('.edd_cart_item_quantity').text(), 10
+          $row.find('.edd_cart_item_quantity').text(),
+          10
         ) || 1;
 
-        // Find the price cell and read the unit price from its current text.
-        // We look for the SECOND td (price column) across multiple EDD class names.
-        var $priceCell = $row.find('.edd_cart_item_price').first();
+        // Read unit price from the existing price cell.
+        var $priceCell = $row.find('.edd_cart_item_price, .edd_item_price').first();
         if (!$priceCell.length) $priceCell = $row.find('td').eq(1);
-
-        // Store the unit price now (before quantity may have made it a line total).
-        // Divide by current qty so we always have the per-unit value.
-        var rawPrice = parsePrice($priceCell.text());
+        var rawPrice  = parsePrice($priceCell.text());
         var unitPrice = currentQty > 1 ? rawPrice / currentQty : rawPrice;
 
-        // Name cell: first td or EDD-named cell.
-        var $nameCell = $row.find(
+        var $cell = $row.find(
           '.edd_cart_item_name, .edd_item_name, .edd_cart_item_title, td:first-child'
         ).first();
+        if (!$cell.length) return;
 
-        if (!$nameCell.length) return;
-
-        $nameCell.append(
+        $cell.append(
           '<div class="eddcq-wrap"' +
-            ' data-cart-key="'  + cartKey   + '"' +
+            ' data-cart-key="'   + cartKey   + '"' +
             ' data-unit-price="' + unitPrice + '">' +
             '<button class="eddcq-btn eddcq-minus" type="button" aria-label="Decrease">&#8722;</button>' +
             '<input  class="eddcq-input" type="number" value="' + currentQty + '" min="1" max="999" aria-label="Quantity">' +
@@ -92,31 +93,40 @@ jQuery(function ($) {
           '</div>'
         );
 
-        // Point the row at its price cell so applyPrice() can find it later.
+        // Cache the price cell on the row for quick lookup later.
         $row.data('eddcq-price-cell', $priceCell);
       });
     },
 
-    bindCart: function () {
+    // ── Download: the PHP hook renders the wrap; just store unit price ─────────
+
+    injectDownload: function () {
+      // Nothing to build — PHP already rendered the controls.
+      // Bind is handled by the shared bind() below.
+    },
+
+    // ── Unified event delegation ───────────────────────────────────────────────
+
+    bind: function () {
       $(document)
-        .on('click', '.eddcq-wrap .eddcq-minus', function () {
-          var $input = $(this).siblings('.eddcq-input');
+        .on('click', '.eddcq-minus', function () {
+          var $input = $(this).closest('.eddcq-wrap').find('.eddcq-input');
           var val    = parseInt($input.val(), 10) || 1;
           if (val > 1) $input.val(val - 1).trigger('eddcq:commit');
         })
-        .on('click', '.eddcq-wrap .eddcq-plus', function () {
-          var $input = $(this).siblings('.eddcq-input');
+        .on('click', '.eddcq-plus', function () {
+          var $input = $(this).closest('.eddcq-wrap').find('.eddcq-input');
           var val    = parseInt($input.val(), 10) || 1;
           $input.val(val + 1).trigger('eddcq:commit');
         })
-        .on('input', '.eddcq-wrap .eddcq-input', function () {
+        .on('input', '.eddcq-input', function () {
           var $input = $(this);
-          clearTimeout(Cart.debounceTimer);
-          Cart.debounceTimer = setTimeout(function () {
+          clearTimeout(EddCQ.debounceTimer);
+          EddCQ.debounceTimer = setTimeout(function () {
             $input.trigger('eddcq:commit');
           }, 600);
         })
-        .on('eddcq:commit', '.eddcq-wrap .eddcq-input', function () {
+        .on('eddcq:commit', '.eddcq-input', function () {
           var $input    = $(this);
           var $wrap     = $input.closest('.eddcq-wrap');
           var cartKey   = $wrap.data('cart-key');
@@ -124,18 +134,26 @@ jQuery(function ($) {
           var quantity  = Math.max(1, parseInt($input.val(), 10) || 1);
           $input.val(quantity);
 
-          // 1. Update the price cell immediately in the browser (no AJAX wait).
-          var $row = $wrap.closest('tr, li');
-          var $priceCell = $row.data('eddcq-price-cell') ||
-                           $row.find('.edd_cart_item_price, td').eq(1);
+          // Skip AJAX on download page (no cart key).
+          if (!cartKey && cartKey !== 0) return;
+
+          // 1. Instant client-side price cell update.
+          var $row       = $wrap.closest('tr, li');
+          var $priceCell = $row.data('eddcq-price-cell');
+          if (!$priceCell || !$priceCell.length) {
+            $priceCell = $row.find('.edd_cart_item_price, .edd_item_price').first();
+            if (!$priceCell.length) $priceCell = $row.find('td').eq(1);
+          }
           if (unitPrice > 0) {
             $priceCell.text(formatPrice(unitPrice * quantity));
           }
 
-          // 2. Persist to server and refresh subtotal/total.
-          Cart.sync(cartKey, quantity, $row);
+          // 2. Persist to server, refresh subtotal + total.
+          EddCQ.sync(cartKey, quantity, $row);
         });
     },
+
+    // ── AJAX ──────────────────────────────────────────────────────────────────
 
     sync: function (cartKey, quantity, $row) {
       $row.addClass('eddcq-loading');
@@ -148,57 +166,27 @@ jQuery(function ($) {
       })
       .done(function (response) {
         if (!response || !response.success) return;
-        Cart.applyTotals(response.data);
+        var d = response.data;
+
+        if (d.subtotal) {
+          $('.edd_cart_subtotal_amount, .edd_subtotal_amount').text(d.subtotal);
+        }
+        if (d.total) {
+          $(
+            '#edd_final_total_wrap .edd_cart_amount,' +
+            '.edd_cart_total .edd_cart_amount,' +
+            '#edd_cart_total .edd_cart_amount,' +
+            '.edd_cart_total_amount,' +
+            '#edd_checkout_total_container,' +
+            '[data-edd-total]'
+          ).text(d.total);
+        }
       })
       .always(function () {
         $row.removeClass('eddcq-loading');
       });
     },
-
-    applyTotals: function (data) {
-      if (data.subtotal) {
-        $('.edd_cart_subtotal_amount, .edd_subtotal_amount, #edd_cart_subtotal .edd_cart_amount')
-          .text(data.subtotal);
-      }
-      if (data.total) {
-        $(
-          '#edd_final_total_wrap .edd_cart_amount, ' +
-          '.edd_cart_total .edd_cart_amount, ' +
-          '#edd_cart_total .edd_cart_amount, ' +
-          '.edd_cart_total_amount, ' +
-          '#edd_checkout_total_container, ' +
-          '[data-edd-total]'
-        ).text(data.total);
-      }
-    },
   };
 
-  // ── Download page: +/− on the PHP-rendered qty input ───────────────────────
-
-  var Download = {
-
-    init: function () {
-      if (!$('.eddcq-dl-qty-wrap').length) return;
-      this.bindDownload();
-    },
-
-    bindDownload: function () {
-      $(document)
-        .on('click', '.eddcq-wrap--inline .eddcq-minus', function () {
-          var $input = $(this).siblings('.eddcq-input');
-          var val    = parseInt($input.val(), 10) || 1;
-          if (val > 1) $input.val(val - 1);
-        })
-        .on('click', '.eddcq-wrap--inline .eddcq-plus', function () {
-          var $input = $(this).siblings('.eddcq-input');
-          var val    = parseInt($input.val(), 10) || 1;
-          $input.val(val + 1);
-        });
-    },
-  };
-
-  // ── Boot ───────────────────────────────────────────────────────────────────
-
-  Cart.init();
-  Download.init();
+  EddCQ.init();
 });
