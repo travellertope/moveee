@@ -1,0 +1,77 @@
+/* ── EDD Cart Quantities controls ── */
+
+.eddcq-wrap {
+  display: inline-flex;
+  align-items: stretch;
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  overflow: hidden;
+  line-height: 1;
+}
+
+.eddcq-btn {
+  background: #f4f1ed;
+  border: none;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 0;
+  color: #1a1814;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.eddcq-btn:hover {
+  background: #e8e2da;
+}
+
+.eddcq-btn:active {
+  background: #d9d0c4;
+}
+
+.eddcq-input {
+  width: 48px;
+  height: 32px;
+  border: none;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  text-align: center;
+  font-size: 13px;
+  color: #1a1814;
+  background: #fff;
+  padding: 0;
+  -moz-appearance: textfield;
+  appearance: textfield;
+  border-radius: 0;
+}
+
+.eddcq-input::-webkit-inner-spin-button,
+.eddcq-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.eddcq-input:focus {
+  outline: none;
+  background: #fafaf8;
+}
+
+/* ── Loading state while AJAX is in flight ── */
+
+.eddcq-loading {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+/* ── Subtle animation on cart table during swap ── */
+
+#edd_checkout_cart {
+  transition: opacity 0.15s ease;
+}
