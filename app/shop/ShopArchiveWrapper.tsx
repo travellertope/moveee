@@ -122,9 +122,9 @@ export default async function ShopArchiveWrapper({
   const isFiltered = !!(category || tag || brand);
   const activeLabel = category || tag || brand || "Lifestyle";
 
-  // Featured = first 4, grid = rest
-  const featured = products.slice(0, 4);
-  const gridProducts = products.slice(4);
+  // Featured = first 5 (1 large + 2×2 grid), grid = rest
+  const featured = products.slice(0, 5);
+  const gridProducts = products.slice(5);
 
   return (
     <>
@@ -212,9 +212,9 @@ export default async function ShopArchiveWrapper({
               </Link>
             )}
 
-            {/* Stacked small cards */}
-            <div className="feat-stack">
-              {featured.slice(1, 4).map((p) => (
+            {/* 2×2 grid of small cards */}
+            <div className="feat-grid">
+              {featured.slice(1, 5).map((p) => (
                 <Link key={p.id} href={`/shop/${p.slug}`} className="feat-card feat-small">
                   <div className="feat-img-wrap">
                     {p.image?.sourceUrl ? (
