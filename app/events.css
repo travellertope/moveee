@@ -230,7 +230,7 @@ html {
 .ec-cta { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; color: var(--ochre); }
 
 /* Filters */
-.filter-bar { background: var(--paper); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 0; margin-bottom: 80px; position: sticky; top: 0; z-index: 50; }
+.filter-bar { background: var(--paper); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 0; position: sticky; top: 0; z-index: 50; }
 .filter-inner { max-width: 1440px; margin: 0 auto; padding: 24px 80px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .filter-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mute); margin-right: 8px; }
 .filter-btn { background: transparent; border: 1px solid var(--rule); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 16px; color: var(--ink); cursor: pointer; transition: all 0.25s; }
