@@ -616,7 +616,7 @@
 .shop-origins-bridge {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 60px 70px;
+  padding: 70px 60px 70px;
   position: relative;
   z-index: 2;
 }
