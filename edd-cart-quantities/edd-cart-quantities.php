@@ -3,7 +3,7 @@
  * Plugin Name:       EDD Cart Quantities
  * Plugin URI:        https://themoveee.com
  * Description:       Real-time quantity adjustment for Easy Digital Downloads cart items on the checkout page.
- * Version:           1.0.2
+ * Version:           1.0.3
  * Author:            The Moveee
  * License:           GPL-2.0-or-later
  * Requires at least: 5.8
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EDDCQ_VERSION', '1.0.2' );
+define( 'EDDCQ_VERSION', '1.0.3' );
 define( 'EDDCQ_URL', plugin_dir_url( __FILE__ ) );
 
 final class EDDCQ_Plugin {
@@ -41,7 +41,6 @@ final class EDDCQ_Plugin {
 
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue' ] );
 
-		// Allow both logged-in and guest checkout users.
 		foreach ( [ 'wp_ajax_', 'wp_ajax_nopriv_' ] as $prefix ) {
 			add_action( $prefix . 'eddcq_update', [ $this, 'ajax_update' ] );
 		}
@@ -75,7 +74,7 @@ final class EDDCQ_Plugin {
 		] );
 	}
 
-	// ─── AJAX: update quantity and return fresh cart HTML ──────────────────────
+	// ─── AJAX handler ─────────────────────────────────────────────────────────
 
 	public function ajax_update(): void {
 		check_ajax_referer( 'eddcq_nonce', 'nonce' );
@@ -89,7 +88,7 @@ final class EDDCQ_Plugin {
 
 		$quantity = max( 1, $quantity );
 
-		// EDD 3.x exposes a typed method; fall back to direct session write for 2.x.
+		// EDD 3.x has a typed method; fall back to direct session write for 2.x.
 		if ( method_exists( EDD()->cart, 'set_item_quantity' ) ) {
 			$updated = EDD()->cart->set_item_quantity( $cart_key, $quantity );
 		} else {
@@ -106,15 +105,33 @@ final class EDDCQ_Plugin {
 			wp_send_json_error( 'Could not update cart.' );
 		}
 
-		// Capture fresh cart table HTML so JS can swap it in.
-		ob_start();
-		edd_checkout_cart();
-		$cart_html = ob_get_clean();
+		wp_send_json_success( $this->cart_data() );
+	}
 
-		wp_send_json_success( [
-			'cart_html' => $cart_html,
-			'total'     => edd_currency_filter( edd_format_amount( edd_get_cart_total() ) ),
-		] );
+	// ─── Build response payload ────────────────────────────────────────────────
+
+	private function cart_data(): array {
+		$cart  = edd_get_cart_contents();
+		$items = [];
+
+		foreach ( (array) $cart as $key => $item ) {
+			$download_id = $item['id'];
+			$options     = $item['options'] ?? [];
+			$quantity    = absint( $item['quantity'] ?? 1 );
+			$unit_price  = edd_get_cart_item_price( $download_id, $options );
+			$line_total  = $unit_price * $quantity;
+
+			$items[ $key ] = [
+				'quantity'   => $quantity,
+				'line_total' => edd_currency_filter( edd_format_amount( $line_total ) ),
+			];
+		}
+
+		return [
+			'items'    => $items,
+			'subtotal' => edd_currency_filter( edd_format_amount( edd_get_cart_subtotal() ) ),
+			'total'    => edd_currency_filter( edd_format_amount( edd_get_cart_total() ) ),
+		];
 	}
 
 	public function missing_edd_notice(): void {

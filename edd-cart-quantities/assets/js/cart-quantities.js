@@ -1,5 +1,4 @@
 /* global eddcq */
-/* jshint browser: true */
 
 jQuery(function ($) {
   'use strict';
@@ -14,29 +13,23 @@ jQuery(function ($) {
       this.bind();
     },
 
-    // ── Inject quantity controls into each cart row ───────────────────────────
+    // ── Inject +/− controls into each cart row ────────────────────────────────
 
     inject: function () {
-      // Match rows by ID prefix — reliable across all EDD versions.
       var $rows = $('tr[id^="edd_cart_item_"]');
-
-      // Fallback: class-based match for themes that strip IDs.
-      if (!$rows.length) {
-        $rows = $('.edd_cart_item');
-      }
+      if (!$rows.length) $rows = $('.edd_cart_item');
 
       $rows.each(function () {
         var $row    = $(this);
         var rowId   = $row.attr('id') || '';
         var cartKey = rowId.replace('edd_cart_item_', '');
 
-        // If ID pattern didn't match, try data attributes.
         if (!cartKey || cartKey === rowId) {
           cartKey = $row.data('cart-key') || $row.data('key');
           if (cartKey === undefined || cartKey === '') return;
         }
 
-        if ($row.find('.eddcq-wrap').length) return; // already injected
+        if ($row.find('.eddcq-wrap').length) return;
 
         var currentQty = parseInt(
           $row.find('input[name*="quantity"], input[name*="qty"]').val() ||
@@ -60,7 +53,7 @@ jQuery(function ($) {
       });
     },
 
-    // ── Event delegation — survives cart HTML swaps ───────────────────────────
+    // ── Event delegation ──────────────────────────────────────────────────────
 
     bind: function () {
       $(document)
@@ -102,39 +95,54 @@ jQuery(function ($) {
         quantity: quantity,
       })
       .done(function (response) {
-        if (!response || !response.success) {
-          $row.removeClass('eddcq-loading');
-          return;
-        }
-        EddCQ.swapCart(response.data.cart_html);
-        EddCQ.updateTotal(response.data.total);
+        $row.removeClass('eddcq-loading');
+        if (!response || !response.success) return;
+        EddCQ.applyData(response.data);
       })
       .fail(function () {
         $row.removeClass('eddcq-loading');
       });
     },
 
-    swapCart: function (html) {
-      if (!html) return;
-      var $parsed = $($.parseHTML(html));
-      var $new    = $parsed.filter('#edd_checkout_cart');
-      if (!$new.length) $new = $parsed.find('#edd_checkout_cart');
-      if ($new.length) $('#edd_checkout_cart').replaceWith($new);
-      EddCQ.inject();
-    },
+    // ── Update prices and totals directly in the DOM ──────────────────────────
 
-    updateTotal: function (total) {
-      if (!total) return;
-      $.each([
-        '#edd_final_total_wrap .edd_cart_amount',
-        '.edd_cart_total .edd_cart_amount',
-        '#edd_cart_total .edd_cart_amount',
-        '.edd_cart_total_amount',
-        '#edd_checkout_total_container',
-        '[data-edd-total]',
-      ], function (_, sel) {
-        $(sel).text(total);
-      });
+    applyData: function (data) {
+      // Per-item line totals (unit price × quantity).
+      if (data.items) {
+        $.each(data.items, function (key, item) {
+          var $row = $('#edd_cart_item_' + key);
+          if (!$row.length) return;
+
+          // Update the price cell with the line total.
+          $row.find(
+            '.edd_cart_item_price, .edd_item_price, td.edd_cart_item_price, td:nth-child(2)'
+          ).first().text(item.line_total);
+
+          // Keep the quantity input in sync.
+          $row.find('.eddcq-input').val(item.quantity);
+        });
+      }
+
+      // Subtotal row.
+      if (data.subtotal) {
+        $(
+          '.edd_cart_subtotal_amount, ' +
+          '.edd_subtotal_amount, ' +
+          '#edd_cart_subtotal .edd_cart_amount'
+        ).text(data.subtotal);
+      }
+
+      // Grand total — covers both the cart tfoot and the payment form total.
+      if (data.total) {
+        $(
+          '#edd_final_total_wrap .edd_cart_amount, ' +
+          '.edd_cart_total .edd_cart_amount, ' +
+          '#edd_cart_total .edd_cart_amount, ' +
+          '.edd_cart_total_amount, ' +
+          '#edd_checkout_total_container, ' +
+          '[data-edd-total]'
+        ).text(data.total);
+      }
     },
   };
 
