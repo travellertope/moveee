@@ -3,7 +3,7 @@
  * Plugin Name: Moveee GraphQL Bridge
  * Description: Bridges JetEngine taxonomies, WCFM vendor profiles, and product
  *              editorial metadata to WPGraphQL for the Moveee headless frontend.
- * Version: 1.4.7
+ * Version: 1.4.8
  * Author: Antigravity
  */
 
@@ -196,10 +196,30 @@ function moveee_vendor_profile_by_id( int $vendor_id ): ?array {
         $avatar_url = (string) get_avatar_url( $vendor_id, [ 'size' => 300 ] );
     }
 
-    $years  = (string) get_user_meta( $vendor_id, '_wcfm_vendor_years',  true );
-    $rating = (string) get_user_meta( $vendor_id, '_wcfm_vendor_rating', true );
+    // Maker since: year the vendor registered on WordPress.
+    $years = $user->user_registered
+        ? (string) date( 'Y', strtotime( $user->user_registered ) )
+        : '';
 
+    // Rating: average WooCommerce product rating across the vendor's products.
     global $wpdb;
+    $avg = (float) $wpdb->get_var( $wpdb->prepare(
+        "SELECT AVG( CAST( pm.meta_value AS DECIMAL(3,1) ) )
+           FROM {$wpdb->postmeta} pm
+           JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+          WHERE pm.meta_key   = '_wc_average_rating'
+            AND p.post_type   = 'product'
+            AND p.post_status = 'publish'
+            AND (
+                    p.post_author = %d
+                 OR p.ID IN (
+                        SELECT post_id FROM {$wpdb->postmeta}
+                         WHERE meta_key = '_wcfm_product_author' AND meta_value = %d
+                    )
+            )",
+        $vendor_id, $vendor_id
+    ) );
+    $rating = $avg > 0 ? number_format( $avg, 1 ) : '';
     $count = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(DISTINCT p.ID)
            FROM {$wpdb->posts} p

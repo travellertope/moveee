@@ -126,7 +126,7 @@ export default async function SingleMakerPage({
             {maker.yearsActive && (
               <div className="maker-stat">
                 <div className="maker-stat-num">{maker.yearsActive}</div>
-                <div className="maker-stat-label">Years making</div>
+                <div className="maker-stat-label">Maker since</div>
               </div>
             )}
             <div className="maker-stat">

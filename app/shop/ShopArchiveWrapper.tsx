@@ -132,12 +132,11 @@ export default async function ShopArchiveWrapper({
       <section className="shop-head">
         <div className="shop-head-inner">
           <div className="shop-head-left">
-            <div className="sh-tag">N°04 · {activeLabel}</div>
             <h1>
               {isFiltered ? (
                 <em>{activeLabel}</em>
               ) : (
-                <>Things worth <em>living with.</em></>
+                <>Moveee <em>Lifestyle</em></>
               )}
             </h1>
             <p className="sh-desc">
