@@ -138,7 +138,7 @@ export default async function Home() {
       {/* ========== N°02 · MAGAZINE ========== */}
       <section className="pillar" id="magazine">
         <div className="pillar-header">
-          <div className="pillar-num">N°02</div>
+
           <div className="pillar-title">
             <h3>Moveee <em>Magazine</em></h3>
             <p>Long-form essays, interviews and cultural commentary. The editorial heart of the platform.</p>
@@ -209,7 +209,7 @@ export default async function Home() {
       {/* ========== N°03 · EVENTS ========== */}
       <section className="pillar" id="events">
         <div className="pillar-header">
-          <div className="pillar-num">N°03</div>
+
           <div className="pillar-title">
             <h3>Moveee <em>Events</em></h3>
             <p>Curated culture happenings — openings, listening sessions, film screenings and community dinners.</p>
@@ -251,7 +251,7 @@ export default async function Home() {
       {/* ========== N°04 · ORIGINS ========== */}
       <section className="pillar" id="origins">
         <div className="pillar-header">
-          <div className="pillar-num">N°04</div>
+
           <div className="pillar-title">
             <h3>Moveee <em>Origins</em></h3>
             <p>Slow, writer-led cultural journeys. Not tours — invitations into the places where the work is made.</p>
@@ -309,7 +309,7 @@ export default async function Home() {
       {/* ========== LIFESTYLE (shop) ========== */}
       <section className="pillar" id="lifestyle" style={{ paddingBottom: '160px' }}>
         <div className="pillar-header">
-          <div className="pillar-num">N°05</div>
+
           <div className="pillar-title">
             <h3>Moveee <em>Shop</em></h3>
             <p>Hand-vetted objects, prints, literary editions and artifacts from creators shaping the diaspora.</p>
@@ -348,7 +348,7 @@ export default async function Home() {
       <section className="connect" id="connect">
         <div className="connect-inner">
           <div className="connect-left">
-            <div className="connect-num">N°06 · CONNECT</div>
+
             <h3>An archive <em>alive</em>.</h3>
             <p>
               The Moveee is entirely independent. Moveee Connect is our membership tier — supporting our editorial independence while granting you access to the physical manifestations of the magazine.
