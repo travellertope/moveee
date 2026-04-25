@@ -367,7 +367,7 @@ export default async function ShopArchiveWrapper({
 
       {/* ── 9. VENDOR STRIP ── */}
       {(() => {
-        const display = makers.length >= 2 ? makers : FALLBACK_VENDORS;
+        const display = makers.length >= 1 ? makers : FALLBACK_VENDORS;
         const isFallback = display === FALLBACK_VENDORS;
         return (
           <section className="shop-vendor-cards">
