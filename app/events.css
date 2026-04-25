@@ -257,9 +257,9 @@ html {
   .page-body { grid-template-columns: 1fr; padding: 60px 40px; }
   .sidebar { position: static; }
   .gallery-run-inner { grid-template-columns: 1fr; }
-  .hero-inner { flex-wrap: wrap; padding: 14px 24px; gap: 12px; }
-  .hero-inner h1 { white-space: normal; }
-  .hero-standfirst { border-left: none; padding-left: 0; max-width: 100%; }
+  .hero-inner { flex-wrap: wrap; padding: 10px 16px; gap: 0; }
+  .hero-inner h1 { white-space: normal; font-size: 20px; }
+  .hero-standfirst { display: none; }
   .spotlight-card { grid-template-columns: 1fr; }
   .events-grid { grid-template-columns: 1fr 1fr; }
   .connect-inner { grid-template-columns: 1fr; }

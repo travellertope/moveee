@@ -1827,21 +1827,19 @@
 
 @media (max-width: 768px) {
   .origins-hero-inner {
-    padding: 14px 24px;
-    gap: 12px;
+    padding: 10px 16px;
+    gap: 0;
   }
   .origins-hero-left {
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 0;
   }
   .origins-hero-title {
     white-space: normal;
+    font-size: 20px;
   }
   .origins-hero-desc {
-    padding-left: 0;
-    border-left: none;
-    padding-left: 0;
-    max-width: 100%;
+    display: none;
   }
   .origins-manifesto,
   .origins-journeys-section,
