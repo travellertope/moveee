@@ -11,24 +11,23 @@
 .origins-hero-inner {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 32px 60px;
+  padding: 18px 60px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 48px;
+  gap: 28px;
 }
 
 .origins-hero-left {
   display: flex;
   align-items: center;
-  gap: 48px;
+  gap: 28px;
 }
 
 .origins-hero-title {
-  font-size: clamp(40px, 4vw, 64px);
+  font-size: clamp(22px, 2.4vw, 34px);
   font-weight: 300;
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
   margin: 0;
   white-space: nowrap;
   font-family: 'Fraunces', serif;
@@ -41,14 +40,14 @@
 
 .origins-hero-desc {
   font-family: 'Fraunces', serif;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 300;
   font-style: italic;
   color: var(--mute);
-  line-height: 1.55;
-  max-width: 340px;
-  padding-left: 40px;
-  border-left: 1px solid rgba(42,36,28,0.15);
+  line-height: 1.5;
+  max-width: 440px;
+  padding-left: 28px;
+  border-left: 1px solid var(--rule);
   margin: 0;
 }
 
@@ -1828,24 +1827,20 @@
 
 @media (max-width: 768px) {
   .origins-hero-inner {
-    padding: 32px 24px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
+    padding: 14px 24px;
+    gap: 12px;
   }
   .origins-hero-left {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
   }
   .origins-hero-title {
     white-space: normal;
-    font-size: 42px;
   }
   .origins-hero-desc {
     padding-left: 0;
     border-left: none;
-    font-size: 14px;
+    padding-left: 0;
     max-width: 100%;
   }
   .origins-manifesto,

@@ -3,7 +3,6 @@ import { getEventsWithFallback } from "@/lib/wp";
 import EventHero from "./components/EventHero";
 import SpotlightCard from "./components/SpotlightCard";
 import EventCard from "./components/EventCard";
-import Marquee from "@/components/Marquee";
 import "@/app/events.css";
 
 export const dynamic = "force-dynamic";
@@ -71,7 +70,18 @@ export default async function EventsPage() {
         ]}
       />
 
-      <Marquee />
+      <div className="ticker-wrap">
+        <div className="ticker-track" aria-hidden>
+          {[
+            "Visual Art", "★", "Film", "★", "Literature", "★", "Music", "★",
+            "Fashion", "★", "Food", "★", "Design", "★", "Craft", "★",
+            "Visual Art", "★", "Film", "★", "Literature", "★", "Music", "★",
+            "Fashion", "★", "Food", "★", "Design", "★", "Craft", "★",
+          ].map((item, i) => (
+            <span key={i} className={item === "★" ? "a" : undefined}>{item}</span>
+          ))}
+        </div>
+      </div>
 
       {/* ── SPOTLIGHT ── */}
       {spotlightEvent && (

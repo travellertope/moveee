@@ -1,66 +1,63 @@
 /* ========== MAGAZINE ARCHIVE ========== */
 
 /* ── MAGAZINE MASTHEAD ── */
-.mag-head { 
-  border-bottom:2px solid var(--rule); 
-  position:relative; 
-  z-index: 100000; 
+.mag-head {
+  border-bottom:2px solid var(--rule);
+  position:relative;
+  z-index: 100000;
   background: var(--paper);
 }
-.mag-head-inner { 
-  max-width:1440px; 
-  margin:0 auto; 
-  padding:32px 60px; 
-  display:flex; 
-  align-items:center; 
-  justify-content: space-between;
-  gap:48px; 
+.mag-head-inner {
+  max-width:1440px;
+  margin:0 auto;
+  padding:18px 60px;
+  display:flex;
+  align-items:center;
+  gap:28px;
 }
 .mag-head-left {
   display: flex;
   align-items: center;
-  gap: 48px;
+  gap: 28px;
 }
 .mag-head-left .issue-tag { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ochre); margin-bottom:18px; }
-.mag-head-left .mag-title-main { 
-  font-size:clamp(40px, 4vw, 64px); 
-  font-weight:300; 
-  line-height: 1; 
-  letter-spacing:-.04em; 
+.mag-head-left .mag-title-main {
+  font-size:clamp(22px, 2.4vw, 34px);
+  font-weight:300;
+  line-height: 1;
+  letter-spacing:-.02em;
   margin: 0;
   white-space: nowrap;
 }
 .mag-head-left .mag-title-main em { font-style:italic; color:var(--ochre); }
-.mag-head-left .mag-desc { 
-  font-family:'Fraunces',serif; 
-  font-size:15px; 
-  font-weight:300; 
-  font-style:italic; 
-  color:var(--mute); 
-  max-width:440px; 
-  line-height:1.4; 
+.mag-head-left .mag-desc {
+  font-family:'Fraunces',serif;
+  font-size:13px;
+  font-weight:300;
+  font-style:italic;
+  color:var(--mute);
+  max-width:440px;
+  line-height:1.5;
   margin: 0;
-  padding-left: 40px;
-  border-left: 1px solid rgba(42,36,28,0.15);
+  padding-left: 28px;
+  border-left: 1px solid var(--rule);
 }
 
 @media (max-width: 768px) {
   .mag-head-inner {
-    padding: 32px 24px;
+    padding: 14px 24px;
   }
   .mag-head-left {
     flex-direction: column;
     align-items: flex-start;
-    gap: 20px;
+    gap: 12px;
   }
   .mag-title-main {
     white-space: normal;
-    font-size: 42px;
   }
   .mag-head-left .mag-desc {
     padding-left: 0;
     border-left: none;
-    font-size: 14px;
     max-width: 100%;
   }
 }
@@ -316,11 +313,7 @@
 
 
 /* ── TICKER ── */
-.ticker-wrap { overflow:hidden; border-bottom:1px solid var(--rule); background:var(--ink); padding:13px 0; position:relative; z-index:2; }
-.ticker-track { display:flex; animation:ticker 30s linear infinite; white-space:nowrap; }
-.ticker-track span { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:rgba(243,236,224,.55); padding-right:48px; }
-.ticker-track span.a { color:var(--ochre); opacity:1; }
-@keyframes ticker { 0%{transform:translateX(0)}100%{transform:translateX(-50%)} }
+/* Ticker styles live in globals.css */
 
 /* ── HERO FEATURE — newspaper-style ── */
 .hero-feature { max-width:1440px; margin:0 auto; padding:0 60px; border-bottom:2px solid var(--rule); position:relative; z-index:2; display:grid; grid-template-columns:1fr 1px 340px; }

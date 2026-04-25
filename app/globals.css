@@ -53,6 +53,36 @@
   html { scroll-behavior: smooth; }
 }
 
+/* ── TICKER (shared across all pages) ── */
+.ticker-wrap {
+  overflow: hidden;
+  border-bottom: 1px solid var(--rule);
+  background: var(--ink);
+  padding: 13px 0;
+  position: relative;
+  z-index: 2;
+  display: block;
+}
+.ticker-track {
+  display: flex;
+  animation: ticker-scroll 28s linear infinite;
+  white-space: nowrap;
+  width: max-content;
+}
+.ticker-track span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(243, 236, 224, .55);
+  padding-right: 48px;
+}
+.ticker-track span.a { color: var(--ochre); opacity: 1; }
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 body {
   background: var(--paper);
   color: var(--ink);
