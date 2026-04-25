@@ -98,11 +98,7 @@ html {
 .btn-outline { background: transparent; color: var(--paper); padding: 15px 28px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; border: 1px solid rgba(243,236,224,0.4); cursor: pointer; }
 
 /* Ticker */
-.ticker-wrap { overflow: hidden; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: var(--ink); padding: 14px 0; position: relative; z-index: 2; }
-.ticker-track { display: flex; animation: ticker 25s linear infinite; white-space: nowrap; width: max-content; }
-.ticker-track span { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--paper); opacity: 0.7; padding-right: 50px; }
-.ticker-track span.accent { color: var(--ochre); opacity: 1; }
-@keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+/* Ticker styles live in globals.css */
 
 .page-body { max-width: 1440px; margin: 0 auto; padding: 80px 80px 100px; display: grid; grid-template-columns: 1fr 400px; gap: 80px; }
 .section-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ochre); margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
@@ -160,18 +156,17 @@ html {
 .hero-inner {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 32px 60px;
+  padding: 18px 60px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 48px;
+  gap: 28px;
 }
 
 .hero-inner h1 {
-  font-size: clamp(40px, 4vw, 64px);
+  font-size: clamp(22px, 2.4vw, 34px);
   font-weight: 300;
   line-height: 1;
-  letter-spacing: -.04em;
+  letter-spacing: -.02em;
   margin: 0;
   white-space: nowrap;
   color: var(--ink);
@@ -180,15 +175,15 @@ html {
 
 .hero-standfirst {
   font-family: 'Fraunces', serif;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 300;
   font-style: italic;
   color: var(--mute);
   max-width: 440px;
-  line-height: 1.4;
+  line-height: 1.5;
   margin: 0;
-  padding-left: 40px;
-  border-left: 1px solid rgba(42,36,28,0.15);
+  padding-left: 28px;
+  border-left: 1px solid var(--rule);
 }
 .hero-stats { display: none; }
 
@@ -262,9 +257,9 @@ html {
   .page-body { grid-template-columns: 1fr; padding: 60px 40px; }
   .sidebar { position: static; }
   .gallery-run-inner { grid-template-columns: 1fr; }
-  .hero-inner { flex-direction: column; align-items: flex-start; gap: 20px; padding: 32px 24px; }
+  .hero-inner { flex-wrap: wrap; padding: 14px 24px; gap: 12px; }
   .hero-inner h1 { white-space: normal; }
-  .hero-standfirst { border-left: none; padding-left: 0; }
+  .hero-standfirst { border-left: none; padding-left: 0; max-width: 100%; }
   .spotlight-card { grid-template-columns: 1fr; }
   .events-grid { grid-template-columns: 1fr 1fr; }
   .connect-inner { grid-template-columns: 1fr; }

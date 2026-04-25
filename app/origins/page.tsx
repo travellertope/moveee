@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { getWPData, GET_JOURNEYS } from "@/lib/wp";
 import OriginHero from "./components/OriginHero";
-import Marquee from "@/components/Marquee";
 import "@/app/origins.css";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +34,18 @@ export default async function OriginsPage() {
         description="Slow, writer-led cultural journeys. Not tours — invitations into the places where the work is made."
       />
 
-      <Marquee />
+      <div className="ticker-wrap">
+        <div className="ticker-track" aria-hidden>
+          {[
+            "Visual Art", "★", "Film", "★", "Literature", "★", "Music", "★",
+            "Fashion", "★", "Food", "★", "Design", "★", "Craft", "★",
+            "Visual Art", "★", "Film", "★", "Literature", "★", "Music", "★",
+            "Fashion", "★", "Food", "★", "Design", "★", "Craft", "★",
+          ].map((item, i) => (
+            <span key={i} className={item === "★" ? "a" : undefined}>{item}</span>
+          ))}
+        </div>
+      </div>
 
       {/* ── MANIFESTO ── */}
       <section className="origins-manifesto">
