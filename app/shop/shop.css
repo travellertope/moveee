@@ -547,6 +547,7 @@
   gap: 80px;
   align-items: center;
 }
+.mb-left { min-width: 0; }
 .mb-left h3 { font-size: clamp(38px, 4vw, 66px); font-weight: 400; margin-bottom: 14px; }
 .mb-left h3 em { font-style: italic; color: var(--ochre); }
 .mb-left p {
@@ -567,10 +568,20 @@
   border: 1px solid var(--rule);
   margin-bottom: 28px;
 }
-.perk { background: var(--paper-deep); padding: 20px 18px; }
+.perk { background: var(--paper-deep); padding: 20px 18px; min-width: 0; }
 .perk .pk-icon { font-size: 20px; margin-bottom: 8px; }
 .perk .pk-title { font-family: 'Fraunces', serif; font-size: 16px; font-style: italic; margin-bottom: 4px; }
-.perk .pk-desc { font-size: 12px; color: var(--ink-soft); line-height: 1.5; }
+.perk .pk-desc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  max-width: none;
+  margin-bottom: 0;
+  overflow-wrap: break-word;
+}
 .mb-btn {
   background: var(--ink);
   color: var(--paper);

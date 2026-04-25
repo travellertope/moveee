@@ -45,20 +45,19 @@
 
 @media (max-width: 768px) {
   .mag-head-inner {
-    padding: 14px 24px;
+    padding: 10px 16px;
   }
   .mag-head-left {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
   }
   .mag-title-main {
     white-space: normal;
+    font-size: 20px;
   }
   .mag-head-left .mag-desc {
-    padding-left: 0;
-    border-left: none;
-    max-width: 100%;
+    display: none;
   }
 }
 
