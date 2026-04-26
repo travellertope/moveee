@@ -113,10 +113,10 @@ export default async function MagazineArchiveWrapper({
             <Link href="/magazine" className="font-mono text-[9px] uppercase tracking-[0.1em] text-ochre border-b border-ochre pb-1 transition-colors hover:text-ochre-deep hover:border-ochre-deep">Clear Filters ✕</Link>
           </div>
           {stories.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
               {stories.map((story) => (
                 <Link key={story.id} href={`/magazine/${story.slug}`} className="card group" style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="img r-port relative aspect-[3/4] bg-ink overflow-hidden mb-3.5 transition-transform duration-400 group-hover:-translate-y-1">
+                  <div className="relative aspect-[3/2] bg-ink overflow-hidden mb-4 transition-transform duration-400 group-hover:-translate-y-1">
                     {story.featuredImage?.node?.sourceUrl && (
                       <Image src={story.featuredImage.node.sourceUrl} alt={story.title} fill className="object-cover" />
                     )}
