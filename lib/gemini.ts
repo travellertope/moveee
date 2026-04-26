@@ -29,14 +29,15 @@ function createVertexClient(): GoogleGenAI | null {
   } as any);
 }
 
-// Only models confirmed reachable on this key's v1beta endpoint.
+// Model priority order for text generation.
+// gemini-2.5-flash is the primary — it carries the free-tier quota on new
+// AI Studio accounts where gemini-2.0-flash-* show limit:0.
 // gemini-2.5-flash-preview-04-17, gemini-1.5-flash-002, gemini-1.5-pro-002
-// all return 404 on this API key — do not add them back.
-// NOTE: all calls will fail with 429 until billing is enabled on the
-// Google Cloud project at console.cloud.google.com → Billing.
+// all return 404 — do not add them back.
 const TEXT_MODELS = [
-  "gemini-2.0-flash",      // Primary — confirmed reachable
-  "gemini-2.0-flash-lite", // Lighter fallback — confirmed reachable
+  "gemini-2.5-flash",      // Primary — has free-tier quota on new accounts
+  "gemini-2.0-flash",      // Fallback
+  "gemini-2.0-flash-lite", // Lightest fallback
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
