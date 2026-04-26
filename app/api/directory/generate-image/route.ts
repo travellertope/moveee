@@ -55,9 +55,18 @@ export async function POST(req: NextRequest) {
       excerpt ?? ""
     );
   } catch (err: any) {
+    const msg: string = err?.message ?? "unknown error";
+    const isBilling =
+      msg.includes("limit: 0") ||
+      msg.includes("RESOURCE_EXHAUSTED") ||
+      msg.includes("BILLING_DISABLED");
     return NextResponse.json(
-      { error: `Image generation failed: ${err?.message ?? "unknown error"}` },
-      { status: 502 }
+      {
+        error: isBilling
+          ? "Image generation requires paid API billing. Enable billing at console.cloud.google.com/billing/enable?project=next-161114 or uncheck 'Generate an AI image' in the seeder."
+          : `Image generation failed: ${msg}`,
+      },
+      { status: isBilling ? 503 : 502 }
     );
   }
 
