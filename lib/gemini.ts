@@ -300,12 +300,15 @@ export async function generateDirectoryImage(
     }
   }
 
-  // ── Tier 2: Gemini image generation ──────────────────────────────────────
-  // responseModalities["IMAGE"] requires the experimental variant; the stable
-  // gemini-2.0-flash does not support image output modalities.
+  // ── Tier 2: Gemini native image generation ───────────────────────────────
+  // Requires TEXT + IMAGE modalities — IMAGE alone causes empty responses.
+  // Only the experimental/preview variants support image output.
   if (!process.env.GEMINI_API_KEY) return null;
 
-  const IMAGE_MODELS = ["gemini-2.0-flash-exp", "gemini-2.0-flash-preview-image-generation"];
+  const IMAGE_MODELS = [
+    "gemini-2.0-flash-preview-image-generation",
+    "gemini-2.0-flash-exp",
+  ];
 
   for (const imageModel of IMAGE_MODELS) {
     try {
@@ -313,7 +316,7 @@ export async function generateDirectoryImage(
         model: imageModel,
         contents: prompt,
         config: {
-          responseModalities: ["IMAGE"],
+          responseModalities: ["TEXT", "IMAGE"],
           safetySettings: SAFETY_SETTINGS,
         } as any,
       });
@@ -324,8 +327,9 @@ export async function generateDirectoryImage(
       for (const part of parts) {
         if (part.inlineData?.data) return part.inlineData.data as string;
       }
+      console.warn(`Gemini image model ${imageModel} responded but returned no image data.`);
     } catch (err: any) {
-      console.warn(`Gemini image model ${imageModel} failed:`, err?.message?.slice(0, 120));
+      console.warn(`Gemini image model ${imageModel} failed:`, err?.message?.slice(0, 200));
     }
   }
 
