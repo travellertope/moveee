@@ -30,14 +30,12 @@ function createVertexClient(): GoogleGenAI | null {
 }
 
 // Model priority order for text generation.
-// gemini-2.5-flash is the primary — it carries the free-tier quota on new
-// AI Studio accounts where gemini-2.0-flash-* show limit:0.
-// gemini-2.5-flash-preview-04-17, gemini-1.5-flash-002, gemini-1.5-pro-002
-// all return 404 — do not add them back.
+// gemini-2.0-flash and gemini-2.0-flash-lite have limit:0 on Pro-subscription
+// AI Studio keys — only 2.5-series and newer models have active quota.
 const TEXT_MODELS = [
-  "gemini-2.5-flash",      // Primary — has free-tier quota on new accounts
-  "gemini-2.0-flash",      // Fallback
-  "gemini-2.0-flash-lite", // Lightest fallback
+  "gemini-2.5-flash",      // Primary — confirmed working
+  "gemini-2.5-flash-lite", // Lighter fallback
+  "gemini-3-flash-preview", // Newer fallback
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
@@ -306,8 +304,9 @@ export async function generateDirectoryImage(
   if (!process.env.GEMINI_API_KEY) return null;
 
   const IMAGE_MODELS = [
-    "gemini-2.0-flash-preview-image-generation",
-    "gemini-2.0-flash-exp",
+    "gemini-2.5-flash-image",        // Confirmed available on this key
+    "gemini-3.1-flash-image-preview", // Newer fallback
+    "gemini-3-pro-image-preview",     // Pro fallback
   ];
 
   const imageErrors: string[] = [];
