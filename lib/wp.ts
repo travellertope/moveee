@@ -400,6 +400,25 @@ export const GET_COUNTRY_STORIES = `
   ${STORY_FIELDS_FRAGMENT}
 `;
 
+export const GET_CATEGORY_INFO = `
+  query GetCategoryInfo($slug: ID!) {
+    category(id: $slug, idType: SLUG) {
+      name
+      slug
+      description
+    }
+  }
+`;
+
+export const GET_TAG_INFO = `
+  query GetTagInfo($tag: ID!) {
+    tag(id: $tag, idType: SLUG) {
+      name
+      slug
+    }
+  }
+`;
+
 // ── COMMUNITY CHAPTERS & EVENTS FRAGMENTS ─────────────────────────────────
 
 const DIRECTORY_FIELDS_FRAGMENT = `

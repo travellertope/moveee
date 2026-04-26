@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_STORIES, GET_FILTERS, GET_SERIES_STORIES, GET_INDUSTRY_STORIES, GET_COUNTRY_STORIES } from "@/lib/wp";
+import { getWPData, GET_STORIES, GET_FILTERS, GET_SERIES_STORIES, GET_INDUSTRY_STORIES, GET_COUNTRY_STORIES, GET_TAG_INFO } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 import Ticker from "@/components/Ticker";
@@ -25,6 +25,7 @@ export default async function MagazineArchiveWrapper({
 }: MagazineArchiveProps) {
   let stories: any[] = [];
   let filters: any = null;
+  let termName = "";
 
   try {
     filters = await getWPData(GET_FILTERS);
@@ -32,20 +33,28 @@ export default async function MagazineArchiveWrapper({
     if (series) {
       const data = await getWPData(GET_SERIES_STORIES, { series });
       stories = data?.seriesItem?.posts?.nodes || [];
+      termName = data?.seriesItem?.name || series;
     } else if (industry) {
       const data = await getWPData(GET_INDUSTRY_STORIES, { industry });
       stories = data?.industry?.posts?.nodes || [];
+      termName = data?.industry?.name || industry;
     } else if (country) {
       const data = await getWPData(GET_COUNTRY_STORIES, { country });
       stories = data?.country?.posts?.nodes || [];
+      termName = data?.country?.name || country;
     } else if (tag) {
-      const data = await getWPData(GET_STORIES, { first: 48, tag });
+      const [storyData, tagData] = await Promise.all([
+        getWPData(GET_STORIES, { first: 48, tag }),
+        getWPData(GET_TAG_INFO, { tag }),
+      ]);
+      stories = storyData?.posts?.nodes || [];
+      termName = tagData?.tag?.name || tag;
+    } else if (category) {
+      const data = await getWPData(GET_STORIES, { first: 27, categoryName: category });
       stories = data?.posts?.nodes || [];
+      termName = filters?.categories?.nodes?.find((c: any) => c.slug === category)?.name || category;
     } else {
-      const data = await getWPData(GET_STORIES, {
-        first: 27,
-        categoryName: category || null
-      });
+      const data = await getWPData(GET_STORIES, { first: 27 });
       stories = data?.posts?.nodes || [];
     }
   } catch {
@@ -67,7 +76,6 @@ export default async function MagazineArchiveWrapper({
   const digestStories = stories.slice(16, 20);
   const opinionStories = stories.slice(20, 26);
   const isFiltered = !!(category || industry || country || series || tag);
-  const activeFilterName = category || industry || country || series || tag || "";
 
   return (
     <>
@@ -101,7 +109,7 @@ export default async function MagazineArchiveWrapper({
         <section className="section-band pt-[80px] pb-[160px] bg-paper relative z-[2]">
           <div className="sec-label">Filtered Results</div>
           <div className="sec-header mb-16">
-            <h3>Stories from <em>{activeFilterName}</em></h3>
+            <h3>Stories from <em>{termName}</em></h3>
             <Link href="/magazine" className="font-mono text-[9px] uppercase tracking-[0.1em] text-ochre border-b border-ochre pb-1 transition-colors hover:text-ochre-deep hover:border-ochre-deep">Clear Filters ✕</Link>
           </div>
           {stories.length > 0 ? (
