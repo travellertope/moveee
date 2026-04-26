@@ -286,16 +286,17 @@ export async function generateDirectoryImage(
       }
     } catch (err: any) {
       const msg: string = err?.message ?? "";
-      const isQuotaError =
+      const isFallbackError =
         msg.includes("429") ||
+        msg.includes("403") ||
         msg.includes("RESOURCE_EXHAUSTED") ||
-        msg.includes("Quota exceeded");
+        msg.includes("BILLING_DISABLED") ||
+        msg.includes("PERMISSION_DENIED") ||
+        msg.includes("Quota exceeded") ||
+        msg.includes("billing");
 
-      if (!isQuotaError) throw err; // Surface unexpected errors immediately.
-      // Quota exhausted — fall through to Gemini 2.0 Flash.
-      console.warn(
-        "Imagen 3 quota exceeded — falling back to Gemini 2.0 Flash."
-      );
+      if (!isFallbackError) throw err;
+      console.warn("Imagen 3 unavailable — falling back to Gemini Flash.", msg.slice(0, 120));
     }
   }
 
