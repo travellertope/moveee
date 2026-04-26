@@ -196,7 +196,7 @@ class Culture_Directory_Tools {
                     'Content-Type'  => 'application/json',
                 ),
                 'body'    => wp_json_encode( array( 'offset' => $offset ) ),
-                'timeout' => 120,
+                'timeout' => 295,
             )
         );
 
