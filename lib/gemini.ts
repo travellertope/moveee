@@ -310,6 +310,8 @@ export async function generateDirectoryImage(
     "gemini-2.0-flash-exp",
   ];
 
+  const imageErrors: string[] = [];
+
   for (const imageModel of IMAGE_MODELS) {
     try {
       const response = await ai.models.generateContent({
@@ -327,13 +329,14 @@ export async function generateDirectoryImage(
       for (const part of parts) {
         if (part.inlineData?.data) return part.inlineData.data as string;
       }
-      console.warn(`Gemini image model ${imageModel} responded but returned no image data.`);
+      imageErrors.push(`${imageModel}: responded but returned no image parts`);
     } catch (err: any) {
-      console.warn(`Gemini image model ${imageModel} failed:`, err?.message?.slice(0, 200));
+      imageErrors.push(`${imageModel}: ${err?.message ?? "unknown error"}`);
     }
   }
 
-  return null; // Image generation unavailable — entry created without image.
+  // Throw so the route can surface the real errors instead of a generic message.
+  throw new Error(`Gemini image generation failed. ${imageErrors.join(" | ")}`);
 }
 
 /**
