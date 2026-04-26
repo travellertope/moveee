@@ -334,8 +334,29 @@ export async function generateDirectoryImage(
     }
   }
 
-  // Throw so the route can surface the real errors instead of a generic message.
-  throw new Error(`Gemini image generation failed. ${imageErrors.join(" | ")}`);
+  // ── Tier 3: Pollinations.ai — free, no API key required ──────────────────
+  // Uses FLUX models. Falls back here when both Vertex AI and Gemini are
+  // unavailable due to billing restrictions.
+  try {
+    // Pollinations works best with a concise prompt — strip the long style
+    // modifiers down to the first ~300 chars to stay within URL limits.
+    const shortPrompt = prompt.slice(0, 300);
+    const url =
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(shortPrompt)}` +
+      `?width=1024&height=768&model=flux&nologo=true&seed=${Date.now() % 99999}`;
+
+    const res = await fetch(url, { signal: AbortSignal.timeout(60_000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const buffer = await res.arrayBuffer();
+    if (buffer.byteLength < 1000) throw new Error("Response too small — likely an error page");
+
+    return Buffer.from(buffer).toString("base64");
+  } catch (err: any) {
+    imageErrors.push(`pollinations.ai: ${err?.message ?? "unknown error"}`);
+  }
+
+  throw new Error(`All image generation tiers failed. ${imageErrors.join(" | ")}`);
 }
 
 /**
