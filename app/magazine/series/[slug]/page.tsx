@@ -9,12 +9,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const data = await getWPData(GET_SERIES_STORIES, { series: slug });
   const name: string = data?.seriesItem?.name || slug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+  const description: string = data?.seriesItem?.description || `Read all stories from the ${name} series — long-form essays, interviews, and cultural commentary from The Moveee.`;
   return {
     title: `${name} | Series | The Moveee Magazine`,
-    description: `Read all stories from the ${name} series — long-form essays, interviews, and cultural commentary from The Moveee.`,
+    description,
     openGraph: {
       title: `${name} | The Moveee Magazine`,
-      description: `Read all stories from the ${name} series on The Moveee Magazine.`,
+      description,
     },
   };
 }

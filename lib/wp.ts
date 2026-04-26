@@ -372,6 +372,7 @@ export const GET_SERIES_STORIES = `
     seriesItem(id: $series, idType: SLUG) {
       name
       slug
+      description
       posts(first: 48) { nodes { ...StoryFields } }
     }
   }
@@ -383,6 +384,7 @@ export const GET_INDUSTRY_STORIES = `
     industry(id: $industry, idType: SLUG) {
       name
       slug
+      description
       posts(first: 48) { nodes { ...StoryFields } }
     }
   }
@@ -394,6 +396,7 @@ export const GET_COUNTRY_STORIES = `
     country(id: $country, idType: SLUG) {
       name
       slug
+      description
       posts(first: 48) { nodes { ...StoryFields } }
     }
   }
@@ -415,6 +418,7 @@ export const GET_TAG_INFO = `
     tag(id: $tag, idType: SLUG) {
       name
       slug
+      description
     }
   }
 `;
