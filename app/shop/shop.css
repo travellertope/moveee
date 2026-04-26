@@ -1576,8 +1576,9 @@
   .sp-more-from-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 900px) {
-  .shop-head-inner { flex-wrap: wrap; padding: 14px 24px; gap: 8px 16px; flex-direction: column; }
+  .shop-head-inner { flex-wrap: wrap; padding: 14px 24px; gap: 8px 16px; flex-direction: column; align-items: flex-start; }
   .sh-rule { display: none; }
+  .sh-desc { display: none; }
   .shop-grid-section,
   .shop-vendor-cards,
   .shop-cat-grid,
