@@ -22,10 +22,12 @@ export async function POST(req: NextRequest) {
   }
 
   if (!process.env.VERTEX_PROJECT || !process.env.VERTEX_CLIENT_EMAIL || !process.env.VERTEX_PRIVATE_KEY) {
-    return NextResponse.json(
-      { error: "Image generation not configured (VERTEX_PROJECT / VERTEX_CLIENT_EMAIL / VERTEX_PRIVATE_KEY missing)." },
-      { status: 503 }
-    );
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json(
+        { error: "Image generation not configured — set VERTEX_* credentials or GEMINI_API_KEY." },
+        { status: 503 }
+      );
+    }
   }
 
   let body: { postId?: number; title?: string; entryType?: string; excerpt?: string };
@@ -61,8 +63,8 @@ export async function POST(req: NextRequest) {
 
   if (!imageBase64) {
     return NextResponse.json(
-      { error: "Image generation returned no result (API key missing?)." },
-      { status: 502 }
+      { error: "Image generation returned no result. Vertex AI requires billing; Gemini image models (gemini-2.0-flash-exp) may not be available on the free tier." },
+      { status: 503 }
     );
   }
 
