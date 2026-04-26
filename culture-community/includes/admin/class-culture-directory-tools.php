@@ -63,7 +63,8 @@ class Culture_Directory_Tools {
         add_action( 'wp_ajax_culture_run_quote_seeder',      array( __CLASS__, 'ajax_run_quote_seeder' ) );
         add_action( 'wp_ajax_culture_import_quotes',         array( __CLASS__, 'ajax_import_quotes' ) );
         add_action( 'wp_ajax_culture_dir_generate_image',     array( __CLASS__, 'ajax_generate_image' ) );
-        add_action( 'wp_ajax_culture_dir_save_extra_topics', array( __CLASS__, 'ajax_save_extra_topics' ) );
+        add_action( 'wp_ajax_culture_dir_save_extra_topics',    array( __CLASS__, 'ajax_save_extra_topics' ) );
+        add_action( 'wp_ajax_culture_dir_backfill_image_meta', array( __CLASS__, 'ajax_backfill_image_meta' ) );
         add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
     }
 
@@ -710,6 +711,39 @@ class Culture_Directory_Tools {
             </div>
         </div>
 
+        <!-- ── Backfill Image Visual Metadata ── -->
+        <div class="cdt-panel">
+            <h2><?php esc_html_e( 'Backfill Image Visual Metadata', 'culture-community' ); ?></h2>
+            <p>
+                <?php esc_html_e( 'Updates the title, description, caption, and alt text of every existing directory featured image so the Visuals library is searchable by visual keywords (illustration style, palette, composition) rather than the entry topic name.', 'culture-community' ); ?>
+            </p>
+            <?php
+            $backfill_total = count( get_posts( array(
+                'post_type'      => 'culture_directory',
+                'posts_per_page' => -1,
+                'meta_query'     => array( array( 'key' => '_thumbnail_id', 'compare' => 'EXISTS' ) ),
+                'fields'         => 'ids',
+            ) ) );
+            ?>
+            <p>
+                <strong><?php echo esc_html( $backfill_total ); ?></strong>
+                <?php esc_html_e( ' directory entries with featured images found.', 'culture-community' ); ?>
+            </p>
+            <div class="cdt-progress-block" id="cdt-backfill-progress" style="display:none;">
+                <div class="cdt-progress-label">
+                    <?php esc_html_e( 'Progress:', 'culture-community' ); ?>
+                    <span id="cdt-backfill-pct" class="cdt-pct">0%</span>
+                </div>
+                <div class="cdt-progress-bar"><div class="cdt-progress-fill" id="cdt-backfill-fill" style="width:0%"></div></div>
+                <p class="cdt-remaining-list" id="cdt-backfill-status"></p>
+            </div>
+            <button id="cdt-backfill-btn" class="button button-primary" <?php echo $backfill_total ? '' : 'disabled'; ?>>
+                <?php esc_html_e( 'Backfill Visual Metadata', 'culture-community' ); ?>
+            </button>
+            <span class="spinner" id="cdt-backfill-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
+            <div id="cdt-backfill-result" class="cdt-result" style="display:none;"></div>
+        </div>
+
         <script>
         (function($) {
             var ajaxUrl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
@@ -964,9 +998,185 @@ class Culture_Directory_Tools {
                 });
             });
 
+            /* ── Backfill Image Visual Metadata ── */
+            (function() {
+                var $btn      = $('#cdt-backfill-btn');
+                var $spinner  = $('#cdt-backfill-spinner');
+                var $progress = $('#cdt-backfill-progress');
+                var $fill     = $('#cdt-backfill-fill');
+                var $pct      = $('#cdt-backfill-pct');
+                var $status   = $('#cdt-backfill-status');
+                var $result   = $('#cdt-backfill-result');
+                var allResults = [];
+
+                function runBatch(batch, total) {
+                    $.post(ajaxUrl, {
+                        action: 'culture_dir_backfill_image_meta',
+                        nonce:  nonce,
+                        batch:  batch,
+                    })
+                    .done(function(res) {
+                        if (!res.success) {
+                            $result.html('<div class="notice notice-error inline"><p>' + $('<span>').text(res.data.message || 'Error').html() + '</p></div>').show();
+                            $btn.prop('disabled', false);
+                            $spinner.hide();
+                            return;
+                        }
+                        var d = res.data;
+                        allResults = allResults.concat(d.results || []);
+                        var pct = d.total > 0 ? Math.round((d.processed / d.total) * 100) : 100;
+                        $fill.css('width', pct + '%');
+                        $pct.text(pct + '%');
+                        $status.text(d.processed + ' of ' + d.total + ' processed — ' + d.updated + ' updated this batch.');
+
+                        if (d.done) {
+                            var html = '<div class="notice notice-success inline"><p><strong>' + d.total + ' image(s) backfilled.</strong></p></div>';
+                            html += '<ul style="margin-top:8px;max-height:200px;overflow-y:auto;border:1px solid #f0f0f1;padding:10px;background:#f6f7f7;">';
+                            allResults.forEach(function(r) {
+                                html += '<li>&#10003; <strong>' + $('<span>').text(r.post).html() + '</strong> (' + $('<span>').text(r.type).html() + ') &rarr; ' + $('<span>').text(r.title).html() + '</li>';
+                            });
+                            html += '</ul>';
+                            $result.html(html).show();
+                            $btn.prop('disabled', true).text('Done');
+                            $spinner.hide();
+                        } else {
+                            runBatch(batch + 1, d.total);
+                        }
+                    })
+                    .fail(function() {
+                        $result.html('<div class="notice notice-error inline"><p>Request failed.</p></div>').show();
+                        $btn.prop('disabled', false);
+                        $spinner.hide();
+                    });
+                }
+
+                $btn.on('click', function() {
+                    $btn.prop('disabled', true);
+                    $spinner.show();
+                    $progress.show();
+                    $result.hide().html('');
+                    allResults = [];
+                    runBatch(0, <?php echo (int) $backfill_total; ?>);
+                });
+            }());
+
         }(jQuery));
         </script>
         <?php
+    }
+
+    // ── Backfill image visual metadata ───────────────────────────────────────
+
+    /**
+     * Classify an entry-type slug into one of three illustration templates,
+     * mirroring classifyTemplateType() in lib/gemini.ts.
+     */
+    private static function classify_template_type( $entry_type ) {
+        $t = strtolower( trim( preg_replace( '/[-_\s]+/', ' ', $entry_type ) ) );
+
+        if ( preg_match( '/\b(person|people|figure|artist|musician|singer|rapper|writer|author|poet|novelist|activist|filmmaker|director|actor|actress|politician|philosopher|leader|thinker|sculptor|painter|photographer|dancer|athlete|architect|designer|chef|scholar|academic|intellectual|icon|legend|pioneer)\b/', $t ) ) {
+            return 'portrait';
+        }
+        if ( preg_match( '/\b(film|documentary|movie|cinema|short film)\b/', $t ) ) {
+            return 'scene';
+        }
+        if ( preg_match( '/\b(food|dish|cuisine|drink|beverage|meal|snack|recipe|ingredient|fashion|clothing|garment|textile|fabric|cloth|print|pattern|weave|embroidery|craft|jewellery|jewelry|accessory|artefact|artifact|instrument|tool|object|product|sculpture|painting|installation|novel|book|album|song|artwork|piece|collection|ceramic|pottery|bead|wax print|kente|gele|headwrap|adire)\b/', $t ) ) {
+            return 'object';
+        }
+        return 'scene';
+    }
+
+    /**
+     * Build descriptive visual metadata for an attachment, mirroring
+     * buildImageMetadata() in lib/gemini.ts.
+     */
+    private static function build_image_metadata( $entry_type ) {
+        $template   = self::classify_template_type( $entry_type );
+        $type_label = strtolower( $entry_type );
+        $palette    = 'Restricted palette: deep ink, burnt ochre, gold brass, cream paper, moss green, indigo. Matte finish, generous negative space, no photorealism.';
+
+        if ( 'portrait' === $template ) {
+            return array(
+                'title'       => "Flat geometric portrait illustration — {$type_label}",
+                'alt'         => 'Flat geometric editorial portrait. Simplified face as an architectural form with sharp shadow shapes. Geometric clothing in flat colour masses. Ochre, ink and gold editorial palette.',
+                'description' => "Flat geometric editorial portrait illustration in The Moveee's signature visual style. Face rendered as a simplified architectural form — 2–3 iconic lines for eyes and mouth. Sharp geometric shadow shapes define volume. Stylised hair as a single dark geometric mass. Geometric clothing depicted as flat colour blocks. {$palette}",
+            );
+        }
+
+        if ( 'object' === $template ) {
+            return array(
+                'title'       => "Flat geometric {$type_label} illustration — editorial icon style",
+                'alt'         => "Flat geometric editorial illustration of a {$type_label} as a clean geometric icon. Crosshatch and stipple textures. Ochre, ink and gold editorial palette.",
+                'description' => "Flat graphic editorial illustration of a {$type_label} in The Moveee's signature visual style. Subject rendered as a clean geometric icon with sharp high-contrast shadow shapes suggesting volume. Crosshatching or stippling texture for surface detail. Dramatic side or bird's-eye lighting. {$palette}",
+            );
+        }
+
+        return array(
+            'title'       => "Abstract geometric scene illustration — {$type_label}, editorial wide format",
+            'alt'         => 'Wide abstract geometric editorial scene with minimal silhouette figures. Large colour blocks and sharp diagonal shapes in ochre, ink and gold palette.',
+            'description' => "Abstract geometric scene illustration in The Moveee's signature editorial style. Wide format composition featuring minimal human silhouettes in the middle ground. Environment built from large colour blocks and sharp geometric shapes — circles, triangles, diagonal lines. Dramatic lighting via sharp shadow planes. Fine stippling and ink-bleed effects for depth. {$palette}",
+        );
+    }
+
+    public static function ajax_backfill_image_meta() {
+        check_ajax_referer( 'culture_dir_tools', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Forbidden.' ) );
+        }
+
+        $batch      = max( 0, (int) ( $_POST['batch'] ?? 0 ) );
+        $batch_size = 20;
+
+        $all_ids = get_posts( array(
+            'post_type'      => 'culture_directory',
+            'posts_per_page' => -1,
+            'meta_query'     => array( array( 'key' => '_thumbnail_id', 'compare' => 'EXISTS' ) ),
+            'fields'         => 'ids',
+        ) );
+        $total = count( $all_ids );
+
+        $batch_ids = array_slice( $all_ids, $batch * $batch_size, $batch_size );
+
+        $updated = 0;
+        $results = array();
+
+        foreach ( $batch_ids as $post_id ) {
+            $attachment_id = (int) get_post_thumbnail_id( $post_id );
+            if ( ! $attachment_id ) {
+                continue;
+            }
+
+            $type_terms = wp_get_post_terms( $post_id, 'culture_dir_type', array( 'fields' => 'slugs' ) );
+            $entry_type = ( ! is_wp_error( $type_terms ) && ! empty( $type_terms ) ) ? $type_terms[0] : 'concept';
+
+            $meta = self::build_image_metadata( $entry_type );
+
+            wp_update_post( array(
+                'ID'           => $attachment_id,
+                'post_title'   => $meta['title'],
+                'post_content' => $meta['description'],
+                'post_excerpt' => $meta['alt'],
+            ) );
+            update_post_meta( $attachment_id, '_wp_attachment_image_alt', $meta['alt'] );
+
+            $results[] = array(
+                'post'  => get_the_title( $post_id ),
+                'type'  => $entry_type,
+                'title' => $meta['title'],
+            );
+            $updated++;
+        }
+
+        $processed = ( $batch * $batch_size ) + count( $batch_ids );
+        $done      = $processed >= $total || empty( $batch_ids );
+
+        wp_send_json_success( array(
+            'updated'   => $updated,
+            'total'     => $total,
+            'processed' => $processed,
+            'done'      => $done,
+            'results'   => $results,
+        ) );
     }
 
     // ── Inline CSS ────────────────────────────────────────────────────────────
