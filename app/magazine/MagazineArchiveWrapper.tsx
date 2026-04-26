@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_STORIES, GET_FILTERS, GET_TAX_STORIES } from "@/lib/wp";
+import { getWPData, GET_STORIES, GET_FILTERS, GET_SERIES_STORIES, GET_INDUSTRY_STORIES, GET_COUNTRY_STORIES } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 import Ticker from "@/components/Ticker";
@@ -29,23 +29,18 @@ export default async function MagazineArchiveWrapper({
   try {
     filters = await getWPData(GET_FILTERS);
 
-    if (industry || country || series || tag) {
-      const taxData = await getWPData(GET_TAX_STORIES, {
-        industry: industry || null,
-        country: country || null,
-        series: series || null,
-        // tag support in GET_TAX_STORIES? lib/wp.ts had tag in GET_STORIES.
-        // Let's use GET_STORIES for tags or update GET_TAX_STORIES.
-      });
-
-      if (industry) stories = taxData?.industry?.posts?.nodes || [];
-      else if (country) stories = taxData?.country?.posts?.nodes || [];
-      else if (series) stories = taxData?.seriesItem?.posts?.nodes || [];
-      else if (tag) {
-         // Fallback to GET_STORIES for tags as GET_TAX_STORIES doesn't have it yet
-         const tagData = await getWPData(GET_STORIES, { first: 27, tag: tag });
-         stories = tagData?.posts?.nodes || [];
-      }
+    if (series) {
+      const data = await getWPData(GET_SERIES_STORIES, { series });
+      stories = data?.seriesItem?.posts?.nodes || [];
+    } else if (industry) {
+      const data = await getWPData(GET_INDUSTRY_STORIES, { industry });
+      stories = data?.industry?.posts?.nodes || [];
+    } else if (country) {
+      const data = await getWPData(GET_COUNTRY_STORIES, { country });
+      stories = data?.country?.posts?.nodes || [];
+    } else if (tag) {
+      const data = await getWPData(GET_STORIES, { first: 48, tag });
+      stories = data?.posts?.nodes || [];
     } else {
       const data = await getWPData(GET_STORIES, {
         first: 27,
