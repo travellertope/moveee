@@ -300,26 +300,36 @@ export async function generateDirectoryImage(
     }
   }
 
-  // ── Tier 2: Gemini 2.0 Flash image generation ─────────────────────────────
+  // ── Tier 2: Gemini image generation ──────────────────────────────────────
+  // responseModalities["IMAGE"] requires the experimental variant; the stable
+  // gemini-2.0-flash does not support image output modalities.
   if (!process.env.GEMINI_API_KEY) return null;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: prompt,
-    config: { 
-      responseModalities: ["IMAGE"],
-      safetySettings: SAFETY_SETTINGS,
-    } as any,
-  });
+  const IMAGE_MODELS = ["gemini-2.0-flash-exp", "gemini-2.0-flash-preview-image-generation"];
 
-  const parts: any[] =
-    (response as any).candidates?.[0]?.content?.parts ?? [];
+  for (const imageModel of IMAGE_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model: imageModel,
+        contents: prompt,
+        config: {
+          responseModalities: ["IMAGE"],
+          safetySettings: SAFETY_SETTINGS,
+        } as any,
+      });
 
-  for (const part of parts) {
-    if (part.inlineData?.data) return part.inlineData.data as string;
+      const parts: any[] =
+        (response as any).candidates?.[0]?.content?.parts ?? [];
+
+      for (const part of parts) {
+        if (part.inlineData?.data) return part.inlineData.data as string;
+      }
+    } catch (err: any) {
+      console.warn(`Gemini image model ${imageModel} failed:`, err?.message?.slice(0, 120));
+    }
   }
 
-  throw new Error("Both Imagen 3 and Gemini 2.0 Flash returned no image.");
+  return null; // Image generation unavailable — entry created without image.
 }
 
 /**
