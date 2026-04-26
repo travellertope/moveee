@@ -27,6 +27,7 @@ const Footer = () => {
             <li><Link href="/magazine?category=interviews">Portraits</Link></li>
             <li><Link href="/magazine?category=dispatches">Dispatches</Link></li>
             <li><Link href="/magazine">The Issue Archive</Link></li>
+            <li><Link href="/newsletters">Newsletter</Link></li>
           </ul>
         </div>
         <div>
