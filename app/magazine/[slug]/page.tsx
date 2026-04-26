@@ -128,7 +128,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   let headingIdx = 0;
   const contentWithIds = rawContent.replace(
     /<h([23])([^>]*)>(.*?)<\/h\1>/gi,
-    (full, level, attrs, inner) => {
+    (full: string, level: string, attrs: string, inner: string) => {
       if (headingIdx >= headings.length) return full;
       const { id } = headings[headingIdx++];
       if (/\bid=/.test(attrs)) return full; // already has an id
