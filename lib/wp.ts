@@ -356,11 +356,46 @@ export const GET_FILTERS = `
   }
 `;
 
+// Kept for reference but no longer used directly — see GET_SERIES_STORIES etc.
 export const GET_TAX_STORIES = `
   query GetTaxStories($category: String, $series: ID, $industry: ID, $country: ID) {
     seriesItem(id: $series, idType: SLUG) { posts(first: 24) { nodes { ...StoryFields } } }
     industry(id: $industry, idType: SLUG) { posts(first: 24) { nodes { ...StoryFields } } }
     country(id: $country, idType: SLUG) { posts(first: 24) { nodes { ...StoryFields } } }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
+// Separate per-taxonomy queries so we never pass null to a required ID! argument.
+export const GET_SERIES_STORIES = `
+  query GetSeriesStories($series: ID!) {
+    seriesItem(id: $series, idType: SLUG) {
+      name
+      slug
+      posts(first: 48) { nodes { ...StoryFields } }
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
+export const GET_INDUSTRY_STORIES = `
+  query GetIndustryStories($industry: ID!) {
+    industry(id: $industry, idType: SLUG) {
+      name
+      slug
+      posts(first: 48) { nodes { ...StoryFields } }
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
+export const GET_COUNTRY_STORIES = `
+  query GetCountryStories($country: ID!) {
+    country(id: $country, idType: SLUG) {
+      name
+      slug
+      posts(first: 48) { nodes { ...StoryFields } }
+    }
   }
   ${STORY_FIELDS_FRAGMENT}
 `;
