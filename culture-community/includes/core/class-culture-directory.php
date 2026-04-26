@@ -204,9 +204,12 @@ class Culture_Directory {
      *   filename     string  Optional. Suggested filename (default: image.jpg).
      */
     public static function handle_attach_image( WP_REST_Request $request ) {
-        $post_id      = (int) $request->get_param( 'post_id' );
-        $image_base64 = $request->get_param( 'image_base64' );
-        $filename     = sanitize_file_name( $request->get_param( 'filename' ) ?: 'directory-image.jpg' );
+        $post_id           = (int) $request->get_param( 'post_id' );
+        $image_base64      = $request->get_param( 'image_base64' );
+        $filename          = sanitize_file_name( $request->get_param( 'filename' ) ?: 'directory-image.jpg' );
+        $image_title       = sanitize_text_field( $request->get_param( 'image_title' ) ?: '' );
+        $image_description = sanitize_textarea_field( $request->get_param( 'image_description' ) ?: '' );
+        $image_alt         = sanitize_text_field( $request->get_param( 'image_alt' ) ?: '' );
 
         if ( ! $post_id || ! $image_base64 ) {
             return new WP_Error(
@@ -250,11 +253,15 @@ class Culture_Directory {
         $mime = wp_check_filetype( $filename );
 
         // Create the media attachment post.
+        // Use visual metadata when provided so the Visuals library is searchable
+        // by what is visible in the illustration, not the directory entry topic.
+        $att_title = $image_title ?: sanitize_text_field( pathinfo( $filename, PATHINFO_FILENAME ) );
         $attachment_id = wp_insert_attachment(
             array(
                 'post_mime_type' => $mime['type'] ?: 'image/jpeg',
-                'post_title'     => sanitize_text_field( pathinfo( $filename, PATHINFO_FILENAME ) ),
-                'post_content'   => '',
+                'post_title'     => $att_title,
+                'post_content'   => $image_description,
+                'post_excerpt'   => $image_alt,
                 'post_status'    => 'inherit',
             ),
             $upload['file'],
@@ -275,6 +282,11 @@ class Culture_Directory {
         }
         $meta = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
         wp_update_attachment_metadata( $attachment_id, $meta );
+
+        // Set alt text (stored as post meta, separate from the attachment post).
+        if ( $image_alt ) {
+            update_post_meta( $attachment_id, '_wp_attachment_image_alt', $image_alt );
+        }
 
         // Set as the post's featured image.
         set_post_thumbnail( $post_id, $attachment_id );

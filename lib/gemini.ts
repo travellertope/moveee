@@ -82,6 +82,66 @@ export interface DirectoryStub {
   suggestedLinks: string[];
 }
 
+export interface ImageResult {
+  data: string;        // base64-encoded image
+  title: string;       // visual descriptive title for the media library
+  description: string; // visual description of what is in the image
+  altText: string;     // concise alt text describing the visual
+}
+
+/**
+ * Derive descriptive visual metadata from the image template type.
+ * Describes what is VISIBLE in the illustration — not the cultural topic —
+ * so the Visuals directory is searchable by visual keywords.
+ */
+function buildImageMetadata(entryType: string): { title: string; description: string; altText: string } {
+  const template = classifyTemplateType(entryType);
+  const typeLabel = entryType.toLowerCase();
+  const palette =
+    "Restricted palette: deep ink, burnt ochre, gold brass, cream paper, moss green, indigo. " +
+    "Matte finish, generous negative space, no photorealism.";
+
+  if (template === "portrait") {
+    return {
+      title: `Flat geometric portrait illustration — ${typeLabel}`,
+      altText:
+        "Flat geometric editorial portrait. Simplified face as an architectural form with sharp shadow shapes. " +
+        "Geometric clothing in flat colour masses. Ochre, ink and gold editorial palette.",
+      description:
+        "Flat geometric editorial portrait illustration in The Moveee's signature visual style. " +
+        "Face rendered as a simplified architectural form — 2–3 iconic lines for eyes and mouth. " +
+        "Sharp geometric shadow shapes define volume. Stylised hair as a single dark geometric mass. " +
+        "Geometric clothing depicted as flat colour blocks. " + palette,
+    };
+  }
+
+  if (template === "object") {
+    return {
+      title: `Flat geometric ${typeLabel} illustration — editorial icon style`,
+      altText:
+        `Flat geometric editorial illustration of a ${typeLabel} as a clean geometric icon. ` +
+        "Crosshatch and stipple textures. Ochre, ink and gold editorial palette.",
+      description:
+        `Flat graphic editorial illustration of a ${typeLabel} in The Moveee's signature visual style. ` +
+        "Subject rendered as a clean geometric icon with sharp high-contrast shadow shapes suggesting volume. " +
+        "Crosshatching or stippling texture for surface detail. Dramatic side or bird's-eye lighting. " + palette,
+    };
+  }
+
+  // Scene: place, movement, genre, concept, film, book
+  return {
+    title: `Abstract geometric scene illustration — ${typeLabel}, editorial wide format`,
+    altText:
+      "Wide abstract geometric editorial scene with minimal silhouette figures. " +
+      "Large colour blocks and sharp diagonal shapes in ochre, ink and gold palette.",
+    description:
+      "Abstract geometric scene illustration in The Moveee's signature editorial style. " +
+      "Wide format composition featuring minimal human silhouettes in the middle ground. " +
+      "Environment built from large colour blocks and sharp geometric shapes — circles, triangles, diagonal lines. " +
+      "Dramatic lighting via sharp shadow planes. Fine stippling and ink-bleed effects for depth. " + palette,
+  };
+}
+
 const SYSTEM_PROMPT = `You are a knowledgeable curator for The Moveee's Culture Directory — a wiki-like reference celebrating African and diaspora culture.
 
 Given a topic name, generate a concise, encyclopedia-style entry stub. Return ONLY valid JSON — no markdown, no code fences, no explanation.
@@ -259,8 +319,12 @@ export async function generateDirectoryImage(
   title: string,
   entryType: string,
   excerpt: string
-): Promise<string | null> {
+): Promise<ImageResult> {
   const prompt = buildImagePrompt(title, entryType, excerpt);
+  const meta = buildImageMetadata(entryType);
+  const imageErrors: string[] = [];
+
+  const wrap = (data: string): ImageResult => ({ data, ...meta });
 
   // ── Tier 1: Imagen 3 via Vertex AI ────────────────────────────────────────
   const vertexClient = createVertexClient();
@@ -274,13 +338,13 @@ export async function generateDirectoryImage(
 
       const imageData = result?.generatedImages?.[0]?.image?.imageBytes;
       if (imageData) {
-        if (typeof imageData === "string") return imageData;
+        if (typeof imageData === "string") return wrap(imageData);
         const bytes =
           imageData instanceof Uint8Array ? imageData : new Uint8Array(imageData);
         let binary = "";
         for (let i = 0; i < bytes.length; i++)
           binary += String.fromCharCode(bytes[i]);
-        return btoa(binary);
+        return wrap(btoa(binary));
       }
     } catch (err: any) {
       const msg: string = err?.message ?? "";
@@ -294,52 +358,44 @@ export async function generateDirectoryImage(
         msg.includes("billing");
 
       if (!isFallbackError) throw err;
-      console.warn("Imagen 3 unavailable — falling back to Gemini Flash.", msg.slice(0, 120));
+      console.warn("Imagen 3 unavailable — falling back.", msg.slice(0, 120));
     }
   }
 
   // ── Tier 2: Gemini native image generation ───────────────────────────────
-  // Requires TEXT + IMAGE modalities — IMAGE alone causes empty responses.
-  // Only the experimental/preview variants support image output.
-  if (!process.env.GEMINI_API_KEY) return null;
+  if (process.env.GEMINI_API_KEY) {
+    const IMAGE_MODELS = [
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image-preview",
+      "gemini-3-pro-image-preview",
+    ];
 
-  const IMAGE_MODELS = [
-    "gemini-2.5-flash-image",        // Confirmed available on this key
-    "gemini-3.1-flash-image-preview", // Newer fallback
-    "gemini-3-pro-image-preview",     // Pro fallback
-  ];
+    for (const imageModel of IMAGE_MODELS) {
+      try {
+        const response = await ai.models.generateContent({
+          model: imageModel,
+          contents: prompt,
+          config: {
+            responseModalities: ["TEXT", "IMAGE"],
+            safetySettings: SAFETY_SETTINGS,
+          } as any,
+        });
 
-  const imageErrors: string[] = [];
+        const parts: any[] =
+          (response as any).candidates?.[0]?.content?.parts ?? [];
 
-  for (const imageModel of IMAGE_MODELS) {
-    try {
-      const response = await ai.models.generateContent({
-        model: imageModel,
-        contents: prompt,
-        config: {
-          responseModalities: ["TEXT", "IMAGE"],
-          safetySettings: SAFETY_SETTINGS,
-        } as any,
-      });
-
-      const parts: any[] =
-        (response as any).candidates?.[0]?.content?.parts ?? [];
-
-      for (const part of parts) {
-        if (part.inlineData?.data) return part.inlineData.data as string;
+        for (const part of parts) {
+          if (part.inlineData?.data) return wrap(part.inlineData.data as string);
+        }
+        imageErrors.push(`${imageModel}: responded but returned no image parts`);
+      } catch (err: any) {
+        imageErrors.push(`${imageModel}: ${err?.message ?? "unknown error"}`);
       }
-      imageErrors.push(`${imageModel}: responded but returned no image parts`);
-    } catch (err: any) {
-      imageErrors.push(`${imageModel}: ${err?.message ?? "unknown error"}`);
     }
   }
 
   // ── Tier 3: Pollinations.ai — free, no API key required ──────────────────
-  // Uses FLUX models. Falls back here when both Vertex AI and Gemini are
-  // unavailable due to billing restrictions.
   try {
-    // Pollinations works best with a concise prompt — strip the long style
-    // modifiers down to the first ~300 chars to stay within URL limits.
     const shortPrompt = prompt.slice(0, 300);
     const url =
       `https://image.pollinations.ai/prompt/${encodeURIComponent(shortPrompt)}` +
@@ -351,7 +407,7 @@ export async function generateDirectoryImage(
     const buffer = await res.arrayBuffer();
     if (buffer.byteLength < 1000) throw new Error("Response too small — likely an error page");
 
-    return Buffer.from(buffer).toString("base64");
+    return wrap(Buffer.from(buffer).toString("base64"));
   } catch (err: any) {
     imageErrors.push(`pollinations.ai: ${err?.message ?? "unknown error"}`);
   }

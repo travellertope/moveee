@@ -149,23 +149,28 @@ async function submitEntry(
 
   if (generateImage && postId) {
     try {
-      const imageBase64 = await generateDirectoryImage(
+      const image = await generateDirectoryImage(
         stub.title,
         stub.entryType,
         stub.excerpt
       );
-      if (imageBase64) {
-        const filename = `${stub.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60)}.jpg`;
-        await fetch(`${WP_URL}/wp-json/culture/v1/directory/attach-image`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${secret}`,
-          },
-          body: JSON.stringify({ post_id: postId, image_base64: imageBase64, filename }),
-          cache: "no-store",
-        });
-      }
+      const filename = `${stub.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60)}.jpg`;
+      await fetch(`${WP_URL}/wp-json/culture/v1/directory/attach-image`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${secret}`,
+        },
+        body: JSON.stringify({
+          post_id: postId,
+          image_base64: image.data,
+          filename,
+          image_title: image.title,
+          image_description: image.description,
+          image_alt: image.altText,
+        }),
+        cache: "no-store",
+      });
     } catch {
       // Image failure is best-effort; never blocks the entry.
     }

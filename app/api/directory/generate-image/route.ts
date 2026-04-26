@@ -45,11 +45,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Generate the image — throws on API/model errors, returns null only when
-  // GEMINI_API_KEY is absent (already checked above, so null won't occur here).
-  let imageBase64: string | null;
+  let image: Awaited<ReturnType<typeof generateDirectoryImage>>;
   try {
-    imageBase64 = await generateDirectoryImage(
+    image = await generateDirectoryImage(
       title,
       entryType ?? "entry",
       excerpt ?? ""
@@ -70,13 +68,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!imageBase64) {
-    return NextResponse.json(
-      { error: "Image generation returned no result. Vertex AI requires billing; Gemini image models (gemini-2.0-flash-exp) may not be available on the free tier." },
-      { status: 503 }
-    );
-  }
-
   // Attach it to the WordPress post via our plugin endpoint
   const secret = process.env.CULTURE_API_SECRET ?? "";
   const filename = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60)}.jpg`;
@@ -89,7 +80,14 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${secret}`,
       },
-      body: JSON.stringify({ post_id: postId, image_base64: imageBase64, filename }),
+      body: JSON.stringify({
+        post_id: postId,
+        image_base64: image.data,
+        filename,
+        image_title: image.title,
+        image_description: image.description,
+        image_alt: image.altText,
+      }),
       cache: "no-store",
     }
   );
