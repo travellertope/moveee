@@ -372,6 +372,7 @@ export const GET_SERIES_STORIES = `
     seriesItem(id: $series, idType: SLUG) {
       name
       slug
+      description
       posts(first: 48) { nodes { ...StoryFields } }
     }
   }
@@ -383,6 +384,7 @@ export const GET_INDUSTRY_STORIES = `
     industry(id: $industry, idType: SLUG) {
       name
       slug
+      description
       posts(first: 48) { nodes { ...StoryFields } }
     }
   }
@@ -394,10 +396,31 @@ export const GET_COUNTRY_STORIES = `
     country(id: $country, idType: SLUG) {
       name
       slug
+      description
       posts(first: 48) { nodes { ...StoryFields } }
     }
   }
   ${STORY_FIELDS_FRAGMENT}
+`;
+
+export const GET_CATEGORY_INFO = `
+  query GetCategoryInfo($slug: ID!) {
+    category(id: $slug, idType: SLUG) {
+      name
+      slug
+      description
+    }
+  }
+`;
+
+export const GET_TAG_INFO = `
+  query GetTagInfo($tag: ID!) {
+    tag(id: $tag, idType: SLUG) {
+      name
+      slug
+      description
+    }
+  }
 `;
 
 // ── COMMUNITY CHAPTERS & EVENTS FRAGMENTS ─────────────────────────────────

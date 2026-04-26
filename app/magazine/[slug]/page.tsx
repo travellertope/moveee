@@ -93,17 +93,48 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const categorySlug = post.categories?.nodes?.[0]?.slug || "";
   const hasFeaturedImage = !!post.featuredImage?.node?.sourceUrl;
 
-  // Extract headings from content for TOC
-  const headingRegex = /<h[23][^>]*id="([^"]*)"[^>]*>(.*?)<\/h[23]>/gi;
+  // Extract headings from content for TOC, generating IDs where none exist.
+  const toHeadingSlug = (text: string) =>
+    text.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
+
+  const rawContent = post.content || "";
   const headings: { id: string; text: string }[] = [];
+  const usedIds = new Set<string>();
+
+  // First pass: collect all h2/h3 headings and assign IDs
+  const allHeadingRegex = /<h([23])[^>]*>(.*?)<\/h\1>/gi;
   let match;
-  const tempContent = post.content || "";
-  while ((match = headingRegex.exec(tempContent)) !== null) {
-    headings.push({
-      id: match[1],
-      text: match[2].replace(/<[^>]*>/g, ""),
-    });
+  while ((match = allHeadingRegex.exec(rawContent)) !== null) {
+    const rawText = match[2].replace(/<[^>]*>/g, "").trim();
+    if (!rawText) continue;
+
+    // Prefer an existing id attribute; otherwise generate one from text
+    const existingId = /\bid="([^"]+)"/.exec(match[0])?.[1];
+    let id = existingId || toHeadingSlug(rawText);
+    if (!id) continue;
+
+    // Deduplicate
+    if (usedIds.has(id)) {
+      let n = 2;
+      while (usedIds.has(`${id}-${n}`)) n++;
+      id = `${id}-${n}`;
+    }
+    usedIds.add(id);
+    headings.push({ id, text: rawText });
   }
+
+  // Second pass: inject generated IDs into headings that lack them so anchor
+  // links in the TOC actually scroll to the right place.
+  let headingIdx = 0;
+  const contentWithIds = rawContent.replace(
+    /<h([23])([^>]*)>(.*?)<\/h\1>/gi,
+    (full, level, attrs, inner) => {
+      if (headingIdx >= headings.length) return full;
+      const { id } = headings[headingIdx++];
+      if (/\bid=/.test(attrs)) return full; // already has an id
+      return `<h${level}${attrs} id="${id}">${inner}</h${level}>`;
+    }
+  );
 
   // Intercept and rewrite internal WP links to use proper Next.js routing
   const cleanContent = (html: string) => {
@@ -126,7 +157,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       }
     );
   };
-  const processedContent = cleanContent(post.content);
+  const processedContent = cleanContent(contentWithIds);
 
   return (
     <>
