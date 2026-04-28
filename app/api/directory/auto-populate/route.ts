@@ -82,13 +82,13 @@ async function getExistingTitles(): Promise<Set<string>> {
       }
     `;
     try {
-      const res = await fetch(WP_GRAPHQL, {
+      const res: Response = await fetch(WP_GRAPHQL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, variables: { after: cursor } }),
         cache: "no-store",
       });
-      const json = await res.json();
+      const json: any = await res.json();
       const conn = json.data?.cultureDirectories;
       if (!conn) break;
 
