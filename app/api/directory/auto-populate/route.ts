@@ -3,7 +3,8 @@
  *
  * Background job that seeds the Culture Directory. Each run:
  *   1. Pulls SEED_TOPICS (hardcoded) + extra topics stored in WordPress.
- *   2. Filters out titles already published in the directory.
+ *   2. Filters out topics already published (by title) AND topics previously
+ *      submitted (by original seed string — survives Gemini title changes).
  *   3. If pending topics remain, generates up to `batchSize` stubs via Gemini.
  *   4. If ALL topics are exhausted, asks Gemini to suggest 20 new ones,
  *      saves them to WordPress, and runs the first batch immediately.
@@ -60,28 +61,49 @@ const SEED_TOPICS = [
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-/** Titles of all published directory entries (lowercased). */
+/**
+ * Titles of all published directory entries (lowercased).
+ * Paginates through WPGraphQL 100 nodes at a time to bypass the default
+ * connection limit — without this, any entry beyond #100 is invisible to
+ * the duplicate check and gets re-seeded on every run.
+ */
 async function getExistingTitles(): Promise<Set<string>> {
-  const query = `
-    query GetAllDirectoryTitles {
-      cultureDirectories(first: 500, where: { status: PUBLISH }) {
-        nodes { title }
+  const titles = new Set<string>();
+  let cursor: string | null = null;
+  let hasNextPage = true;
+
+  while (hasNextPage) {
+    const query = `
+      query GetDirectoryTitles($after: String) {
+        cultureDirectories(first: 100, after: $after, where: { status: PUBLISH }) {
+          pageInfo { hasNextPage endCursor }
+          nodes { title }
+        }
       }
+    `;
+    try {
+      const res = await fetch(WP_GRAPHQL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, variables: { after: cursor } }),
+        cache: "no-store",
+      });
+      const json = await res.json();
+      const conn = json.data?.cultureDirectories;
+      if (!conn) break;
+
+      for (const node of (conn.nodes ?? []) as { title: string }[]) {
+        titles.add(node.title.toLowerCase().trim());
+      }
+
+      hasNextPage = conn.pageInfo?.hasNextPage ?? false;
+      cursor = conn.pageInfo?.endCursor ?? null;
+    } catch {
+      break;
     }
-  `;
-  try {
-    const res = await fetch(WP_GRAPHQL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
-      cache: "no-store",
-    });
-    const json = await res.json();
-    const nodes: any[] = json.data?.cultureDirectories?.nodes ?? [];
-    return new Set(nodes.map((n: any) => n.title.toLowerCase().trim()));
-  } catch {
-    return new Set();
   }
+
+  return titles;
 }
 
 /** Extra / AI-generated topics stored in WordPress. */
@@ -115,6 +137,47 @@ async function saveExtraTopics(topics: string[]): Promise<void> {
     });
   } catch {
     // Non-fatal — the run continues even if the save fails.
+  }
+}
+
+/**
+ * Original seed topic strings already successfully submitted.
+ * This is the primary duplicate guard: Gemini often changes the title
+ * (e.g., "Fela Kuti" → "Fela Anikulapo-Kuti"), so a title-only check
+ * would never match and the topic would be re-seeded every run.
+ */
+async function getProcessedTopics(): Promise<Set<string>> {
+  const secret = process.env.CULTURE_API_SECRET ?? "";
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/directory/processed-topics`, {
+      headers: { Authorization: `Bearer ${secret}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return new Set();
+    const json = await res.json();
+    return new Set(
+      (json.topics ?? []).map((t: string) => t.toLowerCase().trim())
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+/** Record the original seed topic strings that were successfully submitted. */
+async function saveProcessedTopics(topics: string[]): Promise<void> {
+  const secret = process.env.CULTURE_API_SECRET ?? "";
+  try {
+    await fetch(`${WP_URL}/wp-json/culture/v1/directory/processed-topics`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${secret}`,
+      },
+      body: JSON.stringify({ topics }),
+      cache: "no-store",
+    });
+  } catch {
+    // Non-fatal.
   }
 }
 
@@ -197,13 +260,21 @@ export async function POST(req: NextRequest) {
   const generateImages: boolean = body.generateImages !== false;
 
   // Build the full topic list: hardcoded seeds + WP-stored extras.
-  const [existing, extraTopics] = await Promise.all([
+  const [existing, extraTopics, processed] = await Promise.all([
     getExistingTitles(),
     getExtraTopics(),
+    getProcessedTopics(),
   ]);
 
   const allTopics = [...SEED_TOPICS, ...extraTopics];
-  let pending = allTopics.filter((t) => !existing.has(t.toLowerCase().trim()));
+
+  // A topic is pending only if it hasn't been published (title check) AND
+  // hasn't been submitted before (processed-topic check). The second guard
+  // catches cases where Gemini changed the topic name at generation time.
+  let pending = allTopics.filter((t) => {
+    const key = t.toLowerCase().trim();
+    return !existing.has(key) && !processed.has(key);
+  });
 
   // When every known topic is covered, ask Gemini to generate new ones.
   let aiGeneratedNewTopics = false;
@@ -226,7 +297,10 @@ export async function POST(req: NextRequest) {
     }
 
     await saveExtraTopics(newTopics);
-    pending = newTopics.filter((t) => !existing.has(t.toLowerCase().trim()));
+    pending = newTopics.filter((t) => {
+      const key = t.toLowerCase().trim();
+      return !existing.has(key) && !processed.has(key);
+    });
     aiGeneratedNewTopics = true;
   }
 
@@ -234,21 +308,29 @@ export async function POST(req: NextRequest) {
   const batch = [...pending].sort(() => Math.random() - 0.5).slice(0, batchSize);
 
   const results: Array<{ title: string; success: boolean; postId?: number }> = [];
+  const successfulTopics: string[] = [];
 
   for (const topic of batch) {
     try {
       const stub = await generateDirectoryStub(topic);
       const result = await submitEntry(stub, generateImages);
       results.push(result);
+      // Track the original seed topic string (not the AI-generated title)
+      // so that next run's duplicate check works even if Gemini renamed it.
+      if (result.success) successfulTopics.push(topic);
     } catch (err: any) {
-      results.push({ 
-        title: topic, 
+      results.push({
+        title: topic,
         success: false,
-        error: err?.message || "Unknown error during generation"
+        error: err?.message || "Unknown error during generation",
       } as any);
     }
-    // Increased delay to 3.5s to reduce pressure on API quotas and ensure DB sync
     await new Promise((r) => setTimeout(r, 3500));
+  }
+
+  // Persist the successfully submitted topic strings.
+  if (successfulTopics.length > 0) {
+    await saveProcessedTopics(successfulTopics);
   }
 
   const created = results.filter((r) => r.success).length;

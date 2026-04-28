@@ -1,8 +1,7 @@
-import { getWPData, GET_DIRECTORY_ENTRIES } from "@/lib/wp";
 import Link from "next/link";
-import Image from "next/image";
 import "@/app/visuals.css";
 import VisualsGrid from "@/components/VisualsGrid";
+import type { Visual } from "@/components/VisualsGrid";
 
 export const revalidate = 3600;
 
@@ -11,26 +10,35 @@ export const metadata = {
   description: "A curated library of AI-generated illustrations documenting African and diaspora culture. Free for creative use.",
 };
 
+const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
+
 export default async function VisualsPage() {
-  const data = await getWPData(GET_DIRECTORY_ENTRIES, { first: 100 });
-  
-  // Filter for entries that have images
-  const entries = (data?.cultureDirectories?.nodes ?? []).filter((e: any) => 
-    e.featuredImage?.node?.sourceUrl
-  );
+  let visuals: Visual[] = [];
+
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/visuals`, {
+      next: { revalidate: 3600 },
+    });
+    if (res.ok) {
+      const json = await res.json();
+      visuals = Array.isArray(json.visuals) ? json.visuals : [];
+    }
+  } catch {
+    visuals = [];
+  }
 
   return (
     <div className="visuals-portal">
       <section className="visuals-hero">
         <h1 className="visuals-title">Moveee Visuals</h1>
         <p className="visuals-subtitle">
-          A living archive of AI-generated illustrations celebrating African and 
+          A living archive of AI-generated illustrations celebrating African and
           diaspora culture. Curated from our directory. Available for your creative projects.
         </p>
       </section>
 
       <div className="visuals-wrap">
-        <VisualsGrid entries={entries} />
+        <VisualsGrid visuals={visuals} />
       </div>
     </div>
   );

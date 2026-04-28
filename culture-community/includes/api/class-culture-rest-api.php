@@ -351,6 +351,35 @@ class Culture_REST_API {
             'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
         ) );
 
+        // Culture Directory visuals — public, returns media items tagged as directory illustrations.
+        register_rest_route( 'culture/v1', '/visuals', array(
+            'methods'             => 'GET',
+            'callback'            => array( 'Culture_Directory', 'handle_get_visuals' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        // Processed seed topics — tracks original topic strings to prevent re-seeding
+        // even when Gemini generates the entry with a different title.
+        register_rest_route( 'culture/v1', '/directory/processed-topics', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( 'Culture_Directory', 'handle_get_processed_topics' ),
+                'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( 'Culture_Directory', 'handle_post_processed_topics' ),
+                'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
+                'args'                => array(
+                    'topics' => array(
+                        'required' => true,
+                        'type'     => 'array',
+                        'items'    => array( 'type' => 'string' ),
+                    ),
+                ),
+            ),
+        ) );
+
         // Extra / AI-generated seed topics store.
         register_rest_route( 'culture/v1', '/directory/extra-topics', array(
             array(
