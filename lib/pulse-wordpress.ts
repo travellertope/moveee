@@ -55,6 +55,13 @@ export interface WpComment {
   parent: number;
 }
 
+// ── Types ─────────────────────────────────────────────────────────────────
+
+export type SaveResult =
+  | { status: "saved"; post: WpPulseStory }
+  | { status: "duplicate" }
+  | { status: "error"; message: string };
+
 // ── Write helpers ──────────────────────────────────────────────────────────
 
 async function assignTerm(postId: number, restBase: string, taxKey: string, termName: string): Promise<void> {
@@ -97,15 +104,17 @@ async function assignTerm(postId: number, restBase: string, taxKey: string, term
 /**
  * Save a Pulse story to WordPress. Skips exact slug duplicates and
  * stories with identical titles saved in the last 7 days.
- * Returns the created post or null if skipped/failed.
+ * Returns a typed SaveResult so callers can distinguish duplicates from errors.
  */
-export async function savePulseStory(story: PulseStoryRaw): Promise<WpPulseStory | null> {
+export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> {
   const slug = slugify(story.title);
 
   // Check for an existing post with this slug.
   const checkRes = await fetch(`${BASE}/wp/v2/pulse-stories?slug=${slug}`, { cache: "no-store" });
-  const existing: any[] = await checkRes.json().catch(() => []);
-  if (Array.isArray(existing) && existing.length > 0) return null;
+  if (checkRes.ok) {
+    const existing: any[] = await checkRes.json().catch(() => []);
+    if (Array.isArray(existing) && existing.length > 0) return { status: "duplicate" };
+  }
 
   // Also check for a story with the same title in the last 7 days.
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -113,8 +122,10 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<WpPulseStory
     `${BASE}/wp/v2/pulse-stories?search=${encodeURIComponent(story.title)}&after=${sevenDaysAgo}&per_page=1`,
     { cache: "no-store" }
   );
-  const recent: any[] = await recentRes.json().catch(() => []);
-  if (Array.isArray(recent) && recent.length > 0) return null;
+  if (recentRes.ok) {
+    const recent: any[] = await recentRes.json().catch(() => []);
+    if (Array.isArray(recent) && recent.length > 0) return { status: "duplicate" };
+  }
 
   const body = {
     title: story.title,
@@ -141,8 +152,9 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<WpPulseStory
 
   if (!createRes.ok) {
     const err = await createRes.json().catch(() => ({}));
+    const message = (err as any).message || `HTTP ${createRes.status}`;
     console.error("[pulse-wp] Failed to create story:", err);
-    return null;
+    return { status: "error", message };
   }
 
   const post: WpPulseStory = await createRes.json();
@@ -153,7 +165,7 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<WpPulseStory
     story.region ? assignTerm(post.id, "pulse-regions", "pulse_region", story.region) : Promise.resolve(),
   ]);
 
-  return post;
+  return { status: "saved", post };
 }
 
 // ── Read helpers ───────────────────────────────────────────────────────────
