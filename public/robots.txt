@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /pulse/
+Disallow: /api/
+Disallow: /pulse/admin
+
+Sitemap: https://themoveee.com/sitemap.xml
