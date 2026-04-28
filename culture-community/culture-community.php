@@ -35,6 +35,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-newsletter-queue.
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-nl-analytics.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cli.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-pulse.php';
 
 // API includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-rest-api.php';

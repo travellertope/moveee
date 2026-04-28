@@ -1,0 +1,250 @@
+import type { PulseStoryRaw } from "./pulse-gemini";
+
+// WordPress REST API base URL — derived from the existing WP URL env var.
+const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
+const BASE = `${WP_URL}/wp-json`;
+
+// Application Password credentials for write operations.
+const AUTH = Buffer.from(
+  `${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`
+).toString("base64");
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim()
+    .slice(0, 80);
+}
+
+// ── Types ──────────────────────────────────────────────────────────────────
+
+export interface WpPulseStory {
+  id: number;
+  slug: string;
+  date: string;
+  modified: string;
+  title: { rendered: string };
+  excerpt: { rendered: string };
+  content: { rendered: string };
+  comment_status: string;
+  comment_count: number;
+  meta: {
+    pulse_source?: string;
+    pulse_region_label?: string;
+    pulse_arm_label?: string;
+    pulse_external_url?: string;
+    pulse_gemini_refreshed_at?: string;
+  };
+  _embedded?: {
+    "wp:featuredmedia"?: Array<{ source_url: string; alt_text?: string }>;
+    "wp:term"?: Array<Array<{ id: number; name: string; slug: string; taxonomy: string }>>;
+    replies?: Array<Array<{ count?: number | string }>>;
+  };
+}
+
+export interface WpComment {
+  id: number;
+  post: number;
+  author_name: string;
+  date: string;
+  content: { rendered: string };
+  status: string;
+  parent: number;
+}
+
+// ── Write helpers ──────────────────────────────────────────────────────────
+
+async function assignTerm(postId: number, restBase: string, taxKey: string, termName: string): Promise<void> {
+  const termSlug = slugify(termName);
+
+  // Find or create the term.
+  let termId: number;
+
+  const findRes = await fetch(`${BASE}/wp/v2/${restBase}?slug=${termSlug}`, {
+    headers: { Authorization: `Basic ${AUTH}` },
+    cache: "no-store",
+  });
+  const found: any[] = await findRes.json().catch(() => []);
+
+  if (Array.isArray(found) && found.length > 0) {
+    termId = found[0].id;
+  } else {
+    const createRes = await fetch(`${BASE}/wp/v2/${restBase}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Basic ${AUTH}` },
+      body: JSON.stringify({ name: termName, slug: termSlug }),
+      cache: "no-store",
+    });
+    if (!createRes.ok) return;
+    const created = await createRes.json();
+    termId = created.id;
+  }
+
+  if (!termId) return;
+
+  // Assign term to post.
+  await fetch(`${BASE}/wp/v2/pulse-stories/${postId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Basic ${AUTH}` },
+    body: JSON.stringify({ [taxKey]: [termId] }),
+    cache: "no-store",
+  });
+}
+
+/**
+ * Save a Pulse story to WordPress. Skips exact slug duplicates and
+ * stories with identical titles saved in the last 7 days.
+ * Returns the created post or null if skipped/failed.
+ */
+export async function savePulseStory(story: PulseStoryRaw): Promise<WpPulseStory | null> {
+  const slug = slugify(story.title);
+
+  // Check for an existing post with this slug.
+  const checkRes = await fetch(`${BASE}/wp/v2/pulse-stories?slug=${slug}`, { cache: "no-store" });
+  const existing: any[] = await checkRes.json().catch(() => []);
+  if (Array.isArray(existing) && existing.length > 0) return null;
+
+  // Also check for a story with the same title in the last 7 days.
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const recentRes = await fetch(
+    `${BASE}/wp/v2/pulse-stories?search=${encodeURIComponent(story.title)}&after=${sevenDaysAgo}&per_page=1`,
+    { cache: "no-store" }
+  );
+  const recent: any[] = await recentRes.json().catch(() => []);
+  if (Array.isArray(recent) && recent.length > 0) return null;
+
+  const body = {
+    title: story.title,
+    excerpt: story.summary,
+    content: `<p>${(story.body || story.summary).replace(/\n/g, "</p><p>")}</p>`,
+    slug,
+    status: "publish",
+    comment_status: "open",
+    meta: {
+      pulse_source: story.source ?? "",
+      pulse_region_label: story.region ?? "",
+      pulse_arm_label: story.arm ?? "",
+      pulse_external_url: story.source_url ?? "",
+      pulse_gemini_refreshed_at: new Date().toISOString(),
+    },
+  };
+
+  const createRes = await fetch(`${BASE}/wp/v2/pulse-stories`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Basic ${AUTH}` },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+
+  if (!createRes.ok) {
+    const err = await createRes.json().catch(() => ({}));
+    console.error("[pulse-wp] Failed to create story:", err);
+    return null;
+  }
+
+  const post: WpPulseStory = await createRes.json();
+
+  // Assign taxonomies in parallel.
+  await Promise.all([
+    story.arm    ? assignTerm(post.id, "pulse-arms",    "pulse_arm",    story.arm)    : Promise.resolve(),
+    story.region ? assignTerm(post.id, "pulse-regions", "pulse_region", story.region) : Promise.resolve(),
+  ]);
+
+  return post;
+}
+
+// ── Read helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Fetch Pulse stories with optional arm/region filtering.
+ * Uses ISR cache (5 minute revalidation) for read performance.
+ */
+export async function getPulseStories({
+  arm,
+  region,
+  page = 1,
+  perPage = 12,
+}: {
+  arm?: string;
+  region?: string;
+  page?: number;
+  perPage?: number;
+} = {}): Promise<WpPulseStory[]> {
+  let url =
+    `${BASE}/wp/v2/pulse-stories` +
+    `?per_page=${perPage}&page=${page}&orderby=date&order=desc&_embed=1`;
+
+  if (arm)    url += `&pulse_arm=${encodeURIComponent(arm)}`;
+  if (region) url += `&pulse_region=${encodeURIComponent(region)}`;
+
+  const res = await fetch(url, { next: { revalidate: 300 } });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+/** Fetch a single story by its slug. */
+export async function getPulseStoryBySlug(slug: string): Promise<WpPulseStory | null> {
+  const res = await fetch(
+    `${BASE}/wp/v2/pulse-stories?slug=${encodeURIComponent(slug)}&_embed=1`,
+    { next: { revalidate: 300 } }
+  );
+  if (!res.ok) return null;
+  const posts: WpPulseStory[] = await res.json();
+  return posts[0] ?? null;
+}
+
+/** Fetch all published slugs — used for generateStaticParams. */
+export async function getAllPulseSlugs(): Promise<string[]> {
+  const res = await fetch(
+    `${BASE}/wp/v2/pulse-stories?per_page=100&_fields=slug&status=publish`,
+    { next: { revalidate: 3600 } }
+  );
+  if (!res.ok) return [];
+  const posts: Array<{ slug: string }> = await res.json();
+  return posts.map((p) => p.slug);
+}
+
+/** Fetch approved comments for a story post. */
+export async function getPulseComments(postId: number): Promise<WpComment[]> {
+  const res = await fetch(
+    `${BASE}/wp/v2/comments?post=${postId}&per_page=50&orderby=date&order=asc&status=approve`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) return [];
+  return res.json();
+}
+
+/** Post a new comment on a story. */
+export async function postPulseComment({
+  postId,
+  authorName,
+  authorEmail,
+  content,
+}: {
+  postId: number;
+  authorName: string;
+  authorEmail: string;
+  content: string;
+}): Promise<WpComment> {
+  const res = await fetch(`${BASE}/wp/v2/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      post: postId,
+      author_name: authorName,
+      author_email: authorEmail,
+      content,
+    }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as any).message || "Failed to post comment");
+  }
+
+  return res.json();
+}
