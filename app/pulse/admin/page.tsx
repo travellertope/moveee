@@ -9,7 +9,9 @@ export default function PulseAdminPage() {
   const [result, setResult] = useState<{
     success?: boolean;
     saved?: number;
-    skipped?: number;
+    duplicates?: number;
+    errors?: number;
+    errorSample?: string[];
     total?: number;
     error?: string;
   } | null>(null);
@@ -134,11 +136,22 @@ export default function PulseAdminPage() {
                 {result.error ? (
                   <p style={{ color: "#e05a4e", margin: 0 }}>Error: {result.error}</p>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
-                    <p style={{ color: "#4caf77", margin: 0, fontWeight: 600 }}>Refresh complete</p>
-                    <p style={{ color: "#888", margin: 0 }}>
-                      {result.saved} saved · {result.skipped} skipped (duplicates) · {result.total} total from Gemini
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <p style={{ color: result.saved! > 0 ? "#4caf77" : "#D4A847", margin: 0, fontWeight: 600 }}>
+                      {result.saved! > 0 ? "Refresh complete" : "Refresh ran — no new stories saved"}
                     </p>
+                    <p style={{ color: "#888", margin: 0 }}>
+                      {result.saved} saved · {result.duplicates} duplicates · {result.errors} errors · {result.total} from Gemini
+                    </p>
+                    {result.errors! > 0 && result.errorSample && (
+                      <div style={{ marginTop: "0.25rem" }}>
+                        {result.errorSample.map((msg, i) => (
+                          <p key={i} style={{ color: "#e05a4e", fontSize: "0.75rem", margin: "0.15rem 0", fontFamily: "monospace" }}>
+                            {msg}
+                          </p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

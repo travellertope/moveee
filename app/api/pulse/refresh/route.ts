@@ -40,24 +40,31 @@ export async function POST(req: NextRequest) {
 
     const results = await Promise.allSettled(stories.map((s) => savePulseStory(s)));
 
-    const saved = results.filter(
-      (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof savePulseStory>>> =>
-        r.status === "fulfilled" && r.value !== null
-    ).length;
+    let saved = 0, duplicates = 0, errors = 0;
+    const errorMessages: string[] = [];
 
-    const skipped = results.filter(
-      (r) => r.status === "fulfilled" && (r as any).value === null
-    ).length;
-
-    const failed = results.filter((r) => r.status === "rejected").length;
+    for (const r of results) {
+      if (r.status === "rejected") {
+        errors++;
+        errorMessages.push(String(r.reason?.message ?? r.reason));
+      } else {
+        if (r.value.status === "saved")     saved++;
+        if (r.value.status === "duplicate") duplicates++;
+        if (r.value.status === "error") {
+          errors++;
+          errorMessages.push(r.value.message);
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,
       topic,
       total: stories.length,
       saved,
-      skipped,
-      failed,
+      duplicates,
+      errors,
+      ...(errorMessages.length > 0 && { errorSample: errorMessages.slice(0, 3) }),
     });
   } catch (err: any) {
     console.error("[pulse/refresh] Error:", err?.message);
