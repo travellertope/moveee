@@ -3,7 +3,7 @@
  * Plugin Name: Culture Community
  * Plugin URI:  https://example.com/culture-community
  * Description: A hybrid culture community plugin with dual chapter membership, event access restrictions, gamification, and interactive newsletters.
- * Version:     1.1.1
+ * Version:     1.2.0
  * Author:      Culture Community Team
  * License:     GPL-2.0+
  * Text Domain: culture-community
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'CULTURE_VERSION', '1.1.1' );
+define( 'CULTURE_VERSION', '1.2.0' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CULTURE_PLUGIN_FILE', __FILE__ );

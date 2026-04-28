@@ -160,6 +160,99 @@ class Culture_Directory {
     }
 
     /**
+     * GET /culture/v1/visuals
+     *
+     * Returns all attachment posts that were created by the directory seeder
+     * (identified by _culture_dir_visual = 1). Images survive here even after
+     * their parent directory entry is deleted, because WordPress keeps orphaned
+     * attachments in the media library.
+     */
+    public static function handle_get_visuals( WP_REST_Request $request ) {
+        $posts = get_posts( array(
+            'post_type'      => 'attachment',
+            'post_status'    => 'inherit',
+            'posts_per_page' => 300,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'meta_query'     => array(
+                array(
+                    'key'   => '_culture_dir_visual',
+                    'value' => '1',
+                ),
+            ),
+        ) );
+
+        $visuals = array();
+        foreach ( $posts as $post ) {
+            $sizes = wp_get_attachment_image_src( $post->ID, 'full' );
+            $visuals[] = array(
+                'id'         => $post->ID,
+                'entrySlug'  => get_post_meta( $post->ID, '_culture_dir_entry_slug',  true ) ?: '',
+                'entryTitle' => get_post_meta( $post->ID, '_culture_dir_entry_title', true ) ?: $post->post_title,
+                'entryType'  => get_post_meta( $post->ID, '_culture_dir_entry_type',  true ) ?: 'entry',
+                'imageTitle' => $post->post_title,
+                'altText'    => get_post_meta( $post->ID, '_wp_attachment_image_alt', true ) ?: '',
+                'sourceUrl'  => wp_get_attachment_url( $post->ID ),
+                'width'      => $sizes ? (int) $sizes[1] : 0,
+                'height'     => $sizes ? (int) $sizes[2] : 0,
+            );
+        }
+
+        return rest_ensure_response( array(
+            'visuals' => $visuals,
+            'count'   => count( $visuals ),
+        ) );
+    }
+
+    /**
+     * GET /culture/v1/directory/processed-topics
+     *
+     * Returns the list of original seed topic strings that have already been
+     * submitted to the directory. Used by the seeder to prevent re-seeding a
+     * topic even when Gemini generates a different title for the entry.
+     */
+    public static function handle_get_processed_topics( WP_REST_Request $request ) {
+        $raw    = get_option( 'culture_dir_processed_topics', '[]' );
+        $topics = json_decode( $raw, true );
+        if ( ! is_array( $topics ) ) {
+            $topics = array();
+        }
+        return rest_ensure_response( array( 'topics' => array_values( $topics ) ) );
+    }
+
+    /**
+     * POST /culture/v1/directory/processed-topics
+     *
+     * Merges the supplied topic strings into the processed list (no duplicates).
+     * Body: { "topics": ["Fela Kuti", "Lagos", …] }
+     */
+    public static function handle_post_processed_topics( WP_REST_Request $request ) {
+        $new_topics = (array) $request->get_param( 'topics' );
+        $new_topics = array_filter( array_map( 'sanitize_text_field', $new_topics ) );
+
+        $raw      = get_option( 'culture_dir_processed_topics', '[]' );
+        $existing = json_decode( $raw, true );
+        if ( ! is_array( $existing ) ) {
+            $existing = array();
+        }
+
+        $existing_lower = array_map( 'strtolower', $existing );
+        foreach ( $new_topics as $topic ) {
+            if ( ! in_array( strtolower( $topic ), $existing_lower, true ) ) {
+                $existing[]       = $topic;
+                $existing_lower[] = strtolower( $topic );
+            }
+        }
+
+        update_option( 'culture_dir_processed_topics', wp_json_encode( array_values( $existing ) ) );
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'count'   => count( $existing ),
+        ) );
+    }
+
+    /**
      * POST /culture/v1/directory/extra-topics
      *
      * Merges the supplied topics array into the stored list (no duplicates).
@@ -287,6 +380,23 @@ class Culture_Directory {
         if ( $image_alt ) {
             update_post_meta( $attachment_id, '_wp_attachment_image_alt', $image_alt );
         }
+
+        // Mark as a Culture Directory visual so it persists in /visuals even if
+        // the parent directory entry is later deleted. Store enough entry context
+        // (slug, title, type) so the gallery can display the card without needing
+        // the parent post to still exist.
+        $entry_type = '';
+        if ( taxonomy_exists( 'culture_dir_type' ) ) {
+            $terms = wp_get_post_terms( $post_id, 'culture_dir_type', array( 'fields' => 'slugs' ) );
+            if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+                $entry_type = $terms[0];
+            }
+        }
+
+        update_post_meta( $attachment_id, '_culture_dir_visual',      '1' );
+        update_post_meta( $attachment_id, '_culture_dir_entry_slug',  $post->post_name );
+        update_post_meta( $attachment_id, '_culture_dir_entry_title', $post->post_title );
+        update_post_meta( $attachment_id, '_culture_dir_entry_type',  $entry_type );
 
         // Set as the post's featured image.
         set_post_thumbnail( $post_id, $attachment_id );
