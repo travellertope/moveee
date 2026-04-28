@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/pulse/refresh",
-      "schedule": "0 6,12,18 * * *"
+      "schedule": "0 8 * * *"
     }
   ]
 }
