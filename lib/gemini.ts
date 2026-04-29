@@ -601,3 +601,139 @@ Example format:
 
   throw new Error(`Failed to generate seed quotes: ${lastError?.message || "Unknown error"}`);
 }
+
+// ── Events discovery ─────────────────────────────────────────────────────────
+
+export interface SerperResult {
+  title: string;
+  link: string;
+  snippet: string;
+  date?: string;
+}
+
+export interface EventStub {
+  title: string;
+  tagline: string;
+  excerpt: string;
+  content: string;
+  event_date: string;      // ISO 8601: YYYY-MM-DDTHH:mm
+  end_date: string;
+  location: string;        // Venue name + address
+  city: string;
+  admission: string;       // "Free" | "£15" | "From $20" etc.
+  ticketing_url: string;
+  attribution: string;     // Source URL
+  interests: string[];     // culture_interest taxonomy slugs
+  relevant: boolean;
+}
+
+const INTEREST_SLUGS = [
+  "music", "visual-arts", "film", "literature", "fashion",
+  "food", "architecture", "dance", "theatre", "photography",
+  "design", "craft", "performance", "community", "heritage",
+  "sports", "wellness", "technology", "education",
+];
+
+/**
+ * Pass raw Serper search results to Gemini.
+ * Gemini filters for community relevance, extracts structured fields,
+ * and returns up to maxEvents EventStub objects.
+ */
+export async function evaluateAndExtractEvents(
+  results: SerperResult[],
+  city: string,
+  currentDate: string,
+  maxEvents: number = 8
+): Promise<EventStub[]> {
+  if (!results.length) return [];
+
+  const resultsJson = JSON.stringify(
+    results.map((r, i) => ({ id: i, title: r.title, url: r.link, snippet: r.snippet, date: r.date ?? "" }))
+  );
+
+  const prompt = `You are the events curator for The Moveee — an independent cultural platform for the African and global diaspora community. Today's date is ${currentDate}.
+
+You have been given ${results.length} web search results about events in ${city}. Your job is to:
+
+1. FILTER: Only include events that are:
+   - Genuinely upcoming (after ${currentDate}) — skip past events
+   - Actually an event (not a listicle, news article, or venue homepage)
+   - Culturally interesting: music, art exhibitions, film screenings, literature, fashion, food, theatre, dance, cultural festivals, community gatherings. Especially relevant if connected to African, Caribbean, diaspora, or global South culture — but excellent events of any kind are welcome.
+
+2. EXTRACT: For each relevant event, extract all available fields.
+
+3. COMPOSE: Write a short, editorial tagline (1 sentence, present tense, evocative — not a press release) and a longer excerpt (2-3 sentences with cultural context).
+
+Available interest slugs (use only these): ${INTEREST_SLUGS.join(", ")}
+
+Return a JSON array. Each object must have exactly these fields:
+{
+  "title": "Full event title",
+  "tagline": "One evocative sentence about the event",
+  "excerpt": "2-3 sentence editorial description with cultural context",
+  "content": "Same as excerpt — expand if more detail is available in the snippet",
+  "event_date": "YYYY-MM-DDTHH:mm or YYYY-MM-DD if time unknown",
+  "end_date": "YYYY-MM-DDTHH:mm or empty string",
+  "location": "Venue name and address if available",
+  "city": "${city}",
+  "admission": "Free / price / empty string if unknown",
+  "ticketing_url": "Direct ticket/event URL from the search result",
+  "attribution": "Source URL from the search result",
+  "interests": ["slug1", "slug2"],
+  "relevant": true
+}
+
+If a result is NOT relevant, skip it entirely — do not include it with relevant: false.
+Return at most ${maxEvents} events. Return ONLY the JSON array, no commentary.
+
+Search results:
+${resultsJson}`;
+
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          safetySettings: SAFETY_SETTINGS,
+        },
+      });
+
+      const raw = (response.text ?? "").trim();
+      if (!raw) continue;
+
+      const jsonStr = extractJson(raw);
+      const parsed: unknown = JSON.parse(jsonStr);
+
+      if (!Array.isArray(parsed)) continue;
+
+      return (parsed as any[])
+        .filter((e) => e.title && e.event_date && e.relevant !== false)
+        .map((e) => ({
+          title:        String(e.title || "").trim(),
+          tagline:      String(e.tagline || "").trim(),
+          excerpt:      String(e.excerpt || "").trim(),
+          content:      String(e.content || e.excerpt || "").trim(),
+          event_date:   String(e.event_date || "").trim(),
+          end_date:     String(e.end_date || "").trim(),
+          location:     String(e.location || "").trim(),
+          city:         String(e.city || city).trim(),
+          admission:    String(e.admission || "").trim(),
+          ticketing_url: String(e.ticketing_url || "").trim(),
+          attribution:  String(e.attribution || "").trim(),
+          interests:    Array.isArray(e.interests) ? e.interests.filter((s: any) => INTEREST_SLUGS.includes(s)) : [],
+          relevant:     true,
+        }))
+        .slice(0, maxEvents);
+    } catch (err: any) {
+      console.warn(`Model ${modelId} failed for event extraction (${city}):`, err?.message);
+      lastError = err;
+      continue;
+    }
+  }
+
+  throw new Error(`Event extraction failed for ${city}: ${lastError?.message || "Unknown error"}`);
+}
