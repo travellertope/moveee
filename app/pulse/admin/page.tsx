@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const SESSION_KEY = "pulse_admin_secret";
 
 export default function PulseAdminPage() {
   const [secret, setSecret] = useState("");
@@ -17,9 +19,29 @@ export default function PulseAdminPage() {
   } | null>(null);
   const [authed, setAuthed] = useState(false);
 
+  // Restore secret from sessionStorage on mount (survives page reloads).
+  useEffect(() => {
+    const stored = sessionStorage.getItem(SESSION_KEY);
+    if (stored) {
+      setSecret(stored);
+      setAuthed(true);
+    }
+  }, []);
+
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
-    if (secret.trim().length > 0) setAuthed(true);
+    const trimmed = secret.trim();
+    if (!trimmed) return;
+    sessionStorage.setItem(SESSION_KEY, trimmed);
+    setSecret(trimmed);
+    setAuthed(true);
+  };
+
+  const handleLock = () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setAuthed(false);
+    setSecret("");
+    setResult(null);
   };
 
   const handleRefresh = async (e: React.FormEvent) => {
@@ -28,12 +50,20 @@ export default function PulseAdminPage() {
     setResult(null);
 
     try {
-      const res = await fetch(`/api/pulse/refresh?secret=${encodeURIComponent(secret)}`, {
+      const res = await fetch(`/api/pulse/refresh?secret=${encodeURIComponent(secret.trim())}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: topic.trim() }),
       });
       const data = await res.json();
+
+      // If we get 401, clear the stored secret so the user must re-enter.
+      if (res.status === 401) {
+        sessionStorage.removeItem(SESSION_KEY);
+        setAuthed(false);
+        setSecret("");
+      }
+
       setResult(data);
     } catch {
       setResult({ error: "Network error — could not reach the refresh endpoint." });
@@ -99,6 +129,28 @@ export default function PulseAdminPage() {
           </form>
         ) : (
           <form onSubmit={handleRefresh} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            {/* Keep secret editable so it can be corrected without locking out */}
+            <div>
+              <label
+                htmlFor="admin-secret-edit"
+                style={{ display: "block", color: "#666", fontSize: "0.72rem", marginBottom: "0.35rem" }}
+              >
+                Refresh secret
+              </label>
+              <input
+                id="admin-secret-edit"
+                type="password"
+                required
+                value={secret}
+                onChange={(e) => {
+                  setSecret(e.target.value);
+                  sessionStorage.setItem(SESSION_KEY, e.target.value);
+                }}
+                style={inputStyle}
+                placeholder="PULSE_REFRESH_SECRET"
+              />
+            </div>
+
             <div>
               <label
                 htmlFor="admin-topic"
@@ -159,7 +211,7 @@ export default function PulseAdminPage() {
 
             <button
               type="button"
-              onClick={() => { setAuthed(false); setSecret(""); setResult(null); }}
+              onClick={handleLock}
               style={{
                 background: "transparent",
                 border: "none",
