@@ -648,7 +648,7 @@ export async function evaluateAndExtractEvents(
   if (!results.length) return [];
 
   const resultsJson = JSON.stringify(
-    results.map((r, i) => ({ id: i, title: r.title, url: r.link, snippet: r.snippet, date: r.date ?? "" }))
+    results.map((r, i) => ({ id: i, title: r.title, url: r.link, snippet: r.snippet, article_published: r.date ?? "" }))
   );
 
   const prompt = `You are the events curator for The Moveee — an independent cultural platform for the African and global diaspora community. Today's date is ${currentDate}.
@@ -661,6 +661,8 @@ You have been given ${results.length} web search results about events in ${city}
    - Culturally interesting: music, art exhibitions, film screenings, literature, fashion, food, theatre, dance, cultural festivals, community gatherings. Especially relevant if connected to African, Caribbean, diaspora, or global South culture — but excellent events of any kind are welcome.
 
 2. EXTRACT: For each relevant event, extract all available fields.
+   IMPORTANT — dates: The \`article_published\` field is when the web page was indexed — it is NOT the event date.
+   Extract the actual event date from the snippet text. If no clear event date is mentioned in the snippet, leave event_date as an empty string so the event is skipped.
 
 3. COMPOSE: Write a short, editorial tagline (1 sentence, present tense, evocative — not a press release) and a longer excerpt (2-3 sentences with cultural context).
 
@@ -672,7 +674,7 @@ Return a JSON array. Each object must have exactly these fields:
   "tagline": "One evocative sentence about the event",
   "excerpt": "2-3 sentence editorial description with cultural context",
   "content": "Same as excerpt — expand if more detail is available in the snippet",
-  "event_date": "YYYY-MM-DDTHH:mm or YYYY-MM-DD if time unknown",
+  "event_date": "YYYY-MM-DDTHH:mm or YYYY-MM-DD if time unknown — must be the event date, NOT the article_published date",
   "end_date": "YYYY-MM-DDTHH:mm or empty string",
   "location": "Venue name and address if available",
   "city": "${city}",
@@ -684,6 +686,7 @@ Return a JSON array. Each object must have exactly these fields:
 }
 
 If a result is NOT relevant, skip it entirely — do not include it with relevant: false.
+If you cannot determine the actual event date from the snippet text, set event_date to "" and it will be skipped.
 Return at most ${maxEvents} events. Return ONLY the JSON array, no commentary.
 
 Search results:
