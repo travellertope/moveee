@@ -123,7 +123,7 @@ export default function PulseStory({ story, initialComments }: PulseStoryProps) 
         <h1
           style={{
             fontFamily: "var(--font-fraunces), serif",
-            fontSize: "clamp(1.6rem, 4vw, 2.4rem)",
+            fontSize: "clamp(1.35rem, 3.5vw, 2rem)",
             fontWeight: 700,
             lineHeight: 1.2,
             color: "#f0ece4",
