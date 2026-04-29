@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const excerpt = event.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160) || event.tagline || "A curated cultural event from The Moveee";
 
   return {
-    title: `${event.title} · ${dateFormatted} · ${location} | The Moveee Events`,
+    title: `${event.title} · ${dateFormatted} · ${location} | Moveee Happenings`,
     description: excerpt,
     openGraph: {
       title: event.title,
@@ -106,7 +106,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <span className="sep">·</span>
             <span>{eyebrowType}</span>
             <span className="sep">·</span>
-            <span>Moveee Events</span>
+            <span>Moveee Happenings</span>
           </div>
 
           <h1 className="hero-title">{event.title}</h1>
