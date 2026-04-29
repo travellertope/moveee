@@ -382,3 +382,342 @@ html {
   .events-grid { grid-template-columns: 1fr; }
   .programme-row { grid-template-columns: 80px 1fr; gap: 16px; }
 }
+
+/* ==========================================================================
+   ── COMMUNITY RADAR — Discovered / Seeded Events (archive)
+   ========================================================================== */
+
+.disc-section {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 80px 60px;
+}
+
+.disc-section-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.disc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(243, 236, 224, 0.1);
+}
+
+.disc-eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-bottom: 12px;
+}
+
+.disc-heading {
+  font-family: var(--font-serif);
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 700;
+  color: var(--paper);
+  line-height: 0.95;
+  margin-bottom: 12px;
+}
+
+.disc-heading em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.disc-subhead {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: rgba(243, 236, 224, 0.5);
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.disc-total {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(243, 236, 224, 0.3);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  align-self: flex-end;
+}
+
+/* Individual row */
+.disc-row {
+  display: grid;
+  grid-template-columns: 64px 1fr auto auto;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(243, 236, 224, 0.06);
+  transition: background 0.12s;
+}
+
+.disc-row:hover {
+  background: rgba(243, 236, 224, 0.03);
+  margin: 0 -12px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.disc-date-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ochre);
+  background: rgba(197, 73, 31, 0.1);
+  border: 1px solid rgba(197, 73, 31, 0.25);
+  padding: 4px 8px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.disc-title {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--paper);
+  text-decoration: none;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.12s;
+}
+
+.disc-title:hover {
+  color: var(--gold);
+}
+
+.disc-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: rgba(243, 236, 224, 0.35);
+  white-space: nowrap;
+}
+
+.disc-ext-cta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 6px 12px;
+  border: 1px solid rgba(179, 130, 56, 0.3);
+  transition: all 0.12s;
+}
+
+.disc-ext-cta:hover {
+  background: rgba(179, 130, 56, 0.1);
+  border-color: var(--gold);
+}
+
+/* ==========================================================================
+   ── SINGLE DISCOVERED EVENT PAGE (/events/[slug] when isAiGenerated)
+   ========================================================================== */
+
+.disc-event-page {
+  background: var(--ink);
+  min-height: 100vh;
+  color: var(--paper);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  padding: 80px 60px;
+}
+
+.disc-event-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.disc-event-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.disc-back {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: rgba(243, 236, 224, 0.4);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 0.12s;
+}
+
+.disc-back:hover {
+  color: var(--paper);
+}
+
+.disc-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  border: 1px solid rgba(197, 73, 31, 0.4);
+  padding: 4px 10px;
+}
+
+.disc-event-title {
+  font-family: var(--font-serif);
+  font-size: clamp(36px, 6vw, 68px);
+  font-weight: 700;
+  color: var(--paper);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+.disc-event-tagline {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-style: italic;
+  color: rgba(243, 236, 224, 0.6);
+  margin-bottom: 40px;
+  line-height: 1.4;
+}
+
+.disc-event-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 32px;
+  border-top: 1px solid rgba(243, 236, 224, 0.1);
+}
+
+.disc-detail-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(243, 236, 224, 0.07);
+  align-items: baseline;
+}
+
+.disc-detail-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(243, 236, 224, 0.35);
+}
+
+.disc-detail-value {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--paper);
+}
+
+.disc-interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.disc-interest-pill {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(243, 236, 224, 0.5);
+  border: 1px solid rgba(243, 236, 224, 0.15);
+  padding: 5px 10px;
+}
+
+.disc-event-excerpt {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.65;
+  color: rgba(243, 236, 224, 0.75);
+  margin-bottom: 40px;
+  font-weight: 300;
+}
+
+.disc-cta-btn {
+  display: inline-block;
+  background: var(--ochre);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 16px 32px;
+  margin-bottom: 32px;
+  transition: background 0.15s;
+}
+
+.disc-cta-btn:hover {
+  background: var(--ochre-deep);
+}
+
+.disc-cta-note {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-style: italic;
+  color: rgba(243, 236, 224, 0.4);
+  margin-bottom: 32px;
+  padding: 16px;
+  border: 1px solid rgba(243, 236, 224, 0.1);
+}
+
+.disc-attribution {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: rgba(243, 236, 224, 0.25);
+  margin-bottom: 48px;
+}
+
+.disc-event-footer {
+  padding-top: 32px;
+  border-top: 1px solid rgba(243, 236, 224, 0.1);
+}
+
+.disc-back-footer {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(243, 236, 224, 0.4);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+.disc-back-footer:hover {
+  color: var(--paper);
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .disc-section { padding: 60px 40px; }
+  .disc-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+}
+
+@media (max-width: 700px) {
+  .disc-section { padding: 48px 24px; }
+  .disc-event-page { padding: 48px 24px; }
+  .disc-row {
+    grid-template-columns: 48px 1fr;
+    grid-template-rows: auto auto;
+    gap: 8px 12px;
+  }
+  .disc-meta { grid-column: 2; font-size: 9px; }
+  .disc-ext-cta { grid-column: 2; justify-self: start; margin-top: 4px; }
+  .disc-event-title { font-size: clamp(28px, 9vw, 48px); }
+  .disc-detail-row { grid-template-columns: 80px 1fr; gap: 16px; }
+}

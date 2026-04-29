@@ -3,6 +3,7 @@ import { getEventsWithFallback } from "@/lib/wp";
 import EventHero from "./components/EventHero";
 import SpotlightCard from "./components/SpotlightCard";
 import EventCard from "./components/EventCard";
+import DiscoveredEventRow from "./components/DiscoveredEventRow";
 import "@/app/events.css";
 
 export const dynamic = "force-dynamic";
@@ -53,9 +54,12 @@ export default async function EventsPage() {
     events = await getEventsWithFallback(50, { revalidate: 0 });
   } catch { /* CMS unreachable */ }
 
-  const spotlightEvent = events.find(e => e.isFeatured) || events[0];
-  const otherEvents = spotlightEvent ? events.filter(e => e.id !== spotlightEvent.id) : events;
-  const groupedEvents = groupEventsByMonth(otherEvents);
+  const ownEvents    = events.filter(e => !e.isAiGenerated);
+  const seededEvents = events.filter(e => e.isAiGenerated);
+
+  const spotlightEvent = ownEvents.find(e => e.isFeatured) || ownEvents[0];
+  const otherOwnEvents = spotlightEvent ? ownEvents.filter(e => e.id !== spotlightEvent.id) : ownEvents;
+  const groupedEvents = groupEventsByMonth(otherOwnEvents);
 
   return (
     <div className="events-page bg-paper">
@@ -115,13 +119,13 @@ export default async function EventsPage() {
           <button className="filter-btn">Film</button>
           <button className="filter-btn">Food</button>
           <button className="filter-btn">Members Only</button>
-          <span className="filter-count">Showing {events.length} events</span>
+          <span className="filter-count">Showing {ownEvents.length} curated events</span>
         </div>
       </div>
 
-      {/* ── GRID ── */}
+      {/* ── GRID (own / curated events) ── */}
       <section className="events-section">
-        {groupedEvents.length === 0 && events.length === 0 ? (
+        {groupedEvents.length === 0 && ownEvents.length === 0 ? (
           <p className="textAlign-center py-20 font-serif italic text-2xl text-mute">
             No upcoming events — check back soon.
           </p>
@@ -136,7 +140,7 @@ export default async function EventsPage() {
 
               <div className="events-grid">
                 {group.events.map((event) => (
-                  <EventCard 
+                  <EventCard
                     key={event.id}
                     slug={event.slug}
                     title={event.title}
@@ -157,6 +161,54 @@ export default async function EventsPage() {
           ))
         )}
       </section>
+
+      {/* ── COMMUNITY RADAR — discovered / seeded events ── */}
+      {seededEvents.length > 0 && (
+        <section className="disc-section">
+          <div className="disc-section-inner">
+            <div className="disc-header">
+              <div>
+                <span className="disc-eyebrow">Community Radar</span>
+                <h2 className="disc-heading">More <em>Happenings</em></h2>
+                <p className="disc-subhead">
+                  AI-discovered events across the diaspora — sourced from the web and curated for our community.
+                </p>
+              </div>
+              <span className="disc-total">{seededEvents.length} discovered</span>
+            </div>
+
+            <div className="disc-list">
+              {seededEvents
+                .sort((a: any, b: any) => {
+                  const da = new Date(a.eventDate || a.date || 0).getTime();
+                  const db = new Date(b.eventDate || b.date || 0).getTime();
+                  return da - db;
+                })
+                .map((event: any) => {
+                  const d = new Date(event.eventDate || event.date || Date.now());
+                  const dateStr = isNaN(d.getTime())
+                    ? "TBA"
+                    : d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+                  const cat =
+                    Array.isArray(event.cultureInterests?.nodes) && event.cultureInterests.nodes.length > 0
+                      ? event.cultureInterests.nodes[0].name
+                      : "";
+                  return (
+                    <DiscoveredEventRow
+                      key={event.id}
+                      slug={event.slug}
+                      title={event.title}
+                      date={dateStr}
+                      city={event.location || ""}
+                      category={cat}
+                      ticketingUrl={event.ticketingUrl}
+                    />
+                  );
+                })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── CONNECT CTA BAND ── */}
       <section className="connect-band">
