@@ -29,10 +29,20 @@ export default function PulseAdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: topic.trim() }),
       });
+
+      const contentType = res.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        // Vercel killed the function (504 timeout) — body is HTML, not JSON.
+        setResult({
+          error: `Request timed out (HTTP ${res.status}). Gemini took too long — try again or use a more specific topic.`,
+        });
+        return;
+      }
+
       const data = await res.json();
       setResult(data);
-    } catch {
-      setResult({ error: "Network error — could not reach the refresh endpoint." });
+    } catch (err: any) {
+      setResult({ error: `Network error: ${err?.message ?? "could not reach the refresh endpoint."}` });
     } finally {
       setLoading(false);
     }

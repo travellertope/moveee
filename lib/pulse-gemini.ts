@@ -64,6 +64,15 @@ function isValidStory(s: any): s is PulseStoryRaw {
   );
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
+
 async function tryModels(prompt: string, withSearch: boolean): Promise<PulseStoryRaw[] | null> {
   let lastError: any = null;
 
@@ -75,11 +84,15 @@ async function tryModels(prompt: string, withSearch: boolean): Promise<PulseStor
       };
       if (withSearch) config.tools = [{ googleSearch: {} }];
 
-      const response = await ai.models.generateContent({
-        model: modelId,
-        contents: prompt,
-        config,
-      });
+      const response = await withTimeout(
+        ai.models.generateContent({
+          model: modelId,
+          contents: prompt,
+          config,
+        }),
+        20_000,
+        modelId
+      );
 
       const raw = (
         response.text ??
