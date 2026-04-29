@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { WpPulseStory, WpComment } from "@/lib/pulse-wordpress";
+import { decodeHtml } from "@/lib/decode-html";
 import CommentThread from "./CommentThread";
 
 const ARM_STYLES: Record<string, { bg: string; color: string }> = {
@@ -10,10 +11,6 @@ const ARM_STYLES: Record<string, { bg: string; color: string }> = {
   happenings: { bg: "#EEEDFE", color: "#3C3489" },
   magazine:   { bg: "#FAECE7", color: "#712B13" },
 };
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").trim();
-}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-GB", {
@@ -35,7 +32,7 @@ export default function PulseStory({ story, initialComments }: PulseStoryProps) 
   const sourceUrl = story.meta?.pulse_external_url ?? "";
   const armStyle = ARM_STYLES[arm] ?? { bg: "#F0F0F0", color: "#333" };
 
-  const title = stripHtml(story.title?.rendered ?? "");
+  const title = decodeHtml(story.title?.rendered ?? "");
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const storyUrl = `${siteUrl}/pulse/${story.slug}`;
 

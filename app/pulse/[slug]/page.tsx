@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPulseStoryBySlug, getAllPulseSlugs, getPulseComments } from "@/lib/pulse-wordpress";
+import { decodeHtml } from "@/lib/decode-html";
 import PulseStory from "@/components/pulse/PulseStory";
 
-export const revalidate = 600;
+export const dynamic = "force-dynamic";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").trim();
-}
-
 export async function generateStaticParams() {
-  const slugs = await getAllPulseSlugs();
-  return slugs.map((slug) => ({ slug }));
+  try {
+    const slugs = await getAllPulseSlugs();
+    return slugs.map((slug) => ({ slug }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({
@@ -21,67 +22,62 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const story = await getPulseStoryBySlug(slug);
-  if (!story) return { title: "Story not found — Moveee Pulse" };
+  try {
+    const { slug } = await params;
+    const story = await getPulseStoryBySlug(slug);
+    if (!story) return { title: "Story not found — Moveee Pulse" };
 
-  const title = `${stripHtml(story.title.rendered)} — Moveee Pulse`;
-  const description = stripHtml(story.excerpt.rendered).slice(0, 155);
-  const url = `${SITE_URL}/pulse/${story.slug}`;
-  const ogImage =
-    story._embedded?.["wp:featuredmedia"]?.[0]?.source_url ??
-    `${SITE_URL}/og-fallback.png`;
+    const title = `${decodeHtml(story.title?.rendered ?? "")} — Moveee Pulse`;
+    const description = decodeHtml(story.excerpt?.rendered ?? "").slice(0, 155);
+    const url = `${SITE_URL}/pulse/${story.slug}`;
+    const ogImage =
+      story._embedded?.["wp:featuredmedia"]?.[0]?.source_url ??
+      `${SITE_URL}/og-fallback.png`;
 
-  return {
-    title,
-    description,
-    openGraph: {
+    return {
       title,
       description,
-      url,
-      siteName: "The Moveee",
-      images: [{ url: ogImage, width: 1200, height: 630, alt: stripHtml(story.title.rendered) }],
-      type: "article",
-      publishedTime: story.date,
-      modifiedTime: story.modified,
-      authors: ["Moveee Pulse"],
-      tags: [
-        story.meta?.pulse_arm_label,
-        story.meta?.pulse_region_label,
-        "African culture",
-        "Black diaspora",
-      ].filter((t): t is string => Boolean(t)),
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [ogImage],
-    },
-    alternates: { canonical: url },
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
+      openGraph: {
+        title,
+        description,
+        url,
+        siteName: "The Moveee",
+        images: [{ url: ogImage, width: 1200, height: 630, alt: decodeHtml(story.title?.rendered ?? "") }],
+        type: "article",
+        publishedTime: story.date,
+        modifiedTime: story.modified,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [ogImage],
+      },
+      alternates: { canonical: url },
+      robots: {
         index: true,
         follow: true,
-        "max-snippet": -1,
-        "max-image-preview": "large",
+        googleBot: {
+          index: true,
+          follow: true,
+          "max-snippet": -1,
+          "max-image-preview": "large",
+        },
       },
-    },
-  };
+    };
+  } catch {
+    return { title: "Moveee Pulse" };
+  }
 }
 
-function StoryStructuredData({ story }: { story: Awaited<ReturnType<typeof getPulseStoryBySlug>> }) {
-  if (!story) return null;
-
+function StoryStructuredData({ story }: { story: NonNullable<Awaited<ReturnType<typeof getPulseStoryBySlug>>> }) {
   const url = `${SITE_URL}/pulse/${story.slug}`;
-  const description = stripHtml(story.excerpt.rendered).slice(0, 200);
+  const description = decodeHtml(story.excerpt?.rendered ?? "").slice(0, 200);
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
-    headline: stripHtml(story.title.rendered),
+    headline: decodeHtml(story.title?.rendered ?? ""),
     description,
     url,
     datePublished: story.date,
@@ -123,7 +119,7 @@ export default async function PulseStoryPage({
   const story = await getPulseStoryBySlug(slug);
   if (!story) notFound();
 
-  const comments = await getPulseComments(story.id);
+  const comments = await getPulseComments(story.id).catch(() => []);
 
   return (
     <>

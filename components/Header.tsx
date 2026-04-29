@@ -88,6 +88,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
             <Link href="/events">Events</Link>
             <Link href="/origins">Origins</Link>
             <Link href="/shop">Lifestyle</Link>
+            <Link href="/pulse" style={{ color: "#D4A847" }}>Pulse</Link>
           </nav>
 
           {/* Wordmark */}
@@ -215,6 +216,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
             <Link href="/events"   onClick={() => setMobileMenuOpen(false)}>Events</Link>
             <Link href="/origins"  onClick={() => setMobileMenuOpen(false)}>Origins</Link>
             <Link href="/shop"     onClick={() => setMobileMenuOpen(false)}>Lifestyle</Link>
+            <Link href="/pulse"    onClick={() => setMobileMenuOpen(false)} style={{ color: "#D4A847" }}>Pulse</Link>
           </div>
           <div className="mobile-menu-actions">
             {loggedIn ? (
