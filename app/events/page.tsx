@@ -99,7 +99,7 @@ export default async function EventsPage() {
           })()}
           venue={spotlightEvent.location || "Venue TBA"}
           time="Doors 6 PM"
-          admission={spotlightEvent.admission || "Free · RSVP required"}
+          admission={spotlightEvent.admission || "See website for details"}
           image={spotlightEvent.featuredImage?.node?.sourceUrl}
           statusBadge="Featured"
         />

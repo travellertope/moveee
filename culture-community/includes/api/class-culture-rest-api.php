@@ -401,6 +401,13 @@ class Culture_REST_API {
             ),
         ) );
 
+        // AI events seeder — create a culture_event post.
+        register_rest_route( 'culture/v1', '/events/submit', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_create_event' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
         // Paragraph comments — GET (public) and POST (auth/shared secret).
         register_rest_route( 'culture/v1', '/comments/paragraph', array(
             array(
@@ -1853,5 +1860,98 @@ class Culture_REST_API {
         }
 
         return rest_ensure_response( self::user_profile( $user ) );
+    }
+
+    /**
+     * POST /culture/v1/events/submit
+     *
+     * Creates a culture_event post. Called exclusively by the AI events seeder.
+     * Deduplicates by a hash of normalised title + event_date + location.
+     */
+    public static function handle_create_event( WP_REST_Request $request ) {
+        $title         = sanitize_text_field( $request->get_param( 'title' ) );
+        $excerpt       = sanitize_text_field( $request->get_param( 'excerpt' ) );
+        $content       = wp_kses_post( $request->get_param( 'content' ) );
+        $event_date    = sanitize_text_field( $request->get_param( 'event_date' ) );
+        $end_date      = sanitize_text_field( $request->get_param( 'end_date' ) );
+        $location      = sanitize_text_field( $request->get_param( 'location' ) );
+        $city          = sanitize_text_field( $request->get_param( 'city' ) );
+        $admission     = sanitize_text_field( $request->get_param( 'admission' ) );
+        $ticketing_url = esc_url_raw( $request->get_param( 'ticketing_url' ) );
+        $tagline       = sanitize_text_field( $request->get_param( 'tagline' ) );
+        $attribution   = esc_url_raw( $request->get_param( 'attribution' ) );
+        $interests     = (array) $request->get_param( 'interests' );
+        $auto_publish  = (bool) $request->get_param( 'auto_publish' );
+
+        if ( empty( $title ) || empty( $event_date ) ) {
+            return new WP_Error( 'missing_fields', 'title and event_date are required.', array( 'status' => 400 ) );
+        }
+
+        // Deduplication: hash of title + date + location.
+        $dedup_hash = md5( strtolower( trim( $title ) ) . '|' . $event_date . '|' . strtolower( trim( $location ) ) );
+        $existing = get_posts( array(
+            'post_type'      => 'culture_event',
+            'post_status'    => array( 'publish', 'pending' ),
+            'posts_per_page' => 1,
+            'meta_query'     => array(
+                array(
+                    'key'     => '_culture_event_dedup_hash',
+                    'value'   => $dedup_hash,
+                    'compare' => '=',
+                ),
+            ),
+        ) );
+
+        if ( ! empty( $existing ) ) {
+            return new WP_Error( 'duplicate_event', 'This event already exists.', array( 'status' => 409 ) );
+        }
+
+        $post_status = $auto_publish ? 'publish' : 'pending';
+
+        $post_id = wp_insert_post( array(
+            'post_title'   => $title,
+            'post_excerpt' => $excerpt,
+            'post_content' => $content,
+            'post_status'  => $post_status,
+            'post_type'    => 'culture_event',
+            'post_author'  => 0,
+        ), true );
+
+        if ( is_wp_error( $post_id ) ) {
+            return new WP_Error( 'insert_failed', $post_id->get_error_message(), array( 'status' => 500 ) );
+        }
+
+        // Event-specific meta.
+        update_post_meta( $post_id, '_culture_event_date',      $event_date );
+        update_post_meta( $post_id, '_culture_event_end_date',  $end_date );
+        update_post_meta( $post_id, '_culture_location',        $location );
+        update_post_meta( $post_id, '_culture_event_city',      $city );
+        update_post_meta( $post_id, '_culture_admission',       $admission );
+        update_post_meta( $post_id, '_culture_ticketing_url',   $ticketing_url );
+        update_post_meta( $post_id, '_culture_tagline',         $tagline );
+        update_post_meta( $post_id, '_culture_attribution',     $attribution );
+        update_post_meta( $post_id, '_culture_is_featured',     '0' );
+        update_post_meta( $post_id, '_culture_ai_generated',    '1' );
+        update_post_meta( $post_id, '_culture_event_dedup_hash', $dedup_hash );
+
+        // Assign interest terms (only existing slugs to avoid orphan terms).
+        if ( ! empty( $interests ) && taxonomy_exists( 'culture_interest' ) ) {
+            $valid = array();
+            foreach ( array_map( 'sanitize_key', $interests ) as $slug ) {
+                if ( term_exists( $slug, 'culture_interest' ) ) {
+                    $valid[] = $slug;
+                }
+            }
+            if ( ! empty( $valid ) ) {
+                wp_set_object_terms( $post_id, $valid, 'culture_interest' );
+            }
+        }
+
+        $post = get_post( $post_id );
+        return rest_ensure_response( array(
+            'success' => true,
+            'post_id' => $post_id,
+            'slug'    => $post->post_name ?: sanitize_title( $title ),
+        ) );
     }
 }
