@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Search, User, ShoppingBag } from "lucide-react";
 import Ticker from "./Ticker";
 import AuthModal from "./AuthModal";
@@ -19,8 +19,9 @@ interface HeaderProps {
 const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const { language, setLanguage } = useLanguage();
   const { data: session, status } = useSession();
-  const pathname = usePathname();
   const { itemCount, openDrawer } = useCart();
+  const pathname = usePathname();
+  const active = (href: string) => pathname === href || pathname.startsWith(href + "/") ? "true" : undefined;
   const [modalOpen, setModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -86,11 +87,11 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         <header className="masthead">
           {/* Desktop left nav */}
           <nav className="masthead-left">
-            <Link href="/magazine">Editorials</Link>
-            <Link href="/events">Happenings</Link>
-            <Link href="/journeys">Origins</Link>
-            <Link href="/shop">Lifestyle</Link>
-            <Link href="/pulse" style={pathname?.startsWith("/pulse") ? { color: "#D4A847" } : undefined}>Pulse</Link>
+            <Link href="/magazine" data-active={active("/magazine")}>Editorials</Link>
+            <Link href="/events"   data-active={active("/events")}>Happenings</Link>
+            <Link href="/journeys" data-active={active("/journeys")}>Origins</Link>
+            <Link href="/shop"     data-active={active("/shop")}>Lifestyle</Link>
+            <Link href="/pulse"    data-active={active("/pulse")}>Pulse</Link>
           </nav>
 
           {/* Wordmark */}
@@ -214,11 +215,11 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         {/* Mobile dropdown */}
         <nav className={`mobile-menu ${mobileMenuOpen ? "mobile-menu--open" : ""}`}>
           <div className="mobile-menu-links">
-            <Link href="/magazine" onClick={() => setMobileMenuOpen(false)}>Editorials</Link>
-            <Link href="/events"   onClick={() => setMobileMenuOpen(false)}>Happenings</Link>
-            <Link href="/journeys"  onClick={() => setMobileMenuOpen(false)}>Origins</Link>
-            <Link href="/shop"     onClick={() => setMobileMenuOpen(false)}>Lifestyle</Link>
-            <Link href="/pulse"    onClick={() => setMobileMenuOpen(false)} style={{ color: "#D4A847" }}>Pulse</Link>
+            <Link href="/magazine" onClick={() => setMobileMenuOpen(false)} data-active={active("/magazine")}>Editorials</Link>
+            <Link href="/events"   onClick={() => setMobileMenuOpen(false)} data-active={active("/events")}>Happenings</Link>
+            <Link href="/journeys" onClick={() => setMobileMenuOpen(false)} data-active={active("/journeys")}>Origins</Link>
+            <Link href="/shop"     onClick={() => setMobileMenuOpen(false)} data-active={active("/shop")}>Lifestyle</Link>
+            <Link href="/pulse"    onClick={() => setMobileMenuOpen(false)} data-active={active("/pulse")}>Pulse</Link>
           </div>
           <div className="mobile-menu-actions">
             {loggedIn ? (

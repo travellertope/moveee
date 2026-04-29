@@ -64,41 +64,29 @@ export type SaveResult =
 
 // ── Write helpers ──────────────────────────────────────────────────────────
 
-async function assignTerm(postId: number, restBase: string, taxKey: string, termName: string): Promise<void> {
+/** Find or create a taxonomy term; returns its ID or null on failure. */
+async function resolveTermId(restBase: string, termName: string): Promise<number | null> {
   const termSlug = slugify(termName);
-
-  // Find or create the term.
-  let termId: number;
 
   const findRes = await fetch(`${BASE}/wp/v2/${restBase}?slug=${termSlug}`, {
     headers: { Authorization: `Basic ${AUTH}` },
     cache: "no-store",
   });
   const found: any[] = await findRes.json().catch(() => []);
+  if (Array.isArray(found) && found.length > 0) return found[0].id;
 
-  if (Array.isArray(found) && found.length > 0) {
-    termId = found[0].id;
-  } else {
-    const createRes = await fetch(`${BASE}/wp/v2/${restBase}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Basic ${AUTH}` },
-      body: JSON.stringify({ name: termName, slug: termSlug }),
-      cache: "no-store",
-    });
-    if (!createRes.ok) return;
-    const created = await createRes.json();
-    termId = created.id;
-  }
-
-  if (!termId) return;
-
-  // Assign term to post.
-  await fetch(`${BASE}/wp/v2/pulse-stories/${postId}`, {
+  const createRes = await fetch(`${BASE}/wp/v2/${restBase}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Basic ${AUTH}` },
-    body: JSON.stringify({ [taxKey]: [termId] }),
+    body: JSON.stringify({ name: termName, slug: termSlug }),
     cache: "no-store",
   });
+  if (!createRes.ok) {
+    console.warn(`[pulse-wp] Failed to create term "${termName}" in ${restBase}:`, createRes.status);
+    return null;
+  }
+  const created = await createRes.json();
+  return created.id ?? null;
 }
 
 /**
@@ -127,7 +115,14 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> 
     if (Array.isArray(recent) && recent.length > 0) return { status: "duplicate" };
   }
 
-  const body = {
+  // Resolve taxonomy term IDs before creating the post so they can be
+  // included in the initial create request rather than a separate update.
+  const [armId, regionId] = await Promise.all([
+    story.arm    ? resolveTermId("pulse-arms",    story.arm)    : Promise.resolve(null),
+    story.region ? resolveTermId("pulse-regions", story.region) : Promise.resolve(null),
+  ]);
+
+  const body: Record<string, any> = {
     title: story.title,
     excerpt: story.summary,
     content: `<p>${(story.body || story.summary).replace(/\n/g, "</p><p>")}</p>`,
@@ -142,6 +137,9 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> 
       pulse_gemini_refreshed_at: new Date().toISOString(),
     },
   };
+
+  if (armId)    body.pulse_arm    = [armId];
+  if (regionId) body.pulse_region = [regionId];
 
   const createRes = await fetch(`${BASE}/wp/v2/pulse-stories`, {
     method: "POST",
@@ -158,13 +156,6 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> 
   }
 
   const post: WpPulseStory = await createRes.json();
-
-  // Assign taxonomies in parallel.
-  await Promise.all([
-    story.arm    ? assignTerm(post.id, "pulse-arms",    "pulse_arm",    story.arm)    : Promise.resolve(),
-    story.region ? assignTerm(post.id, "pulse-regions", "pulse_region", story.region) : Promise.resolve(),
-  ]);
-
   return { status: "saved", post };
 }
 
@@ -192,7 +183,7 @@ export async function getPulseStories({
   if (arm)    url += `&pulse_arm=${encodeURIComponent(arm)}`;
   if (region) url += `&pulse_region=${encodeURIComponent(region)}`;
 
-  const res = await fetch(url, { next: { revalidate: 300 } });
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }

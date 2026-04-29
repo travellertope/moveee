@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getPulseStories } from "@/lib/pulse-wordpress";
 import PulseFeed from "@/components/pulse/PulseFeed";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 

@@ -139,7 +139,8 @@
     border-bottom: 1px solid transparent;
     transition: border-color 0.3s;
   }
-  .masthead-left a:hover, .masthead-right a:not(.join-btn):not(.masthead-icon-btn):hover {
+  .masthead-left a:hover, .masthead-right a:not(.join-btn):not(.masthead-icon-btn):hover,
+  .masthead-left a[data-active="true"], .masthead-right a:not(.join-btn):not(.masthead-icon-btn)[data-active="true"] {
     border-bottom-color: var(--ochre);
   }
 
@@ -304,7 +305,8 @@
   }
   .mobile-menu-links a:hover,
   .mobile-menu-actions a:hover,
-  .mobile-menu-actions button:hover {
+  .mobile-menu-actions button:hover,
+  .mobile-menu-links a[data-active="true"] {
     background: var(--paper-deep);
   }
 
