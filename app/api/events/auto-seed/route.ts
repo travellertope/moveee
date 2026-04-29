@@ -235,8 +235,20 @@ export async function POST(req: NextRequest) {
 
     cityResults[city.name].found = stubs.length;
 
-    // 3. Submit each stub, skipping in-run dupes.
+    // 3. Submit each stub, skipping in-run dupes and bad dates.
+    const now18mo = new Date();
+    now18mo.setMonth(now18mo.getMonth() + 18);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+
     for (const stub of stubs) {
+      // Sanity-check the date Gemini extracted — reject past events and
+      // anything implausibly far in the future (likely a mis-parse).
+      const parsedDate = stub.event_date ? new Date(stub.event_date) : null;
+      if (!parsedDate || isNaN(parsedDate.getTime()) || parsedDate < today || parsedDate > now18mo) {
+        cityResults[city.name].errors.push(`Bad date "${stub.event_date}" for "${stub.title}" — skipped`);
+        continue;
+      }
+
       const key = buildDedupHash(stub.title, stub.event_date, stub.location);
       if (seenThisRun.has(key)) continue;
       seenThisRun.add(key);
