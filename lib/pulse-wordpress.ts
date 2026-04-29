@@ -243,7 +243,10 @@ export async function postPulseComment({
 }): Promise<WpComment> {
   const res = await fetch(`${BASE}/wp/v2/comments`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Basic ${AUTH}`,
+    },
     body: JSON.stringify({
       post: postId,
       author_name: authorName,
