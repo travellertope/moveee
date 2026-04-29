@@ -101,7 +101,7 @@ export default async function JourneyPage({ params }: { params: Promise<{ slug: 
           <h1 className="journey-hero-title" dangerouslySetInnerHTML={{ __html: journey.title }} />
           <p className="journey-hero-sub">{journey.excerpt?.replace(/<[^>]*>/g, "") || "A culturally anchored journey through Africa and the diaspora."}</p>
           <div className="journey-hero-row">
-            <Link href="/origins" className="btn-ghost-paper">← Back to Origins</Link>
+            <Link href="/journeys" className="btn-ghost-paper">← Back to Origins</Link>
             <Link href="#booking" className="btn-gold">Book this journey →</Link>
           </div>
           <div className="journey-scroll-hint">Scroll</div>
@@ -299,7 +299,7 @@ export default async function JourneyPage({ params }: { params: Promise<{ slug: 
 
       {/* ── BACK LINK ── */}
       <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '60px 80px', textAlign: 'center' }}>
-        <Link href="/origins" style={{ color: 'var(--ink)', textDecoration: 'underline' }}>
+        <Link href="/journeys" style={{ color: 'var(--ink)', textDecoration: 'underline' }}>
           ← Back to all Origins journeys
         </Link>
       </div>

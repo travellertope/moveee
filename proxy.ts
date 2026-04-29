@@ -37,7 +37,7 @@ async function getWPRedirects() {
 const APP_ROUTES = new Set([
   'magazine',
   'events',
-  'origins',
+  'journeys',
   'lifestyle',
   'about',
   'contact',
@@ -81,7 +81,7 @@ const APP_ROUTES = new Set([
 // Alias redirects — old or alternative slugs that should map
 // to their canonical Next.js route.
 const ROUTE_ALIASES: Record<string, string> = {
-  'tours': '/origins',
+  'tours': '/journeys',
   'lifestyle': '/shop',
 }
 

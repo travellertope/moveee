@@ -125,8 +125,8 @@ export default async function OriginsPage() {
                 </>
               )}
               <div className="origins-cj-ctas">
-                <Link href={`/origins/${featuredJourney.slug}`} className="btn-ghost-paper">View Journey →</Link>
-                <Link href={`/origins/${featuredJourney.slug}#booking`} className="btn-gold">Book now →</Link>
+                <Link href={`/journeys/${featuredJourney.slug}`} className="btn-ghost-paper">View Journey →</Link>
+                <Link href={`/journeys/${featuredJourney.slug}#booking`} className="btn-gold">Book now →</Link>
               </div>
             </div>
           </div>
@@ -150,7 +150,7 @@ export default async function OriginsPage() {
               const statusClass = j.journeyStatus === "completed" ? "sold" : j.journeyStatus === "upcoming" ? "upcoming" : "open";
               const statusLabel = j.journeyStatus === "completed" ? "Completed" : j.journeyStatus === "upcoming" ? "Upcoming" : `● ${j.journeySpots || "7"} spots`;
               return (
-                <Link key={j.id} href={`/origins/${j.slug}`} className="origins-jcard">
+                <Link key={j.id} href={`/journeys/${j.slug}`} className="origins-jcard">
                   <div className="origins-ji">
                     <div className={`origins-ji-status ${statusClass}`}>{statusLabel}</div>
                     <div className="origins-ji-num">{j.journeyEdition || "N°01"}</div>

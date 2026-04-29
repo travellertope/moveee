@@ -256,7 +256,7 @@ export default async function Home() {
             <h3>Moveee <em>Origins</em></h3>
             <p>Slow, writer-led cultural journeys. Not tours — invitations into the places where the work is made.</p>
           </div>
-          <Link href="/origins" className="pillar-link">All Journeys →</Link>
+          <Link href="/journeys" className="pillar-link">All Journeys →</Link>
         </div>
 
         <div className="pillar-body">
@@ -285,7 +285,7 @@ export default async function Home() {
 
             <div className="origins-list">
               {origins.length > 0 ? origins.map((origin: any, idx: number) => (
-                <Link key={origin.id} href={`/origins/${origin.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <Link key={origin.id} href={`/journeys/${origin.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <div className="origin-row">
                     <div className="origin-idx">0{idx + 1}</div>
                     <div className="origin-name">{origin.title}</div>

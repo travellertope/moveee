@@ -169,7 +169,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           {/* BREADCRUMB overlaid on hero */}
           <div className="breadcrumb overlay">
             <Link href="/">Home</Link><span className="sep">/</span>
-            <Link href="/magazine">Magazine</Link><span className="sep">/</span>
+            <Link href="/magazine">Editorials</Link><span className="sep">/</span>
             <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep">/</span>
             <span className="breadcrumb-current">{post.title}</span>
           </div>
@@ -220,7 +220,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         <>
           <div className="breadcrumb">
             <Link href="/">Home</Link><span className="sep">/</span>
-            <Link href="/magazine">Magazine</Link><span className="sep">/</span>
+            <Link href="/magazine">Editorials</Link><span className="sep">/</span>
             <Link href={`/magazine/category/${categorySlug}`}>{categoryName}</Link><span className="sep">/</span>
             <span className="breadcrumb-current">{post.title}</span>
           </div>

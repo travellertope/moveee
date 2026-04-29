@@ -54,6 +54,8 @@ const nextConfig = {
       ...temporary,
 
       // ── Permanent structural redirects ──────────────────────────────────
+      { source: '/origins',             destination: '/journeys',                 permanent: true },
+      { source: '/origins/:slug*',      destination: '/journeys/:slug*',          permanent: true },
       { source: '/cat/:slug*',        destination: '/magazine/category/:slug*', permanent: true },
       { source: '/tag/:slug*',        destination: '/magazine/tag/:slug*',      permanent: true },
       { source: '/series/:slug*',     destination: '/magazine/series/:slug*',   permanent: true },
