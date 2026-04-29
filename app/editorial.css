@@ -262,12 +262,11 @@
   max-width: 680px;
 }
 .prose p {
-  font-family: 'Fraunces', serif;
-  font-size: 19px;
-  line-height: 1.65;
-  margin-bottom: 28px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+  margin-bottom: 24px;
   color: var(--ink);
-  font-variation-settings: "opsz" 144;
 }
 
 .prose h3 {
@@ -610,12 +609,11 @@
 
 /* ── Prose content (for WP body injection) ── */
 .prose-content p {
-  font-family: 'Fraunces', serif;
-  font-size: 19px;
-  line-height: 1.65;
-  margin-bottom: 28px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+  margin-bottom: 24px;
   color: var(--ink);
-  font-variation-settings: "opsz" 144;
 }
 
 .prose-content h2, .prose-content h3 {
@@ -647,11 +645,11 @@
 .prose-content a { color: var(--ochre); text-decoration: underline; text-underline-offset: 3px; }
 .prose-content a:hover { color: var(--ochre-deep); }
 .prose-content ul, .prose-content ol {
-  font-family: 'Fraunces', serif;
-  font-size: 18px;
-  line-height: 1.65;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
   color: var(--ink);
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   padding-left: 24px;
 }
 .prose-content li { margin-bottom: 8px; }
