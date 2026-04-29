@@ -85,7 +85,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           {/* Desktop left nav */}
           <nav className="masthead-left">
             <Link href="/magazine">Magazine</Link>
-            <Link href="/events">Events</Link>
+            <Link href="/events">Happenings</Link>
             <Link href="/origins">Origins</Link>
             <Link href="/shop">Lifestyle</Link>
             <Link href="/pulse" style={{ color: "#D4A847" }}>Pulse</Link>
@@ -213,7 +213,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         <nav className={`mobile-menu ${mobileMenuOpen ? "mobile-menu--open" : ""}`}>
           <div className="mobile-menu-links">
             <Link href="/magazine" onClick={() => setMobileMenuOpen(false)}>Magazine</Link>
-            <Link href="/events"   onClick={() => setMobileMenuOpen(false)}>Events</Link>
+            <Link href="/events"   onClick={() => setMobileMenuOpen(false)}>Happenings</Link>
             <Link href="/origins"  onClick={() => setMobileMenuOpen(false)}>Origins</Link>
             <Link href="/shop"     onClick={() => setMobileMenuOpen(false)}>Lifestyle</Link>
             <Link href="/pulse"    onClick={() => setMobileMenuOpen(false)} style={{ color: "#D4A847" }}>Pulse</Link>

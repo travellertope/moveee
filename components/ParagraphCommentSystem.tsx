@@ -133,6 +133,24 @@ export default function ParagraphCommentSystem({ postId, content }: ParagraphCom
     });
   };
 
+  // Build a flat chronological list of all comments with their paragraph context.
+  const allComments = Object.entries(comments)
+    .flatMap(([idxStr, list]) =>
+      list.map((c) => ({ ...c, paragraphIdx: Number(idxStr) }))
+    )
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  // Extract plain-text snippets per paragraph index for the thread labels.
+  const paragraphSnippets: Record<number, string> = {};
+  (() => {
+    const parts = content.split(/<\/p>/i);
+    let i = 0;
+    for (const part of parts) {
+      const text = part.replace(/<[^>]+>/g, "").trim();
+      if (text) { paragraphSnippets[i] = text.slice(0, 80) + (text.length > 80 ? "…" : ""); i++; }
+    }
+  })();
+
   return (
     <div className="paragraph-comment-system">
       <div className="prose-content">
@@ -212,6 +230,43 @@ export default function ParagraphCommentSystem({ postId, content }: ParagraphCom
           )}
         </div>
       </aside>
+
+      {/* Collated comment thread */}
+      <section className="collated-comments">
+        <h2 className="collated-comments-heading">
+          {allComments.length > 0
+            ? `${allComments.length} Comment${allComments.length !== 1 ? "s" : ""}`
+            : "Start the conversation"}
+        </h2>
+
+        {allComments.length > 0 ? (
+          <div className="collated-comments-list">
+            {allComments.map((c) => (
+              <div key={`${c.paragraphIdx}-${c.id}`} className="collated-comment-item">
+                <div className="collated-comment-meta">
+                  <span className="collated-comment-author">{c.author}</span>
+                  <span className="collated-comment-date">
+                    {new Date(c.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                  </span>
+                </div>
+                {paragraphSnippets[c.paragraphIdx] && (
+                  <button
+                    className="collated-comment-ref"
+                    onClick={() => handleOpenComments(c.paragraphIdx, paragraphSnippets[c.paragraphIdx])}
+                  >
+                    On: "{paragraphSnippets[c.paragraphIdx]}"
+                  </button>
+                )}
+                <div className="collated-comment-body" dangerouslySetInnerHTML={{ __html: c.content }} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="collated-comments-empty">
+            Click any paragraph above to leave a comment.
+          </p>
+        )}
+      </section>
     </div>
   );
 }

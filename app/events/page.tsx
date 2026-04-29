@@ -8,7 +8,7 @@ import "@/app/events.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Events",
+  title: "Happenings",
   description: "Curated openings, listening sessions, film screenings, and community gatherings across Africa and the diaspora.",
 };
 
@@ -61,10 +61,10 @@ export default async function EventsPage() {
     <div className="events-page bg-paper">
       {/* ── HERO ── */}
       <EventHero 
-        title="Moveee <em>Events</em>"
+        title="Moveee <em>Happenings</em>"
         standfirst="Curated openings, listening sessions, film screenings, supper clubs and community gatherings — across Africa and the diaspora. Not everything happens online."
         stats={[
-          { num: events.length, label: `Events · ${new Date().getFullYear()}` },
+          { num: events.length, label: `Happenings · ${new Date().getFullYear()}` },
           { num: "06", label: "Cities this quarter" },
           { num: "04", label: "Members-only experiences" }
         ]}

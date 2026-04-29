@@ -667,7 +667,77 @@ h1, h2, h3, h4 {
   text-decoration: underline;
 }
 
-
+/* ── Collated comment thread ──────────────────────────────────────────────── */
+.collated-comments {
+  margin-top: 56px;
+  padding-top: 40px;
+  border-top: 1px solid var(--rule);
+  max-width: 680px;
+}
+.collated-comments-heading {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ink);
+  margin: 0 0 32px;
+}
+.collated-comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.collated-comment-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.collated-comment-meta {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+.collated-comment-author {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  font-weight: 600;
+}
+.collated-comment-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .08em;
+  color: var(--mute);
+}
+.collated-comment-ref {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: 'Fraunces', serif;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--mute);
+  text-align: left;
+  line-height: 1.4;
+  transition: color .15s;
+}
+.collated-comment-ref:hover { color: var(--ochre); }
+.collated-comment-body {
+  font-family: 'Fraunces', serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.collated-comment-body p { margin: 0; }
+.collated-comments-empty {
+  font-family: 'Fraunces', serif;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--mute);
+  margin: 0;
+}
 
 /* ── Cart badge on header icon ────────────────────────────────────────────── */
 .cart-icon-btn { position: relative; }
