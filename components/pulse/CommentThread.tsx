@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useSession, signIn } from "next-auth/react";
+import Link from "next/link";
 import type { WpComment } from "@/lib/pulse-wordpress";
 
 function formatCommentDate(dateStr: string): string {
@@ -21,17 +23,18 @@ interface CommentThreadProps {
 }
 
 export default function CommentThread({ postId, initialComments }: CommentThreadProps) {
+  const { data: session, status: authStatus } = useSession();
   const [comments, setComments] = useState<WpComment[]>(initialComments);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [content, setContent] = useState("");
-  const [honeypot, setHoneypot] = useState(""); // never shown to users
+  const [honeypot] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "moderation" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!session?.user?.email) return;
+
     setSubmitting(true);
     setStatus("idle");
     setErrorMsg("");
@@ -42,10 +45,10 @@ export default function CommentThread({ postId, initialComments }: CommentThread
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           postId,
-          authorName: name,
-          authorEmail: email,
+          authorName: session.user.name ?? session.user.email,
+          authorEmail: session.user.email,
           content,
-          website: honeypot, // honeypot field
+          website: honeypot,
         }),
       });
 
@@ -66,8 +69,6 @@ export default function CommentThread({ postId, initialComments }: CommentThread
         setComments((prev) => [...prev, newComment]);
       }
 
-      setName("");
-      setEmail("");
       setContent("");
     } catch {
       setStatus("error");
@@ -130,133 +131,120 @@ export default function CommentThread({ postId, initialComments }: CommentThread
         </div>
       )}
 
-      {/* Submit form */}
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-        <h3
+      {/* Auth states */}
+      {authStatus === "loading" && (
+        <p style={{ color: "#555", fontSize: "0.82rem" }}>Loading…</p>
+      )}
+
+      {authStatus === "unauthenticated" && (
+        <div
           style={{
-            color: "#888",
-            fontSize: "0.72rem",
-            fontWeight: 600,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            margin: 0,
+            background: "#141414",
+            border: "1px solid #2a2a2a",
+            borderRadius: "2px",
+            padding: "1.5rem",
+            textAlign: "center",
           }}
         >
-          Leave a comment
-        </h3>
-
-        {/* Honeypot — visually hidden */}
-        <div style={{ display: "none" }} aria-hidden>
-          <label htmlFor="pulse-website">Website</label>
-          <input
-            id="pulse-website"
-            type="text"
-            value={honeypot}
-            onChange={(e) => setHoneypot(e.target.value)}
-            tabIndex={-1}
-            autoComplete="off"
-          />
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-          <div>
-            <label
-              htmlFor="pulse-name"
-              style={{ display: "block", color: "#666", fontSize: "0.72rem", marginBottom: "0.3rem" }}
-            >
-              Name <span style={{ color: "#D4A847" }}>*</span>
-            </label>
-            <input
-              id="pulse-name"
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={100}
-              style={inputStyle}
-              placeholder="Your name"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="pulse-email"
-              style={{ display: "block", color: "#666", fontSize: "0.72rem", marginBottom: "0.3rem" }}
-            >
-              Email <span style={{ color: "#D4A847" }}>*</span>
-            </label>
-            <input
-              id="pulse-email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={inputStyle}
-              placeholder="your@email.com"
-            />
-            <p style={{ color: "#444", fontSize: "0.65rem", marginTop: "0.25rem" }}>
-              Not displayed publicly
-            </p>
-          </div>
-        </div>
-
-        <div>
-          <label
-            htmlFor="pulse-comment"
-            style={{ display: "block", color: "#666", fontSize: "0.72rem", marginBottom: "0.3rem" }}
-          >
-            Comment <span style={{ color: "#D4A847" }}>*</span>
-          </label>
-          <textarea
-            id="pulse-comment"
-            required
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            minLength={3}
-            maxLength={1000}
-            rows={4}
-            style={{ ...inputStyle, resize: "vertical", minHeight: "90px" }}
-            placeholder="Share your thoughts…"
-          />
-          <p style={{ color: "#444", fontSize: "0.65rem", marginTop: "0.25rem", textAlign: "right" }}>
-            {content.length}/1000
+          <p style={{ color: "#888", fontSize: "0.85rem", marginBottom: "1rem" }}>
+            Sign in to join the conversation.
           </p>
-        </div>
-
-        {/* Status messages */}
-        {status === "success" && (
-          <p style={{ color: "#4caf77", fontSize: "0.82rem" }}>Comment posted. Thank you!</p>
-        )}
-        {status === "moderation" && (
-          <p style={{ color: "#D4A847", fontSize: "0.82rem" }}>
-            Your comment is awaiting moderation. It will appear once approved.
-          </p>
-        )}
-        {status === "error" && (
-          <p style={{ color: "#e05a4e", fontSize: "0.82rem" }}>{errorMsg}</p>
-        )}
-
-        <div>
           <button
-            type="submit"
-            disabled={submitting}
+            onClick={() => signIn()}
             style={{
-              background: submitting ? "#2a2a2a" : "#D4A847",
-              color: submitting ? "#666" : "#0d0d0d",
+              background: "#D4A847",
+              color: "#0d0d0d",
               border: "none",
-              padding: "0.65rem 1.75rem",
+              padding: "0.6rem 1.5rem",
               fontSize: "0.72rem",
               fontWeight: 700,
               letterSpacing: "0.08em",
               textTransform: "uppercase",
-              cursor: submitting ? "not-allowed" : "pointer",
+              cursor: "pointer",
               borderRadius: "2px",
-              transition: "all 0.15s",
             }}
           >
-            {submitting ? "Posting…" : "Post comment"}
+            Sign in
           </button>
         </div>
-      </form>
+      )}
+
+      {/* Comment form — only for signed-in users */}
+      {authStatus === "authenticated" && (
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              marginBottom: "0.25rem",
+            }}
+          >
+            <span style={{ color: "#888", fontSize: "0.72rem" }}>
+              Commenting as{" "}
+              <span style={{ color: "#D4A847" }}>
+                {session?.user?.name ?? session?.user?.email}
+              </span>
+            </span>
+          </div>
+
+          <div>
+            <label
+              htmlFor="pulse-comment"
+              style={{ display: "block", color: "#666", fontSize: "0.72rem", marginBottom: "0.3rem" }}
+            >
+              Comment <span style={{ color: "#D4A847" }}>*</span>
+            </label>
+            <textarea
+              id="pulse-comment"
+              required
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              minLength={3}
+              maxLength={1000}
+              rows={4}
+              style={{ ...inputStyle, resize: "vertical", minHeight: "90px" }}
+              placeholder="Share your thoughts…"
+            />
+            <p style={{ color: "#444", fontSize: "0.65rem", marginTop: "0.25rem", textAlign: "right" }}>
+              {content.length}/1000
+            </p>
+          </div>
+
+          {status === "success" && (
+            <p style={{ color: "#4caf77", fontSize: "0.82rem" }}>Comment posted. Thank you!</p>
+          )}
+          {status === "moderation" && (
+            <p style={{ color: "#D4A847", fontSize: "0.82rem" }}>
+              Your comment is awaiting moderation. It will appear once approved.
+            </p>
+          )}
+          {status === "error" && (
+            <p style={{ color: "#e05a4e", fontSize: "0.82rem" }}>{errorMsg}</p>
+          )}
+
+          <div>
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                background: submitting ? "#2a2a2a" : "#D4A847",
+                color: submitting ? "#666" : "#0d0d0d",
+                border: "none",
+                padding: "0.65rem 1.75rem",
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                cursor: submitting ? "not-allowed" : "pointer",
+                borderRadius: "2px",
+              }}
+            >
+              {submitting ? "Posting…" : "Post comment"}
+            </button>
+          </div>
+        </form>
+      )}
     </section>
   );
 }

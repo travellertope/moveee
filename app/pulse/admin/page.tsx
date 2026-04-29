@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-const SESSION_KEY = "pulse_admin_secret";
+import { useState } from "react";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 export default function PulseAdminPage() {
-  const [secret, setSecret] = useState("");
+  const { data: session, status } = useSession();
   const [topic, setTopic] = useState("African and Black diaspora culture news");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
@@ -17,32 +17,6 @@ export default function PulseAdminPage() {
     total?: number;
     error?: string;
   } | null>(null);
-  const [authed, setAuthed] = useState(false);
-
-  // Restore secret from sessionStorage on mount (survives page reloads).
-  useEffect(() => {
-    const stored = sessionStorage.getItem(SESSION_KEY);
-    if (stored) {
-      setSecret(stored);
-      setAuthed(true);
-    }
-  }, []);
-
-  const handleAuth = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = secret.trim();
-    if (!trimmed) return;
-    sessionStorage.setItem(SESSION_KEY, trimmed);
-    setSecret(trimmed);
-    setAuthed(true);
-  };
-
-  const handleLock = () => {
-    sessionStorage.removeItem(SESSION_KEY);
-    setAuthed(false);
-    setSecret("");
-    setResult(null);
-  };
 
   const handleRefresh = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,20 +24,12 @@ export default function PulseAdminPage() {
     setResult(null);
 
     try {
-      const res = await fetch(`/api/pulse/refresh?secret=${encodeURIComponent(secret.trim())}`, {
+      const res = await fetch("/api/pulse/admin-refresh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: topic.trim() }),
       });
       const data = await res.json();
-
-      // If we get 401, clear the stored secret so the user must re-enter.
-      if (res.status === 401) {
-        sessionStorage.removeItem(SESSION_KEY);
-        setAuthed(false);
-        setSecret("");
-      }
-
       setResult(data);
     } catch {
       setResult({ error: "Network error — could not reach the refresh endpoint." });
@@ -103,53 +69,44 @@ export default function PulseAdminPage() {
           </p>
         </div>
 
-        {!authed ? (
-          <form onSubmit={handleAuth} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <div>
-              <label
-                htmlFor="admin-secret"
-                style={{ display: "block", color: "#666", fontSize: "0.72rem", marginBottom: "0.35rem" }}
-              >
-                Refresh secret
-              </label>
-              <input
-                id="admin-secret"
-                type="password"
-                required
-                value={secret}
-                onChange={(e) => setSecret(e.target.value)}
-                style={inputStyle}
-                placeholder="Enter your PULSE_REFRESH_SECRET"
-                autoFocus
-              />
-            </div>
-            <button type="submit" style={btnStyle(false)}>
-              Unlock
-            </button>
-          </form>
-        ) : (
+        {/* Loading auth state */}
+        {status === "loading" && (
+          <p style={{ color: "#555", fontSize: "0.85rem" }}>Checking session…</p>
+        )}
+
+        {/* Not signed in */}
+        {status === "unauthenticated" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <p style={{ color: "#888", fontSize: "0.85rem" }}>
+              You must be signed in to access Pulse Admin.
+            </p>
+            <Link
+              href="/login?callbackUrl=/pulse/admin"
+              style={{
+                background: "#D4A847",
+                color: "#0d0d0d",
+                padding: "0.7rem 1.5rem",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                borderRadius: "2px",
+                textDecoration: "none",
+                display: "inline-block",
+                textAlign: "center",
+              }}
+            >
+              Sign in
+            </Link>
+          </div>
+        )}
+
+        {/* Signed in */}
+        {status === "authenticated" && (
           <form onSubmit={handleRefresh} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            {/* Keep secret editable so it can be corrected without locking out */}
-            <div>
-              <label
-                htmlFor="admin-secret-edit"
-                style={{ display: "block", color: "#666", fontSize: "0.72rem", marginBottom: "0.35rem" }}
-              >
-                Refresh secret
-              </label>
-              <input
-                id="admin-secret-edit"
-                type="password"
-                required
-                value={secret}
-                onChange={(e) => {
-                  setSecret(e.target.value);
-                  sessionStorage.setItem(SESSION_KEY, e.target.value);
-                }}
-                style={inputStyle}
-                placeholder="PULSE_REFRESH_SECRET"
-              />
-            </div>
+            <p style={{ color: "#444", fontSize: "0.72rem" }}>
+              Signed in as <span style={{ color: "#D4A847" }}>{session.user?.email}</span>
+            </p>
 
             <div>
               <label
@@ -208,23 +165,6 @@ export default function PulseAdminPage() {
                 )}
               </div>
             )}
-
-            <button
-              type="button"
-              onClick={handleLock}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#444",
-                fontSize: "0.72rem",
-                cursor: "pointer",
-                textDecoration: "underline",
-                padding: 0,
-                textAlign: "left",
-              }}
-            >
-              Lock
-            </button>
           </form>
         )}
       </div>
