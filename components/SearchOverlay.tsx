@@ -120,9 +120,9 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
         {/* ── Results ── */}
         {hasResults && (
           <div className="search-results">
-            <ResultSection label="Magazine"          items={results!.magazine}   basePath="/magazine"  onClose={onClose} />
+            <ResultSection label="Editorials"          items={results!.magazine}   basePath="/magazine"  onClose={onClose} />
             <ResultSection label="Events"            items={results!.events}     basePath="/events"    onClose={onClose} />
-            <ResultSection label="Origins"           items={results!.origins}    basePath="/origins"   onClose={onClose} />
+            <ResultSection label="Origins"           items={results!.origins}    basePath="/journeys"   onClose={onClose} />
             <ResultSection label="Quotes"            items={results!.quotes}     basePath="/quotes"    onClose={onClose} />
             <ResultSection label="Culture Directory" items={results!.directory}  basePath="/directory" onClose={onClose} />
             <ResultSection label="Shop"              items={results!.products}   basePath="/shop"      isProduct onClose={onClose} />

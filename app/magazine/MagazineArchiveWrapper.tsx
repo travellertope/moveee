@@ -82,7 +82,7 @@ export default async function MagazineArchiveWrapper({
       <section className="mag-head">
         <div className="mag-head-inner">
           <div className="mag-head-left">
-            <h1 className="mag-title-main">Moveee <em>Magazine</em></h1>
+            <h1 className="mag-title-main">Moveee <em>Editorials</em></h1>
             <p className="mag-desc">
               Long-form essays, interviews, and cultural commentary. The editorial heart of The Moveee.
             </p>

@@ -5,7 +5,7 @@ import { Metadata } from "next";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Magazine | The Moveee",
+  title: "Editorials | The Moveee",
   description: "Long-form essays, interviews, and cultural commentary from The Moveee.",
 };
 

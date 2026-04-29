@@ -315,7 +315,7 @@ export default async function ShopArchiveWrapper({
             Where things <em>come from</em>
             <span className="eb-meta">Stories from the makers behind the objects</span>
           </div>
-          <Link href="/origins" className="eb-cta">
+          <Link href="/journeys" className="eb-cta">
             Explore Origins →
           </Link>
         </div>
@@ -439,7 +439,7 @@ export default async function ShopArchiveWrapper({
               Every maker in the shop has a story. We travel to document them —
               from mountain workshops to coastal studios.
             </p>
-            <Link href="/origins" className="ob-cta">
+            <Link href="/journeys" className="ob-cta">
               Read Origins →
             </Link>
           </div>
