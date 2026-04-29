@@ -2,30 +2,12 @@ import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
 
-// Keep in sync with lib/gemini.ts TEXT_MODELS.
-// gemini-2.0-flash has quota limit:0 on paid plans.
-// gemini-2.5-flash-8b is the lightest confirmed 2.5 model, useful as a last resort.
+// Mirrors lib/gemini.ts TEXT_MODELS exactly.
 const TEXT_MODELS = [
   "gemini-2.5-flash",
-  "gemini-2.5-flash-lite-preview-06-17",
-  "gemini-2.5-flash-8b",
+  "gemini-2.5-flash-lite",
+  "gemini-3-flash-preview",
 ];
-
-function isRateLimitError(err: any): boolean {
-  const msg: string = err?.message ?? "";
-  return (
-    msg.includes("429") ||
-    msg.includes("RESOURCE_EXHAUSTED") ||
-    msg.includes("Quota exceeded")
-  );
-}
-
-// Parse "Please retry in 43.5s" from error messages; cap at 90s.
-function parseRetryDelay(err: any): number {
-  const match = /retry in ([\d.]+)s/i.exec(err?.message ?? "");
-  if (!match) return 0;
-  return Math.min(parseFloat(match[1]) * 1000, 50_000);
-}
 
 const SAFETY_SETTINGS = [
   { category: HarmCategory.HARM_CATEGORY_HARASSMENT,        threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -82,71 +64,70 @@ function isValidStory(s: any): s is PulseStoryRaw {
   );
 }
 
+async function tryModels(prompt: string, withSearch: boolean): Promise<PulseStoryRaw[] | null> {
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const config: any = {
+        safetySettings: SAFETY_SETTINGS,
+        temperature: 0.2,
+      };
+      if (withSearch) config.tools = [{ googleSearch: {} }];
+
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents: prompt,
+        config,
+      });
+
+      const raw = (
+        response.text ??
+        (response as any).candidates?.[0]?.content?.parts
+          ?.filter((p: any) => p.text)
+          ?.map((p: any) => p.text)
+          ?.join("") ??
+        ""
+      ).trim();
+
+      if (!raw) continue;
+
+      const jsonStr = extractJsonArray(raw);
+      const parsed: unknown[] = JSON.parse(jsonStr);
+      if (!Array.isArray(parsed)) continue;
+
+      const stories = parsed.filter(isValidStory);
+      if (stories.length === 0) continue;
+
+      console.log(`[pulse-gemini] ${modelId} (search=${withSearch}) returned ${stories.length} stories`);
+      return stories;
+    } catch (err: any) {
+      console.warn(`[pulse-gemini] ${modelId} (search=${withSearch}) failed:`, err?.message?.slice(0, 120));
+      lastError = err;
+      continue;
+    }
+  }
+
+  return null; // All models failed for this config
+}
+
 export async function fetchGeminiPulseStories(
   topic = "African and Black diaspora culture news"
 ): Promise<PulseStoryRaw[]> {
   const monthYear = new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" });
   const prompt = `${SYSTEM_PROMPT}\n\nTopic: "${topic} — ${monthYear}"`;
 
-  let lastError: unknown = null;
+  // Pass 1: try all models with Google Search grounding.
+  const withSearch = await tryModels(prompt, true);
+  if (withSearch) return withSearch;
 
-  for (const modelId of TEXT_MODELS) {
-    // Attempt each model up to 2 times — waiting if a retry delay is suggested.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const response = await ai.models.generateContent({
-          model: modelId,
-          contents: prompt,
-          config: {
-            tools: [{ googleSearch: {} }],
-            temperature: 0.2,
-            safetySettings: SAFETY_SETTINGS,
-          } as any,
-        });
+  // Pass 2: grounding quota exhausted — fall back without search tool.
+  // Models will draw on training knowledge; stories may be less current but still valid.
+  console.warn("[pulse-gemini] All grounded models failed — retrying without search tool");
+  const withoutSearch = await tryModels(prompt, false);
+  if (withoutSearch) return withoutSearch;
 
-        const raw = (
-          response.text ??
-          (response as any).candidates?.[0]?.content?.parts
-            ?.filter((p: any) => p.text)
-            ?.map((p: any) => p.text)
-            ?.join("") ??
-          ""
-        ).trim();
-
-        if (!raw) break;
-
-        const jsonStr = extractJsonArray(raw);
-        const parsed: unknown[] = JSON.parse(jsonStr);
-
-        if (!Array.isArray(parsed)) break;
-
-        const stories = parsed.filter(isValidStory);
-        if (stories.length === 0) break;
-
-        return stories;
-      } catch (err: any) {
-        lastError = err;
-        console.warn(`[pulse-gemini] Model ${modelId} attempt ${attempt + 1} failed:`, err?.message?.slice(0, 120));
-
-        if (isRateLimitError(err) && attempt === 0) {
-          const delay = parseRetryDelay(err);
-          // Use the suggested delay, or a 6s default to let per-minute quota recover.
-          const wait = delay > 0 ? delay : 6_000;
-          console.log(`[pulse-gemini] Rate limited on ${modelId} — waiting ${Math.round(wait / 1000)}s…`);
-          await new Promise((r) => setTimeout(r, wait));
-        } else {
-          // Non-rate-limit error or second attempt — move on to next model.
-          break;
-        }
-      }
-    }
-  }
-
-  const lastMsg: string = (lastError as any)?.message ?? "Unknown";
-  const isBilling = lastMsg.includes("billing") || lastMsg.includes("plan") || lastMsg.includes("RESOURCE_EXHAUSTED");
   throw new Error(
-    isBilling
-      ? "Gemini quota exhausted — your API key has hit its rate or billing limit. Check usage at https://ai.dev/rate-limit and ensure billing is enabled on your Google Cloud project."
-      : `All Gemini models failed. Last error: ${lastMsg.slice(0, 300)}`
+    "All Gemini models failed for Pulse refresh. Check your API key quota at https://ai.dev/rate-limit and ensure billing is enabled on your Google Cloud project."
   );
 }
