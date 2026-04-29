@@ -135,7 +135,7 @@ export default function ParagraphCommentSystem({ postId, content }: ParagraphCom
 
   // Build a flat chronological list of all comments with their paragraph context.
   const allComments = Object.entries(comments)
-    .flatMap(([idxStr, list]) =>
+    .flatMap(([idxStr, list]: [string, Comment[]]) =>
       list.map((c) => ({ ...c, paragraphIdx: Number(idxStr) }))
     )
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
