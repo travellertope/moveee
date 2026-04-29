@@ -3,11 +3,12 @@ import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
 
 // Keep in sync with lib/gemini.ts TEXT_MODELS.
-// gemini-2.0-flash has limit:0 on paid plans — use gemini-3-flash-preview as final fallback.
+// gemini-2.0-flash has quota limit:0 on paid plans.
+// gemini-2.5-flash-8b is the lightest confirmed 2.5 model, useful as a last resort.
 const TEXT_MODELS = [
   "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gemini-3-flash-preview",
+  "gemini-2.5-flash-lite-preview-06-17",
+  "gemini-2.5-flash-8b",
 ];
 
 function isRateLimitError(err: any): boolean {
@@ -129,22 +130,23 @@ export async function fetchGeminiPulseStories(
 
         if (isRateLimitError(err) && attempt === 0) {
           const delay = parseRetryDelay(err);
-          if (delay > 0) {
-            console.log(`[pulse-gemini] Rate limited — waiting ${Math.round(delay / 1000)}s before retry…`);
-            await new Promise((r) => setTimeout(r, delay));
-          } else {
-            // No delay hint — fall through to next model immediately.
-            break;
-          }
+          // Use the suggested delay, or a 6s default to let per-minute quota recover.
+          const wait = delay > 0 ? delay : 6_000;
+          console.log(`[pulse-gemini] Rate limited on ${modelId} — waiting ${Math.round(wait / 1000)}s…`);
+          await new Promise((r) => setTimeout(r, wait));
         } else {
-          // Non-rate-limit error or second attempt — move on.
+          // Non-rate-limit error or second attempt — move on to next model.
           break;
         }
       }
     }
   }
 
+  const lastMsg: string = (lastError as any)?.message ?? "Unknown";
+  const isBilling = lastMsg.includes("billing") || lastMsg.includes("plan") || lastMsg.includes("RESOURCE_EXHAUSTED");
   throw new Error(
-    `All Gemini models failed for Pulse refresh. Last error: ${(lastError as any)?.message ?? "Unknown"}`
+    isBilling
+      ? "Gemini quota exhausted — your API key has hit its rate or billing limit. Check usage at https://ai.dev/rate-limit and ensure billing is enabled on your Google Cloud project."
+      : `All Gemini models failed. Last error: ${lastMsg.slice(0, 300)}`
   );
 }
