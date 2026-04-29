@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { WpPulseStory } from "@/lib/pulse-wordpress";
+import { decodeHtml } from "@/lib/decode-html";
 
 const ARM_STYLES: Record<string, { bg: string; color: string }> = {
   lifestyle:  { bg: "#E1F5EE", color: "#085041" },
@@ -7,10 +8,6 @@ const ARM_STYLES: Record<string, { bg: string; color: string }> = {
   happenings: { bg: "#EEEDFE", color: "#3C3489" },
   magazine:   { bg: "#FAECE7", color: "#712B13" },
 };
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").trim();
-}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-GB", {
@@ -30,8 +27,8 @@ export default function PulseCard({ story }: PulseCardProps) {
   const source = story.meta?.pulse_source ?? "";
   const armStyle = ARM_STYLES[arm] ?? { bg: "#F0F0F0", color: "#333" };
 
-  const title = stripHtml(story.title?.rendered ?? "");
-  const excerpt = stripHtml(story.excerpt?.rendered ?? "");
+  const title = decodeHtml(story.title?.rendered ?? "");
+  const excerpt = decodeHtml(story.excerpt?.rendered ?? "");
 
   // Comment count via _embedded replies.
   const commentCount =
