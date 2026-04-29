@@ -251,6 +251,7 @@ export default function PulseStory({ story, initialComments }: PulseStoryProps) 
         {/* Story body */}
         <div
           style={{
+            fontFamily: "var(--font-fraunces), serif",
             fontSize: "1rem",
             lineHeight: 1.75,
             color: "#c8c4bc",

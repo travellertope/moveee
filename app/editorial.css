@@ -262,8 +262,8 @@
   max-width: 680px;
 }
 .prose p {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
   line-height: 1.75;
   margin-bottom: 24px;
   color: var(--ink);
@@ -609,8 +609,8 @@
 
 /* ── Prose content (for WP body injection) ── */
 .prose-content p {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
   line-height: 1.75;
   margin-bottom: 24px;
   color: var(--ink);
@@ -645,8 +645,8 @@
 .prose-content a { color: var(--ochre); text-decoration: underline; text-underline-offset: 3px; }
 .prose-content a:hover { color: var(--ochre-deep); }
 .prose-content ul, .prose-content ol {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
   line-height: 1.75;
   color: var(--ink);
   margin-bottom: 24px;
