@@ -23,7 +23,7 @@ function isRateLimitError(err: any): boolean {
 function parseRetryDelay(err: any): number {
   const match = /retry in ([\d.]+)s/i.exec(err?.message ?? "");
   if (!match) return 0;
-  return Math.min(parseFloat(match[1]) * 1000, 90_000);
+  return Math.min(parseFloat(match[1]) * 1000, 50_000);
 }
 
 const SAFETY_SETTINGS = [

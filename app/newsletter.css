@@ -1429,9 +1429,9 @@
   align-items: start;
 }
 .gml-issue-prose {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  line-height: 1.75;
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  line-height: 1.65;
   color: var(--ink-soft);
 }
 .gml-issue-prose p { margin-bottom: 1.5em; }

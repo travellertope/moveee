@@ -163,7 +163,7 @@
   flex-wrap: wrap;
 }
 .sec-single-meta span { color: var(--ochre); }
-.sec-single-body { font-size: 15px; line-height: 1.75; color: var(--ink-soft); font-family: 'DM Sans', sans-serif; }
+.sec-single-body { font-size: 16px; line-height: 1.65; color: var(--ink-soft); font-family: 'Fraunces', serif; }
 .sec-single-body p { margin: 0 0 1.4em; }
 .sec-single-body h2, .sec-single-body h3 {
   font-family: 'Fraunces', serif;

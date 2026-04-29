@@ -13,7 +13,7 @@ import { fetchGeminiPulseStories } from "@/lib/pulse-gemini";
 import { savePulseStory } from "@/lib/pulse-wordpress";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const configuredSecret = process.env.PULSE_REFRESH_SECRET ?? "";
