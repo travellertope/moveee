@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { Search, User, ShoppingBag } from "lucide-react";
 import Ticker from "./Ticker";
 import AuthModal from "./AuthModal";
@@ -18,6 +19,7 @@ interface HeaderProps {
 const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const { language, setLanguage } = useLanguage();
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const { itemCount, openDrawer } = useCart();
   const [modalOpen, setModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -88,7 +90,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
             <Link href="/events">Happenings</Link>
             <Link href="/origins">Origins</Link>
             <Link href="/shop">Lifestyle</Link>
-            <Link href="/pulse" style={{ color: "#D4A847" }}>Pulse</Link>
+            <Link href="/pulse" style={pathname?.startsWith("/pulse") ? { color: "#D4A847" } : undefined}>Pulse</Link>
           </nav>
 
           {/* Wordmark */}
