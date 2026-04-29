@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
 import RSVPForm from "../components/RSVPForm";
+import DiscoveredEventPage from "../components/DiscoveredEventPage";
 import "@/app/events.css";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +56,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   } catch { /* CMS unreachable */ }
 
   if (!event) notFound();
+
+  if (event.isAiGenerated) return <DiscoveredEventPage event={event} />;
 
   const img = event.featuredImage?.node?.sourceUrl;
   const cat = event.cultureInterests?.nodes?.[0]?.name || "Happening";
