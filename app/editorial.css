@@ -264,7 +264,7 @@
 .prose p {
   font-family: 'Fraunces', serif;
   font-size: 16px;
-  line-height: 1.75;
+  line-height: 1.65;
   margin-bottom: 24px;
   color: var(--ink);
 }
@@ -611,7 +611,7 @@
 .prose-content p {
   font-family: 'Fraunces', serif;
   font-size: 16px;
-  line-height: 1.75;
+  line-height: 1.65;
   margin-bottom: 24px;
   color: var(--ink);
 }
@@ -647,7 +647,7 @@
 .prose-content ul, .prose-content ol {
   font-family: 'Fraunces', serif;
   font-size: 16px;
-  line-height: 1.75;
+  line-height: 1.65;
   color: var(--ink);
   margin-bottom: 24px;
   padding-left: 24px;

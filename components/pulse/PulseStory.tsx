@@ -253,7 +253,7 @@ export default function PulseStory({ story, initialComments }: PulseStoryProps) 
           style={{
             fontFamily: "var(--font-fraunces), serif",
             fontSize: "1rem",
-            lineHeight: 1.75,
+            lineHeight: 1.65,
             color: "#c8c4bc",
             marginBottom: "2rem",
           }}

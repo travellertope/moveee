@@ -1431,7 +1431,7 @@
 .gml-issue-prose {
   font-family: 'Fraunces', serif;
   font-size: 16px;
-  line-height: 1.75;
+  line-height: 1.65;
   color: var(--ink-soft);
 }
 .gml-issue-prose p { margin-bottom: 1.5em; }
