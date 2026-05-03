@@ -656,15 +656,31 @@ export async function evaluateAndExtractEvents(
 You have been given ${results.length} web search results about events in ${city}. Your job is to:
 
 1. FILTER: Only include events that are:
-   - Genuinely upcoming (after ${currentDate}) — skip past events
-   - Actually an event (not a listicle, news article, or venue homepage)
+   - Genuinely upcoming (start date is after ${currentDate}) — skip past events
+   - Actually a discrete event (not a listicle, news article, venue homepage, or general "things to do" guide)
    - Culturally interesting: music, art exhibitions, film screenings, literature, fashion, food, theatre, dance, cultural festivals, community gatherings. Especially relevant if connected to African, Caribbean, diaspora, or global South culture — but excellent events of any kind are welcome.
 
-2. EXTRACT: For each relevant event, extract all available fields.
-   IMPORTANT — dates: The \`article_published\` field is when the web page was indexed — it is NOT the event date.
-   Extract the actual event date from the snippet text. If no clear event date is mentioned in the snippet, leave event_date as an empty string so the event is skipped.
+2. EXTRACT DATES — this is the most critical step:
+   The \`article_published\` field is when the web page was crawled by Google — it is NEVER the event date. Ignore it for date purposes.
 
-3. COMPOSE: Write a short, editorial tagline (1 sentence, present tense, evocative — not a press release) and a longer excerpt (2-3 sentences with cultural context).
+   To find the real event date, scan the snippet for these signals (in order of reliability):
+   a) Explicit date text: "Saturday 14 June", "June 14", "14/06/2025", "Jun 14, 2025", "2025-06-14"
+   b) Weekday + relative week: "this Saturday", "next Friday" — resolve against today (${currentDate})
+   c) Month-range text for exhibitions: "runs until 30 August", "on view through September 12", "open until..."
+      → set event_date to the exhibition OPENING date if mentioned, else the earliest date in the snippet
+      → set end_date to the closing date
+   d) Ticketing URL patterns: Eventbrite URLs sometimes embed dates (e.g. /e/event-name-12345678)
+   e) Structured date fragments in the snippet like "When: ...", "Date: ...", "Doors: ..."
+
+   If after careful scanning you still cannot identify a specific event date, set event_date to "" — the event will be skipped.
+   Never guess or invent a date. Never use the article_published date as the event date.
+
+3. EXTRACT END DATES: For exhibitions, runs, and festivals that span multiple days or weeks:
+   - Always try to extract end_date from phrases like "until", "through", "closes", "runs to", "ending"
+   - Format: YYYY-MM-DDTHH:mm or YYYY-MM-DD
+   - A single-night event's end_date can be left empty
+
+4. COMPOSE: Write a short, editorial tagline (1 sentence, present tense, evocative — not a press release) and a longer excerpt (2-3 sentences with cultural context).
 
 Available interest slugs (use only these): ${INTEREST_SLUGS.join(", ")}
 
@@ -674,8 +690,8 @@ Return a JSON array. Each object must have exactly these fields:
   "tagline": "One evocative sentence about the event",
   "excerpt": "2-3 sentence editorial description with cultural context",
   "content": "Same as excerpt — expand if more detail is available in the snippet",
-  "event_date": "YYYY-MM-DDTHH:mm or YYYY-MM-DD if time unknown — must be the event date, NOT the article_published date",
-  "end_date": "YYYY-MM-DDTHH:mm or empty string",
+  "event_date": "YYYY-MM-DDTHH:mm or YYYY-MM-DD — the actual event/opening start date, NOT article_published",
+  "end_date": "YYYY-MM-DDTHH:mm or YYYY-MM-DD for multi-day events — empty string for single-night events",
   "location": "Venue name and address if available",
   "city": "${city}",
   "admission": "Free / price / empty string if unknown",
