@@ -21,12 +21,13 @@ export const CITIES = [
 export type CityResult = { found: number; submitted: number; skipped: number; errors: string[] };
 export type SeedResult = { cities: string[]; submitted: number; detail: Record<string, CityResult> };
 
-export function buildQueries(city: string, monthYear: string): string[] {
+export function buildQueries(city: string, monthYear: string, nextMonthYear: string): string[] {
   return [
     `African diaspora cultural events ${city} ${monthYear}`,
-    `art exhibition music film events ${city} ${monthYear}`,
+    `African diaspora cultural events ${city} ${nextMonthYear}`,
+    `art exhibition music film events ${city} ${monthYear} OR ${nextMonthYear}`,
     `Black culture events ${city} ${monthYear} site:eventbrite.com OR site:dice.fm OR site:ra.co`,
-    `gallery opening supper club pop-up cultural event ${city} ${monthYear}`,
+    `gallery opening supper club pop-up cultural event ${city} ${nextMonthYear}`,
   ];
 }
 
@@ -96,6 +97,8 @@ export async function seedCities(
 ): Promise<SeedResult> {
   const now         = new Date();
   const monthYear   = now.toLocaleString("en-US", { month: "long", year: "numeric" });
+  const nextMonth   = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const nextMonthYear = nextMonth.toLocaleString("en-US", { month: "long", year: "numeric" });
   const currentDate = now.toISOString().slice(0, 10);
   const today       = new Date(); today.setHours(0, 0, 0, 0);
   const maxDate     = new Date(); maxDate.setMonth(maxDate.getMonth() + 18);
@@ -110,7 +113,7 @@ export async function seedCities(
     // Collect unique search results across all queries.
     const allRaw: SerperResult[] = [];
     const seenUrls = new Set<string>();
-    for (const q of buildQueries(city.name, monthYear)) {
+    for (const q of buildQueries(city.name, monthYear, nextMonthYear)) {
       const hits = await searchSerper(q, city.gl, city.hl);
       for (const h of hits) {
         if (!seenUrls.has(h.link)) { seenUrls.add(h.link); allRaw.push(h); }

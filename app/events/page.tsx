@@ -48,14 +48,25 @@ function groupEventsByMonth(events: any[]) {
   return groups;
 }
 
+function isEventPast(event: any): boolean {
+  // Multi-day events stay visible until their end date passes
+  const checkDate = event.endDate || event.eventDate || event.date;
+  if (!checkDate) return false;
+  const d = new Date(checkDate);
+  if (isNaN(d.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d < today;
+}
+
 export default async function EventsPage() {
   let events: any[] = [];
   try {
     events = await getEventsWithFallback(50, { revalidate: 0 });
   } catch { /* CMS unreachable */ }
 
-  const ownEvents    = events.filter(e => !e.isAiGenerated);
-  const seededEvents = events.filter(e => e.isAiGenerated);
+  const ownEvents    = events.filter(e => !e.isAiGenerated && !isEventPast(e));
+  const seededEvents = events.filter(e => e.isAiGenerated && !isEventPast(e));
 
   const spotlightEvent = ownEvents.find(e => e.isFeatured) || ownEvents[0];
   const otherOwnEvents = spotlightEvent ? ownEvents.filter(e => e.id !== spotlightEvent.id) : ownEvents;
