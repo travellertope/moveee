@@ -451,12 +451,26 @@ html {
 /* Individual row */
 .disc-row {
   display: grid;
-  grid-template-columns: 64px 1fr auto auto;
+  grid-template-columns: 64px auto 1fr auto auto;
   align-items: center;
   gap: 24px;
   padding: 16px 0;
   border-bottom: 1px solid rgba(243, 236, 224, 0.06);
   transition: background 0.12s;
+}
+
+.disc-location-pill {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(243, 236, 224, 0.5);
+  border: 1px solid rgba(243, 236, 224, 0.12);
+  padding: 4px 8px;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .disc-row:hover {
@@ -712,12 +726,13 @@ html {
   .disc-section { padding: 48px 24px; }
   .disc-event-page { padding: 48px 24px; }
   .disc-row {
-    grid-template-columns: 48px 1fr;
+    grid-template-columns: 48px auto 1fr;
     grid-template-rows: auto auto;
     gap: 8px 12px;
   }
-  .disc-meta { grid-column: 2; font-size: 9px; }
-  .disc-ext-cta { grid-column: 2; justify-self: start; margin-top: 4px; }
+  .disc-location-pill { font-size: 8px; max-width: 72px; }
+  .disc-meta { grid-column: 2 / span 2; font-size: 9px; }
+  .disc-ext-cta { grid-column: 2 / span 2; justify-self: start; margin-top: 4px; }
   .disc-event-title { font-size: clamp(28px, 9vw, 48px); }
   .disc-detail-row { grid-template-columns: 80px 1fr; gap: 16px; }
 }
