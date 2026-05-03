@@ -6,10 +6,10 @@ import Image from 'next/image';
 
 export interface Visual {
   id: number;
-  entrySlug: string;   // directory entry slug — used for /visuals/[slug] link
-  entryTitle: string;  // directory entry title — shown on the card
-  entryType: string;   // e.g. "person", "place" — shown as the card meta label
-  imageTitle: string;  // descriptive visual title for alt/tooltip
+  entrySlug: string;
+  entryTitle: string;
+  entryType: string;
+  imageTitle: string;
   altText: string;
   sourceUrl: string;
   width: number;
@@ -20,8 +20,11 @@ interface Props {
   visuals: Visual[];
 }
 
+const PER_PAGE = 12;
+
 export default function VisualsGrid({ visuals }: Props) {
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   const filtered = visuals.filter((v) => {
     const q = search.toLowerCase();
@@ -33,6 +36,14 @@ export default function VisualsGrid({ visuals }: Props) {
     );
   });
 
+  const visible = filtered.slice(0, page * PER_PAGE);
+  const hasMore = visible.length < filtered.length;
+
+  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSearch(e.target.value);
+    setPage(1);
+  }
+
   return (
     <>
       <div className="flex justify-center mb-16">
@@ -41,13 +52,13 @@ export default function VisualsGrid({ visuals }: Props) {
           placeholder="Search illustrations..."
           className="bg-zinc-900 border border-white/10 rounded-full px-8 py-4 w-full max-w-lg text-white text-lg focus:outline-none focus:border-white/30 transition-all font-light"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={handleSearchChange}
         />
       </div>
 
       <div className="visuals-grid">
-        {filtered.length > 0 ? (
-          filtered.map((visual) => (
+        {visible.length > 0 ? (
+          visible.map((visual) => (
             <Link
               key={visual.id}
               href={`/visuals/${visual.entrySlug}`}
@@ -60,7 +71,7 @@ export default function VisualsGrid({ visuals }: Props) {
                   width={visual.width || 800}
                   height={visual.height || 1000}
                   className="w-full h-auto"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 33vw"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1100px) 50vw, 33vw"
                 />
               </div>
               <div className="visual-card-overlay">
@@ -80,6 +91,17 @@ export default function VisualsGrid({ visuals }: Props) {
           </div>
         )}
       </div>
+
+      {hasMore && (
+        <div className="visuals-pagination">
+          <button
+            className="visuals-load-more"
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Load More
+          </button>
+        </div>
+      )}
     </>
   );
 }

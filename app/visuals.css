@@ -57,7 +57,7 @@
 .visuals-grid {
   columns: 3;
   column-gap: 32px;
-  margin-bottom: 80px;
+  margin-bottom: 40px;
 }
 
 @media (max-width: 1100px) {
@@ -68,9 +68,45 @@
 
 @media (max-width: 640px) {
   .visuals-grid {
-    columns: 1;
-    padding: 0 20px;
+    columns: 2;
+    column-gap: 12px;
+    padding: 0 12px;
   }
+
+  .visual-card {
+    margin-bottom: 12px;
+  }
+}
+
+/* Pagination */
+.visuals-pagination {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 80px;
+}
+
+.visuals-load-more {
+  background: transparent;
+  border: 1px solid #d4af37;
+  color: #d4af37;
+  padding: 14px 48px;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.visuals-load-more:hover {
+  background: #d4af37;
+  color: #0a0a0a;
+}
+
+.visuals-load-more:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .visual-card {
