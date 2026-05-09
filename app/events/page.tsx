@@ -210,7 +210,8 @@ export default async function EventsPage() {
                       slug={event.slug}
                       title={event.title}
                       date={dateStr}
-                      city={event.location || ""}
+                      city={event.city || ""}
+                      location={event.location || ""}
                       category={cat}
                       ticketingUrl={event.ticketingUrl}
                     />

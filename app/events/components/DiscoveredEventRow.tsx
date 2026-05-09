@@ -5,6 +5,7 @@ interface DiscoveredEventRowProps {
   title: string;
   date: string;
   city: string;
+  location: string;
   category: string;
   ticketingUrl?: string | null;
 }
@@ -14,18 +15,25 @@ export default function DiscoveredEventRow({
   title,
   date,
   city,
+  location,
   category,
   ticketingUrl,
 }: DiscoveredEventRowProps) {
+  const displayLocation = city || location;
+
   return (
     <div className="disc-row">
       <span className="disc-date-pill">{date}</span>
+      {displayLocation && (
+        <span className="disc-location-pill" title={location || city}>
+          {displayLocation}
+        </span>
+      )}
       <Link href={`/events/${slug}`} className="disc-title">
         <span dangerouslySetInnerHTML={{ __html: title }} />
       </Link>
       <span className="disc-meta">
-        {city}
-        {category ? ` · ${category}` : ""}
+        {category}
       </span>
       {ticketingUrl ? (
         <a

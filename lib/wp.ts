@@ -98,6 +98,7 @@ function mapRestEventToFrontendShape(item: any) {
     eventDate: pick(acf.event_date, meta.event_date, meta._culture_event_date, item?.date),
     endDate: pick(acf.end_date, meta.end_date, meta._culture_end_date),
     location: pick(acf.location, meta.location, meta._culture_location),
+    city: pick(acf.city, meta.city, meta._culture_event_city),
     admission: pick(acf.admission, meta.admission, meta._culture_admission),
     isFeatured: Boolean(pick(acf.is_featured, meta.is_featured, meta._culture_is_featured)),
     isAiGenerated: meta._culture_ai_generated === '1' || meta._culture_ai_generated === true,
