@@ -255,18 +255,17 @@ async function buildImagePromptWithAI(
   excerpt: string
 ): Promise<string> {
   const template = classifyTemplateType(entryType);
-  const userMessage =
-    `Entry: "${title}" (type: ${entryType})\n` +
-    `Description: ${excerpt.slice(0, 400)}\n` +
-    `Template: ${template}`;
+  const contents =
+    IMAGE_PROMPT_BRIEF_INSTRUCTION +
+    `\n\nEntry: "${title}" (type: ${entryType}, template: ${template})\n` +
+    `Description: ${excerpt.slice(0, 400) || "(no description provided)"}`;
 
   for (const model of TEXT_MODELS) {
     try {
       const res = await ai.models.generateContent({
         model,
-        contents: userMessage,
+        contents,
         config: {
-          systemInstruction: IMAGE_PROMPT_BRIEF_INSTRUCTION,
           safetySettings: SAFETY_SETTINGS,
           temperature: 0.9,
           maxOutputTokens: 200,
@@ -274,20 +273,22 @@ async function buildImagePromptWithAI(
       });
       const brief = (res.text ?? "").trim();
       if (brief.length > 30) {
-        return (
+        const fullPrompt =
           brief + " " +
           "Strictly restricted palette: deep ink (#14110d), burnt ochre (#c5491f), dark ochre (#8a2d10), " +
           "gold brass (#b38238), moss green (#3d4a2a), cream paper (#f3ece0), indigo (#1e2b42) — no saturated blues/purples, no white. " +
           "Premium editorial magazine illustration. Flat geometric shapes with dry-brush paper grain, coarse stippling, ink bleeds. " +
-          "Shading via sharp geometric shadow blocks, no soft gradients. No photorealism, no 3D rendering, matte finish, generous negative space."
-        );
+          "Shading via sharp geometric shadow blocks, no soft gradients. No photorealism, no 3D rendering, matte finish, generous negative space.";
+        console.log(`[image-prompt] AI brief for "${title}": ${brief.slice(0, 120)}...`);
+        return fullPrompt;
       }
-    } catch {
-      // try next model
+      console.warn(`[image-prompt] ${model} returned empty brief for "${title}" — trying next`);
+    } catch (err: any) {
+      console.warn(`[image-prompt] ${model} failed for "${title}": ${err?.message?.slice(0, 100)}`);
     }
   }
 
-  // Fallback: template-based prompt if AI generation fails
+  console.warn(`[image-prompt] All models failed for "${title}" — using fallback template`);
   return buildImagePromptFallback(title, entryType, excerpt);
 }
 
