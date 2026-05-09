@@ -153,6 +153,23 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Games — trivia daily cache (same questions for every player each day).
+        register_rest_route( 'culture/v1', '/games/trivia-daily', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_trivia_daily' ),
+                'permission_callback' => '__return_true',
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_set_trivia_daily' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+                'args'                => array(
+                    'questions' => array( 'required' => true, 'type' => 'array' ),
+                ),
+            ),
+        ) );
+
         // Quote audit batch — fetch unaudited quotes for the Next.js audit bot.
         register_rest_route( 'culture/v1', '/quotes/audit-batch', array(
             'methods'             => 'GET',
@@ -1387,6 +1404,42 @@ class Culture_REST_API {
             'success' => true,
             'message' => 'Quote reported.',
         ) );
+    }
+
+    /**
+     * GET /culture/v1/games/trivia-daily
+     * Returns today's cached trivia questions, or 404 if not generated yet.
+     */
+    public static function handle_get_trivia_daily( $request ) {
+        $date   = gmdate( 'Y-m-d' );
+        $cached = get_option( 'culture_games_trivia_' . $date, null );
+
+        if ( null === $cached || ! is_array( $cached ) ) {
+            return new WP_Error( 'not_found', 'No trivia cached for today.', array( 'status' => 404 ) );
+        }
+
+        return rest_ensure_response( array( 'date' => $date, 'questions' => $cached ) );
+    }
+
+    /**
+     * POST /culture/v1/games/trivia-daily
+     * Stores today's trivia questions (called by the Next.js API route after
+     * Gemini generation). Cleans up the previous day's option automatically.
+     */
+    public static function handle_set_trivia_daily( $request ) {
+        $questions = $request->get_param( 'questions' );
+
+        if ( ! is_array( $questions ) || empty( $questions ) ) {
+            return new WP_Error( 'invalid', 'questions must be a non-empty array.', array( 'status' => 400 ) );
+        }
+
+        $date      = gmdate( 'Y-m-d' );
+        $yesterday = gmdate( 'Y-m-d', strtotime( '-1 day' ) );
+
+        update_option( 'culture_games_trivia_' . $date,      $questions, false );
+        delete_option( 'culture_games_trivia_' . $yesterday );
+
+        return rest_ensure_response( array( 'success' => true, 'date' => $date ) );
     }
 
     /**
