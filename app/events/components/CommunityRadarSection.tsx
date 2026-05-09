@@ -10,6 +10,7 @@ interface SeededEvent {
   title: string;
   eventDate?: string;
   date?: string;
+  city?: string;
   location?: string;
   ticketingUrl?: string | null;
   cultureInterests?: { nodes: Array<{ name: string }> };
@@ -420,7 +421,8 @@ export default function CommunityRadarSection({ events }: CommunityRadarSectionP
               slug={event.slug}
               title={event.title}
               date={getDateStr(event)}
-              city={event.location || ""}
+              city={event.city || ""}
+              location={event.location || ""}
               category={getCategory(event)}
               ticketingUrl={event.ticketingUrl}
             />
