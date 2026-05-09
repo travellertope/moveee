@@ -3,7 +3,7 @@ import { getEventsWithFallback } from "@/lib/wp";
 import EventHero from "./components/EventHero";
 import SpotlightCard from "./components/SpotlightCard";
 import EventCard from "./components/EventCard";
-import DiscoveredEventRow from "./components/DiscoveredEventRow";
+import CommunityRadarSection from "./components/CommunityRadarSection";
 import "@/app/events.css";
 
 export const dynamic = "force-dynamic";
@@ -174,53 +174,7 @@ export default async function EventsPage() {
       </section>
 
       {/* ── COMMUNITY RADAR — discovered / seeded events ── */}
-      {seededEvents.length > 0 && (
-        <section className="disc-section">
-          <div className="disc-section-inner">
-            <div className="disc-header">
-              <div>
-                <span className="disc-eyebrow">Community Radar</span>
-                <h2 className="disc-heading">More <em>Happenings</em></h2>
-                <p className="disc-subhead">
-                  AI-discovered events across the diaspora — sourced from the web and curated for our community.
-                </p>
-              </div>
-              <span className="disc-total">{seededEvents.length} discovered</span>
-            </div>
-
-            <div className="disc-list">
-              {seededEvents
-                .sort((a: any, b: any) => {
-                  const da = new Date(a.eventDate || a.date || 0).getTime();
-                  const db = new Date(b.eventDate || b.date || 0).getTime();
-                  return da - db;
-                })
-                .map((event: any) => {
-                  const d = new Date(event.eventDate || event.date || Date.now());
-                  const dateStr = isNaN(d.getTime())
-                    ? "TBA"
-                    : d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-                  const cat =
-                    Array.isArray(event.cultureInterests?.nodes) && event.cultureInterests.nodes.length > 0
-                      ? event.cultureInterests.nodes[0].name
-                      : "";
-                  return (
-                    <DiscoveredEventRow
-                      key={event.id}
-                      slug={event.slug}
-                      title={event.title}
-                      date={dateStr}
-                      city={event.city || ""}
-                      location={event.location || ""}
-                      category={cat}
-                      ticketingUrl={event.ticketingUrl}
-                    />
-                  );
-                })}
-            </div>
-          </div>
-        </section>
-      )}
+      <CommunityRadarSection events={seededEvents} />
 
       {/* ── CONNECT CTA BAND ── */}
       <section className="connect-band">

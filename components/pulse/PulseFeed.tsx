@@ -24,9 +24,9 @@ function FilterPill({
     <button
       onClick={onClick}
       style={{
-        background: active ? "#D4A847" : "transparent",
-        color: active ? "#0d0d0d" : "#888",
-        border: active ? "1px solid #D4A847" : "1px solid #2a2a2a",
+        background: active ? "var(--ink)" : "transparent",
+        color: active ? "var(--paper)" : "#6b6157",
+        border: active ? "1px solid var(--ink)" : "1px solid #d4cfc6",
         borderRadius: "2px",
         padding: "0.35rem 0.85rem",
         fontSize: "0.72rem",
@@ -55,13 +55,6 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
     async (arm: string, region: string, nextPage = 1, append = false) => {
       setLoading(true);
       try {
-        const params = new URLSearchParams({ page: String(nextPage), perPage: "12" });
-        if (arm !== "All") params.set("arm", arm.toLowerCase());
-        if (region !== "All") params.set("region", region);
-
-        // Fetch directly from WP REST (via absolute URL with _embed) — but since
-        // this is client-side we call our own Next.js path which is CORS-safe.
-        // Build the WP REST URL client-side using the public WP URL.
         const wpBase = process.env.NEXT_PUBLIC_WP_URL ?? "";
         let url = `${wpBase}/wp-json/wp/v2/pulse-stories?per_page=12&page=${nextPage}&orderby=date&order=desc&_embed=1`;
         if (arm !== "All") url += `&pulse_arm=${encodeURIComponent(arm.toLowerCase())}`;
@@ -97,15 +90,15 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
   };
 
   return (
-    <div style={{ background: "#0d0d0d", minHeight: "60vh", paddingBottom: "4rem" }}>
+    <div style={{ background: "var(--paper)", minHeight: "60vh", paddingBottom: "4rem" }}>
       {/* Filters */}
       <div
         style={{
-          borderBottom: "1px solid #1e1e1e",
+          borderBottom: "1px solid #e0dbd1",
           padding: "1.25rem 1.5rem",
           position: "sticky",
           top: 0,
-          background: "#0d0d0d",
+          background: "var(--paper)",
           zIndex: 10,
         }}
       >
@@ -134,9 +127,9 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
       </div>
 
       {/* Grid */}
-      <div style={{ padding: "1.5rem" }}>
+      <div style={{ padding: "1.5rem", maxWidth: "1260px", margin: "0 auto" }}>
         {stories.length === 0 && !loading ? (
-          <div style={{ color: "#555", textAlign: "center", padding: "4rem 0", fontSize: "0.9rem" }}>
+          <div style={{ color: "#6b6157", textAlign: "center", padding: "4rem 0", fontSize: "0.9rem" }}>
             No stories found for this filter. Check back soon.
           </div>
         ) : (
@@ -167,8 +160,8 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
               <div
                 key={i}
                 style={{
-                  background: "#1a1a1a",
-                  border: "1px solid #2a2a2a",
+                  background: "#ebe1d0",
+                  border: "1px solid #e0dbd1",
                   borderRadius: "2px",
                   height: "200px",
                   animation: "pulse-shimmer 1.5s ease-in-out infinite",
@@ -185,8 +178,8 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
               onClick={handleLoadMore}
               style={{
                 background: "transparent",
-                border: "1px solid #D4A847",
-                color: "#D4A847",
+                border: "1px solid var(--ink)",
+                color: "var(--ink)",
                 padding: "0.65rem 2rem",
                 fontSize: "0.75rem",
                 fontWeight: 600,
@@ -205,11 +198,12 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
 
       <style>{`
         @keyframes pulse-shimmer {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.7; }
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 0.8; }
         }
         .pulse-card:hover {
-          border-color: #2e2e2e !important;
+          border-color: #c4bdb3 !important;
+          box-shadow: 0 2px 8px rgba(20, 17, 13, 0.06);
         }
       `}</style>
     </div>

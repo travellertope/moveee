@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import GameDoneScreen from "./GameDoneScreen";
 
-interface Question {
+interface WsiQuestion {
   id:             number;
   quote:          string;
   source:         string;
@@ -10,21 +11,21 @@ interface Question {
   options:        string[];
 }
 
-type Phase = "loading" | "question" | "answered" | "complete" | "error";
+type Phase = "loading" | "playing" | "answered" | "complete" | "error";
 
-const TOTAL_ROUNDS = 10;
+const STORAGE_KEY = (date: string) => `moveee_wsi_${date}`;
 
-function ResultEmoji(score: number): string {
-  const pct = score / TOTAL_ROUNDS;
-  if (pct === 1)    return "🏆";
-  if (pct >= 0.8)   return "🔥";
-  if (pct >= 0.6)   return "👏";
-  if (pct >= 0.4)   return "📚";
+function ResultEmoji(score: number, total: number): string {
+  const pct = score / total;
+  if (pct === 1)   return "🏆";
+  if (pct >= 0.8)  return "🔥";
+  if (pct >= 0.6)  return "👏";
+  if (pct >= 0.4)  return "📚";
   return "🌱";
 }
 
-function ResultTitle(score: number): string {
-  const pct = score / TOTAL_ROUNDS;
+function ResultTitle(score: number, total: number): string {
+  const pct = score / total;
   if (pct === 1)   return "Perfect Score!";
   if (pct >= 0.8)  return "Culture Scholar";
   if (pct >= 0.6)  return "Well Versed";
@@ -33,64 +34,85 @@ function ResultTitle(score: number): string {
 }
 
 export default function WhoSaidItGame() {
-  const [phase,       setPhase]   = useState<Phase>("loading");
-  const [question,    setQuestion] = useState<Question | null>(null);
-  const [selected,    setSelected] = useState<string | null>(null);
-  const [score,       setScore]   = useState(0);
-  const [round,       setRound]   = useState(0);
-  const [seenIds,     setSeenIds] = useState<number[]>([]);
-  const [errorMsg,    setErrorMsg] = useState("");
+  const [phase,     setPhase]     = useState<Phase>("loading");
+  const [questions, setQuestions] = useState<WsiQuestion[]>([]);
+  const [current,   setCurrent]   = useState(0);
+  const [selected,  setSelected]  = useState<string | null>(null);
+  const [score,     setScore]     = useState(0);
+  const [date,      setDate]      = useState("");
+  const [errorMsg,  setErrorMsg]  = useState("");
+  const [alreadyPlayed, setAlreadyPlayed] = useState<{ score: number; total: number } | null>(null);
 
-  const loadQuestion = useCallback(async (seen: number[]) => {
-    setPhase("loading");
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    setDate(today);
+
+    // Check if already played today
     try {
-      const exclude = seen.join(",");
-      const res = await fetch(
-        `/api/games/who-said-it/question${exclude ? `?exclude=${exclude}` : ""}`
-      );
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        throw new Error(d.error ?? `HTTP ${res.status}`);
+      const stored = localStorage.getItem(STORAGE_KEY(today));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setAlreadyPlayed(parsed);
+        setPhase("complete");
+        return;
       }
-      const data: Question = await res.json();
-      setQuestion(data);
-      setSelected(null);
-      setPhase("question");
-    } catch (err: any) {
-      setErrorMsg(err.message ?? "Could not load question.");
-      setPhase("error");
-    }
+    } catch {}
+
+    // Load today's question set
+    fetch("/api/games/who-said-it/daily")
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        if (!Array.isArray(data.questions) || data.questions.length === 0)
+          throw new Error("No questions returned.");
+        setQuestions(data.questions);
+        setPhase("playing");
+      })
+      .catch((err) => {
+        setErrorMsg(err.message ?? "Could not load today's game.");
+        setPhase("error");
+      });
   }, []);
 
-  // Load first question on mount.
-  useEffect(() => { loadQuestion([]); }, [loadQuestion]);
-
   function handleAnswer(author: string) {
-    if (phase !== "question" || !question) return;
+    if (phase !== "playing" || !questions[current]) return;
     setSelected(author);
-    if (author === question.correct_author) setScore((s) => s + 1);
+    if (author === questions[current].correct_author) setScore((s) => s + 1);
     setPhase("answered");
   }
 
   function handleNext() {
-    const newRound = round + 1;
-    if (newRound >= TOTAL_ROUNDS) {
-      setRound(newRound);
+    const next = current + 1;
+    if (next >= questions.length) {
+      const finalScore = score + (selected === questions[current].correct_author ? 0 : 0);
+      // Save to localStorage
+      try {
+        localStorage.setItem(
+          STORAGE_KEY(date),
+          JSON.stringify({ score, total: questions.length })
+        );
+      } catch {}
+      setAlreadyPlayed({ score, total: questions.length });
       setPhase("complete");
       return;
     }
-    const newSeen = [...seenIds, question!.id];
-    setSeenIds(newSeen);
-    setRound(newRound);
-    loadQuestion(newSeen);
+    setCurrent(next);
+    setSelected(null);
+    setPhase("playing");
   }
 
-  function handleRestart() {
-    setScore(0);
-    setRound(0);
-    setSeenIds([]);
-    setErrorMsg("");
-    loadQuestion([]);
+  // ── Already played today ──────────────────────────────────────────────────
+  if (phase === "complete" && alreadyPlayed) {
+    return (
+      <GameDoneScreen
+        game="wsi"
+        score={alreadyPlayed.score}
+        total={alreadyPlayed.total}
+        date={date}
+      />
+    );
   }
 
   // ── Loading ───────────────────────────────────────────────────────────────
@@ -99,7 +121,7 @@ export default function WhoSaidItGame() {
       <div className="wsi-game">
         <div className="game-loading">
           <div className="game-loading__spinner" />
-          <p className="game-loading__text">Finding a quote…</p>
+          <p className="game-loading__text">Loading today's quotes…</p>
         </div>
       </div>
     );
@@ -111,7 +133,11 @@ export default function WhoSaidItGame() {
       <div className="wsi-game">
         <div className="game-loading">
           <p className="game-loading__text">{errorMsg}</p>
-          <button className="wsi-next-btn" onClick={handleRestart}>
+          <button
+            className="wsi-next-btn"
+            style={{ marginTop: 24 }}
+            onClick={() => window.location.reload()}
+          >
             Try Again →
           </button>
         </div>
@@ -119,55 +145,13 @@ export default function WhoSaidItGame() {
     );
   }
 
-  // ── Results ───────────────────────────────────────────────────────────────
-  if (phase === "complete") {
-    const wrong = TOTAL_ROUNDS - score;
-    return (
-      <div className="game-page">
-        <div className="game-result">
-          <div className="game-result__emoji">{ResultEmoji(score)}</div>
-          <h2 className="game-result__title">{ResultTitle(score)}</h2>
-          <p className="game-result__subtitle">You completed Who Said It</p>
+  if (questions.length === 0) return null;
 
-          <div className="game-result__score">
-            <span className="game-result__score-num">{score}</span>
-            <span className="game-result__score-total">/ {TOTAL_ROUNDS}</span>
-          </div>
-
-          <div className="game-result__breakdown">
-            <div className="game-result__stat">
-              <span className="game-result__stat-num" style={{ color: "var(--moss)" }}>
-                {score}
-              </span>
-              <span className="game-result__stat-label">Correct</span>
-            </div>
-            <div className="game-result__stat">
-              <span className="game-result__stat-num" style={{ color: "var(--ochre)" }}>
-                {wrong}
-              </span>
-              <span className="game-result__stat-label">Missed</span>
-            </div>
-          </div>
-
-          <div className="game-result__actions">
-            <button className="game-result__btn game-result__btn--primary" onClick={handleRestart}>
-              Play Again →
-            </button>
-            <a href="/games/trivia" className="game-result__btn game-result__btn--secondary">
-              Try Culture Trivia
-            </a>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Question / Answered ───────────────────────────────────────────────────
-  if (!question) return null;
-
-  const isAnswered    = phase === "answered";
-  const isCorrect     = selected === question.correct_author;
-  const progress      = (round / TOTAL_ROUNDS) * 100;
+  const q          = questions[current];
+  const total      = questions.length;
+  const isAnswered = phase === "answered";
+  const isCorrect  = selected === q.correct_author;
+  const progress   = (current / total) * 100;
 
   return (
     <div className="wsi-game">
@@ -176,16 +160,14 @@ export default function WhoSaidItGame() {
         <div className="wsi-progress__bar">
           <div className="wsi-progress__fill" style={{ width: `${progress}%` }} />
         </div>
-        <span className="wsi-progress__label">{round + 1} / {TOTAL_ROUNDS}</span>
+        <span className="wsi-progress__label">{current + 1} / {total}</span>
         <span className="wsi-score-badge">{score} pts</span>
       </div>
 
       {/* Quote */}
       <div className="wsi-quote-card">
-        <p className="wsi-quote-text">{question.quote}</p>
-        {question.source && (
-          <span className="wsi-quote-source">— {question.source}</span>
-        )}
+        <p className="wsi-quote-text">{q.quote}</p>
+        {q.source && <span className="wsi-quote-source">— {q.source}</span>}
       </div>
 
       {/* Prompt */}
@@ -193,14 +175,13 @@ export default function WhoSaidItGame() {
 
       {/* Options */}
       <div className="wsi-options">
-        {question.options.map((author) => {
+        {q.options.map((author) => {
           let cls = "wsi-option";
           if (isAnswered) {
-            if (author === question.correct_author) {
+            if (author === q.correct_author)
               cls += selected === author ? " wsi-option--correct" : " wsi-option--reveal";
-            } else if (author === selected) {
+            else if (author === selected)
               cls += " wsi-option--wrong";
-            }
           }
           return (
             <button
@@ -220,17 +201,17 @@ export default function WhoSaidItGame() {
         <>
           <div className={`wsi-feedback wsi-feedback--${isCorrect ? "correct" : "wrong"}`}>
             <p className="wsi-feedback__label">
-              {isCorrect ? "Correct" : `Missed — it was ${question.correct_author}`}
+              {isCorrect ? "Correct!" : `Missed — it was ${q.correct_author}`}
             </p>
             {!isCorrect && (
               <p className="wsi-feedback__text">
-                This quote is by <strong>{question.correct_author}</strong>.
-                {question.source ? ` Source: ${question.source}.` : ""}
+                This quote is by <strong>{q.correct_author}</strong>.
+                {q.source ? ` Source: ${q.source}.` : ""}
               </p>
             )}
           </div>
           <button className="wsi-next-btn" onClick={handleNext}>
-            {round + 1 >= TOTAL_ROUNDS ? "See Results" : "Next Quote"} →
+            {current + 1 >= total ? "See Results" : "Next Quote"} →
           </button>
         </>
       )}

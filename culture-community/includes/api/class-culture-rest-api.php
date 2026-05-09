@@ -153,6 +153,23 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Games — trivia daily cache (same questions for every player each day).
+        register_rest_route( 'culture/v1', '/games/trivia-daily', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_trivia_daily' ),
+                'permission_callback' => '__return_true',
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_set_trivia_daily' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+                'args'                => array(
+                    'questions' => array( 'required' => true, 'type' => 'array' ),
+                ),
+            ),
+        ) );
+
         // Quote audit batch — fetch unaudited quotes for the Next.js audit bot.
         register_rest_route( 'culture/v1', '/quotes/audit-batch', array(
             'methods'             => 'GET',
@@ -1390,6 +1407,42 @@ class Culture_REST_API {
     }
 
     /**
+     * GET /culture/v1/games/trivia-daily
+     * Returns today's cached trivia questions, or 404 if not generated yet.
+     */
+    public static function handle_get_trivia_daily( $request ) {
+        $date   = gmdate( 'Y-m-d' );
+        $cached = get_option( 'culture_games_trivia_' . $date, null );
+
+        if ( null === $cached || ! is_array( $cached ) ) {
+            return new WP_Error( 'not_found', 'No trivia cached for today.', array( 'status' => 404 ) );
+        }
+
+        return rest_ensure_response( array( 'date' => $date, 'questions' => $cached ) );
+    }
+
+    /**
+     * POST /culture/v1/games/trivia-daily
+     * Stores today's trivia questions (called by the Next.js API route after
+     * Gemini generation). Cleans up the previous day's option automatically.
+     */
+    public static function handle_set_trivia_daily( $request ) {
+        $questions = $request->get_param( 'questions' );
+
+        if ( ! is_array( $questions ) || empty( $questions ) ) {
+            return new WP_Error( 'invalid', 'questions must be a non-empty array.', array( 'status' => 400 ) );
+        }
+
+        $date      = gmdate( 'Y-m-d' );
+        $yesterday = gmdate( 'Y-m-d', strtotime( '-1 day' ) );
+
+        update_option( 'culture_games_trivia_' . $date,      $questions, false );
+        delete_option( 'culture_games_trivia_' . $yesterday );
+
+        return rest_ensure_response( array( 'success' => true, 'date' => $date ) );
+    }
+
+    /**
      * GET /culture/v1/quotes/audit-batch?size=N
      * Returns up to N unaudited culture_quote posts for the audit bot.
      * A quote is "unaudited" when it has no _quote_audit_status meta at all.
@@ -1988,8 +2041,12 @@ class Culture_REST_API {
         $ticketing_url = esc_url_raw( $request->get_param( 'ticketing_url' ) );
         $tagline       = sanitize_text_field( $request->get_param( 'tagline' ) );
         $attribution   = esc_url_raw( $request->get_param( 'attribution' ) );
-        $interests     = (array) $request->get_param( 'interests' );
-        $auto_publish  = (bool) $request->get_param( 'auto_publish' );
+        $interests        = (array) $request->get_param( 'interests' );
+        $auto_publish     = (bool) $request->get_param( 'auto_publish' );
+        $ai_generated_raw = $request->get_param( 'ai_generated' );
+        $ai_generated     = ( $ai_generated_raw === null ) ? true : (bool) $ai_generated_raw;
+        $submitter_name   = sanitize_text_field( $request->get_param( 'submitter_name' ) );
+        $submitter_email  = sanitize_email( $request->get_param( 'submitter_email' ) );
 
         if ( empty( $title ) || empty( $event_date ) ) {
             return new WP_Error( 'missing_fields', 'title and event_date are required.', array( 'status' => 400 ) );
@@ -2039,8 +2096,15 @@ class Culture_REST_API {
         update_post_meta( $post_id, '_culture_tagline',         $tagline );
         update_post_meta( $post_id, '_culture_attribution',     $attribution );
         update_post_meta( $post_id, '_culture_is_featured',     '0' );
-        update_post_meta( $post_id, '_culture_ai_generated',    '1' );
+        update_post_meta( $post_id, '_culture_ai_generated',    $ai_generated ? '1' : '0' );
         update_post_meta( $post_id, '_culture_event_dedup_hash', $dedup_hash );
+
+        if ( ! empty( $submitter_name ) ) {
+            update_post_meta( $post_id, '_culture_submitter_name',  $submitter_name );
+        }
+        if ( ! empty( $submitter_email ) ) {
+            update_post_meta( $post_id, '_culture_submitter_email', $submitter_email );
+        }
 
         // Assign interest terms (only existing slugs to avoid orphan terms).
         if ( ! empty( $interests ) && taxonomy_exists( 'culture_interest' ) ) {

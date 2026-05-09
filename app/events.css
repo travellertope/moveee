@@ -388,9 +388,10 @@ html {
    ========================================================================== */
 
 .disc-section {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--paper);
+  color: var(--ink);
   padding: 80px 60px;
+  border-top: 1px solid #e0dbd1;
 }
 
 .disc-section-inner {
@@ -404,7 +405,7 @@ html {
   align-items: flex-end;
   margin-bottom: 48px;
   padding-bottom: 24px;
-  border-bottom: 1px solid rgba(243, 236, 224, 0.1);
+  border-bottom: 1px solid rgba(20, 17, 13, 0.1);
 }
 
 .disc-eyebrow {
@@ -421,7 +422,7 @@ html {
   font-family: var(--font-serif);
   font-size: clamp(32px, 5vw, 52px);
   font-weight: 700;
-  color: var(--paper);
+  color: var(--ink);
   line-height: 0.95;
   margin-bottom: 12px;
 }
@@ -434,7 +435,7 @@ html {
 .disc-subhead {
   font-family: var(--font-sans);
   font-size: 13px;
-  color: rgba(243, 236, 224, 0.5);
+  color: rgba(20, 17, 13, 0.55);
   max-width: 420px;
   line-height: 1.5;
 }
@@ -442,7 +443,7 @@ html {
 .disc-total {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: rgba(243, 236, 224, 0.3);
+  color: rgba(20, 17, 13, 0.35);
   letter-spacing: 0.1em;
   white-space: nowrap;
   align-self: flex-end;
@@ -455,7 +456,7 @@ html {
   align-items: center;
   gap: 24px;
   padding: 16px 0;
-  border-bottom: 1px solid rgba(243, 236, 224, 0.06);
+  border-bottom: 1px solid rgba(20, 17, 13, 0.08);
   transition: background 0.12s;
 }
 
@@ -474,7 +475,7 @@ html {
 }
 
 .disc-row:hover {
-  background: rgba(243, 236, 224, 0.03);
+  background: rgba(20, 17, 13, 0.03);
   margin: 0 -12px;
   padding-left: 12px;
   padding-right: 12px;
@@ -496,7 +497,7 @@ html {
   font-family: var(--font-serif);
   font-size: 16px;
   font-weight: 400;
-  color: var(--paper);
+  color: var(--ink);
   text-decoration: none;
   line-height: 1.25;
   display: -webkit-box;
@@ -514,7 +515,7 @@ html {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.06em;
-  color: rgba(243, 236, 224, 0.35);
+  color: rgba(20, 17, 13, 0.45);
   white-space: nowrap;
 }
 
@@ -534,6 +535,39 @@ html {
 .disc-ext-cta:hover {
   background: rgba(179, 130, 56, 0.1);
   border-color: var(--gold);
+}
+
+/* Community Radar category filter pills */
+.disc-filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.disc-filter-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border: 1px solid rgba(20, 17, 13, 0.2);
+  background: transparent;
+  color: rgba(20, 17, 13, 0.55);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.12s;
+}
+
+.disc-filter-pill:hover {
+  border-color: var(--ochre);
+  color: var(--ochre);
+}
+
+.disc-filter-pill--active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
 }
 
 /* ==========================================================================

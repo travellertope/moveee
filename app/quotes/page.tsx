@@ -1,8 +1,6 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
-import { getWPQuotes } from '@/lib/wp';
-import QuoteCard from '@/components/QuoteCard';
 import SubmitQuoteTrigger from '@/components/SubmitQuoteTrigger';
+import QuotesInfiniteGrid from '@/components/QuotesInfiniteGrid';
 import '@/app/quotes.css';
 
 export const dynamic = 'force-dynamic';
@@ -12,9 +10,84 @@ export const metadata: Metadata = {
   description: 'A directory of user-submitted quotes relevant to the culture, themes, and vibe of The Moveee community.',
 };
 
+const WP_GRAPHQL_URL =
+  process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'https://cms.themoveee.com/graphql';
+
+const INITIAL_QUERY = `
+  query GetQuotesPaged($first: Int) {
+    cultureQuotes(first: $first, where: { status: PUBLISH }) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        id
+        databaseId
+        title
+        slug
+        content
+        date
+        quoteSource
+        quoteLikes
+        quoteAuthors {
+          nodes { name slug }
+        }
+      }
+    }
+  }
+`;
+
+const INITIAL_QUERY_BASIC = `
+  query GetQuotesPagedBasic($first: Int) {
+    cultureQuotes(first: $first, where: { status: PUBLISH }) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        id
+        databaseId
+        title
+        slug
+        content
+        date
+        quoteAuthors {
+          nodes { name slug }
+        }
+      }
+    }
+  }
+`;
+
+async function fetchInitialQuotes() {
+  const vars = { first: 20 };
+  for (const query of [INITIAL_QUERY, INITIAL_QUERY_BASIC]) {
+    try {
+      const res = await fetch(WP_GRAPHQL_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, variables: vars }),
+        cache: 'no-store',
+      });
+      if (!res.ok) continue;
+      const json = await res.json();
+      const result = json.data?.cultureQuotes;
+      if (result) {
+        return {
+          quotes: result.nodes ?? [],
+          endCursor: result.pageInfo?.endCursor ?? null,
+          hasNextPage: result.pageInfo?.hasNextPage ?? false,
+        };
+      }
+    } catch {
+      // try next query
+    }
+  }
+  return { quotes: [], endCursor: null, hasNextPage: false };
+}
+
 export default async function QuoteHub() {
-  const data = await getWPQuotes({ first: 50 });
-  const quotes = data?.cultureQuotes?.nodes || [];
+  const { quotes, endCursor, hasNextPage } = await fetchInitialQuotes();
 
   return (
     <div className="quote-hub">
@@ -23,28 +96,22 @@ export default async function QuoteHub() {
         <p>
           A collective archive of words that move us. From African literature to global cinema, captured by the community.
         </p>
-        
+
         <div className="search-wrap max-w-xl mx-auto">
-          <input 
-            type="search" 
-            placeholder="Search quotes, authors or sources..." 
+          <input
+            type="search"
+            placeholder="Search quotes, authors or sources..."
             className="w-full px-6 py-4 border-b border-rule bg-transparent font-light focus:outline-none focus:border-gold transition-colors text-white"
           />
         </div>
       </header>
 
       <main className="quote-body-wrap">
-        <section className="quote-grid">
-          {quotes.length > 0 ? (
-            quotes.map((quote: any) => (
-              <QuoteCard key={quote.id} quote={quote} />
-            ))
-          ) : (
-            <div className="col-span-full py-32 text-center text-ink-soft italic bg-paper">
-              No quotes have been shared yet. Be the first to move the community.
-            </div>
-          )}
-        </section>
+        <QuotesInfiniteGrid
+          initialQuotes={quotes}
+          initialEndCursor={endCursor}
+          initialHasNextPage={hasNextPage}
+        />
       </main>
 
       <SubmitQuoteTrigger />

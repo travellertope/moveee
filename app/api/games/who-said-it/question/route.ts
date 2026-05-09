@@ -83,13 +83,20 @@ export async function GET(req: NextRequest) {
 
   const options = shuffle([correctAuthor, ...distractors]);
 
-  // Strip HTML tags from quote text for display.
+  // Strip HTML tags and decode common HTML entities for plain-text display.
   const cleanText = quote.content
     .replace(/<[^>]*>/g, "")
+    .replace(/&#8216;|&lsquo;/g, "‘")   // '
+    .replace(/&#8217;|&rsquo;/g, "’")   // '
+    .replace(/&#8220;|&ldquo;/g, "“")   // "
+    .replace(/&#8221;|&rdquo;/g, "”")   // "
+    .replace(/&#8211;|&ndash;/g, "–")   // –
+    .replace(/&#8212;|&mdash;/g, "—")   // —
+    .replace(/&#8230;|&hellip;/g, "…")  // …
     .replace(/&quot;/g, '"')
-    .replace(/&#8220;|&ldquo;/g, "“")
-    .replace(/&#8221;|&rdquo;/g, "”")
     .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
     .trim();
 
   return NextResponse.json({

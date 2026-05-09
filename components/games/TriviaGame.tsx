@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import GameDoneScreen from "./GameDoneScreen";
 
 interface TriviaQuestion {
   question:    string;
@@ -22,58 +23,50 @@ const CATEGORY_LABELS: Record<string, string> = {
   culture:    "Culture",
 };
 
-function ResultEmoji(score: number, total: number): string {
-  const pct = score / total;
-  if (pct === 1)   return "🏆";
-  if (pct >= 0.8)  return "🔥";
-  if (pct >= 0.6)  return "🧠";
-  if (pct >= 0.4)  return "📖";
-  return "🌱";
-}
-
-function ResultTitle(score: number, total: number): string {
-  const pct = score / total;
-  if (pct === 1)   return "Flawless!";
-  if (pct >= 0.8)  return "Culture Expert";
-  if (pct >= 0.6)  return "Strong Knowledge";
-  if (pct >= 0.4)  return "Keep Exploring";
-  return "Just the Beginning";
-}
+const STORAGE_KEY = (date: string) => `moveee_trivia_${date}`;
 
 export default function TriviaGame() {
-  const [phase,      setPhase]    = useState<Phase>("loading");
-  const [questions,  setQuestions] = useState<TriviaQuestion[]>([]);
-  const [current,    setCurrent]  = useState(0);
-  const [selected,   setSelected] = useState<number | null>(null);
-  const [score,      setScore]    = useState(0);
-  const [errorMsg,   setErrorMsg] = useState("");
-  const [date,       setDate]     = useState("");
+  const [phase,     setPhase]     = useState<Phase>("loading");
+  const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
+  const [current,   setCurrent]   = useState(0);
+  const [selected,  setSelected]  = useState<number | null>(null);
+  const [score,     setScore]     = useState(0);
+  const [date,      setDate]      = useState("");
+  const [errorMsg,  setErrorMsg]  = useState("");
+  const [alreadyPlayed, setAlreadyPlayed] = useState<{ score: number; total: number } | null>(null);
 
-  async function loadQuestions() {
-    setPhase("loading");
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    setDate(today);
+
+    // Check if already played today
     try {
-      const res = await fetch("/api/games/trivia/daily");
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        throw new Error(d.error ?? `HTTP ${res.status}`);
+      const stored = localStorage.getItem(STORAGE_KEY(today));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setAlreadyPlayed(parsed);
+        setPhase("complete");
+        return;
       }
-      const data = await res.json();
-      if (!Array.isArray(data.questions) || data.questions.length === 0) {
-        throw new Error("No questions returned.");
-      }
-      setQuestions(data.questions);
-      setDate(data.date ?? "");
-      setCurrent(0);
-      setSelected(null);
-      setScore(0);
-      setPhase("playing");
-    } catch (err: any) {
-      setErrorMsg(err.message ?? "Could not load trivia.");
-      setPhase("error");
-    }
-  }
+    } catch {}
 
-  useEffect(() => { loadQuestions(); }, []);
+    // Load today's questions
+    fetch("/api/games/trivia/daily")
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        if (!Array.isArray(data.questions) || data.questions.length === 0)
+          throw new Error("No questions returned.");
+        setQuestions(data.questions);
+        setPhase("playing");
+      })
+      .catch((err) => {
+        setErrorMsg(err.message ?? "Could not load today's trivia.");
+        setPhase("error");
+      });
+  }, []);
 
   function handleAnswer(idx: number) {
     if (phase !== "playing") return;
@@ -85,6 +78,13 @@ export default function TriviaGame() {
   function handleNext() {
     const next = current + 1;
     if (next >= questions.length) {
+      try {
+        localStorage.setItem(
+          STORAGE_KEY(date),
+          JSON.stringify({ score, total: questions.length })
+        );
+      } catch {}
+      setAlreadyPlayed({ score, total: questions.length });
       setPhase("complete");
       return;
     }
@@ -93,13 +93,25 @@ export default function TriviaGame() {
     setPhase("playing");
   }
 
+  // ── Already played today ──────────────────────────────────────────────────
+  if (phase === "complete" && alreadyPlayed) {
+    return (
+      <GameDoneScreen
+        game="trivia"
+        score={alreadyPlayed.score}
+        total={alreadyPlayed.total}
+        date={date}
+      />
+    );
+  }
+
   // ── Loading ───────────────────────────────────────────────────────────────
   if (phase === "loading") {
     return (
       <div className="trivia-game">
         <div className="game-loading">
           <div className="game-loading__spinner" />
-          <p className="game-loading__text">Generating today's questions…</p>
+          <p className="game-loading__text">Loading today's trivia…</p>
         </div>
       </div>
     );
@@ -111,7 +123,11 @@ export default function TriviaGame() {
       <div className="trivia-game">
         <div className="game-loading">
           <p className="game-loading__text">{errorMsg}</p>
-          <button className="trivia-next-btn" style={{ marginTop: 24 }} onClick={loadQuestions}>
+          <button
+            className="trivia-next-btn"
+            style={{ marginTop: 24 }}
+            onClick={() => window.location.reload()}
+          >
             Try Again →
           </button>
         </div>
@@ -119,56 +135,11 @@ export default function TriviaGame() {
     );
   }
 
-  // ── Results ───────────────────────────────────────────────────────────────
-  if (phase === "complete") {
-    const total = questions.length;
-    const wrong = total - score;
-    const pct   = Math.round((score / total) * 100);
-    return (
-      <div className="game-page">
-        <div className="game-result">
-          <div className="game-result__emoji">{ResultEmoji(score, total)}</div>
-          <h2 className="game-result__title">{ResultTitle(score, total)}</h2>
-          <p className="game-result__subtitle">{pct}% correct — Culture Trivia {date}</p>
-
-          <div className="game-result__score">
-            <span className="game-result__score-num">{score}</span>
-            <span className="game-result__score-total">/ {total}</span>
-          </div>
-
-          <div className="game-result__breakdown">
-            <div className="game-result__stat">
-              <span className="game-result__stat-num" style={{ color: "var(--moss)" }}>
-                {score}
-              </span>
-              <span className="game-result__stat-label">Correct</span>
-            </div>
-            <div className="game-result__stat">
-              <span className="game-result__stat-num" style={{ color: "var(--ochre)" }}>
-                {wrong}
-              </span>
-              <span className="game-result__stat-label">Missed</span>
-            </div>
-          </div>
-
-          <div className="game-result__actions">
-            <button className="game-result__btn game-result__btn--primary" onClick={loadQuestions}>
-              Play Again →
-            </button>
-            <a href="/games/who-said-it" className="game-result__btn game-result__btn--secondary">
-              Try Who Said It
-            </a>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Question ──────────────────────────────────────────────────────────────
   if (questions.length === 0) return null;
+
   const q          = questions[current];
-  const isAnswered = phase === "answered";
   const total      = questions.length;
+  const isAnswered = phase === "answered";
 
   return (
     <div className="trivia-game">
@@ -180,15 +151,15 @@ export default function TriviaGame() {
         </p>
       </div>
 
-      {/* Progress pips */}
+      {/* Progress pips — one per question, no repeats */}
       <div className="trivia-progress">
         {questions.map((_, i) => (
           <div
             key={i}
             className={[
               "trivia-progress__pip",
-              i < current   ? "trivia-progress__pip--done"   : "",
-              i === current ? "trivia-progress__pip--active"  : "",
+              i < current    ? "trivia-progress__pip--done"   : "",
+              i === current  ? "trivia-progress__pip--active" : "",
             ].join(" ")}
           />
         ))}
@@ -200,7 +171,7 @@ export default function TriviaGame() {
         {q.category && ` · ${CATEGORY_LABELS[q.category] ?? q.category}`}
       </p>
 
-      {/* Question text */}
+      {/* Question */}
       <p className="trivia-question-text">{q.question}</p>
 
       {/* Options */}
@@ -208,7 +179,7 @@ export default function TriviaGame() {
         {q.options.map((opt, idx) => {
           let cls = "trivia-option";
           if (isAnswered) {
-            if (idx === q.correct)   cls += " trivia-option--correct";
+            if (idx === q.correct)    cls += " trivia-option--correct";
             else if (idx === selected) cls += " trivia-option--wrong";
           }
           return (
