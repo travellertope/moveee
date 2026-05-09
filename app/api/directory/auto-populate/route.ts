@@ -57,6 +57,41 @@ const SEED_TOPICS = [
   "Things Fall Apart (novel)", "Song of Solomon (novel)",
   "Beloved (novel)", "Purple Hibiscus (novel)",
   "Sankofa (film)", "Beasts of No Nation (film)",
+  // Film & TV — Nigerian Web Series (YouTube / Digital-First)
+  "Skinny Girl in Transit (web series)", "The Men's Club (web series)",
+  "Visa on Arrival (web series)", "Gidi Up (web series)",
+  "Rumour Has It (web series)", "Little Black Book (web series)",
+  "Bottom Line (web series)", "MTV Shuga Naija (TV series)",
+  "Best Friends in the World (web series)", "Papa Benji (web series)",
+  "This Thing Called Love (web series)", "The Olive (web series)",
+  "Ajoche (TV series)", "Under the Influence (web series)",
+  "Halita (TV series)",
+  // Film & TV — South African Series
+  "Blood & Water (TV series)", "Kings of Jo'Burg (TV series)",
+  "Savage Beauty (TV series)", "Shaka iLembe (TV series)",
+  "How to Ruin Love (TV series)", "Lioness (South African TV series)",
+  "The River (South African TV series)", "Unseen (South African TV series)",
+  // Film & TV — East African Series
+  "Single Kiasi (TV series)", "Pepeta (Kenyan TV series)",
+  "Igiza (TV series)", "Mpakani (TV series)", "Lazizi (TV series)",
+  // Film & TV — Other African & Diaspora
+  "An African City (web series)", "Iyanu: Child of Wonder (animated series)",
+  "What's Left of Us (web series)",
+  // Film & TV — Korean (K-Dramas)
+  "Squid Game (TV series)", "All of Us Are Dead (TV series)",
+  "The Glory (TV series)", "Extraordinary Attorney Woo (TV series)",
+  // Film & TV — Indian
+  "Sacred Games (TV series)", "Mirzapur (TV series)",
+  "Panchayat (TV series)", "Kota Factory (TV series)",
+  // Film & TV — Latin American
+  "La Casa de Papel (TV series)", "Elite (Spanish TV series)",
+  "Dark Desire (TV series)",
+  // Film & TV — US / UK Streaming Era
+  "Stranger Things (TV series)", "Breaking Bad (TV series)",
+  "The Wire (TV series)", "Game of Thrones (TV series)",
+  "Black Mirror (TV series)", "Insecure (TV series)",
+  // Film & TV — Other Global
+  "Dark (German TV series)", "Lupin (French TV series)",
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
