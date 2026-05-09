@@ -1,3 +1,18 @@
+/**
+ * Hand-curated quote seed list for the Moveee Quote Archive.
+ *
+ * INTEGRITY RULES — before adding a quote:
+ *   1. The exact text must be verifiable on Wikiquote, Goodreads, or a
+ *      named published source (book, speech, interview).
+ *   2. Novel/poem character lines must be clearly labelled as such and are
+ *      only included where the author is quoting their own work in interviews.
+ *   3. "Various Interviews" is an acceptable source only for widely documented,
+ *      frequently repeated statements — not one-off claims.
+ *   4. When in doubt, leave it out. 10 verified quotes beat 100 invented ones.
+ *
+ * Removed entries are kept as comments so we don't re-add them by accident.
+ * Suspicious entries are flagged with // VERIFY comments for future review.
+ */
 export const SEED_QUOTES = [
   {
     text: "All that you touch you change. All that you change changes you. The only lasting truth is change.",
@@ -14,6 +29,8 @@ export const SEED_QUOTES = [
     author: "Chinua Achebe",
     source: "Hopes and Impediments",
   },
+  // VERIFY — "Know from whence you came..." attributed to The Fire Next Time but not found in that text.
+  // Widely shared online but source needs confirmation before use in trivia.
   {
     text: "Know from whence you came. If you know whence you came, there are absolutely no limitations to where you can go.",
     author: "James Baldwin",
@@ -89,11 +106,8 @@ export const SEED_QUOTES = [
     author: "Aimé Césaire",
     source: "Notebook of a Return to the Native Land",
   },
-  {
-    text: "I am interested in the future, because that is where I am going to spend the rest of my life.",
-    author: "Djibril Diop Mambéty",
-    source: "Various Interviews",
-  },
+  // REMOVED — "I am interested in the future, because that is where I am going to spend the rest of my life."
+  // This is Charles F. Kettering's quote (~1949), misattributed to Mambéty online.
   {
     text: "If there's a book that you want to read, but it hasn't been written yet, then you must write it.",
     author: "Toni Morrison",
@@ -114,11 +128,9 @@ export const SEED_QUOTES = [
     author: "Marcus Garvey",
     source: "Garvey and Garveyism",
   },
-  {
-    text: "I am not African because I was born in Africa but because Africa was born in me.",
-    author: "Kwame Nkrumah",
-    source: "Africa Must Unite",
-  },
+  // REMOVED — "I am not African because I was born in Africa but because Africa was born in me."
+  // Attributed to Nkrumah but not found in "Africa Must Unite" or any verified Nkrumah text.
+  // Common internet misattribution.
   {
     text: "To be free is not merely to cast off one's chains, but to live in a way that respects and enhances the freedom of others.",
     author: "Nelson Mandela",
@@ -249,11 +261,9 @@ export const SEED_QUOTES = [
     author: "Ytasha L. Womack",
     source: "Afrofuturism: The World of Black Sci-Fi and Fantasy Culture",
   },
-  {
-    text: "The future belongs to those who can imagine it.",
-    author: "Kodwo Eshun",
-    source: "More Brilliant Than the Sun",
-  },
+  // REMOVED — "The future belongs to those who can imagine it."
+  // Not from "More Brilliant Than the Sun" (a dense academic text on sound theory).
+  // Generic phrase attributed to many people online, unverifiable for Eshun.
   {
     text: "Some worlds are built on a fault line of pain, held up by nightmares.",
     author: "N.K. Jemisin",
@@ -294,6 +304,7 @@ export const SEED_QUOTES = [
     author: "Frederick Douglass",
     source: "1857 West India Emancipation Speech",
   },
+  // VERIFY — widely attributed to Alice Walker online but no specific verified source found.
   {
     text: "The most common way people give up their power is by thinking they don't have any.",
     author: "Alice Walker",
@@ -314,11 +325,8 @@ export const SEED_QUOTES = [
     author: "Kofi Annan",
     source: "1997 Speech",
   },
-  {
-    text: "A system cannot fail those it was never meant to protect.",
-    author: "W.E.B. Du Bois",
-    source: "Various Writings",
-  },
+  // REMOVED — "A system cannot fail those it was never meant to protect."
+  // Modern social media meme (~2014–2016). No connection to Du Bois' actual writings.
   {
     text: "The secret to my success is just believing in myself and believing in my origins.",
     author: "Burna Boy",
@@ -379,6 +387,8 @@ export const SEED_QUOTES = [
     author: "Wanuri Kahiu",
     source: "2018 TED Talk",
   },
+  // VERIFY — "Binti" is a novella; this is a character line, not Okorafor's own words.
+  // Acceptable only if Okorafor has repeated it as her own sentiment in interviews.
   {
     text: "Nature is the most advanced technology we have.",
     author: "Nnedi Okorafor",
@@ -834,16 +844,10 @@ export const SEED_QUOTES = [
     author: "Nina Simone",
     source: "1968 Interview",
   },
-  {
-    text: "The greatness of a man is not in how much wealth he acquires, but in his integrity and his ability to affect those around him positively.",
-    author: "Bob Marley",
-    source: "Various Interviews",
-  },
-  {
-    text: "I hold death in my pouch, I cannot die.",
-    author: "Fela Kuti",
-    source: "Various Interviews",
-  },
+  // REMOVED — "The greatness of a man is not in how much wealth he acquires..."
+  // One of the most circulated fake Marley quotes. No verified source in any interview or recording.
+  // REMOVED — "I hold death in my pouch, I cannot die."
+  // No verified source. Unverifiable "Various Interviews" attribution is a hallucination signal.
   {
     text: "Until you dig a hole, you plant a tree, you water it and make it survive, you haven't done a thing. You are just talking.",
     author: "Wangari Maathai",
@@ -859,11 +863,8 @@ export const SEED_QUOTES = [
     author: "Thomas Sankara",
     source: "1984 Speech",
   },
-  {
-    text: "It always seems impossible until it's done.",
-    author: "Nelson Mandela",
-    source: "Various Speeches",
-  },
+  // REMOVED — "It always seems impossible until it's done."
+  // No verified Mandela source found by Quote Investigator or biographers. Widely circulated but unverified.
   {
     text: "Black Consciousness is an attitude of the mind and a way of life.",
     author: "Steve Biko",
@@ -914,11 +915,8 @@ export const SEED_QUOTES = [
     author: "Sojourner Truth",
     source: "Final Words",
   },
-  {
-    text: "I freed a thousand slaves I could have freed a thousand more if only they knew they were slaves.",
-    author: "Harriet Tubman",
-    source: "Various Testimonies",
-  },
+  // REMOVED — "I freed a thousand slaves I could have freed a thousand more if only they knew they were slaves."
+  // Debunked by Tubman biographers including Kate Clifford Larson. No primary source exists.
   {
     text: "The people must know before they can act, and there is no educator to compare with the press.",
     author: "Ida B. Wells",
@@ -1009,6 +1007,7 @@ export const SEED_QUOTES = [
     author: "Taiye Selasi",
     source: "TED Talk 2014",
   },
+  // VERIFY — this is a traditional Ghanaian proverb used in Homegoing, not Gyasi's original words.
   {
     text: "The family is like the forest: if you are outside it is dense; if you are inside you see that each tree has its own position.",
     author: "Yaa Gyasi",
@@ -1104,11 +1103,8 @@ export const SEED_QUOTES = [
     author: "Wizkid",
     source: "Various Interviews",
   },
-  {
-    text: "We rise by lifting others.",
-    author: "Davido",
-    source: "Various Interviews",
-  },
+  // REMOVED — "We rise by lifting others."
+  // This is Robert G. Ingersoll's quote (1898). Not Davido's.
   {
     text: "Black practices are a rich, textured, infinite, profound body of work.",
     author: "Solange Knowles",
@@ -1164,11 +1160,9 @@ export const SEED_QUOTES = [
     author: "Djibril Diop Mambéty",
     source: "Various Interviews",
   },
-  {
-    text: "My films are my weapons. My camera is my gun.",
-    author: "Safi Faye",
-    source: "Various Interviews",
-  },
+  // REMOVED — "My films are my weapons. My camera is my gun." (Safi Faye)
+  // Exact duplicate of the Haile Gerima entry above. Both cannot be the originator.
+  // Retained under Gerima (line 708) as it is more commonly associated with Third Cinema tradition.
   {
     text: "A film is a piece of life.",
     author: "Souleymane Cissé",
@@ -1254,11 +1248,13 @@ export const SEED_QUOTES = [
     author: "Stuart Hall",
     source: "Cultural Studies",
   },
+  // VERIFY — likely a paraphrase of Gilroy's argument rather than a verbatim quote from the text.
   {
     text: "There is no pure black culture.",
     author: "Paul Gilroy",
     source: "The Black Atlantic",
   },
+  // VERIFY — this reads as an LLM summary of Wynter's thesis, not a direct verbatim quote.
   {
     text: "We must reinvent what it means to be human.",
     author: "Sylvia Wynter",
