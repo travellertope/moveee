@@ -7,7 +7,7 @@ const API_KEY = process.env.CULTURE_API_SECRET ?? "";
 
 export async function POST(req: NextRequest) {
   // Require a logged-in session.
-  const session = await getServerSession(authOptions as any);
+  const session = await getServerSession(authOptions as any) as any;
   if (!session?.user) {
     return NextResponse.json({ error: "You must be signed in to submit an event." }, { status: 401 });
   }
