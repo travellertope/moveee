@@ -279,22 +279,12 @@ async function submitEntry(
 
 // ── Route handler ──────────────────────────────────────────────────────────
 
-export async function POST(req: NextRequest) {
+function isAuthorized(req: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET ?? "";
-  const authHeader = req.headers.get("Authorization") ?? "";
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
-  }
+  return !!cronSecret && req.headers.get("Authorization") === `Bearer ${cronSecret}`;
+}
 
-  if (!process.env.GEMINI_API_KEY) {
-    return NextResponse.json({ error: "GEMINI_API_KEY not configured." }, { status: 503 });
-  }
-
-  const body = await req.json().catch(() => ({}));
-  const batchSize: number = Math.min(Number(body.batchSize) || 5, 20);
-  const generateImages: boolean = body.generateImages !== false;
-
-  // Build the full topic list: hardcoded seeds + WP-stored extras.
+async function runPopulate(batchSize: number, generateImages: boolean): Promise<NextResponse> {
   const [existing, extraTopics, processed] = await Promise.all([
     getExistingTitles(),
     getExtraTopics(),
@@ -303,15 +293,11 @@ export async function POST(req: NextRequest) {
 
   const allTopics = [...SEED_TOPICS, ...extraTopics];
 
-  // A topic is pending only if it hasn't been published (title check) AND
-  // hasn't been submitted before (processed-topic check). The second guard
-  // catches cases where Gemini changed the topic name at generation time.
   let pending = allTopics.filter((t) => {
     const key = t.toLowerCase().trim();
     return !existing.has(key) && !processed.has(key);
   });
 
-  // When every known topic is covered, ask Gemini to generate new ones.
   let aiGeneratedNewTopics = false;
   if (pending.length === 0) {
     let newTopics: string[] = [];
@@ -339,7 +325,6 @@ export async function POST(req: NextRequest) {
     aiGeneratedNewTopics = true;
   }
 
-  // Shuffle for variety, take up to batchSize.
   const batch = [...pending].sort(() => Math.random() - 0.5).slice(0, batchSize);
 
   const results: Array<{ title: string; success: boolean; postId?: number }> = [];
@@ -350,8 +335,6 @@ export async function POST(req: NextRequest) {
       const stub = await generateDirectoryStub(topic);
       const result = await submitEntry(stub, generateImages);
       results.push(result);
-      // Track the original seed topic string (not the AI-generated title)
-      // so that next run's duplicate check works even if Gemini renamed it.
       if (result.success) successfulTopics.push(topic);
     } catch (err: any) {
       results.push({
@@ -363,7 +346,6 @@ export async function POST(req: NextRequest) {
     await new Promise((r) => setTimeout(r, 3500));
   }
 
-  // Persist the successfully submitted topic strings.
   if (successfulTopics.length > 0) {
     await saveProcessedTopics(successfulTopics);
   }
@@ -375,4 +357,27 @@ export async function POST(req: NextRequest) {
     aiGeneratedNewTopics,
     results,
   });
+}
+
+export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json({ error: "GEMINI_API_KEY not configured." }, { status: 503 });
+  }
+  return runPopulate(5, true);
+}
+
+export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json({ error: "GEMINI_API_KEY not configured." }, { status: 503 });
+  }
+  const body = await req.json().catch(() => ({}));
+  const batchSize: number = Math.min(Number(body.batchSize) || 5, 20);
+  const generateImages: boolean = body.generateImages !== false;
+  return runPopulate(batchSize, generateImages);
 }
