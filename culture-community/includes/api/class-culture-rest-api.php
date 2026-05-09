@@ -2041,8 +2041,12 @@ class Culture_REST_API {
         $ticketing_url = esc_url_raw( $request->get_param( 'ticketing_url' ) );
         $tagline       = sanitize_text_field( $request->get_param( 'tagline' ) );
         $attribution   = esc_url_raw( $request->get_param( 'attribution' ) );
-        $interests     = (array) $request->get_param( 'interests' );
-        $auto_publish  = (bool) $request->get_param( 'auto_publish' );
+        $interests        = (array) $request->get_param( 'interests' );
+        $auto_publish     = (bool) $request->get_param( 'auto_publish' );
+        $ai_generated_raw = $request->get_param( 'ai_generated' );
+        $ai_generated     = ( $ai_generated_raw === null ) ? true : (bool) $ai_generated_raw;
+        $submitter_name   = sanitize_text_field( $request->get_param( 'submitter_name' ) );
+        $submitter_email  = sanitize_email( $request->get_param( 'submitter_email' ) );
 
         if ( empty( $title ) || empty( $event_date ) ) {
             return new WP_Error( 'missing_fields', 'title and event_date are required.', array( 'status' => 400 ) );
@@ -2092,8 +2096,15 @@ class Culture_REST_API {
         update_post_meta( $post_id, '_culture_tagline',         $tagline );
         update_post_meta( $post_id, '_culture_attribution',     $attribution );
         update_post_meta( $post_id, '_culture_is_featured',     '0' );
-        update_post_meta( $post_id, '_culture_ai_generated',    '1' );
+        update_post_meta( $post_id, '_culture_ai_generated',    $ai_generated ? '1' : '0' );
         update_post_meta( $post_id, '_culture_event_dedup_hash', $dedup_hash );
+
+        if ( ! empty( $submitter_name ) ) {
+            update_post_meta( $post_id, '_culture_submitter_name',  $submitter_name );
+        }
+        if ( ! empty( $submitter_email ) ) {
+            update_post_meta( $post_id, '_culture_submitter_email', $submitter_email );
+        }
 
         // Assign interest terms (only existing slugs to avoid orphan terms).
         if ( ! empty( $interests ) && taxonomy_exists( 'culture_interest' ) ) {
