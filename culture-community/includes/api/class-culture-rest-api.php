@@ -153,6 +153,34 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Quote audit batch — fetch unaudited quotes for the Next.js audit bot.
+        register_rest_route( 'culture/v1', '/quotes/audit-batch', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_audit_batch' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'size' => array(
+                    'required'          => false,
+                    'type'              => 'integer',
+                    'default'           => 20,
+                    'sanitize_callback' => 'absint',
+                ),
+            ),
+        ) );
+
+        // Quote audit update — write verdict + optional quarantine from audit bot.
+        register_rest_route( 'culture/v1', '/quotes/audit-update', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_update_audit_status' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'post_id'      => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'audit_status' => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_key' ),
+                'audit_note'   => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+                'quarantine'   => array( 'required' => false, 'type' => 'boolean', 'default' => false ),
+            ),
+        ) );
+
         // Toggle Post Interactions (Like/Bookmark) for articles and quotes.
         register_rest_route( 'culture/v1', '/user/toggle-interaction', array(
             'methods'             => 'POST',
@@ -1358,6 +1386,86 @@ class Culture_REST_API {
         return rest_ensure_response( array(
             'success' => true,
             'message' => 'Quote reported.',
+        ) );
+    }
+
+    /**
+     * GET /culture/v1/quotes/audit-batch?size=N
+     * Returns up to N unaudited culture_quote posts for the audit bot.
+     * A quote is "unaudited" when it has no _quote_audit_status meta at all.
+     */
+    public static function handle_get_audit_batch( $request ) {
+        $size = min( absint( $request->get_param( 'size' ) ) ?: 20, 50 );
+
+        $posts = get_posts( array(
+            'post_type'      => 'culture_quote',
+            'post_status'    => array( 'publish', 'pending' ),
+            'posts_per_page' => $size,
+            'meta_query'     => array(
+                array(
+                    'key'     => '_quote_audit_status',
+                    'compare' => 'NOT EXISTS',
+                ),
+            ),
+        ) );
+
+        $quotes = array_map( function( $p ) {
+            $terms  = wp_get_object_terms( $p->ID, 'culture_quote_author' );
+            $author = ! empty( $terms ) ? $terms[0]->name : '';
+            return array(
+                'id'     => $p->ID,
+                'text'   => $p->post_content ?: $p->post_title,
+                'author' => $author,
+                'source' => get_post_meta( $p->ID, '_quote_source', true ) ?: '',
+            );
+        }, $posts );
+
+        return rest_ensure_response( array(
+            'quotes' => $quotes,
+            'total'  => count( $quotes ),
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/quotes/audit-update
+     * Writes audit verdict meta to a culture_quote post.
+     * Optionally moves suspicious/fabricated quotes to draft (quarantine).
+     */
+    public static function handle_update_audit_status( $request ) {
+        $post_id    = (int) $request->get_param( 'post_id' );
+        $status     = $request->get_param( 'audit_status' );
+        $note       = $request->get_param( 'audit_note' ) ?: '';
+        $quarantine = (bool) $request->get_param( 'quarantine' );
+
+        $allowed = array( 'verified', 'suspicious', 'likely-fabricated', 'unverifiable' );
+        if ( ! in_array( $status, $allowed, true ) ) {
+            return new WP_Error(
+                'invalid_status',
+                'audit_status must be one of: ' . implode( ', ', $allowed ),
+                array( 'status' => 400 )
+            );
+        }
+
+        $post = get_post( $post_id );
+        if ( ! $post || 'culture_quote' !== $post->post_type ) {
+            return new WP_Error( 'not_found', 'Quote not found.', array( 'status' => 404 ) );
+        }
+
+        update_post_meta( $post_id, '_quote_audit_status', $status );
+        update_post_meta( $post_id, '_quote_audit_note',   $note );
+        update_post_meta( $post_id, '_quote_audit_date',   gmdate( 'Y-m-d H:i:s' ) );
+
+        $quarantined = false;
+        if ( $quarantine && in_array( $status, array( 'likely-fabricated', 'suspicious' ), true ) ) {
+            wp_update_post( array( 'ID' => $post_id, 'post_status' => 'draft' ) );
+            $quarantined = true;
+        }
+
+        return rest_ensure_response( array(
+            'success'     => true,
+            'post_id'     => $post_id,
+            'status'      => $status,
+            'quarantined' => $quarantined,
         ) );
     }
 

@@ -602,6 +602,189 @@ Example format:
   throw new Error(`Failed to generate seed quotes: ${lastError?.message || "Unknown error"}`);
 }
 
+/**
+ * Extract verified quotes from Serper search results.
+ *
+ * Gemini is an EXTRACTOR here, not a generator. It may only return quotes
+ * whose exact text appears verbatim in the supplied search snippets.
+ * It must not recall quotes from training data, paraphrase, or invent.
+ *
+ * @param results  Raw Serper organic results for this author.
+ * @param author   Name of the person whose quotes we are extracting.
+ * @param maxQuotes Maximum quotes to return (default 4).
+ */
+export async function searchAndExtractQuotes(
+  results: Array<{ title: string; link: string; snippet: string }>,
+  author: string,
+  maxQuotes: number = 4
+): Promise<Array<{ text: string; author: string; source: string; source_url: string }>> {
+  if (!results.length) return [];
+
+  const resultsJson = JSON.stringify(
+    results.map((r, i) => ({ id: i, title: r.title, url: r.link, snippet: r.snippet }))
+  );
+
+  const prompt = `You are a quote verification assistant for The Moveee — an African and diaspora culture platform.
+
+You have been given ${results.length} web search results that may contain real quotes by ${author}.
+
+STRICT RULES — follow exactly:
+1. Extract ONLY quotes whose EXACT text appears verbatim in one of the snippets below.
+2. DO NOT use your training data to recall or reconstruct quotes. If you know a quote but cannot see it in the snippets, skip it.
+3. DO NOT complete partial quotes. If a snippet shows the start of a quote but cuts off, skip it.
+4. DO NOT paraphrase. The "text" field must be the exact wording from the snippet.
+5. Prefer results from wikiquote.org, goodreads.com, published books, or recorded speeches.
+6. Minimum quote length: 10 words. Skip sentence fragments.
+7. It is better to return 1 verified quote than 4 uncertain ones. Return [] if nothing is verifiable.
+
+Return a JSON array. Each object must have exactly these fields:
+{
+  "text": "Exact verbatim quote as found in the snippet",
+  "author": "${author}",
+  "source": "Book title, speech name, film, or interview — from the snippet or URL. Empty string if unknown.",
+  "source_url": "URL of the search result where the quote was found"
+}
+
+Return ONLY the JSON array, no commentary. If nothing is verifiable, return [].
+
+Search results:
+${resultsJson}`;
+
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          safetySettings: SAFETY_SETTINGS,
+        },
+      });
+
+      const raw = (response.text ?? "").trim();
+      if (!raw) continue;
+
+      const jsonStr = extractJson(raw);
+      const quotes: unknown = JSON.parse(jsonStr);
+      if (!Array.isArray(quotes)) continue;
+
+      return (quotes as any[])
+        .filter((q) => q.text && String(q.text).trim().split(/\s+/).length >= 10)
+        .map((q) => ({
+          text:       String(q.text).trim(),
+          author:     String(q.author  || author),
+          source:     String(q.source  || ""),
+          source_url: String(q.source_url || ""),
+        }))
+        .slice(0, maxQuotes);
+    } catch (err: any) {
+      console.warn(`[searchAndExtractQuotes] Model ${modelId} failed:`, err?.message);
+      lastError = err;
+      continue;
+    }
+  }
+
+  console.error("[searchAndExtractQuotes] All models failed:", lastError?.message);
+  return [];
+}
+
+// ── Quote authenticity verification ──────────────────────────────────────────
+
+export type AuditVerdict = "verified" | "suspicious" | "likely-fabricated" | "unverifiable";
+
+export interface AuditResult {
+  verdict: AuditVerdict;
+  reason: string;
+}
+
+/**
+ * Ask Gemini to assess whether an existing database quote is authentic.
+ *
+ * Gemini acts as a FACT-CHECKER, not a generator. It must base its verdict
+ * ONLY on what appears in the supplied search results. If no results mention
+ * the quote, "unverifiable" is the correct answer — NOT "likely-fabricated".
+ *
+ * Verdicts:
+ *   verified          — exact (or near-verbatim) text found in a reliable source
+ *   suspicious        — found but wording differs, source is dubious, or attribution conflicts
+ *   likely-fabricated — strong evidence the quote is misattributed or invented
+ *   unverifiable      — no search results confirm or deny (neutral — not a condemnation)
+ */
+export async function verifyExistingQuote(
+  quoteText: string,
+  author: string,
+  source: string,
+  searchResults: Array<{ title: string; link: string; snippet: string }>
+): Promise<AuditResult> {
+  const resultsJson = searchResults.length
+    ? JSON.stringify(
+        searchResults.map((r, i) => ({ id: i, title: r.title, url: r.link, snippet: r.snippet }))
+      )
+    : "[]";
+
+  const prompt = `You are a quote fact-checker for The Moveee — an African and diaspora culture platform. Your job is to assess whether a quote in our database is authentic.
+
+Quote to verify:
+  Text:   "${quoteText}"
+  Author: "${author}"
+  Source: "${source || "(unknown)"}"
+
+You have been given ${searchResults.length} web search results that may help you judge authenticity.
+
+VERDICT RULES — choose exactly one:
+• "verified"          — The exact (or very close to verbatim) text is found attributed to this author in at least one of the snippets, AND the source is credible (Wikiquote, published book, recorded speech, reputable journalism).
+• "suspicious"        — The quote appears in results BUT the wording differs noticeably, attribution conflicts with another person, or the only sources are low-quality sites.
+• "likely-fabricated" — A snippet explicitly says the quote is misattributed, debunked, or not from this person. OR the quote appears attributed to a completely different person in the results.
+• "unverifiable"      — The search results contain no useful signal either way. This is NOT a negative verdict; it simply means more research is needed.
+
+IMPORTANT: Do NOT use your training data memory to recall or verify quotes. Base your verdict ONLY on what is visible in the snippets below. If the snippets are empty or irrelevant, verdict must be "unverifiable".
+
+Return ONLY valid JSON — no commentary:
+{
+  "verdict": "verified" | "suspicious" | "likely-fabricated" | "unverifiable",
+  "reason": "One or two sentences explaining the verdict, citing specific snippets where possible."
+}
+
+Search results:
+${resultsJson}`;
+
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          safetySettings: SAFETY_SETTINGS,
+        },
+      });
+
+      const raw = (response.text ?? "").trim();
+      if (!raw) continue;
+
+      const jsonStr = extractJson(raw);
+      const parsed: any = JSON.parse(jsonStr);
+
+      const validVerdicts: AuditVerdict[] = ["verified", "suspicious", "likely-fabricated", "unverifiable"];
+      const verdict: AuditVerdict = validVerdicts.includes(parsed.verdict) ? parsed.verdict : "unverifiable";
+      const reason: string = String(parsed.reason ?? "No reason provided.").slice(0, 400);
+
+      return { verdict, reason };
+    } catch (err: any) {
+      console.warn(`[verifyExistingQuote] Model ${modelId} failed:`, err?.message);
+      lastError = err;
+      continue;
+    }
+  }
+
+  console.error("[verifyExistingQuote] All models failed:", lastError?.message);
+  return { verdict: "unverifiable", reason: "Verification service unavailable." };
+}
+
 // ── Events discovery ─────────────────────────────────────────────────────────
 
 export interface SerperResult {
