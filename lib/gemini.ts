@@ -237,69 +237,85 @@ function classifyTemplateType(
   return "scene";
 }
 
-/**
- * Build a context-aware Imagen 3 prompt based on the entry type.
- * Randomizes compositions and backgrounds to ensure a diverse directory.
- */
-function buildImagePrompt(
+const IMAGE_PROMPT_BRIEF_INSTRUCTION = `You are a visual art director briefing an illustrator for a premium editorial magazine called Moveee, which celebrates African and Black diasporan culture.
+
+Given a directory entry, write a single illustration brief (2–4 sentences) describing WHAT TO DRAW. Be highly specific to this exact subject — extract concrete visual elements from the content: specific objects, garments, architecture, instruments, landscapes, gestures, cultural symbols, time period, geography. No generic descriptions.
+
+The illustration must always use: flat geometric shapes, dry-brush paper grain, coarse stippling, ink bleeds, sharp geometric shadow blocks, matte finish, generous negative space. Palette locked to: deep ink (#14110d), burnt ochre (#c5491f), dark ochre (#8a2d10), gold brass (#b38238), moss green (#3d4a2a), cream paper (#f3ece0), indigo (#1e2b42). No photorealism, no gradients, no white.
+
+For PORTRAIT entries: describe the figure's specific pose, their distinctive clothing or signature look, a meaningful object they're associated with, and a background that references their world (not generic).
+For OBJECT entries: describe the object's specific form, texture, cultural markings or details, and a setting or arrangement that places it in cultural context.
+For SCENE entries: describe the specific environment, what human figures (if any) are doing, what architectural or natural features dominate, and what geometric shapes carry the composition.
+
+Return ONLY the brief — no labels, no preamble.`;
+
+async function buildImagePromptWithAI(
   title: string,
   entryType: string,
   excerpt: string
-): string {
+): Promise<string> {
+  const template = classifyTemplateType(entryType);
+  const userMessage =
+    `Entry: "${title}" (type: ${entryType})\n` +
+    `Description: ${excerpt.slice(0, 400)}\n` +
+    `Template: ${template}`;
+
+  for (const model of TEXT_MODELS) {
+    try {
+      const res = await ai.models.generateContent({
+        model,
+        contents: userMessage,
+        config: {
+          systemInstruction: IMAGE_PROMPT_BRIEF_INSTRUCTION,
+          safetySettings: SAFETY_SETTINGS,
+          temperature: 0.9,
+          maxOutputTokens: 200,
+        },
+      });
+      const brief = (res.text ?? "").trim();
+      if (brief.length > 30) {
+        return (
+          brief + " " +
+          "Strictly restricted palette: deep ink (#14110d), burnt ochre (#c5491f), dark ochre (#8a2d10), " +
+          "gold brass (#b38238), moss green (#3d4a2a), cream paper (#f3ece0), indigo (#1e2b42) — no saturated blues/purples, no white. " +
+          "Premium editorial magazine illustration. Flat geometric shapes with dry-brush paper grain, coarse stippling, ink bleeds. " +
+          "Shading via sharp geometric shadow blocks, no soft gradients. No photorealism, no 3D rendering, matte finish, generous negative space."
+        );
+      }
+    } catch {
+      // try next model
+    }
+  }
+
+  // Fallback: template-based prompt if AI generation fails
+  return buildImagePromptFallback(title, entryType, excerpt);
+}
+
+function buildImagePromptFallback(title: string, entryType: string, excerpt: string): string {
   const context = excerpt.slice(0, 180);
   const template = classifyTemplateType(entryType);
 
-  // Background varieties for randomization
-  const bgVarieties = [
-    "minimalist textured paper background",
-    "abstract architectural geometry in ochre and ink",
-    "moody indigo-black void with a geometric spotlight",
-    "split-background using dynamic diagonal color blocks",
-    "background featuring stylized silhouettes of cityscapes or palms",
-  ];
-  const bg = bgVarieties[Math.floor(Math.random() * bgVarieties.length)];
-
-  // Composition varieties
-  const portraitComps = ["heroic low-angle shot", "side-profile silhouette", "minimalist centered portrait"];
-  const objectComps = ["dynamic bird's-eye view", "dramatic side-lighting", "heroic 3/4 view"];
-
   if (template === "portrait") {
-    const comp = portraitComps[Math.floor(Math.random() * portraitComps.length)];
     return (
       `Flat geometric editorial portrait of ${title} (${entryType}). ` +
-      `${comp} against a ${bg}. ` +
-      `Face as a simplified architectural form with sharp shadow shapes. ` +
-      `Minimal facial features (2-3 iconic lines for eyes and mouth). ` +
-      `Stylized hair as a single dark shape with coarse texture. ` +
-      `Geometric clothing as flat color masses. ` +
-      `Context: ${context}. ` +
-      STYLE_MODIFIERS
+      `Heroic low-angle silhouette with sharp shadow shapes for facial features. ` +
+      `Stylized hair as a single dark shape with coarse texture. Geometric clothing as flat color masses. ` +
+      `Context: ${context}. ` + STYLE_MODIFIERS
     );
   }
-
   if (template === "object") {
-    const comp = objectComps[Math.floor(Math.random() * objectComps.length)];
     return (
       `Flat graphic editorial illustration of ${title} (${entryType}). ` +
-      `${comp} shown against a ${bg}. ` +
-      `The subject is rendered as a clean geometric icon. ` +
-      `Use sharp, high-contrast shadow shapes to suggest volume. ` +
-      `Stylized textures (crosshatching or dots) for surface details. ` +
-      `Context: ${context}. ` +
-      STYLE_MODIFIERS
+      `The subject rendered as a clean geometric icon with stylized crosshatch textures. ` +
+      `Sharp high-contrast shadow shapes suggest volume. ` +
+      `Context: ${context}. ` + STYLE_MODIFIERS
     );
   }
-
-  // Default: scene (place, movement, genre, etc.)
   return (
     `Abstract geometric scene illustration representing ${title} (${entryType}). ` +
-    `Wide editorial composition against a ${bg}. ` +
-    `Human figures as minimal silhouettes in the middle ground. ` +
-    `Environment suggested through large blocks of color and sharp geometric shapes (circles, triangles, lines). ` +
-    `Dramatic lighting through sharp diagonal shadow-planes. ` +
-    `Fine stippling and ink-bleed effects for depth. ` +
-    `Context: ${context}. ` +
-    STYLE_MODIFIERS
+    `Wide editorial composition. Human figures as minimal silhouettes. ` +
+    `Environment suggested through large color blocks and sharp geometric shapes. ` +
+    `Context: ${context}. ` + STYLE_MODIFIERS
   );
 }
 
@@ -321,7 +337,7 @@ export async function generateDirectoryImage(
   entryType: string,
   excerpt: string
 ): Promise<ImageResult> {
-  const prompt = buildImagePrompt(title, entryType, excerpt);
+  const prompt = await buildImagePromptWithAI(title, entryType, excerpt);
   const meta = buildImageMetadata(entryType);
   const imageErrors: string[] = [];
 

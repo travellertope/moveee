@@ -21,20 +21,20 @@ const SAFETY_SETTINGS = [
 
 const SYSTEM_PROMPT = `You are the editorial AI for Moveee Pulse — a live cultural intelligence platform for African and Black diasporan culture.
 
-Use Google Search to find real, current news stories and cultural moments from the past 30 days.
+IMPORTANT: You MUST use Google Search to find stories. Only report stories you actually found via search results. Do NOT invent, fabricate, or hallucinate any stories, people, events, or URLs.
 
 Return ONLY a raw JSON array — no markdown, no backticks, no explanation.
 
 Each object must have:
-- "title": sharp editorial headline, max 12 words, sentence case, must name a real person/place/event/brand
+- "title": sharp editorial headline, max 12 words, sentence case, must name a real person/place/event/brand you found via search
 - "summary": exactly 2 sentences in Moveee editorial voice — smart, warm, specific. Max 50 words. Name the actual artist, designer, event, or place.
 - "body": 4–5 substantial paragraphs for the full story page. Each paragraph is 3–5 sentences. Total 400–600 words. Use \\n\\n to separate paragraphs. Structure: (1) overview of the story, (2) cultural/historical context, (3) significance for the African and diaspora community, (4) broader implications or reactions, (5) what's next or a closing perspective. Editorial voice — warm, specific, authoritative. Name real people, places, events. Avoid generic filler.
 - "arm": exactly one of: "lifestyle" | "origins" | "happenings" | "magazine"
 - "region": one of: "Africa" | "Caribbean" | "Diaspora UK" | "Diaspora US" | "Diaspora Europe" | "Global"
-- "source": real publication name (e.g. OkayAfrica, The Guardian, Billboard, Vogue Africa, BBC Africa, Afropunk, The FADER, Pitchfork)
-- "source_url": URL of the source article found via search, or empty string
+- "source": real publication name you found the story on (e.g. OkayAfrica, The Guardian, Billboard, Vogue Africa, BBC Africa, Afropunk, The FADER, Pitchfork)
+- "source_url": the EXACT URL of the real article you found via Google Search. CRITICAL: only include a URL if you are certain it exists — copy it directly from search results. If unsure, use empty string. NEVER guess or construct a URL.
 
-Spread stories across at least 3 different arms and 3 different regions. Use only real, verifiable stories found via Google Search. Be specific — generic descriptions are not acceptable. Aim for 8–12 stories per run.`;
+Spread stories across at least 3 different arms and 3 different regions. Only include stories you verified exist via Google Search. Be specific — generic descriptions are not acceptable. Aim for 8–12 stories per run.`;
 
 export interface PulseStoryRaw {
   title: string;
@@ -68,6 +68,34 @@ function isValidStory(s: any): s is PulseStoryRaw {
 }
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+async function validateSourceUrl(url: string): Promise<boolean> {
+  if (!url) return false;
+  try {
+    const res = await Promise.race([
+      fetch(url, { method: "HEAD", redirect: "follow" }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 5_000)),
+    ]);
+    return (res as Response).ok;
+  } catch {
+    return false;
+  }
+}
+
+async function filterFabricatedUrls(stories: PulseStoryRaw[]): Promise<PulseStoryRaw[]> {
+  const checks = await Promise.all(
+    stories.map(async (s) => {
+      if (!s.source_url) return s;
+      const valid = await validateSourceUrl(s.source_url);
+      if (!valid) {
+        console.warn(`[pulse-gemini] Dead URL removed: ${s.source_url}`);
+        return { ...s, source_url: "" };
+      }
+      return s;
+    })
+  );
+  return checks;
+}
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
@@ -130,8 +158,10 @@ async function tryModels(prompt: string, withSearch: boolean): Promise<PulseStor
       const stories = parsed.filter(isValidStory);
       if (stories.length === 0) continue;
 
-      console.log(`[pulse-gemini] ${modelId} (search=${withSearch}) returned ${stories.length} stories`);
-      return stories;
+      console.log(`[pulse-gemini] ${modelId} (search=${withSearch}) returned ${stories.length} stories — validating URLs...`);
+      const validated = await filterFabricatedUrls(stories);
+      console.log(`[pulse-gemini] ${validated.filter(s => s.source_url).length}/${validated.length} stories have verified URLs`);
+      return validated;
     } catch (err: any) {
       const isQuota = isQuotaError(err);
       console.warn(
@@ -154,17 +184,13 @@ export async function fetchGeminiPulseStories(
   const monthYear = new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" });
   const prompt = `${SYSTEM_PROMPT}\n\nTopic: "${topic} — ${monthYear}"`;
 
-  // Pass 1: try all models with Google Search grounding.
+  // All models tried with Google Search grounding only.
+  // We do NOT fall back to ungrounded mode — without search, Gemini hallucinates
+  // stories and fabricates URLs, which is worse than having no new stories.
   const withSearch = await tryModels(prompt, true);
   if (withSearch) return withSearch;
 
-  // Pass 2: grounding quota exhausted — fall back without search tool.
-  // Models will draw on training knowledge; stories may be less current but still valid.
-  console.warn("[pulse-gemini] All grounded models failed — retrying without search tool");
-  const withoutSearch = await tryModels(prompt, false);
-  if (withoutSearch) return withoutSearch;
-
   throw new Error(
-    "All Gemini models failed for Pulse refresh. Check your API key quota at https://ai.dev/rate-limit and ensure billing is enabled on your Google Cloud project."
+    "All Gemini models failed for Pulse refresh (grounded search only). Check your API key quota at https://aistudio.google.com/app/apikey and ensure billing is enabled."
   );
 }
