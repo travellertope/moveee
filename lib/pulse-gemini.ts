@@ -2,11 +2,14 @@ import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
 
-// Mirrors lib/gemini.ts TEXT_MODELS exactly.
+// Confirmed GA-stable models with Google Search grounding support (May 2026).
+// gemini-2.5-flash and gemini-2.5-flash-lite share the same RPM/TPM quota bucket.
+// gemini-2.5-pro is the high-quality fallback on the same Tier quota.
+// All three support { googleSearch: {} } grounding.
 const TEXT_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gemini-3-flash-preview",
+  "gemini-2.5-flash",      // Primary — 2,000 RPM (Tier 2), fastest
+  "gemini-2.5-flash-lite", // Fallback — same quota, lower cost/latency
+  "gemini-2.5-pro",        // Heavy fallback — 1,000 RPM (Tier 2), highest quality
 ];
 
 const SAFETY_SETTINGS = [
@@ -64,6 +67,8 @@ function isValidStory(s: any): s is PulseStoryRaw {
   );
 }
 
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
     promise,
@@ -73,10 +78,20 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   ]);
 }
 
-async function tryModels(prompt: string, withSearch: boolean): Promise<PulseStoryRaw[] | null> {
-  let lastError: any = null;
+function isQuotaError(err: any): boolean {
+  const msg = (err?.message ?? "").toLowerCase();
+  return (
+    msg.includes("429") ||
+    msg.includes("quota") ||
+    msg.includes("rate limit") ||
+    msg.includes("resource_exhausted") ||
+    err?.status === 429
+  );
+}
 
-  for (const modelId of TEXT_MODELS) {
+async function tryModels(prompt: string, withSearch: boolean): Promise<PulseStoryRaw[] | null> {
+  for (let i = 0; i < TEXT_MODELS.length; i++) {
+    const modelId = TEXT_MODELS[i];
     try {
       const config: any = {
         safetySettings: SAFETY_SETTINGS,
@@ -84,13 +99,16 @@ async function tryModels(prompt: string, withSearch: boolean): Promise<PulseStor
       };
       if (withSearch) config.tools = [{ googleSearch: {} }];
 
+      // Pro model needs more time for grounded research.
+      const timeoutMs = modelId.includes("pro") ? 45_000 : 30_000;
+
       const response = await withTimeout(
         ai.models.generateContent({
           model: modelId,
           contents: prompt,
           config,
         }),
-        20_000,
+        timeoutMs,
         modelId
       );
 
@@ -115,9 +133,15 @@ async function tryModels(prompt: string, withSearch: boolean): Promise<PulseStor
       console.log(`[pulse-gemini] ${modelId} (search=${withSearch}) returned ${stories.length} stories`);
       return stories;
     } catch (err: any) {
-      console.warn(`[pulse-gemini] ${modelId} (search=${withSearch}) failed:`, err?.message?.slice(0, 120));
-      lastError = err;
-      continue;
+      const isQuota = isQuotaError(err);
+      console.warn(
+        `[pulse-gemini] ${modelId} (search=${withSearch}) failed [${isQuota ? "QUOTA" : "ERROR"}]:`,
+        err?.message?.slice(0, 120)
+      );
+      // Wait before trying next model: longer pause for quota errors.
+      if (i < TEXT_MODELS.length - 1) {
+        await sleep(isQuota ? 6_000 : 2_000);
+      }
     }
   }
 

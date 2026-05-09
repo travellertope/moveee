@@ -35,7 +35,7 @@ const SAFETY = [
   { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
 ];
 
-const TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+const TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro"];
 
 const PROMPT = `You are the question writer for Culture Games — a trivia game on The Moveee, a platform celebrating African and diaspora culture globally.
 
