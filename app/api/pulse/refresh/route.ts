@@ -19,11 +19,16 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 function isAuthorized(req: NextRequest): boolean {
-  const configuredSecret = process.env.PULSE_REFRESH_SECRET ?? "";
-  if (!configuredSecret) return false;
+  const pulseSecret = process.env.PULSE_REFRESH_SECRET ?? "";
+  const cronSecret  = process.env.CRON_SECRET ?? "";
   const querySecret = req.nextUrl.searchParams.get("secret") ?? "";
-  const authHeader = req.headers.get("Authorization") ?? "";
-  return querySecret === configuredSecret || authHeader === `Bearer ${configuredSecret}`;
+  const authHeader  = req.headers.get("Authorization") ?? "";
+
+  // Accept PULSE_REFRESH_SECRET via query param or Bearer header.
+  if (pulseSecret && (querySecret === pulseSecret || authHeader === `Bearer ${pulseSecret}`)) return true;
+  // Accept CRON_SECRET via Bearer header (used by WordPress cron).
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true;
+  return false;
 }
 
 async function run(topic: string) {
