@@ -30,12 +30,13 @@ function createVertexClient(): GoogleGenAI | null {
 }
 
 // Model priority order for text generation.
-// gemini-2.0-flash and gemini-2.0-flash-lite have limit:0 on Pro-subscription
-// AI Studio keys — only 2.5-series and newer models have active quota.
+// GA-stable models with active quota on AI Studio keys (May 2026).
+// gemini-2.0-* and gemini-1.5-* are deprecated / quota:0 on paid keys.
+// gemini-3-* does not exist as a GA model — removed.
 const TEXT_MODELS = [
-  "gemini-2.5-flash",      // Primary — confirmed working
-  "gemini-2.5-flash-lite", // Lighter fallback
-  "gemini-3-flash-preview", // Newer fallback
+  "gemini-2.5-flash",      // Primary — 2,000 RPM (Tier 2), fastest
+  "gemini-2.5-flash-lite", // Fallback — same quota bucket, lower cost
+  "gemini-2.5-pro",        // Heavy fallback — 1,000 RPM (Tier 2), best quality
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
