@@ -25,7 +25,7 @@ Return ONLY a raw JSON array — no markdown, no backticks, no explanation.
 Each object must have:
 - "title": sharp editorial headline, max 12 words, sentence case, must name a real person/place/event/brand
 - "summary": exactly 2 sentences in Moveee editorial voice — smart, warm, specific. Max 50 words. Name the actual artist, designer, event, or place.
-- "body": 2–3 paragraphs for the story page. Each paragraph is 2–4 sentences. Total 120–200 words. Use \\n\\n to separate paragraphs. Editorial, not journalistic. Same warm, specific voice — go deeper on context, cultural significance, and what makes this moment matter.
+- "body": 4–5 substantial paragraphs for the full story page. Each paragraph is 3–5 sentences. Total 400–600 words. Use \\n\\n to separate paragraphs. Structure: (1) overview of the story, (2) cultural/historical context, (3) significance for the African and diaspora community, (4) broader implications or reactions, (5) what's next or a closing perspective. Editorial voice — warm, specific, authoritative. Name real people, places, events. Avoid generic filler.
 - "arm": exactly one of: "lifestyle" | "origins" | "happenings" | "magazine"
 - "region": one of: "Africa" | "Caribbean" | "Diaspora UK" | "Diaspora US" | "Diaspora Europe" | "Global"
 - "source": real publication name (e.g. OkayAfrica, The Guardian, Billboard, Vogue Africa, BBC Africa, Afropunk, The FADER, Pitchfork)

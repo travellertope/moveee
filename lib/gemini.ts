@@ -822,6 +822,53 @@ const INTEREST_SLUGS = [
  * Gemini filters for community relevance, extracts structured fields,
  * and returns up to maxEvents EventStub objects.
  */
+/**
+ * Use Gemini with Google Search grounding to research an event and return
+ * a richer 3–4 paragraph content block for the event's detail page.
+ * Falls back to the original excerpt if all models fail.
+ */
+export async function enrichEventContent(
+  title: string,
+  city: string,
+  eventDate: string,
+  originalExcerpt: string
+): Promise<string> {
+  const prompt = `You are the editorial writer for The Moveee — a cultural platform for the African and global diaspora. Use Google Search to research this event and write a rich editorial description for its detail page.
+
+Event: "${title}"
+City: ${city}
+Date: ${eventDate}
+
+Write 3–4 paragraphs (total ~250–350 words) covering:
+1. What the event is and who's involved (be specific — name artists, curators, speakers, or organisations)
+2. Cultural or historical context — why this event matters to the African/diaspora community
+3. What to expect: programme highlights, atmosphere, format
+4. Practical note: location/neighbourhood character, any ticketing detail found, and why this is worth attending
+
+Use an editorial voice — warm, knowledgeable, specific. No marketing clichés. Return ONLY the plain text (no JSON, no markdown, no headings). Separate paragraphs with a blank line.`;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+          safetySettings: SAFETY_SETTINGS,
+          temperature: 0.3,
+        } as any,
+      });
+
+      const text = (response.text ?? "").trim();
+      if (text && text.length > 100) return text;
+    } catch {
+      // try next model
+    }
+  }
+
+  return originalExcerpt;
+}
+
 export async function evaluateAndExtractEvents(
   results: SerperResult[],
   city: string,

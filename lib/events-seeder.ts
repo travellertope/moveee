@@ -3,7 +3,7 @@
  * (auto-seed) and the manual admin route (admin-seed).
  */
 
-import { evaluateAndExtractEvents, SerperResult } from "@/lib/gemini";
+import { evaluateAndExtractEvents, enrichEventContent, SerperResult } from "@/lib/gemini";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
@@ -145,9 +145,17 @@ export async function seedCities(
       seenThisRun.add(key);
 
       try {
-        const r = await submitEvent(stub);
-        if (r.success) { detail[city.name].submitted++; totalSubmitted++; }
-        else if (r.duplicate) detail[city.name].skipped++;
+        // Enrich content with deeper Gemini research before submitting.
+        const richContent = await enrichEventContent(
+          stub.title,
+          stub.city || city.name,
+          stub.event_date,
+          stub.excerpt || stub.content
+        );
+        const enrichedStub = { ...stub, content: richContent };
+        const r = await submitEvent(enrichedStub);
+        if (r.success)        { detail[city.name].submitted++; totalSubmitted++; }
+        else if (r.duplicate) { detail[city.name].skipped++; }
       } catch (err: any) {
         detail[city.name].errors.push(`"${stub.title}": ${err?.message}`);
       }

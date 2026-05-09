@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getPulseStoryBySlug, getAllPulseSlugs, getPulseComments } from "@/lib/pulse-wordpress";
+import { getPulseStoryBySlug, getAllPulseSlugs, getPulseComments, getPulseStories } from "@/lib/pulse-wordpress";
 import { decodeHtml } from "@/lib/decode-html";
 import PulseStory from "@/components/pulse/PulseStory";
 
@@ -119,12 +119,19 @@ export default async function PulseStoryPage({
   const story = await getPulseStoryBySlug(slug);
   if (!story) notFound();
 
-  const comments = await getPulseComments(story.id).catch(() => []);
+  const arm = story.meta?.pulse_arm_label ?? undefined;
+
+  const [comments, allRelated] = await Promise.all([
+    getPulseComments(story.id).catch(() => []),
+    getPulseStories({ arm, perPage: 8 }).catch(() => []),
+  ]);
+
+  const relatedStories = allRelated.filter((s) => s.id !== story.id).slice(0, 6);
 
   return (
     <>
       <StoryStructuredData story={story} />
-      <PulseStory story={story} initialComments={comments} />
+      <PulseStory story={story} initialComments={comments} relatedStories={relatedStories} />
     </>
   );
 }
