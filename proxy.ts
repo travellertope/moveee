@@ -76,6 +76,7 @@ const APP_ROUTES = new Set([
   'visuals',
   'makers',
   'pulse',
+  'games',
 ])
 
 // Alias redirects — old or alternative slugs that should map
