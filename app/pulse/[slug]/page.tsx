@@ -123,10 +123,10 @@ export default async function PulseStoryPage({
 
   const [comments, allRelated] = await Promise.all([
     getPulseComments(story.id).catch(() => []),
-    getPulseStories({ arm, perPage: 8 }).catch(() => []),
+    getPulseStories({ arm, perPage: 5 }).catch(() => []),
   ]);
 
-  const relatedStories = allRelated.filter((s) => s.id !== story.id).slice(0, 6);
+  const relatedStories = allRelated.filter((s) => s.id !== story.id).slice(0, 3);
 
   return (
     <>

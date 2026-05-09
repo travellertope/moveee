@@ -53,7 +53,7 @@ export default function PulseStory({ story, initialComments, relatedStories = []
   return (
     <div style={{ background: "var(--paper)", minHeight: "100vh", color: "var(--ink)" }}>
       {/* Back link */}
-      <div style={{ padding: "2rem 1.5rem 1rem", maxWidth: "1260px", margin: "0 auto" }}>
+      <div style={{ padding: "2rem 3.5rem 1.5rem", maxWidth: "1200px", margin: "0 auto" }}>
         <Link
           href="/pulse"
           style={{
@@ -340,20 +340,20 @@ export default function PulseStory({ story, initialComments, relatedStories = []
 
       <style>{`
         .pulse-story-layout {
-          max-width: 1260px;
+          max-width: 1200px;
           margin: 0 auto;
-          padding: 0 1.5rem 4rem;
+          padding: 0 3.5rem 5rem;
           display: flex;
-          gap: 3rem;
+          gap: 3.5rem;
           align-items: flex-start;
         }
         .pulse-story-main {
           flex: 1;
           min-width: 0;
-          max-width: 720px;
+          max-width: 680px;
         }
         .pulse-story-sidebar {
-          width: 280px;
+          width: 260px;
           flex-shrink: 0;
           position: sticky;
           top: 5rem;
@@ -372,9 +372,16 @@ export default function PulseStory({ story, initialComments, relatedStories = []
           border-color: #c4bdb3 !important;
           box-shadow: 0 2px 6px rgba(20, 17, 13, 0.06);
         }
+        @media (max-width: 1024px) {
+          .pulse-story-layout {
+            padding: 0 2rem 4rem;
+            gap: 2.5rem;
+          }
+        }
         @media (max-width: 900px) {
           .pulse-story-layout {
             flex-direction: column;
+            padding: 0 1.5rem 3rem;
           }
           .pulse-story-sidebar {
             width: 100%;

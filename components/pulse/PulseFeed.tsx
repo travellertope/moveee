@@ -49,22 +49,22 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
   const [activeRegion, setActiveRegion] = useState<string>("All");
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(initialStories.length >= 12);
+  const [hasMore, setHasMore] = useState(initialStories.length >= 18);
 
   const fetchStories = useCallback(
     async (arm: string, region: string, nextPage = 1, append = false) => {
       setLoading(true);
       try {
-        const wpBase = process.env.NEXT_PUBLIC_WP_URL ?? "";
-        let url = `${wpBase}/wp-json/wp/v2/pulse-stories?per_page=12&page=${nextPage}&orderby=date&order=desc&_embed=1`;
-        if (arm !== "All") url += `&pulse_arm=${encodeURIComponent(arm.toLowerCase())}`;
-        if (region !== "All") url += `&pulse_region=${encodeURIComponent(region)}`;
+        const params = new URLSearchParams({ page: String(nextPage), perPage: "12" });
+        if (arm !== "All")    params.set("arm",    arm.toLowerCase());
+        if (region !== "All") params.set("region", region);
 
-        const res = await fetch(url);
-        const data: WpPulseStory[] = res.ok ? await res.json() : [];
+        const res  = await fetch(`/api/pulse/stories?${params}`);
+        const json = res.ok ? await res.json() : { stories: [], hasMore: false };
 
-        setStories(append ? (prev) => [...prev, ...data] : data);
-        setHasMore(data.length >= 12);
+        const incoming: WpPulseStory[] = json.stories ?? [];
+        setStories(append ? (prev) => [...prev, ...incoming] : incoming);
+        setHasMore(json.hasMore ?? incoming.length >= 12);
         setPage(nextPage);
       } catch {
         // Keep existing stories on failure.
