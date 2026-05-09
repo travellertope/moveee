@@ -41,6 +41,14 @@ const Footer = () => {
           </ul>
         </div>
         <div>
+          <h5>Culture Games</h5>
+          <ul>
+            <li><Link href="/games">All Games</Link></li>
+            <li><Link href="/games/trivia">Culture Trivia</Link></li>
+            <li><Link href="/games/who-said-it">Who Said It?</Link></li>
+          </ul>
+        </div>
+        <div>
           <h5>Lifestyle & Shop</h5>
           <ul>
             <li><Link href="/shop">Vetted Makers</Link></li>
