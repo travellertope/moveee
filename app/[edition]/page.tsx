@@ -9,7 +9,7 @@ import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
 
 interface Props {
-  params: { edition: string };
+  params: Promise<{ edition: string }>;
 }
 
 const EDITION_META: Record<RegionalSlug, { title: string; description: string; locale: string }> = {
@@ -34,7 +34,7 @@ const EDITION_META: Record<RegionalSlug, { title: string; description: string; l
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { edition } = params;
+  const { edition } = await params;
   if (!isValidRegionalSlug(edition)) return {};
 
   const slug = edition as RegionalSlug;
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function EditionPage({ params }: Props) {
-  const { edition } = params;
+  const { edition } = await params;
 
   if (!isValidRegionalSlug(edition)) notFound();
 
