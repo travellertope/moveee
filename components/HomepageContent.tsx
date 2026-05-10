@@ -205,13 +205,13 @@ export default function HomepageContent({
           }) : <p className="hp-trinity-empty">New happenings soon.</p>}
         </div>
 
-        {/* ORIGINS */}
-        <div className="hp-trinity-col">
+        {/* ORIGINS + FEATURED QUOTE */}
+        <div className="hp-trinity-col hp-trinity-col--origins">
           <div className="hp-trinity-head">
             <h3 className="hp-trinity-heading">Origins</h3>
             <Link href="/journeys" className="hp-trinity-all">All Tours →</Link>
           </div>
-          {origins.length > 0 ? origins.slice(0, 5).map((origin: any) => (
+          {origins.slice(0, 2).map((origin: any) => (
             <Link key={origin.id} href={`/journeys/${origin.slug}`} className="hp-trinity-thumb-row">
               {origin.featuredImage && (
                 <div className="hp-trinity-thumb">
@@ -232,7 +232,23 @@ export default function HomepageContent({
                 )}
               </div>
             </Link>
-          )) : <p className="hp-trinity-empty">New itineraries coming soon.</p>}
+          ))}
+
+          {/* Featured Quote — stretches to fill remaining column height */}
+          {quotes.length > 0 && (
+            <div className="hp-trinity-fquote">
+              <div className="hp-trinity-fquote-label">Featured Quote</div>
+              <div className="hp-trinity-fquote-mark">&ldquo;</div>
+              <blockquote
+                className="hp-trinity-fquote-text"
+                dangerouslySetInnerHTML={{ __html: quotes[0].content || quotes[0].title }}
+              />
+              <div className="hp-trinity-fquote-author">
+                — {quotes[0].quoteAuthors?.nodes[0]?.name || quotes[0].quoteSource || "Anonymous"}
+              </div>
+              <Link href="/quotes" className="hp-trinity-fquote-link">All Quotes →</Link>
+            </div>
+          )}
         </div>
 
         {/* DIRECTORY */}
@@ -296,32 +312,6 @@ export default function HomepageContent({
         </div>
         <ShopCarousel products={products} />
       </section>
-
-      <AdBanner slot="leaderboard-pre-quotes" className="hp-ad-leaderboard" />
-
-      {/* ===== QUOTES ===== */}
-      {quotes.length > 0 && (
-        <section className="hp-section hp-section--dark" id="quotes">
-          <div className="hp-section-header">
-            <div className="hp-section-title">
-              <span className="hp-section-label">Words that move</span>
-              <h3>Quotes</h3>
-            </div>
-            <Link href="/quotes" className="hp-section-link">All Quotes →</Link>
-          </div>
-          <div className="hp-quotes-grid">
-            {quotes.map((quote: any) => (
-              <Link key={quote.id} href={`/quotes/${quote.slug}`} className="hp-quote-card">
-                <div className="hp-quote-mark">&ldquo;</div>
-                <blockquote className="hp-quote-text" dangerouslySetInnerHTML={{ __html: quote.content || quote.title }} />
-                <div className="hp-quote-author">
-                  — {quote.quoteAuthors?.nodes[0]?.name || quote.quoteSource || "Anonymous"}
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* ===== CONNECT (MEMBERSHIP) ===== */}
       <section className="connect" id="connect">
