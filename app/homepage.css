@@ -1480,105 +1480,83 @@
     z-index: 2;
   }
 
-  /* The column itself is the sticky element — more reliable than nesting sticky inside a grid cell */
+  /* Sticky column — sticks while right col scrolls */
   .hp-cover-col {
     position: sticky;
     top: 0;
-    height: 100vh;
-    overflow: hidden;
+    max-height: 100vh;
+    overflow-y: auto;
     border-right: 1px solid var(--rule);
-    align-self: start; /* don't stretch — lets right col set the section height */
+    align-self: start;
+    scrollbar-width: none;
   }
+  .hp-cover-col::-webkit-scrollbar { display: none; }
 
   .hp-cover-sticky {
-    height: 100%;
-    overflow: hidden;
+    /* natural flow — text stacks above image */
   }
 
+  /* Full-column clickable link, flex column */
   .hp-cover-link {
-    display: block;
-    height: 100%;
+    display: flex;
+    flex-direction: column;
     text-decoration: none;
     color: inherit;
-    position: relative;
   }
 
-  .hp-cover-image {
-    position: absolute;
-    inset: 0;
-    background: var(--ink);
-  }
-
-  .hp-cover-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(20,17,13,0.88) 40%, rgba(20,17,13,0.15) 100%);
-    z-index: 1;
-  }
-
+  /* ── Text block (top) ── */
   .hp-cover-text {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 48px 44px;
-    color: var(--paper);
-    z-index: 2;
+    padding: 32px 36px 24px;
+    background: var(--paper);
+    flex-shrink: 0;
   }
 
+  /* Category label — all caps, monospace */
   .hp-cover-kicker {
-    display: flex;
-    align-items: center;
-    gap: 10px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: var(--ochre);
-    margin-bottom: 14px;
+    color: var(--ink);
+    opacity: 0.45;
+    margin-bottom: 12px;
   }
 
-  .hp-cover-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--ochre);
-    flex-shrink: 0;
-    animation: pulse 2.4s ease-in-out infinite;
-  }
-
+  /* Large editorial title */
   .hp-cover-title {
     font-family: 'Fraunces', serif;
-    font-size: clamp(28px, 3vw, 52px);
+    font-size: clamp(26px, 2.6vw, 44px);
     font-weight: 400;
-    line-height: 1.02;
-    letter-spacing: -0.025em;
-    color: var(--paper);
+    line-height: 1.06;
+    letter-spacing: -0.022em;
+    color: var(--ink);
     margin-bottom: 14px;
-    font-variation-settings: "opsz" 144, "SOFT" 30;
+    font-variation-settings: "opsz" 144, "SOFT" 20;
   }
 
+  /* Excerpt body text */
   .hp-cover-excerpt {
-    font-size: 14px;
-    line-height: 1.55;
-    color: rgba(243,236,224,0.7);
-    max-width: 460px;
-    margin-bottom: 22px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ink);
+    opacity: 0.65;
+    margin-bottom: 18px;
   }
   .hp-cover-excerpt p { margin: 0; }
 
-  .hp-cover-cta {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--ochre);
-    border-bottom: 1px solid var(--ochre);
-    display: inline-block;
-    padding-bottom: 2px;
-    transition: opacity 0.2s;
+  /* ── Image block (below text) — 632 × 474 ratio ── */
+  .hp-cover-image {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 632 / 474;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--ink);
   }
-  .hp-cover-link:hover .hp-cover-cta { opacity: 0.7; }
+
+  /* Subtle zoom on hover (group-hover via Tailwind on the Image tag) */
+  .hp-cover-link:hover .hp-cover-image img { transform: scale(1.025); }
+  .hp-cover-image img { transition: transform 0.7s ease; }
 
   .hp-cover-placeholder {
     width: 100%;
@@ -2712,9 +2690,8 @@
       border-right: none;
       border-bottom: 2px solid var(--rule);
     }
-    .hp-cover-sticky { height: 70vw; max-height: 520px; overflow: hidden; }
-    /* push cover text down from header */
-    .hp-cover-text { padding-top: 80px; }
+    .hp-cover-sticky { /* natural height on mobile */ }
+    .hp-cover-text { padding: 28px 24px 20px; }
     .hp-nl-cta-inner { grid-template-columns: 1fr; }
     .hp-nl-cta-left { display: none; }
     .hp-nl-cta-right { padding: 48px 40px; }
@@ -2768,8 +2745,7 @@
     .hp-nl-cta-input { border-right: 1px solid var(--rule); height: 48px; }
     .hp-nl-cta-btn { width: 100%; }
     .hp-nl-cta-right { padding: 40px 22px; }
-    /* Cover text — keep padding-top but adjust bottom */
-    .hp-cover-text { padding: 80px 24px 28px; }
+    .hp-cover-text { padding: 24px 20px 18px; }
     .hp-cover-title { font-size: 26px; }
     .hb-footer-cols { grid-template-columns: 1fr 1fr; gap: 24px; }
     .hb-footer-legal { flex-wrap: wrap; gap: 6px; }

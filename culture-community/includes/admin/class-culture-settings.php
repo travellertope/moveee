@@ -94,6 +94,15 @@ class Culture_Settings {
         'culture_twitter_access_token'        => '',
         'culture_twitter_access_token_secret' => '',
         'culture_twitter_interval'            => 'thirtyminutes',
+
+        // Advertising — Google Ads / AdSense.
+        'culture_ads_enabled'                    => '0',
+        'culture_ads_publisher_id'               => '',
+        'culture_ads_custom_script'              => '',
+        'culture_ads_slot_leaderboard_top'       => '',
+        'culture_ads_slot_leaderboard_mid'       => '',
+        'culture_ads_slot_leaderboard_pre_quotes'=> '',
+        'culture_ads_slot_hero_sidebar'          => '',
     );
 
     /**
@@ -243,6 +252,15 @@ class Culture_Settings {
         register_setting( 'culture_settings_automation', 'culture_twitter_access_token',        $text );
         register_setting( 'culture_settings_automation', 'culture_twitter_access_token_secret', $text );
         register_setting( 'culture_settings_automation', 'culture_twitter_interval',            $text );
+
+        // Advertising.
+        register_setting( 'culture_settings_advertising', 'culture_ads_enabled',                     $bool );
+        register_setting( 'culture_settings_advertising', 'culture_ads_publisher_id',                $text );
+        register_setting( 'culture_settings_advertising', 'culture_ads_custom_script',               array( 'sanitize_callback' => 'wp_kses_post' ) );
+        register_setting( 'culture_settings_advertising', 'culture_ads_slot_leaderboard_top',        $text );
+        register_setting( 'culture_settings_advertising', 'culture_ads_slot_leaderboard_mid',        $text );
+        register_setting( 'culture_settings_advertising', 'culture_ads_slot_leaderboard_pre_quotes', $text );
+        register_setting( 'culture_settings_advertising', 'culture_ads_slot_hero_sidebar',           $text );
     }
 
     /**
@@ -258,6 +276,7 @@ class Culture_Settings {
             'membership'   => __( 'Membership', 'culture-community' ),
             'general'      => __( 'General', 'culture-community' ),
             'automation'   => __( 'Automation', 'culture-community' ),
+            'advertising'  => __( 'Advertising', 'culture-community' ),
         );
         ?>
         <div class="wrap">
@@ -294,6 +313,9 @@ class Culture_Settings {
                         break;
                     case 'automation':
                         self::render_automation_tab();
+                        break;
+                    case 'advertising':
+                        self::render_advertising_tab();
                         break;
                     default:
                         self::render_payment_tab();
@@ -783,6 +805,93 @@ class Culture_Settings {
                     <p class="description">
                         <?php esc_html_e( 'Get these from developer.twitter.com → Your App → Keys and Tokens. Generate an Access Token for your @Moveee account under "Authentication Tokens".', 'culture-community' ); ?>
                     </p>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    private static function render_advertising_tab() {
+        ?>
+        <h2><?php esc_html_e( 'Google Ads / AdSense', 'culture-community' ); ?></h2>
+        <p class="description">
+            <?php esc_html_e( 'Configure Google AdSense or Ad Manager. Set your Publisher ID and individual slot IDs for each placement. Leave a slot empty to hide that placement entirely — no blank space will appear on the frontend.', 'culture-community' ); ?>
+        </p>
+
+        <table class="form-table">
+            <tr>
+                <th scope="row"><?php esc_html_e( 'Enable Ads', 'culture-community' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="culture_ads_enabled" value="1"
+                               <?php checked( '1', self::get( 'culture_ads_enabled' ) ); ?> />
+                        <?php esc_html_e( 'Show ads on the frontend', 'culture-community' ); ?>
+                    </label>
+                    <p class="description"><?php esc_html_e( 'Master switch. Uncheck to pause all ads instantly without losing your slot IDs.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_ads_publisher_id"><?php esc_html_e( 'Publisher ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_ads_publisher_id" name="culture_ads_publisher_id"
+                           value="<?php echo esc_attr( self::get( 'culture_ads_publisher_id' ) ); ?>"
+                           class="regular-text" placeholder="ca-pub-0000000000000000" />
+                    <p class="description"><?php esc_html_e( 'Your AdSense Publisher ID — found in your AdSense account under Account → Account information.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Ad Slot IDs', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Paste the data-ad-slot value for each placement. Find these in your AdSense account under Ads → By ad unit.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_ads_slot_leaderboard_top"><?php esc_html_e( 'Leaderboard — Top', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_ads_slot_leaderboard_top" name="culture_ads_slot_leaderboard_top"
+                           value="<?php echo esc_attr( self::get( 'culture_ads_slot_leaderboard_top' ) ); ?>"
+                           class="regular-text" placeholder="1234567890" />
+                    <p class="description"><?php esc_html_e( 'Appears between the hero section and the magazine strip.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_ads_slot_leaderboard_mid"><?php esc_html_e( 'Leaderboard — Mid', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_ads_slot_leaderboard_mid" name="culture_ads_slot_leaderboard_mid"
+                           value="<?php echo esc_attr( self::get( 'culture_ads_slot_leaderboard_mid' ) ); ?>"
+                           class="regular-text" placeholder="1234567890" />
+                    <p class="description"><?php esc_html_e( 'Appears between the magazine strip and happenings.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_ads_slot_leaderboard_pre_quotes"><?php esc_html_e( 'Leaderboard — Pre Quotes', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_ads_slot_leaderboard_pre_quotes" name="culture_ads_slot_leaderboard_pre_quotes"
+                           value="<?php echo esc_attr( self::get( 'culture_ads_slot_leaderboard_pre_quotes' ) ); ?>"
+                           class="regular-text" placeholder="1234567890" />
+                    <p class="description"><?php esc_html_e( 'Appears above the Quotes section.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_ads_slot_hero_sidebar"><?php esc_html_e( 'Hero Sidebar', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_ads_slot_hero_sidebar" name="culture_ads_slot_hero_sidebar"
+                           value="<?php echo esc_attr( self::get( 'culture_ads_slot_hero_sidebar' ) ); ?>"
+                           class="regular-text" placeholder="1234567890" />
+                    <p class="description"><?php esc_html_e( 'Appears in the right column of the hero section, between stories and the Pulse widget.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Custom Script', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Optional — paste a raw JavaScript snippet here (e.g. Google Tag Manager, Ad Manager tag, or any other ad network initialisation code). Do not include &lt;script&gt; tags. Leave blank if using standard AdSense above.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_ads_custom_script"><?php esc_html_e( 'Custom Ad Script', 'culture-community' ); ?></label></th>
+                <td>
+                    <textarea id="culture_ads_custom_script" name="culture_ads_custom_script"
+                              rows="8" class="large-text code"
+                              placeholder="// e.g. GTM or Ad Manager initialisation JS"><?php echo esc_textarea( self::get( 'culture_ads_custom_script' ) ); ?></textarea>
+                    <p class="description"><?php esc_html_e( 'Injected as an inline &lt;script&gt; tag on every page after interactive (afterInteractive strategy). Only active when "Enable Ads" is checked.', 'culture-community' ); ?></p>
                 </td>
             </tr>
         </table>

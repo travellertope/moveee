@@ -534,6 +534,37 @@ class Culture_Post_Types {
             },
         ) );
 
+        // 10. Ad Settings
+        register_graphql_object_type( 'CultureAdSettings', array(
+            'description' => __( 'Google Ads / AdSense configuration managed from WP Admin → Advertising', 'culture-community' ),
+            'fields'      => array(
+                'adsEnabled'               => array( 'type' => 'Boolean' ),
+                'publisherId'              => array( 'type' => 'String' ),
+                'customScript'             => array( 'type' => 'String' ),
+                'slotLeaderboardTop'       => array( 'type' => 'String' ),
+                'slotLeaderboardMid'       => array( 'type' => 'String' ),
+                'slotLeaderboardPreQuotes' => array( 'type' => 'String' ),
+                'slotHeroSidebar'          => array( 'type' => 'String' ),
+            ),
+        ) );
+
+        register_graphql_field( 'RootQuery', 'adSettings', array(
+            'type'        => 'CultureAdSettings',
+            'description' => __( 'Google Ads / AdSense slot configuration', 'culture-community' ),
+            'resolve'     => function() {
+                if ( ! class_exists( 'Culture_Settings' ) ) return null;
+                return array(
+                    'adsEnabled'               => (bool) Culture_Settings::get( 'culture_ads_enabled' ),
+                    'publisherId'              => Culture_Settings::get( 'culture_ads_publisher_id' )                ?: null,
+                    'customScript'             => Culture_Settings::get( 'culture_ads_custom_script' )              ?: null,
+                    'slotLeaderboardTop'       => Culture_Settings::get( 'culture_ads_slot_leaderboard_top' )        ?: null,
+                    'slotLeaderboardMid'       => Culture_Settings::get( 'culture_ads_slot_leaderboard_mid' )        ?: null,
+                    'slotLeaderboardPreQuotes' => Culture_Settings::get( 'culture_ads_slot_leaderboard_pre_quotes' ) ?: null,
+                    'slotHeroSidebar'          => Culture_Settings::get( 'culture_ads_slot_hero_sidebar' )           ?: null,
+                );
+            },
+        ) );
+
         error_log( 'Culture Community: GraphQL fields registration completed.' );
     }
 
