@@ -11,7 +11,13 @@ export const metadata = {
     "A living wiki of African and diaspora culture — people, places, movements, genres, and more.",
 };
 
-export default async function DirectoryPage() {
+export default async function DirectoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>;
+}) {
+  const { type: initialType } = await searchParams;
+
   const [entriesData, typesData] = await Promise.allSettled([
     getWPData(GET_DIRECTORY_ENTRIES, { first: 200 }),
     getWPData(GET_DIRECTORY_TYPES, {}),
@@ -53,7 +59,7 @@ export default async function DirectoryPage() {
             </p>
           </div>
         ) : (
-          <DirectoryGrid entries={entries} types={types} />
+          <DirectoryGrid entries={entries} types={types} initialType={initialType ?? null} />
         )}
 
         <div className="dir-submit-cta">
