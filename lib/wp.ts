@@ -1152,5 +1152,14 @@ export const GET_SITE_SETTINGS = `
       monthlyUsd
       yearlyUsd
     }
+    adSettings {
+      adsEnabled
+      publisherId
+      customScript
+      slotLeaderboardTop
+      slotLeaderboardMid
+      slotLeaderboardPreQuotes
+      slotHeroSidebar
+    }
   }
 `;
