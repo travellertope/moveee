@@ -83,42 +83,8 @@ const AdBanner: React.FC<AdBannerProps> = ({
     );
   }
 
-  /* Placeholder shown when ads are not yet live */
-  if (ADS_LIVE) return null; /* suppress blanks in production when slot id missing */
-
-  return (
-    <div
-      className={className}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "inherit",
-      }}
-    >
-      <div
-        style={{
-          border: "1px dashed rgba(42,36,28,0.2)",
-          padding: "12px 24px",
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: "9px",
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-          color: "rgba(42,36,28,0.3)",
-          textAlign: "center",
-          width: "100%",
-          maxWidth: 728,
-        }}
-      >
-        Ad · {slot}
-        {!adSlotId && (
-          <span style={{ display: "block", marginTop: 4, opacity: 0.6 }}>
-            Configure slot ID in WP Settings → Ad Slots
-          </span>
-        )}
-      </div>
-    </div>
-  );
+  /* No live ad and no slot ID — render nothing so the wrapper collapses */
+  return null;
 };
 
 export default AdBanner;
