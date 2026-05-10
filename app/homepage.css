@@ -2057,6 +2057,73 @@
     padding: 20px 0;
   }
 
+  /* Origins column: flex column so quote fills remaining space */
+  .hp-trinity-col--origins {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Featured Quote — stretches to fill remaining Origins column height */
+  .hp-trinity-fquote {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--ink);
+    padding: 24px 22px 22px;
+    margin-top: 20px;
+    min-height: 160px;
+  }
+
+  .hp-trinity-fquote-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin-bottom: 14px;
+  }
+
+  .hp-trinity-fquote-mark {
+    font-family: 'Fraunces', serif;
+    font-size: 40px;
+    line-height: 1;
+    color: var(--ochre);
+    margin-bottom: 6px;
+  }
+
+  .hp-trinity-fquote-text {
+    flex: 1;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--paper);
+    margin: 0 0 14px;
+  }
+  .hp-trinity-fquote-text p { margin: 0; }
+
+  .hp-trinity-fquote-author {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: rgba(243,236,224,0.5);
+    margin-bottom: 16px;
+  }
+
+  .hp-trinity-fquote-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(197,73,31,0.4);
+    padding-bottom: 2px;
+    align-self: flex-start;
+    transition: opacity 0.2s;
+  }
+  .hp-trinity-fquote-link:hover { opacity: 0.65; }
+
   /* ===== HAPPENINGS — 2-col grid ===== */
   .hp-events-monocle {
     max-width: 1440px;
