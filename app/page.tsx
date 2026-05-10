@@ -416,7 +416,10 @@ export default async function Home() {
             <span className="hp-section-label">The Africa-wide cultural atlas</span>
             <h3>Directory</h3>
           </div>
-          <Link href="/directory" className="hp-section-link">Browse All →</Link>
+          <div className="hp-section-links">
+            <Link href="/directory/submit" className="hp-section-link">Submit an Entry →</Link>
+            <Link href="/directory" className="hp-section-link">Browse All →</Link>
+          </div>
         </div>
 
         {directoryEntries.length > 0 ? (
@@ -449,16 +452,6 @@ export default async function Home() {
           </div>
         ) : null}
 
-        <div className="hp-directory-cta" style={{ marginTop: directoryEntries.length > 0 ? "40px" : "0" }}>
-          <p>
-            Discover makers, galleries, restaurants, studios and culture spaces across Africa and
-            the diaspora — submitted and curated by the Moveee community.
-          </p>
-          <div className="hp-directory-links">
-            <Link href="/directory" className="btn-primary">Browse Directory <span className="arrow">→</span></Link>
-            <Link href="/directory/submit" className="btn-ghost">Submit an Entry</Link>
-          </div>
-        </div>
       </section>
 
       {/* ===== CONNECT (MEMBERSHIP) ===== */}

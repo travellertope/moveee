@@ -1841,6 +1841,12 @@
   .hp-section--dark .hp-section-link { color: var(--paper); border-bottom-color: rgba(243,236,224,0.4); }
   .hp-section--dark .hp-section-link:hover { color: var(--ochre); border-color: var(--ochre); }
 
+  .hp-section-links {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+  }
+
   /* ===== MAGAZINE STRIP ===== */
   .hp-mag-strip {
     max-width: 1440px;
