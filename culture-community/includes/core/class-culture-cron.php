@@ -42,6 +42,11 @@ class Culture_Cron {
         add_action( self::HOOK_SEED_EVENTS,    array( __CLASS__, 'seed_events' ) );
         add_action( self::HOOK_SEED_QUOTES,    array( __CLASS__, 'seed_quotes' ) );
         add_action( self::HOOK_TWEET_PULSE,    array( __CLASS__, 'tweet_pulse' ) );
+
+        // Self-heal: schedule any jobs that are missing without requiring re-activation.
+        // Runs on every init so newly added hooks (like tweet_pulse) get registered
+        // even if the plugin was already active when they were introduced.
+        add_action( 'init', array( __CLASS__, 'schedule' ), 99 );
     }
 
     /**
