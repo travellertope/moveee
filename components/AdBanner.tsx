@@ -55,7 +55,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
   format = "auto",
   fullWidthResponsive = true,
 }) => {
-  const adRef = useRef<HTMLInsElement>(null);
+  const adRef = useRef<HTMLElement>(null);
   const pushed = useRef(false);
 
   useEffect(() => {
