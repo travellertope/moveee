@@ -3,22 +3,10 @@ import {
   GET_STORIES,
   GET_JOURNEYS,
   GET_DIRECTORY_ENTRIES,
+  GET_PRODUCTS,
   getEventsWithFallback,
   getWPQuotes,
 } from "@/lib/wp";
-
-const PRODUCTS_QUERY = `
-  query GetProducts {
-    products(first: 10) {
-      nodes {
-        id name slug
-        image { sourceUrl }
-        ... on SimpleProduct { price }
-        ... on VariableProduct { price }
-      }
-    }
-  }
-`;
 
 /**
  * Fetch all data needed for a homepage edition.
@@ -90,10 +78,18 @@ export async function fetchHomepageData(editionTag?: string) {
     origins = data?.cultureJourneys?.nodes || [];
   } catch (err) { console.error("Origins fetch error:", err); }
 
-  // Products — same across all editions
+  // Products — edition-tagged first, fall back to global if fewer than 4
   try {
-    const data = await getWPData(PRODUCTS_QUERY, {});
-    products = data?.products?.nodes || [];
+    if (editionTag) {
+      const tagged = await getWPData(GET_PRODUCTS, { first: 10, tag: editionTag });
+      products = tagged?.products?.nodes || [];
+    }
+    if (products.length < 4) {
+      const global = await getWPData(GET_PRODUCTS, { first: 10 });
+      const globalProducts: any[] = global?.products?.nodes || [];
+      const existingIds = new Set(products.map((p: any) => p.id));
+      products = [...products, ...globalProducts.filter((p: any) => !existingIds.has(p.id))].slice(0, 10);
+    }
   } catch (err) { console.error("Products fetch error:", err); }
 
   // Directory — random 8 from a larger pool
