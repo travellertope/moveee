@@ -4,6 +4,7 @@ import Marquee from "@/components/Marquee";
 import PatronPrice from "@/components/PatronPrice";
 import AdBanner from "@/components/AdBanner";
 import ShopCarousel from "@/components/ShopCarousel";
+import HomepageNewsletterForm from "@/components/HomepageNewsletterForm";
 import type { EditionSlug } from "@/lib/editions";
 import { EDITIONS } from "@/lib/editions";
 
@@ -24,7 +25,7 @@ export default function HomepageContent({
   coverStory, stories, events, origins, products, quotes,
   pulseStories, directoryEntries, isLoggedIn, edition,
 }: Props) {
-  const heroStories   = stories.slice(0, 5);
+  const heroStories   = stories.slice(0, 8);
   const magazineStrip = stories.slice(0, 5);
   const editionLabel  = EDITIONS[edition].label;
   const editionPrefix = edition === "global" ? "" : `/${edition}`;
@@ -283,20 +284,19 @@ export default function HomepageContent({
 
       {/* ===== NEWSLETTER CTA ===== */}
       <section className="hp-nl-cta">
-        <div className="hp-nl-cta-inner">
+        <div className="hp-nl-cta-box">
           <div className="hp-nl-cta-left">
-            <div className="hp-nl-cta-deco" aria-hidden="true"><span>M</span></div>
+            <div className="hp-nl-cta-deco" aria-hidden="true"><span>G</span></div>
           </div>
           <div className="hp-nl-cta-right">
-            <h3 className="hp-nl-cta-heading">Want more stories like<br />these in your inbox?</h3>
+            <div className="hp-nl-cta-tag">GetMeLit · Our Flagship Newsletter</div>
+            <h3 className="hp-nl-cta-heading">Stay lit.<br />Every Thursday.</h3>
             <p className="hp-nl-cta-body">
-              Sign up to The Moveee {editionLabel !== "Global" ? editionLabel : ""} newsletter to stay on top of the
-              latest in African culture, style, travel, and community — straight to you, every week.
+              GetMeLit is the weekly culture briefing from The Moveee — the stories, art, music,
+              and ideas moving the African diaspora forward, curated by our editors and delivered
+              straight to your inbox. No noise. Just the good stuff.
             </p>
-            <form className="hp-nl-cta-form" action="/newsletter" method="POST">
-              <input type="email" placeholder="Enter your email address" aria-label="Newsletter email address" className="hp-nl-cta-input" />
-              <button type="submit" className="hp-nl-cta-btn">Subscribe</button>
-            </form>
+            <HomepageNewsletterForm />
           </div>
         </div>
       </section>
