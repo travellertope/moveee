@@ -1010,7 +1010,7 @@ export const GET_DIRECTORY_ENTRY_BY_SLUG = `
 
 export const GET_DIRECTORY_ENTRIES_BY_TYPE = `
   query GetDirectoryEntriesByType($first: Int, $typeSlug: String) {
-    cultureDirectories(first: $first, where: { status: PUBLISH, taxQuery: { taxArray: [{ taxonomy: CULTUREDIRECTORYTYPES, field: SLUG, terms: [$typeSlug] }] } }) {
+    cultureDirectories(first: $first, where: { status: PUBLISH, taxQuery: { taxArray: [{ taxonomy: CULTURE_DIR_TYPE, field: SLUG, terms: [$typeSlug] }] } }) {
       nodes {
         ...DirectoryFields
       }

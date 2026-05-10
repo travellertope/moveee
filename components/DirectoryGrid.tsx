@@ -22,10 +22,11 @@ interface DirectoryEntry {
 interface Props {
   entries: DirectoryEntry[];
   types: EntryType[];
+  initialType?: string | null;
 }
 
-export default function DirectoryGrid({ entries, types }: Props) {
-  const [activeType, setActiveType] = useState<string | null>(null);
+export default function DirectoryGrid({ entries, types, initialType = null }: Props) {
+  const [activeType, setActiveType] = useState<string | null>(initialType);
 
   // Only show types that have at least one published entry
   const usedTypes = useMemo(() => {
