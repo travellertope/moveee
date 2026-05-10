@@ -55,7 +55,6 @@ const AdBanner: React.FC<AdBannerProps> = ({
   format = "auto",
   fullWidthResponsive = true,
 }) => {
-  const adRef = useRef<HTMLElement>(null);
   const pushed = useRef(false);
 
   useEffect(() => {
@@ -73,7 +72,6 @@ const AdBanner: React.FC<AdBannerProps> = ({
     return (
       <div className={className}>
         <ins
-          ref={adRef}
           className="adsbygoogle"
           style={{ display: "block" }}
           data-ad-client={PUBLISHER_ID}
