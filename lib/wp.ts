@@ -465,6 +465,10 @@ const DIRECTORY_FIELDS_FRAGMENT = `
     websiteUrl
     instagramHandle
     twitterHandle
+    selectedWorks {
+      title
+      imageUrl
+    }
   }
 `;
 
@@ -999,6 +1003,17 @@ export const GET_DIRECTORY_ENTRY_BY_SLUG = `
     cultureDirectory(id: $slug, idType: SLUG) {
       ...DirectoryFields
       content
+    }
+  }
+  ${DIRECTORY_FIELDS_FRAGMENT}
+`;
+
+export const GET_DIRECTORY_ENTRIES_BY_TYPE = `
+  query GetDirectoryEntriesByType($first: Int, $typeSlug: String) {
+    cultureDirectories(first: $first, where: { status: PUBLISH, taxQuery: { taxArray: [{ taxonomy: CULTUREDIRECTORYTYPES, field: SLUG, terms: [$typeSlug] }] } }) {
+      nodes {
+        ...DirectoryFields
+      }
     }
   }
   ${DIRECTORY_FIELDS_FRAGMENT}

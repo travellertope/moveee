@@ -474,6 +474,38 @@ class Culture_Post_Types {
             },
         ) );
 
+        // Selected Works repeater field.
+        register_graphql_object_type( 'CultureDirectoryWork', array(
+            'description' => 'A single item in the Selected Works / Portfolio repeater.',
+            'fields'      => array(
+                'title'    => array( 'type' => 'String' ),
+                'imageUrl' => array( 'type' => 'String' ),
+            ),
+        ) );
+
+        register_graphql_field( 'CultureDirectory', 'selectedWorks', array(
+            'type'    => array( 'list_of' => 'CultureDirectoryWork' ),
+            'resolve' => function( $post ) {
+                $rows = function_exists('get_field')
+                    ? get_field( 'selected_works', $post->databaseId )
+                    : array();
+                if ( empty( $rows ) || ! is_array( $rows ) ) return array();
+                return array_map( function( $row ) {
+                    $image_url = '';
+                    if ( ! empty( $row['image'] ) ) {
+                        // Return format is 'id', so resolve to URL.
+                        $image_url = is_numeric( $row['image'] )
+                            ? wp_get_attachment_url( (int) $row['image'] )
+                            : ( is_array( $row['image'] ) ? ( $row['image']['url'] ?? '' ) : $row['image'] );
+                    }
+                    return array(
+                        'title'    => $row['title'] ?? '',
+                        'imageUrl' => $image_url ?: '',
+                    );
+                }, $rows );
+            },
+        ) );
+
         // 9. Global Membership Settings
         register_graphql_object_type( 'CultureMembershipSettings', array(
             'description' => __( 'Global membership pricing and tier labels', 'culture-community' ),
