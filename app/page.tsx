@@ -65,9 +65,9 @@ export default async function Home() {
   } catch (err) { console.error("Products fetch error:", err); }
 
   try {
-    const dirData = await getWPData(GET_DIRECTORY_ENTRIES, { first: 18 }, { revalidate: 0 });
+    const dirData = await getWPData(GET_DIRECTORY_ENTRIES, { first: 24 }, { revalidate: 0 });
     const allDir = dirData?.cultureDirectories?.nodes || [];
-    directoryEntries = allDir.sort(() => Math.random() - 0.5).slice(0, 6);
+    directoryEntries = allDir.sort(() => Math.random() - 0.5).slice(0, 8);
   } catch (err) { console.error("Directory fetch error:", err); }
 
   try {
