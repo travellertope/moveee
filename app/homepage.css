@@ -1484,13 +1484,11 @@
   .hp-cover-col {
     position: sticky;
     top: 0;
-    max-height: 100vh;
-    overflow-y: auto;
+    height: 100vh;
+    overflow: hidden;
     border-right: 1px solid var(--rule);
     align-self: start;
-    scrollbar-width: none;
   }
-  .hp-cover-col::-webkit-scrollbar { display: none; }
 
   .hp-cover-sticky {
     /* natural flow — text stacks above image */
