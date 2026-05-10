@@ -1,9 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getWPData, GET_STORIES, GET_JOURNEYS, getEventsWithFallback, getWPQuotes } from "@/lib/wp";
+import { getWPData, GET_STORIES, GET_JOURNEYS, GET_DIRECTORY_ENTRIES, getEventsWithFallback, getWPQuotes } from "@/lib/wp";
 import Marquee from "@/components/Marquee";
 import PatronPrice from "@/components/PatronPrice";
 import AdBanner from "@/components/AdBanner";
+import ShopCarousel from "@/components/ShopCarousel";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -20,6 +21,7 @@ export default async function Home() {
   let products: any[] = [];
   let quotes: any[] = [];
   let pulseStories: any[] = [];
+  let directoryEntries: any[] = [];
 
   try {
     const coverData = await getWPData(GET_STORIES, { first: 1, tag: "cover-story" }, { revalidate: 0 });
@@ -49,7 +51,7 @@ export default async function Home() {
   try {
     const productsData = await getWPData(`
       query GetProducts {
-        products(first: 4) {
+        products(first: 10) {
           nodes {
             id name slug
             image { sourceUrl }
@@ -61,6 +63,11 @@ export default async function Home() {
     `, {});
     products = productsData?.products?.nodes || [];
   } catch (err) { console.error("Products fetch error:", err); }
+
+  try {
+    const dirData = await getWPData(GET_DIRECTORY_ENTRIES, { first: 6 }, { revalidate: 0 });
+    directoryEntries = dirData?.cultureDirectories?.nodes || [];
+  } catch (err) { console.error("Directory fetch error:", err); }
 
   try {
     const quotesData = await getWPQuotes({ first: 3 });
@@ -126,27 +133,8 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* RIGHT: Scrollable — nav + article grid + widgets */}
+        {/* RIGHT: Scrollable — article grid + widgets */}
         <div className="hp-right-col">
-
-          {/* Section navigation */}
-          <nav className="hp-section-nav">
-            <Link href="/magazine">Editorials</Link>
-            <span className="hp-nav-sep">·</span>
-            <Link href="/events">Happenings</Link>
-            <span className="hp-nav-sep">·</span>
-            <Link href="/journeys">Origins</Link>
-            <span className="hp-nav-sep">·</span>
-            <Link href="/shop">Lifestyle</Link>
-            <span className="hp-nav-sep">·</span>
-            <Link href="/pulse">Pulse</Link>
-            <span className="hp-nav-sep">·</span>
-            <Link href="/games">Games</Link>
-            <span className="hp-nav-sep">·</span>
-            <Link href="/directory">Directory</Link>
-            <span className="hp-nav-sep">·</span>
-            <Link href="/quotes">Quotes</Link>
-          </nav>
 
           {/* Latest stories grid — 2 columns */}
           <div className="hp-right-stories">
@@ -388,25 +376,7 @@ export default async function Home() {
           <Link href="/shop" className="hp-section-link">Visit Shop →</Link>
         </div>
 
-        {products.length > 0 ? (
-          <div className="hp-products-grid">
-            {products.map((product: any) => (
-              <Link key={product.id} href={`/shop/${product.slug}`} className="hp-product">
-                <div className="hp-product-image">
-                  {product.image && (
-                    <Image src={product.image.sourceUrl} alt={product.name} fill className="object-cover" />
-                  )}
-                  <span className="hp-product-badge">MOVEEE VETTED</span>
-                </div>
-                <span className="hp-product-vendor">The Moveee Editions</span>
-                <span className="hp-product-name">{product.name}</span>
-                <span className="hp-product-price">{product.price || "Price on Request"}</span>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="hp-empty-state">Our curated shop collection is launching soon.</div>
-        )}
+        <ShopCarousel products={products} />
       </section>
 
       {/* ===== AD: PRE-QUOTES LEADERBOARD ===== */}
@@ -439,16 +409,47 @@ export default async function Home() {
         </section>
       )}
 
-      {/* ===== DIRECTORY PREVIEW ===== */}
+      {/* ===== DIRECTORY ===== */}
       <section className="hp-section" id="directory">
         <div className="hp-section-header">
           <div className="hp-section-title">
             <span className="hp-section-label">The Africa-wide cultural atlas</span>
             <h3>Directory</h3>
           </div>
-          <Link href="/directory" className="hp-section-link">Browse Directory →</Link>
+          <Link href="/directory" className="hp-section-link">Browse All →</Link>
         </div>
-        <div className="hp-directory-cta">
+
+        {directoryEntries.length > 0 ? (
+          <div className="hp-dir-grid">
+            {directoryEntries.map((entry: any) => (
+              <Link key={entry.id} href={`/directory/${entry.slug}`} className="hp-dir-card">
+                <div className="hp-dir-image">
+                  {entry.featuredImage ? (
+                    <Image
+                      src={entry.featuredImage.node.sourceUrl}
+                      alt={entry.featuredImage.node.altText || entry.title}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="hp-dir-image-placeholder" />
+                  )}
+                </div>
+                <div className="hp-dir-body">
+                  {entry.cultureDirectoryTypes?.nodes?.[0] && (
+                    <span className="hp-dir-type">
+                      {entry.cultureDirectoryTypes.nodes[0].name}
+                    </span>
+                  )}
+                  <h5 className="hp-dir-name">{entry.title}</h5>
+                  <span className="hp-dir-cta">View entry ↗</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="hp-directory-cta" style={{ marginTop: directoryEntries.length > 0 ? "40px" : "0" }}>
           <p>
             Discover makers, galleries, restaurants, studios and culture spaces across Africa and
             the diaspora — submitted and curated by the Moveee community.
