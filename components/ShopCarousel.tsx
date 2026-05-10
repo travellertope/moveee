@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -15,6 +15,34 @@ interface Product {
 export default function ShopCarousel({ products }: { products: Product[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false });
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 8);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 8);
+  }, []);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    checkScroll();
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      el.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [products, checkScroll]);
+
+  const scroll = useCallback((dir: "left" | "right") => {
+    const el = trackRef.current;
+    if (!el) return;
+    const cardWidth = el.querySelector<HTMLElement>(".hp-carousel-card")?.offsetWidth ?? 280;
+    el.scrollBy({ left: dir === "right" ? cardWidth + 20 : -(cardWidth + 20), behavior: "smooth" });
+  }, []);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const el = trackRef.current;
@@ -55,6 +83,16 @@ export default function ShopCarousel({ products }: { products: Product[] }) {
 
   return (
     <div className="hp-carousel-wrap">
+      {/* Desktop-only overlay arrows */}
+      <button
+        className={`hp-carousel-btn hp-carousel-btn--prev${canScrollLeft ? "" : " hp-carousel-btn--hidden"}`}
+        onClick={() => scroll("left")}
+        aria-label="Previous products"
+        tabIndex={canScrollLeft ? 0 : -1}
+      >
+        ←
+      </button>
+
       <div
         className="hp-carousel-track"
         ref={trackRef}
@@ -89,6 +127,15 @@ export default function ShopCarousel({ products }: { products: Product[] }) {
           </Link>
         ))}
       </div>
+
+      <button
+        className={`hp-carousel-btn hp-carousel-btn--next${canScrollRight ? "" : " hp-carousel-btn--hidden"}`}
+        onClick={() => scroll("right")}
+        aria-label="Next products"
+        tabIndex={canScrollRight ? 0 : -1}
+      >
+        →
+      </button>
     </div>
   );
 }
