@@ -264,62 +264,24 @@ export default async function Home() {
         </div>
 
         {events.length > 0 ? (
-          <div className="hp-happenings-grid">
-            {/* Featured event */}
-            <Link href={`/events/${events[0].slug}`} className="hp-event-featured">
-              <div className="hp-event-featured-image">
-                {events[0].featuredImage && (
-                  <Image
-                    src={events[0].featuredImage.node.sourceUrl}
-                    alt={events[0].featuredImage.node.altText || ""}
-                    fill
-                    className="object-cover"
+          <div className="hp-events-monocle">
+            {events.map((event: any) => {
+              const d = new Date(event.eventDate || event.date);
+              const dateStr = d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+              return (
+                <Link key={event.id} href={`/events/${event.slug}`} className="hp-event-row">
+                  <span className="hp-event-row-date">{dateStr}</span>
+                  <h4 className="hp-event-row-title">{event.title}</h4>
+                  <div
+                    className="hp-event-row-excerpt"
+                    dangerouslySetInnerHTML={{ __html: event.excerpt }}
                   />
-                )}
-                <div className="hp-event-featured-overlay" />
-              </div>
-              <div className="hp-event-featured-body">
-                <span className="hp-event-date-pill">
-                  {(() => {
-                    const d = new Date(events[0].eventDate || events[0].date);
-                    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-                  })()}
-                </span>
-                <h3>{events[0].title}</h3>
-                <div
-                  className="hp-event-featured-excerpt"
-                  dangerouslySetInnerHTML={{ __html: events[0].excerpt }}
-                />
-                <span className="hp-event-cta">RSVP ↗</span>
-              </div>
-            </Link>
-
-            {/* Remaining events */}
-            <div className="hp-events-list">
-              {events.slice(1, 3).map((event: any) => {
-                const d = new Date(event.eventDate || event.date);
-                return (
-                  <Link key={event.id} href={`/events/${event.slug}`} className="hp-event-item">
-                    <div className="hp-event-item-date">
-                      <span className="hp-event-day">{d.getDate().toString().padStart(2, "0")}</span>
-                      <span className="hp-event-month">
-                        {d.toLocaleDateString("en-GB", { month: "short" })}
-                      </span>
-                    </div>
-                    <div className="hp-event-item-body">
-                      <h5>{event.title}</h5>
-                      <div
-                        className="hp-event-item-excerpt"
-                        dangerouslySetInnerHTML={{ __html: event.excerpt }}
-                      />
-                    </div>
-                    <span className="hp-event-rsvp">RSVP</span>
-                  </Link>
-                );
-              })}
-
-              {/* Ad slot inside events section sidebar */}
-              <AdBanner slot="happenings-sidebar" className="hp-ad-rect" />
+                  <span className="hp-event-row-cta">RSVP ↗</span>
+                </Link>
+              );
+            })}
+            <div className="hp-events-footer">
+              <Link href="/events" className="hp-events-see-all">See all happenings and collaborations</Link>
             </div>
           </div>
         ) : (
@@ -327,43 +289,73 @@ export default async function Home() {
         )}
       </section>
 
+      {/* ===== NEWSLETTER CTA ===== */}
+      <section className="hp-nl-cta">
+        <div className="hp-nl-cta-inner">
+          <div className="hp-nl-cta-left">
+            <div className="hp-nl-cta-deco" aria-hidden="true">
+              <span>M</span>
+            </div>
+          </div>
+          <div className="hp-nl-cta-right">
+            <h3 className="hp-nl-cta-heading">
+              Want more stories like<br />these in your inbox?
+            </h3>
+            <p className="hp-nl-cta-body">
+              Sign up to The Moveee newsletter to stay on top of the latest in African culture,
+              style, travel, and community — straight to you, every week.
+            </p>
+            <form className="hp-nl-cta-form" action="/newsletter" method="POST">
+              <input
+                type="email"
+                placeholder="Enter your email address"
+                aria-label="Newsletter email address"
+                className="hp-nl-cta-input"
+              />
+              <button type="submit" className="hp-nl-cta-btn">Subscribe</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
       {/* ===== MOVEEE ORIGINS ===== */}
-      <section className="hp-section" id="origins">
+      <section className="hp-section hp-section--origins" id="origins">
         <div className="hp-section-header">
           <div className="hp-section-title">
             <span className="hp-section-label">Writer-led Cultural Journeys</span>
             <h3>Origins</h3>
           </div>
-          <Link href="/journeys" className="hp-section-link">All Journeys →</Link>
+          <Link href="/journeys" className="hp-section-link">See All →</Link>
         </div>
 
-        <div className="hp-origins-body">
-          <div className="hp-origins-intro">
-            <p>
-              Every Origins journey is led by a resident editor — an artist, chef, writer or curator
-              — who takes a small group into the rooms, studios, markets and kitchens that shape a place.
-              No buses. No scripts. Just time.
-            </p>
-            <div className="hp-origins-stats">
-              <div><div className="hp-stat-n">12</div><div className="hp-stat-l">Cities · 2026</div></div>
-              <div><div className="hp-stat-n">38</div><div className="hp-stat-l">Resident hosts</div></div>
-              <div><div className="hp-stat-n">09</div><div className="hp-stat-l">Countries</div></div>
-              <div><div className="hp-stat-n">4.9</div><div className="hp-stat-l">Guest rating</div></div>
+        {origins.length > 0 ? (
+          <div className="hp-origins-carousel-wrap">
+            <div className="hp-origins-track">
+              {origins.map((origin: any) => (
+                <Link key={origin.id} href={`/journeys/${origin.slug}`} className="hp-origin-card">
+                  <div className="hp-origin-card-top">
+                    <span className="hp-origin-card-label">Moveee Origins</span>
+                    <h4 className="hp-origin-card-title">{origin.title}</h4>
+                  </div>
+                  <div className="hp-origin-card-image">
+                    {origin.featuredImage ? (
+                      <Image
+                        src={origin.featuredImage.node.sourceUrl}
+                        alt={origin.featuredImage.node.altText || origin.title}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="hp-origin-card-placeholder" />
+                    )}
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
-          <div className="hp-origins-list">
-            {origins.length > 0 ? origins.map((origin: any, idx: number) => (
-              <Link key={origin.id} href={`/journeys/${origin.slug}`} className="hp-origin-row">
-                <span className="hp-origin-idx">0{idx + 1}</span>
-                <span className="hp-origin-name">{origin.title}</span>
-                <span className="hp-origin-loc">{origin.journeyLocation || "Destination TBC"}</span>
-                <span className="hp-origin-cta">View ↗</span>
-              </Link>
-            )) : (
-              <div className="hp-empty-state">New itineraries are being curated.</div>
-            )}
-          </div>
-        </div>
+        ) : (
+          <div className="hp-empty-state">New itineraries are being curated.</div>
+        )}
       </section>
 
       {/* ===== LIFESTYLE (SHOP) ===== */}
@@ -416,7 +408,10 @@ export default async function Home() {
             <span className="hp-section-label">The Africa-wide cultural atlas</span>
             <h3>Directory</h3>
           </div>
-          <Link href="/directory" className="hp-section-link">Browse All →</Link>
+          <div className="hp-section-links">
+            <Link href="/directory/submit" className="hp-section-link">Submit an Entry →</Link>
+            <Link href="/directory" className="hp-section-link">Browse All →</Link>
+          </div>
         </div>
 
         {directoryEntries.length > 0 ? (
@@ -449,16 +444,6 @@ export default async function Home() {
           </div>
         ) : null}
 
-        <div className="hp-directory-cta" style={{ marginTop: directoryEntries.length > 0 ? "40px" : "0" }}>
-          <p>
-            Discover makers, galleries, restaurants, studios and culture spaces across Africa and
-            the diaspora — submitted and curated by the Moveee community.
-          </p>
-          <div className="hp-directory-links">
-            <Link href="/directory" className="btn-primary">Browse Directory <span className="arrow">→</span></Link>
-            <Link href="/directory/submit" className="btn-ghost">Submit an Entry</Link>
-          </div>
-        </div>
       </section>
 
       {/* ===== CONNECT (MEMBERSHIP) ===== */}
