@@ -40,7 +40,7 @@ export default async function Home() {
   } catch (err) { console.error(err); }
 
   try {
-    events = await getEventsWithFallback(3, { revalidate: 0 });
+    events = await getEventsWithFallback(6, { revalidate: 0 });
   } catch (err) { console.error(err); }
 
   try {
@@ -280,9 +280,6 @@ export default async function Home() {
                 </Link>
               );
             })}
-            <div className="hp-events-footer">
-              <Link href="/events" className="hp-events-see-all">See all happenings and collaborations</Link>
-            </div>
           </div>
         ) : (
           <div className="hp-empty-state">New happenings will be announced soon.</div>

@@ -1904,22 +1904,30 @@
     margin-top: auto;
   }
 
-  /* ===== HAPPENINGS — Monocle-style event list ===== */
+  /* ===== HAPPENINGS — 2-col grid ===== */
   .hp-events-monocle {
-    max-width: 860px;
+    max-width: 1440px;
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .hp-event-row {
     display: block;
-    padding: 40px 0;
+    padding: 40px 48px 40px 0;
     border-top: 1px solid var(--rule);
     text-decoration: none;
     color: inherit;
     cursor: pointer;
     transition: opacity 0.2s;
   }
-  .hp-event-row:last-of-type { border-bottom: 1px solid var(--rule); }
+  /* right-column cells get left padding instead */
+  .hp-event-row:nth-child(even) {
+    padding-left: 48px;
+    padding-right: 0;
+    border-left: 1px solid var(--rule);
+  }
+  .hp-event-row:nth-last-child(-n+2) { border-bottom: 1px solid var(--rule); }
   .hp-event-row:hover { opacity: 0.72; }
 
   .hp-event-row-date {
@@ -1963,22 +1971,6 @@
     display: inline-block;
   }
 
-  .hp-events-footer {
-    text-align: center;
-    padding: 40px 0 8px;
-  }
-
-  .hp-events-see-all {
-    font-family: 'Fraunces', serif;
-    font-size: 17px;
-    font-weight: 400;
-    color: var(--ink);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    text-decoration-color: rgba(42,36,28,0.35);
-    transition: text-decoration-color 0.2s, color 0.2s;
-  }
-  .hp-events-see-all:hover { color: var(--ochre); text-decoration-color: var(--ochre); }
 
   /* ===== NEWSLETTER CTA ===== */
   .hp-nl-cta {
@@ -2686,7 +2678,11 @@
     .hp-quote-card { border-right: none; border-bottom: 1px solid rgba(243,236,224,0.12); }
     .hp-origins-carousel-wrap { padding: 0 22px 4px; }
     .hp-section--origins .hp-section-header { padding-left: 22px; padding-right: 22px; }
+    .hp-events-monocle { grid-template-columns: 1fr; }
     .hp-event-row { padding: 28px 0; }
+    .hp-event-row:nth-child(even) { padding-left: 0; border-left: none; }
+    .hp-event-row:nth-last-child(-n+2) { border-bottom: none; }
+    .hp-event-row:last-child { border-bottom: 1px solid var(--rule); }
     .hp-ad-leaderboard, .hp-ad-sidebar, .hp-ad-rect { min-height: 0; }
     .hb-footer-cols { grid-template-columns: repeat(2, 1fr); }
     .hb-footer-main { padding: 32px 22px; }
