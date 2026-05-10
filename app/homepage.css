@@ -2089,36 +2089,56 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
     display: flex;
-    padding: 0 40px 4px;
-    gap: 0;
+    padding: 0 40px 8px;
   }
   .hp-origins-carousel-wrap::-webkit-scrollbar { display: none; }
 
   .hp-origins-track {
     display: flex;
-    gap: 0;
+    gap: 20px;
     min-width: max-content;
   }
 
   .hp-origin-card {
-    flex: 0 0 320px;
+    flex: 0 0 300px;
     display: flex;
     flex-direction: column;
     text-decoration: none;
     color: inherit;
     background: var(--ochre);
-    border-right: 1px solid rgba(20,17,13,0.18);
+    border-radius: 8px;
+    border: 1px solid rgba(20,17,13,0.12);
     scroll-snap-align: start;
     cursor: pointer;
-    transition: filter 0.25s;
     overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+    padding: 10px;
+    gap: 10px;
   }
-  .hp-origin-card:last-child { border-right: none; }
-  .hp-origin-card:hover { filter: brightness(0.92); }
+  .hp-origin-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(20,17,13,0.14);
+  }
 
-  .hp-origin-card-top {
-    padding: 20px 22px 16px;
-    background: var(--ochre);
+  .hp-origin-card-image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    position: relative;
+    background: var(--ochre-deep);
+    overflow: hidden;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .hp-origin-card-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(160deg, var(--ochre-deep) 0%, rgba(20,17,13,0.4) 100%);
+  }
+
+  .hp-origin-card-bottom {
+    padding: 8px 10px 10px;
+    border-top: 1px solid rgba(243,236,224,0.2);
   }
 
   .hp-origin-card-label {
@@ -2127,34 +2147,18 @@
     font-size: 8px;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: rgba(243,236,224,0.7);
-    margin-bottom: 8px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(243,236,224,0.25);
+    color: rgba(243,236,224,0.65);
+    margin-bottom: 6px;
   }
 
   .hp-origin-card-title {
     font-family: 'Fraunces', serif;
-    font-size: 26px;
+    font-size: 22px;
     font-weight: 700;
-    line-height: 1.05;
+    line-height: 1.08;
     letter-spacing: -0.015em;
     color: var(--paper);
     font-variation-settings: "opsz" 144, "SOFT" 0;
-  }
-
-  .hp-origin-card-image {
-    flex: 1;
-    min-height: 280px;
-    position: relative;
-    background: var(--ochre-deep);
-    overflow: hidden;
-  }
-
-  .hp-origin-card-placeholder {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(160deg, var(--ochre-deep) 0%, rgba(20,17,13,0.4) 100%);
   }
 
   /* ===== LIFESTYLE (SHOP) ===== */
@@ -2660,7 +2664,7 @@
     .hp-nl-cta-inner { grid-template-columns: 1fr; }
     .hp-nl-cta-left { display: none; }
     .hp-nl-cta-right { padding: 48px 40px; }
-    .hp-origin-card { flex: 0 0 260px; }
+    .hp-origin-card { flex: 0 0 240px; }
     .hp-products-grid { grid-template-columns: repeat(2, 1fr); }
     .hp-quotes-grid { grid-template-columns: 1fr 1fr; }
     .hp-directory-cta { grid-template-columns: 1fr; gap: 24px; }
