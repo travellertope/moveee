@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { editionFromCountry, isValidRegionalSlug } from './lib/editions'
 
 /**
  * Moveee SEO Redirect Proxy
@@ -86,8 +87,39 @@ const ROUTE_ALIASES: Record<string, string> = {
   'lifestyle': '/shop',
 }
 
+const EDITION_COOKIE = 'moveee-edition'
+const EDITION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // ── Edition routing ──────────────────────────────────────────
+  // When a user visits a regional path (/uk, /us, /africa), lock cookie
+  const firstSeg = pathname.split('/')[1]
+  if (isValidRegionalSlug(firstSeg)) {
+    const saved = request.cookies.get(EDITION_COOKIE)?.value
+    if (saved !== firstSeg) {
+      const res = NextResponse.next()
+      res.cookies.set(EDITION_COOKIE, firstSeg, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
+      return res
+    }
+    return NextResponse.next()
+  }
+
+  // On the exact homepage, geo-redirect first-time visitors to their edition
+  if (pathname === '/') {
+    const saved = request.cookies.get(EDITION_COOKIE)?.value
+    if (saved && isValidRegionalSlug(saved)) {
+      return NextResponse.redirect(new URL(`/${saved}`, request.url))
+    }
+    const country = request.headers.get('x-vercel-ip-country') ?? ''
+    const edition = editionFromCountry(country)
+    if (edition !== 'global') {
+      const res = NextResponse.redirect(new URL(`/${edition}`, request.url))
+      res.cookies.set(EDITION_COOKIE, edition, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
+      return res
+    }
+  }
 
   // ── WP Admin redirect manager (checked first, highest priority) ──
   const wpRedirects = await getWPRedirects()
