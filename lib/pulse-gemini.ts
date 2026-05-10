@@ -33,6 +33,7 @@ Each object must have:
 - "region": one of: "Africa" | "Caribbean" | "Diaspora UK" | "Diaspora US" | "Diaspora Europe" | "Global"
 - "source": real publication name you found the story on (e.g. OkayAfrica, The Guardian, Billboard, Vogue Africa, BBC Africa, Afropunk, The FADER, Pitchfork)
 - "source_url": the EXACT URL of the real article you found via Google Search. CRITICAL: only include a URL if you are certain it exists — copy it directly from search results. If unsure, use empty string. NEVER guess or construct a URL.
+- "category": the primary industry — exactly one of: "music" | "film" | "fashion" | "art" | "literature" | "food" | "activism" | "sports" | "business" | "tech"
 
 Spread stories across at least 3 different arms and 3 different regions. Only include stories you verified exist via Google Search. Be specific — generic descriptions are not acceptable. Aim for 8–12 stories per run.`;
 
@@ -42,6 +43,7 @@ export interface PulseStoryRaw {
   body: string;
   arm: "lifestyle" | "origins" | "happenings" | "magazine";
   region: "Africa" | "Caribbean" | "Diaspora UK" | "Diaspora US" | "Diaspora Europe" | "Global";
+  category: "music" | "film" | "fashion" | "art" | "literature" | "food" | "activism" | "sports" | "business" | "tech";
   source: string;
   source_url: string;
 }
@@ -57,6 +59,7 @@ function extractJsonArray(raw: string): string {
 
 const VALID_ARMS = new Set(["lifestyle", "origins", "happenings", "magazine"]);
 const VALID_REGIONS = new Set(["Africa", "Caribbean", "Diaspora UK", "Diaspora US", "Diaspora Europe", "Global"]);
+const VALID_CATEGORIES = new Set(["music", "film", "fashion", "art", "literature", "food", "activism", "sports", "business", "tech"]);
 
 function isValidStory(s: any): s is PulseStoryRaw {
   return (
@@ -65,6 +68,10 @@ function isValidStory(s: any): s is PulseStoryRaw {
     VALID_ARMS.has(s.arm) &&
     VALID_REGIONS.has(s.region)
   );
+}
+
+function normaliseCategory(raw: any): PulseStoryRaw["category"] {
+  return VALID_CATEGORIES.has(raw) ? raw : "art";
 }
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -85,13 +92,14 @@ async function validateSourceUrl(url: string): Promise<boolean> {
 async function filterFabricatedUrls(stories: PulseStoryRaw[]): Promise<PulseStoryRaw[]> {
   const checks = await Promise.all(
     stories.map(async (s) => {
-      if (!s.source_url) return s;
+      const normalised = { ...s, category: normaliseCategory(s.category) };
+      if (!s.source_url) return normalised;
       const valid = await validateSourceUrl(s.source_url);
       if (!valid) {
         console.warn(`[pulse-gemini] Dead URL removed: ${s.source_url}`);
-        return { ...s, source_url: "" };
+        return { ...normalised, source_url: "" };
       }
-      return s;
+      return normalised;
     })
   );
   return checks;

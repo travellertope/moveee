@@ -80,6 +80,20 @@ class Culture_Pulse {
             'hierarchical'      => false,
             'show_admin_column' => true,
         ] );
+
+        // Industry category taxonomy — what the story is about.
+        register_taxonomy( 'pulse_category', 'pulse_story', [
+            'label'             => 'Category',
+            'labels'            => [
+                'name'          => 'Categories',
+                'singular_name' => 'Category',
+            ],
+            'public'            => true,
+            'show_in_rest'      => true,
+            'rest_base'         => 'pulse-categories',
+            'hierarchical'      => false,
+            'show_admin_column' => true,
+        ] );
     }
 
     public static function register_meta() {

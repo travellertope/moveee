@@ -4,17 +4,19 @@ const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const page    = searchParams.get("page")    ?? "1";
-  const perPage = searchParams.get("perPage") ?? "12";
-  const arm     = searchParams.get("arm");
-  const region  = searchParams.get("region");
+  const page     = searchParams.get("page")     ?? "1";
+  const perPage  = searchParams.get("perPage")  ?? "12";
+  const arm      = searchParams.get("arm");
+  const region   = searchParams.get("region");
+  const category = searchParams.get("category");
 
   let url =
     `${WP_URL}/wp-json/wp/v2/pulse-stories` +
     `?per_page=${perPage}&page=${page}&orderby=date&order=desc&_embed=1`;
 
-  if (arm)    url += `&pulse_arm=${encodeURIComponent(arm)}`;
-  if (region) url += `&pulse_region=${encodeURIComponent(region)}`;
+  if (arm)      url += `&pulse_arm=${encodeURIComponent(arm)}`;
+  if (region)   url += `&pulse_region=${encodeURIComponent(region)}`;
+  if (category) url += `&pulse_category=${encodeURIComponent(category)}`;
 
   try {
     const res = await fetch(url, { cache: "no-store" });
