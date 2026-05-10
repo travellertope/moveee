@@ -15,11 +15,14 @@
 
   @layer base {
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      overflow-x: hidden;
+    html {
+      overflow-x: clip; /* clip instead of hidden — avoids creating a scroll container that breaks position: sticky */
       width: 100%;
-      position: relative;
       scroll-behavior: smooth;
+    }
+    body {
+      overflow-x: clip;
+      width: 100%;
     }
   }
 
@@ -31,7 +34,7 @@
     font-size: 15px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    overflow-x: clip;
     background-image:
       radial-gradient(circle at 20% 10%, rgba(197, 73, 31, 0.04), transparent 40%),
       radial-gradient(circle at 80% 80%, rgba(61, 74, 42, 0.04), transparent 40%);
@@ -1435,14 +1438,18 @@
     z-index: 2;
   }
 
+  /* The column itself is the sticky element — more reliable than nesting sticky inside a grid cell */
   .hp-cover-col {
-    border-right: 1px solid var(--rule);
-  }
-
-  .hp-cover-sticky {
     position: sticky;
     top: 0;
     height: 100vh;
+    overflow: hidden;
+    border-right: 1px solid var(--rule);
+    align-self: start; /* don't stretch — lets right col set the section height */
+  }
+
+  .hp-cover-sticky {
+    height: 100%;
     overflow: hidden;
   }
 
@@ -1585,9 +1592,6 @@
   }
   .hp-section-nav a:hover { color: var(--ochre); }
   .hp-nav-sep { color: var(--rule); opacity: 0.4; margin: 0 10px; }
-
-  /* Right col always taller than 100vh so cover story has room to stick */
-  .hp-right-col { min-height: calc(100vh + 200px); }
 
   /* Stories grid inside hero right col */
   .hp-right-stories {
@@ -2286,27 +2290,24 @@
     justify-content: center;
     align-items: center;
     padding: 16px 40px;
-    border-bottom: 1px solid rgba(42,36,28,0.1);
     background: var(--paper);
-    min-height: 100px;
   }
+  .hp-ad-leaderboard:empty { display: none; }
 
   .hp-ad-sidebar {
-    border-bottom: 1px solid var(--rule);
-    min-height: 90px;
     display: flex;
     justify-content: center;
     align-items: center;
   }
+  .hp-ad-sidebar:empty { display: none; }
 
   .hp-ad-rect {
-    border-top: 1px solid var(--rule);
-    min-height: 250px;
     display: flex;
     justify-content: center;
     align-items: center;
     margin-top: 16px;
   }
+  .hp-ad-rect:empty { display: none; }
 
   /* ===== SHOP CAROUSEL ===== */
   .hp-carousel-wrap {
@@ -2647,7 +2648,7 @@
     .hp-origin-name { font-size: 20px; }
     .hp-event-item { grid-template-columns: 52px 1fr; }
     .hp-event-rsvp { display: none; }
-    .hp-ad-leaderboard, .hp-ad-sidebar, .hp-ad-rect { min-height: 60px; }
+    .hp-ad-leaderboard, .hp-ad-sidebar, .hp-ad-rect { min-height: 0; }
     .hb-footer-cols { grid-template-columns: repeat(2, 1fr); }
     .hb-footer-main { padding: 32px 22px; }
     .hb-footer-bottom { flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 22px; }
