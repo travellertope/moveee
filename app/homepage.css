@@ -2958,9 +2958,9 @@
     .hp-mag-strip { grid-template-columns: 1fr; }
     /* Newsletter form stacks vertically */
     .hp-nl-cta { padding: 22px; }
-    .hp-nl-cta-form { flex-direction: column; }
-    .hp-nl-cta-input { border-right: 1px solid var(--rule); height: 48px; }
-    .hp-nl-cta-btn { width: 100%; }
+    .hp-nl-cta-form { flex-direction: column; gap: 0; }
+    .hp-nl-cta-input { border-right: 1px solid var(--rule); border-bottom: none; height: 56px; font-size: 15px; }
+    .hp-nl-cta-btn { width: 100%; height: 56px; font-size: 10px; }
     .hp-nl-cta-right { padding: 36px 24px; }
     .hp-cover-text { padding: 24px 20px 18px; }
     .hp-cover-title { font-size: 26px; }
