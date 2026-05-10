@@ -34,32 +34,32 @@ export default function HomepageContent({
       {/* ===== HERO: STICKY COVER STORY + SCROLLING RIGHT ===== */}
       <section className="hp-hero">
 
-        {/* LEFT: Sticky Cover Story */}
+        {/* LEFT: Sticky Cover Story — Monocle-style stacked layout */}
         <div className="hp-cover-col">
           <div className="hp-cover-sticky">
             {coverStory ? (
               <Link href={`/magazine/${coverStory.slug}`} className="hp-cover-link">
-                <div className="hp-cover-image">
-                  {coverStory.featuredImage && (
+                {/* Text block: category → title → excerpt → meta */}
+                <div className="hp-cover-text">
+                  <div className="hp-cover-kicker">
+                    {coverStory.categories?.nodes[0]?.name?.toUpperCase() || "CULTURE"}
+                  </div>
+                  <h2 className="hp-cover-title">{coverStory.title}</h2>
+                  <div className="hp-cover-excerpt" dangerouslySetInnerHTML={{ __html: coverStory.excerpt }} />
+                </div>
+
+                {/* Image below text — 632 × 474 aspect ratio */}
+                {coverStory.featuredImage && (
+                  <div className="hp-cover-image">
                     <Image
                       src={coverStory.featuredImage.node.sourceUrl}
                       alt={coverStory.featuredImage.node.altText || coverStory.title}
                       fill
-                      className="object-cover transition-transform duration-700 hover:scale-[1.03]"
+                      className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                       priority
                     />
-                  )}
-                  <div className="hp-cover-overlay" />
-                </div>
-                <div className="hp-cover-text">
-                  <div className="hp-cover-kicker">
-                    <span className="hp-cover-dot" />
-                    Cover Story · {coverStory.categories?.nodes[0]?.name || "Culture"}
                   </div>
-                  <h2 className="hp-cover-title">{coverStory.title}</h2>
-                  <div className="hp-cover-excerpt" dangerouslySetInnerHTML={{ __html: coverStory.excerpt }} />
-                  <span className="hp-cover-cta">Read Feature ↗</span>
-                </div>
+                )}
               </Link>
             ) : (
               <div className="hp-cover-placeholder">
