@@ -179,34 +179,90 @@ export default function HomepageContent({
 
       <AdBanner slot="leaderboard-mid" className="hp-ad-leaderboard" />
 
-      {/* ===== HAPPENINGS ===== */}
-      <section className="hp-section" id="happenings">
-        <div className="hp-section-header">
-          <div className="hp-section-title">
-            <span className="hp-section-label">Community</span>
-            <h3>Happenings</h3>
+      {/* ===== TRINITY: HAPPENINGS · ORIGINS · DIRECTORY ===== */}
+      <section className="hp-trinity">
+
+        {/* HAPPENINGS */}
+        <div className="hp-trinity-col">
+          <div className="hp-trinity-head">
+            <h3 className="hp-trinity-heading">Happenings</h3>
+            <Link href="/events" className="hp-trinity-all">All Events →</Link>
           </div>
-          <Link href="/events" className="hp-section-link">Full Calendar →</Link>
+          {events.length > 0 ? events.slice(0, 7).map((event: any) => {
+            const d = new Date(event.eventDate || event.date);
+            const dateMeta = d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).toUpperCase();
+            const loc = event.location || event.eventLocation;
+            return (
+              <Link key={event.id} href={`/events/${event.slug}`} className="hp-trinity-event">
+                <div className="hp-trinity-meta">
+                  <span>{dateMeta}</span>
+                  {loc && <><span className="hp-trinity-sep">·</span><span>{loc.toUpperCase()}</span></>}
+                </div>
+                <h4 className="hp-trinity-title">{event.title}</h4>
+                <div className="hp-trinity-excerpt" dangerouslySetInnerHTML={{ __html: event.excerpt }} />
+              </Link>
+            );
+          }) : <p className="hp-trinity-empty">New happenings soon.</p>}
         </div>
-        {events.length > 0 ? (
-          <div className="hp-events-monocle">
-            {events.map((event: any) => {
-              const d = new Date(event.eventDate || event.date);
-              return (
-                <Link key={event.id} href={`/events/${event.slug}`} className="hp-event-row">
-                  <span className="hp-event-row-date">
-                    {d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
-                  </span>
-                  <h4 className="hp-event-row-title">{event.title}</h4>
-                  <div className="hp-event-row-excerpt" dangerouslySetInnerHTML={{ __html: event.excerpt }} />
-                  <span className="hp-event-row-cta">RSVP ↗</span>
-                </Link>
-              );
-            })}
+
+        {/* ORIGINS */}
+        <div className="hp-trinity-col">
+          <div className="hp-trinity-head">
+            <h3 className="hp-trinity-heading">Origins</h3>
+            <Link href="/journeys" className="hp-trinity-all">All Tours →</Link>
           </div>
-        ) : (
-          <div className="hp-empty-state">New happenings will be announced soon.</div>
-        )}
+          {origins.length > 0 ? origins.map((origin: any) => (
+            <Link key={origin.id} href={`/journeys/${origin.slug}`} className="hp-trinity-thumb-row">
+              {origin.featuredImage && (
+                <div className="hp-trinity-thumb">
+                  <Image src={origin.featuredImage.node.sourceUrl} alt={origin.featuredImage.node.altText || origin.title} fill className="object-cover" />
+                </div>
+              )}
+              <div className="hp-trinity-thumb-body">
+                {(origin.journeyLocation || origin.journeyDates) && (
+                  <div className="hp-trinity-meta">
+                    {origin.journeyLocation && <span>{origin.journeyLocation.toUpperCase()}</span>}
+                    {origin.journeyLocation && origin.journeyDates && <span className="hp-trinity-sep">·</span>}
+                    {origin.journeyDates && <span>{origin.journeyDates}</span>}
+                  </div>
+                )}
+                <h4 className="hp-trinity-title">{origin.title}</h4>
+                {origin.excerpt && (
+                  <div className="hp-trinity-excerpt" dangerouslySetInnerHTML={{ __html: origin.excerpt }} />
+                )}
+              </div>
+            </Link>
+          )) : <p className="hp-trinity-empty">New itineraries coming soon.</p>}
+        </div>
+
+        {/* DIRECTORY */}
+        <div className="hp-trinity-col">
+          <div className="hp-trinity-head">
+            <h3 className="hp-trinity-heading">Directory</h3>
+            <Link href="/directory" className="hp-trinity-all">Browse All →</Link>
+          </div>
+          {directoryEntries.slice(0, 8).map((entry: any) => (
+            <Link key={entry.id} href={`/directory/${entry.slug}`} className="hp-trinity-thumb-row">
+              {entry.featuredImage ? (
+                <div className="hp-trinity-thumb">
+                  <Image src={entry.featuredImage.node.sourceUrl} alt={entry.featuredImage.node.altText || entry.title} fill className="object-cover" />
+                </div>
+              ) : (
+                <div className="hp-trinity-thumb hp-trinity-thumb--placeholder" />
+              )}
+              <div className="hp-trinity-thumb-body">
+                {entry.cultureDirectoryTypes?.nodes?.[0] && (
+                  <div className="hp-trinity-type">{entry.cultureDirectoryTypes.nodes[0].name.toUpperCase()}</div>
+                )}
+                <h4 className="hp-trinity-title">{entry.title}</h4>
+                {entry.excerpt && (
+                  <div className="hp-trinity-excerpt" dangerouslySetInnerHTML={{ __html: entry.excerpt }} />
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+
       </section>
 
       {/* ===== NEWSLETTER CTA ===== */}
@@ -227,40 +283,6 @@ export default function HomepageContent({
             </form>
           </div>
         </div>
-      </section>
-
-      {/* ===== ORIGINS ===== */}
-      <section className="hp-section hp-section--origins" id="origins">
-        <div className="hp-section-header">
-          <div className="hp-section-title">
-            <span className="hp-section-label">Writer-led Cultural Journeys</span>
-            <h3>Origins</h3>
-          </div>
-          <Link href="/journeys" className="hp-section-link">See All →</Link>
-        </div>
-        {origins.length > 0 ? (
-          <div className="hp-origins-carousel-wrap">
-            <div className="hp-origins-track">
-              {origins.map((origin: any) => (
-                <Link key={origin.id} href={`/journeys/${origin.slug}`} className="hp-origin-card">
-                  <div className="hp-origin-card-image">
-                    {origin.featuredImage ? (
-                      <Image src={origin.featuredImage.node.sourceUrl} alt={origin.featuredImage.node.altText || origin.title} fill className="object-cover" />
-                    ) : (
-                      <div className="hp-origin-card-placeholder" />
-                    )}
-                  </div>
-                  <div className="hp-origin-card-bottom">
-                    <span className="hp-origin-card-label">Moveee Origins</span>
-                    <h4 className="hp-origin-card-title">{origin.title}</h4>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="hp-empty-state">New itineraries are being curated.</div>
-        )}
       </section>
 
       {/* ===== LIFESTYLE (SHOP) ===== */}
@@ -300,42 +322,6 @@ export default function HomepageContent({
           </div>
         </section>
       )}
-
-      {/* ===== DIRECTORY ===== */}
-      <section className="hp-section" id="directory">
-        <div className="hp-section-header">
-          <div className="hp-section-title">
-            <span className="hp-section-label">The Africa-wide cultural atlas</span>
-            <h3>Directory</h3>
-          </div>
-          <div className="hp-section-links">
-            <Link href="/directory/submit" className="hp-section-link">Submit an Entry →</Link>
-            <Link href="/directory" className="hp-section-link">Browse All →</Link>
-          </div>
-        </div>
-        {directoryEntries.length > 0 && (
-          <div className="hp-dir-grid">
-            {directoryEntries.map((entry: any) => (
-              <Link key={entry.id} href={`/directory/${entry.slug}`} className="hp-dir-card">
-                <div className="hp-dir-image">
-                  {entry.featuredImage ? (
-                    <Image src={entry.featuredImage.node.sourceUrl} alt={entry.featuredImage.node.altText || entry.title} fill className="object-cover" />
-                  ) : (
-                    <div className="hp-dir-image-placeholder" />
-                  )}
-                </div>
-                <div className="hp-dir-body">
-                  {entry.cultureDirectoryTypes?.nodes?.[0] && (
-                    <span className="hp-dir-type">{entry.cultureDirectoryTypes.nodes[0].name}</span>
-                  )}
-                  <h5 className="hp-dir-name">{entry.title}</h5>
-                  <span className="hp-dir-cta">View entry ↗</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
 
       {/* ===== CONNECT (MEMBERSHIP) ===== */}
       <section className="connect" id="connect">
