@@ -78,6 +78,10 @@ const APP_ROUTES = new Set([
   'makers',
   'pulse',
   'games',
+  // Regional edition homepages
+  'uk',
+  'us',
+  'africa',
 ])
 
 // Alias redirects — old or alternative slugs that should map
