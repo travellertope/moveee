@@ -117,9 +117,10 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> 
 
   // Resolve taxonomy term IDs before creating the post so they can be
   // included in the initial create request rather than a separate update.
-  const [armId, regionId] = await Promise.all([
-    story.arm    ? resolveTermId("pulse-arms",    story.arm)    : Promise.resolve(null),
-    story.region ? resolveTermId("pulse-regions", story.region) : Promise.resolve(null),
+  const [armId, regionId, categoryId] = await Promise.all([
+    story.arm      ? resolveTermId("pulse-arms",       story.arm)      : Promise.resolve(null),
+    story.region   ? resolveTermId("pulse-regions",    story.region)   : Promise.resolve(null),
+    story.category ? resolveTermId("pulse-categories", story.category) : Promise.resolve(null),
   ]);
 
   const body: Record<string, any> = {
@@ -138,8 +139,9 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> 
     },
   };
 
-  if (armId)    body.pulse_arm    = [armId];
-  if (regionId) body.pulse_region = [regionId];
+  if (armId)      body.pulse_arm      = [armId];
+  if (regionId)   body.pulse_region   = [regionId];
+  if (categoryId) body.pulse_category = [categoryId];
 
   const createRes = await fetch(`${BASE}/wp/v2/pulse-stories`, {
     method: "POST",
@@ -168,11 +170,13 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> 
 export async function getPulseStories({
   arm,
   region,
+  category,
   page = 1,
   perPage = 12,
 }: {
   arm?: string;
   region?: string;
+  category?: string;
   page?: number;
   perPage?: number;
 } = {}): Promise<WpPulseStory[]> {
@@ -180,8 +184,9 @@ export async function getPulseStories({
     `${BASE}/wp/v2/pulse-stories` +
     `?per_page=${perPage}&page=${page}&orderby=date&order=desc&_embed=1`;
 
-  if (arm)    url += `&pulse_arm=${encodeURIComponent(arm)}`;
-  if (region) url += `&pulse_region=${encodeURIComponent(region)}`;
+  if (arm)      url += `&pulse_arm=${encodeURIComponent(arm)}`;
+  if (region)   url += `&pulse_region=${encodeURIComponent(region)}`;
+  if (category) url += `&pulse_category=${encodeURIComponent(category)}`;
 
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) return [];
