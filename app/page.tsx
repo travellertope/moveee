@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getWPData, GET_STORIES, GET_JOURNEYS, getEventsWithFallback } from "@/lib/wp";
+import { getWPData, GET_STORIES, GET_JOURNEYS, getEventsWithFallback, getWPQuotes } from "@/lib/wp";
 import Marquee from "@/components/Marquee";
 import PatronPrice from "@/components/PatronPrice";
+import AdBanner from "@/components/AdBanner";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -11,350 +12,465 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const session = await getServerSession(authOptions);
   const isLoggedIn = !!session?.user;
+
   let stories: any[] = [];
   let coverStory: any = null;
   let events: any[] = [];
   let origins: any[] = [];
   let products: any[] = [];
+  let quotes: any[] = [];
+  let pulseStories: any[] = [];
 
   try {
-    // 1. Fetch specifically for the Cover Story tag
     const coverData = await getWPData(GET_STORIES, { first: 1, tag: "cover-story" }, { revalidate: 0 });
     coverStory = coverData?.posts?.nodes?.[0] || null;
+  } catch (err) { console.error(err); }
 
-    // 2. Fetch latest stories (we fetch 7 to be safe in case we filter out the cover story)
-    const data = await getWPData(GET_STORIES, { first: 7 }, { revalidate: 0 });
+  try {
+    const data = await getWPData(GET_STORIES, { first: 14 }, { revalidate: 0 });
     const allStories = data?.posts?.nodes || [];
-    
-    // If no specific cover story was found by tag, use the latest one as fallback
     if (!coverStory) {
       coverStory = allStories[0];
-      stories = allStories.slice(1, 7);
+      stories = allStories.slice(1, 14);
     } else {
-      // Filter out the cover story from the general list to avoid duplication
-      stories = allStories.filter((s: any) => s.id !== coverStory.id).slice(0, 6);
+      stories = allStories.filter((s: any) => s.id !== coverStory.id).slice(0, 13);
     }
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 
   try {
     events = await getEventsWithFallback(3, { revalidate: 0 });
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 
   try {
     const originsData = await getWPData(GET_JOURNEYS, { first: 4 }, { revalidate: 0 });
     origins = originsData?.cultureJourneys?.nodes || [];
-  } catch (err) {
-    console.error('❌ Error fetching journeys:', err);
-  }
+  } catch (err) { console.error("Origins fetch error:", err); }
 
   try {
-    // Attempting to fetch WooCommerce Products via WPGraphQL WooCommerce (wooCommerce Extension)
-    // If it fails (e.g. extension not active), it will gracefully catch and default to empty.
     const productsData = await getWPData(`
       query GetProducts {
         products(first: 4) {
           nodes {
-            id
-            name
-            slug
-            image {
-              sourceUrl
-            }
-            ... on SimpleProduct {
-              price
-            }
-            ... on VariableProduct {
-              price
-            }
+            id name slug
+            image { sourceUrl }
+            ... on SimpleProduct { price }
+            ... on VariableProduct { price }
           }
         }
       }
     `, {});
     products = productsData?.products?.nodes || [];
-  } catch (err) {
-    console.error("WooCommerce missing or products fetch failed:", err);
-  }
+  } catch (err) { console.error("Products fetch error:", err); }
 
-  const magLeadStory = stories[0] || coverStory; // Lead for Mag Pillar
-  const remainingStories = stories.slice(1, 5); // Right side 4 stories
+  try {
+    const quotesData = await getWPQuotes({ first: 3 });
+    quotes = quotesData?.cultureQuotes?.nodes || [];
+  } catch (err) { console.error("Quotes fetch error:", err); }
+
+  try {
+    const WP_URL = process.env.NEXT_PUBLIC_WP_URL || "https://cms.themoveee.com";
+    const res = await fetch(
+      `${WP_URL}/wp-json/wp/v2/pulse-stories?per_page=4&orderby=date&order=desc&_embed=1`,
+      { next: { revalidate: 0 } }
+    );
+    if (res.ok) pulseStories = await res.json();
+  } catch (err) { console.error("Pulse fetch error:", err); }
+
+  // Slice stories for each section
+  const heroStories = stories.slice(0, 6);      // right col of hero
+  const magazineStrip = stories.slice(0, 5);    // 5-col mag strip below hero
 
   return (
     <>
-      <section className="hero">
-        <div className="hero-grid">
-          <div className="hero-lede">
-            <h2>
-              A field guide to <em>daring</em><br/>
-              <span className="underline">moves</span> in culture,<br/>
-              from Africa to the world.
-            </h2>
-            <p className="hero-standfirst">
-              We documents and celebrate the most considered work in film, music, visual art, literature, design, food and fashion from Africa and its diaspora — then we take you inside it.
-            </p>
-            <div className="hero-cta-row">
-              <Link href="#magazine" className="btn-primary">Enter the Issue <span className="arrow">→</span></Link>
-              {isLoggedIn ? (
-                <Link href="/member" className="btn-ghost">My Dashboard</Link>
-              ) : (
-                <Link href="/connect" className="btn-ghost">Become a Member</Link>
-              )}
+      {/* ===== HERO: STICKY COVER STORY + SCROLLING RIGHT ===== */}
+      <section className="hp-hero">
+
+        {/* LEFT: Sticky Cover Story */}
+        <div className="hp-cover-col">
+          <div className="hp-cover-sticky">
+            {coverStory ? (
+              <Link href={`/magazine/${coverStory.slug}`} className="hp-cover-link">
+                <div className="hp-cover-image">
+                  {coverStory.featuredImage && (
+                    <Image
+                      src={coverStory.featuredImage.node.sourceUrl}
+                      alt={coverStory.featuredImage.node.altText || coverStory.title}
+                      fill
+                      className="object-cover transition-transform duration-700 hover:scale-[1.03]"
+                      priority
+                    />
+                  )}
+                  <div className="hp-cover-overlay" />
+                </div>
+                <div className="hp-cover-text">
+                  <div className="hp-cover-kicker">
+                    <span className="hp-cover-dot" />
+                    Cover Story · {coverStory.categories?.nodes[0]?.name || "Culture"}
+                  </div>
+                  <h2 className="hp-cover-title">{coverStory.title}</h2>
+                  <div
+                    className="hp-cover-excerpt"
+                    dangerouslySetInnerHTML={{ __html: coverStory.excerpt }}
+                  />
+                  <span className="hp-cover-cta">Read Feature ↗</span>
+                </div>
+              </Link>
+            ) : (
+              <div className="hp-cover-placeholder">
+                <div className="hp-cover-placeholder-inner">
+                  <span>The Moveee</span>
+                  <p>Best in Culture</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT: Scrollable — nav + article grid + widgets */}
+        <div className="hp-right-col">
+
+          {/* Section navigation */}
+          <nav className="hp-section-nav">
+            <Link href="/magazine">Editorials</Link>
+            <span className="hp-nav-sep">·</span>
+            <Link href="/events">Happenings</Link>
+            <span className="hp-nav-sep">·</span>
+            <Link href="/journeys">Origins</Link>
+            <span className="hp-nav-sep">·</span>
+            <Link href="/shop">Lifestyle</Link>
+            <span className="hp-nav-sep">·</span>
+            <Link href="/pulse">Pulse</Link>
+            <span className="hp-nav-sep">·</span>
+            <Link href="/games">Games</Link>
+            <span className="hp-nav-sep">·</span>
+            <Link href="/directory">Directory</Link>
+            <span className="hp-nav-sep">·</span>
+            <Link href="/quotes">Quotes</Link>
+          </nav>
+
+          {/* Latest stories grid — 2 columns */}
+          <div className="hp-right-stories">
+            {heroStories.map((story: any) => (
+              <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-story-card">
+                <div className="hp-story-thumb">
+                  {story.featuredImage && (
+                    <Image
+                      src={story.featuredImage.node.sourceUrl}
+                      alt={story.featuredImage.node.altText || ""}
+                      fill
+                      className="object-cover"
+                    />
+                  )}
+                </div>
+                <span className="hp-story-cat">{story.categories?.nodes[0]?.name || "Culture"}</span>
+                <h4 className="hp-story-title">{story.title}</h4>
+                <span className="hp-story-meta">
+                  {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                  {story.countries?.nodes[0]?.name ? ` · ${story.countries.nodes[0].name}` : ""}
+                </span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Ad slot — inside hero right column */}
+          <AdBanner slot="hero-sidebar" className="hp-ad-sidebar" />
+
+          {/* Pulse widget */}
+          {pulseStories.length > 0 && (
+            <div className="hp-pulse-widget">
+              <div className="hp-widget-head">
+                <div className="hp-widget-label">
+                  <span className="hp-pulse-dot" />
+                  Latest from Pulse
+                </div>
+                <Link href="/pulse" className="hp-widget-see-all">See all →</Link>
+              </div>
+              <div className="hp-pulse-list">
+                {pulseStories.slice(0, 3).map((story: any) => (
+                  <Link key={story.id} href={`/pulse/${story.slug}`} className="hp-pulse-item">
+                    <span className="hp-pulse-title">{story.title?.rendered || story.title}</span>
+                    <span className="hp-pulse-date">
+                      {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Games widget */}
+          <div className="hp-games-widget">
+            <div className="hp-widget-head">
+              <div className="hp-widget-label">Culture Games</div>
+              <Link href="/games" className="hp-widget-see-all">Play now →</Link>
+            </div>
+            <div className="hp-games-list">
+              <Link href="/games/trivia" className="hp-game-item">
+                <div className="hp-game-icon">▶</div>
+                <div>
+                  <div className="hp-game-name">Culture Trivia</div>
+                  <div className="hp-game-desc">Test your knowledge of African culture</div>
+                </div>
+              </Link>
+              <Link href="/games/who-said-it" className="hp-game-item">
+                <div className="hp-game-icon">?</div>
+                <div>
+                  <div className="hp-game-name">Who Said It?</div>
+                  <div className="hp-game-desc">Match the quote to the voice</div>
+                </div>
+              </Link>
             </div>
           </div>
 
-          <div className="hero-visual">
-              <Link href={coverStory ? `/magazine/${coverStory.slug}` : '#'} className="hero-frame">
-                <div className="hero-ticker">
-                  <span>Frame · 01 / 05</span>
-                  <span>Shot on 35mm</span>
-                </div>
-                
-                {coverStory?.featuredImage && (
-                  <Image 
-                    src={coverStory.featuredImage.node.sourceUrl} 
-                    alt={coverStory.featuredImage.node.altText || coverStory.title} 
-                    fill 
-                    className="object-cover transition-transform duration-1000 hover:scale-105"
-                    priority
-                  />
-                )}
-              </Link>
-            
-            {coverStory && (
-              <Link href={`/magazine/${coverStory.slug}`} className="hero-caption" style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
-                <span>Cover Story<br />{coverStory.title}</span>
-                <span>↗ Read feature</span>
-              </Link>
-            )}
-          </div>
         </div>
       </section>
 
       <Marquee />
 
-      {/* ========== N°02 · MAGAZINE ========== */}
-      <section className="pillar" id="magazine">
-        <div className="pillar-header">
+      {/* ===== AD: POST-HERO LEADERBOARD ===== */}
+      <AdBanner slot="leaderboard-top" className="hp-ad-leaderboard" />
 
-          <div className="pillar-title">
-            <h3>Moveee <em>Magazine</em></h3>
-            <p>Long-form essays, interviews and cultural commentary. The editorial heart of the platform.</p>
+      {/* ===== LATEST FROM MOVEEE MAGAZINE ===== */}
+      <section className="hp-section" id="magazine">
+        <div className="hp-section-header">
+          <div className="hp-section-title">
+            <span className="hp-section-label">Editorial</span>
+            <h3>Magazine</h3>
           </div>
-          <Link href="/magazine" className="pillar-link">All Stories →</Link>
+          <Link href="/magazine" className="hp-section-link">All Stories →</Link>
         </div>
-
-        <div className="pillar-body">
-          <div className="mag-grid">
-            {magLeadStory && (
-              <Link href={`/magazine/${magLeadStory.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <article className="mag-lead">
-                  <div className="cover">
-                    {magLeadStory.featuredImage && (
-                      <Image 
-                        src={magLeadStory.featuredImage.node.sourceUrl} 
-                        alt={magLeadStory.featuredImage.node.altText || ""} 
-                        fill 
-                        className="object-cover grayscale-0 hover:grayscale transition-all duration-700"
-                      />
-                    )}
-                  </div>
-                  <div className="mag-kicker">★ Featured · {magLeadStory.categories?.nodes[0]?.name || "Culture"}</div>
-                  <h4>{magLeadStory.title}</h4>
-                  <div 
-                    className="text-sm text-ink-soft mb-4 line-clamp-3"
-                    dangerouslySetInnerHTML={{ __html: magLeadStory.excerpt }}
+        <div className="hp-mag-strip">
+          {magazineStrip.map((story: any) => (
+            <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-mag-card">
+              <div className="hp-mag-card-image">
+                {story.featuredImage && (
+                  <Image
+                    src={story.featuredImage.node.sourceUrl}
+                    alt={story.featuredImage.node.altText || ""}
+                    fill
+                    className="object-cover"
                   />
-                  <div className="mag-byline">
-                    {new Date(magLeadStory.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </div>
-                </article>
-              </Link>
-            )}
-
-            <div className="mag-list grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
-              {remainingStories.map((story: any, idx: number) => (
-                <Link key={story.id} href={`/magazine/${story.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <article className="mag-item h-full">
-                    <div className="mag-item-thumb">
-                      {story.featuredImage && (
-                        <Image 
-                          src={story.featuredImage.node.sourceUrl} 
-                          alt={story.featuredImage.node.altText || ""} 
-                          fill 
-                          className="object-cover grayscale-0 hover:grayscale transition-all duration-700"
-                        />
-                      )}
-                    </div>
-                    <div className="num">0{idx + 1}</div>
-                    <h5>{story.title}</h5>
-                    <div 
-                      className="text-xs text-ink-soft mb-3 line-clamp-2 opacity-80"
-                      dangerouslySetInnerHTML={{ __html: story.excerpt }}
-                    />
-                    <div className="meta">
-                      {story.categories?.nodes[0]?.name || "Culture"}
-                      {story.countries?.nodes[0]?.name ? ` · ${story.countries.nodes[0].name}` : ''}
-                    </div>
-                  </article>
-                </Link>
-              ))}
-            </div>
-          </div>
+                )}
+              </div>
+              <span className="hp-mag-cat">{story.categories?.nodes[0]?.name || "Culture"}</span>
+              <h4 className="hp-mag-card-title">{story.title}</h4>
+              <span className="hp-mag-card-meta">
+                {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
+            </Link>
+          ))}
         </div>
       </section>
 
-      {/* ========== N°03 · EVENTS ========== */}
-      <section className="pillar" id="events">
-        <div className="pillar-header">
+      {/* ===== AD: MID-PAGE LEADERBOARD ===== */}
+      <AdBanner slot="leaderboard-mid" className="hp-ad-leaderboard" />
 
-          <div className="pillar-title">
-            <h3>Moveee <em>Events</em></h3>
-            <p>Curated culture happenings — openings, listening sessions, film screenings and community dinners.</p>
+      {/* ===== HAPPENINGS ===== */}
+      <section className="hp-section" id="happenings">
+        <div className="hp-section-header">
+          <div className="hp-section-title">
+            <span className="hp-section-label">Community</span>
+            <h3>Happenings</h3>
           </div>
-          <Link href="/events" className="pillar-link">Full Calendar →</Link>
+          <Link href="/events" className="hp-section-link">Full Calendar →</Link>
         </div>
 
-        <div className="pillar-body">
-          {events.length > 0 ? (
-            <div className="events-grid">
-              {events.map((event: any) => {
-                const targetDate = event.eventDate || event.date;
-                const eventDate = new Date(targetDate);
+        {events.length > 0 ? (
+          <div className="hp-happenings-grid">
+            {/* Featured event */}
+            <Link href={`/events/${events[0].slug}`} className="hp-event-featured">
+              <div className="hp-event-featured-image">
+                {events[0].featuredImage && (
+                  <Image
+                    src={events[0].featuredImage.node.sourceUrl}
+                    alt={events[0].featuredImage.node.altText || ""}
+                    fill
+                    className="object-cover"
+                  />
+                )}
+                <div className="hp-event-featured-overlay" />
+              </div>
+              <div className="hp-event-featured-body">
+                <span className="hp-event-date-pill">
+                  {(() => {
+                    const d = new Date(events[0].eventDate || events[0].date);
+                    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+                  })()}
+                </span>
+                <h3>{events[0].title}</h3>
+                <div
+                  className="hp-event-featured-excerpt"
+                  dangerouslySetInnerHTML={{ __html: events[0].excerpt }}
+                />
+                <span className="hp-event-cta">RSVP ↗</span>
+              </div>
+            </Link>
+
+            {/* Remaining events */}
+            <div className="hp-events-list">
+              {events.slice(1, 3).map((event: any) => {
+                const d = new Date(event.eventDate || event.date);
                 return (
-                  <Link key={event.id} href={`/events/${event.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <article className="event-card">
-                      <div className="event-date">
-                        <span className="day">{eventDate.getDate().toString().padStart(2, '0')}</span>
-                        <span className="month">{eventDate.toLocaleDateString('en-GB', { month: 'short' })}</span>
-                      </div>
-                      <h4>{event.title}</h4>
-                      <div className="event-meta">
-                        <div dangerouslySetInnerHTML={{ __html: event.excerpt }} className="line-clamp-2" />
-                      </div>
-                      <span className="event-tag">RSVP</span>
-                    </article>
+                  <Link key={event.id} href={`/events/${event.slug}`} className="hp-event-item">
+                    <div className="hp-event-item-date">
+                      <span className="hp-event-day">{d.getDate().toString().padStart(2, "0")}</span>
+                      <span className="hp-event-month">
+                        {d.toLocaleDateString("en-GB", { month: "short" })}
+                      </span>
+                    </div>
+                    <div className="hp-event-item-body">
+                      <h5>{event.title}</h5>
+                      <div
+                        className="hp-event-item-excerpt"
+                        dangerouslySetInnerHTML={{ __html: event.excerpt }}
+                      />
+                    </div>
+                    <span className="hp-event-rsvp">RSVP</span>
                   </Link>
                 );
               })}
+
+              {/* Ad slot inside events section sidebar */}
+              <AdBanner slot="happenings-sidebar" className="hp-ad-rect" />
             </div>
-          ) : (
-            <div className="py-12 border border-rule/20 text-center text-ink-soft italic">
-              New happenings will be announced soon.
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="hp-empty-state">New happenings will be announced soon.</div>
+        )}
       </section>
 
-      {/* ========== N°04 · ORIGINS ========== */}
-      <section className="pillar" id="origins">
-        <div className="pillar-header">
-
-          <div className="pillar-title">
-            <h3>Moveee <em>Origins</em></h3>
-            <p>Slow, writer-led cultural journeys. Not tours — invitations into the places where the work is made.</p>
+      {/* ===== MOVEEE ORIGINS ===== */}
+      <section className="hp-section" id="origins">
+        <div className="hp-section-header">
+          <div className="hp-section-title">
+            <span className="hp-section-label">Writer-led Cultural Journeys</span>
+            <h3>Origins</h3>
           </div>
-          <Link href="/journeys" className="pillar-link">All Journeys →</Link>
+          <Link href="/journeys" className="hp-section-link">All Journeys →</Link>
         </div>
 
-        <div className="pillar-body">
-          <div className="origins-wrap">
-            <div className="origins-intro">
-              <p>Every Origins journey is designed with a resident editor — an artist, chef, writer or curator — who takes a small group (max. 12) into the rooms, studios, markets and kitchens that shape a place. No buses. No scripts. Just time.</p>
-              <div className="origins-stats">
-                <div className="stat">
-                  <div className="num">12</div>
-                  <div className="label">Cities · 2026</div>
-                </div>
-                <div className="stat">
-                  <div className="num">38</div>
-                  <div className="label">Resident hosts</div>
-                </div>
-                <div className="stat">
-                  <div className="num">09</div>
-                  <div className="label">Countries</div>
-                </div>
-                <div className="stat">
-                  <div className="num">4.9</div>
-                  <div className="label">Guest rating</div>
-                </div>
-              </div>
+        <div className="hp-origins-body">
+          <div className="hp-origins-intro">
+            <p>
+              Every Origins journey is led by a resident editor — an artist, chef, writer or curator
+              — who takes a small group into the rooms, studios, markets and kitchens that shape a place.
+              No buses. No scripts. Just time.
+            </p>
+            <div className="hp-origins-stats">
+              <div><div className="hp-stat-n">12</div><div className="hp-stat-l">Cities · 2026</div></div>
+              <div><div className="hp-stat-n">38</div><div className="hp-stat-l">Resident hosts</div></div>
+              <div><div className="hp-stat-n">09</div><div className="hp-stat-l">Countries</div></div>
+              <div><div className="hp-stat-n">4.9</div><div className="hp-stat-l">Guest rating</div></div>
             </div>
-
-            <div className="origins-list">
-              {origins.length > 0 ? origins.map((origin: any, idx: number) => (
-                <Link key={origin.id} href={`/journeys/${origin.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="origin-row">
-                    <div className="origin-idx">0{idx + 1}</div>
-                    <div className="origin-name">{origin.title}</div>
-                    <div className="origin-country">{origin.journeyLocation || "Destination"}</div>
-                    <div className="origin-price">
-                      ↗
-                      <small>View Itinerary</small>
-                    </div>
-                  </div>
-                </Link>
-              )) : (
-                <div className="py-12 text-center text-ink-soft italic border-t border-rule/20">
-                  New origins itineraries are being curated.
-                </div>
-              )}
-            </div>
+          </div>
+          <div className="hp-origins-list">
+            {origins.length > 0 ? origins.map((origin: any, idx: number) => (
+              <Link key={origin.id} href={`/journeys/${origin.slug}`} className="hp-origin-row">
+                <span className="hp-origin-idx">0{idx + 1}</span>
+                <span className="hp-origin-name">{origin.title}</span>
+                <span className="hp-origin-loc">{origin.journeyLocation || "Destination TBC"}</span>
+                <span className="hp-origin-cta">View ↗</span>
+              </Link>
+            )) : (
+              <div className="hp-empty-state">New itineraries are being curated.</div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* ========== LIFESTYLE (shop) ========== */}
-      <section className="pillar" id="lifestyle" style={{ paddingBottom: '160px' }}>
-        <div className="pillar-header">
-
-          <div className="pillar-title">
-            <h3>Moveee <em>Shop</em></h3>
-            <p>Hand-vetted objects, prints, literary editions and artifacts from creators shaping the diaspora.</p>
+      {/* ===== LIFESTYLE (SHOP) ===== */}
+      <section className="hp-section" id="lifestyle">
+        <div className="hp-section-header">
+          <div className="hp-section-title">
+            <span className="hp-section-label">Vetted Objects &amp; Editions</span>
+            <h3>Lifestyle</h3>
           </div>
-          <Link href="/shop" className="pillar-link">Visit Shop →</Link>
+          <Link href="/shop" className="hp-section-link">Visit Shop →</Link>
         </div>
 
-        <div className="pillar-body">
-          {products.length > 0 ? (
-            <div className="lifestyle-grid">
-              {products.map((product: any) => (
-                <Link key={product.id} href={`/shop/${product.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="product">
-                    <div className="product-img">
-                      {product.image && (
-                        <Image src={product.image.sourceUrl} alt={product.name} fill className="object-cover" />
-                      )}
-                      <div className="product-vetted">MOVEEE VETTED</div>
-                    </div>
-                    <div className="product-vendor">The Moveee Editions</div>
-                    <div className="product-name">{product.name}</div>
-                    <div className="product-price">{product.price || "Price on Request"}</div>
-                  </div>
-                </Link>
-              ))}
+        {products.length > 0 ? (
+          <div className="hp-products-grid">
+            {products.map((product: any) => (
+              <Link key={product.id} href={`/shop/${product.slug}`} className="hp-product">
+                <div className="hp-product-image">
+                  {product.image && (
+                    <Image src={product.image.sourceUrl} alt={product.name} fill className="object-cover" />
+                  )}
+                  <span className="hp-product-badge">MOVEEE VETTED</span>
+                </div>
+                <span className="hp-product-vendor">The Moveee Editions</span>
+                <span className="hp-product-name">{product.name}</span>
+                <span className="hp-product-price">{product.price || "Price on Request"}</span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="hp-empty-state">Our curated shop collection is launching soon.</div>
+        )}
+      </section>
+
+      {/* ===== AD: PRE-QUOTES LEADERBOARD ===== */}
+      <AdBanner slot="leaderboard-pre-quotes" className="hp-ad-leaderboard" />
+
+      {/* ===== QUOTES ===== */}
+      {quotes.length > 0 && (
+        <section className="hp-section hp-section--dark" id="quotes">
+          <div className="hp-section-header">
+            <div className="hp-section-title">
+              <span className="hp-section-label">Words that move</span>
+              <h3>Quotes</h3>
             </div>
-          ) : (
-            <div className="py-12 border border-rule/20 text-center text-ink-soft italic">
-              Our curated shop collection is launching soon.
-            </div>
-          )}
+            <Link href="/quotes" className="hp-section-link">All Quotes →</Link>
+          </div>
+          <div className="hp-quotes-grid">
+            {quotes.map((quote: any) => (
+              <Link key={quote.id} href={`/quotes/${quote.slug}`} className="hp-quote-card">
+                <div className="hp-quote-mark">&ldquo;</div>
+                <blockquote
+                  className="hp-quote-text"
+                  dangerouslySetInnerHTML={{ __html: quote.content || quote.title }}
+                />
+                <div className="hp-quote-author">
+                  — {quote.quoteAuthors?.nodes[0]?.name || quote.quoteSource || "Anonymous"}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ===== DIRECTORY PREVIEW ===== */}
+      <section className="hp-section" id="directory">
+        <div className="hp-section-header">
+          <div className="hp-section-title">
+            <span className="hp-section-label">The Africa-wide cultural atlas</span>
+            <h3>Directory</h3>
+          </div>
+          <Link href="/directory" className="hp-section-link">Browse Directory →</Link>
+        </div>
+        <div className="hp-directory-cta">
+          <p>
+            Discover makers, galleries, restaurants, studios and culture spaces across Africa and
+            the diaspora — submitted and curated by the Moveee community.
+          </p>
+          <div className="hp-directory-links">
+            <Link href="/directory" className="btn-primary">Browse Directory <span className="arrow">→</span></Link>
+            <Link href="/directory/submit" className="btn-ghost">Submit an Entry</Link>
+          </div>
         </div>
       </section>
 
-      {/* ========== CONNECT (membership) ========== */}
+      {/* ===== CONNECT (MEMBERSHIP) ===== */}
       <section className="connect" id="connect">
         <div className="connect-inner">
           <div className="connect-left">
-
             <h3>An archive <em>alive</em>.</h3>
             <p>
-              The Moveee is entirely independent. Moveee Connect is our membership tier — supporting our editorial independence while granting you access to the physical manifestations of the magazine.
+              The Moveee is entirely independent. Moveee Connect is our membership tier — supporting
+              our editorial independence while granting you access to the physical manifestations of
+              the magazine.
             </p>
           </div>
-
           <div className="connect-right">
             <div className="perks">
               <div className="perk">
@@ -370,7 +486,6 @@ export default async function Home() {
                 <p>Full digital access to the entire editorial archive.</p>
               </div>
             </div>
-            
             <div className="connect-cta">
               {isLoggedIn ? (
                 <Link href="/member" className="btn-gold">Go to Dashboard <span className="arrow">→</span></Link>
