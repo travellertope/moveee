@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -12,36 +12,42 @@ interface Product {
   image?: { sourceUrl: string };
 }
 
-interface ShopCarouselProps {
-  products: Product[];
-}
+export default function ShopCarousel({ products }: { products: Product[] }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const drag = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false });
 
-const ShopCarousel: React.FC<ShopCarouselProps> = ({ products }) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  const checkScroll = () => {
-    const el = scrollRef.current;
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const el = trackRef.current;
     if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 8);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 8);
-  };
+    drag.current = { active: true, startX: e.clientX, scrollLeft: el.scrollLeft, moved: false };
+    el.setPointerCapture(e.pointerId);
+    el.style.cursor = "grabbing";
+  }, []);
 
-  useEffect(() => {
-    const el = scrollRef.current;
+  const onPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current.active) return;
+    const el = trackRef.current;
     if (!el) return;
-    checkScroll();
-    el.addEventListener("scroll", checkScroll, { passive: true });
-    return () => el.removeEventListener("scroll", checkScroll);
-  }, [products]);
+    const dx = e.clientX - drag.current.startX;
+    if (Math.abs(dx) > 4) drag.current.moved = true;
+    el.scrollLeft = drag.current.scrollLeft - dx;
+  }, []);
 
-  const scroll = (dir: "left" | "right") => {
-    const el = scrollRef.current;
+  const onPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const el = trackRef.current;
     if (!el) return;
-    const cardWidth = el.querySelector(".hp-carousel-card")?.clientWidth || 280;
-    el.scrollBy({ left: dir === "right" ? cardWidth * 2 : -(cardWidth * 2), behavior: "smooth" });
-  };
+    drag.current.active = false;
+    el.releasePointerCapture(e.pointerId);
+    el.style.cursor = "";
+  }, []);
+
+  const onClickCapture = useCallback((e: React.MouseEvent) => {
+    if (drag.current.moved) {
+      e.preventDefault();
+      e.stopPropagation();
+      drag.current.moved = false;
+    }
+  }, []);
 
   if (!products.length) {
     return <div className="hp-empty-state">Our curated shop collection is launching soon.</div>;
@@ -49,17 +55,22 @@ const ShopCarousel: React.FC<ShopCarouselProps> = ({ products }) => {
 
   return (
     <div className="hp-carousel-wrap">
-      <button
-        className={`hp-carousel-btn hp-carousel-btn--prev ${!canScrollLeft ? "hp-carousel-btn--hidden" : ""}`}
-        onClick={() => scroll("left")}
-        aria-label="Previous products"
+      <div
+        className="hp-carousel-track"
+        ref={trackRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onClickCapture={onClickCapture}
       >
-        ←
-      </button>
-
-      <div className="hp-carousel-track" ref={scrollRef}>
         {products.map((product) => (
-          <Link key={product.id} href={`/shop/${product.slug}`} className="hp-carousel-card hp-product">
+          <Link
+            key={product.id}
+            href={`/shop/${product.slug}`}
+            className="hp-carousel-card hp-product"
+            draggable={false}
+          >
             <div className="hp-product-image">
               {product.image && (
                 <Image
@@ -67,6 +78,7 @@ const ShopCarousel: React.FC<ShopCarouselProps> = ({ products }) => {
                   alt={product.name}
                   fill
                   className="object-cover"
+                  draggable={false}
                 />
               )}
               <span className="hp-product-badge">MOVEEE VETTED</span>
@@ -77,16 +89,6 @@ const ShopCarousel: React.FC<ShopCarouselProps> = ({ products }) => {
           </Link>
         ))}
       </div>
-
-      <button
-        className={`hp-carousel-btn hp-carousel-btn--next ${!canScrollRight ? "hp-carousel-btn--hidden" : ""}`}
-        onClick={() => scroll("right")}
-        aria-label="Next products"
-      >
-        →
-      </button>
     </div>
   );
-};
-
-export default ShopCarousel;
+}
