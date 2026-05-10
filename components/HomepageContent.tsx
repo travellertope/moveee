@@ -188,7 +188,7 @@ export default function HomepageContent({
             <h3 className="hp-trinity-heading">Happenings</h3>
             <Link href="/events" className="hp-trinity-all">All Events →</Link>
           </div>
-          {events.length > 0 ? events.slice(0, 7).map((event: any) => {
+          {events.length > 0 ? events.slice(0, 6).map((event: any) => {
             const d = new Date(event.eventDate || event.date);
             const dateMeta = d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).toUpperCase();
             const loc = event.location || event.eventLocation;
@@ -211,7 +211,7 @@ export default function HomepageContent({
             <h3 className="hp-trinity-heading">Origins</h3>
             <Link href="/journeys" className="hp-trinity-all">All Tours →</Link>
           </div>
-          {origins.length > 0 ? origins.map((origin: any) => (
+          {origins.length > 0 ? origins.slice(0, 6).map((origin: any) => (
             <Link key={origin.id} href={`/journeys/${origin.slug}`} className="hp-trinity-thumb-row">
               {origin.featuredImage && (
                 <div className="hp-trinity-thumb">
@@ -241,7 +241,7 @@ export default function HomepageContent({
             <h3 className="hp-trinity-heading">Directory</h3>
             <Link href="/directory" className="hp-trinity-all">Browse All →</Link>
           </div>
-          {directoryEntries.slice(0, 8).map((entry: any) => (
+          {directoryEntries.slice(0, 6).map((entry: any) => (
             <Link key={entry.id} href={`/directory/${entry.slug}`} className="hp-trinity-thumb-row">
               {entry.featuredImage ? (
                 <div className="hp-trinity-thumb">
