@@ -80,22 +80,24 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
 
   return (
     <div style={{ background: "var(--paper)", minHeight: "60vh", paddingBottom: "4rem" }}>
-      {/* ── Filter bar ── */}
+      {/* ── Filter bar: category tabs left, refine selects right — single row ── */}
       <div style={{
         borderBottom: "1px solid #e0dbd1",
         position: "sticky",
         top: 0,
         background: "var(--paper)",
         zIndex: 10,
+        display: "flex",
+        alignItems: "stretch",
+        padding: "0 1.5rem",
       }}>
-        {/* Primary: scrollable category tabs */}
+        {/* Scrollable category tabs */}
         <div style={{
           display: "flex",
           gap: 0,
           overflowX: "auto",
           scrollbarWidth: "none",
-          borderBottom: "1px solid #e0dbd1",
-          padding: "0 1.5rem",
+          flex: 1,
         }}>
           {CATEGORIES.map(({ slug, label }) => {
             const active = activeCategory === slug;
@@ -127,22 +129,16 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
           })}
         </div>
 
-        {/* Secondary: section + region selects */}
+        {/* Refine selects — pinned right */}
         <div style={{
           display: "flex",
           alignItems: "center",
-          gap: "0.75rem",
-          padding: "0.6rem 1.5rem",
+          gap: "0.5rem",
+          flexShrink: 0,
+          borderLeft: "1px solid #e0dbd1",
+          paddingLeft: "1.25rem",
+          marginLeft: "0.5rem",
         }}>
-          <span style={{
-            fontFamily: "var(--font-mono, monospace)",
-            fontSize: "0.62rem",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "#b0a495",
-          }}>
-            Refine:
-          </span>
           <select
             value={activeArm}
             onChange={(e) => handleArm(e.target.value)}
