@@ -74,7 +74,7 @@ export async function fetchHomepageData(editionTag?: string) {
 
   // Origins
   try {
-    const data = await getWPData(GET_JOURNEYS, { first: 4 }, { revalidate: 0 });
+    const data = await getWPData(GET_JOURNEYS, { first: 6 }, { revalidate: 0 });
     origins = data?.cultureJourneys?.nodes || [];
   } catch (err) { console.error("Origins fetch error:", err); }
 
