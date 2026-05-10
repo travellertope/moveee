@@ -40,7 +40,7 @@ export default async function Home() {
   } catch (err) { console.error(err); }
 
   try {
-    events = await getEventsWithFallback(3, { revalidate: 0 });
+    events = await getEventsWithFallback(6, { revalidate: 0 });
   } catch (err) { console.error(err); }
 
   try {
@@ -280,9 +280,6 @@ export default async function Home() {
                 </Link>
               );
             })}
-            <div className="hp-events-footer">
-              <Link href="/events" className="hp-events-see-all">See all happenings and collaborations</Link>
-            </div>
           </div>
         ) : (
           <div className="hp-empty-state">New happenings will be announced soon.</div>
@@ -333,10 +330,6 @@ export default async function Home() {
             <div className="hp-origins-track">
               {origins.map((origin: any) => (
                 <Link key={origin.id} href={`/journeys/${origin.slug}`} className="hp-origin-card">
-                  <div className="hp-origin-card-top">
-                    <span className="hp-origin-card-label">Moveee Origins</span>
-                    <h4 className="hp-origin-card-title">{origin.title}</h4>
-                  </div>
                   <div className="hp-origin-card-image">
                     {origin.featuredImage ? (
                       <Image
@@ -348,6 +341,10 @@ export default async function Home() {
                     ) : (
                       <div className="hp-origin-card-placeholder" />
                     )}
+                  </div>
+                  <div className="hp-origin-card-bottom">
+                    <span className="hp-origin-card-label">Moveee Origins</span>
+                    <h4 className="hp-origin-card-title">{origin.title}</h4>
                   </div>
                 </Link>
               ))}
