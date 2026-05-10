@@ -1,0 +1,124 @@
+import {
+  getWPData,
+  GET_STORIES,
+  GET_JOURNEYS,
+  GET_DIRECTORY_ENTRIES,
+  getEventsWithFallback,
+  getWPQuotes,
+} from "@/lib/wp";
+
+const PRODUCTS_QUERY = `
+  query GetProducts {
+    products(first: 10) {
+      nodes {
+        id name slug
+        image { sourceUrl }
+        ... on SimpleProduct { price }
+        ... on VariableProduct { price }
+      }
+    }
+  }
+`;
+
+/**
+ * Fetch all data needed for a homepage edition.
+ * Pass `editionTag` ("uk" | "us" | "africa") to filter edition-specific content,
+ * or leave undefined for the global edition.
+ */
+export async function fetchHomepageData(editionTag?: string) {
+  let stories: any[] = [];
+  let coverStory: any = null;
+  let events: any[] = [];
+  let origins: any[] = [];
+  let products: any[] = [];
+  let quotes: any[] = [];
+  let pulseStories: any[] = [];
+  let directoryEntries: any[] = [];
+
+  // Cover story — try edition-specific tag first, fall back to global cover-story
+  try {
+    if (editionTag) {
+      const edCover = await getWPData(GET_STORIES, { first: 1, tag: `cover-story-${editionTag}` }, { revalidate: 0 });
+      coverStory = edCover?.posts?.nodes?.[0] || null;
+    }
+    if (!coverStory) {
+      const globalCover = await getWPData(GET_STORIES, { first: 1, tag: "cover-story" }, { revalidate: 0 });
+      coverStory = globalCover?.posts?.nodes?.[0] || null;
+    }
+  } catch (err) { console.error("Cover story fetch error:", err); }
+
+  // Stories — edition-tagged first, fall back to latest
+  try {
+    const vars = editionTag
+      ? { first: 14, tag: editionTag }
+      : { first: 14 };
+    const data = await getWPData(GET_STORIES, vars, { revalidate: 0 });
+    const all: any[] = data?.posts?.nodes || [];
+
+    // If edition tag returned fewer than 4 stories, supplement with latest
+    let pool = all;
+    if (editionTag && all.length < 4) {
+      const fallback = await getWPData(GET_STORIES, { first: 14 }, { revalidate: 0 });
+      const fallbackStories: any[] = fallback?.posts?.nodes || [];
+      const existingIds = new Set(all.map((s: any) => s.id));
+      pool = [...all, ...fallbackStories.filter((s: any) => !existingIds.has(s.id))].slice(0, 14);
+    }
+
+    if (!coverStory) {
+      coverStory = pool[0];
+      stories = pool.slice(1, 14);
+    } else {
+      stories = pool.filter((s: any) => s.id !== coverStory.id).slice(0, 13);
+    }
+  } catch (err) { console.error("Stories fetch error:", err); }
+
+  // Events — filter by edition tag if provided
+  try {
+    events = await getEventsWithFallback(6, { revalidate: 0 });
+    if (editionTag && events.length > 0) {
+      // Filter events tagged for this edition; fall back to all if none match
+      const tagged = events.filter((e: any) =>
+        e.tags?.nodes?.some((t: any) => t.slug === editionTag)
+      );
+      if (tagged.length >= 2) events = tagged;
+    }
+  } catch (err) { console.error("Events fetch error:", err); }
+
+  // Origins
+  try {
+    const data = await getWPData(GET_JOURNEYS, { first: 4 }, { revalidate: 0 });
+    origins = data?.cultureJourneys?.nodes || [];
+  } catch (err) { console.error("Origins fetch error:", err); }
+
+  // Products — same across all editions
+  try {
+    const data = await getWPData(PRODUCTS_QUERY, {});
+    products = data?.products?.nodes || [];
+  } catch (err) { console.error("Products fetch error:", err); }
+
+  // Directory — random 8 from a larger pool
+  try {
+    const data = await getWPData(GET_DIRECTORY_ENTRIES, { first: 24 }, { revalidate: 0 });
+    const all: any[] = data?.cultureDirectories?.nodes || [];
+    directoryEntries = all.sort(() => Math.random() - 0.5).slice(0, 8);
+  } catch (err) { console.error("Directory fetch error:", err); }
+
+  // Quotes — random 3 from a larger pool
+  try {
+    const data = await getWPQuotes({ first: 15 });
+    const all: any[] = data?.cultureQuotes?.nodes || [];
+    quotes = all.sort(() => Math.random() - 0.5).slice(0, 3);
+  } catch (err) { console.error("Quotes fetch error:", err); }
+
+  // Pulse stories
+  try {
+    const WP_URL = process.env.NEXT_PUBLIC_WP_URL || "https://cms.themoveee.com";
+    const res = await fetch(
+      `${WP_URL}/wp-json/wp/v2/pulse-stories?per_page=4&orderby=date&order=desc&_embed=1`,
+      { next: { revalidate: 0 } }
+    );
+    if (res.ok) pulseStories = await res.json();
+  } catch (err) { console.error("Pulse fetch error:", err); }
+
+  return { coverStory, stories, events, origins, products, quotes, pulseStories, directoryEntries };
+}

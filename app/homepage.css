@@ -76,6 +76,48 @@
     z-index: 2;
   }
 
+  /* ========== EDITION SWITCHER BAR ========== */
+  .edition-bar {
+    background: var(--ink);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .edition-bar-inner {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 7px 40px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .edition-bar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    margin-right: 16px;
+  }
+
+  .edition-bar-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+    text-decoration: none;
+    padding: 4px 12px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    transition: color 0.2s;
+  }
+  .edition-bar-link:first-of-type { border-left: 1px solid rgba(255,255,255,0.1); }
+  .edition-bar-link:hover { color: rgba(255,255,255,0.85); }
+  .edition-bar-link--active {
+    color: var(--paper);
+    background: rgba(255,255,255,0.08);
+  }
+
   /* ========== MASTHEAD ========== */
   .masthead-bar {
     border-bottom: 1px solid var(--rule);
