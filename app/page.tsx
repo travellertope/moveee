@@ -71,8 +71,9 @@ export default async function Home() {
   } catch (err) { console.error("Directory fetch error:", err); }
 
   try {
-    const quotesData = await getWPQuotes({ first: 3 });
-    quotes = quotesData?.cultureQuotes?.nodes || [];
+    const quotesData = await getWPQuotes({ first: 15 });
+    const allQuotes = quotesData?.cultureQuotes?.nodes || [];
+    quotes = allQuotes.sort(() => Math.random() - 0.5).slice(0, 3);
   } catch (err) { console.error("Quotes fetch error:", err); }
 
   try {
