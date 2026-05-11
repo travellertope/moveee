@@ -11,42 +11,57 @@ interface Props {
   alreadyDone?: boolean;
 }
 
-const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
-
-function getResult(game: Props["game"], score: number, total: number) {
-  if (game === "sudoku" || game === "crossword") {
-    return { emoji: "🧩", title: "Puzzle Complete!" };
-  }
-  const pct = score / total;
-  if (pct === 1)   return { emoji: "🏆", title: "Perfect Score!" };
-  if (pct >= 0.8)  return { emoji: "🔥", title: "Culture Expert" };
-  if (pct >= 0.6)  return { emoji: "🧠", title: "Well Versed" };
-  if (pct >= 0.4)  return { emoji: "📖", title: "Keep Exploring" };
-  return           { emoji: "🌱", title: "Just the Beginning" };
-}
+const GAME_META: Record<Props["game"], { label: string; icon: string }> = {
+  trivia:    { label: "Culture Trivia",   icon: "🧠" },
+  wsi:       { label: "Who Said It?",     icon: "💬" },
+  sudoku:    { label: "Daily Sudoku",     icon: "🔢" },
+  crossword: { label: "Daily Crossword",  icon: "✏️"  },
+};
 
 const OTHER_GAME: Record<Props["game"], { href: string; label: string }> = {
   wsi:       { href: "/games/trivia",     label: "Culture Trivia" },
   trivia:    { href: "/games/who-said-it", label: "Who Said It?" },
-  sudoku:    { href: "/games/crossword",   label: "Daily Crossword" },
-  crossword: { href: "/games/sudoku",      label: "Daily Sudoku" },
+  sudoku:    { href: "/games/crossword",  label: "Daily Crossword" },
+  crossword: { href: "/games/sudoku",     label: "Daily Sudoku" },
 };
+
+function getResult(game: Props["game"], score: number, total: number) {
+  if (game === "sudoku" || game === "crossword") {
+    return { emoji: "🏅", badge: "COMPLETE", tagline: "Puzzle solved." };
+  }
+  const pct = score / total;
+  if (pct === 1)   return { emoji: "🏆", badge: "PERFECT",  tagline: "Flawless. Every answer right." };
+  if (pct >= 0.8)  return { emoji: "🔥", badge: "SHARP",    tagline: "Culture is in your blood." };
+  if (pct >= 0.6)  return { emoji: "🧠", badge: "VERSED",   tagline: "Well versed. Keep going." };
+  if (pct >= 0.4)  return { emoji: "📖", badge: "LEARNING", tagline: "The archive awaits you." };
+  return           { emoji: "🌱", badge: "STARTER",          tagline: "Every great knows starts here." };
+}
+
+function formatDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  } catch {
+    return iso;
+  }
+}
 
 export default function GameDoneScreen({ game, score, total, date, alreadyDone }: Props) {
   const [email,    setEmail]    = useState("");
   const [subState, setSubState] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [shared,   setShared]   = useState(false);
 
-  const { emoji, title } = getResult(game, score, total);
+  const { emoji, badge, tagline } = getResult(game, score, total);
+  const meta       = GAME_META[game];
+  const otherGame  = OTHER_GAME[game];
   const isPuzzle   = game === "sudoku" || game === "crossword";
   const pct        = isPuzzle ? null : Math.round((score / total) * 100);
-  const otherGame  = OTHER_GAME[game];
 
   async function handleSubscribe(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return;
     setSubState("loading");
     try {
-      const res = await fetch(`${WP_URL}/wp-json/culture/v1/newsletter-subscribe`, {
+      const res = await fetch("/api/games/subscribe", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ email }),
@@ -57,63 +72,99 @@ export default function GameDoneScreen({ game, score, total, date, alreadyDone }
     }
   }
 
+  async function handleShare() {
+    const scoreText = isPuzzle
+      ? `I solved today's ${meta.label} on Moveee! 🎯`
+      : `I scored ${score}/${total} (${pct}%) on today's ${meta.label} on Moveee! ${emoji}`;
+    const shareData = {
+      title: `Moveee Games — ${meta.label}`,
+      text: `${scoreText}\n\nPlay at themoveee.com/games`,
+      url: "https://themoveee.com/games",
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(`${scoreText}\n\nthemoveee.com/games`);
+        setShared(true);
+        setTimeout(() => setShared(false), 3000);
+      }
+    } catch {}
+  }
+
   return (
-    <div className="game-done">
-      <div className="game-done__card">
-        <p className="game-done__already">{alreadyDone ? "Already completed today" : "Today's game complete"}</p>
+    <div className="gds-wrap">
+      <div className="gds-card">
 
-        <div className="game-done__emoji">{emoji}</div>
-        <h2 className="game-done__title">{title}</h2>
-        <p className="game-done__date">{date}</p>
+        {/* Header bar */}
+        <div className="gds-header">
+          <span className="gds-logo">THE MOVEEE</span>
+          <span className="gds-game-tag">{meta.icon} {meta.label}</span>
+        </div>
 
-        {!isPuzzle && (
-          <>
-            <div className="game-done__score">
-              <span className="game-done__score-num">{score}</span>
-              <span className="game-done__score-den">/ {total}</span>
+        {/* Score / result zone */}
+        <div className="gds-result">
+          <div className="gds-badge">{badge}</div>
+          <div className="gds-emoji">{emoji}</div>
+          {!isPuzzle && (
+            <div className="gds-score-block">
+              <span className="gds-score-num">{score}</span>
+              <span className="gds-score-sep">/</span>
+              <span className="gds-score-total">{total}</span>
             </div>
-            <p className="game-done__pct">{pct}% correct</p>
-          </>
-        )}
-
-        <div className="game-done__subscribe">
-          <p className="game-done__sub-label">
-            Get notified when tomorrow's puzzle drops
-          </p>
-          {subState === "done" ? (
-            <p className="game-done__sub-success">✓ You're in — see you tomorrow</p>
-          ) : (
-            <form className="game-done__sub-form" onSubmit={handleSubscribe}>
-              <input
-                type="email"
-                className="game-done__sub-input"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <button
-                type="submit"
-                className="game-done__sub-btn"
-                disabled={subState === "loading"}
-              >
-                {subState === "loading" ? "…" : "Notify me"}
-              </button>
-            </form>
           )}
-          {subState === "error" && (
-            <p className="game-done__sub-error">Something went wrong — try again.</p>
+          {!isPuzzle && pct !== null && (
+            <div className="gds-pct">{pct}% correct</div>
+          )}
+          <p className="gds-tagline">{tagline}</p>
+        </div>
+
+        {/* Date + status */}
+        <div className="gds-meta-row">
+          <span className="gds-date">{formatDate(date)}</span>
+          {alreadyDone && <span className="gds-already">Already played today</span>}
+        </div>
+
+        {/* Share button */}
+        <button className="gds-share-btn" onClick={handleShare}>
+          {shared ? "✓ Copied to clipboard" : "Share your score →"}
+        </button>
+
+        {/* Games notify subscription */}
+        <div className="gds-sub-zone">
+          {subState === "done" ? (
+            <p className="gds-sub-success">✓ You're on the list — we'll ping you daily.</p>
+          ) : (
+            <>
+              <p className="gds-sub-label">Get daily game reminders</p>
+              <form className="gds-sub-form" onSubmit={handleSubscribe}>
+                <input
+                  type="email"
+                  className="gds-sub-input"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                <button type="submit" className="gds-sub-btn" disabled={subState === "loading"}>
+                  {subState === "loading" ? "…" : "Notify me"}
+                </button>
+              </form>
+              {subState === "error" && <p className="gds-sub-error">Try again in a moment.</p>}
+            </>
           )}
         </div>
 
-        <div className="game-done__actions">
-          <Link href={otherGame.href} className="game-result__btn game-result__btn--primary">
+        {/* Nav actions */}
+        <div className="gds-actions">
+          <Link href={otherGame.href} className="gds-btn gds-btn--primary">
             Try {otherGame.label} →
           </Link>
-          <Link href="/games" className="game-result__btn game-result__btn--secondary">
+          <Link href="/games" className="gds-btn gds-btn--ghost">
             All Games
           </Link>
         </div>
+
       </div>
     </div>
   );
