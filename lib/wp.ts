@@ -469,6 +469,19 @@ const DIRECTORY_FIELDS_FRAGMENT = `
       title
       imageUrl
     }
+    infobox {
+      born died nationality occupation knownFor originCity activeYears awards labels education
+      country region population officialLanguage currency founded area
+      founders originCountry activePeriod ideology keyFigures relatedMovements
+      originDecade instruments tempoBpm keyArtists relatedGenres subgenres
+      keyThinkers period relatedConcepts
+      director year starring cinematographer language distributor runtime productionCompany
+      author yearPublished genre publisher pages isbn
+      artist medium dimensions currentLocation artCollection style
+      foodType mainIngredients alsoKnownAs culturalContext
+      origin era keyDesigners materials culturalSignificance
+      creator network seasons years
+    }
   }
 `;
 

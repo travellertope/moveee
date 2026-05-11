@@ -127,6 +127,43 @@ class Culture_Directory {
             }
         }
 
+        // Save per-type infobox meta fields.
+        $infobox = $request->get_param( 'infobox' );
+        if ( ! empty( $infobox ) && is_array( $infobox ) ) {
+            $allowed_keys = array(
+                // person
+                'born', 'died', 'nationality', 'occupation', 'known_for', 'origin_city', 'active_years', 'awards', 'labels', 'education',
+                // place
+                'country', 'region', 'population', 'official_language', 'currency', 'founded', 'area',
+                // movement
+                'founders', 'origin_country', 'active_period', 'ideology', 'key_figures', 'related_movements',
+                // genre
+                'origin_decade', 'instruments', 'tempo_bpm', 'key_artists', 'related_genres', 'subgenres',
+                // concept
+                'key_thinkers', 'period', 'related_concepts',
+                // film
+                'director', 'year', 'starring', 'cinematographer', 'language', 'distributor', 'runtime', 'production_company',
+                // book
+                'author', 'year_published', 'genre', 'publisher', 'pages', 'isbn',
+                // artwork
+                'artist', 'medium', 'dimensions', 'current_location', 'art_collection', 'style',
+                // food
+                'food_type', 'main_ingredients', 'also_known_as', 'cultural_context',
+                // fashion
+                'origin', 'era', 'key_designers', 'materials', 'cultural_significance',
+                // tv-series
+                'creator', 'network', 'seasons', 'years',
+            );
+            foreach ( $allowed_keys as $snake_key ) {
+                // Accept both snake_case and camelCase from the JSON body.
+                $camel_key = lcfirst( str_replace( '_', '', ucwords( $snake_key, '_' ) ) );
+                $value     = $infobox[ $snake_key ] ?? $infobox[ $camel_key ] ?? null;
+                if ( isset( $value ) && $value !== '' ) {
+                    update_post_meta( $post_id, 'dir_infobox_' . $snake_key, sanitize_text_field( (string) $value ) );
+                }
+            }
+        }
+
         // Award gamification points to the submitter.
         $points_awarded = 25;
         if ( $user_id > 0 && class_exists( 'Culture_Gamification' ) ) {

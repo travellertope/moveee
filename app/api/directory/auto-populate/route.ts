@@ -235,6 +235,7 @@ async function submitEntry(
       content:      stub.content,
       entry_type:   stub.entryType,
       interests:    stub.interests,
+      infobox:      stub.infobox ?? {},
       ai_generated: true,
       auto_publish: true,
     }),

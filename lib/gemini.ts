@@ -70,9 +70,44 @@ export const ENTRY_TYPE_SLUGS = [
   "book",
   "food",
   "fashion",
+  "tv-series",
 ] as const;
 
 export type EntryType = (typeof ENTRY_TYPE_SLUGS)[number];
+
+export interface DirectoryInfobox {
+  // person
+  born?: string; died?: string; nationality?: string; occupation?: string;
+  knownFor?: string; originCity?: string; activeYears?: string; awards?: string;
+  labels?: string; education?: string;
+  // place
+  country?: string; region?: string; population?: string; officialLanguage?: string;
+  currency?: string; founded?: string; area?: string;
+  // movement
+  founders?: string; originCountry?: string; activePeriod?: string; ideology?: string;
+  keyFigures?: string; relatedMovements?: string;
+  // genre
+  originDecade?: string; instruments?: string; tempoBpm?: string; keyArtists?: string;
+  relatedGenres?: string; subgenres?: string;
+  // concept
+  keyThinkers?: string; period?: string; relatedConcepts?: string;
+  // film
+  director?: string; year?: string; starring?: string; cinematographer?: string;
+  language?: string; distributor?: string; runtime?: string; productionCompany?: string;
+  // book
+  author?: string; yearPublished?: string; genre?: string; publisher?: string;
+  pages?: string; isbn?: string;
+  // artwork
+  artist?: string; medium?: string; dimensions?: string; currentLocation?: string;
+  artCollection?: string; style?: string;
+  // food
+  foodType?: string; mainIngredients?: string; alsoKnownAs?: string; culturalContext?: string;
+  // fashion
+  origin?: string; era?: string; keyDesigners?: string; materials?: string;
+  culturalSignificance?: string;
+  // tv-series
+  creator?: string; network?: string; seasons?: string; years?: string;
+}
 
 export interface DirectoryStub {
   title: string;
@@ -81,6 +116,7 @@ export interface DirectoryStub {
   entryType: EntryType;
   interests: string[];
   suggestedLinks: string[];
+  infobox: DirectoryInfobox;
 }
 
 export interface ImageResult {
@@ -152,9 +188,25 @@ The JSON must match this exact structure:
   "title": "The canonical name of the entry",
   "excerpt": "One or two sentences summarising this entry (plain text, no HTML tags)",
   "content": "Full HTML body using ONLY <p>, <h2>, <ul>, <li> tags. Must include: an overview paragraph, a Cultural Significance section, and a Legacy or Related Works section. Minimum 4 paragraphs total.",
-  "entryType": "exactly one of the following — choose the most specific match:\n  person   = an individual human being (musician, writer, artist, activist, filmmaker, philosopher, etc.)\n  place    = a geographic location (city, neighbourhood, landmark, region, market)\n  movement = a cultural, political, or artistic movement or era (Pan-Africanism, Harlem Renaissance)\n  genre    = a musical or artistic genre or style (Afrobeats, Highlife, Amapiano, Nollywood as a film industry)\n  concept  = an idea, philosophy, practice, or tradition (Ubuntu, Sankofa, Griot tradition, Adinkra symbols)\n  film     = a specific film or documentary (feature film, short film, documentary — NOT a genre or industry)\n  book     = a specific published book (novel, essay collection, poetry collection, memoir)\n  artwork  = a specific visual artwork, sculpture, installation, or album/music recording\n  food     = a specific dish, ingredient, or food tradition\n  fashion  = a specific garment, textile, fabric, or fashion tradition",
+  "entryType": "exactly one of the following — choose the most specific match:\n  person    = an individual human being (musician, writer, artist, activist, filmmaker, philosopher, etc.)\n  place     = a geographic location (city, neighbourhood, landmark, region, market)\n  movement  = a cultural, political, or artistic movement or era (Pan-Africanism, Harlem Renaissance)\n  genre     = a musical or artistic genre or style (Afrobeats, Highlife, Amapiano, Nollywood as a film industry)\n  concept   = an idea, philosophy, practice, or tradition (Ubuntu, Sankofa, Griot tradition, Adinkra symbols)\n  film      = a specific film or documentary (feature film, short film, documentary — NOT a series)\n  book      = a specific published book (novel, essay collection, poetry collection, memoir)\n  artwork   = a specific visual artwork, sculpture, installation, or album/music recording\n  food      = a specific dish, ingredient, or food tradition\n  fashion   = a specific garment, textile, fabric, or fashion tradition\n  tv-series = a television or streaming series, web series, or miniseries",
   "interests": ["2-5 relevant interest slugs, lowercase, hyphenated. Choose from: music, visual-art, food-drink, fashion, literature, film, history, politics, spirituality, dance, theatre, sport, architecture, photography"],
-  "suggestedLinks": ["2-4 names of related topics that would make good linked entries in the same directory"]
+  "suggestedLinks": ["2-4 names of related topics that would make good linked entries in the same directory"],
+  "infobox": {
+    // Include ONLY fields relevant to the entryType. All values must be strings.
+    // Use approximate/well-known values only. Omit a field entirely if the value is genuinely uncertain.
+    //
+    // person:    born, died, nationality, occupation, knownFor, originCity, activeYears, awards, labels, education
+    // place:     country, region, population, officialLanguage, currency, founded, area
+    // movement:  founded, founders, originCountry, activePeriod, ideology, keyFigures, relatedMovements
+    // genre:     originCountry, originDecade, instruments, tempoBpm, keyArtists, relatedGenres, subgenres
+    // concept:   originCountry, keyThinkers, period, knownFor, relatedConcepts
+    // film:      director, year, starring, cinematographer, country, language, distributor, runtime, productionCompany
+    // book:      author, yearPublished, genre, publisher, language, pages, isbn
+    // artwork:   artist, year, medium, dimensions, currentLocation, artCollection, style
+    // food:      originCountry, foodType, mainIngredients, alsoKnownAs, culturalContext
+    // fashion:   origin, era, keyDesigners, materials, style, culturalSignificance
+    // tv-series: creator, network, seasons, years, starring, country, language, genre
+  }
 }
 
 Focus on African, Caribbean, and global diaspora contexts. Be factual, culturally respectful, and celebratory in tone. Use approximate language (e.g. "in the late 1970s") rather than fabricating specific dates you are unsure of.`;
@@ -474,6 +526,18 @@ export async function generateDirectoryStub(
       // Ensure arrays are arrays.
       if (!Array.isArray(parsed.interests)) parsed.interests = [];
       if (!Array.isArray(parsed.suggestedLinks)) parsed.suggestedLinks = [];
+
+      // Ensure infobox is a plain object of string values.
+      if (!parsed.infobox || typeof parsed.infobox !== "object" || Array.isArray(parsed.infobox)) {
+        parsed.infobox = {};
+      } else {
+        // Strip any non-string, null, or empty values.
+        const clean: DirectoryInfobox = {};
+        for (const [k, v] of Object.entries(parsed.infobox)) {
+          if (typeof v === "string" && v.trim()) (clean as any)[k] = v.trim();
+        }
+        parsed.infobox = clean;
+      }
 
       return parsed;
     } catch (err: any) {

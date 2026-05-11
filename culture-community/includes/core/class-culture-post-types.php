@@ -506,7 +506,127 @@ class Culture_Post_Types {
             },
         ) );
 
-        // 9. Global Membership Settings
+        // 9. Directory Infobox — flat object with per-type metadata fields.
+        $infobox_meta_map = array(
+            // person
+            'born'               => 'dir_infobox_born',
+            'died'               => 'dir_infobox_died',
+            'nationality'        => 'dir_infobox_nationality',
+            'occupation'         => 'dir_infobox_occupation',
+            'knownFor'           => 'dir_infobox_known_for',
+            'originCity'         => 'dir_infobox_origin_city',
+            'activeYears'        => 'dir_infobox_active_years',
+            'awards'             => 'dir_infobox_awards',
+            'labels'             => 'dir_infobox_labels',
+            'education'          => 'dir_infobox_education',
+            // place
+            'country'            => 'dir_infobox_country',
+            'region'             => 'dir_infobox_region',
+            'population'         => 'dir_infobox_population',
+            'officialLanguage'   => 'dir_infobox_official_language',
+            'currency'           => 'dir_infobox_currency',
+            'founded'            => 'dir_infobox_founded',
+            'area'               => 'dir_infobox_area',
+            // movement
+            'founders'           => 'dir_infobox_founders',
+            'originCountry'      => 'dir_infobox_origin_country',
+            'activePeriod'       => 'dir_infobox_active_period',
+            'ideology'           => 'dir_infobox_ideology',
+            'keyFigures'         => 'dir_infobox_key_figures',
+            'relatedMovements'   => 'dir_infobox_related_movements',
+            // genre
+            'originDecade'       => 'dir_infobox_origin_decade',
+            'instruments'        => 'dir_infobox_instruments',
+            'tempoBpm'           => 'dir_infobox_tempo_bpm',
+            'keyArtists'         => 'dir_infobox_key_artists',
+            'relatedGenres'      => 'dir_infobox_related_genres',
+            'subgenres'          => 'dir_infobox_subgenres',
+            // concept
+            'keyThinkers'        => 'dir_infobox_key_thinkers',
+            'period'             => 'dir_infobox_period',
+            'knownFor2'          => 'dir_infobox_known_for',   // alias: concept shares knownFor with person
+            'relatedConcepts'    => 'dir_infobox_related_concepts',
+            // film
+            'director'           => 'dir_infobox_director',
+            'year'               => 'dir_infobox_year',
+            'starring'           => 'dir_infobox_starring',
+            'cinematographer'    => 'dir_infobox_cinematographer',
+            'language'           => 'dir_infobox_language',
+            'distributor'        => 'dir_infobox_distributor',
+            'runtime'            => 'dir_infobox_runtime',
+            'productionCompany'  => 'dir_infobox_production_company',
+            // book
+            'author'             => 'dir_infobox_author',
+            'yearPublished'      => 'dir_infobox_year_published',
+            'genre'              => 'dir_infobox_genre',
+            'publisher'          => 'dir_infobox_publisher',
+            'pages'              => 'dir_infobox_pages',
+            'isbn'               => 'dir_infobox_isbn',
+            // artwork
+            'artist'             => 'dir_infobox_artist',
+            'medium'             => 'dir_infobox_medium',
+            'dimensions'         => 'dir_infobox_dimensions',
+            'currentLocation'    => 'dir_infobox_current_location',
+            'artCollection'      => 'dir_infobox_art_collection',
+            'style'              => 'dir_infobox_style',
+            // food
+            'foodType'           => 'dir_infobox_food_type',
+            'mainIngredients'    => 'dir_infobox_main_ingredients',
+            'alsoKnownAs'        => 'dir_infobox_also_known_as',
+            'culturalContext'    => 'dir_infobox_cultural_context',
+            // fashion
+            'origin'             => 'dir_infobox_origin',
+            'era'                => 'dir_infobox_era',
+            'keyDesigners'       => 'dir_infobox_key_designers',
+            'materials'          => 'dir_infobox_materials',
+            'culturalSignificance' => 'dir_infobox_cultural_significance',
+            // tv-series
+            'creator'            => 'dir_infobox_creator',
+            'network'            => 'dir_infobox_network',
+            'seasons'            => 'dir_infobox_seasons',
+            'years'              => 'dir_infobox_years',
+        );
+
+        // Build per-field resolvers for the infobox sub-type.
+        $infobox_gql_fields = array();
+        foreach ( $infobox_meta_map as $gql_name => $meta_key ) {
+            // knownFor2 is an internal alias; expose it as knownFor on the type.
+            $field_name = ( $gql_name === 'knownFor2' ) ? 'knownFor' : $gql_name;
+            if ( ! isset( $infobox_gql_fields[ $field_name ] ) ) {
+                $infobox_gql_fields[ $field_name ] = array(
+                    'type'    => 'String',
+                    'resolve' => function( $source ) use ( $meta_key ) {
+                        return isset( $source[ $meta_key ] ) ? $source[ $meta_key ] : null;
+                    },
+                );
+            }
+        }
+
+        register_graphql_object_type( 'CultureDirectoryInfobox', array(
+            'description' => 'Per-type infobox metadata for a Culture Directory entry.',
+            'fields'      => $infobox_gql_fields,
+        ) );
+
+        register_graphql_field( 'CultureDirectory', 'infobox', array(
+            'type'    => 'CultureDirectoryInfobox',
+            'resolve' => function( $post ) use ( $infobox_meta_map ) {
+                $id   = $post->databaseId;
+                $data = array();
+                $has  = false;
+                foreach ( $infobox_meta_map as $gql_name => $meta_key ) {
+                    $val = get_post_meta( $id, $meta_key, true );
+                    if ( ! empty( $val ) ) {
+                        $data[ $meta_key ] = (string) $val;
+                        $has = true;
+                    } else {
+                        $data[ $meta_key ] = null;
+                    }
+                }
+                return $has ? $data : null;
+            },
+        ) );
+
+        // 10. Global Membership Settings
         register_graphql_object_type( 'CultureMembershipSettings', array(
             'description' => __( 'Global membership pricing and tier labels', 'culture-community' ),
             'fields'      => array(
