@@ -1,11 +1,13 @@
 /**
  * GET/POST /api/pulse/refresh?secret=...
  *
- * Calls Gemini with Google Search grounding to surface fresh cultural stories,
- * then saves them to WordPress as pulse_story posts.
+ * Fetches fresh articles from 40+ RSS feeds across African and diaspora
+ * media, then uses Gemini (no grounding — free tier compatible) to select
+ * and editorially rewrite the most culturally relevant stories, saving them
+ * to WordPress as pulse_story posts.
  *
  * GET  — invoked by Vercel cron (Authorization: Bearer {PULSE_REFRESH_SECRET}).
- * POST — invoked manually; accepts { topic } in request body.
+ * POST — invoked manually from the admin panel.
  *
  * Protected by PULSE_REFRESH_SECRET query param or Authorization header.
  * Configured in vercel.json to run daily at 08:00 UTC.
@@ -15,8 +17,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchGeminiPulseStories } from "@/lib/pulse-gemini";
 import { savePulseStory } from "@/lib/pulse-wordpress";
 
-export const runtime = "nodejs";
-export const maxDuration = 60;
+export const runtime    = "nodejs";
+export const maxDuration = 120; // bumped — RSS fetching + Gemini rewrite needs more time
 
 function isAuthorized(req: NextRequest): boolean {
   const pulseSecret = process.env.PULSE_REFRESH_SECRET ?? "";
@@ -24,22 +26,19 @@ function isAuthorized(req: NextRequest): boolean {
   const querySecret = req.nextUrl.searchParams.get("secret") ?? "";
   const authHeader  = req.headers.get("Authorization") ?? "";
 
-  // Accept PULSE_REFRESH_SECRET via query param or Bearer header.
   if (pulseSecret && (querySecret === pulseSecret || authHeader === `Bearer ${pulseSecret}`)) return true;
-  // Accept CRON_SECRET via Bearer header (used by WordPress cron).
-  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true;
+  if (cronSecret  && authHeader === `Bearer ${cronSecret}`) return true;
   return false;
 }
 
-async function run(topic: string) {
+async function run() {
   if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json({ error: "GEMINI_API_KEY not configured" }, { status: 503 });
   }
 
   try {
-    const stories = await fetchGeminiPulseStories(topic);
-
-    const results = await Promise.allSettled(stories.map((s) => savePulseStory(s)));
+    const stories = await fetchGeminiPulseStories();
+    const results = await Promise.allSettled(stories.map(s => savePulseStory(s)));
 
     let saved = 0, duplicates = 0, errors = 0;
     const errorMessages: string[] = [];
@@ -60,7 +59,6 @@ async function run(topic: string) {
 
     return NextResponse.json({
       success: true,
-      topic,
       total: stories.length,
       saved,
       duplicates,
@@ -73,19 +71,12 @@ async function run(topic: string) {
   }
 }
 
-const DEFAULT_TOPIC = "African and Black diaspora culture news";
-
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  return run(DEFAULT_TOPIC);
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  return run();
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const body = await req.json().catch(() => ({}));
-  return run(body.topic || DEFAULT_TOPIC);
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  return run();
 }
