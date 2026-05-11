@@ -67,6 +67,23 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Games subscriber list — separate from the GetMeLit newsletter.
+        register_rest_route( 'culture/v1', '/games-subscribe', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_games_subscribe' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                    'validate_callback' => function( $value ) {
+                        return is_email( $value );
+                    },
+                ),
+            ),
+        ) );
+
         // Newsletter unsubscribe endpoint — called by the Next.js frontend page.
         // Token is verified here so the CMS backend is never exposed to subscribers.
         register_rest_route( 'culture/v1', '/newsletter-unsubscribe', array(
@@ -758,6 +775,38 @@ class Culture_REST_API {
         return rest_ensure_response( array(
             'success' => true,
             'message' => __( 'Subscribed successfully.', 'culture-community' ),
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/games-subscribe
+     * Adds an email to the Moveee Games subscriber list (culture_games_subscribers).
+     */
+    public static function handle_games_subscribe( $request ) {
+        $email = $request->get_param( 'email' );
+
+        $subscribers = get_option( 'culture_games_subscribers', array() );
+
+        // Check for existing subscription (handle both plain strings and object records).
+        foreach ( $subscribers as $sub ) {
+            $existing = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
+            if ( strtolower( trim( $existing ) ) === strtolower( $email ) ) {
+                return rest_ensure_response( array(
+                    'success' => true,
+                    'message' => __( 'You are already subscribed to Moveee Games.', 'culture-community' ),
+                ) );
+            }
+        }
+
+        $subscribers[] = array(
+            'email' => $email,
+            'date'  => current_time( 'mysql' ),
+        );
+        update_option( 'culture_games_subscribers', $subscribers );
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'message' => __( 'Subscribed to Moveee Games.', 'culture-community' ),
         ) );
     }
 
