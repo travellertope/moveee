@@ -35,6 +35,32 @@ const GAMES = [
     difficulty:  "Easy to Hard",
     rounds:      "10 questions",
   },
+  {
+    href:        "/games/sudoku",
+    name:        "Daily Sudoku",
+    tagline:
+      "One 9×9 grid a day — same puzzle for every player worldwide. No luck, pure logic.",
+    icon:        "🔢",
+    badge:       "Puzzle",
+    accentColor: "#1a3a5c",
+    badgeBg:     "rgba(26,58,92,.12)",
+    badgeColor:  "#1a3a5c",
+    difficulty:  "Medium",
+    rounds:      "1 daily grid",
+  },
+  {
+    href:        "/games/crossword",
+    name:        "Daily Crossword",
+    tagline:
+      "A new African culture mini-crossword every day. Test your knowledge of people, places, and traditions.",
+    icon:        "✏️",
+    badge:       "Culture",
+    accentColor: "#5c3a1a",
+    badgeBg:     "rgba(92,58,26,.12)",
+    badgeColor:  "#5c3a1a",
+    difficulty:  "Mixed",
+    rounds:      "1 daily puzzle",
+  },
 ];
 
 export default function GamesHub() {

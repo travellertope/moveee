@@ -125,21 +125,31 @@ export default function HomepageContent({
             </div>
             <div className="hp-games-list">
               <Link href="/games/trivia" className="hp-game-item">
-                <div className="hp-game-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                </div>
+                <div className="hp-game-icon">🧠</div>
                 <div>
                   <div className="hp-game-name">Culture Trivia</div>
-                  <div className="hp-game-desc">Test your knowledge of African culture</div>
+                  <div className="hp-game-desc">10 daily questions on African culture</div>
                 </div>
               </Link>
               <Link href="/games/who-said-it" className="hp-game-item">
-                <div className="hp-game-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
-                </div>
+                <div className="hp-game-icon">💬</div>
                 <div>
                   <div className="hp-game-name">Who Said It?</div>
                   <div className="hp-game-desc">Match the quote to the voice</div>
+                </div>
+              </Link>
+              <Link href="/games/sudoku" className="hp-game-item">
+                <div className="hp-game-icon">🔢</div>
+                <div>
+                  <div className="hp-game-name">Daily Sudoku</div>
+                  <div className="hp-game-desc">One grid a day, same for everyone</div>
+                </div>
+              </Link>
+              <Link href="/games/crossword" className="hp-game-item">
+                <div className="hp-game-icon">✏️</div>
+                <div>
+                  <div className="hp-game-name">Daily Crossword</div>
+                  <div className="hp-game-desc">African culture mini-crossword</div>
                 </div>
               </Link>
             </div>
