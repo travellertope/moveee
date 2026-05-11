@@ -76,9 +76,115 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
     } catch {}
   }
 
-  const websiteUrl     = entry.websiteUrl     ?? "";
+  const websiteUrl      = entry.websiteUrl      ?? "";
   const instagramHandle = entry.instagramHandle ?? "";
-  const twitterHandle  = entry.twitterHandle   ?? "";
+  const twitterHandle   = entry.twitterHandle   ?? "";
+  const infobox: Record<string, string> = entry.infobox ?? {};
+
+  type InfoboxField = { label: string; key: string };
+  const INFOBOX_DEFS: Record<string, InfoboxField[]> = {
+    person: [
+      { label: "Born",                  key: "born" },
+      { label: "Died",                  key: "died" },
+      { label: "Nationality",           key: "nationality" },
+      { label: "Occupation",            key: "occupation" },
+      { label: "Known For",             key: "knownFor" },
+      { label: "Origin",                key: "originCity" },
+      { label: "Active Years",          key: "activeYears" },
+      { label: "Labels / Affiliations", key: "labels" },
+      { label: "Education",             key: "education" },
+      { label: "Notable Awards",        key: "awards" },
+    ],
+    place: [
+      { label: "Country",           key: "country" },
+      { label: "Region / State",    key: "region" },
+      { label: "Population",        key: "population" },
+      { label: "Official Language", key: "officialLanguage" },
+      { label: "Currency",          key: "currency" },
+      { label: "Founded",           key: "founded" },
+      { label: "Area",              key: "area" },
+    ],
+    movement: [
+      { label: "Founded",           key: "founded" },
+      { label: "Founders",          key: "founders" },
+      { label: "Origin Country",    key: "originCountry" },
+      { label: "Active Period",     key: "activePeriod" },
+      { label: "Ideology",          key: "ideology" },
+      { label: "Key Figures",       key: "keyFigures" },
+      { label: "Related Movements", key: "relatedMovements" },
+    ],
+    genre: [
+      { label: "Origin Country",  key: "originCountry" },
+      { label: "Origin Decade",   key: "originDecade" },
+      { label: "Key Instruments", key: "instruments" },
+      { label: "Tempo (BPM)",     key: "tempoBpm" },
+      { label: "Key Artists",     key: "keyArtists" },
+      { label: "Related Genres",  key: "relatedGenres" },
+      { label: "Subgenres",       key: "subgenres" },
+    ],
+    concept: [
+      { label: "Origin Country",   key: "originCountry" },
+      { label: "Period / Era",     key: "period" },
+      { label: "Known For",        key: "knownFor" },
+      { label: "Key Thinkers",     key: "keyThinkers" },
+      { label: "Related Concepts", key: "relatedConcepts" },
+    ],
+    film: [
+      { label: "Director",           key: "director" },
+      { label: "Year",               key: "year" },
+      { label: "Runtime",            key: "runtime" },
+      { label: "Country",            key: "country" },
+      { label: "Language",           key: "language" },
+      { label: "Distributor",        key: "distributor" },
+      { label: "Production Company", key: "productionCompany" },
+      { label: "Cinematographer",    key: "cinematographer" },
+      { label: "Starring",           key: "starring" },
+    ],
+    book: [
+      { label: "Author",         key: "author" },
+      { label: "Year Published", key: "yearPublished" },
+      { label: "Genre",          key: "genre" },
+      { label: "Publisher",      key: "publisher" },
+      { label: "Language",       key: "language" },
+      { label: "Pages",          key: "pages" },
+      { label: "ISBN",           key: "isbn" },
+    ],
+    artwork: [
+      { label: "Artist",           key: "artist" },
+      { label: "Year",             key: "year" },
+      { label: "Medium",           key: "medium" },
+      { label: "Dimensions",       key: "dimensions" },
+      { label: "Style / Movement", key: "style" },
+      { label: "Current Location", key: "currentLocation" },
+      { label: "Collection",       key: "artCollection" },
+    ],
+    food: [
+      { label: "Origin Country",   key: "originCountry" },
+      { label: "Food Type",        key: "foodType" },
+      { label: "Also Known As",    key: "alsoKnownAs" },
+      { label: "Cultural Context", key: "culturalContext" },
+      { label: "Main Ingredients", key: "mainIngredients" },
+    ],
+    fashion: [
+      { label: "Origin / Region",       key: "origin" },
+      { label: "Era / Period",          key: "era" },
+      { label: "Style / Category",      key: "style" },
+      { label: "Materials / Fabric",    key: "materials" },
+      { label: "Key Designers",         key: "keyDesigners" },
+      { label: "Cultural Significance", key: "culturalSignificance" },
+    ],
+    "tv-series": [
+      { label: "Created By",        key: "creator" },
+      { label: "Network / Platform",key: "network" },
+      { label: "Seasons",           key: "seasons" },
+      { label: "Years",             key: "years" },
+      { label: "Country",           key: "country" },
+      { label: "Language",          key: "language" },
+      { label: "Genre",             key: "genre" },
+      { label: "Starring",          key: "starring" },
+    ],
+  };
+  const infoboxFields = INFOBOX_DEFS[typeSlug] ?? [];
 
   return (
     <div className="dir-wiki-page">
@@ -218,6 +324,19 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                 <span className="dir-wiki-infobox-label">Added</span>
                 <span className="dir-wiki-infobox-value">{date}</span>
               </div>
+            )}
+
+            {/* Per-type infobox fields */}
+            {infoboxFields.length > 0 && infoboxFields.some(f => infobox[f.key]) && (
+              <div className="dir-wiki-infobox-divider" />
+            )}
+            {infoboxFields.map(({ label, key }) =>
+              infobox[key] ? (
+                <div key={key} className="dir-wiki-infobox-row">
+                  <span className="dir-wiki-infobox-label">{label}</span>
+                  <span className="dir-wiki-infobox-value">{infobox[key]}</span>
+                </div>
+              ) : null
             )}
 
             {/* External links */}
