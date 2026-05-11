@@ -4,15 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 
 interface Props {
-  game:  "wsi" | "trivia";
-  score: number;
-  total: number;
-  date:  string;
+  game:        "wsi" | "trivia" | "sudoku" | "crossword";
+  score:       number;
+  total:       number;
+  date:        string;
+  alreadyDone?: boolean;
 }
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
-function getResult(score: number, total: number) {
+function getResult(game: Props["game"], score: number, total: number) {
+  if (game === "sudoku" || game === "crossword") {
+    return { emoji: "🧩", title: "Puzzle Complete!" };
+  }
   const pct = score / total;
   if (pct === 1)   return { emoji: "🏆", title: "Perfect Score!" };
   if (pct >= 0.8)  return { emoji: "🔥", title: "Culture Expert" };
@@ -21,15 +25,21 @@ function getResult(score: number, total: number) {
   return           { emoji: "🌱", title: "Just the Beginning" };
 }
 
-export default function GameDoneScreen({ game, score, total, date }: Props) {
+const OTHER_GAME: Record<Props["game"], { href: string; label: string }> = {
+  wsi:       { href: "/games/trivia",     label: "Culture Trivia" },
+  trivia:    { href: "/games/who-said-it", label: "Who Said It?" },
+  sudoku:    { href: "/games/crossword",   label: "Daily Crossword" },
+  crossword: { href: "/games/sudoku",      label: "Daily Sudoku" },
+};
+
+export default function GameDoneScreen({ game, score, total, date, alreadyDone }: Props) {
   const [email,    setEmail]    = useState("");
   const [subState, setSubState] = useState<"idle" | "loading" | "done" | "error">("idle");
 
-  const { emoji, title } = getResult(score, total);
-  const pct       = Math.round((score / total) * 100);
-  const otherGame = game === "wsi"
-    ? { href: "/games/trivia",     label: "Culture Trivia" }
-    : { href: "/games/who-said-it", label: "Who Said It?" };
+  const { emoji, title } = getResult(game, score, total);
+  const isPuzzle   = game === "sudoku" || game === "crossword";
+  const pct        = isPuzzle ? null : Math.round((score / total) * 100);
+  const otherGame  = OTHER_GAME[game];
 
   async function handleSubscribe(e: React.FormEvent) {
     e.preventDefault();
@@ -50,21 +60,25 @@ export default function GameDoneScreen({ game, score, total, date }: Props) {
   return (
     <div className="game-done">
       <div className="game-done__card">
-        <p className="game-done__already">Today's game complete</p>
+        <p className="game-done__already">{alreadyDone ? "Already completed today" : "Today's game complete"}</p>
 
         <div className="game-done__emoji">{emoji}</div>
         <h2 className="game-done__title">{title}</h2>
         <p className="game-done__date">{date}</p>
 
-        <div className="game-done__score">
-          <span className="game-done__score-num">{score}</span>
-          <span className="game-done__score-den">/ {total}</span>
-        </div>
-        <p className="game-done__pct">{pct}% correct</p>
+        {!isPuzzle && (
+          <>
+            <div className="game-done__score">
+              <span className="game-done__score-num">{score}</span>
+              <span className="game-done__score-den">/ {total}</span>
+            </div>
+            <p className="game-done__pct">{pct}% correct</p>
+          </>
+        )}
 
         <div className="game-done__subscribe">
           <p className="game-done__sub-label">
-            Get notified when tomorrow's questions drop
+            Get notified when tomorrow's puzzle drops
           </p>
           {subState === "done" ? (
             <p className="game-done__sub-success">✓ You're in — see you tomorrow</p>
