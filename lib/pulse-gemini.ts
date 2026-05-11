@@ -1,15 +1,26 @@
+/**
+ * pulse-gemini.ts
+ *
+ * Uses Gemini (no Google Search grounding, works on free tier) to select
+ * and editorially rewrite real articles fetched from 25+ RSS feeds.
+ *
+ * Flow:
+ *   1. fetchAllFeeds()  — pulls from 40+ RSS feeds in parallel
+ *   2. Gemini           — selects the most culturally relevant stories,
+ *                         rewrites them in Moveee editorial voice,
+ *                         preserving the real source URLs
+ */
+
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { fetchAllFeeds, type FeedItem } from "./pulse-rss";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
 
-// Confirmed GA-stable models with Google Search grounding support (May 2026).
-// gemini-2.5-flash and gemini-2.5-flash-lite share the same RPM/TPM quota bucket.
-// gemini-2.5-pro is the high-quality fallback on the same Tier quota.
-// All three support { googleSearch: {} } grounding.
+// Free-tier compatible models — no grounding, no billing required.
 const TEXT_MODELS = [
-  "gemini-2.5-flash",      // Primary — 2,000 RPM (Tier 2), fastest
-  "gemini-2.5-flash-lite", // Fallback — same quota, lower cost/latency
-  "gemini-2.5-pro",        // Heavy fallback — 1,000 RPM (Tier 2), highest quality
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.5-pro",
 ];
 
 const SAFETY_SETTINGS = [
@@ -19,52 +30,26 @@ const SAFETY_SETTINGS = [
   { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
 ];
 
-const SYSTEM_PROMPT = `You are the editorial AI for Moveee Pulse — a live cultural intelligence platform for African and Black diasporan culture.
-
-IMPORTANT: You MUST use Google Search to find stories. Only report stories you actually found via search results. Do NOT invent, fabricate, or hallucinate any stories, people, events, or URLs.
-
-Return ONLY a raw JSON array — no markdown, no backticks, no explanation.
-
-Each object must have:
-- "title": sharp editorial headline, max 12 words, sentence case, must name a real person/place/event/brand you found via search
-- "summary": exactly 2 sentences in Moveee editorial voice — smart, warm, specific. Max 50 words. Name the actual artist, designer, event, or place.
-- "body": 4–5 substantial paragraphs for the full story page. Each paragraph is 3–5 sentences. Total 400–600 words. Use \\n\\n to separate paragraphs. Structure: (1) overview of the story, (2) cultural/historical context, (3) significance for the African and diaspora community, (4) broader implications or reactions, (5) what's next or a closing perspective. Editorial voice — warm, specific, authoritative. Name real people, places, events. Avoid generic filler.
-- "arm": exactly one of: "lifestyle" | "origins" | "happenings" | "magazine"
-- "region": one of: "Africa" | "Caribbean" | "Diaspora UK" | "Diaspora US" | "Diaspora Europe" | "Global"
-- "source": real publication name you found the story on (e.g. OkayAfrica, The Guardian, Billboard, Vogue Africa, BBC Africa, Afropunk, The FADER, Pitchfork)
-- "source_url": the EXACT URL of the real article you found via Google Search. CRITICAL: only include a URL if you are certain it exists — copy it directly from search results. If unsure, use empty string. NEVER guess or construct a URL.
-- "category": the primary industry — exactly one of: "music" | "film" | "fashion" | "art" | "literature" | "food" | "activism" | "sports" | "business" | "tech"
-
-Spread stories across at least 3 different arms and 3 different regions. Only include stories you verified exist via Google Search. Be specific — generic descriptions are not acceptable. Aim for 8–12 stories per run.`;
-
 export interface PulseStoryRaw {
-  title: string;
-  summary: string;
-  body: string;
-  arm: "lifestyle" | "origins" | "happenings" | "magazine";
-  region: "Africa" | "Caribbean" | "Diaspora UK" | "Diaspora US" | "Diaspora Europe" | "Global";
-  category: "music" | "film" | "fashion" | "art" | "literature" | "food" | "activism" | "sports" | "business" | "tech";
-  source: string;
+  title:      string;
+  summary:    string;
+  body:       string;
+  arm:        "lifestyle" | "origins" | "happenings" | "magazine";
+  region:     "Africa" | "Caribbean" | "Diaspora UK" | "Diaspora US" | "Diaspora Europe" | "Global";
+  category:   "music" | "film" | "fashion" | "art" | "literature" | "food" | "activism" | "sports" | "business" | "tech";
+  source:     string;
   source_url: string;
 }
 
-function extractJsonArray(raw: string): string {
-  const start = raw.indexOf("[");
-  const end = raw.lastIndexOf("]");
-  if (start === -1 || end === -1 || end <= start) {
-    throw new Error("No JSON array found in Gemini response");
-  }
-  return raw.slice(start, end + 1);
-}
-
-const VALID_ARMS = new Set(["lifestyle", "origins", "happenings", "magazine"]);
-const VALID_REGIONS = new Set(["Africa", "Caribbean", "Diaspora UK", "Diaspora US", "Diaspora Europe", "Global"]);
+const VALID_ARMS       = new Set(["lifestyle", "origins", "happenings", "magazine"]);
+const VALID_REGIONS    = new Set(["Africa", "Caribbean", "Diaspora UK", "Diaspora US", "Diaspora Europe", "Global"]);
 const VALID_CATEGORIES = new Set(["music", "film", "fashion", "art", "literature", "food", "activism", "sports", "business", "tech"]);
 
 function isValidStory(s: any): s is PulseStoryRaw {
   return (
-    typeof s.title === "string" && s.title.trim().length > 0 &&
-    typeof s.summary === "string" && s.summary.trim().length > 0 &&
+    typeof s.title      === "string" && s.title.trim().length > 0 &&
+    typeof s.summary    === "string" && s.summary.trim().length > 0 &&
+    typeof s.source_url === "string" &&
     VALID_ARMS.has(s.arm) &&
     VALID_REGIONS.has(s.region)
   );
@@ -74,75 +59,75 @@ function normaliseCategory(raw: any): PulseStoryRaw["category"] {
   return VALID_CATEGORIES.has(raw) ? raw : "art";
 }
 
-const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-
-async function validateSourceUrl(url: string): Promise<boolean> {
-  if (!url) return false;
-  try {
-    const res = await Promise.race([
-      fetch(url, { method: "HEAD", redirect: "follow" }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 5_000)),
-    ]);
-    return (res as Response).ok;
-  } catch {
-    return false;
-  }
+function extractJsonArray(raw: string): string {
+  const start = raw.indexOf("[");
+  const end   = raw.lastIndexOf("]");
+  if (start === -1 || end === -1 || end <= start) throw new Error("No JSON array in response");
+  return raw.slice(start, end + 1);
 }
 
-async function filterFabricatedUrls(stories: PulseStoryRaw[]): Promise<PulseStoryRaw[]> {
-  const checks = await Promise.all(
-    stories.map(async (s) => {
-      const normalised = { ...s, category: normaliseCategory(s.category) };
-      if (!s.source_url) return normalised;
-      const valid = await validateSourceUrl(s.source_url);
-      if (!valid) {
-        console.warn(`[pulse-gemini] Dead URL removed: ${s.source_url}`);
-        return { ...normalised, source_url: "" };
-      }
-      return normalised;
-    })
-  );
-  return checks;
-}
-
-function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
-    promise,
+    p,
     new Promise<T>((_, reject) =>
       setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
     ),
   ]);
 }
 
-function isQuotaError(err: any): boolean {
-  const msg = (err?.message ?? "").toLowerCase();
-  return (
-    msg.includes("429") ||
-    msg.includes("quota") ||
-    msg.includes("rate limit") ||
-    msg.includes("resource_exhausted") ||
-    err?.status === 429
-  );
+const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+
+// ─── Build prompt from RSS items ──────────────────────────────────────────────
+function buildPrompt(items: FeedItem[]): string {
+  const list = items
+    .map((item, i) =>
+      `[${i + 1}] SOURCE: ${item.source}\nURL: ${item.link}\nTITLE: ${item.title}\nSUMMARY: ${item.description}`
+    )
+    .join("\n\n");
+
+  return `You are the editorial AI for Moveee Pulse — a cultural intelligence platform covering African and Black diasporan culture.
+
+Below are ${items.length} real news items fetched from African and diaspora media. Your job:
+
+1. SELECT the 8–12 items most relevant to African/Black diaspora culture — music, film, fashion, art, literature, food, activism, travel, lifestyle, or business. Ignore pure politics, sport results, or crime unless they have strong cultural significance.
+
+2. REWRITE each selected item in the Moveee editorial voice — smart, warm, specific, culturally attuned.
+
+3. PRESERVE the exact URL from each item you select — copy it as "source_url". Do NOT alter, guess, or construct URLs.
+
+Return ONLY a raw JSON array — no markdown, no backticks, no explanation.
+
+Each object must have:
+- "title": sharp editorial headline, max 12 words, sentence case
+- "summary": exactly 2 sentences in Moveee voice. Max 50 words. Specific — name the real artist, designer, event, or place.
+- "body": 4–5 paragraphs, 400–600 words total, separated by \\n\\n. Structure: (1) story overview, (2) cultural/historical context, (3) significance for African and diaspora community, (4) broader implications or reactions, (5) what's next. Warm, authoritative, specific.
+- "arm": exactly one of: "lifestyle" | "origins" | "happenings" | "magazine"
+- "region": one of: "Africa" | "Caribbean" | "Diaspora UK" | "Diaspora US" | "Diaspora Europe" | "Global"
+- "source": the publication name (e.g. OkayAfrica, BellaNaija, The Root)
+- "source_url": the EXACT URL from the item — copy it verbatim
+- "category": exactly one of: "music" | "film" | "fashion" | "art" | "literature" | "food" | "activism" | "sports" | "business" | "tech"
+
+Spread selections across at least 3 different arms and 3 different regions. Prefer recent, specific, culturally rich stories.
+
+NEWS ITEMS:
+${list}`;
 }
 
-async function tryModels(prompt: string, withSearch: boolean): Promise<PulseStoryRaw[] | null> {
+// ─── Try all models until one succeeds ───────────────────────────────────────
+async function tryModels(prompt: string): Promise<PulseStoryRaw[] | null> {
   for (let i = 0; i < TEXT_MODELS.length; i++) {
     const modelId = TEXT_MODELS[i];
     try {
-      const config: any = {
-        safetySettings: SAFETY_SETTINGS,
-        temperature: 0.2,
-      };
-      if (withSearch) config.tools = [{ googleSearch: {} }];
-
-      // Pro model needs more time for grounded research.
-      const timeoutMs = modelId.includes("pro") ? 45_000 : 30_000;
+      const timeoutMs = modelId.includes("pro") ? 60_000 : 45_000;
 
       const response = await withTimeout(
         ai.models.generateContent({
-          model: modelId,
+          model:    modelId,
           contents: prompt,
-          config,
+          config: {
+            safetySettings: SAFETY_SETTINGS,
+            temperature:    0.3,
+          },
         }),
         timeoutMs,
         modelId
@@ -163,42 +148,42 @@ async function tryModels(prompt: string, withSearch: boolean): Promise<PulseStor
       const parsed: unknown[] = JSON.parse(jsonStr);
       if (!Array.isArray(parsed)) continue;
 
-      const stories = parsed.filter(isValidStory);
+      const stories = parsed
+        .filter(isValidStory)
+        .map(s => ({ ...s, category: normaliseCategory(s.category) }));
+
       if (stories.length === 0) continue;
 
-      console.log(`[pulse-gemini] ${modelId} (search=${withSearch}) returned ${stories.length} stories — validating URLs...`);
-      const validated = await filterFabricatedUrls(stories);
-      console.log(`[pulse-gemini] ${validated.filter(s => s.source_url).length}/${validated.length} stories have verified URLs`);
-      return validated;
+      console.log(`[pulse-gemini] ${modelId} selected ${stories.length} stories from RSS feed`);
+      return stories;
     } catch (err: any) {
-      const isQuota = isQuotaError(err);
-      console.warn(
-        `[pulse-gemini] ${modelId} (search=${withSearch}) failed [${isQuota ? "QUOTA" : "ERROR"}]:`,
-        err?.message?.slice(0, 120)
-      );
-      // Wait before trying next model: longer pause for quota errors.
-      if (i < TEXT_MODELS.length - 1) {
-        await sleep(isQuota ? 6_000 : 2_000);
-      }
+      console.warn(`[pulse-gemini] ${modelId} failed:`, err?.message?.slice(0, 120));
+      if (i < TEXT_MODELS.length - 1) await sleep(2_000);
     }
   }
-
-  return null; // All models failed for this config
+  return null;
 }
 
-export async function fetchGeminiPulseStories(
-  topic = "African and Black diaspora culture news"
-): Promise<PulseStoryRaw[]> {
-  const monthYear = new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" });
-  const prompt = `${SYSTEM_PROMPT}\n\nTopic: "${topic} — ${monthYear}"`;
+// ─── Main export ──────────────────────────────────────────────────────────────
+export async function fetchGeminiPulseStories(): Promise<PulseStoryRaw[]> {
+  // Step 1: Pull fresh articles from all RSS feeds in parallel
+  console.log("[pulse-gemini] Fetching RSS feeds…");
+  const feedItems = await fetchAllFeeds();
+  console.log(`[pulse-gemini] ${feedItems.length} items fetched across all feeds`);
 
-  // All models tried with Google Search grounding only.
-  // We do NOT fall back to ungrounded mode — without search, Gemini hallucinates
-  // stories and fabricates URLs, which is worse than having no new stories.
-  const withSearch = await tryModels(prompt, true);
-  if (withSearch) return withSearch;
+  if (feedItems.length < 5) {
+    throw new Error("Not enough RSS items fetched — check feed connectivity.");
+  }
 
-  throw new Error(
-    "All Gemini models failed for Pulse refresh (grounded search only). Check your API key quota at https://aistudio.google.com/app/apikey and ensure billing is enabled."
-  );
+  // Step 2: Ask Gemini to select and editorially rewrite the best stories
+  const prompt  = buildPrompt(feedItems);
+  const stories = await tryModels(prompt);
+
+  if (!stories) {
+    throw new Error(
+      "All Gemini models failed to rewrite RSS stories. Check GEMINI_API_KEY and quota at https://aistudio.google.com/app/apikey"
+    );
+  }
+
+  return stories;
 }

@@ -39,10 +39,10 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const topic: string = body.topic || "African and Black diaspora culture news";
+  void body; // topic no longer used — stories sourced from RSS feeds
 
   try {
-    const stories = await fetchGeminiPulseStories(topic);
+    const stories = await fetchGeminiPulseStories();
     const results = await Promise.allSettled(stories.map((s) => savePulseStory(s)));
 
     let saved = 0, duplicates = 0, errors = 0;
@@ -64,7 +64,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      topic,
       total: stories.length,
       saved,
       duplicates,
