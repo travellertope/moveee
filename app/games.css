@@ -1004,24 +1004,25 @@
 /* Layout: grid left, clues right */
 .crossword-layout {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: min(420px, 45vw) 1fr;
   gap: 32px;
   align-items: start;
 }
 
 .crossword-grid-wrap {
   outline: none;
+  width: 100%;
 }
 
 .crossword-grid {
   display: grid;
   border: 2px solid var(--ink);
-  width: min(360px, 100%);
+  width: 100%;
 }
 
 .cw-cell {
-  width: calc(min(360px, 100%) / var(--cw-size, 7));
-  height: calc(min(360px, 100%) / var(--cw-size, 7));
+  aspect-ratio: 1 / 1;
+  width: 100%;
   border: 1px solid rgba(20,17,13,.2);
   position: relative;
   display: flex;
