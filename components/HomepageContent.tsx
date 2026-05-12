@@ -108,7 +108,7 @@ export default function HomepageContent({
               <div className="hp-pulse-list">
                 {pulseStories.slice(0, 6).map((story: any) => (
                   <Link key={story.id} href={`/pulse/${story.slug}`} className="hp-pulse-item">
-                    <span className="hp-pulse-title">{story.title?.rendered || story.title}</span>
+                    <span className="hp-pulse-title" dangerouslySetInnerHTML={{ __html: story.title?.rendered || story.title }} />
                     <span className="hp-pulse-date">
                       {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                     </span>
