@@ -7,7 +7,10 @@
  * Response: { date, puzzle: CrosswordPuzzle }
  */
 
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
+import fs from "fs";
+import path from "path";
+import { generateCrosswordWithGemini } from "@/lib/crossword-gemini";
 
 export const runtime = "nodejs";
 
@@ -64,7 +67,7 @@ const PUZZLES: { grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "
       "I.GRIOT",
       ".LAGOS.",
       "..B....",
-      "..ORISА",   // Orisa
+      "..ORISA",
     ],
     // Clues matched by (direction, answer)
     clues: [
@@ -128,10 +131,10 @@ const PUZZLES: { grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "
       "BEADS..",
       "I.DAKAR",
       "N.....A",
-      "T.AFROБ",
+      "T.AFROB",
       "A.OGUN.",
       "..T....",
-      "..HEROE",   // HEROES shortened as HEROE for grid
+      "..HEROE",
     ],
     clues: [
       { direction: "across", answer: "BEADS",  clue: "Used in waist-beading, a body adornment tradition across Africa" },
@@ -169,7 +172,7 @@ const PUZZLES: { grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "
     title: "Sacred & Civil",
     grid: [
       "KENYA..",
-      "O.SPHINX",
+      "SPHINX.",
       "L.....I",
       "A.KENTE",
       ".CAIRO.",
@@ -228,45 +231,44 @@ function numberAndClues(
   rawClues: Omit<CrosswordClue, "number" | "row" | "col" | "length">[],
   size: number
 ): CrosswordClue[] {
-  let n = 1;
   const clues: CrosswordClue[] = [];
-  const numbered: { row: number; col: number; n: number }[] = [];
+  let nextNumber = 1;
 
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size; c++) {
       if (cells[r][c].black) continue;
-      const startsAcross = (c === 0 || cells[r][c-1].black) && c + 1 < size && !cells[r][c+1].black;
-      const startsDown   = (r === 0 || cells[r-1][c].black) && r + 1 < size && !cells[r+1][c].black;
-      if (startsAcross || startsDown) {
-        cells[r][c].number = n;
-        numbered.push({ row: r, col: c, n });
-        n++;
-      }
-    }
-  }
 
-  // Match raw clues to numbered positions by scanning the grid for the answer
-  for (const raw of rawClues) {
-    const word = raw.answer;
-    for (const pos of numbered) {
-      if (raw.direction === "across") {
-        let match = true;
-        for (let i = 0; i < word.length; i++) {
-          if (pos.col + i >= size || cells[pos.row][pos.col+i].letter !== word[i]) { match = false; break; }
+      const startsAcross = (c === 0 || cells[r][c - 1].black) && c + 1 < size && !cells[r][c + 1].black;
+      const startsDown = (r === 0 || cells[r - 1][c].black) && r + 1 < size && !cells[r + 1][c].black;
+
+      if (!startsAcross && !startsDown) continue;
+
+      let usedAcross = false;
+      let usedDown = false;
+
+      if (startsAcross) {
+        let word = "";
+        for (let i = c; i < size && !cells[r][i].black; i++) word += cells[r][i].letter;
+        const matchingClue = rawClues.find(cl => cl.direction === "across" && cl.answer === word);
+        if (matchingClue) {
+          usedAcross = true;
+          clues.push({ ...matchingClue, number: nextNumber, row: r, col: c, length: word.length });
         }
-        if (match) {
-          clues.push({ ...raw, number: pos.n, row: pos.row, col: pos.col, length: word.length });
-          break;
+      }
+
+      if (startsDown) {
+        let word = "";
+        for (let i = r; i < size && !cells[i][c].black; i++) word += cells[i][c].letter;
+        const matchingClue = rawClues.find(cl => cl.direction === "down" && cl.answer === word);
+        if (matchingClue) {
+          usedDown = true;
+          clues.push({ ...matchingClue, number: nextNumber, row: r, col: c, length: word.length });
         }
-      } else {
-        let match = true;
-        for (let i = 0; i < word.length; i++) {
-          if (pos.row + i >= size || cells[pos.row+i][pos.col].letter !== word[i]) { match = false; break; }
-        }
-        if (match) {
-          clues.push({ ...raw, number: pos.n, row: pos.row, col: pos.col, length: word.length });
-          break;
-        }
+      }
+
+      if (usedAcross || usedDown) {
+        cells[r][c].number = nextNumber;
+        nextNumber++;
       }
     }
   }
@@ -274,14 +276,58 @@ function numberAndClues(
   return clues.sort((a, b) => a.number - b.number || (a.direction === "across" ? -1 : 1));
 }
 
-// ── Route handler ─────────────────────────────────────────────────────────────
-export async function GET() {
-  const date = new Date().toISOString().slice(0, 10);
-  const rng  = makeRng(dateToSeed(date));
-  const idx  = Math.floor(rng() * PUZZLES.length);
-  const raw  = PUZZLES[idx];
-  const size = raw.grid.length;
 
+// ── Route handler ─────────────────────────────────────────────────────────────
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const isRandom = searchParams.get("random") === "true";
+  const date = new Date().toISOString().slice(0, 10);
+  
+  let raw: { title: string; grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "col" | "length">[] } | null = null;
+
+  // Try Gemini first if it's random OR if we don't have a cached one for today
+  if (process.env.GEMINI_API_KEY) {
+    const cacheDir = path.join(process.cwd(), "scratch", "crossword-cache");
+    const cacheFile = path.join(cacheDir, `puzzle-${date}.json`);
+
+    if (!isRandom && fs.existsSync(cacheFile)) {
+      try {
+        raw = JSON.parse(fs.readFileSync(cacheFile, "utf-8"));
+      } catch (e) {
+        console.error("Cache read error:", e);
+      }
+    }
+
+    if (!raw) {
+      const geminiPuzzle = await generateCrosswordWithGemini();
+      if (geminiPuzzle) {
+        raw = {
+          title: geminiPuzzle.title,
+          grid: geminiPuzzle.grid,
+          clues: geminiPuzzle.clues.map(c => ({ direction: c.direction, answer: c.answer.toUpperCase(), clue: c.clue }))
+        };
+
+        // Cache it if it's for today (and not a random request)
+        if (!isRandom) {
+          try {
+            if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+            fs.writeFileSync(cacheFile, JSON.stringify(raw), "utf-8");
+          } catch (e) {
+            console.error("Cache write error:", e);
+          }
+        }
+      }
+    }
+  }
+
+  // Fallback to pre-built bank if Gemini failed or no API key
+  if (!raw) {
+    const rng = makeRng(dateToSeed(date));
+    const idx = Math.floor(rng() * PUZZLES.length);
+    raw = PUZZLES[idx];
+  }
+
+  const size = raw.grid.length;
   const cells = buildCells(raw.grid);
   const clues = numberAndClues(cells, raw.clues, size);
 

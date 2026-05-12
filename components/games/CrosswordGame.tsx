@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
 import GameDoneScreen from "./GameDoneScreen";
 import type { CrosswordPuzzle, CrosswordClue } from "@/app/api/games/crossword/daily/route";
 
@@ -19,7 +20,41 @@ export default function CrosswordGame() {
   const [date,        setDate]        = useState("");
   const [errorMsg,    setErrorMsg]    = useState("");
   const [alreadyDone, setAlreadyDone] = useState(false);
+  const { data: session } = useSession();
+  const isPatron = session?.user?.tier === "patron";
   const gridRef = useRef<HTMLDivElement>(null);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  async function loadPuzzle(random = false) {
+    if (random) {
+      setPhase("loading");
+      setIsGenerating(true);
+    }
+    
+    try {
+      const resp = await fetch(`/api/games/crossword/daily${random ? "?random=true" : ""}`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const p: CrosswordPuzzle = data.puzzle;
+      
+      setPuzzle(p);
+      setBoard(p.cells.map(row => row.map(c => c.black ? "#" : "")));
+      setRevealed(p.cells.map(row => row.map(() => false)));
+      
+      // Select first non-black cell
+      outer: for (let r = 0; r < p.size; r++)
+        for (let c = 0; c < p.size; c++)
+          if (!p.cells[r][c].black) { setSelectedR(r); setSelectedC(c); break outer; }
+      
+      setPhase("playing");
+    } catch (err: any) {
+      setErrorMsg(err.message);
+      setPhase("error");
+    } finally {
+      setIsGenerating(false);
+    }
+  }
 
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -29,20 +64,7 @@ export default function CrosswordGame() {
       if (stored) { setAlreadyDone(true); setPhase("complete"); return; }
     } catch {}
 
-    fetch("/api/games/crossword/daily")
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(data => {
-        const p: CrosswordPuzzle = data.puzzle;
-        setPuzzle(p);
-        setBoard(p.cells.map(row => row.map(c => c.black ? "#" : "")));
-        setRevealed(p.cells.map(row => row.map(() => false)));
-        // Select first non-black cell
-        outer: for (let r = 0; r < p.size; r++)
-          for (let c = 0; c < p.size; c++)
-            if (!p.cells[r][c].black) { setSelectedR(r); setSelectedC(c); break outer; }
-        setPhase("playing");
-      })
-      .catch(err => { setErrorMsg(err.message); setPhase("error"); });
+    loadPuzzle();
   }, []);
 
   // Derive active clue whenever selection/direction changes
@@ -166,6 +188,17 @@ export default function CrosswordGame() {
           <span className="crossword-label">Daily Crossword</span>
           <span className="crossword-title">{puzzle.title}</span>
           <span className="crossword-date">{date}</span>
+        </div>
+        <div className="crossword-actions">
+          {isPatron && (
+            <button 
+              className="cw-btn cw-btn--secondary" 
+              onClick={() => loadPuzzle(true)}
+              disabled={isGenerating}
+            >
+              {isGenerating ? "Generating..." : "Generate Random"}
+            </button>
+          )}
         </div>
       </div>
 

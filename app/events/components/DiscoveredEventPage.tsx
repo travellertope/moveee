@@ -108,6 +108,14 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
             <p className="disc-event-excerpt">{excerpt}</p>
           )}
 
+          {event.content && (
+            <div 
+              className="disc-event-content prose-custom" 
+              dangerouslySetInnerHTML={{ __html: event.content }} 
+              style={{ marginTop: "24px", color: "var(--ink-soft)", lineHeight: 1.6 }}
+            />
+          )}
+
           {/* CTA */}
           {event.ticketingUrl ? (
             <a

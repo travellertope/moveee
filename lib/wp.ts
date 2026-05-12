@@ -1081,6 +1081,17 @@ export const GET_DIRECTORY_ENTRIES_BY_TYPE = `
   ${DIRECTORY_FIELDS_FRAGMENT}
 `;
 
+export const GET_DIRECTORY_ENTRIES_BY_INTEREST = `
+  query GetDirectoryEntriesByInterest($first: Int, $interestSlug: String) {
+    cultureDirectories(first: $first, where: { status: PUBLISH, taxQuery: { taxArray: [{ taxonomy: CULTURE_INTEREST, field: SLUG, terms: [$interestSlug] }] } }) {
+      nodes {
+        ...DirectoryFields
+      }
+    }
+  }
+  ${DIRECTORY_FIELDS_FRAGMENT}
+`;
+
 const QUOTE_FIELDS_FRAGMENT = `
   fragment QuoteFields on CultureQuote {
     id

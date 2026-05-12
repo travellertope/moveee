@@ -694,8 +694,9 @@
 .gds-card {
   width: 100%;
   max-width: 460px;
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule);
   overflow: hidden;
 }
 
@@ -705,7 +706,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 20px;
-  border-bottom: 1px solid rgba(255,255,255,.1);
+  border-bottom: 1px solid var(--rule);
 }
 
 .gds-logo {
@@ -722,14 +723,14 @@
   font-size: 9px;
   letter-spacing: .12em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.5);
+  color: var(--mute);
 }
 
 /* Result zone */
 .gds-result {
   padding: 36px 24px 28px;
   text-align: center;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid var(--rule);
 }
 
 .gds-badge {
@@ -769,14 +770,14 @@
 .gds-score-sep {
   font-family: 'JetBrains Mono', monospace;
   font-size: 24px;
-  color: rgba(255,255,255,.3);
+  color: var(--rule);
 }
 
 .gds-score-total {
   font-family: 'Fraunces', serif;
   font-size: 48px;
   font-weight: 400;
-  color: rgba(255,255,255,.5);
+  color: var(--mute);
 }
 
 .gds-pct {
@@ -784,14 +785,14 @@
   font-size: 10px;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.45);
+  color: var(--mute);
   margin-bottom: 20px;
 }
 
 .gds-tagline {
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
-  color: rgba(255,255,255,.7);
+  color: var(--ink-soft);
   line-height: 1.4;
   margin: 0;
 }
@@ -802,7 +803,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid var(--rule);
 }
 
 .gds-date {
@@ -810,7 +811,7 @@
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.4);
+  color: var(--mute);
 }
 
 .gds-already {
@@ -827,7 +828,7 @@
   width: 100%;
   padding: 16px 20px;
   background: var(--ochre);
-  color: var(--ink);
+  color: #fff;
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
   letter-spacing: .18em;
@@ -843,13 +844,13 @@
 /* Subscription zone */
 .gds-sub-zone {
   padding: 20px 20px 0;
-  border-top: 1px solid rgba(255,255,255,.08);
+  border-top: 1px solid var(--rule);
 }
 
 .gds-sub-label {
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
-  color: rgba(255,255,255,.5);
+  color: var(--mute);
   margin-bottom: 10px;
   text-align: center;
 }
@@ -862,17 +863,17 @@
 .gds-sub-input {
   flex: 1;
   padding: 12px 14px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.2);
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
   border-right: none;
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
-  color: var(--paper);
+  color: var(--ink);
   outline: none;
   min-width: 0;
 }
 .gds-sub-input:focus { border-color: var(--ochre); }
-.gds-sub-input::placeholder { color: rgba(255,255,255,.3); }
+.gds-sub-input::placeholder { color: var(--mute); }
 
 .gds-sub-btn {
   font-family: 'JetBrains Mono', monospace;
@@ -880,14 +881,14 @@
   letter-spacing: .14em;
   text-transform: uppercase;
   padding: 12px 16px;
-  background: rgba(255,255,255,.12);
-  color: var(--paper);
-  border: 1px solid rgba(255,255,255,.2);
+  background: var(--paper-deep);
+  color: var(--ink);
+  border: 1px solid var(--rule);
   cursor: pointer;
   white-space: nowrap;
-  transition: background .15s;
+  transition: background .15s, color .15s;
 }
-.gds-sub-btn:hover:not(:disabled) { background: var(--ochre); color: var(--ink); }
+.gds-sub-btn:hover:not(:disabled) { background: var(--ochre); color: #fff; border-color: var(--ochre); }
 .gds-sub-btn:disabled { opacity: .5; cursor: default; }
 
 .gds-sub-success {
@@ -895,7 +896,7 @@
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: #6ee7b7;
+  color: #059669;
   text-align: center;
   padding: 4px 0 0;
 }
@@ -903,7 +904,7 @@
 .gds-sub-error {
   font-family: 'DM Sans', sans-serif;
   font-size: 11px;
-  color: #fca5a5;
+  color: #dc2626;
   text-align: center;
   margin-top: 6px;
 }
@@ -912,7 +913,7 @@
 .gds-actions {
   display: flex;
   gap: 0;
-  border-top: 1px solid rgba(255,255,255,.1);
+  border-top: 1px solid var(--rule);
   margin-top: 20px;
 }
 
@@ -925,23 +926,23 @@
   text-transform: uppercase;
   text-align: center;
   text-decoration: none;
-  transition: background .15s;
+  transition: background .15s, color .15s;
   cursor: pointer;
 }
 
 .gds-btn--primary {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
   font-weight: 700;
 }
-.gds-btn--primary:hover { background: var(--ochre); color: var(--ink); }
+.gds-btn--primary:hover { background: var(--ochre); color: #fff; }
 
 .gds-btn--ghost {
   background: transparent;
-  color: rgba(255,255,255,.5);
-  border-left: 1px solid rgba(255,255,255,.1);
+  color: var(--mute);
+  border-left: 1px solid var(--rule);
 }
-.gds-btn--ghost:hover { background: rgba(255,255,255,.06); color: var(--paper); }
+.gds-btn--ghost:hover { background: var(--paper-deep); color: var(--ink); }
 
 /* ── LOADING STATES ────────────────────────────────────────────── */
 
@@ -1090,9 +1091,52 @@
 }
 
 .crossword-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 24px;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--rule);
+}
+
+.crossword-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.cw-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.cw-btn:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.cw-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cw-btn--secondary {
+  border-color: var(--ochre);
+  color: var(--ochre);
+}
+
+.cw-btn--secondary:hover:not(:disabled) {
+  background: var(--ochre);
+  color: var(--paper);
+  border-color: var(--ochre);
 }
 
 .crossword-meta { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
@@ -1249,6 +1293,11 @@
 
 /* Responsive */
 @media (max-width: 640px) {
+  .crossword-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
   .crossword-layout { grid-template-columns: 1fr; }
   .crossword-grid   { width: 100%; }
   .cw-cell {
@@ -1259,3 +1308,4 @@
   .sudoku-numpad { grid-template-columns: repeat(5, 1fr); gap: 8px; }
   .sudoku-numpad-btn { aspect-ratio: unset; padding: 12px 0; }
 }
+

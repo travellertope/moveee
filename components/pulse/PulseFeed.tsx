@@ -19,7 +19,15 @@ const CATEGORIES = [
 ] as const;
 
 const ARMS    = ["All", "Lifestyle", "Origins", "Happenings", "Magazine"] as const;
-const REGIONS = ["All", "Africa", "Caribbean", "Diaspora UK", "Diaspora US", "Diaspora Europe", "Global"] as const;
+const REGIONS = [
+  { slug: "All",             label: "Region: All" },
+  { slug: "africa",          label: "Africa" },
+  { slug: "caribbean",       label: "Caribbean" },
+  { slug: "uk",              label: "Diaspora UK" },
+  { slug: "us",              label: "Diaspora US" },
+  { slug: "europe",          label: "Diaspora Europe" },
+  { slug: "global",          label: "Global" },
+] as const;
 
 interface PulseFeedProps {
   initialStories: WpPulseStory[];
@@ -175,8 +183,8 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
               outline: "none",
             }}
           >
-            {REGIONS.map((region) => (
-              <option key={region} value={region}>{region === "All" ? "Region: All" : region}</option>
+            {REGIONS.map((r) => (
+              <option key={r.slug} value={r.slug}>{r.label}</option>
             ))}
           </select>
         </div>

@@ -163,6 +163,19 @@ export default function PulseStory({ story, initialComments, relatedStories = []
               </span>
             )}
 
+            <span style={{ 
+              color: "var(--ochre)", 
+              fontSize: "0.65rem", 
+              fontWeight: 700, 
+              letterSpacing: "0.08em", 
+              textTransform: "uppercase",
+              background: "rgba(202, 138, 4, 0.08)",
+              padding: "0.15rem 0.4rem",
+              borderRadius: "2px",
+            }}>
+              Curated with AI
+            </span>
+
             {/* Share button */}
             <button
               onClick={handleShare}

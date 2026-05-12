@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTermIdBySlug } from "@/lib/pulse-wordpress";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
@@ -10,13 +11,20 @@ export async function GET(req: NextRequest) {
   const region   = searchParams.get("region");
   const category = searchParams.get("category");
 
+  // Resolve slugs to IDs for WP filtering
+  const [armId, regionId, catId] = await Promise.all([
+    arm      ? getTermIdBySlug("pulse_arm",      arm)      : Promise.resolve(null),
+    region   ? getTermIdBySlug("pulse_region",   region)   : Promise.resolve(null),
+    category ? getTermIdBySlug("pulse_category", category) : Promise.resolve(null),
+  ]);
+
   let url =
     `${WP_URL}/wp-json/wp/v2/pulse-stories` +
     `?per_page=${perPage}&page=${page}&orderby=date&order=desc&_embed=1`;
 
-  if (arm)      url += `&pulse_arm=${encodeURIComponent(arm)}`;
-  if (region)   url += `&pulse_region=${encodeURIComponent(region)}`;
-  if (category) url += `&pulse_category=${encodeURIComponent(category)}`;
+  if (armId)    url += `&pulse_arm=${armId}`;
+  if (regionId) url += `&pulse_region=${regionId}`;
+  if (catId)    url += `&pulse_category=${catId}`;
 
   try {
     const res = await fetch(url, { cache: "no-store" });

@@ -1,4 +1,4 @@
-import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG, GET_DIRECTORY_ENTRIES_BY_TYPE } from "@/lib/wp";
+import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG, GET_DIRECTORY_ENTRIES_BY_TYPE, GET_DIRECTORY_ENTRIES_BY_INTEREST } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -65,15 +65,30 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
     ? new Date(entry.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
     : null;
 
-  // Fetch related entries of the same type (server-side)
+  // Fetch related entries of the same type or interest
   let relatedEntries: any[] = [];
-  if (typeSlug) {
-    try {
-      const rel = await getWPData(GET_DIRECTORY_ENTRIES_BY_TYPE, { first: 8, typeSlug });
-      relatedEntries = (rel?.cultureDirectories?.nodes ?? [])
-        .filter((e: any) => e.slug !== slug)
-        .slice(0, 5);
-    } catch {}
+  const interestSlug = interests[0]?.slug;
+
+  try {
+    const [byType, byInterest] = await Promise.all([
+      typeSlug ? getWPData(GET_DIRECTORY_ENTRIES_BY_TYPE, { first: 8, typeSlug }) : Promise.resolve(null),
+      interestSlug ? getWPData(GET_DIRECTORY_ENTRIES_BY_INTEREST, { first: 8, interestSlug }) : Promise.resolve(null)
+    ]);
+
+    const typeNodes = byType?.cultureDirectories?.nodes ?? [];
+    const interestNodes = byInterest?.cultureDirectories?.nodes ?? [];
+
+    // Merge and deduplicate
+    const combined = [...typeNodes, ...interestNodes];
+    const uniqueMap = new Map();
+    combined.forEach(e => {
+      if (e.slug !== slug && !uniqueMap.has(e.slug)) {
+        uniqueMap.set(e.slug, e);
+      }
+    });
+    relatedEntries = Array.from(uniqueMap.values()).slice(0, 5);
+  } catch (err) {
+    console.error("[directory] related fetch failed:", err);
   }
 
   const websiteUrl      = entry.websiteUrl      ?? "";

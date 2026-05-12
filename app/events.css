@@ -717,8 +717,24 @@ html {
   font-size: 17px;
   line-height: 1.7;
   color: var(--ink-soft);
-  margin-bottom: 36px;
+  margin-bottom: 24px;
   font-weight: 300;
+}
+
+.disc-event-content {
+  margin-bottom: 40px;
+}
+
+.prose-custom p {
+  margin-bottom: 1.25em;
+}
+.prose-custom p:last-child {
+  margin-bottom: 0;
+}
+.prose-custom a {
+  color: var(--ochre);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* CTA */
