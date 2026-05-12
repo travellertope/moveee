@@ -1,4 +1,4 @@
-import { getWPData, GET_DIRECTORY_ENTRIES, GET_DIRECTORY_TYPES } from "@/lib/wp";
+import { getWPData, getDirectoryEntriesWithFallback, GET_DIRECTORY_TYPES } from "@/lib/wp";
 import Link from "next/link";
 import "../directory.css";
 import DirectoryGrid from "@/components/DirectoryGrid";
@@ -18,16 +18,12 @@ export default async function DirectoryPage({
 }) {
   const { type: initialType } = await searchParams;
 
-  const [entriesData, typesData] = await Promise.allSettled([
-    getWPData(GET_DIRECTORY_ENTRIES, { first: 200 }),
+  const [entries, typesData] = await Promise.allSettled([
+    getDirectoryEntriesWithFallback(200),
     getWPData(GET_DIRECTORY_TYPES, {}),
   ]);
 
-  const entries: any[] =
-    entriesData.status === "fulfilled"
-      ? (entriesData.value?.cultureDirectories?.nodes ?? [])
-      : [];
-
+  const dirEntries: any[] = entries.status === "fulfilled" ? entries.value : [];
   const types: any[] =
     typesData.status === "fulfilled"
       ? (typesData.value?.cultureDirectoryTypes?.nodes ?? [])
@@ -51,7 +47,7 @@ export default async function DirectoryPage({
 
       {/* ── GRID + FILTERS ── */}
       <div className="dir-wrap">
-        {entries.length === 0 ? (
+        {dirEntries.length === 0 ? (
           <div className="dir-empty">
             <p>
               No entries yet.{" "}
@@ -59,7 +55,7 @@ export default async function DirectoryPage({
             </p>
           </div>
         ) : (
-          <DirectoryGrid entries={entries} types={types} initialType={initialType ?? null} />
+          <DirectoryGrid entries={dirEntries} types={types} initialType={initialType ?? null} />
         )}
 
         <div className="dir-submit-cta">
