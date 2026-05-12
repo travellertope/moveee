@@ -1,4 +1,4 @@
-import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG, GET_DIRECTORY_ENTRIES_BY_TYPE, GET_DIRECTORY_ENTRIES_BY_INTEREST } from "@/lib/wp";
+import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG, getDirectoryEntriesWithFallback } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -65,28 +65,30 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
     ? new Date(entry.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
     : null;
 
-  // Fetch related entries of the same type or interest
+  // Fetch related entries by pulling the full pool and scoring by type + shared interests.
+  // This mirrors the proven approach used by the directory archive page and avoids
+  // unreliable taxQuery GraphQL filtering on custom taxonomies.
   let relatedEntries: any[] = [];
-  const interestSlug = interests[0]?.slug;
+  const interestSlugs = new Set(interests.map((i: any) => i.slug));
 
   try {
-    const [byType, byInterest] = await Promise.all([
-      typeSlug ? getWPData(GET_DIRECTORY_ENTRIES_BY_TYPE, { first: 8, typeSlug }) : Promise.resolve(null),
-      interestSlug ? getWPData(GET_DIRECTORY_ENTRIES_BY_INTEREST, { first: 8, interestSlug }) : Promise.resolve(null)
-    ]);
+    const allEntries = await getDirectoryEntriesWithFallback(200);
 
-    const typeNodes = byType?.cultureDirectories?.nodes ?? [];
-    const interestNodes = byInterest?.cultureDirectories?.nodes ?? [];
+    // Score each entry: 2 pts for same type, 1 pt per shared interest
+    const scored = allEntries
+      .filter((e: any) => e.slug !== slug)
+      .map((e: any) => {
+        const eType = e.cultureDirectoryTypes?.nodes?.[0]?.slug ?? "";
+        const eInterests: string[] = (e.cultureInterests?.nodes ?? []).map((n: any) => n.slug);
+        let score = 0;
+        if (typeSlug && eType === typeSlug) score += 2;
+        eInterests.forEach((s: string) => { if (interestSlugs.has(s)) score += 1; });
+        return { entry: e, score };
+      })
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score);
 
-    // Merge and deduplicate
-    const combined = [...typeNodes, ...interestNodes];
-    const uniqueMap = new Map();
-    combined.forEach(e => {
-      if (e.slug !== slug && !uniqueMap.has(e.slug)) {
-        uniqueMap.set(e.slug, e);
-      }
-    });
-    relatedEntries = Array.from(uniqueMap.values()).slice(0, 5);
+    relatedEntries = scored.slice(0, 5).map(({ entry }) => entry);
   } catch (err) {
     console.error("[directory] related fetch failed:", err);
   }
