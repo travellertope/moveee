@@ -25,7 +25,7 @@ export default function HomepageContent({
   coverStory, stories, events, origins, products, quotes,
   pulseStories, directoryEntries, isLoggedIn, edition,
 }: Props) {
-  const heroStories   = stories.slice(0, 8);
+  const heroStories   = stories.slice(0, 5);
   const magazineStrip = stories.slice(0, 5);
   const editionLabel  = EDITIONS[edition].label;
   const editionPrefix = edition === "global" ? "" : `/${edition}`;
@@ -106,7 +106,7 @@ export default function HomepageContent({
                 <Link href="/pulse" className="hp-widget-see-all">See all →</Link>
               </div>
               <div className="hp-pulse-list">
-                {pulseStories.slice(0, 3).map((story: any) => (
+                {pulseStories.slice(0, 6).map((story: any) => (
                   <Link key={story.id} href={`/pulse/${story.slug}`} className="hp-pulse-item">
                     <span className="hp-pulse-title">{story.title?.rendered || story.title}</span>
                     <span className="hp-pulse-date">
