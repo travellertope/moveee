@@ -13,9 +13,36 @@ class Culture_Post_Types {
         // Register CPTs and taxonomies directly since init() is called during the init hook.
         self::register_post_types();
         self::register_taxonomies();
+        self::register_rest_meta_fields();
         add_action( 'add_meta_boxes', array( __CLASS__, 'register_meta_boxes' ) );
         add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
+    }
+
+    /**
+     * Expose key private meta fields via the WP REST API so the Next.js
+     * REST fallback can read them (e.g. isAiGenerated on events).
+     */
+    public static function register_rest_meta_fields() {
+        $event_meta = array(
+            '_culture_ai_generated'  => array( 'type' => 'string' ),
+            '_culture_event_date'    => array( 'type' => 'string' ),
+            '_culture_end_date'      => array( 'type' => 'string' ),
+            '_culture_location'      => array( 'type' => 'string' ),
+            '_culture_event_city'    => array( 'type' => 'string' ),
+            '_culture_admission'     => array( 'type' => 'string' ),
+            '_culture_ticketing_url' => array( 'type' => 'string' ),
+            '_culture_tagline'       => array( 'type' => 'string' ),
+            '_culture_is_featured'   => array( 'type' => 'string' ),
+        );
+        foreach ( $event_meta as $meta_key => $args ) {
+            register_post_meta( 'culture_event', $meta_key, array(
+                'type'         => $args['type'],
+                'single'       => true,
+                'show_in_rest' => true,
+                'auth_callback' => '__return_true',
+            ) );
+        }
     }
 
     /**
