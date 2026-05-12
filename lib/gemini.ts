@@ -176,8 +176,9 @@ The JSON must match this exact structure:
   "interests": ["2-5 relevant interest slugs, lowercase, hyphenated. Choose from: music, visual-art, food-drink, fashion, literature, film, history, politics, spirituality, dance, theatre, sport, architecture, photography"],
   "suggestedLinks": ["2-4 names of related topics that would make good linked entries in the same directory"],
   "infobox": {
-    // Include ONLY fields relevant to the entryType. All values must be strings.
-    // Use approximate/well-known values only. Omit a field entirely if the value is genuinely uncertain.
+    // MANDATORY: Fill as many fields as possible for the given entryType. 
+    // High-density metadata is a priority. Omit a field ONLY if the information is impossible to find or estimate.
+    // All values must be strings.
     //
     // person:    born, died, nationality, occupation, knownFor, originCity, activeYears, awards, labels, education
     // place:     country, region, population, officialLanguage, currency, founded, area
@@ -193,7 +194,7 @@ The JSON must match this exact structure:
   }
 }
 
-Focus on African, Caribbean, and global diaspora contexts. Be factual, culturally respectful, and celebratory in tone. Use approximate language (e.g. "in the late 1970s") rather than fabricating specific dates you are unsure of.`;
+Focus on African, Caribbean, and global diaspora contexts. Be factual, culturally respectful, and celebratory in tone. For infobox data, use approximate values (e.g. "c. 1920" or "late 90s") if exact data is unavailable, as this is better than an empty field.`;
 
 /**
  * Extract the first complete JSON value (object or array) from a string.

@@ -138,21 +138,21 @@ class Culture_Directory {
                 // movement
                 'founders', 'origin_country', 'active_period', 'ideology', 'key_figures', 'related_movements',
                 // genre
-                'origin_decade', 'instruments', 'tempo_bpm', 'key_artists', 'related_genres', 'subgenres',
+                'origin_country', 'origin_decade', 'instruments', 'tempo_bpm', 'key_artists', 'related_genres', 'subgenres',
                 // concept
-                'key_thinkers', 'period', 'related_concepts',
+                'origin_country', 'key_thinkers', 'period', 'known_for', 'related_concepts',
                 // film
-                'director', 'year', 'starring', 'cinematographer', 'language', 'distributor', 'runtime', 'production_company',
+                'director', 'year', 'starring', 'cinematographer', 'country', 'language', 'distributor', 'runtime', 'production_company',
                 // book
-                'author', 'year_published', 'genre', 'publisher', 'pages', 'isbn',
+                'author', 'year_published', 'genre', 'publisher', 'language', 'pages', 'isbn',
                 // artwork
-                'artist', 'medium', 'dimensions', 'current_location', 'art_collection', 'style',
+                'artist', 'year', 'medium', 'dimensions', 'current_location', 'art_collection', 'style',
                 // food
-                'food_type', 'main_ingredients', 'also_known_as', 'cultural_context',
+                'origin_country', 'food_type', 'main_ingredients', 'also_known_as', 'cultural_context',
                 // fashion
-                'origin', 'era', 'key_designers', 'materials', 'cultural_significance',
+                'origin', 'era', 'key_designers', 'materials', 'style', 'cultural_significance',
                 // tv-series
-                'creator', 'network', 'seasons', 'years',
+                'creator', 'network', 'seasons', 'years', 'starring', 'country', 'language', 'genre',
             );
             foreach ( $allowed_keys as $snake_key ) {
                 // Accept both snake_case and camelCase from the JSON body.
