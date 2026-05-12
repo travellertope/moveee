@@ -1,7 +1,7 @@
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 // Google AI Studio client — used for all text generation.
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
 
 /**
  * Lazily create a Vertex AI client for Imagen 3 image generation.
@@ -9,24 +9,8 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
  * Returns null when any required variable is absent so image generation
  * degrades gracefully rather than crashing at startup.
  */
-function createVertexClient(): GoogleGenAI | null {
-  const project     = process.env.VERTEX_PROJECT;
-  const location    = process.env.VERTEX_LOCATION ?? "us-central1";
-  const clientEmail = process.env.VERTEX_CLIENT_EMAIL;
-  // Vercel stores the private key with literal \n — normalise to real newlines.
-  const privateKey  = process.env.VERTEX_PRIVATE_KEY?.replace(/\\n/g, "\n");
-
-  if (!project || !clientEmail || !privateKey) return null;
-
-  return new GoogleGenAI({
-    vertexai: true,
-    project,
-    location,
-    googleAuthOptions: {
-      credentials: { client_email: clientEmail, private_key: privateKey },
-      scopes: ["https://www.googleapis.com/auth/cloud-platform"],
-    },
-  } as any);
+function createVertexClient(): any | null {
+  return null; // Disabled: incompatible with new SDK. Use Gemini or Pollinations fallback.
 }
 
 // Model priority order for text generation.
@@ -34,9 +18,9 @@ function createVertexClient(): GoogleGenAI | null {
 // gemini-2.0-* and gemini-1.5-* are deprecated / quota:0 on paid keys.
 // gemini-3-* does not exist as a GA model — removed.
 const TEXT_MODELS = [
-  "gemini-2.5-flash",      // Primary — 2,000 RPM (Tier 2), fastest
-  "gemini-2.5-flash-lite", // Fallback — same quota bucket, lower cost
-  "gemini-2.5-pro",        // Heavy fallback — 1,000 RPM (Tier 2), best quality
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
+  "gemini-1.5-pro",
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
@@ -312,18 +296,19 @@ async function buildImagePromptWithAI(
     `\n\nEntry: "${title}" (type: ${entryType}, template: ${template})\n` +
     `Description: ${excerpt.slice(0, 400) || "(no description provided)"}`;
 
-  for (const model of TEXT_MODELS) {
+  for (const modelId of TEXT_MODELS) {
     try {
-      const res = await ai.models.generateContent({
-        model,
-        contents,
-        config: {
-          safetySettings: SAFETY_SETTINGS,
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
           temperature: 0.9,
           maxOutputTokens: 200,
         },
       });
-      const brief = (res.text ?? "").trim();
+      const res = await model.generateContent(contents);
+      const response = await res.response;
+      const brief = response.text().trim();
       if (brief.length > 30) {
         const fullPrompt =
           brief + " " +
@@ -334,9 +319,9 @@ async function buildImagePromptWithAI(
         console.log(`[image-prompt] AI brief for "${title}": ${brief.slice(0, 120)}...`);
         return fullPrompt;
       }
-      console.warn(`[image-prompt] ${model} returned empty brief for "${title}" — trying next`);
+      console.warn(`[image-prompt] ${modelId} returned empty brief for "${title}" — trying next`);
     } catch (err: any) {
-      console.warn(`[image-prompt] ${model} failed for "${title}": ${err?.message?.slice(0, 100)}`);
+      console.warn(`[image-prompt] ${modelId} failed for "${title}": ${err?.message?.slice(0, 100)}`);
     }
   }
 
@@ -442,14 +427,15 @@ export async function generateDirectoryImage(
 
     for (const imageModel of IMAGE_MODELS) {
       try {
-        const response = await ai.models.generateContent({
+        const model = ai.getGenerativeModel({
           model: imageModel,
-          contents: prompt,
-          config: {
+          safetySettings: SAFETY_SETTINGS,
+          generationConfig: {
             responseModalities: ["TEXT", "IMAGE"],
-            safetySettings: SAFETY_SETTINGS,
           } as any,
         });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
 
         const parts: any[] =
           (response as any).candidates?.[0]?.content?.parts ?? [];
@@ -496,23 +482,16 @@ export async function generateDirectoryStub(
 
   for (const modelId of TEXT_MODELS) {
     try {
-      const response = await ai.models.generateContent({
+      const model = ai.getGenerativeModel({
         model: modelId,
-        contents: `Generate a Culture Directory entry for: "${topic}"`,
-        config: {
-          systemInstruction: SYSTEM_PROMPT,
-          safetySettings: SAFETY_SETTINGS,
-        },
+        systemInstruction: SYSTEM_PROMPT,
+        safetySettings: SAFETY_SETTINGS,
       });
+      const res = await model.generateContent(`Generate a Culture Directory entry for: "${topic}"`);
+      const response = await res.response;
       console.log(`[gemini] ${modelId} response for "${topic}":`, JSON.stringify(response).slice(0, 200));
 
-      // response.text can be null in SDK v1.x when responseMimeType is set —
-      // fall back to the raw candidates structure as the image code does.
-      const raw = (
-        response.text ??
-        (response as any).candidates?.[0]?.content?.parts?.[0]?.text ??
-        ""
-      ).trim();
+      const raw = response.text().trim();
       if (!raw) continue; // Try next model
 
       const jsonStr = extractJson(raw);
@@ -581,17 +560,14 @@ Return ONLY a JSON array of strings — topic names only, no descriptions, no nu
 
   for (const modelId of TEXT_MODELS) {
     try {
-      const response = await ai.models.generateContent({
+      const model = ai.getGenerativeModel({
         model: modelId,
-        contents: prompt,
-        config: { safetySettings: SAFETY_SETTINGS },
+        safetySettings: SAFETY_SETTINGS,
       });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
 
-      const raw = (
-        response.text ??
-        (response as any).candidates?.[0]?.content?.parts?.[0]?.text ??
-        ""
-      ).trim();
+      const raw = response.text().trim();
       if (!raw) continue;
 
       const jsonStr = extractJson(raw);
@@ -648,17 +624,14 @@ Example format:
 
   for (const modelId of TEXT_MODELS) {
     try {
-      const response = await ai.models.generateContent({
+      const model = ai.getGenerativeModel({
         model: modelId,
-        contents: prompt,
-        config: { safetySettings: SAFETY_SETTINGS },
+        safetySettings: SAFETY_SETTINGS,
       });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
 
-      const raw = (
-        response.text ??
-        (response as any).candidates?.[0]?.content?.parts?.[0]?.text ??
-        ""
-      ).trim();
+      const raw = response.text().trim();
       if (!raw) continue;
 
       const jsonStr = extractJson(raw);
@@ -736,16 +709,17 @@ ${resultsJson}`;
 
   for (const modelId of TEXT_MODELS) {
     try {
-      const response = await ai.models.generateContent({
+      const model = ai.getGenerativeModel({
         model: modelId,
-        contents: prompt,
-        config: {
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
           responseMimeType: "application/json",
-          safetySettings: SAFETY_SETTINGS,
         },
       });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
 
-      const raw = (response.text ?? "").trim();
+      const raw = response.text().trim();
       if (!raw) continue;
 
       const jsonStr = extractJson(raw);
@@ -836,16 +810,17 @@ ${resultsJson}`;
 
   for (const modelId of TEXT_MODELS) {
     try {
-      const response = await ai.models.generateContent({
+      const model = ai.getGenerativeModel({
         model: modelId,
-        contents: prompt,
-        config: {
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
           responseMimeType: "application/json",
-          safetySettings: SAFETY_SETTINGS,
         },
       });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
 
-      const raw = (response.text ?? "").trim();
+      const raw = response.text().trim();
       if (!raw) continue;
 
       const jsonStr = extractJson(raw);
@@ -931,17 +906,18 @@ Use an editorial voice — warm, knowledgeable, specific. No marketing clichés.
 
   for (const modelId of TEXT_MODELS) {
     try {
-      const response = await ai.models.generateContent({
+      const model = ai.getGenerativeModel({
         model: modelId,
-        contents: prompt,
-        config: {
-          tools: [{ googleSearch: {} }],
-          safetySettings: SAFETY_SETTINGS,
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
           temperature: 0.3,
-        } as any,
+        },
+        tools: [{ googleSearch: {} }] as any,
       });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
 
-      const text = (response.text ?? "").trim();
+      const text = response.text().trim();
       if (text && text.length > 100) return text;
     } catch {
       // try next model
@@ -1024,16 +1000,17 @@ ${resultsJson}`;
 
   for (const modelId of TEXT_MODELS) {
     try {
-      const response = await ai.models.generateContent({
+      const model = ai.getGenerativeModel({
         model: modelId,
-        contents: prompt,
-        config: {
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
           responseMimeType: "application/json",
-          safetySettings: SAFETY_SETTINGS,
         },
       });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
 
-      const raw = (response.text ?? "").trim();
+      const raw = response.text().trim();
       if (!raw) continue;
 
       const jsonStr = extractJson(raw);

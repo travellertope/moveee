@@ -1,7 +1,7 @@
 
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
 
 export interface GeminiCrosswordClue {
   direction: "across" | "down";

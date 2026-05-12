@@ -11,16 +11,16 @@
  *                         preserving the real source URLs
  */
 
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { fetchAllFeeds, type FeedItem } from "./pulse-rss";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
 
 // Free-tier compatible models — no grounding, no billing required.
 const TEXT_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gemini-2.5-pro",
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
+  "gemini-1.5-pro",
 ];
 
 const SAFETY_SETTINGS = [
@@ -119,28 +119,22 @@ async function tryModels(prompt: string): Promise<PulseStoryRaw[] | null> {
     const modelId = TEXT_MODELS[i];
     try {
       const timeoutMs = modelId.includes("pro") ? 60_000 : 45_000;
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
+          temperature: 0.3,
+        },
+      });
 
-      const response = await withTimeout(
-        ai.models.generateContent({
-          model:    modelId,
-          contents: prompt,
-          config: {
-            safetySettings: SAFETY_SETTINGS,
-            temperature:    0.3,
-          },
-        }),
+      const result = await withTimeout(
+        model.generateContent(prompt),
         timeoutMs,
         modelId
       );
 
-      const raw = (
-        response.text ??
-        (response as any).candidates?.[0]?.content?.parts
-          ?.filter((p: any) => p.text)
-          ?.map((p: any) => p.text)
-          ?.join("") ??
-        ""
-      ).trim();
+      const response = await result.response;
+      const raw = response.text().trim();
 
       if (!raw) continue;
 

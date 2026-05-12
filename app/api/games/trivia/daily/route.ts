@@ -12,7 +12,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 export const runtime = "nodejs";
 
@@ -27,7 +27,7 @@ interface TriviaQuestion {
 const WP_URL  = process.env.NEXT_PUBLIC_WP_URL    ?? "https://cms.themoveee.com";
 const API_KEY = process.env.CULTURE_API_SECRET    ?? "";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
 
 const SAFETY = [
   { category: HarmCategory.HARM_CATEGORY_HARASSMENT,        threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -35,7 +35,7 @@ const SAFETY = [
   { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
 ];
 
-const TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro"];
+const TEXT_MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
 
 const PROMPT = `You are the question writer for Culture Games — a trivia game on The Moveee, a platform celebrating African and diaspora culture globally.
 
@@ -105,15 +105,17 @@ async function saveToWP(questions: TriviaQuestion[]): Promise<void> {
 
 async function generateQuestions(): Promise<TriviaQuestion[]> {
   let lastErr: any;
-  for (const model of TEXT_MODELS) {
+  for (const modelId of TEXT_MODELS) {
     try {
-      const res = await ai.models.generateContent({
-        model,
-        contents: PROMPT,
-        config: { responseMimeType: "application/json", safetySettings: SAFETY },
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY,
+        generationConfig: { responseMimeType: "application/json" },
       });
 
-      const raw = (res.text ?? "").trim();
+      const res = await model.generateContent(PROMPT);
+      const response = await res.response;
+      const raw = response.text().trim();
       if (!raw) continue;
 
       const parsed = JSON.parse(extractJson(raw));
