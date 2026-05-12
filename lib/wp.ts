@@ -149,6 +149,55 @@ function mapRestEventToFrontendShape(item: any) {
   };
 }
 
+function mapRestDirectoryToFrontendShape(item: any) {
+  const embeddedMedia = item?._embedded?.["wp:featuredmedia"]?.[0];
+  const embeddedTerms: any[][] = item?._embedded?.["wp:term"] ?? [];
+  const dirTypes  = embeddedTerms.flat().filter((t: any) => t?.taxonomy === "culture_dir_type");
+  const interests = embeddedTerms.flat().filter((t: any) => t?.taxonomy === "culture_interest");
+  const acf = item?.acf || {};
+  const pick = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== "") ?? null;
+  return {
+    id: String(item?.id ?? ""),
+    databaseId: item?.id,
+    slug: item?.slug ?? "",
+    title: item?.title?.rendered ?? "Untitled",
+    date: item?.date ?? null,
+    excerpt: item?.excerpt?.rendered ?? "",
+    featuredImage: embeddedMedia?.source_url
+      ? { node: { sourceUrl: embeddedMedia.source_url, altText: embeddedMedia.alt_text || "" } }
+      : null,
+    cultureDirectoryTypes: { nodes: dirTypes.map((t: any) => ({ name: t.name, slug: t.slug })) },
+    cultureInterests: { nodes: interests.map((t: any) => ({ name: t.name, slug: t.slug })) },
+    cultureAccesses: { nodes: [] },
+    websiteUrl: pick(acf.website_url, acf.websiteUrl, item?.website_url),
+    instagramHandle: pick(acf.instagram_handle, acf.instagramHandle),
+    twitterHandle: pick(acf.twitter_handle, acf.twitterHandle),
+    selectedWorks: [],
+    infobox: null,
+  };
+}
+
+export async function getDirectoryEntriesWithFallback(first = 200, options: any = {}) {
+  const gql = await getWPData(GET_DIRECTORY_ENTRIES, { first }, options);
+  const gqlEntries = gql?.cultureDirectories?.nodes ?? [];
+  if (gqlEntries.length > 0) return gqlEntries;
+
+  try {
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_directory?per_page=${Math.min(first, 100)}&status=publish&_embed=1&orderby=date&order=desc`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate: options.revalidate !== undefined ? options.revalidate : 3600 },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    return json.map(mapRestDirectoryToFrontendShape);
+  } catch {
+    return [];
+  }
+}
+
 export async function getEventsWithFallback(first = 50, options: any = {}) {
   const gql = await getWPData(GET_EVENTS, { first }, options);
   const gqlEvents = gql?.cultureEvents?.nodes ?? [];
