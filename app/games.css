@@ -1096,6 +1096,50 @@
   z-index: -1;
 }
 
+/* Puzzle complete celebration overlay */
+.cw-celebrate {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 17, 13, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: cwFadeIn .2s ease;
+}
+
+@keyframes cwFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.cw-celebrate-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: cwScaleIn .3s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+@keyframes cwScaleIn {
+  from { transform: scale(.5); opacity: 0; }
+  to   { transform: scale(1);  opacity: 1; }
+}
+
+.cw-celebrate-emoji {
+  font-size: 72px;
+  color: var(--ochre);
+  line-height: 1;
+}
+
+.cw-celebrate-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: var(--paper);
+}
+
 .crossword-game {
   max-width: 960px;
   margin: 0 auto;

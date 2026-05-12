@@ -26,6 +26,8 @@ export default function CrosswordGame() {
   // Hidden input ref — this is what triggers the mobile keyboard
   const hiddenInputRef = useRef<HTMLInputElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [celebrating,  setCelebrating]  = useState(false);
+  const [checked,      setChecked]      = useState(false); // shows revealed state after Check
 
   async function loadPuzzle(random = false) {
     if (random) {
@@ -188,8 +190,16 @@ export default function CrosswordGame() {
     );
     if (done) {
       try { localStorage.setItem(STORAGE_KEY(date), JSON.stringify({ completed: true })); } catch {}
-      setPhase("complete");
+      setCelebrating(true);
+      setTimeout(() => { setCelebrating(false); setPhase("complete"); }, 1800);
     }
+  }
+
+  function handleCheckAnswers() {
+    if (!puzzle) return;
+    setChecked(true);
+    // Flash red cells briefly so the player can see what's wrong
+    setTimeout(() => setChecked(false), 3000);
   }
 
   function clickClue(clue: CrosswordClue) {
@@ -232,6 +242,13 @@ export default function CrosswordGame() {
           <span className="crossword-date">{date}</span>
         </div>
         <div className="crossword-actions">
+          <button
+            className="cw-btn"
+            onClick={handleCheckAnswers}
+            disabled={celebrating}
+          >
+            Check
+          </button>
           {isPatron && (
             <button
               className="cw-btn cw-btn--secondary"
@@ -243,6 +260,16 @@ export default function CrosswordGame() {
           )}
         </div>
       </div>
+
+      {/* Celebration overlay */}
+      {celebrating && (
+        <div className="cw-celebrate">
+          <div className="cw-celebrate-inner">
+            <div className="cw-celebrate-emoji">✓</div>
+            <div className="cw-celebrate-text">PUZZLE COMPLETE</div>
+          </div>
+        </div>
+      )}
 
       <div className="crossword-layout">
         {/* Grid */}
@@ -264,7 +291,9 @@ export default function CrosswordGame() {
                 let cls = "cw-cell";
                 if (isSelected) cls += " cw-cell--selected";
                 else if (inClue) cls += " cw-cell--highlight";
-                if (isWrong)   cls += " cw-cell--error";
+                // Only show error highlight if Check was pressed OR cell has content
+                if (checked && userVal !== "" && !isCorrect) cls += " cw-cell--error";
+                else if (!checked && isWrong) cls += " cw-cell--error";
                 if (isCorrect && userVal) cls += " cw-cell--correct";
 
                 return (
