@@ -643,6 +643,18 @@ html {
   padding: 4px 10px;
 }
 
+.disc-ai-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid rgba(179, 130, 56, 0.4);
+  background: rgba(179, 130, 56, 0.05);
+  padding: 4px 10px;
+  border-radius: 2px;
+}
+
 .disc-event-title {
   font-family: var(--font-serif);
   font-size: clamp(32px, 5vw, 62px);

@@ -35,6 +35,7 @@ export default function DiscoveredEventRow({
       <span className="disc-meta">
         {category}
       </span>
+      <span className="disc-ai-badge" style={{ marginLeft: "auto", marginRight: "12px" }}>AI</span>
       {ticketingUrl ? (
         <a
           href={ticketingUrl}
