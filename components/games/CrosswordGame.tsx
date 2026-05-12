@@ -11,8 +11,8 @@ const STORAGE_KEY = (d: string) => `moveee_crossword_${d}`;
 export default function CrosswordGame() {
   const [phase,       setPhase]       = useState<Phase>("loading");
   const [puzzle,      setPuzzle]      = useState<CrosswordPuzzle | null>(null);
-  const [board,       setBoard]       = useState<string[][]>([]);       // user input
-  const [revealed,    setRevealed]    = useState<boolean[][]>([]);      // correct cells
+  const [board,       setBoard]       = useState<string[][]>([]);
+  const [revealed,    setRevealed]    = useState<boolean[][]>([]);
   const [selectedR,   setSelectedR]   = useState(0);
   const [selectedC,   setSelectedC]   = useState(0);
   const [direction,   setDirection]   = useState<"across" | "down">("across");
@@ -22,8 +22,9 @@ export default function CrosswordGame() {
   const [alreadyDone, setAlreadyDone] = useState(false);
   const { data: session } = useSession();
   const isPatron = session?.user?.tier === "patron";
-  const gridRef = useRef<HTMLDivElement>(null);
 
+  // Hidden input ref — this is what triggers the mobile keyboard
+  const hiddenInputRef = useRef<HTMLInputElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
   async function loadPuzzle(random = false) {
@@ -31,22 +32,17 @@ export default function CrosswordGame() {
       setPhase("loading");
       setIsGenerating(true);
     }
-    
     try {
       const resp = await fetch(`/api/games/crossword/daily${random ? "?random=true" : ""}`);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       const p: CrosswordPuzzle = data.puzzle;
-      
       setPuzzle(p);
       setBoard(p.cells.map(row => row.map(c => c.black ? "#" : "")));
       setRevealed(p.cells.map(row => row.map(() => false)));
-      
-      // Select first non-black cell
       outer: for (let r = 0; r < p.size; r++)
         for (let c = 0; c < p.size; c++)
           if (!p.cells[r][c].black) { setSelectedR(r); setSelectedC(c); break outer; }
-      
       setPhase("playing");
     } catch (err: any) {
       setErrorMsg(err.message);
@@ -63,11 +59,9 @@ export default function CrosswordGame() {
       const stored = localStorage.getItem(STORAGE_KEY(today));
       if (stored) { setAlreadyDone(true); setPhase("complete"); return; }
     } catch {}
-
     loadPuzzle();
   }, []);
 
-  // Derive active clue whenever selection/direction changes
   useEffect(() => {
     if (!puzzle) return;
     const clue = findClueFor(puzzle.clues, selectedR, selectedC, direction, puzzle.cells);
@@ -92,6 +86,11 @@ export default function CrosswordGame() {
     return c === activeClue.col && r >= activeClue.row && r < activeClue.row + activeClue.length;
   }
 
+  function focusInput() {
+    // Focus the hidden input to summon keyboard on mobile
+    hiddenInputRef.current?.focus();
+  }
+
   function selectCell(r: number, c: number) {
     if (!puzzle || puzzle.cells[r][c].black) return;
     if (r === selectedR && c === selectedC) {
@@ -100,7 +99,7 @@ export default function CrosswordGame() {
       setSelectedR(r);
       setSelectedC(c);
     }
-    gridRef.current?.focus();
+    focusInput();
   }
 
   function advance() {
@@ -155,6 +154,33 @@ export default function CrosswordGame() {
     if (e.key === "ArrowUp")    { e.preventDefault(); if (direction === "down")   retreat(); else setDirection("down"); }
   }
 
+  // Handles input from the hidden <input> on mobile (onChange fires on each keystroke)
+  function handleHiddenInput(e: React.FormEvent<HTMLInputElement>) {
+    const val = (e.currentTarget.value ?? "").toUpperCase();
+    if (!val || phase !== "playing" || !puzzle) {
+      // Value cleared = backspace
+      const next = board.map(row => [...row]);
+      if (next[selectedR][selectedC] !== "") {
+        next[selectedR][selectedC] = "";
+      } else {
+        retreat();
+      }
+      setBoard(next);
+      return;
+    }
+    // Take the last character typed
+    const letter = val[val.length - 1];
+    if (letter >= "A" && letter <= "Z") {
+      const next = board.map(row => [...row]);
+      next[selectedR][selectedC] = letter;
+      setBoard(next);
+      advance();
+      checkComplete(next);
+    }
+    // Always clear the input so every new keystroke is fresh
+    e.currentTarget.value = "";
+  }
+
   function checkComplete(b: string[][]) {
     if (!puzzle) return;
     const done = puzzle.cells.every((row, r) =>
@@ -170,7 +196,7 @@ export default function CrosswordGame() {
     setDirection(clue.direction);
     setSelectedR(clue.row);
     setSelectedC(clue.col);
-    gridRef.current?.focus();
+    focusInput();
   }
 
   if (phase === "complete") return <GameDoneScreen game="crossword" score={0} total={0} date={date} alreadyDone={alreadyDone} />;
@@ -183,6 +209,22 @@ export default function CrosswordGame() {
 
   return (
     <div className="crossword-game">
+      {/* Hidden input — captures keyboard on mobile without showing any UI */}
+      <input
+        ref={hiddenInputRef}
+        className="cw-hidden-input"
+        type="text"
+        inputMode="text"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="characters"
+        spellCheck={false}
+        aria-hidden="true"
+        onInput={handleHiddenInput}
+        onKeyDown={handleKey}
+        readOnly={phase !== "playing"}
+      />
+
       <div className="crossword-header">
         <div className="crossword-meta">
           <span className="crossword-label">Daily Crossword</span>
@@ -191,8 +233,8 @@ export default function CrosswordGame() {
         </div>
         <div className="crossword-actions">
           {isPatron && (
-            <button 
-              className="cw-btn cw-btn--secondary" 
+            <button
+              className="cw-btn cw-btn--secondary"
               onClick={() => loadPuzzle(true)}
               disabled={isGenerating}
             >
@@ -206,10 +248,8 @@ export default function CrosswordGame() {
         {/* Grid */}
         <div
           className="crossword-grid-wrap"
-          ref={gridRef}
-          tabIndex={0}
-          onKeyDown={handleKey}
           style={{ "--cw-size": puzzle.size } as React.CSSProperties}
+          onClick={focusInput}
         >
           <div className="crossword-grid" style={{ gridTemplateColumns: `repeat(${puzzle.size}, 1fr)` }}>
             {puzzle.cells.map((row, r) =>
