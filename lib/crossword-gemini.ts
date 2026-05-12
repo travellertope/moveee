@@ -24,7 +24,7 @@ const SAFETY_SETTINGS = [
 
 export async function generateCrosswordWithGemini(): Promise<GeminiCrosswordResponse | null> {
   const model = ai.getGenerativeModel({ 
-    model: "gemini-2.0-flash", // Use 2.0 Flash for speed and high logic capability
+    model: "gemini-1.5-flash",
     safetySettings: SAFETY_SETTINGS,
   });
 

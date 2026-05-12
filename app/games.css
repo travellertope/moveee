@@ -1166,7 +1166,7 @@
 /* Layout: grid left, clues right */
 .crossword-layout {
   display: grid;
-  grid-template-columns: min(420px, 45vw) 1fr;
+  grid-template-columns: min(440px, 48vw) 1fr;
   gap: 32px;
   align-items: start;
 }
@@ -1291,21 +1291,51 @@
   color: var(--ink);
 }
 
-/* Responsive */
+/* Mobile crossword */
 @media (max-width: 640px) {
+  .crossword-game {
+    padding: 20px 12px 60px;
+  }
   .crossword-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
+  }
+  .crossword-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .crossword-grid-wrap {
+    width: 100%;
+  }
+  .crossword-grid {
+    width: 100%;
+  }
+  .cw-cell {
+    /* aspect-ratio: 1/1 handles height — no manual calc needed */
+  }
+  .cw-cell-num {
+    font-size: 7px;
+    top: 1px;
+    left: 2px;
+  }
+  .cw-cell-letter {
+    font-size: clamp(11px, 4.2vw, 17px);
+  }
+  .cw-active-clue {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin-bottom: 12px;
+  }
+  .cw-active-clue-text {
+    font-size: 13px;
+  }
+  .cw-clue-cols {
+    grid-template-columns: 1fr;
     gap: 16px;
   }
-  .crossword-layout { grid-template-columns: 1fr; }
-  .crossword-grid   { width: 100%; }
-  .cw-cell {
-    width: calc(100% / var(--cw-size, 7));
-    height: calc(100% / var(--cw-size, 7));
-  }
-  .cw-clue-cols { grid-template-columns: 1fr; }
   .sudoku-numpad { grid-template-columns: repeat(5, 1fr); gap: 8px; }
   .sudoku-numpad-btn { aspect-ratio: unset; padding: 12px 0; }
 }
-

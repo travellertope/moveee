@@ -322,8 +322,15 @@ export async function GET(req: NextRequest) {
 
   // Fallback to pre-built bank if Gemini failed or no API key
   if (!raw) {
-    const rng = makeRng(dateToSeed(date));
-    const idx = Math.floor(rng() * PUZZLES.length);
+    let idx: number;
+    if (isRandom) {
+      // Truly random — different puzzle each press
+      idx = Math.floor(Math.random() * PUZZLES.length);
+    } else {
+      // Deterministic — same puzzle for all players today
+      const rng = makeRng(dateToSeed(date));
+      idx = Math.floor(rng() * PUZZLES.length);
+    }
     raw = PUZZLES[idx];
   }
 
