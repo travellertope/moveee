@@ -150,6 +150,16 @@ class Culture_Twitter {
     }
 
     /**
+     * Public alias so Culture_Settings AJAX handler can call it for test tweets.
+     * @param  string $method HTTP method.
+     * @param  string $url    Request URL.
+     * @return string         OAuth Authorization header value.
+     */
+    public static function build_oauth_header_public( $method, $url ) {
+        return self::build_oauth_header( $method, $url );
+    }
+
+    /**
      * Build an OAuth 1.0a Authorization header for Twitter API v2.
      *
      * JSON bodies are NOT included in the signature base string —
