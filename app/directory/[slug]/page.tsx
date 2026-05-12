@@ -75,7 +75,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
     const allEntries = await getDirectoryEntriesWithFallback(200);
 
     // Score each entry: 2 pts for same type, 1 pt per shared interest
-    const scored = allEntries
+    const scored: { entry: any; score: number }[] = allEntries
       .filter((e: any) => e.slug !== slug)
       .map((e: any) => {
         const eType = e.cultureDirectoryTypes?.nodes?.[0]?.slug ?? "";
@@ -85,8 +85,8 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
         eInterests.forEach((s: string) => { if (interestSlugs.has(s)) score += 1; });
         return { entry: e, score };
       })
-      .filter(({ score }) => score > 0)
-      .sort((a, b) => b.score - a.score);
+      .filter(({ score }: { score: number }) => score > 0)
+      .sort((a: { score: number }, b: { score: number }) => b.score - a.score);
 
     relatedEntries = scored.slice(0, 5).map(({ entry }) => entry);
   } catch (err) {

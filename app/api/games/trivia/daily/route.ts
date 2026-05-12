@@ -110,7 +110,6 @@ async function generateQuestions(): Promise<TriviaQuestion[]> {
       const model = ai.getGenerativeModel({
         model: modelId,
         safetySettings: SAFETY,
-        generationConfig: { responseMimeType: "application/json" },
       });
 
       const res = await model.generateContent(PROMPT);

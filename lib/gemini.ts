@@ -713,7 +713,6 @@ ${resultsJson}`;
         model: modelId,
         safetySettings: SAFETY_SETTINGS,
         generationConfig: {
-          responseMimeType: "application/json",
         },
       });
       const res = await model.generateContent(prompt);
@@ -814,7 +813,6 @@ ${resultsJson}`;
         model: modelId,
         safetySettings: SAFETY_SETTINGS,
         generationConfig: {
-          responseMimeType: "application/json",
         },
       });
       const res = await model.generateContent(prompt);
@@ -1004,7 +1002,6 @@ ${resultsJson}`;
         model: modelId,
         safetySettings: SAFETY_SETTINGS,
         generationConfig: {
-          responseMimeType: "application/json",
         },
       });
       const res = await model.generateContent(prompt);
