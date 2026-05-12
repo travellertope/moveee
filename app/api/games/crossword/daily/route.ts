@@ -219,7 +219,7 @@ function buildCells(gridLines: string[]): CrosswordCell[][] {
   const size = gridLines.length;
   return gridLines.map(row =>
     row.split("").map(ch => ({
-      letter: ch === "." ? "" : ch,
+      letter: ch === "." ? "" : ch.toUpperCase(), // always uppercase — user input is always uppercase
       black:  ch === ".",
     }))
   );
@@ -249,7 +249,8 @@ function numberAndClues(
       if (startsAcross) {
         let word = "";
         for (let i = c; i < size && !cells[r][i].black; i++) word += cells[r][i].letter;
-        const matchingClue = rawClues.find(cl => cl.direction === "across" && cl.answer === word);
+        // Case-insensitive match — clue answers from Gemini may be mixed case
+        const matchingClue = rawClues.find(cl => cl.direction === "across" && cl.answer.toUpperCase() === word.toUpperCase());
         if (matchingClue) {
           usedAcross = true;
           clues.push({ ...matchingClue, number: nextNumber, row: r, col: c, length: word.length });
@@ -259,7 +260,8 @@ function numberAndClues(
       if (startsDown) {
         let word = "";
         for (let i = r; i < size && !cells[i][c].black; i++) word += cells[i][c].letter;
-        const matchingClue = rawClues.find(cl => cl.direction === "down" && cl.answer === word);
+        // Case-insensitive match
+        const matchingClue = rawClues.find(cl => cl.direction === "down" && cl.answer.toUpperCase() === word.toUpperCase());
         if (matchingClue) {
           usedDown = true;
           clues.push({ ...matchingClue, number: nextNumber, row: r, col: c, length: word.length });
