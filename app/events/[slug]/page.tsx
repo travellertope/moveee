@@ -337,7 +337,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         </aside>
       </main>
 
-
       {/* ARTIST STRIP */}
       {hasHost && (
         <section className="artist-strip">
