@@ -6,7 +6,7 @@ import EventCard from "./components/EventCard";
 import CommunityRadarSection from "./components/CommunityRadarSection";
 import "@/app/events.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 180;
 
 export const metadata = {
   title: "Happenings",

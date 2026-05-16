@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getUnifiedFeed } from "@/lib/unified-feed";
 import HashtagFeed from "@/components/pulse/HashtagFeed";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function generateMetadata({
   params,

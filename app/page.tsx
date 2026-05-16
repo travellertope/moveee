@@ -4,7 +4,7 @@ import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import HomepageContent from "@/components/HomepageContent";
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 export const metadata: Metadata = {
   title: "The Moveee — Best in African Culture",

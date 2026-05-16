@@ -7,7 +7,7 @@ import ProductSelectors from "./ProductSelectors";
 import ProductAccordion from "./ProductAccordion";
 import "../shop.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default async function ProductPage({
   params,

@@ -13,7 +13,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getAccessLevel, canViewContent } from "@/lib/access";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;

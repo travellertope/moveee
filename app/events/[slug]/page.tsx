@@ -7,7 +7,7 @@ import RSVPForm from "../components/RSVPForm";
 import DiscoveredEventPage from "../components/DiscoveredEventPage";
 import "@/app/events.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 180;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

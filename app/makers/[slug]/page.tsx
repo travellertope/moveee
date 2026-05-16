@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import "../makers.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 const CMS = "https://cms.themoveee.com";
 

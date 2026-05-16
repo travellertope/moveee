@@ -5,7 +5,7 @@ import { decodeHtml } from "@/lib/decode-html";
 import PulseStory from "@/components/pulse/PulseStory";
 import CategoryPage from "@/components/pulse/CategoryPage";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 
