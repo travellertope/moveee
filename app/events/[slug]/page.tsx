@@ -88,7 +88,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   const eventSubtype = event.eventSubtype || "";
   const aboutLabel = event.aboutLabel || "About the event";
-const venueAddress = event.venueAddress || "";
+  const venueAddress = event.venueAddress || "";
   const membersNote = event.rsvpMembersNote || "";
   const rsvpTicketTypes = event.rsvpTicketTypes && event.rsvpTicketTypes.length > 0
     ? event.rsvpTicketTypes.map((t: any) => ({
