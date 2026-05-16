@@ -176,14 +176,16 @@ export default function FeedCard({
           )}
 
           {/* Reactions + comment link */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0 }}>
             {item.wpId && (
-              <ReactionBar
-                itemId={item.wpId}
-                itemType="community"
-                initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
-                shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/pulse#community-${item.wpId}`}
-              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <ReactionBar
+                  itemId={item.wpId}
+                  itemType="community"
+                  initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
+                  shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/pulse#community-${item.wpId}`}
+                />
+              </div>
             )}
             <Link
               href={`/community/${item.slug}`}
@@ -194,7 +196,6 @@ export default function FeedCard({
                 color: "#7a6f5c",
                 textDecoration: "none",
                 fontSize: "0.75rem",
-                marginLeft: "auto",
                 flexShrink: 0,
               }}
               aria-label="View comments"

@@ -134,9 +134,11 @@ export default function ReactionBar({
         display: "flex",
         alignItems: "center",
         gap: "0.25rem",
-        paddingTop: "0.6rem",
-        borderTop: "1px solid #1e2e1e",
+        paddingTop: "0.5rem",
+        borderTop: "1px solid #e8e2d8",
         marginTop: "0.25rem",
+        minWidth: 0,
+        overflow: "hidden",
       }}
     >
       {REACTIONS.map(({ key, emoji, label }) => {
@@ -149,9 +151,9 @@ export default function ReactionBar({
             title={label}
             aria-label={`${label}: ${count}`}
             style={{
-              background: active ? "rgba(255,255,255,0.07)" : "transparent",
+              background: active ? "#f0ece4" : "transparent",
               border: "1px solid",
-              borderColor: active ? "rgba(255,255,255,0.15)" : "transparent",
+              borderColor: active ? "#d8cfc4" : "transparent",
               borderRadius: "20px",
               padding: "0.2rem 0.55rem",
               cursor: "pointer",
@@ -159,7 +161,7 @@ export default function ReactionBar({
               alignItems: "center",
               gap: "0.3rem",
               fontSize: "0.8rem",
-              color: active ? "#e8e8e8" : "#666",
+              color: active ? "#3a342b" : "#7a6f5c",
               transition: "all 0.15s",
               lineHeight: 1,
             }}
@@ -185,7 +187,7 @@ export default function ReactionBar({
           background: "transparent",
           border: "none",
           cursor: "pointer",
-          color: copied ? "#6abf69" : "#444",
+          color: copied ? "#2e7d32" : "#7a6f5c",
           display: "flex",
           alignItems: "center",
           gap: "0.3rem",
