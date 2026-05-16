@@ -168,7 +168,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   }, [items]);
 
   return (
-    <div style={{ background: "#f7f5f2" }}>
+    <div style={{ background: "#f7f5f2", overflowX: "hidden" }}>
       <div className="pulse-layout">
 
         {/* ── Left Sidebar ── */}
@@ -231,7 +231,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
         <main className="pulse-timeline">
           {/* Mobile filter strip */}
           <div className="pulse-mobile-filters">
-            <div style={{ display: "flex", gap: "0.35rem", overflowX: "auto", padding: "0.65rem 1rem", scrollbarWidth: "none" }}>
+            <div style={{ display: "flex", gap: "0.35rem", padding: "0.65rem 1rem" }}>
               {TYPE_FILTERS.map(({ label, value }) => (
                 <button
                   key={value}
@@ -332,6 +332,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
           display: grid;
           grid-template-columns: 190px 1fr 220px;
           max-width: 1080px;
+          width: 100%;
           margin: 0 auto;
           align-items: start;
         }
@@ -361,6 +362,10 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
           display: none;
           border-bottom: 1px solid #e8e2d8;
           background: #fff;
+          overflow-x: auto;
+          overflow-y: hidden;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
         }
         .pulse-mobile-filters::-webkit-scrollbar { display: none; }
         @media (max-width: 860px) {
