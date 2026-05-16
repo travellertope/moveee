@@ -2913,6 +2913,48 @@
     white-space: nowrap;
   }
 
+  .hb-footer-edition {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .hb-footer-edition-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .hb-footer-edition-select {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 2px;
+    color: rgba(255,255,255,0.55);
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 6px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .hb-footer-edition-select:hover,
+  .hb-footer-edition-select:focus {
+    border-color: rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.85);
+  }
+
+  .hb-footer-edition-select option {
+    background: #1a1612;
+    color: #fff;
+    text-transform: uppercase;
+  }
+
   /* ===== HP RESPONSIVE ===== */
   @media (max-width: 1280px) {
     .hp-mag-strip { grid-template-columns: repeat(3, 1fr); }

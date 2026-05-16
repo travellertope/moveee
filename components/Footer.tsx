@@ -1,7 +1,27 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { EDITIONS } from "@/lib/editions";
+
+const EDITION_ORDER = ["global", "uk", "us", "africa"] as const;
 
 const Footer = () => {
+  const pathname = usePathname();
+
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const firstSeg = pathSegments[0];
+  const currentEdition = (firstSeg === "uk" || firstSeg === "us" || firstSeg === "africa")
+    ? firstSeg
+    : "global";
+
+  function handleEditionChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const slug = e.target.value as typeof EDITION_ORDER[number];
+    document.cookie = `moveee_edition=${slug}; path=/; max-age=2592000; SameSite=Lax`;
+    window.location.href = EDITIONS[slug].path;
+  }
+
   return (
     <footer className="hb-footer">
 
@@ -130,7 +150,21 @@ const Footer = () => {
           <span>|</span>
           <Link href="/contact">Contact</Link>
         </div>
-        <div className="hb-footer-lang">English</div>
+        <div className="hb-footer-edition">
+          <label htmlFor="footer-edition-select" className="hb-footer-edition-label">Edition</label>
+          <select
+            id="footer-edition-select"
+            value={currentEdition}
+            onChange={handleEditionChange}
+            className="hb-footer-edition-select"
+          >
+            {EDITION_ORDER.map((slug) => (
+              <option key={slug} value={slug}>
+                {EDITIONS[slug].label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </footer>
   );
