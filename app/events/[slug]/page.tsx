@@ -88,7 +88,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   const eventSubtype = event.eventSubtype || "";
   const aboutLabel = event.aboutLabel || "About the event";
-  const galleryRunText = event.galleryRunText || "Admission is free and strictly by RSVP for the opening night. The archive remains open for visitors thereafter during regular gallery hours.";
   const venueAddress = event.venueAddress || "";
   const membersNote = event.rsvpMembersNote || "";
   const rsvpTicketTypes = event.rsvpTicketTypes && event.rsvpTicketTypes.length > 0
@@ -338,49 +337,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         </aside>
       </main>
 
-      {/* ON VIEW / EVENT RUN */}
-      <section className="gallery-run">
-        <div className="gallery-run-inner">
-          <div>
-            <div className="section-label">{eyebrowType}</div>
-            <h3>On view through<br/><em>{endFormatted || dateFormatted}</em></h3>
-            <p>{galleryRunText}</p>
-
-            <div className="run-dates">
-              <div className="run-date-item">
-                <div className="d-label">Opens</div>
-                <div className="d-val">{dateFormatted}</div>
-              </div>
-              <div className="run-date-item">
-                <div className="d-label">Closes</div>
-                <div className="d-val">{endFormatted || "TBA"}</div>
-              </div>
-              <div className="run-date-item">
-                <div className="d-label">Hours</div>
-                <div className="d-val">{event.openingHours || "See venue"}</div>
-              </div>
-              <div className="run-date-item">
-                <div className="d-label">Admission</div>
-                <div className="d-val">{event.admission || "Free"}</div>
-              </div>
-            </div>
-
-            <a href="#rsvp-section" className="btn-primary">RSVP Now →</a>
-          </div>
-
-          {/* On-view image — uses dedicated ACF field if set, falls back to featured image */}
-          <div className="gallery-portrait">
-            {(event.onViewImage?.node?.sourceUrl || img) && (
-              <Image
-                src={event.onViewImage?.node?.sourceUrl || img}
-                alt={event.onViewImage?.node?.altText || event.title}
-                fill
-                style={{ objectFit: "cover" }}
-              />
-            )}
-          </div>
-        </div>
-      </section>
 
       {/* ARTIST STRIP */}
       {hasHost && (

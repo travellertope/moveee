@@ -118,15 +118,21 @@ export default function ReactionBar({
 
   async function handleShare() {
     const url = shareUrl ?? window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ url });
+      } catch {
+        // User cancelled or share failed — silently ignore.
+      }
+      return;
+    }
+    // Fallback: copy to clipboard.
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard not available — fall back to native share if available.
-      if (navigator.share) {
-        navigator.share({ url }).catch(() => {});
-      }
+      // Nothing we can do.
     }
   }
 
