@@ -92,30 +92,6 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
         padding: "1.25rem 1.5rem",
       }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          {/* Breadcrumb */}
-          <p style={{
-            fontFamily: "var(--font-mono), monospace",
-            fontSize: "0.65rem",
-            color: "#7a6f5c",
-            margin: "0 0 0.6rem",
-          }}>
-            <Link href="/pulse" style={{ color: "#7a6f5c", textDecoration: "none" }}>← Pulse</Link>
-            {" · "}
-            <Link href="/pulse/categories" style={{ color: "#7a6f5c", textDecoration: "none" }}>Categories</Link>
-          </p>
-
-          {/* Mono label */}
-          <p style={{
-            fontFamily: "var(--font-mono), monospace",
-            fontSize: "0.6rem",
-            color: "#c5491f",
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            margin: "0 0 0.2rem",
-          }}>
-            Moveee Pulse · {label}
-          </p>
-
           {/* H1 */}
           <h1 style={{
             fontSize: "1.4rem",
