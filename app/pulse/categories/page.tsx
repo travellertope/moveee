@@ -1,9 +1,7 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Categories — Moveee Pulse",
-};
 
 const CATEGORIES = [
   { slug: "music",      label: "Music",       desc: "Artists, releases, and the sounds shaping the diaspora." },
