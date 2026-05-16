@@ -1,240 +1,288 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import type { WpPulseStory } from "@/lib/pulse-wordpress";
-import PulseCard from "./PulseCard";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
+import FeedCard from "./FeedCard";
+import SubmitPost from "./SubmitPost";
 
-const CATEGORIES = [
-  { slug: "all",        label: "All" },
-  { slug: "music",      label: "Music" },
-  { slug: "film",       label: "Film" },
-  { slug: "fashion",    label: "Fashion" },
-  { slug: "art",        label: "Art" },
-  { slug: "literature", label: "Literature" },
-  { slug: "food",       label: "Food" },
-  { slug: "activism",   label: "Activism" },
-  { slug: "sports",     label: "Sports" },
-  { slug: "business",   label: "Business" },
-  { slug: "tech",       label: "Tech" },
-] as const;
+const TYPE_FILTERS: { label: string; value: FeedItemType | "all" }[] = [
+  { label: "All",        value: "all"       },
+  { label: "Community",  value: "community" },
+  { label: "Pulse",      value: "pulse"     },
+  { label: "Editorial",  value: "editorial" },
+  { label: "Happening",  value: "happening" },
+  { label: "Directory",  value: "directory" },
+  { label: "Quote",      value: "quote"     },
+];
 
-const ARMS    = ["All", "Lifestyle", "Origins", "Happenings", "Magazine"] as const;
-const REGIONS = [
-  { slug: "All",             label: "Region: All" },
-  { slug: "africa",          label: "Africa" },
-  { slug: "caribbean",       label: "Caribbean" },
-  { slug: "uk",              label: "Diaspora UK" },
-  { slug: "us",              label: "Diaspora US" },
-  { slug: "europe",          label: "Diaspora Europe" },
-  { slug: "global",          label: "Global" },
-] as const;
+const REGIONS = ["All", "Africa", "Caribbean", "Diaspora UK", "Diaspora US", "Diaspora Europe", "Global"] as const;
 
 interface PulseFeedProps {
-  initialStories: WpPulseStory[];
+  initialItems: FeedItem[];
 }
 
-export default function PulseFeed({ initialStories }: PulseFeedProps) {
-  const [stories,        setStories]        = useState<WpPulseStory[]>(initialStories);
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [activeArm,      setActiveArm]      = useState("All");
-  const [activeRegion,   setActiveRegion]   = useState("All");
-  const [loading,        setLoading]        = useState(false);
-  const [page,           setPage]           = useState(1);
-  const [hasMore,        setHasMore]        = useState(initialStories.length >= 18);
+function FilterPill({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: active ? "#D4A847" : "transparent",
+        color: active ? "#0d0d0d" : "#888",
+        border: active ? "1px solid #D4A847" : "1px solid #2a2a2a",
+        borderRadius: "2px",
+        padding: "0.35rem 0.85rem",
+        fontSize: "0.72rem",
+        fontWeight: active ? 700 : 500,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        cursor: "pointer",
+        transition: "all 0.15s",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
 
-  const fetchStories = useCallback(
-    async (category: string, arm: string, region: string, nextPage = 1, append = false) => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams({ page: String(nextPage), perPage: "12" });
-        if (category !== "all") params.set("category", category);
-        if (arm      !== "All") params.set("arm",      arm.toLowerCase());
-        if (region   !== "All") params.set("region",   region);
+export default function PulseFeed({ initialItems }: PulseFeedProps) {
+  const searchParams = useSearchParams();
+  const [items, setItems] = useState<FeedItem[]>(initialItems);
+  const [activeType, setActiveType] = useState<FeedItemType | "all">("all");
+  const [activeRegion, setActiveRegion] = useState<string>("All");
+  const [activeTag, setActiveTag] = useState<string>("");
 
-        const res  = await fetch(`/api/pulse/stories?${params}`);
-        const json = res.ok ? await res.json() : { stories: [], hasMore: false };
+  // Honour ?hashtag= and ?tag= query params from community post page links.
+  useEffect(() => {
+    const hashtag = searchParams.get("hashtag");
+    const tag     = searchParams.get("tag");
+    if (hashtag) {
+      setActiveType("community");
+      setActiveTag(`#${hashtag}`);
+    } else if (tag) {
+      setActiveType("community");
+      setActiveTag(tag);
+    }
+  }, [searchParams]);
+  const [visibleCount, setVisibleCount] = useState(24);
 
-        const incoming: WpPulseStory[] = json.stories ?? [];
-        setStories(append ? (prev) => [...prev, ...incoming] : incoming);
-        setHasMore(json.hasMore ?? incoming.length >= 12);
-        setPage(nextPage);
-      } catch {
-        // Keep existing stories on failure.
-      } finally {
-        setLoading(false);
-      }
+  // Derive available tags from actual community posts in the feed.
+  const availableTags = useMemo(() => {
+    const tags = new Set<string>();
+    items.forEach((item) => {
+      if (item.type === "community" && item.communityTag) tags.add(item.communityTag);
+    });
+    return Array.from(tags).sort();
+  }, [items]);
+
+  const handlePosted = useCallback(
+    (post: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null }) => {
+      const newItem: FeedItem = {
+        id: `community-${post.id}`,
+        type: "community",
+        title: post.text,
+        slug: String(post.id),
+        date: new Date().toISOString(),
+        image: post.imageUrl ?? undefined,
+        href: `/community/${post.id}`,
+        communityAuthor: post.authorName,
+        communityTag: post.tag ?? "",
+        reactions: { love: 0, fire: 0, clap: 0 },
+        wpId: post.id,
+      };
+      setItems((prev) => [newItem, ...prev]);
+      setActiveType("community");
+      setActiveTag(post.tag ?? "");
+      setVisibleCount(24);
     },
     []
   );
 
-  const handleCategory = (cat: string) => {
-    setActiveCategory(cat);
-    fetchStories(cat, activeArm, activeRegion, 1, false);
-  };
+  const handleTagClick = useCallback((tag: string) => {
+    setActiveType("community");
+    setActiveTag((prev) => (prev === tag ? "" : tag));
+    setVisibleCount(24);
+  }, []);
 
-  const handleArm = (arm: string) => {
-    setActiveArm(arm);
-    fetchStories(activeCategory, arm, activeRegion, 1, false);
+  // Hashtag clicks: store with # prefix so filter logic can distinguish them.
+  const handleHashtagClick = useCallback((hashtag: string) => {
+    setActiveType("community");
+    setActiveTag((prev) => (prev === hashtag ? "" : hashtag));
+    setVisibleCount(24);
+  }, []);
+
+  const filtered = items.filter((item) => {
+    const typeMatch = activeType === "all" || item.type === activeType;
+    const regionMatch =
+      activeRegion === "All" ||
+      (item.region?.toLowerCase() === activeRegion.toLowerCase());
+    const tagMatch = !activeTag || (item.type === "community" && (
+      activeTag.startsWith("#")
+        // Hashtag filter: search post text.
+        ? item.title.toLowerCase().includes(activeTag.toLowerCase())
+        // Structured tag filter: match communityTag.
+        : item.communityTag === activeTag
+    ));
+    return typeMatch && regionMatch && tagMatch;
+  });
+
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+
+  const handleType = (type: FeedItemType | "all") => {
+    setActiveType(type);
+    setActiveTag("");
+    setVisibleCount(24);
+    if (type !== "pulse") setActiveRegion("All");
   };
 
   const handleRegion = (region: string) => {
     setActiveRegion(region);
-    fetchStories(activeCategory, activeArm, region, 1, false);
+    setVisibleCount(24);
   };
 
-  const handleLoadMore = () => {
-    fetchStories(activeCategory, activeArm, activeRegion, page + 1, true);
-  };
+  const showRegions = activeType === "all" || activeType === "pulse";
+  const showTags = availableTags.length > 0 && (activeType === "all" || activeType === "community");
 
   return (
-    <div style={{ background: "var(--paper)", minHeight: "60vh", paddingBottom: "4rem" }}>
-      {/* ── Filter bar: category tabs left, refine selects right — single row ── */}
-      <div style={{
-        borderBottom: "1px solid #e0dbd1",
-        position: "sticky",
-        top: 0,
-        background: "var(--paper)",
-        zIndex: 10,
-        display: "flex",
-        alignItems: "stretch",
-        padding: "0 1.5rem",
-      }}>
-        {/* Scrollable category tabs */}
-        <div style={{
-          display: "flex",
-          gap: 0,
-          overflowX: "auto",
-          scrollbarWidth: "none",
-          flex: 1,
-        }}>
-          {CATEGORIES.map(({ slug, label }) => {
-            const active = activeCategory === slug;
-            return (
-              <button
-                key={slug}
-                onClick={() => handleCategory(slug)}
-                style={{
-                  flex: "0 0 auto",
-                  padding: "0.85rem 1.1rem",
-                  background: "transparent",
-                  border: "none",
-                  borderBottom: active ? "2px solid var(--ochre)" : "2px solid transparent",
-                  color: active ? "var(--ink)" : "#8a7d6e",
-                  fontFamily: "var(--font-mono, monospace)",
-                  fontSize: "0.7rem",
-                  fontWeight: active ? 700 : 500,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  cursor: "pointer",
-                  transition: "color 0.15s, border-color 0.15s",
-                  whiteSpace: "nowrap",
-                  marginBottom: "-1px",
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
+    <div style={{ background: "#0d0d0d", minHeight: "60vh", paddingBottom: "4rem" }}>
+      {/* Compose box */}
+      <SubmitPost onPosted={handlePosted} />
 
-        {/* Refine selects — pinned right */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0.5rem",
-          flexShrink: 0,
-          borderLeft: "1px solid #e0dbd1",
-          paddingLeft: "1.25rem",
-          marginLeft: "0.5rem",
-        }}>
-          <select
-            value={activeArm}
-            onChange={(e) => handleArm(e.target.value)}
-            style={{
-              fontFamily: "var(--font-mono, monospace)",
-              fontSize: "0.68rem",
-              letterSpacing: "0.05em",
-              color: activeArm !== "All" ? "var(--ink)" : "#8a7d6e",
-              background: "transparent",
-              border: "1px solid " + (activeArm !== "All" ? "var(--ink)" : "#d4cfc6"),
-              borderRadius: "2px",
-              padding: "0.28rem 0.55rem",
-              cursor: "pointer",
-              outline: "none",
-            }}
-          >
-            {ARMS.map((arm) => (
-              <option key={arm} value={arm}>{arm === "All" ? "Section: All" : arm}</option>
-            ))}
-          </select>
-          <select
-            value={activeRegion}
-            onChange={(e) => handleRegion(e.target.value)}
-            style={{
-              fontFamily: "var(--font-mono, monospace)",
-              fontSize: "0.68rem",
-              letterSpacing: "0.05em",
-              color: activeRegion !== "All" ? "var(--ink)" : "#8a7d6e",
-              background: "transparent",
-              border: "1px solid " + (activeRegion !== "All" ? "var(--ink)" : "#d4cfc6"),
-              borderRadius: "2px",
-              padding: "0.28rem 0.55rem",
-              cursor: "pointer",
-              outline: "none",
-            }}
-          >
-            {REGIONS.map((r) => (
-              <option key={r.slug} value={r.slug}>{r.label}</option>
-            ))}
-          </select>
+      {/* Filters */}
+      <div
+        style={{
+          borderBottom: "1px solid #1e1e1e",
+          padding: "1.25rem 1.5rem",
+          position: "sticky",
+          top: 0,
+          background: "#0d0d0d",
+          zIndex: 10,
+        }}
+      >
+        {/* Type filters */}
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: showRegions ? "0.6rem" : 0 }}>
+          {TYPE_FILTERS.map(({ label, value }) => (
+            <FilterPill
+              key={value}
+              label={label}
+              active={activeType === value}
+              onClick={() => handleType(value)}
+            />
+          ))}
         </div>
-      </div>
-
-      {/* ── Grid ── */}
-      <div style={{ padding: "1.5rem", maxWidth: "1260px", margin: "0 auto" }}>
-        {stories.length === 0 && !loading ? (
-          <div style={{ color: "#6b6157", textAlign: "center", padding: "4rem 0", fontSize: "0.9rem" }}>
-            No stories found for this filter. Check back soon.
-          </div>
-        ) : (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: "1rem",
-          }}>
-            {stories.map((story) => (
-              <PulseCard key={story.id} story={story} />
+        {/* Region filters — only relevant for Pulse */}
+        {showRegions && (
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: showTags ? "0.6rem" : 0 }}>
+            {REGIONS.map((region) => (
+              <FilterPill
+                key={region}
+                label={region}
+                active={activeRegion === region}
+                onClick={() => handleRegion(region)}
+              />
             ))}
           </div>
         )}
 
-        {loading && (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: "1rem",
-            marginTop: stories.length ? "1rem" : 0,
-          }}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} style={{
-                background: "#ebe1d0",
-                border: "1px solid #e0dbd1",
+        {/* Tag filters — derived from community posts present in the feed */}
+        {showTags && (
+          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+            <FilterPill
+              label="All tags"
+              active={activeTag === ""}
+              onClick={() => { setActiveTag(""); setVisibleCount(24); }}
+            />
+            {availableTags.map((tag) => (
+              <FilterPill
+                key={tag}
+                label={tag}
+                active={activeTag === tag}
+                onClick={() => handleTagClick(tag)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Active hashtag chip — shown when filtering by a #hashtag */}
+        {activeTag.startsWith("#") && (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", paddingTop: "0.5rem" }}>
+            <span style={{ color: "#888", fontSize: "0.7rem" }}>Filtering by</span>
+            <span
+              style={{
+                background: "#2a2000",
+                color: "#D4A847",
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                padding: "0.2rem 0.55rem",
                 borderRadius: "2px",
-                height: "200px",
-                animation: "pulse-shimmer 1.5s ease-in-out infinite",
-              }} />
-            ))}
-          </div>
-        )}
-
-        {hasMore && !loading && stories.length > 0 && (
-          <div style={{ textAlign: "center", marginTop: "2.5rem" }}>
+                letterSpacing: "0.04em",
+              }}
+            >
+              {activeTag}
+            </span>
             <button
-              onClick={handleLoadMore}
+              onClick={() => { setActiveTag(""); setVisibleCount(24); }}
               style={{
                 background: "transparent",
-                border: "1px solid var(--ink)",
-                color: "var(--ink)",
+                border: "none",
+                color: "#555",
+                cursor: "pointer",
+                fontSize: "0.8rem",
+                padding: "0 0.2rem",
+                lineHeight: 1,
+              }}
+              aria-label="Clear hashtag filter"
+            >
+              ×
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Grid */}
+      <div style={{ padding: "1.5rem" }}>
+        {visible.length === 0 ? (
+          <div style={{ color: "#555", textAlign: "center", padding: "4rem 0", fontSize: "0.9rem" }}>
+            Nothing here yet — check back soon.
+          </div>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: "1rem",
+            }}
+          >
+            {visible.map((item) => (
+              <FeedCard
+                key={item.id}
+                item={item}
+                onTagClick={handleTagClick}
+                onHashtagClick={handleHashtagClick}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Load more */}
+        {hasMore && (
+          <div style={{ textAlign: "center", marginTop: "2.5rem" }}>
+            <button
+              onClick={() => setVisibleCount((n: number) => n + 24)}
+              style={{
+                background: "transparent",
+                border: "1px solid #D4A847",
+                color: "#D4A847",
                 padding: "0.65rem 2rem",
                 fontSize: "0.75rem",
                 fontWeight: 600,
@@ -245,20 +293,15 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
                 transition: "all 0.15s",
               }}
             >
-              Load more stories
+              Load more
             </button>
           </div>
         )}
       </div>
 
       <style>{`
-        @keyframes pulse-shimmer {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 0.8; }
-        }
         .pulse-card:hover {
-          border-color: #c4bdb3 !important;
-          box-shadow: 0 2px 8px rgba(20, 17, 13, 0.06);
+          border-color: #2e2e2e !important;
         }
       `}</style>
     </div>

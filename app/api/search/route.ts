@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { searchCommunityPosts } from '@/lib/community-wordpress';
 
 const WP_GRAPHQL_URL = 'https://cms.themoveee.com/graphql';
+const WP_REST_URL    = `${process.env.NEXT_PUBLIC_WP_URL ?? 'https://cms.themoveee.com'}/wp-json/wp/v2`;
 
 async function gql(query: string, variables: object) {
   const res = await fetch(WP_GRAPHQL_URL, {
@@ -71,18 +73,30 @@ const SEARCH_DIRECTORY = `
   }
 `;
 
+async function searchPulseStories(q: string) {
+  const res = await fetch(
+    `${WP_REST_URL}/pulse-stories?search=${encodeURIComponent(q)}&per_page=6&_fields=id,slug,title,excerpt`,
+    { cache: 'no-store' }
+  );
+  if (!res.ok) return [];
+  return res.json().catch(() => []);
+}
+
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get('q')?.trim();
   if (!q || q.length < 2) {
-    return NextResponse.json({ magazine: [], events: [], origins: [], products: [], quotes: [], directory: [] });
+    return NextResponse.json({ magazine: [], events: [], origins: [], products: [], quotes: [], directory: [], pulse: [], community: [] });
   }
 
-  const [postsResult, productsResult, quotesResult, directoryResult] = await Promise.allSettled([
-    gql(SEARCH_POSTS, { search: q }),
-    gql(SEARCH_PRODUCTS, { search: q }),
-    gql(SEARCH_QUOTES, { search: q }),
-    gql(SEARCH_DIRECTORY, { search: q }),
-  ]);
+  const [postsResult, productsResult, quotesResult, directoryResult, pulseResult, communityResult] =
+    await Promise.allSettled([
+      gql(SEARCH_POSTS, { search: q }),
+      gql(SEARCH_PRODUCTS, { search: q }),
+      gql(SEARCH_QUOTES, { search: q }),
+      gql(SEARCH_DIRECTORY, { search: q }),
+      searchPulseStories(q),
+      searchCommunityPosts(q),
+    ]);
 
   const posts: any[] = postsResult.status === 'fulfilled' && postsResult.value ? postsResult.value.posts?.nodes ?? [] : [];
   const products: any[] = productsResult.status === 'fulfilled' && productsResult.value ? productsResult.value.products?.nodes ?? [] : [];
@@ -122,6 +136,25 @@ export async function GET(req: NextRequest) {
     else magazine.push(post);
   }
 
-  return NextResponse.json({ magazine, events, origins, products, quotes, directory });
+  const pulse: any[] = (pulseResult.status === 'fulfilled' ? pulseResult.value : [])
+    .map((p: any) => ({
+      id:    p.id,
+      title: p.title?.rendered ?? p.title ?? '',
+      slug:  p.slug,
+      meta:  'Pulse',
+    }));
+
+  const community: any[] = (communityResult.status === 'fulfilled' ? communityResult.value : [])
+    .map((p: any) => {
+      const text = (p.content?.rendered ?? '').replace(/<[^>]+>/g, '').trim();
+      return {
+        id:    p.id,
+        title: text.slice(0, 80) + (text.length > 80 ? '…' : ''),
+        slug:  p.slug,
+        meta:  p.meta?.community_author_name ?? 'Community',
+      };
+    });
+
+  return NextResponse.json({ magazine, events, origins, products, quotes, directory, pulse, community });
 }
 
