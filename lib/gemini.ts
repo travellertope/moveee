@@ -13,14 +13,12 @@ function createVertexClient(): any | null {
   return null; // Disabled: incompatible with new SDK. Use Gemini or Pollinations fallback.
 }
 
-// Model priority order for text generation.
-// GA-stable models with active quota on AI Studio keys (May 2026).
-// gemini-2.0-* and gemini-1.5-* are deprecated / quota:0 on paid keys.
-// gemini-3-* does not exist as a GA model — removed.
+// Model priority order — newest first, 1.5-series as fallback.
 const TEXT_MODELS = [
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
   "gemini-1.5-flash",
   "gemini-1.5-flash-8b",
-  "gemini-1.5-pro",
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.

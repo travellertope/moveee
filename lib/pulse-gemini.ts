@@ -16,11 +16,12 @@ import { fetchAllFeeds, type FeedItem } from "./pulse-rss";
 
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
 
-// Free-tier compatible models — no grounding, no billing required.
+// Models in preference order — newer first, fallback to 1.5-series.
 const TEXT_MODELS = [
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
   "gemini-1.5-flash",
   "gemini-1.5-flash-8b",
-  "gemini-1.5-pro",
 ];
 
 const SAFETY_SETTINGS = [
@@ -115,6 +116,8 @@ ${list}`;
 
 // ─── Try all models until one succeeds ───────────────────────────────────────
 async function tryModels(prompt: string): Promise<PulseStoryRaw[] | null> {
+  const errors: string[] = [];
+
   for (let i = 0; i < TEXT_MODELS.length; i++) {
     const modelId = TEXT_MODELS[i];
     try {
@@ -136,25 +139,29 @@ async function tryModels(prompt: string): Promise<PulseStoryRaw[] | null> {
       const response = await result.response;
       const raw = response.text().trim();
 
-      if (!raw) continue;
+      if (!raw) { errors.push(`${modelId}: empty response`); continue; }
 
       const jsonStr = extractJsonArray(raw);
       const parsed: unknown[] = JSON.parse(jsonStr);
-      if (!Array.isArray(parsed)) continue;
+      if (!Array.isArray(parsed)) { errors.push(`${modelId}: response was not an array`); continue; }
 
       const stories = parsed
         .filter(isValidStory)
         .map(s => ({ ...s, category: normaliseCategory(s.category) }));
 
-      if (stories.length === 0) continue;
+      if (stories.length === 0) { errors.push(`${modelId}: 0 valid stories after filtering`); continue; }
 
       console.log(`[pulse-gemini] ${modelId} selected ${stories.length} stories from RSS feed`);
       return stories;
     } catch (err: any) {
-      console.warn(`[pulse-gemini] ${modelId} failed:`, err?.message?.slice(0, 120));
+      const msg = err?.message?.slice(0, 200) ?? "unknown error";
+      errors.push(`${modelId}: ${msg}`);
+      console.warn(`[pulse-gemini] ${modelId} failed:`, msg);
       if (i < TEXT_MODELS.length - 1) await sleep(2_000);
     }
   }
+
+  console.error("[pulse-gemini] All models failed:\n" + errors.map((e, i) => `  ${i + 1}. ${e}`).join("\n"));
   return null;
 }
 
@@ -175,7 +182,7 @@ export async function fetchGeminiPulseStories(): Promise<PulseStoryRaw[]> {
 
   if (!stories) {
     throw new Error(
-      "All Gemini models failed to rewrite RSS stories. Check GEMINI_API_KEY and quota at https://aistudio.google.com/app/apikey"
+      "All Gemini models failed to rewrite RSS stories. Check GEMINI_API_KEY and quota. See server logs for per-model errors."
     );
   }
 
