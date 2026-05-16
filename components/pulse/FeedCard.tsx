@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { FeedItem } from "@/lib/unified-feed";
 import ReactionBar from "./ReactionBar";
+import HashtagText from "./HashtagText";
 
 const TYPE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   pulse:     { label: "Pulse",      bg: "#2a2000",  color: "#D4A847" },
@@ -29,7 +30,15 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export default function FeedCard({ item, onTagClick }: { item: FeedItem; onTagClick?: (tag: string) => void }) {
+export default function FeedCard({
+  item,
+  onTagClick,
+  onHashtagClick,
+}: {
+  item: FeedItem;
+  onTagClick?: (tag: string) => void;
+  onHashtagClick?: (hashtag: string) => void;
+}) {
   const typeMeta = TYPE_BADGE[item.type] ?? TYPE_BADGE.pulse;
   const armStyle = item.arm ? (ARM_STYLES[item.arm.toLowerCase()] ?? null) : null;
 
@@ -174,13 +183,13 @@ export default function FeedCard({ item, onTagClick }: { item: FeedItem; onTagCl
             fontSize: "0.95rem",
             lineHeight: 1.6,
             margin: 0,
-            display: "-webkit-box",
-            WebkitLineClamp: 6,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
           }}
         >
-          {item.title}
+          <HashtagText
+            text={item.title}
+            onHashtagClick={onHashtagClick}
+            clamp={6}
+          />
         </p>
 
         {/* Image if present */}

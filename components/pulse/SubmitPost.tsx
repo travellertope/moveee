@@ -1,9 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { parseHashtags } from "@/lib/hashtags";
 
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
+
+function HashtagPreview({ text }: { text: string }) {
+  const tags = useMemo(() => parseHashtags(text), [text]);
+  if (!tags.length) return null;
+  return (
+    <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+      {tags.map((tag) => (
+        <span
+          key={tag}
+          style={{
+            color: "#D4A847",
+            fontSize: "0.72rem",
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+          }}
+        >
+          #{tag}
+        </span>
+      ))}
+    </div>
+  );
+}
 type Tag = (typeof TAGS)[number];
 
 interface SubmitPostProps {
@@ -165,6 +188,9 @@ export default function SubmitPost({ onPosted }: SubmitPostProps) {
             paddingBottom: "0.5rem",
           }}
         />
+
+        {/* Live hashtag preview */}
+        <HashtagPreview text={text} />
 
         {/* Image URL field — optional */}
         {showImageField && (

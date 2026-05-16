@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { parseHashtags } from "@/lib/hashtags";
 
 export const runtime = "nodejs";
 
@@ -80,11 +81,17 @@ export async function POST(req: NextRequest) {
     user?.name ?? user?.displayName ?? user?.username ?? "Community Member";
   const authorId: string = String(user?.id ?? user?.databaseId ?? "");
 
-  // Resolve or create the "community" category and optional tag in parallel.
-  const [categoryId, tagId] = await Promise.all([
+  // Extract #hashtags from the post text.
+  const hashtags = parseHashtags(content);
+
+  // Resolve the community category + structured tag + all inline hashtags in parallel.
+  const [categoryId, ...tagIds] = await Promise.all([
     resolveCategoryId("community"),
     validTag ? resolveTagId(validTag) : Promise.resolve(null),
+    ...hashtags.map((ht) => resolveTagId(ht)),
   ]);
+
+  const allTagIds = tagIds.filter((id): id is number => id !== null);
 
   const title = content.slice(0, 80) + (content.length > 80 ? "…" : "");
   const htmlContent = `<p>${content.replace(/\n/g, "</p><p>")}</p>`;
@@ -105,7 +112,7 @@ export async function POST(req: NextRequest) {
     },
   };
   if (categoryId) postBody.categories = [categoryId];
-  if (tagId) postBody.tags = [tagId];
+  if (allTagIds.length) postBody.tags = allTagIds;
 
   const createRes = await fetch(`${BASE}/posts`, {
     method: "POST",

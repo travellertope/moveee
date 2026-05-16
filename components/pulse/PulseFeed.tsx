@@ -98,14 +98,25 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     setVisibleCount(24);
   }, []);
 
+  // Hashtag clicks: store with # prefix so filter logic can distinguish them.
+  const handleHashtagClick = useCallback((hashtag: string) => {
+    setActiveType("community");
+    setActiveTag((prev) => (prev === hashtag ? "" : hashtag));
+    setVisibleCount(24);
+  }, []);
+
   const filtered = items.filter((item) => {
     const typeMatch = activeType === "all" || item.type === activeType;
     const regionMatch =
       activeRegion === "All" ||
       (item.region?.toLowerCase() === activeRegion.toLowerCase());
-    const tagMatch =
-      !activeTag ||
-      (item.type === "community" && item.communityTag === activeTag);
+    const tagMatch = !activeTag || (item.type === "community" && (
+      activeTag.startsWith("#")
+        // Hashtag filter: search post text.
+        ? item.title.toLowerCase().includes(activeTag.toLowerCase())
+        // Structured tag filter: match communityTag.
+        : item.communityTag === activeTag
+    ));
     return typeMatch && regionMatch && tagMatch;
   });
 
@@ -170,7 +181,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
         {/* Tag filters — derived from community posts present in the feed */}
         {showTags && (
-          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", paddingTop: showRegions ? "0" : "0" }}>
+          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
             <FilterPill
               label="All tags"
               active={activeTag === ""}
@@ -184,6 +195,41 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 onClick={() => handleTagClick(tag)}
               />
             ))}
+          </div>
+        )}
+
+        {/* Active hashtag chip — shown when filtering by a #hashtag */}
+        {activeTag.startsWith("#") && (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", paddingTop: "0.5rem" }}>
+            <span style={{ color: "#888", fontSize: "0.7rem" }}>Filtering by</span>
+            <span
+              style={{
+                background: "#2a2000",
+                color: "#D4A847",
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                padding: "0.2rem 0.55rem",
+                borderRadius: "2px",
+                letterSpacing: "0.04em",
+              }}
+            >
+              {activeTag}
+            </span>
+            <button
+              onClick={() => { setActiveTag(""); setVisibleCount(24); }}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#555",
+                cursor: "pointer",
+                fontSize: "0.8rem",
+                padding: "0 0.2rem",
+                lineHeight: 1,
+              }}
+              aria-label="Clear hashtag filter"
+            >
+              ×
+            </button>
           </div>
         )}
       </div>
@@ -203,7 +249,12 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
             }}
           >
             {visible.map((item) => (
-              <FeedCard key={item.id} item={item} onTagClick={handleTagClick} />
+              <FeedCard
+                key={item.id}
+                item={item}
+                onTagClick={handleTagClick}
+                onHashtagClick={handleHashtagClick}
+              />
             ))}
           </div>
         )}
