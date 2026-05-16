@@ -56,6 +56,8 @@ export default function FeedCard({
       <article style={{
         background: "#fff",
         borderBottom: "1px solid #e8e2d8",
+        overflow: "hidden",
+        minWidth: 0,
         padding: "1.1rem 1.25rem",
       }}>
         <div style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start" }}>
@@ -99,6 +101,8 @@ export default function FeedCard({
           padding: "1rem 1.25rem",
           display: "flex",
           gap: "0.75rem",
+          overflow: "hidden",
+          minWidth: 0,
         }}
       >
         {/* Avatar */}
@@ -190,6 +194,8 @@ export default function FeedCard({
       background: "#fff",
       borderBottom: "1px solid #e8e2d8",
       padding: "0.9rem 1.25rem",
+      overflow: "hidden",
+      minWidth: 0,
     }}>
       <Link href={item.href} style={{ display: "flex", gap: "0.9rem", textDecoration: "none" }} aria-label={item.title}>
         {/* Text block */}
