@@ -161,8 +161,8 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
   // ── Confirmed via Paystack callback ─────────────────────────────────────────
   if (status === 'ticket_confirmed') {
     return (
-      <div style={{ background: 'rgba(61,74,42,0.25)', border: '1px solid rgba(61,74,42,0.4)', padding: '28px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '20px', color: 'var(--paper)', marginBottom: '8px' }}>
+      <div style={{ background: 'rgba(61,74,42,0.08)', border: '1px solid rgba(61,74,42,0.3)', padding: '28px', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '20px', color: 'var(--ink)', marginBottom: '8px' }}>
           Ticket confirmed.
         </p>
         <p className="rsvp-small" style={{ marginTop: 0 }}>
@@ -175,8 +175,8 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
   // ── Stripe pending — webhook fires asynchronously ───────────────────────────
   if (status === 'ticket_pending') {
     return (
-      <div style={{ background: 'rgba(30,60,90,0.2)', border: '1px solid rgba(100,160,220,0.3)', padding: '28px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '20px', color: 'var(--paper)', marginBottom: '8px' }}>
+      <div style={{ background: 'rgba(30,60,90,0.06)', border: '1px solid rgba(100,160,220,0.3)', padding: '28px', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '20px', color: 'var(--ink)', marginBottom: '8px' }}>
           Payment received.
         </p>
         <p className="rsvp-small" style={{ marginTop: 0 }}>
@@ -189,8 +189,8 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
   // ── Free RSVP success ───────────────────────────────────────────────────────
   if (status === 'success') {
     return (
-      <div style={{ background: 'rgba(61,74,42,0.25)', border: '1px solid rgba(61,74,42,0.4)', padding: '28px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '20px', color: 'var(--paper)', marginBottom: '8px' }}>
+      <div style={{ background: 'rgba(61,74,42,0.08)', border: '1px solid rgba(61,74,42,0.3)', padding: '28px', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '20px', color: 'var(--ink)', marginBottom: '8px' }}>
           You&rsquo;re on the list.
         </p>
         <p className="rsvp-small" style={{ marginTop: 0 }}>
