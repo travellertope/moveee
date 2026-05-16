@@ -242,8 +242,13 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
     items.push(...communityResult.value);
   }
 
-  // Sort newest first
-  items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Deduplicate: community posts are regular WP posts, so GET_STORIES also picks
+  // them up as "editorial". Remove any editorial whose slug matches a community post.
+  const communitySlugs = new Set(items.filter(i => i.type === "community").map(i => i.slug));
+  const deduped = items.filter(i => !(i.type === "editorial" && communitySlugs.has(i.slug)));
 
-  return items;
+  // Sort newest first
+  deduped.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  return deduped;
 }
