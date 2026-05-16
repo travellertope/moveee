@@ -251,7 +251,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 ))}
                 <li style={{ listStyle: "none" }}>
                   <Link href="/pulse/categories" style={{ display: "block", padding: "0.3rem 0.85rem", fontSize: "0.72rem", color: "#c5491f", textDecoration: "none", fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
-                    See all categories →
+                    ⊞ Sections →
                   </Link>
                 </li>
               </ul>
@@ -284,6 +284,27 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                   {label}
                 </button>
               ))}
+              <Link
+                href="/pulse/categories"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.25rem",
+                  background: "transparent",
+                  color: "#7a6f5c",
+                  border: "1px solid #d8d0c6",
+                  borderRadius: "2px",
+                  padding: "0.25rem 0.7rem",
+                  fontSize: "0.72rem",
+                  fontWeight: 400,
+                  whiteSpace: "nowrap",
+                  letterSpacing: "0.04em",
+                  textDecoration: "none",
+                  flexShrink: 0,
+                }}
+              >
+                ⊞ Sections
+              </Link>
             </div>
           </div>
 
