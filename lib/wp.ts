@@ -128,7 +128,6 @@ function mapRestEventToFrontendShape(item: any) {
     eventSubtype: pick(acf.event_subtype, meta.event_subtype),
     aboutLabel: pick(acf.about_label, meta.about_label),
     venueAddress: pick(acf.venue_address, meta.venue_address),
-    galleryRunText: pick(acf.gallery_run_text, meta.gallery_run_text),
     rsvpCapacity: acf.rsvp_capacity ? parseInt(String(acf.rsvp_capacity), 10) : null,
     rsvpMembersNote: pick(acf.rsvp_members_note, meta.rsvp_members_note),
     rsvpTicketTypes: Array.isArray(acf.rsvp_ticket_types)
@@ -141,11 +140,6 @@ function mapRestEventToFrontendShape(item: any) {
           ticketCurrency: t.ticket_currency ?? 'NGN',
         }))
       : [],
-    onViewImage: (() => {
-      const raw = acf.on_view_image || meta.on_view_image;
-      const item = toMediaItem(raw);
-      return item ? { node: item } : null;
-    })(),
   };
 }
 
@@ -646,7 +640,6 @@ const EVENT_FIELDS_FRAGMENT = `
     eventSubtype
     aboutLabel
     venueAddress
-    galleryRunText
     rsvpCapacity
     rsvpMembersNote
     rsvpTicketTypes {
@@ -656,12 +649,6 @@ const EVENT_FIELDS_FRAGMENT = `
       ticketPrice
       ticketAmount
       ticketCurrency
-    }
-    onViewImage {
-      node {
-        sourceUrl
-        altText
-      }
     }
   }
 `;

@@ -324,7 +324,6 @@ class Culture_Post_Types {
             'eventSubtype'   => array( 'type' => 'String', 'acf_key' => 'event_subtype' ),
             'aboutLabel'     => array( 'type' => 'String', 'acf_key' => 'about_label' ),
             'venueAddress'   => array( 'type' => 'String', 'acf_key' => 'venue_address' ),
-            'galleryRunText' => array( 'type' => 'String', 'acf_key' => 'gallery_run_text' ),
             'rsvpMembersNote' => array( 'type' => 'String', 'acf_key' => 'rsvp_members_note' ),
             'rsvpCapacity'   => array( 'type' => 'Int',    'acf_key' => 'rsvp_capacity' ),
         );
@@ -358,21 +357,6 @@ class Culture_Post_Types {
                         'ticketCurrency' => $row['ticket_currency'] ?? 'NGN',
                     );
                 }, $rows );
-            },
-        ) );
-
-        register_graphql_field( 'CultureEvent', 'onViewImage', array(
-            'type'    => 'CultureEventImageWrapper',
-            'resolve' => function( $post ) {
-                if ( ! function_exists('get_field') ) return null;
-                $img = get_field( 'on_view_image', $post->databaseId );
-                if ( empty( $img ) ) return null;
-                return array(
-                    'node' => array(
-                        'sourceUrl' => $img['url'] ?? '',
-                        'altText'   => $img['alt'] ?? '',
-                    ),
-                );
             },
         ) );
 
