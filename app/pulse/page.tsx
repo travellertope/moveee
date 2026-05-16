@@ -24,40 +24,38 @@ export const metadata: Metadata = {
     description: "Live cultural intelligence for the African and Black diaspora.",
     images: [`${SITE_URL}/og-fallback.png`],
   },
-  alternates: {
-    canonical: `${SITE_URL}/pulse`,
-  },
+  alternates: { canonical: `${SITE_URL}/pulse` },
 };
 
 export default async function PulsePage() {
   const items = await getUnifiedFeed();
 
   return (
-    <div style={{ background: "var(--paper)", minHeight: "100vh" }}>
+    <div style={{ background: "#f7f5f2", minHeight: "100vh" }}>
       {/* Header */}
       <header
         style={{
-          borderBottom: "1px solid #e0dbd1",
-          padding: "2.5rem 1.5rem 2rem",
-          background: "var(--paper)",
+          borderBottom: "1px solid #e8e2d8",
+          padding: "2rem 1.5rem 1.5rem",
+          background: "#fff",
         }}
       >
-        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+        <div style={{ maxWidth: "1080px", margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.35rem" }}>
             <span
               style={{
                 display: "inline-block",
-                width: "8px",
-                height: "8px",
+                width: "7px",
+                height: "7px",
                 borderRadius: "50%",
-                background: "var(--ochre)",
+                background: "#c5491f",
                 animation: "pulse-dot 2s ease-in-out infinite",
               }}
             />
             <span
               style={{
-                color: "var(--ochre)",
-                fontSize: "0.65rem",
+                color: "#c5491f",
+                fontSize: "0.6rem",
                 fontWeight: 700,
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
@@ -70,26 +68,18 @@ export default async function PulsePage() {
           <h1
             style={{
               fontFamily: "var(--font-fraunces), serif",
-              fontSize: "clamp(2rem, 5vw, 3.25rem)",
+              fontSize: "clamp(1.6rem, 4vw, 2.4rem)",
               fontWeight: 700,
-              color: "var(--ink)",
+              color: "#14110d",
               lineHeight: 1.05,
-              marginBottom: "0.75rem",
+              marginBottom: "0.5rem",
             }}
           >
             Moveee Pulse
           </h1>
 
-          <p
-            style={{
-              color: "#6b6157",
-              fontSize: "0.9rem",
-              lineHeight: 1.55,
-              maxWidth: "520px",
-            }}
-          >
-            Everything happening in African and Black diaspora culture — Pulse stories, editorials,
-            happenings, directory picks, and quotes — all in one living feed.
+          <p style={{ color: "#7a6f5c", fontSize: "0.85rem", lineHeight: 1.5, maxWidth: "480px" }}>
+            Everything happening in African and Black diaspora culture — curated stories, community voices, events, and ideas.
           </p>
         </div>
       </header>
