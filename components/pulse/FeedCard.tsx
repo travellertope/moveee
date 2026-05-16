@@ -52,6 +52,8 @@ export default function FeedCard({
 
   // ── Quote card ──
   if (item.type === "quote") {
+    const paragraphs = item.title.split("\n").filter((l) => l.trim()).length;
+    const isLong = paragraphs >= 6 || item.title.length > 500;
     return (
       <article style={{
         background: "#fff",
@@ -70,10 +72,12 @@ export default function FeedCard({
               lineHeight: 1.55,
               fontStyle: "italic",
               marginBottom: "0.6rem",
-              display: "-webkit-box",
-              WebkitLineClamp: 4,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
+              ...(isLong ? {
+                display: "-webkit-box",
+                WebkitLineClamp: 8,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              } : {}),
             }}>
               {item.title}
             </p>
@@ -171,15 +175,39 @@ export default function FeedCard({
             </div>
           )}
 
-          {/* Reactions */}
-          {item.wpId && (
-            <ReactionBar
-              itemId={item.wpId}
-              itemType="community"
-              initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
-              shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/pulse#community-${item.wpId}`}
-            />
-          )}
+          {/* Reactions + comment link */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0 }}>
+            {item.wpId && (
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <ReactionBar
+                  itemId={item.wpId}
+                  itemType="community"
+                  initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
+                  shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/pulse#community-${item.wpId}`}
+                />
+              </div>
+            )}
+            <Link
+              href={`/community/${item.slug}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.3rem",
+                color: "#7a6f5c",
+                textDecoration: "none",
+                fontSize: "0.75rem",
+                flexShrink: 0,
+              }}
+              aria-label="View comments"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              {(item.commentCount ?? 0) > 0 && (
+                <span style={{ fontVariantNumeric: "tabular-nums" }}>{item.commentCount}</span>
+              )}
+            </Link>
+          </div>
         </div>
       </article>
     );
@@ -231,14 +259,14 @@ export default function FeedCard({
             {item.title}
           </h3>
 
-          {/* Excerpt — only when no image to keep cards compact */}
-          {!hasImage && item.excerpt && (
+          {/* Excerpt */}
+          {(item.type === "directory" || !hasImage) && item.excerpt && (
             <p style={{
               color: "#7a6f5c",
               fontSize: "0.78rem",
               lineHeight: 1.5,
               display: "-webkit-box",
-              WebkitLineClamp: 2,
+              WebkitLineClamp: hasImage ? 2 : 3,
               WebkitBoxOrient: "vertical",
               overflow: "hidden",
               margin: 0,

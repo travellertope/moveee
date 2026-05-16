@@ -168,7 +168,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   }, [items]);
 
   return (
-    <div style={{ background: "#f7f5f2", overflowX: "hidden" }}>
+    <div style={{ background: "#f7f5f2" }}>
       <div className="pulse-layout">
 
         {/* ── Left Sidebar ── */}
@@ -335,6 +335,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
           width: 100%;
           margin: 0 auto;
           align-items: start;
+          overflow-x: clip;
         }
         .pulse-sidebar-left {
           border-right: 1px solid #e8e2d8;
@@ -350,6 +351,8 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
           border-right: 1px solid #e8e2d8;
           background: #f7f5f2;
           min-height: 80vh;
+          min-width: 0;
+          overflow: hidden;
         }
         .pulse-sidebar-right {
           position: sticky;

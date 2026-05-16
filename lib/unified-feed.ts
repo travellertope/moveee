@@ -37,6 +37,7 @@ export interface FeedItem {
   // community-specific
   communityAuthor?: string;
   communityTag?: string;
+  commentCount?: number;
   // reactions (community + pulse)
   reactions?: { love: number; fire: number; clap: number };
   wpId?: string;
@@ -93,7 +94,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
   if (!catId) return [];
 
   const res = await fetch(
-    `${WP_BASE}/posts?categories=${catId}&per_page=24&orderby=date&order=desc&_fields=id,slug,date,content,meta`,
+    `${WP_BASE}/posts?categories=${catId}&per_page=24&orderby=date&order=desc&_fields=id,slug,date,content,meta,comment_count`,
     { cache: "no-store" }
   );
   if (!res.ok) return [];
@@ -114,6 +115,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
       href: `/community/${post.slug}`,
       communityAuthor: authorName || (post.excerpt?.rendered ? stripHtml(post.excerpt.rendered) : ""),
       communityTag: tag ?? "",
+      commentCount: Number(post.comment_count ?? 0),
       reactions: {
         love: Number(post.meta?.reaction_love ?? 0),
         fire: Number(post.meta?.reaction_fire ?? 0),

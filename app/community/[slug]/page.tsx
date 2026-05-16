@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getCommunityPostBySlug, getAllCommunitySlugs } from "@/lib/community-wordpress";
+import { getCommunityPostBySlug, getAllCommunitySlugs, getPostComments } from "@/lib/community-wordpress";
 import { parseHashtags } from "@/lib/hashtags";
 import CommunityPostClient from "./CommunityPostClient";
 
@@ -79,6 +79,7 @@ export default async function CommunityPostPage({
   const { slug } = await params;
   const post = await getCommunityPostBySlug(slug);
   if (!post) notFound();
+  const comments = await getPostComments(post.id);
 
   const rawText  = post.content.rendered.replace(/<[^>]+>/g, "").trim();
   const author   = post.meta.community_author_name ?? "Community Member";
@@ -127,13 +128,13 @@ export default async function CommunityPostPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div style={{ background: "#0d0d0d", minHeight: "100vh", padding: "2rem 1.5rem 4rem" }}>
+      <div style={{ background: "#f7f5f2", minHeight: "100vh", padding: "2rem 1.5rem 4rem" }}>
         <div style={{ maxWidth: "680px", margin: "0 auto" }}>
           {/* Back link */}
           <Link
             href="/pulse"
             style={{
-              color: "#555",
+              color: "#7a6f5c",
               fontSize: "0.78rem",
               textDecoration: "none",
               letterSpacing: "0.06em",
@@ -154,9 +155,9 @@ export default async function CommunityPostPage({
                 width: "44px",
                 height: "44px",
                 borderRadius: "50%",
-                background: "#0d1a0d",
-                border: "1px solid #2a3e2a",
-                color: "#6abf69",
+                background: "#edf7ed",
+                border: "1px solid #c8e6c9",
+                color: "#2e7d32",
                 fontSize: "0.8rem",
                 fontWeight: 700,
                 display: "flex",
@@ -169,16 +170,16 @@ export default async function CommunityPostPage({
               {initials}
             </div>
             <div>
-              <div style={{ color: "#6abf69", fontSize: "0.9rem", fontWeight: 600 }}>{author}</div>
-              <div style={{ color: "#444", fontSize: "0.75rem" }}>{formatDate(post.date)}</div>
+              <div style={{ color: "#2e7d32", fontSize: "0.9rem", fontWeight: 600 }}>{author}</div>
+              <div style={{ color: "#7a6f5c", fontSize: "0.75rem" }}>{formatDate(post.date)}</div>
             </div>
             {tag && (
               <Link
                 href={`/pulse?tag=${encodeURIComponent(tag)}`}
                 style={{
                   marginLeft: "auto",
-                  background: "#0d1a0d",
-                  color: "#6abf69",
+                  background: "#edf7ed",
+                  color: "#2e7d32",
                   fontSize: "0.65rem",
                   fontWeight: 700,
                   letterSpacing: "0.1em",
@@ -186,7 +187,7 @@ export default async function CommunityPostPage({
                   padding: "0.2rem 0.6rem",
                   borderRadius: "2px",
                   textDecoration: "none",
-                  border: "1px solid #1e2e1e",
+                  border: "1px solid #c8e6c9",
                 }}
               >
                 {tag}
@@ -210,12 +211,14 @@ export default async function CommunityPostPage({
             text={rawText}
             hashtags={hashtags}
             wpId={String(post.id)}
+            postId={post.id}
             initialReactions={{
               love: Number(post.meta.reaction_love ?? 0),
               fire: Number(post.meta.reaction_fire ?? 0),
               clap: Number(post.meta.reaction_clap ?? 0),
             }}
             shareUrl={url}
+            initialComments={comments}
           />
 
           {/* Hashtag list */}
@@ -226,11 +229,11 @@ export default async function CommunityPostPage({
                   key={ht}
                   href={`/pulse?hashtag=${encodeURIComponent(ht)}`}
                   style={{
-                    color: "#D4A847",
+                    color: "#b38238",
                     fontSize: "0.82rem",
                     fontWeight: 600,
                     textDecoration: "none",
-                    background: "#2a2000",
+                    background: "#fdf5e6",
                     padding: "0.25rem 0.65rem",
                     borderRadius: "2px",
                   }}
