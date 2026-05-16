@@ -13,6 +13,8 @@ import CartDrawer from "@/components/CartDrawer";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import { CartProvider } from "@/context/CartContext";
+import { AdsProvider, type AdSettings } from "@/context/AdsContext";
+import Script from "next/script";
 import SessionProvider from "@/components/SessionProvider";
 import { headers } from "next/headers";
 
@@ -77,6 +79,17 @@ export default async function RootLayout({
   const headersList = await headers();
   const country = headersList.get("x-vercel-ip-country") || "US";
 
+  const rawAds = siteData?.adSettings;
+  const adSettings: AdSettings = {
+    adsEnabled:              rawAds?.adsEnabled        ?? false,
+    publisherId:             rawAds?.publisherId        ?? null,
+    customScript:            rawAds?.customScript       ?? null,
+    slotLeaderboardTop:      rawAds?.slotLeaderboardTop      ?? null,
+    slotLeaderboardMid:      rawAds?.slotLeaderboardMid      ?? null,
+    slotLeaderboardPreQuotes:rawAds?.slotLeaderboardPreQuotes ?? null,
+    slotHeroSidebar:         rawAds?.slotHeroSidebar         ?? null,
+  };
+
   return (
     <html lang="en" className="scroll-smooth">
       <body
@@ -89,11 +102,29 @@ export default async function RootLayout({
           >
             <LanguageProvider>
               <CartProvider>
-                <Header siteSettings={siteData} />
-                <main>{children}</main>
-                <Footer />
-                <CartDrawer />
-                <CookieConsent />
+                <AdsProvider settings={adSettings}>
+                  {/* AdSense loader — only injected when a publisher ID is set */}
+                  {adSettings.adsEnabled && adSettings.publisherId && (
+                    <Script
+                      src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adSettings.publisherId}`}
+                      strategy="afterInteractive"
+                      crossOrigin="anonymous"
+                    />
+                  )}
+                  {/* Custom ad script (e.g. Google Tag Manager, Ad Manager) */}
+                  {adSettings.adsEnabled && adSettings.customScript && (
+                    <Script
+                      id="custom-ad-script"
+                      strategy="afterInteractive"
+                      dangerouslySetInnerHTML={{ __html: adSettings.customScript }}
+                    />
+                  )}
+                  <Header siteSettings={siteData} />
+                  <main>{children}</main>
+                  <Footer />
+                  <CartDrawer />
+                  <CookieConsent />
+                </AdsProvider>
               </CartProvider>
             </LanguageProvider>
           </CurrencyProvider>

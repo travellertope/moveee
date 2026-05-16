@@ -65,8 +65,8 @@ export type SaveResult =
 // ── Write helpers ──────────────────────────────────────────────────────────
 
 /** Find or create a taxonomy term; returns its ID or null on failure. */
-async function resolveTermId(restBase: string, termName: string): Promise<number | null> {
-  const termSlug = slugify(termName);
+async function resolveTermId(restBase: string, termName: string, customSlug?: string): Promise<number | null> {
+  const termSlug = customSlug || slugify(termName);
 
   const findRes = await fetch(`${BASE}/wp/v2/${restBase}?slug=${termSlug}`, {
     headers: { Authorization: `Basic ${AUTH}` },
@@ -117,9 +117,20 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> 
 
   // Resolve taxonomy term IDs before creating the post so they can be
   // included in the initial create request rather than a separate update.
-  const [armId, regionId] = await Promise.all([
-    story.arm    ? resolveTermId("pulse-arms",    story.arm)    : Promise.resolve(null),
-    story.region ? resolveTermId("pulse-regions", story.region) : Promise.resolve(null),
+  // Region and Arm mapping for clean slugs
+  const regionMap: Record<string, string> = {
+    "Africa": "africa",
+    "Caribbean": "caribbean",
+    "Diaspora UK": "uk",
+    "Diaspora US": "us",
+    "Diaspora Europe": "europe",
+    "Global": "global"
+  };
+
+  const [armId, regionId, categoryId] = await Promise.all([
+    story.arm      ? resolveTermId("pulse-arms",       story.arm)      : Promise.resolve(null),
+    story.region   ? resolveTermId("pulse-regions",    story.region,   regionMap[story.region]) : Promise.resolve(null),
+    story.category ? resolveTermId("pulse-categories", story.category) : Promise.resolve(null),
   ]);
 
   const body: Record<string, any> = {
@@ -138,8 +149,9 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> 
     },
   };
 
-  if (armId)    body.pulse_arm    = [armId];
-  if (regionId) body.pulse_region = [regionId];
+  if (armId)      body.pulse_arm      = [armId];
+  if (regionId)   body.pulse_region   = [regionId];
+  if (categoryId) body.pulse_category = [categoryId];
 
   const createRes = await fetch(`${BASE}/wp/v2/pulse-stories`, {
     method: "POST",
@@ -168,11 +180,13 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> 
 export async function getPulseStories({
   arm,
   region,
+  category,
   page = 1,
   perPage = 12,
 }: {
   arm?: string;
   region?: string;
+  category?: string;
   page?: number;
   perPage?: number;
 } = {}): Promise<WpPulseStory[]> {
@@ -180,8 +194,9 @@ export async function getPulseStories({
     `${BASE}/wp/v2/pulse-stories` +
     `?per_page=${perPage}&page=${page}&orderby=date&order=desc&_embed=1`;
 
-  if (arm)    url += `&pulse_arm=${encodeURIComponent(arm)}`;
-  if (region) url += `&pulse_region=${encodeURIComponent(region)}`;
+  if (arm)      url += `&pulse_arm=${encodeURIComponent(arm)}`;
+  if (region)   url += `&pulse_region=${encodeURIComponent(region)}`;
+  if (category) url += `&pulse_category=${encodeURIComponent(category)}`;
 
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) return [];
@@ -253,4 +268,18 @@ export async function postPulseComment({
   }
 
   return res.json();
+}
+
+/** Fetch a term ID by its slug for a given taxonomy. */
+export async function getTermIdBySlug(taxonomy: string, slug: string): Promise<number | null> {
+  // Map taxonomy name to REST base (WordPress standard is often plural with hyphens)
+  const restBase = taxonomy.replace(/_/g, "-") + (taxonomy.endsWith("s") ? "" : "s"); 
+  try {
+    const res = await fetch(`${BASE}/wp/v2/${restBase}?slug=${slug}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    const terms: any[] = await res.json();
+    return terms[0]?.id ?? null;
+  } catch {
+    return null;
+  }
 }

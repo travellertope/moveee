@@ -1,7 +1,7 @@
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 // Google AI Studio client — used for all text generation.
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
 
 /**
  * Lazily create a Vertex AI client for Imagen 3 image generation.
@@ -9,33 +9,18 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
  * Returns null when any required variable is absent so image generation
  * degrades gracefully rather than crashing at startup.
  */
-function createVertexClient(): GoogleGenAI | null {
-  const project     = process.env.VERTEX_PROJECT;
-  const location    = process.env.VERTEX_LOCATION ?? "us-central1";
-  const clientEmail = process.env.VERTEX_CLIENT_EMAIL;
-  // Vercel stores the private key with literal \n — normalise to real newlines.
-  const privateKey  = process.env.VERTEX_PRIVATE_KEY?.replace(/\\n/g, "\n");
-
-  if (!project || !clientEmail || !privateKey) return null;
-
-  return new GoogleGenAI({
-    vertexai: true,
-    project,
-    location,
-    googleAuthOptions: {
-      credentials: { client_email: clientEmail, private_key: privateKey },
-      scopes: ["https://www.googleapis.com/auth/cloud-platform"],
-    },
-  } as any);
+function createVertexClient(): any | null {
+  return null; // Disabled: incompatible with new SDK. Use Gemini or Pollinations fallback.
 }
 
 // Model priority order for text generation.
-// gemini-2.0-flash and gemini-2.0-flash-lite have limit:0 on Pro-subscription
-// AI Studio keys — only 2.5-series and newer models have active quota.
+// GA-stable models with active quota on AI Studio keys (May 2026).
+// gemini-2.0-* and gemini-1.5-* are deprecated / quota:0 on paid keys.
+// gemini-3-* does not exist as a GA model — removed.
 const TEXT_MODELS = [
-  "gemini-2.5-flash",      // Primary — confirmed working
-  "gemini-2.5-flash-lite", // Lighter fallback
-  "gemini-3-flash-preview", // Newer fallback
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
+  "gemini-1.5-pro",
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
@@ -69,9 +54,44 @@ export const ENTRY_TYPE_SLUGS = [
   "book",
   "food",
   "fashion",
+  "tv-series",
 ] as const;
 
 export type EntryType = (typeof ENTRY_TYPE_SLUGS)[number];
+
+export interface DirectoryInfobox {
+  // person
+  born?: string; died?: string; nationality?: string; occupation?: string;
+  knownFor?: string; originCity?: string; activeYears?: string; awards?: string;
+  labels?: string; education?: string;
+  // place
+  country?: string; region?: string; population?: string; officialLanguage?: string;
+  currency?: string; founded?: string; area?: string;
+  // movement
+  founders?: string; originCountry?: string; activePeriod?: string; ideology?: string;
+  keyFigures?: string; relatedMovements?: string;
+  // genre
+  originDecade?: string; instruments?: string; tempoBpm?: string; keyArtists?: string;
+  relatedGenres?: string; subgenres?: string;
+  // concept
+  keyThinkers?: string; period?: string; relatedConcepts?: string;
+  // film
+  director?: string; year?: string; starring?: string; cinematographer?: string;
+  language?: string; distributor?: string; runtime?: string; productionCompany?: string;
+  // book
+  author?: string; yearPublished?: string; genre?: string; publisher?: string;
+  pages?: string; isbn?: string;
+  // artwork
+  artist?: string; medium?: string; dimensions?: string; currentLocation?: string;
+  artCollection?: string; style?: string;
+  // food
+  foodType?: string; mainIngredients?: string; alsoKnownAs?: string; culturalContext?: string;
+  // fashion
+  origin?: string; era?: string; keyDesigners?: string; materials?: string;
+  culturalSignificance?: string;
+  // tv-series
+  creator?: string; network?: string; seasons?: string; years?: string;
+}
 
 export interface DirectoryStub {
   title: string;
@@ -80,6 +100,7 @@ export interface DirectoryStub {
   entryType: EntryType;
   interests: string[];
   suggestedLinks: string[];
+  infobox: DirectoryInfobox;
 }
 
 export interface ImageResult {
@@ -151,12 +172,29 @@ The JSON must match this exact structure:
   "title": "The canonical name of the entry",
   "excerpt": "One or two sentences summarising this entry (plain text, no HTML tags)",
   "content": "Full HTML body using ONLY <p>, <h2>, <ul>, <li> tags. Must include: an overview paragraph, a Cultural Significance section, and a Legacy or Related Works section. Minimum 4 paragraphs total.",
-  "entryType": "exactly one of the following — choose the most specific match:\n  person   = an individual human being (musician, writer, artist, activist, filmmaker, philosopher, etc.)\n  place    = a geographic location (city, neighbourhood, landmark, region, market)\n  movement = a cultural, political, or artistic movement or era (Pan-Africanism, Harlem Renaissance)\n  genre    = a musical or artistic genre or style (Afrobeats, Highlife, Amapiano, Nollywood as a film industry)\n  concept  = an idea, philosophy, practice, or tradition (Ubuntu, Sankofa, Griot tradition, Adinkra symbols)\n  film     = a specific film or documentary (feature film, short film, documentary — NOT a genre or industry)\n  book     = a specific published book (novel, essay collection, poetry collection, memoir)\n  artwork  = a specific visual artwork, sculpture, installation, or album/music recording\n  food     = a specific dish, ingredient, or food tradition\n  fashion  = a specific garment, textile, fabric, or fashion tradition",
+  "entryType": "exactly one of the following — choose the most specific match:\n  person    = an individual human being (musician, writer, artist, activist, filmmaker, philosopher, etc.)\n  place     = a geographic location (city, neighbourhood, landmark, region, market)\n  movement  = a cultural, political, or artistic movement or era (Pan-Africanism, Harlem Renaissance)\n  genre     = a musical or artistic genre or style (Afrobeats, Highlife, Amapiano, Nollywood as a film industry)\n  concept   = an idea, philosophy, practice, or tradition (Ubuntu, Sankofa, Griot tradition, Adinkra symbols)\n  film      = a specific film or documentary (feature film, short film, documentary — NOT a series)\n  book      = a specific published book (novel, essay collection, poetry collection, memoir)\n  artwork   = a specific visual artwork, sculpture, installation, or album/music recording\n  food      = a specific dish, ingredient, or food tradition\n  fashion   = a specific garment, textile, fabric, or fashion tradition\n  tv-series = a television or streaming series, web series, or miniseries",
   "interests": ["2-5 relevant interest slugs, lowercase, hyphenated. Choose from: music, visual-art, food-drink, fashion, literature, film, history, politics, spirituality, dance, theatre, sport, architecture, photography"],
-  "suggestedLinks": ["2-4 names of related topics that would make good linked entries in the same directory"]
+  "suggestedLinks": ["2-4 names of related topics that would make good linked entries in the same directory"],
+  "infobox": {
+    // MANDATORY: Fill as many fields as possible for the given entryType. 
+    // High-density metadata is a priority. Omit a field ONLY if the information is impossible to find or estimate.
+    // All values must be strings.
+    //
+    // person:    born, died, nationality, occupation, knownFor, originCity, activeYears, awards, labels, education
+    // place:     country, region, population, officialLanguage, currency, founded, area
+    // movement:  founded, founders, originCountry, activePeriod, ideology, keyFigures, relatedMovements
+    // genre:     originCountry, originDecade, instruments, tempoBpm, keyArtists, relatedGenres, subgenres
+    // concept:   originCountry, keyThinkers, period, knownFor, relatedConcepts
+    // film:      director, year, starring, cinematographer, country, language, distributor, runtime, productionCompany
+    // book:      author, yearPublished, genre, publisher, language, pages, isbn
+    // artwork:   artist, year, medium, dimensions, currentLocation, artCollection, style
+    // food:      originCountry, foodType, mainIngredients, alsoKnownAs, culturalContext
+    // fashion:   origin, era, keyDesigners, materials, style, culturalSignificance
+    // tv-series: creator, network, seasons, years, starring, country, language, genre
+  }
 }
 
-Focus on African, Caribbean, and global diaspora contexts. Be factual, culturally respectful, and celebratory in tone. Use approximate language (e.g. "in the late 1970s") rather than fabricating specific dates you are unsure of.`;
+Focus on African, Caribbean, and global diaspora contexts. Be factual, culturally respectful, and celebratory in tone. For infobox data, use approximate values (e.g. "c. 1920" or "late 90s") if exact data is unavailable, as this is better than an empty field.`;
 
 /**
  * Extract the first complete JSON value (object or array) from a string.
@@ -236,69 +274,87 @@ function classifyTemplateType(
   return "scene";
 }
 
-/**
- * Build a context-aware Imagen 3 prompt based on the entry type.
- * Randomizes compositions and backgrounds to ensure a diverse directory.
- */
-function buildImagePrompt(
+const IMAGE_PROMPT_BRIEF_INSTRUCTION = `You are a visual art director briefing an illustrator for a premium editorial magazine called Moveee, which celebrates African and Black diasporan culture.
+
+Given a directory entry, write a single illustration brief (2–4 sentences) describing WHAT TO DRAW. Be highly specific to this exact subject — extract concrete visual elements from the content: specific objects, garments, architecture, instruments, landscapes, gestures, cultural symbols, time period, geography. No generic descriptions.
+
+The illustration must always use: flat geometric shapes, dry-brush paper grain, coarse stippling, ink bleeds, sharp geometric shadow blocks, matte finish, generous negative space. Palette locked to: deep ink (#14110d), burnt ochre (#c5491f), dark ochre (#8a2d10), gold brass (#b38238), moss green (#3d4a2a), cream paper (#f3ece0), indigo (#1e2b42). No photorealism, no gradients, no white.
+
+For PORTRAIT entries: describe the figure's specific pose, their distinctive clothing or signature look, a meaningful object they're associated with, and a background that references their world (not generic).
+For OBJECT entries: describe the object's specific form, texture, cultural markings or details, and a setting or arrangement that places it in cultural context.
+For SCENE entries: describe the specific environment, what human figures (if any) are doing, what architectural or natural features dominate, and what geometric shapes carry the composition.
+
+Return ONLY the brief — no labels, no preamble.`;
+
+async function buildImagePromptWithAI(
   title: string,
   entryType: string,
   excerpt: string
-): string {
+): Promise<string> {
+  const template = classifyTemplateType(entryType);
+  const contents =
+    IMAGE_PROMPT_BRIEF_INSTRUCTION +
+    `\n\nEntry: "${title}" (type: ${entryType}, template: ${template})\n` +
+    `Description: ${excerpt.slice(0, 400) || "(no description provided)"}`;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
+          temperature: 0.9,
+          maxOutputTokens: 200,
+        },
+      });
+      const res = await model.generateContent(contents);
+      const response = await res.response;
+      const brief = response.text().trim();
+      if (brief.length > 30) {
+        const fullPrompt =
+          brief + " " +
+          "Strictly restricted palette: deep ink (#14110d), burnt ochre (#c5491f), dark ochre (#8a2d10), " +
+          "gold brass (#b38238), moss green (#3d4a2a), cream paper (#f3ece0), indigo (#1e2b42) — no saturated blues/purples, no white. " +
+          "Premium editorial magazine illustration. Flat geometric shapes with dry-brush paper grain, coarse stippling, ink bleeds. " +
+          "Shading via sharp geometric shadow blocks, no soft gradients. No photorealism, no 3D rendering, matte finish, generous negative space.";
+        console.log(`[image-prompt] AI brief for "${title}": ${brief.slice(0, 120)}...`);
+        return fullPrompt;
+      }
+      console.warn(`[image-prompt] ${modelId} returned empty brief for "${title}" — trying next`);
+    } catch (err: any) {
+      console.warn(`[image-prompt] ${modelId} failed for "${title}": ${err?.message?.slice(0, 100)}`);
+    }
+  }
+
+  console.warn(`[image-prompt] All models failed for "${title}" — using fallback template`);
+  return buildImagePromptFallback(title, entryType, excerpt);
+}
+
+function buildImagePromptFallback(title: string, entryType: string, excerpt: string): string {
   const context = excerpt.slice(0, 180);
   const template = classifyTemplateType(entryType);
 
-  // Background varieties for randomization
-  const bgVarieties = [
-    "minimalist textured paper background",
-    "abstract architectural geometry in ochre and ink",
-    "moody indigo-black void with a geometric spotlight",
-    "split-background using dynamic diagonal color blocks",
-    "background featuring stylized silhouettes of cityscapes or palms",
-  ];
-  const bg = bgVarieties[Math.floor(Math.random() * bgVarieties.length)];
-
-  // Composition varieties
-  const portraitComps = ["heroic low-angle shot", "side-profile silhouette", "minimalist centered portrait"];
-  const objectComps = ["dynamic bird's-eye view", "dramatic side-lighting", "heroic 3/4 view"];
-
   if (template === "portrait") {
-    const comp = portraitComps[Math.floor(Math.random() * portraitComps.length)];
     return (
       `Flat geometric editorial portrait of ${title} (${entryType}). ` +
-      `${comp} against a ${bg}. ` +
-      `Face as a simplified architectural form with sharp shadow shapes. ` +
-      `Minimal facial features (2-3 iconic lines for eyes and mouth). ` +
-      `Stylized hair as a single dark shape with coarse texture. ` +
-      `Geometric clothing as flat color masses. ` +
-      `Context: ${context}. ` +
-      STYLE_MODIFIERS
+      `Heroic low-angle silhouette with sharp shadow shapes for facial features. ` +
+      `Stylized hair as a single dark shape with coarse texture. Geometric clothing as flat color masses. ` +
+      `Context: ${context}. ` + STYLE_MODIFIERS
     );
   }
-
   if (template === "object") {
-    const comp = objectComps[Math.floor(Math.random() * objectComps.length)];
     return (
       `Flat graphic editorial illustration of ${title} (${entryType}). ` +
-      `${comp} shown against a ${bg}. ` +
-      `The subject is rendered as a clean geometric icon. ` +
-      `Use sharp, high-contrast shadow shapes to suggest volume. ` +
-      `Stylized textures (crosshatching or dots) for surface details. ` +
-      `Context: ${context}. ` +
-      STYLE_MODIFIERS
+      `The subject rendered as a clean geometric icon with stylized crosshatch textures. ` +
+      `Sharp high-contrast shadow shapes suggest volume. ` +
+      `Context: ${context}. ` + STYLE_MODIFIERS
     );
   }
-
-  // Default: scene (place, movement, genre, etc.)
   return (
     `Abstract geometric scene illustration representing ${title} (${entryType}). ` +
-    `Wide editorial composition against a ${bg}. ` +
-    `Human figures as minimal silhouettes in the middle ground. ` +
-    `Environment suggested through large blocks of color and sharp geometric shapes (circles, triangles, lines). ` +
-    `Dramatic lighting through sharp diagonal shadow-planes. ` +
-    `Fine stippling and ink-bleed effects for depth. ` +
-    `Context: ${context}. ` +
-    STYLE_MODIFIERS
+    `Wide editorial composition. Human figures as minimal silhouettes. ` +
+    `Environment suggested through large color blocks and sharp geometric shapes. ` +
+    `Context: ${context}. ` + STYLE_MODIFIERS
   );
 }
 
@@ -320,7 +376,7 @@ export async function generateDirectoryImage(
   entryType: string,
   excerpt: string
 ): Promise<ImageResult> {
-  const prompt = buildImagePrompt(title, entryType, excerpt);
+  const prompt = await buildImagePromptWithAI(title, entryType, excerpt);
   const meta = buildImageMetadata(entryType);
   const imageErrors: string[] = [];
 
@@ -372,14 +428,15 @@ export async function generateDirectoryImage(
 
     for (const imageModel of IMAGE_MODELS) {
       try {
-        const response = await ai.models.generateContent({
+        const model = ai.getGenerativeModel({
           model: imageModel,
-          contents: prompt,
-          config: {
+          safetySettings: SAFETY_SETTINGS,
+          generationConfig: {
             responseModalities: ["TEXT", "IMAGE"],
-            safetySettings: SAFETY_SETTINGS,
           } as any,
         });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
 
         const parts: any[] =
           (response as any).candidates?.[0]?.content?.parts ?? [];
@@ -426,23 +483,16 @@ export async function generateDirectoryStub(
 
   for (const modelId of TEXT_MODELS) {
     try {
-      const response = await ai.models.generateContent({
+      const model = ai.getGenerativeModel({
         model: modelId,
-        contents: `Generate a Culture Directory entry for: "${topic}"`,
-        config: {
-          systemInstruction: SYSTEM_PROMPT,
-          safetySettings: SAFETY_SETTINGS,
-        },
+        systemInstruction: SYSTEM_PROMPT,
+        safetySettings: SAFETY_SETTINGS,
       });
+      const res = await model.generateContent(`Generate a Culture Directory entry for: "${topic}"`);
+      const response = await res.response;
       console.log(`[gemini] ${modelId} response for "${topic}":`, JSON.stringify(response).slice(0, 200));
 
-      // response.text can be null in SDK v1.x when responseMimeType is set —
-      // fall back to the raw candidates structure as the image code does.
-      const raw = (
-        response.text ??
-        (response as any).candidates?.[0]?.content?.parts?.[0]?.text ??
-        ""
-      ).trim();
+      const raw = response.text().trim();
       if (!raw) continue; // Try next model
 
       const jsonStr = extractJson(raw);
@@ -456,6 +506,18 @@ export async function generateDirectoryStub(
       // Ensure arrays are arrays.
       if (!Array.isArray(parsed.interests)) parsed.interests = [];
       if (!Array.isArray(parsed.suggestedLinks)) parsed.suggestedLinks = [];
+
+      // Ensure infobox is a plain object of string values.
+      if (!parsed.infobox || typeof parsed.infobox !== "object" || Array.isArray(parsed.infobox)) {
+        parsed.infobox = {};
+      } else {
+        // Strip any non-string, null, or empty values.
+        const clean: DirectoryInfobox = {};
+        for (const [k, v] of Object.entries(parsed.infobox)) {
+          if (typeof v === "string" && v.trim()) (clean as any)[k] = v.trim();
+        }
+        parsed.infobox = clean;
+      }
 
       return parsed;
     } catch (err: any) {
@@ -499,17 +561,14 @@ Return ONLY a JSON array of strings — topic names only, no descriptions, no nu
 
   for (const modelId of TEXT_MODELS) {
     try {
-      const response = await ai.models.generateContent({
+      const model = ai.getGenerativeModel({
         model: modelId,
-        contents: prompt,
-        config: { safetySettings: SAFETY_SETTINGS },
+        safetySettings: SAFETY_SETTINGS,
       });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
 
-      const raw = (
-        response.text ??
-        (response as any).candidates?.[0]?.content?.parts?.[0]?.text ??
-        ""
-      ).trim();
+      const raw = response.text().trim();
       if (!raw) continue;
 
       const jsonStr = extractJson(raw);
@@ -566,17 +625,14 @@ Example format:
 
   for (const modelId of TEXT_MODELS) {
     try {
-      const response = await ai.models.generateContent({
+      const model = ai.getGenerativeModel({
         model: modelId,
-        contents: prompt,
-        config: { safetySettings: SAFETY_SETTINGS },
+        safetySettings: SAFETY_SETTINGS,
       });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
 
-      const raw = (
-        response.text ??
-        (response as any).candidates?.[0]?.content?.parts?.[0]?.text ??
-        ""
-      ).trim();
+      const raw = response.text().trim();
       if (!raw) continue;
 
       const jsonStr = extractJson(raw);
@@ -600,4 +656,390 @@ Example format:
   }
 
   throw new Error(`Failed to generate seed quotes: ${lastError?.message || "Unknown error"}`);
+}
+
+/**
+ * Extract verified quotes from Serper search results.
+ *
+ * Gemini is an EXTRACTOR here, not a generator. It may only return quotes
+ * whose exact text appears verbatim in the supplied search snippets.
+ * It must not recall quotes from training data, paraphrase, or invent.
+ *
+ * @param results  Raw Serper organic results for this author.
+ * @param author   Name of the person whose quotes we are extracting.
+ * @param maxQuotes Maximum quotes to return (default 4).
+ */
+export async function searchAndExtractQuotes(
+  results: Array<{ title: string; link: string; snippet: string }>,
+  author: string,
+  maxQuotes: number = 4
+): Promise<Array<{ text: string; author: string; source: string; source_url: string }>> {
+  if (!results.length) return [];
+
+  const resultsJson = JSON.stringify(
+    results.map((r, i) => ({ id: i, title: r.title, url: r.link, snippet: r.snippet }))
+  );
+
+  const prompt = `You are a quote verification assistant for The Moveee — an African and diaspora culture platform.
+
+You have been given ${results.length} web search results that may contain real quotes by ${author}.
+
+STRICT RULES — follow exactly:
+1. Extract ONLY quotes whose EXACT text appears verbatim in one of the snippets below.
+2. DO NOT use your training data to recall or reconstruct quotes. If you know a quote but cannot see it in the snippets, skip it.
+3. DO NOT complete partial quotes. If a snippet shows the start of a quote but cuts off, skip it.
+4. DO NOT paraphrase. The "text" field must be the exact wording from the snippet.
+5. Prefer results from wikiquote.org, goodreads.com, published books, or recorded speeches.
+6. Minimum quote length: 10 words. Skip sentence fragments.
+7. It is better to return 1 verified quote than 4 uncertain ones. Return [] if nothing is verifiable.
+
+Return a JSON array. Each object must have exactly these fields:
+{
+  "text": "Exact verbatim quote as found in the snippet",
+  "author": "${author}",
+  "source": "Book title, speech name, film, or interview — from the snippet or URL. Empty string if unknown.",
+  "source_url": "URL of the search result where the quote was found"
+}
+
+Return ONLY the JSON array, no commentary. If nothing is verifiable, return [].
+
+Search results:
+${resultsJson}`;
+
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
+        },
+      });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
+
+      const raw = response.text().trim();
+      if (!raw) continue;
+
+      const jsonStr = extractJson(raw);
+      const quotes: unknown = JSON.parse(jsonStr);
+      if (!Array.isArray(quotes)) continue;
+
+      return (quotes as any[])
+        .filter((q) => q.text && String(q.text).trim().split(/\s+/).length >= 10)
+        .map((q) => ({
+          text:       String(q.text).trim(),
+          author:     String(q.author  || author),
+          source:     String(q.source  || ""),
+          source_url: String(q.source_url || ""),
+        }))
+        .slice(0, maxQuotes);
+    } catch (err: any) {
+      console.warn(`[searchAndExtractQuotes] Model ${modelId} failed:`, err?.message);
+      lastError = err;
+      continue;
+    }
+  }
+
+  console.error("[searchAndExtractQuotes] All models failed:", lastError?.message);
+  return [];
+}
+
+// ── Quote authenticity verification ──────────────────────────────────────────
+
+export type AuditVerdict = "verified" | "suspicious" | "likely-fabricated" | "unverifiable";
+
+export interface AuditResult {
+  verdict: AuditVerdict;
+  reason: string;
+}
+
+/**
+ * Ask Gemini to assess whether an existing database quote is authentic.
+ *
+ * Gemini acts as a FACT-CHECKER, not a generator. It must base its verdict
+ * ONLY on what appears in the supplied search results. If no results mention
+ * the quote, "unverifiable" is the correct answer — NOT "likely-fabricated".
+ *
+ * Verdicts:
+ *   verified          — exact (or near-verbatim) text found in a reliable source
+ *   suspicious        — found but wording differs, source is dubious, or attribution conflicts
+ *   likely-fabricated — strong evidence the quote is misattributed or invented
+ *   unverifiable      — no search results confirm or deny (neutral — not a condemnation)
+ */
+export async function verifyExistingQuote(
+  quoteText: string,
+  author: string,
+  source: string,
+  searchResults: Array<{ title: string; link: string; snippet: string }>
+): Promise<AuditResult> {
+  const resultsJson = searchResults.length
+    ? JSON.stringify(
+        searchResults.map((r, i) => ({ id: i, title: r.title, url: r.link, snippet: r.snippet }))
+      )
+    : "[]";
+
+  const prompt = `You are a quote fact-checker for The Moveee — an African and diaspora culture platform. Your job is to assess whether a quote in our database is authentic.
+
+Quote to verify:
+  Text:   "${quoteText}"
+  Author: "${author}"
+  Source: "${source || "(unknown)"}"
+
+You have been given ${searchResults.length} web search results that may help you judge authenticity.
+
+VERDICT RULES — choose exactly one:
+• "verified"          — The exact (or very close to verbatim) text is found attributed to this author in at least one of the snippets, AND the source is credible (Wikiquote, published book, recorded speech, reputable journalism).
+• "suspicious"        — The quote appears in results BUT the wording differs noticeably, attribution conflicts with another person, or the only sources are low-quality sites.
+• "likely-fabricated" — A snippet explicitly says the quote is misattributed, debunked, or not from this person. OR the quote appears attributed to a completely different person in the results.
+• "unverifiable"      — The search results contain no useful signal either way. This is NOT a negative verdict; it simply means more research is needed.
+
+IMPORTANT: Do NOT use your training data memory to recall or verify quotes. Base your verdict ONLY on what is visible in the snippets below. If the snippets are empty or irrelevant, verdict must be "unverifiable".
+
+Return ONLY valid JSON — no commentary:
+{
+  "verdict": "verified" | "suspicious" | "likely-fabricated" | "unverifiable",
+  "reason": "One or two sentences explaining the verdict, citing specific snippets where possible."
+}
+
+Search results:
+${resultsJson}`;
+
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
+        },
+      });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
+
+      const raw = response.text().trim();
+      if (!raw) continue;
+
+      const jsonStr = extractJson(raw);
+      const parsed: any = JSON.parse(jsonStr);
+
+      const validVerdicts: AuditVerdict[] = ["verified", "suspicious", "likely-fabricated", "unverifiable"];
+      const verdict: AuditVerdict = validVerdicts.includes(parsed.verdict) ? parsed.verdict : "unverifiable";
+      const reason: string = String(parsed.reason ?? "No reason provided.").slice(0, 400);
+
+      return { verdict, reason };
+    } catch (err: any) {
+      console.warn(`[verifyExistingQuote] Model ${modelId} failed:`, err?.message);
+      lastError = err;
+      continue;
+    }
+  }
+
+  console.error("[verifyExistingQuote] All models failed:", lastError?.message);
+  return { verdict: "unverifiable", reason: "Verification service unavailable." };
+}
+
+// ── Events discovery ─────────────────────────────────────────────────────────
+
+export interface SerperResult {
+  title: string;
+  link: string;
+  snippet: string;
+  date?: string;
+}
+
+export interface EventStub {
+  title: string;
+  tagline: string;
+  excerpt: string;
+  content: string;
+  event_date: string;      // ISO 8601: YYYY-MM-DDTHH:mm
+  end_date: string;
+  location: string;        // Venue name + address
+  city: string;
+  admission: string;       // "Free" | "£15" | "From $20" etc.
+  ticketing_url: string;
+  attribution: string;     // Source URL
+  interests: string[];     // culture_interest taxonomy slugs
+  relevant: boolean;
+}
+
+const INTEREST_SLUGS = [
+  "music", "visual-arts", "film", "literature", "fashion",
+  "food", "architecture", "dance", "theatre", "photography",
+  "design", "craft", "performance", "community", "heritage",
+  "sports", "wellness", "technology", "education",
+];
+
+/**
+ * Pass raw Serper search results to Gemini.
+ * Gemini filters for community relevance, extracts structured fields,
+ * and returns up to maxEvents EventStub objects.
+ */
+/**
+ * Use Gemini with Google Search grounding to research an event and return
+ * a richer 3–4 paragraph content block for the event's detail page.
+ * Falls back to the original excerpt if all models fail.
+ */
+export async function enrichEventContent(
+  title: string,
+  city: string,
+  eventDate: string,
+  originalExcerpt: string
+): Promise<string> {
+  const prompt = `You are the editorial writer for The Moveee — a cultural platform for the African and global diaspora. Use Google Search to research this event and write a rich editorial description for its detail page.
+
+Event: "${title}"
+City: ${city}
+Date: ${eventDate}
+
+Write 3–4 paragraphs (total ~250–350 words) covering:
+1. What the event is and who's involved (be specific — name artists, curators, speakers, or organisations)
+2. Cultural or historical context — why this event matters to the African/diaspora community
+3. What to expect: programme highlights, atmosphere, format
+4. Practical note: location/neighbourhood character, any ticketing detail found, and why this is worth attending
+
+Use an editorial voice — warm, knowledgeable, specific. No marketing clichés. Return ONLY the plain text (no JSON, no markdown, no headings). Separate paragraphs with a blank line.`;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
+          temperature: 0.3,
+        },
+        tools: [{ googleSearch: {} }] as any,
+      });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
+
+      const text = response.text().trim();
+      if (text && text.length > 100) return text;
+    } catch {
+      // try next model
+    }
+  }
+
+  return originalExcerpt;
+}
+
+export async function evaluateAndExtractEvents(
+  results: SerperResult[],
+  city: string,
+  currentDate: string,
+  maxEvents: number = 8
+): Promise<EventStub[]> {
+  if (!results.length) return [];
+
+  const resultsJson = JSON.stringify(
+    results.map((r, i) => ({ id: i, title: r.title, url: r.link, snippet: r.snippet, article_published: r.date ?? "" }))
+  );
+
+  const prompt = `You are the events curator for The Moveee — an independent cultural platform for the African and global diaspora community. Today's date is ${currentDate}.
+
+You have been given ${results.length} web search results about events in ${city}. Your job is to:
+
+1. FILTER: Only include events that are:
+   - Genuinely upcoming (start date is after ${currentDate}) — skip past events
+   - Actually a discrete event (not a listicle, news article, venue homepage, or general "things to do" guide)
+   - Culturally interesting: music, art exhibitions, film screenings, literature, fashion, food, theatre, dance, cultural festivals, community gatherings. Especially relevant if connected to African, Caribbean, diaspora, or global South culture — but excellent events of any kind are welcome.
+
+2. EXTRACT DATES — this is the most critical step:
+   The \`article_published\` field is when the web page was crawled by Google — it is NEVER the event date. Ignore it for date purposes.
+
+   To find the real event date, scan the snippet for these signals (in order of reliability):
+   a) Explicit date text: "Saturday 14 June", "June 14", "14/06/2025", "Jun 14, 2025", "2025-06-14"
+   b) Weekday + relative week: "this Saturday", "next Friday" — resolve against today (${currentDate})
+   c) Month-range text for exhibitions: "runs until 30 August", "on view through September 12", "open until..."
+      → set event_date to the exhibition OPENING date if mentioned, else the earliest date in the snippet
+      → set end_date to the closing date
+   d) Ticketing URL patterns: Eventbrite URLs sometimes embed dates (e.g. /e/event-name-12345678)
+   e) Structured date fragments in the snippet like "When: ...", "Date: ...", "Doors: ..."
+
+   If after careful scanning you still cannot identify a specific event date, set event_date to "" — the event will be skipped.
+   Never guess or invent a date. Never use the article_published date as the event date.
+
+3. EXTRACT END DATES: For exhibitions, runs, and festivals that span multiple days or weeks:
+   - Always try to extract end_date from phrases like "until", "through", "closes", "runs to", "ending"
+   - Format: YYYY-MM-DDTHH:mm or YYYY-MM-DD
+   - A single-night event's end_date can be left empty
+
+4. COMPOSE: Write a short, editorial tagline (1 sentence, present tense, evocative — not a press release) and a longer excerpt (2-3 sentences with cultural context).
+
+Available interest slugs (use only these): ${INTEREST_SLUGS.join(", ")}
+
+Return a JSON array. Each object must have exactly these fields:
+{
+  "title": "Full event title",
+  "tagline": "One evocative sentence about the event",
+  "excerpt": "2-3 sentence editorial description with cultural context",
+  "content": "Same as excerpt — expand if more detail is available in the snippet",
+  "event_date": "YYYY-MM-DDTHH:mm or YYYY-MM-DD — the actual event/opening start date, NOT article_published",
+  "end_date": "YYYY-MM-DDTHH:mm or YYYY-MM-DD for multi-day events — empty string for single-night events",
+  "location": "Venue name and address if available",
+  "city": "${city}",
+  "admission": "Free / price / empty string if unknown",
+  "ticketing_url": "Direct ticket/event URL from the search result",
+  "attribution": "Source URL from the search result",
+  "interests": ["slug1", "slug2"],
+  "relevant": true
+}
+
+If a result is NOT relevant, skip it entirely — do not include it with relevant: false.
+If you cannot determine the actual event date from the snippet text, set event_date to "" and it will be skipped.
+Return at most ${maxEvents} events. Return ONLY the JSON array, no commentary.
+
+Search results:
+${resultsJson}`;
+
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
+        },
+      });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
+
+      const raw = response.text().trim();
+      if (!raw) continue;
+
+      const jsonStr = extractJson(raw);
+      const parsed: unknown = JSON.parse(jsonStr);
+
+      if (!Array.isArray(parsed)) continue;
+
+      return (parsed as any[])
+        .filter((e) => e.title && e.event_date && e.relevant !== false)
+        .map((e) => ({
+          title:        String(e.title || "").trim(),
+          tagline:      String(e.tagline || "").trim(),
+          excerpt:      String(e.excerpt || "").trim(),
+          content:      String(e.content || e.excerpt || "").trim(),
+          event_date:   String(e.event_date || "").trim(),
+          end_date:     String(e.end_date || "").trim(),
+          location:     String(e.location || "").trim(),
+          city:         String(e.city || city).trim(),
+          admission:    String(e.admission || "").trim(),
+          ticketing_url: String(e.ticketing_url || "").trim(),
+          attribution:  String(e.attribution || "").trim(),
+          interests:    Array.isArray(e.interests) ? e.interests.filter((s: any) => INTEREST_SLUGS.includes(s)) : [],
+          relevant:     true,
+        }))
+        .slice(0, maxEvents);
+    } catch (err: any) {
+      console.warn(`Model ${modelId} failed for event extraction (${city}):`, err?.message);
+      lastError = err;
+      continue;
+    }
+  }
+
+  throw new Error(`Event extraction failed for ${city}: ${lastError?.message || "Unknown error"}`);
 }

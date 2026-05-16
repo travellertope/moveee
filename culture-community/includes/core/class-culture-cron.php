@@ -1,9 +1,17 @@
 <?php
 /**
- * Cron jobs for scheduled tasks.
+ * Scheduled jobs for Culture Community.
  *
- * - Grace period expiry: downgrades Patron users to Citizen after
- *   7 days of failed payment (non-renewing status).
+ * All automation runs via WordPress cron, triggered by a real server cron
+ * on Lightsail every 30 minutes (see wp-config.php: DISABLE_WP_CRON = true).
+ *
+ * Jobs:
+ *  - Grace period check (daily) — downgrades lapsed Patron accounts.
+ *  - Directory seed (weekly)    — triggers Next.js /api/directory/auto-populate.
+ *  - Pulse refresh (daily)      — triggers Next.js /api/pulse/refresh.
+ *  - Events seed (daily)        — triggers Next.js /api/events/auto-seed.
+ *  - Quotes seed (weekly)       — triggers Next.js /api/quotes/auto-populate.
+ *  - Tweet pulse (every 30 min) — posts latest unposted pulse story to X/Twitter.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,53 +20,107 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Culture_Cron {
 
-    /** Default grace period duration in days. */
+    // ── Hook names ────────────────────────────────────────────────────────
+
+    const HOOK_GRACE_CHECK      = 'culture_check_grace_periods';
+    const HOOK_SEED_DIRECTORY   = 'culture_seed_directory';
+    const HOOK_REFRESH_PULSE    = 'culture_refresh_pulse';
+    const HOOK_SEED_EVENTS      = 'culture_seed_events';
+    const HOOK_SEED_QUOTES      = 'culture_seed_quotes';
+    const HOOK_TWEET_PULSE      = 'culture_tweet_pulse';
+
+    /** Default grace period in days. */
     const GRACE_PERIOD_DAYS = 7;
 
-    /**
-     * Get the configured grace period in days.
-     *
-     * @return int
-     */
-    public static function get_grace_period_days() {
-        return class_exists( 'Culture_Settings' ) ? (int) Culture_Settings::get( 'culture_grace_period_days' ) : self::GRACE_PERIOD_DAYS;
-    }
-
-    /** Cron hook name. */
-    const HOOK_GRACE_CHECK = 'culture_check_grace_periods';
+    // ── Bootstrap ─────────────────────────────────────────────────────────
 
     public static function init() {
-        add_action( self::HOOK_GRACE_CHECK, array( __CLASS__, 'process_grace_periods' ) );
+        add_filter( 'cron_schedules',      array( __CLASS__, 'add_schedules' ) );
+        add_action( self::HOOK_GRACE_CHECK,    array( __CLASS__, 'process_grace_periods' ) );
+        add_action( self::HOOK_SEED_DIRECTORY, array( __CLASS__, 'seed_directory' ) );
+        add_action( self::HOOK_REFRESH_PULSE,  array( __CLASS__, 'refresh_pulse' ) );
+        add_action( self::HOOK_SEED_EVENTS,    array( __CLASS__, 'seed_events' ) );
+        add_action( self::HOOK_SEED_QUOTES,    array( __CLASS__, 'seed_quotes' ) );
+        add_action( self::HOOK_TWEET_PULSE,    array( __CLASS__, 'tweet_pulse' ) );
+
+        // Self-heal: schedule any jobs that are missing without requiring re-activation.
+        // Runs on every init so newly added hooks (like tweet_pulse) get registered
+        // even if the plugin was already active when they were introduced.
+        add_action( 'init', array( __CLASS__, 'schedule' ), 99 );
     }
 
     /**
-     * Schedule the cron event on plugin activation.
+     * Register custom cron intervals that WordPress doesn't include by default.
+     */
+    public static function add_schedules( $schedules ) {
+        if ( ! isset( $schedules['thirtyminutes'] ) ) {
+            $schedules['thirtyminutes'] = array(
+                'interval' => 30 * MINUTE_IN_SECONDS,
+                'display'  => __( 'Every 30 Minutes', 'culture-community' ),
+            );
+        }
+        if ( ! isset( $schedules['weekly'] ) ) {
+            $schedules['weekly'] = array(
+                'interval' => 7 * DAY_IN_SECONDS,
+                'display'  => __( 'Once a Week', 'culture-community' ),
+            );
+        }
+        return $schedules;
+    }
+
+    // ── Schedule / Unschedule ─────────────────────────────────────────────
+
+    /**
+     * Register all recurring events. Called on plugin activation.
      */
     public static function schedule() {
-        if ( ! wp_next_scheduled( self::HOOK_GRACE_CHECK ) ) {
-            wp_schedule_event( time(), 'daily', self::HOOK_GRACE_CHECK );
+        $jobs = array(
+            self::HOOK_GRACE_CHECK    => 'daily',
+            self::HOOK_SEED_DIRECTORY => 'weekly',
+            self::HOOK_REFRESH_PULSE  => 'daily',
+            self::HOOK_SEED_EVENTS    => 'daily',
+            self::HOOK_SEED_QUOTES    => 'weekly',
+            self::HOOK_TWEET_PULSE    => 'thirtyminutes',
+        );
+
+        foreach ( $jobs as $hook => $recurrence ) {
+            if ( ! wp_next_scheduled( $hook ) ) {
+                wp_schedule_event( time(), $recurrence, $hook );
+            }
         }
     }
 
     /**
-     * Clear the cron event on plugin deactivation.
+     * Remove all recurring events. Called on plugin deactivation.
      */
     public static function unschedule() {
-        $timestamp = wp_next_scheduled( self::HOOK_GRACE_CHECK );
-        if ( $timestamp ) {
-            wp_unschedule_event( $timestamp, self::HOOK_GRACE_CHECK );
+        $hooks = array(
+            self::HOOK_GRACE_CHECK,
+            self::HOOK_SEED_DIRECTORY,
+            self::HOOK_REFRESH_PULSE,
+            self::HOOK_SEED_EVENTS,
+            self::HOOK_SEED_QUOTES,
+            self::HOOK_TWEET_PULSE,
+        );
+
+        foreach ( $hooks as $hook ) {
+            $timestamp = wp_next_scheduled( $hook );
+            if ( $timestamp ) {
+                wp_unschedule_event( $timestamp, $hook );
+            }
         }
     }
 
+    // ── Job handlers ──────────────────────────────────────────────────────
+
     /**
-     * Process users in the grace period.
-     *
-     * Finds users with '_culture_subscription_status' = 'non-renewing'
-     * and '_culture_grace_period_start' older than GRACE_PERIOD_DAYS.
-     * Downgrades them to Citizen and removes secondary chapter.
+     * Downgrade Patron users whose grace period has expired.
      */
     public static function process_grace_periods() {
-        $cutoff = gmdate( 'Y-m-d H:i:s', strtotime( '-' . self::get_grace_period_days() . ' days' ) );
+        $days   = class_exists( 'Culture_Settings' )
+            ? (int) Culture_Settings::get( 'culture_grace_period_days' )
+            : self::GRACE_PERIOD_DAYS;
+        $cutoff = gmdate( 'Y-m-d H:i:s', strtotime( '-' . $days . ' days' ) );
 
         $users = get_users( array(
             'meta_query' => array(
@@ -78,17 +140,100 @@ class Culture_Cron {
         ) );
 
         foreach ( $users as $user_id ) {
-            // Downgrade to Citizen.
             update_user_meta( $user_id, '_culture_membership_tier', 'citizen' );
             update_user_meta( $user_id, '_culture_subscription_status', 'expired' );
-
-            // Remove secondary chapter access.
             delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
-
-            // Clean up grace period flag.
             delete_user_meta( $user_id, '_culture_grace_period_start' );
-
             do_action( 'culture_grace_period_expired', $user_id );
         }
+    }
+
+    /**
+     * Trigger the Culture Directory AI seeder on Next.js.
+     * Runs weekly. Sends a small batch to stay within Vercel execution limits.
+     */
+    public static function seed_directory() {
+        self::call_nextjs( '/api/directory/auto-populate', array(
+            'batchSize'      => 3,
+            'generateImages' => true,
+        ) );
+    }
+
+    /**
+     * Trigger the Pulse story refresh on Next.js.
+     * Runs daily.
+     */
+    public static function refresh_pulse() {
+        self::call_nextjs( '/api/pulse/refresh' );
+    }
+
+    /**
+     * Trigger the Events seeder on Next.js.
+     * Runs daily.
+     */
+    public static function seed_events() {
+        self::call_nextjs( '/api/events/auto-seed', array( 'citiesPerRun' => 3 ) );
+    }
+
+    /**
+     * Trigger the Quotes seeder on Next.js.
+     * Runs weekly.
+     */
+    public static function seed_quotes() {
+        self::call_nextjs( '/api/quotes/auto-populate' );
+    }
+
+    /**
+     * Tweet the latest unposted pulse story.
+     * Runs every 30 minutes.
+     */
+    public static function tweet_pulse() {
+        if ( class_exists( 'Culture_Twitter' ) ) {
+            Culture_Twitter::tweet_latest_pulse();
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    /**
+     * POST to a Next.js API endpoint using the stored cron secret for auth.
+     *
+     * @param string $path  API path, e.g. '/api/pulse/refresh'.
+     * @param array  $body  Optional JSON body parameters.
+     */
+    private static function call_nextjs( $path, $body = array() ) {
+        $frontend_url = rtrim( Culture_Settings::get( 'culture_frontend_url' ), '/' );
+        $cron_secret  = Culture_Settings::get( 'culture_cron_secret' );
+
+        if ( empty( $frontend_url ) || empty( $cron_secret ) ) {
+            error_log( '[Culture Cron] ' . $path . ' — Frontend URL or Cron Secret not set in Culture Community → Settings → General.' );
+            return;
+        }
+
+        $url      = $frontend_url . $path;
+        $response = wp_remote_post( $url, array(
+            'timeout'     => 60, // generous; Vercel Hobby caps at 10s but won't hang WP
+            'blocking'    => false, // fire-and-forget; WP doesn't need the response
+            'headers'     => array(
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $cron_secret,
+            ),
+            'body'        => wp_json_encode( $body ),
+        ) );
+
+        // blocking=false means $response is always true, but log if misconfigured.
+        if ( is_wp_error( $response ) ) {
+            error_log( '[Culture Cron] ' . $path . ' error: ' . $response->get_error_message() );
+        } else {
+            error_log( '[Culture Cron] Fired ' . $path );
+        }
+    }
+
+    // ── Legacy accessor (used by Culture_Settings UI) ─────────────────────
+
+    public static function get_grace_period_days() {
+        return class_exists( 'Culture_Settings' )
+            ? (int) Culture_Settings::get( 'culture_grace_period_days' )
+            : self::GRACE_PERIOD_DAYS;
     }
 }

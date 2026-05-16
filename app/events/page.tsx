@@ -3,6 +3,7 @@ import { getEventsWithFallback } from "@/lib/wp";
 import EventHero from "./components/EventHero";
 import SpotlightCard from "./components/SpotlightCard";
 import EventCard from "./components/EventCard";
+import CommunityRadarSection from "./components/CommunityRadarSection";
 import "@/app/events.css";
 
 export const dynamic = "force-dynamic";
@@ -47,15 +48,29 @@ function groupEventsByMonth(events: any[]) {
   return groups;
 }
 
+function isEventPast(event: any): boolean {
+  // Multi-day events stay visible until their end date passes
+  const checkDate = event.endDate || event.eventDate || event.date;
+  if (!checkDate) return false;
+  const d = new Date(checkDate);
+  if (isNaN(d.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d < today;
+}
+
 export default async function EventsPage() {
   let events: any[] = [];
   try {
     events = await getEventsWithFallback(50, { revalidate: 0 });
   } catch { /* CMS unreachable */ }
 
-  const spotlightEvent = events.find(e => e.isFeatured) || events[0];
-  const otherEvents = spotlightEvent ? events.filter(e => e.id !== spotlightEvent.id) : events;
-  const groupedEvents = groupEventsByMonth(otherEvents);
+  const ownEvents    = events.filter(e => !e.isAiGenerated && !isEventPast(e));
+  const seededEvents = events.filter(e => e.isAiGenerated && !isEventPast(e));
+
+  const spotlightEvent = ownEvents.find(e => e.isFeatured) || ownEvents[0];
+  const otherOwnEvents = spotlightEvent ? ownEvents.filter(e => e.id !== spotlightEvent.id) : ownEvents;
+  const groupedEvents = groupEventsByMonth(otherOwnEvents);
 
   return (
     <div className="events-page bg-paper">
@@ -99,7 +114,7 @@ export default async function EventsPage() {
           })()}
           venue={spotlightEvent.location || "Venue TBA"}
           time="Doors 6 PM"
-          admission={spotlightEvent.admission || "Free · RSVP required"}
+          admission={spotlightEvent.admission || "See website for details"}
           image={spotlightEvent.featuredImage?.node?.sourceUrl}
           statusBadge="Featured"
         />
@@ -115,13 +130,13 @@ export default async function EventsPage() {
           <button className="filter-btn">Film</button>
           <button className="filter-btn">Food</button>
           <button className="filter-btn">Members Only</button>
-          <span className="filter-count">Showing {events.length} events</span>
+          <span className="filter-count">Showing {ownEvents.length} curated events</span>
         </div>
       </div>
 
-      {/* ── GRID ── */}
+      {/* ── GRID (own / curated events) ── */}
       <section className="events-section">
-        {groupedEvents.length === 0 && events.length === 0 ? (
+        {groupedEvents.length === 0 && ownEvents.length === 0 ? (
           <p className="textAlign-center py-20 font-serif italic text-2xl text-mute">
             No upcoming events — check back soon.
           </p>
@@ -136,7 +151,7 @@ export default async function EventsPage() {
 
               <div className="events-grid">
                 {group.events.map((event) => (
-                  <EventCard 
+                  <EventCard
                     key={event.id}
                     slug={event.slug}
                     title={event.title}
@@ -157,6 +172,9 @@ export default async function EventsPage() {
           ))
         )}
       </section>
+
+      {/* ── COMMUNITY RADAR — discovered / seeded events ── */}
+      <CommunityRadarSection events={seededEvents} />
 
       {/* ── CONNECT CTA BAND ── */}
       <section className="connect-band">

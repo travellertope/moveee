@@ -13,9 +13,36 @@ class Culture_Post_Types {
         // Register CPTs and taxonomies directly since init() is called during the init hook.
         self::register_post_types();
         self::register_taxonomies();
+        self::register_rest_meta_fields();
         add_action( 'add_meta_boxes', array( __CLASS__, 'register_meta_boxes' ) );
         add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
+    }
+
+    /**
+     * Expose key private meta fields via the WP REST API so the Next.js
+     * REST fallback can read them (e.g. isAiGenerated on events).
+     */
+    public static function register_rest_meta_fields() {
+        $event_meta = array(
+            '_culture_ai_generated'  => array( 'type' => 'string' ),
+            '_culture_event_date'    => array( 'type' => 'string' ),
+            '_culture_end_date'      => array( 'type' => 'string' ),
+            '_culture_location'      => array( 'type' => 'string' ),
+            '_culture_event_city'    => array( 'type' => 'string' ),
+            '_culture_admission'     => array( 'type' => 'string' ),
+            '_culture_ticketing_url' => array( 'type' => 'string' ),
+            '_culture_tagline'       => array( 'type' => 'string' ),
+            '_culture_is_featured'   => array( 'type' => 'string' ),
+        );
+        foreach ( $event_meta as $meta_key => $args ) {
+            register_post_meta( 'culture_event', $meta_key, array(
+                'type'         => $args['type'],
+                'single'       => true,
+                'show_in_rest' => true,
+                'auth_callback' => '__return_true',
+            ) );
+        }
     }
 
     /**
@@ -375,7 +402,8 @@ class Culture_Post_Types {
             'endDate'      => array( 'type' => 'String',  'acf_key' => 'end_date',    'meta_key' => '_culture_end_date' ),
             'location'     => array( 'type' => 'String',  'acf_key' => 'location',    'meta_key' => '_culture_location' ),
             'admission'    => array( 'type' => 'String',  'acf_key' => 'admission',   'meta_key' => '_culture_admission' ),
-            'isFeatured'   => array( 'type' => 'Boolean', 'acf_key' => 'is_featured', 'meta_key' => '_culture_is_featured' ),
+            'isFeatured'     => array( 'type' => 'Boolean', 'acf_key' => 'is_featured',    'meta_key' => '_culture_is_featured' ),
+            'isAiGenerated'  => array( 'type' => 'Boolean', 'acf_key' => 'ai_generated',  'meta_key' => '_culture_ai_generated' ),
             'tagline'      => array( 'type' => 'String',  'acf_key' => 'tagline',     'meta_key' => '_culture_tagline' ),
             'attribution'  => array( 'type' => 'String',  'acf_key' => 'attribution', 'meta_key' => '_culture_attribution' ),
             'openingHours' => array( 'type' => 'String',  'acf_key' => 'opening_hours', 'meta_key' => '_culture_opening_hours' ),
@@ -473,7 +501,159 @@ class Culture_Post_Types {
             },
         ) );
 
-        // 9. Global Membership Settings
+        // Selected Works repeater field.
+        register_graphql_object_type( 'CultureDirectoryWork', array(
+            'description' => 'A single item in the Selected Works / Portfolio repeater.',
+            'fields'      => array(
+                'title'    => array( 'type' => 'String' ),
+                'imageUrl' => array( 'type' => 'String' ),
+            ),
+        ) );
+
+        register_graphql_field( 'CultureDirectory', 'selectedWorks', array(
+            'type'    => array( 'list_of' => 'CultureDirectoryWork' ),
+            'resolve' => function( $post ) {
+                $rows = function_exists('get_field')
+                    ? get_field( 'selected_works', $post->databaseId )
+                    : array();
+                if ( empty( $rows ) || ! is_array( $rows ) ) return array();
+                return array_map( function( $row ) {
+                    $image_url = '';
+                    if ( ! empty( $row['image'] ) ) {
+                        // Return format is 'id', so resolve to URL.
+                        $image_url = is_numeric( $row['image'] )
+                            ? wp_get_attachment_url( (int) $row['image'] )
+                            : ( is_array( $row['image'] ) ? ( $row['image']['url'] ?? '' ) : $row['image'] );
+                    }
+                    return array(
+                        'title'    => $row['title'] ?? '',
+                        'imageUrl' => $image_url ?: '',
+                    );
+                }, $rows );
+            },
+        ) );
+
+        // 9. Directory Infobox — flat object with per-type metadata fields.
+        $infobox_meta_map = array(
+            // person
+            'born'               => 'dir_infobox_born',
+            'died'               => 'dir_infobox_died',
+            'nationality'        => 'dir_infobox_nationality',
+            'occupation'         => 'dir_infobox_occupation',
+            'knownFor'           => 'dir_infobox_known_for',
+            'originCity'         => 'dir_infobox_origin_city',
+            'activeYears'        => 'dir_infobox_active_years',
+            'awards'             => 'dir_infobox_awards',
+            'labels'             => 'dir_infobox_labels',
+            'education'          => 'dir_infobox_education',
+            // place
+            'country'            => 'dir_infobox_country',
+            'region'             => 'dir_infobox_region',
+            'population'         => 'dir_infobox_population',
+            'officialLanguage'   => 'dir_infobox_official_language',
+            'currency'           => 'dir_infobox_currency',
+            'founded'            => 'dir_infobox_founded',
+            'area'               => 'dir_infobox_area',
+            // movement
+            'founders'           => 'dir_infobox_founders',
+            'originCountry'      => 'dir_infobox_origin_country',
+            'activePeriod'       => 'dir_infobox_active_period',
+            'ideology'           => 'dir_infobox_ideology',
+            'keyFigures'         => 'dir_infobox_key_figures',
+            'relatedMovements'   => 'dir_infobox_related_movements',
+            // genre
+            'originDecade'       => 'dir_infobox_origin_decade',
+            'instruments'        => 'dir_infobox_instruments',
+            'tempoBpm'           => 'dir_infobox_tempo_bpm',
+            'keyArtists'         => 'dir_infobox_key_artists',
+            'relatedGenres'      => 'dir_infobox_related_genres',
+            'subgenres'          => 'dir_infobox_subgenres',
+            // concept
+            'keyThinkers'        => 'dir_infobox_key_thinkers',
+            'period'             => 'dir_infobox_period',
+            'knownFor2'          => 'dir_infobox_known_for',   // alias: concept shares knownFor with person
+            'relatedConcepts'    => 'dir_infobox_related_concepts',
+            // film
+            'director'           => 'dir_infobox_director',
+            'year'               => 'dir_infobox_year',
+            'starring'           => 'dir_infobox_starring',
+            'cinematographer'    => 'dir_infobox_cinematographer',
+            'language'           => 'dir_infobox_language',
+            'distributor'        => 'dir_infobox_distributor',
+            'runtime'            => 'dir_infobox_runtime',
+            'productionCompany'  => 'dir_infobox_production_company',
+            // book
+            'author'             => 'dir_infobox_author',
+            'yearPublished'      => 'dir_infobox_year_published',
+            'genre'              => 'dir_infobox_genre',
+            'publisher'          => 'dir_infobox_publisher',
+            'pages'              => 'dir_infobox_pages',
+            'isbn'               => 'dir_infobox_isbn',
+            // artwork
+            'artist'             => 'dir_infobox_artist',
+            'medium'             => 'dir_infobox_medium',
+            'dimensions'         => 'dir_infobox_dimensions',
+            'currentLocation'    => 'dir_infobox_current_location',
+            'artCollection'      => 'dir_infobox_art_collection',
+            'style'              => 'dir_infobox_style',
+            // food
+            'foodType'           => 'dir_infobox_food_type',
+            'mainIngredients'    => 'dir_infobox_main_ingredients',
+            'alsoKnownAs'        => 'dir_infobox_also_known_as',
+            'culturalContext'    => 'dir_infobox_cultural_context',
+            // fashion
+            'origin'             => 'dir_infobox_origin',
+            'era'                => 'dir_infobox_era',
+            'keyDesigners'       => 'dir_infobox_key_designers',
+            'materials'          => 'dir_infobox_materials',
+            'culturalSignificance' => 'dir_infobox_cultural_significance',
+            // tv-series
+            'creator'            => 'dir_infobox_creator',
+            'network'            => 'dir_infobox_network',
+            'seasons'            => 'dir_infobox_seasons',
+            'years'              => 'dir_infobox_years',
+        );
+
+        // Build per-field resolvers for the infobox sub-type.
+        $infobox_gql_fields = array();
+        foreach ( $infobox_meta_map as $gql_name => $meta_key ) {
+            // knownFor2 is an internal alias; expose it as knownFor on the type.
+            $field_name = ( $gql_name === 'knownFor2' ) ? 'knownFor' : $gql_name;
+            if ( ! isset( $infobox_gql_fields[ $field_name ] ) ) {
+                $infobox_gql_fields[ $field_name ] = array(
+                    'type'    => 'String',
+                    'resolve' => function( $source ) use ( $meta_key ) {
+                        return isset( $source[ $meta_key ] ) ? $source[ $meta_key ] : null;
+                    },
+                );
+            }
+        }
+
+        register_graphql_object_type( 'CultureDirectoryInfobox', array(
+            'description' => 'Per-type infobox metadata for a Culture Directory entry.',
+            'fields'      => $infobox_gql_fields,
+        ) );
+
+        register_graphql_field( 'CultureDirectory', 'infobox', array(
+            'type'    => 'CultureDirectoryInfobox',
+            'resolve' => function( $post ) use ( $infobox_meta_map ) {
+                $id   = $post->databaseId;
+                $data = array();
+                $has  = false;
+                foreach ( $infobox_meta_map as $gql_name => $meta_key ) {
+                    $val = get_post_meta( $id, $meta_key, true );
+                    if ( ! empty( $val ) ) {
+                        $data[ $meta_key ] = (string) $val;
+                        $has = true;
+                    } else {
+                        $data[ $meta_key ] = null;
+                    }
+                }
+                return $has ? $data : null;
+            },
+        ) );
+
+        // 10. Global Membership Settings
         register_graphql_object_type( 'CultureMembershipSettings', array(
             'description' => __( 'Global membership pricing and tier labels', 'culture-community' ),
             'fields'      => array(
@@ -497,6 +677,37 @@ class Culture_Post_Types {
                     'yearlyNgn'   => Culture_Settings::get( 'culture_paystack_amount_yearly_ngn' ),
                     'monthlyUsd'  => Culture_Settings::get( 'culture_paystack_amount_monthly_usd' ),
                     'yearlyUsd'   => Culture_Settings::get( 'culture_paystack_amount_yearly_usd' ),
+                );
+            },
+        ) );
+
+        // 10. Ad Settings
+        register_graphql_object_type( 'CultureAdSettings', array(
+            'description' => __( 'Google Ads / AdSense configuration managed from WP Admin → Advertising', 'culture-community' ),
+            'fields'      => array(
+                'adsEnabled'               => array( 'type' => 'Boolean' ),
+                'publisherId'              => array( 'type' => 'String' ),
+                'customScript'             => array( 'type' => 'String' ),
+                'slotLeaderboardTop'       => array( 'type' => 'String' ),
+                'slotLeaderboardMid'       => array( 'type' => 'String' ),
+                'slotLeaderboardPreQuotes' => array( 'type' => 'String' ),
+                'slotHeroSidebar'          => array( 'type' => 'String' ),
+            ),
+        ) );
+
+        register_graphql_field( 'RootQuery', 'adSettings', array(
+            'type'        => 'CultureAdSettings',
+            'description' => __( 'Google Ads / AdSense slot configuration', 'culture-community' ),
+            'resolve'     => function() {
+                if ( ! class_exists( 'Culture_Settings' ) ) return null;
+                return array(
+                    'adsEnabled'               => (bool) Culture_Settings::get( 'culture_ads_enabled' ),
+                    'publisherId'              => Culture_Settings::get( 'culture_ads_publisher_id' )                ?: null,
+                    'customScript'             => Culture_Settings::get( 'culture_ads_custom_script' )              ?: null,
+                    'slotLeaderboardTop'       => Culture_Settings::get( 'culture_ads_slot_leaderboard_top' )        ?: null,
+                    'slotLeaderboardMid'       => Culture_Settings::get( 'culture_ads_slot_leaderboard_mid' )        ?: null,
+                    'slotLeaderboardPreQuotes' => Culture_Settings::get( 'culture_ads_slot_leaderboard_pre_quotes' ) ?: null,
+                    'slotHeroSidebar'          => Culture_Settings::get( 'culture_ads_slot_hero_sidebar' )           ?: null,
                 );
             },
         ) );

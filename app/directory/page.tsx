@@ -1,4 +1,4 @@
-import { getWPData, GET_DIRECTORY_ENTRIES, GET_DIRECTORY_TYPES } from "@/lib/wp";
+import { getWPData, getDirectoryEntriesWithFallback, GET_DIRECTORY_TYPES } from "@/lib/wp";
 import Link from "next/link";
 import "../directory.css";
 import DirectoryGrid from "@/components/DirectoryGrid";
@@ -11,17 +11,19 @@ export const metadata = {
     "A living wiki of African and diaspora culture — people, places, movements, genres, and more.",
 };
 
-export default async function DirectoryPage() {
-  const [entriesData, typesData] = await Promise.allSettled([
-    getWPData(GET_DIRECTORY_ENTRIES, { first: 200 }),
+export default async function DirectoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>;
+}) {
+  const { type: initialType } = await searchParams;
+
+  const [entries, typesData] = await Promise.allSettled([
+    getDirectoryEntriesWithFallback(200),
     getWPData(GET_DIRECTORY_TYPES, {}),
   ]);
 
-  const entries: any[] =
-    entriesData.status === "fulfilled"
-      ? (entriesData.value?.cultureDirectories?.nodes ?? [])
-      : [];
-
+  const dirEntries: any[] = entries.status === "fulfilled" ? entries.value : [];
   const types: any[] =
     typesData.status === "fulfilled"
       ? (typesData.value?.cultureDirectoryTypes?.nodes ?? [])
@@ -45,7 +47,7 @@ export default async function DirectoryPage() {
 
       {/* ── GRID + FILTERS ── */}
       <div className="dir-wrap">
-        {entries.length === 0 ? (
+        {dirEntries.length === 0 ? (
           <div className="dir-empty">
             <p>
               No entries yet.{" "}
@@ -53,7 +55,7 @@ export default async function DirectoryPage() {
             </p>
           </div>
         ) : (
-          <DirectoryGrid entries={entries} types={types} />
+          <DirectoryGrid entries={dirEntries} types={types} initialType={initialType ?? null} />
         )}
 
         <div className="dir-submit-cta">

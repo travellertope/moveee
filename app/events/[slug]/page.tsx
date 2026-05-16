@@ -1,9 +1,10 @@
-import { getEventBySlugWithFallback } from "@/lib/wp";
+import { getEventBySlugWithFallback, getEventsWithFallback } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
 import RSVPForm from "../components/RSVPForm";
+import DiscoveredEventPage from "../components/DiscoveredEventPage";
 import "@/app/events.css";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +56,21 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   } catch { /* CMS unreachable */ }
 
   if (!event) notFound();
+
+  if (event.isAiGenerated) {
+    // Fetch related AI-discovered events — same city first, then general pool
+    let relatedEvents: any[] = [];
+    try {
+      const pool = await getEventsWithFallback(50, { revalidate: 3600 });
+      const aiPool = pool.filter((e: any) => e.isAiGenerated && e.slug !== event.slug);
+      const sameCity = event.city
+        ? aiPool.filter((e: any) => e.city && e.city.toLowerCase() === event.city.toLowerCase())
+        : [];
+      const others = aiPool.filter((e: any) => !sameCity.some((s: any) => s.slug === e.slug));
+      relatedEvents = [...sameCity, ...others].slice(0, 4);
+    } catch { /* non-fatal */ }
+    return <DiscoveredEventPage event={event} relatedEvents={relatedEvents} />;
+  }
 
   const img = event.featuredImage?.node?.sourceUrl;
   const cat = event.cultureInterests?.nodes?.[0]?.name || "Happening";

@@ -67,6 +67,23 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Games subscriber list — separate from the GetMeLit newsletter.
+        register_rest_route( 'culture/v1', '/games-subscribe', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_games_subscribe' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                    'validate_callback' => function( $value ) {
+                        return is_email( $value );
+                    },
+                ),
+            ),
+        ) );
+
         // Newsletter unsubscribe endpoint — called by the Next.js frontend page.
         // Token is verified here so the CMS backend is never exposed to subscribers.
         register_rest_route( 'culture/v1', '/newsletter-unsubscribe', array(
@@ -150,6 +167,51 @@ class Culture_REST_API {
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             'args'                => array(
                 'quote_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Games — trivia daily cache (same questions for every player each day).
+        register_rest_route( 'culture/v1', '/games/trivia-daily', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_trivia_daily' ),
+                'permission_callback' => '__return_true',
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_set_trivia_daily' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+                'args'                => array(
+                    'questions' => array( 'required' => true, 'type' => 'array' ),
+                ),
+            ),
+        ) );
+
+        // Quote audit batch — fetch unaudited quotes for the Next.js audit bot.
+        register_rest_route( 'culture/v1', '/quotes/audit-batch', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_audit_batch' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'size' => array(
+                    'required'          => false,
+                    'type'              => 'integer',
+                    'default'           => 20,
+                    'sanitize_callback' => 'absint',
+                ),
+            ),
+        ) );
+
+        // Quote audit update — write verdict + optional quarantine from audit bot.
+        register_rest_route( 'culture/v1', '/quotes/audit-update', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_update_audit_status' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'post_id'      => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'audit_status' => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_key' ),
+                'audit_note'   => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+                'quarantine'   => array( 'required' => false, 'type' => 'boolean', 'default' => false ),
             ),
         ) );
 
@@ -399,6 +461,13 @@ class Culture_REST_API {
                     ),
                 ),
             ),
+        ) );
+
+        // AI events seeder — create a culture_event post.
+        register_rest_route( 'culture/v1', '/events/submit', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_create_event' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
 
         // Paragraph comments — GET (public) and POST (auth/shared secret).
@@ -706,6 +775,38 @@ class Culture_REST_API {
         return rest_ensure_response( array(
             'success' => true,
             'message' => __( 'Subscribed successfully.', 'culture-community' ),
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/games-subscribe
+     * Adds an email to the Moveee Games subscriber list (culture_games_subscribers).
+     */
+    public static function handle_games_subscribe( $request ) {
+        $email = $request->get_param( 'email' );
+
+        $subscribers = get_option( 'culture_games_subscribers', array() );
+
+        // Check for existing subscription (handle both plain strings and object records).
+        foreach ( $subscribers as $sub ) {
+            $existing = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
+            if ( strtolower( trim( $existing ) ) === strtolower( $email ) ) {
+                return rest_ensure_response( array(
+                    'success' => true,
+                    'message' => __( 'You are already subscribed to Moveee Games.', 'culture-community' ),
+                ) );
+            }
+        }
+
+        $subscribers[] = array(
+            'email' => $email,
+            'date'  => current_time( 'mysql' ),
+        );
+        update_option( 'culture_games_subscribers', $subscribers );
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'message' => __( 'Subscribed to Moveee Games.', 'culture-community' ),
         ) );
     }
 
@@ -1355,6 +1456,122 @@ class Culture_REST_API {
     }
 
     /**
+     * GET /culture/v1/games/trivia-daily
+     * Returns today's cached trivia questions, or 404 if not generated yet.
+     */
+    public static function handle_get_trivia_daily( $request ) {
+        $date   = gmdate( 'Y-m-d' );
+        $cached = get_option( 'culture_games_trivia_' . $date, null );
+
+        if ( null === $cached || ! is_array( $cached ) ) {
+            return new WP_Error( 'not_found', 'No trivia cached for today.', array( 'status' => 404 ) );
+        }
+
+        return rest_ensure_response( array( 'date' => $date, 'questions' => $cached ) );
+    }
+
+    /**
+     * POST /culture/v1/games/trivia-daily
+     * Stores today's trivia questions (called by the Next.js API route after
+     * Gemini generation). Cleans up the previous day's option automatically.
+     */
+    public static function handle_set_trivia_daily( $request ) {
+        $questions = $request->get_param( 'questions' );
+
+        if ( ! is_array( $questions ) || empty( $questions ) ) {
+            return new WP_Error( 'invalid', 'questions must be a non-empty array.', array( 'status' => 400 ) );
+        }
+
+        $date      = gmdate( 'Y-m-d' );
+        $yesterday = gmdate( 'Y-m-d', strtotime( '-1 day' ) );
+
+        update_option( 'culture_games_trivia_' . $date,      $questions, false );
+        delete_option( 'culture_games_trivia_' . $yesterday );
+
+        return rest_ensure_response( array( 'success' => true, 'date' => $date ) );
+    }
+
+    /**
+     * GET /culture/v1/quotes/audit-batch?size=N
+     * Returns up to N unaudited culture_quote posts for the audit bot.
+     * A quote is "unaudited" when it has no _quote_audit_status meta at all.
+     */
+    public static function handle_get_audit_batch( $request ) {
+        $size = min( absint( $request->get_param( 'size' ) ) ?: 20, 50 );
+
+        $posts = get_posts( array(
+            'post_type'      => 'culture_quote',
+            'post_status'    => array( 'publish', 'pending' ),
+            'posts_per_page' => $size,
+            'meta_query'     => array(
+                array(
+                    'key'     => '_quote_audit_status',
+                    'compare' => 'NOT EXISTS',
+                ),
+            ),
+        ) );
+
+        $quotes = array_map( function( $p ) {
+            $terms  = wp_get_object_terms( $p->ID, 'culture_quote_author' );
+            $author = ! empty( $terms ) ? $terms[0]->name : '';
+            return array(
+                'id'     => $p->ID,
+                'text'   => $p->post_content ?: $p->post_title,
+                'author' => $author,
+                'source' => get_post_meta( $p->ID, '_quote_source', true ) ?: '',
+            );
+        }, $posts );
+
+        return rest_ensure_response( array(
+            'quotes' => $quotes,
+            'total'  => count( $quotes ),
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/quotes/audit-update
+     * Writes audit verdict meta to a culture_quote post.
+     * Optionally moves suspicious/fabricated quotes to draft (quarantine).
+     */
+    public static function handle_update_audit_status( $request ) {
+        $post_id    = (int) $request->get_param( 'post_id' );
+        $status     = $request->get_param( 'audit_status' );
+        $note       = $request->get_param( 'audit_note' ) ?: '';
+        $quarantine = (bool) $request->get_param( 'quarantine' );
+
+        $allowed = array( 'verified', 'suspicious', 'likely-fabricated', 'unverifiable' );
+        if ( ! in_array( $status, $allowed, true ) ) {
+            return new WP_Error(
+                'invalid_status',
+                'audit_status must be one of: ' . implode( ', ', $allowed ),
+                array( 'status' => 400 )
+            );
+        }
+
+        $post = get_post( $post_id );
+        if ( ! $post || 'culture_quote' !== $post->post_type ) {
+            return new WP_Error( 'not_found', 'Quote not found.', array( 'status' => 404 ) );
+        }
+
+        update_post_meta( $post_id, '_quote_audit_status', $status );
+        update_post_meta( $post_id, '_quote_audit_note',   $note );
+        update_post_meta( $post_id, '_quote_audit_date',   gmdate( 'Y-m-d H:i:s' ) );
+
+        $quarantined = false;
+        if ( $quarantine && in_array( $status, array( 'likely-fabricated', 'suspicious' ), true ) ) {
+            wp_update_post( array( 'ID' => $post_id, 'post_status' => 'draft' ) );
+            $quarantined = true;
+        }
+
+        return rest_ensure_response( array(
+            'success'     => true,
+            'post_id'     => $post_id,
+            'status'      => $status,
+            'quarantined' => $quarantined,
+        ) );
+    }
+
+    /**
      * POST /culture/v1/user/toggle-interaction
      */
     public static function handle_toggle_interaction( $request ) {
@@ -1853,5 +2070,109 @@ class Culture_REST_API {
         }
 
         return rest_ensure_response( self::user_profile( $user ) );
+    }
+
+    /**
+     * POST /culture/v1/events/submit
+     *
+     * Creates a culture_event post. Called exclusively by the AI events seeder.
+     * Deduplicates by a hash of normalised title + event_date + location.
+     */
+    public static function handle_create_event( WP_REST_Request $request ) {
+        $title         = sanitize_text_field( $request->get_param( 'title' ) );
+        $excerpt       = sanitize_text_field( $request->get_param( 'excerpt' ) );
+        $content       = wp_kses_post( $request->get_param( 'content' ) );
+        $event_date    = sanitize_text_field( $request->get_param( 'event_date' ) );
+        $end_date      = sanitize_text_field( $request->get_param( 'end_date' ) );
+        $location      = sanitize_text_field( $request->get_param( 'location' ) );
+        $city          = sanitize_text_field( $request->get_param( 'city' ) );
+        $admission     = sanitize_text_field( $request->get_param( 'admission' ) );
+        $ticketing_url = esc_url_raw( $request->get_param( 'ticketing_url' ) );
+        $tagline       = sanitize_text_field( $request->get_param( 'tagline' ) );
+        $attribution   = esc_url_raw( $request->get_param( 'attribution' ) );
+        $interests        = (array) $request->get_param( 'interests' );
+        $auto_publish     = (bool) $request->get_param( 'auto_publish' );
+        $ai_generated_raw = $request->get_param( 'ai_generated' );
+        $ai_generated     = ( $ai_generated_raw === null ) ? true : (bool) $ai_generated_raw;
+        $submitter_name   = sanitize_text_field( $request->get_param( 'submitter_name' ) );
+        $submitter_email  = sanitize_email( $request->get_param( 'submitter_email' ) );
+
+        if ( empty( $title ) || empty( $event_date ) ) {
+            return new WP_Error( 'missing_fields', 'title and event_date are required.', array( 'status' => 400 ) );
+        }
+
+        // Deduplication: hash of title + date + location.
+        $dedup_hash = md5( strtolower( trim( $title ) ) . '|' . $event_date . '|' . strtolower( trim( $location ) ) );
+        $existing = get_posts( array(
+            'post_type'      => 'culture_event',
+            'post_status'    => array( 'publish', 'pending' ),
+            'posts_per_page' => 1,
+            'meta_query'     => array(
+                array(
+                    'key'     => '_culture_event_dedup_hash',
+                    'value'   => $dedup_hash,
+                    'compare' => '=',
+                ),
+            ),
+        ) );
+
+        if ( ! empty( $existing ) ) {
+            return new WP_Error( 'duplicate_event', 'This event already exists.', array( 'status' => 409 ) );
+        }
+
+        $post_status = $auto_publish ? 'publish' : 'pending';
+
+        $post_id = wp_insert_post( array(
+            'post_title'   => $title,
+            'post_excerpt' => $excerpt,
+            'post_content' => $content,
+            'post_status'  => $post_status,
+            'post_type'    => 'culture_event',
+            'post_author'  => 0,
+        ), true );
+
+        if ( is_wp_error( $post_id ) ) {
+            return new WP_Error( 'insert_failed', $post_id->get_error_message(), array( 'status' => 500 ) );
+        }
+
+        // Event-specific meta.
+        update_post_meta( $post_id, '_culture_event_date',      $event_date );
+        update_post_meta( $post_id, '_culture_event_end_date',  $end_date );
+        update_post_meta( $post_id, '_culture_location',        $location );
+        update_post_meta( $post_id, '_culture_event_city',      $city );
+        update_post_meta( $post_id, '_culture_admission',       $admission );
+        update_post_meta( $post_id, '_culture_ticketing_url',   $ticketing_url );
+        update_post_meta( $post_id, '_culture_tagline',         $tagline );
+        update_post_meta( $post_id, '_culture_attribution',     $attribution );
+        update_post_meta( $post_id, '_culture_is_featured',     '0' );
+        update_post_meta( $post_id, '_culture_ai_generated',    $ai_generated ? '1' : '0' );
+        update_post_meta( $post_id, '_culture_event_dedup_hash', $dedup_hash );
+
+        if ( ! empty( $submitter_name ) ) {
+            update_post_meta( $post_id, '_culture_submitter_name',  $submitter_name );
+        }
+        if ( ! empty( $submitter_email ) ) {
+            update_post_meta( $post_id, '_culture_submitter_email', $submitter_email );
+        }
+
+        // Assign interest terms (only existing slugs to avoid orphan terms).
+        if ( ! empty( $interests ) && taxonomy_exists( 'culture_interest' ) ) {
+            $valid = array();
+            foreach ( array_map( 'sanitize_key', $interests ) as $slug ) {
+                if ( term_exists( $slug, 'culture_interest' ) ) {
+                    $valid[] = $slug;
+                }
+            }
+            if ( ! empty( $valid ) ) {
+                wp_set_object_terms( $post_id, $valid, 'culture_interest' );
+            }
+        }
+
+        $post = get_post( $post_id );
+        return rest_ensure_response( array(
+            'success' => true,
+            'post_id' => $post_id,
+            'slug'    => $post->post_name ?: sanitize_title( $title ),
+        ) );
     }
 }

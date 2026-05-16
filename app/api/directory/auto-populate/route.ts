@@ -57,6 +57,41 @@ const SEED_TOPICS = [
   "Things Fall Apart (novel)", "Song of Solomon (novel)",
   "Beloved (novel)", "Purple Hibiscus (novel)",
   "Sankofa (film)", "Beasts of No Nation (film)",
+  // Film & TV — Nigerian Web Series (YouTube / Digital-First)
+  "Skinny Girl in Transit (web series)", "The Men's Club (web series)",
+  "Visa on Arrival (web series)", "Gidi Up (web series)",
+  "Rumour Has It (web series)", "Little Black Book (web series)",
+  "Bottom Line (web series)", "MTV Shuga Naija (TV series)",
+  "Best Friends in the World (web series)", "Papa Benji (web series)",
+  "This Thing Called Love (web series)", "The Olive (web series)",
+  "Ajoche (TV series)", "Under the Influence (web series)",
+  "Halita (TV series)",
+  // Film & TV — South African Series
+  "Blood & Water (TV series)", "Kings of Jo'Burg (TV series)",
+  "Savage Beauty (TV series)", "Shaka iLembe (TV series)",
+  "How to Ruin Love (TV series)", "Lioness (South African TV series)",
+  "The River (South African TV series)", "Unseen (South African TV series)",
+  // Film & TV — East African Series
+  "Single Kiasi (TV series)", "Pepeta (Kenyan TV series)",
+  "Igiza (TV series)", "Mpakani (TV series)", "Lazizi (TV series)",
+  // Film & TV — Other African & Diaspora
+  "An African City (web series)", "Iyanu: Child of Wonder (animated series)",
+  "What's Left of Us (web series)",
+  // Film & TV — Korean (K-Dramas)
+  "Squid Game (TV series)", "All of Us Are Dead (TV series)",
+  "The Glory (TV series)", "Extraordinary Attorney Woo (TV series)",
+  // Film & TV — Indian
+  "Sacred Games (TV series)", "Mirzapur (TV series)",
+  "Panchayat (TV series)", "Kota Factory (TV series)",
+  // Film & TV — Latin American
+  "La Casa de Papel (TV series)", "Elite (Spanish TV series)",
+  "Dark Desire (TV series)",
+  // Film & TV — US / UK Streaming Era
+  "Stranger Things (TV series)", "Breaking Bad (TV series)",
+  "The Wire (TV series)", "Game of Thrones (TV series)",
+  "Black Mirror (TV series)", "Insecure (TV series)",
+  // Film & TV — Other Global
+  "Dark (German TV series)", "Lupin (French TV series)",
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -200,6 +235,7 @@ async function submitEntry(
       content:      stub.content,
       entry_type:   stub.entryType,
       interests:    stub.interests,
+      infobox:      stub.infobox ?? {},
       ai_generated: true,
       auto_publish: true,
     }),
@@ -244,22 +280,12 @@ async function submitEntry(
 
 // ── Route handler ──────────────────────────────────────────────────────────
 
-export async function POST(req: NextRequest) {
+function isAuthorized(req: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET ?? "";
-  const authHeader = req.headers.get("Authorization") ?? "";
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
-  }
+  return !!cronSecret && req.headers.get("Authorization") === `Bearer ${cronSecret}`;
+}
 
-  if (!process.env.GEMINI_API_KEY) {
-    return NextResponse.json({ error: "GEMINI_API_KEY not configured." }, { status: 503 });
-  }
-
-  const body = await req.json().catch(() => ({}));
-  const batchSize: number = Math.min(Number(body.batchSize) || 5, 20);
-  const generateImages: boolean = body.generateImages !== false;
-
-  // Build the full topic list: hardcoded seeds + WP-stored extras.
+async function runPopulate(batchSize: number, generateImages: boolean): Promise<NextResponse> {
   const [existing, extraTopics, processed] = await Promise.all([
     getExistingTitles(),
     getExtraTopics(),
@@ -268,15 +294,11 @@ export async function POST(req: NextRequest) {
 
   const allTopics = [...SEED_TOPICS, ...extraTopics];
 
-  // A topic is pending only if it hasn't been published (title check) AND
-  // hasn't been submitted before (processed-topic check). The second guard
-  // catches cases where Gemini changed the topic name at generation time.
   let pending = allTopics.filter((t) => {
     const key = t.toLowerCase().trim();
     return !existing.has(key) && !processed.has(key);
   });
 
-  // When every known topic is covered, ask Gemini to generate new ones.
   let aiGeneratedNewTopics = false;
   if (pending.length === 0) {
     let newTopics: string[] = [];
@@ -304,7 +326,6 @@ export async function POST(req: NextRequest) {
     aiGeneratedNewTopics = true;
   }
 
-  // Shuffle for variety, take up to batchSize.
   const batch = [...pending].sort(() => Math.random() - 0.5).slice(0, batchSize);
 
   const results: Array<{ title: string; success: boolean; postId?: number }> = [];
@@ -315,8 +336,6 @@ export async function POST(req: NextRequest) {
       const stub = await generateDirectoryStub(topic);
       const result = await submitEntry(stub, generateImages);
       results.push(result);
-      // Track the original seed topic string (not the AI-generated title)
-      // so that next run's duplicate check works even if Gemini renamed it.
       if (result.success) successfulTopics.push(topic);
     } catch (err: any) {
       results.push({
@@ -328,7 +347,6 @@ export async function POST(req: NextRequest) {
     await new Promise((r) => setTimeout(r, 3500));
   }
 
-  // Persist the successfully submitted topic strings.
   if (successfulTopics.length > 0) {
     await saveProcessedTopics(successfulTopics);
   }
@@ -340,4 +358,27 @@ export async function POST(req: NextRequest) {
     aiGeneratedNewTopics,
     results,
   });
+}
+
+export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json({ error: "GEMINI_API_KEY not configured." }, { status: 503 });
+  }
+  return runPopulate(5, true);
+}
+
+export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json({ error: "GEMINI_API_KEY not configured." }, { status: 503 });
+  }
+  const body = await req.json().catch(() => ({}));
+  const batchSize: number = Math.min(Number(body.batchSize) || 5, 20);
+  const generateImages: boolean = body.generateImages !== false;
+  return runPopulate(batchSize, generateImages);
 }

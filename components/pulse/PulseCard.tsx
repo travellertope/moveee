@@ -30,20 +30,19 @@ export default function PulseCard({ story }: PulseCardProps) {
   const title = decodeHtml(story.title?.rendered ?? "");
   const excerpt = decodeHtml(story.excerpt?.rendered ?? "");
 
-  // Comment count via _embedded replies.
   const commentCount =
     Number(story._embedded?.replies?.[0]?.[0]?.count ?? story.comment_count ?? 0);
 
   return (
     <article
       style={{
-        background: "#1a1a1a",
-        border: "1px solid #2a2a2a",
+        background: "#fff",
+        border: "1px solid #e0dbd1",
         borderRadius: "2px",
         display: "flex",
         flexDirection: "column",
         position: "relative",
-        transition: "border-color 0.2s",
+        transition: "border-color 0.2s, box-shadow 0.2s",
       }}
       className="pulse-card group"
     >
@@ -74,13 +73,13 @@ export default function PulseCard({ story }: PulseCardProps) {
             <span
               style={{
                 background: "transparent",
-                color: "#888",
+                color: "#6b6157",
                 fontSize: "0.65rem",
                 fontWeight: 500,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
                 padding: "0.2rem 0.5rem",
-                border: "1px solid #333",
+                border: "1px solid #d4cfc6",
                 borderRadius: "2px",
               }}
             >
@@ -92,7 +91,7 @@ export default function PulseCard({ story }: PulseCardProps) {
         {/* Title */}
         <h3
           style={{
-            color: "#f0ece4",
+            color: "var(--ink)",
             fontFamily: "var(--font-fraunces), serif",
             fontSize: "1.05rem",
             fontWeight: 600,
@@ -110,7 +109,7 @@ export default function PulseCard({ story }: PulseCardProps) {
         {/* Excerpt */}
         <p
           style={{
-            color: "#999",
+            color: "#6b6157",
             fontSize: "0.82rem",
             lineHeight: 1.55,
             flex: 1,
@@ -134,15 +133,15 @@ export default function PulseCard({ story }: PulseCardProps) {
           }}
         >
           {source && (
-            <span style={{ color: "#D4A847", fontSize: "0.7rem", fontWeight: 500, letterSpacing: "0.04em" }}>
+            <span style={{ color: "var(--ochre)", fontSize: "0.7rem", fontWeight: 500, letterSpacing: "0.04em" }}>
               {source}
             </span>
           )}
-          <span style={{ color: "#555", fontSize: "0.7rem" }}>{formatDate(story.date)}</span>
+          <span style={{ color: "#999", fontSize: "0.7rem" }}>{formatDate(story.date)}</span>
         </div>
       </Link>
 
-      {/* Comment icon — separate link so it doesn't trigger the card link */}
+      {/* Comment icon */}
       <Link
         href={`/pulse/${story.slug}#comments`}
         style={{
@@ -152,7 +151,7 @@ export default function PulseCard({ story }: PulseCardProps) {
           display: "flex",
           alignItems: "center",
           gap: "0.3rem",
-          color: "#555",
+          color: "#aaa",
           textDecoration: "none",
           fontSize: "0.72rem",
           zIndex: 1,

@@ -86,6 +86,23 @@ class Culture_Settings {
         'culture_cron_secret'          => '',
         'culture_analytics_limit_top_members' => 10,
         'culture_analytics_limit_events'      => 10,
+
+        // Automation — Twitter / X.
+        'culture_twitter_enabled'             => '0',
+        'culture_twitter_api_key'             => '',
+        'culture_twitter_api_secret'          => '',
+        'culture_twitter_access_token'        => '',
+        'culture_twitter_access_token_secret' => '',
+        'culture_twitter_interval'            => 'thirtyminutes',
+
+        // Advertising — Google Ads / AdSense.
+        'culture_ads_enabled'                    => '0',
+        'culture_ads_publisher_id'               => '',
+        'culture_ads_custom_script'              => '',
+        'culture_ads_slot_leaderboard_top'       => '',
+        'culture_ads_slot_leaderboard_mid'       => '',
+        'culture_ads_slot_leaderboard_pre_quotes'=> '',
+        'culture_ads_slot_hero_sidebar'          => '',
     );
 
     /**
@@ -127,6 +144,64 @@ class Culture_Settings {
         add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 9 );
         add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
         add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+        add_action( 'wp_ajax_culture_test_tweet', array( __CLASS__, 'ajax_test_tweet' ) );
+    }
+
+    /**
+     * AJAX: test Twitter credentials by posting a test tweet.
+     */
+    public static function ajax_test_tweet() {
+        check_ajax_referer( 'culture_test_tweet' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Unauthorised.' );
+        }
+
+        if ( ! class_exists( 'Culture_Twitter' ) ) {
+            wp_send_json_error( 'Culture_Twitter class not loaded.' );
+        }
+
+        // Build a test tweet with a timestamp so it never duplicates.
+        $test_text = '[Test] Moveee auto-poster connection check — ' . gmdate( 'Y-m-d H:i:s' ) . ' UTC';
+
+        // Temporarily capture the raw response for diagnostics.
+        $body     = wp_json_encode( array( 'text' => $test_text ) );
+        $auth     = Culture_Twitter::build_oauth_header_public( 'POST', 'https://api.twitter.com/2/tweets' );
+
+        $response = wp_remote_post( 'https://api.twitter.com/2/tweets', array(
+            'timeout' => 20,
+            'headers' => array(
+                'Content-Type'  => 'application/json',
+                'Authorization' => $auth,
+            ),
+            'body' => $body,
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( 'WP_Error: ' . $response->get_error_message() );
+        }
+
+        $code     = wp_remote_retrieve_response_code( $response );
+        $resp_body = wp_remote_retrieve_body( $response );
+
+        if ( $code >= 200 && $code < 300 ) {
+            wp_send_json_success( 'Tweet posted successfully (HTTP ' . $code . ').' );
+        } else {
+            // Decode and surface the Twitter error message.
+            $decoded = json_decode( $resp_body, true );
+            $msg     = isset( $decoded['detail'] ) ? $decoded['detail']
+                     : ( isset( $decoded['errors'][0]['message'] ) ? $decoded['errors'][0]['message']
+                     : $resp_body );
+            wp_send_json_error( 'HTTP ' . $code . ': ' . $msg );
+        }
+    }
+
+    /** Check if Twitter credentials are fully configured. */
+    private static function is_twitter_configured() {
+        return '1' === self::get( 'culture_twitter_enabled' )
+            && '' !== self::get( 'culture_twitter_api_key' )
+            && '' !== self::get( 'culture_twitter_api_secret' )
+            && '' !== self::get( 'culture_twitter_access_token' )
+            && '' !== self::get( 'culture_twitter_access_token_secret' );
     }
 
     /**
@@ -226,6 +301,24 @@ class Culture_Settings {
         register_setting( 'culture_settings_general', 'culture_cron_secret', $text );
         register_setting( 'culture_settings_general', 'culture_analytics_limit_top_members', $int );
         register_setting( 'culture_settings_general', 'culture_analytics_limit_events', $int );
+
+        // Automation — Twitter.
+        $bool = array( 'sanitize_callback' => 'absint' );
+        register_setting( 'culture_settings_automation', 'culture_twitter_enabled',             $bool );
+        register_setting( 'culture_settings_automation', 'culture_twitter_api_key',             $text );
+        register_setting( 'culture_settings_automation', 'culture_twitter_api_secret',          $text );
+        register_setting( 'culture_settings_automation', 'culture_twitter_access_token',        $text );
+        register_setting( 'culture_settings_automation', 'culture_twitter_access_token_secret', $text );
+        register_setting( 'culture_settings_automation', 'culture_twitter_interval',            $text );
+
+        // Advertising.
+        register_setting( 'culture_settings_advertising', 'culture_ads_enabled',                     $bool );
+        register_setting( 'culture_settings_advertising', 'culture_ads_publisher_id',                $text );
+        register_setting( 'culture_settings_advertising', 'culture_ads_custom_script',               array( 'sanitize_callback' => 'wp_kses_post' ) );
+        register_setting( 'culture_settings_advertising', 'culture_ads_slot_leaderboard_top',        $text );
+        register_setting( 'culture_settings_advertising', 'culture_ads_slot_leaderboard_mid',        $text );
+        register_setting( 'culture_settings_advertising', 'culture_ads_slot_leaderboard_pre_quotes', $text );
+        register_setting( 'culture_settings_advertising', 'culture_ads_slot_hero_sidebar',           $text );
     }
 
     /**
@@ -240,6 +333,8 @@ class Culture_Settings {
             'emails'       => __( 'Emails', 'culture-community' ),
             'membership'   => __( 'Membership', 'culture-community' ),
             'general'      => __( 'General', 'culture-community' ),
+            'automation'   => __( 'Automation', 'culture-community' ),
+            'advertising'  => __( 'Advertising', 'culture-community' ),
         );
         ?>
         <div class="wrap">
@@ -273,6 +368,12 @@ class Culture_Settings {
                         break;
                     case 'general':
                         self::render_general_tab();
+                        break;
+                    case 'automation':
+                        self::render_automation_tab();
+                        break;
+                    case 'advertising':
+                        self::render_advertising_tab();
                         break;
                     default:
                         self::render_payment_tab();
@@ -669,6 +770,214 @@ class Culture_Settings {
                 <tr><td><code>[culture_referral]</code></td><td><?php esc_html_e( 'Referral link widget with share button and stats.', 'culture-community' ); ?></td></tr>
                 <tr><td><code>[culture_register]</code></td><td><?php esc_html_e( 'Multi-step registration wizard.', 'culture-community' ); ?></td></tr>
             </tbody>
+        </table>
+        <?php
+    }
+
+    private static function render_automation_tab() {
+        $next_dir    = wp_next_scheduled( 'culture_seed_directory' );
+        $next_pulse  = wp_next_scheduled( 'culture_refresh_pulse' );
+        $next_events = wp_next_scheduled( 'culture_seed_events' );
+        $next_quotes = wp_next_scheduled( 'culture_seed_quotes' );
+        $next_tweet  = wp_next_scheduled( 'culture_tweet_pulse' );
+        ?>
+        <h2><?php esc_html_e( 'Scheduled Jobs', 'culture-community' ); ?></h2>
+        <p class="description">
+            <?php esc_html_e( 'All automation is handled by WordPress Cron, triggered by a real server cron on Lightsail every 30 minutes. Make sure DISABLE_WP_CRON is set to true in wp-config.php.', 'culture-community' ); ?>
+        </p>
+        <table class="widefat fixed striped" style="max-width:700px;margin-bottom:2em;">
+            <thead>
+                <tr>
+                    <th><?php esc_html_e( 'Job', 'culture-community' ); ?></th>
+                    <th><?php esc_html_e( 'Frequency', 'culture-community' ); ?></th>
+                    <th><?php esc_html_e( 'Next Run', 'culture-community' ); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $jobs = array(
+                    array( __( 'Directory Seed', 'culture-community' ),  __( 'Weekly', 'culture-community' ),       $next_dir ),
+                    array( __( 'Pulse Refresh', 'culture-community' ),   __( 'Daily', 'culture-community' ),        $next_pulse ),
+                    array( __( 'Events Seed', 'culture-community' ),     __( 'Daily', 'culture-community' ),        $next_events ),
+                    array( __( 'Quotes Seed', 'culture-community' ),     __( 'Weekly', 'culture-community' ),       $next_quotes ),
+                    array( __( 'Tweet Pulse', 'culture-community' ),     __( 'Every 30 min', 'culture-community' ), $next_tweet ),
+                );
+                foreach ( $jobs as $job ) :
+                    $ts  = $job[2];
+                    $due = $ts ? esc_html( get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $ts ), 'Y-m-d H:i:s' ) ) : '<span style="color:#d63638">' . esc_html__( 'Not scheduled', 'culture-community' ) . '</span>';
+                ?>
+                <tr>
+                    <td><?php echo esc_html( $job[0] ); ?></td>
+                    <td><?php echo esc_html( $job[1] ); ?></td>
+                    <td><?php echo wp_kses_post( $due ); ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <h2><?php esc_html_e( 'Twitter / X Auto-Posting', 'culture-community' ); ?></h2>
+        <p class="description">
+            <?php esc_html_e( 'When enabled, the latest unposted Pulse story is tweeted every 30 minutes. Requires a Twitter Developer App with Read & Write permissions and an Access Token generated for your posting account.', 'culture-community' ); ?>
+        </p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><?php esc_html_e( 'Enable Auto-Posting', 'culture-community' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="culture_twitter_enabled" value="1"
+                               <?php checked( '1', Culture_Settings::get( 'culture_twitter_enabled' ) ); ?> />
+                        <?php esc_html_e( 'Post new Pulse stories to X / Twitter automatically', 'culture-community' ); ?>
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_twitter_api_key"><?php esc_html_e( 'API Key (Consumer Key)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="password" id="culture_twitter_api_key" name="culture_twitter_api_key"
+                           value="<?php echo esc_attr( Culture_Settings::get( 'culture_twitter_api_key' ) ); ?>"
+                           class="regular-text" autocomplete="new-password" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_twitter_api_secret"><?php esc_html_e( 'API Secret (Consumer Secret)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="password" id="culture_twitter_api_secret" name="culture_twitter_api_secret"
+                           value="<?php echo esc_attr( Culture_Settings::get( 'culture_twitter_api_secret' ) ); ?>"
+                           class="regular-text" autocomplete="new-password" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_twitter_access_token"><?php esc_html_e( 'Access Token', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="password" id="culture_twitter_access_token" name="culture_twitter_access_token"
+                           value="<?php echo esc_attr( Culture_Settings::get( 'culture_twitter_access_token' ) ); ?>"
+                           class="regular-text" autocomplete="new-password" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_twitter_access_token_secret"><?php esc_html_e( 'Access Token Secret', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="password" id="culture_twitter_access_token_secret" name="culture_twitter_access_token_secret"
+                           value="<?php echo esc_attr( Culture_Settings::get( 'culture_twitter_access_token_secret' ) ); ?>"
+                           class="regular-text" autocomplete="new-password" />
+                    <p class="description">
+                        <?php esc_html_e( 'Get these from developer.twitter.com → Your App → Keys and Tokens. Generate an Access Token for your @Moveee account under "Authentication Tokens".', 'culture-community' ); ?>
+                    </p>
+                </td>
+            </tr>
+        </table>
+
+        <hr />
+        <h3><?php esc_html_e( 'Test Connection', 'culture-community' ); ?></h3>
+        <p class="description"><?php esc_html_e( 'Send a test tweet immediately. The result shows the exact API error from Twitter.', 'culture-community' ); ?></p>
+        <?php if ( ! self::is_twitter_configured() ) : ?>
+            <p style="color:#d63638;"><strong><?php esc_html_e( 'Save credentials and enable auto-posting first.', 'culture-community' ); ?></strong></p>
+        <?php else : ?>
+        <button type="button" class="button button-secondary" id="culture-test-tweet"><?php esc_html_e( 'Send Test Tweet Now', 'culture-community' ); ?></button>
+        <span id="culture-test-tweet-result" style="margin-left:12px;font-weight:600;"></span>
+        <script>
+        document.getElementById('culture-test-tweet').addEventListener('click', function() {
+            var btn = this, res = document.getElementById('culture-test-tweet-result');
+            btn.disabled = true; res.textContent = 'Sending…'; res.style.color = '#888';
+            var d = new URLSearchParams();
+            d.append('action', 'culture_test_tweet');
+            d.append('_wpnonce', '<?php echo esc_js( wp_create_nonce( "culture_test_tweet" ) ); ?>');
+            fetch(ajaxurl, { method: 'POST', body: d }).then(function(r){ return r.json(); })
+            .then(function(j) {
+                btn.disabled = false;
+                res.textContent = (j.success ? '✓ ' : '✗ ') + j.data;
+                res.style.color = j.success ? '#0a7227' : '#d63638';
+            }).catch(function(e){ btn.disabled = false; res.textContent = '✗ ' + e.message; res.style.color = '#d63638'; });
+        });
+        </script>
+        <?php endif; ?>
+
+        <?php
+    }
+
+    private static function render_advertising_tab() {
+        ?>
+        <h2><?php esc_html_e( 'Google Ads / AdSense', 'culture-community' ); ?></h2>
+        <p class="description">
+            <?php esc_html_e( 'Configure Google AdSense or Ad Manager. Set your Publisher ID and individual slot IDs for each placement. Leave a slot empty to hide that placement entirely — no blank space will appear on the frontend.', 'culture-community' ); ?>
+        </p>
+
+        <table class="form-table">
+            <tr>
+                <th scope="row"><?php esc_html_e( 'Enable Ads', 'culture-community' ); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="culture_ads_enabled" value="1"
+                               <?php checked( '1', self::get( 'culture_ads_enabled' ) ); ?> />
+                        <?php esc_html_e( 'Show ads on the frontend', 'culture-community' ); ?>
+                    </label>
+                    <p class="description"><?php esc_html_e( 'Master switch. Uncheck to pause all ads instantly without losing your slot IDs.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_ads_publisher_id"><?php esc_html_e( 'Publisher ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_ads_publisher_id" name="culture_ads_publisher_id"
+                           value="<?php echo esc_attr( self::get( 'culture_ads_publisher_id' ) ); ?>"
+                           class="regular-text" placeholder="ca-pub-0000000000000000" />
+                    <p class="description"><?php esc_html_e( 'Your AdSense Publisher ID — found in your AdSense account under Account → Account information.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Ad Slot IDs', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Paste the data-ad-slot value for each placement. Find these in your AdSense account under Ads → By ad unit.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_ads_slot_leaderboard_top"><?php esc_html_e( 'Leaderboard — Top', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_ads_slot_leaderboard_top" name="culture_ads_slot_leaderboard_top"
+                           value="<?php echo esc_attr( self::get( 'culture_ads_slot_leaderboard_top' ) ); ?>"
+                           class="regular-text" placeholder="1234567890" />
+                    <p class="description"><?php esc_html_e( 'Appears between the hero section and the magazine strip.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_ads_slot_leaderboard_mid"><?php esc_html_e( 'Leaderboard — Mid', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_ads_slot_leaderboard_mid" name="culture_ads_slot_leaderboard_mid"
+                           value="<?php echo esc_attr( self::get( 'culture_ads_slot_leaderboard_mid' ) ); ?>"
+                           class="regular-text" placeholder="1234567890" />
+                    <p class="description"><?php esc_html_e( 'Appears between the magazine strip and happenings.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_ads_slot_leaderboard_pre_quotes"><?php esc_html_e( 'Leaderboard — Pre Quotes', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_ads_slot_leaderboard_pre_quotes" name="culture_ads_slot_leaderboard_pre_quotes"
+                           value="<?php echo esc_attr( self::get( 'culture_ads_slot_leaderboard_pre_quotes' ) ); ?>"
+                           class="regular-text" placeholder="1234567890" />
+                    <p class="description"><?php esc_html_e( 'Appears above the Quotes section.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_ads_slot_hero_sidebar"><?php esc_html_e( 'Hero Sidebar', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_ads_slot_hero_sidebar" name="culture_ads_slot_hero_sidebar"
+                           value="<?php echo esc_attr( self::get( 'culture_ads_slot_hero_sidebar' ) ); ?>"
+                           class="regular-text" placeholder="1234567890" />
+                    <p class="description"><?php esc_html_e( 'Appears in the right column of the hero section, between stories and the Pulse widget.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Custom Script', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'Optional — paste a raw JavaScript snippet here (e.g. Google Tag Manager, Ad Manager tag, or any other ad network initialisation code). Do not include &lt;script&gt; tags. Leave blank if using standard AdSense above.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_ads_custom_script"><?php esc_html_e( 'Custom Ad Script', 'culture-community' ); ?></label></th>
+                <td>
+                    <textarea id="culture_ads_custom_script" name="culture_ads_custom_script"
+                              rows="8" class="large-text code"
+                              placeholder="// e.g. GTM or Ad Manager initialisation JS"><?php echo esc_textarea( self::get( 'culture_ads_custom_script' ) ); ?></textarea>
+                    <p class="description"><?php esc_html_e( 'Injected as an inline &lt;script&gt; tag on every page after interactive (afterInteractive strategy). Only active when "Enable Ads" is checked.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
         </table>
         <?php
     }

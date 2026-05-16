@@ -1,5 +1,5 @@
 
-const { GoogleGenAI } = require("@google/genai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 async function listModels() {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -7,7 +7,7 @@ async function listModels() {
     console.error("GEMINI_API_KEY not set");
     return;
   }
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenerativeAI(apiKey);
   try {
     const models = await ai.models.list();
     console.log(JSON.stringify(models, null, 2));

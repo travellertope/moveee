@@ -1,4 +1,4 @@
-import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG } from "@/lib/wp";
+import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG, getDirectoryEntriesWithFallback } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,169 +11,384 @@ import "../../directory.css";
 export const dynamic = "force-dynamic";
 
 const TYPE_LABELS: Record<string, string> = {
-  person: "Person",
-  place: "Place",
+  person:   "Person",
+  place:    "Place",
   movement: "Movement",
-  genre: "Genre",
-  concept: "Concept",
-  artwork: "Artwork",
-  food: "Food & Drink",
-  fashion: "Fashion",
+  genre:    "Genre",
+  concept:  "Concept",
+  artwork:  "Artwork",
+  food:     "Food & Drink",
+  fashion:  "Fashion",
+  film:     "Film",
+  book:     "Book",
+  "tv-series": "TV Series",
 };
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  let data;
-  try {
-    data = await getWPData(GET_DIRECTORY_ENTRY_BY_SLUG, { slug });
-  } catch {}
+  let data: any;
+  try { data = await getWPData(GET_DIRECTORY_ENTRY_BY_SLUG, { slug }); } catch {}
   const entry = data?.cultureDirectory;
   if (!entry) return { title: "Culture Directory · The Moveee" };
-
   const imageUrl = entry.featuredImage?.node?.sourceUrl || "/og-fallback.png";
-
+  const desc = entry.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160);
   return {
     title: `${entry.title} · Culture Directory · The Moveee`,
-    description: entry.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
-    openGraph: {
-      title: entry.title,
-      description: entry.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: entry.title,
-      description: entry.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
-      images: [imageUrl],
-    },
+    description: desc,
+    openGraph: { title: entry.title, description: desc, images: [{ url: imageUrl, width: 1200, height: 630 }] },
+    twitter: { card: "summary_large_image", title: entry.title, description: desc, images: [imageUrl] },
   };
 }
 
-export default async function DirectoryEntryPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function DirectoryEntryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  let data;
-  try {
-    data = await getWPData(GET_DIRECTORY_ENTRY_BY_SLUG, { slug });
-  } catch (err: any) {
-    console.error("DirectoryEntryPage getWPData error:", err);
-  }
-
+  let data: any;
+  try { data = await getWPData(GET_DIRECTORY_ENTRY_BY_SLUG, { slug }); } catch {}
   const entry = data?.cultureDirectory;
   if (!entry) notFound();
 
-  // Access control (supports member-only / patron-only entries)
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
   const accessLevel = getAccessLevel(entry);
   const canView = canViewContent(accessLevel, user);
   const isLoggedIn = !!user;
 
-  const type = entry.cultureDirectoryTypes?.nodes?.[0];
+  const typeNode = entry.cultureDirectoryTypes?.nodes?.[0];
+  const typeSlug = typeNode?.slug ?? "";
+  const typeLabel = TYPE_LABELS[typeSlug] ?? typeNode?.name ?? "Entry";
   const img = entry.featuredImage?.node?.sourceUrl;
+  const interests: any[] = entry.cultureInterests?.nodes ?? [];
+  const works: { title: string; imageUrl: string }[] = entry.selectedWorks ?? [];
+
   const date = entry.date
-    ? new Date(entry.date).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
+    ? new Date(entry.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
     : null;
 
+  // Fetch related entries by pulling the full pool and scoring by type + shared interests.
+  // This mirrors the proven approach used by the directory archive page and avoids
+  // unreliable taxQuery GraphQL filtering on custom taxonomies.
+  let relatedEntries: any[] = [];
+  const interestSlugs = new Set(interests.map((i: any) => i.slug));
+
+  try {
+    const allEntries = await getDirectoryEntriesWithFallback(200);
+
+    // Score each entry: 2 pts for same type, 1 pt per shared interest
+    const scored: { entry: any; score: number }[] = allEntries
+      .filter((e: any) => e.slug !== slug)
+      .map((e: any) => {
+        const eType = e.cultureDirectoryTypes?.nodes?.[0]?.slug ?? "";
+        const eInterests: string[] = (e.cultureInterests?.nodes ?? []).map((n: any) => n.slug);
+        let score = 0;
+        if (typeSlug && eType === typeSlug) score += 2;
+        eInterests.forEach((s: string) => { if (interestSlugs.has(s)) score += 1; });
+        return { entry: e, score };
+      })
+      .filter(({ score }: { score: number }) => score > 0)
+      .sort((a: { score: number }, b: { score: number }) => b.score - a.score);
+
+    relatedEntries = scored.slice(0, 5).map(({ entry }) => entry);
+  } catch (err) {
+    console.error("[directory] related fetch failed:", err);
+  }
+
+  const websiteUrl      = entry.websiteUrl      ?? "";
+  const instagramHandle = entry.instagramHandle ?? "";
+  const twitterHandle   = entry.twitterHandle   ?? "";
+  const infobox: Record<string, string> = entry.infobox ?? {};
+
+  type InfoboxField = { label: string; key: string };
+  const INFOBOX_DEFS: Record<string, InfoboxField[]> = {
+    person: [
+      { label: "Born",                  key: "born" },
+      { label: "Died",                  key: "died" },
+      { label: "Nationality",           key: "nationality" },
+      { label: "Occupation",            key: "occupation" },
+      { label: "Known For",             key: "knownFor" },
+      { label: "Origin",                key: "originCity" },
+      { label: "Active Years",          key: "activeYears" },
+      { label: "Labels / Affiliations", key: "labels" },
+      { label: "Education",             key: "education" },
+      { label: "Notable Awards",        key: "awards" },
+    ],
+    place: [
+      { label: "Country",           key: "country" },
+      { label: "Region / State",    key: "region" },
+      { label: "Population",        key: "population" },
+      { label: "Official Language", key: "officialLanguage" },
+      { label: "Currency",          key: "currency" },
+      { label: "Founded",           key: "founded" },
+      { label: "Area",              key: "area" },
+    ],
+    movement: [
+      { label: "Founded",           key: "founded" },
+      { label: "Founders",          key: "founders" },
+      { label: "Origin Country",    key: "originCountry" },
+      { label: "Active Period",     key: "activePeriod" },
+      { label: "Ideology",          key: "ideology" },
+      { label: "Key Figures",       key: "keyFigures" },
+      { label: "Related Movements", key: "relatedMovements" },
+    ],
+    genre: [
+      { label: "Origin Country",  key: "originCountry" },
+      { label: "Origin Decade",   key: "originDecade" },
+      { label: "Key Instruments", key: "instruments" },
+      { label: "Tempo (BPM)",     key: "tempoBpm" },
+      { label: "Key Artists",     key: "keyArtists" },
+      { label: "Related Genres",  key: "relatedGenres" },
+      { label: "Subgenres",       key: "subgenres" },
+    ],
+    concept: [
+      { label: "Origin Country",   key: "originCountry" },
+      { label: "Period / Era",     key: "period" },
+      { label: "Known For",        key: "knownFor" },
+      { label: "Key Thinkers",     key: "keyThinkers" },
+      { label: "Related Concepts", key: "relatedConcepts" },
+    ],
+    film: [
+      { label: "Director",           key: "director" },
+      { label: "Year",               key: "year" },
+      { label: "Runtime",            key: "runtime" },
+      { label: "Country",            key: "country" },
+      { label: "Language",           key: "language" },
+      { label: "Distributor",        key: "distributor" },
+      { label: "Production Company", key: "productionCompany" },
+      { label: "Cinematographer",    key: "cinematographer" },
+      { label: "Starring",           key: "starring" },
+    ],
+    book: [
+      { label: "Author",         key: "author" },
+      { label: "Year Published", key: "yearPublished" },
+      { label: "Genre",          key: "genre" },
+      { label: "Publisher",      key: "publisher" },
+      { label: "Language",       key: "language" },
+      { label: "Pages",          key: "pages" },
+      { label: "ISBN",           key: "isbn" },
+    ],
+    artwork: [
+      { label: "Artist",           key: "artist" },
+      { label: "Year",             key: "year" },
+      { label: "Medium",           key: "medium" },
+      { label: "Dimensions",       key: "dimensions" },
+      { label: "Style / Movement", key: "style" },
+      { label: "Current Location", key: "currentLocation" },
+      { label: "Collection",       key: "artCollection" },
+    ],
+    food: [
+      { label: "Origin Country",   key: "originCountry" },
+      { label: "Food Type",        key: "foodType" },
+      { label: "Also Known As",    key: "alsoKnownAs" },
+      { label: "Cultural Context", key: "culturalContext" },
+      { label: "Main Ingredients", key: "mainIngredients" },
+    ],
+    fashion: [
+      { label: "Origin / Region",       key: "origin" },
+      { label: "Era / Period",          key: "era" },
+      { label: "Style / Category",      key: "style" },
+      { label: "Materials / Fabric",    key: "materials" },
+      { label: "Key Designers",         key: "keyDesigners" },
+      { label: "Cultural Significance", key: "culturalSignificance" },
+    ],
+    "tv-series": [
+      { label: "Created By",        key: "creator" },
+      { label: "Network / Platform",key: "network" },
+      { label: "Seasons",           key: "seasons" },
+      { label: "Years",             key: "years" },
+      { label: "Country",           key: "country" },
+      { label: "Language",          key: "language" },
+      { label: "Genre",             key: "genre" },
+      { label: "Starring",          key: "starring" },
+    ],
+  };
+  const infoboxFields = INFOBOX_DEFS[typeSlug] ?? [];
+
   return (
-    <div className="dir-single">
-      <Link href="/directory" className="dir-back">
-        ← Culture Directory
-      </Link>
-
-      {/* ── ENTRY HERO ── */}
-      <div className="dir-single-hero">
-        {img && (
-          <Link href={`/visuals/${slug}`} className="dir-single-img">
-            <Image
-              src={img}
-              alt={entry.title ?? ""}
-              fill
-              style={{ objectFit: "cover" }}
-            />
-          </Link>
-        )}
-
-        {type && (
-          <span className="dir-single-type">
-            {TYPE_LABELS[type.slug] ?? type.name}
-          </span>
-        )}
-
-        <h1
-          className="dir-single-title"
-          dangerouslySetInnerHTML={{ __html: entry.title }}
-        />
-
-        {entry.excerpt && (
-          <p
-            className="dir-single-standfirst"
-            dangerouslySetInnerHTML={{
-              __html: entry.excerpt.replace(/<[^>]*>/g, ""),
-            }}
-          />
-        )}
-
-        {date && <div className="dir-single-date">Added {date}</div>}
+    <div className="dir-wiki-page">
+      {/* ── Back link ── */}
+      <div className="dir-wiki-topbar">
+        <Link href="/directory" className="dir-back">← Culture Directory</Link>
       </div>
 
-      {/* ── BODY ── */}
-      {canView ? (
-        entry.content && (
-          <div
-            className="dir-single-body"
-            dangerouslySetInnerHTML={{ __html: entry.content }}
-          />
-        )
-      ) : (
-        <ContentGate
-          accessLevel={accessLevel as "member-only" | "patron-only"}
-          isLoggedIn={isLoggedIn}
-        />
-      )}
+      {/* ── Three-column layout ── */}
+      <div className="dir-wiki-layout">
 
-      {/* ── TAGS ── */}
-      {entry.cultureInterests?.nodes?.length > 0 && (
-        <div className="dir-single-tags">
-          <div className="dir-tags-label">Topics</div>
-          <div className="dir-tags-list">
-            {entry.cultureInterests.nodes.map((t: any) => (
-              <span key={t.slug} className="dir-tag">
-                {t.name}
-              </span>
-            ))}
+        {/* LEFT SIDEBAR — Related entries */}
+        <aside className="dir-wiki-left">
+          <div className="dir-wiki-sidebar-card">
+            <div className="dir-wiki-sidebar-heading">Related {typeLabel}s</div>
+            {relatedEntries.length === 0 ? (
+              <p className="dir-wiki-sidebar-empty">No related entries yet.</p>
+            ) : (
+              <ul className="dir-wiki-related-list">
+                {relatedEntries.map((e: any) => (
+                  <li key={e.slug}>
+                    <Link href={`/directory/${e.slug}`} className="dir-wiki-related-link">
+                      {e.featuredImage?.node?.sourceUrl && (
+                        <div className="dir-wiki-related-thumb">
+                          <Image src={e.featuredImage.node.sourceUrl} alt={e.title} fill style={{ objectFit: "cover" }} />
+                        </div>
+                      )}
+                      <span className="dir-wiki-related-title">{e.title}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="dir-wiki-sidebar-footer">
+              <Link href={`/directory?type=${typeSlug}`} className="dir-wiki-see-all">
+                See all {typeLabel}s →
+              </Link>
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* ── IMPROVE CTA ── */}
-      <div className="dir-improve-cta">
-        <div className="dir-improve-label">★ Community Wiki</div>
-        <p>Know more about this entry? Help improve it.</p>
-        <Link
-          href={`/directory/submit?improve=${slug}`}
-          className="dir-improve-btn"
-        >
-          Improve this entry →
-        </Link>
+          {/* Improve CTA */}
+          <div className="dir-wiki-improve">
+            <div className="dir-wiki-improve-label">★ Community Wiki</div>
+            <p>Know more? Help improve this entry.</p>
+            <Link href={`/directory/submit?improve=${slug}`} className="dir-improve-btn">
+              Improve →
+            </Link>
+          </div>
+        </aside>
+
+        {/* CENTRE — Main article */}
+        <article className="dir-wiki-main">
+          <div className="dir-wiki-article-header">
+            <span className="dir-single-type">{typeLabel}</span>
+            <h1 className="dir-wiki-title" dangerouslySetInnerHTML={{ __html: entry.title }} />
+            {entry.excerpt && (
+              <p className="dir-wiki-lead" dangerouslySetInnerHTML={{ __html: entry.excerpt.replace(/<[^>]*>/g, "") }} />
+            )}
+            {date && <div className="dir-wiki-date">Added to directory {date}</div>}
+          </div>
+
+          {/* Body content */}
+          <div className="dir-wiki-divider" />
+
+          {canView ? (
+            entry.content ? (
+              <div className="dir-single-body" dangerouslySetInnerHTML={{ __html: entry.content }} />
+            ) : (
+              <p className="dir-wiki-no-content">Full article coming soon. Know this subject? Help us build it.</p>
+            )
+          ) : (
+            <ContentGate accessLevel={accessLevel as "member-only" | "patron-only"} isLoggedIn={isLoggedIn} />
+          )}
+
+          {/* Interests / tags */}
+          {interests.length > 0 && (
+            <div className="dir-single-tags" style={{ marginTop: "32px" }}>
+              <div className="dir-tags-label">Topics</div>
+              <div className="dir-tags-list">
+                {interests.map((t: any) => (
+                  <span key={t.slug} className="dir-tag">{t.name}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Selected Works */}
+          {works.length > 0 && (
+            <div className="dir-wiki-works">
+              <h2 className="dir-wiki-section-heading">Selected Works</h2>
+              <div className="dir-wiki-works-grid">
+                {works.map((w, i) => (
+                  <div key={i} className="dir-wiki-work-card">
+                    {w.imageUrl && (
+                      <div className="dir-wiki-work-img">
+                        <Image src={w.imageUrl} alt={w.title} fill style={{ objectFit: "cover" }} />
+                      </div>
+                    )}
+                    {w.title && <div className="dir-wiki-work-title">{w.title}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </article>
+
+        {/* RIGHT SIDEBAR — Infobox */}
+        <aside className="dir-wiki-right">
+          <div className="dir-wiki-infobox">
+            {/* Featured image */}
+            {img && (
+              <div className="dir-wiki-infobox-img">
+                <Image src={img} alt={entry.title ?? ""} fill style={{ objectFit: "cover" }} />
+              </div>
+            )}
+
+            {/* Title inside infobox */}
+            <div className="dir-wiki-infobox-name">{entry.title}</div>
+
+            {/* Type row */}
+            <div className="dir-wiki-infobox-row">
+              <span className="dir-wiki-infobox-label">Type</span>
+              <span className="dir-wiki-infobox-value">{typeLabel}</span>
+            </div>
+
+            {/* Interests */}
+            {interests.length > 0 && (
+              <div className="dir-wiki-infobox-row">
+                <span className="dir-wiki-infobox-label">Category</span>
+                <span className="dir-wiki-infobox-value">{interests.map((t: any) => t.name).join(", ")}</span>
+              </div>
+            )}
+
+            {/* Added date */}
+            {date && (
+              <div className="dir-wiki-infobox-row">
+                <span className="dir-wiki-infobox-label">Added</span>
+                <span className="dir-wiki-infobox-value">{date}</span>
+              </div>
+            )}
+
+            {/* Per-type infobox fields */}
+            {infoboxFields.length > 0 && infoboxFields.some(f => infobox[f.key]) && (
+              <div className="dir-wiki-infobox-divider" />
+            )}
+            {infoboxFields.map(({ label, key }) =>
+              infobox[key] ? (
+                <div key={key} className="dir-wiki-infobox-row">
+                  <span className="dir-wiki-infobox-label">{label}</span>
+                  <span className="dir-wiki-infobox-value">{infobox[key]}</span>
+                </div>
+              ) : null
+            )}
+
+            {/* External links */}
+            {(websiteUrl || instagramHandle || twitterHandle) && (
+              <>
+                <div className="dir-wiki-infobox-divider" />
+                {websiteUrl && (
+                  <div className="dir-wiki-infobox-row">
+                    <span className="dir-wiki-infobox-label">Website</span>
+                    <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="dir-wiki-infobox-link">
+                      {websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                    </a>
+                  </div>
+                )}
+                {instagramHandle && (
+                  <div className="dir-wiki-infobox-row">
+                    <span className="dir-wiki-infobox-label">Instagram</span>
+                    <a href={`https://instagram.com/${instagramHandle.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="dir-wiki-infobox-link">
+                      @{instagramHandle.replace(/^@/, "")}
+                    </a>
+                  </div>
+                )}
+                {twitterHandle && (
+                  <div className="dir-wiki-infobox-row">
+                    <span className="dir-wiki-infobox-label">X / Twitter</span>
+                    <a href={`https://x.com/${twitterHandle.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="dir-wiki-infobox-link">
+                      @{twitterHandle.replace(/^@/, "")}
+                    </a>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </aside>
+
       </div>
     </div>
   );

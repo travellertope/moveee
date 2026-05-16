@@ -33,13 +33,13 @@ export default async function PulsePage() {
   const items = await getUnifiedFeed();
 
   return (
-    <div style={{ background: "#0d0d0d", minHeight: "100vh" }}>
+    <div style={{ background: "var(--paper)", minHeight: "100vh" }}>
       {/* Header */}
       <header
         style={{
-          borderBottom: "1px solid #1e1e1e",
+          borderBottom: "1px solid #e0dbd1",
           padding: "2.5rem 1.5rem 2rem",
-          background: "#0d0d0d",
+          background: "var(--paper)",
         }}
       >
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
@@ -50,13 +50,13 @@ export default async function PulsePage() {
                 width: "8px",
                 height: "8px",
                 borderRadius: "50%",
-                background: "#D4A847",
+                background: "var(--ochre)",
                 animation: "pulse-dot 2s ease-in-out infinite",
               }}
             />
             <span
               style={{
-                color: "#D4A847",
+                color: "var(--ochre)",
                 fontSize: "0.65rem",
                 fontWeight: 700,
                 letterSpacing: "0.15em",
@@ -72,7 +72,7 @@ export default async function PulsePage() {
               fontFamily: "var(--font-fraunces), serif",
               fontSize: "clamp(2rem, 5vw, 3.25rem)",
               fontWeight: 700,
-              color: "#f0ece4",
+              color: "var(--ink)",
               lineHeight: 1.05,
               marginBottom: "0.75rem",
             }}
@@ -82,7 +82,7 @@ export default async function PulsePage() {
 
           <p
             style={{
-              color: "#777",
+              color: "#6b6157",
               fontSize: "0.9rem",
               lineHeight: 1.55,
               maxWidth: "520px",

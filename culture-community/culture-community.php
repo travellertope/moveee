@@ -37,6 +37,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cli.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-pulse.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-twitter.php';
 
 // API includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-rest-api.php';
@@ -54,6 +55,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-analytics.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-email-templates.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-send.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-subscribers.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-games-subscribers.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-importer.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-nl-analytics-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-directory-tools.php';
@@ -102,6 +104,7 @@ function culture_community_init() {
     Culture_Newsletter_Queue::init();
     Culture_Newsletter_Send::init();
     Culture_Subscribers::init();
+    Culture_Games_Subscribers::init();
     Culture_NL_Analytics::init();
     Culture_NL_Analytics_Admin::init();
     Culture_Newsletter_Importer::init();

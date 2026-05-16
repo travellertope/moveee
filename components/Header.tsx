@@ -10,6 +10,9 @@ import AuthModal from "./AuthModal";
 import SearchOverlay from "./SearchOverlay";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
+import { EDITIONS } from "@/lib/editions";
+
+const EDITION_ORDER = ["global", "uk", "us", "africa"] as const;
 
 interface HeaderProps {
   variant?: "light" | "dark";
@@ -32,6 +35,13 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
     month: "long",
     year: "numeric",
   });
+
+  // Derive current edition from path
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const firstSeg = pathSegments[0];
+  const currentEdition = (firstSeg === "uk" || firstSeg === "us" || firstSeg === "africa")
+    ? firstSeg
+    : "global";
 
   const tickerData = siteSettings?.mastheadTicker || {};
   const user = session?.user as any;
@@ -81,6 +91,26 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
                 FR
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Edition switcher strip */}
+        <div className="edition-bar">
+          <div className="edition-bar-inner">
+            <span className="edition-bar-label">Edition:</span>
+            {EDITION_ORDER.map((slug) => {
+              const cfg = EDITIONS[slug];
+              const isActive = slug === currentEdition;
+              return (
+                <Link
+                  key={slug}
+                  href={cfg.path}
+                  className={`edition-bar-link${isActive ? " edition-bar-link--active" : ""}`}
+                >
+                  {cfg.label}
+                </Link>
+              );
+            })}
           </div>
         </div>
 

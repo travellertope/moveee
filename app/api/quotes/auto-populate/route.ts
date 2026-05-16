@@ -1,136 +1,149 @@
 /**
- * POST /api/quotes/auto-populate
+ * GET/POST /api/quotes/auto-populate
  *
- * Background job that seeds the Moveee Quote Database.
- * Curates a selection of high-impact, culturally relevant quotes.
+ * Seeds the Moveee Quote Archive in two phases:
  *
- * Auth: requires Authorization: Bearer {CRON_SECRET} header.
+ * Phase 1 — Curated list (data.ts):
+ *   Scans SEED_QUOTES in offset order, submitting up to TARGET_BATCH_SIZE
+ *   new quotes per run. All entries in data.ts are hand-verified real quotes.
  *
- * Optional body params:
- *   offset  – index in SEED_QUOTES to start scanning from (default 0).
- *             Clients should persist the returned `nextOffset` and send
- *             it on the next call to avoid re-scanning already-imported
- *             quotes from the beginning every run.
+ * Phase 2 — Serper-backed discovery (when curated list is exhausted):
+ *   Rotates through QUOTE_AUTHORS, runs targeted Google searches against
+ *   Wikiquote and Goodreads, and asks Gemini to extract only verbatim quotes
+ *   it can see in the search results. Gemini acts as an extractor, not a
+ *   generator — it may not invent or recall quotes from training data.
+ *
+ * GET  — invoked by WordPress cron (Authorization: Bearer {CRON_SECRET}).
+ * POST — invoked manually; accepts { offset } in request body.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { generateSeedQuotes } from "@/lib/gemini";
 import { SEED_QUOTES } from "./data";
+import { runVerifiedQuotesBatch } from "@/lib/quotes-seeder";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-export async function GET() {
-  return NextResponse.json({ status: "Quote Seeder API is active.", method: "POST required for seeding." });
-}
-
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
-export async function POST(req: NextRequest) {
+function isAuthorized(req: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET ?? "";
-  const authHeader = req.headers.get("Authorization") ?? "";
+  return !!cronSecret && req.headers.get("Authorization") === `Bearer ${cronSecret}`;
+}
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
-  }
+async function submitQuote(
+  secret: string,
+  quote: { text: string; author: string; source: string }
+): Promise<{ ok: boolean; duplicate: boolean }> {
+  const res = await fetch(`${WP_URL}/wp-json/culture/v1/quotes`, {
+    method: "POST",
+    headers: {
+      "Content-Type":       "application/json",
+      "Authorization":      `Bearer ${secret}`,
+      "X-Culture-API-Secret": secret,
+    },
+    body: JSON.stringify({
+      text:    quote.text,
+      author:  quote.author,
+      source:  quote.source,
+      user_id: 0,
+    }),
+  });
 
-  const secret = process.env.CULTURE_API_SECRET ?? "";
+  if (res.ok) return { ok: true, duplicate: false };
+
+  const data = await res.json().catch(() => ({}));
+  const isDuplicate =
+    res.status === 409 ||
+    res.status === 400 ||
+    String(data.message ?? "").includes("already exists");
+
+  return { ok: false, duplicate: isDuplicate };
+}
+
+async function runSeed(startOffset: number): Promise<NextResponse> {
+  const secret  = process.env.CULTURE_API_SECRET ?? "";
   const results: Array<{ title: string; success: boolean; error?: string }> = [];
-
-  // Accept an optional offset so we don't re-scan from index 0 every run.
-  const body = await req.json().catch(() => ({}));
-  const rawOffset = parseInt(String(body.offset ?? "0"), 10);
-  const startOffset = isNaN(rawOffset) ? 0 : Math.max(0, Math.min(rawOffset, SEED_QUOTES.length - 1));
 
   let createdCount = 0;
   let skippedCount = 0;
   const TARGET_BATCH_SIZE = 15;
-
-  // nextOffset tracks where the next run should start.
   let nextOffset = startOffset;
 
   try {
-    // Scan at most SEED_QUOTES.length entries (one full pass), starting from offset.
-    // Wraps around so runs near the end of the list roll over to the beginning.
+    // ── Phase 1: curated hand-verified quotes ──────────────────────────────
     const total = SEED_QUOTES.length;
 
     for (let scanned = 0; scanned < total && createdCount < TARGET_BATCH_SIZE; scanned++) {
-      const idx = (startOffset + scanned) % total;
+      const idx   = (startOffset + scanned) % total;
       const quote = SEED_QUOTES[idx];
 
-      const res = await fetch(`${WP_URL}/wp-json/culture/v1/quotes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${secret}`,
-          "X-Culture-API-Secret": secret,
-        },
-        body: JSON.stringify({
-          text: quote.text,
-          author: quote.author,
-          source: quote.source,
-          user_id: 0,
-        }),
-      });
+      const { ok, duplicate } = await submitQuote(secret, quote);
 
-      const data = await res.json();
-
-      if (res.ok) {
-        results.push({ title: `${quote.author}: ${quote.text.slice(0, 30)}...`, success: true });
+      if (ok) {
+        results.push({ title: `${quote.author}: ${quote.text.slice(0, 40)}…`, success: true });
         createdCount++;
-        // Advance the cursor past this newly-created quote.
         nextOffset = (idx + 1) % total;
-      } else if (
-        res.status === 409 ||
-        res.status === 400 ||
-        data.message?.includes("already exists")
-      ) {
-        // Silently skip confirmed duplicates and advance the cursor.
+      } else if (duplicate) {
         skippedCount++;
         nextOffset = (idx + 1) % total;
       } else {
-        // Unexpected error — log it but keep scanning.
-        results.push({ title: quote.author, success: false, error: data.message || `HTTP ${res.status}` });
+        results.push({ title: quote.author, success: false });
       }
 
-      // Throttle to be kind to the WP API.
       await new Promise((r) => setTimeout(r, 200));
     }
 
-    // Fallback to AI when the entire curated list has already been imported.
-    if (createdCount === 0) {
-      console.log("No new quotes added from curated list. Fetching AI suggestions...");
-      const aiQuotes = await generateSeedQuotes(10);
-      if (aiQuotes && aiQuotes.length > 0) {
-        for (const quote of aiQuotes) {
-          const res = await fetch(`${WP_URL}/wp-json/culture/v1/quotes`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${secret}`,
-              "X-Culture-API-Secret": secret,
-            },
-            body: JSON.stringify({
-              text: quote.text,
-              author: quote.author,
-              source: quote.source,
-              user_id: 0,
-            }),
-          });
-          if (res.ok) {
-            results.push({ title: `AI: ${quote.author}`, success: true });
-            createdCount++;
-          }
-          await new Promise((r) => setTimeout(r, 300));
-        }
-        return NextResponse.json({
-          created: createdCount,
-          skipped: skippedCount,
-          results,
-          nextOffset,
-          mode: "ai-generated",
-        });
+    if (createdCount > 0) {
+      return NextResponse.json({
+        created: createdCount,
+        skipped: skippedCount,
+        results,
+        nextOffset,
+        mode: "curated",
+      });
+    }
+
+    // ── Phase 2: Serper-backed verified discovery ──────────────────────────
+    // Only reached when the entire curated list has been imported.
+    // Rotates through QUOTE_AUTHORS by day-of-year so all figures are
+    // covered over time without needing persistent state.
+    if (!process.env.SERPER_API_KEY) {
+      return NextResponse.json({
+        created: 0,
+        skipped: skippedCount,
+        results,
+        nextOffset,
+        mode: "exhausted",
+        note: "Curated list exhausted. Add SERPER_API_KEY to enable verified quote discovery.",
+      });
+    }
+
+    console.log("[quotes] Curated list exhausted — running Serper-backed discovery.");
+    const verifiedQuotes = await runVerifiedQuotesBatch(3, 4);
+
+    if (verifiedQuotes.length === 0) {
+      return NextResponse.json({
+        created: 0,
+        skipped: skippedCount,
+        results,
+        nextOffset,
+        mode: "exhausted",
+        note: "Serper search returned no verifiable quotes this run.",
+      });
+    }
+
+    for (const quote of verifiedQuotes) {
+      const { ok, duplicate } = await submitQuote(secret, quote);
+      if (ok) {
+        results.push({ title: `${quote.author}: ${quote.text.slice(0, 40)}…`, success: true });
+        createdCount++;
+      } else if (duplicate) {
+        skippedCount++;
+      } else {
+        results.push({ title: quote.author, success: false });
       }
+      await new Promise((r) => setTimeout(r, 300));
     }
 
     return NextResponse.json({
@@ -138,10 +151,29 @@ export async function POST(req: NextRequest) {
       skipped: skippedCount,
       results,
       nextOffset,
-      mode: createdCount > 0 ? "curated" : "exhausted",
+      mode: "serper-verified",
     });
 
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+}
+
+export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+  return runSeed(0);
+}
+
+export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+  const body        = await req.json().catch(() => ({}));
+  const rawOffset   = parseInt(String(body.offset ?? "0"), 10);
+  const startOffset = isNaN(rawOffset)
+    ? 0
+    : Math.max(0, Math.min(rawOffset, SEED_QUOTES.length - 1));
+  return runSeed(startOffset);
 }
