@@ -111,7 +111,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
       slug: post.slug,
       date: post.date,
       image: imageUrl ?? undefined,
-      href: `/pulse#community-${post.id}`,
+      href: `/community/${post.slug}`,
       communityAuthor: authorName || (post.excerpt?.rendered ? stripHtml(post.excerpt.rendered) : ""),
       communityTag: tag ?? "",
       reactions: {

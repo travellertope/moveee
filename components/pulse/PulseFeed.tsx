@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
 import FeedCard from "./FeedCard";
 import SubmitPost from "./SubmitPost";
@@ -54,10 +55,24 @@ function FilterPill({
 }
 
 export default function PulseFeed({ initialItems }: PulseFeedProps) {
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<FeedItem[]>(initialItems);
   const [activeType, setActiveType] = useState<FeedItemType | "all">("all");
   const [activeRegion, setActiveRegion] = useState<string>("All");
   const [activeTag, setActiveTag] = useState<string>("");
+
+  // Honour ?hashtag= and ?tag= query params from community post page links.
+  useEffect(() => {
+    const hashtag = searchParams.get("hashtag");
+    const tag     = searchParams.get("tag");
+    if (hashtag) {
+      setActiveType("community");
+      setActiveTag(`#${hashtag}`);
+    } else if (tag) {
+      setActiveType("community");
+      setActiveTag(tag);
+    }
+  }, [searchParams]);
   const [visibleCount, setVisibleCount] = useState(24);
 
   // Derive available tags from actual community posts in the feed.
@@ -78,7 +93,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
         slug: String(post.id),
         date: new Date().toISOString(),
         image: post.imageUrl ?? undefined,
-        href: `/pulse#community-${post.id}`,
+        href: `/community/${post.id}`,
         communityAuthor: post.authorName,
         communityTag: post.tag ?? "",
         reactions: { love: 0, fire: 0, clap: 0 },

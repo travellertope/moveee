@@ -18,12 +18,14 @@ interface SearchResult {
 }
 
 interface SearchResults {
-  magazine: SearchResult[];
-  events: SearchResult[];
-  origins: SearchResult[];
-  products: SearchResult[];
-  quotes: SearchResult[];
+  magazine:  SearchResult[];
+  events:    SearchResult[];
+  origins:   SearchResult[];
+  products:  SearchResult[];
+  quotes:    SearchResult[];
   directory: SearchResult[];
+  pulse:     SearchResult[];
+  community: SearchResult[];
 }
 
 interface Props {
@@ -89,7 +91,9 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
       (results.origins?.length ?? 0) +
       (results.products?.length ?? 0) +
       (results.quotes?.length ?? 0) +
-      (results.directory?.length ?? 0)
+      (results.directory?.length ?? 0) +
+      (results.pulse?.length ?? 0) +
+      (results.community?.length ?? 0)
     : 0;
 
   const hasResults = !!results && total > 0;
@@ -106,7 +110,7 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search magazine, quotes, directory, events…"
+            placeholder="Search pulse, community, editorials, events, directory…"
             value={query}
             onChange={e => setQuery(e.target.value)}
             className="search-input"
@@ -120,9 +124,11 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
         {/* ── Results ── */}
         {hasResults && (
           <div className="search-results">
-            <ResultSection label="Editorials"          items={results!.magazine}   basePath="/magazine"  onClose={onClose} />
-            <ResultSection label="Events"            items={results!.events}     basePath="/events"    onClose={onClose} />
-            <ResultSection label="Origins"           items={results!.origins}    basePath="/journeys"   onClose={onClose} />
+            <ResultSection label="Pulse"             items={results!.pulse}      basePath="/pulse"     onClose={onClose} />
+            <ResultSection label="Community"         items={results!.community}  basePath="/community" onClose={onClose} />
+            <ResultSection label="Editorials"        items={results!.magazine}   basePath="/magazine"  onClose={onClose} />
+            <ResultSection label="Happenings"        items={results!.events}     basePath="/events"    onClose={onClose} />
+            <ResultSection label="Origins"           items={results!.origins}    basePath="/journeys"  onClose={onClose} />
             <ResultSection label="Quotes"            items={results!.quotes}     basePath="/quotes"    onClose={onClose} />
             <ResultSection label="Culture Directory" items={results!.directory}  basePath="/directory" onClose={onClose} />
             <ResultSection label="Shop"              items={results!.products}   basePath="/shop"      isProduct onClose={onClose} />
