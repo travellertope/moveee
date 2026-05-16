@@ -8,7 +8,7 @@ import {
 import { getPulseStories } from "./pulse-wordpress";
 import { decodeHtml } from "./decode-html";
 
-export type FeedItemType = "pulse" | "editorial" | "happening" | "directory" | "quote";
+export type FeedItemType = "pulse" | "editorial" | "happening" | "directory" | "quote" | "community";
 
 export interface FeedItem {
   id: string;
@@ -34,10 +34,77 @@ export interface FeedItem {
   quoteAuthor?: string;
   // editorial-specific
   category?: string;
+  // community-specific
+  communityAuthor?: string;
+  communityTag?: string;
 }
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, "").trim();
+}
+
+/** Parse the embedded <!--community:{...}--> data from a WP post's content. */
+function parseCommunityData(content: string): {
+  authorName: string;
+  imageUrl: string | null;
+  tag: string | null;
+} {
+  const match = content.match(/<!--community:(\{.*?\})-->/s);
+  if (!match) return { authorName: "", imageUrl: null, tag: null };
+  try {
+    const data = JSON.parse(match[1]);
+    return {
+      authorName: data.authorName ?? "",
+      imageUrl: data.imageUrl ?? null,
+      tag: data.tag ?? null,
+    };
+  } catch {
+    return { authorName: "", imageUrl: null, tag: null };
+  }
+}
+
+const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
+const WP_BASE = `${WP_URL}/wp-json/wp/v2`;
+
+/** Fetch community category ID (slug "community"), or null if it doesn't exist yet. */
+async function getCommunityCategory(): Promise<number | null> {
+  const res = await fetch(`${WP_BASE}/categories?slug=community&_fields=id`, {
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  const cats: any[] = await res.json().catch(() => []);
+  return cats[0]?.id ?? null;
+}
+
+/** Fetch the latest community posts from WordPress. */
+async function getCommunityPosts(): Promise<FeedItem[]> {
+  const catId = await getCommunityCategory();
+  if (!catId) return [];
+
+  const res = await fetch(
+    `${WP_BASE}/posts?categories=${catId}&per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,excerpt`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) return [];
+  const posts: any[] = await res.json().catch(() => []);
+
+  return posts.map((post) => {
+    const raw = post.content?.rendered ?? "";
+    const { authorName, imageUrl, tag } = parseCommunityData(raw);
+    const textContent = stripHtml(raw.replace(/<!--.*?-->/gs, ""));
+
+    return {
+      id: `community-${post.id}`,
+      type: "community" as const,
+      title: textContent,
+      slug: post.slug,
+      date: post.date,
+      image: imageUrl ?? undefined,
+      href: `/pulse#community-${post.id}`,
+      communityAuthor: authorName || (post.excerpt?.rendered ? stripHtml(post.excerpt.rendered) : ""),
+      communityTag: tag ?? "",
+    };
+  });
 }
 
 export async function getUnifiedFeed(): Promise<FeedItem[]> {
@@ -47,12 +114,14 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
     eventsResult,
     directoryResult,
     quotesResult,
+    communityResult,
   ] = await Promise.allSettled([
     getPulseStories({ perPage: 18 }),
     getWPData(GET_STORIES, { first: 12 }, { revalidate: 0 }),
     getEventsWithFallback(12, { revalidate: 0 }),
     getWPData(GET_DIRECTORY_ENTRIES, { first: 12 }, { revalidate: 0 }),
     getWPQuotes({ first: 12 }),
+    getCommunityPosts(),
   ]);
 
   const items: FeedItem[] = [];
@@ -143,6 +212,11 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         quoteAuthor: quote.quoteAuthors?.nodes?.[0]?.name ?? "",
       });
     }
+  }
+
+  // Community posts
+  if (communityResult.status === "fulfilled") {
+    items.push(...communityResult.value);
   }
 
   // Sort newest first

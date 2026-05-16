@@ -7,6 +7,7 @@ const TYPE_BADGE: Record<string, { label: string; bg: string; color: string }> =
   happening: { label: "Happening",  bg: "#EEEDFE",  color: "#3C3489" },
   directory: { label: "Directory",  bg: "#E1F5EE",  color: "#085041" },
   quote:     { label: "Quote",      bg: "#1a1520",  color: "#b58dd4" },
+  community: { label: "Community",  bg: "#0d1a0d",  color: "#6abf69" },
 };
 
 const ARM_STYLES: Record<string, { bg: string; color: string }> = {
@@ -88,6 +89,112 @@ export default function FeedCard({ item }: { item: FeedItem }) {
           </span>
           <span style={{ color: "#444", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>
         </div>
+      </article>
+    );
+  }
+
+  if (item.type === "community") {
+    const tagMeta = TYPE_BADGE.community;
+    return (
+      <article
+        id={`community-${item.id.replace("community-", "")}`}
+        style={{
+          background: "#111811",
+          border: "1px solid #1e2e1e",
+          borderRadius: "2px",
+          display: "flex",
+          flexDirection: "column",
+          padding: "1.25rem",
+          gap: "0.75rem",
+        }}
+        className="pulse-card"
+      >
+        {/* Header: avatar + author + tag */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <div
+            style={{
+              width: "30px",
+              height: "30px",
+              borderRadius: "50%",
+              background: "#0d1a0d",
+              border: "1px solid #2a3e2a",
+              color: "#6abf69",
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            {(item.communityAuthor ?? "?")
+              .split(" ")
+              .slice(0, 2)
+              .map((w) => w[0])
+              .join("")
+              .toUpperCase() || "?"}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ color: "#6abf69", fontSize: "0.78rem", fontWeight: 600 }}>
+              {item.communityAuthor || "Community Member"}
+            </span>
+            <span style={{ color: "#3a4a3a", margin: "0 0.35rem", fontSize: "0.7rem" }}>·</span>
+            <span style={{ color: "#3a4a3a", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>
+          </div>
+          {item.communityTag && (
+            <span
+              style={{
+                background: tagMeta.bg,
+                color: tagMeta.color,
+                fontSize: "0.6rem",
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                padding: "0.15rem 0.45rem",
+                borderRadius: "2px",
+                flexShrink: 0,
+              }}
+            >
+              {item.communityTag}
+            </span>
+          )}
+        </div>
+
+        {/* Post text */}
+        <p
+          style={{
+            color: "#d8f0d8",
+            fontFamily: "var(--font-fraunces), serif",
+            fontSize: "0.95rem",
+            lineHeight: 1.6,
+            margin: 0,
+            display: "-webkit-box",
+            WebkitLineClamp: 6,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {item.title}
+        </p>
+
+        {/* Image if present */}
+        {item.image && (
+          <div
+            style={{
+              width: "100%",
+              maxHeight: "220px",
+              overflow: "hidden",
+              borderRadius: "2px",
+            }}
+          >
+            <img
+              src={item.image}
+              alt=""
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              loading="lazy"
+            />
+          </div>
+        )}
       </article>
     );
   }

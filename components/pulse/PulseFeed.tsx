@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
 import FeedCard from "./FeedCard";
+import SubmitPost from "./SubmitPost";
 
 const TYPE_FILTERS: { label: string; value: FeedItemType | "all" }[] = [
   { label: "All",        value: "all"       },
+  { label: "Community",  value: "community" },
   { label: "Pulse",      value: "pulse"     },
   { label: "Editorial",  value: "editorial" },
   { label: "Happening",  value: "happening" },
@@ -52,11 +54,32 @@ function FilterPill({
 }
 
 export default function PulseFeed({ initialItems }: PulseFeedProps) {
+  const [items, setItems] = useState<FeedItem[]>(initialItems);
   const [activeType, setActiveType] = useState<FeedItemType | "all">("all");
   const [activeRegion, setActiveRegion] = useState<string>("All");
   const [visibleCount, setVisibleCount] = useState(24);
 
-  const filtered = initialItems.filter((item) => {
+  const handlePosted = useCallback(
+    (post: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null }) => {
+      const newItem: FeedItem = {
+        id: `community-${post.id}`,
+        type: "community",
+        title: post.text,
+        slug: String(post.id),
+        date: new Date().toISOString(),
+        image: post.imageUrl ?? undefined,
+        href: `/pulse#community-${post.id}`,
+        communityAuthor: post.authorName,
+        communityTag: post.tag ?? "",
+      };
+      setItems((prev) => [newItem, ...prev]);
+      setActiveType("community");
+      setVisibleCount(24);
+    },
+    []
+  );
+
+  const filtered = items.filter((item) => {
     const typeMatch = activeType === "all" || item.type === activeType;
     const regionMatch =
       activeRegion === "All" ||
@@ -82,6 +105,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
   return (
     <div style={{ background: "#0d0d0d", minHeight: "60vh", paddingBottom: "4rem" }}>
+      {/* Compose box */}
+      <SubmitPost onPosted={handlePosted} />
+
       {/* Filters */}
       <div
         style={{
