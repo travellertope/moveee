@@ -292,10 +292,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "0.25rem",
-                  background: "#fff",
-                  color: "#7a6f5c",
-                  border: "1px solid #d8d0c6",
-                  borderLeft: "none",
+                  background: "#14110d",
+                  color: "#fff",
+                  border: "none",
                   borderRadius: "0",
                   padding: "0.25rem 0.9rem",
                   fontSize: "0.72rem",
@@ -304,7 +303,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                   letterSpacing: "0.04em",
                   textDecoration: "none",
                   flexShrink: 0,
-                  boxShadow: "-6px 0 10px #fff",
+                  boxShadow: "-8px 0 10px #fff",
                 }}
               >
                 ⊞ Sections
