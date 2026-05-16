@@ -116,14 +116,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       {/* ── HERO — left: content, right: featured image ── */}
       <section className="event-hero">
         <div className="hero-content">
-          <div className="hero-eyebrow">
-            <span className="pill">{eyebrowStatus}</span>
-            <span className="sep">·</span>
-            <span>{eyebrowType}</span>
-            <span className="sep">·</span>
-            <span>Moveee Happenings</span>
-          </div>
-
           <h1 className="hero-title">{event.title}</h1>
           <p className="hero-subtitle">{event.tagline || `${cat} by ${host?.title || "Moveee Talent"}`}</p>
 
