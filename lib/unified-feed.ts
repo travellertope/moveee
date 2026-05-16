@@ -103,7 +103,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
   return posts.map((post) => {
     const raw = post.content?.rendered ?? "";
     const { authorName, imageUrl, tag } = parseCommunityData(post.meta, raw);
-    const textContent = stripHtml(raw.replace(/<!--[\s\S]*?-->/g, ""));
+    const textContent = decodeHtml(stripHtml(raw.replace(/<!--[\s\S]*?-->/g, "")));
 
     return {
       id: `community-${post.id}`,

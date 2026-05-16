@@ -175,11 +175,16 @@ export default function FeedCard({
             </div>
           )}
 
-          {/* Reactions + comment link */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0 }}>
+          {/* Reactions + comment link — share the same border-top row */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: "0.5rem",
+            minWidth: 0, paddingTop: "0.5rem",
+            borderTop: "1px solid #e8e2d8", marginTop: "0.25rem",
+          }}>
             {item.wpId && (
               <div style={{ flex: 1, minWidth: 0 }}>
                 <ReactionBar
+                  noBorder
                   itemId={item.wpId}
                   itemType="community"
                   initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
