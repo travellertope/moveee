@@ -87,26 +87,22 @@ export async function POST(req: NextRequest) {
   ]);
 
   const title = content.slice(0, 80) + (content.length > 80 ? "…" : "");
-
-  // Embed author attribution and optional image as a data comment inside content
-  // so it survives even if meta registration isn't present in WP.
-  const communityData = JSON.stringify({
-    authorName,
-    authorId,
-    imageUrl: imageUrl?.trim() || null,
-    tag: validTag,
-  });
-  const htmlContent =
-    `<!--community:${communityData}-->` +
-    `<p>${content.replace(/\n/g, "</p><p>")}</p>`;
+  const htmlContent = `<p>${content.replace(/\n/g, "</p><p>")}</p>`;
 
   const postBody: Record<string, any> = {
     title,
     content: htmlContent,
-    // Store author name in excerpt for easy retrieval.
-    excerpt: authorName,
     status: "publish",
     comment_status: "open",
+    // Proper meta fields — registered via Culture_Community::register_meta()
+    // in culture-community/includes/core/class-culture-community.php.
+    // Stored in wp_postmeta, fully backed up by UpdraftPlus.
+    meta: {
+      community_author_name: authorName,
+      community_author_id:   authorId,
+      community_image_url:   imageUrl?.trim() || "",
+      community_tag:         validTag ?? "",
+    },
   };
   if (categoryId) postBody.categories = [categoryId];
   if (tagId) postBody.tags = [tagId];

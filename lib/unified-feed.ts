@@ -43,20 +43,28 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, "").trim();
 }
 
-/** Parse the embedded <!--community:{...}--> data from a WP post's content. */
-function parseCommunityData(content: string): {
-  authorName: string;
-  imageUrl: string | null;
-  tag: string | null;
-} {
+/** Parse community attribution from a WP post. Prefers proper meta fields;
+ *  falls back to the legacy HTML-comment format for any old posts. */
+function parseCommunityData(
+  meta: Record<string, string> | null | undefined,
+  content: string
+): { authorName: string; imageUrl: string | null; tag: string | null } {
+  if (meta?.community_author_name) {
+    return {
+      authorName: meta.community_author_name,
+      imageUrl:   meta.community_image_url || null,
+      tag:        meta.community_tag || null,
+    };
+  }
+  // Legacy fallback — HTML comment embedded in content.
   const match = content.match(/<!--community:(\{.*?\})-->/s);
   if (!match) return { authorName: "", imageUrl: null, tag: null };
   try {
     const data = JSON.parse(match[1]);
     return {
       authorName: data.authorName ?? "",
-      imageUrl: data.imageUrl ?? null,
-      tag: data.tag ?? null,
+      imageUrl:   data.imageUrl ?? null,
+      tag:        data.tag ?? null,
     };
   } catch {
     return { authorName: "", imageUrl: null, tag: null };
@@ -82,7 +90,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
   if (!catId) return [];
 
   const res = await fetch(
-    `${WP_BASE}/posts?categories=${catId}&per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,excerpt`,
+    `${WP_BASE}/posts?categories=${catId}&per_page=24&orderby=date&order=desc&_fields=id,slug,date,content,meta`,
     { cache: "no-store" }
   );
   if (!res.ok) return [];
@@ -90,7 +98,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
 
   return posts.map((post) => {
     const raw = post.content?.rendered ?? "";
-    const { authorName, imageUrl, tag } = parseCommunityData(raw);
+    const { authorName, imageUrl, tag } = parseCommunityData(post.meta, raw);
     const textContent = stripHtml(raw.replace(/<!--.*?-->/gs, ""));
 
     return {
