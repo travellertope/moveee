@@ -1,14 +1,22 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import type { WpPulseStory } from "@/lib/pulse-wordpress";
-import PulseCard from "./PulseCard";
+import { useState } from "react";
+import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
+import FeedCard from "./FeedCard";
 
-const ARMS = ["All", "Lifestyle", "Origins", "Happenings", "Magazine"] as const;
+const TYPE_FILTERS: { label: string; value: FeedItemType | "all" }[] = [
+  { label: "All",        value: "all"       },
+  { label: "Pulse",      value: "pulse"     },
+  { label: "Editorial",  value: "editorial" },
+  { label: "Happening",  value: "happening" },
+  { label: "Directory",  value: "directory" },
+  { label: "Quote",      value: "quote"     },
+];
+
 const REGIONS = ["All", "Africa", "Caribbean", "Diaspora UK", "Diaspora US", "Diaspora Europe", "Global"] as const;
 
 interface PulseFeedProps {
-  initialStories: WpPulseStory[];
+  initialItems: FeedItem[];
 }
 
 function FilterPill({
@@ -43,58 +51,34 @@ function FilterPill({
   );
 }
 
-export default function PulseFeed({ initialStories }: PulseFeedProps) {
-  const [stories, setStories] = useState<WpPulseStory[]>(initialStories);
-  const [activeArm, setActiveArm] = useState<string>("All");
+export default function PulseFeed({ initialItems }: PulseFeedProps) {
+  const [activeType, setActiveType] = useState<FeedItemType | "all">("all");
   const [activeRegion, setActiveRegion] = useState<string>("All");
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(initialStories.length >= 12);
+  const [visibleCount, setVisibleCount] = useState(24);
 
-  const fetchStories = useCallback(
-    async (arm: string, region: string, nextPage = 1, append = false) => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams({ page: String(nextPage), perPage: "12" });
-        if (arm !== "All") params.set("arm", arm.toLowerCase());
-        if (region !== "All") params.set("region", region);
+  const filtered = initialItems.filter((item) => {
+    const typeMatch = activeType === "all" || item.type === activeType;
+    const regionMatch =
+      activeRegion === "All" ||
+      (item.region?.toLowerCase() === activeRegion.toLowerCase());
+    return typeMatch && regionMatch;
+  });
 
-        // Fetch directly from WP REST (via absolute URL with _embed) — but since
-        // this is client-side we call our own Next.js path which is CORS-safe.
-        // Build the WP REST URL client-side using the public WP URL.
-        const wpBase = process.env.NEXT_PUBLIC_WP_URL ?? "";
-        let url = `${wpBase}/wp-json/wp/v2/pulse-stories?per_page=12&page=${nextPage}&orderby=date&order=desc&_embed=1`;
-        if (arm !== "All") url += `&pulse_arm=${encodeURIComponent(arm.toLowerCase())}`;
-        if (region !== "All") url += `&pulse_region=${encodeURIComponent(region)}`;
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
 
-        const res = await fetch(url);
-        const data: WpPulseStory[] = res.ok ? await res.json() : [];
-
-        setStories(append ? (prev) => [...prev, ...data] : data);
-        setHasMore(data.length >= 12);
-        setPage(nextPage);
-      } catch {
-        // Keep existing stories on failure.
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
-  const handleArm = (arm: string) => {
-    setActiveArm(arm);
-    fetchStories(arm, activeRegion, 1, false);
+  const handleType = (type: FeedItemType | "all") => {
+    setActiveType(type);
+    setVisibleCount(24);
+    if (type !== "pulse") setActiveRegion("All");
   };
 
   const handleRegion = (region: string) => {
     setActiveRegion(region);
-    fetchStories(activeArm, region, 1, false);
+    setVisibleCount(24);
   };
 
-  const handleLoadMore = () => {
-    fetchStories(activeArm, activeRegion, page + 1, true);
-  };
+  const showRegions = activeType === "all" || activeType === "pulse";
 
   return (
     <div style={{ background: "#0d0d0d", minHeight: "60vh", paddingBottom: "4rem" }}>
@@ -109,35 +93,37 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
           zIndex: 10,
         }}
       >
-        {/* Arm filters */}
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.6rem" }}>
-          {ARMS.map((arm) => (
+        {/* Type filters */}
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: showRegions ? "0.6rem" : 0 }}>
+          {TYPE_FILTERS.map(({ label, value }) => (
             <FilterPill
-              key={arm}
-              label={arm}
-              active={activeArm === arm}
-              onClick={() => handleArm(arm)}
+              key={value}
+              label={label}
+              active={activeType === value}
+              onClick={() => handleType(value)}
             />
           ))}
         </div>
-        {/* Region filters */}
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-          {REGIONS.map((region) => (
-            <FilterPill
-              key={region}
-              label={region}
-              active={activeRegion === region}
-              onClick={() => handleRegion(region)}
-            />
-          ))}
-        </div>
+        {/* Region filters — only relevant for Pulse */}
+        {showRegions && (
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            {REGIONS.map((region) => (
+              <FilterPill
+                key={region}
+                label={region}
+                active={activeRegion === region}
+                onClick={() => handleRegion(region)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Grid */}
       <div style={{ padding: "1.5rem" }}>
-        {stories.length === 0 && !loading ? (
+        {visible.length === 0 ? (
           <div style={{ color: "#555", textAlign: "center", padding: "4rem 0", fontSize: "0.9rem" }}>
-            No stories found for this filter. Check back soon.
+            Nothing here yet — check back soon.
           </div>
         ) : (
           <div
@@ -147,42 +133,17 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
               gap: "1rem",
             }}
           >
-            {stories.map((story) => (
-              <PulseCard key={story.id} story={story} />
-            ))}
-          </div>
-        )}
-
-        {/* Loading skeleton */}
-        {loading && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: "1rem",
-              marginTop: stories.length ? "1rem" : 0,
-            }}
-          >
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  background: "#1a1a1a",
-                  border: "1px solid #2a2a2a",
-                  borderRadius: "2px",
-                  height: "200px",
-                  animation: "pulse-shimmer 1.5s ease-in-out infinite",
-                }}
-              />
+            {visible.map((item) => (
+              <FeedCard key={item.id} item={item} />
             ))}
           </div>
         )}
 
         {/* Load more */}
-        {hasMore && !loading && stories.length > 0 && (
+        {hasMore && (
           <div style={{ textAlign: "center", marginTop: "2.5rem" }}>
             <button
-              onClick={handleLoadMore}
+              onClick={() => setVisibleCount((n: number) => n + 24)}
               style={{
                 background: "transparent",
                 border: "1px solid #D4A847",
@@ -197,17 +158,13 @@ export default function PulseFeed({ initialStories }: PulseFeedProps) {
                 transition: "all 0.15s",
               }}
             >
-              Load more stories
+              Load more
             </button>
           </div>
         )}
       </div>
 
       <style>{`
-        @keyframes pulse-shimmer {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.7; }
-        }
         .pulse-card:hover {
           border-color: #2e2e2e !important;
         }

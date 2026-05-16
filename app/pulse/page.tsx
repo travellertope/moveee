@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getPulseStories } from "@/lib/pulse-wordpress";
+import { getUnifiedFeed } from "@/lib/unified-feed";
 import PulseFeed from "@/components/pulse/PulseFeed";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PulsePage() {
-  const stories = await getPulseStories({ perPage: 18 });
+  const items = await getUnifiedFeed();
 
   return (
     <div style={{ background: "#0d0d0d", minHeight: "100vh" }}>
@@ -88,13 +88,13 @@ export default async function PulsePage() {
               maxWidth: "520px",
             }}
           >
-            AI-curated cultural intelligence across African and Black diaspora music, fashion,
-            travel, events, and ideas — refreshed three times daily.
+            Everything happening in African and Black diaspora culture — Pulse stories, editorials,
+            happenings, directory picks, and quotes — all in one living feed.
           </p>
         </div>
       </header>
 
-      <PulseFeed initialStories={stories} />
+      <PulseFeed initialItems={items} />
 
       <style>{`
         @keyframes pulse-dot {
