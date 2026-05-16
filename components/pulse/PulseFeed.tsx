@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
 import FeedCard from "./FeedCard";
 import SubmitPost from "./SubmitPost";
@@ -57,7 +57,17 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [items, setItems] = useState<FeedItem[]>(initialItems);
   const [activeType, setActiveType] = useState<FeedItemType | "all">("all");
   const [activeRegion, setActiveRegion] = useState<string>("All");
+  const [activeTag, setActiveTag] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(24);
+
+  // Derive available tags from actual community posts in the feed.
+  const availableTags = useMemo(() => {
+    const tags = new Set<string>();
+    items.forEach((item) => {
+      if (item.type === "community" && item.communityTag) tags.add(item.communityTag);
+    });
+    return Array.from(tags).sort();
+  }, [items]);
 
   const handlePosted = useCallback(
     (post: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null }) => {
@@ -71,20 +81,32 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
         href: `/pulse#community-${post.id}`,
         communityAuthor: post.authorName,
         communityTag: post.tag ?? "",
+        reactions: { love: 0, fire: 0, clap: 0 },
+        wpId: post.id,
       };
       setItems((prev) => [newItem, ...prev]);
       setActiveType("community");
+      setActiveTag(post.tag ?? "");
       setVisibleCount(24);
     },
     []
   );
+
+  const handleTagClick = useCallback((tag: string) => {
+    setActiveType("community");
+    setActiveTag((prev) => (prev === tag ? "" : tag));
+    setVisibleCount(24);
+  }, []);
 
   const filtered = items.filter((item) => {
     const typeMatch = activeType === "all" || item.type === activeType;
     const regionMatch =
       activeRegion === "All" ||
       (item.region?.toLowerCase() === activeRegion.toLowerCase());
-    return typeMatch && regionMatch;
+    const tagMatch =
+      !activeTag ||
+      (item.type === "community" && item.communityTag === activeTag);
+    return typeMatch && regionMatch && tagMatch;
   });
 
   const visible = filtered.slice(0, visibleCount);
@@ -92,6 +114,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
   const handleType = (type: FeedItemType | "all") => {
     setActiveType(type);
+    setActiveTag("");
     setVisibleCount(24);
     if (type !== "pulse") setActiveRegion("All");
   };
@@ -102,6 +125,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   };
 
   const showRegions = activeType === "all" || activeType === "pulse";
+  const showTags = availableTags.length > 0 && (activeType === "all" || activeType === "community");
 
   return (
     <div style={{ background: "#0d0d0d", minHeight: "60vh", paddingBottom: "4rem" }}>
@@ -132,13 +156,32 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
         </div>
         {/* Region filters — only relevant for Pulse */}
         {showRegions && (
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: showTags ? "0.6rem" : 0 }}>
             {REGIONS.map((region) => (
               <FilterPill
                 key={region}
                 label={region}
                 active={activeRegion === region}
                 onClick={() => handleRegion(region)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Tag filters — derived from community posts present in the feed */}
+        {showTags && (
+          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", paddingTop: showRegions ? "0" : "0" }}>
+            <FilterPill
+              label="All tags"
+              active={activeTag === ""}
+              onClick={() => { setActiveTag(""); setVisibleCount(24); }}
+            />
+            {availableTags.map((tag) => (
+              <FilterPill
+                key={tag}
+                label={tag}
+                active={activeTag === tag}
+                onClick={() => handleTagClick(tag)}
               />
             ))}
           </div>
@@ -160,7 +203,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
             }}
           >
             {visible.map((item) => (
-              <FeedCard key={item.id} item={item} />
+              <FeedCard key={item.id} item={item} onTagClick={handleTagClick} />
             ))}
           </div>
         )}

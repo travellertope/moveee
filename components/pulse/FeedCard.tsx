@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import type { FeedItem } from "@/lib/unified-feed";
+import ReactionBar from "./ReactionBar";
 
 const TYPE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   pulse:     { label: "Pulse",      bg: "#2a2000",  color: "#D4A847" },
@@ -26,7 +29,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export default function FeedCard({ item }: { item: FeedItem }) {
+export default function FeedCard({ item, onTagClick }: { item: FeedItem; onTagClick?: (tag: string) => void }) {
   const typeMeta = TYPE_BADGE[item.type] ?? TYPE_BADGE.pulse;
   const armStyle = item.arm ? (ARM_STYLES[item.arm.toLowerCase()] ?? null) : null;
 
@@ -142,7 +145,8 @@ export default function FeedCard({ item }: { item: FeedItem }) {
             <span style={{ color: "#3a4a3a", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>
           </div>
           {item.communityTag && (
-            <span
+            <button
+              onClick={() => onTagClick?.(item.communityTag!)}
               style={{
                 background: tagMeta.bg,
                 color: tagMeta.color,
@@ -153,10 +157,12 @@ export default function FeedCard({ item }: { item: FeedItem }) {
                 padding: "0.15rem 0.45rem",
                 borderRadius: "2px",
                 flexShrink: 0,
+                border: "none",
+                cursor: onTagClick ? "pointer" : "default",
               }}
             >
               {item.communityTag}
-            </span>
+            </button>
           )}
         </div>
 
@@ -194,6 +200,16 @@ export default function FeedCard({ item }: { item: FeedItem }) {
               loading="lazy"
             />
           </div>
+        )}
+
+        {/* Reactions */}
+        {item.wpId && (
+          <ReactionBar
+            itemId={item.wpId}
+            itemType="community"
+            initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
+            shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/pulse#community-${item.wpId}`}
+          />
         )}
       </article>
     );
@@ -380,6 +396,18 @@ export default function FeedCard({ item }: { item: FeedItem }) {
           </div>
         </div>
       </Link>
+
+      {/* Reactions — pulse stories only (community cards have their own ReactionBar) */}
+      {item.type === "pulse" && item.wpId && (
+        <div style={{ padding: "0 1.1rem 0.9rem" }}>
+          <ReactionBar
+            itemId={item.wpId}
+            itemType="pulse"
+            initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
+            shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/pulse/${item.slug}`}
+          />
+        </div>
+      )}
     </article>
   );
 }

@@ -37,6 +37,9 @@ export interface FeedItem {
   // community-specific
   communityAuthor?: string;
   communityTag?: string;
+  // reactions (community + pulse)
+  reactions?: { love: number; fire: number; clap: number };
+  wpId?: string;
 }
 
 function stripHtml(html: string): string {
@@ -111,6 +114,12 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
       href: `/pulse#community-${post.id}`,
       communityAuthor: authorName || (post.excerpt?.rendered ? stripHtml(post.excerpt.rendered) : ""),
       communityTag: tag ?? "",
+      reactions: {
+        love: Number(post.meta?.reaction_love ?? 0),
+        fire: Number(post.meta?.reaction_fire ?? 0),
+        clap: Number(post.meta?.reaction_clap ?? 0),
+      },
+      wpId: String(post.id),
     };
   });
 }
@@ -150,6 +159,12 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         region: story.meta?.pulse_region_label ?? "",
         source: story.meta?.pulse_source ?? "",
         sourceUrl: story.meta?.pulse_external_url ?? "",
+        reactions: {
+          love: Number((story.meta as any)?.reaction_love ?? 0),
+          fire: Number((story.meta as any)?.reaction_fire ?? 0),
+          clap: Number((story.meta as any)?.reaction_clap ?? 0),
+        },
+        wpId: String(story.id),
       });
     }
   }

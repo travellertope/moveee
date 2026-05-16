@@ -6,19 +6,11 @@
  * community posts submitted via the Next.js API route carry proper author
  * attribution, an optional image URL, and a content tag.
  *
- * Fields:
- *   community_author_name — display name of the submitting member
- *   community_author_id   — their NextAuth / WP user ID (string)
- *   community_image_url   — optional image URL attached to the post
- *   community_tag         — topic tag e.g. Music, Fashion, Tech
+ * Also registers reaction count fields on both 'post' (community posts) and
+ * 'pulse_story' CPT so that emoji reactions can be stored, read, and written
+ * via the REST API from the Next.js layer.
  *
- * These fields are:
- *   - Readable by anyone via the REST API (show_in_rest: true)
- *   - Writable only by users who can edit posts (the site's admin app
- *     password satisfies this; regular subscriber-level users cannot write
- *     these fields directly)
- *   - Backed up by UpdraftPlus (stored in wp_postmeta, same as all WP meta)
- *   - Queryable via WP_Query / REST meta_query for future per-user feeds
+ * All fields are stored in wp_postmeta and are fully backed up by UpdraftPlus.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -32,14 +24,15 @@ class Culture_Community {
     }
 
     public static function register_meta() {
-        $fields = [
+        // ── Community post attribution fields (post type: post) ──────────────
+        $string_fields = [
             'community_author_name',
             'community_author_id',
             'community_image_url',
             'community_tag',
         ];
 
-        foreach ( $fields as $field ) {
+        foreach ( $string_fields as $field ) {
             register_post_meta( 'post', $field, [
                 'show_in_rest'  => true,
                 'single'        => true,
@@ -49,6 +42,28 @@ class Culture_Community {
                     return current_user_can( 'edit_posts' );
                 },
             ] );
+        }
+
+        // ── Reaction count fields — community posts (post type: post) ────────
+        // ── Reaction count fields — pulse stories (post type: pulse_story) ───
+        //
+        // Each field is an integer reaction count for one emoji.
+        // Writes are restricted to edit_posts capability (admin app password).
+        // Reads are public (show_in_rest: true, no auth needed for GET).
+        $reaction_fields = [ 'reaction_love', 'reaction_fire', 'reaction_clap' ];
+
+        foreach ( [ 'post', 'pulse_story' ] as $post_type ) {
+            foreach ( $reaction_fields as $field ) {
+                register_post_meta( $post_type, $field, [
+                    'show_in_rest'  => true,
+                    'single'        => true,
+                    'type'          => 'integer',
+                    'default'       => 0,
+                    'auth_callback' => function () {
+                        return current_user_can( 'edit_posts' );
+                    },
+                ] );
+            }
         }
     }
 }
