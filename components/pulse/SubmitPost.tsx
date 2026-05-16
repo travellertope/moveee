@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 
-const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas"] as const;
+const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 
 interface SubmitPostProps {
@@ -257,8 +257,8 @@ export default function SubmitPost({ onPosted }: SubmitPostProps) {
             type="submit"
             disabled={!text.trim() || loading || remaining < 0}
             style={{
-              background: text.trim() && !loading && remaining >= 0 ? "#D4A847" : "#2a2a2a",
-              color: text.trim() && !loading && remaining >= 0 ? "#0d0d0d" : "#555",
+              background: text.trim() && !loading && remaining >= 0 ? "#c93c2a" : "#2a2a2a",
+              color: text.trim() && !loading && remaining >= 0 ? "#fff" : "#555",
               border: "none",
               borderRadius: "2px",
               padding: "0.35rem 1rem",

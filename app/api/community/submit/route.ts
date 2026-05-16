@@ -10,7 +10,7 @@ const AUTH = Buffer.from(
   `${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`
 ).toString("base64");
 
-const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas"] as const;
+const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 
 async function resolveCategoryId(slug: string): Promise<number | null> {
