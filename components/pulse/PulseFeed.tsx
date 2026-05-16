@@ -262,8 +262,8 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
         {/* ── Center Timeline ── */}
         <main className="pulse-timeline">
           {/* Mobile filter strip */}
-          <div className="pulse-mobile-filters" style={{ position: "relative" }}>
-            <div style={{ display: "flex", gap: "0.35rem", padding: "0.65rem 1rem", paddingRight: "7rem" }}>
+          <div className="pulse-mobile-filters">
+            <div style={{ display: "flex", gap: "0.35rem", padding: "0.65rem 1rem" }}>
               {TYPE_FILTERS.map(({ label, value }) => (
                 <button
                   key={value}
@@ -284,35 +284,27 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                   {label}
                 </button>
               ))}
-            </div>
-            {/* Fade + sticky Sections anchor */}
-            <div style={{
-              position: "absolute",
-              top: 0, right: 0, bottom: 0,
-              display: "flex",
-              alignItems: "center",
-              paddingRight: "0.65rem",
-              background: "linear-gradient(to right, transparent, #fff 38%)",
-              pointerEvents: "none",
-            }}>
               <Link
                 href="/pulse/categories"
                 style={{
+                  position: "sticky",
+                  right: 0,
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "0.25rem",
                   background: "#fff",
                   color: "#7a6f5c",
                   border: "1px solid #d8d0c6",
-                  borderRadius: "2px",
-                  padding: "0.25rem 0.7rem",
+                  borderLeft: "none",
+                  borderRadius: "0",
+                  padding: "0.25rem 0.9rem",
                   fontSize: "0.72rem",
                   fontWeight: 500,
                   whiteSpace: "nowrap",
                   letterSpacing: "0.04em",
                   textDecoration: "none",
-                  pointerEvents: "auto",
-                  boxShadow: "-4px 0 8px rgba(255,255,255,0.9)",
+                  flexShrink: 0,
+                  boxShadow: "-6px 0 10px #fff",
                 }}
               >
                 ⊞ Sections
