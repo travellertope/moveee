@@ -240,7 +240,7 @@ export default function SubmitPost({ onPosted }: SubmitPostProps) {
               outline: "none",
             }}
           >
-            <option value="">Tag</option>
+            <option value="">Section</option>
             {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
 
