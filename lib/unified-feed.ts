@@ -60,7 +60,7 @@ function parseCommunityData(
     };
   }
   // Legacy fallback — HTML comment embedded in content.
-  const match = content.match(/<!--community:(\{.*?\})-->/s);
+  const match = content.match(/<!--community:(\{[\s\S]*?\})-->/);
   if (!match) return { authorName: "", imageUrl: null, tag: null };
   try {
     const data = JSON.parse(match[1]);
@@ -102,7 +102,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
   return posts.map((post) => {
     const raw = post.content?.rendered ?? "";
     const { authorName, imageUrl, tag } = parseCommunityData(post.meta, raw);
-    const textContent = stripHtml(raw.replace(/<!--.*?-->/gs, ""));
+    const textContent = stripHtml(raw.replace(/<!--[\s\S]*?-->/g, ""));
 
     return {
       id: `community-${post.id}`,
