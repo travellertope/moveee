@@ -29,6 +29,7 @@ interface ReactionBarProps {
   itemType:     "community" | "pulse";
   initialCounts: { love: number; fire: number; clap: number };
   shareUrl?:    string;
+  noBorder?:    boolean;
 }
 
 export default function ReactionBar({
@@ -36,6 +37,7 @@ export default function ReactionBar({
   itemType,
   initialCounts,
   shareUrl,
+  noBorder,
 }: ReactionBarProps) {
   const { status } = useSession();
   const loggedIn = status === "authenticated";
@@ -134,9 +136,7 @@ export default function ReactionBar({
         display: "flex",
         alignItems: "center",
         gap: "0.25rem",
-        paddingTop: "0.5rem",
-        borderTop: "1px solid #e8e2d8",
-        marginTop: "0.25rem",
+        ...(noBorder ? {} : { paddingTop: "0.5rem", borderTop: "1px solid #e8e2d8", marginTop: "0.25rem" }),
         minWidth: 0,
         overflow: "hidden",
       }}
