@@ -76,6 +76,19 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [visibleCount, setVisibleCount] = useState(20);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
+  // Apply edition cookie → pre-select matching region
+  useEffect(() => {
+    const edition = document.cookie.split("; ").find(r => r.startsWith("moveee_edition="))?.split("=")[1];
+    const editionToRegion: Record<string, string> = {
+      uk:     "Diaspora UK",
+      us:     "Diaspora US",
+      africa: "Africa",
+    };
+    if (edition && editionToRegion[edition]) {
+      setActiveRegion(editionToRegion[edition]);
+    }
+  }, []);
+
   useEffect(() => {
     const hashtag = searchParams.get("hashtag");
     const tag = searchParams.get("tag");

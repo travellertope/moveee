@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { parseHashtags } from "@/lib/hashtags";
 
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
+type Tag = (typeof TAGS)[number];
 
 function HashtagPreview({ text }: { text: string }) {
   const tags = useMemo(() => parseHashtags(text), [text]);
@@ -20,8 +21,6 @@ function HashtagPreview({ text }: { text: string }) {
   );
 }
 
-type Tag = (typeof TAGS)[number];
-
 interface SubmitPostProps {
   onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null }) => void;
 }
@@ -29,40 +28,76 @@ interface SubmitPostProps {
 export default function SubmitPost({ onPosted }: SubmitPostProps) {
   const { data: session, status } = useSession();
   const [text, setText] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
   const [tag, setTag] = useState<Tag | "">("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showImageField, setShowImageField] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const user = session?.user as any;
   const loggedIn = status === "authenticated";
   const MAX = 500;
   const remaining = MAX - text.length;
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setImageFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = ev => setImagePreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
+    }
+  }
+
+  function removeImage() {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim() || loading) return;
     setLoading(true);
     setError("");
+
     try {
+      // Upload image first if one was selected
+      let imageUrl: string | undefined;
+      if (imageFile) {
+        setUploading(true);
+        const fd = new FormData();
+        fd.append("file", imageFile);
+        const uploadRes = await fetch("/api/community/upload-image", { method: "POST", body: fd });
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) throw new Error(uploadData.error || "Image upload failed");
+        imageUrl = uploadData.url;
+        setUploading(false);
+      }
+
       const res = await fetch("/api/community/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text.trim(), imageUrl: imageUrl.trim() || undefined, tag: tag || undefined }),
+        body: JSON.stringify({ text: text.trim(), imageUrl, tag: tag || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to post");
+
       onPosted?.({
         id: data.id,
         text: text.trim(),
         authorName: user?.name ?? user?.displayName ?? "Community Member",
         tag: tag || null,
-        imageUrl: imageUrl.trim() || null,
+        imageUrl: imageUrl ?? null,
       });
-      setText(""); setImageUrl(""); setTag(""); setShowImageField(false);
+      setText(""); setTag(""); removeImage();
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
+      setUploading(false);
     } finally {
       setLoading(false);
     }
@@ -153,24 +188,39 @@ export default function SubmitPost({ onPosted }: SubmitPostProps) {
 
         <HashtagPreview text={text} />
 
-        {showImageField && (
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={e => setImageUrl(e.target.value)}
-            placeholder="Image URL (optional)"
-            style={{
-              background: "#f7f5f2",
-              border: "1px solid #e0d8ce",
-              borderRadius: "2px",
-              color: "#3a342b",
-              fontSize: "0.8rem",
-              padding: "0.4rem 0.7rem",
-              outline: "none",
-              width: "100%",
-            }}
-          />
+        {/* Image preview */}
+        {imagePreview && (
+          <div style={{ position: "relative", display: "inline-block", maxWidth: "200px" }}>
+            <img
+              src={imagePreview}
+              alt="Preview"
+              style={{ width: "100%", borderRadius: "4px", border: "1px solid #e0d8ce", display: "block" }}
+            />
+            <button
+              type="button"
+              onClick={removeImage}
+              aria-label="Remove image"
+              style={{
+                position: "absolute", top: "4px", right: "4px",
+                background: "rgba(20,17,13,0.65)", border: "none",
+                borderRadius: "50%", width: "20px", height: "20px",
+                color: "#fff", fontSize: "0.7rem", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              ✕
+            </button>
+          </div>
         )}
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          onChange={handleFileChange}
+          style={{ display: "none" }}
+        />
 
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
           <select
@@ -194,15 +244,16 @@ export default function SubmitPost({ onPosted }: SubmitPostProps) {
             {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
 
+          {/* Image upload button */}
           <button
             type="button"
-            onClick={() => setShowImageField(v => !v)}
-            title="Add image URL"
+            onClick={() => fileInputRef.current?.click()}
+            title="Attach image"
             style={{
-              background: showImageField ? "#fff0eb" : "transparent",
-              border: `1px solid ${showImageField ? "#c5491f" : "#e0d8ce"}`,
+              background: imageFile ? "#fff0eb" : "transparent",
+              border: `1px solid ${imageFile ? "#c5491f" : "#e0d8ce"}`,
               borderRadius: "2px",
-              color: showImageField ? "#c5491f" : "#7a6f5c",
+              color: imageFile ? "#c5491f" : "#7a6f5c",
               fontSize: "0.72rem",
               padding: "0.28rem 0.55rem",
               cursor: "pointer",
@@ -214,7 +265,7 @@ export default function SubmitPost({ onPosted }: SubmitPostProps) {
               <circle cx="8.5" cy="8.5" r="1.5" />
               <polyline points="21 15 16 10 5 21" />
             </svg>
-            Image
+            {imageFile ? "Change" : "Image"}
           </button>
 
           <div style={{ flex: 1 }} />
@@ -244,7 +295,7 @@ export default function SubmitPost({ onPosted }: SubmitPostProps) {
               transition: "all 0.15s",
             }}
           >
-            {loading ? "Posting…" : "Post"}
+            {uploading ? "Uploading…" : loading ? "Posting…" : "Post"}
           </button>
         </div>
 

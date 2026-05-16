@@ -106,6 +106,9 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
                   key={slug}
                   href={cfg.path}
                   className={`edition-bar-link${isActive ? " edition-bar-link--active" : ""}`}
+                  onClick={() => {
+                    document.cookie = `moveee_edition=${slug}; path=/; max-age=2592000; SameSite=Lax`;
+                  }}
                 >
                   {cfg.label}
                 </Link>
