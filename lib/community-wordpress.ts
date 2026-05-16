@@ -70,3 +70,21 @@ export async function searchCommunityPosts(query: string): Promise<WpCommunityPo
   if (!res.ok) return [];
   return res.json().catch(() => []);
 }
+
+export interface WpComment {
+  id: number;
+  post: number;
+  parent: number;
+  author_name: string;
+  date: string;
+  content: { rendered: string };
+}
+
+export async function getPostComments(postId: number): Promise<WpComment[]> {
+  const res = await fetch(
+    `${BASE}/comments?post=${postId}&per_page=100&order=asc&_fields=id,post,parent,author_name,date,content`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) return [];
+  return res.json().catch(() => []);
+}
