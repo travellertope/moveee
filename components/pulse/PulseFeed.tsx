@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
 import FeedCard from "./FeedCard";
 import SubmitPost from "./SubmitPost";
@@ -224,6 +225,24 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 </ul>
               </div>
             )}
+
+            <div style={{ marginTop: "1.25rem" }}>
+              <SidebarHeading>Categories</SidebarHeading>
+              <ul style={{ margin: 0, padding: 0 }}>
+                {["Music","Film","Art","Fashion","Literature","Food","Tech","Sport","Travel","Design"].slice(0,6).map(cat => (
+                  <li key={cat} style={{ listStyle: "none" }}>
+                    <Link href={`/pulse/${cat.toLowerCase()}`} style={{ display: "block", padding: "0.3rem 0.85rem", fontSize: "0.78rem", color: "#3a342b", textDecoration: "none", borderLeft: "2px solid transparent" }}>
+                      {cat}
+                    </Link>
+                  </li>
+                ))}
+                <li style={{ listStyle: "none" }}>
+                  <Link href="/pulse/categories" style={{ display: "block", padding: "0.3rem 0.85rem", fontSize: "0.72rem", color: "#c5491f", textDecoration: "none", fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
+                    See all categories →
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </nav>
         </aside>
 
