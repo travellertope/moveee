@@ -226,34 +226,45 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
   const gql = await getWPData(GET_EVENT_BY_SLUG, { slug }, options);
   if (gql?.cultureEvent) {
     const ev = gql.cultureEvent;
-    // WPGraphQL may not resolve the ACF relationship — patch via REST if host is missing
-    if (!ev.featuredHost) {
+    // WPGraphQL may not resolve some ACF fields — patch via REST for host, showcaseLabel, chapterId
+    if (!ev.featuredHost || !ev.showcaseLabel || !ev.chapterId) {
       try {
         const metaRes = await fetch(
-          `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_fields=acf`,
+          `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_fields=acf,meta`,
           { next: { revalidate: 3600 } }
         );
         if (metaRes.ok) {
           const metaJson = await metaRes.json();
-          const rawHost = metaJson[0]?.acf?.featured_host;
-          const hostId = typeof rawHost === "number" ? rawHost
-            : Array.isArray(rawHost) ? (typeof rawHost[0] === "number" ? rawHost[0] : rawHost[0]?.ID ?? null)
-            : typeof rawHost === "object" && rawHost ? (rawHost.ID ?? rawHost.id ?? null)
-            : null;
-          if (hostId) {
-            const hostRes = await fetch(
-              `${WP_BASE_URL}/wp-json/wp/v2/culture_directory/${hostId}?_embed=1`,
-              { next: { revalidate: 3600 } }
-            );
-            if (hostRes.ok) {
-              const h = await hostRes.json();
-              const img = h._embedded?.["wp:featuredmedia"]?.[0];
-              ev.featuredHost = {
-                title: h.title?.rendered ?? "",
-                slug: h.slug ?? "",
-                excerpt: h.excerpt?.rendered?.replace(/<[^>]+>/g, "") ?? "",
-                featuredImage: img?.source_url ? { node: { sourceUrl: img.source_url, altText: img.alt_text ?? "" } } : null,
-              };
+          const acf = metaJson[0]?.acf ?? {};
+          const meta = metaJson[0]?.meta ?? {};
+
+          if (!ev.showcaseLabel && acf.showcase_label) ev.showcaseLabel = acf.showcase_label;
+          if (!ev.chapterId) {
+            const rawChapter = acf.chapter_id ?? meta._culture_chapter_id;
+            if (rawChapter) ev.chapterId = parseInt(String(rawChapter), 10) || null;
+          }
+
+          if (!ev.featuredHost) {
+            const rawHost = acf.featured_host;
+            const hostId = typeof rawHost === "number" ? rawHost
+              : Array.isArray(rawHost) ? (typeof rawHost[0] === "number" ? rawHost[0] : rawHost[0]?.ID ?? null)
+              : typeof rawHost === "object" && rawHost ? (rawHost.ID ?? rawHost.id ?? null)
+              : null;
+            if (hostId) {
+              const hostRes = await fetch(
+                `${WP_BASE_URL}/wp-json/wp/v2/culture_directory/${hostId}?_embed=1`,
+                { next: { revalidate: 3600 } }
+              );
+              if (hostRes.ok) {
+                const h = await hostRes.json();
+                const img = h._embedded?.["wp:featuredmedia"]?.[0];
+                ev.featuredHost = {
+                  title: h.title?.rendered ?? "",
+                  slug: h.slug ?? "",
+                  excerpt: h.excerpt?.rendered?.replace(/<[^>]+>/g, "") ?? "",
+                  featuredImage: img?.source_url ? { node: { sourceUrl: img.source_url, altText: img.alt_text ?? "" } } : null,
+                };
+              }
             }
           }
         }
@@ -766,7 +777,6 @@ const EVENT_FIELDS_FRAGMENT = `
       ticketAmount
       ticketCurrency
     }
-    showcaseLabel
     chapterId
   }
 `;
