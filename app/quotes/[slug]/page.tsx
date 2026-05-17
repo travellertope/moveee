@@ -2,7 +2,9 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getWPQuoteById } from '@/lib/wp';
+import { getPostComments } from '@/lib/community-wordpress';
 import QuoteCard from '@/components/QuoteCard';
+import QuoteComments from './QuoteComments';
 import '@/app/quotes.css';
 
 interface QuotePageProps {
@@ -50,6 +52,8 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
 
   if (!quote) notFound();
 
+  const comments = await getPostComments(quote.databaseId);
+
   const author = quote.quoteAuthors?.nodes[0]?.name || 'Unknown Author';
 
   const jsonLd = {
@@ -78,6 +82,8 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
         </Link>
 
         <QuoteCard quote={quote} />
+
+        <QuoteComments postId={quote.databaseId} initialComments={comments} />
 
         <div className="mt-24 border-t border-rule pt-12">
           <h4 className="num mb-8">MORE FROM THE ARCHIVE</h4>
