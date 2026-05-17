@@ -108,6 +108,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const host = hasHost ? event.featuredHost : null;
   const chapter = event.associatedChapter && event.associatedChapter.title ? event.associatedChapter : null;
   const showcaseLabel = event.showcaseLabel || null;
+  const artistSectionLabel = event.artistSectionLabel || "The artist";
+  const artistLinkLabel = event.artistLinkLabel || "Read the full portrait";
 
   // Eyebrow pieces
   const eyebrowType = eventSubtype || cat;
@@ -337,7 +339,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             )}
           </div>
           <div className="artist-info">
-            <div className="section-label">The artist</div>
+            <div className="section-label">{artistSectionLabel}</div>
             <h3>{host.title?.split(' ')[0] || "Featured"} <em>{host.title?.split(' ').slice(1).join(' ') || "Artist"}</em></h3>
             <div
               style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: "18px", color: "var(--ink-soft)", lineHeight: 1.5, marginBottom: "20px" }}
@@ -347,7 +349,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               href={`/directory/${host.slug}`}
               style={{ display: "inline-block", fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.15em", borderBottom: "1px solid var(--ink)", paddingBottom: "2px", textDecoration: "none", color: "var(--ink)" }}
             >
-              Read the full portrait →
+              {artistLinkLabel} →
             </Link>
           </div>
         </section>

@@ -324,11 +324,14 @@ class Culture_Post_Types {
 
         // New display / RSVP fields
         $new_event_acf_fields = array(
-            'eventSubtype'   => array( 'type' => 'String', 'acf_key' => 'event_subtype' ),
-            'aboutLabel'     => array( 'type' => 'String', 'acf_key' => 'about_label' ),
-            'venueAddress'   => array( 'type' => 'String', 'acf_key' => 'venue_address' ),
-            'rsvpMembersNote' => array( 'type' => 'String', 'acf_key' => 'rsvp_members_note' ),
-            'rsvpCapacity'   => array( 'type' => 'Int',    'acf_key' => 'rsvp_capacity' ),
+            'eventSubtype'       => array( 'type' => 'String', 'acf_key' => 'event_subtype' ),
+            'aboutLabel'         => array( 'type' => 'String', 'acf_key' => 'about_label' ),
+            'showcaseLabel'      => array( 'type' => 'String', 'acf_key' => 'showcase_label' ),
+            'artistSectionLabel' => array( 'type' => 'String', 'acf_key' => 'artist_section_label' ),
+            'artistLinkLabel'    => array( 'type' => 'String', 'acf_key' => 'artist_link_label' ),
+            'venueAddress'       => array( 'type' => 'String', 'acf_key' => 'venue_address' ),
+            'rsvpMembersNote'    => array( 'type' => 'String', 'acf_key' => 'rsvp_members_note' ),
+            'rsvpCapacity'       => array( 'type' => 'Int',    'acf_key' => 'rsvp_capacity' ),
         );
 
         foreach ( $new_event_acf_fields as $field_name => $config ) {

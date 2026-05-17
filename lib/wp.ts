@@ -133,6 +133,8 @@ function mapRestEventToFrontendShape(item: any) {
     rsvpCapacity: acf.rsvp_capacity ? parseInt(String(acf.rsvp_capacity), 10) : null,
     rsvpMembersNote: pick(acf.rsvp_members_note, meta.rsvp_members_note),
     showcaseLabel: pick(acf.showcase_label, meta.showcase_label) || null,
+    artistSectionLabel: pick(acf.artist_section_label, meta.artist_section_label) || null,
+    artistLinkLabel: pick(acf.artist_link_label, meta.artist_link_label) || null,
     chapterId: acf.chapter_id ? parseInt(String(acf.chapter_id), 10)
       : meta._culture_chapter_id ? parseInt(String(meta._culture_chapter_id), 10)
       : null,
@@ -226,9 +228,9 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
   const gql = await getWPData(GET_EVENT_BY_SLUG, { slug }, options);
   if (gql?.cultureEvent) {
     const ev = gql.cultureEvent;
-    // WPGraphQL may not resolve some ACF fields — patch via REST for host, showcaseLabel, chapterId
+    // WPGraphQL may not resolve some ACF fields — patch via REST for host, chapterId
     const needsHostPatch = !ev.featuredHost?.title;
-    if (needsHostPatch || !ev.showcaseLabel || !ev.chapterId) {
+    if (needsHostPatch || !ev.chapterId) {
       try {
         const metaRes = await fetch(
           `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_fields=acf,meta`,
@@ -239,7 +241,6 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
           const acf = metaJson[0]?.acf ?? {};
           const meta = metaJson[0]?.meta ?? {};
 
-          if (!ev.showcaseLabel && acf.showcase_label) ev.showcaseLabel = acf.showcase_label;
           if (!ev.chapterId) {
             const rawChapter = acf.chapter_id ?? meta._culture_chapter_id;
             if (rawChapter) ev.chapterId = parseInt(String(rawChapter), 10) || null;
@@ -819,6 +820,9 @@ const EVENT_FIELDS_FRAGMENT = `
     }
     eventSubtype
     aboutLabel
+    showcaseLabel
+    artistSectionLabel
+    artistLinkLabel
     venueAddress
     rsvpCapacity
     rsvpMembersNote
