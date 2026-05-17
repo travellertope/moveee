@@ -39,12 +39,13 @@ const TAB_STYLE = (active: boolean): React.CSSProperties => ({
 
 interface SubmitPostProps {
   onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null }) => void;
+  lockedTag?: string;
 }
 
 // ── Post mode ────────────────────────────────────────────────────────────────
-function PostForm({ user, onPosted }: { user: any; onPosted?: SubmitPostProps["onPosted"] }) {
+function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitPostProps["onPosted"]; lockedTag?: string }) {
   const [text, setText] = useState("");
-  const [tag, setTag] = useState<Tag | "">("");
+  const [tag, setTag] = useState<Tag | "">(lockedTag as Tag ?? "");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -140,15 +141,25 @@ function PostForm({ user, onPosted }: { user: any; onPosted?: SubmitPostProps["o
       )}
       <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileChange} style={{ display: "none" }} />
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-        <select value={tag} onChange={e => setTag(e.target.value as Tag | "")} style={{
-          background: "#f7f5f2", border: "1px solid #e0d8ce", borderRadius: "2px",
-          color: tag ? "#c5491f" : "#7a6f5c", fontSize: "0.72rem", fontWeight: 600,
-          letterSpacing: "0.06em", textTransform: "uppercase", padding: "0.28rem 0.55rem",
-          cursor: "pointer", outline: "none",
-        }}>
-          <option value="">Section</option>
-          {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
+        {lockedTag ? (
+          <span style={{
+            background: "#fff0eb", color: "#c5491f", fontSize: "0.65rem", fontWeight: 700,
+            letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.28rem 0.55rem",
+            borderRadius: "2px", border: "1px solid #f5d0c0",
+          }}>
+            {lockedTag}
+          </span>
+        ) : (
+          <select value={tag} onChange={e => setTag(e.target.value as Tag | "")} style={{
+            background: "#f7f5f2", border: "1px solid #e0d8ce", borderRadius: "2px",
+            color: tag ? "#c5491f" : "#7a6f5c", fontSize: "0.72rem", fontWeight: 600,
+            letterSpacing: "0.06em", textTransform: "uppercase", padding: "0.28rem 0.55rem",
+            cursor: "pointer", outline: "none",
+          }}>
+            <option value="">Section</option>
+            {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        )}
         <button type="button" onClick={() => fileInputRef.current?.click()} title="Attach image" style={{
           background: imageFile ? "#fff0eb" : "transparent",
           border: `1px solid ${imageFile ? "#c5491f" : "#e0d8ce"}`,
@@ -355,7 +366,7 @@ function SubmitDropdown() {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function SubmitPost({ onPosted }: SubmitPostProps) {
+export default function SubmitPost({ onPosted, lockedTag }: SubmitPostProps) {
   const { data: session, status } = useSession();
   const [mode, setMode] = useState<Mode>("post");
 
@@ -418,7 +429,7 @@ export default function SubmitPost({ onPosted }: SubmitPostProps) {
 
         <div style={{ flex: 1, minWidth: 0 }}>
           {mode === "post"
-            ? <PostForm user={user} onPosted={onPosted} />
+            ? <PostForm user={user} onPosted={onPosted} lockedTag={lockedTag} />
             : <QuoteForm user={user} />
           }
         </div>

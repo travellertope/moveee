@@ -139,7 +139,7 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
           {/* Main column */}
           <div style={{ borderRight: "1px solid #e8e2d8", minHeight: "80vh" }}>
             {/* Composer */}
-            <SubmitPost />
+            <SubmitPost lockedTag={label} />
 
             {/* Community posts */}
             {communityItems.length > 0 && (
