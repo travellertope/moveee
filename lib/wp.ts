@@ -273,19 +273,25 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
       } catch { /* non-fatal */ }
     }
 
-    // Resolve missing showcase images (WPGraphQL may return null for image fields stored as IDs)
+    // Resolve missing showcase images via WP media API when GraphQL returns null
     if (Array.isArray(ev.showcase)) {
-      const missingImageItems = ev.showcase
-        .map((s: any, i: number) => ({ i, id: s._imageId ?? null }))
-        .filter((x: any) => x.id && !ev.showcase[x.i]?.image?.sourceUrl);
-      if (missingImageItems.length > 0) {
-        await Promise.allSettled(missingImageItems.map(async ({ i, id }: { i: number; id: number }) => {
+      const missing = ev.showcase
+        .map((s: any, i: number) => {
+          if (s.image?.sourceUrl) return null;
+          // Try mediaItemUrl first, then fall back to databaseId fetch
+          if (s.image?.mediaItemUrl) { ev.showcase[i].image = { sourceUrl: s.image.mediaItemUrl }; return null; }
+          const id = s.image?.databaseId ?? null;
+          return id ? { i, id } : null;
+        })
+        .filter(Boolean) as { i: number; id: number }[];
+      if (missing.length > 0) {
+        await Promise.allSettled(missing.map(async ({ i, id }) => {
           try {
             const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
             if (mRes.ok) {
               const m = await mRes.json();
               const url = m.source_url ?? m.guid?.rendered;
-              if (url) ev.showcase[i].image = { sourceUrl: url };
+              if (url) ev.showcase[i] = { ...ev.showcase[i], image: { sourceUrl: url } };
             }
           } catch { /* non-fatal */ }
         }));
@@ -791,10 +797,20 @@ const EVENT_FIELDS_FRAGMENT = `
       price
       image {
         sourceUrl
+        mediaItemUrl
+        databaseId
       }
     }
     featuredHost {
-      ...DirectoryFields
+      title
+      slug
+      excerpt
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+        }
+      }
     }
     associatedJourney {
       ...JourneyFields
@@ -967,7 +983,6 @@ export const GET_EVENTS = `
     }
   }
   ${EVENT_FIELDS_FRAGMENT}
-  ${DIRECTORY_FIELDS_FRAGMENT}
   ${JOURNEY_FIELDS_FRAGMENT}
 `;
 
@@ -979,7 +994,6 @@ export const GET_EVENT_BY_SLUG = `
     }
   }
   ${EVENT_FIELDS_FRAGMENT}
-  ${DIRECTORY_FIELDS_FRAGMENT}
   ${JOURNEY_FIELDS_FRAGMENT}
 `;
 
