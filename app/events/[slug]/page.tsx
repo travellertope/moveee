@@ -119,27 +119,19 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           <h1 className="hero-title">{event.title}</h1>
           <p className="hero-subtitle">{event.tagline || `${cat} by ${host?.title || "Moveee Talent"}`}</p>
 
-          <div className="hero-meta-row">
-            <div className="hero-meta-item">
-              <div className="label">{eventSubtype || "Opening Night"}</div>
-              <div className="value">{dateFormatted}</div>
+          <div className="hero-info-cards">
+            <div className="hero-info-card">
+              <div className="label">📍 Venue</div>
+              <p>{event.location || "Venue TBA"}</p>
+              <small style={{ whiteSpace: "pre-line" }}>
+                {venueAddress || "Please check your confirmation email for exact entry directions."}
+              </small>
             </div>
-            <div className="hero-meta-item">
-              <div className="label">Venue</div>
-              <div className="value">{event.location || "Venue TBA"}</div>
+            <div className="hero-info-card">
+              <div className="label">📅 {endFormatted ? "Event run" : "Date"}</div>
+              <p>{dateFormatted}{endFormatted ? ` — ${endFormatted}` : ""}</p>
+              <small>{event.openingHours || "Hours TBA"}<br />{event.admission || "Free Admission"}</small>
             </div>
-            {endFormatted && (
-              <div className="hero-meta-item">
-                <div className="label">Event run</div>
-                <div className="value">{dateFormatted} — {endFormatted}</div>
-              </div>
-            )}
-            {event.metrics?.map((m: any, i: number) => (
-              <div key={i} className="hero-meta-item">
-                <div className="label">{m.label}</div>
-                <div className="value">{m.value}</div>
-              </div>
-            ))}
           </div>
 
           <div className="hero-cta-group">
@@ -285,22 +277,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 />
               </>
             )}
-          </div>
-
-          <div className="info-card">
-            <div className="label">📍 Venue</div>
-            <p>{event.location || "Venue TBA"}</p>
-            {venueAddress ? (
-              <small style={{ whiteSpace: "pre-line" }}>{venueAddress}</small>
-            ) : (
-              <small>Please check your confirmation email for exact entry directions.</small>
-            )}
-          </div>
-
-          <div className="info-card">
-            <div className="label">📅 Event dates</div>
-            <p>{dateFormatted}{endFormatted ? ` — ${endFormatted}` : ""}</p>
-            <small>{event.openingHours || "Hours TBA"}<br/>{event.admission || "Free Admission"}</small>
           </div>
 
           {event.associatedJourney && (

@@ -93,6 +93,11 @@ html {
 .hero-meta-row { display: flex; gap: 36px; align-items: flex-end; flex-wrap: wrap; width: 100%; }
 .hero-meta-item .label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute); margin-bottom: 6px; }
 .hero-meta-item .value { font-family: var(--font-serif); font-size: 16px; font-style: italic; color: var(--ink); }
+.hero-info-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+.hero-info-card { background: rgba(42,36,28,0.04); border: 1px solid rgba(42,36,28,0.08); border-radius: 4px; padding: 14px 16px; }
+.hero-info-card .label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ochre); margin-bottom: 8px; display: block; }
+.hero-info-card p { font-family: var(--font-serif); font-size: 15px; font-style: italic; color: var(--ink); margin: 0 0 4px; }
+.hero-info-card small { font-size: 12px; font-family: var(--font-sans); color: var(--mute); display: block; line-height: 1.5; }
 .hero-cta-group { margin-top: 32px; display: flex; gap: 14px; flex-wrap: wrap; }
 
 .btn-primary { background: var(--ochre); color: var(--paper); padding: 16px 28px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; border: none; cursor: pointer; transition: background .3s; text-decoration: none; display: inline-block; }
@@ -377,6 +382,7 @@ html {
   .hero-content { padding: 36px 24px; }
   .hero-title { font-size: clamp(26px, 8vw, 48px); }
   .hero-meta-row { gap: 18px; }
+  .hero-info-cards { grid-template-columns: 1fr; }
   .page-body { padding: 40px 24px; }
   .gallery-run { padding: 40px 24px; }
   .gallery-portrait { aspect-ratio: 4/3; }
