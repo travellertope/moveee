@@ -9,10 +9,10 @@ import SubmitPost from "./SubmitPost";
 
 const TYPE_FILTERS: { label: string; value: FeedItemType | "all" }[] = [
   { label: "All",        value: "all"       },
-  { label: "Community",  value: "community" },
-  { label: "Pulse",      value: "pulse"     },
+  { label: "Pulse",      value: "community" },
+  { label: "News",       value: "pulse"     },
   { label: "Editorial",  value: "editorial" },
-  { label: "Happening",  value: "happening" },
+  { label: "Event",      value: "happening" },
   { label: "Directory",  value: "directory" },
   { label: "Quote",      value: "quote"     },
 ];
