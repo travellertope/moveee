@@ -153,6 +153,35 @@ class Culture_Email_Templates {
 </ul>
 <p>To regain Patron benefits, you can re-subscribe at any time.</p>',
             ),
+
+            'event_rsvp_confirmation' => array(
+                'label'           => __( 'Event RSVP Confirmation', 'culture-community' ),
+                'description'     => __( 'Sent to an attendee immediately after they RSVP to an event.', 'culture-community' ),
+                'tags'            => array(
+                    '{first_name}'    => __( 'Attendee\'s first name', 'culture-community' ),
+                    '{event_title}'   => __( 'Event name', 'culture-community' ),
+                    '{ticket_label}'  => __( 'Ticket type label (e.g. General Admission, Private View)', 'culture-community' ),
+                    '{event_date}'    => __( 'Event date (e.g. 12 June 2025)', 'culture-community' ),
+                    '{event_venue}'   => __( 'Venue / location name', 'culture-community' ),
+                    '{event_hours}'   => __( 'Opening / door hours (e.g. Doors open 19:30)', 'culture-community' ),
+                    '{event_admission}' => __( 'Admission info (e.g. Free Admission, Paid Entry)', 'culture-community' ),
+                    '{attendee_email}' => __( 'Attendee\'s email address', 'culture-community' ),
+                ),
+                'default_subject' => "You're on the list — {event_title} · The Moveee",
+                'default_heading' => 'The Moveee · Events',
+                'default_button'  => 'View Event →',
+                'default_body'    => '<p>Hi {first_name},</p>
+<p>You\'re confirmed for <strong>{event_title}</strong>. We look forward to seeing you.</p>
+<table style="width:100%;margin:24px 0;border-collapse:collapse;">
+<tbody>
+<tr><td style="padding:10px 0;border-bottom:1px solid rgba(243,236,224,0.15);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;opacity:0.5;">Your ticket</td><td style="padding:10px 0;border-bottom:1px solid rgba(243,236,224,0.15);text-align:right;">{ticket_label}</td></tr>
+<tr><td style="padding:10px 0;border-bottom:1px solid rgba(243,236,224,0.15);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;opacity:0.5;">Date</td><td style="padding:10px 0;border-bottom:1px solid rgba(243,236,224,0.15);text-align:right;">{event_date}</td></tr>
+<tr><td style="padding:10px 0;border-bottom:1px solid rgba(243,236,224,0.15);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;opacity:0.5;">Venue</td><td style="padding:10px 0;border-bottom:1px solid rgba(243,236,224,0.15);text-align:right;">{event_venue}</td></tr>
+<tr><td style="padding:10px 0;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;opacity:0.5;">Entry</td><td style="padding:10px 0;text-align:right;">{event_hours} · {event_admission}</td></tr>
+</tbody>
+</table>
+<p style="font-size:13px;opacity:0.6;">A confirmation has been sent to {attendee_email}. Please bring this email or tell us your name at the door on the night.</p>',
+            ),
         );
     }
 
