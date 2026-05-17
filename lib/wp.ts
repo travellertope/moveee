@@ -68,13 +68,15 @@ function mapRestEventToFrontendShape(item: any) {
       : [];
 
   const normalizeHost = (h: any) => {
-    if (!h || typeof h !== "object") return null;
+    // ACF relationship field can return: null, a post object, or an array of post objects/IDs
+    const raw = Array.isArray(h) ? h[0] : h;
+    if (!raw || typeof raw !== "object") return null;
     return {
-      title: h.post_title || h.title || h.name || "",
-      slug: h.post_name || h.slug || "",
-      excerpt: h.post_excerpt || h.excerpt || "",
-      featuredImage: toMediaItem(h.featured_image || h.thumbnail)
-        ? { node: toMediaItem(h.featured_image || h.thumbnail) }
+      title: raw.post_title || raw.title || raw.name || "",
+      slug: raw.post_name || raw.slug || "",
+      excerpt: raw.post_excerpt || raw.excerpt || "",
+      featuredImage: toMediaItem(raw.featured_image || raw.thumbnail)
+        ? { node: toMediaItem(raw.featured_image || raw.thumbnail) }
         : null,
     };
   };
@@ -217,7 +219,43 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
 
 export async function getEventBySlugWithFallback(slug: string, options: any = {}) {
   const gql = await getWPData(GET_EVENT_BY_SLUG, { slug }, options);
-  if (gql?.cultureEvent) return gql.cultureEvent;
+  if (gql?.cultureEvent) {
+    const ev = gql.cultureEvent;
+    // WPGraphQL may not resolve the ACF relationship — patch via REST if host is missing
+    if (!ev.featuredHost) {
+      try {
+        const metaRes = await fetch(
+          `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_fields=acf`,
+          { next: { revalidate: 3600 } }
+        );
+        if (metaRes.ok) {
+          const metaJson = await metaRes.json();
+          const rawHost = metaJson[0]?.acf?.featured_host;
+          const hostId = typeof rawHost === "number" ? rawHost
+            : Array.isArray(rawHost) ? (typeof rawHost[0] === "number" ? rawHost[0] : rawHost[0]?.ID ?? null)
+            : typeof rawHost === "object" && rawHost ? (rawHost.ID ?? rawHost.id ?? null)
+            : null;
+          if (hostId) {
+            const hostRes = await fetch(
+              `${WP_BASE_URL}/wp-json/wp/v2/culture_directory/${hostId}?_embed=1`,
+              { next: { revalidate: 3600 } }
+            );
+            if (hostRes.ok) {
+              const h = await hostRes.json();
+              const img = h._embedded?.["wp:featuredmedia"]?.[0];
+              ev.featuredHost = {
+                title: h.title?.rendered ?? "",
+                slug: h.slug ?? "",
+                excerpt: h.excerpt?.rendered?.replace(/<[^>]+>/g, "") ?? "",
+                featuredImage: img?.source_url ? { node: { sourceUrl: img.source_url, altText: img.alt_text ?? "" } } : null,
+              };
+            }
+          }
+        }
+      } catch { /* non-fatal */ }
+    }
+    return ev;
+  }
 
   try {
     const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_embed=1`;
@@ -231,7 +269,36 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
     if (!res.ok) return null;
     const json = await res.json();
     if (!Array.isArray(json) || json.length === 0) return null;
-    return mapRestEventToFrontendShape(json[0]);
+    const event = mapRestEventToFrontendShape(json[0]);
+
+    // ACF relationship fields often return a bare post ID instead of a full object.
+    // If normalizeHost returned null but there is an ID, fetch the directory entry.
+    if (!event.featuredHost) {
+      const rawHost = json[0]?.acf?.featured_host;
+      const hostId = typeof rawHost === "number" ? rawHost
+        : Array.isArray(rawHost) && typeof rawHost[0] === "number" ? rawHost[0]
+        : null;
+      if (hostId) {
+        try {
+          const hostRes = await fetch(
+            `${WP_BASE_URL}/wp-json/wp/v2/culture_directory/${hostId}?_embed=1`,
+            { next: { revalidate: 3600 } }
+          );
+          if (hostRes.ok) {
+            const h = await hostRes.json();
+            const img = h._embedded?.["wp:featuredmedia"]?.[0];
+            event.featuredHost = {
+              title: h.title?.rendered ?? "",
+              slug: h.slug ?? "",
+              excerpt: h.excerpt?.rendered?.replace(/<[^>]+>/g, "") ?? "",
+              featuredImage: img?.source_url ? { node: { sourceUrl: img.source_url, altText: img.alt_text ?? "" } } : null,
+            };
+          }
+        } catch { /* non-fatal */ }
+      }
+    }
+
+    return event;
   } catch {
     return null;
   }
