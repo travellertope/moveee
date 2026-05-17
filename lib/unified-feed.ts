@@ -232,7 +232,8 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         title: decodeHtml(stripHtml(quote.content ?? quote.title ?? "")),
         slug: quote.slug,
         date: quote.date,
-        href: `/connect/pulse#quote-${quote.databaseId}`,
+        href: `/quotes/${quote.databaseId}-${quote.slug}`,
+        wpId: String(quote.databaseId),
         quoteSource: quote.quoteSource ?? "",
         quoteAuthor: quote.quoteAuthors?.nodes?.[0]?.name ?? "",
       });

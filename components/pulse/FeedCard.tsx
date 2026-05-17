@@ -108,8 +108,6 @@ export default function FeedCard({
 
   // ── Quote card ──
   if (item.type === "quote") {
-    const paragraphs = item.title.split("\n").filter((l) => l.trim()).length;
-    const isLong = paragraphs >= 6 || item.title.length > 500;
     return (
       <article style={{
         background: "#fff",
@@ -128,12 +126,6 @@ export default function FeedCard({
               lineHeight: 1.55,
               fontStyle: "italic",
               marginBottom: "0.6rem",
-              ...(isLong ? {
-                display: "-webkit-box",
-                WebkitLineClamp: 8,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              } : {}),
             }}>
               {item.title}
             </p>
@@ -142,6 +134,15 @@ export default function FeedCard({
               {item.quoteAuthor && <span style={{ color: "#c5491f", fontSize: "0.75rem", fontWeight: 600 }}>{item.quoteAuthor}</span>}
               {item.quoteSource && <span style={{ color: "#7a6f5c", fontSize: "0.72rem" }}>· {item.quoteSource}</span>}
               <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+              <Link
+                href={item.href}
+                style={{ display: "flex", alignItems: "center", color: "#7a6f5c", textDecoration: "none", flexShrink: 0 }}
+                aria-label="View quote"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </Link>
             </div>
           </div>
         </div>
