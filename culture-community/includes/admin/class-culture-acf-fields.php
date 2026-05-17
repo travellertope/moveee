@@ -295,6 +295,14 @@ class Culture_ACF_Fields {
                     ),
                 ),
                 array(
+                    'key' => 'field_showcase_label',
+                    'label' => 'Showcase Section Title',
+                    'name' => 'showcase_label',
+                    'type' => 'text',
+                    'placeholder' => 'e.g. Selected Works · Leave blank for default',
+                    'instructions' => 'Custom heading for the works/gallery section. Defaults to "Selected works" if left blank.',
+                ),
+                array(
                     'key' => 'field_event_showcase',
                     'label' => 'Showcase Items (Works / Gallery)',
                     'name' => 'showcase',
@@ -307,7 +315,7 @@ class Culture_ACF_Fields {
                             'label' => 'Image',
                             'name' => 'image',
                             'type' => 'image',
-                            'return_format' => 'id',
+                            'return_format' => 'array',
                             'wrapper' => array( 'width' => '30' ),
                         ),
                         array(

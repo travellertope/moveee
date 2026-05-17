@@ -132,6 +132,10 @@ function mapRestEventToFrontendShape(item: any) {
     venueAddress: pick(acf.venue_address, meta.venue_address),
     rsvpCapacity: acf.rsvp_capacity ? parseInt(String(acf.rsvp_capacity), 10) : null,
     rsvpMembersNote: pick(acf.rsvp_members_note, meta.rsvp_members_note),
+    showcaseLabel: pick(acf.showcase_label, meta.showcase_label) || null,
+    chapterId: acf.chapter_id ? parseInt(String(acf.chapter_id), 10)
+      : meta._culture_chapter_id ? parseInt(String(meta._culture_chapter_id), 10)
+      : null,
     rsvpTicketTypes: Array.isArray(acf.rsvp_ticket_types)
       ? acf.rsvp_ticket_types.map((t: any) => ({
           ticketName:     t.ticket_name     ?? '',
@@ -254,6 +258,27 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
         }
       } catch { /* non-fatal */ }
     }
+
+    // Resolve chapter if chapterId is set but chapter object not yet populated
+    if (ev.chapterId && !ev.associatedChapter) {
+      try {
+        const chapterRes = await fetch(
+          `${WP_BASE_URL}/wp-json/wp/v2/culture_chapter/${ev.chapterId}?_embed=1`,
+          { next: { revalidate: 3600 } }
+        );
+        if (chapterRes.ok) {
+          const ch = await chapterRes.json();
+          const chImg = ch._embedded?.["wp:featuredmedia"]?.[0];
+          ev.associatedChapter = {
+            title: ch.title?.rendered ?? "",
+            slug: ch.slug ?? "",
+            excerpt: ch.excerpt?.rendered?.replace(/<[^>]+>/g, "") ?? "",
+            featuredImage: chImg?.source_url ? { node: { sourceUrl: chImg.source_url } } : null,
+          };
+        }
+      } catch { /* non-fatal */ }
+    }
+
     return ev;
   }
 
@@ -296,6 +321,29 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
           }
         } catch { /* non-fatal */ }
       }
+    }
+
+    // Resolve chapter from meta
+    const chapterId = event.chapterId
+      ?? (json[0]?.meta?._culture_chapter_id ? parseInt(String(json[0].meta._culture_chapter_id), 10) : null);
+    if (chapterId) {
+      event.chapterId = chapterId;
+      try {
+        const chapterRes = await fetch(
+          `${WP_BASE_URL}/wp-json/wp/v2/culture_chapter/${chapterId}?_embed=1`,
+          { next: { revalidate: 3600 } }
+        );
+        if (chapterRes.ok) {
+          const ch = await chapterRes.json();
+          const chImg = ch._embedded?.["wp:featuredmedia"]?.[0];
+          event.associatedChapter = {
+            title: ch.title?.rendered ?? "",
+            slug: ch.slug ?? "",
+            excerpt: ch.excerpt?.rendered?.replace(/<[^>]+>/g, "") ?? "",
+            featuredImage: chImg?.source_url ? { node: { sourceUrl: chImg.source_url } } : null,
+          };
+        }
+      } catch { /* non-fatal */ }
     }
 
     return event;
@@ -717,6 +765,8 @@ const EVENT_FIELDS_FRAGMENT = `
       ticketAmount
       ticketCurrency
     }
+    showcaseLabel
+    chapterId
   }
 `;
 

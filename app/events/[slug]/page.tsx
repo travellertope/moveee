@@ -106,6 +106,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const hasShowcase = Array.isArray(event.showcase) && event.showcase.length > 0;
   const hasHost = event.featuredHost && typeof event.featuredHost === 'object' && event.featuredHost?.title;
   const host = hasHost ? event.featuredHost : null;
+  const chapter = event.associatedChapter && event.associatedChapter.title ? event.associatedChapter : null;
+  const showcaseLabel = event.showcaseLabel || null;
 
   // Eyebrow pieces
   const eyebrowType = eventSubtype || cat;
@@ -203,7 +205,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           {hasShowcase && (
             <div className="works-section">
               <div className="works-header">
-                <h3>Selected <em>works</em></h3>
+                {showcaseLabel
+                  ? <h3>{showcaseLabel}</h3>
+                  : <h3>Selected <em>works</em></h3>}
+
                 <small>Preview · {event.showcase.length} items</small>
               </div>
               <div className="works-grid">
@@ -278,6 +283,21 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               </>
             )}
           </div>
+
+          {chapter && (
+            <div className="info-card">
+              <span className="label">Chapter</span>
+              <p style={{ fontWeight: 600, marginBottom: "6px" }}>{chapter.title}</p>
+              {chapter.excerpt && (
+                <small style={{ display: "block", marginBottom: "12px", color: "var(--ink-soft)", lineHeight: 1.5 }}>
+                  {chapter.excerpt.replace(/<[^>]*>/g, "").slice(0, 120)}{chapter.excerpt.length > 120 ? "…" : ""}
+                </small>
+              )}
+              <Link href={`/chapters/${chapter.slug}`} style={{ fontSize: "10px", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                View Chapter →
+              </Link>
+            </div>
+          )}
 
           {event.associatedJourney && (
             <div className="info-card" style={{ background: "var(--ink)", color: "var(--paper)" }}>
