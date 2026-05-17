@@ -238,6 +238,10 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
 
       {/* Form */}
       <form className="rsvp-form" onSubmit={handleSubmit}>
+        {membersNote && (
+          <div className="members-note">{membersNote}</div>
+        )}
+
         <input
           type="text"
           placeholder="Full name"
