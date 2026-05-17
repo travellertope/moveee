@@ -796,10 +796,6 @@ const EVENT_FIELDS_FRAGMENT = `
       year
       price
       imageUrl
-      image {
-        sourceUrl
-        mediaItemUrl
-      }
     }
     featuredHost {
       title

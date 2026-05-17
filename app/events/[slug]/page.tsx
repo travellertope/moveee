@@ -213,7 +213,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               </div>
               <div className="works-grid">
                 {event.showcase.map((item: any, i: number) => {
-                    const imgSrc = item.image?.sourceUrl || item.image?.mediaItemUrl || item.imageUrl || null;
+                    const imgSrc = item.imageUrl || null;
                     return (
                   <div key={i} className="work-card">
                     <div className="work-frame">
