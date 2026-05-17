@@ -102,7 +102,7 @@ class Culture_ACF_Fields {
                     'post_type' => array( 'culture_directory' ),
                     'allow_null' => 1,
                     'multiple' => 0,
-                    'return_format' => 'id',
+                    'return_format' => 'object',
                     'ui' => 1,
                     'wrapper' => array( 'width' => '50' ),
                 ),

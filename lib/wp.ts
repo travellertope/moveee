@@ -227,7 +227,8 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
   if (gql?.cultureEvent) {
     const ev = gql.cultureEvent;
     // WPGraphQL may not resolve some ACF fields — patch via REST for host, showcaseLabel, chapterId
-    if (!ev.featuredHost || !ev.showcaseLabel || !ev.chapterId) {
+    const needsHostPatch = !ev.featuredHost?.title;
+    if (needsHostPatch || !ev.showcaseLabel || !ev.chapterId) {
       try {
         const metaRes = await fetch(
           `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_fields=acf,meta`,
@@ -244,10 +245,11 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
             if (rawChapter) ev.chapterId = parseInt(String(rawChapter), 10) || null;
           }
 
-          if (!ev.featuredHost) {
+          if (needsHostPatch) {
             const rawHost = acf.featured_host;
+            // ACF returns object, array-of-objects, or bare integer ID depending on return_format
             const hostId = typeof rawHost === "number" ? rawHost
-              : Array.isArray(rawHost) ? (typeof rawHost[0] === "number" ? rawHost[0] : rawHost[0]?.ID ?? null)
+              : Array.isArray(rawHost) ? (typeof rawHost[0] === "number" ? rawHost[0] : rawHost[0]?.ID ?? rawHost[0]?.id ?? null)
               : typeof rawHost === "object" && rawHost ? (rawHost.ID ?? rawHost.id ?? null)
               : null;
             if (hostId) {
@@ -269,6 +271,25 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
           }
         }
       } catch { /* non-fatal */ }
+    }
+
+    // Resolve missing showcase images (WPGraphQL may return null for image fields stored as IDs)
+    if (Array.isArray(ev.showcase)) {
+      const missingImageItems = ev.showcase
+        .map((s: any, i: number) => ({ i, id: s._imageId ?? null }))
+        .filter((x: any) => x.id && !ev.showcase[x.i]?.image?.sourceUrl);
+      if (missingImageItems.length > 0) {
+        await Promise.allSettled(missingImageItems.map(async ({ i, id }: { i: number; id: number }) => {
+          try {
+            const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
+            if (mRes.ok) {
+              const m = await mRes.json();
+              const url = m.source_url ?? m.guid?.rendered;
+              if (url) ev.showcase[i].image = { sourceUrl: url };
+            }
+          } catch { /* non-fatal */ }
+        }));
+      }
     }
 
     // Resolve chapter if chapterId is set but chapter object not yet populated
@@ -308,12 +329,13 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
     if (!Array.isArray(json) || json.length === 0) return null;
     const event = mapRestEventToFrontendShape(json[0]);
 
-    // ACF relationship fields often return a bare post ID instead of a full object.
-    // If normalizeHost returned null but there is an ID, fetch the directory entry.
-    if (!event.featuredHost) {
+    // ACF post_object fields can return a bare integer ID, an object, or an array.
+    // normalizeHost handles objects/arrays; if host is still missing, do a secondary fetch.
+    if (!event.featuredHost?.title) {
       const rawHost = json[0]?.acf?.featured_host;
       const hostId = typeof rawHost === "number" ? rawHost
-        : Array.isArray(rawHost) && typeof rawHost[0] === "number" ? rawHost[0]
+        : Array.isArray(rawHost) ? (typeof rawHost[0] === "number" ? rawHost[0] : rawHost[0]?.ID ?? rawHost[0]?.id ?? null)
+        : typeof rawHost === "object" && rawHost ? (rawHost.ID ?? rawHost.id ?? null)
         : null;
       if (hostId) {
         try {
@@ -333,6 +355,25 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
           }
         } catch { /* non-fatal */ }
       }
+    }
+
+    // Resolve showcase image IDs → actual URLs
+    const showcaseImageIds: { i: number; id: number }[] = [];
+    (event.showcase ?? []).forEach((s: any, i: number) => {
+      const raw = json[0]?.acf?.showcase?.[i]?.image;
+      if (!s.image?.sourceUrl && typeof raw === "number" && raw > 0) showcaseImageIds.push({ i, id: raw });
+    });
+    if (showcaseImageIds.length > 0) {
+      await Promise.allSettled(showcaseImageIds.map(async ({ i, id }) => {
+        try {
+          const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
+          if (mRes.ok) {
+            const m = await mRes.json();
+            const url = m.source_url ?? m.guid?.rendered;
+            if (url) event.showcase[i].image = { sourceUrl: url };
+          }
+        } catch { /* non-fatal */ }
+      }));
     }
 
     // Resolve chapter from meta
