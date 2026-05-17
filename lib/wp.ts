@@ -146,6 +146,7 @@ function mapRestEventToFrontendShape(item: any) {
           ticketCurrency: t.ticket_currency ?? 'NGN',
         }))
       : [],
+    associatedChapter: null as { title: string; slug: string; excerpt: string; featuredImage: { node: { sourceUrl: string } } | null } | null,
   };
 }
 
