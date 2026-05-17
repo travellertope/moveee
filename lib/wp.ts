@@ -798,7 +798,6 @@ const EVENT_FIELDS_FRAGMENT = `
       image {
         sourceUrl
         mediaItemUrl
-        databaseId
       }
     }
     featuredHost {
