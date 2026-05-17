@@ -212,18 +212,21 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 <small>Preview · {event.showcase.length} items</small>
               </div>
               <div className="works-grid">
-                {event.showcase.map((item: any, i: number) => (
+                {event.showcase.map((item: any, i: number) => {
+                    const imgSrc = item.image?.sourceUrl || item.image?.mediaItemUrl || item.imageUrl || null;
+                    return (
                   <div key={i} className="work-card">
                     <div className="work-frame">
-                      {item.image?.sourceUrl && (
-                        <Image src={item.image.sourceUrl} alt={item.title} fill className="object-cover" />
+                      {imgSrc && (
+                        <Image src={imgSrc} alt={item.title} fill className="object-cover" />
                       )}
                     </div>
                     <div className="work-num">N°0{i+1}</div>
                     <div className="work-title">{item.title}</div>
                     <div className="work-meta">{item.media} · {item.dimensions} · {item.year}</div>
                   </div>
-                ))}
+                    );
+                  })}
               </div>
             </div>
           )}

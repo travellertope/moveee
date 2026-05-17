@@ -795,6 +795,7 @@ const EVENT_FIELDS_FRAGMENT = `
       dimensions
       year
       price
+      imageUrl
       image {
         sourceUrl
         mediaItemUrl
