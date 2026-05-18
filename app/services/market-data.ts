@@ -460,7 +460,7 @@ export const MARKETS: Market[] = [
             price: "₦65,000",
             priceNote: "per month · rolling subscription",
             includes: [
-              "1 press release per month (AI-assisted + edited)",
+              "1 press release per month (written + edited)",
               "GEO (Generative Engine Optimisation) strategy",
               "Brand narrative development",
               "1 × Moveee editorial mention per quarter",
@@ -603,7 +603,7 @@ export const MARKETS: Market[] = [
             price: "£250",
             priceNote: "per month · rolling subscription",
             includes: [
-              "1 press release per month (AI-assisted + edited)",
+              "1 press release per month (written + edited)",
               "Distribution to UK digital news platforms",
               "GEO (Generative Engine Optimisation) strategy",
               "Brand narrative development",
@@ -743,7 +743,7 @@ export const MARKETS: Market[] = [
             price: "$350",
             priceNote: "per month · rolling subscription",
             includes: [
-              "1 press release per month (AI-assisted + edited)",
+              "1 press release per month (written + edited)",
               "Distribution to US digital news platforms",
               "GEO (Generative Engine Optimisation) strategy",
               "Brand narrative development",
