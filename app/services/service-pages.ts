@@ -185,12 +185,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     presskit: {
-      headline: "Get Into the Right Publications. Stay There.",
-      tagline: "AI-assisted monthly PR, guaranteed placements, and media strategy built for African brands with real stories to tell.",
+      headline: "Nigerian Brands Deserve a Media Presence. Build One.",
+      tagline: "Monthly PR subscription for brands, founders, and organisations serious about consistent visibility in Nigerian media.",
       intro: [
-        "Most Nigerian brands are invisible in the press not because their story is weak, but because they've never had consistent media infrastructure. MoveeePR is a monthly subscription that gives you that infrastructure: AI-assisted press release writing, human-led media outreach, strategy calls, and ongoing placement tracking.",
-        "If you need guaranteed placement rather than outreach — a confirmed article in Punch, Business Day, Premium Times, or any of our 14 partner publications — the PressKit placement product delivers exactly that. ₦100,000 per platform. No speculation, no 'we'll try our best'.",
-        "We serve brands, cultural organisations, public figures, and startups that have something worth saying and need it said in the right places, consistently. This is not a one-press-release-and-done service.",
+        "Most Nigerian brands are invisible in the press not because their story is weak, but because they've never had consistent media infrastructure. MoveeePR is a monthly subscription that changes that: AI-assisted press release writing, human-led media outreach to Nigerian publications, strategy calls, and ongoing placement tracking.",
+        "Starter is designed for individuals and emerging businesses — one press release per month, distribution infrastructure, and quarterly Moveee editorial coverage. Growth adds volume and depth: two releases plus a thought leadership piece, regular media outreach, and monthly strategy calls to keep momentum building.",
+        "PR compounds. One announcement is a flicker. Twelve months of consistent coverage is a reputation. We're set up to help you build the latter.",
       ],
       howItWorks: [
         {
@@ -206,12 +206,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "03",
           title: "Media Outreach",
-          body: "We send to our established contacts at Nigerian national and online publications. For PressKit guaranteed placements, we confirm the slot before you pay. For MoveeePR subscribers, outreach is ongoing and reported monthly.",
+          body: "We send to our established contacts at Nigerian national and digital publications. Outreach is ongoing, reported monthly, and adjusted based on what's generating traction.",
         },
         {
           step: "04",
           title: "Placements Confirmed",
-          body: "You receive links to every live placement. For guaranteed placements, we don't invoice until the article is live. Organic placements secured through outreach are reported in your monthly summary.",
+          body: "Live links delivered as coverage goes up. You receive every placement URL with context — which outlet, which section, estimated reach.",
         },
         {
           step: "05",
@@ -221,20 +221,20 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ],
       benefits: [
         {
-          title: "14 Partner Publications",
-          body: "Punch, Vanguard, The Nation, Guardian Nigeria, Blueprint, Tribune, Independent, Nigerian Pilot, Daily Trust, Daily Post, Business Day, PM News, Premium Times, New Telegraph. Guaranteed placements mean confirmed slots, not crossed fingers.",
-        },
-        {
           title: "PR That Actually Sounds Like Journalism",
-          body: "Our releases are written to be published, not just sent. That means editors engage with them instead of deleting them, and the resulting coverage reads like a story, not an advert.",
+          body: "Our releases are written to be published, not just sent. Editors engage with them because they read like stories, not adverts — which means faster placements and better coverage.",
         },
         {
           title: "Consistent Monthly Presence",
-          body: "A single press release is a one-day story. MoveeePR is a media presence — monthly output that builds name recognition across the publications your audience and investors actually read.",
+          body: "A single press release is a one-day story. MoveeePR is a media presence — monthly output that builds name recognition across the publications your audience, partners, and investors actually read.",
+        },
+        {
+          title: "Nigerian Media Relationships",
+          body: "We have established contacts at Nigerian national newspapers and digital publications. A pitch from a known editorial partner is treated differently from a cold email.",
         },
         {
           title: "Strategy, Not Just Execution",
-          body: "Every MoveeePR subscriber gets a strategy call. We're not a press release factory. We help you identify news pegs, anticipate calendar moments, and build a narrative arc for your brand over time.",
+          body: "Every subscriber gets a strategy call. We help you identify news pegs, anticipate calendar moments, and build a narrative arc for your brand over time. Not a press release factory.",
         },
       ],
       faqs: [
@@ -243,12 +243,8 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           answer: "A press release is a 400–600 word formal announcement written for media consumption. It follows a standard format that editors recognise and can publish quickly. We write yours, pitch it, and handle follow-up.",
         },
         {
-          question: "What's the difference between guaranteed placement and media outreach?",
-          answer: "Guaranteed placement (PressKit, ₦100,000/platform) means we've confirmed a slot with the publication before you pay — your article will be published. Media outreach (included in MoveeePR) means we pitch your story to relevant contacts, secure coverage where we can, and report results. Outreach generates more coverage over time but isn't guaranteed on any single release.",
-        },
-        {
           question: "How fast can you turn around a press release?",
-          answer: "Standard turnaround is 48–72 hours from brief completion. For urgent news (funding announcements, crisis response, event-driven news), we offer expedited turnaround — contact us directly.",
+          answer: "Standard turnaround is 48–72 hours from brief completion. For urgent news — funding announcements, crisis response, event-driven news — contact us directly to discuss expedited options.",
         },
         {
           question: "What makes a good story for Nigerian media?",
@@ -256,15 +252,19 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Can I choose which publications to target?",
-          answer: "Yes. For guaranteed placements, you select the platforms from our list and we confirm availability. For MoveeePR, we advise on which publications suit your story and audience, but you have final say on targeting.",
+          answer: "Yes. We advise on which publications suit your story and audience, but you have final say on where we pitch.",
         },
         {
-          question: "Is the MoveeePR subscription month-to-month or annual?",
-          answer: "MoveeePR is available month-to-month with a recommended minimum of three months to see compounding results. Annual subscribers receive a discounted rate. Details are confirmed at onboarding.",
+          question: "Is the subscription month-to-month or minimum term?",
+          answer: "Starter is rolling month-to-month. Growth has a 3-month minimum to allow media relationships and momentum to build. We recommend at least three months on any tier to see compounding results.",
+        },
+        {
+          question: "Can I start on Starter and move to Growth later?",
+          answer: "Yes. Many clients start on Starter to build their brand narrative and media relationships, then upgrade to Growth when they have more news to run and a clearer media strategy. Upgrade any time with 30 days notice.",
         },
       ],
       ctaLabel: "Book a strategy call →",
-      ctaSubtext: "Guaranteed placements from ₦100,000/platform. MoveeePR subscriptions available monthly.",
+      ctaSubtext: "Starter from ₦65,000/month. Growth from ₦120,000/month.",
     },
 
     partnership: {
@@ -666,12 +666,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     presskit: {
-      headline: "Black British Brands Deserve Coverage. We Make It Happen.",
-      tagline: "Monthly PR subscription and guaranteed placements across the UK publications your audience actually reads.",
+      headline: "Build a Consistent Media Presence in the UK.",
+      tagline: "Monthly PR subscription for UK-based African and Caribbean brands, creatives, and founders who need steady press coverage — not a one-off announcement.",
       intro: [
-        "Getting consistent press coverage as a Black British brand is harder than it should be. Mainstream UK media covers the community selectively, often reactively, and rarely with depth. MoveeePR is a monthly subscription that builds you a media presence in publications that reach Black British readers directly — London Journal, Birmingham Times, UK Herald, Manchester Times, and more.",
-        "If you need a guaranteed placement — a confirmed article in a named publication — rather than a pitch-and-hope approach, our PressKit product delivers exactly that. £170 per platform. Confirmed before you pay.",
-        "PR is infrastructure. A single announcement without context is noise. MoveeePR is a monthly rhythm of press releases, outreach, and reporting that builds name recognition with media and audiences over time.",
+        "Consistent press coverage doesn't happen by accident. It happens through regular, well-written press releases pitched to the right journalists and publications on an ongoing basis. MoveeePR UK gives you that infrastructure: AI-assisted writing, ongoing media outreach across UK digital news platforms, and monthly reporting on what's landing.",
+        "Starter gives you one release per month and the foundational brand narrative work to make every pitch count. Growth doubles the output, adds thought leadership content, and includes monthly strategy calls to keep your media presence building over time.",
+        "PR compounds. One announcement is a flicker. Consistent monthly output is how brands become familiar to journalists — and eventually, to their audiences.",
       ],
       howItWorks: [
         {
@@ -682,47 +682,43 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "02",
           title: "We Write the Releases",
-          body: "Our team produces press releases that are editorially compelling — a genuine news hook, a quotable spokesperson, and a clear relevance to Black British readers. We don't write corporate boilerplate that gets binned.",
+          body: "Our team produces press releases written to be published — a genuine news hook, a quotable spokesperson, and a clear angle for UK readers. Not corporate boilerplate.",
         },
         {
           step: "03",
           title: "Outreach to UK Publications",
-          body: "We pitch to our established contacts across seven UK partner publications. For PressKit guaranteed placements, the slot is confirmed before you pay. For MoveeePR, outreach is ongoing.",
+          body: "We distribute to UK digital news platforms and pitch to relevant journalists. Outreach is ongoing and adjusted each month based on what's generating traction.",
         },
         {
           step: "04",
           title: "Placements Confirmed",
-          body: "Live links delivered as coverage goes up. For guaranteed placements, we don't invoice until the article is live.",
+          body: "Live links delivered as coverage goes up. You receive every placement URL with context — which outlet, audience size, and section.",
         },
         {
           step: "05",
           title: "Monthly Reporting",
-          body: "MoveeePR subscribers receive a monthly report covering placements secured, outlets contacted, estimated reach, and recommendations for the following month.",
+          body: "Placements secured, outlets contacted, estimated reach, and recommendations for the following month. You're building a media record — this is the log of it.",
         },
       ],
       benefits: [
         {
-          title: "Seven UK Partner Publications",
-          body: "London Journal, Glasgow Report, Manchester Times, UK Herald, Birmingham Times, UK Reporter, UK Wire. Guaranteed placements mean confirmed slots, not aspirational pitches.",
+          title: "Press Releases Written to Be Published",
+          body: "Our releases are written like editorial, not marketing copy. That means faster uptake from editors and coverage that reflects well on your brand rather than reading like a paid-for announcement.",
         },
         {
-          title: "Media Coverage That Reads Like Journalism",
-          body: "Our releases are written to be published without heavy editing. That means faster placement, better coverage, and editorial that reflects well on your brand.",
+          title: "UK Digital Distribution Network",
+          body: "We distribute across a network of UK digital news platforms. Not a single outlet — a broad distribution that maximises the chances of your story landing.",
         },
         {
           title: "Monthly Consistency",
-          body: "One placement is a flicker. MoveeePR is a steady accumulation of coverage that makes your brand familiar to editors and readers across UK Black media.",
+          body: "One placement is a flicker. MoveeePR is a steady accumulation of coverage that makes your brand familiar to editors, journalists, and eventually their readers.",
         },
         {
-          title: "Black British Media Relationships",
-          body: "We have established contacts at the publications we work with. That relationship matters — a pitch from a known editorial partner is treated differently from a cold email.",
+          title: "Strategy Included",
+          body: "We help you identify news pegs, anticipate calendar moments, and build a narrative arc over time. You're not just buying press releases — you're buying a media strategy.",
         },
       ],
       faqs: [
-        {
-          question: "What's the difference between MoveeePR and a PressKit placement?",
-          answer: "MoveeePR is a monthly subscription that includes writing, outreach, and reporting across multiple releases over time. PressKit is a one-off guaranteed placement in a specific named publication at £170 per platform. Many clients use both.",
-        },
         {
           question: "What counts as newsworthy for a press release?",
           answer: "A product launch, funding round, award, significant partnership, cultural milestone, or executive appointment — anything with a genuine news peg. We'll advise if your story needs more development before pitching.",
@@ -732,8 +728,8 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           answer: "48–72 hours from brief completion. For time-sensitive announcements, contact us directly to discuss expedited options.",
         },
         {
-          question: "Can I choose which publications to target?",
-          answer: "Yes. For guaranteed placements, you select from our seven UK partner publications. For MoveeePR outreach, we advise on best fit but you have final say.",
+          question: "Which publications do you distribute to?",
+          answer: "We distribute to a network of UK digital news platforms and pitch to relevant journalists based on your story. We advise on which outlets suit your brand and audience — you have final say on targeting.",
         },
         {
           question: "Is the MoveeePR subscription flexible?",
@@ -741,11 +737,15 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Do you work with brands outside London?",
-          answer: "Yes. Our UK partner publications include outlets covering Birmingham, Manchester, and Glasgow. We work with Black British brands and organisations across the UK, not just in London.",
+          answer: "Yes. We work with UK-based brands and organisations wherever they are — London, Birmingham, Manchester, Glasgow, Bristol. The distribution network covers the whole of the UK.",
+        },
+        {
+          question: "Can I start on Starter and move to Growth later?",
+          answer: "Yes. Start on Starter to build your brand narrative and outreach rhythm, then upgrade to Growth when you have more news volume and a clearer media strategy. Upgrade any time with 30 days notice.",
         },
       ],
       ctaLabel: "Book a strategy call →",
-      ctaSubtext: "Guaranteed placements from £170/platform. MoveeePR subscriptions available monthly.",
+      ctaSubtext: "Starter from £250/month. Growth from £450/month.",
     },
 
     events: {
@@ -1069,12 +1069,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     presskit: {
-      headline: "Black Diaspora Brands Need Media Infrastructure. Here It Is.",
-      tagline: "Monthly PR subscription and guaranteed placements across the US publications African and Caribbean diaspora readers trust.",
+      headline: "Build a Consistent Media Presence Across the US.",
+      tagline: "Monthly PR subscription for African and Caribbean diaspora brands who need steady press coverage — not a one-off announcement.",
       intro: [
-        "Getting consistent press coverage as an African or Caribbean diaspora brand in the US is harder than it looks. General market outlets cover Black stories when they fit the narrative du jour. Black media has limited capacity and gets overwhelmed with pitches. MoveeePR is a monthly subscription that builds you a sustained presence in the publications your target audience — diaspora professionals, creatives, and community leaders — actually reads.",
-        "If you need guaranteed placement — a confirmed article in Atlanta Black Star, Blavity, NY Amsterdam News, Houston Defender, or any of our other US partner publications — PressKit delivers. $220 per platform. Confirmed before you pay.",
-        "This is long-game media infrastructure. PR compounds over months and years. A single press release is a single day's coverage. MoveeePR is a monthly rhythm that builds name recognition across the diaspora media landscape.",
+        "Getting consistent press coverage as an African or Caribbean diaspora brand in the US requires a rhythm, not a one-off pitch. MoveeePR US gives you that rhythm: AI-assisted press release writing, ongoing media outreach to US digital news platforms, and monthly reporting on what's landing.",
+        "Starter gives you one release per month and the brand narrative groundwork that makes every pitch more effective. Growth doubles the output, adds thought leadership content, and includes monthly strategy calls to keep your media presence building.",
+        "PR compounds. A single press release is a single day's coverage. MoveeePR is the monthly infrastructure that makes your brand familiar to editors — and eventually, to the diaspora audiences they reach.",
       ],
       howItWorks: [
         {
@@ -1085,62 +1085,62 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "02",
           title: "We Write the Releases",
-          body: "Our team writes press releases that have a real news hook, a quotable spokesperson, and relevance to diaspora readers. No boilerplate. No third-person corporate speak that editors delete on sight.",
+          body: "Our team writes press releases with a real news hook, a quotable spokesperson, and clear relevance to US readers. Not boilerplate. Not third-person corporate speak that editors delete on sight.",
         },
         {
           step: "03",
           title: "Outreach to US Publications",
-          body: "We pitch to established contacts at our US partner publications. For PressKit guaranteed placements, the slot is confirmed before you pay. MoveeePR outreach is ongoing and reported monthly.",
+          body: "We distribute to US digital news platforms and pitch to relevant journalists. Outreach is ongoing and adjusted each month based on what's generating traction.",
         },
         {
           step: "04",
           title: "Placements Confirmed",
-          body: "Live links delivered as coverage goes up. Guaranteed placements aren't invoiced until the article is live.",
+          body: "Live links delivered as coverage goes up. You receive every placement URL with context — outlet, section, and estimated audience.",
         },
         {
           step: "05",
           title: "Monthly Reporting",
-          body: "MoveeePR subscribers receive a monthly report: placements secured, outlets contacted, estimated reach, and strategy recommendations for the following month.",
+          body: "Placements secured, outlets contacted, estimated reach, and strategy recommendations for the following month. You're building a media record — this is the log of it.",
         },
       ],
       benefits: [
         {
-          title: "Seven US Partner Publications",
-          body: "Atlanta Black Star, Blavity, Houston Defender, NY Amsterdam News, Afro News, The African Exponent, Diaspora Digest. Guaranteed placements mean confirmed slots.",
+          title: "Releases Written to Be Published",
+          body: "We write for editors, not brand managers. That means fewer rewrites, faster placements, and coverage that reads like journalism rather than a paid-for announcement.",
         },
         {
-          title: "Releases Written to Be Published",
-          body: "We write for editors, not for brand managers. That means fewer rewrites, faster placements, and coverage that reads like journalism.",
+          title: "US Digital Distribution Network",
+          body: "We distribute across a network of US digital news platforms and pitch to relevant journalists. Broad distribution maximises the chance of your story finding the right editorial home.",
         },
         {
           title: "Monthly Media Presence",
-          body: "Consistent coverage across months makes your brand familiar to editors and recognisable to readers. That familiarity is what turns a press release into a story a journalist actually wants to write.",
+          body: "Consistent coverage across months makes your brand familiar to editors and recognisable to their readers. That familiarity is what turns a press release into a story a journalist wants to write.",
         },
         {
-          title: "Diaspora Media Relationships",
-          body: "Our contacts at Black and diaspora US publications are editorial relationships built over time. A pitch from a trusted source moves faster than a cold outreach from a brand's in-house team.",
+          title: "Strategy Included",
+          body: "We help you identify news pegs, anticipate the US media calendar, and build a narrative arc. You're not just buying press releases — you're buying a media strategy.",
         },
       ],
       faqs: [
         {
-          question: "What's the difference between MoveeePR and a PressKit placement?",
-          answer: "MoveeePR is a monthly subscription: writing, outreach, and reporting across multiple releases over time. PressKit is a one-off guaranteed placement in a specific named publication at $220 per platform. Many clients use both.",
-        },
-        {
-          question: "What makes a story newsworthy for Black diaspora media?",
-          answer: "A clear news peg (launch, funding, award, partnership, cultural milestone), a named and quotable source, and genuine relevance to Black or diaspora readers. We'll tell you if your story needs development before it's ready to pitch.",
+          question: "What makes a story newsworthy for US media?",
+          answer: "A clear news peg (launch, funding, award, partnership, cultural milestone), a named and quotable source, and genuine relevance to US readers. We'll tell you if your story needs development before it's ready to pitch.",
         },
         {
           question: "How quickly can you turn around a press release?",
           answer: "48–72 hours from brief completion. Expedited options are available for time-sensitive announcements.",
         },
         {
-          question: "Can I choose which publications to target?",
-          answer: "Yes. For guaranteed placements, you select from our seven US partner publications. For MoveeePR, we advise on best editorial fit but you have final say on targeting.",
+          question: "Which publications do you distribute to?",
+          answer: "We distribute to a network of US digital news platforms and pitch to relevant journalists. We advise on editorial fit based on your story and audience — you have final say on targeting.",
         },
         {
           question: "Is the subscription flexible?",
-          answer: "Month-to-month with a recommended three-month minimum to see compounding results. Annual subscribers receive a discounted rate.",
+          answer: "Starter is rolling month-to-month. Growth has a 3-month minimum. We recommend at least three months on any tier to see compounding results.",
+        },
+        {
+          question: "Can I start on Starter and upgrade later?",
+          answer: "Yes. Start on Starter to build your brand narrative and outreach rhythm, then upgrade to Growth when you have more news volume. Upgrade any time with 30 days notice.",
         },
         {
           question: "Do you work with brands based outside the US?",
@@ -1148,7 +1148,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "Book a strategy call →",
-      ctaSubtext: "Guaranteed placements from $220/platform. MoveeePR subscriptions available monthly.",
+      ctaSubtext: "Starter from $350/month. Growth from $650/month.",
     },
 
     events: {

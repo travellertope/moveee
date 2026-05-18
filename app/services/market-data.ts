@@ -323,111 +323,6 @@ const amplifyUS: TierService = {
   ],
 };
 
-// ── PressKit per market ───────────────────────────────────────────────────────
-
-const presskitAfrica: TierService = {
-  slug: "presskit",
-  name: "Moveee PressKit",
-  eyebrow: "PR & Press Coverage",
-  description:
-    "Get your story placed in Nigeria's most-read newspapers and digital publications. PressKit gives you guaranteed editorial placement across the outlets your audience already trusts — from Punch and Vanguard to Premium Times and Business Day.",
-  packages: [
-    {
-      name: "Nigeria Media",
-      highlight: true,
-      billingNote: "Monthly Recurring Option Also Available",
-      price: "100k", currency: "₦", unit: "Per Platform",
-      features: [
-        { label: "10% Discount on Bulk Buy (5+ Platforms)", included: true },
-        { label: "Punch", included: true },
-        { label: "Vanguard", included: true },
-        { label: "Nation", included: true },
-        { label: "Guardian", included: true },
-        { label: "Blueprint", included: true },
-        { label: "Tribune", included: true },
-        { label: "Independent", included: true },
-        { label: "Nigerian Pilot", included: true },
-        { label: "Daily Trust", included: true },
-        { label: "Daily Post", included: true },
-        { label: "Business Day", included: true },
-        { label: "PM News", included: true },
-        { label: "Premium Times", included: true },
-        { label: "New Telegraph", included: true },
-      ],
-      cta: "Buy Once", ctaSecondary: "Subscribe to Monthly Plan",
-    },
-  ],
-  addOns: [
-    { icon: "📎", price: "₦320k", description: "Include contact details, images, logo, and artwork — or commission an extensive interview format." },
-    { icon: "📅", price: "+₦130k", description: "Backdate your story to an earlier date than the original publication period." },
-    { icon: "✍️", price: "+₦40k", description: "Commission a unique story angle per platform so each outlet gets an exclusive perspective." },
-  ],
-};
-
-const presskitUK: TierService = {
-  slug: "presskit",
-  name: "Moveee PressKit UK",
-  eyebrow: "PR & Press Coverage",
-  description:
-    "Get your story placed in trusted UK publications reaching the Black British and diaspora community. PressKit UK gives you guaranteed editorial placement across outlets covering London, Birmingham, Manchester, and beyond — putting your story where it will be seen and remembered.",
-  packages: [
-    {
-      name: "UK Media",
-      highlight: true,
-      billingNote: "Monthly Recurring Option Also Available",
-      price: "170", currency: "£", unit: "Per Platform",
-      features: [
-        { label: "10% Discount on Bulk Buy (5+ Platforms)", included: true },
-        { label: "London Journal", included: true },
-        { label: "Glasgow Report", included: true },
-        { label: "Manchester Times", included: true },
-        { label: "UK Herald", included: true },
-        { label: "Birmingham Times", included: true },
-        { label: "UK Reporter", included: true },
-        { label: "UK Wire", included: true },
-      ],
-      cta: "Buy Once", ctaSecondary: "Subscribe to Monthly Plan",
-    },
-  ],
-  addOns: [
-    { icon: "📎", price: "£220", description: "Include contact details, images, logo, and artwork — or commission an extensive interview format." },
-    { icon: "📅", price: "+£100", description: "Backdate your story to an earlier date than the original publication period." },
-    { icon: "✍️", price: "+£45", description: "Commission a unique story angle per platform so each outlet gets an exclusive perspective." },
-  ],
-};
-
-const presskitUS: TierService = {
-  slug: "presskit",
-  name: "Moveee PressKit US",
-  eyebrow: "PR & Press Coverage",
-  description:
-    "Get your story placed in trusted US publications reaching African and Caribbean diaspora audiences. PressKit US gives you guaranteed editorial placement in the digital and print outlets that Black American and diaspora communities actually read.",
-  packages: [
-    {
-      name: "US Media",
-      highlight: true,
-      billingNote: "Monthly Recurring Option Also Available",
-      price: "220", currency: "$", unit: "Per Platform",
-      features: [
-        { label: "10% Discount on Bulk Buy (5+ Platforms)", included: true },
-        { label: "Atlanta Black Star", included: true },
-        { label: "Blavity", included: true },
-        { label: "Houston Defender", included: true },
-        { label: "New York Amsterdam News", included: true },
-        { label: "Afro News", included: true },
-        { label: "The African Exponent", included: true },
-        { label: "Diaspora Digest", included: true },
-      ],
-      cta: "Buy Once", ctaSecondary: "Subscribe to Monthly Plan",
-    },
-  ],
-  addOns: [
-    { icon: "📎", price: "$220", description: "Include contact details, images, logo, and artwork — or commission an extensive interview format." },
-    { icon: "📅", price: "+$100", description: "Backdate your story to an earlier date than the original publication period." },
-    { icon: "✍️", price: "+$45", description: "Commission a unique story angle per platform so each outlet gets an exclusive perspective." },
-  ],
-};
-
 // ── MoveeeePro (Africa only) ──────────────────────────────────────────────────
 
 const moveeeProAfrica: TierService = {
@@ -556,8 +451,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "presskit", label: "Presskit", kind: "mixed",
-        serviceLabel: "Press placement",
+        id: "presskit", label: "Presskit", kind: "cards",
         cards: [
           {
             name: "MoveeePR Africa — Starter",
@@ -586,7 +480,6 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
-        service: presskitAfrica,
       },
       {
         id: "partnership", label: "Partnership Program", kind: "tiers",
@@ -701,24 +594,36 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "presskit", label: "Presskit", kind: "mixed",
-        serviceLabel: "Press placement",
+        id: "presskit", label: "Presskit", kind: "cards",
         cards: [
           {
-            name: "MoveeePR UK",
+            name: "MoveeePR UK — Starter",
             tag: "pr", tagLabel: "PR Subscription",
-            description: "Affordable AI-powered PR for UK-based African and Caribbean creatives. London agency retainers start at £1,500–£3,000/month — MoveeePR UK is the culturally fluent alternative.",
-            price: "£350",
+            description: "Monthly PR subscription for UK-based African and Caribbean creatives, founders, and brands. Press release writing and distribution to UK digital news platforms.",
+            price: "£250",
             priceNote: "per month · rolling subscription",
             includes: [
-              "2 press releases per month (AI-assisted + edited)",
-              "UK media outreach (Black press + mainstream)",
-              "Monthly strategy call + monthly report",
+              "1 press release per month (AI-assisted + edited)",
+              "Distribution to UK digital news platforms",
+              "GEO (Generative Engine Optimisation) strategy",
+              "Brand narrative development",
               "1 × Moveee UK editorial mention per quarter",
             ],
           },
+          {
+            name: "MoveeePR UK — Growth",
+            tag: "pr", tagLabel: "PR Subscription",
+            description: "For established UK-based African and Caribbean brands and public figures needing consistent media presence and strategic visibility.",
+            price: "£450",
+            priceNote: "per month · 3-month minimum",
+            includes: [
+              "2 press releases + 1 thought leadership piece per month",
+              "Distribution to UK and international digital publications",
+              "Monthly strategy call + performance report",
+              "1 × Moveee UK editorial feature per quarter",
+            ],
+          },
         ],
-        service: presskitUK,
       },
       {
         id: "events", label: "Events & Travel", kind: "cards",
@@ -829,24 +734,36 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "presskit", label: "Presskit", kind: "mixed",
-        serviceLabel: "Press placement",
+        id: "presskit", label: "Presskit", kind: "cards",
         cards: [
           {
-            name: "Diaspora Brand Launchpad",
-            tag: "consulting", tagLabel: "Consulting",
-            description: "Full-service package for African founders entering the US market — market positioning + PR + editorial brand storytelling.",
-            price: "$2,500",
-            priceNote: "one-off project fee",
+            name: "MoveeePR US — Starter",
+            tag: "pr", tagLabel: "PR Subscription",
+            description: "Monthly PR subscription for African and diaspora-founded brands in the US. Press release writing and distribution to US digital news platforms.",
+            price: "$350",
+            priceNote: "per month · rolling subscription",
             includes: [
-              "US market positioning strategy session",
-              "Brand narrative for US diaspora audience",
-              "1 × Moveee US editorial feature",
-              "PR media outreach bundle (5–10 publications)",
+              "1 press release per month (AI-assisted + edited)",
+              "Distribution to US digital news platforms",
+              "GEO (Generative Engine Optimisation) strategy",
+              "Brand narrative development",
+              "1 × Moveee US editorial mention per quarter",
+            ],
+          },
+          {
+            name: "MoveeePR US — Growth",
+            tag: "pr", tagLabel: "PR Subscription",
+            description: "For established US-based African diaspora brands and public figures who need consistent media presence and strategic visibility.",
+            price: "$650",
+            priceNote: "per month · 3-month minimum",
+            includes: [
+              "2 press releases + 1 thought leadership piece per month",
+              "Distribution to US and international digital publications",
+              "Monthly strategy call + performance report",
+              "1 × Moveee US editorial feature per quarter",
             ],
           },
         ],
-        service: presskitUS,
       },
       {
         id: "events", label: "Events & Travel", kind: "cards",
