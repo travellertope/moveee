@@ -254,7 +254,7 @@ const amplifyUS: TierService = {
     {
       name: "Priority",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "60", currency: "$",
+      price: "100", currency: "$",
       features: [
         { label: "Credible As-Seen-In Logo", included: true },
         { label: "Priority-Track Feature", included: true },
@@ -271,7 +271,7 @@ const amplifyUS: TierService = {
     {
       name: "Sponsored",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "115", currency: "$",
+      price: "190", currency: "$",
       features: [
         { label: "Credible As-Seen-In Logo", included: true },
         { label: "Priority-Track Feature", included: true },
@@ -289,7 +289,7 @@ const amplifyUS: TierService = {
       name: "Sponsored+",
       highlight: true,
       billingNote: "Monthly Recurring Option Also Available",
-      price: "180", currency: "$",
+      price: "300", currency: "$",
       features: [
         { label: "Credible As-Seen-In Logo", included: true },
         { label: "Priority-Track Feature", included: true },
@@ -306,7 +306,7 @@ const amplifyUS: TierService = {
     {
       name: "Invested",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "420", currency: "$",
+      price: "700", currency: "$",
       features: [
         { label: "Credible As-Seen-In Logo", included: true },
         { label: "Priority-Track Feature", included: true },
@@ -456,14 +456,14 @@ export const MARKETS: Market[] = [
           {
             name: "MoveeePR Africa — Starter",
             tag: "pr", tagLabel: "PR Subscription",
-            description: "AI-powered PR subscription for emerging Nigerian individuals and small businesses.",
-            price: "₦65,000",
+            description: "Monthly PR subscription for emerging Nigerian individuals and small businesses.",
+            price: "₦100,000",
             priceNote: "per month · rolling subscription",
             includes: [
-              "1 press release per month (AI-assisted + edited)",
+              "1 press release per month (written + edited)",
               "GEO (Generative Engine Optimisation) strategy",
               "Brand narrative development",
-              "1 × Moveee editorial mention per quarter",
+              "1 × Moveee news mention per quarter",
             ],
           },
           {
@@ -476,7 +476,7 @@ export const MARKETS: Market[] = [
               "2 press releases + 1 op-ed or thought leadership piece",
               "Media outreach to Nigerian publications",
               "Monthly strategy + reporting call",
-              "Moveee editorial feature (quarterly)",
+              "Quarterly editorial news coverage on The Moveee",
             ],
           },
         ],
@@ -603,7 +603,7 @@ export const MARKETS: Market[] = [
             price: "£250",
             priceNote: "per month · rolling subscription",
             includes: [
-              "1 press release per month (AI-assisted + edited)",
+              "1 press release per month (written + edited)",
               "Distribution to UK digital news platforms",
               "GEO (Generative Engine Optimisation) strategy",
               "Brand narrative development",
@@ -743,7 +743,7 @@ export const MARKETS: Market[] = [
             price: "$350",
             priceNote: "per month · rolling subscription",
             includes: [
-              "1 press release per month (AI-assisted + edited)",
+              "1 press release per month (written + edited)",
               "Distribution to US digital news platforms",
               "GEO (Generative Engine Optimisation) strategy",
               "Brand narrative development",

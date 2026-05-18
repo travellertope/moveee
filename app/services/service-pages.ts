@@ -188,7 +188,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Nigerian Brands Deserve a Media Presence. Build One.",
       tagline: "Monthly PR subscription for brands, founders, and organisations serious about consistent visibility in Nigerian media.",
       intro: [
-        "Most Nigerian brands are invisible in the press not because their story is weak, but because they've never had consistent media infrastructure. MoveeePR is a monthly subscription that changes that: AI-assisted press release writing, human-led media outreach to Nigerian publications, strategy calls, and ongoing placement tracking.",
+        "Most Nigerian brands are invisible in the press not because their story is weak, but because they've never had consistent media infrastructure. MoveeePR is a monthly subscription that changes that: press release writing, media outreach to Nigerian publications, strategy calls, and ongoing placement tracking.",
         "Starter is designed for individuals and emerging businesses — one press release per month, distribution infrastructure, and quarterly Moveee editorial coverage. Growth adds volume and depth: two releases plus a thought leadership piece, regular media outreach, and monthly strategy calls to keep momentum building.",
         "PR compounds. One announcement is a flicker. Twelve months of consistent coverage is a reputation. We're set up to help you build the latter.",
       ],
@@ -264,7 +264,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "Book a strategy call →",
-      ctaSubtext: "Starter from ₦65,000/month. Growth from ₦120,000/month.",
+      ctaSubtext: "Starter from ₦100,000/month. Growth from ₦120,000/month.",
     },
 
     partnership: {
@@ -669,7 +669,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Build a Consistent Media Presence in the UK.",
       tagline: "Monthly PR subscription for UK-based African and Caribbean brands, creatives, and founders who need steady press coverage — not a one-off announcement.",
       intro: [
-        "Consistent press coverage doesn't happen by accident. It happens through regular, well-written press releases pitched to the right journalists and publications on an ongoing basis. MoveeePR UK gives you that infrastructure: AI-assisted writing, ongoing media outreach across UK digital news platforms, and monthly reporting on what's landing.",
+        "Consistent press coverage doesn't happen by accident. It happens through regular, well-written press releases pitched to the right journalists and publications on an ongoing basis. MoveeePR UK gives you that infrastructure: press release writing, ongoing media outreach across UK digital news platforms, and monthly reporting on what's landing.",
         "Starter gives you one release per month and the foundational brand narrative work to make every pitch count. Growth doubles the output, adds thought leadership content, and includes monthly strategy calls to keep your media presence building over time.",
         "PR compounds. One announcement is a flicker. Consistent monthly output is how brands become familiar to journalists — and eventually, to their audiences.",
       ],
@@ -938,7 +938,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "04",
           title: "Amplify (Optional)",
-          body: "Amplify tiers from $60 push further through paid social, influencer shares, and editorial syndication. Options are scoped and priced at the brief stage.",
+          body: "Amplify tiers from $100 push further through paid social, influencer shares, and editorial syndication. Options are scoped and priced at the brief stage.",
         },
       ],
       benefits: [
@@ -986,7 +986,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "Submit a brief →",
-      ctaSubtext: "$1,200 flat. Amplify from $60.",
+      ctaSubtext: "$1,200 flat. Amplify from $100.",
     },
 
     lifestyle: {
@@ -1072,7 +1072,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Build a Consistent Media Presence Across the US.",
       tagline: "Monthly PR subscription for African and Caribbean diaspora brands who need steady press coverage — not a one-off announcement.",
       intro: [
-        "Getting consistent press coverage as an African or Caribbean diaspora brand in the US requires a rhythm, not a one-off pitch. MoveeePR US gives you that rhythm: AI-assisted press release writing, ongoing media outreach to US digital news platforms, and monthly reporting on what's landing.",
+        "Getting consistent press coverage as an African or Caribbean diaspora brand in the US requires a rhythm, not a one-off pitch. MoveeePR US gives you that rhythm: press release writing, ongoing media outreach to US digital news platforms, and monthly reporting on what's landing.",
         "Starter gives you one release per month and the brand narrative groundwork that makes every pitch more effective. Growth doubles the output, adds thought leadership content, and includes monthly strategy calls to keep your media presence building.",
         "PR compounds. A single press release is a single day's coverage. MoveeePR is the monthly infrastructure that makes your brand familiar to editors — and eventually, to the diaspora audiences they reach.",
       ],
