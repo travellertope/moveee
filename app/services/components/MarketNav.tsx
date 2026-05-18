@@ -3,10 +3,20 @@
 import { useEffect, useState } from "react";
 import type { Section } from "../market-data";
 
-export default function MarketNav({ sections }: { sections: Section[] }) {
+type NavMode = "anchor" | "page";
+
+interface MarketNavProps {
+  sections: Section[];
+  mode?: NavMode;
+  market?: string;
+}
+
+export default function MarketNav({ sections, mode = "anchor", market }: MarketNavProps) {
   const [active, setActive] = useState<string>("");
 
   useEffect(() => {
+    if (mode !== "anchor") return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -22,7 +32,12 @@ export default function MarketNav({ sections }: { sections: Section[] }) {
     });
 
     return () => observer.disconnect();
-  }, [sections]);
+  }, [sections, mode]);
+
+  function getHref(sectionId: string) {
+    if (mode === "page") return `/services/${market}/${sectionId}`;
+    return `#${sectionId}`;
+  }
 
   return (
     <aside className="market-sidenav">
@@ -32,7 +47,7 @@ export default function MarketNav({ sections }: { sections: Section[] }) {
           {sections.map((s) => (
             <a
               key={s.id}
-              href={`#${s.id}`}
+              href={getHref(s.id)}
               className={`sidenav-link ${active === s.id ? "sidenav-link--active" : ""}`}
             >
               <span className="sidenav-link-name">{s.label}</span>
