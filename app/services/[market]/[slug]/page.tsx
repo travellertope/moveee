@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { Metadata } from "next";
-import { getMarket, MARKETS, CONNECT_BAR, type Section, type RateCard, type TierPackage } from "../../market-data";
+import { getMarket, type Section, type RateCard, type TierPackage } from "../../market-data";
 import { getServicePage } from "../../service-pages";
 import MarketNav from "../../components/MarketNav";
 
@@ -36,29 +36,31 @@ export async function generateMetadata({
 
 function CardGrid({ cards }: { cards: RateCard[] }) {
   return (
-    <div className="rate-card-grid">
+    <div className="market-cards-grid">
       {cards.map((card) => (
-        <div key={card.name} className="rate-card">
-          <div className="rate-card-top">
-            <span className="rate-card-tag">{card.tagLabel}</span>
-            <h3 className="rate-card-name">{card.name}</h3>
-            <p className="rate-card-desc">{card.description}</p>
+        <div key={card.name} className="market-card">
+          <div className="market-card-top">
+            <div className="market-card-tags">
+              <span className="market-card-tag">{card.tagLabel}</span>
+            </div>
+            <h3 className="market-card-name">{card.name}</h3>
+            <p className="market-card-desc">{card.description}</p>
           </div>
-          <div className="rate-card-bottom">
-            <div className="rate-card-price-row">
-              <span className="rate-card-price">{card.price}</span>
+          <div className="market-card-body">
+            <div className="market-card-price">
+              <span className="market-card-price-amount">{card.price}</span>
               {card.priceNote && (
-                <span className="rate-card-note">{card.priceNote}</span>
+                <span className="market-card-price-note">{card.priceNote}</span>
               )}
             </div>
-            <ul className="rate-card-includes">
+            <ul className="market-card-includes">
               {card.includes.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
             <a
               href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Enquiry — ${card.name}`)}`}
-              className="btn-primary-service"
+              className="btn-market-card"
             >
               Enquire →
             </a>
@@ -71,40 +73,47 @@ function CardGrid({ cards }: { cards: RateCard[] }) {
 
 function TierGrid({ packages }: { packages: TierPackage[] }) {
   return (
-    <div className="tier-grid">
+    <div className="rate-card-grid rate-card-grid--auto">
       {packages.map((pkg) => (
-        <div key={pkg.name} className={`tier-card${pkg.highlight ? " tier-card--highlight" : ""}`}>
-          <div className="tier-card-top">
-            <p className="tier-billing">{pkg.billingNote}</p>
-            <h3 className="tier-name">{pkg.name}</h3>
-            <p className="tier-price">
-              <span className="tier-currency">{pkg.currency}</span>
-              {pkg.price}
-              {pkg.unit && <span className="tier-unit"> {pkg.unit}</span>}
-            </p>
+        <div key={pkg.name} className={`rate-card${pkg.highlight ? " rate-card--highlight" : ""}`}>
+          <div className="rate-card-header">
+            <h3>{pkg.name}</h3>
+            <span className="rate-billing">{pkg.billingNote}</span>
           </div>
-          <ul className="tier-features">
+          <div className="rate-card-price">
+            <span className="price-currency">{pkg.currency}</span>
+            <span className="price-amount">{pkg.price}</span>
+            {pkg.unit && <span className="price-unit">{pkg.unit}</span>}
+          </div>
+          <ul className="rate-card-features">
             {pkg.features.map((f) => (
-              <li key={f.label} className={f.included ? "tier-feat--yes" : "tier-feat--no"}>
-                <span className="tier-feat-icon">{f.included ? "✓" : "–"}</span>
-                {typeof f.included === "string" ? `${f.label}: ${f.included}` : f.label}
+              <li
+                key={f.label}
+                className={`feature-item ${f.included ? "feature-item--yes" : "feature-item--no"}`}
+              >
+                <span className="feature-icon">{f.included ? "✓" : "–"}</span>
+                <span className="feature-label">
+                  {typeof f.included === "string" ? `${f.label}: ${f.included}` : f.label}
+                </span>
               </li>
             ))}
           </ul>
-          <a
-            href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Enquiry — ${pkg.name}`)}`}
-            className="btn-primary-service"
-          >
-            {pkg.cta}
-          </a>
-          {pkg.ctaSecondary && (
+          <div className="rate-card-ctas">
             <a
-              href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Monthly Plan — ${pkg.name}`)}`}
-              className="tier-cta-secondary"
+              href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Enquiry — ${pkg.name}`)}`}
+              className="btn-rate-primary"
             >
-              {pkg.ctaSecondary}
+              {pkg.cta}
             </a>
-          )}
+            {pkg.ctaSecondary && (
+              <a
+                href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(`Monthly Plan — ${pkg.name}`)}`}
+                className="btn-rate-secondary"
+              >
+                {pkg.ctaSecondary}
+              </a>
+            )}
+          </div>
         </div>
       ))}
     </div>
@@ -118,7 +127,6 @@ function PricingSection({ section }: { section: Section }) {
   if (section.kind === "tiers") {
     return <TierGrid packages={section.service.packages} />;
   }
-  // mixed
   return (
     <>
       <CardGrid cards={section.cards} />
@@ -198,11 +206,11 @@ export default async function SlugPage({
         {content.howItWorks.length > 0 && (
           <section className="slug-how-it-works" id="how-it-works">
             <p className="section-eyebrow">How it works</p>
-            <h2>Simple process, serious results.</h2>
+            <h2 className="slug-section-title">Simple process, serious results.</h2>
             <div className="how-it-works-steps">
               {content.howItWorks.map((step) => (
                 <div key={step.step} className="how-step">
-                  <p className="how-step-number">{step.step}</p>
+                  <p className="how-step-num">{step.step}</p>
                   <h3 className="how-step-title">{step.title}</h3>
                   <p className="how-step-body">{step.body}</p>
                 </div>
@@ -215,12 +223,12 @@ export default async function SlugPage({
         {content.benefits.length > 0 && (
           <section className="slug-benefits" id="benefits">
             <p className="section-eyebrow">Why it works</p>
-            <h2>What you actually get.</h2>
+            <h2 className="slug-section-title">What you actually get.</h2>
             <div className="slug-benefits-grid">
               {content.benefits.map((benefit) => (
                 <div key={benefit.title} className="slug-benefit">
-                  <h3>{benefit.title}</h3>
-                  <p>{benefit.body}</p>
+                  <h3 className="slug-benefit-title">{benefit.title}</h3>
+                  <p className="slug-benefit-body">{benefit.body}</p>
                 </div>
               ))}
             </div>
@@ -230,7 +238,7 @@ export default async function SlugPage({
         {/* Pricing */}
         <section className="slug-pricing" id="pricing">
           <p className="section-eyebrow">Pricing</p>
-          <h2>Clear prices. No surprises.</h2>
+          <h2 className="slug-section-title">Clear prices. No surprises.</h2>
           <PricingSection section={section} />
         </section>
 
@@ -238,12 +246,12 @@ export default async function SlugPage({
         {content.faqs.length > 0 && (
           <section className="slug-faq" id="faq">
             <p className="section-eyebrow">FAQ</p>
-            <h2>Common questions.</h2>
-            <div className="slug-faq-list">
+            <h2 className="slug-section-title">Common questions.</h2>
+            <div className="faq-list">
               {content.faqs.map((faq) => (
-                <details key={faq.question} className="slug-faq-item">
-                  <summary className="slug-faq-question">{faq.question}</summary>
-                  <p className="slug-faq-answer">{faq.answer}</p>
+                <details key={faq.question} className="faq-item">
+                  <summary className="faq-question">{faq.question}</summary>
+                  <p className="faq-answer">{faq.answer}</p>
                 </details>
               ))}
             </div>
@@ -267,7 +275,7 @@ export default async function SlugPage({
         {otherSections.length > 0 && (
           <section className="slug-other-services">
             <p className="section-eyebrow">Also available</p>
-            <h2>Explore more services.</h2>
+            <h2 className="slug-section-title">Explore more services.</h2>
             <div className="slug-other-grid">
               {otherSections.map((s) => (
                 <Link
@@ -278,7 +286,7 @@ export default async function SlugPage({
                   <span className="slug-other-name">{s.label}</span>
                   <span className="slug-other-arrow">→</span>
                 </Link>
-              ))}
+          ))}
             </div>
           </section>
         )}

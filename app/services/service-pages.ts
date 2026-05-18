@@ -185,12 +185,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     presskit: {
-      headline: "Get Into the Right Publications. Stay There.",
-      tagline: "AI-assisted monthly PR, guaranteed placements, and media strategy built for African brands with real stories to tell.",
+      headline: "Nigerian Brands Deserve a Media Presence. Build One.",
+      tagline: "Monthly PR subscription for brands, founders, and organisations serious about consistent visibility in Nigerian media.",
       intro: [
-        "Most Nigerian brands are invisible in the press not because their story is weak, but because they've never had consistent media infrastructure. MoveeePR is a monthly subscription that gives you that infrastructure: AI-assisted press release writing, human-led media outreach, strategy calls, and ongoing placement tracking.",
-        "If you need guaranteed placement rather than outreach — a confirmed article in Punch, Business Day, Premium Times, or any of our 14 partner publications — the PressKit placement product delivers exactly that. ₦100,000 per platform. No speculation, no 'we'll try our best'.",
-        "We serve brands, cultural organisations, public figures, and startups that have something worth saying and need it said in the right places, consistently. This is not a one-press-release-and-done service.",
+        "Most Nigerian brands are invisible in the press not because their story is weak, but because they've never had consistent media infrastructure. MoveeePR is a monthly subscription that changes that: AI-assisted press release writing, human-led media outreach to Nigerian publications, strategy calls, and ongoing placement tracking.",
+        "Starter is designed for individuals and emerging businesses — one press release per month, distribution infrastructure, and quarterly Moveee editorial coverage. Growth adds volume and depth: two releases plus a thought leadership piece, regular media outreach, and monthly strategy calls to keep momentum building.",
+        "PR compounds. One announcement is a flicker. Twelve months of consistent coverage is a reputation. We're set up to help you build the latter.",
       ],
       howItWorks: [
         {
@@ -206,12 +206,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "03",
           title: "Media Outreach",
-          body: "We send to our established contacts at Nigerian national and online publications. For PressKit guaranteed placements, we confirm the slot before you pay. For MoveeePR subscribers, outreach is ongoing and reported monthly.",
+          body: "We send to our established contacts at Nigerian national and digital publications. Outreach is ongoing, reported monthly, and adjusted based on what's generating traction.",
         },
         {
           step: "04",
           title: "Placements Confirmed",
-          body: "You receive links to every live placement. For guaranteed placements, we don't invoice until the article is live. Organic placements secured through outreach are reported in your monthly summary.",
+          body: "Live links delivered as coverage goes up. You receive every placement URL with context — which outlet, which section, estimated reach.",
         },
         {
           step: "05",
@@ -221,20 +221,20 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ],
       benefits: [
         {
-          title: "14 Partner Publications",
-          body: "Punch, Vanguard, The Nation, Guardian Nigeria, Blueprint, Tribune, Independent, Nigerian Pilot, Daily Trust, Daily Post, Business Day, PM News, Premium Times, New Telegraph. Guaranteed placements mean confirmed slots, not crossed fingers.",
-        },
-        {
           title: "PR That Actually Sounds Like Journalism",
-          body: "Our releases are written to be published, not just sent. That means editors engage with them instead of deleting them, and the resulting coverage reads like a story, not an advert.",
+          body: "Our releases are written to be published, not just sent. Editors engage with them because they read like stories, not adverts — which means faster placements and better coverage.",
         },
         {
           title: "Consistent Monthly Presence",
-          body: "A single press release is a one-day story. MoveeePR is a media presence — monthly output that builds name recognition across the publications your audience and investors actually read.",
+          body: "A single press release is a one-day story. MoveeePR is a media presence — monthly output that builds name recognition across the publications your audience, partners, and investors actually read.",
+        },
+        {
+          title: "Nigerian Media Relationships",
+          body: "We have established contacts at Nigerian national newspapers and digital publications. A pitch from a known editorial partner is treated differently from a cold email.",
         },
         {
           title: "Strategy, Not Just Execution",
-          body: "Every MoveeePR subscriber gets a strategy call. We're not a press release factory. We help you identify news pegs, anticipate calendar moments, and build a narrative arc for your brand over time.",
+          body: "Every subscriber gets a strategy call. We help you identify news pegs, anticipate calendar moments, and build a narrative arc for your brand over time. Not a press release factory.",
         },
       ],
       faqs: [
@@ -243,12 +243,8 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           answer: "A press release is a 400–600 word formal announcement written for media consumption. It follows a standard format that editors recognise and can publish quickly. We write yours, pitch it, and handle follow-up.",
         },
         {
-          question: "What's the difference between guaranteed placement and media outreach?",
-          answer: "Guaranteed placement (PressKit, ₦100,000/platform) means we've confirmed a slot with the publication before you pay — your article will be published. Media outreach (included in MoveeePR) means we pitch your story to relevant contacts, secure coverage where we can, and report results. Outreach generates more coverage over time but isn't guaranteed on any single release.",
-        },
-        {
           question: "How fast can you turn around a press release?",
-          answer: "Standard turnaround is 48–72 hours from brief completion. For urgent news (funding announcements, crisis response, event-driven news), we offer expedited turnaround — contact us directly.",
+          answer: "Standard turnaround is 48–72 hours from brief completion. For urgent news — funding announcements, crisis response, event-driven news — contact us directly to discuss expedited options.",
         },
         {
           question: "What makes a good story for Nigerian media?",
@@ -256,15 +252,19 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Can I choose which publications to target?",
-          answer: "Yes. For guaranteed placements, you select the platforms from our list and we confirm availability. For MoveeePR, we advise on which publications suit your story and audience, but you have final say on targeting.",
+          answer: "Yes. We advise on which publications suit your story and audience, but you have final say on where we pitch.",
         },
         {
-          question: "Is the MoveeePR subscription month-to-month or annual?",
-          answer: "MoveeePR is available month-to-month with a recommended minimum of three months to see compounding results. Annual subscribers receive a discounted rate. Details are confirmed at onboarding.",
+          question: "Is the subscription month-to-month or minimum term?",
+          answer: "Starter is rolling month-to-month. Growth has a 3-month minimum to allow media relationships and momentum to build. We recommend at least three months on any tier to see compounding results.",
+        },
+        {
+          question: "Can I start on Starter and move to Growth later?",
+          answer: "Yes. Many clients start on Starter to build their brand narrative and media relationships, then upgrade to Growth when they have more news to run and a clearer media strategy. Upgrade any time with 30 days notice.",
         },
       ],
       ctaLabel: "Book a strategy call →",
-      ctaSubtext: "Guaranteed placements from ₦100,000/platform. MoveeePR subscriptions available monthly.",
+      ctaSubtext: "Starter from ₦65,000/month. Growth from ₦120,000/month.",
     },
 
     partnership: {
@@ -427,6 +427,84 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ctaLabel: "Enquire about a partnership →",
       ctaSubtext: "Events media partnership by application. Origins/Tours listing from ₦30,000/quarter.",
     },
+
+    connect: {
+      headline: "Inside the Room Where the Culture Happens",
+      tagline: "Quarterly community sponsorship for brands that want trust-transferred access to Nigerian and Pan-African creatives, entrepreneurs, and professionals.",
+      intro: [
+        "Moveee Connect is the community layer of The Moveee — a curated, semi-private space where Nigerian and Pan-African creatives, entrepreneurs, professionals, and culture lovers gather. Not a general public audience. A self-selected, high-intent community of people who care about African and diaspora culture deeply enough to opt in.",
+        "When you buy a Moveee Connect sponsorship, you're not buying an ad. You're buying trust-transferred access — the ability to show up inside a community that already has a relationship with The Moveee, in a way that feels curated rather than intrusive. The Moveee team introduces you. Your content has to earn its place. Your member offer has to genuinely serve the people receiving it.",
+        "₦100,000 per quarter gets you a warm community introduction, one sponsored content slot, and an exclusive member offer. For brands that can't reach this audience through mainstream Nigerian media — and most can't — this is the most direct route in.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Enquire and Brief",
+          body: "Tell us about your brand, what you want to offer the community, and what your goals are for the quarter. We assess editorial fit — not every brand is right for Moveee Connect, and we won't place a brand whose offer doesn't serve the community.",
+        },
+        {
+          step: "02",
+          title: "Community Introduction",
+          body: "We write and post a community introduction: who you are, why we're partnering with you this quarter, and why we think you're relevant to this community. The Moveee's voice vouches for you. That warm intro is worth more than a cold ad.",
+        },
+        {
+          step: "03",
+          title: "Your Sponsored Content Slot",
+          body: "One piece of genuinely useful content shared to the community — a guide, resource, offer, or insight that serves people first. A Nigerian fashion brand might share how to get stocked in Abuja concept stores. A fintech might share a practical guide to diaspora remittance options. Value-first, brand second.",
+        },
+        {
+          step: "04",
+          title: "Exclusive Member Offer",
+          body: "An offer, discount, or experience available only to Moveee Connect members. This creates reciprocity — the community feels rewarded, and you drive real commercial action. Offer parameters are agreed at briefing.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Trust Transfer, Not Interruption",
+          body: "A warm introduction from The Moveee team carries weight that a banner ad never will. The community already trusts The Moveee's editorial judgement — that trust extends, partially, to brands we choose to feature.",
+        },
+        {
+          title: "Self-Selected, High-Intent Audience",
+          body: "Moveee Connect members opted in. They're not passively scrolling a timeline. They're engaged participants in a space they chose to join — which means your message lands differently.",
+        },
+        {
+          title: "Reach Buyers Mainstream Media Can't Reach",
+          body: "Financial services targeting diaspora professionals, legal services, education providers, real estate developers marketing to diaspora buyers, event promoters, recruiters — these buyers can't easily find this audience through mainstream Nigerian media. Moveee Connect is the direct line.",
+        },
+        {
+          title: "Value-First Commercial Format",
+          body: "Your content slot has to be genuinely useful. This keeps community trust intact, ensures high engagement, and means your brand is remembered for the value it added — not the promotion it ran.",
+        },
+      ],
+      faqs: [
+        {
+          question: "What exactly is Moveee Connect?",
+          answer: "A curated, semi-private community — think a well-moderated Telegram group, Discord, or similar platform — where Nigerian and Pan-African creatives, entrepreneurs, and professionals gather around shared interest in African and diaspora culture. Membership is opt-in and deliberately kept high-quality.",
+        },
+        {
+          question: "Who is in the community?",
+          answer: "Nigerian and Pan-African creatives, entrepreneurs, professionals, and culture lovers — people who engage with The Moveee's editorial and care enough about the culture to join a dedicated space. Age range skews 25–45, professionally established, culturally literate.",
+        },
+        {
+          question: "What counts as a 'sponsored content slot'?",
+          answer: "One post sharing something genuinely useful — a guide, resource, exclusive insight, experience, or offer. It shouldn't read like an ad. We'll advise on format and review the content before it goes out.",
+        },
+        {
+          question: "Is this available across other Moveee markets?",
+          answer: "Yes. Moveee Connect operates in Nigeria/Africa, the UK, and the US. Each market has its own community. You can sponsor one or multiple markets — pricing is per market, per quarter.",
+        },
+        {
+          question: "How is this different from a sponsored post on social?",
+          answer: "A sponsored social post reaches a broad, passive audience. Moveee Connect reaches a small, active, high-intent community. The format is conversational and contextualised, not a standard ad unit. The community knows who sponsors it and why.",
+        },
+        {
+          question: "Can I renew after the first quarter?",
+          answer: "Yes, and renewal is encouraged. Consistency builds familiarity — brands that show up every quarter are perceived as part of the ecosystem, not one-off advertisers. Renewal is confirmed before the next quarter begins.",
+        },
+      ],
+      ctaLabel: "Apply for Connect sponsorship →",
+      ctaSubtext: "₦100,000 per quarter. Subject to editorial fit review.",
+    },
   },
 
   uk: {
@@ -588,12 +666,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     presskit: {
-      headline: "Black British Brands Deserve Coverage. We Make It Happen.",
-      tagline: "Monthly PR subscription and guaranteed placements across the UK publications your audience actually reads.",
+      headline: "Build a Consistent Media Presence in the UK.",
+      tagline: "Monthly PR subscription for UK-based African and Caribbean brands, creatives, and founders who need steady press coverage — not a one-off announcement.",
       intro: [
-        "Getting consistent press coverage as a Black British brand is harder than it should be. Mainstream UK media covers the community selectively, often reactively, and rarely with depth. MoveeePR is a monthly subscription that builds you a media presence in publications that reach Black British readers directly — London Journal, Birmingham Times, UK Herald, Manchester Times, and more.",
-        "If you need a guaranteed placement — a confirmed article in a named publication — rather than a pitch-and-hope approach, our PressKit product delivers exactly that. £170 per platform. Confirmed before you pay.",
-        "PR is infrastructure. A single announcement without context is noise. MoveeePR is a monthly rhythm of press releases, outreach, and reporting that builds name recognition with media and audiences over time.",
+        "Consistent press coverage doesn't happen by accident. It happens through regular, well-written press releases pitched to the right journalists and publications on an ongoing basis. MoveeePR UK gives you that infrastructure: AI-assisted writing, ongoing media outreach across UK digital news platforms, and monthly reporting on what's landing.",
+        "Starter gives you one release per month and the foundational brand narrative work to make every pitch count. Growth doubles the output, adds thought leadership content, and includes monthly strategy calls to keep your media presence building over time.",
+        "PR compounds. One announcement is a flicker. Consistent monthly output is how brands become familiar to journalists — and eventually, to their audiences.",
       ],
       howItWorks: [
         {
@@ -604,47 +682,43 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "02",
           title: "We Write the Releases",
-          body: "Our team produces press releases that are editorially compelling — a genuine news hook, a quotable spokesperson, and a clear relevance to Black British readers. We don't write corporate boilerplate that gets binned.",
+          body: "Our team produces press releases written to be published — a genuine news hook, a quotable spokesperson, and a clear angle for UK readers. Not corporate boilerplate.",
         },
         {
           step: "03",
           title: "Outreach to UK Publications",
-          body: "We pitch to our established contacts across seven UK partner publications. For PressKit guaranteed placements, the slot is confirmed before you pay. For MoveeePR, outreach is ongoing.",
+          body: "We distribute to UK digital news platforms and pitch to relevant journalists. Outreach is ongoing and adjusted each month based on what's generating traction.",
         },
         {
           step: "04",
           title: "Placements Confirmed",
-          body: "Live links delivered as coverage goes up. For guaranteed placements, we don't invoice until the article is live.",
+          body: "Live links delivered as coverage goes up. You receive every placement URL with context — which outlet, audience size, and section.",
         },
         {
           step: "05",
           title: "Monthly Reporting",
-          body: "MoveeePR subscribers receive a monthly report covering placements secured, outlets contacted, estimated reach, and recommendations for the following month.",
+          body: "Placements secured, outlets contacted, estimated reach, and recommendations for the following month. You're building a media record — this is the log of it.",
         },
       ],
       benefits: [
         {
-          title: "Seven UK Partner Publications",
-          body: "London Journal, Glasgow Report, Manchester Times, UK Herald, Birmingham Times, UK Reporter, UK Wire. Guaranteed placements mean confirmed slots, not aspirational pitches.",
+          title: "Press Releases Written to Be Published",
+          body: "Our releases are written like editorial, not marketing copy. That means faster uptake from editors and coverage that reflects well on your brand rather than reading like a paid-for announcement.",
         },
         {
-          title: "Media Coverage That Reads Like Journalism",
-          body: "Our releases are written to be published without heavy editing. That means faster placement, better coverage, and editorial that reflects well on your brand.",
+          title: "UK Digital Distribution Network",
+          body: "We distribute across a network of UK digital news platforms. Not a single outlet — a broad distribution that maximises the chances of your story landing.",
         },
         {
           title: "Monthly Consistency",
-          body: "One placement is a flicker. MoveeePR is a steady accumulation of coverage that makes your brand familiar to editors and readers across UK Black media.",
+          body: "One placement is a flicker. MoveeePR is a steady accumulation of coverage that makes your brand familiar to editors, journalists, and eventually their readers.",
         },
         {
-          title: "Black British Media Relationships",
-          body: "We have established contacts at the publications we work with. That relationship matters — a pitch from a known editorial partner is treated differently from a cold email.",
+          title: "Strategy Included",
+          body: "We help you identify news pegs, anticipate calendar moments, and build a narrative arc over time. You're not just buying press releases — you're buying a media strategy.",
         },
       ],
       faqs: [
-        {
-          question: "What's the difference between MoveeePR and a PressKit placement?",
-          answer: "MoveeePR is a monthly subscription that includes writing, outreach, and reporting across multiple releases over time. PressKit is a one-off guaranteed placement in a specific named publication at £170 per platform. Many clients use both.",
-        },
         {
           question: "What counts as newsworthy for a press release?",
           answer: "A product launch, funding round, award, significant partnership, cultural milestone, or executive appointment — anything with a genuine news peg. We'll advise if your story needs more development before pitching.",
@@ -654,8 +728,8 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           answer: "48–72 hours from brief completion. For time-sensitive announcements, contact us directly to discuss expedited options.",
         },
         {
-          question: "Can I choose which publications to target?",
-          answer: "Yes. For guaranteed placements, you select from our seven UK partner publications. For MoveeePR outreach, we advise on best fit but you have final say.",
+          question: "Which publications do you distribute to?",
+          answer: "We distribute to a network of UK digital news platforms and pitch to relevant journalists based on your story. We advise on which outlets suit your brand and audience — you have final say on targeting.",
         },
         {
           question: "Is the MoveeePR subscription flexible?",
@@ -663,11 +737,15 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Do you work with brands outside London?",
-          answer: "Yes. Our UK partner publications include outlets covering Birmingham, Manchester, and Glasgow. We work with Black British brands and organisations across the UK, not just in London.",
+          answer: "Yes. We work with UK-based brands and organisations wherever they are — London, Birmingham, Manchester, Glasgow, Bristol. The distribution network covers the whole of the UK.",
+        },
+        {
+          question: "Can I start on Starter and move to Growth later?",
+          answer: "Yes. Start on Starter to build your brand narrative and outreach rhythm, then upgrade to Growth when you have more news volume and a clearer media strategy. Upgrade any time with 30 days notice.",
         },
       ],
       ctaLabel: "Book a strategy call →",
-      ctaSubtext: "Guaranteed placements from £170/platform. MoveeePR subscriptions available monthly.",
+      ctaSubtext: "Starter from £250/month. Growth from £450/month.",
     },
 
     events: {
@@ -751,6 +829,84 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ],
       ctaLabel: "Enquire about a partnership →",
       ctaSubtext: "Events partnership by application. Origins/Tours listing from £75/quarter.",
+    },
+
+    connect: {
+      headline: "The Room Where Black British Culture Does Business",
+      tagline: "Quarterly community sponsorship for brands that want trust-transferred access to Black British and diaspora creatives, professionals, and entrepreneurs.",
+      intro: [
+        "Moveee Connect UK is the community layer of The Moveee — a curated, semi-private space where Black British and diaspora creatives, entrepreneurs, professionals, and culture lovers gather. Not a general social media audience. A self-selected community of people who care about African and Caribbean diaspora culture enough to opt in and actively participate.",
+        "A quarterly sponsorship isn't an ad placement. It's trust-transferred access — you show up inside a community that already has a relationship with The Moveee, introduced by the team, in a format that feels curated and useful rather than intrusive. The community knows who's in the room and why.",
+        "£200 per quarter. A warm introduction, one sponsored content slot, one exclusive member offer. For brands that can't easily reach Black British professionals and creatives through mainstream UK media — which is most — Moveee Connect is the most direct route in.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Enquire and Brief",
+          body: "Tell us about your brand, what you want to offer the community, and what your goals are for the quarter. We assess editorial fit — not every brand is right for Moveee Connect UK, and we won't place a brand whose offer doesn't genuinely serve the community.",
+        },
+        {
+          step: "02",
+          title: "Community Introduction",
+          body: "We write and post an introduction to the community: who you are, why we're working with you this quarter, and why we think you're relevant to Black British and diaspora community members. Our voice vouches for you. That matters.",
+        },
+        {
+          step: "03",
+          title: "Your Sponsored Content Slot",
+          body: "One piece of genuinely useful content shared to the community. A legal services firm might share '5 things diaspora entrepreneurs get wrong about UK company formation.' A fashion brand might share how to get stocked in UK independent boutiques. Value-first, brand second.",
+        },
+        {
+          step: "04",
+          title: "Exclusive Member Offer",
+          body: "An offer, discount, or experience available only to Moveee Connect UK members. Creates reciprocity — the community feels rewarded, and you drive real commercial action. Offer parameters are agreed at briefing.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Trust Transfer, Not Interruption",
+          body: "A warm introduction from The Moveee team carries weight that a display ad or sponsored post never will. The community trusts The Moveee's editorial judgement — that trust extends to brands we choose to endorse.",
+        },
+        {
+          title: "Self-Selected, High-Intent Community",
+          body: "These are people who chose to be here — not passive social scrollers. Black British and diaspora professionals who are culturally engaged, economically active, and receptive to brands that understand their context.",
+        },
+        {
+          title: "Buyers Mainstream UK Media Struggles to Reach",
+          body: "Financial services targeting diaspora professionals, immigration lawyers, Caribbean and African property, education providers, recruiters, fintechs — there's no efficient way to reach Black British and diaspora audiences in mainstream UK media. Moveee Connect is the direct line.",
+        },
+        {
+          title: "Value-First Format That Builds Brand Memory",
+          body: "Your content slot has to genuinely serve the community. This means higher engagement, stronger brand recall, and a relationship that persists beyond the quarter.",
+        },
+      ],
+      faqs: [
+        {
+          question: "What is Moveee Connect UK?",
+          answer: "A curated semi-private community — a moderated group space on Telegram, Discord, or a similar platform — for Black British and diaspora creatives, entrepreneurs, and professionals. Membership is opt-in and quality-controlled.",
+        },
+        {
+          question: "Who are the members?",
+          answer: "Black British and diaspora creatives, entrepreneurs, and professionals — people in the African and Caribbean community in the UK who engage with The Moveee's editorial content. Age range 25–45, professionally established, culturally literate.",
+        },
+        {
+          question: "What does the sponsored content slot look like in practice?",
+          answer: "One post to the community from your brand — written in a way that serves community members first. We'll advise on the right format, review the content before it goes out, and make sure it fits the community's tone.",
+        },
+        {
+          question: "Can I run this across multiple Moveee markets?",
+          answer: "Yes. Connect operates in Africa/Nigeria, the UK, and the US. Sponsoring multiple markets gives you cross-market reach. Each market is priced independently per quarter.",
+        },
+        {
+          question: "How is this different from a standard sponsored post?",
+          answer: "A sponsored post on social reaches a passive, broad audience with no particular reason to trust you. Moveee Connect reaches an active, self-selected community that trusts The Moveee's endorsement. Very different starting point for a brand relationship.",
+        },
+        {
+          question: "Can I renew quarter to quarter?",
+          answer: "Yes. Consistent presence across multiple quarters deepens brand familiarity and signals genuine investment in the community. Renewal is offered before each new quarter.",
+        },
+      ],
+      ctaLabel: "Apply for Connect sponsorship →",
+      ctaSubtext: "£200 per quarter. Subject to editorial fit review.",
     },
   },
 
@@ -913,12 +1069,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     presskit: {
-      headline: "Black Diaspora Brands Need Media Infrastructure. Here It Is.",
-      tagline: "Monthly PR subscription and guaranteed placements across the US publications African and Caribbean diaspora readers trust.",
+      headline: "Build a Consistent Media Presence Across the US.",
+      tagline: "Monthly PR subscription for African and Caribbean diaspora brands who need steady press coverage — not a one-off announcement.",
       intro: [
-        "Getting consistent press coverage as an African or Caribbean diaspora brand in the US is harder than it looks. General market outlets cover Black stories when they fit the narrative du jour. Black media has limited capacity and gets overwhelmed with pitches. MoveeePR is a monthly subscription that builds you a sustained presence in the publications your target audience — diaspora professionals, creatives, and community leaders — actually reads.",
-        "If you need guaranteed placement — a confirmed article in Atlanta Black Star, Blavity, NY Amsterdam News, Houston Defender, or any of our other US partner publications — PressKit delivers. $220 per platform. Confirmed before you pay.",
-        "This is long-game media infrastructure. PR compounds over months and years. A single press release is a single day's coverage. MoveeePR is a monthly rhythm that builds name recognition across the diaspora media landscape.",
+        "Getting consistent press coverage as an African or Caribbean diaspora brand in the US requires a rhythm, not a one-off pitch. MoveeePR US gives you that rhythm: AI-assisted press release writing, ongoing media outreach to US digital news platforms, and monthly reporting on what's landing.",
+        "Starter gives you one release per month and the brand narrative groundwork that makes every pitch more effective. Growth doubles the output, adds thought leadership content, and includes monthly strategy calls to keep your media presence building.",
+        "PR compounds. A single press release is a single day's coverage. MoveeePR is the monthly infrastructure that makes your brand familiar to editors — and eventually, to the diaspora audiences they reach.",
       ],
       howItWorks: [
         {
@@ -929,62 +1085,62 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "02",
           title: "We Write the Releases",
-          body: "Our team writes press releases that have a real news hook, a quotable spokesperson, and relevance to diaspora readers. No boilerplate. No third-person corporate speak that editors delete on sight.",
+          body: "Our team writes press releases with a real news hook, a quotable spokesperson, and clear relevance to US readers. Not boilerplate. Not third-person corporate speak that editors delete on sight.",
         },
         {
           step: "03",
           title: "Outreach to US Publications",
-          body: "We pitch to established contacts at our US partner publications. For PressKit guaranteed placements, the slot is confirmed before you pay. MoveeePR outreach is ongoing and reported monthly.",
+          body: "We distribute to US digital news platforms and pitch to relevant journalists. Outreach is ongoing and adjusted each month based on what's generating traction.",
         },
         {
           step: "04",
           title: "Placements Confirmed",
-          body: "Live links delivered as coverage goes up. Guaranteed placements aren't invoiced until the article is live.",
+          body: "Live links delivered as coverage goes up. You receive every placement URL with context — outlet, section, and estimated audience.",
         },
         {
           step: "05",
           title: "Monthly Reporting",
-          body: "MoveeePR subscribers receive a monthly report: placements secured, outlets contacted, estimated reach, and strategy recommendations for the following month.",
+          body: "Placements secured, outlets contacted, estimated reach, and strategy recommendations for the following month. You're building a media record — this is the log of it.",
         },
       ],
       benefits: [
         {
-          title: "Seven US Partner Publications",
-          body: "Atlanta Black Star, Blavity, Houston Defender, NY Amsterdam News, Afro News, The African Exponent, Diaspora Digest. Guaranteed placements mean confirmed slots.",
+          title: "Releases Written to Be Published",
+          body: "We write for editors, not brand managers. That means fewer rewrites, faster placements, and coverage that reads like journalism rather than a paid-for announcement.",
         },
         {
-          title: "Releases Written to Be Published",
-          body: "We write for editors, not for brand managers. That means fewer rewrites, faster placements, and coverage that reads like journalism.",
+          title: "US Digital Distribution Network",
+          body: "We distribute across a network of US digital news platforms and pitch to relevant journalists. Broad distribution maximises the chance of your story finding the right editorial home.",
         },
         {
           title: "Monthly Media Presence",
-          body: "Consistent coverage across months makes your brand familiar to editors and recognisable to readers. That familiarity is what turns a press release into a story a journalist actually wants to write.",
+          body: "Consistent coverage across months makes your brand familiar to editors and recognisable to their readers. That familiarity is what turns a press release into a story a journalist wants to write.",
         },
         {
-          title: "Diaspora Media Relationships",
-          body: "Our contacts at Black and diaspora US publications are editorial relationships built over time. A pitch from a trusted source moves faster than a cold outreach from a brand's in-house team.",
+          title: "Strategy Included",
+          body: "We help you identify news pegs, anticipate the US media calendar, and build a narrative arc. You're not just buying press releases — you're buying a media strategy.",
         },
       ],
       faqs: [
         {
-          question: "What's the difference between MoveeePR and a PressKit placement?",
-          answer: "MoveeePR is a monthly subscription: writing, outreach, and reporting across multiple releases over time. PressKit is a one-off guaranteed placement in a specific named publication at $220 per platform. Many clients use both.",
-        },
-        {
-          question: "What makes a story newsworthy for Black diaspora media?",
-          answer: "A clear news peg (launch, funding, award, partnership, cultural milestone), a named and quotable source, and genuine relevance to Black or diaspora readers. We'll tell you if your story needs development before it's ready to pitch.",
+          question: "What makes a story newsworthy for US media?",
+          answer: "A clear news peg (launch, funding, award, partnership, cultural milestone), a named and quotable source, and genuine relevance to US readers. We'll tell you if your story needs development before it's ready to pitch.",
         },
         {
           question: "How quickly can you turn around a press release?",
           answer: "48–72 hours from brief completion. Expedited options are available for time-sensitive announcements.",
         },
         {
-          question: "Can I choose which publications to target?",
-          answer: "Yes. For guaranteed placements, you select from our seven US partner publications. For MoveeePR, we advise on best editorial fit but you have final say on targeting.",
+          question: "Which publications do you distribute to?",
+          answer: "We distribute to a network of US digital news platforms and pitch to relevant journalists. We advise on editorial fit based on your story and audience — you have final say on targeting.",
         },
         {
           question: "Is the subscription flexible?",
-          answer: "Month-to-month with a recommended three-month minimum to see compounding results. Annual subscribers receive a discounted rate.",
+          answer: "Starter is rolling month-to-month. Growth has a 3-month minimum. We recommend at least three months on any tier to see compounding results.",
+        },
+        {
+          question: "Can I start on Starter and upgrade later?",
+          answer: "Yes. Start on Starter to build your brand narrative and outreach rhythm, then upgrade to Growth when you have more news volume. Upgrade any time with 30 days notice.",
         },
         {
           question: "Do you work with brands based outside the US?",
@@ -992,7 +1148,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "Book a strategy call →",
-      ctaSubtext: "Guaranteed placements from $220/platform. MoveeePR subscriptions available monthly.",
+      ctaSubtext: "Starter from $350/month. Growth from $650/month.",
     },
 
     events: {
@@ -1076,6 +1232,84 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ],
       ctaLabel: "Enquire about a partnership →",
       ctaSubtext: "Events partnership by application. Origins/Tours listing from $60/quarter.",
+    },
+
+    connect: {
+      headline: "Access the Diaspora Community That Mainstream Doesn't Reach",
+      tagline: "Quarterly community sponsorship for brands targeting African and Caribbean diaspora professionals and creatives across the United States.",
+      intro: [
+        "Moveee Connect US is the community layer of The Moveee — a curated, semi-private space where African and Caribbean diaspora creatives, entrepreneurs, professionals, and culture lovers gather across New York, Atlanta, Houston, DC, and Los Angeles. Not a passive social media audience. A self-selected community of people who actively sought this space out because they care about their culture.",
+        "A quarterly sponsorship is trust-transferred access. You're introduced to the community by The Moveee team — in a context where the audience already trusts our editorial judgement. Your content has to be genuinely useful. Your member offer has to serve the people receiving it. In exchange, you reach an audience that mainstream US media rarely gets to accurately.",
+        "$250 per quarter. One warm community introduction, one sponsored content slot, one exclusive member offer. For financial services, professional firms, technology companies, and brands that need to reach diaspora professionals — and can't find them through mainstream channels — this is the most direct route.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Enquire and Brief",
+          body: "Tell us about your brand, your offer for the community, and your goals for the quarter. We assess editorial fit — we won't place a brand whose product or offer doesn't genuinely serve the community. Diaspora fintech, professional services, cultural brands, education providers, and event promoters typically fit well.",
+        },
+        {
+          step: "02",
+          title: "Community Introduction",
+          body: "We write and post an introduction to the community — who you are, why we're working together this quarter, why we think you're relevant to African and Caribbean diaspora professionals in the US. Our voice vouches for you. That's the whole point.",
+        },
+        {
+          step: "03",
+          title: "Your Sponsored Content Slot",
+          body: "One piece of genuinely useful content. A remittance platform might share a guide to transfer fee comparisons. A legal firm might share what Nigerian American entrepreneurs need to know about US entity formation. A creative education platform might share a scholarship opportunity. Value-first, brand second.",
+        },
+        {
+          step: "04",
+          title: "Exclusive Member Offer",
+          body: "An offer, discount, or experience available only to Moveee Connect US members. Creates reciprocity — the community feels rewarded, and you create real commercial action. Offer parameters are confirmed at briefing.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Trust Transfer, Not Interruption",
+          body: "A warm introduction from The Moveee team is a fundamentally different starting point than a cold ad. The community trusts The Moveee. That trust extends — partially, conditionally — to brands we choose to introduce.",
+        },
+        {
+          title: "A Highly Specific Audience That's Hard to Buy Elsewhere",
+          body: "African and Caribbean diaspora professionals in the US aren't a meaningful targeting category in mainstream US digital advertising. Moveee Connect is a direct channel to exactly these people.",
+        },
+        {
+          title: "Buyers No Other Channel Gets Right",
+          body: "Diaspora remittance and fintech, immigration legal services, African property for diaspora buyers, Nigerian and Caribbean food and lifestyle brands, cultural education, diversity-focused employers — the buyer profile for this community is unusually broad. All of them need this audience and none of them can easily buy it.",
+        },
+        {
+          title: "Value-First Format That Builds Real Brand Memory",
+          body: "The community knows your content slot has to earn its place. When it does — when it's genuinely useful — the brand memory it creates is much stronger than an ad impression. This is a relationship-building format, not an awareness format.",
+        },
+      ],
+      faqs: [
+        {
+          question: "What is Moveee Connect US?",
+          answer: "A curated, semi-private community — a moderated group on Telegram, Discord, or a similar platform — for African and Caribbean diaspora creatives, entrepreneurs, and professionals across the United States. Membership is opt-in, focused on New York, Atlanta, Houston, DC, and LA.",
+        },
+        {
+          question: "Who are the members?",
+          answer: "African and Caribbean diaspora creatives, entrepreneurs, and professionals — people who engage with The Moveee US and care enough about diaspora culture to join a dedicated community. Age range 25–45, professionally established, brand-literate.",
+        },
+        {
+          question: "What does the sponsored content slot look like?",
+          answer: "One post to the community from your brand — written to serve community members first. We'll advise on format, review the content before it goes out, and make sure it fits the community's tone and expectations.",
+        },
+        {
+          question: "What kinds of brands fit well?",
+          answer: "Diaspora fintech and remittance, legal and professional services targeting African and Caribbean professionals, US real estate or Nigerian/Caribbean property for diaspora buyers, cultural education and training, event promoters, diversity-focused recruiters, and lifestyle brands with genuine diaspora cultural relevance.",
+        },
+        {
+          question: "Can I sponsor multiple markets?",
+          answer: "Yes. Moveee Connect operates in Africa/Nigeria, the UK, and the US. Sponsoring multiple markets gives you cross-market reach at scale. Each market is priced independently per quarter.",
+        },
+        {
+          question: "Can I renew quarter to quarter?",
+          answer: "Yes, and renewal is encouraged. Consistent quarter-on-quarter presence builds real familiarity — you go from 'that brand The Moveee mentioned' to a recognisable, trusted fixture of the community. Renewal is offered before each new quarter.",
+        },
+      ],
+      ctaLabel: "Apply for Connect sponsorship →",
+      ctaSubtext: "$250 per quarter. Subject to editorial fit review.",
     },
   },
 };
