@@ -264,7 +264,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "Book a strategy call →",
-      ctaSubtext: "Starter from ₦65,000/month. Growth from ₦120,000/month.",
+      ctaSubtext: "Starter from ₦100,000/month. Growth from ₦120,000/month.",
     },
 
     partnership: {
@@ -938,7 +938,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "04",
           title: "Amplify (Optional)",
-          body: "Amplify tiers from $60 push further through paid social, influencer shares, and editorial syndication. Options are scoped and priced at the brief stage.",
+          body: "Amplify tiers from $100 push further through paid social, influencer shares, and editorial syndication. Options are scoped and priced at the brief stage.",
         },
       ],
       benefits: [
@@ -986,7 +986,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "Submit a brief →",
-      ctaSubtext: "$1,200 flat. Amplify from $60.",
+      ctaSubtext: "$1,200 flat. Amplify from $100.",
     },
 
     lifestyle: {
