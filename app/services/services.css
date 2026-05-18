@@ -720,6 +720,379 @@
 .service-bottom-nav a:hover { color: var(--ochre); }
 
 /* ============================================================
+   MARKET PAGE (/services/[market])
+   ============================================================ */
+
+.market-shell {
+  display: flex;
+  align-items: flex-start;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+/* ── Market sidenav (reuses sidebar styles, adds active state) ── */
+.market-sidenav {
+  width: 220px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid rgba(42,36,28,0.1);
+  background: var(--paper);
+}
+
+.market-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidenav-link--active {
+  border-left-color: var(--ochre) !important;
+  background: rgba(197,73,31,0.05) !important;
+}
+.sidenav-link--active .sidenav-link-name {
+  color: var(--ochre);
+}
+
+/* ── Market hero ── */
+.market-hero {
+  padding: 72px 80px 64px;
+  border-bottom: 1px solid rgba(42,36,28,0.1);
+  max-width: 860px;
+}
+
+.market-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.market-flag { font-size: 20px; letter-spacing: 0; }
+
+.market-headline {
+  font-family: var(--font-serif);
+  font-size: clamp(36px, 4.5vw, 60px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.0;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.market-headline em { font-style: italic; color: var(--ochre); }
+
+.market-intro {
+  font-size: 16px;
+  color: var(--ink-soft);
+  line-height: 1.7;
+  max-width: 600px;
+  margin-bottom: 36px;
+}
+
+/* ── Market sections ── */
+.market-section {
+  padding: 72px 80px;
+  border-bottom: 1px solid rgba(42,36,28,0.1);
+  scroll-margin-top: 24px;
+}
+
+.market-section-header {
+  margin-bottom: 32px;
+}
+
+/* ── Cards grid (editorial, lifestyle, PR, events etc.) ── */
+.market-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1px;
+  background: rgba(42,36,28,0.1);
+  border: 1px solid rgba(42,36,28,0.1);
+}
+
+.market-card {
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  transition: background 0.2s;
+}
+.market-card:hover { background: #faf6ef; }
+
+.market-card--featured {
+  background: #faf6ef;
+}
+
+.market-card-top {
+  padding: 32px 32px 24px;
+  flex: 1;
+  border-bottom: 1px solid rgba(42,36,28,0.08);
+}
+
+.market-card-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.market-card-tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  border: 1px solid rgba(197,73,31,0.3);
+  padding: 3px 8px;
+}
+
+.market-card-badge {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--ochre);
+  color: var(--paper);
+  padding: 3px 8px;
+}
+
+.market-card-name {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+
+.market-card-desc {
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+.market-card-body {
+  padding: 24px 32px 28px;
+}
+
+.market-card-price {
+  margin-bottom: 20px;
+}
+
+.market-card-price-amount {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.market-card-price-note {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--mute);
+  text-transform: uppercase;
+}
+
+.market-card-includes {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 24px;
+  border-top: 1px solid rgba(42,36,28,0.08);
+  padding-top: 16px;
+}
+
+.market-card-includes li {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(42,36,28,0.06);
+  padding-left: 16px;
+  position: relative;
+}
+.market-card-includes li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--ochre);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+.market-card-includes li:last-child { border-bottom: none; }
+
+.btn-market-card {
+  display: inline-block;
+  padding: 10px 24px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.btn-market-card:hover { background: var(--ochre); }
+
+/* ── Tier section (Amplify, PressKit, MoveeeePro) ── */
+.tier-section {}
+
+.tier-service-desc {
+  font-size: 15px;
+  color: var(--ink-soft);
+  line-height: 1.7;
+  max-width: 680px;
+  margin-bottom: 36px;
+}
+
+.tier-addons {
+  margin-top: 40px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(42,36,28,0.1);
+}
+
+.tier-addons-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-bottom: 24px;
+}
+
+.rate-card-badge-strip {
+  background: var(--ochre);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 6px;
+}
+
+/* ── Connect bar ── */
+.connect-bar {
+  background: var(--ink);
+  padding: 56px 80px;
+  border-bottom: 1px solid rgba(243,236,224,0.06);
+}
+
+.connect-bar-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 64px;
+}
+
+.connect-bar-text { flex: 1; }
+
+.connect-bar-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--paper);
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.connect-bar-desc {
+  font-size: 14px;
+  color: rgba(243,236,224,0.6);
+  line-height: 1.7;
+  max-width: 480px;
+}
+
+.connect-bar-price-block {
+  flex-shrink: 0;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.connect-bar-price {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--paper);
+  letter-spacing: -0.02em;
+}
+
+.connect-bar-price-note {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(243,236,224,0.4);
+  margin-bottom: 8px;
+}
+
+.connect-bar .btn-primary-service {
+  background: transparent;
+  color: var(--paper);
+  border-color: rgba(243,236,224,0.35);
+}
+.connect-bar .btn-primary-service:hover {
+  background: var(--ochre);
+  border-color: var(--ochre);
+}
+
+/* ── Market bottom CTA ── */
+.market-bottom-cta {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 80px;
+}
+
+.market-bottom-cta h2 {
+  font-family: var(--font-serif);
+  font-size: clamp(28px, 3.5vw, 48px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--paper);
+  margin-bottom: 16px;
+  line-height: 1.05;
+  max-width: 560px;
+}
+
+.market-bottom-cta p {
+  font-size: 15px;
+  color: rgba(243,236,224,0.6);
+  max-width: 480px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.market-bottom-cta .section-eyebrow {
+  color: var(--ochre);
+}
+
+.market-bottom-cta .btn-primary-service {
+  background: transparent;
+  color: var(--paper);
+  border-color: rgba(243,236,224,0.35);
+}
+.market-bottom-cta .btn-primary-service:hover {
+  background: var(--ochre);
+  border-color: var(--ochre);
+}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 
@@ -728,31 +1101,61 @@
 }
 
 @media (max-width: 768px) {
-  .services-sidenav {
+  /* ── Market shell ── */
+  .market-shell { flex-direction: column; }
+
+  .market-sidenav {
     width: 100%;
     height: auto;
-    position: static;
+    position: sticky;
+    top: 0;
+    z-index: 10;
     border-right: none;
     border-bottom: 1px solid rgba(42,36,28,0.1);
+    background: var(--paper);
   }
-  .sidenav-inner {
-    padding: 24px;
+  .market-sidenav .sidenav-inner {
+    padding: 16px 20px;
     min-height: auto;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    gap: 12px;
+    gap: 0;
+    overflow-x: auto;
   }
-  .sidenav-label { margin-bottom: 0; white-space: nowrap; }
-  .services-sidenav nav { flex-direction: row; flex-wrap: wrap; gap: 4px; flex: 1; }
-  .sidenav-link { padding: 8px 12px; border-left: none; border-bottom: 2px solid transparent; }
-  .sidenav-link:hover { border-bottom-color: var(--ochre); border-left-color: transparent; background: none; }
-  .sidenav-link-eyebrow { display: none; }
-  .sidenav-cta { display: none; }
+  .market-sidenav .sidenav-label { display: none; }
+  .market-sidenav nav {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0;
+    flex: 1;
+    overflow-x: auto;
+  }
+  .market-sidenav .sidenav-link {
+    padding: 8px 14px;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .market-sidenav .sidenav-link--active {
+    border-bottom-color: var(--ochre) !important;
+    border-left-color: transparent !important;
+    background: none !important;
+  }
+  .market-sidenav .sidenav-cta { display: none; }
 
+  .market-hero { padding: 48px 24px; }
+  .market-section { padding: 48px 24px; }
+  .market-cards-grid { grid-template-columns: 1fr; }
+  .connect-bar { padding: 40px 24px; }
+  .connect-bar-inner { flex-direction: column; gap: 32px; }
+  .connect-bar-price-block { align-items: flex-start; text-align: left; }
+  .market-bottom-cta { padding: 48px 24px; }
+
+  /* ── Old service page ── */
   .benefits-section { padding: 48px 24px; }
   .benefits-grid { grid-template-columns: 1fr; }
-  .services-shell { flex-direction: column; }
   .services-index { padding: 40px 24px 0; }
   .services-index-contact { padding: 60px 24px; margin: 0 -24px; }
 

@@ -53,6 +53,11 @@ const nextConfig = {
     return [
       ...temporary,
 
+      // ── Services old slug redirects (now market-based pages) ────────────
+      { source: '/services/amplify',         destination: '/services', permanent: false },
+      { source: '/services/presskit',        destination: '/services', permanent: false },
+      { source: '/services/book-publishers', destination: '/services', permanent: false },
+
       // ── Permanent structural redirects ──────────────────────────────────
       { source: '/origins',             destination: '/journeys',                 permanent: true },
       { source: '/origins/:slug*',      destination: '/journeys/:slug*',          permanent: true },
