@@ -7,7 +7,7 @@ import RSVPForm from "../components/RSVPForm";
 import DiscoveredEventPage from "../components/DiscoveredEventPage";
 import "@/app/events.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 180;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -106,6 +106,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const hasShowcase = Array.isArray(event.showcase) && event.showcase.length > 0;
   const hasHost = event.featuredHost && typeof event.featuredHost === 'object' && event.featuredHost?.title;
   const host = hasHost ? event.featuredHost : null;
+  const chapter = event.associatedChapter && event.associatedChapter.title ? event.associatedChapter : null;
+  const showcaseLabel = event.showcaseLabel || null;
+  const artistSectionLabel = event.artistSectionLabel || "The artist";
+  const artistLinkLabel = event.artistLinkLabel || "Read the full portrait";
 
   // Eyebrow pieces
   const eyebrowType = eventSubtype || cat;
@@ -116,38 +120,22 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       {/* ── HERO — left: content, right: featured image ── */}
       <section className="event-hero">
         <div className="hero-content">
-          <div className="hero-eyebrow">
-            <span className="pill">{eyebrowStatus}</span>
-            <span className="sep">·</span>
-            <span>{eyebrowType}</span>
-            <span className="sep">·</span>
-            <span>Moveee Happenings</span>
-          </div>
-
           <h1 className="hero-title">{event.title}</h1>
           <p className="hero-subtitle">{event.tagline || `${cat} by ${host?.title || "Moveee Talent"}`}</p>
 
-          <div className="hero-meta-row">
-            <div className="hero-meta-item">
-              <div className="label">{eventSubtype || "Opening Night"}</div>
-              <div className="value">{dateFormatted}</div>
+          <div className="hero-info-cards">
+            <div className="hero-info-card">
+              <div className="label">📍 Venue</div>
+              <p>{event.location || "Venue TBA"}</p>
+              <small style={{ whiteSpace: "pre-line" }}>
+                {venueAddress || "Please check your confirmation email for exact entry directions."}
+              </small>
             </div>
-            <div className="hero-meta-item">
-              <div className="label">Venue</div>
-              <div className="value">{event.location || "Venue TBA"}</div>
+            <div className="hero-info-card">
+              <div className="label">📅 {endFormatted ? "Event run" : "Date"}</div>
+              <p>{dateFormatted}{endFormatted ? ` — ${endFormatted}` : ""}</p>
+              <small>{event.openingHours || "Hours TBA"}<br />{event.admission || "Free Admission"}</small>
             </div>
-            {endFormatted && (
-              <div className="hero-meta-item">
-                <div className="label">Event run</div>
-                <div className="value">{dateFormatted} — {endFormatted}</div>
-              </div>
-            )}
-            {event.metrics?.map((m: any, i: number) => (
-              <div key={i} className="hero-meta-item">
-                <div className="label">{m.label}</div>
-                <div className="value">{m.value}</div>
-              </div>
-            ))}
           </div>
 
           <div className="hero-cta-group">
@@ -219,22 +207,28 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           {hasShowcase && (
             <div className="works-section">
               <div className="works-header">
-                <h3>Selected <em>works</em></h3>
+                {showcaseLabel
+                  ? <h3>{showcaseLabel}</h3>
+                  : <h3>Selected <em>works</em></h3>}
+
                 <small>Preview · {event.showcase.length} items</small>
               </div>
               <div className="works-grid">
-                {event.showcase.map((item: any, i: number) => (
+                {event.showcase.map((item: any, i: number) => {
+                    const imgSrc = item.imageUrl || null;
+                    return (
                   <div key={i} className="work-card">
                     <div className="work-frame">
-                      {item.image?.sourceUrl && (
-                        <Image src={item.image.sourceUrl} alt={item.title} fill className="object-cover" />
+                      {imgSrc && (
+                        <Image src={imgSrc} alt={item.title} fill className="object-cover" />
                       )}
                     </div>
                     <div className="work-num">N°0{i+1}</div>
                     <div className="work-title">{item.title}</div>
                     <div className="work-meta">{item.media} · {item.dimensions} · {item.year}</div>
                   </div>
-                ))}
+                    );
+                  })}
               </div>
             </div>
           )}
@@ -295,21 +289,20 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             )}
           </div>
 
-          <div className="info-card">
-            <div className="label">📍 Venue</div>
-            <p>{event.location || "Venue TBA"}</p>
-            {venueAddress ? (
-              <small style={{ whiteSpace: "pre-line" }}>{venueAddress}</small>
-            ) : (
-              <small>Please check your confirmation email for exact entry directions.</small>
-            )}
-          </div>
-
-          <div className="info-card">
-            <div className="label">📅 Event dates</div>
-            <p>{dateFormatted}{endFormatted ? ` — ${endFormatted}` : ""}</p>
-            <small>{event.openingHours || "Hours TBA"}<br/>{event.admission || "Free Admission"}</small>
-          </div>
+          {chapter && (
+            <div className="info-card">
+              <span className="label">Chapter</span>
+              <p style={{ fontWeight: 600, marginBottom: "6px" }}>{chapter.title}</p>
+              {chapter.excerpt && (
+                <small style={{ display: "block", marginBottom: "12px", color: "var(--ink-soft)", lineHeight: 1.5 }}>
+                  {chapter.excerpt.replace(/<[^>]*>/g, "").slice(0, 120)}{chapter.excerpt.length > 120 ? "…" : ""}
+                </small>
+              )}
+              <Link href={`/chapters/${chapter.slug}`} style={{ fontSize: "10px", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                View Chapter →
+              </Link>
+            </div>
+          )}
 
           {event.associatedJourney && (
             <div className="info-card" style={{ background: "var(--ink)", color: "var(--paper)" }}>
@@ -346,7 +339,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             )}
           </div>
           <div className="artist-info">
-            <div className="section-label">The artist</div>
+            <div className="section-label">{artistSectionLabel}</div>
             <h3>{host.title?.split(' ')[0] || "Featured"} <em>{host.title?.split(' ').slice(1).join(' ') || "Artist"}</em></h3>
             <div
               style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: "18px", color: "var(--ink-soft)", lineHeight: 1.5, marginBottom: "20px" }}
@@ -356,7 +349,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               href={`/directory/${host.slug}`}
               style={{ display: "inline-block", fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.15em", borderBottom: "1px solid var(--ink)", paddingBottom: "2px", textDecoration: "none", color: "var(--ink)" }}
             >
-              Read the full portrait →
+              {artistLinkLabel} →
             </Link>
           </div>
         </section>

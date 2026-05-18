@@ -68,13 +68,15 @@ function mapRestEventToFrontendShape(item: any) {
       : [];
 
   const normalizeHost = (h: any) => {
-    if (!h || typeof h !== "object") return null;
+    // ACF relationship field can return: null, a post object, or an array of post objects/IDs
+    const raw = Array.isArray(h) ? h[0] : h;
+    if (!raw || typeof raw !== "object") return null;
     return {
-      title: h.post_title || h.title || h.name || "",
-      slug: h.post_name || h.slug || "",
-      excerpt: h.post_excerpt || h.excerpt || "",
-      featuredImage: toMediaItem(h.featured_image || h.thumbnail)
-        ? { node: toMediaItem(h.featured_image || h.thumbnail) }
+      title: raw.post_title || raw.title || raw.name || "",
+      slug: raw.post_name || raw.slug || "",
+      excerpt: raw.post_excerpt || raw.excerpt || "",
+      featuredImage: toMediaItem(raw.featured_image || raw.thumbnail)
+        ? { node: toMediaItem(raw.featured_image || raw.thumbnail) }
         : null,
     };
   };
@@ -130,6 +132,12 @@ function mapRestEventToFrontendShape(item: any) {
     venueAddress: pick(acf.venue_address, meta.venue_address),
     rsvpCapacity: acf.rsvp_capacity ? parseInt(String(acf.rsvp_capacity), 10) : null,
     rsvpMembersNote: pick(acf.rsvp_members_note, meta.rsvp_members_note),
+    showcaseLabel: pick(acf.showcase_label, meta.showcase_label) || null,
+    artistSectionLabel: pick(acf.artist_section_label, meta.artist_section_label) || null,
+    artistLinkLabel: pick(acf.artist_link_label, meta.artist_link_label) || null,
+    chapterId: acf.chapter_id ? parseInt(String(acf.chapter_id), 10)
+      : meta._culture_chapter_id ? parseInt(String(meta._culture_chapter_id), 10)
+      : null,
     rsvpTicketTypes: Array.isArray(acf.rsvp_ticket_types)
       ? acf.rsvp_ticket_types.map((t: any) => ({
           ticketName:     t.ticket_name     ?? '',
@@ -140,6 +148,7 @@ function mapRestEventToFrontendShape(item: any) {
           ticketCurrency: t.ticket_currency ?? 'NGN',
         }))
       : [],
+    associatedChapter: null as { title: string; slug: string; excerpt: string; featuredImage: { node: { sourceUrl: string } } | null } | null,
   };
 }
 
@@ -217,7 +226,101 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
 
 export async function getEventBySlugWithFallback(slug: string, options: any = {}) {
   const gql = await getWPData(GET_EVENT_BY_SLUG, { slug }, options);
-  if (gql?.cultureEvent) return gql.cultureEvent;
+  if (gql?.cultureEvent) {
+    const ev = gql.cultureEvent;
+    // WPGraphQL may not resolve some ACF fields — patch via REST for host, chapterId
+    const needsHostPatch = !ev.featuredHost?.title;
+    if (needsHostPatch || !ev.chapterId) {
+      try {
+        const metaRes = await fetch(
+          `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_fields=acf,meta`,
+          { next: { revalidate: 3600 } }
+        );
+        if (metaRes.ok) {
+          const metaJson = await metaRes.json();
+          const acf = metaJson[0]?.acf ?? {};
+          const meta = metaJson[0]?.meta ?? {};
+
+          if (!ev.chapterId) {
+            const rawChapter = acf.chapter_id ?? meta._culture_chapter_id;
+            if (rawChapter) ev.chapterId = parseInt(String(rawChapter), 10) || null;
+          }
+
+          if (needsHostPatch) {
+            const rawHost = acf.featured_host;
+            // ACF returns object, array-of-objects, or bare integer ID depending on return_format
+            const hostId = typeof rawHost === "number" ? rawHost
+              : Array.isArray(rawHost) ? (typeof rawHost[0] === "number" ? rawHost[0] : rawHost[0]?.ID ?? rawHost[0]?.id ?? null)
+              : typeof rawHost === "object" && rawHost ? (rawHost.ID ?? rawHost.id ?? null)
+              : null;
+            if (hostId) {
+              const hostRes = await fetch(
+                `${WP_BASE_URL}/wp-json/wp/v2/culture_directory/${hostId}?_embed=1`,
+                { next: { revalidate: 3600 } }
+              );
+              if (hostRes.ok) {
+                const h = await hostRes.json();
+                const img = h._embedded?.["wp:featuredmedia"]?.[0];
+                ev.featuredHost = {
+                  title: h.title?.rendered ?? "",
+                  slug: h.slug ?? "",
+                  excerpt: h.excerpt?.rendered?.replace(/<[^>]+>/g, "") ?? "",
+                  featuredImage: img?.source_url ? { node: { sourceUrl: img.source_url, altText: img.alt_text ?? "" } } : null,
+                };
+              }
+            }
+          }
+        }
+      } catch { /* non-fatal */ }
+    }
+
+    // Resolve missing showcase images via WP media API when GraphQL returns null
+    if (Array.isArray(ev.showcase)) {
+      const missing = ev.showcase
+        .map((s: any, i: number) => {
+          if (s.image?.sourceUrl) return null;
+          // Try mediaItemUrl first, then fall back to databaseId fetch
+          if (s.image?.mediaItemUrl) { ev.showcase[i].image = { sourceUrl: s.image.mediaItemUrl }; return null; }
+          const id = s.image?.databaseId ?? null;
+          return id ? { i, id } : null;
+        })
+        .filter(Boolean) as { i: number; id: number }[];
+      if (missing.length > 0) {
+        await Promise.allSettled(missing.map(async ({ i, id }) => {
+          try {
+            const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
+            if (mRes.ok) {
+              const m = await mRes.json();
+              const url = m.source_url ?? m.guid?.rendered;
+              if (url) ev.showcase[i] = { ...ev.showcase[i], image: { sourceUrl: url } };
+            }
+          } catch { /* non-fatal */ }
+        }));
+      }
+    }
+
+    // Resolve chapter if chapterId is set but chapter object not yet populated
+    if (ev.chapterId && !ev.associatedChapter) {
+      try {
+        const chapterRes = await fetch(
+          `${WP_BASE_URL}/wp-json/wp/v2/culture_chapter/${ev.chapterId}?_embed=1`,
+          { next: { revalidate: 3600 } }
+        );
+        if (chapterRes.ok) {
+          const ch = await chapterRes.json();
+          const chImg = ch._embedded?.["wp:featuredmedia"]?.[0];
+          ev.associatedChapter = {
+            title: ch.title?.rendered ?? "",
+            slug: ch.slug ?? "",
+            excerpt: ch.excerpt?.rendered?.replace(/<[^>]+>/g, "") ?? "",
+            featuredImage: chImg?.source_url ? { node: { sourceUrl: chImg.source_url } } : null,
+          };
+        }
+      } catch { /* non-fatal */ }
+    }
+
+    return ev;
+  }
 
   try {
     const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_embed=1`;
@@ -231,7 +334,79 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
     if (!res.ok) return null;
     const json = await res.json();
     if (!Array.isArray(json) || json.length === 0) return null;
-    return mapRestEventToFrontendShape(json[0]);
+    const event = mapRestEventToFrontendShape(json[0]);
+
+    // ACF post_object fields can return a bare integer ID, an object, or an array.
+    // normalizeHost handles objects/arrays; if host is still missing, do a secondary fetch.
+    if (!event.featuredHost?.title) {
+      const rawHost = json[0]?.acf?.featured_host;
+      const hostId = typeof rawHost === "number" ? rawHost
+        : Array.isArray(rawHost) ? (typeof rawHost[0] === "number" ? rawHost[0] : rawHost[0]?.ID ?? rawHost[0]?.id ?? null)
+        : typeof rawHost === "object" && rawHost ? (rawHost.ID ?? rawHost.id ?? null)
+        : null;
+      if (hostId) {
+        try {
+          const hostRes = await fetch(
+            `${WP_BASE_URL}/wp-json/wp/v2/culture_directory/${hostId}?_embed=1`,
+            { next: { revalidate: 3600 } }
+          );
+          if (hostRes.ok) {
+            const h = await hostRes.json();
+            const img = h._embedded?.["wp:featuredmedia"]?.[0];
+            event.featuredHost = {
+              title: h.title?.rendered ?? "",
+              slug: h.slug ?? "",
+              excerpt: h.excerpt?.rendered?.replace(/<[^>]+>/g, "") ?? "",
+              featuredImage: img?.source_url ? { node: { sourceUrl: img.source_url, altText: img.alt_text ?? "" } } : null,
+            };
+          }
+        } catch { /* non-fatal */ }
+      }
+    }
+
+    // Resolve showcase image IDs → actual URLs
+    const showcaseImageIds: { i: number; id: number }[] = [];
+    (event.showcase ?? []).forEach((s: any, i: number) => {
+      const raw = json[0]?.acf?.showcase?.[i]?.image;
+      if (!s.image?.sourceUrl && typeof raw === "number" && raw > 0) showcaseImageIds.push({ i, id: raw });
+    });
+    if (showcaseImageIds.length > 0) {
+      await Promise.allSettled(showcaseImageIds.map(async ({ i, id }) => {
+        try {
+          const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
+          if (mRes.ok) {
+            const m = await mRes.json();
+            const url = m.source_url ?? m.guid?.rendered;
+            if (url) event.showcase[i].image = { sourceUrl: url };
+          }
+        } catch { /* non-fatal */ }
+      }));
+    }
+
+    // Resolve chapter from meta
+    const chapterId = event.chapterId
+      ?? (json[0]?.meta?._culture_chapter_id ? parseInt(String(json[0].meta._culture_chapter_id), 10) : null);
+    if (chapterId) {
+      event.chapterId = chapterId;
+      try {
+        const chapterRes = await fetch(
+          `${WP_BASE_URL}/wp-json/wp/v2/culture_chapter/${chapterId}?_embed=1`,
+          { next: { revalidate: 3600 } }
+        );
+        if (chapterRes.ok) {
+          const ch = await chapterRes.json();
+          const chImg = ch._embedded?.["wp:featuredmedia"]?.[0];
+          event.associatedChapter = {
+            title: ch.title?.rendered ?? "",
+            slug: ch.slug ?? "",
+            excerpt: ch.excerpt?.rendered?.replace(/<[^>]+>/g, "") ?? "",
+            featuredImage: chImg?.source_url ? { node: { sourceUrl: chImg.source_url } } : null,
+          };
+        }
+      } catch { /* non-fatal */ }
+    }
+
+    return event;
   } catch {
     return null;
   }
@@ -621,12 +796,18 @@ const EVENT_FIELDS_FRAGMENT = `
       dimensions
       year
       price
-      image {
-        sourceUrl
-      }
+      imageUrl
     }
     featuredHost {
-      ...DirectoryFields
+      title
+      slug
+      excerpt
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+        }
+      }
     }
     associatedJourney {
       ...JourneyFields
@@ -639,6 +820,9 @@ const EVENT_FIELDS_FRAGMENT = `
     }
     eventSubtype
     aboutLabel
+    showcaseLabel
+    artistSectionLabel
+    artistLinkLabel
     venueAddress
     rsvpCapacity
     rsvpMembersNote
@@ -650,6 +834,7 @@ const EVENT_FIELDS_FRAGMENT = `
       ticketAmount
       ticketCurrency
     }
+    chapterId
   }
 `;
 
@@ -798,7 +983,6 @@ export const GET_EVENTS = `
     }
   }
   ${EVENT_FIELDS_FRAGMENT}
-  ${DIRECTORY_FIELDS_FRAGMENT}
   ${JOURNEY_FIELDS_FRAGMENT}
 `;
 
@@ -810,7 +994,6 @@ export const GET_EVENT_BY_SLUG = `
     }
   }
   ${EVENT_FIELDS_FRAGMENT}
-  ${DIRECTORY_FIELDS_FRAGMENT}
   ${JOURNEY_FIELDS_FRAGMENT}
 `;
 

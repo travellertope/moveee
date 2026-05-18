@@ -81,34 +81,35 @@ const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 // ─── Build prompt from RSS items ──────────────────────────────────────────────
 function buildPrompt(items: FeedItem[]): string {
   const list = items
-    .map((item, i) =>
-      `[${i + 1}] SOURCE: ${item.source}\nURL: ${item.link}\nTITLE: ${item.title}\nSUMMARY: ${item.description}`
-    )
+    .map((item, i) => {
+      const desc = (item.description ?? "").slice(0, 120).replace(/\s+/g, " ").trim();
+      return `[${i + 1}] ${item.source} | ${item.title}\nURL: ${item.link}${desc ? `\n${desc}` : ""}`;
+    })
     .join("\n\n");
 
   return `You are the editorial AI for Moveee Pulse — a cultural intelligence platform covering African and Black diasporan culture.
 
 Below are ${items.length} real news items fetched from African and diaspora media. Your job:
 
-1. SELECT the 8–12 items most relevant to African/Black diaspora culture — music, film, fashion, art, literature, food, activism, travel, lifestyle, or business. Ignore pure politics, sport results, or crime unless they have strong cultural significance.
+1. SELECT the 5–8 items most relevant to African/Black diaspora culture — music, film, fashion, art, literature, food, activism, travel, lifestyle, or business. Skip politics, sport results, or crime unless strongly cultural.
 
-2. REWRITE each selected item in the Moveee editorial voice — smart, warm, specific, culturally attuned.
+2. REWRITE each item in the Moveee editorial voice — smart, warm, specific.
 
-3. PRESERVE the exact URL from each item you select — copy it as "source_url". Do NOT alter, guess, or construct URLs.
+3. PRESERVE the exact URL from each item — copy it verbatim as "source_url". Never alter or construct URLs.
 
 Return ONLY a raw JSON array — no markdown, no backticks, no explanation.
 
 Each object must have:
-- "title": sharp editorial headline, max 12 words, sentence case
-- "summary": exactly 2 sentences in Moveee voice. Max 50 words. Specific — name the real artist, designer, event, or place.
-- "body": 4–5 paragraphs, 400–600 words total, separated by \\n\\n. Structure: (1) story overview, (2) cultural/historical context, (3) significance for African and diaspora community, (4) broader implications or reactions, (5) what's next. Warm, authoritative, specific.
-- "arm": exactly one of: "lifestyle" | "origins" | "happenings" | "magazine"
+- "title": sharp headline, max 10 words, sentence case
+- "summary": 1–2 sentences, max 30 words, Moveee voice, name the real artist/place/event
+- "body": 2 short paragraphs, 80–120 words total, separated by \\n\\n. (1) what happened and why it matters, (2) significance for African/diaspora audiences.
+- "arm": one of: "lifestyle" | "origins" | "happenings" | "magazine"
 - "region": one of: "Africa" | "Caribbean" | "Diaspora UK" | "Diaspora US" | "Diaspora Europe" | "Global"
-- "source": the publication name (e.g. OkayAfrica, BellaNaija, The Root)
-- "source_url": the EXACT URL from the item — copy it verbatim
-- "category": exactly one of: "music" | "film" | "fashion" | "art" | "literature" | "food" | "activism" | "sports" | "business" | "tech"
+- "source": publication name (e.g. OkayAfrica, BellaNaija, The Root)
+- "source_url": the EXACT URL from the item — copy verbatim
+- "category": one of: "music" | "film" | "fashion" | "art" | "literature" | "food" | "activism" | "sports" | "business" | "tech"
 
-Spread selections across at least 3 different arms and 3 different regions. Prefer recent, specific, culturally rich stories.
+Spread across at least 3 arms and 3 regions.
 
 NEWS ITEMS:
 ${list}`;

@@ -4,7 +4,7 @@ import { getWPData, GET_JOURNEYS } from "@/lib/wp";
 import OriginHero from "./components/OriginHero";
 import "@/app/origins.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = {
   title: "Origins · Curated Journeys · The Moveee",

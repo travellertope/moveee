@@ -2,16 +2,17 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
 import FeedCard from "./FeedCard";
 import SubmitPost from "./SubmitPost";
 
 const TYPE_FILTERS: { label: string; value: FeedItemType | "all" }[] = [
   { label: "All",        value: "all"       },
-  { label: "Community",  value: "community" },
-  { label: "Pulse",      value: "pulse"     },
+  { label: "Pulse",      value: "community" },
+  { label: "News",       value: "pulse"     },
   { label: "Editorial",  value: "editorial" },
-  { label: "Happening",  value: "happening" },
+  { label: "Event",      value: "happening" },
   { label: "Directory",  value: "directory" },
   { label: "Quote",      value: "quote"     },
 ];
@@ -74,6 +75,19 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [activeTag, setActiveTag] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(20);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Apply edition cookie → pre-select matching region
+  useEffect(() => {
+    const edition = document.cookie.split("; ").find(r => r.startsWith("moveee_edition="))?.split("=")[1];
+    const editionToRegion: Record<string, string> = {
+      uk:     "Diaspora UK",
+      us:     "Diaspora US",
+      africa: "Africa",
+    };
+    if (edition && editionToRegion[edition]) {
+      setActiveRegion(editionToRegion[edition]);
+    }
+  }, []);
 
   useEffect(() => {
     const hashtag = searchParams.get("hashtag");
@@ -224,6 +238,24 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 </ul>
               </div>
             )}
+
+            <div style={{ marginTop: "1.25rem" }}>
+              <SidebarHeading>Categories</SidebarHeading>
+              <ul style={{ margin: 0, padding: 0 }}>
+                {["Music","Film","Art","Fashion","Literature","Food","Tech","Sport","Travel","Design"].slice(0,6).map(cat => (
+                  <li key={cat} style={{ listStyle: "none" }}>
+                    <Link href={`/pulse/${cat.toLowerCase()}`} style={{ display: "block", padding: "0.3rem 0.85rem", fontSize: "0.78rem", color: "#3a342b", textDecoration: "none", borderLeft: "2px solid transparent" }}>
+                      {cat}
+                    </Link>
+                  </li>
+                ))}
+                <li style={{ listStyle: "none" }}>
+                  <Link href="/pulse/categories" style={{ display: "block", padding: "0.3rem 0.85rem", fontSize: "0.72rem", color: "#c5491f", textDecoration: "none", fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
+                    ⊞ Sections →
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </nav>
         </aside>
 
@@ -252,6 +284,30 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                   {label}
                 </button>
               ))}
+              <Link
+                href="/pulse/categories"
+                style={{
+                  position: "sticky",
+                  right: 0,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.25rem",
+                  background: "#14110d",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "0",
+                  padding: "0.25rem 0.9rem",
+                  fontSize: "0.72rem",
+                  fontWeight: 500,
+                  whiteSpace: "nowrap",
+                  letterSpacing: "0.04em",
+                  textDecoration: "none",
+                  flexShrink: 0,
+                  boxShadow: "-8px 0 10px #fff",
+                }}
+              >
+                ⊞ Sections
+              </Link>
             </div>
           </div>
 

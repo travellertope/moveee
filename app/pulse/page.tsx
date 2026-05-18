@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getUnifiedFeed } from "@/lib/unified-feed";
 import PulseFeed from "@/components/pulse/PulseFeed";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 

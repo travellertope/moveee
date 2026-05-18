@@ -1,9 +1,65 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import type { FeedItem } from "@/lib/unified-feed";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
+
+function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(0,0,0,0.88)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "1rem",
+        cursor: "zoom-out",
+      }}
+    >
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        aria-label="Close"
+        style={{
+          position: "absolute", top: "1rem", right: "1rem",
+          background: "rgba(255,255,255,0.12)", border: "none",
+          borderRadius: "50%", width: "36px", height: "36px",
+          color: "#fff", fontSize: "1rem", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+      >
+        ✕
+      </button>
+
+      {/* Image — stop click propagating so clicking image itself doesn't close */}
+      <img
+        src={src}
+        alt={alt}
+        onClick={e => e.stopPropagation()}
+        style={{
+          maxWidth: "100%",
+          maxHeight: "90vh",
+          objectFit: "contain",
+          borderRadius: "4px",
+          cursor: "default",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
+        }}
+      />
+    </div>
+  );
+}
 
 const TYPE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   pulse:     { label: "Pulse",      bg: "#fef3e2", color: "#b38238" },
@@ -52,8 +108,6 @@ export default function FeedCard({
 
   // ── Quote card ──
   if (item.type === "quote") {
-    const paragraphs = item.title.split("\n").filter((l) => l.trim()).length;
-    const isLong = paragraphs >= 6 || item.title.length > 500;
     return (
       <article style={{
         background: "#fff",
@@ -72,12 +126,6 @@ export default function FeedCard({
               lineHeight: 1.55,
               fontStyle: "italic",
               marginBottom: "0.6rem",
-              ...(isLong ? {
-                display: "-webkit-box",
-                WebkitLineClamp: 8,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              } : {}),
             }}>
               {item.title}
             </p>
@@ -86,6 +134,15 @@ export default function FeedCard({
               {item.quoteAuthor && <span style={{ color: "#c5491f", fontSize: "0.75rem", fontWeight: 600 }}>{item.quoteAuthor}</span>}
               {item.quoteSource && <span style={{ color: "#7a6f5c", fontSize: "0.72rem" }}>· {item.quoteSource}</span>}
               <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+              <Link
+                href={item.href}
+                style={{ display: "flex", alignItems: "center", color: "#7a6f5c", textDecoration: "none", flexShrink: 0 }}
+                aria-label="View quote"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </Link>
             </div>
           </div>
         </div>
@@ -95,6 +152,11 @@ export default function FeedCard({
 
   // ── Community card (tweet-style) ──
   if (item.type === "community") {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [lightbox, setLightbox] = useState<string | null>(null);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const closeLightbox = useCallback(() => setLightbox(null), []);
+
     return (
       <article
         id={`community-${item.id.replace("community-", "")}`}
@@ -170,9 +232,15 @@ export default function FeedCard({
 
           {/* Image */}
           {item.image && (
-            <div style={{ width: "100%", maxHeight: "200px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8" }}>
-              <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} loading="lazy" />
-            </div>
+            <>
+              <div
+                onClick={() => setLightbox(item.image!)}
+                style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8", cursor: "zoom-in" }}
+              >
+                <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.15s" }} loading="lazy" />
+              </div>
+              {lightbox && <ImageLightbox src={lightbox} alt={item.title} onClose={closeLightbox} />}
+            </>
           )}
 
           {/* Reactions + comment link — share the same border-top row */}

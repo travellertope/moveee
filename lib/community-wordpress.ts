@@ -88,3 +88,22 @@ export async function getPostComments(postId: number): Promise<WpComment[]> {
   if (!res.ok) return [];
   return res.json().catch(() => []);
 }
+
+/**
+ * Fetch community posts filtered by a communityTag that matches the given tag label
+ * (e.g. "Music" for the music category). WP REST API doesn't support meta filtering,
+ * so we fetch the last 50 posts and filter client-side.
+ */
+export async function getCommunityPostsByTag(tag: string): Promise<WpCommunityPost[]> {
+  const catId = await getCommunityCategory();
+  if (!catId) return [];
+  const res = await fetch(
+    `${BASE}/posts?categories=${catId}&per_page=50&orderby=date&order=desc&_fields=id,slug,date,content,meta,comment_count`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) return [];
+  const posts: WpCommunityPost[] = await res.json().catch(() => []);
+  return posts.filter(
+    (p) => p.meta?.community_tag?.toLowerCase() === tag.toLowerCase()
+  );
+}

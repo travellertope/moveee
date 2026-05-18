@@ -135,11 +135,11 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
     quotesResult,
     communityResult,
   ] = await Promise.allSettled([
-    getPulseStories({ perPage: 18 }),
-    getWPData(GET_STORIES, { first: 12 }, { revalidate: 0 }),
-    getEventsWithFallback(12, { revalidate: 0 }),
-    getWPData(GET_DIRECTORY_ENTRIES, { first: 12 }, { revalidate: 0 }),
-    getWPQuotes({ first: 12 }),
+    getPulseStories({ perPage: 40 }),
+    getWPData(GET_STORIES, { first: 30 }, { revalidate: 0 }),
+    getEventsWithFallback(30, { revalidate: 0 }),
+    getWPData(GET_DIRECTORY_ENTRIES, { first: 30 }, { revalidate: 0 }),
+    getWPQuotes({ first: 50 }),
     getCommunityPosts(),
   ]);
 
@@ -232,7 +232,8 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         title: decodeHtml(stripHtml(quote.content ?? quote.title ?? "")),
         slug: quote.slug,
         date: quote.date,
-        href: `/connect/pulse#quote-${quote.databaseId}`,
+        href: `/quotes/${quote.databaseId}-${quote.slug}`,
+        wpId: String(quote.databaseId),
         quoteSource: quote.quoteSource ?? "",
         quoteAuthor: quote.quoteAuthors?.nodes?.[0]?.name ?? "",
       });

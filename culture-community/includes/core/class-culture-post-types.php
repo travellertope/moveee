@@ -228,10 +228,13 @@ class Culture_Post_Types {
                 'dimensions' => array( 'type' => 'String' ),
                 'year'       => array( 'type' => 'String' ),
                 'price'      => array( 'type' => 'String' ),
-                'image'      => array(
-                    'type'    => 'MediaItem',
+                'imageUrl'   => array(
+                    'type'    => 'String',
                     'resolve' => function( $item ) {
-                        return isset( $item['image'] ) ? get_post( $item['image'] ) : null;
+                        if ( empty( $item['image'] ) ) return null;
+                        $img_id = is_array( $item['image'] ) ? ( $item['image']['ID'] ?? $item['image']['id'] ?? null ) : $item['image'];
+                        if ( ! $img_id ) return null;
+                        return wp_get_attachment_url( (int) $img_id ) ?: null;
                     },
                 ),
             ),
@@ -321,11 +324,14 @@ class Culture_Post_Types {
 
         // New display / RSVP fields
         $new_event_acf_fields = array(
-            'eventSubtype'   => array( 'type' => 'String', 'acf_key' => 'event_subtype' ),
-            'aboutLabel'     => array( 'type' => 'String', 'acf_key' => 'about_label' ),
-            'venueAddress'   => array( 'type' => 'String', 'acf_key' => 'venue_address' ),
-            'rsvpMembersNote' => array( 'type' => 'String', 'acf_key' => 'rsvp_members_note' ),
-            'rsvpCapacity'   => array( 'type' => 'Int',    'acf_key' => 'rsvp_capacity' ),
+            'eventSubtype'       => array( 'type' => 'String', 'acf_key' => 'event_subtype' ),
+            'aboutLabel'         => array( 'type' => 'String', 'acf_key' => 'about_label' ),
+            'showcaseLabel'      => array( 'type' => 'String', 'acf_key' => 'showcase_label' ),
+            'artistSectionLabel' => array( 'type' => 'String', 'acf_key' => 'artist_section_label' ),
+            'artistLinkLabel'    => array( 'type' => 'String', 'acf_key' => 'artist_link_label' ),
+            'venueAddress'       => array( 'type' => 'String', 'acf_key' => 'venue_address' ),
+            'rsvpMembersNote'    => array( 'type' => 'String', 'acf_key' => 'rsvp_members_note' ),
+            'rsvpCapacity'       => array( 'type' => 'Int',    'acf_key' => 'rsvp_capacity' ),
         );
 
         foreach ( $new_event_acf_fields as $field_name => $config ) {
@@ -360,14 +366,21 @@ class Culture_Post_Types {
             },
         ) );
 
-        // Relationship Resolvers (using native WP_Post objects for maximum stability)
+        // Relationship Resolvers
         register_graphql_field( 'CultureEvent', 'featuredHost', array(
             'type'    => 'CultureDirectory',
-            'resolve' => function( $post ) {
-                $host_id = function_exists('get_field') ? get_field( 'featured_host', $post->databaseId ) : null;
+            'resolve' => function( $post, $args, $context ) {
+                $host = function_exists('get_field') ? get_field( 'featured_host', $post->databaseId ) : null;
+                if ( ! $host ) return null;
+                if ( is_object( $host ) && isset( $host->ID ) ) {
+                    $host_id = $host->ID;
+                } elseif ( is_array( $host ) ) {
+                    $host_id = $host['ID'] ?? $host['id'] ?? null;
+                } else {
+                    $host_id = is_numeric( $host ) ? (int) $host : null;
+                }
                 if ( ! $host_id ) return null;
-                $host_obj = get_post( $host_id );
-                return ( $host_obj && $host_obj->post_type === 'culture_directory' ) ? $host_obj : null;
+                return $context->get_loader( 'post' )->load_deferred( (int) $host_id );
             },
         ) );
         register_graphql_field( 'CultureEvent', 'associatedJourney', array(

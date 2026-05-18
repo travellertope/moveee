@@ -50,19 +50,20 @@ html {
   display: grid;
   grid-template-columns: 55% 45%;
   min-height: 85vh;
-  background: var(--ink);
+  background: var(--paper);
   position: relative;
   z-index: 2;
   overflow: hidden;
+  border-bottom: 1px solid rgba(42,36,28,0.12);
 }
 
 .hero-content {
   display: flex; flex-direction: column; justify-content: flex-end;
-  padding: 70px 80px; color: var(--paper); position: relative; z-index: 3;
+  padding: 70px 80px; color: var(--ink); position: relative; z-index: 3;
 }
 
 .hero-image-panel {
-  position: relative; overflow: hidden; background: var(--ink-soft);
+  position: relative; overflow: hidden; background: var(--paper-deep);
 }
 .hero-image-panel img { object-fit: cover; }
 
@@ -71,32 +72,38 @@ html {
   font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em;
   text-transform: uppercase; color: var(--ochre);
 }
-.hero-eyebrow .sep { color: rgba(243,236,224,0.3); }
+.hero-eyebrow .sep { color: rgba(42,36,28,0.25); }
 .hero-eyebrow .pill {
-  border: 1px solid rgba(197,73,31,0.5); padding: 4px 10px;
+  border: 1px solid rgba(197,73,31,0.4); padding: 4px 10px;
   color: var(--ochre); font-size: 9px;
 }
 
 .hero-title {
   font-size: clamp(28px, 4.5vw, 68px); font-weight: 300; line-height: 1.05;
-  letter-spacing: -0.03em; color: var(--paper); margin-bottom: 14px;
+  letter-spacing: -0.03em; color: var(--ink); margin-bottom: 14px;
 }
 .hero-title em { font-style: italic; color: var(--ochre); font-weight: 300; }
 
 .hero-subtitle {
   font-family: var(--font-serif); font-size: clamp(16px, 1.5vw, 22px);
-  font-weight: 300; font-style: italic; color: rgba(243,236,224,0.7);
+  font-weight: 300; font-style: italic; color: var(--ink-soft);
   margin-bottom: 40px; letter-spacing: -0.01em;
 }
 
 .hero-meta-row { display: flex; gap: 36px; align-items: flex-end; flex-wrap: wrap; width: 100%; }
-.hero-meta-item .label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(243,236,224,0.45); margin-bottom: 6px; }
-.hero-meta-item .value { font-family: var(--font-serif); font-size: 16px; font-style: italic; color: var(--paper); }
+.hero-meta-item .label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute); margin-bottom: 6px; }
+.hero-meta-item .value { font-family: var(--font-serif); font-size: 16px; font-style: italic; color: var(--ink); }
+.hero-info-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+.hero-info-card { background: rgba(42,36,28,0.04); border: 1px solid rgba(42,36,28,0.08); border-radius: 4px; padding: 14px 16px; }
+.hero-info-card .label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ochre); margin-bottom: 8px; display: block; }
+.hero-info-card p { font-family: var(--font-serif); font-size: 15px; font-style: italic; color: var(--ink); margin: 0 0 4px; }
+.hero-info-card small { font-size: 12px; font-family: var(--font-sans); color: var(--mute); display: block; line-height: 1.5; }
 .hero-cta-group { margin-top: 32px; display: flex; gap: 14px; flex-wrap: wrap; }
 
 .btn-primary { background: var(--ochre); color: var(--paper); padding: 16px 28px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; border: none; cursor: pointer; transition: background .3s; text-decoration: none; display: inline-block; }
 .btn-primary:hover { background: var(--ochre-deep); }
-.btn-outline { background: transparent; color: var(--paper); padding: 15px 28px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; border: 1px solid rgba(243,236,224,0.4); cursor: pointer; text-decoration: none; display: inline-block; }
+.btn-outline { background: transparent; color: var(--ink); padding: 15px 28px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; border: 1px solid rgba(42,36,28,0.35); cursor: pointer; text-decoration: none; display: inline-block; }
+.btn-outline:hover { border-color: var(--ink); }
 
 /* Ticker */
 /* Ticker styles live in globals.css */
@@ -130,18 +137,18 @@ html {
 .sidebar { position: sticky; top: 30px; align-self: start; }
 
 /* RSVP Card */
-.rsvp-card { background: var(--ink); color: var(--paper); padding: 40px 36px; margin-bottom: 24px; }
+.rsvp-card { background: var(--paper); color: var(--ink); padding: 40px 36px; margin-bottom: 24px; border: 1px solid rgba(42,36,28,0.12); }
 .rsvp-card .top-label {
   font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.2em;
   text-transform: uppercase; color: var(--ochre); margin-bottom: 20px;
   display: flex; align-items: center; gap: 8px;
 }
-.rsvp-card .top-label::after { content: ''; flex: 1; height: 1px; background: rgba(243,236,224,0.15); }
-.rsvp-card h3 { font-size: 34px; font-weight: 400; margin-bottom: 8px; color: var(--paper); }
+.rsvp-card .top-label::after { content: ''; flex: 1; height: 1px; background: rgba(42,36,28,0.12); }
+.rsvp-card h3 { font-size: 34px; font-weight: 400; margin-bottom: 8px; color: var(--ink); }
 .rsvp-card h3 em { font-style: italic; color: var(--ochre); }
 .rsvp-card .event-date {
   font-family: var(--font-serif); font-size: 15px; font-style: italic;
-  color: rgba(243,236,224,0.6); margin-bottom: 28px;
+  color: var(--mute); margin-bottom: 28px;
 }
 
 /* Capacity bar */
@@ -149,36 +156,36 @@ html {
 .cap-label {
   display: flex; justify-content: space-between;
   font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.15em;
-  text-transform: uppercase; color: rgba(243,236,224,0.5); margin-bottom: 10px;
+  text-transform: uppercase; color: var(--mute); margin-bottom: 10px;
 }
 .cap-label .spots { color: var(--ochre); }
-.bar-track { height: 3px; background: rgba(243,236,224,0.12); width: 100%; }
+.bar-track { height: 3px; background: rgba(42,36,28,0.1); width: 100%; }
 .bar-fill { height: 3px; background: var(--ochre); transition: width 1s ease; }
 
 /* Ticket type rows */
 .ticket-type {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 16px 0; border-bottom: 1px solid rgba(243,236,224,0.1);
+  padding: 16px 0; border-bottom: 1px solid rgba(42,36,28,0.1);
 }
-.ticket-type:first-of-type { border-top: 1px solid rgba(243,236,224,0.1); }
-.ticket-name { font-family: var(--font-serif); font-size: 16px; font-style: italic; }
-.ticket-info { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(243,236,224,0.45); margin-top: 4px; }
+.ticket-type:first-of-type { border-top: 1px solid rgba(42,36,28,0.1); }
+.ticket-name { font-family: var(--font-serif); font-size: 16px; font-style: italic; color: var(--ink); }
+.ticket-info { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute); margin-top: 4px; }
 .ticket-price { font-family: var(--font-serif); font-size: 20px; font-style: italic; color: var(--gold); }
-.ticket-price.free { color: var(--moss); filter: brightness(1.8); }
+.ticket-price.free { color: var(--moss); }
 
 /* RSVP form */
 .rsvp-form { margin-top: 28px; }
 .rsvp-form input,
 .rsvp-form select {
-  width: 100%; background: rgba(243,236,224,0.07); border: 1px solid rgba(243,236,224,0.15);
-  color: var(--paper); padding: 14px 16px; font-family: var(--font-sans); font-size: 14px;
+  width: 100%; background: var(--paper-deep); border: 1px solid rgba(42,36,28,0.15);
+  color: var(--ink); padding: 14px 16px; font-family: var(--font-sans); font-size: 14px;
   margin-bottom: 12px; outline: none; transition: border-color .3s; appearance: none;
 }
-.rsvp-form input::placeholder { color: rgba(243,236,224,0.3); }
+.rsvp-form input::placeholder { color: var(--mute); }
 .rsvp-form input:focus,
 .rsvp-form select:focus { border-color: var(--ochre); }
-.rsvp-form select { color: rgba(243,236,224,0.7); cursor: pointer; }
-.rsvp-form select option { background: var(--ink); }
+.rsvp-form select { color: var(--ink-soft); cursor: pointer; }
+.rsvp-form select option { background: var(--paper); }
 .rsvp-form .members-note {
   font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--ochre); margin-bottom: 14px;
@@ -193,7 +200,7 @@ html {
 .rsvp-submit:disabled { opacity: 0.6; cursor: default; }
 .rsvp-small {
   font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em;
-  text-transform: uppercase; color: rgba(243,236,224,0.35); margin-top: 14px;
+  text-transform: uppercase; color: var(--mute); margin-top: 14px;
   text-align: center; line-height: 1.7;
 }
 
@@ -375,6 +382,7 @@ html {
   .hero-content { padding: 36px 24px; }
   .hero-title { font-size: clamp(26px, 8vw, 48px); }
   .hero-meta-row { gap: 18px; }
+  .hero-info-cards { grid-template-columns: 1fr; }
   .page-body { padding: 40px 24px; }
   .gallery-run { padding: 40px 24px; }
   .gallery-portrait { aspect-ratio: 4/3; }

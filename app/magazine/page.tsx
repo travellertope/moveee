@@ -2,7 +2,7 @@ import React from "react";
 import MagazineArchiveWrapper from "./MagazineArchiveWrapper";
 import { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Editorials | The Moveee",

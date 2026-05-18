@@ -9,7 +9,7 @@ export const metadata = {
     "Discover the vetted craftspeople behind every piece in the Moveee shop — personally reviewed for craft integrity, fair production, and lasting quality.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 const CMS = "https://cms.themoveee.com";
 

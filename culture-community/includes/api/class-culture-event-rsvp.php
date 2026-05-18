@@ -160,7 +160,7 @@ class Culture_Event_RSVP {
         }
 
         // Emails
-        self::send_confirmation( $name, $email, $event_title, $ticket_type );
+        self::send_confirmation( $name, $email, $event_slug, $event_title, $ticket_type );
 
         return self::cors( new WP_REST_Response( [
             'success' => true,
@@ -214,39 +214,88 @@ class Culture_Event_RSVP {
 
     // ── Confirmation email ────────────────────────────────────────────────────
 
-    private static function send_confirmation( string $name, string $email, string $event_title, string $ticket_type ): void {
+    private static function send_confirmation( string $name, string $email, string $event_slug, string $event_title, string $ticket_type ): void {
         $first = explode( ' ', trim( $name ) )[0];
 
+        // Fetch live event data for accurate date/venue/hours
+        $post         = get_page_by_path( $event_slug, OBJECT, 'culture_event' );
+        $event_date   = '';
+        $event_venue  = '';
+        $event_hours  = '';
+        $event_admission = '';
+
+        if ( $post ) {
+            $raw_date = get_post_meta( $post->ID, 'event_date', true );
+            if ( ! $raw_date && function_exists('get_field') ) {
+                $raw_date = get_field( 'event_date', $post->ID );
+            }
+            if ( $raw_date ) {
+                $date_obj   = date_create( $raw_date );
+                $event_date = $date_obj ? date_format( $date_obj, 'j F Y' ) : $raw_date;
+            }
+
+            $event_venue     = function_exists('get_field') ? get_field( 'location', $post->ID )      : get_post_meta( $post->ID, 'location', true );
+            $event_hours     = function_exists('get_field') ? get_field( 'opening_hours', $post->ID ) : get_post_meta( $post->ID, 'opening_hours', true );
+            $event_admission = function_exists('get_field') ? get_field( 'admission', $post->ID )     : get_post_meta( $post->ID, 'admission', true );
+        }
+
+        $event_venue     = $event_venue     ?: 'Venue TBA';
+        $event_hours     = $event_hours     ?: 'See event details';
+        $event_admission = $event_admission ?: 'Free Admission';
+        $event_date      = $event_date      ?: 'Date TBA';
+
+        // Human-readable ticket label (no hardcoded times)
         $label = match ( $ticket_type ) {
-            'private' => 'Private View — 18:00',
+            'private' => 'Private View',
             'supper'  => 'Origins Supper Table',
-            default   => 'General Admission — 19:30',
+            default   => 'General Admission',
         };
 
-        $subject = "You're on the list — {$event_title} · The Moveee";
+        // Load editable template
+        $tpl     = class_exists('Culture_Email_Templates') ? Culture_Email_Templates::get_template('event_rsvp_confirmation') : null;
+        $subject = $tpl ? Culture_Email_Templates::merge( $tpl['subject'], [
+            '{event_title}' => $event_title,
+        ] ) : "You're on the list — {$event_title} · The Moveee";
 
+        $body_content = $tpl ? Culture_Email_Templates::merge( $tpl['body'], [
+            '{first_name}'      => esc_html( $first ),
+            '{event_title}'     => esc_html( $event_title ),
+            '{ticket_label}'    => esc_html( $label ),
+            '{event_date}'      => esc_html( $event_date ),
+            '{event_venue}'     => esc_html( $event_venue ),
+            '{event_hours}'     => esc_html( $event_hours ),
+            '{event_admission}' => esc_html( $event_admission ),
+            '{attendee_email}'  => esc_html( $email ),
+        ] ) : '';
+
+        $heading     = $tpl ? esc_html( $tpl['heading'] ) : 'The Moveee · Events';
+        $button_text = $tpl ? esc_html( $tpl['button'] )  : 'View Event →';
+        $event_url   = esc_url( 'https://themoveee.com/events/' . $event_slug );
+
+        // Branded dark email wrapper
         $html  = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#f3ece0;font-family:Georgia,serif;">';
         $html .= '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3ece0;padding:48px 20px;"><tr><td align="center">';
         $html .= '<table width="580" cellpadding="0" cellspacing="0" style="background:#14110d;overflow:hidden;">';
 
         // Header
         $html .= '<tr><td style="padding:36px 48px 24px;border-bottom:1px solid rgba(243,236,224,0.1);">';
-        $html .= '<p style="margin:0;font-family:monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#c5491f;">The Moveee · Events</p>';
+        $html .= '<p style="margin:0;font-family:monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#c5491f;">' . $heading . '</p>';
         $html .= '</td></tr>';
 
-        // Body
-        $html .= '<tr><td style="padding:40px 48px;color:#f3ece0;">';
+        // Hero
+        $html .= '<tr><td style="padding:40px 48px 0;color:#f3ece0;">';
         $html .= '<h1 style="margin:0 0 8px;font-size:38px;font-weight:400;line-height:1.1;color:#f3ece0;">You\'re on the list,<br><em style="color:#c5491f;">' . esc_html( $first ) . '.</em></h1>';
-        $html .= '<p style="margin:16px 0 36px;font-size:17px;font-style:italic;color:rgba(243,236,224,0.65);line-height:1.5;">' . esc_html( $event_title ) . '</p>';
+        $html .= '<p style="margin:16px 0 32px;font-size:17px;font-style:italic;color:rgba(243,236,224,0.65);line-height:1.5;">' . esc_html( $event_title ) . '</p>';
+        $html .= '</td></tr>';
 
-        $html .= '<table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid rgba(243,236,224,0.1);border-bottom:1px solid rgba(243,236,224,0.1);margin-bottom:32px;">';
-        $html .= '<tr>';
-        $html .= '<td style="padding:18px 0;font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:rgba(243,236,224,0.4);">Your ticket</td>';
-        $html .= '<td style="padding:18px 0;font-size:16px;font-style:italic;color:#f3ece0;text-align:right;">' . esc_html( $label ) . '</td>';
-        $html .= '</tr></table>';
+        // Body (editable template content)
+        $html .= '<tr><td style="padding:0 48px 32px;color:#f3ece0;font-family:sans-serif;font-size:14px;line-height:1.7;color:rgba(243,236,224,0.75);">';
+        $html .= $body_content;
+        $html .= '</td></tr>';
 
-        $html .= '<p style="margin:0 0 16px;font-family:sans-serif;font-size:14px;color:rgba(243,236,224,0.6);line-height:1.6;">A confirmation has been sent to <strong style="color:#f3ece0;">' . esc_html( $email ) . '</strong>. Please bring this email or tell us your name at the door on the night.</p>';
-        $html .= '<p style="margin:0;font-family:sans-serif;font-size:13px;color:rgba(243,236,224,0.35);line-height:1.6;">Doors open from 19:30 · Capacity is limited · Free admission</p>';
+        // CTA button
+        $html .= '<tr><td style="padding:0 48px 40px;">';
+        $html .= '<a href="' . $event_url . '" style="display:inline-block;padding:14px 28px;background:#c5491f;color:#f3ece0;font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;text-decoration:none;">' . $button_text . '</a>';
         $html .= '</td></tr>';
 
         // Footer
@@ -266,7 +315,7 @@ class Culture_Event_RSVP {
         wp_mail(
             get_option( 'admin_email' ),
             "[RSVP] {$event_title} — {$name}",
-            "New RSVP:\n\nName: {$name}\nEmail: {$email}\nTicket: {$label}\nEvent: {$event_title}",
+            "New RSVP:\n\nName: {$name}\nEmail: {$email}\nTicket: {$label}\nDate: {$event_date}\nVenue: {$event_venue}\nEvent: {$event_title}",
             [ 'From: The Moveee Events <events@themoveee.com>' ]
         );
     }
