@@ -1113,26 +1113,31 @@
     border-right: none;
     border-bottom: 1px solid rgba(42,36,28,0.1);
     background: var(--paper);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  .market-sidenav::-webkit-scrollbar { display: none; }
   .market-sidenav .sidenav-inner {
-    padding: 16px 20px;
+    padding: 0;
     min-height: auto;
     flex-direction: row;
     flex-wrap: nowrap;
-    align-items: center;
+    align-items: stretch;
     gap: 0;
-    overflow-x: auto;
+    width: max-content;
+    overflow: visible;
   }
   .market-sidenav .sidenav-label { display: none; }
   .market-sidenav nav {
+    display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     gap: 0;
-    flex: 1;
-    overflow-x: auto;
+    flex: none;
   }
   .market-sidenav .sidenav-link {
-    padding: 8px 14px;
+    padding: 14px 18px;
     border-left: none;
     border-bottom: 2px solid transparent;
     white-space: nowrap;
