@@ -47,7 +47,8 @@ export type RateCard = {
 
 export type Section =
   | { id: string; label: string; kind: "cards"; cards: RateCard[] }
-  | { id: string; label: string; kind: "tiers"; service: TierService };
+  | { id: string; label: string; kind: "tiers"; service: TierService }
+  | { id: string; label: string; kind: "mixed"; cards: RateCard[]; service: TierService; serviceLabel?: string };
 
 export type Market = {
   id: "africa" | "uk" | "us";
@@ -430,11 +431,11 @@ const presskitUS: TierService = {
 // ── MoveeeePro (Africa only) ──────────────────────────────────────────────────
 
 const moveeeProAfrica: TierService = {
-  slug: "book-publishers",
+  slug: "partnership",
   name: "MoveeeePro",
-  eyebrow: "For Book Publishers & Authors",
+  eyebrow: "Partnership Program",
   description:
-    "The premium feature package for publishers and authors who want their books not just read — but seen, discussed, and remembered. We spotlight your title through reviews, author interviews, news releases, and multimedia social posts to the exact audience most likely to buy it.",
+    "A dedicated visibility package for creative and cultural organisations — book publishers and authors, art galleries, theatres, museums, and cultural institutions. We spotlight your work through reviews, interviews, news releases, and multimedia social posts to the exact audience most likely to engage and buy.",
   packages: [
     {
       name: "Starter",
@@ -504,7 +505,8 @@ export const MARKETS: Market[] = [
     currency: "₦",
     sections: [
       {
-        id: "editorial", label: "Editorial", kind: "cards",
+        id: "editorial", label: "Editorial & Amplification", kind: "mixed",
+        serviceLabel: "Amplify your feature",
         cards: [
           {
             name: "Cultural Spotlight Package",
@@ -520,6 +522,7 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
+        service: amplifyAfrica,
       },
       {
         id: "lifestyle", label: "Lifestyle & Commerce", kind: "cards",
@@ -553,11 +556,8 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "amplify", label: "Media Amplification", kind: "tiers",
-        service: amplifyAfrica,
-      },
-      {
-        id: "pr", label: "PR", kind: "cards",
+        id: "presskit", label: "Presskit", kind: "mixed",
+        serviceLabel: "Press placement",
         cards: [
           {
             name: "MoveeePR Africa — Starter",
@@ -586,13 +586,10 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
-      },
-      {
-        id: "presskit", label: "Press Coverage", kind: "tiers",
         service: presskitAfrica,
       },
       {
-        id: "book-publishers", label: "Book Publishers", kind: "tiers",
+        id: "partnership", label: "Partnership Program", kind: "tiers",
         service: moveeeProAfrica,
       },
       {
@@ -635,7 +632,8 @@ export const MARKETS: Market[] = [
     currency: "£",
     sections: [
       {
-        id: "editorial", label: "Editorial", kind: "cards",
+        id: "editorial", label: "Editorial & Amplification", kind: "mixed",
+        serviceLabel: "Amplify your feature",
         cards: [
           {
             name: "Cultural Spotlight Package",
@@ -651,6 +649,7 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
+        service: amplifyUK,
       },
       {
         id: "lifestyle", label: "Lifestyle & Commerce", kind: "cards",
@@ -684,11 +683,8 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "amplify", label: "Media Amplification", kind: "tiers",
-        service: amplifyUK,
-      },
-      {
-        id: "pr", label: "PR", kind: "cards",
+        id: "presskit", label: "Presskit", kind: "mixed",
+        serviceLabel: "Press placement",
         cards: [
           {
             name: "MoveeePR UK",
@@ -704,9 +700,6 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
-      },
-      {
-        id: "presskit", label: "Press Coverage", kind: "tiers",
         service: presskitUK,
       },
       {
@@ -749,7 +742,8 @@ export const MARKETS: Market[] = [
     currency: "$",
     sections: [
       {
-        id: "editorial", label: "Editorial", kind: "cards",
+        id: "editorial", label: "Editorial & Amplification", kind: "mixed",
+        serviceLabel: "Amplify your feature",
         cards: [
           {
             name: "Brand Culture Partnership",
@@ -765,6 +759,7 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
+        service: amplifyUS,
       },
       {
         id: "lifestyle", label: "Lifestyle & Commerce", kind: "cards",
@@ -798,11 +793,8 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "amplify", label: "Media Amplification", kind: "tiers",
-        service: amplifyUS,
-      },
-      {
-        id: "consulting", label: "Consulting & PR", kind: "cards",
+        id: "presskit", label: "Presskit", kind: "mixed",
+        serviceLabel: "Press placement",
         cards: [
           {
             name: "Diaspora Brand Launchpad",
@@ -818,9 +810,6 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
-      },
-      {
-        id: "presskit", label: "Press Coverage", kind: "tiers",
         service: presskitUS,
       },
       {

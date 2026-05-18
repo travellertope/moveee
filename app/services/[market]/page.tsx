@@ -152,8 +152,18 @@ function MarketSection({ section }: { section: Section }) {
       </div>
       {section.kind === "cards" ? (
         <CardGrid cards={section.cards} />
-      ) : (
+      ) : section.kind === "tiers" ? (
         <TierGrid service={section.service} />
+      ) : (
+        <>
+          <CardGrid cards={section.cards} />
+          <div className="mixed-section-divider">
+            <span className="mixed-section-label">
+              {section.serviceLabel ?? section.service.eyebrow}
+            </span>
+          </div>
+          <TierGrid service={section.service} />
+        </>
       )}
     </section>
   );

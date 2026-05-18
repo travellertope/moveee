@@ -947,6 +947,29 @@
 }
 .btn-market-card:hover { background: var(--ochre); }
 
+/* ── Mixed section divider ── */
+.mixed-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 48px 0 32px;
+}
+.mixed-section-divider::before,
+.mixed-section-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(42,36,28,0.1);
+}
+.mixed-section-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  white-space: nowrap;
+}
+
 /* ── Tier section (Amplify, PressKit, MoveeeePro) ── */
 .tier-section {}
 
