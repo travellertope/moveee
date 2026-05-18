@@ -86,17 +86,22 @@ function TierGrid({ packages }: { packages: TierPackage[] }) {
             {pkg.unit && <span className="price-unit">{pkg.unit}</span>}
           </div>
           <ul className="rate-card-features">
-            {pkg.features.map((f) => (
-              <li
-                key={f.label}
-                className={`feature-item ${f.included ? "feature-item--yes" : "feature-item--no"}`}
-              >
-                <span className="feature-icon">{f.included ? "✓" : "–"}</span>
-                <span className="feature-label">
-                  {typeof f.included === "string" ? `${f.label}: ${f.included}` : f.label}
-                </span>
-              </li>
-            ))}
+            {pkg.features.map((f) => {
+              const isIncluded = typeof f.included === "string"
+                ? !f.included.startsWith("0")
+                : f.included;
+              return (
+                <li
+                  key={f.label}
+                  className={`feature-item ${isIncluded ? "feature-item--yes" : "feature-item--no"}`}
+                >
+                  <span className="feature-icon">{isIncluded ? "✓" : "–"}</span>
+                  <span className="feature-label">
+                      {typeof f.included === "string" ? `${f.label}: ${f.included}` : f.label}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
           <div className="rate-card-ctas">
             <a
