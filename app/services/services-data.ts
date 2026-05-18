@@ -88,7 +88,7 @@ export const SERVICES: Service[] = [
         name: "Priority",
         billingNote: "Monthly Recurring Option Also Available",
         priceNGN: "65k",
-        priceUSD: "40",
+        priceUSD: "60",
         features: [
           { label: "Credible As-Seen-In Logo", included: true },
           { label: "Priority-Track Feature", included: true },
@@ -107,7 +107,7 @@ export const SERVICES: Service[] = [
         name: "Sponsored",
         billingNote: "Monthly Recurring Option Also Available",
         priceNGN: "150k",
-        priceUSD: "95",
+        priceUSD: "115",
         features: [
           { label: "Credible As-Seen-In Logo", included: true },
           { label: "Priority-Track Feature", included: true },
@@ -127,7 +127,7 @@ export const SERVICES: Service[] = [
         highlight: true,
         billingNote: "Monthly Recurring Option Also Available",
         priceNGN: "260k",
-        priceUSD: "160",
+        priceUSD: "180",
         features: [
           { label: "Credible As-Seen-In Logo", included: true },
           { label: "Priority-Track Feature", included: true },
@@ -146,7 +146,7 @@ export const SERVICES: Service[] = [
         name: "Invested",
         billingNote: "Monthly Recurring Option Also Available",
         priceNGN: "650k",
-        priceUSD: "400",
+        priceUSD: "420",
         features: [
           { label: "Credible As-Seen-In Logo", included: true },
           { label: "Priority-Track Feature", included: true },
@@ -242,7 +242,7 @@ export const SERVICES: Service[] = [
         name: "In Nigeria Media",
         billingNote: "Monthly Recurring Option Also Available",
         priceNGN: "100k",
-        priceUSD: "60",
+        priceUSD: "80",
         unit: "Per Platform",
         features: [
           { label: "10% Discount On Bulk Buy (5+ Platforms)", included: true },
@@ -269,7 +269,7 @@ export const SERVICES: Service[] = [
         highlight: true,
         billingNote: "Monthly Recurring Option Also Available",
         priceNGN: "240k",
-        priceUSD: "150",
+        priceUSD: "170",
         unit: "Per Platform",
         features: [
           { label: "10% Discount On Bulk Buy (5+ Platforms)", included: true },
@@ -289,19 +289,19 @@ export const SERVICES: Service[] = [
       {
         icon: "📎",
         priceNGN: "₦320k",
-        priceUSD: "$200",
+        priceUSD: "$220",
         description: "Include contact details, images, logo, and artwork in your story, or commission an extensive interview format with richer editorial depth.",
       },
       {
         icon: "📅",
         priceNGN: "+₦130k",
-        priceUSD: "+$80",
+        priceUSD: "+$100",
         description: "Backdate your story to an earlier date than the period you're originally being published — ideal for quarterly retrospectives or launch anniversaries.",
       },
       {
         icon: "✍️",
         priceNGN: "+₦40k",
-        priceUSD: "+$25",
+        priceUSD: "+$45",
         description: "Commission a unique story angle for each platform so you don't repeat content — allowing you to cover multiple perspectives across outlets.",
       },
     ],
@@ -351,7 +351,7 @@ export const SERVICES: Service[] = [
         name: "Starter",
         billingNote: "Expires in 3 Months",
         priceNGN: "65k",
-        priceUSD: "40",
+        priceUSD: "60",
         features: [
           { label: "Book Review", included: "0×" },
           { label: "Author Interview", included: "1×" },
@@ -364,7 +364,7 @@ export const SERVICES: Service[] = [
         name: "Growth",
         billingNote: "Expires in 3 Months",
         priceNGN: "150k",
-        priceUSD: "95",
+        priceUSD: "115",
         features: [
           { label: "Book Review", included: "1×" },
           { label: "Author Interview", included: "1×" },
@@ -378,7 +378,7 @@ export const SERVICES: Service[] = [
         highlight: true,
         billingNote: "Expires in 3 Months",
         priceNGN: "250k",
-        priceUSD: "155",
+        priceUSD: "175",
         features: [
           { label: "Book Review", included: "2×" },
           { label: "Author Interview", included: "2×" },
@@ -391,7 +391,7 @@ export const SERVICES: Service[] = [
         name: "Visibility+",
         billingNote: "Expires in 3 Months",
         priceNGN: "580k",
-        priceUSD: "360",
+        priceUSD: "380",
         features: [
           { label: "Book Review", included: "5×" },
           { label: "Author Interview", included: "5×" },
@@ -405,19 +405,19 @@ export const SERVICES: Service[] = [
       {
         icon: "🎥",
         priceNGN: "₦100k",
-        priceUSD: "$60",
+        priceUSD: "$80",
         description: "Video Interview (Virtual) — a recorded long-form conversation with the author, published on The Moveee's video channels.",
       },
       {
         icon: "📱",
         priceNGN: "₦65k",
-        priceUSD: "$40",
+        priceUSD: "$60",
         description: "Instagram Live Q&A — a live session with the author hosted on The Moveee's Instagram, open to our full follower base.",
       },
       {
         icon: "🎬",
         priceNGN: "₦200k",
-        priceUSD: "$120",
+        priceUSD: "$140",
         description: "Basic Book Trailer — a professionally produced short-form video asset you can use across all your own channels to drive pre-orders and awareness.",
       },
     ],
