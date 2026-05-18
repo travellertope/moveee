@@ -11,70 +11,73 @@ export type PartnershipCategory = {
   page: ServicePageContent;
 };
 
-// ── Shared tier price bands ───────────────────────────────────────────────────
-
-const TIERS = ["Starter", "Growth", "Momentum", "Visibility+"] as const;
-const PRICES = ["65k", "150k", "250k", "580k"] as const;
 const BILLING = "Expires in 3 Months";
-const CTA_PRIMARY = "Buy Now";
+const CTA = "Start Partnership";
 
 // ── Publishers & Authors ──────────────────────────────────────────────────────
+// Tiers: Debut → Season → Catalogue → Imprint
+// Pricing reflects title volume and author campaign depth.
 
 const publishersService: TierService = {
   slug: "publishers",
-  name: "MoveeeePro — Publishers",
+  name: "Moveee Atelier — Publishers",
   eyebrow: "Publishers & Authors",
   description:
     "A sustained editorial partnership for Nigerian and African book publishers, independent authors, and literary organisations. We review titles, interview authors, publish news releases, and keep your work in conversation with the audience most likely to read and recommend it.",
   packages: [
     {
-      name: "Starter",
+      name: "Debut",
       billingNote: BILLING,
-      price: "65k", currency: "₦",
+      price: "80k", currency: "₦",
       features: [
         { label: "Book Review", included: "0×" },
         { label: "Author Interview", included: "1×" },
-        { label: "News Release", included: "1×" },
+        { label: "News Release", included: "2×" },
+        { label: "GetMeLit Newsletter Mention", included: "1×" },
         { label: "Social Media Sync", included: "Basic" },
       ],
-      cta: CTA_PRIMARY,
+      cta: CTA,
     },
     {
-      name: "Growth",
+      name: "Season",
       billingNote: BILLING,
-      price: "150k", currency: "₦",
+      price: "190k", currency: "₦",
       features: [
         { label: "Book Review", included: "1×" },
-        { label: "Author Interview", included: "1×" },
-        { label: "News Release", included: "1×" },
+        { label: "Author Interview", included: "2×" },
+        { label: "News Release", included: "3×" },
+        { label: "GetMeLit Newsletter Mention", included: "1×" },
         { label: "Social Media Sync", included: "Basic" },
       ],
-      cta: "Buy Once",
+      cta: CTA,
     },
     {
-      name: "Momentum",
+      name: "Catalogue",
       highlight: true,
       billingNote: BILLING,
-      price: "250k", currency: "₦",
+      price: "360k", currency: "₦",
       features: [
-        { label: "Book Review", included: "2×" },
-        { label: "Author Interview", included: "2×" },
-        { label: "News Release", included: "4×" },
+        { label: "Book Review", included: "3×" },
+        { label: "Author Interview", included: "3×" },
+        { label: "News Release", included: "5×" },
+        { label: "GetMeLit Newsletter Feature", included: "1×" },
         { label: "Social Media Posts", included: "Multimedia" },
       ],
-      cta: "Buy Once",
+      cta: CTA,
     },
     {
-      name: "Visibility+",
+      name: "Imprint",
       billingNote: BILLING,
-      price: "580k", currency: "₦",
+      price: "680k", currency: "₦",
       features: [
-        { label: "Book Review", included: "5×" },
+        { label: "Book Review", included: "6×" },
         { label: "Author Interview", included: "5×" },
-        { label: "News Release", included: "10×" },
+        { label: "News Release", included: "8×" },
+        { label: "GetMeLit Newsletter Feature", included: "Quarterly" },
         { label: "Social Media Posts", included: "Multimedia" },
+        { label: "Live Q&A / Event Coverage", included: "1×" },
       ],
-      cta: "Buy Once",
+      cta: CTA,
     },
   ],
   addOns: [
@@ -88,7 +91,7 @@ const publishersPage: ServicePageContent = {
   headline: "Books Launch. Careers Are Built. Stories Deserve Readers.",
   tagline: "A sustained editorial partnership for Nigerian and African publishers, authors, and literary organisations.",
   intro: [
-    "A book launch without media infrastructure is a tree falling in an empty forest. MoveeePro for Publishers gives you the editorial scaffolding that turns a publication date into a media moment: reviews written by readers who care about African literature, author interviews given proper length and context, news releases for launch events, and social content that keeps the title in conversation beyond its first week.",
+    "A book launch without media infrastructure is a tree falling in an empty forest. Moveee Atelier for Publishers gives you the editorial scaffolding that turns a publication date into a media moment: reviews written by readers who care about African literature, author interviews given proper length and context, news releases for launch events, and social content that keeps the title in conversation beyond its first week.",
     "We serve independent Nigerian authors, Lagos and Accra-based publishers, Pan-African imprints, and literary festival organisers. Tiers run across three months — enough time to cover a launch properly, sustain a backlist title, or build an author's presence around a touring season.",
     "This isn't a logo placement deal. It's an editorial relationship: we read your books, we form opinions, and we cover your work the way it deserves to be covered.",
   ],
@@ -159,72 +162,83 @@ const publishersPage: ServicePageContent = {
     },
   ],
   ctaLabel: "Start a partnership →",
-  ctaSubtext: "Starter from ₦65,000. Three-month visibility package.",
+  ctaSubtext: "Debut from ₦80,000. Three-month visibility package.",
 };
 
 // ── Art Galleries ─────────────────────────────────────────────────────────────
+// Tiers: Preview → Exhibition → Programme → Institution
+// Higher price band reflecting gallery budgets and the prestige value of critical art coverage.
 
 const galleriesService: TierService = {
   slug: "galleries",
-  name: "MoveeeePro — Galleries",
+  name: "Moveee Atelier — Galleries",
   eyebrow: "Art Galleries",
   description:
     "A sustained editorial partnership for Nigerian and African art galleries, independent exhibition spaces, and art fair organisers. We review exhibitions, profile artists, cover openings, and publish news releases that keep your programme in front of the collectors, critics, and culture lovers who matter.",
   packages: [
     {
-      name: "Starter",
+      name: "Preview",
       billingNote: BILLING,
-      price: "65k", currency: "₦",
+      price: "130k", currency: "₦",
       features: [
         { label: "Exhibition Review", included: "0×" },
-        { label: "Artist Spotlight", included: "1×" },
-        { label: "News Release", included: "1×" },
+        { label: "Artist Spotlight", included: "2×" },
+        { label: "News Release", included: "2×" },
+        { label: "GetMeLit Newsletter Mention", included: "1×" },
         { label: "Social Media Sync", included: "Basic" },
+        { label: "Opening Night Coverage", included: "0×" },
       ],
-      cta: CTA_PRIMARY,
+      cta: CTA,
     },
     {
-      name: "Growth",
+      name: "Exhibition",
       billingNote: BILLING,
-      price: "150k", currency: "₦",
+      price: "280k", currency: "₦",
       features: [
         { label: "Exhibition Review", included: "1×" },
-        { label: "Artist Spotlight", included: "1×" },
-        { label: "News Release", included: "1×" },
+        { label: "Artist Spotlight", included: "2×" },
+        { label: "News Release", included: "3×" },
+        { label: "GetMeLit Newsletter Mention", included: "1×" },
         { label: "Social Media Sync", included: "Basic" },
+        { label: "Opening Night Coverage", included: "0×" },
       ],
-      cta: "Buy Once",
+      cta: CTA,
     },
     {
-      name: "Momentum",
+      name: "Programme",
       highlight: true,
       billingNote: BILLING,
-      price: "250k", currency: "₦",
+      price: "500k", currency: "₦",
       features: [
         { label: "Exhibition Review", included: "2×" },
-        { label: "Artist Spotlight", included: "2×" },
+        { label: "Artist Spotlight", included: "3×" },
         { label: "News Release", included: "4×" },
+        { label: "GetMeLit Newsletter Feature", included: "1×" },
         { label: "Social Media Posts", included: "Multimedia" },
+        { label: "Opening Night Coverage", included: "1×" },
       ],
-      cta: "Buy Once",
+      cta: CTA,
     },
     {
-      name: "Visibility+",
+      name: "Institution",
       billingNote: BILLING,
-      price: "580k", currency: "₦",
+      price: "900k", currency: "₦",
       features: [
-        { label: "Exhibition Review", included: "5×" },
+        { label: "Exhibition Review", included: "4×" },
         { label: "Artist Spotlight", included: "5×" },
-        { label: "News Release", included: "10×" },
+        { label: "News Release", included: "6×" },
+        { label: "GetMeLit Newsletter Feature", included: "Quarterly" },
         { label: "Social Media Posts", included: "Multimedia" },
+        { label: "Opening Night Coverage", included: "2×" },
+        { label: "Editorial Photo Essay", included: "1×" },
       ],
-      cta: "Buy Once",
+      cta: CTA,
     },
   ],
   addOns: [
-    { icon: "🎥", price: "₦100k", description: "Video Gallery Walkthrough — filmed tour of an active exhibition, published on The Moveee's video channels." },
-    { icon: "📱", price: "₦65k", description: "Instagram Live Opening Night — live coverage of a vernissage or special event hosted on The Moveee's Instagram." },
-    { icon: "📷", price: "₦120k", description: "Editorial Photo Essay — professional photography + editorial write-up for a flagship exhibition or artist retrospective." },
+    { icon: "🎥", price: "₦120k", description: "Video Gallery Walkthrough — filmed tour of an active exhibition, published on The Moveee's video channels." },
+    { icon: "📱", price: "₦80k", description: "Instagram Live Opening Night — live coverage of a vernissage or special event hosted on The Moveee's Instagram." },
+    { icon: "📷", price: "₦180k", description: "Editorial Photo Essay — professional photography + editorial write-up for a flagship exhibition or artist retrospective." },
   ],
 };
 
@@ -232,7 +246,7 @@ const galleriesPage: ServicePageContent = {
   headline: "Nigerian Art Belongs in the Cultural Conversation. We Put It There.",
   tagline: "A sustained editorial partnership for galleries, exhibition spaces, and art fair organisers who take Nigerian and African art seriously.",
   intro: [
-    "The Nigerian and Pan-African art scene is producing some of the most significant work on the continent — and most of it goes undercovered. MoveeePro for Galleries gives exhibition spaces the editorial infrastructure they need: exhibition reviews written with critical seriousness, artist spotlights that go beyond the bio, opening night coverage, and news releases for new shows and acquisitions.",
+    "The Nigerian and Pan-African art scene is producing some of the most significant work on the continent — and most of it goes undercovered. Moveee Atelier for Galleries gives exhibition spaces the editorial infrastructure they need: exhibition reviews written with critical seriousness, artist spotlights that go beyond the bio, opening night coverage, and news releases for new shows and acquisitions.",
     "We serve Lagos galleries, Abuja exhibition spaces, art fairs, and independent curators running programmes worth covering. Tiers run across three months and can be renewed around exhibition calendars.",
     "The goal isn't to generate promotional content. It's to build a media record for your programme and your artists — the kind of coverage that ends up in press kits, grant applications, and collector due diligence.",
   ],
@@ -299,71 +313,82 @@ const galleriesPage: ServicePageContent = {
     },
   ],
   ctaLabel: "Start a partnership →",
-  ctaSubtext: "Starter from ₦65,000. Three-month exhibition coverage partnership.",
+  ctaSubtext: "Preview from ₦130,000. Three-month exhibition coverage partnership.",
 };
 
 // ── Filmmakers & Producers ────────────────────────────────────────────────────
+// Tiers: Development → Release → Festival → Distribution
+// Named after production phases so filmmakers can self-select based on where they are.
 
 const filmmakersService: TierService = {
   slug: "filmmakers",
-  name: "MoveeeePro — Film",
+  name: "Moveee Atelier — Film",
   eyebrow: "Filmmakers & Producers",
   description:
     "A sustained editorial partnership for Nigerian and African filmmakers, independent production companies, and film festival organisers. We review films and series, profile filmmakers, cover festival moments, and publish news releases — building the press record your work deserves.",
   packages: [
     {
-      name: "Starter",
+      name: "Development",
       billingNote: BILLING,
-      price: "65k", currency: "₦",
+      price: "100k", currency: "₦",
       features: [
         { label: "Film / Series Review", included: "0×" },
-        { label: "Filmmaker Interview", included: "1×" },
-        { label: "News Release", included: "1×" },
+        { label: "Filmmaker Profile", included: "1×" },
+        { label: "News Release", included: "2×" },
+        { label: "GetMeLit Newsletter Mention", included: "1×" },
         { label: "Social Media Sync", included: "Basic" },
+        { label: "Trailer Editorial Feature", included: "0×" },
       ],
-      cta: CTA_PRIMARY,
+      cta: CTA,
     },
     {
-      name: "Growth",
+      name: "Release",
       billingNote: BILLING,
-      price: "150k", currency: "₦",
+      price: "230k", currency: "₦",
       features: [
         { label: "Film / Series Review", included: "1×" },
-        { label: "Filmmaker Interview", included: "1×" },
-        { label: "News Release", included: "1×" },
+        { label: "Filmmaker Profile", included: "2×" },
+        { label: "News Release", included: "3×" },
+        { label: "GetMeLit Newsletter Mention", included: "1×" },
         { label: "Social Media Sync", included: "Basic" },
+        { label: "Trailer Editorial Feature", included: "0×" },
       ],
-      cta: "Buy Once",
+      cta: CTA,
     },
     {
-      name: "Momentum",
+      name: "Festival",
       highlight: true,
       billingNote: BILLING,
-      price: "250k", currency: "₦",
+      price: "420k", currency: "₦",
       features: [
         { label: "Film / Series Review", included: "2×" },
-        { label: "Filmmaker Interview", included: "2×" },
+        { label: "Filmmaker Profile", included: "3×" },
         { label: "News Release", included: "4×" },
+        { label: "GetMeLit Newsletter Feature", included: "1×" },
         { label: "Social Media Posts", included: "Multimedia" },
+        { label: "Trailer Editorial Feature", included: "1×" },
       ],
-      cta: "Buy Once",
+      cta: CTA,
     },
     {
-      name: "Visibility+",
+      name: "Distribution",
       billingNote: BILLING,
-      price: "580k", currency: "₦",
+      price: "750k", currency: "₦",
       features: [
-        { label: "Film / Series Review", included: "5×" },
-        { label: "Filmmaker Interview", included: "5×" },
-        { label: "News Release", included: "10×" },
+        { label: "Film / Series Review", included: "4×" },
+        { label: "Filmmaker Profile", included: "4×" },
+        { label: "News Release", included: "8×" },
+        { label: "GetMeLit Newsletter Feature", included: "Quarterly" },
         { label: "Social Media Posts", included: "Multimedia" },
+        { label: "Trailer Editorial Feature", included: "1×" },
+        { label: "Festival / Premiere Coverage", included: "1×" },
       ],
-      cta: "Buy Once",
+      cta: CTA,
     },
   ],
   addOns: [
-    { icon: "🎥", price: "₦100k", description: "Video Filmmaker Interview — long-form on-camera conversation published on The Moveee's video channels." },
-    { icon: "📱", price: "₦65k", description: "Instagram Live Premiere Coverage — live hosting of a premiere night or screening event on The Moveee's Instagram." },
+    { icon: "🎥", price: "₦120k", description: "Video Filmmaker Interview — long-form on-camera conversation published on The Moveee's video channels." },
+    { icon: "📱", price: "₦80k", description: "Instagram Live Premiere Coverage — live hosting of a premiere night or screening event on The Moveee's Instagram." },
     { icon: "🎬", price: "₦150k", description: "Trailer Editorial Feature — editorial piece built around your official trailer release, timed to premiere or festival entry." },
   ],
 };
@@ -372,8 +397,8 @@ const filmmakersPage: ServicePageContent = {
   headline: "Nollywood Is Not a Monolith. Neither Is Our Coverage.",
   tagline: "A sustained editorial partnership for Nigerian and African filmmakers, producers, and film festival organisers who want critical coverage that travels.",
   intro: [
-    "Nollywood is the third-largest film industry in the world and still largely self-covered. Critical coverage of independent Nigerian and African cinema — the kind that ends up in international press packets, streaming negotiations, and festival submissions — is scarce. MoveeePro for Filmmakers closes that gap: film and series reviews, filmmaker profiles, festival coverage, and news releases that build a press record your distribution team can actually use.",
-    "We serve independent Nigerian filmmakers, Lagos and Abuja production companies, diaspora filmmakers with Nigerian projects, and film festival organisers. Tiers run across three months — aligned to a production release window, a festival circuit run, or a streaming debut.",
+    "Nollywood is the third-largest film industry in the world and still largely self-covered. Critical coverage of independent Nigerian and African cinema — the kind that ends up in international press packets, streaming negotiations, and festival submissions — is scarce. Moveee Atelier for Filmmakers closes that gap: film and series reviews, filmmaker profiles, festival coverage, and news releases that build a press record your distribution team can actually use.",
+    "We serve independent Nigerian filmmakers, Lagos and Abuja production companies, diaspora filmmakers with Nigerian projects, and film festival organisers. Tiers are named after production phases — Development, Release, Festival, Distribution — so you can enter at the moment that makes sense for your project.",
     "This is not promotional recap coverage. We write film criticism, director profiles with depth, and news releases for productions worth announcing.",
   ],
   howItWorks: [
@@ -390,7 +415,7 @@ const filmmakersPage: ServicePageContent = {
     {
       step: "03",
       title: "Editorial Production",
-      body: "Reviews are written as film criticism — situating the work within Nigerian and African cinema, assessing craft, performance, and cultural significance. Filmmaker interviews go beyond the making-of to the ideas behind the work.",
+      body: "Reviews are written as film criticism — situating the work within Nigerian and African cinema, assessing craft, performance, and cultural significance. Filmmaker profiles go beyond the making-of to the ideas behind the work.",
     },
     {
       step: "04",
@@ -443,7 +468,7 @@ const filmmakersPage: ServicePageContent = {
     },
   ],
   ctaLabel: "Start a partnership →",
-  ctaSubtext: "Starter from ₦65,000. Three-month film coverage partnership.",
+  ctaSubtext: "Development from ₦100,000. Three-month film coverage partnership.",
 };
 
 // ── Exports ───────────────────────────────────────────────────────────────────

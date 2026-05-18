@@ -323,11 +323,11 @@ const amplifyUS: TierService = {
   ],
 };
 
-// ── MoveeeePro (Africa only) ──────────────────────────────────────────────────
+// ── Moveee Atelier (Africa only) ─────────────────────────────────────────────
 
 const moveeeProAfrica: TierService = {
   slug: "partnership",
-  name: "MoveeeePro",
+  name: "Moveee Atelier",
   eyebrow: "Partnership Program",
   description:
     "A dedicated visibility package for creative and cultural organisations — book publishers and authors, art galleries, theatres, museums, and cultural institutions. We spotlight your work through reviews, interviews, news releases, and multimedia social posts to the exact audience most likely to engage and buy.",

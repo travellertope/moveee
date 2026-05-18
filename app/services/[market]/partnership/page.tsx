@@ -63,7 +63,7 @@ export default async function PartnershipHubPage({
           </p>
           <div className="slug-intro">
             <p>
-              MoveeeePro is a three-month editorial partnership designed for African cultural organisations that need more than a press release. Book publishers need reviews that travel and interviews that build author profiles. Art galleries need critical coverage that ends up in press kits and grant applications. Filmmakers need a press record that works for festival submissions and distribution pitches.
+              Moveee Atelier is a three-month editorial partnership designed for African cultural organisations that need more than a press release. Book publishers need reviews that travel and interviews that build author profiles. Art galleries need critical coverage that ends up in press kits and grant applications. Filmmakers need a press record that works for festival submissions and distribution pitches.
             </p>
             <p>
               We cover all three. Same programme structure, tailored to each discipline: reviews, interviews, news releases, and social content — sustained over three months, renewable around your programme calendar.
