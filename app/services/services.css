@@ -1116,6 +1116,322 @@
 }
 
 /* ============================================================
+   MARKET OVERVIEW GRID (/services/[market])
+   ============================================================ */
+
+.market-overview-grid-section {
+  padding: 72px 80px;
+  border-bottom: 1px solid rgba(42,36,28,0.1);
+}
+
+.market-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1px;
+  background: rgba(42,36,28,0.1);
+  border: 1px solid rgba(42,36,28,0.1);
+  margin-top: 32px;
+}
+
+.market-overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 40px 36px;
+  background: var(--paper);
+  text-decoration: none;
+  color: var(--ink);
+  transition: background 0.2s;
+}
+.market-overview-card:hover { background: #faf6ef; }
+
+.market-overview-icon {
+  font-size: 24px;
+  color: var(--ochre);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.market-overview-name {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  line-height: 1.15;
+  flex: 1;
+}
+
+.market-overview-price {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+.market-overview-arrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-top: 4px;
+}
+
+/* ============================================================
+   INDIVIDUAL SERVICE PAGE (/services/[market]/[slug])
+   ============================================================ */
+
+.service-slug-page { color: var(--ink); font-family: var(--font-sans); }
+
+.slug-breadcrumb {
+  padding: 20px 80px;
+  border-bottom: 1px solid rgba(42,36,28,0.08);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mute);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.slug-breadcrumb a { color: var(--mute); text-decoration: none; }
+.slug-breadcrumb a:hover { color: var(--ochre); }
+.slug-breadcrumb-sep { opacity: 0.4; }
+
+.slug-hero {
+  padding: 72px 80px 64px;
+  border-bottom: 1px solid rgba(42,36,28,0.1);
+  max-width: 900px;
+}
+
+.slug-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-bottom: 20px;
+}
+
+.slug-headline {
+  font-family: var(--font-serif);
+  font-size: clamp(36px, 4.5vw, 60px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.0;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.slug-headline em { font-style: italic; color: var(--ochre); }
+
+.slug-tagline {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-style: italic;
+  color: var(--ink-soft);
+  line-height: 1.45;
+  margin-bottom: 32px;
+  max-width: 640px;
+}
+
+.slug-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 640px;
+  margin-bottom: 40px;
+}
+.slug-intro p { font-size: 15px; color: var(--ink-soft); line-height: 1.75; }
+.slug-intro strong { color: var(--ink); }
+
+/* How it works */
+.slug-how-it-works {
+  padding: 72px 80px;
+  border-bottom: 1px solid rgba(42,36,28,0.1);
+  background: #faf6ef;
+}
+
+.slug-section-title {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 40px;
+  line-height: 1.1;
+}
+
+.how-it-works-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1px;
+  background: rgba(42,36,28,0.1);
+  border: 1px solid rgba(42,36,28,0.1);
+}
+
+.how-step {
+  background: #faf6ef;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.how-step-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--ochre);
+}
+
+.how-step-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.how-step-body {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+/* Benefits */
+.slug-benefits {
+  padding: 72px 80px;
+  border-bottom: 1px solid rgba(42,36,28,0.1);
+}
+
+.slug-benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1px;
+  background: rgba(42,36,28,0.1);
+  border: 1px solid rgba(42,36,28,0.1);
+}
+
+.slug-benefit {
+  background: var(--paper);
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.slug-benefit-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.slug-benefit-body {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+/* Pricing */
+.slug-pricing {
+  padding: 72px 80px;
+  border-bottom: 1px solid rgba(42,36,28,0.1);
+}
+
+/* FAQ */
+.slug-faq {
+  padding: 72px 80px;
+  border-bottom: 1px solid rgba(42,36,28,0.1);
+  max-width: 860px;
+}
+
+/* Bottom CTA */
+.slug-bottom-cta {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 80px;
+}
+
+.slug-bottom-cta h2 {
+  font-family: var(--font-serif);
+  font-size: clamp(28px, 3.5vw, 48px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--paper);
+  margin-bottom: 16px;
+  line-height: 1.05;
+  max-width: 560px;
+}
+
+.slug-bottom-cta > p {
+  font-size: 14px;
+  color: rgba(243,236,224,0.6);
+  max-width: 440px;
+  line-height: 1.65;
+  margin-bottom: 32px;
+}
+
+.slug-bottom-cta .section-eyebrow { color: var(--ochre); }
+
+.slug-bottom-cta .btn-primary-service {
+  background: transparent;
+  color: var(--paper);
+  border-color: rgba(243,236,224,0.35);
+  margin-bottom: 32px;
+  display: inline-block;
+}
+.slug-bottom-cta .btn-primary-service:hover {
+  background: var(--ochre);
+  border-color: var(--ochre);
+}
+
+.slug-cta-subtext {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--mute);
+}
+
+.slug-other-services {
+  padding: 64px 0;
+  border-top: 1px solid rgba(243,236,224,0.1);
+}
+
+.slug-other-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.slug-other-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border: 1px solid rgba(243,236,224,0.15);
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color 0.15s, color 0.15s;
+}
+.slug-other-card:hover {
+  border-color: var(--ochre);
+  color: var(--ochre);
+}
+.slug-other-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+.slug-other-arrow {
+  opacity: 0.5;
+  font-size: 14px;
+}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 
@@ -1195,4 +1511,20 @@
   .addons-section { padding: 48px 24px; }
   .faq-section { padding: 48px 24px; }
   .service-bottom-cta { padding: 48px 24px; }
+
+  /* ── Market overview grid ── */
+  .market-overview-grid-section { padding: 48px 24px; }
+  .market-overview-grid { grid-template-columns: 1fr 1fr; }
+  .market-overview-card { padding: 28px 20px; }
+
+  /* ── Individual service slug pages ── */
+  .slug-breadcrumb { padding: 16px 24px; }
+  .slug-hero { padding: 48px 24px; }
+  .slug-how-it-works { padding: 48px 24px; }
+  .how-it-works-steps { grid-template-columns: 1fr; }
+  .slug-benefits { padding: 48px 24px; }
+  .slug-benefits-grid { grid-template-columns: 1fr; }
+  .slug-pricing { padding: 48px 24px; }
+  .slug-faq { padding: 48px 24px; }
+  .slug-bottom-cta { padding: 48px 24px; }
 }

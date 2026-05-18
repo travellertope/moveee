@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
-import { getMarket, MARKETS, CONNECT_BAR, Section, RateCard, TierService } from "../market-data";
+import { getMarket, MARKETS, CONNECT_BAR } from "../market-data";
 import MarketNav from "../components/MarketNav";
 
 const VALID_MARKETS = ["africa", "uk", "us"];
@@ -23,153 +24,13 @@ export async function generateMetadata({
   };
 }
 
-// ── Card section ──────────────────────────────────────────────────────────────
-
-function CardGrid({ cards }: { cards: RateCard[] }) {
-  return (
-    <div className="market-cards-grid">
-      {cards.map((card, i) => (
-        <div key={i} className={`market-card ${card.featured ? "market-card--featured" : ""}`}>
-          <div className="market-card-top">
-            <div className="market-card-tags">
-              <span className="market-card-tag">{card.tagLabel}</span>
-              {card.featured && card.featuredBadge && (
-                <span className="market-card-badge">{card.featuredBadge}</span>
-              )}
-            </div>
-            <h3 className="market-card-name">{card.name}</h3>
-            <p className="market-card-desc">{card.description}</p>
-          </div>
-          <div className="market-card-body">
-            <div className="market-card-price">
-              <span className="market-card-price-amount">{card.price}</span>
-              <span className="market-card-price-note">{card.priceNote}</span>
-            </div>
-            <ul className="market-card-includes">
-              {card.includes.map((item, ii) => (
-                <li key={ii}>{item}</li>
-              ))}
-            </ul>
-            <a
-              href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(card.name + " Enquiry")}`}
-              className="btn-market-card"
-            >
-              Enquire →
-            </a>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Tier section ─────────────────────────────────────────────────────────────
-
-function TierGrid({ service }: { service: TierService }) {
-  return (
-    <div className="tier-section">
-      <p className="tier-service-desc">{service.description}</p>
-      <div className={`rate-card-grid cols-${service.packages.length}`}>
-        {service.packages.map((pkg, i) => {
-          const isExcluded = (val: boolean | string) => typeof val === "boolean" && !val;
-          return (
-            <div key={i} className={`rate-card ${pkg.highlight ? "rate-card--highlight" : ""}`}>
-              {pkg.highlight && pkg.featuredBadge && (
-                <div className="rate-card-badge-strip">{pkg.featuredBadge}</div>
-              )}
-              <div className="rate-card-header">
-                <h3>{pkg.name}</h3>
-                <span className="rate-card-billing">{pkg.billingNote}</span>
-              </div>
-              <div className="rate-card-price">
-                <span className="price-currency">{pkg.currency}</span>
-                <span className="price-amount">{pkg.price}</span>
-                {pkg.unit && <span className="price-unit">{pkg.unit}</span>}
-              </div>
-              <ul className="rate-card-features">
-                {pkg.features.map((f, fi) => {
-                  const isString = typeof f.included === "string";
-                  const excluded = isExcluded(f.included as boolean | string);
-                  return (
-                    <li key={fi} className={`feature-item ${excluded ? "feature-item--no" : "feature-item--yes"}`}>
-                      <span className="feature-icon">{excluded ? "✕" : "✓"}</span>
-                      <span className="feature-label">
-                        {isString && (
-                          <strong className="feature-qty">{f.included as string} </strong>
-                        )}
-                        {f.label}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-              <div className="rate-card-ctas">
-                <a
-                  href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(service.name + " — " + pkg.name)}`}
-                  className="btn-rate-primary"
-                >
-                  {pkg.cta}
-                </a>
-                {pkg.ctaSecondary && (
-                  <a
-                    href={`mailto:hello@themoveee.com?subject=${encodeURIComponent(service.name + " — " + pkg.name + " Monthly")}`}
-                    className="btn-rate-secondary"
-                  >
-                    {pkg.ctaSecondary}
-                  </a>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {service.addOns && service.addOns.length > 0 && (
-        <div className="tier-addons">
-          <p className="tier-addons-label">Add-Ons</p>
-          <div className="addons-grid">
-            {service.addOns.map((addon, i) => (
-              <div key={i} className="addon-card">
-                <div className="addon-icon">{addon.icon}</div>
-                <p className="addon-price">{addon.price}</p>
-                <p className="addon-desc">{addon.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Market section ────────────────────────────────────────────────────────────
-
-function MarketSection({ section }: { section: Section }) {
-  return (
-    <section id={section.id} className="market-section">
-      <div className="market-section-header">
-        <p className="section-eyebrow">{section.label}</p>
-      </div>
-      {section.kind === "cards" ? (
-        <CardGrid cards={section.cards} />
-      ) : section.kind === "tiers" ? (
-        <TierGrid service={section.service} />
-      ) : (
-        <>
-          <CardGrid cards={section.cards} />
-          <div className="mixed-section-divider">
-            <span className="mixed-section-label">
-              {section.serviceLabel ?? section.service.eyebrow}
-            </span>
-          </div>
-          <TierGrid service={section.service} />
-        </>
-      )}
-    </section>
-  );
-}
-
-// ── Page ──────────────────────────────────────────────────────────────────────
+const SECTION_ICONS: Record<string, string> = {
+  editorial: "◈",
+  lifestyle: "◉",
+  presskit: "◎",
+  partnership: "◆",
+  events: "◇",
+};
 
 export default async function MarketPage({
   params,
@@ -184,7 +45,7 @@ export default async function MarketPage({
 
   return (
     <div className="market-shell">
-      <MarketNav sections={data.sections} />
+      <MarketNav sections={data.sections} mode="page" market={market} />
 
       <main className="market-main">
 
@@ -202,10 +63,35 @@ export default async function MarketPage({
           </a>
         </section>
 
-        {/* All sections */}
-        {data.sections.map((section) => (
-          <MarketSection key={section.id} section={section} />
-        ))}
+        {/* Services overview grid */}
+        <section className="market-overview-grid-section">
+          <p className="section-eyebrow">Services</p>
+          <div className="market-overview-grid">
+            {data.sections.map((section) => {
+              const firstPrice =
+                section.kind === "cards"
+                  ? section.cards[0]?.price
+                  : section.kind === "tiers"
+                  ? `${section.service.packages[0]?.currency}${section.service.packages[0]?.price}`
+                  : section.cards[0]?.price;
+
+              return (
+                <Link
+                  key={section.id}
+                  href={`/services/${market}/${section.id}`}
+                  className="market-overview-card"
+                >
+                  <span className="market-overview-icon">
+                    {SECTION_ICONS[section.id] ?? "◈"}
+                  </span>
+                  <h2 className="market-overview-name">{section.label}</h2>
+                  <p className="market-overview-price">From {firstPrice}</p>
+                  <span className="market-overview-arrow">View service →</span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
 
         {/* Connect bar */}
         <section className="connect-bar">
