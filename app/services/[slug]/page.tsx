@@ -38,6 +38,21 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
         </a>
       </section>
 
+      {/* ── BENEFITS ── */}
+      {service.benefits && service.benefits.length > 0 && (
+        <section className="benefits-section">
+          <div className="benefits-grid">
+            {service.benefits.map((b, i) => (
+              <div key={i} className="benefit-card">
+                <div className="benefit-num">0{i + 1}</div>
+                <h3 className="benefit-title">{b.title}</h3>
+                <p className="benefit-body">{b.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ── RATE CARD ── */}
       <section className="rate-card-section">
         <p className="section-eyebrow">Rate Card</p>

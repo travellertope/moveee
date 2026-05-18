@@ -78,6 +78,7 @@ const APP_ROUTES = new Set([
   'makers',
   'pulse',
   'games',
+  'services',
   // Regional edition homepages
   'uk',
   'us',
