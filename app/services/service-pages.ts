@@ -427,6 +427,84 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ctaLabel: "Enquire about a partnership →",
       ctaSubtext: "Events media partnership by application. Origins/Tours listing from ₦30,000/quarter.",
     },
+
+    connect: {
+      headline: "Inside the Room Where the Culture Happens",
+      tagline: "Quarterly community sponsorship for brands that want trust-transferred access to Nigerian and Pan-African creatives, entrepreneurs, and professionals.",
+      intro: [
+        "Moveee Connect is the community layer of The Moveee — a curated, semi-private space where Nigerian and Pan-African creatives, entrepreneurs, professionals, and culture lovers gather. Not a general public audience. A self-selected, high-intent community of people who care about African and diaspora culture deeply enough to opt in.",
+        "When you buy a Moveee Connect sponsorship, you're not buying an ad. You're buying trust-transferred access — the ability to show up inside a community that already has a relationship with The Moveee, in a way that feels curated rather than intrusive. The Moveee team introduces you. Your content has to earn its place. Your member offer has to genuinely serve the people receiving it.",
+        "₦100,000 per quarter gets you a warm community introduction, one sponsored content slot, and an exclusive member offer. For brands that can't reach this audience through mainstream Nigerian media — and most can't — this is the most direct route in.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Enquire and Brief",
+          body: "Tell us about your brand, what you want to offer the community, and what your goals are for the quarter. We assess editorial fit — not every brand is right for Moveee Connect, and we won't place a brand whose offer doesn't serve the community.",
+        },
+        {
+          step: "02",
+          title: "Community Introduction",
+          body: "We write and post a community introduction: who you are, why we're partnering with you this quarter, and why we think you're relevant to this community. The Moveee's voice vouches for you. That warm intro is worth more than a cold ad.",
+        },
+        {
+          step: "03",
+          title: "Your Sponsored Content Slot",
+          body: "One piece of genuinely useful content shared to the community — a guide, resource, offer, or insight that serves people first. A Nigerian fashion brand might share how to get stocked in Abuja concept stores. A fintech might share a practical guide to diaspora remittance options. Value-first, brand second.",
+        },
+        {
+          step: "04",
+          title: "Exclusive Member Offer",
+          body: "An offer, discount, or experience available only to Moveee Connect members. This creates reciprocity — the community feels rewarded, and you drive real commercial action. Offer parameters are agreed at briefing.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Trust Transfer, Not Interruption",
+          body: "A warm introduction from The Moveee team carries weight that a banner ad never will. The community already trusts The Moveee's editorial judgement — that trust extends, partially, to brands we choose to feature.",
+        },
+        {
+          title: "Self-Selected, High-Intent Audience",
+          body: "Moveee Connect members opted in. They're not passively scrolling a timeline. They're engaged participants in a space they chose to join — which means your message lands differently.",
+        },
+        {
+          title: "Reach Buyers Mainstream Media Can't Reach",
+          body: "Financial services targeting diaspora professionals, legal services, education providers, real estate developers marketing to diaspora buyers, event promoters, recruiters — these buyers can't easily find this audience through mainstream Nigerian media. Moveee Connect is the direct line.",
+        },
+        {
+          title: "Value-First Commercial Format",
+          body: "Your content slot has to be genuinely useful. This keeps community trust intact, ensures high engagement, and means your brand is remembered for the value it added — not the promotion it ran.",
+        },
+      ],
+      faqs: [
+        {
+          question: "What exactly is Moveee Connect?",
+          answer: "A curated, semi-private community — think a well-moderated Telegram group, Discord, or similar platform — where Nigerian and Pan-African creatives, entrepreneurs, and professionals gather around shared interest in African and diaspora culture. Membership is opt-in and deliberately kept high-quality.",
+        },
+        {
+          question: "Who is in the community?",
+          answer: "Nigerian and Pan-African creatives, entrepreneurs, professionals, and culture lovers — people who engage with The Moveee's editorial and care enough about the culture to join a dedicated space. Age range skews 25–45, professionally established, culturally literate.",
+        },
+        {
+          question: "What counts as a 'sponsored content slot'?",
+          answer: "One post sharing something genuinely useful — a guide, resource, exclusive insight, experience, or offer. It shouldn't read like an ad. We'll advise on format and review the content before it goes out.",
+        },
+        {
+          question: "Is this available across other Moveee markets?",
+          answer: "Yes. Moveee Connect operates in Nigeria/Africa, the UK, and the US. Each market has its own community. You can sponsor one or multiple markets — pricing is per market, per quarter.",
+        },
+        {
+          question: "How is this different from a sponsored post on social?",
+          answer: "A sponsored social post reaches a broad, passive audience. Moveee Connect reaches a small, active, high-intent community. The format is conversational and contextualised, not a standard ad unit. The community knows who sponsors it and why.",
+        },
+        {
+          question: "Can I renew after the first quarter?",
+          answer: "Yes, and renewal is encouraged. Consistency builds familiarity — brands that show up every quarter are perceived as part of the ecosystem, not one-off advertisers. Renewal is confirmed before the next quarter begins.",
+        },
+      ],
+      ctaLabel: "Apply for Connect sponsorship →",
+      ctaSubtext: "₦100,000 per quarter. Subject to editorial fit review.",
+    },
   },
 
   uk: {
@@ -752,6 +830,84 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ctaLabel: "Enquire about a partnership →",
       ctaSubtext: "Events partnership by application. Origins/Tours listing from £75/quarter.",
     },
+
+    connect: {
+      headline: "The Room Where Black British Culture Does Business",
+      tagline: "Quarterly community sponsorship for brands that want trust-transferred access to Black British and diaspora creatives, professionals, and entrepreneurs.",
+      intro: [
+        "Moveee Connect UK is the community layer of The Moveee — a curated, semi-private space where Black British and diaspora creatives, entrepreneurs, professionals, and culture lovers gather. Not a general social media audience. A self-selected community of people who care about African and Caribbean diaspora culture enough to opt in and actively participate.",
+        "A quarterly sponsorship isn't an ad placement. It's trust-transferred access — you show up inside a community that already has a relationship with The Moveee, introduced by the team, in a format that feels curated and useful rather than intrusive. The community knows who's in the room and why.",
+        "£200 per quarter. A warm introduction, one sponsored content slot, one exclusive member offer. For brands that can't easily reach Black British professionals and creatives through mainstream UK media — which is most — Moveee Connect is the most direct route in.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Enquire and Brief",
+          body: "Tell us about your brand, what you want to offer the community, and what your goals are for the quarter. We assess editorial fit — not every brand is right for Moveee Connect UK, and we won't place a brand whose offer doesn't genuinely serve the community.",
+        },
+        {
+          step: "02",
+          title: "Community Introduction",
+          body: "We write and post an introduction to the community: who you are, why we're working with you this quarter, and why we think you're relevant to Black British and diaspora community members. Our voice vouches for you. That matters.",
+        },
+        {
+          step: "03",
+          title: "Your Sponsored Content Slot",
+          body: "One piece of genuinely useful content shared to the community. A legal services firm might share '5 things diaspora entrepreneurs get wrong about UK company formation.' A fashion brand might share how to get stocked in UK independent boutiques. Value-first, brand second.",
+        },
+        {
+          step: "04",
+          title: "Exclusive Member Offer",
+          body: "An offer, discount, or experience available only to Moveee Connect UK members. Creates reciprocity — the community feels rewarded, and you drive real commercial action. Offer parameters are agreed at briefing.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Trust Transfer, Not Interruption",
+          body: "A warm introduction from The Moveee team carries weight that a display ad or sponsored post never will. The community trusts The Moveee's editorial judgement — that trust extends to brands we choose to endorse.",
+        },
+        {
+          title: "Self-Selected, High-Intent Community",
+          body: "These are people who chose to be here — not passive social scrollers. Black British and diaspora professionals who are culturally engaged, economically active, and receptive to brands that understand their context.",
+        },
+        {
+          title: "Buyers Mainstream UK Media Struggles to Reach",
+          body: "Financial services targeting diaspora professionals, immigration lawyers, Caribbean and African property, education providers, recruiters, fintechs — there's no efficient way to reach Black British and diaspora audiences in mainstream UK media. Moveee Connect is the direct line.",
+        },
+        {
+          title: "Value-First Format That Builds Brand Memory",
+          body: "Your content slot has to genuinely serve the community. This means higher engagement, stronger brand recall, and a relationship that persists beyond the quarter.",
+        },
+      ],
+      faqs: [
+        {
+          question: "What is Moveee Connect UK?",
+          answer: "A curated semi-private community — a moderated group space on Telegram, Discord, or a similar platform — for Black British and diaspora creatives, entrepreneurs, and professionals. Membership is opt-in and quality-controlled.",
+        },
+        {
+          question: "Who are the members?",
+          answer: "Black British and diaspora creatives, entrepreneurs, and professionals — people in the African and Caribbean community in the UK who engage with The Moveee's editorial content. Age range 25–45, professionally established, culturally literate.",
+        },
+        {
+          question: "What does the sponsored content slot look like in practice?",
+          answer: "One post to the community from your brand — written in a way that serves community members first. We'll advise on the right format, review the content before it goes out, and make sure it fits the community's tone.",
+        },
+        {
+          question: "Can I run this across multiple Moveee markets?",
+          answer: "Yes. Connect operates in Africa/Nigeria, the UK, and the US. Sponsoring multiple markets gives you cross-market reach. Each market is priced independently per quarter.",
+        },
+        {
+          question: "How is this different from a standard sponsored post?",
+          answer: "A sponsored post on social reaches a passive, broad audience with no particular reason to trust you. Moveee Connect reaches an active, self-selected community that trusts The Moveee's endorsement. Very different starting point for a brand relationship.",
+        },
+        {
+          question: "Can I renew quarter to quarter?",
+          answer: "Yes. Consistent presence across multiple quarters deepens brand familiarity and signals genuine investment in the community. Renewal is offered before each new quarter.",
+        },
+      ],
+      ctaLabel: "Apply for Connect sponsorship →",
+      ctaSubtext: "£200 per quarter. Subject to editorial fit review.",
+    },
   },
 
   us: {
@@ -1076,6 +1232,84 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ],
       ctaLabel: "Enquire about a partnership →",
       ctaSubtext: "Events partnership by application. Origins/Tours listing from $60/quarter.",
+    },
+
+    connect: {
+      headline: "Access the Diaspora Community That Mainstream Doesn't Reach",
+      tagline: "Quarterly community sponsorship for brands targeting African and Caribbean diaspora professionals and creatives across the United States.",
+      intro: [
+        "Moveee Connect US is the community layer of The Moveee — a curated, semi-private space where African and Caribbean diaspora creatives, entrepreneurs, professionals, and culture lovers gather across New York, Atlanta, Houston, DC, and Los Angeles. Not a passive social media audience. A self-selected community of people who actively sought this space out because they care about their culture.",
+        "A quarterly sponsorship is trust-transferred access. You're introduced to the community by The Moveee team — in a context where the audience already trusts our editorial judgement. Your content has to be genuinely useful. Your member offer has to serve the people receiving it. In exchange, you reach an audience that mainstream US media rarely gets to accurately.",
+        "$250 per quarter. One warm community introduction, one sponsored content slot, one exclusive member offer. For financial services, professional firms, technology companies, and brands that need to reach diaspora professionals — and can't find them through mainstream channels — this is the most direct route.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Enquire and Brief",
+          body: "Tell us about your brand, your offer for the community, and your goals for the quarter. We assess editorial fit — we won't place a brand whose product or offer doesn't genuinely serve the community. Diaspora fintech, professional services, cultural brands, education providers, and event promoters typically fit well.",
+        },
+        {
+          step: "02",
+          title: "Community Introduction",
+          body: "We write and post an introduction to the community — who you are, why we're working together this quarter, why we think you're relevant to African and Caribbean diaspora professionals in the US. Our voice vouches for you. That's the whole point.",
+        },
+        {
+          step: "03",
+          title: "Your Sponsored Content Slot",
+          body: "One piece of genuinely useful content. A remittance platform might share a guide to transfer fee comparisons. A legal firm might share what Nigerian American entrepreneurs need to know about US entity formation. A creative education platform might share a scholarship opportunity. Value-first, brand second.",
+        },
+        {
+          step: "04",
+          title: "Exclusive Member Offer",
+          body: "An offer, discount, or experience available only to Moveee Connect US members. Creates reciprocity — the community feels rewarded, and you create real commercial action. Offer parameters are confirmed at briefing.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Trust Transfer, Not Interruption",
+          body: "A warm introduction from The Moveee team is a fundamentally different starting point than a cold ad. The community trusts The Moveee. That trust extends — partially, conditionally — to brands we choose to introduce.",
+        },
+        {
+          title: "A Highly Specific Audience That's Hard to Buy Elsewhere",
+          body: "African and Caribbean diaspora professionals in the US aren't a meaningful targeting category in mainstream US digital advertising. Moveee Connect is a direct channel to exactly these people.",
+        },
+        {
+          title: "Buyers No Other Channel Gets Right",
+          body: "Diaspora remittance and fintech, immigration legal services, African property for diaspora buyers, Nigerian and Caribbean food and lifestyle brands, cultural education, diversity-focused employers — the buyer profile for this community is unusually broad. All of them need this audience and none of them can easily buy it.",
+        },
+        {
+          title: "Value-First Format That Builds Real Brand Memory",
+          body: "The community knows your content slot has to earn its place. When it does — when it's genuinely useful — the brand memory it creates is much stronger than an ad impression. This is a relationship-building format, not an awareness format.",
+        },
+      ],
+      faqs: [
+        {
+          question: "What is Moveee Connect US?",
+          answer: "A curated, semi-private community — a moderated group on Telegram, Discord, or a similar platform — for African and Caribbean diaspora creatives, entrepreneurs, and professionals across the United States. Membership is opt-in, focused on New York, Atlanta, Houston, DC, and LA.",
+        },
+        {
+          question: "Who are the members?",
+          answer: "African and Caribbean diaspora creatives, entrepreneurs, and professionals — people who engage with The Moveee US and care enough about diaspora culture to join a dedicated community. Age range 25–45, professionally established, brand-literate.",
+        },
+        {
+          question: "What does the sponsored content slot look like?",
+          answer: "One post to the community from your brand — written to serve community members first. We'll advise on format, review the content before it goes out, and make sure it fits the community's tone and expectations.",
+        },
+        {
+          question: "What kinds of brands fit well?",
+          answer: "Diaspora fintech and remittance, legal and professional services targeting African and Caribbean professionals, US real estate or Nigerian/Caribbean property for diaspora buyers, cultural education and training, event promoters, diversity-focused recruiters, and lifestyle brands with genuine diaspora cultural relevance.",
+        },
+        {
+          question: "Can I sponsor multiple markets?",
+          answer: "Yes. Moveee Connect operates in Africa/Nigeria, the UK, and the US. Sponsoring multiple markets gives you cross-market reach at scale. Each market is priced independently per quarter.",
+        },
+        {
+          question: "Can I renew quarter to quarter?",
+          answer: "Yes, and renewal is encouraged. Consistent quarter-on-quarter presence builds real familiarity — you go from 'that brand The Moveee mentioned' to a recognisable, trusted fixture of the community. Renewal is offered before each new quarter.",
+        },
+      ],
+      ctaLabel: "Apply for Connect sponsorship →",
+      ctaSubtext: "$250 per quarter. Subject to editorial fit review.",
     },
   },
 };

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
-import { getMarket, MARKETS, CONNECT_BAR } from "../market-data";
+import { getMarket } from "../market-data";
 import MarketNav from "../components/MarketNav";
 
 const VALID_MARKETS = ["africa", "uk", "us"];
@@ -30,6 +30,7 @@ const SECTION_ICONS: Record<string, string> = {
   presskit: "◎",
   partnership: "◆",
   events: "◇",
+  connect: "⬡",
 };
 
 export default async function MarketPage({
@@ -90,26 +91,6 @@ export default async function MarketPage({
                 </Link>
               );
             })}
-          </div>
-        </section>
-
-        {/* Connect bar */}
-        <section className="connect-bar">
-          <div className="connect-bar-inner">
-            <div className="connect-bar-text">
-              <p className="connect-bar-title">{CONNECT_BAR.title}</p>
-              <p className="connect-bar-desc">{CONNECT_BAR.description}</p>
-            </div>
-            <div className="connect-bar-price-block">
-              <p className="connect-bar-price">{CONNECT_BAR.price}</p>
-              <p className="connect-bar-price-note">{CONNECT_BAR.priceNote}</p>
-              <a
-                href={`mailto:hello@themoveee.com?subject=${encodeURIComponent("Moveee Connect Sponsorship Enquiry")}`}
-                className="btn-primary-service"
-              >
-                Enquire →
-              </a>
-            </div>
           </div>
         </section>
 

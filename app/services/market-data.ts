@@ -1,7 +1,7 @@
 // ── Shared types ─────────────────────────────────────────────────────────────
 
 export type CardTag =
-  | "editorial" | "lifestyle" | "pr" | "events" | "travel" | "consulting";
+  | "editorial" | "lifestyle" | "pr" | "events" | "travel" | "consulting" | "community";
 
 export type Feature = { label: string; included: boolean | string };
 
@@ -621,6 +621,24 @@ export const MARKETS: Market[] = [
           },
         ],
       },
+      {
+        id: "connect", label: "Moveee Connect", kind: "cards",
+        cards: [
+          {
+            name: "Moveee Connect — Nigeria/Africa",
+            tag: "community", tagLabel: "Community",
+            description: "Quarterly sponsorship inside The Moveee's curated community of Nigerian and Pan-African creatives, entrepreneurs, and professionals. Trust-transferred access — not a cold ad.",
+            price: "₦100,000",
+            priceNote: "per quarter",
+            includes: [
+              "Community introduction post by The Moveee team",
+              "One sponsored content slot (resource, offer, or insight)",
+              "Exclusive member offer for Moveee Connect community",
+              "Access to self-selected, high-intent Black/diaspora audience",
+            ],
+          },
+        ],
+      },
     ],
   },
 
@@ -731,6 +749,24 @@ export const MARKETS: Market[] = [
           },
         ],
       },
+      {
+        id: "connect", label: "Moveee Connect", kind: "cards",
+        cards: [
+          {
+            name: "Moveee Connect — UK",
+            tag: "community", tagLabel: "Community",
+            description: "Quarterly sponsorship inside The Moveee's curated community of Black British and diaspora creatives, entrepreneurs, and professionals. Trusted access — not a cold ad.",
+            price: "£200",
+            priceNote: "per quarter",
+            includes: [
+              "Community introduction post by The Moveee team",
+              "One sponsored content slot (resource, offer, or insight)",
+              "Exclusive member offer for Moveee Connect UK community",
+              "Access to self-selected, high-intent Black British/diaspora audience",
+            ],
+          },
+        ],
+      },
     ],
   },
 
@@ -825,6 +861,24 @@ export const MARKETS: Market[] = [
               "Official Moveee US media partner badge",
               "Live coverage + content creation",
               "Pre/post event editorial on Moveee Happenings US",
+            ],
+          },
+        ],
+      },
+      {
+        id: "connect", label: "Moveee Connect", kind: "cards",
+        cards: [
+          {
+            name: "Moveee Connect — US",
+            tag: "community", tagLabel: "Community",
+            description: "Quarterly sponsorship inside The Moveee's curated community of African and Caribbean diaspora creatives, entrepreneurs, and professionals across the United States.",
+            price: "$250",
+            priceNote: "per quarter",
+            includes: [
+              "Community introduction post by The Moveee team",
+              "One sponsored content slot (resource, offer, or insight)",
+              "Exclusive member offer for Moveee Connect US community",
+              "Access to self-selected, high-intent diaspora audience in NYC, Atlanta, Houston, DC, and LA",
             ],
           },
         ],
