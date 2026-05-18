@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Metadata } from "next";
 import { getService, SERVICES } from "../services-data";
+import { PackagePrice, AddOnPrice } from "../components/PriceDisplay";
 
 export async function generateStaticParams() {
   return SERVICES.map((s) => ({ slug: s.slug }));
@@ -63,11 +64,11 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
                 <h3>{pkg.name}</h3>
                 <span className="rate-card-billing">{pkg.billingNote}</span>
               </div>
-              <div className="rate-card-price">
-                <span className="price-currency">{pkg.currency}</span>
-                <span className="price-amount">{pkg.price}</span>
-                {pkg.unit && <span className="price-unit">{pkg.unit}</span>}
-              </div>
+              <PackagePrice
+                priceNGN={pkg.priceNGN}
+                priceUSD={pkg.priceUSD}
+                unit={pkg.unit}
+              />
               <ul className="rate-card-features">
                 {pkg.features.map((f, fi) => {
                   const isString = typeof f.included === "string";
@@ -110,7 +111,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
             {service.addOns.map((addon, i) => (
               <div key={i} className="addon-card">
                 <div className="addon-icon">{addon.icon}</div>
-                <div className="addon-price">{addon.price}</div>
+                <AddOnPrice priceNGN={addon.priceNGN} priceUSD={addon.priceUSD} />
                 <p className="addon-desc">{addon.description}</p>
               </div>
             ))}

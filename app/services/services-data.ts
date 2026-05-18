@@ -5,8 +5,8 @@ export type Package = {
   badge?: string;
   highlight?: boolean;
   billingNote: string;
-  price: string;
-  currency: string;
+  priceNGN: string;
+  priceUSD: string;
   unit?: string;
   features: Feature[];
   cta: string;
@@ -15,7 +15,8 @@ export type Package = {
 
 export type AddOn = {
   icon: string;
-  price: string;
+  priceNGN: string;
+  priceUSD: string;
   description: string;
 };
 
@@ -86,8 +87,8 @@ export const SERVICES: Service[] = [
       {
         name: "Priority",
         billingNote: "Monthly Recurring Option Also Available",
-        price: "65k",
-        currency: "₦",
+        priceNGN: "65k",
+        priceUSD: "40",
         features: [
           { label: "Credible As-Seen-In Logo", included: true },
           { label: "Priority-Track Feature", included: true },
@@ -105,8 +106,8 @@ export const SERVICES: Service[] = [
       {
         name: "Sponsored",
         billingNote: "Monthly Recurring Option Also Available",
-        price: "150k",
-        currency: "₦",
+        priceNGN: "150k",
+        priceUSD: "95",
         features: [
           { label: "Credible As-Seen-In Logo", included: true },
           { label: "Priority-Track Feature", included: true },
@@ -125,8 +126,8 @@ export const SERVICES: Service[] = [
         name: "Sponsored+",
         highlight: true,
         billingNote: "Monthly Recurring Option Also Available",
-        price: "260k",
-        currency: "₦",
+        priceNGN: "260k",
+        priceUSD: "160",
         features: [
           { label: "Credible As-Seen-In Logo", included: true },
           { label: "Priority-Track Feature", included: true },
@@ -144,8 +145,8 @@ export const SERVICES: Service[] = [
       {
         name: "Invested",
         billingNote: "Monthly Recurring Option Also Available",
-        price: "650k",
-        currency: "₦",
+        priceNGN: "650k",
+        priceUSD: "400",
         features: [
           { label: "Credible As-Seen-In Logo", included: true },
           { label: "Priority-Track Feature", included: true },
@@ -240,8 +241,8 @@ export const SERVICES: Service[] = [
       {
         name: "In Nigeria Media",
         billingNote: "Monthly Recurring Option Also Available",
-        price: "100k",
-        currency: "₦",
+        priceNGN: "100k",
+        priceUSD: "60",
         unit: "Per Platform",
         features: [
           { label: "10% Discount On Bulk Buy (5+ Platforms)", included: true },
@@ -267,8 +268,8 @@ export const SERVICES: Service[] = [
         name: "In UK Media",
         highlight: true,
         billingNote: "Monthly Recurring Option Also Available",
-        price: "150",
-        currency: "$",
+        priceNGN: "240k",
+        priceUSD: "150",
         unit: "Per Platform",
         features: [
           { label: "10% Discount On Bulk Buy (5+ Platforms)", included: true },
@@ -287,17 +288,20 @@ export const SERVICES: Service[] = [
     addOns: [
       {
         icon: "📎",
-        price: "₦320k",
+        priceNGN: "₦320k",
+        priceUSD: "$200",
         description: "Include contact details, images, logo, and artwork in your story, or commission an extensive interview format with richer editorial depth.",
       },
       {
         icon: "📅",
-        price: "+₦130k",
+        priceNGN: "+₦130k",
+        priceUSD: "+$80",
         description: "Backdate your story to an earlier date than the period you're originally being published — ideal for quarterly retrospectives or launch anniversaries.",
       },
       {
         icon: "✍️",
-        price: "+₦40k",
+        priceNGN: "+₦40k",
+        priceUSD: "+$25",
         description: "Commission a unique story angle for each platform so you don't repeat content — allowing you to cover multiple perspectives across outlets.",
       },
     ],
@@ -346,8 +350,8 @@ export const SERVICES: Service[] = [
       {
         name: "Starter",
         billingNote: "Expires in 3 Months",
-        price: "65k",
-        currency: "₦",
+        priceNGN: "65k",
+        priceUSD: "40",
         features: [
           { label: "Book Review", included: "0×" },
           { label: "Author Interview", included: "1×" },
@@ -359,8 +363,8 @@ export const SERVICES: Service[] = [
       {
         name: "Growth",
         billingNote: "Expires in 3 Months",
-        price: "150k",
-        currency: "₦",
+        priceNGN: "150k",
+        priceUSD: "95",
         features: [
           { label: "Book Review", included: "1×" },
           { label: "Author Interview", included: "1×" },
@@ -373,8 +377,8 @@ export const SERVICES: Service[] = [
         name: "Momentum",
         highlight: true,
         billingNote: "Expires in 3 Months",
-        price: "250k",
-        currency: "₦",
+        priceNGN: "250k",
+        priceUSD: "155",
         features: [
           { label: "Book Review", included: "2×" },
           { label: "Author Interview", included: "2×" },
@@ -386,8 +390,8 @@ export const SERVICES: Service[] = [
       {
         name: "Visibility+",
         billingNote: "Expires in 3 Months",
-        price: "580k",
-        currency: "₦",
+        priceNGN: "580k",
+        priceUSD: "360",
         features: [
           { label: "Book Review", included: "5×" },
           { label: "Author Interview", included: "5×" },
@@ -400,17 +404,20 @@ export const SERVICES: Service[] = [
     addOns: [
       {
         icon: "🎥",
-        price: "₦100k",
+        priceNGN: "₦100k",
+        priceUSD: "$60",
         description: "Video Interview (Virtual) — a recorded long-form conversation with the author, published on The Moveee's video channels.",
       },
       {
         icon: "📱",
-        price: "₦65k",
+        priceNGN: "₦65k",
+        priceUSD: "$40",
         description: "Instagram Live Q&A — a live session with the author hosted on The Moveee's Instagram, open to our full follower base.",
       },
       {
         icon: "🎬",
-        price: "₦200k",
+        priceNGN: "₦200k",
+        priceUSD: "$120",
         description: "Basic Book Trailer — a professionally produced short-form video asset you can use across all your own channels to drive pre-orders and awareness.",
       },
     ],

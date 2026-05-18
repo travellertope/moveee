@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Metadata } from "next";
 import { SERVICES } from "./services-data";
+import { ServiceIndexPrice } from "./components/PriceDisplay";
 
 export const metadata: Metadata = {
   title: "Services | The Moveee",
@@ -30,8 +31,6 @@ export default function ServicesPage() {
       {/* Services grid */}
       <section className="services-index-grid">
         {SERVICES.map((service) => {
-          const lowestPrice = service.packages[0].price;
-          const highestPrice = service.packages[service.packages.length - 1].price;
           return (
             <Link key={service.slug} href={`/services/${service.slug}`} className="service-card">
               <div className="service-card-icon">{SERVICE_ICONS[service.slug] || "◈"}</div>
@@ -39,10 +38,7 @@ export default function ServicesPage() {
               <h2 className="service-card-name">{service.name}</h2>
               <p className="service-card-tagline">{service.tagline}</p>
               <div className="service-card-footer">
-                <span className="service-card-price">
-                  From {service.packages[0].currency}{lowestPrice}
-                  {lowestPrice !== highestPrice && ` — ${service.packages[service.packages.length - 1].currency}${highestPrice}`}
-                </span>
+                <ServiceIndexPrice packages={service.packages} />
                 <span className="service-card-arrow">View rates →</span>
               </div>
             </Link>
