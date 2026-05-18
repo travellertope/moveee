@@ -424,6 +424,7 @@
 .rate-card-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
 .rate-card-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
 .rate-card-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+.rate-card-grid--auto { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 
 /* Rate card */
 .rate-card {
@@ -446,7 +447,8 @@
   margin-bottom: 4px;
   letter-spacing: -0.01em;
 }
-.rate-card-billing {
+.rate-card-billing,
+.rate-billing {
   font-family: var(--font-mono);
   font-size: 8px;
   letter-spacing: 0.1em;
@@ -1396,8 +1398,8 @@
 }
 
 .slug-other-services {
-  padding: 64px 0;
-  border-top: 1px solid rgba(243,236,224,0.1);
+  padding: 64px 80px;
+  border-top: 1px solid rgba(42,36,28,0.1);
 }
 
 .slug-other-grid {
@@ -1527,4 +1529,6 @@
   .slug-pricing { padding: 48px 24px; }
   .slug-faq { padding: 48px 24px; }
   .slug-bottom-cta { padding: 48px 24px; }
+  .slug-other-services { padding: 48px 24px; }
+  .rate-card-grid--auto { grid-template-columns: 1fr; }
 }
