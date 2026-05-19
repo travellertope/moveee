@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getCommunityPostBySlug, getAllCommunitySlugs, getPostComments } from "@/lib/community-wordpress";
 import { parseHashtags } from "@/lib/hashtags";
 import CommunityPostClient from "./CommunityPostClient";
@@ -76,9 +78,13 @@ export default async function CommunityPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = await getCommunityPostBySlug(slug);
+  const [post, session] = await Promise.all([
+    getCommunityPostBySlug(slug),
+    getServerSession(authOptions),
+  ]);
   if (!post) notFound();
   const comments = await getPostComments(post.id);
+  const loggedIn = !!session?.user;
 
   const rawText  = post.content.rendered.replace(/<[^>]+>/g, "").trim();
   const author   = post.meta.community_author_name ?? "Community Member";
@@ -265,14 +271,25 @@ export default async function CommunityPostPage({
                 <p style={{ color: "#3a342b", fontSize: "0.78rem", lineHeight: 1.55, margin: "0 0 0.85rem" }}>
                   Village square for culture loving creatives, entrepreneurs, professionals.
                 </p>
-                <Link href="/register" style={{
-                  display: "block", background: "#c93c2a", color: "#fff",
-                  textAlign: "center", padding: "0.45rem 0.75rem",
-                  fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
-                  textTransform: "uppercase", textDecoration: "none",
-                }}>
-                  Join Moveee Connect →
-                </Link>
+                {loggedIn ? (
+                  <Link href="/member" style={{
+                    display: "block", background: "#c93c2a", color: "#fff",
+                    textAlign: "center", padding: "0.45rem 0.75rem",
+                    fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
+                    textTransform: "uppercase", textDecoration: "none",
+                  }}>
+                    Member Dashboard →
+                  </Link>
+                ) : (
+                  <Link href="/register" style={{
+                    display: "block", background: "#c93c2a", color: "#fff",
+                    textAlign: "center", padding: "0.45rem 0.75rem",
+                    fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
+                    textTransform: "uppercase", textDecoration: "none",
+                  }}>
+                    Join Moveee Connect →
+                  </Link>
+                )}
               </div>
             </div>
           </aside>

@@ -5,7 +5,6 @@ import Link from "next/link";
 import NewsletterPreferences from "./NewsletterPreferences";
 import ProfileEditor from "./ProfileEditor";
 import DirectoryProfile from "./DirectoryProfile";
-import ChapterSelector from "@/components/ChapterSelector";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -111,35 +110,6 @@ export default async function MemberSettingsPage() {
               </div>
             </section>
 
-            {/* ── 4. CHAPTER ── */}
-            <section className="mem-card">
-              <div className="mem-card-label">Chapter</div>
-              <ChapterSelector
-                currentPrimaryId={user.primaryChapter?.id ?? 0}
-                currentPrimaryName={user.primaryChapter?.name ?? ""}
-                currentSecondaryId={user.secondaryChapter?.id ?? 0}
-                currentSecondaryName={user.secondaryChapter?.name ?? ""}
-                isPatron={isPatron}
-              />
-            </section>
-
-            {/* ── 5. DANGER ZONE ── */}
-            <section className="mem-card mem-card--rule">
-              <div className="mem-card-label" style={{ color: "var(--mute)" }}>Account</div>
-              <div className="mem-field-list">
-                <div className="mem-field mem-field--action">
-                  <div>
-                    <div className="mem-field-label">Sign out</div>
-                    <div className="mem-field-value mem-field-value--muted">
-                      Sign out of your account on this device
-                    </div>
-                  </div>
-                  <Link href="/api/auth/signout" className="mem-field-btn mem-field-btn--muted">
-                    Sign out →
-                  </Link>
-                </div>
-              </div>
-            </section>
 
           </div>
 

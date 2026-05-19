@@ -13,6 +13,46 @@ function wpAuthHeaders() {
   };
 }
 
+export async function PATCH(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const u = session.user as any;
+
+  let body: Record<string, string>;
+  try { body = await req.json(); } catch {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+
+  const payload: Record<string, string> = {
+    user_id:                String(u.id),
+    directory_opt_in:       body.directory_opt_in       ?? "0",
+    directory_bio:          body.directory_bio          ?? "",
+    directory_disciplines:  body.directory_disciplines  ?? "",
+    directory_instagram:    body.directory_instagram    ?? "",
+    directory_linkedin:     body.directory_linkedin     ?? "",
+    directory_website:      body.directory_website      ?? "",
+  };
+
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/update`, {
+      method: "POST",
+      headers: wpAuthHeaders(),
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return NextResponse.json({ error: (err as any).message ?? "Update failed" }, { status: 502 });
+    }
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
+  }
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user) {

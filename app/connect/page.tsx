@@ -27,36 +27,32 @@ export default async function ConnectPage() {
 
   return (
     <div>
-      {/* ── HERO ── */}
-      <section className="mco-hero">
-        <div className="mco-hero-inner">
-          <div className="mco-hero-text">
-            <p className="mco-eyebrow">Moveee Connect</p>
-            <h1 className="mco-headline">
-              Where culture <em>gathers.</em>
-            </h1>
-            <p className="mco-lede">
-              Village square for culture loving creatives, entrepreneurs, professionals.
-            </p>
+      {/* ── HERO — only shown to logged-out visitors ── */}
+      {!loggedIn && (
+        <section className="mco-hero">
+          <div className="mco-hero-inner">
+            <div className="mco-hero-text">
+              <p className="mco-eyebrow">Moveee Connect</p>
+              <h1 className="mco-headline">
+                Where culture <em>gathers.</em>
+              </h1>
+              <p className="mco-lede">
+                Village square for culture loving creatives, entrepreneurs, professionals.
+              </p>
+            </div>
+            <div className="mco-hero-cta">
+              <Link href="/register" className="con-btn-primary">Join Moveee Connect →</Link>
+              <Link href="/login" className="con-btn-ghost">Already a member? Sign in</Link>
+            </div>
           </div>
-          <div className="mco-hero-cta">
-            {loggedIn ? (
-              <Link href="/member" className="con-btn-primary">Member Dashboard →</Link>
-            ) : (
-              <>
-                <Link href="/register" className="con-btn-primary">Join Moveee Connect →</Link>
-                <Link href="/login" className="con-btn-ghost">Already a member? Sign in</Link>
-              </>
-            )}
-          </div>
-        </div>
 
-        <nav className="mco-section-nav" aria-label="Connect sections">
-          <a href="#feed" className="mco-nav-link">Pulse Feed</a>
-          <Link href="/connect/people" className="mco-nav-link">The Directory</Link>
-          <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
-        </nav>
-      </section>
+          <nav className="mco-section-nav" aria-label="Connect sections">
+            <a href="#feed" className="mco-nav-link">Pulse Feed</a>
+            <Link href="/connect/people" className="mco-nav-link">The Directory</Link>
+            <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
+          </nav>
+        </section>
+      )}
 
       {/* ── PULSE FEED ── */}
       <section id="feed" className="mco-feed-section">
