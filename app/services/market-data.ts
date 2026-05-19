@@ -394,7 +394,7 @@ export const MARKETS: Market[] = [
             name: "Cultural Spotlight Package",
             tag: "editorial", tagLabel: "Sponsored Content",
             description: "Longform editorial feature + social amplification + GetMeLit newsletter placement. The fastest route to visibility — ideal for Nigerian fashion brands, music acts, food & lifestyle businesses.",
-            price: "₦250,000",
+            price: "₦200,000",
             priceNote: "per package",
             includes: [
               "1 × longform editorial feature (800–1,200 words)",
@@ -537,7 +537,7 @@ export const MARKETS: Market[] = [
             name: "Cultural Spotlight Package",
             tag: "editorial", tagLabel: "Sponsored Content",
             description: "Longform editorial feature + social amplification + GetMeLit UK newsletter. Ideal for UK Afrobeats labels, Black-owned fashion brands, and events promoters.",
-            price: "£850",
+            price: "£600",
             priceNote: "per package",
             includes: [
               "1 × longform editorial feature (800–1,200 words)",
@@ -677,7 +677,7 @@ export const MARKETS: Market[] = [
             name: "Brand Culture Partnership",
             tag: "editorial", tagLabel: "Sponsored Content",
             description: "Sponsored editorial + newsletter placement for US brands targeting African and Caribbean diaspora audiences. The culturally-specific alternative to The Root or Essence.",
-            price: "$1,200",
+            price: "$800",
             priceNote: "per package",
             includes: [
               "Sponsored editorial feature (branded)",
