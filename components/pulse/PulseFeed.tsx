@@ -262,6 +262,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
         <main className="pulse-timeline">
           {/* Mobile filter strip */}
           <div className="pulse-mobile-filters">
+            <div className="pulse-mobile-filters-scroll">
             <div style={{ display: "flex", gap: "0.35rem", padding: "0.65rem 1rem" }}>
               {TYPE_FILTERS.map(({ label, value }) => (
                 <button
@@ -304,6 +305,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 ⊞ Sections
               </button>
             </div>
+            </div>{/* end pulse-mobile-filters-scroll */}
 
             {/* Sections + Categories dropdown panel */}
             {showSectionsMenu && (

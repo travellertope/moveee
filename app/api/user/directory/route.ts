@@ -27,7 +27,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  const payload = {
+  const form = new URLSearchParams({
     user_id:                String(u.id),
     directory_opt_in:       body.directory_opt_in       ?? "0",
     directory_bio:          body.directory_bio          ?? "",
@@ -35,19 +35,30 @@ export async function PATCH(req: NextRequest) {
     directory_instagram:    body.directory_instagram    ?? "",
     directory_linkedin:     body.directory_linkedin     ?? "",
     directory_website:      body.directory_website      ?? "",
+  });
+
+  const formHeaders = {
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Authorization": `Bearer ${secret}`,
+    "X-Culture-API-Secret": secret,
   };
 
   try {
-    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/directory`, {
+    let res = await fetch(`${WP_URL}/wp-json/culture/v1/user/directory`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${secret}`,
-        "X-Culture-API-Secret": secret,
-      },
-      body: JSON.stringify(payload),
+      headers: formHeaders,
+      body: form.toString(),
       cache: "no-store",
     });
+    // Fall back to user/update if dedicated endpoint not yet live
+    if (res.status === 404) {
+      res = await fetch(`${WP_URL}/wp-json/culture/v1/user/update`, {
+        method: "POST",
+        headers: formHeaders,
+        body: form.toString(),
+        cache: "no-store",
+      });
+    }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       return NextResponse.json({ error: (err as any).message ?? "Update failed" }, { status: 502 });

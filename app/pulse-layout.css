@@ -35,12 +35,14 @@
   display: none;
   border-bottom: 1px solid #e8e2d8;
   background: #fff;
+}
+.pulse-mobile-filters-scroll {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
-.pulse-mobile-filters::-webkit-scrollbar { display: none; }
+.pulse-mobile-filters-scroll::-webkit-scrollbar { display: none; }
 @media (max-width: 860px) {
   .pulse-layout              { grid-template-columns: 1fr; }
   .pulse-sidebar-left        { display: none; }
