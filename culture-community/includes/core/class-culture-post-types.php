@@ -853,6 +853,30 @@ class Culture_Post_Types {
         ) );
 
         // Journey CPT – curated cultural journeys.
+        // Community Post CPT — member-submitted posts in the Connect feed.
+        register_post_type( 'culture_post', array(
+            'labels' => array(
+                'name'               => __( 'Community Posts', 'culture-community' ),
+                'singular_name'      => __( 'Community Post', 'culture-community' ),
+                'add_new'            => __( 'Add New', 'culture-community' ),
+                'add_new_item'       => __( 'Add New Community Post', 'culture-community' ),
+                'edit_item'          => __( 'Edit Community Post', 'culture-community' ),
+                'view_item'          => __( 'View Community Post', 'culture-community' ),
+                'all_items'          => __( 'All Community Posts', 'culture-community' ),
+                'search_items'       => __( 'Search Community Posts', 'culture-community' ),
+                'not_found'          => __( 'No community posts found', 'culture-community' ),
+            ),
+            'public'              => true,
+            'has_archive'         => false,
+            'show_in_menu'        => 'culture-community',
+            'menu_icon'           => 'dashicons-groups',
+            'supports'            => array( 'title', 'editor', 'custom-fields', 'comments' ),
+            'rewrite'             => array( 'slug' => 'community' ),
+            'show_in_rest'        => true,
+            'rest_base'           => 'community-posts',
+            'capability_type'     => 'post',
+        ) );
+
         register_post_type( 'culture_journey', array(
             'labels' => array(
                 'name'               => __( 'Journeys', 'culture-community' ),

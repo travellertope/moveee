@@ -24,7 +24,9 @@ class Culture_Community {
     }
 
     public static function register_meta() {
-        // ── Community post attribution fields (post type: post) ──────────────
+        // ── Community post attribution fields ────────────────────────────────
+        // Registered on both culture_post (new CPT) and post (legacy, kept so
+        // existing community posts in the "community" category remain readable).
         $string_fields = [
             'community_author_name',
             'community_author_id',
@@ -34,27 +36,25 @@ class Culture_Community {
             'community_author_tier',
         ];
 
+        $string_meta_args = [
+            'show_in_rest'  => true,
+            'single'        => true,
+            'type'          => 'string',
+            'default'       => '',
+            'auth_callback' => function () {
+                return current_user_can( 'edit_posts' );
+            },
+        ];
+
         foreach ( $string_fields as $field ) {
-            register_post_meta( 'post', $field, [
-                'show_in_rest'  => true,
-                'single'        => true,
-                'type'          => 'string',
-                'default'       => '',
-                'auth_callback' => function () {
-                    return current_user_can( 'edit_posts' );
-                },
-            ] );
+            register_post_meta( 'culture_post', $field, $string_meta_args );
+            register_post_meta( 'post',         $field, $string_meta_args ); // legacy
         }
 
-        // ── Reaction count fields — community posts (post type: post) ────────
-        // ── Reaction count fields — pulse stories (post type: pulse_story) ───
-        //
-        // Each field is an integer reaction count for one emoji.
-        // Writes are restricted to edit_posts capability (admin app password).
-        // Reads are public (show_in_rest: true, no auth needed for GET).
+        // ── Reaction count fields ─────────────────────────────────────────────
         $reaction_fields = [ 'reaction_love', 'reaction_fire', 'reaction_clap' ];
 
-        foreach ( [ 'post', 'pulse_story' ] as $post_type ) {
+        foreach ( [ 'culture_post', 'post', 'pulse_story' ] as $post_type ) {
             foreach ( $reaction_fields as $field ) {
                 register_post_meta( $post_type, $field, [
                     'show_in_rest'  => true,

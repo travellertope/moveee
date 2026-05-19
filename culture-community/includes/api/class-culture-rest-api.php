@@ -578,6 +578,13 @@ class Culture_REST_API {
             ),
         ) );
 
+        // One-time migration: re-type "community" category posts → culture_post CPT.
+        register_rest_route( 'culture/v1', '/admin/migrate-community-posts', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_migrate_community_posts' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
         // Initiate membership upgrade for an existing user.
         register_rest_route( 'culture/v1', '/user/upgrade-init', array(
             'methods'             => 'POST',
@@ -2233,6 +2240,46 @@ class Culture_REST_API {
             'success' => true,
             'post_id' => $post_id,
             'slug'    => $post->post_name ?: sanitize_title( $title ),
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/admin/migrate-community-posts
+     * One-time migration: converts all posts in the "community" category
+     * to the culture_post CPT. Safe to run multiple times (idempotent).
+     */
+    public static function handle_migrate_community_posts() {
+        global $wpdb;
+
+        $category = get_term_by( 'slug', 'community', 'category' );
+        if ( ! $category ) {
+            return rest_ensure_response( array( 'migrated' => 0, 'message' => 'No community category found.' ) );
+        }
+
+        $post_ids = get_posts( array(
+            'post_type'      => 'post',
+            'post_status'    => 'publish',
+            'category'       => $category->term_id,
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+        ) );
+
+        $migrated = 0;
+        foreach ( $post_ids as $id ) {
+            $wpdb->update(
+                $wpdb->posts,
+                array( 'post_type' => 'culture_post' ),
+                array( 'ID' => $id ),
+                array( '%s' ),
+                array( '%d' )
+            );
+            clean_post_cache( $id );
+            $migrated++;
+        }
+
+        return rest_ensure_response( array(
+            'migrated' => $migrated,
+            'message'  => "Migrated {$migrated} posts to culture_post.",
         ) );
     }
 
