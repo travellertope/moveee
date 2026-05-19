@@ -209,7 +209,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
               <SidebarHeading>Sections</SidebarHeading>
               <ul style={{ margin: 0, padding: 0 }}>
                 {[
-                  { label: "Pulse Feed",        href: "#feed" },
                   { label: "Members Directory", href: "/connect/people" },
                   { label: "Membership",        href: "/connect/membership" },
                 ].map(({ label, href }) => (
@@ -312,7 +311,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 {/* Connect sections row */}
                 <div style={{ display: "flex", borderBottom: "1px solid #e8e2d8" }}>
                   {[
-                    { label: "Pulse Feed",        href: "#feed" },
                     { label: "Members Directory", href: "/connect/people" },
                     { label: "Membership",        href: "/connect/membership" },
                   ].map(({ label, href }, i, arr) => (
