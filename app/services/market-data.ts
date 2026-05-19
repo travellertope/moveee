@@ -407,35 +407,8 @@ export const MARKETS: Market[] = [
         service: amplifyAfrica,
       },
       {
-        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For consumer product brands, retailers, and artisans", kind: "cards",
-        cards: [
-          {
-            name: "Moveee Lifestyle — Brand Feature",
-            tag: "lifestyle", tagLabel: "Lifestyle",
-            description: "Curated ‘Shop African’ product collections for Nigerian and African designers, artisans, beauty brands, and homeware makers on the Moveee Lifestyle shop hub.",
-            price: "₦80,000",
-            priceNote: "flat placement fee · 10% affiliate commission per sale",
-            includes: [
-              "Curated shop collection listing on Moveee Lifestyle",
-              "Editorial product write-up (brand story + product)",
-              "GetMeLit newsletter + social promotion",
-              "Seasonal ‘Shop the Culture’ drop inclusion option",
-            ],
-          },
-          {
-            name: "Lifestyle Seasonal Drop Campaign",
-            tag: "lifestyle", tagLabel: "Lifestyle",
-            description: "Full editorial commerce campaign around key cultural moments — Detty December, Lagos Fashion Week, Afrobeats season.",
-            price: "₦450,000",
-            priceNote: "per seasonal campaign · 3 brand slots per season",
-            includes: [
-              "Dedicated seasonal campaign feature",
-              "Multi-post social series (5–8 posts)",
-              "Priority GetMeLit placement (top-of-edition)",
-              "Moveee Connect community promotion",
-            ],
-          },
-        ],
+        id: "partnership", label: "Media Partnership", audience: "For publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
+        service: moveeeProAfrica,
       },
       {
         id: "presskit", label: "Presskit", audience: "For businesses, founders, and public figures building media presence", kind: "cards",
@@ -469,8 +442,53 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "partnership", label: "Media Partnership", audience: "For publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
-        service: moveeeProAfrica,
+        id: "connect", label: "Moveee Connect", audience: "For brands seeking community-level access to Nigerian creative professionals", kind: "cards",
+        cards: [
+          {
+            name: "Moveee Connect — Nigeria/Africa",
+            tag: "community", tagLabel: "Community",
+            description: "Quarterly sponsorship inside The Moveee’s curated community of Nigerian and Pan-African creatives, entrepreneurs, and professionals. Trust-transferred access — not a cold ad.",
+            price: "₦100,000",
+            priceNote: "per quarter",
+            includes: [
+              "Community introduction post by The Moveee team",
+              "One sponsored content slot (resource, offer, or insight)",
+              "Exclusive member offer for Moveee Connect community",
+              "Access to self-selected, high-intent Black/diaspora audience",
+            ],
+          },
+        ],
+      },
+      {
+        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For consumer product brands, retailers, and artisans", kind: "cards",
+        cards: [
+          {
+            name: "Moveee Lifestyle — Brand Feature",
+            tag: "lifestyle", tagLabel: "Lifestyle",
+            description: "Curated ‘Shop African’ product collections for Nigerian and African designers, artisans, beauty brands, and homeware makers on the Moveee Lifestyle shop hub.",
+            price: "₦80,000",
+            priceNote: "flat placement fee · 10% affiliate commission per sale",
+            includes: [
+              "Curated shop collection listing on Moveee Lifestyle",
+              "Editorial product write-up (brand story + product)",
+              "GetMeLit newsletter + social promotion",
+              "Seasonal ‘Shop the Culture’ drop inclusion option",
+            ],
+          },
+          {
+            name: "Lifestyle Seasonal Drop Campaign",
+            tag: "lifestyle", tagLabel: "Lifestyle",
+            description: "Full editorial commerce campaign around key cultural moments — Detty December, Lagos Fashion Week, Afrobeats season.",
+            price: "₦450,000",
+            priceNote: "per seasonal campaign · 3 brand slots per season",
+            includes: [
+              "Dedicated seasonal campaign feature",
+              "Multi-post social series (5–8 posts)",
+              "Priority GetMeLit placement (top-of-edition)",
+              "Moveee Connect community promotion",
+            ],
+          },
+        ],
       },
       {
         id: "events", label: "Events & Travel", audience: "For event promoters, festival organisers, and tour operators", kind: "cards",
@@ -497,24 +515,6 @@ export const MARKETS: Market[] = [
               "Curated itinerary feature on Moveee Origins",
               "Origins editorial feature + photography",
               "Moveee Connect community promotion",
-            ],
-          },
-        ],
-      },
-      {
-        id: "connect", label: "Moveee Connect", audience: "For brands seeking community-level access to Nigerian creative professionals", kind: "cards",
-        cards: [
-          {
-            name: "Moveee Connect — Nigeria/Africa",
-            tag: "community", tagLabel: "Community",
-            description: "Quarterly sponsorship inside The Moveee's curated community of Nigerian and Pan-African creatives, entrepreneurs, and professionals. Trust-transferred access — not a cold ad.",
-            price: "₦100,000",
-            priceNote: "per quarter",
-            includes: [
-              "Community introduction post by The Moveee team",
-              "One sponsored content slot (resource, offer, or insight)",
-              "Exclusive member offer for Moveee Connect community",
-              "Access to self-selected, high-intent Black/diaspora audience",
             ],
           },
         ],
@@ -550,37 +550,6 @@ export const MARKETS: Market[] = [
         service: amplifyUK,
       },
       {
-        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For Black-owned consumer brands, retailers, and artisans in the UK", kind: "cards",
-        cards: [
-          {
-            name: "Moveee Lifestyle UK — Shop the Diaspora",
-            tag: "lifestyle", tagLabel: "Lifestyle",
-            description: "Curated shop drops for UK-based Black-owned brands — fashion, beauty, natural hair, homeware, and food.",
-            price: "£250",
-            priceNote: "flat placement fee · 10% affiliate commission per sale",
-            includes: [
-              "Curated shop collection listing on Moveee Lifestyle UK",
-              "Editorial product write-up (brand + product story)",
-              "GetMeLit UK newsletter + social promotion",
-              "Eligible for seasonal campaign drops",
-            ],
-          },
-          {
-            name: "Lifestyle UK — Seasonal Shop Drop",
-            tag: "lifestyle", tagLabel: "Lifestyle",
-            description: "Full editorial commerce campaign timed to UK cultural moments — Black History Month, Carnival season, Christmas gifting.",
-            price: "£600",
-            priceNote: "per seasonal campaign · 3 brand slots per season",
-            includes: [
-              "Dedicated seasonal campaign feature",
-              "Multi-post social series (5–8 posts)",
-              "Top-of-edition GetMeLit UK placement",
-              "Moveee Connect UK community promotion",
-            ],
-          },
-        ],
-      },
-      {
         id: "presskit", label: "Presskit", audience: "For UK-based founders, creatives, and brands building media presence", kind: "cards",
         cards: [
           {
@@ -613,6 +582,55 @@ export const MARKETS: Market[] = [
         ],
       },
       {
+        id: "connect", label: "Moveee Connect", audience: "For brands seeking community-level access to Black British and diaspora professionals", kind: "cards",
+        cards: [
+          {
+            name: "Moveee Connect — UK",
+            tag: "community", tagLabel: "Community",
+            description: "Quarterly sponsorship inside The Moveee's curated community of Black British and diaspora creatives, entrepreneurs, and professionals. Trusted access — not a cold ad.",
+            price: "£200",
+            priceNote: "per quarter",
+            includes: [
+              "Community introduction post by The Moveee team",
+              "One sponsored content slot (resource, offer, or insight)",
+              "Exclusive member offer for Moveee Connect UK community",
+              "Access to self-selected, high-intent Black British/diaspora audience",
+            ],
+          },
+        ],
+      },
+      {
+        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For Black-owned consumer brands, retailers, and artisans in the UK", kind: "cards",
+        cards: [
+          {
+            name: "Moveee Lifestyle UK — Shop the Diaspora",
+            tag: "lifestyle", tagLabel: "Lifestyle",
+            description: "Curated shop drops for UK-based Black-owned brands — fashion, beauty, natural hair, homeware, and food.",
+            price: "£250",
+            priceNote: "flat placement fee · 10% affiliate commission per sale",
+            includes: [
+              "Curated shop collection listing on Moveee Lifestyle UK",
+              "Editorial product write-up (brand + product story)",
+              "GetMeLit UK newsletter + social promotion",
+              "Eligible for seasonal campaign drops",
+            ],
+          },
+          {
+            name: "Lifestyle UK — Seasonal Shop Drop",
+            tag: "lifestyle", tagLabel: "Lifestyle",
+            description: "Full editorial commerce campaign timed to UK cultural moments — Black History Month, Carnival season, Christmas gifting.",
+            price: "£600",
+            priceNote: "per seasonal campaign · 3 brand slots per season",
+            includes: [
+              "Dedicated seasonal campaign feature",
+              "Multi-post social series (5–8 posts)",
+              "Top-of-edition GetMeLit UK placement",
+              "Moveee Connect UK community promotion",
+            ],
+          },
+        ],
+      },
+      {
         id: "events", label: "Events & Travel", audience: "For event promoters, entertainment organisers, and tour operators in the UK", kind: "cards",
         cards: [
           {
@@ -637,24 +655,6 @@ export const MARKETS: Market[] = [
               "Heritage itinerary featured on Moveee Origins",
               "Editorial spotlight + photography",
               "GetMeLit UK + Moveee Connect promotion",
-            ],
-          },
-        ],
-      },
-      {
-        id: "connect", label: "Moveee Connect", audience: "For brands seeking community-level access to Black British and diaspora professionals", kind: "cards",
-        cards: [
-          {
-            name: "Moveee Connect — UK",
-            tag: "community", tagLabel: "Community",
-            description: "Quarterly sponsorship inside The Moveee's curated community of Black British and diaspora creatives, entrepreneurs, and professionals. Trusted access — not a cold ad.",
-            price: "£200",
-            priceNote: "per quarter",
-            includes: [
-              "Community introduction post by The Moveee team",
-              "One sponsored content slot (resource, offer, or insight)",
-              "Exclusive member offer for Moveee Connect UK community",
-              "Access to self-selected, high-intent Black British/diaspora audience",
             ],
           },
         ],
@@ -690,37 +690,6 @@ export const MARKETS: Market[] = [
         service: amplifyUS,
       },
       {
-        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For Black-owned consumer brands, retailers, and artisans in the US", kind: "cards",
-        cards: [
-          {
-            name: "Moveee Lifestyle US — Shop the Culture",
-            tag: "lifestyle", tagLabel: "Lifestyle",
-            description: "Curated ‘Shop the Culture’ collections featuring US Black-owned brands — DTC fashion, natural hair and beauty, food, and homeware.",
-            price: "$450",
-            priceNote: "flat placement fee · 10% affiliate commission per sale",
-            includes: [
-              "Curated shop collection feature on Moveee Lifestyle US",
-              "Editorial product write-up (brand story + product)",
-              "GetMeLit US newsletter + social promotion",
-              "Eligible for seasonal campaign drops",
-            ],
-          },
-          {
-            name: "Lifestyle US — Seasonal Shop Drop",
-            tag: "lifestyle", tagLabel: "Lifestyle",
-            description: "Full editorial commerce campaign around US cultural moments — Black History Month, Juneteenth, Holiday gifting.",
-            price: "$900",
-            priceNote: "per seasonal campaign · 3 brand slots per season",
-            includes: [
-              "Dedicated seasonal campaign editorial",
-              "Multi-post social series (5–8 posts)",
-              "Top-of-edition GetMeLit US placement",
-              "Moveee Connect US community promotion",
-            ],
-          },
-        ],
-      },
-      {
         id: "presskit", label: "Presskit", audience: "For US-based African diaspora founders, creatives, and brands", kind: "cards",
         cards: [
           {
@@ -753,6 +722,55 @@ export const MARKETS: Market[] = [
         ],
       },
       {
+        id: "connect", label: "Moveee Connect", audience: "For brands seeking community-level access to African diaspora professionals in the US", kind: "cards",
+        cards: [
+          {
+            name: "Moveee Connect — US",
+            tag: "community", tagLabel: "Community",
+            description: "Quarterly sponsorship inside The Moveee’s curated community of African and Caribbean diaspora creatives, entrepreneurs, and professionals across the United States.",
+            price: "$250",
+            priceNote: "per quarter",
+            includes: [
+              "Community introduction post by The Moveee team",
+              "One sponsored content slot (resource, offer, or insight)",
+              "Exclusive member offer for Moveee Connect US community",
+              "Access to self-selected, high-intent diaspora audience in NYC, Atlanta, Houston, DC, and LA",
+            ],
+          },
+        ],
+      },
+      {
+        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For Black-owned consumer brands, retailers, and artisans in the US", kind: "cards",
+        cards: [
+          {
+            name: "Moveee Lifestyle US — Shop the Culture",
+            tag: "lifestyle", tagLabel: "Lifestyle",
+            description: "Curated ‘Shop the Culture’ collections featuring US Black-owned brands — DTC fashion, natural hair and beauty, food, and homeware.",
+            price: "$450",
+            priceNote: "flat placement fee · 10% affiliate commission per sale",
+            includes: [
+              "Curated shop collection feature on Moveee Lifestyle US",
+              "Editorial product write-up (brand story + product)",
+              "GetMeLit US newsletter + social promotion",
+              "Eligible for seasonal campaign drops",
+            ],
+          },
+          {
+            name: "Lifestyle US — Seasonal Shop Drop",
+            tag: "lifestyle", tagLabel: "Lifestyle",
+            description: "Full editorial commerce campaign around US cultural moments — Black History Month, Juneteenth, Holiday gifting.",
+            price: "$900",
+            priceNote: "per seasonal campaign · 3 brand slots per season",
+            includes: [
+              "Dedicated seasonal campaign editorial",
+              "Multi-post social series (5–8 posts)",
+              "Top-of-edition GetMeLit US placement",
+              "Moveee Connect US community promotion",
+            ],
+          },
+        ],
+      },
+      {
         id: "events", label: "Events & Travel", audience: "For event promoters, entertainment organisers, and tour operators in the US", kind: "cards",
         cards: [
           {
@@ -765,24 +783,6 @@ export const MARKETS: Market[] = [
               "Official Moveee US media partner badge",
               "Live coverage + content creation",
               "Pre/post event editorial on Moveee Happenings US",
-            ],
-          },
-        ],
-      },
-      {
-        id: "connect", label: "Moveee Connect", audience: "For brands seeking community-level access to African diaspora professionals in the US", kind: "cards",
-        cards: [
-          {
-            name: "Moveee Connect — US",
-            tag: "community", tagLabel: "Community",
-            description: "Quarterly sponsorship inside The Moveee's curated community of African and Caribbean diaspora creatives, entrepreneurs, and professionals across the United States.",
-            price: "$250",
-            priceNote: "per quarter",
-            includes: [
-              "Community introduction post by The Moveee team",
-              "One sponsored content slot (resource, offer, or insight)",
-              "Exclusive member offer for Moveee Connect US community",
-              "Access to self-selected, high-intent diaspora audience in NYC, Atlanta, Houston, DC, and LA",
             ],
           },
         ],
