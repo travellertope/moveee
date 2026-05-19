@@ -37,7 +37,7 @@ export async function PATCH(req: NextRequest) {
   };
 
   try {
-    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/update`, {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/directory`, {
       method: "POST",
       headers: wpAuthHeaders(),
       body: JSON.stringify(payload),
