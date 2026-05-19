@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       "Content-Type": uploadType,
       "Content-Disposition": `attachment; filename="${filename}"`,
     },
-    body: uploadBuffer,
+    body: new Uint8Array(uploadBuffer),
   });
 
   if (!wpRes.ok) {
