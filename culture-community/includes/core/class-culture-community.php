@@ -30,7 +30,6 @@ class Culture_Community {
         $string_fields = [
             'community_author_name',
             'community_author_id',
-            'community_image_url',
             'community_tag',
             'community_region',
             'community_author_tier',
@@ -50,6 +49,25 @@ class Culture_Community {
             register_post_meta( 'culture_post', $field, $string_meta_args );
             register_post_meta( 'post',         $field, $string_meta_args ); // legacy
         }
+
+        // Register community_image_url with an explicit REST schema so that
+        // no pattern constraint can be injected by other plugins or filters.
+        $image_url_args = [
+            'show_in_rest' => [
+                'schema' => [
+                    'type'    => 'string',
+                    'default' => '',
+                ],
+            ],
+            'single'        => true,
+            'type'          => 'string',
+            'default'       => '',
+            'auth_callback' => function () {
+                return current_user_can( 'edit_posts' );
+            },
+        ];
+        register_post_meta( 'culture_post', 'community_image_url', $image_url_args );
+        register_post_meta( 'post',         'community_image_url', $image_url_args ); // legacy
 
         // ── Reaction count fields ─────────────────────────────────────────────
         $reaction_fields = [ 'reaction_love', 'reaction_fire', 'reaction_clap' ];
