@@ -1039,5 +1039,184 @@ class Culture_ACF_Fields {
             'instruction_placement' => 'label',
             'show_in_graphql'   => 1,
         ) );
+
+        // ── Connect Directory — User Profile ─────────────────────────────────────
+        if ( function_exists( 'acf_add_local_field_group' ) ) {
+            acf_add_local_field_group( array(
+                'key'    => 'group_connect_directory_user',
+                'title'  => 'Moveee Connect — Directory Profile',
+                'fields' => array(
+                    array(
+                        'key'           => 'field_connect_dir_opt_in',
+                        'label'         => 'Show in Connect Directory',
+                        'name'          => '_culture_directory_opt_in',
+                        'type'          => 'true_false',
+                        'instructions'  => 'When enabled, this member appears in the public Connect member directory.',
+                        'message'       => 'List me in the directory',
+                        'default_value' => 1,
+                        'ui'            => 1,
+                        'wrapper'       => array( 'width' => '100' ),
+                    ),
+                    array(
+                        'key'           => 'field_connect_dir_bio',
+                        'label'         => 'Directory Bio',
+                        'name'          => '_culture_directory_bio',
+                        'type'          => 'textarea',
+                        'instructions'  => 'Short bio shown on the member card (max 160 characters).',
+                        'maxlength'     => 160,
+                        'rows'          => 3,
+                        'wrapper'       => array( 'width' => '100' ),
+                    ),
+                    array(
+                        'key'           => 'field_connect_dir_disciplines',
+                        'label'         => 'Disciplines',
+                        'name'          => '_culture_directory_disciplines',
+                        'type'          => 'checkbox',
+                        'instructions'  => 'Select all that apply. Stored as comma-separated string.',
+                        'choices'       => array(
+                            'Creative'      => 'Creative',
+                            'Entrepreneur'  => 'Entrepreneur',
+                            'Artist'        => 'Artist',
+                            'Filmmaker'     => 'Filmmaker',
+                            'Writer'        => 'Writer',
+                            'Designer'      => 'Designer',
+                            'Musician'      => 'Musician',
+                            'Photographer'  => 'Photographer',
+                            'Tech'          => 'Tech',
+                            'Legal'         => 'Legal',
+                            'Finance'       => 'Finance',
+                            'Academic'      => 'Academic',
+                        ),
+                        'layout'        => 'horizontal',
+                        'return_format' => 'value',
+                        'save_custom'   => 0,
+                        'wrapper'       => array( 'width' => '100' ),
+                    ),
+                    array(
+                        'key'         => 'field_connect_dir_instagram',
+                        'label'       => 'Instagram Handle',
+                        'name'        => '_culture_directory_instagram',
+                        'type'        => 'text',
+                        'prepend'     => '@',
+                        'instructions'=> 'Without the @ symbol.',
+                        'wrapper'     => array( 'width' => '33' ),
+                    ),
+                    array(
+                        'key'     => 'field_connect_dir_linkedin',
+                        'label'   => 'LinkedIn URL',
+                        'name'    => '_culture_directory_linkedin',
+                        'type'    => 'url',
+                        'wrapper' => array( 'width' => '33' ),
+                    ),
+                    array(
+                        'key'     => 'field_connect_dir_website',
+                        'label'   => 'Website',
+                        'name'    => '_culture_directory_website',
+                        'type'    => 'url',
+                        'wrapper' => array( 'width' => '33' ),
+                    ),
+                ),
+                'location' => array(
+                    array(
+                        array(
+                            'param'    => 'user_form',
+                            'operator' => '==',
+                            'value'    => 'all',
+                        ),
+                    ),
+                ),
+                'menu_order'            => 10,
+                'position'              => 'normal',
+                'style'                 => 'default',
+                'label_placement'       => 'top',
+                'instruction_placement' => 'label',
+                'active'                => true,
+                'description'           => 'Controls what appears on the member\'s Connect Directory card.',
+            ) );
+        }
+
+        // Serialize disciplines as comma-separated string for REST API compatibility
+        add_filter( 'acf/update_value/key=field_connect_dir_disciplines', function( $value, $post_id, $field ) {
+            if ( is_array( $value ) ) {
+                $value = implode( ',', array_map( 'sanitize_text_field', $value ) );
+            }
+            return $value;
+        }, 10, 3 );
+
+        // On load, convert back to array for ACF checkbox rendering
+        add_filter( 'acf/load_value/key=field_connect_dir_disciplines', function( $value, $post_id, $field ) {
+            if ( is_string( $value ) && strpos( $value, ',' ) !== false ) {
+                $value = array_map( 'trim', explode( ',', $value ) );
+            }
+            return $value;
+        }, 10, 3 );
+
+        // ── Patron Content Gate ───────────────────────────────────────────────────
+        acf_add_local_field_group( array(
+            'key'    => 'group_patron_content_gate',
+            'title'  => 'Moveee Connect — Access Control',
+            'fields' => array(
+                array(
+                    'key'           => 'field_is_patron_content',
+                    'label'         => 'Patron Members Only',
+                    'name'          => 'is_patron_content',
+                    'type'          => 'true_false',
+                    'instructions'  => 'When enabled, the full content of this post is gated behind a Patron membership. A preview teaser and upgrade prompt are shown to Citizens and logged-out visitors.',
+                    'message'       => 'Restrict to Patron members',
+                    'default_value' => 0,
+                    'ui'            => 1,
+                    'ui_on_text'    => 'Patron Only',
+                    'ui_off_text'   => 'Public',
+                    'wrapper'       => array( 'width' => '50' ),
+                ),
+                array(
+                    'key'           => 'field_patron_preview_length',
+                    'label'         => 'Free Preview Length',
+                    'name'          => 'patron_preview_length',
+                    'type'          => 'select',
+                    'instructions'  => 'How much of the post is visible before the paywall. Only applies when "Patron Members Only" is enabled.',
+                    'choices'       => array(
+                        '0'   => 'No preview — gate immediately',
+                        '100' => 'Short (first 100 words)',
+                        '200' => 'Medium (first 200 words)',
+                        '350' => 'Long (first 350 words)',
+                    ),
+                    'default_value' => '200',
+                    'allow_null'    => 0,
+                    'wrapper'       => array( 'width' => '50' ),
+                    'conditional_logic' => array(
+                        array(
+                            array(
+                                'field'    => 'field_is_patron_content',
+                                'operator' => '==',
+                                'value'    => '1',
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            'location' => array(
+                array(
+                    array( 'param' => 'post_type', 'operator' => '==', 'value' => 'post' ),
+                ),
+                array(
+                    array( 'param' => 'post_type', 'operator' => '==', 'value' => 'page' ),
+                ),
+                array(
+                    array( 'param' => 'post_type', 'operator' => '==', 'value' => 'culture_pulse' ),
+                ),
+                array(
+                    array( 'param' => 'post_type', 'operator' => '==', 'value' => 'culture_editorial' ),
+                ),
+            ),
+            'menu_order'            => 0,
+            'position'              => 'side',
+            'style'                 => 'default',
+            'label_placement'       => 'top',
+            'instruction_placement' => 'label',
+            'active'                => true,
+            'description'           => 'Controls content access for Connect members.',
+            'show_in_graphql'       => true,
+        ) );
     }
 }
