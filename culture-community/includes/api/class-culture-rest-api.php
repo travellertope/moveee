@@ -385,6 +385,30 @@ class Culture_REST_API {
             ),
         ) );
 
+        // GET culture/v1/user/directory — returns Connect directory settings for authenticated user
+        register_rest_route( 'culture/v1', '/user/directory', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_directory_profile' ),
+            'permission_callback' => array( __CLASS__, 'verify_bearer_token' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // GET culture/v1/members — returns opted-in directory members
+        register_rest_route( 'culture/v1', '/members', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_members_directory' ),
+            'permission_callback' => array( __CLASS__, 'verify_bearer_token' ),
+            'args'                => array(
+                'directory'  => array( 'default' => '0' ),
+                'search'     => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
+                'discipline' => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
+                'location'   => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
+                'per_page'   => array( 'default' => 50, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Newsletter preferences — GET returns state, POST updates it. Requires API key.
         register_rest_route( 'culture/v1', '/newsletter-preferences', array(
             array(
@@ -952,6 +976,19 @@ class Culture_REST_API {
             update_user_meta( $user_id, '_culture_secondary_chapter_id', $secondary );
         }
 
+        // Connect Directory — opt-in by default on registration
+        $dir_opt_in      = $request->get_param( 'directory_opt_in' ) ?: '1';
+        $dir_disciplines = $request->get_param( 'directory_disciplines' ) ?: '';
+        $dir_bio         = $request->get_param( 'directory_bio' ) ?: '';
+
+        update_user_meta( $user_id, '_culture_directory_opt_in', $dir_opt_in === '1' ? '1' : '0' );
+        if ( $dir_disciplines ) {
+            update_user_meta( $user_id, '_culture_directory_disciplines', sanitize_text_field( $dir_disciplines ) );
+        }
+        if ( $dir_bio ) {
+            update_user_meta( $user_id, '_culture_directory_bio', sanitize_textarea_field( $dir_bio ) );
+        }
+
         update_user_meta( $user_id, '_culture_points', 0 );
         update_user_meta( $user_id, '_culture_badges', array() );
 
@@ -1087,20 +1124,36 @@ class Culture_REST_API {
 
         // Meta fields
         $meta_map = array(
-            'phone'                => '_culture_phone',
-            'whatsapp'             => '_culture_whatsapp',
-            'gender'               => '_culture_gender',
-            'date_of_birth'        => '_culture_dob',
-            'nationality'          => '_culture_nationality',
-            'country_of_residence' => '_culture_country_of_residence',
-            'city'                 => '_culture_city',
-            'occupation'           => '_culture_occupation',
+            'phone'                  => '_culture_phone',
+            'whatsapp'               => '_culture_whatsapp',
+            'gender'                 => '_culture_gender',
+            'date_of_birth'          => '_culture_dob',
+            'nationality'            => '_culture_nationality',
+            'country_of_residence'   => '_culture_country_of_residence',
+            'city'                   => '_culture_city',
+            'occupation'             => '_culture_occupation',
+            // Connect Directory
+            'directory_disciplines'  => '_culture_directory_disciplines',
+            'directory_instagram'    => '_culture_directory_instagram',
+            'directory_linkedin'     => '_culture_directory_linkedin',
+            'directory_website'      => '_culture_directory_website',
         );
 
         foreach ( $meta_map as $param => $meta_key ) {
             if ( $request->has_param( $param ) ) {
                 update_user_meta( $user_id, $meta_key, sanitize_text_field( $request->get_param( $param ) ) );
             }
+        }
+
+        // Bio allows newlines — use textarea sanitization
+        if ( $request->has_param( 'directory_bio' ) ) {
+            update_user_meta( $user_id, '_culture_directory_bio', sanitize_textarea_field( $request->get_param( 'directory_bio' ) ) );
+        }
+
+        // directory_opt_in is boolean — store as '1' or '0'
+        if ( $request->has_param( 'directory_opt_in' ) ) {
+            $opt_in_val = $request->get_param( 'directory_opt_in' );
+            update_user_meta( $user_id, '_culture_directory_opt_in', ( $opt_in_val === '1' || $opt_in_val === true ) ? '1' : '0' );
         }
 
         // Chapter updates — validate the chapter ID is a published culture_chapter post.
@@ -2174,5 +2227,113 @@ class Culture_REST_API {
             'post_id' => $post_id,
             'slug'    => $post->post_name ?: sanitize_title( $title ),
         ) );
+    }
+
+    /**
+     * GET /culture/v1/user/directory
+     * Returns the Connect directory settings for the given user_id.
+     */
+    public static function handle_get_directory_profile( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $user    = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $disciplines_raw = get_user_meta( $user_id, '_culture_directory_disciplines', true ) ?: '';
+
+        return rest_ensure_response( array(
+            'directory_opt_in'      => get_user_meta( $user_id, '_culture_directory_opt_in',     true ) === '1',
+            'directory_bio'         => get_user_meta( $user_id, '_culture_directory_bio',         true ) ?: '',
+            'directory_disciplines' => $disciplines_raw,
+            'directory_instagram'   => get_user_meta( $user_id, '_culture_directory_instagram',   true ) ?: '',
+            'directory_linkedin'    => get_user_meta( $user_id, '_culture_directory_linkedin',    true ) ?: '',
+            'directory_website'     => get_user_meta( $user_id, '_culture_directory_website',     true ) ?: '',
+        ) );
+    }
+
+    /**
+     * GET /culture/v1/members
+     * Returns members opted into the Connect directory.
+     * Supports ?search=, ?discipline=, ?location=, ?per_page=
+     */
+    public static function handle_get_members_directory( $request ) {
+        $only_directory = $request->get_param( 'directory' ) === '1';
+        $search         = $request->get_param( 'search' );
+        $discipline     = $request->get_param( 'discipline' );
+        $location       = $request->get_param( 'location' );
+        $per_page       = min( (int) $request->get_param( 'per_page' ), 200 );
+
+        $meta_query = array( 'relation' => 'AND' );
+
+        if ( $only_directory ) {
+            $meta_query[] = array(
+                'key'     => '_culture_directory_opt_in',
+                'value'   => '1',
+                'compare' => '=',
+            );
+        }
+
+        if ( $discipline ) {
+            $meta_query[] = array(
+                'key'     => '_culture_directory_disciplines',
+                'value'   => $discipline,
+                'compare' => 'LIKE',
+            );
+        }
+
+        if ( $location ) {
+            $meta_query[] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => '_culture_city',
+                    'value'   => $location,
+                    'compare' => 'LIKE',
+                ),
+                array(
+                    'key'     => '_culture_country_of_residence',
+                    'value'   => $location,
+                    'compare' => 'LIKE',
+                ),
+            );
+        }
+
+        $args = array(
+            'number'     => $per_page,
+            'meta_query' => $meta_query,
+            'orderby'    => 'display_name',
+            'order'      => 'ASC',
+        );
+
+        if ( $search ) {
+            $args['search']         = '*' . $search . '*';
+            $args['search_columns'] = array( 'display_name', 'user_nicename' );
+        }
+
+        $users = get_users( $args );
+
+        $members = array_map( function( $user ) {
+            $tier             = get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen';
+            $primary_id       = (int) get_user_meta( $user->ID, '_culture_primary_chapter_id', true );
+            $primary_name     = $primary_id ? get_the_title( $primary_id ) : '';
+            $disciplines_raw  = get_user_meta( $user->ID, '_culture_directory_disciplines', true ) ?: '';
+
+            return array(
+                'id'                     => $user->ID,
+                'display_name'           => $user->display_name,
+                'occupation'             => get_user_meta( $user->ID, '_culture_occupation',             true ) ?: '',
+                'city'                   => get_user_meta( $user->ID, '_culture_city',                   true ) ?: '',
+                'country_of_residence'   => get_user_meta( $user->ID, '_culture_country_of_residence',   true ) ?: '',
+                'tier'                   => $tier,
+                'primary_chapter'        => array( 'id' => $primary_id, 'name' => $primary_name ),
+                'directory_bio'          => get_user_meta( $user->ID, '_culture_directory_bio',          true ) ?: '',
+                'directory_disciplines'  => $disciplines_raw,
+                'directory_instagram'    => get_user_meta( $user->ID, '_culture_directory_instagram',    true ) ?: '',
+                'directory_linkedin'     => get_user_meta( $user->ID, '_culture_directory_linkedin',     true ) ?: '',
+                'directory_website'      => get_user_meta( $user->ID, '_culture_directory_website',      true ) ?: '',
+            );
+        }, $users );
+
+        return rest_ensure_response( $members );
     }
 }

@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getUnifiedFeed } from "@/lib/unified-feed";
 import PulseFeed from "@/components/pulse/PulseFeed";
-import PatronPrice from "@/components/PatronPrice";
 import Link from "next/link";
 import "../sections.css";
 import "./connect.css";
@@ -78,7 +77,7 @@ export default async function ConnectPage() {
         <nav className="mco-section-nav" aria-label="Connect sections">
           <a href="#feed" className="mco-nav-link">Pulse Feed</a>
           <Link href="/connect/people" className="mco-nav-link">The Directory</Link>
-          <a href="#membership" className="mco-nav-link">Membership</a>
+          <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
         </nav>
       </section>
 
@@ -106,67 +105,20 @@ export default async function ConnectPage() {
         </div>
       </section>
 
-      {/* ── MEMBERSHIP ── */}
-      <section id="membership" className="mco-membership-section">
-        <div className="mco-membership-head">
-          <p className="mco-section-eyebrow">Membership</p>
-          <h2 className="mco-section-title">Choose your tier.</h2>
-        </div>
-        <div className="con-tiers">
-          <div className="con-tier-card">
-            <div className="con-tier-label">Free</div>
-            <h2 className="con-tier-name">Citizen</h2>
-            <div className="con-tier-price">Free forever</div>
-            <ul className="con-tier-perks">
-              <li>Pulse feed &amp; community posts</li>
-              <li>Directory listing</li>
-              <li>One primary chapter</li>
-              <li>Access to online events</li>
-              <li>The Cultural Digest newsletter</li>
-              <li>Culture points &amp; badges</li>
-            </ul>
-            {!loggedIn && (
-              <Link href="/register?tier=citizen" className="con-tier-btn">
-                Become a Citizen →
-              </Link>
-            )}
-            {loggedIn && user?.tier === "citizen" && (
-              <span className="con-tier-status">Active Membership</span>
-            )}
-            {loggedIn && user?.tier === "patron" && (
-              <span className="con-tier-status con-tier-status--prev">Basic Membership</span>
-            )}
+      {/* ── MEMBERSHIP TEASER ── */}
+      <section className="mco-membership-teaser">
+        <div className="mco-membership-teaser-inner">
+          <div>
+            <p className="mco-section-eyebrow">Membership</p>
+            <h2 className="mco-section-title" style={{ marginBottom: 8 }}>Connect Citizen &amp; Connect Pro</h2>
+            <p className="mco-section-desc">
+              Free membership gets you in. Connect Pro gets you featured, gated content, a Pro badge,
+              and more. Two tiers. One community.
+            </p>
           </div>
-
-          <div className="con-tier-card con-tier-card--patron">
-            <div className="con-tier-label">Premium</div>
-            <h2 className="con-tier-name">Patron</h2>
-            <div className="con-tier-price">
-              <PatronPrice variant="yearly" /> / <PatronPrice variant="monthly" /> · Cancel anytime
-            </div>
-            <ul className="con-tier-perks">
-              <li>Everything in Citizen</li>
-              <li>Featured directory listing</li>
-              <li>Physical events in your chapter</li>
-              <li>Secondary chapter membership</li>
-              <li>Priority RSVP for all events</li>
-              <li>Exclusive Patron-only content</li>
-              <li>Direct access to community leaders</li>
-            </ul>
-            {!loggedIn && (
-              <Link href="/register?tier=patron" className="con-tier-btn">
-                Become a Patron →
-              </Link>
-            )}
-            {loggedIn && user?.tier === "citizen" && (
-              <Link href="/register?upgrade=patron" className="con-tier-btn">
-                Upgrade to Patron →
-              </Link>
-            )}
-            {loggedIn && user?.tier === "patron" && (
-              <span className="con-tier-status">Active Membership</span>
-            )}
-          </div>
+          <Link href="/connect/membership" className="mco-membership-teaser-cta">
+            View membership →
+          </Link>
         </div>
       </section>
     </div>

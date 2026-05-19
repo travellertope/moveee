@@ -242,7 +242,7 @@ function RegisterForm() {
     <div style={styles.page}>
       <div style={styles.card}>
         <p style={styles.eyebrow}>The Moveee &mdash; Culture Community</p>
-        <h1 style={styles.heading}>{isUpgrade ? "Upgrade to Patron" : "Join the Community"}</h1>
+        <h1 style={styles.heading}>{isUpgrade ? "Upgrade to Connect Pro" : "Join the Community"}</h1>
 
         {/* Progress bar */}
         {!isUpgrade && (
@@ -573,16 +573,16 @@ function RegisterForm() {
                     },
                     {
                       value: "patron",
-                      label: "Patron",
-                      price: currency === "NGN" 
+                      label: "Connect Pro",
+                      price: currency === "NGN"
                         ? (billingCycle === "monthly" ? "₦4,500" : "₦45,000")
                         : (billingCycle === "monthly" ? "$4" : "$40"),
                       period: billingCycle === "monthly" ? "/ mo" : "/ yr",
                       perks: [
                         "Everything in Citizen",
-                        "Dual chapter membership",
-                        "Physical event access",
-                        "Priority invites & exclusive drops",
+                        "Featured directory listing",
+                        "Pro badge on Pulse posts",
+                        "Gated content & priority RSVP",
                       ],
                     },
                   ] as const
@@ -662,7 +662,7 @@ function RegisterForm() {
                 <div style={styles.field}>
                   <label style={styles.label} htmlFor="secondary_chapter">
                     Secondary Chapter{" "}
-                    <span style={{ fontWeight: 400, color: "#7a6f5c" }}>(Patron perk)</span>
+                    <span style={{ fontWeight: 400, color: "#7a6f5c" }}>(Connect Pro perk)</span>
                   </label>
                   <select
                     id="secondary_chapter"
