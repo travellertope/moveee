@@ -1161,6 +1161,12 @@
   letter-spacing: -0.01em;
   color: var(--ink);
   line-height: 1.15;
+}
+
+.market-overview-audience {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.4;
   flex: 1;
 }
 

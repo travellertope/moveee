@@ -81,9 +81,9 @@ const publishersService: TierService = {
     },
   ],
   addOns: [
-    { icon: "🎥", price: "₦100k", description: "Video Interview (Virtual) — recorded long-form conversation with the author, published on The Moveee's video channels." },
-    { icon: "📱", price: "₦65k", description: "Instagram Live Q&A — live session hosted on The Moveee's Instagram, open to our full follower base." },
-    { icon: "🎬", price: "₦200k", description: "Book Trailer — short-form video asset for your own channels to drive pre-orders and awareness." },
+    { icon: "🎥", price: "₦120k", description: "Video Interview (Virtual) — recorded long-form conversation with the author, published on The Moveee's video channels." },
+    { icon: "📱", price: "₦80k", description: "Instagram Live Q&A — live session hosted on The Moveee's Instagram, open to our full follower base." },
+    { icon: "🎬", price: "₦220k", description: "Book Trailer — short-form video asset for your own channels to drive pre-orders and awareness." },
   ],
 };
 

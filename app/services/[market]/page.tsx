@@ -86,6 +86,9 @@ export default async function MarketPage({
                     {SECTION_ICONS[section.id] ?? "◈"}
                   </span>
                   <h2 className="market-overview-name">{section.label}</h2>
+                  {section.audience && (
+                    <p className="market-overview-audience">{section.audience}</p>
+                  )}
                   <p className="market-overview-price">From {firstPrice}</p>
                   <span className="market-overview-arrow">View service →</span>
                 </Link>

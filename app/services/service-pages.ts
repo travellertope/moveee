@@ -322,7 +322,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "What tier is right for an independent author?",
-          answer: "Starter (₦65,000) is designed for independent authors and small publishers. It covers a review and one social post. Growth (₦150,000) adds an author interview. For authors with an upcoming release or tour, Momentum (₦250,000) is the most comprehensive single-launch option.",
+          answer: "The Debut tier (₦80,000) is the entry point — one author interview, two news releases, and basic social. Season (₦190,000) adds a book review and a second interview. For authors with a release or touring season, Catalogue (₦360,000) gives three reviews and multimedia social coverage.",
         },
         {
           question: "How long does it take to publish a review after we send the book?",
@@ -337,12 +337,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           answer: "No. Reviews are editorially independent — that's what makes them valuable. You can provide context, author notes, and press materials. The editorial team decides the angle, tone, and conclusion. Positive coverage is earned, not purchased.",
         },
         {
-          question: "What's included in the Visibility+ tier?",
-          answer: "Visibility+ (₦580,000) is a comprehensive annual or long-term engagement: reviews, interviews, news releases, social media integration, a video interview, an Instagram Live Q&A, and book trailer support. It's designed for publishers, institutions, or authors with sustained output across a year.",
+          question: "What does the top Imprint tier include?",
+          answer: "Imprint (₦680,000) is the full-house package: six book reviews, five author interviews, eight news releases, quarterly GetMeLit newsletter features, multimedia social posts, and live Q&A or event coverage. It's designed for publishers with multiple authors and sustained annual output.",
         },
       ],
       ctaLabel: "Enquire about a partnership →",
-      ctaSubtext: "Tiers from ₦65,000. Galleries, theatres, and museums welcome.",
+      ctaSubtext: "Publishers from ₦80,000 · Galleries from ₦130,000 · Filmmakers from ₦100,000.",
     },
 
     events: {
@@ -405,7 +405,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "What kinds of events qualify for a Happenings partnership?",
-          answer: "Cultural events, festivals, conferences, creative industry gatherings, brand activations with genuine cultural programming, music events, art exhibitions with opening events, and film premieres. We don't partner with events that don't align with our editorial values — this is assessed on enquiry.",
+          answer: "Music concerts, cultural festivals, owambes, conferences, creative industry gatherings, brand activations with genuine cultural programming, film premieres, and sports-adjacent entertainment events. If your primary need is sustained editorial coverage of an ongoing programme — a gallery, a publisher, a filmmaker — that's our Media Partnership rather than Happenings.",
         },
         {
           question: "Is the media partner relationship exclusive?",

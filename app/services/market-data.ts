@@ -46,9 +46,9 @@ export type RateCard = {
 };
 
 export type Section =
-  | { id: string; label: string; kind: "cards"; cards: RateCard[] }
-  | { id: string; label: string; kind: "tiers"; service: TierService }
-  | { id: string; label: string; kind: "mixed"; cards: RateCard[]; service: TierService; serviceLabel?: string };
+  | { id: string; label: string; audience?: string; kind: "cards"; cards: RateCard[] }
+  | { id: string; label: string; audience?: string; kind: "tiers"; service: TierService }
+  | { id: string; label: string; audience?: string; kind: "mixed"; cards: RateCard[]; service: TierService; serviceLabel?: string };
 
 export type Market = {
   id: "africa" | "uk" | "us";
@@ -333,59 +333,46 @@ const moveeeProAfrica: TierService = {
     "A dedicated visibility package for creative and cultural organisations — book publishers and authors, art galleries, theatres, museums, and cultural institutions. We spotlight your work through reviews, interviews, news releases, and multimedia social posts to the exact audience most likely to engage and buy.",
   packages: [
     {
-      name: "Starter",
+      name: "Publishers — Debut",
       billingNote: "Expires in 3 Months",
-      price: "65k", currency: "₦",
+      price: "80k", currency: "₦",
       features: [
         { label: "Book Review", included: "0×" },
         { label: "Author Interview", included: "1×" },
-        { label: "News Release", included: "1×" },
+        { label: "News Release", included: "2×" },
         { label: "Social Media Sync", included: "Basic" },
       ],
-      cta: "Buy Now",
+      cta: "Start Partnership",
     },
     {
-      name: "Growth",
+      name: "Galleries — Preview",
       billingNote: "Expires in 3 Months",
-      price: "150k", currency: "₦",
+      price: "130k", currency: "₦",
       features: [
-        { label: "Book Review", included: "1×" },
-        { label: "Author Interview", included: "1×" },
-        { label: "News Release", included: "1×" },
+        { label: "Exhibition Review", included: "0×" },
+        { label: "Artist Spotlight", included: "2×" },
+        { label: "News Release", included: "2×" },
         { label: "Social Media Sync", included: "Basic" },
       ],
-      cta: "Buy Once",
+      cta: "Start Partnership",
     },
     {
-      name: "Momentum",
-      highlight: true,
+      name: "Filmmakers — Development",
       billingNote: "Expires in 3 Months",
-      price: "250k", currency: "₦",
+      price: "100k", currency: "₦",
       features: [
-        { label: "Book Review", included: "2×" },
-        { label: "Author Interview", included: "2×" },
-        { label: "News Release", included: "4×" },
-        { label: "Social Media Posts", included: "Multimedia" },
+        { label: "Film Review", included: "0×" },
+        { label: "Filmmaker Profile", included: "1×" },
+        { label: "News Release", included: "2×" },
+        { label: "Social Media Sync", included: "Basic" },
       ],
-      cta: "Buy Once",
-    },
-    {
-      name: "Visibility+",
-      billingNote: "Expires in 3 Months",
-      price: "580k", currency: "₦",
-      features: [
-        { label: "Book Review", included: "5×" },
-        { label: "Author Interview", included: "5×" },
-        { label: "News Release", included: "10×" },
-        { label: "Social Media Posts", included: "Multimedia" },
-      ],
-      cta: "Buy Once",
+      cta: "Start Partnership",
     },
   ],
   addOns: [
-    { icon: "🎥", price: "₦100k", description: "Video Interview (Virtual) — recorded long-form conversation with the author, published on The Moveee's video channels." },
-    { icon: "📱", price: "₦65k", description: "Instagram Live Q&A — live session hosted on The Moveee's Instagram, open to our full follower base." },
-    { icon: "🎬", price: "₦200k", description: "Basic Book Trailer — short-form video asset for your own channels to drive pre-orders and awareness." },
+    { icon: "🎥", price: "₦120k", description: "Video Interview (Virtual) — recorded long-form conversation with the author, published on The Moveee's video channels." },
+    { icon: "📱", price: "₦80k", description: "Instagram Live Q&A — live session hosted on The Moveee's Instagram, open to our full follower base." },
+    { icon: "🎬", price: "₦220k", description: "Book Trailer — short-form video asset for your own channels to drive pre-orders and awareness." },
   ],
 };
 
@@ -400,7 +387,7 @@ export const MARKETS: Market[] = [
     currency: "₦",
     sections: [
       {
-        id: "editorial", label: "Sponsored Content", kind: "mixed",
+        id: "editorial", label: "Sponsored Content", audience: "For brands and businesses targeting Nigerian and Pan-African audiences", kind: "mixed",
         serviceLabel: "Amplify your feature",
         cards: [
           {
@@ -420,7 +407,7 @@ export const MARKETS: Market[] = [
         service: amplifyAfrica,
       },
       {
-        id: "lifestyle", label: "Lifestyle & Commerce", kind: "cards",
+        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For consumer product brands, retailers, and artisans", kind: "cards",
         cards: [
           {
             name: "Moveee Lifestyle — Brand Feature",
@@ -451,7 +438,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "presskit", label: "Presskit", kind: "cards",
+        id: "presskit", label: "Presskit", audience: "For businesses, founders, and public figures building media presence", kind: "cards",
         cards: [
           {
             name: "MoveeePR Africa — Starter",
@@ -482,16 +469,16 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "partnership", label: "Media Partnership", kind: "tiers",
+        id: "partnership", label: "Media Partnership", audience: "For publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
         service: moveeeProAfrica,
       },
       {
-        id: "events", label: "Events & Travel", kind: "cards",
+        id: "events", label: "Events & Travel", audience: "For event promoters, festival organisers, and tour operators", kind: "cards",
         cards: [
           {
             name: "Moveee Happenings Partner",
             tag: "events", tagLabel: "Events",
-            description: "Official media partnership for owambes, cultural festivals, concerts, and art shows across Nigeria.",
+            description: "Official media partnership for owambes, cultural festivals, concerts, and entertainment events across Nigeria.",
             price: "From ₦250,000",
             priceNote: "per event · custom quotes on enquiry",
             includes: [
@@ -515,7 +502,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "connect", label: "Moveee Connect", kind: "cards",
+        id: "connect", label: "Moveee Connect", audience: "For brands seeking community-level access to Nigerian creative professionals", kind: "cards",
         cards: [
           {
             name: "Moveee Connect — Nigeria/Africa",
@@ -543,7 +530,7 @@ export const MARKETS: Market[] = [
     currency: "£",
     sections: [
       {
-        id: "editorial", label: "Sponsored Content", kind: "mixed",
+        id: "editorial", label: "Sponsored Content", audience: "For brands targeting the African and Caribbean diaspora across Britain", kind: "mixed",
         serviceLabel: "Amplify your feature",
         cards: [
           {
@@ -563,7 +550,7 @@ export const MARKETS: Market[] = [
         service: amplifyUK,
       },
       {
-        id: "lifestyle", label: "Lifestyle & Commerce", kind: "cards",
+        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For Black-owned consumer brands, retailers, and artisans in the UK", kind: "cards",
         cards: [
           {
             name: "Moveee Lifestyle UK — Shop the Diaspora",
@@ -594,7 +581,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "presskit", label: "Presskit", kind: "cards",
+        id: "presskit", label: "Presskit", audience: "For UK-based founders, creatives, and brands building media presence", kind: "cards",
         cards: [
           {
             name: "MoveeePR UK — Starter",
@@ -626,12 +613,12 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Events & Travel", kind: "cards",
+        id: "events", label: "Events & Travel", audience: "For event promoters, entertainment organisers, and tour operators in the UK", kind: "cards",
         cards: [
           {
             name: "Moveee Happenings UK Partner",
             tag: "events", tagLabel: "Events",
-            description: "Official media partner for Afrobeats nights, art shows, Caribbean food festivals, and diaspora film screenings across Britain.",
+            description: "Official media partner for Afrobeats nights, Caribbean food festivals, concerts, and diaspora entertainment events across Britain.",
             price: "From £400",
             priceNote: "per event · custom quotes on enquiry",
             includes: [
@@ -655,7 +642,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "connect", label: "Moveee Connect", kind: "cards",
+        id: "connect", label: "Moveee Connect", audience: "For brands seeking community-level access to Black British and diaspora professionals", kind: "cards",
         cards: [
           {
             name: "Moveee Connect — UK",
@@ -683,7 +670,7 @@ export const MARKETS: Market[] = [
     currency: "$",
     sections: [
       {
-        id: "editorial", label: "Sponsored Content", kind: "mixed",
+        id: "editorial", label: "Sponsored Content", audience: "For brands targeting the African and Caribbean diaspora across the US", kind: "mixed",
         serviceLabel: "Amplify your feature",
         cards: [
           {
@@ -703,7 +690,7 @@ export const MARKETS: Market[] = [
         service: amplifyUS,
       },
       {
-        id: "lifestyle", label: "Lifestyle & Commerce", kind: "cards",
+        id: "lifestyle", label: "Lifestyle & Commerce", audience: "For Black-owned consumer brands, retailers, and artisans in the US", kind: "cards",
         cards: [
           {
             name: "Moveee Lifestyle US — Shop the Culture",
@@ -734,7 +721,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "presskit", label: "Presskit", kind: "cards",
+        id: "presskit", label: "Presskit", audience: "For US-based African diaspora founders, creatives, and brands", kind: "cards",
         cards: [
           {
             name: "MoveeePR US — Starter",
@@ -766,7 +753,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Events & Travel", kind: "cards",
+        id: "events", label: "Events & Travel", audience: "For event promoters, entertainment organisers, and tour operators in the US", kind: "cards",
         cards: [
           {
             name: "Moveee Happenings US Partner",
@@ -783,7 +770,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "connect", label: "Moveee Connect", kind: "cards",
+        id: "connect", label: "Moveee Connect", audience: "For brands seeking community-level access to African diaspora professionals in the US", kind: "cards",
         cards: [
           {
             name: "Moveee Connect — US",
