@@ -20,13 +20,14 @@ export async function PATCH(req: NextRequest) {
   }
 
   const u = session.user as any;
+  const secret = process.env.CULTURE_API_SECRET ?? "";
 
   let body: Record<string, string>;
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  const payload: Record<string, string> = {
+  const payload = {
     user_id:                String(u.id),
     directory_opt_in:       body.directory_opt_in       ?? "0",
     directory_bio:          body.directory_bio          ?? "",
@@ -39,7 +40,11 @@ export async function PATCH(req: NextRequest) {
   try {
     const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/directory`, {
       method: "POST",
-      headers: wpAuthHeaders(),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${secret}`,
+        "X-Culture-API-Secret": secret,
+      },
       body: JSON.stringify(payload),
       cache: "no-store",
     });

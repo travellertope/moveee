@@ -206,6 +206,31 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
         <aside className="pulse-sidebar-left">
           <nav style={{ padding: "1.25rem 0" }}>
             <div style={{ marginBottom: "1.25rem" }}>
+              <SidebarHeading>Sections</SidebarHeading>
+              <ul style={{ margin: 0, padding: 0 }}>
+                {[
+                  { label: "Pulse Feed",        href: "#feed" },
+                  { label: "Members Directory", href: "/connect/people" },
+                  { label: "Membership",        href: "/connect/membership" },
+                ].map(({ label, href }) => (
+                  <li key={label} style={{ listStyle: "none" }}>
+                    <Link href={href} style={{
+                      display: "block",
+                      borderLeft: "2px solid transparent",
+                      padding: "0.28rem 0.75rem",
+                      color: "#3a342b",
+                      fontSize: "0.83rem",
+                      fontWeight: 400,
+                      textDecoration: "none",
+                    }}>
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div style={{ marginBottom: "1.25rem" }}>
               <SidebarHeading>Content</SidebarHeading>
               <ul style={{ margin: 0, padding: 0 }}>
                 {TYPE_FILTERS.map(({ label, value }) => (
@@ -229,11 +254,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                     </Link>
                   </li>
                 ))}
-                <li style={{ listStyle: "none" }}>
-                  <Link href="/connect" style={{ display: "block", padding: "0.3rem 0.85rem", fontSize: "0.72rem", color: "#c5491f", textDecoration: "none", fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
-                    ⊞ Sections →
-                  </Link>
-                </li>
               </ul>
             </div>
           </nav>
@@ -292,9 +312,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 {/* Connect sections row */}
                 <div style={{ display: "flex", borderBottom: "1px solid #e8e2d8" }}>
                   {[
-                    { label: "Pulse Feed",    href: "#feed" },
-                    { label: "The Directory", href: "/connect/people" },
-                    { label: "Membership",    href: "/connect/membership" },
+                    { label: "Pulse Feed",        href: "#feed" },
+                    { label: "Members Directory", href: "/connect/people" },
+                    { label: "Membership",        href: "/connect/membership" },
                   ].map(({ label, href }, i, arr) => (
                     <Link
                       key={label}
@@ -317,22 +337,24 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                     </Link>
                   ))}
                 </div>
-                {/* Categories grid */}
-                <div style={{ padding: "0.5rem 0.75rem" }}>
+                {/* Categories — horizontal scroll */}
+                <div style={{ padding: "0.5rem 0.75rem 0.6rem" }}>
                   <p style={{ margin: "0 0 0.35rem", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a6f5c" }}>Categories</p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                  <div style={{ display: "flex", gap: "0.35rem", overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" as any }}>
                     {["Music","Film","Art","Fashion","Literature","Food","Tech","Sport","Travel","Design"].map(cat => (
                       <Link
                         key={cat}
                         href={`/pulse/${cat.toLowerCase()}`}
                         onClick={() => setShowSectionsMenu(false)}
                         style={{
-                          padding: "0.25rem 0.6rem",
+                          flexShrink: 0,
+                          padding: "0.25rem 0.7rem",
                           fontSize: "0.7rem",
                           color: "#3a342b",
                           textDecoration: "none",
                           background: "#f7f5f2",
                           border: "1px solid #e8e2d8",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {cat}
