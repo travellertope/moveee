@@ -5,27 +5,17 @@
 
 /* ── Hero ── */
 .mco-hero {
-  background: var(--ink);
+  background: var(--paper);
+  border-bottom: 1px solid rgba(42,36,28,.1);
   position: relative;
-  overflow: hidden;
-}
-.mco-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 10% 60%, rgba(197,73,31,.25), transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(179,130,56,.15), transparent 45%);
-  pointer-events: none;
 }
 .mco-hero-inner {
-  position: relative;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 80px 60px 0;
+  padding: 48px 60px 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 80px;
+  gap: 60px;
   align-items: center;
 }
 .mco-eyebrow {
@@ -33,39 +23,39 @@
   font-size: 9px;
   letter-spacing: .22em;
   text-transform: uppercase;
-  color: rgba(243,236,224,.35);
-  margin: 0 0 24px;
+  color: var(--ochre);
+  margin: 0 0 14px;
 }
 .mco-headline {
   font-family: 'Fraunces', serif;
-  font-size: clamp(36px, 4vw, 58px);
+  font-size: clamp(28px, 3vw, 42px);
   font-weight: 300;
   line-height: 1.05;
   letter-spacing: -.03em;
-  color: var(--paper);
-  margin: 0 0 20px;
+  color: var(--ink);
+  margin: 0 0 14px;
 }
-.mco-headline em { font-style: italic; color: var(--gold, #b38238); }
+.mco-headline em { font-style: italic; color: var(--ochre, #b38238); }
 .mco-lede {
-  font-size: 16px;
-  color: rgba(243,236,224,.65);
+  font-size: 14px;
+  color: var(--mute);
   line-height: 1.6;
-  margin: 0 0 32px;
+  margin: 0 0 24px;
 }
 .mco-hero-stats {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 .mco-stat {
-  border-left: 2px solid rgba(243,236,224,.12);
-  padding-left: 20px;
+  border-left: 2px solid rgba(42,36,28,.1);
+  padding-left: 16px;
 }
 .mco-stat-num {
   font-family: 'Fraunces', serif;
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 300;
-  color: var(--paper);
+  color: var(--ink);
   line-height: 1;
 }
 .mco-stat-label {
@@ -73,31 +63,35 @@
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(243,236,224,.4);
-  margin-top: 6px;
+  color: var(--mute);
+  margin-top: 4px;
 }
 
 /* ── Section nav (within hero) ── */
 .mco-section-nav {
-  position: relative;
   max-width: 1200px;
-  margin: 56px auto 0;
+  margin: 32px auto 0;
   padding: 0 60px;
   display: flex;
   gap: 0;
-  border-top: 1px solid rgba(243,236,224,.08);
+  border-top: 1px solid rgba(42,36,28,.08);
 }
 .mco-nav-link {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   letter-spacing: .15em;
   text-transform: uppercase;
-  color: rgba(243,236,224,.45);
+  color: var(--mute);
   text-decoration: none;
-  padding: 16px 32px 16px 0;
+  padding: 14px 28px 14px 0;
   transition: color .15s;
 }
-.mco-nav-link:hover { color: var(--paper); }
+.mco-nav-link:hover { color: var(--ink); }
+.mco-nav-link--active {
+  color: var(--ink);
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 12px;
+}
 
 /* ── Pulse Feed section ── */
 .mco-feed-section {
@@ -589,8 +583,8 @@
 
 /* ── Responsive ── */
 @media (max-width: 1024px) {
-  .mco-hero-inner              { padding: 60px 32px 0; gap: 48px; }
-  .mco-section-nav             { padding: 0 32px; margin-top: 48px; }
+  .mco-hero-inner              { padding: 36px 32px 0; gap: 40px; }
+  .mco-section-nav             { padding: 0 32px; margin-top: 28px; }
   .mco-directory-head          { padding: 56px 32px 36px; }
   .mco-directory-teaser-inner  { padding: 48px 32px; }
   .mco-membership-teaser-inner { padding: 48px 32px; }
@@ -599,8 +593,8 @@
   .mco-dir                     { padding: 0 32px 60px; }
 }
 @media (max-width: 768px) {
-  .mco-hero-inner              { grid-template-columns: 1fr; gap: 40px; padding: 48px 22px 0; }
-  .mco-section-nav             { padding: 0 22px; flex-wrap: wrap; margin-top: 40px; }
+  .mco-hero-inner              { grid-template-columns: 1fr; gap: 24px; padding: 28px 22px 0; }
+  .mco-section-nav             { padding: 0 22px; flex-wrap: wrap; margin-top: 24px; }
   .mco-directory-head          { flex-direction: column; align-items: flex-start; padding: 40px 22px 32px; gap: 24px; }
   .mco-directory-teaser-inner  { flex-direction: column; align-items: flex-start; padding: 40px 22px; gap: 24px; }
   .mco-directory-teaser-cta    { align-self: stretch; text-align: center; }

@@ -37,9 +37,7 @@ export default async function MembershipPage() {
         <nav className="mco-section-nav" aria-label="Connect sections">
           <Link href="/connect" className="mco-nav-link">Pulse Feed</Link>
           <Link href="/connect/people" className="mco-nav-link">The Directory</Link>
-          <span className="mco-nav-link" style={{ color: "rgba(243,236,224,.85)", borderBottom: "1px solid rgba(243,236,224,.2)", paddingBottom: 13 }}>
-            Membership
-          </span>
+          <span className="mco-nav-link mco-nav-link--active">Membership</span>
         </nav>
       </section>
 
