@@ -113,6 +113,26 @@ export default async function PartnershipHubPage({
           </div>
         </section>
 
+        {/* Media Partnership vs Events */}
+        <section className="slug-faq" id="faq">
+          <p className="section-eyebrow">Common questions</p>
+          <h2 className="slug-section-title">Worth clarifying.</h2>
+          <div className="faq-list">
+            <details className="faq-item">
+              <summary className="faq-question">What if I only have one event — an opening night, a book launch, or a film premiere?</summary>
+              <p className="faq-answer">A single event is better served by our Events &amp; Travel partnership. Media Partnership is designed for organisations with an ongoing programme — a gallery's quarterly exhibition calendar, a publisher's seasonal title slate, a filmmaker's release and festival circuit. If your need is a one-off moment rather than a sustained relationship, talk to us about Happenings instead.</p>
+            </details>
+            <details className="faq-item">
+              <summary className="faq-question">How is Media Partnership different from Sponsored Content?</summary>
+              <p className="faq-answer">Sponsored Content is for brands commissioning a feature about their product or service — it is brand-initiated, commercially framed, and clearly labelled as such. Media Partnership is for cultural organisations whose work we cover editorially over three months. The coverage is genuine criticism, not branded content. Publishers, galleries, and filmmakers are cultural producers, not brands buying advertising.</p>
+            </details>
+            <details className="faq-item">
+              <summary className="faq-question">My organisation spans more than one category — a gallery with a film programme, a publisher that also runs events.</summary>
+              <p className="faq-answer">Choose the category that best describes your primary programme, or contact us to discuss a bespoke arrangement. We can build a package that covers multiple disciplines where the breadth genuinely warrants it.</p>
+            </details>
+          </div>
+        </section>
+
         {/* Bottom CTA */}
         <section className="slug-bottom-cta">
           <p className="section-eyebrow">Not sure which fits?</p>
