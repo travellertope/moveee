@@ -108,7 +108,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
   const filtered = useMemo(() => items.filter(item => {
     const typeMatch = activeType === "all" || item.type === activeType;
-    const regionMatch = activeRegion === "All" || item.region?.toLowerCase() === activeRegion.toLowerCase();
+    const regionMatch = activeRegion === "All" || !item.region || item.region.toLowerCase() === activeRegion.toLowerCase();
     const tagMatch = !activeTag || (item.type === "community" && (
       activeTag.startsWith("#")
         ? item.title.toLowerCase().includes(activeTag.toLowerCase())
