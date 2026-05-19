@@ -150,11 +150,6 @@ export default async function MemberPage() {
                   <div className="mem-chapter-name">{user.secondaryChapter.name}</div>
                 </div>
               )}
-              {!isPatron && (
-                <p className="mem-chapter-note">
-                  Connect Pro members can join a second chapter.
-                </p>
-              )}
             </section>
 
             {/* Quick links */}
