@@ -21,17 +21,28 @@ export default async function MembershipPage() {
   return (
     <div>
       {/* ── HERO ── */}
-      <section className="mco-hero" style={{ paddingBottom: 0 }}>
-        <div className="mco-hero-inner" style={{ gridTemplateColumns: "1fr" }}>
+      <section className="mco-hero">
+        <div className="mco-hero-inner">
           <div className="mco-hero-text">
             <p className="mco-eyebrow">Moveee Connect · Membership</p>
             <h1 className="mco-headline">
               Belong to <em>something.</em>
             </h1>
-            <p className="mco-lede" style={{ maxWidth: 540 }}>
+            <p className="mco-lede">
               Moveee Connect is for Black and diaspora creatives, entrepreneurs, professionals,
-              and culture lovers. Membership is how you show up — and how the community shows up for you.
+              and culture lovers. Membership is how you show up.
             </p>
+          </div>
+          <div className="mco-hero-cta">
+            {!loggedIn && (
+              <Link href="/register" className="con-btn-primary">Join free →</Link>
+            )}
+            {loggedIn && !isPro && (
+              <Link href="/register?upgrade=patron" className="con-btn-primary">Upgrade to Connect Pro →</Link>
+            )}
+            {loggedIn && isPro && (
+              <Link href="/member" className="con-btn-primary">Member Dashboard →</Link>
+            )}
           </div>
         </div>
 

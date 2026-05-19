@@ -31,44 +31,24 @@ export default async function ConnectPage() {
       <section className="mco-hero">
         <div className="mco-hero-inner">
           <div className="mco-hero-text">
-            <p className="mco-eyebrow">N°06 · Moveee Connect</p>
+            <p className="mco-eyebrow">Moveee Connect</p>
             <h1 className="mco-headline">
               Where diaspora<br />culture <em>gathers.</em>
             </h1>
             <p className="mco-lede">
               Black and diaspora creatives, entrepreneurs, professionals, and culture lovers —
-              self-selected, high-intent, and deeply invested in where African culture is going.
-              Not a general public. A community.
+              self-selected, high-intent, deeply invested in where African culture is going.
             </p>
-            <div className="con-cta-row">
-              {loggedIn ? (
-                <Link href="/member" className="con-btn-primary">Member Dashboard →</Link>
-              ) : (
-                <>
-                  <Link href="/register" className="con-btn-primary">Join Moveee Connect →</Link>
-                  <Link href="/login" className="con-btn-ghost">Already a member? Sign in</Link>
-                </>
-              )}
-            </div>
-            {!loggedIn && (
-              <p className="con-price">
-                Citizen — Free · <Link href="/connect/membership" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}>View membership →</Link>
-              </p>
-            )}
           </div>
-
-          <div className="mco-hero-stats">
-            {[
-              ["500+", "Members worldwide"],
-              ["12",   "City chapters"],
-              ["200+", "Events hosted"],
-              ["Weekly", "Pulse digest"],
-            ].map(([stat, label]) => (
-              <div key={label} className="mco-stat">
-                <div className="mco-stat-num">{stat}</div>
-                <div className="mco-stat-label">{label}</div>
-              </div>
-            ))}
+          <div className="mco-hero-cta">
+            {loggedIn ? (
+              <Link href="/member" className="con-btn-primary">Member Dashboard →</Link>
+            ) : (
+              <>
+                <Link href="/register" className="con-btn-primary">Join Moveee Connect →</Link>
+                <Link href="/login" className="con-btn-ghost">Already a member? Sign in</Link>
+              </>
+            )}
           </div>
         </div>
 

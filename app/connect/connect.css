@@ -7,16 +7,23 @@
 .mco-hero {
   background: var(--paper);
   border-bottom: 1px solid rgba(42,36,28,.1);
-  position: relative;
 }
 .mco-hero-inner {
   max-width: 1200px;
   margin: 0 auto;
   padding: 48px 60px 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 60px;
+}
+.mco-hero-text { flex: 1; min-width: 0; }
+.mco-hero-cta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
 }
 .mco-eyebrow {
   font-family: 'JetBrains Mono', monospace;
@@ -40,31 +47,8 @@
   font-size: 14px;
   color: var(--mute);
   line-height: 1.6;
-  margin: 0 0 24px;
-}
-.mco-hero-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.mco-stat {
-  border-left: 2px solid rgba(42,36,28,.1);
-  padding-left: 16px;
-}
-.mco-stat-num {
-  font-family: 'Fraunces', serif;
-  font-size: 26px;
-  font-weight: 300;
-  color: var(--ink);
-  line-height: 1;
-}
-.mco-stat-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--mute);
-  margin-top: 4px;
+  margin: 0;
+  max-width: 540px;
 }
 
 /* ── Section nav (within hero) ── */
@@ -583,7 +567,7 @@
 
 /* ── Responsive ── */
 @media (max-width: 1024px) {
-  .mco-hero-inner              { padding: 36px 32px 0; gap: 40px; }
+  .mco-hero-inner              { padding: 36px 32px 0; gap: 32px; }
   .mco-section-nav             { padding: 0 32px; margin-top: 28px; }
   .mco-directory-head          { padding: 56px 32px 36px; }
   .mco-directory-teaser-inner  { padding: 48px 32px; }
@@ -593,7 +577,8 @@
   .mco-dir                     { padding: 0 32px 60px; }
 }
 @media (max-width: 768px) {
-  .mco-hero-inner              { grid-template-columns: 1fr; gap: 24px; padding: 28px 22px 0; }
+  .mco-hero-inner              { flex-direction: column; align-items: flex-start; gap: 20px; padding: 28px 22px 0; }
+  .mco-hero-cta                { align-items: flex-start; }
   .mco-section-nav             { padding: 0 22px; flex-wrap: wrap; margin-top: 24px; }
   .mco-directory-head          { flex-direction: column; align-items: flex-start; padding: 40px 22px 32px; gap: 24px; }
   .mco-directory-teaser-inner  { flex-direction: column; align-items: flex-start; padding: 40px 22px; gap: 24px; }
