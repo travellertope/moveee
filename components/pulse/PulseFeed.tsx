@@ -151,7 +151,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     setActiveType("community");
     setActiveTag(post.tag ?? "");
     setVisibleCount(20);
-  }, []);
+  }, [session]);
 
   const handleTagClick = useCallback((tag: string) => {
     setActiveType("community");
@@ -412,7 +412,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
           background: #f7f5f2;
           min-height: 80vh;
           min-width: 0;
-          overflow: hidden;
         }
         .pulse-sidebar-right {
           position: sticky;

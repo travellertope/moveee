@@ -18,33 +18,25 @@ export default async function PeoplePage() {
 
   return (
     <div>
-      <section className="mco-hero" style={{ paddingBottom: 0 }}>
-        <div className="mco-hero-inner" style={{ gridTemplateColumns: "1fr" }}>
+      <section className="mco-hero">
+        <div className="mco-hero-inner">
           <div className="mco-hero-text">
             <p className="mco-eyebrow">Moveee Connect · The Directory</p>
             <h1 className="mco-headline">
               Find each <em>other.</em>
             </h1>
-            <p className="mco-lede" style={{ maxWidth: 540 }}>
+            <p className="mco-lede">
               A searchable index of Moveee Connect members — who they are, what they do, and where
-              they're based. The Lagos photographer. The UK art director. The Nigerian lawyer in
-              New York. Find them here.
+              they're based. The Lagos photographer. The UK art director. The Nigerian lawyer in New York.
             </p>
-            <div className="con-cta-row">
-              {loggedIn ? (
-                <Link href="/member/settings" className="con-btn-primary">Update your profile →</Link>
-              ) : (
-                <>
-                  <Link href="/register" className="con-btn-primary">Join &amp; get listed →</Link>
-                  <Link href="/connect" className="con-btn-ghost">← Back to Connect</Link>
-                </>
-              )}
-            </div>
-            {loggedIn && (
-              <p className="con-price">
-                <Link href="/connect" style={{ color: "inherit", textDecoration: "none" }}>← Back to Connect</Link>
-              </p>
+          </div>
+          <div className="mco-hero-cta">
+            {loggedIn ? (
+              <Link href="/member/settings" className="con-btn-primary">Update your profile →</Link>
+            ) : (
+              <Link href="/register" className="con-btn-primary">Join &amp; get listed →</Link>
             )}
+            <Link href="/connect" className="con-btn-ghost">← Back to Connect</Link>
           </div>
         </div>
         <nav className="mco-section-nav" aria-label="Connect sections">
