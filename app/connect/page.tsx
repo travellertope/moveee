@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getUnifiedFeed } from "@/lib/unified-feed";
 import PulseFeed from "@/components/pulse/PulseFeed";
-import MemberDirectory from "@/components/connect/MemberDirectory";
 import PatronPrice from "@/components/PatronPrice";
 import Link from "next/link";
 import "../sections.css";
@@ -78,7 +77,7 @@ export default async function ConnectPage() {
 
         <nav className="mco-section-nav" aria-label="Connect sections">
           <a href="#feed" className="mco-nav-link">Pulse Feed</a>
-          <a href="#directory" className="mco-nav-link">The Directory</a>
+          <Link href="/connect/people" className="mco-nav-link">The Directory</Link>
           <a href="#membership" className="mco-nav-link">Membership</a>
         </nav>
       </section>
@@ -90,29 +89,21 @@ export default async function ConnectPage() {
         </Suspense>
       </section>
 
-      {/* ── THE DIRECTORY ── */}
-      <section id="directory" className="mco-directory-section">
-        <div className="mco-directory-head">
+      {/* ── DIRECTORY TEASER ── */}
+      <section className="mco-directory-teaser">
+        <div className="mco-directory-teaser-inner">
           <div>
             <p className="mco-section-eyebrow">Find Each Other</p>
-            <h2 className="mco-section-title">The Directory</h2>
+            <h2 className="mco-section-title" style={{ marginBottom: 8 }}>The Directory</h2>
             <p className="mco-section-desc">
-              A searchable index of Moveee Connect members — who they are, what they do,
-              and where they're based. The Lagos photographer. The UK art director.
-              The Nigerian lawyer in New York. Find them here.
+              A searchable index of members — who they are, what they do, and where they're based.
+              The Lagos photographer. The UK art director. The Nigerian lawyer in New York.
             </p>
           </div>
-          {loggedIn ? (
-            <Link href="/member/settings" className="mco-directory-cta">
-              Update your profile →
-            </Link>
-          ) : (
-            <Link href="/register" className="mco-directory-cta">
-              Join to appear in the directory →
-            </Link>
-          )}
+          <Link href="/connect/people" className="mco-directory-teaser-cta">
+            Browse the directory →
+          </Link>
         </div>
-        <MemberDirectory />
       </section>
 
       {/* ── MEMBERSHIP ── */}

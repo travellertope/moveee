@@ -6,6 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CountrySelect, CitySelect } from "@/components/LocationSelect";
 
+const DISCIPLINES = [
+  "Creative", "Entrepreneur", "Artist", "Filmmaker", "Writer",
+  "Designer", "Musician", "Photographer", "Tech", "Legal", "Finance", "Academic",
+];
+
 interface Chapter {
   id: number;
   name: string;
@@ -54,6 +59,10 @@ function RegisterForm() {
   const [primaryChapter, setPrimaryChapter] = useState(0);
   const [secondaryChapter, setSecondaryChapter] = useState(0);
   const [referralCode] = useState(referralFromUrl);
+
+  // Directory profile (opt-in by default)
+  const [disciplines, setDisciplines] = useState<string[]>([]);
+  const [directoryBio, setDirectoryBio] = useState("");
 
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [currency, setCurrency] = useState<"NGN" | "USD">("NGN");
@@ -172,6 +181,9 @@ function RegisterForm() {
       occupation: occupation.trim(),
       tier,
       primary_chapter: primaryChapter,
+      directory_opt_in: "1",
+      directory_disciplines: disciplines.join(","),
+      directory_bio: directoryBio.trim(),
     };
 
     if (diffWhatsapp && whatsapp.trim()) body.whatsapp = whatsapp.trim();
@@ -435,15 +447,76 @@ function RegisterForm() {
                   />
                 </div>
                 <div style={{ ...styles.field, flex: 1 }}>
-                  <label style={styles.label} htmlFor="occupation">Occupation</label>
+                  <label style={styles.label} htmlFor="occupation">Occupation / Role</label>
                   <input
                     id="occupation"
                     type="text"
+                    placeholder="e.g. Photographer, Lawyer, Designer"
                     value={occupation}
                     onChange={(e) => setOccupation(e.target.value)}
                     style={styles.input}
                   />
                 </div>
+              </div>
+
+              {/* Directory fields */}
+              <div style={{ ...styles.field, marginTop: 4 }}>
+                <label style={styles.label}>Disciplines <span style={{ fontWeight: 400, color: "#7a6f5c" }}>(optional)</span></label>
+                <p style={{ ...styles.hint, marginBottom: 10 }}>Select all that apply — helps members find you in the directory.</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {DISCIPLINES.map(d => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setDisciplines(prev =>
+                        prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]
+                      )}
+                      style={{
+                        padding: "6px 14px",
+                        border: disciplines.includes(d) ? "1px solid #14110d" : "1px solid #d4cbbf",
+                        background: disciplines.includes(d) ? "#14110d" : "transparent",
+                        color: disciplines.includes(d) ? "#f5f0e8" : "#7a6f5c",
+                        fontSize: 12,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        transition: "all 0.15s",
+                        borderRadius: 2,
+                      }}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={styles.field}>
+                <label style={styles.label} htmlFor="dir_bio">
+                  Short bio <span style={{ fontWeight: 400, color: "#7a6f5c" }}>(optional · {160 - directoryBio.length} chars left)</span>
+                </label>
+                <textarea
+                  id="dir_bio"
+                  rows={3}
+                  maxLength={160}
+                  placeholder="A sentence or two about what you do and what you're building."
+                  value={directoryBio}
+                  onChange={e => setDirectoryBio(e.target.value)}
+                  style={{ ...styles.input, resize: "vertical", lineHeight: 1.5 }}
+                />
+              </div>
+
+              <div style={{
+                background: "#f0ede6",
+                border: "1px solid #e0d8ce",
+                borderRadius: 3,
+                padding: "10px 14px",
+                fontSize: 12,
+                color: "#7a6f5c",
+                lineHeight: 1.55,
+                marginTop: 4,
+              }}>
+                You'll appear in the <strong style={{ color: "#14110d" }}>Moveee Connect member directory</strong> so other members can find you. You can update or remove yourself from the directory any time in your profile settings.
               </div>
             </div>
           )}

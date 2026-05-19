@@ -45,7 +45,7 @@ const Footer = () => {
             <h6>Community</h6>
             <ul>
               <li><Link href="/connect">Moveee Connect</Link></li>
-              <li><Link href="/connect#directory">Member Directory</Link></li>
+              <li><Link href="/connect/people">Member Directory</Link></li>
               <li><Link href="/events">Happenings</Link></li>
               <li><Link href="/journeys">Origins</Link></li>
               <li><Link href="/visuals">Visuals</Link></li>
