@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import PatronPrice from "@/components/PatronPrice";
 import Link from "next/link";
+import "../../sections.css";
 import "../connect.css";
 
 export const metadata: Metadata = {
