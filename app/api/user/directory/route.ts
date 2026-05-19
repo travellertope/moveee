@@ -37,28 +37,17 @@ export async function PATCH(req: NextRequest) {
     directory_website:      body.directory_website      ?? "",
   });
 
-  const formHeaders = {
-    "Content-Type": "application/x-www-form-urlencoded",
-    "Authorization": `Bearer ${secret}`,
-    "X-Culture-API-Secret": secret,
-  };
-
   try {
-    let res = await fetch(`${WP_URL}/wp-json/culture/v1/user/directory`, {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/update`, {
       method: "POST",
-      headers: formHeaders,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Bearer ${secret}`,
+        "X-Culture-API-Secret": secret,
+      },
       body: form.toString(),
       cache: "no-store",
     });
-    // Fall back to user/update if dedicated endpoint not yet live
-    if (res.status === 404) {
-      res = await fetch(`${WP_URL}/wp-json/culture/v1/user/update`, {
-        method: "POST",
-        headers: formHeaders,
-        body: form.toString(),
-        cache: "no-store",
-      });
-    }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       return NextResponse.json({ error: (err as any).message ?? "Update failed" }, { status: 502 });

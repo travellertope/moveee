@@ -390,7 +390,7 @@ class Culture_REST_API {
             array(
                 'methods'             => 'GET',
                 'callback'            => array( __CLASS__, 'handle_get_directory_profile' ),
-                'permission_callback' => array( __CLASS__, 'verify_bearer_token' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
                 'args'                => array(
                     'user_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
                 ),
@@ -398,7 +398,7 @@ class Culture_REST_API {
             array(
                 'methods'             => 'POST',
                 'callback'            => array( __CLASS__, 'handle_save_directory_profile' ),
-                'permission_callback' => array( __CLASS__, 'verify_bearer_token' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             ),
         ) );
 
