@@ -250,7 +250,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                   </li>
                 ))}
                 <li style={{ listStyle: "none" }}>
-                  <Link href="/pulse/categories" style={{ display: "block", padding: "0.3rem 0.85rem", fontSize: "0.72rem", color: "#c5491f", textDecoration: "none", fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
+                  <Link href="/connect#feed" style={{ display: "block", padding: "0.3rem 0.85rem", fontSize: "0.72rem", color: "#c5491f", textDecoration: "none", fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
                     ⊞ Sections →
                   </Link>
                 </li>
@@ -285,7 +285,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 </button>
               ))}
               <Link
-                href="/pulse/categories"
+                href="/connect#feed"
                 style={{
                   position: "sticky",
                   right: 0,
@@ -374,9 +374,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
             )}
 
             <div style={{ background: "#fff", border: "1px solid #e8e2d8", borderRadius: "4px", padding: "0.85rem" }}>
-              <p style={{ color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.45rem" }}>About Pulse</p>
+              <p style={{ color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.45rem" }}>About Moveee Connect</p>
               <p style={{ color: "#3a342b", fontSize: "0.78rem", lineHeight: 1.55, margin: 0 }}>
-                Your living feed of African and Black diaspora culture — community voices, curated stories, events, and ideas, all in one place.
+                The community for Black and diaspora creatives, entrepreneurs, and culture lovers. Pulse is where members post, share, and stay in the conversation.
               </p>
             </div>
           </div>

@@ -48,7 +48,7 @@ export default async function HashtagPage({
             color: "#7a6f5c",
             margin: "0 0 0.75rem",
           }}>
-            <Link href="/pulse" style={{ color: "#7a6f5c", textDecoration: "none" }}>← Pulse</Link>
+            <Link href="/connect" style={{ color: "#7a6f5c", textDecoration: "none" }}>← Connect</Link>
           </p>
 
           {/* Hashtag display */}

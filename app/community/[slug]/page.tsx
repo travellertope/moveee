@@ -132,7 +132,7 @@ export default async function CommunityPostPage({
         <div style={{ maxWidth: "680px", margin: "0 auto" }}>
           {/* Back link */}
           <Link
-            href="/pulse"
+            href="/connect"
             style={{
               color: "#7a6f5c",
               fontSize: "0.78rem",

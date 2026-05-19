@@ -90,7 +90,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
             <Link href="/events"   data-active={active("/events")}>Happenings</Link>
             <Link href="/journeys" data-active={active("/journeys")}>Origins</Link>
             <Link href="/shop"     data-active={active("/shop")}>Lifestyle</Link>
-            <Link href="/pulse"    data-active={active("/pulse")}>Pulse</Link>
+            <Link href="/connect"  data-active={active("/connect")}>Connect</Link>
           </nav>
 
           {/* Wordmark */}
@@ -218,7 +218,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
             <Link href="/events"   onClick={() => setMobileMenuOpen(false)} data-active={active("/events")}>Happenings</Link>
             <Link href="/journeys" onClick={() => setMobileMenuOpen(false)} data-active={active("/journeys")}>Origins</Link>
             <Link href="/shop"     onClick={() => setMobileMenuOpen(false)} data-active={active("/shop")}>Lifestyle</Link>
-            <Link href="/pulse"    onClick={() => setMobileMenuOpen(false)} data-active={active("/pulse")}>Pulse</Link>
+            <Link href="/connect"  onClick={() => setMobileMenuOpen(false)} data-active={active("/connect")}>Connect</Link>
           </div>
           <div className="mobile-menu-actions">
             {loggedIn ? (

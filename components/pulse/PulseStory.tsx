@@ -55,7 +55,7 @@ export default function PulseStory({ story, initialComments, relatedStories = []
       {/* Back link */}
       <div style={{ padding: "2rem 3.5rem 1.5rem", maxWidth: "1200px", margin: "0 auto" }}>
         <Link
-          href="/pulse"
+          href="/connect"
           style={{
             color: "var(--ochre)",
             fontSize: "0.75rem",
