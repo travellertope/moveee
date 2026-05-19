@@ -306,7 +306,7 @@ const amplifyUS: TierService = {
     {
       name: "Invested",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "700", currency: "$",
+      price: "450", currency: "$",
       features: [
         { label: "Credible As-Seen-In Logo", included: true },
         { label: "Priority-Track Feature", included: true },
