@@ -354,12 +354,6 @@
   font-weight: 300;
   color: var(--ink);
 }
-.mem-chapter-note {
-  font-size: 13px;
-  color: var(--mute);
-  margin: 0;
-  font-style: italic;
-}
 
 /* ── Quick links card ── */
 .mem-links-card { gap: 0; padding: 0; overflow: hidden; }
