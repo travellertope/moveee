@@ -20,7 +20,7 @@ const CTA = "Start Partnership";
 
 const publishersService: TierService = {
   slug: "publishers",
-  name: "Moveee Atelier — Publishers",
+  name: "Media Partnership — Publishers",
   eyebrow: "Publishers & Authors",
   description:
     "A sustained editorial partnership for Nigerian and African book publishers, independent authors, and literary organisations. We review titles, interview authors, publish news releases, and keep your work in conversation with the audience most likely to read and recommend it.",
@@ -91,7 +91,7 @@ const publishersPage: ServicePageContent = {
   headline: "Books Launch. Careers Are Built. Stories Deserve Readers.",
   tagline: "A sustained editorial partnership for Nigerian and African publishers, authors, and literary organisations.",
   intro: [
-    "A book launch without media infrastructure is a tree falling in an empty forest. Moveee Atelier for Publishers gives you the editorial scaffolding that turns a publication date into a media moment: reviews written by readers who care about African literature, author interviews given proper length and context, news releases for launch events, and social content that keeps the title in conversation beyond its first week.",
+    "A book launch without media infrastructure is a tree falling in an empty forest. The Media Partnership for Publishers gives you the editorial scaffolding that turns a publication date into a media moment: reviews written by readers who care about African literature, author interviews given proper length and context, news releases for launch events, and social content that keeps the title in conversation beyond its first week.",
     "We serve independent Nigerian authors, Lagos and Accra-based publishers, Pan-African imprints, and literary festival organisers. Tiers run across three months — enough time to cover a launch properly, sustain a backlist title, or build an author's presence around a touring season.",
     "This isn't a logo placement deal. It's an editorial relationship: we read your books, we form opinions, and we cover your work the way it deserves to be covered.",
   ],
@@ -171,7 +171,7 @@ const publishersPage: ServicePageContent = {
 
 const galleriesService: TierService = {
   slug: "galleries",
-  name: "Moveee Atelier — Galleries",
+  name: "Media Partnership — Galleries",
   eyebrow: "Art Galleries",
   description:
     "A sustained editorial partnership for Nigerian and African art galleries, independent exhibition spaces, and art fair organisers. We review exhibitions, profile artists, cover openings, and publish news releases that keep your programme in front of the collectors, critics, and culture lovers who matter.",
@@ -246,7 +246,7 @@ const galleriesPage: ServicePageContent = {
   headline: "Nigerian Art Belongs in the Cultural Conversation. We Put It There.",
   tagline: "A sustained editorial partnership for galleries, exhibition spaces, and art fair organisers who take Nigerian and African art seriously.",
   intro: [
-    "The Nigerian and Pan-African art scene is producing some of the most significant work on the continent — and most of it goes undercovered. Moveee Atelier for Galleries gives exhibition spaces the editorial infrastructure they need: exhibition reviews written with critical seriousness, artist spotlights that go beyond the bio, opening night coverage, and news releases for new shows and acquisitions.",
+    "The Nigerian and Pan-African art scene is producing some of the most significant work on the continent — and most of it goes undercovered. The Media Partnership for Galleries gives exhibition spaces the editorial infrastructure they need: exhibition reviews written with critical seriousness, artist spotlights that go beyond the bio, opening night coverage, and news releases for new shows and acquisitions.",
     "We serve Lagos galleries, Abuja exhibition spaces, art fairs, and independent curators running programmes worth covering. Tiers run across three months and can be renewed around exhibition calendars.",
     "The goal isn't to generate promotional content. It's to build a media record for your programme and your artists — the kind of coverage that ends up in press kits, grant applications, and collector due diligence.",
   ],
@@ -322,7 +322,7 @@ const galleriesPage: ServicePageContent = {
 
 const filmmakersService: TierService = {
   slug: "filmmakers",
-  name: "Moveee Atelier — Film",
+  name: "Media Partnership — Film",
   eyebrow: "Filmmakers & Producers",
   description:
     "A sustained editorial partnership for Nigerian and African filmmakers, independent production companies, and film festival organisers. We review films and series, profile filmmakers, cover festival moments, and publish news releases — building the press record your work deserves.",
@@ -397,7 +397,7 @@ const filmmakersPage: ServicePageContent = {
   headline: "Nollywood Is Not a Monolith. Neither Is Our Coverage.",
   tagline: "A sustained editorial partnership for Nigerian and African filmmakers, producers, and film festival organisers who want critical coverage that travels.",
   intro: [
-    "Nollywood is the third-largest film industry in the world and still largely self-covered. Critical coverage of independent Nigerian and African cinema — the kind that ends up in international press packets, streaming negotiations, and festival submissions — is scarce. Moveee Atelier for Filmmakers closes that gap: film and series reviews, filmmaker profiles, festival coverage, and news releases that build a press record your distribution team can actually use.",
+    "Nollywood is the third-largest film industry in the world and still largely self-covered. Critical coverage of independent Nigerian and African cinema — the kind that ends up in international press packets, streaming negotiations, and festival submissions — is scarce. The Media Partnership for Filmmakers closes that gap: film and series reviews, filmmaker profiles, festival coverage, and news releases that build a press record your distribution team can actually use.",
     "We serve independent Nigerian filmmakers, Lagos and Abuja production companies, diaspora filmmakers with Nigerian projects, and film festival organisers. Tiers are named after production phases — Development, Release, Festival, Distribution — so you can enter at the moment that makes sense for your project.",
     "This is not promotional recap coverage. We write film criticism, director profiles with depth, and news releases for productions worth announcing.",
   ],

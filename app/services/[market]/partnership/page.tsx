@@ -16,9 +16,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { market } = await params;
   const data = getMarket(market);
-  if (!data) return { title: "Partnership Program | The Moveee" };
+  if (!data) return { title: "Media Partnership | The Moveee" };
   return {
-    title: `Partnership Program — ${data.name} | The Moveee`,
+    title: `Media Partnership — ${data.name} | The Moveee`,
     description:
       "A sustained editorial partnership for African cultural organisations — book publishers, art galleries, and filmmakers.",
   };
@@ -47,13 +47,13 @@ export default async function PartnershipHubPage({
           <span className="slug-breadcrumb-sep">›</span>
           <Link href={`/services/${market}`}>{marketData.name}</Link>
           <span className="slug-breadcrumb-sep">›</span>
-          <span>Partnership Program</span>
+          <span>Media Partnership</span>
         </nav>
 
         {/* Hero */}
         <section className="slug-hero">
           <p className="market-eyebrow">
-            <span className="market-flag">{marketData.flag}</span> {marketData.name} · Partnership Program
+            <span className="market-flag">{marketData.flag}</span> {marketData.name} · Media Partnership
           </p>
           <h1 className="slug-headline">
             For the Organisations That Carry African Culture Forward
@@ -63,7 +63,7 @@ export default async function PartnershipHubPage({
           </p>
           <div className="slug-intro">
             <p>
-              Moveee Atelier is a three-month editorial partnership designed for African cultural organisations that need more than a press release. Book publishers need reviews that travel and interviews that build author profiles. Art galleries need critical coverage that ends up in press kits and grant applications. Filmmakers need a press record that works for festival submissions and distribution pitches.
+              The Moveee Media Partnership is a three-month editorial programme designed for African cultural organisations that need more than a press release. Book publishers need reviews that travel and interviews that build author profiles. Art galleries need critical coverage that ends up in press kits and grant applications. Filmmakers need a press record that works for festival submissions and distribution pitches.
             </p>
             <p>
               We cover all three. Same programme structure, tailored to each discipline: reviews, interviews, news releases, and social content — sustained over three months, renewable around your programme calendar.
@@ -121,7 +121,7 @@ export default async function PartnershipHubPage({
             If your organisation spans more than one category — a publisher with a filmmaker in residence, a gallery with a bookshop — we can discuss a bespoke arrangement.
           </p>
           <a
-            href={`mailto:hello@themoveee.com?subject=${encodeURIComponent("Partnership Program Enquiry")}`}
+            href={`mailto:hello@themoveee.com?subject=${encodeURIComponent("Media Partnership Enquiry")}`}
             className="btn-primary-service"
           >
             Get in touch →
