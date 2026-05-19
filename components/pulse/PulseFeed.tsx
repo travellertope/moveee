@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
 import FeedCard from "./FeedCard";
 import SubmitPost from "./SubmitPost";
+import "@/app/pulse-layout.css";
 
 const TYPE_FILTERS: { label: string; value: FeedItemType | "all" }[] = [
   { label: "All",        value: "all"       },
@@ -361,57 +362,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
         </aside>
       </div>
 
-      <style>{`
-        .pulse-layout {
-          display: grid;
-          grid-template-columns: 190px 1fr 220px;
-          max-width: 1080px;
-          width: 100%;
-          margin: 0 auto;
-          align-items: start;
-          overflow-x: clip;
-        }
-        .pulse-sidebar-left {
-          border-right: 1px solid #e8e2d8;
-          position: sticky;
-          top: 0;
-          max-height: 100vh;
-          overflow-y: auto;
-          background: #f7f5f2;
-        }
-        .pulse-sidebar-left::-webkit-scrollbar { width: 3px; }
-        .pulse-sidebar-left::-webkit-scrollbar-thumb { background: #e0d8ce; }
-        .pulse-timeline {
-          border-right: 1px solid #e8e2d8;
-          background: #f7f5f2;
-          min-height: 80vh;
-          min-width: 0;
-        }
-        .pulse-sidebar-right {
-          position: sticky;
-          top: 0;
-          max-height: 100vh;
-          overflow-y: auto;
-          background: #f7f5f2;
-        }
-        .pulse-mobile-filters {
-          display: none;
-          border-bottom: 1px solid #e8e2d8;
-          background: #fff;
-          overflow-x: auto;
-          overflow-y: hidden;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-        }
-        .pulse-mobile-filters::-webkit-scrollbar { display: none; }
-        @media (max-width: 860px) {
-          .pulse-layout { grid-template-columns: 1fr; }
-          .pulse-sidebar-left { display: none; }
-          .pulse-sidebar-right { display: none; }
-          .pulse-timeline { border-right: none; }
-          .pulse-mobile-filters { display: block; }
-        }
-      `}</style>
     </div>
   );
 }
