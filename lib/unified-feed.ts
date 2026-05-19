@@ -119,6 +119,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
       communityAuthor: authorName || (post.excerpt?.rendered ? stripHtml(post.excerpt.rendered) : ""),
       communityTag: tag ?? "",
       communityTier: tier ?? undefined,
+      region: (post.meta?.community_region as string) || undefined,
       commentCount: Number(post.comment_count ?? 0),
       reactions: {
         love: Number(post.meta?.reaction_love ?? 0),
