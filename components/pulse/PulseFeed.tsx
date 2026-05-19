@@ -286,39 +286,60 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
               </button>
             </div>
 
-            {/* Sections dropdown panel */}
+            {/* Sections + Categories dropdown panel */}
             {showSectionsMenu && (
-              <div style={{
-                borderTop: "1px solid #e8e2d8",
-                background: "#fff",
-                display: "flex",
-                gap: 0,
-              }}>
-                {[
-                  { label: "Pulse Feed",    href: "#feed" },
-                  { label: "The Directory", href: "/connect/people" },
-                  { label: "Membership",    href: "/connect/membership" },
-                ].map(({ label, href }) => (
-                  <Link
-                    key={label}
-                    href={href}
-                    onClick={() => setShowSectionsMenu(false)}
-                    style={{
-                      flex: 1,
-                      textAlign: "center",
-                      padding: "0.65rem 0.5rem",
-                      fontSize: "0.68rem",
-                      fontWeight: 600,
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                      color: "#3a342b",
-                      textDecoration: "none",
-                      borderRight: "1px solid #e8e2d8",
-                    }}
-                  >
-                    {label}
-                  </Link>
-                ))}
+              <div style={{ borderTop: "1px solid #e8e2d8", background: "#fff" }}>
+                {/* Connect sections row */}
+                <div style={{ display: "flex", borderBottom: "1px solid #e8e2d8" }}>
+                  {[
+                    { label: "Pulse Feed",    href: "#feed" },
+                    { label: "The Directory", href: "/connect/people" },
+                    { label: "Membership",    href: "/connect/membership" },
+                  ].map(({ label, href }, i, arr) => (
+                    <Link
+                      key={label}
+                      href={href}
+                      onClick={() => setShowSectionsMenu(false)}
+                      style={{
+                        flex: 1,
+                        textAlign: "center",
+                        padding: "0.6rem 0.5rem",
+                        fontSize: "0.65rem",
+                        fontWeight: 600,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: "#3a342b",
+                        textDecoration: "none",
+                        borderRight: i < arr.length - 1 ? "1px solid #e8e2d8" : "none",
+                      }}
+                    >
+                      {label}
+                    </Link>
+                  ))}
+                </div>
+                {/* Categories grid */}
+                <div style={{ padding: "0.5rem 0.75rem" }}>
+                  <p style={{ margin: "0 0 0.35rem", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a6f5c" }}>Categories</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                    {["Music","Film","Art","Fashion","Literature","Food","Tech","Sport","Travel","Design"].map(cat => (
+                      <Link
+                        key={cat}
+                        href={`/pulse/${cat.toLowerCase()}`}
+                        onClick={() => setShowSectionsMenu(false)}
+                        style={{
+                          padding: "0.25rem 0.6rem",
+                          fontSize: "0.7rem",
+                          color: "#3a342b",
+                          textDecoration: "none",
+                          background: "#f7f5f2",
+                          border: "1px solid #e8e2d8",
+                        }}
+                      >
+                        {cat}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>
