@@ -290,6 +290,46 @@
   color: var(--ochre);
   margin: 4px 0 0;
 }
+.mco-member-disciplines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0 0;
+}
+.mco-member-discipline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  background: rgba(197,73,31,.07);
+  border: 1px solid rgba(197,73,31,.15);
+  padding: 2px 6px;
+}
+.mco-member-bio {
+  font-size: 12px;
+  color: var(--mute);
+  line-height: 1.45;
+  margin: 6px 0 0;
+}
+.mco-member-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 0;
+}
+.mco-member-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(42,36,28,.2);
+  padding-bottom: 1px;
+  transition: color .12s, border-color .12s;
+}
+.mco-member-link:hover { color: var(--ochre); border-color: var(--ochre); }
 .mco-member-tier {
   position: absolute;
   top: 10px;

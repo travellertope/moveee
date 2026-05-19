@@ -91,6 +91,8 @@ export async function PATCH(req: NextRequest) {
     "display_name", "phone", "whatsapp", "gender",
     "date_of_birth", "nationality", "country_of_residence", "city", "occupation",
     "primary_chapter", "secondary_chapter",
+    "directory_opt_in", "directory_bio", "directory_disciplines",
+    "directory_instagram", "directory_linkedin", "directory_website",
   ];
 
   const payload: Record<string, string | number> = { user_id: String(u.id) };

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import NewsletterPreferences from "./NewsletterPreferences";
 import ProfileEditor from "./ProfileEditor";
+import DirectoryProfile from "./DirectoryProfile";
 import ChapterSelector from "@/components/ChapterSelector";
 import "../../member.css";
 
@@ -72,7 +73,18 @@ export default async function MemberSettingsPage() {
               }} />
             </section>
 
-            {/* ── 2. NOTIFICATIONS ── */}
+            {/* ── 2. DIRECTORY ── */}
+            <section className="mem-card">
+              <div className="mem-card-label">Moveee Connect Directory</div>
+              <DirectoryProfile
+                displayName={displayName}
+                occupation={user.occupation ?? ""}
+                city={user.city ?? ""}
+                country={user.countryOfResidence ?? ""}
+              />
+            </section>
+
+            {/* ── 3. NOTIFICATIONS ── */}
             <section className="mem-card">
               <div className="mem-card-label">Newsletter Subscriptions</div>
               <NewsletterPreferences email={email} />

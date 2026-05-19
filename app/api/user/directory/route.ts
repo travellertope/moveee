@@ -1,0 +1,45 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
+const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
+
+function wpAuthHeaders() {
+  const secret = process.env.CULTURE_API_SECRET ?? "";
+  return {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${secret}`,
+    "X-Culture-API-Secret": secret,
+  };
+}
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const u = session.user as any;
+
+  try {
+    const res = await fetch(
+      `${WP_URL}/wp-json/culture/v1/user/directory?user_id=${u.id}`,
+      { headers: wpAuthHeaders(), cache: "no-store" }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      return NextResponse.json({
+        optIn:       data.directory_opt_in   === true || data.directory_opt_in === "1",
+        bio:         data.directory_bio      ?? "",
+        disciplines: data.directory_disciplines
+          ? String(data.directory_disciplines).split(",").map((s: string) => s.trim()).filter(Boolean)
+          : [],
+        instagram:   data.directory_instagram ?? "",
+        linkedin:    data.directory_linkedin  ?? "",
+        website:     data.directory_website   ?? "",
+      });
+    }
+  } catch { /* fall through to defaults */ }
+
+  return NextResponse.json({ optIn: false, bio: "", disciplines: [], instagram: "", linkedin: "", website: "" });
+}

@@ -11,11 +11,16 @@ interface Member {
   countryOfResidence: string;
   tier: "citizen" | "patron";
   chapter?: string;
+  bio?: string;
+  disciplines?: string[];
+  instagram?: string;
+  linkedin?: string;
+  website?: string;
 }
 
 const DISCIPLINES = [
-  "All", "Creative", "Entrepreneur", "Professional", "Artist",
-  "Filmmaker", "Writer", "Designer", "Musician", "Tech", "Legal", "Finance",
+  "All", "Creative", "Entrepreneur", "Artist", "Filmmaker", "Writer",
+  "Designer", "Musician", "Photographer", "Tech", "Legal", "Finance", "Academic",
 ];
 
 const LOCATIONS = [
@@ -56,7 +61,6 @@ export default function MemberDirectory() {
 
   return (
     <div className="mco-dir">
-      {/* Search + filter bar */}
       <div className="mco-dir-controls">
         <div className="mco-dir-search-wrap">
           <input
@@ -103,39 +107,76 @@ export default function MemberDirectory() {
           <p className="mco-dir-empty-title">The directory is growing.</p>
           <p className="mco-dir-empty-body">
             Members who have opted into the directory will appear here — the Lagos photographer,
-            the UK art director, the Nigerian lawyer in New York. Join Moveee Connect and complete
-            your profile to be listed.
+            the UK art director, the Nigerian lawyer in New York. Join Moveee Connect and opt in
+            from your profile settings to be listed.
           </p>
           <Link href="/register" className="mco-dir-empty-cta">Join &amp; get listed →</Link>
         </div>
       ) : (
         <div className="mco-dir-grid">
           {members.map(member => (
-            <div
-              key={member.id}
-              className={`mco-member-card${member.tier === "patron" ? " mco-member-card--patron" : ""}`}
-            >
-              <div className="mco-member-avatar" aria-hidden="true">
-                {member.displayName.charAt(0).toUpperCase()}
-              </div>
-              <div className="mco-member-info">
-                <h3 className="mco-member-name">{member.displayName}</h3>
-                {member.occupation && (
-                  <p className="mco-member-role">{member.occupation}</p>
-                )}
-                <p className="mco-member-location">
-                  {[member.city, member.countryOfResidence].filter(Boolean).join(", ")}
-                </p>
-                {member.chapter && (
-                  <p className="mco-member-chapter">{member.chapter}</p>
-                )}
-              </div>
-              {member.tier === "patron" && (
-                <span className="mco-member-tier" aria-label="Patron member">Patron</span>
-              )}
-            </div>
+            <MemberCard key={member.id} member={member} />
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+function MemberCard({ member }: { member: Member }) {
+  const isPatron = member.tier === "patron";
+  const location = [member.city, member.countryOfResidence].filter(Boolean).join(", ");
+  const links = [
+    member.instagram && { label: "Instagram", href: `https://instagram.com/${member.instagram.replace(/^@/, "")}` },
+    member.linkedin  && { label: "LinkedIn",  href: member.linkedin.startsWith("http") ? member.linkedin : `https://${member.linkedin}` },
+    member.website   && { label: "Website",   href: member.website.startsWith("http")  ? member.website  : `https://${member.website}` },
+  ].filter(Boolean) as { label: string; href: string }[];
+
+  return (
+    <div className={`mco-member-card${isPatron ? " mco-member-card--patron" : ""}`}>
+      <div className="mco-member-avatar" aria-hidden="true">
+        {member.displayName.charAt(0).toUpperCase()}
+      </div>
+      <div className="mco-member-info">
+        <h3 className="mco-member-name">{member.displayName}</h3>
+        {member.occupation && (
+          <p className="mco-member-role">{member.occupation}</p>
+        )}
+        {location && (
+          <p className="mco-member-location">{location}</p>
+        )}
+        {member.disciplines && member.disciplines.length > 0 && (
+          <div className="mco-member-disciplines">
+            {member.disciplines.slice(0, 3).map(d => (
+              <span key={d} className="mco-member-discipline">{d}</span>
+            ))}
+          </div>
+        )}
+        {member.bio && (
+          <p className="mco-member-bio">{member.bio}</p>
+        )}
+        {links.length > 0 && (
+          <div className="mco-member-links">
+            {links.map(l => (
+              <a
+                key={l.label}
+                href={l.href}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="mco-member-link"
+                aria-label={`${member.displayName} on ${l.label}`}
+              >
+                {l.label}
+              </a>
+            ))}
+          </div>
+        )}
+        {member.chapter && (
+          <p className="mco-member-chapter">{member.chapter}</p>
+        )}
+      </div>
+      {isPatron && (
+        <span className="mco-member-tier" aria-label="Patron member">Patron</span>
       )}
     </div>
   );
