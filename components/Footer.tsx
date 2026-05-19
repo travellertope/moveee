@@ -44,9 +44,10 @@ const Footer = () => {
           <div className="hb-footer-col">
             <h6>Community</h6>
             <ul>
+              <li><Link href="/connect">Moveee Connect</Link></li>
+              <li><Link href="/connect#directory">Member Directory</Link></li>
               <li><Link href="/events">Happenings</Link></li>
               <li><Link href="/journeys">Origins</Link></li>
-              <li><Link href="/directory">Directory</Link></li>
               <li><Link href="/visuals">Visuals</Link></li>
               <li><Link href="/quotes">Quotes</Link></li>
             </ul>
@@ -58,7 +59,7 @@ const Footer = () => {
               <li><Link href="/games">All Games</Link></li>
               <li><Link href="/games/trivia">Culture Trivia</Link></li>
               <li><Link href="/games/who-said-it">Who Said It?</Link></li>
-              <li><Link href="/pulse">Pulse</Link></li>
+              <li><Link href="/directory">Culture Directory</Link></li>
             </ul>
           </div>
 

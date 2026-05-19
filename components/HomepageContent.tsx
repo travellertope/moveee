@@ -103,7 +103,7 @@ export default function HomepageContent({
             <div className="hp-pulse-widget">
               <div className="hp-widget-head">
                 <div className="hp-widget-label"><span className="hp-pulse-dot" />Latest from Pulse</div>
-                <Link href="/pulse" className="hp-widget-see-all">See all →</Link>
+                <Link href="/connect" className="hp-widget-see-all">See all →</Link>
               </div>
               <div className="hp-pulse-list">
                 {pulseStories.slice(0, 6).map((story: any) => (
