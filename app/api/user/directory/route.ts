@@ -20,13 +20,16 @@ export async function PATCH(req: NextRequest) {
   }
 
   const u = session.user as any;
+  const secret = process.env.CULTURE_API_SECRET ?? "";
 
   let body: Record<string, string>;
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  const payload: Record<string, string> = {
+  // Send as form-encoded so WordPress places params in $request->params['POST']
+  // where has_param() reliably finds them — JSON body parsing can be inconsistent.
+  const form = new URLSearchParams({
     user_id:                String(u.id),
     directory_opt_in:       body.directory_opt_in       ?? "0",
     directory_bio:          body.directory_bio          ?? "",
@@ -34,13 +37,17 @@ export async function PATCH(req: NextRequest) {
     directory_instagram:    body.directory_instagram    ?? "",
     directory_linkedin:     body.directory_linkedin     ?? "",
     directory_website:      body.directory_website      ?? "",
-  };
+  });
 
   try {
-    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/directory`, {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/update`, {
       method: "POST",
-      headers: wpAuthHeaders(),
-      body: JSON.stringify(payload),
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Bearer ${secret}`,
+        "X-Culture-API-Secret": secret,
+      },
+      body: form.toString(),
       cache: "no-store",
     });
     if (!res.ok) {
