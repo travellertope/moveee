@@ -174,7 +174,7 @@ const galleriesService: TierService = {
   name: "Media Partnership — Galleries",
   eyebrow: "Art Galleries",
   description:
-    "A sustained editorial partnership for Nigerian and African art galleries, independent exhibition spaces, and art fair organisers. We review exhibitions, profile artists, cover openings, and publish news releases that keep your programme in front of the collectors, critics, and culture lovers who matter.",
+    "A sustained editorial partnership for Nigerian and African art galleries, independent exhibition spaces, and art fair organisers. We review exhibitions, profile artists, cover openings, and publish news releases that keep your programme in front of the early collectors, critics, and culture lovers who matter.",
   packages: [
     {
       name: "Preview",
@@ -279,7 +279,7 @@ const galleriesPage: ServicePageContent = {
     },
     {
       title: "Reach Collectors, Curators, and the Cultural Class",
-      body: "GetMeLit reaches Nigerian and diaspora professionals who engage with culture intentionally. Collectors, architects, creative directors, and the professionally curious — the people who attend and acquire.",
+      body: "GetMeLit reaches Nigerian and diaspora professionals who engage with culture intentionally. Early collectors, architects, creative directors, and the culturally curious — the people who attend, follow artists, and start acquiring in their twenties and thirties.",
     },
     {
       title: "A Permanent Editorial Record",

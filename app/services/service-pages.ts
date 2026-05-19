@@ -483,7 +483,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Who is in the community?",
-          answer: "Nigerian and Pan-African creatives, entrepreneurs, professionals, and culture lovers — people who engage with The Moveee's editorial and care enough about the culture to join a dedicated space. Age range skews 25–45, professionally established, culturally literate.",
+          answer: "Nigerian and Pan-African creatives, entrepreneurs, professionals, and culture lovers — people who engage with The Moveee's editorial and care enough about the culture to join a dedicated space. Age range 20–40, career-building and culturally driven.",
         },
         {
           question: "What counts as a 'sponsored content slot'?",
@@ -886,7 +886,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Who are the members?",
-          answer: "Black British and diaspora creatives, entrepreneurs, and professionals — people in the African and Caribbean community in the UK who engage with The Moveee's editorial content. Age range 25–45, professionally established, culturally literate.",
+          answer: "Black British and diaspora creatives, entrepreneurs, and professionals — people in the African and Caribbean community in the UK who engage with The Moveee's editorial content. Age range 20–40, career-building and culturally engaged.",
         },
         {
           question: "What does the sponsored content slot look like in practice?",
@@ -1289,7 +1289,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Who are the members?",
-          answer: "African and Caribbean diaspora creatives, entrepreneurs, and professionals — people who engage with The Moveee US and care enough about diaspora culture to join a dedicated community. Age range 25–45, professionally established, brand-literate.",
+          answer: "African and Caribbean diaspora creatives, entrepreneurs, and professionals — people who engage with The Moveee US and care enough about diaspora culture to join a dedicated community. Age range 20–40, career-building and brand-aware.",
         },
         {
           question: "What does the sponsored content slot look like?",
