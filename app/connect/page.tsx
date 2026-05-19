@@ -50,11 +50,9 @@ export default async function ConnectPage() {
                 </>
               )}
             </div>
-            {loggedIn ? (
-              <p className="con-price">Welcome back, {user?.name}</p>
-            ) : (
+            {!loggedIn && (
               <p className="con-price">
-                Citizen — Free · <PatronPrice variant="yearly" showTierLabel={true} />
+                Citizen — Free · <Link href="/connect/membership" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}>View membership →</Link>
               </p>
             )}
           </div>
