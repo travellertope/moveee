@@ -33,7 +33,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       intro: [
         "Most PR placements treat Nigeria and the wider continent as an afterthought — a single paragraph in a global roundup, a stock photo that could be anywhere. The Moveee Sponsored Content package is built differently. We write a 800–1,200 word feature that places your brand, product, or story in genuine cultural context, shaped by writers who actually live this market.",
         "Every editorial feature is distributed through GetMeLit, our newsletter read by Nigerian and Pan-African professionals across Lagos, Abuja, Accra, Nairobi, and the diaspora. Alongside that, three native social posts go out across our platforms — copy and creative direction included. You brief us, we handle the craft.",
-        "If you need to push further, our Amplify tiers extend reach through paid social and influencer networks. But the foundation — the feature, the newsletter, the social — is complete on its own. ₦250,000 flat, no hidden add-ons.",
+        "If you need to push further, our Amplify tiers extend reach through paid social and influencer networks. But the foundation — the feature, the newsletter, the social — is complete on its own. ₦200,000 flat, no hidden add-ons.",
       ],
       howItWorks: [
         {
@@ -72,7 +72,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "Transparent Pricing",
-          body: "₦250,000 covers the feature, newsletter placement, and three social posts. Amplify is clearly scoped and priced before you commit. No surprise invoices.",
+          body: "₦200,000 covers the feature, newsletter placement, and three social posts. Amplify is clearly scoped and priced before you commit. No surprise invoices.",
         },
       ],
       faqs: [
@@ -102,7 +102,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "Submit a brief →",
-      ctaSubtext: "₦250,000 flat. Amplify from ₦65,000.",
+      ctaSubtext: "₦200,000 flat. Amplify from ₦65,000.",
     },
 
     lifestyle: {
@@ -514,7 +514,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       intro: [
         "The Black British market — African and Caribbean diaspora across London, Birmingham, Manchester, and Bristol — is one of the most culturally sophisticated and brand-conscious audiences in the UK. It is also one of the most consistently misread by mainstream media. The Moveee UK Sponsored Content package exists for brands that want to get it right.",
         "We produce an 800–1,200 word feature that earns its place in front of this audience: well-researched, culturally informed, and written by writers who are part of the communities they're speaking to. The feature distributes through our UK newsletter and goes out across our social channels as three native posts.",
-        "The flat rate is £850, which covers the feature, newsletter inclusion, and social content. If your campaign requires extended reach — paid social, influencer activation, or press syndication — Amplify tiers start at £45 and are scoped to your needs. Everything is agreed before you commit.",
+        "The flat rate is £600, which covers the feature, newsletter inclusion, and social content. If your campaign requires extended reach — paid social, influencer activation, or press syndication — Amplify tiers start at £45 and are scoped to your needs. Everything is agreed before you commit.",
       ],
       howItWorks: [
         {
@@ -583,7 +583,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "Submit a brief →",
-      ctaSubtext: "£850 flat. Amplify from £45.",
+      ctaSubtext: "£600 flat. Amplify from £45.",
     },
 
     lifestyle: {
@@ -916,7 +916,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       tagline: "Longform editorial, newsletter distribution, and social reach for brands ready to engage Black American and African diaspora communities with substance.",
       intro: [
         "The African and Caribbean diaspora in the United States — in New York, Atlanta, Houston, DC, and Los Angeles — is not a monolith, and any brand treating it like one will be seen through immediately. The Moveee US Sponsored Content package is built around cultural specificity: writing that understands the difference between a Yoruba cultural reference and a Trinidadian one, between Atlanta's Black creative economy and the Nigerian American professional community in the DMV.",
-        "An 800–1,200 word longform feature, distributed through our US newsletter and amplified by three native social posts, for $1,200 flat. The feature is written by writers who are part of these communities. You brief us, we handle the craft, and you get links and traffic data within 72 hours of publication.",
+        "An 800–1,200 word longform feature, distributed through our US newsletter and amplified by three native social posts, for $800 flat. The feature is written by writers who are part of these communities. You brief us, we handle the craft, and you get links and traffic data within 72 hours of publication.",
         "Amplify tiers start at $60 and extend reach through paid social, influencer networks, and press syndication — Priority, Sponsored, Sponsored+, and Invested options available at the brief stage. Everything is scoped before you commit.",
       ],
       howItWorks: [
@@ -956,7 +956,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "Transparent Pricing, No Surprises",
-          body: "$1,200 covers the feature, newsletter, and three social posts. Amplify is a separate, clearly priced add-on. No invoice you weren't expecting.",
+          body: "$800 covers the feature, newsletter, and three social posts. Amplify is a separate, clearly priced add-on. No invoice you weren't expecting.",
         },
       ],
       faqs: [
@@ -986,7 +986,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "Submit a brief →",
-      ctaSubtext: "$1,200 flat. Amplify from $100.",
+      ctaSubtext: "$800 flat. Amplify from $100.",
     },
 
     lifestyle: {
