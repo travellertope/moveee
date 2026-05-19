@@ -37,6 +37,7 @@ export interface FeedItem {
   // community-specific
   communityAuthor?: string;
   communityTag?: string;
+  communityTier?: string;
   commentCount?: number;
   // reactions (community + pulse)
   reactions?: { love: number; fire: number; clap: number };
@@ -52,26 +53,28 @@ function stripHtml(html: string): string {
 function parseCommunityData(
   meta: Record<string, string> | null | undefined,
   content: string
-): { authorName: string; imageUrl: string | null; tag: string | null } {
+): { authorName: string; imageUrl: string | null; tag: string | null; tier: string | null } {
   if (meta?.community_author_name) {
     return {
       authorName: meta.community_author_name,
       imageUrl:   meta.community_image_url || null,
       tag:        meta.community_tag || null,
+      tier:       meta.community_author_tier || null,
     };
   }
   // Legacy fallback — HTML comment embedded in content.
   const match = content.match(/<!--community:(\{[\s\S]*?\})-->/);
-  if (!match) return { authorName: "", imageUrl: null, tag: null };
+  if (!match) return { authorName: "", imageUrl: null, tag: null, tier: null };
   try {
     const data = JSON.parse(match[1]);
     return {
       authorName: data.authorName ?? "",
       imageUrl:   data.imageUrl ?? null,
       tag:        data.tag ?? null,
+      tier:       data.tier ?? null,
     };
   } catch {
-    return { authorName: "", imageUrl: null, tag: null };
+    return { authorName: "", imageUrl: null, tag: null, tier: null };
   }
 }
 
@@ -102,7 +105,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
 
   return posts.map((post) => {
     const raw = post.content?.rendered ?? "";
-    const { authorName, imageUrl, tag } = parseCommunityData(post.meta, raw);
+    const { authorName, imageUrl, tag, tier } = parseCommunityData(post.meta, raw);
     const textContent = decodeHtml(stripHtml(raw.replace(/<!--[\s\S]*?-->/g, "")));
 
     return {
@@ -115,6 +118,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
       href: `/community/${post.slug}`,
       communityAuthor: authorName || (post.excerpt?.rendered ? stripHtml(post.excerpt.rendered) : ""),
       communityTag: tag ?? "",
+      communityTier: tier ?? undefined,
       commentCount: Number(post.comment_count ?? 0),
       reactions: {
         love: Number(post.meta?.reaction_love ?? 0),

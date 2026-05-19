@@ -195,6 +195,20 @@ export default function FeedCard({
             <span style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600 }}>
               {item.communityAuthor || "Community Member"}
             </span>
+            {item.communityTier === "patron" && (
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "0.52rem",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "#b38238",
+                background: "rgba(179,130,56,.1)",
+                border: "1px solid rgba(179,130,56,.25)",
+                padding: "1px 5px",
+                lineHeight: 1.6,
+                flexShrink: 0,
+              }}>Pro</span>
+            )}
             <span style={{ color: "#c8bfb0", fontSize: "0.7rem" }}>·</span>
             <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>
             {item.communityTag && (

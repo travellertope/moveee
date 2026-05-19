@@ -49,7 +49,7 @@ export default async function PeoplePage() {
         <nav className="mco-section-nav" aria-label="Connect sections">
           <Link href="/connect" className="mco-nav-link">Pulse Feed</Link>
           <span className="mco-nav-link" style={{ color: "rgba(243,236,224,.85)", borderBottom: "1px solid rgba(243,236,224,.2)", paddingBottom: 13 }}>The Directory</span>
-          <Link href="/connect#membership" className="mco-nav-link">Membership</Link>
+          <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
         </nav>
       </section>
 

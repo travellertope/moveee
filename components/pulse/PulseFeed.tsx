@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
 import FeedCard from "./FeedCard";
@@ -69,6 +70,7 @@ function SidebarLink({
 
 export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const [items, setItems] = useState<FeedItem[]>(initialItems);
   const [activeType, setActiveType] = useState<FeedItemType | "all">("all");
   const [activeRegion, setActiveRegion] = useState<string>("All");
@@ -130,6 +132,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   }, [hasMore, filtered.length]);
 
   const handlePosted = useCallback((post: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null }) => {
+    const sessionUser = session?.user as any;
     const newItem: FeedItem = {
       id: `community-${post.id}`,
       type: "community",
@@ -140,6 +143,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       href: `/community/${post.id}`,
       communityAuthor: post.authorName,
       communityTag: post.tag ?? "",
+      communityTier: sessionUser?.tier ?? undefined,
       reactions: { love: 0, fire: 0, clap: 0 },
       wpId: post.id,
     };

@@ -35,7 +35,7 @@ export default async function MemberSettingsPage() {
             <h1 className="mem-name">{displayName}</h1>
             <div className="mem-meta">
               <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
-                {isPatron ? "Patron" : "Citizen"}
+                {isPatron ? "Connect Pro" : "Connect Citizen"}
               </span>
               <span className="mem-sep">·</span>
               <span>{email}</span>

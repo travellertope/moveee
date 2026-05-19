@@ -36,7 +36,7 @@ export default async function MemberPage() {
             <h1 className="mem-name">{displayName}</h1>
             <div className="mem-meta">
               <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
-                {isPatron ? "Patron" : "Citizen"}
+                {isPatron ? "Connect Pro" : "Connect Citizen"}
               </span>
               <span className="mem-sep">·</span>
               <span>{user.primaryChapter?.name || "No chapter"}</span>
@@ -57,7 +57,7 @@ export default async function MemberPage() {
           initialPoints={user.points ?? 0}
           initialBadges={user.badges ?? []}
           referralCount={user.referralCount ?? 0}
-          membership={isPatron ? "Patron" : "Citizen"}
+          membership={isPatron ? "Connect Pro" : "Connect Citizen"}
         />
 
         <div className="mem-grid">
@@ -99,19 +99,21 @@ export default async function MemberPage() {
             {!isPatron && (
               <section className="mem-card mem-card--dark">
                 <div className="mem-card-label" style={{ color: "var(--ochre)" }}>
-                  Upgrade to Patron
+                  Upgrade to Connect Pro
                 </div>
                 <h3 className="mem-upgrade-title">
                   Unlock the full experience.
                 </h3>
                 <ul className="mem-upgrade-perks">
-                  <li>Physical events in your chapter</li>
-                  <li>Secondary chapter membership</li>
-                  <li>Priority RSVP</li>
-                  <li>Exclusive Patron-only content</li>
+                  <li>Featured directory listing</li>
+                  <li>Pro badge on your Pulse posts</li>
+                  <li>Priority RSVP for all events</li>
+                  <li>Exclusive gated content</li>
+                  <li>Full GetMeLit newsletter edition</li>
+                  <li>10% Moveee Shop discount</li>
                 </ul>
-                <Link href="/register?upgrade=patron" className="mem-upgrade-btn">
-                  Become a Patron →
+                <Link href="/connect/membership" className="mem-upgrade-btn">
+                  Become a Connect Pro →
                 </Link>
               </section>
             )}
@@ -150,7 +152,7 @@ export default async function MemberPage() {
               )}
               {!isPatron && (
                 <p className="mem-chapter-note">
-                  Patron members can join a second chapter.
+                  Connect Pro members can join a second chapter.
                 </p>
               )}
             </section>
