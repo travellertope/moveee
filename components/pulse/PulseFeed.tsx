@@ -228,11 +228,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                     </Link>
                   </li>
                 ))}
-                <li style={{ listStyle: "none" }}>
-                  <Link href="/connect#feed" style={{ display: "block", padding: "0.3rem 0.85rem", fontSize: "0.72rem", color: "#c5491f", textDecoration: "none", fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
-                    ⊞ Sections →
-                  </Link>
-                </li>
               </ul>
             </div>
           </nav>
@@ -263,30 +258,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                   {label}
                 </button>
               ))}
-              <Link
-                href="/connect#feed"
-                style={{
-                  position: "sticky",
-                  right: 0,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                  background: "#14110d",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "0",
-                  padding: "0.25rem 0.9rem",
-                  fontSize: "0.72rem",
-                  fontWeight: 500,
-                  whiteSpace: "nowrap",
-                  letterSpacing: "0.04em",
-                  textDecoration: "none",
-                  flexShrink: 0,
-                  boxShadow: "-8px 0 10px #fff",
-                }}
-              >
-                ⊞ Sections
-              </Link>
             </div>
           </div>
 

@@ -385,13 +385,20 @@ class Culture_REST_API {
             ),
         ) );
 
-        // GET culture/v1/user/directory — returns Connect directory settings for authenticated user
+        // GET/POST culture/v1/user/directory — read or write Connect directory settings
         register_rest_route( 'culture/v1', '/user/directory', array(
-            'methods'             => 'GET',
-            'callback'            => array( __CLASS__, 'handle_get_directory_profile' ),
-            'permission_callback' => array( __CLASS__, 'verify_bearer_token' ),
-            'args'                => array(
-                'user_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_directory_profile' ),
+                'permission_callback' => array( __CLASS__, 'verify_bearer_token' ),
+                'args'                => array(
+                    'user_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+                ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_save_directory_profile' ),
+                'permission_callback' => array( __CLASS__, 'verify_bearer_token' ),
             ),
         ) );
 
@@ -2227,6 +2234,28 @@ class Culture_REST_API {
             'post_id' => $post_id,
             'slug'    => $post->post_name ?: sanitize_title( $title ),
         ) );
+    }
+
+    /**
+     * POST /culture/v1/user/directory
+     * Saves Connect directory settings. Reads all fields directly from the
+     * request without relying on has_param() so JSON bodies always persist.
+     */
+    public static function handle_save_directory_profile( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        if ( ! $user_id || ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $opt_in = $request->get_param( 'directory_opt_in' );
+        update_user_meta( $user_id, '_culture_directory_opt_in',     ( $opt_in === '1' || $opt_in === true ) ? '1' : '0' );
+        update_user_meta( $user_id, '_culture_directory_bio',         sanitize_textarea_field( (string) $request->get_param( 'directory_bio' ) ) );
+        update_user_meta( $user_id, '_culture_directory_disciplines', sanitize_text_field( (string) $request->get_param( 'directory_disciplines' ) ) );
+        update_user_meta( $user_id, '_culture_directory_instagram',   sanitize_text_field( (string) $request->get_param( 'directory_instagram' ) ) );
+        update_user_meta( $user_id, '_culture_directory_linkedin',    sanitize_text_field( (string) $request->get_param( 'directory_linkedin' ) ) );
+        update_user_meta( $user_id, '_culture_directory_website',     sanitize_text_field( (string) $request->get_param( 'directory_website' ) ) );
+
+        return rest_ensure_response( array( 'ok' => true ) );
     }
 
     /**
