@@ -45,7 +45,7 @@ export default function DirectoryProfile({ displayName, occupation, city, countr
     setState(next);
     setStatus("saving");
     try {
-      const res = await fetch("/api/user/profile", {
+      const res = await fetch("/api/user/directory", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -61,6 +61,7 @@ export default function DirectoryProfile({ displayName, occupation, city, countr
       setStatus("saved");
       setTimeout(() => setStatus("idle"), 2000);
     } catch {
+      setState(state); // revert optimistic update on failure
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
     }
@@ -232,7 +233,7 @@ function LinkField({ label, placeholder, value, onSave }: {
   label: string;
   placeholder: string;
   value: string;
-  onSave: (v: string) => void;
+  onSave: (v: string) => Promise<void> | void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -243,12 +244,13 @@ function LinkField({ label, placeholder, value, onSave }: {
   async function commit() {
     setStatus("saving");
     try {
-      onSave(draft.trim());
+      await onSave(draft.trim());
       setStatus("saved");
       setTimeout(() => setStatus("idle"), 1500);
       setEditing(false);
     } catch {
       setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
     }
   }
 
