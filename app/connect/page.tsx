@@ -36,7 +36,7 @@ export default async function ConnectPage() {
               Where culture <em>gathers.</em>
             </h1>
             <p className="mco-lede">
-              Village square for Black and diaspora creatives, entrepreneurs, professionals, and culture lovers.
+              Village square for culture loving creatives, entrepreneurs, professionals.
             </p>
           </div>
           <div className="mco-hero-cta">

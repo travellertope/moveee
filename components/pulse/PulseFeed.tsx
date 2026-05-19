@@ -217,43 +217,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
               </ul>
             </div>
 
-            {showRegions && (
-              <div style={{ marginBottom: "1.25rem" }}>
-                <SidebarHeading>Region</SidebarHeading>
-                <ul style={{ margin: 0, padding: 0 }}>
-                  {REGIONS.map(region => (
-                    <SidebarLink
-                      key={region}
-                      label={region}
-                      active={activeRegion === region}
-                      onClick={() => { setActiveRegion(region); setVisibleCount(20); }}
-                    />
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {showTags && (
-              <div>
-                <SidebarHeading>Topics</SidebarHeading>
-                <ul style={{ margin: 0, padding: 0 }}>
-                  <SidebarLink
-                    label="All topics"
-                    active={activeTag === ""}
-                    onClick={() => { setActiveTag(""); setVisibleCount(20); }}
-                  />
-                  {availableTags.map(tag => (
-                    <SidebarLink
-                      key={tag}
-                      label={tag}
-                      active={activeTag === tag}
-                      onClick={() => handleTagClick(tag)}
-                    />
-                  ))}
-                </ul>
-              </div>
-            )}
-
             <div style={{ marginTop: "1.25rem" }}>
               <SidebarHeading>Categories</SidebarHeading>
               <ul style={{ margin: 0, padding: 0 }}>
