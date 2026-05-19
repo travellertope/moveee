@@ -406,7 +406,7 @@ class Culture_REST_API {
         register_rest_route( 'culture/v1', '/members', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_members_directory' ),
-            'permission_callback' => array( __CLASS__, 'verify_bearer_token' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             'args'                => array(
                 'directory'  => array( 'default' => '0' ),
                 'search'     => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
