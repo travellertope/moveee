@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
+import sharp from "sharp";
 import { authOptions } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -10,7 +11,7 @@ const AUTH = Buffer.from(
 ).toString("base64");
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
+const MAX_BYTES = 8 * 1024 * 1024; // 8 MB raw input limit
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -29,22 +30,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Only JPEG, PNG, WebP, or GIF allowed." }, { status: 400 });
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  if (buffer.byteLength > MAX_BYTES) {
+  const rawBuffer = Buffer.from(await file.arrayBuffer());
+  if (rawBuffer.byteLength > MAX_BYTES) {
     return NextResponse.json({ error: "Image must be under 8 MB." }, { status: 400 });
   }
 
-  const ext = file.type.split("/")[1].replace("jpeg", "jpg");
-  const filename = `community-${Date.now()}.${ext}`;
+  // Compress still images to WebP; leave GIFs as-is (animated GIF support
+  // requires additional sharp options and is rarely used here).
+  let uploadBuffer: Buffer;
+  let uploadType: string;
+  let uploadExt: string;
+
+  if (file.type === "image/gif") {
+    uploadBuffer = rawBuffer;
+    uploadType = "image/gif";
+    uploadExt = "gif";
+  } else {
+    uploadBuffer = await sharp(rawBuffer)
+      .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+    uploadType = "image/webp";
+    uploadExt = "webp";
+  }
+
+  const filename = `community-${Date.now()}.${uploadExt}`;
 
   const wpRes = await fetch(`${WP_URL}/wp-json/wp/v2/media`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${AUTH}`,
-      "Content-Type": file.type,
+      "Content-Type": uploadType,
       "Content-Disposition": `attachment; filename="${filename}"`,
     },
-    body: buffer,
+    body: uploadBuffer,
   });
 
   if (!wpRes.ok) {

@@ -17,6 +17,7 @@
     "next-auth": "^4.24.13",
     "react": "latest",
     "react-dom": "latest",
+    "sharp": "^0.34.5",
     "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
@@ -24,6 +25,7 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "@types/sharp": "^0.31.1",
     "autoprefixer": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
