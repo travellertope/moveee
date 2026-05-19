@@ -113,11 +113,14 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
     try {
       let imageUrl: string | undefined;
       if (imageFile) {
+        if (imageFile.size > 8 * 1024 * 1024) {
+          throw new Error("Image must be under 8 MB.");
+        }
         setUploading(true);
         const fd = new FormData();
         fd.append("file", imageFile);
         const uploadRes = await fetch("/api/community/upload-image", { method: "POST", body: fd });
-        const uploadData = await uploadRes.json();
+        const uploadData = await uploadRes.json().catch(() => ({ error: "Upload failed — please try again." }));
         if (!uploadRes.ok) throw new Error(uploadData.error || "Image upload failed");
         imageUrl = uploadData.url;
         setUploading(false);
