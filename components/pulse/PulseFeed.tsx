@@ -77,6 +77,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [activeRegion, setActiveRegion] = useState<string>("All");
   const [activeTag, setActiveTag] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(20);
+  const [showSectionsMenu, setShowSectionsMenu] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Apply edition cookie → pre-select matching region
@@ -228,6 +229,11 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                     </Link>
                   </li>
                 ))}
+                <li style={{ listStyle: "none" }}>
+                  <Link href="/connect" style={{ display: "block", padding: "0.3rem 0.85rem", fontSize: "0.72rem", color: "#c5491f", textDecoration: "none", fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
+                    ⊞ Sections →
+                  </Link>
+                </li>
               </ul>
             </div>
           </nav>
@@ -258,7 +264,63 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                   {label}
                 </button>
               ))}
+              <button
+                onClick={() => setShowSectionsMenu(s => !s)}
+                style={{
+                  position: "sticky",
+                  right: 0,
+                  background: showSectionsMenu ? "#c5491f" : "#14110d",
+                  color: "#fff",
+                  border: "none",
+                  padding: "0.25rem 0.9rem",
+                  fontSize: "0.72rem",
+                  fontWeight: 500,
+                  whiteSpace: "nowrap",
+                  letterSpacing: "0.04em",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  boxShadow: "-8px 0 10px #f7f5f2",
+                }}
+              >
+                ⊞ Sections
+              </button>
             </div>
+
+            {/* Sections dropdown panel */}
+            {showSectionsMenu && (
+              <div style={{
+                borderTop: "1px solid #e8e2d8",
+                background: "#fff",
+                display: "flex",
+                gap: 0,
+              }}>
+                {[
+                  { label: "Pulse Feed",    href: "#feed" },
+                  { label: "The Directory", href: "/connect/people" },
+                  { label: "Membership",    href: "/connect/membership" },
+                ].map(({ label, href }) => (
+                  <Link
+                    key={label}
+                    href={href}
+                    onClick={() => setShowSectionsMenu(false)}
+                    style={{
+                      flex: 1,
+                      textAlign: "center",
+                      padding: "0.65rem 0.5rem",
+                      fontSize: "0.68rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "#3a342b",
+                      textDecoration: "none",
+                      borderRight: "1px solid #e8e2d8",
+                    }}
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Active hashtag chip */}
