@@ -27,9 +27,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  // Send as form-encoded so WordPress places params in $request->params['POST']
-  // where has_param() reliably finds them — JSON body parsing can be inconsistent.
-  const form = new URLSearchParams({
+  const payload = {
     user_id:                String(u.id),
     directory_opt_in:       body.directory_opt_in       ?? "0",
     directory_bio:          body.directory_bio          ?? "",
@@ -37,17 +35,17 @@ export async function PATCH(req: NextRequest) {
     directory_instagram:    body.directory_instagram    ?? "",
     directory_linkedin:     body.directory_linkedin     ?? "",
     directory_website:      body.directory_website      ?? "",
-  });
+  };
 
   try {
-    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/update`, {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/directory`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/json",
         "Authorization": `Bearer ${secret}`,
         "X-Culture-API-Secret": secret,
       },
-      body: form.toString(),
+      body: JSON.stringify(payload),
       cache: "no-store",
     });
     if (!res.ok) {
