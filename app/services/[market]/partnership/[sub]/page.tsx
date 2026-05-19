@@ -19,9 +19,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { sub } = await params;
   const cat = getPartnershipCategory(sub);
-  if (!cat) return { title: "Partnership Program | The Moveee" };
+  if (!cat) return { title: "Media Partnership | The Moveee" };
   return {
-    title: `${cat.label} — Partnership Program | The Moveee Africa`,
+    title: `${cat.label} — Media Partnership | The Moveee Africa`,
     description: cat.page.tagline,
   };
 }
@@ -110,7 +110,7 @@ export default async function PartnershipSubPage({
           <span className="slug-breadcrumb-sep">›</span>
           <Link href={`/services/${market}`}>{marketData.name}</Link>
           <span className="slug-breadcrumb-sep">›</span>
-          <Link href={`/services/${market}/partnership`}>Partnership Program</Link>
+          <Link href={`/services/${market}/partnership`}>Media Partnership</Link>
           <span className="slug-breadcrumb-sep">›</span>
           <span>{cat.label}</span>
         </nav>

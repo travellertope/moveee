@@ -31,7 +31,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Tell Your Story Where It Actually Lands",
       tagline: "Longform editorial. Newsletter distribution. Social reach. For brands that know their audience is African.",
       intro: [
-        "Most PR placements treat Nigeria and the wider continent as an afterthought — a single paragraph in a global roundup, a stock photo that could be anywhere. The Moveee Editorial package is built differently. We write a 800–1,200 word feature that places your brand, product, or story in genuine cultural context, shaped by writers who actually live this market.",
+        "Most PR placements treat Nigeria and the wider continent as an afterthought — a single paragraph in a global roundup, a stock photo that could be anywhere. The Moveee Sponsored Content package is built differently. We write a 800–1,200 word feature that places your brand, product, or story in genuine cultural context, shaped by writers who actually live this market.",
         "Every editorial feature is distributed through GetMeLit, our newsletter read by Nigerian and Pan-African professionals across Lagos, Abuja, Accra, Nairobi, and the diaspora. Alongside that, three native social posts go out across our platforms — copy and creative direction included. You brief us, we handle the craft.",
         "If you need to push further, our Amplify tiers extend reach through paid social and influencer networks. But the foundation — the feature, the newsletter, the social — is complete on its own. ₦250,000 flat, no hidden add-ons.",
       ],
@@ -269,11 +269,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     partnership: {
       headline: "For Publishers, Galleries, Theatres, and Institutions That Take Culture Seriously",
-      tagline: "A sustained editorial partnership for African cultural organisations — not a one-off feature, but a media relationship.",
+      tagline: "A sustained media partnership for African cultural organisations — not a one-off feature, but a media relationship.",
       intro: [
-        "Books launched in Nigeria deserve reviews. Art exhibitions deserve critical attention. Theatre productions deserve audiences who knew the show was happening before opening night. The Moveee Partnership Program exists because cultural institutions — publishers, galleries, theatres, museums, literary festivals — are chronically underserved by media that reaches the audiences they need.",
+        "Books launched in Nigeria deserve reviews. Art exhibitions deserve critical attention. Theatre productions deserve audiences who knew the show was happening before opening night. The Moveee Media Partnership exists because cultural institutions — publishers, galleries, theatres, museums, literary festivals — are chronically underserved by media that reaches the audiences they need.",
         "This isn't a sponsorship arrangement where you pay for logo placement. It's an editorial partnership: book reviews written by readers who understand the genre, author interviews given proper length and context, news releases for your launches and events, and social media presence tied to your actual programming calendar.",
-        "Tiers start at ₦65,000 for Starter (ideal for independent authors and small publishers) and scale to ₦580,000 for Visibility+ (full-year editorial integration, video, Instagram Live, and book trailer support). Cultural institutions beyond books — galleries, theatres, museums — are explicitly welcome. So are literary festivals and arts nonprofits.",
+        "The Media Partnership has three dedicated categories — publishers, art galleries, and filmmakers — each with independent pricing tiers. Publishers start from ₦80,000 (Debut) through to ₦680,000 (Imprint). Galleries from ₦130,000 (Preview) to ₦900,000 (Institution). Filmmakers from ₦100,000 (Development) to ₦750,000 (Distribution). Literary festivals and arts nonprofits are also welcome — contact us.",
       ],
       howItWorks: [
         {
@@ -318,7 +318,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       faqs: [
         {
           question: "Is this only for book publishers?",
-          answer: "No. The Partnership Program is explicitly designed for any cultural institution with editorial merit — art galleries, theatres, museums, literary festivals, arts nonprofits, and cultural centres. If your organisation produces culture worth covering, we want to talk.",
+          answer: "No. The Media Partnership is explicitly designed for any cultural institution with editorial merit — art galleries, theatres, museums, literary festivals, arts nonprofits, and cultural centres. If your organisation produces culture worth covering, we want to talk.",
         },
         {
           question: "What tier is right for an independent author?",
@@ -512,7 +512,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Black British Stories, Told With the Weight They Deserve",
       tagline: "Longform editorial. Newsletter distribution. Social reach. For brands that understand the Black British market isn't a segment — it's a culture.",
       intro: [
-        "The Black British market — African and Caribbean diaspora across London, Birmingham, Manchester, and Bristol — is one of the most culturally sophisticated and brand-conscious audiences in the UK. It is also one of the most consistently misread by mainstream media. The Moveee UK Editorial package exists for brands that want to get it right.",
+        "The Black British market — African and Caribbean diaspora across London, Birmingham, Manchester, and Bristol — is one of the most culturally sophisticated and brand-conscious audiences in the UK. It is also one of the most consistently misread by mainstream media. The Moveee UK Sponsored Content package exists for brands that want to get it right.",
         "We produce an 800–1,200 word feature that earns its place in front of this audience: well-researched, culturally informed, and written by writers who are part of the communities they're speaking to. The feature distributes through our UK newsletter and goes out across our social channels as three native posts.",
         "The flat rate is £850, which covers the feature, newsletter inclusion, and social content. If your campaign requires extended reach — paid social, influencer activation, or press syndication — Amplify tiers start at £45 and are scoped to your needs. Everything is agreed before you commit.",
       ],
@@ -915,7 +915,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "For Brands That Know the Diaspora Isn't One Story",
       tagline: "Longform editorial, newsletter distribution, and social reach for brands ready to engage Black American and African diaspora communities with substance.",
       intro: [
-        "The African and Caribbean diaspora in the United States — in New York, Atlanta, Houston, DC, and Los Angeles — is not a monolith, and any brand treating it like one will be seen through immediately. The Moveee US Editorial package is built around cultural specificity: writing that understands the difference between a Yoruba cultural reference and a Trinidadian one, between Atlanta's Black creative economy and the Nigerian American professional community in the DMV.",
+        "The African and Caribbean diaspora in the United States — in New York, Atlanta, Houston, DC, and Los Angeles — is not a monolith, and any brand treating it like one will be seen through immediately. The Moveee US Sponsored Content package is built around cultural specificity: writing that understands the difference between a Yoruba cultural reference and a Trinidadian one, between Atlanta's Black creative economy and the Nigerian American professional community in the DMV.",
         "An 800–1,200 word longform feature, distributed through our US newsletter and amplified by three native social posts, for $1,200 flat. The feature is written by writers who are part of these communities. You brief us, we handle the craft, and you get links and traffic data within 72 hours of publication.",
         "Amplify tiers start at $60 and extend reach through paid social, influencer networks, and press syndication — Priority, Sponsored, Sponsored+, and Invested options available at the brief stage. Everything is scoped before you commit.",
       ],

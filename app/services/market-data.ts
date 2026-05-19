@@ -323,12 +323,12 @@ const amplifyUS: TierService = {
   ],
 };
 
-// ── Moveee Atelier (Africa only) ─────────────────────────────────────────────
+// ── Media Partnership (Africa only) ──────────────────────────────────────────
 
 const moveeeProAfrica: TierService = {
   slug: "partnership",
-  name: "Moveee Atelier",
-  eyebrow: "Partnership Program",
+  name: "Media Partnership",
+  eyebrow: "Media Partnership",
   description:
     "A dedicated visibility package for creative and cultural organisations — book publishers and authors, art galleries, theatres, museums, and cultural institutions. We spotlight your work through reviews, interviews, news releases, and multimedia social posts to the exact audience most likely to engage and buy.",
   packages: [
@@ -400,12 +400,12 @@ export const MARKETS: Market[] = [
     currency: "₦",
     sections: [
       {
-        id: "editorial", label: "Editorial & Amplification", kind: "mixed",
+        id: "editorial", label: "Sponsored Content", kind: "mixed",
         serviceLabel: "Amplify your feature",
         cards: [
           {
             name: "Cultural Spotlight Package",
-            tag: "editorial", tagLabel: "Editorial",
+            tag: "editorial", tagLabel: "Sponsored Content",
             description: "Longform editorial feature + social amplification + GetMeLit newsletter placement. The fastest route to visibility — ideal for Nigerian fashion brands, music acts, food & lifestyle businesses.",
             price: "₦250,000",
             priceNote: "per package",
@@ -482,7 +482,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "partnership", label: "Partnership Program", kind: "tiers",
+        id: "partnership", label: "Media Partnership", kind: "tiers",
         service: moveeeProAfrica,
       },
       {
@@ -543,12 +543,12 @@ export const MARKETS: Market[] = [
     currency: "£",
     sections: [
       {
-        id: "editorial", label: "Editorial & Amplification", kind: "mixed",
+        id: "editorial", label: "Sponsored Content", kind: "mixed",
         serviceLabel: "Amplify your feature",
         cards: [
           {
             name: "Cultural Spotlight Package",
-            tag: "editorial", tagLabel: "Editorial",
+            tag: "editorial", tagLabel: "Sponsored Content",
             description: "Longform editorial feature + social amplification + GetMeLit UK newsletter. Ideal for UK Afrobeats labels, Black-owned fashion brands, and events promoters.",
             price: "£850",
             priceNote: "per package",
@@ -683,12 +683,12 @@ export const MARKETS: Market[] = [
     currency: "$",
     sections: [
       {
-        id: "editorial", label: "Editorial & Amplification", kind: "mixed",
+        id: "editorial", label: "Sponsored Content", kind: "mixed",
         serviceLabel: "Amplify your feature",
         cards: [
           {
             name: "Brand Culture Partnership",
-            tag: "editorial", tagLabel: "Editorial",
+            tag: "editorial", tagLabel: "Sponsored Content",
             description: "Sponsored editorial + newsletter placement for US brands targeting African and Caribbean diaspora audiences. The culturally-specific alternative to The Root or Essence.",
             price: "$1,200",
             priceNote: "per package",
