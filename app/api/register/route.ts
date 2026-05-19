@@ -11,6 +11,9 @@ interface RegisterBody {
   primary_chapter?: number;
   secondary_chapter?: number;
   referral_code?: string;
+  directory_opt_in?: string;
+  directory_disciplines?: string;
+  directory_bio?: string;
 }
 
 export async function POST(req: Request) {

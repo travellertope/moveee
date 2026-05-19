@@ -27,7 +27,7 @@ export default function DirectoryProfile({ displayName, occupation, city, countr
   country: string;
 }) {
   const [state, setState] = useState<DirectoryState>({
-    optIn: false, bio: "", disciplines: [], instagram: "", linkedin: "", website: "",
+    optIn: true, bio: "", disciplines: [], instagram: "", linkedin: "", website: "",
   });
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<SaveStatus>("idle");
