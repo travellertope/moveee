@@ -27,9 +27,9 @@ export default async function ConnectPage() {
 
   return (
     <div>
-      {/* ── HERO — marketing copy only shown to logged-out visitors ── */}
+      {/* ── HERO + SECTION NAV — logged-out visitors only ── */}
       {!loggedIn && (
-        <div className="mco-hero-top">
+        <section className="mco-hero">
           <div className="mco-hero-inner">
             <div className="mco-hero-text">
               <p className="mco-eyebrow">Moveee Connect</p>
@@ -45,15 +45,13 @@ export default async function ConnectPage() {
               <Link href="/login" className="con-btn-ghost">Already a member? Sign in</Link>
             </div>
           </div>
-        </div>
+          <nav className="mco-section-nav" aria-label="Connect sections">
+            <a href="#feed" className="mco-nav-link">Pulse Feed</a>
+            <Link href="/connect/people" className="mco-nav-link">Members Directory</Link>
+            <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
+          </nav>
+        </section>
       )}
-
-      {/* ── SECTION NAV — always visible ── */}
-      <nav className="mco-section-nav" aria-label="Connect sections">
-        <a href="#feed" className="mco-nav-link">Pulse Feed</a>
-        <Link href="/connect/people" className="mco-nav-link">The Directory</Link>
-        <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
-      </nav>
 
       {/* ── PULSE FEED ── */}
       <section id="feed" className="mco-feed-section">
