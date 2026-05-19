@@ -5,6 +5,38 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { parseHashtags } from "@/lib/hashtags";
 
+const EDITION_TO_REGION: Record<string, string> = {
+  uk:     "Diaspora UK",
+  us:     "Diaspora US",
+  africa: "Africa",
+};
+
+const COUNTRY_TO_REGION: Record<string, string> = {
+  ng: "Africa", ghana: "Africa", ke: "Africa", za: "Africa",
+  nigeria: "Africa", kenya: "Africa", "south africa": "Africa",
+  ethiopia: "Africa", senegal: "Africa", cameroon: "Africa",
+  gb: "Diaspora UK", uk: "Diaspora UK", "united kingdom": "Diaspora UK",
+  us: "Diaspora US", "united states": "Diaspora US",
+  fr: "Diaspora Europe", de: "Diaspora Europe", nl: "Diaspora Europe",
+  france: "Diaspora Europe", germany: "Diaspora Europe", netherlands: "Diaspora Europe",
+  belgium: "Diaspora Europe", italy: "Diaspora Europe", spain: "Diaspora Europe",
+  jamaica: "Caribbean", trinidad: "Caribbean", barbados: "Caribbean",
+  guyana: "Caribbean", haiti: "Caribbean",
+};
+
+function detectRegion(countryOfResidence?: string): string | null {
+  if (typeof document !== "undefined") {
+    const edition = document.cookie.split("; ")
+      .find(r => r.startsWith("moveee_edition="))?.split("=")[1];
+    if (edition && EDITION_TO_REGION[edition]) return EDITION_TO_REGION[edition];
+  }
+  if (countryOfResidence) {
+    const key = countryOfResidence.toLowerCase().trim();
+    return COUNTRY_TO_REGION[key] ?? null;
+  }
+  return null;
+}
+
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 type Mode = "post" | "quote";
@@ -38,7 +70,7 @@ const TAB_STYLE = (active: boolean): React.CSSProperties => ({
 });
 
 interface SubmitPostProps {
-  onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null }) => void;
+  onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null }) => void;
   lockedTag?: string;
 }
 
@@ -93,16 +125,24 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
       const res = await fetch("/api/community/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text.trim(), imageUrl, tag: tag || undefined }),
+        body: JSON.stringify({
+          text: text.trim(),
+          imageUrl,
+          tag: tag || undefined,
+          region: detectRegion(user?.countryOfResidence) ?? undefined,
+          authorTier: user?.tier ?? undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to post");
+      const region = detectRegion(user?.countryOfResidence);
       onPosted?.({
         id: data.id,
         text: text.trim(),
         authorName: user?.name ?? user?.displayName ?? "Community Member",
         tag: tag || null,
         imageUrl: imageUrl ?? null,
+        region,
       });
       setText(""); setTag(""); removeImage();
     } catch (err: any) {

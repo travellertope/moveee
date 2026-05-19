@@ -30,6 +30,8 @@ class Culture_Community {
             'community_author_id',
             'community_image_url',
             'community_tag',
+            'community_region',
+            'community_author_tier',
         ];
 
         foreach ( $string_fields as $field ) {

@@ -117,8 +117,18 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     return typeMatch && regionMatch && tagMatch;
   }), [items, activeType, activeRegion, activeTag]);
 
-  const visible = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
+  const sorted = useMemo(() => {
+    if (activeRegion === "All") return filtered;
+    return [...filtered].sort((a, b) => {
+      const aMatch = a.type === "community" && !!a.region && a.region.toLowerCase() === activeRegion.toLowerCase() ? 1 : 0;
+      const bMatch = b.type === "community" && !!b.region && b.region.toLowerCase() === activeRegion.toLowerCase() ? 1 : 0;
+      if (aMatch !== bMatch) return bMatch - aMatch;
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+  }, [filtered, activeRegion]);
+
+  const visible = sorted.slice(0, visibleCount);
+  const hasMore = visibleCount < sorted.length;
 
   // Infinite scroll
   useEffect(() => {
@@ -131,7 +141,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     return () => io.disconnect();
   }, [hasMore, filtered.length]);
 
-  const handlePosted = useCallback((post: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null }) => {
+  const handlePosted = useCallback((post: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null }) => {
     const sessionUser = session?.user as any;
     const newItem: FeedItem = {
       id: `community-${post.id}`,
@@ -144,6 +154,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       communityAuthor: post.authorName,
       communityTag: post.tag ?? "",
       communityTier: sessionUser?.tier ?? undefined,
+      region: post.region ?? undefined,
       reactions: { love: 0, fire: 0, clap: 0 },
       wpId: post.id,
     };

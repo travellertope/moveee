@@ -60,10 +60,12 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const { text, imageUrl, tag } = body as {
+  const { text, imageUrl, tag, region, authorTier } = body as {
     text?: string;
     imageUrl?: string;
     tag?: string;
+    region?: string;
+    authorTier?: string;
   };
 
   const content = (text ?? "").trim();
@@ -80,6 +82,7 @@ export async function POST(req: NextRequest) {
   const authorName: string =
     user?.name ?? user?.displayName ?? user?.username ?? "Community Member";
   const authorId: string = String(user?.id ?? user?.databaseId ?? "");
+  const sessionTier: string = user?.tier ?? "";
 
   // Extract #hashtags from the post text.
   const hashtags = parseHashtags(content);
@@ -109,6 +112,8 @@ export async function POST(req: NextRequest) {
       community_author_id:   authorId,
       community_image_url:   imageUrl?.trim() || "",
       community_tag:         validTag ?? "",
+      community_region:      region?.trim() || "",
+      community_author_tier: (authorTier?.trim() || sessionTier) || "",
     },
   };
   if (categoryId) postBody.categories = [categoryId];
