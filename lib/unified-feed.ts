@@ -81,23 +81,10 @@ function parseCommunityData(
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const WP_BASE = `${WP_URL}/wp-json/wp/v2`;
 
-/** Fetch community category ID (slug "community"), or null if it doesn't exist yet. */
-async function getCommunityCategory(): Promise<number | null> {
-  const res = await fetch(`${WP_BASE}/categories?slug=community&_fields=id`, {
-    cache: "no-store",
-  });
-  if (!res.ok) return null;
-  const cats: any[] = await res.json().catch(() => []);
-  return cats[0]?.id ?? null;
-}
-
-/** Fetch the latest community posts from WordPress. */
+/** Fetch the latest community posts from the culture_post CPT. */
 async function getCommunityPosts(): Promise<FeedItem[]> {
-  const catId = await getCommunityCategory();
-  if (!catId) return [];
-
   const res = await fetch(
-    `${WP_BASE}/posts?categories=${catId}&per_page=24&orderby=date&order=desc&_fields=id,slug,date,content,meta,comment_count`,
+    `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,content,meta,comment_count`,
     { cache: "no-store" }
   );
   if (!res.ok) return [];
@@ -250,13 +237,8 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
     items.push(...communityResult.value);
   }
 
-  // Deduplicate: community posts are regular WP posts, so GET_STORIES also picks
-  // them up as "editorial". Remove any editorial whose slug matches a community post.
-  const communitySlugs = new Set(items.filter(i => i.type === "community").map(i => i.slug));
-  const deduped = items.filter(i => !(i.type === "editorial" && communitySlugs.has(i.slug)));
-
   // Sort newest first
-  deduped.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  return deduped;
+  return items;
 }

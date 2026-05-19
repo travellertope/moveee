@@ -17,25 +17,11 @@ export interface WpCommunityPost {
     reaction_fire?:  number;
     reaction_clap?:  number;
   };
-  _embedded?: {
-    "wp:term"?: Array<Array<{ id: number; name: string; slug: string; taxonomy: string }>>;
-  };
-}
-
-async function getCommunityCategory(): Promise<number | null> {
-  const res = await fetch(`${BASE}/categories?slug=community&_fields=id`, {
-    cache: "no-store",
-  });
-  if (!res.ok) return null;
-  const cats: any[] = await res.json().catch(() => []);
-  return cats[0]?.id ?? null;
 }
 
 export async function getAllCommunitySlugs(): Promise<string[]> {
-  const catId = await getCommunityCategory();
-  if (!catId) return [];
   const res = await fetch(
-    `${BASE}/posts?categories=${catId}&per_page=100&_fields=slug&status=publish`,
+    `${BASE}/community-posts?per_page=100&_fields=slug&status=publish`,
     { next: { revalidate: 3600 } }
   );
   if (!res.ok) return [];
@@ -45,26 +31,17 @@ export async function getAllCommunitySlugs(): Promise<string[]> {
 
 export async function getCommunityPostBySlug(slug: string): Promise<WpCommunityPost | null> {
   const res = await fetch(
-    `${BASE}/posts?slug=${encodeURIComponent(slug)}&_embed=1`,
+    `${BASE}/community-posts?slug=${encodeURIComponent(slug)}`,
     { cache: "no-store" }
   );
   if (!res.ok) return null;
   const posts: WpCommunityPost[] = await res.json().catch(() => []);
-  const post = posts[0] ?? null;
-  if (!post) return null;
-
-  // Filter to only posts in the community category.
-  const terms = post._embedded?.["wp:term"]?.flat() ?? [];
-  const isComm = terms.some((t) => t.taxonomy === "category" && t.slug === "community");
-  return isComm ? post : null;
+  return posts[0] ?? null;
 }
 
-/** WP REST search across community posts — used by the search API route. */
 export async function searchCommunityPosts(query: string): Promise<WpCommunityPost[]> {
-  const catId = await getCommunityCategory();
-  if (!catId) return [];
   const res = await fetch(
-    `${BASE}/posts?categories=${catId}&search=${encodeURIComponent(query)}&per_page=6&_fields=id,slug,date,title,content,meta`,
+    `${BASE}/community-posts?search=${encodeURIComponent(query)}&per_page=6&_fields=id,slug,date,title,content,meta`,
     { cache: "no-store" }
   );
   if (!res.ok) return [];
@@ -89,16 +66,9 @@ export async function getPostComments(postId: number): Promise<WpComment[]> {
   return res.json().catch(() => []);
 }
 
-/**
- * Fetch community posts filtered by a communityTag that matches the given tag label
- * (e.g. "Music" for the music category). WP REST API doesn't support meta filtering,
- * so we fetch the last 50 posts and filter client-side.
- */
 export async function getCommunityPostsByTag(tag: string): Promise<WpCommunityPost[]> {
-  const catId = await getCommunityCategory();
-  if (!catId) return [];
   const res = await fetch(
-    `${BASE}/posts?categories=${catId}&per_page=50&orderby=date&order=desc&_fields=id,slug,date,content,meta,comment_count`,
+    `${BASE}/community-posts?per_page=50&orderby=date&order=desc&_fields=id,slug,date,content,meta,comment_count`,
     { cache: "no-store" }
   );
   if (!res.ok) return [];

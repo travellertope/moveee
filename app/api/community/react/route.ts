@@ -27,7 +27,8 @@ type Emoji  = (typeof VALID_EMOJIS)[number];
 type Action = (typeof VALID_ACTIONS)[number];
 
 function restBase(itemType: string): string {
-  return itemType === "pulse" ? "pulse-stories" : "posts";
+  if (itemType === "pulse") return "pulse-stories";
+  return "community-posts";
 }
 
 async function fetchCurrentCounts(
