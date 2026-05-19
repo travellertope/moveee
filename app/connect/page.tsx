@@ -33,11 +33,10 @@ export default async function ConnectPage() {
           <div className="mco-hero-text">
             <p className="mco-eyebrow">Moveee Connect</p>
             <h1 className="mco-headline">
-              Where diaspora<br />culture <em>gathers.</em>
+              Where culture <em>gathers.</em>
             </h1>
             <p className="mco-lede">
-              Black and diaspora creatives, entrepreneurs, professionals, and culture lovers —
-              self-selected, high-intent, deeply invested in where African culture is going.
+              Village square for Black and diaspora creatives, entrepreneurs, professionals, and culture lovers.
             </p>
           </div>
           <div className="mco-hero-cta">
