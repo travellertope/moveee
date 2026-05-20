@@ -17,6 +17,12 @@ class Culture_Post_Types {
         add_action( 'add_meta_boxes', array( __CLASS__, 'register_meta_boxes' ) );
         add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
+
+        // Issue taxonomy admin form fields
+        add_action( 'issue_add_form_fields',  array( __CLASS__, 'issue_add_form_fields' ) );
+        add_action( 'issue_edit_form_fields', array( __CLASS__, 'issue_edit_form_fields' ), 10, 2 );
+        add_action( 'created_issue',          array( __CLASS__, 'issue_save_meta' ) );
+        add_action( 'edited_issue',           array( __CLASS__, 'issue_save_meta' ) );
     }
 
     /**
@@ -1154,6 +1160,85 @@ class Culture_Post_Types {
         if ( isset( $_POST['culture_quote_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_quote_meta_nonce'], 'culture_quote_meta' ) ) {
             if ( isset( $_POST['quote_source'] ) ) update_post_meta( $post_id, '_quote_source', sanitize_text_field( $_POST['quote_source'] ) );
             if ( isset( $_POST['quote_user_id'] ) ) update_post_meta( $post_id, '_quote_user_id', absint( $_POST['quote_user_id'] ) );
+        }
+    }
+
+    // ── Issue taxonomy admin UI ──────────────────────────────────────────
+
+    public static function issue_add_form_fields() {
+        wp_nonce_field( 'issue_meta_save', 'issue_meta_nonce' );
+        ?>
+        <div class="form-field">
+            <label for="issue_number"><?php esc_html_e( 'Issue Number', 'culture-community' ); ?></label>
+            <input type="number" id="issue_number" name="issue_number" value="" min="1" style="width:80px;">
+        </div>
+        <div class="form-field">
+            <label for="issue_subtitle"><?php esc_html_e( 'Subtitle / Theme', 'culture-community' ); ?></label>
+            <input type="text" id="issue_subtitle" name="issue_subtitle" value="">
+        </div>
+        <div class="form-field">
+            <label for="issue_editorial_note"><?php esc_html_e( 'Editorial Note', 'culture-community' ); ?></label>
+            <textarea id="issue_editorial_note" name="issue_editorial_note" rows="4" cols="40"></textarea>
+            <p class="description"><?php esc_html_e( 'Short editor\'s note shown on the issue page and homepage.', 'culture-community' ); ?></p>
+        </div>
+        <div class="form-field">
+            <label for="issue_cover_image_url"><?php esc_html_e( 'Cover Image URL', 'culture-community' ); ?></label>
+            <input type="url" id="issue_cover_image_url" name="issue_cover_image_url" value="">
+            <p class="description"><?php esc_html_e( 'Full URL of the cover image (upload to Media Library and copy the URL).', 'culture-community' ); ?></p>
+        </div>
+        <?php
+    }
+
+    public static function issue_edit_form_fields( $term ) {
+        $number   = get_term_meta( $term->term_id, 'issue_number', true );
+        $subtitle = get_term_meta( $term->term_id, 'issue_subtitle', true );
+        $note     = get_term_meta( $term->term_id, 'issue_editorial_note', true );
+        $cover    = get_term_meta( $term->term_id, 'issue_cover_image_url', true );
+        wp_nonce_field( 'issue_meta_save', 'issue_meta_nonce' );
+        ?>
+        <tr class="form-field">
+            <th scope="row"><label for="issue_number"><?php esc_html_e( 'Issue Number', 'culture-community' ); ?></label></th>
+            <td><input type="number" id="issue_number" name="issue_number" value="<?php echo esc_attr( $number ); ?>" min="1" style="width:80px;"></td>
+        </tr>
+        <tr class="form-field">
+            <th scope="row"><label for="issue_subtitle"><?php esc_html_e( 'Subtitle / Theme', 'culture-community' ); ?></label></th>
+            <td><input type="text" id="issue_subtitle" name="issue_subtitle" value="<?php echo esc_attr( $subtitle ); ?>"></td>
+        </tr>
+        <tr class="form-field">
+            <th scope="row"><label for="issue_editorial_note"><?php esc_html_e( 'Editorial Note', 'culture-community' ); ?></label></th>
+            <td>
+                <textarea id="issue_editorial_note" name="issue_editorial_note" rows="4" cols="50"><?php echo esc_textarea( $note ); ?></textarea>
+                <p class="description"><?php esc_html_e( 'Short editor\'s note shown on the issue page and homepage.', 'culture-community' ); ?></p>
+            </td>
+        </tr>
+        <tr class="form-field">
+            <th scope="row"><label for="issue_cover_image_url"><?php esc_html_e( 'Cover Image URL', 'culture-community' ); ?></label></th>
+            <td>
+                <?php if ( $cover ) : ?>
+                    <img src="<?php echo esc_url( $cover ); ?>" style="max-width:120px;display:block;margin-bottom:8px;">
+                <?php endif; ?>
+                <input type="url" id="issue_cover_image_url" name="issue_cover_image_url" value="<?php echo esc_attr( $cover ); ?>" style="width:100%;">
+                <p class="description"><?php esc_html_e( 'Full URL — upload to Media Library, open the image, and copy the File URL.', 'culture-community' ); ?></p>
+            </td>
+        </tr>
+        <?php
+    }
+
+    public static function issue_save_meta( $term_id ) {
+        if ( ! isset( $_POST['issue_meta_nonce'] ) || ! wp_verify_nonce( $_POST['issue_meta_nonce'], 'issue_meta_save' ) ) {
+            return;
+        }
+        if ( isset( $_POST['issue_number'] ) ) {
+            update_term_meta( $term_id, 'issue_number', absint( $_POST['issue_number'] ) );
+        }
+        if ( isset( $_POST['issue_subtitle'] ) ) {
+            update_term_meta( $term_id, 'issue_subtitle', sanitize_text_field( $_POST['issue_subtitle'] ) );
+        }
+        if ( isset( $_POST['issue_editorial_note'] ) ) {
+            update_term_meta( $term_id, 'issue_editorial_note', sanitize_textarea_field( $_POST['issue_editorial_note'] ) );
+        }
+        if ( isset( $_POST['issue_cover_image_url'] ) ) {
+            update_term_meta( $term_id, 'issue_cover_image_url', esc_url_raw( $_POST['issue_cover_image_url'] ) );
         }
     }
 }
