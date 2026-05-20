@@ -491,7 +491,7 @@ export const MARKETS: Market[] = [
         service: moveeeProAfrica,
       },
       {
-        id: "presskit", label: "Presskit", audience: "For businesses, founders, and public figures building media presence", kind: "cards",
+        id: "presskit", label: "Presskit (PR)", audience: "For businesses, founders, and public figures building media presence", kind: "cards",
         cards: [
           {
             name: "Single Press Release",
@@ -601,7 +601,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Events & Travel", audience: "For event promoters, festival organisers, and tour operators", kind: "cards",
+        id: "events", label: "Event Coverage", audience: "For event promoters, festival organisers, and cultural institutions across Nigeria", kind: "cards",
         cards: [
           {
             name: "Happenings Partner — Single Day",
@@ -658,6 +658,11 @@ export const MARKETS: Market[] = [
               "Additional spotlights at ₦200,000 each",
             ],
           },
+        ],
+      },
+      {
+        id: "travel", label: "Travel & Tours", audience: "For tour operators, travel experiences, and cultural heritage packages across Nigeria and West Africa", kind: "cards",
+        cards: [
           {
             name: "Moveee Origins — Tour Partner",
             tag: "travel", tagLabel: "Travel",
@@ -713,7 +718,7 @@ export const MARKETS: Market[] = [
         service: moveeeProUK,
       },
       {
-        id: "presskit", label: "Presskit", audience: "For UK-based founders, creatives, and brands building media presence", kind: "cards",
+        id: "presskit", label: "Presskit (PR)", audience: "For UK-based founders, creatives, and brands building media presence", kind: "cards",
         cards: [
           {
             name: "Single Press Release",
@@ -823,7 +828,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Events & Travel", audience: "For event promoters, entertainment organisers, and tour operators in the UK", kind: "cards",
+        id: "events", label: "Event Coverage", audience: "For event promoters, entertainment organisers, and cultural institutions across Britain", kind: "cards",
         cards: [
           {
             name: "Happenings UK Partner — Single Day",
@@ -880,6 +885,11 @@ export const MARKETS: Market[] = [
               "Additional spotlights at £280 each",
             ],
           },
+        ],
+      },
+      {
+        id: "travel", label: "Travel & Tours", audience: "For UK diaspora travel operators and heritage experience providers", kind: "cards",
+        cards: [
           {
             name: "Origins UK — Heritage Tours",
             tag: "travel", tagLabel: "Travel",
@@ -935,7 +945,7 @@ export const MARKETS: Market[] = [
         service: moveeeProUS,
       },
       {
-        id: "presskit", label: "Presskit", audience: "For US-based African diaspora founders, creatives, and brands", kind: "cards",
+        id: "presskit", label: "Presskit (PR)", audience: "For US-based African diaspora founders, creatives, and brands", kind: "cards",
         cards: [
           {
             name: "Single Press Release",
@@ -1045,7 +1055,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Events & Travel", audience: "For event promoters, entertainment organisers, and tour operators in the US", kind: "cards",
+        id: "events", label: "Event Coverage", audience: "For event promoters, entertainment organisers, and cultural institutions across the US", kind: "cards",
         cards: [
           {
             name: "Happenings US Partner — Single Day",

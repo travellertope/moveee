@@ -346,12 +346,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
 
     events: {
-      headline: "Your Event Deserves Coverage. Your Tour Deserves Bookings.",
-      tagline: "Official media partnership for African events, and a commission-based listing for tour operators and travel experiences.",
+      headline: "Your Event Deserves More Than a Mention.",
+      tagline: "Official media partner status for Nigerian and Pan-African events — pre-event build-up, live coverage, and post-event editorial.",
       intro: [
         "Detty December. Lagos Fashion Week. Afropunk. GTCO Food & Drink Festival. The best events in Nigeria succeed in part because people knew about them, talked about them, and showed up ready. The Moveee Happenings partnership gives your event official media partner status — pre-event editorial build-up, live coverage, post-event write-up, and a media badge you can use in your own comms.",
-        "For tour operators, travel agencies, and cultural experience companies, Origins/Tours is a commission-based listing model. Your experience is featured on The Moveee, promoted through GetMeLit and social, and bookings are tracked through an affiliate link. We earn 12% on confirmed bookings. You pay a ₦30,000 quarterly listing fee to maintain your placement in the directory.",
         "This is media partnership, not advertising. The Moveee editorial team attends, covers, and writes about events we believe in — which is why our coverage means something to readers who've learned to trust our taste.",
+        "Choose from single-day coverage, multi-day festival partnerships, a pre-event rollout campaign, or the full Cultural Institution Partner package for recurring events and institutions.",
       ],
       howItWorks: [
         {
@@ -412,20 +412,69 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           answer: "We don't require exclusivity as a default, but we don't partner with events that have conflicting official media partners with competing editorial mandates. Discuss your existing media partners on enquiry.",
         },
         {
-          question: "How does the Origins/Tours listing work?",
-          answer: "You pay a ₦30,000 quarterly listing fee to maintain your tour or experience in our directory. On top of that, we earn 12% commission on confirmed bookings traced to our content. The listing includes an editorial feature on your tour — we write it, you approve the facts.",
-        },
-        {
-          question: "How are bookings tracked for commission purposes?",
-          answer: "We use a unique affiliate link or tracking code specific to your listing. Bookings that originate from that link are confirmed through your booking platform and reported monthly. Commission is invoiced quarterly.",
-        },
-        {
           question: "Can I use The Moveee coverage in my own marketing?",
           answer: "Yes. You may quote from published editorial, share links, and use the media partner badge in your own materials. Republishing full articles requires written permission.",
         },
       ],
-      ctaLabel: "Enquire about a partnership →",
-      ctaSubtext: "Events media partnership by application. Origins/Tours listing from ₦30,000/quarter.",
+      ctaLabel: "Enquire about event coverage →",
+      ctaSubtext: "Events media partnership by application. Minimum four weeks' notice required.",
+    },
+
+    travel: {
+      headline: "Put Your Tour in Front of the People Most Likely to Book It.",
+      tagline: "Commission-based listing and editorial coverage for cultural tour operators and heritage travel experiences across Nigeria and West Africa.",
+      intro: [
+        "Moveee Origins is the travel arm of The Moveee — curated cultural and heritage tour listings for Nigerian and Pan-African audiences who want to travel with intention. If you run homecoming trips, heritage trails, festival packages, or cultural immersion experiences, this is where your audience already comes to discover what's worth booking.",
+        "The model is simple: you pay a ₦30,000 quarterly listing fee to maintain your placement in the Origins directory. We write an editorial feature on your experience, promote it through GetMeLit and social, and track bookings through a dedicated affiliate link. We earn 12% on confirmed bookings. Zero inventory risk for you.",
+        "We only list experiences we'd genuinely recommend to our readers — which is exactly why our listings convert.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Submit Your Experience",
+          body: "Tell us about your tour or travel experience — itinerary, target audience, price point, and available dates. We assess fit with our editorial standards and confirm listing eligibility within five working days.",
+        },
+        {
+          step: "02",
+          title: "We Write the Feature",
+          body: "Our editorial team writes a feature on your experience — the story of where it goes, what it means culturally, and why it's worth booking. You review the facts before it goes live.",
+        },
+        {
+          step: "03",
+          title: "Listed, Promoted, Tracked",
+          body: "Your experience goes live in the Origins directory with its editorial feature. A dedicated affiliate link tracks all bookings traced to our content. You receive monthly booking reports and commission is invoiced quarterly.",
+        },
+      ],
+      benefits: [
+        {
+          title: "The Right Audience",
+          body: "GetMeLit subscribers are Nigerian and Pan-African professionals with disposable income who travel for culture, family, and experience. They are not bargain hunters — they're the ideal customer for a meaningful heritage trip.",
+        },
+        {
+          title: "Zero Inventory Risk",
+          body: "You pay a flat quarterly listing fee. Commission is only earned on confirmed bookings. No upfront ad spend with uncertain returns.",
+        },
+        {
+          title: "Editorial Credibility",
+          body: "A Moveee Origins feature is editorial recommendation, not a paid ad listing. That distinction matters to our readers — and it matters to your booking conversion rate.",
+        },
+      ],
+      faqs: [
+        {
+          question: "What kinds of experiences qualify for Origins listing?",
+          answer: "Cultural and heritage tours, homecoming trips, festival travel packages, food and craft experiences, and immersive diaspora reconnection experiences across Nigeria and West Africa. We assess editorial fit on enquiry.",
+        },
+        {
+          question: "How does booking tracking work?",
+          answer: "We use a unique affiliate link specific to your listing. Bookings originating from that link are confirmed through your booking platform and reported monthly. Commission of 12% is invoiced quarterly.",
+        },
+        {
+          question: "Can I list multiple experiences?",
+          answer: "Yes. Each experience is listed separately with its own editorial feature and tracking link. Each listing carries the ₦30,000 quarterly fee.",
+        },
+      ],
+      ctaLabel: "List your experience →",
+      ctaSubtext: "₦30,000/quarter listing fee + 12% commission on confirmed bookings.",
     },
 
     connect: {
@@ -810,11 +859,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     events: {
       headline: "Your Event Is Part of Black British Culture. Cover It Like It Is.",
-      tagline: "Official media partnership for UK events and a commission-based listing for Black British travel experiences.",
+      tagline: "Official media partnership for UK events — pre-event build-up, live coverage, and post-event editorial for the Black British community.",
       intro: [
         "Notting Hill Carnival. Africa Oyé. Afropunk London. Migrate Festival. The events that define Black British cultural life succeed because community media builds the anticipation, documents the moment, and tells the story after. The Moveee UK Happenings partnership gives your event that editorial infrastructure — official media partner status, pre-event coverage, live documentation, and a post-event write-up that becomes part of the permanent record.",
-        "For tour operators, travel agencies, and cultural travel experience companies serving the Black British community, Origins/Tours is a commission-based directory listing. Your experience is editorially featured, promoted through our newsletter and social, and bookings are tracked through affiliate links. We earn 12% on confirmed bookings. Quarterly listing fee is £75.",
         "We partner with events we believe in editorially. That selectivity is what makes our coverage credible — and what makes readers trust our recommendations enough to show up.",
+        "Choose from single-day coverage, multi-day festival partnerships, a pre-event rollout campaign, or the full Cultural Institution Partner package for recurring events and institutions.",
       ],
       howItWorks: [
         {
@@ -871,14 +920,6 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           answer: "Cultural events, music festivals, creative industry conferences, brand activations with cultural programming, art exhibitions, film premieres, and community gatherings that serve the Black British community. We assess editorial fit on enquiry.",
         },
         {
-          question: "How does the Origins/Tours listing work?",
-          answer: "A £75 quarterly listing fee maintains your experience in our travel directory, which includes an editorial feature on your tour. We earn 12% commission on confirmed bookings traced to our affiliate link.",
-        },
-        {
-          question: "How are bookings tracked?",
-          answer: "Through a unique affiliate link assigned to your listing. Bookings originating from that link are confirmed via your booking platform and reported monthly. Commission is invoiced quarterly.",
-        },
-        {
           question: "Can I use The Moveee coverage in my own marketing?",
           answer: "Yes — link sharing, excerpt quoting, and media badge use are all permitted. Full text republication requires written permission.",
         },
@@ -887,8 +928,65 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           answer: "Yes. We cover events across the UK where editorial resource allows. Birmingham, Manchester, and Bristol events have been covered. Confirm location at enquiry and we'll advise on attendance feasibility.",
         },
       ],
-      ctaLabel: "Enquire about a partnership →",
-      ctaSubtext: "Events partnership by application. Origins/Tours listing from £75/quarter.",
+      ctaLabel: "Enquire about event coverage →",
+      ctaSubtext: "Events partnership by application. Minimum four weeks' notice required.",
+    },
+
+    travel: {
+      headline: "Heritage Travel, Listed Where Your Audience Already Looks.",
+      tagline: "Commission-based listing and editorial coverage for Black British cultural travel operators and diaspora heritage experiences.",
+      intro: [
+        "Black British travellers are significant consumers of culturally intentional travel — homecoming trips to Nigeria, Ghana, Jamaica, and beyond. Diaspora city breaks. Heritage trails. Festival packages built around Afropunk, GTCO, or carnival season. The Moveee Origins UK lists the experiences worth booking for an audience that travels with purpose.",
+        "The model is simple: you pay a £75 quarterly listing fee to maintain your placement in the Origins directory. We write an editorial feature on your experience, promote it through GetMeLit UK and social, and track bookings through a dedicated affiliate link. We earn 12% on confirmed bookings. No inventory risk for you.",
+        "We only list experiences we'd genuinely recommend to our readers — which is exactly why our listings convert.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Submit Your Experience",
+          body: "Tell us about your tour — itinerary, target audience, price point, and available dates. We assess fit with our editorial standards and confirm listing eligibility within five working days.",
+        },
+        {
+          step: "02",
+          title: "We Write the Feature",
+          body: "Our editorial team writes a feature on your experience — where it goes, what it means culturally, and why it's worth booking. You review the facts before publication.",
+        },
+        {
+          step: "03",
+          title: "Listed, Promoted, Tracked",
+          body: "Your experience goes live in the Origins UK directory. A dedicated affiliate link tracks all bookings. You receive monthly booking reports and commission is invoiced quarterly.",
+        },
+      ],
+      benefits: [
+        {
+          title: "The Right Audience",
+          body: "GetMeLit UK subscribers are Black British professionals with disposable income who travel intentionally. They are looking for heritage and cultural experiences — your exact customer.",
+        },
+        {
+          title: "Zero Inventory Risk",
+          body: "A flat quarterly listing fee with commission only on confirmed bookings. No upfront ad spend with uncertain returns.",
+        },
+        {
+          title: "Editorial Credibility",
+          body: "A Moveee Origins feature reads as editorial recommendation, not a paid listing. That's the difference between a browse and a booking.",
+        },
+      ],
+      faqs: [
+        {
+          question: "What kinds of experiences qualify?",
+          answer: "Homecoming heritage tours, Afrobeats and carnival festival travel packages, roots tourism, cultural city breaks, and immersive diaspora reconnection experiences. We assess editorial fit on enquiry.",
+        },
+        {
+          question: "How does booking tracking work?",
+          answer: "Through a unique affiliate link specific to your listing. Bookings traced to that link are confirmed via your booking platform and reported monthly. Commission of 12% is invoiced quarterly.",
+        },
+        {
+          question: "Can I list multiple experiences?",
+          answer: "Yes. Each experience is listed and featured separately. Each carries its own £75 quarterly listing fee.",
+        },
+      ],
+      ctaLabel: "List your experience →",
+      ctaSubtext: "£75/quarter listing fee + 12% commission on confirmed bookings.",
     },
 
     connect: {
@@ -1269,11 +1367,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     events: {
       headline: "Diaspora Events Deserve More Than an Instagram Post",
-      tagline: "Official media partnership for US events and commission-based listings for cultural travel experiences serving the diaspora.",
+      tagline: "Official media partnership for US events — pre-event build-up, live coverage, and post-event editorial for the African and Caribbean diaspora.",
       intro: [
         "Afropunk Brooklyn. One Africa Music Fest. Essence Festival. The African Festival of the Arts. Diaspora events in New York, Atlanta, Houston, DC, and LA have built cultural institutions out of community — and community media is how those events reach the people who need to be there. The Moveee US Happenings partnership gives your event official media partner status, editorial build-up, live coverage, and a post-event write-up that becomes part of the permanent cultural record.",
-        "For tour operators and cultural travel companies serving the African and Caribbean diaspora — heritage tours to West Africa, Caribbean cultural experiences, city itineraries for diaspora travelers — Origins/Tours is a commission-based listing with editorial support. We earn 12% on confirmed bookings. Quarterly listing fee is $60.",
         "We partner with events editorially. That selectivity is the reason our coverage carries weight with readers who've learned to trust our recommendations.",
+        "Choose from single-day coverage, multi-day festival partnerships, a pre-event rollout campaign, or the full Cultural Institution Partner package for recurring events and institutions.",
       ],
       howItWorks: [
         {
@@ -1334,20 +1432,12 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           answer: "Yes. We cover events in Atlanta, Houston, DC, and LA where editorial resource allows. Confirm your city at enquiry and we'll advise on attendance feasibility and alternative coverage options.",
         },
         {
-          question: "How does the Origins/Tours listing work?",
-          answer: "A $60 quarterly listing fee maintains your tour or experience in our directory with an editorial feature. We earn 12% commission on confirmed bookings traced to our affiliate link.",
-        },
-        {
-          question: "How are bookings tracked for the commission?",
-          answer: "A unique affiliate link is assigned to your listing at setup. Bookings originating from that link are confirmed via your booking platform, reported monthly, and invoiced quarterly.",
-        },
-        {
           question: "Can I use The Moveee coverage in my own marketing?",
           answer: "Yes — link sharing, excerpt quoting, and media badge use are all permitted. Full text republication requires written permission.",
         },
       ],
-      ctaLabel: "Enquire about a partnership →",
-      ctaSubtext: "Events partnership by application. Origins/Tours listing from $60/quarter.",
+      ctaLabel: "Enquire about event coverage →",
+      ctaSubtext: "Events partnership by application. Minimum four weeks' notice required.",
     },
 
     connect: {
