@@ -46,9 +46,9 @@ export type RateCard = {
 };
 
 export type Section =
-  | { id: string; label: string; audience?: string; kind: "cards"; cards: RateCard[] }
-  | { id: string; label: string; audience?: string; kind: "tiers"; service: TierService }
-  | { id: string; label: string; audience?: string; kind: "mixed"; cards: RateCard[]; service: TierService; serviceLabel?: string };
+  | { id: string; label: string; audience?: string; kind: "cards"; cards: RateCard[]; crossSellTo?: string }
+  | { id: string; label: string; audience?: string; kind: "tiers"; service: TierService; crossSellTo?: string }
+  | { id: string; label: string; audience?: string; kind: "mixed"; cards: RateCard[]; service: TierService; serviceLabel?: string; crossSellTo?: string };
 
 export type Market = {
   id: "africa" | "uk" | "us";
@@ -503,6 +503,7 @@ export const MARKETS: Market[] = [
       {
         id: "editorial", label: "Sponsored Content", audience: "For brands and businesses targeting Nigerian and Pan-African audiences", kind: "mixed",
         serviceLabel: "Amplify your feature",
+        crossSellTo: "amplify",
         cards: [
           {
             name: "Cultural Spotlight Package",
@@ -521,7 +522,12 @@ export const MARKETS: Market[] = [
         service: amplifyAfrica,
       },
       {
+        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
+        service: amplifyAfrica,
+      },
+      {
         id: "partnership", label: "Media Partnership", audience: "For publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
+        crossSellTo: "amplify",
         service: moveeeProAfrica,
       },
       {
@@ -719,6 +725,7 @@ export const MARKETS: Market[] = [
       {
         id: "editorial", label: "Sponsored Content", audience: "For brands targeting the African and Caribbean diaspora across Britain", kind: "mixed",
         serviceLabel: "Amplify your feature",
+        crossSellTo: "amplify",
         cards: [
           {
             name: "Cultural Spotlight Package",
@@ -737,7 +744,12 @@ export const MARKETS: Market[] = [
         service: amplifyUK,
       },
       {
+        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
+        service: amplifyUK,
+      },
+      {
         id: "partnership", label: "Media Partnership", audience: "For UK publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
+        crossSellTo: "amplify",
         service: moveeeProUK,
       },
       {
@@ -935,6 +947,7 @@ export const MARKETS: Market[] = [
       {
         id: "editorial", label: "Sponsored Content", audience: "For brands targeting the African and Caribbean diaspora across the US", kind: "mixed",
         serviceLabel: "Amplify your feature",
+        crossSellTo: "amplify",
         cards: [
           {
             name: "Brand Culture Partnership",
@@ -953,7 +966,12 @@ export const MARKETS: Market[] = [
         service: amplifyUS,
       },
       {
+        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
+        service: amplifyUS,
+      },
+      {
         id: "partnership", label: "Media Partnership", audience: "For US publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
+        crossSellTo: "amplify",
         service: moveeeProUS,
       },
       {

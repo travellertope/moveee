@@ -505,6 +505,66 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ctaLabel: "Apply for Connect sponsorship →",
       ctaSubtext: "₦100,000 per quarter. Subject to editorial fit review.",
     },
+    amplify: {
+      headline: "Push Your Moveee Feature Further",
+      tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The Moveee.",
+      intro: [
+        "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The Moveee. We don't amplify external content — only work published on our own platform.",
+        "Once your feature is live, Amplify extends its reach through paid social ads targeting Nigerian and Pan-African audiences, influencer shares within our network, and extended newsletter distribution. You choose the tier that matches your budget and reach objectives.",
+        "Think of the editorial feature as the foundation — Amplify is what you build on top of it when you want the story to travel further and faster than organic reach alone will take it.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Confirm Your Moveee Feature",
+          body: "Amplify requires a live Sponsored Content feature or an active Media Partnership on The Moveee. Share the link to your published piece when you enquire — we'll confirm eligibility within 24 hours.",
+        },
+        {
+          step: "02",
+          title: "Choose Your Amplify Tier",
+          body: "Select Priority, Sponsored, or Sponsored+ based on your reach objectives and budget. Each tier adds layers of paid social promotion, influencer distribution, and editorial syndication. We'll advise which tier fits your goals.",
+        },
+        {
+          step: "03",
+          title: "We Run the Campaign",
+          body: "Our team sets up and manages the paid social campaign, coordinates influencer shares, and handles any extended newsletter distribution. You get a brief report at the end of the campaign period.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Targeted Reach, Not Spray and Pray",
+          body: "Every paid placement targets Nigerian and Pan-African audiences — the same people who already read The Moveee. No wasted impressions on audiences who don't care about your category.",
+        },
+        {
+          title: "Influencer Network Built In",
+          body: "Higher tiers include coordinated shares from influencers within our network. These are people our audience already follows and trusts — not cold sponsored posts.",
+        },
+        {
+          title: "Your Feature Does the Heavy Lifting",
+          body: "The editorial piece handles the story; Amplify just gets more people in front of it. The credibility of a Moveee feature lands differently than a standalone ad — that's the real value of amplification.",
+        },
+      ],
+      faqs: [
+        {
+          question: "Can I buy Content Amplification without a Sponsored Content or Media Partnership package?",
+          answer: "No. Content Amplification is exclusively available as an add-on to Sponsored Content or Media Partnership. The feature we amplify must be published on The Moveee.",
+        },
+        {
+          question: "How long does an Amplify campaign run?",
+          answer: "Campaign length varies by tier — Priority runs for one week, Sponsored for two weeks, Sponsored+ for three weeks. Invested campaigns are discussed on a case-by-case basis.",
+        },
+        {
+          question: "Can I add Amplify after my feature has already been published?",
+          answer: "Yes, within 30 days of publication. Features older than 30 days are assessed on a case-by-case basis — reach us at hello@themoveee.com.",
+        },
+        {
+          question: "What's the difference between the basic social posts in Sponsored Content and an Amplify campaign?",
+          answer: "The social posts included in Sponsored Content are organic — posted to our channels with no paid spend behind them. Amplify adds a paid budget, audience targeting, and extended distribution that organic posts can't match.",
+        },
+      ],
+      ctaLabel: "Enquire about Amplify →",
+      ctaSubtext: "Requires an active Sponsored Content or Media Partnership package.",
+    },
   },
 
   uk: {
@@ -908,6 +968,62 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ctaLabel: "Apply for Connect sponsorship →",
       ctaSubtext: "£200 per quarter. Subject to editorial fit review.",
     },
+    amplify: {
+      headline: "Push Your Moveee Feature Further",
+      tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The Moveee UK.",
+      intro: [
+        "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The Moveee UK. We don't amplify external content — only work published on our own platform.",
+        "Once your feature is live, Amplify extends its reach through paid social ads targeting Black British and African diaspora audiences across the UK, influencer shares within our network, and extended GetMeLit UK newsletter distribution. Choose the tier that matches your budget and reach objectives.",
+        "The editorial feature is the foundation — Amplify is what gets the story in front of more of the right people, faster than organic reach alone will manage.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Confirm Your Moveee Feature",
+          body: "Amplify requires a live Sponsored Content feature or an active Media Partnership on The Moveee UK. Share the link to your published piece when you enquire — we'll confirm eligibility within 24 hours.",
+        },
+        {
+          step: "02",
+          title: "Choose Your Amplify Tier",
+          body: "Select Priority or Sponsored based on your reach objectives and budget. Each tier adds layers of paid social promotion and influencer distribution. We'll advise which tier fits your goals.",
+        },
+        {
+          step: "03",
+          title: "We Run the Campaign",
+          body: "Our team sets up and manages the paid social campaign, coordinates influencer shares, and handles any extended newsletter distribution. You get a brief report at the end of the campaign period.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Black British Audience Targeting",
+          body: "Every paid placement targets Black British and African Caribbean diaspora audiences — the same readership that already engages with The Moveee UK. No wasted impressions on irrelevant demographics.",
+        },
+        {
+          title: "Credibility That Travels",
+          body: "Amplifying a Moveee feature lands differently from a cold ad. The audience already knows us, trusts our editorial voice, and is more likely to engage with promoted content they recognise.",
+        },
+        {
+          title: "Influencer Reach Within the Community",
+          body: "Higher tiers include coordinated shares from influencers connected to our network — people the Black British community already follows, not unfamiliar sponsored accounts.",
+        },
+      ],
+      faqs: [
+        {
+          question: "Can I buy Content Amplification without a Sponsored Content or Media Partnership package?",
+          answer: "No. Content Amplification is exclusively available as an add-on to Sponsored Content or Media Partnership. The feature we amplify must be published on The Moveee UK.",
+        },
+        {
+          question: "Can I add Amplify after my feature has already gone live?",
+          answer: "Yes, within 30 days of publication. Features older than 30 days are assessed on enquiry — reach us at hello@themoveee.com.",
+        },
+        {
+          question: "What's the difference between the social posts in Sponsored Content and an Amplify campaign?",
+          answer: "The social posts included in Sponsored Content are organic. Amplify adds a paid budget behind those posts, audience targeting, influencer distribution, and extended newsletter reach — all of which organic posting cannot match.",
+        },
+      ],
+      ctaLabel: "Enquire about Amplify →",
+      ctaSubtext: "Requires an active Sponsored Content or Media Partnership package.",
+    },
   },
 
   us: {
@@ -1310,6 +1426,62 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ],
       ctaLabel: "Apply for Connect sponsorship →",
       ctaSubtext: "$250 per quarter. Subject to editorial fit review.",
+    },
+    amplify: {
+      headline: "Push Your Moveee Feature Further",
+      tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The Moveee US.",
+      intro: [
+        "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The Moveee US. We don't amplify external content — only work published on our own platform.",
+        "Once your feature is live, Amplify extends its reach through paid social ads targeting African and Caribbean diaspora audiences across NYC, Atlanta, Houston, DC, and LA, plus influencer shares within our network and extended GetMeLit US newsletter distribution.",
+        "The editorial feature is the foundation — Amplify is what gets the story in front of more of the right diaspora audience, faster than organic reach alone will manage.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Confirm Your Moveee Feature",
+          body: "Amplify requires a live Sponsored Content feature or an active Media Partnership on The Moveee US. Share the link to your published piece when you enquire — we'll confirm eligibility within 24 hours.",
+        },
+        {
+          step: "02",
+          title: "Choose Your Amplify Tier",
+          body: "Select Priority or Invested based on your reach objectives and budget. Each tier adds layers of paid social promotion, influencer distribution, and extended newsletter reach. We'll advise which tier fits your goals.",
+        },
+        {
+          step: "03",
+          title: "We Run the Campaign",
+          body: "Our team sets up and manages the paid social campaign, coordinates influencer shares, and handles extended newsletter distribution. You get a brief report at the end of the campaign period.",
+        },
+      ],
+      benefits: [
+        {
+          title: "Diaspora-Specific Targeting",
+          body: "Every paid placement targets African and Caribbean diaspora audiences across US cities — the same readership that already engages with The Moveee US. Precise, culturally specific, zero wasted spend.",
+        },
+        {
+          title: "Editorial Credibility Behind Every Promotion",
+          body: "Amplifying a Moveee feature carries more weight than a cold ad. Diaspora audiences trust editorial recommendations — promoting something they might have already read in The Moveee has a different response rate.",
+        },
+        {
+          title: "Influencer Distribution in Diaspora Spaces",
+          body: "Higher tiers include coordinated shares from influencers connected to our African and Caribbean diaspora network — authentic voices, not unfamiliar sponsored accounts.",
+        },
+      ],
+      faqs: [
+        {
+          question: "Can I buy Content Amplification without a Sponsored Content or Media Partnership package?",
+          answer: "No. Content Amplification is exclusively available as an add-on to Sponsored Content or Media Partnership. The feature we amplify must be published on The Moveee US.",
+        },
+        {
+          question: "Can I add Amplify after my feature has already gone live?",
+          answer: "Yes, within 30 days of publication. Features older than 30 days are assessed on enquiry — reach us at hello@themoveee.com.",
+        },
+        {
+          question: "What's the difference between the social posts in Sponsored Content and an Amplify campaign?",
+          answer: "The social posts included in Sponsored Content are organic. Amplify adds a paid budget, audience targeting, influencer distribution, and extended newsletter reach — all of which organic posting alone cannot match.",
+        },
+      ],
+      ctaLabel: "Enquire about Amplify →",
+      ctaSubtext: "Requires an active Sponsored Content or Media Partnership package.",
     },
   },
 };
