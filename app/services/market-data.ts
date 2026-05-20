@@ -465,8 +465,7 @@ export const MARKETS: Market[] = [
     currency: "₦",
     sections: [
       {
-        id: "editorial", label: "Sponsored Content", audience: "For brands and businesses targeting Nigerian and Pan-African audiences", kind: "mixed",
-        serviceLabel: "Amplify your feature",
+        id: "editorial", label: "Sponsored Content", audience: "For brands and businesses targeting Nigerian and Pan-African audiences", kind: "cards",
         crossSellTo: "amplify",
         cards: [
           {
@@ -483,7 +482,6 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
-        service: amplifyAfrica,
       },
       {
         id: "partnership", label: "Media Partnership", audience: "For publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
@@ -717,8 +715,7 @@ export const MARKETS: Market[] = [
     currency: "£",
     sections: [
       {
-        id: "editorial", label: "Sponsored Content", audience: "For brands targeting the African and Caribbean diaspora across Britain", kind: "mixed",
-        serviceLabel: "Amplify your feature",
+        id: "editorial", label: "Sponsored Content", audience: "For brands targeting the African and Caribbean diaspora across Britain", kind: "cards",
         crossSellTo: "amplify",
         cards: [
           {
@@ -735,7 +732,6 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
-        service: amplifyUK,
       },
       {
         id: "partnership", label: "Media Partnership", audience: "For UK publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
@@ -969,8 +965,7 @@ export const MARKETS: Market[] = [
     currency: "$",
     sections: [
       {
-        id: "editorial", label: "Sponsored Content", audience: "For brands targeting the African and Caribbean diaspora across the US", kind: "mixed",
-        serviceLabel: "Amplify your feature",
+        id: "editorial", label: "Sponsored Content", audience: "For brands targeting the African and Caribbean diaspora across the US", kind: "cards",
         crossSellTo: "amplify",
         cards: [
           {
@@ -987,7 +982,6 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
-        service: amplifyUS,
       },
       {
         id: "partnership", label: "Media Partnership", audience: "For US publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
