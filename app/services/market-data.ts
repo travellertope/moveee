@@ -179,7 +179,7 @@ const amplifyUK: TierService = {
     {
       name: "Priority",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "45", currency: "£",
+      price: "85", currency: "£",
       features: [
         { label: '"As Seen In The Moveee" logo rights', included: true },
         { label: "Priority publish slot (48-hour turnaround)", included: true },
@@ -197,7 +197,7 @@ const amplifyUK: TierService = {
     {
       name: "Sponsored",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "90", currency: "£",
+      price: "140", currency: "£",
       features: [
         { label: '"As Seen In The Moveee" logo rights', included: true },
         { label: "Priority publish slot (48-hour turnaround)", included: true },
@@ -317,7 +317,7 @@ const amplifyUS: TierService = {
     {
       name: "Invested",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "450", currency: "$",
+      price: "575", currency: "$",
       features: [
         { label: '"As Seen In The Moveee" logo rights', included: true },
         { label: "Priority publish slot (48-hour turnaround)", included: true },
@@ -349,7 +349,7 @@ const moveeeProAfrica: TierService = {
       billingNote: "Expires in 3 Months",
       price: "80k", currency: "₦",
       features: [
-        { label: "Book Review", included: "0×" },
+        { label: "Book Review", included: "1×" },
         { label: "Author Interview", included: "1×" },
         { label: "News Release", included: "2×" },
         { label: "Social Media Sync", included: "Basic" },
@@ -361,7 +361,7 @@ const moveeeProAfrica: TierService = {
       billingNote: "Expires in 3 Months",
       price: "130k", currency: "₦",
       features: [
-        { label: "Exhibition Review", included: "0×" },
+        { label: "Exhibition Review", included: "1×" },
         { label: "Artist Spotlight", included: "2×" },
         { label: "News Release", included: "2×" },
         { label: "Social Media Sync", included: "Basic" },
@@ -373,7 +373,7 @@ const moveeeProAfrica: TierService = {
       billingNote: "Expires in 3 Months",
       price: "100k", currency: "₦",
       features: [
-        { label: "Film Review", included: "0×" },
+        { label: "Film Review", included: "1×" },
         { label: "Filmmaker Profile", included: "1×" },
         { label: "News Release", included: "2×" },
         { label: "Social Media Sync", included: "Basic" },
