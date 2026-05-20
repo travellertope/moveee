@@ -586,6 +586,55 @@ export const GET_TAX_STORIES = `
   ${STORY_FIELDS_FRAGMENT}
 `;
 
+// ── Magazine Issues ───────────────────────────────────────────────────────────
+
+export const GET_ALL_ISSUES = `
+  query GetAllIssues {
+    issues(first: 50, where: { orderby: TERM_ORDER, order: DESC, hideEmpty: true }) {
+      nodes {
+        id
+        databaseId
+        name
+        slug
+        description
+        issueFields {
+          issueNumber
+          issueSubtitle
+          issueEditorialNote
+          issueCoverImageUrl
+        }
+        posts(first: 1) {
+          nodes { date }
+        }
+      }
+    }
+  }
+`;
+
+export const GET_ISSUE_BY_SLUG = `
+  query GetIssueBySlug($slug: ID!) {
+    issue(id: $slug, idType: SLUG) {
+      id
+      databaseId
+      name
+      slug
+      description
+      issueFields {
+        issueNumber
+        issueSubtitle
+        issueEditorialNote
+        issueCoverImageUrl
+      }
+      posts(first: 100) {
+        nodes {
+          ...StoryFields
+        }
+      }
+    }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
 // Separate per-taxonomy queries so we never pass null to a required ID! argument.
 export const GET_SERIES_STORIES = `
   query GetSeriesStories($series: ID!) {
@@ -1406,3 +1455,64 @@ export const GET_SITE_SETTINGS = `
     }
   }
 `;
+
+// ── Issue helpers (REST-based — term meta not available via GraphQL without ACF) ──
+
+export interface IssueTerm {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  meta: {
+    issue_number?: number;
+    issue_subtitle?: string;
+    issue_editorial_note?: string;
+    issue_cover_image_url?: string;
+  };
+}
+
+export async function getLatestIssue(): Promise<IssueTerm | null> {
+  try {
+    const res = await fetch(
+      `${WP_BASE_URL}/wp-json/wp/v2/issues?per_page=1&orderby=id&order=desc&_fields=id,name,slug,description,meta`,
+      { next: { revalidate: 300 } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.[0] ?? null;
+  } catch { return null; }
+}
+
+export async function getAllIssues(): Promise<IssueTerm[]> {
+  try {
+    const res = await fetch(
+      `${WP_BASE_URL}/wp-json/wp/v2/issues?per_page=50&orderby=id&order=desc&_fields=id,name,slug,description,meta`,
+      { next: { revalidate: 300 } }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch { return []; }
+}
+
+export async function getIssueBySlug(slug: string): Promise<IssueTerm | null> {
+  try {
+    const res = await fetch(
+      `${WP_BASE_URL}/wp-json/wp/v2/issues?slug=${encodeURIComponent(slug)}&_fields=id,name,slug,description,meta`,
+      { next: { revalidate: 300 } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.[0] ?? null;
+  } catch { return null; }
+}
+
+export async function getPostsByIssue(issueId: number): Promise<any[]> {
+  try {
+    const res = await fetch(
+      `${WP_BASE_URL}/wp-json/wp/v2/posts?issues=${issueId}&per_page=100&orderby=date&order=asc&_embed=1&status=publish`,
+      { next: { revalidate: 300 } }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch { return []; }
+}

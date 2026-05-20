@@ -999,6 +999,61 @@ class Culture_Post_Types {
             'graphql_single_name' => 'cultureDirectoryType',
             'graphql_plural_name' => 'cultureDirectoryTypes',
         ) );
+
+        register_taxonomy( 'issue', array( 'post' ), array(
+            'labels' => array(
+                'name'              => __( 'Issues', 'culture-community' ),
+                'singular_name'     => __( 'Issue', 'culture-community' ),
+                'search_items'      => __( 'Search Issues', 'culture-community' ),
+                'all_items'         => __( 'All Issues', 'culture-community' ),
+                'edit_item'         => __( 'Edit Issue', 'culture-community' ),
+                'add_new_item'      => __( 'Add New Issue', 'culture-community' ),
+                'not_found'         => __( 'No issues found', 'culture-community' ),
+                'menu_name'         => __( 'Issues', 'culture-community' ),
+            ),
+            'hierarchical'        => false,
+            'public'              => true,
+            'publicly_queryable'  => true,
+            'show_ui'             => true,
+            'show_in_menu'        => true,
+            'show_admin_column'   => true,
+            'show_in_nav_menus'   => true,
+            'show_tagcloud'       => false,
+            'show_in_quick_edit'  => true,
+            'show_in_rest'        => true,
+            'rest_base'           => 'issues',
+            'rewrite'             => array( 'slug' => 'issue', 'with_front' => false ),
+            'query_var'           => true,
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'issue',
+            'graphql_plural_name' => 'issues',
+        ) );
+
+        // Register term meta for issues
+        register_term_meta( 'issue', 'issue_number', array(
+            'type'              => 'integer',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'sanitize_callback' => 'absint',
+        ) );
+        register_term_meta( 'issue', 'issue_subtitle', array(
+            'type'              => 'string',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'sanitize_callback' => 'sanitize_text_field',
+        ) );
+        register_term_meta( 'issue', 'issue_editorial_note', array(
+            'type'              => 'string',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'sanitize_callback' => 'sanitize_textarea_field',
+        ) );
+        register_term_meta( 'issue', 'issue_cover_image_url', array(
+            'type'              => 'string',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'sanitize_callback' => 'esc_url_raw',
+        ) );
     }
 
     /**
