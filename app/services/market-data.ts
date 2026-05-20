@@ -654,7 +654,7 @@ export const MARKETS: Market[] = [
             price: "From ₦2,500,000",
             priceNote: "3-month campaign · custom scoping on enquiry",
             includes: [
-              "2× editorial features",
+              "4× editorial features",
               "4× individual artist or designer spotlights",
               "Pre-event social campaign & countdown content",
               "Full Happenings event coverage (day-of)",
@@ -876,7 +876,7 @@ export const MARKETS: Market[] = [
             price: "From £3,200",
             priceNote: "3-month campaign · custom scoping on enquiry",
             includes: [
-              "2× editorial features",
+              "4× editorial features",
               "4× individual artist or designer spotlights",
               "Pre-event social campaign & countdown content",
               "Full Happenings event coverage (day-of)",
@@ -1098,7 +1098,7 @@ export const MARKETS: Market[] = [
             price: "From $5,500",
             priceNote: "3-month campaign · custom scoping on enquiry",
             includes: [
-              "2× editorial features",
+              "4× editorial features",
               "4× individual artist or designer spotlights",
               "Pre-event social campaign & countdown content",
               "Full Happenings event coverage (day-of)",
