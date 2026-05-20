@@ -486,16 +486,12 @@ export const MARKETS: Market[] = [
         service: amplifyAfrica,
       },
       {
-        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
-        service: amplifyAfrica,
-      },
-      {
         id: "partnership", label: "Media Partnership", audience: "For publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
         crossSellTo: "amplify",
         service: moveeeProAfrica,
       },
       {
-        id: "presskit", label: "Presskit", audience: "For businesses, founders, and public figures building media presence", kind: "cards",
+        id: "presskit", label: "Presskit (PR)", audience: "For businesses, founders, and public figures building media presence", kind: "cards",
         cards: [
           {
             name: "Single Press Release",
@@ -605,7 +601,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Events & Travel", audience: "For event promoters, festival organisers, and tour operators", kind: "cards",
+        id: "events", label: "Event Coverage", audience: "For event promoters, festival organisers, and cultural institutions across Nigeria", kind: "cards",
         cards: [
           {
             name: "Happenings Partner — Single Day",
@@ -662,6 +658,11 @@ export const MARKETS: Market[] = [
               "Additional spotlights at ₦200,000 each",
             ],
           },
+        ],
+      },
+      {
+        id: "travel", label: "Travel & Tours", audience: "For tour operators, travel experiences, and cultural heritage packages across Nigeria and West Africa", kind: "cards",
+        cards: [
           {
             name: "Moveee Origins — Tour Partner",
             tag: "travel", tagLabel: "Travel",
@@ -675,6 +676,10 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
+      },
+      {
+        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
+        service: amplifyAfrica,
       },
     ],
   },
@@ -708,16 +713,12 @@ export const MARKETS: Market[] = [
         service: amplifyUK,
       },
       {
-        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
-        service: amplifyUK,
-      },
-      {
         id: "partnership", label: "Media Partnership", audience: "For UK publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
         crossSellTo: "amplify",
         service: moveeeProUK,
       },
       {
-        id: "presskit", label: "Presskit", audience: "For UK-based founders, creatives, and brands building media presence", kind: "cards",
+        id: "presskit", label: "Presskit (PR)", audience: "For UK-based founders, creatives, and brands building media presence", kind: "cards",
         cards: [
           {
             name: "Single Press Release",
@@ -827,7 +828,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Events & Travel", audience: "For event promoters, entertainment organisers, and tour operators in the UK", kind: "cards",
+        id: "events", label: "Event Coverage", audience: "For event promoters, entertainment organisers, and cultural institutions across Britain", kind: "cards",
         cards: [
           {
             name: "Happenings UK Partner — Single Day",
@@ -884,6 +885,11 @@ export const MARKETS: Market[] = [
               "Additional spotlights at £280 each",
             ],
           },
+        ],
+      },
+      {
+        id: "travel", label: "Travel & Tours", audience: "For UK diaspora travel operators and heritage experience providers", kind: "cards",
+        cards: [
           {
             name: "Origins UK — Heritage Tours",
             tag: "travel", tagLabel: "Travel",
@@ -897,6 +903,10 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
+      },
+      {
+        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
+        service: amplifyUK,
       },
     ],
   },
@@ -930,16 +940,12 @@ export const MARKETS: Market[] = [
         service: amplifyUS,
       },
       {
-        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
-        service: amplifyUS,
-      },
-      {
         id: "partnership", label: "Media Partnership", audience: "For US publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
         crossSellTo: "amplify",
         service: moveeeProUS,
       },
       {
-        id: "presskit", label: "Presskit", audience: "For US-based African diaspora founders, creatives, and brands", kind: "cards",
+        id: "presskit", label: "Presskit (PR)", audience: "For US-based African diaspora founders, creatives, and brands", kind: "cards",
         cards: [
           {
             name: "Single Press Release",
@@ -1049,7 +1055,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Events & Travel", audience: "For event promoters, entertainment organisers, and tour operators in the US", kind: "cards",
+        id: "events", label: "Event Coverage", audience: "For event promoters, entertainment organisers, and cultural institutions across the US", kind: "cards",
         cards: [
           {
             name: "Happenings US Partner — Single Day",
@@ -1107,6 +1113,27 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
+      },
+      {
+        id: "travel", label: "Travel & Tours", audience: "For tour operators and cultural travel experience providers serving the African and Caribbean diaspora in the US", kind: "cards",
+        cards: [
+          {
+            name: "Origins US — Diaspora Travel Partner",
+            tag: "travel", tagLabel: "Travel",
+            description: "Commission-based listing for heritage tours, homeland trips, and cultural travel experiences for African and Caribbean diaspora audiences across NYC, Atlanta, Houston, DC, and LA.",
+            price: "12% commission",
+            priceNote: "per booking · $80/quarter listing fee",
+            includes: [
+              "Curated experience featured on Moveee Origins US",
+              "Origins editorial feature + photography",
+              "GetMeLit US + Moveee Connect promotion",
+            ],
+          },
+        ],
+      },
+      {
+        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
+        service: amplifyUS,
       },
     ],
   },

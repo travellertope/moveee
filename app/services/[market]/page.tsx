@@ -31,6 +31,7 @@ const SECTION_ICONS: Record<string, string> = {
   presskit: "◎",
   partnership: "◆",
   events: "◇",
+  travel: "◎",
   connect: "⬡",
 };
 
