@@ -46,7 +46,7 @@ export type RateCard = {
 };
 
 export type Section =
-  | { id: string; label: string; audience?: string; kind: "cards"; cards: RateCard[]; crossSellTo?: string }
+  | { id: string; label: string; audience?: string; kind: "cards"; cards: RateCard[]; crossSellTo?: string; columns?: 2 }
   | { id: string; label: string; audience?: string; kind: "tiers"; service: TierService; crossSellTo?: string }
   | { id: string; label: string; audience?: string; kind: "mixed"; cards: RateCard[]; service: TierService; serviceLabel?: string; crossSellTo?: string };
 
@@ -573,9 +573,21 @@ export const MARKETS: Market[] = [
         id: "lifestyle", label: "Lifestyle & Commerce", audience: "For consumer product brands, retailers, and artisans", kind: "cards",
         cards: [
           {
-            name: "Moveee Lifestyle — Brand Feature",
-            tag: "lifestyle", tagLabel: "Lifestyle",
-            description: "Curated ‘Shop African’ product collections for Nigerian and African designers, artisans, beauty brands, and homeware makers on the Moveee Lifestyle shop hub.",
+            name: "Directory Listing",
+            tag: "lifestyle", tagLabel: "Free to List",
+            description: "Get your brand in the Moveee Lifestyle directory — no upfront fee, no editorial required. Simple shop presence with your brand name, category, and product link. We earn 10% on sales traced to our link.",
+            price: "Free",
+            priceNote: "10% affiliate commission per sale · no upfront fee",
+            includes: [
+              "Brand listed in Moveee Lifestyle directory",
+              "Product category + shop link",
+              "Eligible for editorial upgrade to Brand Feature",
+            ],
+          },
+          {
+            name: "Brand Feature",
+            tag: "lifestyle", tagLabel: "Featured",
+            description: "Curated ‘Shop African’ product collection with a full editorial write-up — brand story, product spotlight, newsletter distribution, and social promotion.",
             price: "₦80,000",
             priceNote: "flat placement fee · 10% affiliate commission per sale",
             includes: [
@@ -586,8 +598,8 @@ export const MARKETS: Market[] = [
             ],
           },
           {
-            name: "Lifestyle Seasonal Drop Campaign",
-            tag: "lifestyle", tagLabel: "Lifestyle",
+            name: "Seasonal Drop Campaign",
+            tag: "lifestyle", tagLabel: "Campaign",
             description: "Full editorial commerce campaign around key cultural moments — Detty December, Lagos Fashion Week, Afrobeats season.",
             price: "₦450,000",
             priceNote: "per seasonal campaign · 3 brand slots per season",
@@ -601,7 +613,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Event Coverage", audience: "For event promoters, festival organisers, and cultural institutions across Nigeria", kind: "cards",
+        id: "events", label: "Event Coverage", audience: "For event promoters, festival organisers, and cultural institutions across Nigeria", kind: "cards", columns: 2,
         cards: [
           {
             name: "Happenings Partner — Single Day",
@@ -664,14 +676,27 @@ export const MARKETS: Market[] = [
         id: "travel", label: "Travel & Tours", audience: "For tour operators, travel experiences, and cultural heritage packages across Nigeria and West Africa", kind: "cards",
         cards: [
           {
-            name: "Moveee Origins — Tour Partner",
-            tag: "travel", tagLabel: "Travel",
-            description: "Commission-based curated cultural and heritage tour packages. Zero inventory risk.",
-            price: "12% commission",
-            priceNote: "per booking · ₦30,000/quarter listing fee",
+            name: "Basic Listing",
+            tag: "travel", tagLabel: "Free to List",
+            description: "Get your tour or experience in the Moveee Origins directory — no upfront fee, no editorial required. Just your experience, category, and booking link. We earn 12% on confirmed bookings.",
+            price: "Free",
+            priceNote: "12% commission on confirmed bookings · no listing fee",
+            includes: [
+              "Listed in Moveee Origins Nigeria directory",
+              "Tour category + booking link",
+              "Eligible for editorial upgrade",
+            ],
+          },
+          {
+            name: "Editorial Feature",
+            tag: "travel", tagLabel: "Featured",
+            description: "Full editorial write-up of your tour or experience — cultural context, itinerary story, and photography — distributed through GetMeLit and promoted across our social channels.",
+            price: "₦50,000",
+            priceNote: "flat fee · 12% commission on confirmed bookings",
             includes: [
               "Curated itinerary feature on Moveee Origins",
-              "Origins editorial feature + photography",
+              "Editorial write-up (cultural context + itinerary)",
+              "GetMeLit newsletter promotion",
               "Moveee Connect community promotion",
             ],
           },
@@ -800,9 +825,21 @@ export const MARKETS: Market[] = [
         id: "lifestyle", label: "Lifestyle & Commerce", audience: "For Black-owned consumer brands, retailers, and artisans in the UK", kind: "cards",
         cards: [
           {
-            name: "Moveee Lifestyle UK — Shop the Diaspora",
-            tag: "lifestyle", tagLabel: "Lifestyle",
-            description: "Curated shop drops for UK-based Black-owned brands — fashion, beauty, natural hair, homeware, and food.",
+            name: "Directory Listing",
+            tag: "lifestyle", tagLabel: "Free to List",
+            description: "Get your brand in the Moveee Lifestyle UK directory — no upfront fee, no editorial required. Simple shop presence with your brand name, category, and product link. We earn 10% on sales traced to our link.",
+            price: "Free",
+            priceNote: "10% affiliate commission per sale · no upfront fee",
+            includes: [
+              "Brand listed in Moveee Lifestyle UK directory",
+              "Product category + shop link",
+              "Eligible for editorial upgrade to Brand Feature",
+            ],
+          },
+          {
+            name: "Brand Feature",
+            tag: "lifestyle", tagLabel: "Featured",
+            description: "Curated shop drop with full editorial write-up — brand story, product spotlight, GetMeLit UK newsletter distribution, and social promotion.",
             price: "£250",
             priceNote: "flat placement fee · 10% affiliate commission per sale",
             includes: [
@@ -813,8 +850,8 @@ export const MARKETS: Market[] = [
             ],
           },
           {
-            name: "Lifestyle UK — Seasonal Shop Drop",
-            tag: "lifestyle", tagLabel: "Lifestyle",
+            name: "Seasonal Drop Campaign",
+            tag: "lifestyle", tagLabel: "Campaign",
             description: "Full editorial commerce campaign timed to UK cultural moments — Black History Month, Carnival season, Christmas gifting.",
             price: "£600",
             priceNote: "per seasonal campaign · 3 brand slots per season",
@@ -828,7 +865,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Event Coverage", audience: "For event promoters, entertainment organisers, and cultural institutions across Britain", kind: "cards",
+        id: "events", label: "Event Coverage", audience: "For event promoters, entertainment organisers, and cultural institutions across Britain", kind: "cards", columns: 2,
         cards: [
           {
             name: "Happenings UK Partner — Single Day",
@@ -891,15 +928,28 @@ export const MARKETS: Market[] = [
         id: "travel", label: "Travel & Tours", audience: "For UK diaspora travel operators and heritage experience providers", kind: "cards",
         cards: [
           {
-            name: "Origins UK — Heritage Tours",
-            tag: "travel", tagLabel: "Travel",
-            description: "Roots tourism for UK diaspora Nigerians, Ghanaians, and Jamaicans — homecoming trips, owambes, cultural festivals.",
-            price: "12% commission",
-            priceNote: "per booking · £75/quarter listing fee",
+            name: "Basic Listing",
+            tag: "travel", tagLabel: "Free to List",
+            description: "Get your tour or experience in the Moveee Origins UK directory — no upfront fee, no editorial required. Just your experience, category, and booking link. We earn 12% on confirmed bookings.",
+            price: "Free",
+            priceNote: "12% commission on confirmed bookings · no listing fee",
             includes: [
-              "Heritage itinerary featured on Moveee Origins",
-              "Editorial spotlight + photography",
-              "GetMeLit UK + Moveee Connect promotion",
+              "Listed in Moveee Origins UK directory",
+              "Tour category + booking link",
+              "Eligible for editorial upgrade",
+            ],
+          },
+          {
+            name: "Editorial Feature",
+            tag: "travel", tagLabel: "Featured",
+            description: "Full editorial write-up of your heritage tour or experience — cultural context, itinerary story, and photography — distributed through GetMeLit UK and promoted across our social channels.",
+            price: "£120",
+            priceNote: "flat fee · 12% commission on confirmed bookings",
+            includes: [
+              "Heritage itinerary featured on Moveee Origins UK",
+              "Editorial write-up (cultural context + itinerary)",
+              "GetMeLit UK newsletter promotion",
+              "Moveee Connect UK community promotion",
             ],
           },
         ],
@@ -1027,9 +1077,21 @@ export const MARKETS: Market[] = [
         id: "lifestyle", label: "Lifestyle & Commerce", audience: "For Black-owned consumer brands, retailers, and artisans in the US", kind: "cards",
         cards: [
           {
-            name: "Moveee Lifestyle US — Shop the Culture",
-            tag: "lifestyle", tagLabel: "Lifestyle",
-            description: "Curated ‘Shop the Culture’ collections featuring US Black-owned brands — DTC fashion, natural hair and beauty, food, and homeware.",
+            name: "Directory Listing",
+            tag: "lifestyle", tagLabel: "Free to List",
+            description: "Get your brand in the Moveee Lifestyle US directory — no upfront fee, no editorial required. Simple shop presence with your brand name, category, and product link. We earn 10% on sales traced to our link.",
+            price: "Free",
+            priceNote: "10% affiliate commission per sale · no upfront fee",
+            includes: [
+              "Brand listed in Moveee Lifestyle US directory",
+              "Product category + shop link",
+              "Eligible for editorial upgrade to Brand Feature",
+            ],
+          },
+          {
+            name: "Brand Feature",
+            tag: "lifestyle", tagLabel: "Featured",
+            description: "Curated ‘Shop the Culture’ collection with full editorial write-up — brand story, product spotlight, GetMeLit US newsletter distribution, and social promotion.",
             price: "$450",
             priceNote: "flat placement fee · 10% affiliate commission per sale",
             includes: [
@@ -1040,8 +1102,8 @@ export const MARKETS: Market[] = [
             ],
           },
           {
-            name: "Lifestyle US — Seasonal Shop Drop",
-            tag: "lifestyle", tagLabel: "Lifestyle",
+            name: "Seasonal Drop Campaign",
+            tag: "lifestyle", tagLabel: "Campaign",
             description: "Full editorial commerce campaign around US cultural moments — Black History Month, Juneteenth, Holiday gifting.",
             price: "$900",
             priceNote: "per seasonal campaign · 3 brand slots per season",
@@ -1055,7 +1117,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Event Coverage", audience: "For event promoters, entertainment organisers, and cultural institutions across the US", kind: "cards",
+        id: "events", label: "Event Coverage", audience: "For event promoters, entertainment organisers, and cultural institutions across the US", kind: "cards", columns: 2,
         cards: [
           {
             name: "Happenings US Partner — Single Day",
@@ -1118,15 +1180,28 @@ export const MARKETS: Market[] = [
         id: "travel", label: "Travel & Tours", audience: "For tour operators and cultural travel experience providers serving the African and Caribbean diaspora in the US", kind: "cards",
         cards: [
           {
-            name: "Origins US — Diaspora Travel Partner",
-            tag: "travel", tagLabel: "Travel",
-            description: "Commission-based listing for heritage tours, homeland trips, and cultural travel experiences for African and Caribbean diaspora audiences across NYC, Atlanta, Houston, DC, and LA.",
-            price: "12% commission",
-            priceNote: "per booking · $80/quarter listing fee",
+            name: "Basic Listing",
+            tag: "travel", tagLabel: "Free to List",
+            description: "Get your tour or experience in the Moveee Origins US directory — no upfront fee, no editorial required. Just your experience, category, and booking link. We earn 12% on confirmed bookings.",
+            price: "Free",
+            priceNote: "12% commission on confirmed bookings · no listing fee",
+            includes: [
+              "Listed in Moveee Origins US directory",
+              "Tour category + booking link",
+              "Eligible for editorial upgrade",
+            ],
+          },
+          {
+            name: "Editorial Feature",
+            tag: "travel", tagLabel: "Featured",
+            description: "Full editorial write-up of your diaspora travel experience — cultural context, itinerary story, and photography — distributed through GetMeLit US and promoted across our social channels.",
+            price: "$180",
+            priceNote: "flat fee · 12% commission on confirmed bookings",
             includes: [
               "Curated experience featured on Moveee Origins US",
-              "Origins editorial feature + photography",
-              "GetMeLit US + Moveee Connect promotion",
+              "Editorial write-up (cultural context + itinerary)",
+              "GetMeLit US newsletter promotion",
+              "Moveee Connect US community promotion",
             ],
           },
         ],
