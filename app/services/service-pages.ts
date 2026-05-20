@@ -109,79 +109,79 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Your Brand, Inside the Culture",
       tagline: "Curated commerce and editorial for African consumer brands that deserve more than a product listing.",
       intro: [
-        "The Moveee Lifestyle & Commerce offering is not a marketplace. It's a curated space where African and diaspora-founded brands sit alongside original editorial, seasonal campaign moments, and a newsletter readership that shops intentionally. If your product is worth discovering, we make sure it's discovered properly.",
-        "Brand Feature gives you a curated shop listing, an editorial write-up that frames your product in cultural context, newsletter placement, and native social posts. Seasonal Drop takes it further — at Detty December, Black History Month, or other high-traffic cultural moments, we build full campaigns around a select group of brands. Application is required and spots are limited.",
-        "This is affiliate-tracked commerce. We promote, readers discover, sales are tracked through your unique affiliate link, and we earn commission on conversions. There's no flat fee for driving traffic that doesn't convert — our incentives are aligned with yours.",
+        "The Moveee Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. It's the lowest-friction way to get in front of our audience.",
+        "When you're ready for more, upgrade to a Brand Feature: a curated shop listing with an editorial write-up that frames your product in genuine cultural context, plus GetMeLit newsletter distribution and social promotion. Seasonal Drop takes it further — at Detty December, Lagos Fashion Week, and other high-traffic cultural moments, we build full editorial commerce campaigns around a select group of brands.",
+        "At every tier, we earn on conversions. Our incentives are aligned with yours.",
       ],
       howItWorks: [
         {
           step: "01",
-          title: "Brand Application",
-          body: "Submit your brand profile: product category, price point, brand story, and any existing press coverage. We review applications on a rolling basis and will respond within five business days.",
+          title: "List for Free",
+          body: "Submit your brand for a free Directory Listing — no editorial review required, just your category, product link, and brand name. We set up an affiliate link and you're live in the directory within three business days.",
         },
         {
           step: "02",
-          title: "Editorial Review & Onboarding",
-          body: "If your brand is selected, we onboard you with a product brief and shoot/write-up intake. You send samples where relevant. We confirm the editorial angle, affiliate link setup, and live dates.",
+          title: "Apply for Brand Feature",
+          body: "When you're ready for editorial, submit your brand profile: product category, price point, brand story, and any existing press. We review applications on a rolling basis and respond within five business days.",
         },
         {
           step: "03",
-          title: "Shoot & Write-Up",
-          body: "Our editorial team produces the write-up. Where a product shoot is required (fashion, beauty, homeware), this is coordinated as part of onboarding. The goal is imagery and copy that fits seamlessly into our editorial environment.",
+          title: "Editorial Onboarding",
+          body: "Once accepted, we onboard you with a product brief and write-up intake. You send samples where relevant. We confirm the editorial angle, affiliate link setup, and live dates.",
         },
         {
           step: "04",
           title: "Go Live",
-          body: "The listing goes live in the shop, the editorial write-up publishes, GetMeLit drops the feature into subscribers' inboxes, and social posts go out. You can watch traffic and affiliate clicks in real time.",
+          body: "Your listing goes live in the shop, the editorial write-up publishes, GetMeLit drops the feature into subscribers' inboxes, and social posts go out across our channels.",
         },
         {
           step: "05",
           title: "Track & Earn Together",
-          body: "Affiliate sales are tracked and reported monthly. Commission is invoiced against confirmed conversions. We share performance data with you so you can see exactly what the placement drove.",
+          body: "Affiliate sales are tracked and reported monthly. Commission is invoiced against confirmed conversions. We share performance data so you can see exactly what the placement drove.",
         },
       ],
       benefits: [
         {
+          title: "Start Free, Upgrade When Ready",
+          body: "The free Directory Listing removes all upfront risk. Get into the directory, see if the audience responds, and upgrade to a Brand Feature when you're ready for full editorial treatment.",
+        },
+        {
           title: "Curation That Signals Quality",
-          body: "Being featured in The Moveee shop tells readers this brand has been editorially reviewed. That signal matters more than a paid-for listing in a generic directory.",
+          body: "A Brand Feature tells readers this product has been editorially reviewed. That signal matters more than a generic paid-for listing — it's what converts a browse into a purchase.",
         },
         {
           title: "Seasonal Campaign Moments",
-          body: "Detty December, Juneteenth, and Black History Month are high-intent shopping moments for our audience. Seasonal Drops are coordinated campaigns — not a last-minute newsletter mention.",
+          body: "Detty December, Lagos Fashion Week, and Afrobeats season are high-intent shopping moments for our audience. Seasonal Drops are coordinated campaigns built around them — not last-minute newsletter mentions.",
         },
         {
           title: "Aligned Incentives",
-          body: "We earn on conversions, not on your budget. That means our copy, timing, and placement decisions are made to drive actual purchases, not just impressions.",
-        },
-        {
-          title: "Editorial Credibility",
-          body: "Every listing comes with a write-up that gives your product a story. Product copy that contextualises, rather than just describes, is what converts readers who've never heard of you.",
+          body: "At every tier, we earn on conversions. Our copy, timing, and placement decisions are made to drive actual purchases, not just impressions.",
         },
       ],
       faqs: [
+        {
+          question: "What's the difference between Directory Listing and Brand Feature?",
+          answer: "A Directory Listing is free — your brand name, category, and shop link in the directory, with 10% commission on traced sales. No editorial write-up, no newsletter, no social. A Brand Feature adds all of that: an editorial write-up, GetMeLit newsletter placement, and social posts, plus a ₦80,000 flat fee.",
+        },
         {
           question: "What product categories do you accept?",
           answer: "Fashion, beauty, wellness, homeware, food & drink, books and media, and African-made tech accessories. We don't currently list services or digital-only products in the shop, though these may be featured editorially.",
         },
         {
-          question: "How does the affiliate commission work?",
-          answer: "You provide us with a trackable affiliate link or we set one up through our platform. Every confirmed sale that originates from our content earns a commission, agreed in advance at onboarding. Commission rates range by category.",
-        },
-        {
           question: "Is there exclusivity — can competitors also be listed?",
-          answer: "We don't offer category exclusivity on the standard Brand Feature. Seasonal Drops may include exclusivity within a campaign window — this is discussed at the time of application.",
+          answer: "We don't offer category exclusivity on Directory Listings or Brand Features. Seasonal Drops may include exclusivity within a campaign window — this is discussed at the time of application.",
         },
         {
-          question: "How long does the listing stay live?",
+          question: "How long does a Brand Feature listing stay live?",
           answer: "Brand Features run for a minimum of three months from publication. After that, listings are reviewed and renewed based on performance and continued brand eligibility.",
         },
         {
-          question: "How long from application to going live?",
+          question: "How long from Brand Feature application to going live?",
           answer: "Application review takes up to five business days. After acceptance, onboarding and go-live typically takes two to three weeks depending on whether a product shoot is required.",
         },
       ],
-      ctaLabel: "Apply to be featured →",
-      ctaSubtext: "Applications reviewed on a rolling basis. Spots are limited.",
+      ctaLabel: "List your brand →",
+      ctaSubtext: "Free Directory Listing available now. Brand Feature by application.",
     },
 
     presskit: {
@@ -699,9 +699,9 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Black British Shoppers Are Intentional. Meet Them Where They Are.",
       tagline: "Curated commerce and editorial for brands the Black British community actually wants — not brands that want to be seen in it.",
       intro: [
-        "The Moveee UK Lifestyle & Commerce offering is built on a simple editorial principle: we only feature brands worth discovering. That selectivity is what makes a listing here mean something to readers in London, Birmingham, Manchester, and Bristol who've learned to trust our taste.",
-        "Brand Feature gives you a curated shop listing, an editorial write-up, newsletter placement, and native social content. Seasonal Drop positions your brand inside high-intent cultural moments — Black History Month (October in the UK), Christmas gifting season, and other calendar peaks our audience shops around intentionally.",
-        "The model is affiliate-based: we promote, readers discover, confirmed sales generate commission. Your entry point is an application — not a credit card. We review brands on merit, cultural fit, and editorial potential.",
+        "The Moveee UK Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. Zero risk, instant presence.",
+        "When you're ready for more, upgrade to a Brand Feature: a curated shop listing with an editorial write-up, GetMeLit UK newsletter distribution, and social promotion for £250 flat. Seasonal Drop takes it further — at Black History Month, Christmas gifting season, and other high-intent cultural moments, we build coordinated editorial campaigns around a select group of brands.",
+        "At every tier, we earn on conversions. Our incentives are aligned with yours.",
       ],
       howItWorks: [
         {
@@ -770,8 +770,8 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           answer: "Application review takes up to five business days. From acceptance to live, allow two to three weeks.",
         },
       ],
-      ctaLabel: "Apply to be featured →",
-      ctaSubtext: "Applications reviewed on a rolling basis. BHM Seasonal Drop applications open early.",
+      ctaLabel: "List your brand →",
+      ctaSubtext: "Free Directory Listing available now. Brand Feature by application.",
     },
 
     presskit: {
@@ -1207,9 +1207,9 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "The Diaspora Shops With Intention. Be Worth Discovering.",
       tagline: "Curated commerce and editorial for brands that deserve a place in the African and Caribbean diaspora's cultural conversation.",
       intro: [
-        "In New York, Atlanta, Houston, DC, and LA, the African and Caribbean diaspora has built a commercial ecosystem of its own — Black-owned brands, African-founded businesses, Caribbean culinary institutions, and creative ventures that circulate through community networks before they ever reach mainstream coverage. The Moveee US Lifestyle & Commerce offering is how the best of those brands reach a wider diaspora audience.",
-        "Brand Feature places your product in our curated shop with an editorial write-up, newsletter placement, and social content. Seasonal Drop campaigns align your brand with Juneteenth, Black History Month (February in the US), holiday gifting season, and other high-intent cultural moments. Application is required. We review brands for editorial fit and cultural authenticity, not just product category.",
-        "The model is affiliate-based: our incentives are aligned with yours because we earn on confirmed conversions, not impressions. Commission rates are agreed at onboarding.",
+        "The Moveee US Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. It's how brands across NYC, Atlanta, Houston, DC, and LA get in front of the diaspora audience with zero risk.",
+        "When you're ready for full editorial treatment, upgrade to a Brand Feature: a curated shop listing with an editorial write-up, GetMeLit US newsletter distribution, and social promotion for $450 flat. Seasonal Drop positions your brand inside Juneteenth, Black History Month, and holiday gifting season — coordinated editorial campaigns built around high-intent cultural moments.",
+        "At every tier, we earn on confirmed conversions. Our incentives are aligned with yours.",
       ],
       howItWorks: [
         {
@@ -1278,8 +1278,8 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
           answer: "Application review takes up to five business days. From acceptance to live, allow two to three weeks.",
         },
       ],
-      ctaLabel: "Apply to be featured →",
-      ctaSubtext: "Applications reviewed on a rolling basis. Juneteenth and BHM Seasonal Drop applications open early.",
+      ctaLabel: "List your brand →",
+      ctaSubtext: "Free Directory Listing available now. Brand Feature by application.",
     },
 
     presskit: {

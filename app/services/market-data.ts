@@ -573,9 +573,21 @@ export const MARKETS: Market[] = [
         id: "lifestyle", label: "Lifestyle & Commerce", audience: "For consumer product brands, retailers, and artisans", kind: "cards",
         cards: [
           {
-            name: "Moveee Lifestyle — Brand Feature",
-            tag: "lifestyle", tagLabel: "Lifestyle",
-            description: "Curated ‘Shop African’ product collections for Nigerian and African designers, artisans, beauty brands, and homeware makers on the Moveee Lifestyle shop hub.",
+            name: "Directory Listing",
+            tag: "lifestyle", tagLabel: "Free to List",
+            description: "Get your brand in the Moveee Lifestyle directory — no upfront fee, no editorial required. Simple shop presence with your brand name, category, and product link. We earn 10% on sales traced to our link.",
+            price: "Free",
+            priceNote: "10% affiliate commission per sale · no upfront fee",
+            includes: [
+              "Brand listed in Moveee Lifestyle directory",
+              "Product category + shop link",
+              "Eligible for editorial upgrade to Brand Feature",
+            ],
+          },
+          {
+            name: "Brand Feature",
+            tag: "lifestyle", tagLabel: "Featured",
+            description: "Curated ‘Shop African’ product collection with a full editorial write-up — brand story, product spotlight, newsletter distribution, and social promotion.",
             price: "₦80,000",
             priceNote: "flat placement fee · 10% affiliate commission per sale",
             includes: [
@@ -586,8 +598,8 @@ export const MARKETS: Market[] = [
             ],
           },
           {
-            name: "Lifestyle Seasonal Drop Campaign",
-            tag: "lifestyle", tagLabel: "Lifestyle",
+            name: "Seasonal Drop Campaign",
+            tag: "lifestyle", tagLabel: "Campaign",
             description: "Full editorial commerce campaign around key cultural moments — Detty December, Lagos Fashion Week, Afrobeats season.",
             price: "₦450,000",
             priceNote: "per seasonal campaign · 3 brand slots per season",
@@ -800,9 +812,21 @@ export const MARKETS: Market[] = [
         id: "lifestyle", label: "Lifestyle & Commerce", audience: "For Black-owned consumer brands, retailers, and artisans in the UK", kind: "cards",
         cards: [
           {
-            name: "Moveee Lifestyle UK — Shop the Diaspora",
-            tag: "lifestyle", tagLabel: "Lifestyle",
-            description: "Curated shop drops for UK-based Black-owned brands — fashion, beauty, natural hair, homeware, and food.",
+            name: "Directory Listing",
+            tag: "lifestyle", tagLabel: "Free to List",
+            description: "Get your brand in the Moveee Lifestyle UK directory — no upfront fee, no editorial required. Simple shop presence with your brand name, category, and product link. We earn 10% on sales traced to our link.",
+            price: "Free",
+            priceNote: "10% affiliate commission per sale · no upfront fee",
+            includes: [
+              "Brand listed in Moveee Lifestyle UK directory",
+              "Product category + shop link",
+              "Eligible for editorial upgrade to Brand Feature",
+            ],
+          },
+          {
+            name: "Brand Feature",
+            tag: "lifestyle", tagLabel: "Featured",
+            description: "Curated shop drop with full editorial write-up — brand story, product spotlight, GetMeLit UK newsletter distribution, and social promotion.",
             price: "£250",
             priceNote: "flat placement fee · 10% affiliate commission per sale",
             includes: [
@@ -813,8 +837,8 @@ export const MARKETS: Market[] = [
             ],
           },
           {
-            name: "Lifestyle UK — Seasonal Shop Drop",
-            tag: "lifestyle", tagLabel: "Lifestyle",
+            name: "Seasonal Drop Campaign",
+            tag: "lifestyle", tagLabel: "Campaign",
             description: "Full editorial commerce campaign timed to UK cultural moments — Black History Month, Carnival season, Christmas gifting.",
             price: "£600",
             priceNote: "per seasonal campaign · 3 brand slots per season",
@@ -1027,9 +1051,21 @@ export const MARKETS: Market[] = [
         id: "lifestyle", label: "Lifestyle & Commerce", audience: "For Black-owned consumer brands, retailers, and artisans in the US", kind: "cards",
         cards: [
           {
-            name: "Moveee Lifestyle US — Shop the Culture",
-            tag: "lifestyle", tagLabel: "Lifestyle",
-            description: "Curated ‘Shop the Culture’ collections featuring US Black-owned brands — DTC fashion, natural hair and beauty, food, and homeware.",
+            name: "Directory Listing",
+            tag: "lifestyle", tagLabel: "Free to List",
+            description: "Get your brand in the Moveee Lifestyle US directory — no upfront fee, no editorial required. Simple shop presence with your brand name, category, and product link. We earn 10% on sales traced to our link.",
+            price: "Free",
+            priceNote: "10% affiliate commission per sale · no upfront fee",
+            includes: [
+              "Brand listed in Moveee Lifestyle US directory",
+              "Product category + shop link",
+              "Eligible for editorial upgrade to Brand Feature",
+            ],
+          },
+          {
+            name: "Brand Feature",
+            tag: "lifestyle", tagLabel: "Featured",
+            description: "Curated ‘Shop the Culture’ collection with full editorial write-up — brand story, product spotlight, GetMeLit US newsletter distribution, and social promotion.",
             price: "$450",
             priceNote: "flat placement fee · 10% affiliate commission per sale",
             includes: [
@@ -1040,8 +1076,8 @@ export const MARKETS: Market[] = [
             ],
           },
           {
-            name: "Lifestyle US — Seasonal Shop Drop",
-            tag: "lifestyle", tagLabel: "Lifestyle",
+            name: "Seasonal Drop Campaign",
+            tag: "lifestyle", tagLabel: "Campaign",
             description: "Full editorial commerce campaign around US cultural moments — Black History Month, Juneteenth, Holiday gifting.",
             price: "$900",
             priceNote: "per seasonal campaign · 3 brand slots per season",
