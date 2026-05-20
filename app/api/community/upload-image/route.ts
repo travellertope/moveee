@@ -46,12 +46,19 @@ export async function POST(req: NextRequest) {
     uploadType = "image/gif";
     uploadExt = "gif";
   } else {
-    uploadBuffer = await sharp(rawBuffer)
-      .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 82 })
-      .toBuffer();
-    uploadType = "image/webp";
-    uploadExt = "webp";
+    try {
+      uploadBuffer = await sharp(rawBuffer)
+        .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 82 })
+        .toBuffer();
+      uploadType = "image/webp";
+      uploadExt = "webp";
+    } catch {
+      // Compression failed (e.g. unsupported format variant) — upload original.
+      uploadBuffer = rawBuffer;
+      uploadType = file.type;
+      uploadExt = file.type.split("/")[1].replace("jpeg", "jpg");
+    }
   }
 
   const filename = `community-${Date.now()}.${uploadExt}`;
