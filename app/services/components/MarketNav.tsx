@@ -51,6 +51,9 @@ export default function MarketNav({ sections, mode = "anchor", market }: MarketN
               className={`sidenav-link ${active === s.id ? "sidenav-link--active" : ""}`}
             >
               <span className="sidenav-link-name">{s.label}</span>
+              {s.id === "amplify" && (
+                <span className="sidenav-addon-badge">Add-On</span>
+              )}
             </a>
           ))}
         </nav>

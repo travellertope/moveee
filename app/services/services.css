@@ -51,8 +51,10 @@
 
 .sidenav-link {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 12px 14px;
   border-left: 2px solid transparent;
   text-decoration: none;
@@ -80,6 +82,20 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--mute);
+}
+
+.sidenav-addon-badge {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  border: 1px solid var(--ochre);
+  border-radius: 3px;
+  padding: 1px 5px;
+  line-height: 1.4;
+  flex-shrink: 0;
 }
 
 .sidenav-cta {

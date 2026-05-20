@@ -486,10 +486,6 @@ export const MARKETS: Market[] = [
         service: amplifyAfrica,
       },
       {
-        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
-        service: amplifyAfrica,
-      },
-      {
         id: "partnership", label: "Media Partnership", audience: "For publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
         crossSellTo: "amplify",
         service: moveeeProAfrica,
@@ -676,6 +672,10 @@ export const MARKETS: Market[] = [
           },
         ],
       },
+      {
+        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
+        service: amplifyAfrica,
+      },
     ],
   },
 
@@ -705,10 +705,6 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
-        service: amplifyUK,
-      },
-      {
-        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
         service: amplifyUK,
       },
       {
@@ -898,6 +894,10 @@ export const MARKETS: Market[] = [
           },
         ],
       },
+      {
+        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
+        service: amplifyUK,
+      },
     ],
   },
 
@@ -927,10 +927,6 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
-        service: amplifyUS,
-      },
-      {
-        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
         service: amplifyUS,
       },
       {
@@ -1107,6 +1103,10 @@ export const MARKETS: Market[] = [
             ],
           },
         ],
+      },
+      {
+        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
+        service: amplifyUS,
       },
     ],
   },
