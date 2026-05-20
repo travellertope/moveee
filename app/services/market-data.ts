@@ -46,9 +46,9 @@ export type RateCard = {
 };
 
 export type Section =
-  | { id: string; label: string; audience?: string; kind: "cards"; cards: RateCard[] }
-  | { id: string; label: string; audience?: string; kind: "tiers"; service: TierService }
-  | { id: string; label: string; audience?: string; kind: "mixed"; cards: RateCard[]; service: TierService; serviceLabel?: string };
+  | { id: string; label: string; audience?: string; kind: "cards"; cards: RateCard[]; crossSellTo?: string }
+  | { id: string; label: string; audience?: string; kind: "tiers"; service: TierService; crossSellTo?: string }
+  | { id: string; label: string; audience?: string; kind: "mixed"; cards: RateCard[]; service: TierService; serviceLabel?: string; crossSellTo?: string };
 
 export type Market = {
   id: "africa" | "uk" | "us";
@@ -179,7 +179,7 @@ const amplifyUK: TierService = {
     {
       name: "Priority",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "45", currency: "£",
+      price: "85", currency: "£",
       features: [
         { label: '"As Seen In The Moveee" logo rights', included: true },
         { label: "Priority publish slot (48-hour turnaround)", included: true },
@@ -197,7 +197,7 @@ const amplifyUK: TierService = {
     {
       name: "Sponsored",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "90", currency: "£",
+      price: "140", currency: "£",
       features: [
         { label: '"As Seen In The Moveee" logo rights', included: true },
         { label: "Priority publish slot (48-hour turnaround)", included: true },
@@ -317,7 +317,7 @@ const amplifyUS: TierService = {
     {
       name: "Invested",
       billingNote: "Monthly Recurring Option Also Available",
-      price: "450", currency: "$",
+      price: "575", currency: "$",
       features: [
         { label: '"As Seen In The Moveee" logo rights', included: true },
         { label: "Priority publish slot (48-hour turnaround)", included: true },
@@ -335,7 +335,7 @@ const amplifyUS: TierService = {
   ],
 };
 
-// ── Media Partnership (Africa only) ──────────────────────────────────────────
+// ── Media Partnership ─────────────────────────────────────────────────────────
 
 const moveeeProAfrica: TierService = {
   slug: "partnership",
@@ -349,7 +349,7 @@ const moveeeProAfrica: TierService = {
       billingNote: "Expires in 3 Months",
       price: "80k", currency: "₦",
       features: [
-        { label: "Book Review", included: "0×" },
+        { label: "Book Review", included: "1×" },
         { label: "Author Interview", included: "1×" },
         { label: "News Release", included: "2×" },
         { label: "Social Media Sync", included: "Basic" },
@@ -361,7 +361,7 @@ const moveeeProAfrica: TierService = {
       billingNote: "Expires in 3 Months",
       price: "130k", currency: "₦",
       features: [
-        { label: "Exhibition Review", included: "0×" },
+        { label: "Exhibition Review", included: "1×" },
         { label: "Artist Spotlight", included: "2×" },
         { label: "News Release", included: "2×" },
         { label: "Social Media Sync", included: "Basic" },
@@ -373,7 +373,7 @@ const moveeeProAfrica: TierService = {
       billingNote: "Expires in 3 Months",
       price: "100k", currency: "₦",
       features: [
-        { label: "Film Review", included: "0×" },
+        { label: "Film Review", included: "1×" },
         { label: "Filmmaker Profile", included: "1×" },
         { label: "News Release", included: "2×" },
         { label: "Social Media Sync", included: "Basic" },
@@ -385,6 +385,108 @@ const moveeeProAfrica: TierService = {
     { icon: "🎥", price: "₦120k", description: "Video Interview (Virtual) — recorded long-form conversation with the author, published on The Moveee's video channels." },
     { icon: "📱", price: "₦80k", description: "Instagram Live Q&A — live session hosted on The Moveee's Instagram, open to our full follower base." },
     { icon: "🎬", price: "₦220k", description: "Book Trailer — short-form video asset for your own channels to drive pre-orders and awareness." },
+  ],
+};
+
+const moveeeProUK: TierService = {
+  slug: "partnership",
+  name: "Media Partnership UK",
+  eyebrow: "Media Partnership",
+  description:
+    "A dedicated visibility package for Black British and diaspora creative organisations — independent publishers, art galleries, theatres, and filmmakers. We spotlight your work through reviews, interviews, news releases, and social content to the culturally engaged Black British audience most likely to engage, attend, and buy.",
+  packages: [
+    {
+      name: "Publishers — Debut",
+      billingNote: "Expires in 3 Months",
+      price: "180", currency: "£",
+      features: [
+        { label: "Book Review", included: "1×" },
+        { label: "Author Interview", included: "1×" },
+        { label: "News Release", included: "2×" },
+        { label: "Social Media Sync", included: "Basic" },
+      ],
+      cta: "Start Partnership",
+    },
+    {
+      name: "Galleries — Preview",
+      billingNote: "Expires in 3 Months",
+      price: "280", currency: "£",
+      features: [
+        { label: "Exhibition Review", included: "1×" },
+        { label: "Artist Spotlight", included: "2×" },
+        { label: "News Release", included: "2×" },
+        { label: "Social Media Sync", included: "Basic" },
+      ],
+      cta: "Start Partnership",
+    },
+    {
+      name: "Filmmakers — Development",
+      billingNote: "Expires in 3 Months",
+      price: "220", currency: "£",
+      features: [
+        { label: "Film Review", included: "1×" },
+        { label: "Filmmaker Profile", included: "1×" },
+        { label: "News Release", included: "2×" },
+        { label: "Social Media Sync", included: "Basic" },
+      ],
+      cta: "Start Partnership",
+    },
+  ],
+  addOns: [
+    { icon: "🎥", price: "£250", description: "Video Interview (Virtual) — recorded long-form conversation published on The Moveee's video channels." },
+    { icon: "📱", price: "£150", description: "Instagram Live Q&A — live session hosted on The Moveee UK Instagram, open to our full follower base." },
+    { icon: "🎬", price: "£450", description: "Promo Trailer — short-form video asset for your own channels to drive pre-orders, ticket sales, or awareness." },
+  ],
+};
+
+const moveeeProUS: TierService = {
+  slug: "partnership",
+  name: "Media Partnership US",
+  eyebrow: "Media Partnership",
+  description:
+    "A dedicated visibility package for African and Caribbean diaspora creative organisations in the US — independent publishers, art galleries, and filmmakers. We spotlight your work through reviews, interviews, news releases, and social content to the culturally engaged diaspora audience across NYC, Atlanta, Houston, DC, and LA.",
+  packages: [
+    {
+      name: "Publishers — Debut",
+      billingNote: "Expires in 3 Months",
+      price: "280", currency: "$",
+      features: [
+        { label: "Book Review", included: "1×" },
+        { label: "Author Interview", included: "1×" },
+        { label: "News Release", included: "2×" },
+        { label: "Social Media Sync", included: "Basic" },
+      ],
+      cta: "Start Partnership",
+    },
+    {
+      name: "Galleries — Preview",
+      billingNote: "Expires in 3 Months",
+      price: "420", currency: "$",
+      features: [
+        { label: "Exhibition Review", included: "1×" },
+        { label: "Artist Spotlight", included: "2×" },
+        { label: "News Release", included: "2×" },
+        { label: "Social Media Sync", included: "Basic" },
+      ],
+      cta: "Start Partnership",
+    },
+    {
+      name: "Filmmakers — Development",
+      billingNote: "Expires in 3 Months",
+      price: "350", currency: "$",
+      features: [
+        { label: "Film Review", included: "1×" },
+        { label: "Filmmaker Profile", included: "1×" },
+        { label: "News Release", included: "2×" },
+        { label: "Social Media Sync", included: "Basic" },
+      ],
+      cta: "Start Partnership",
+    },
+  ],
+  addOns: [
+    { icon: "🎥", price: "$380", description: "Video Interview (Virtual) — recorded long-form conversation published on The Moveee's video channels." },
+    { icon: "📱", price: "$230", description: "Instagram Live Q&A — live session hosted on The Moveee US Instagram, open to our full follower base." },
+    { icon: "🎬", price: "$650", description: "Promo Trailer — short-form video asset for your own channels to drive pre-orders, ticket sales, or awareness." },
   ],
 };
 
@@ -401,6 +503,7 @@ export const MARKETS: Market[] = [
       {
         id: "editorial", label: "Sponsored Content", audience: "For brands and businesses targeting Nigerian and Pan-African audiences", kind: "mixed",
         serviceLabel: "Amplify your feature",
+        crossSellTo: "amplify",
         cards: [
           {
             name: "Cultural Spotlight Package",
@@ -419,7 +522,12 @@ export const MARKETS: Market[] = [
         service: amplifyAfrica,
       },
       {
+        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
+        service: amplifyAfrica,
+      },
+      {
         id: "partnership", label: "Media Partnership", audience: "For publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
+        crossSellTo: "amplify",
         service: moveeeProAfrica,
       },
       {
@@ -617,6 +725,7 @@ export const MARKETS: Market[] = [
       {
         id: "editorial", label: "Sponsored Content", audience: "For brands targeting the African and Caribbean diaspora across Britain", kind: "mixed",
         serviceLabel: "Amplify your feature",
+        crossSellTo: "amplify",
         cards: [
           {
             name: "Cultural Spotlight Package",
@@ -633,6 +742,15 @@ export const MARKETS: Market[] = [
           },
         ],
         service: amplifyUK,
+      },
+      {
+        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
+        service: amplifyUK,
+      },
+      {
+        id: "partnership", label: "Media Partnership", audience: "For UK publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
+        crossSellTo: "amplify",
+        service: moveeeProUK,
       },
       {
         id: "presskit", label: "Presskit", audience: "For UK-based founders, creatives, and brands building media presence", kind: "cards",
@@ -829,6 +947,7 @@ export const MARKETS: Market[] = [
       {
         id: "editorial", label: "Sponsored Content", audience: "For brands targeting the African and Caribbean diaspora across the US", kind: "mixed",
         serviceLabel: "Amplify your feature",
+        crossSellTo: "amplify",
         cards: [
           {
             name: "Brand Culture Partnership",
@@ -845,6 +964,15 @@ export const MARKETS: Market[] = [
           },
         ],
         service: amplifyUS,
+      },
+      {
+        id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
+        service: amplifyUS,
+      },
+      {
+        id: "partnership", label: "Media Partnership", audience: "For US publishers, galleries, and filmmakers with an ongoing programme", kind: "tiers",
+        crossSellTo: "amplify",
+        service: moveeeProUS,
       },
       {
         id: "presskit", label: "Presskit", audience: "For US-based African diaspora founders, creatives, and brands", kind: "cards",

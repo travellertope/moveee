@@ -5,6 +5,16 @@ import { getMarket, type Section, type RateCard, type TierPackage } from "../../
 import { getServicePage } from "../../service-pages";
 import MarketNav from "../../components/MarketNav";
 
+const SECTION_ICONS: Record<string, string> = {
+  editorial: "◈",
+  amplify: "◉",
+  lifestyle: "◉",
+  presskit: "◎",
+  partnership: "◆",
+  events: "◇",
+  connect: "⬡",
+};
+
 const VALID_MARKETS = ["africa", "uk", "us"];
 
 export function generateStaticParams() {
@@ -244,7 +254,40 @@ export default async function SlugPage({
         <section className="slug-pricing" id="pricing">
           <p className="section-eyebrow">Pricing</p>
           <h2 className="slug-section-title">Clear prices. No surprises.</h2>
+
+          {/* Addon-only notice on the Content Amplification page */}
+          {slug === "amplify" && (
+            <div className="amplify-addon-notice">
+              <span className="amplify-addon-notice-icon">◉</span>
+              <p>
+                <strong>Content Amplification is an add-on service.</strong> It requires an active{" "}
+                <Link href={`/services/${market}/editorial`}>Sponsored Content</Link> feature or{" "}
+                <Link href={`/services/${market}/partnership`}>Media Partnership</Link> package on The Moveee.
+                Tiers below are priced on top of your chosen content package.
+              </p>
+            </div>
+          )}
+
           <PricingSection section={section} />
+
+          {/* Cross-sell to Content Amplification from editorial/partnership pages */}
+          {"crossSellTo" in section && section.crossSellTo && (
+            <div className="amplify-crosssell">
+              <div className="amplify-crosssell-inner">
+                <span className="amplify-crosssell-icon">◉</span>
+                <div>
+                  <p className="amplify-crosssell-label">Want to push this further?</p>
+                  <p className="amplify-crosssell-body">
+                    Add Content Amplification to your package — paid social, influencer reach, and ad placements
+                    across our channels, exclusively for Moveee-published content.
+                  </p>
+                </div>
+                <Link href={`/services/${market}/amplify`} className="amplify-crosssell-link">
+                  See Content Amplification →
+                </Link>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* FAQ */}

@@ -26,6 +26,7 @@ export async function generateMetadata({
 
 const SECTION_ICONS: Record<string, string> = {
   editorial: "◈",
+  amplify: "◉",
   lifestyle: "◉",
   presskit: "◎",
   partnership: "◆",
