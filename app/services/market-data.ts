@@ -668,7 +668,7 @@ export const MARKETS: Market[] = [
             tag: "travel", tagLabel: "Travel",
             description: "Commission-based curated cultural and heritage tour packages. Zero inventory risk.",
             price: "12% commission",
-            priceNote: "per booking · ₦30,000/quarter listing fee",
+            priceNote: "per confirmed booking · no listing fee",
             includes: [
               "Curated itinerary feature on Moveee Origins",
               "Origins editorial feature + photography",
@@ -895,7 +895,7 @@ export const MARKETS: Market[] = [
             tag: "travel", tagLabel: "Travel",
             description: "Roots tourism for UK diaspora Nigerians, Ghanaians, and Jamaicans — homecoming trips, owambes, cultural festivals.",
             price: "12% commission",
-            priceNote: "per booking · £75/quarter listing fee",
+            priceNote: "per confirmed booking · no listing fee",
             includes: [
               "Heritage itinerary featured on Moveee Origins",
               "Editorial spotlight + photography",
@@ -1122,7 +1122,7 @@ export const MARKETS: Market[] = [
             tag: "travel", tagLabel: "Travel",
             description: "Commission-based listing for heritage tours, homeland trips, and cultural travel experiences for African and Caribbean diaspora audiences across NYC, Atlanta, Houston, DC, and LA.",
             price: "12% commission",
-            priceNote: "per booking · $80/quarter listing fee",
+            priceNote: "per confirmed booking · no listing fee",
             includes: [
               "Curated experience featured on Moveee Origins US",
               "Origins editorial feature + photography",

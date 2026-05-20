@@ -474,7 +474,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "List your experience →",
-      ctaSubtext: "₦30,000/quarter listing fee + 12% commission on confirmed bookings.",
+      ctaSubtext: "No listing fee. 12% commission on confirmed bookings only.",
     },
 
     connect: {
@@ -986,7 +986,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "List your experience →",
-      ctaSubtext: "£75/quarter listing fee + 12% commission on confirmed bookings.",
+      ctaSubtext: "No listing fee. 12% commission on confirmed bookings only.",
     },
 
     connect: {
@@ -1502,7 +1502,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "List your experience →",
-      ctaSubtext: "$80/quarter listing fee + 12% commission on confirmed bookings.",
+      ctaSubtext: "No listing fee. 12% commission on confirmed bookings only.",
     },
 
     connect: {
