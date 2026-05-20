@@ -1440,6 +1440,71 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       ctaSubtext: "Events partnership by application. Minimum four weeks' notice required.",
     },
 
+    travel: {
+      headline: "Heritage Travel, Listed Where the Diaspora Already Looks.",
+      tagline: "Commission-based listing and editorial coverage for cultural travel operators serving the African and Caribbean diaspora across the United States.",
+      intro: [
+        "African and Caribbean diaspora Americans are among the most active heritage travellers in the world. Homeland trips to Nigeria, Ghana, Jamaica, and Trinidad. Cultural pilgrimages for Afropunk, GTCO, or carnival season. Reconnection journeys built around family, food, and roots. The Moveee Origins US lists the experiences worth booking for an audience that travels with purpose — not just for leisure.",
+        "The model is the same as our other markets: you pay an $80 quarterly listing fee to maintain your placement in the Origins US directory. We write an editorial feature on your experience, promote it through GetMeLit US and social, and track bookings through a dedicated affiliate link. We earn 12% on confirmed bookings. No inventory risk for you.",
+        "We only list experiences we'd genuinely recommend to our readers — which is exactly why our listings convert.",
+      ],
+      howItWorks: [
+        {
+          step: "01",
+          title: "Submit Your Experience",
+          body: "Tell us about your tour — itinerary, target audience, price point, and available dates. We assess fit with our editorial standards and confirm listing eligibility within five working days.",
+        },
+        {
+          step: "02",
+          title: "We Write the Feature",
+          body: "Our editorial team writes a feature on your experience — where it goes, what it means culturally, and why it's worth booking for a diaspora traveller. You review the facts before publication.",
+        },
+        {
+          step: "03",
+          title: "Listed, Promoted, Tracked",
+          body: "Your experience goes live in the Origins US directory. A dedicated affiliate link tracks all bookings. You receive monthly booking reports and commission is invoiced quarterly.",
+        },
+      ],
+      benefits: [
+        {
+          title: "The Right Audience",
+          body: "GetMeLit US subscribers are African and Caribbean diaspora professionals with disposable income who travel intentionally — homecomings, cultural trips, festival travel. They are your exact customer.",
+        },
+        {
+          title: "Massive Underserved Market",
+          body: "Diaspora travel to West Africa and the Caribbean is a multi-billion dollar market that mainstream US travel media largely ignores. The Moveee speaks directly to the people making those bookings.",
+        },
+        {
+          title: "Zero Inventory Risk",
+          body: "A flat $80 quarterly listing fee with 12% commission only on confirmed bookings. No upfront ad spend with uncertain returns.",
+        },
+        {
+          title: "Editorial Credibility",
+          body: "A Moveee Origins feature reads as editorial recommendation, not a paid listing. That distinction matters to diaspora travellers who are discerning about who they trust with a significant trip.",
+        },
+      ],
+      faqs: [
+        {
+          question: "What kinds of experiences qualify?",
+          answer: "Heritage tours to West Africa or the Caribbean, Afrobeats and carnival festival travel packages, roots tourism, diaspora homecoming trips, cultural city breaks, and immersive reconnection experiences. We assess editorial fit on enquiry.",
+        },
+        {
+          question: "How does booking tracking work?",
+          answer: "Through a unique affiliate link specific to your listing. Bookings traced to that link are confirmed via your booking platform, reported monthly, and commission of 12% is invoiced quarterly.",
+        },
+        {
+          question: "Can I list multiple experiences?",
+          answer: "Yes. Each experience is listed and featured separately, each with its own $80 quarterly listing fee and dedicated tracking link.",
+        },
+        {
+          question: "Do I need to be US-based to list?",
+          answer: "No. Tour operators based in Nigeria, Ghana, Jamaica, or anywhere else can list on Origins US as long as the experience serves diaspora travellers departing from or returning to the US.",
+        },
+      ],
+      ctaLabel: "List your experience →",
+      ctaSubtext: "$80/quarter listing fee + 12% commission on confirmed bookings.",
+    },
+
     connect: {
       headline: "Access the Diaspora Community That Mainstream Doesn't Reach",
       tagline: "Quarterly community sponsorship for brands targeting African and Caribbean diaspora professionals and creatives across the United States.",

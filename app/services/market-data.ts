@@ -1115,6 +1115,23 @@ export const MARKETS: Market[] = [
         ],
       },
       {
+        id: "travel", label: "Travel & Tours", audience: "For tour operators and cultural travel experience providers serving the African and Caribbean diaspora in the US", kind: "cards",
+        cards: [
+          {
+            name: "Origins US — Diaspora Travel Partner",
+            tag: "travel", tagLabel: "Travel",
+            description: "Commission-based listing for heritage tours, homeland trips, and cultural travel experiences for African and Caribbean diaspora audiences across NYC, Atlanta, Houston, DC, and LA.",
+            price: "12% commission",
+            priceNote: "per booking · $80/quarter listing fee",
+            includes: [
+              "Curated experience featured on Moveee Origins US",
+              "Origins editorial feature + photography",
+              "GetMeLit US + Moveee Connect promotion",
+            ],
+          },
+        ],
+      },
+      {
         id: "amplify", label: "Content Amplification", audience: "Add-on for Sponsored Content and Media Partnership — paid social, influencer reach, and ad placements", kind: "tiers",
         service: amplifyUS,
       },
