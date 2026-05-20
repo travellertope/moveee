@@ -46,7 +46,7 @@ export type RateCard = {
 };
 
 export type Section =
-  | { id: string; label: string; audience?: string; kind: "cards"; cards: RateCard[]; crossSellTo?: string }
+  | { id: string; label: string; audience?: string; kind: "cards"; cards: RateCard[]; crossSellTo?: string; columns?: 2 }
   | { id: string; label: string; audience?: string; kind: "tiers"; service: TierService; crossSellTo?: string }
   | { id: string; label: string; audience?: string; kind: "mixed"; cards: RateCard[]; service: TierService; serviceLabel?: string; crossSellTo?: string };
 
@@ -613,7 +613,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Event Coverage", audience: "For event promoters, festival organisers, and cultural institutions across Nigeria", kind: "cards",
+        id: "events", label: "Event Coverage", audience: "For event promoters, festival organisers, and cultural institutions across Nigeria", kind: "cards", columns: 2,
         cards: [
           {
             name: "Happenings Partner — Single Day",
@@ -676,14 +676,27 @@ export const MARKETS: Market[] = [
         id: "travel", label: "Travel & Tours", audience: "For tour operators, travel experiences, and cultural heritage packages across Nigeria and West Africa", kind: "cards",
         cards: [
           {
-            name: "Moveee Origins — Tour Partner",
-            tag: "travel", tagLabel: "Travel",
-            description: "Commission-based curated cultural and heritage tour packages. Zero inventory risk.",
-            price: "12% commission",
-            priceNote: "per confirmed booking · no listing fee",
+            name: "Basic Listing",
+            tag: "travel", tagLabel: "Free to List",
+            description: "Get your tour or experience in the Moveee Origins directory — no upfront fee, no editorial required. Just your experience, category, and booking link. We earn 12% on confirmed bookings.",
+            price: "Free",
+            priceNote: "12% commission on confirmed bookings · no listing fee",
+            includes: [
+              "Listed in Moveee Origins Nigeria directory",
+              "Tour category + booking link",
+              "Eligible for editorial upgrade",
+            ],
+          },
+          {
+            name: "Editorial Feature",
+            tag: "travel", tagLabel: "Featured",
+            description: "Full editorial write-up of your tour or experience — cultural context, itinerary story, and photography — distributed through GetMeLit and promoted across our social channels.",
+            price: "₦50,000",
+            priceNote: "flat fee · 12% commission on confirmed bookings",
             includes: [
               "Curated itinerary feature on Moveee Origins",
-              "Origins editorial feature + photography",
+              "Editorial write-up (cultural context + itinerary)",
+              "GetMeLit newsletter promotion",
               "Moveee Connect community promotion",
             ],
           },
@@ -852,7 +865,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Event Coverage", audience: "For event promoters, entertainment organisers, and cultural institutions across Britain", kind: "cards",
+        id: "events", label: "Event Coverage", audience: "For event promoters, entertainment organisers, and cultural institutions across Britain", kind: "cards", columns: 2,
         cards: [
           {
             name: "Happenings UK Partner — Single Day",
@@ -915,15 +928,28 @@ export const MARKETS: Market[] = [
         id: "travel", label: "Travel & Tours", audience: "For UK diaspora travel operators and heritage experience providers", kind: "cards",
         cards: [
           {
-            name: "Origins UK — Heritage Tours",
-            tag: "travel", tagLabel: "Travel",
-            description: "Roots tourism for UK diaspora Nigerians, Ghanaians, and Jamaicans — homecoming trips, owambes, cultural festivals.",
-            price: "12% commission",
-            priceNote: "per confirmed booking · no listing fee",
+            name: "Basic Listing",
+            tag: "travel", tagLabel: "Free to List",
+            description: "Get your tour or experience in the Moveee Origins UK directory — no upfront fee, no editorial required. Just your experience, category, and booking link. We earn 12% on confirmed bookings.",
+            price: "Free",
+            priceNote: "12% commission on confirmed bookings · no listing fee",
             includes: [
-              "Heritage itinerary featured on Moveee Origins",
-              "Editorial spotlight + photography",
-              "GetMeLit UK + Moveee Connect promotion",
+              "Listed in Moveee Origins UK directory",
+              "Tour category + booking link",
+              "Eligible for editorial upgrade",
+            ],
+          },
+          {
+            name: "Editorial Feature",
+            tag: "travel", tagLabel: "Featured",
+            description: "Full editorial write-up of your heritage tour or experience — cultural context, itinerary story, and photography — distributed through GetMeLit UK and promoted across our social channels.",
+            price: "£120",
+            priceNote: "flat fee · 12% commission on confirmed bookings",
+            includes: [
+              "Heritage itinerary featured on Moveee Origins UK",
+              "Editorial write-up (cultural context + itinerary)",
+              "GetMeLit UK newsletter promotion",
+              "Moveee Connect UK community promotion",
             ],
           },
         ],
@@ -1091,7 +1117,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "events", label: "Event Coverage", audience: "For event promoters, entertainment organisers, and cultural institutions across the US", kind: "cards",
+        id: "events", label: "Event Coverage", audience: "For event promoters, entertainment organisers, and cultural institutions across the US", kind: "cards", columns: 2,
         cards: [
           {
             name: "Happenings US Partner — Single Day",
@@ -1154,15 +1180,28 @@ export const MARKETS: Market[] = [
         id: "travel", label: "Travel & Tours", audience: "For tour operators and cultural travel experience providers serving the African and Caribbean diaspora in the US", kind: "cards",
         cards: [
           {
-            name: "Origins US — Diaspora Travel Partner",
-            tag: "travel", tagLabel: "Travel",
-            description: "Commission-based listing for heritage tours, homeland trips, and cultural travel experiences for African and Caribbean diaspora audiences across NYC, Atlanta, Houston, DC, and LA.",
-            price: "12% commission",
-            priceNote: "per confirmed booking · no listing fee",
+            name: "Basic Listing",
+            tag: "travel", tagLabel: "Free to List",
+            description: "Get your tour or experience in the Moveee Origins US directory — no upfront fee, no editorial required. Just your experience, category, and booking link. We earn 12% on confirmed bookings.",
+            price: "Free",
+            priceNote: "12% commission on confirmed bookings · no listing fee",
+            includes: [
+              "Listed in Moveee Origins US directory",
+              "Tour category + booking link",
+              "Eligible for editorial upgrade",
+            ],
+          },
+          {
+            name: "Editorial Feature",
+            tag: "travel", tagLabel: "Featured",
+            description: "Full editorial write-up of your diaspora travel experience — cultural context, itinerary story, and photography — distributed through GetMeLit US and promoted across our social channels.",
+            price: "$180",
+            priceNote: "flat fee · 12% commission on confirmed bookings",
             includes: [
               "Curated experience featured on Moveee Origins US",
-              "Origins editorial feature + photography",
-              "GetMeLit US + Moveee Connect promotion",
+              "Editorial write-up (cultural context + itinerary)",
+              "GetMeLit US newsletter promotion",
+              "Moveee Connect US community promotion",
             ],
           },
         ],

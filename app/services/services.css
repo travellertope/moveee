@@ -835,6 +835,10 @@
   border: 1px solid rgba(42,36,28,0.1);
 }
 
+.market-cards-grid--two-col {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .market-card {
   background: var(--paper);
   display: flex;
@@ -1713,7 +1717,8 @@
 
   .market-hero { padding: 48px 24px; }
   .market-section { padding: 48px 24px; }
-  .market-cards-grid { grid-template-columns: 1fr; }
+  .market-cards-grid,
+  .market-cards-grid--two-col { grid-template-columns: 1fr; }
   .connect-bar { padding: 40px 24px; }
   .connect-bar-inner { flex-direction: column; gap: 32px; }
   .connect-bar-price-block { align-items: flex-start; text-align: left; }

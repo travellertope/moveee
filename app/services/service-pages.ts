@@ -425,7 +425,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       tagline: "Commission-based listing and editorial coverage for cultural tour operators and heritage travel experiences across Nigeria and West Africa.",
       intro: [
         "Moveee Origins is the travel arm of The Moveee — curated cultural and heritage tour listings for Nigerian and Pan-African audiences who want to travel with intention. If you run homecoming trips, heritage trails, festival packages, or cultural immersion experiences, this is where your audience already comes to discover what's worth booking.",
-        "The model is simple: you pay a ₦30,000 quarterly listing fee to maintain your placement in the Origins directory. We write an editorial feature on your experience, promote it through GetMeLit and social, and track bookings through a dedicated affiliate link. We earn 12% on confirmed bookings. Zero inventory risk for you.",
+        "The model works in two tiers. Start with a free Basic Listing — your tour in the Origins directory with a tracked booking link and 12% commission on confirmed bookings. No upfront cost, no editorial required. When you're ready for more reach, upgrade to an Editorial Feature: a ₦50,000 flat fee gets you a full write-up, GetMeLit newsletter promotion, and social distribution.",
         "We only list experiences we'd genuinely recommend to our readers — which is exactly why our listings convert.",
       ],
       howItWorks: [
@@ -474,7 +474,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "List your experience →",
-      ctaSubtext: "No listing fee. 12% commission on confirmed bookings only.",
+      ctaSubtext: "Free Basic Listing available now. Editorial Feature by application.",
     },
 
     connect: {
@@ -937,7 +937,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       tagline: "Commission-based listing and editorial coverage for Black British cultural travel operators and diaspora heritage experiences.",
       intro: [
         "Black British travellers are significant consumers of culturally intentional travel — homecoming trips to Nigeria, Ghana, Jamaica, and beyond. Diaspora city breaks. Heritage trails. Festival packages built around Afropunk, GTCO, or carnival season. The Moveee Origins UK lists the experiences worth booking for an audience that travels with purpose.",
-        "The model is simple: you pay a £75 quarterly listing fee to maintain your placement in the Origins directory. We write an editorial feature on your experience, promote it through GetMeLit UK and social, and track bookings through a dedicated affiliate link. We earn 12% on confirmed bookings. No inventory risk for you.",
+        "The model works in two tiers. Start with a free Basic Listing — your tour in the Origins UK directory with a tracked booking link and 12% commission on confirmed bookings. No upfront cost, no editorial required. When you're ready for more reach, upgrade to an Editorial Feature: a £120 flat fee gets you a full write-up, GetMeLit UK newsletter promotion, and social distribution.",
         "We only list experiences we'd genuinely recommend to our readers — which is exactly why our listings convert.",
       ],
       howItWorks: [
@@ -986,7 +986,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "List your experience →",
-      ctaSubtext: "No listing fee. 12% commission on confirmed bookings only.",
+      ctaSubtext: "Free Basic Listing available now. Editorial Feature by application.",
     },
 
     connect: {
@@ -1445,7 +1445,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       tagline: "Commission-based listing and editorial coverage for cultural travel operators serving the African and Caribbean diaspora across the United States.",
       intro: [
         "African and Caribbean diaspora Americans are among the most active heritage travellers in the world. Homeland trips to Nigeria, Ghana, Jamaica, and Trinidad. Cultural pilgrimages for Afropunk, GTCO, or carnival season. Reconnection journeys built around family, food, and roots. The Moveee Origins US lists the experiences worth booking for an audience that travels with purpose — not just for leisure.",
-        "The model is the same as our other markets: you pay an $80 quarterly listing fee to maintain your placement in the Origins US directory. We write an editorial feature on your experience, promote it through GetMeLit US and social, and track bookings through a dedicated affiliate link. We earn 12% on confirmed bookings. No inventory risk for you.",
+        "The model works in two tiers. Start with a free Basic Listing — your tour in the Origins US directory with a tracked booking link and 12% commission on confirmed bookings. No upfront cost, no editorial required. When you're ready for more reach, upgrade to an Editorial Feature: a $180 flat fee gets you a full write-up, GetMeLit US newsletter promotion, and social distribution.",
         "We only list experiences we'd genuinely recommend to our readers — which is exactly why our listings convert.",
       ],
       howItWorks: [
@@ -1502,7 +1502,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
       ],
       ctaLabel: "List your experience →",
-      ctaSubtext: "No listing fee. 12% commission on confirmed bookings only.",
+      ctaSubtext: "Free Basic Listing available now. Editorial Feature by application.",
     },
 
     connect: {

@@ -45,9 +45,9 @@ export async function generateMetadata({
   };
 }
 
-function CardGrid({ cards }: { cards: RateCard[] }) {
+function CardGrid({ cards, columns }: { cards: RateCard[]; columns?: 2 }) {
   return (
-    <div className="market-cards-grid">
+    <div className={`market-cards-grid${columns === 2 ? " market-cards-grid--two-col" : ""}`}>
       {cards.map((card) => (
         <div key={card.name} className="market-card">
           <div className="market-card-top">
@@ -138,7 +138,7 @@ function TierGrid({ packages }: { packages: TierPackage[] }) {
 
 function PricingSection({ section }: { section: Section }) {
   if (section.kind === "cards") {
-    return <CardGrid cards={section.cards} />;
+    return <CardGrid cards={section.cards} columns={section.columns} />;
   }
   if (section.kind === "tiers") {
     return <TierGrid packages={section.service.packages} />;
