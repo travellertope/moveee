@@ -86,7 +86,7 @@ function groupPosts(posts: any[]): Section[] {
 function PostCard({ post }: { post: any }) {
   const image = getPostImage(post);
   const title = decodeHtml(post.title?.rendered || "");
-  const excerpt = post.excerpt?.rendered?.replace(/<[^>]*>/g, "").trim() || "";
+  const excerpt = decodeHtml(post.excerpt?.rendered?.replace(/<[^>]*>/g, "").trim() || "");
 
   return (
     <Link href={`/magazine/${post.slug}`} className="mag-issue-post">
