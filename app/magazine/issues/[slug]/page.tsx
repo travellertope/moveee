@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getIssueBySlug, getAllIssues, getPostsByIssue } from "@/lib/wp";
 import { decodeHtml } from "@/lib/decode-html";
+import "@/app/magazine.css";
 import type { Metadata } from "next";
 
 export const revalidate = 300;

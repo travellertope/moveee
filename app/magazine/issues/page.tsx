@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getAllIssues } from "@/lib/wp";
+import "@/app/magazine.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
