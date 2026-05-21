@@ -279,9 +279,10 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
         {/* LEFT — TOC */}
         <aside className="toc">
-          <details className="toc-details toc-details--desktop-open">
+          <div className="toc-heading">In this piece</div>
+          <details className="toc-details">
           <summary className="toc-summary">
-            <span className="label">In this piece</span>
+            <span className="toc-toggle-label">In this piece</span>
             <span className="toc-chevron" aria-hidden>▾</span>
           </summary>
           {headings.length > 0 ? (
@@ -338,35 +339,37 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         {/* CENTER — PROSE (Interactive Paragraph Comments) */}
         <div className="prose" id="article-body">
           {canView ? (
-            <ParagraphCommentSystem 
-              postId={parseInt(post.databaseId)} 
-              content={processedContent || ""} 
+            <ParagraphCommentSystem
+              postId={parseInt(post.databaseId)}
+              content={processedContent || ""}
             />
           ) : (
             <>
-              {/* Faded excerpt teaser */}
-              {post.excerpt && (
-                <div style={{ position: "relative", marginBottom: 0 }}>
-                  <div
-                    className="prose-content"
-                    style={{ maxHeight: 120, overflow: "hidden" }}
-                    dangerouslySetInnerHTML={{
-                      __html: post.excerpt.replace(/<[^>]*>/g, ""),
-                    }}
-                  />
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 80,
-                      background:
-                        "linear-gradient(to bottom, transparent, var(--paper, #ffffff))",
-                    }}
-                  />
-                </div>
-              )}
+              {/* First ~5% of article content with gradient fade */}
+              {(() => {
+                const firstParas = (processedContent.match(/<p[\s\S]*?<\/p>/gi) || []).slice(0, 3).join("");
+                const preview = firstParas || post.excerpt || "";
+                if (!preview) return null;
+                return (
+                  <div style={{ position: "relative", marginBottom: 0 }}>
+                    <div
+                      className="prose-content"
+                      dangerouslySetInnerHTML={{ __html: preview }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 160,
+                        background: "linear-gradient(to bottom, transparent, var(--paper, #ffffff))",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  </div>
+                );
+              })()}
               <ContentGate
                 accessLevel={accessLevel as "member-only" | "patron-only"}
                 isLoggedIn={isLoggedIn}
