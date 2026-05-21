@@ -3,6 +3,7 @@ import Image from "next/image";
 import Marquee from "@/components/Marquee";
 import PatronPrice from "@/components/PatronPrice";
 import AdBanner from "@/components/AdBanner";
+import { decodeHtml } from "@/lib/decode-html";
 import ShopCarousel from "@/components/ShopCarousel";
 import HomepageNewsletterForm from "@/components/HomepageNewsletterForm";
 import type { EditionSlug } from "@/lib/editions";
@@ -209,7 +210,7 @@ export default function HomepageContent({
                       {img && <Image src={img} alt={story.title?.rendered || ""} fill className="object-cover" />}
                     </div>
                     <span className="hp-mag-cat">{cat}</span>
-                    <h4 className="hp-mag-card-title">{story.title?.rendered || ""}</h4>
+                    <h4 className="hp-mag-card-title">{decodeHtml(story.title?.rendered || "")}</h4>
                     <span className="hp-mag-card-meta">
                       {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                     </span>

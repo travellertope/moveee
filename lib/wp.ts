@@ -497,6 +497,8 @@ const STORY_FIELDS_FRAGMENT = `
       }
     }
     asToldTo
+    seoTitle
+    seoDescription
     author {
       node {
         name

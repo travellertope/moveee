@@ -7,7 +7,7 @@ export default function Loading() {
   };
 
   return (
-    <div style={{ background: "#f7f5f2", minHeight: "100vh" }}>
+    <div style={{ background: "#ffffff", minHeight: "100vh" }}>
       <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
 
       <div style={{ display: "grid", gridTemplateColumns: "190px 1fr 220px", maxWidth: "1440px", margin: "0 auto" }}>

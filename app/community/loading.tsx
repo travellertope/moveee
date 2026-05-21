@@ -7,7 +7,7 @@ export default function Loading() {
   };
 
   return (
-    <div style={{ background: "#f7f5f2", minHeight: "100vh" }}>
+    <div style={{ background: "#ffffff", minHeight: "100vh" }}>
       <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
       <div style={{ maxWidth: "680px", margin: "0 auto", padding: "2rem 1rem" }}>
         {/* Post */}

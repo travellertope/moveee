@@ -33,7 +33,7 @@ export default async function HashtagPage({
   });
 
   return (
-    <div style={{ background: "#f7f5f2", minHeight: "100vh" }}>
+    <div style={{ background: "#ffffff", minHeight: "100vh" }}>
       {/* Header */}
       <div style={{
         background: "#fff",

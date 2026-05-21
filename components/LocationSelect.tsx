@@ -156,7 +156,7 @@ function Combobox({
                 cursor: "pointer",
                 fontSize: 14,
                 color: "#14110d",
-                background: i === highlighted ? "#f5f0e8" : "transparent",
+                background: i === highlighted ? "#f0f0f0" : "transparent",
                 borderBottom: i < filtered.length - 1 ? "1px solid #f0ebe3" : "none",
               }}
             >

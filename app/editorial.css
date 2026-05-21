@@ -204,6 +204,33 @@
   top: 40px;
   align-self: start;
 }
+/* details/summary wrapper */
+.toc-details { border: none; }
+/* Desktop: always show content, no toggle needed */
+@media(min-width:1101px) {
+  .toc-details { display: contents; }
+  .toc-summary { display: none !important; }
+  .toc-details ul, .toc-details .toc-meta { display: block !important; }
+}
+.toc-details[open] > .toc-summary .toc-chevron { transform: rotate(180deg); }
+.toc-summary {
+  display: none; /* hidden on desktop — always open */
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--rule);
+}
+.toc-summary::-webkit-details-marker { display: none; }
+.toc-chevron {
+  font-size: 12px;
+  color: var(--ochre);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
 .toc .label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
@@ -713,6 +740,13 @@
 @media(max-width:1100px) {
   .article-wrap { grid-template-columns: 1fr; }
   .toc, .sidebar { position: static; }
+  /* Show the toggle and hide the static label on tablet/mobile */
+  .toc-summary { display: flex; }
+  .toc .label { display: none; }
+  /* Collapsed by default on mobile — hidden until user taps */
+  .toc-details:not([open]) ul,
+  .toc-details:not([open]) .toc-meta { display: none; }
+  .toc-details[open] .toc-chevron { transform: rotate(180deg); }
 }
 @media(max-width:768px) {
   .article-hero { min-height: auto; }

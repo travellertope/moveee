@@ -123,7 +123,7 @@ export default async function CommunityPostPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div style={{ background: "#f7f5f2" }}>
+      <div style={{ background: "#ffffff" }}>
         <div className="pulse-layout">
 
           {/* ── Left sidebar ── */}

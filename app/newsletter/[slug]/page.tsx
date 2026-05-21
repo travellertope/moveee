@@ -204,7 +204,7 @@ export default async function GmlIssuePage({
                       right: 0,
                       height: 70,
                       background:
-                        "linear-gradient(to bottom, transparent, var(--paper, #f5f0e8))",
+                        "linear-gradient(to bottom, transparent, var(--paper, #ffffff))",
                     }}
                   />
                 </div>
