@@ -6,71 +6,50 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CountrySelect, CitySelect } from "@/components/LocationSelect";
 
-const DISCIPLINES = [
-  "Creative", "Entrepreneur", "Artist", "Filmmaker", "Writer",
-  "Designer", "Musician", "Photographer", "Tech", "Legal", "Finance", "Academic",
-];
-
-interface Chapter {
-  id: number;
-  name: string;
-  slug: string;
-}
-
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3;
 
 function RegisterForm() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const searchParams = useSearchParams();
   const referralFromUrl = searchParams.get("ref") || "";
   const tierFromUrl = searchParams.get("tier") as "citizen" | "patron" | null;
   const isUpgrade = searchParams.get("upgrade") === "patron";
 
-  // Form state
   const [step, setStep] = useState<Step>(1);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
 
-  // If upgrading or Tier pre-selected, handle step routing
   useEffect(() => {
     if (isUpgrade && session) {
-      setStep(3); // Skip to Membership
+      setStep(3);
       setTier("patron");
     } else if (tierFromUrl) {
       setTier(tierFromUrl);
     }
   }, [isUpgrade, session, tierFromUrl]);
 
+  // Account
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [phone, setPhone] = useState("");
-  const [diffWhatsapp, setDiffWhatsapp] = useState(false);
-  const [whatsapp, setWhatsapp] = useState("");
-  // KYC
-  const [gender, setGender] = useState("");
+
+  // About You
   const [dateOfBirth, setDateOfBirth] = useState("");
-  const [nationality, setNationality] = useState("");
   const [countryOfResidence, setCountryOfResidence] = useState("");
   const [city, setCity] = useState("");
   const [occupation, setOccupation] = useState("");
+
+  // Membership
   const [tier, setTier] = useState<"citizen" | "patron">(tierFromUrl || "citizen");
-  const [primaryChapter, setPrimaryChapter] = useState(0);
-  const [secondaryChapter, setSecondaryChapter] = useState(0);
-  const [referralCode] = useState(referralFromUrl);
-
-  // Directory profile (opt-in by default)
-  const [disciplines, setDisciplines] = useState<string[]>([]);
-  const [directoryBio, setDirectoryBio] = useState("");
-
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [currency, setCurrency] = useState<"NGN" | "USD">("NGN");
 
+  const [referralCode] = useState(referralFromUrl);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Auto-detect currency based on country
+  // Auto-detect currency from country
   useEffect(() => {
     if (countryOfResidence) {
       const isNigeria = countryOfResidence.toLowerCase().includes("nigeria") || countryOfResidence === "NG";
@@ -78,30 +57,16 @@ function RegisterForm() {
     }
   }, [countryOfResidence]);
 
-  useEffect(() => {
-    fetch("/api/chapters")
-      .then((r) => r.json())
-      .then((data: Chapter[]) => setChapters(data))
-      .catch(() => {});
-  }, []);
-
   function validateStep(s: Step): string {
     if (s === 1) {
       if (!username.trim()) return "Username is required.";
       if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
         return "A valid email is required.";
       if (password.length < 8) return "Password must be at least 8 characters.";
-      if (!phone.trim()) return "Phone number is required.";
     }
     if (s === 2) {
       if (!dateOfBirth) return "Date of birth is required.";
-      if (!nationality.trim()) return "Nationality is required.";
       if (!countryOfResidence.trim()) return "Country of residence is required.";
-    }
-    if (s === 4) {
-      if (!primaryChapter) return "Please select your primary chapter.";
-      if (tier === "patron" && secondaryChapter && secondaryChapter === primaryChapter)
-        return "Secondary chapter must differ from primary.";
     }
     return "";
   }
@@ -110,7 +75,7 @@ function RegisterForm() {
     const err = validateStep(step);
     if (err) { setError(err); return; }
     setError("");
-    setStep((s) => (s < 4 ? ((s + 1) as Step) : s));
+    setStep((s) => (s < 3 ? ((s + 1) as Step) : s));
   }
 
   function prevStep() {
@@ -122,14 +87,10 @@ function RegisterForm() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/membership/upgrade-init", { 
+      const res = await fetch("/api/membership/upgrade-init", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          plan_key: `${billingCycle}_${currency.toLowerCase()}`,
-          primary_chapter: primaryChapter,
-          secondary_chapter: secondaryChapter
-        })
+        body: JSON.stringify({ plan_key: `${billingCycle}_${currency.toLowerCase()}` }),
       });
       const data = await res.json();
       if (data.checkout_url) {
@@ -143,21 +104,14 @@ function RegisterForm() {
       setLoading(false);
     }
   }
-  async function handleSubmit(e?: any) {
-    if (e && e.preventDefault) e.preventDefault();
 
-    // Common validation for all flows (including upgrades)
+  async function handleSubmit(e?: FormEvent) {
+    if (e) e.preventDefault();
     const err = validateStep(step);
-    if (err) {
-      setError(err);
-      return;
-    }
+    if (err) { setError(err); return; }
 
     if (isUpgrade && session) {
-      if (step < 4) {
-        nextStep();
-        return;
-      }
+      if (step < 3) { nextStep(); return; }
       if (loading) return;
       handleUpgrade();
       return;
@@ -172,26 +126,19 @@ function RegisterForm() {
       email: email.trim(),
       password,
       display_name: displayName.trim() || username.trim(),
-      phone: phone.trim(),
-      gender,
       date_of_birth: dateOfBirth,
-      nationality: nationality.trim(),
       country_of_residence: countryOfResidence.trim(),
       city: city.trim(),
       occupation: occupation.trim(),
       tier,
-      primary_chapter: primaryChapter,
       directory_opt_in: "1",
-      directory_disciplines: disciplines.join(","),
-      directory_bio: directoryBio.trim(),
     };
 
-    if (diffWhatsapp && whatsapp.trim()) body.whatsapp = whatsapp.trim();
+    if (phone.trim()) body.phone = phone.trim();
+    if (referralCode) body.referral_code = referralCode;
     if (tier === "patron") {
-      if (secondaryChapter) body.secondary_chapter = secondaryChapter;
       body.plan_key = `${billingCycle}_${currency.toLowerCase()}`;
     }
-    if (referralCode) body.referral_code = referralCode;
 
     try {
       const res = await fetch("/api/register", {
@@ -199,7 +146,6 @@ function RegisterForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-
       const data = await res.json();
 
       if (!data.success) {
@@ -208,13 +154,11 @@ function RegisterForm() {
         return;
       }
 
-      // Patron tier — redirect to Paystack checkout.
       if (data.requires_payment && data.checkout_url) {
         window.location.href = data.checkout_url;
         return;
       }
 
-      // Auto sign-in after successful registration.
       const result = await signIn("credentials", {
         username: username.trim(),
         password,
@@ -224,7 +168,6 @@ function RegisterForm() {
       setLoading(false);
 
       if (result?.error) {
-        // Registration succeeded but auto-login failed — send to login page.
         router.push("/login?registered=1");
       } else {
         router.push("/member");
@@ -236,7 +179,8 @@ function RegisterForm() {
     }
   }
 
-  const progressPercent = ((step - 1) / 3) * 100;
+  const progressPercent = ((step - 1) / 2) * 100;
+  const stepLabels = ["Account", "About You", "Membership"] as const;
 
   return (
     <div style={styles.page}>
@@ -244,15 +188,15 @@ function RegisterForm() {
         <p style={styles.eyebrow}>The Moveee &mdash; Culture Community</p>
         <h1 style={styles.heading}>{isUpgrade ? "Upgrade to Connect Pro" : "Join the Community"}</h1>
 
-        {/* Progress bar */}
+        {/* Progress */}
         {!isUpgrade && (
           <div style={styles.progressWrap}>
-            {(["Account", "About You", "Membership", "Chapter"] as const).map((label, i) => (
+            {stepLabels.map((label, i) => (
               <div key={label} style={styles.progressStep}>
                 <div
                   style={{
                     ...styles.progressDot,
-                    background: step > i ? "#14110d" : step === i + 1 ? "#14110d" : "#d4cbbf",
+                    background: step > i + 1 ? "#14110d" : step === i + 1 ? "#14110d" : "#d4cbbf",
                     color: step >= i + 1 ? "#ffffff" : "#7a6f5c",
                     border: step === i + 1 ? "2px solid #14110d" : "2px solid transparent",
                   }}
@@ -277,26 +221,15 @@ function RegisterForm() {
         )}
 
         <form onSubmit={handleSubmit} noValidate>
-          {/* Step 1: Account */}
+
+          {/* ── Step 1: Account ── */}
           {step === 1 && (
             <div>
-              <h2 style={styles.stepHeading}>Create Your Account</h2>
+              <h2 style={styles.stepHeading}>Create your account</h2>
 
               <div style={styles.row}>
                 <div style={{ ...styles.field, flex: 1 }}>
-                  <label style={styles.label} htmlFor="username">Username</label>
-                  <input
-                    id="username"
-                    type="text"
-                    autoComplete="username"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    style={styles.input}
-                  />
-                </div>
-                <div style={{ ...styles.field, flex: 1 }}>
-                  <label style={styles.label} htmlFor="display_name">Display Name</label>
+                  <label style={styles.label} htmlFor="display_name">Full Name</label>
                   <input
                     id="display_name"
                     type="text"
@@ -307,10 +240,23 @@ function RegisterForm() {
                     style={styles.input}
                   />
                 </div>
+                <div style={{ ...styles.field, flex: 1 }}>
+                  <label style={styles.label} htmlFor="username">Username <span style={{ color: "#c5491f" }}>*</span></label>
+                  <input
+                    id="username"
+                    type="text"
+                    autoComplete="username"
+                    required
+                    placeholder="@handle"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    style={styles.input}
+                  />
+                </div>
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label} htmlFor="email">Email</label>
+                <label style={styles.label} htmlFor="email">Email <span style={{ color: "#c5491f" }}>*</span></label>
                 <input
                   id="email"
                   type="email"
@@ -323,7 +269,7 @@ function RegisterForm() {
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label} htmlFor="password">Password</label>
+                <label style={styles.label} htmlFor="password">Password <span style={{ color: "#c5491f" }}>*</span></label>
                 <input
                   id="password"
                   type="password"
@@ -338,67 +284,27 @@ function RegisterForm() {
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label} htmlFor="phone">Phone Number</label>
+                <label style={styles.label} htmlFor="phone">
+                  Phone Number <span style={{ fontWeight: 400, color: "#7a6f5c" }}>(optional)</span>
+                </label>
                 <input
                   id="phone"
                   type="tel"
                   autoComplete="tel"
-                  required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   style={styles.input}
                 />
               </div>
-
-              <div style={styles.checkRow}>
-                <input
-                  id="diff_wa"
-                  type="checkbox"
-                  checked={diffWhatsapp}
-                  onChange={(e) => setDiffWhatsapp(e.target.checked)}
-                  style={styles.checkbox}
-                />
-                <label htmlFor="diff_wa" style={styles.checkLabel}>
-                  My WhatsApp number is different
-                </label>
-              </div>
-
-              {diffWhatsapp && (
-                <div style={styles.field}>
-                  <label style={styles.label} htmlFor="whatsapp">WhatsApp Number</label>
-                  <input
-                    id="whatsapp"
-                    type="tel"
-                    value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
-                    style={styles.input}
-                  />
-                </div>
-              )}
             </div>
           )}
 
-          {/* Step 2: About You (KYC) */}
+          {/* ── Step 2: About You ── */}
           {step === 2 && (
             <div>
-              <h2 style={styles.stepHeading}>About You</h2>
+              <h2 style={styles.stepHeading}>A little about you</h2>
 
               <div style={styles.row}>
-                <div style={{ ...styles.field, flex: 1 }}>
-                  <label style={styles.label} htmlFor="gender">Gender</label>
-                  <select
-                    id="gender"
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    style={styles.input}
-                  >
-                    <option value="">Prefer not to say</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Non-binary">Non-binary</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
                 <div style={{ ...styles.field, flex: 1 }}>
                   <label style={styles.label} htmlFor="dob">Date of Birth <span style={{ color: "#c5491f" }}>*</span></label>
                   <input
@@ -408,19 +314,6 @@ function RegisterForm() {
                     value={dateOfBirth}
                     onChange={(e) => setDateOfBirth(e.target.value)}
                     style={styles.input}
-                  />
-                </div>
-              </div>
-
-              <div style={styles.row}>
-                <div style={{ ...styles.field, flex: 1 }}>
-                  <label style={styles.label} htmlFor="nationality">Nationality <span style={{ color: "#c5491f" }}>*</span></label>
-                  <CountrySelect
-                    id="nationality"
-                    value={nationality}
-                    onChange={setNationality}
-                    inputStyle={styles.input}
-                    placeholder="Search countries…"
                   />
                 </div>
                 <div style={{ ...styles.field, flex: 1 }}>
@@ -437,7 +330,9 @@ function RegisterForm() {
 
               <div style={styles.row}>
                 <div style={{ ...styles.field, flex: 1 }}>
-                  <label style={styles.label} htmlFor="city">City</label>
+                  <label style={styles.label} htmlFor="city">
+                    City <span style={{ fontWeight: 400, color: "#7a6f5c" }}>(optional)</span>
+                  </label>
                   <CitySelect
                     id="city"
                     country={countryOfResidence}
@@ -447,11 +342,13 @@ function RegisterForm() {
                   />
                 </div>
                 <div style={{ ...styles.field, flex: 1 }}>
-                  <label style={styles.label} htmlFor="occupation">Occupation / Role</label>
+                  <label style={styles.label} htmlFor="occupation">
+                    Occupation <span style={{ fontWeight: 400, color: "#7a6f5c" }}>(optional)</span>
+                  </label>
                   <input
                     id="occupation"
                     type="text"
-                    placeholder="e.g. Photographer, Lawyer, Designer"
+                    placeholder="e.g. Filmmaker, Designer"
                     value={occupation}
                     onChange={(e) => setOccupation(e.target.value)}
                     style={styles.input}
@@ -459,74 +356,17 @@ function RegisterForm() {
                 </div>
               </div>
 
-              {/* Directory fields */}
-              <div style={{ ...styles.field, marginTop: 4 }}>
-                <label style={styles.label}>Disciplines <span style={{ fontWeight: 400, color: "#7a6f5c" }}>(optional)</span></label>
-                <p style={{ ...styles.hint, marginBottom: 10 }}>Select all that apply — helps members find you in the directory.</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {DISCIPLINES.map(d => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setDisciplines(prev =>
-                        prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]
-                      )}
-                      style={{
-                        padding: "6px 14px",
-                        border: disciplines.includes(d) ? "1px solid #14110d" : "1px solid #d4cbbf",
-                        background: disciplines.includes(d) ? "#14110d" : "transparent",
-                        color: disciplines.includes(d) ? "#ffffff" : "#7a6f5c",
-                        fontSize: 12,
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                        cursor: "pointer",
-                        fontFamily: "inherit",
-                        transition: "all 0.15s",
-                        borderRadius: 2,
-                      }}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={styles.field}>
-                <label style={styles.label} htmlFor="dir_bio">
-                  Short bio <span style={{ fontWeight: 400, color: "#7a6f5c" }}>(optional · {160 - directoryBio.length} chars left)</span>
-                </label>
-                <textarea
-                  id="dir_bio"
-                  rows={3}
-                  maxLength={160}
-                  placeholder="A sentence or two about what you do and what you're building."
-                  value={directoryBio}
-                  onChange={e => setDirectoryBio(e.target.value)}
-                  style={{ ...styles.input, resize: "vertical", lineHeight: 1.5 }}
-                />
-              </div>
-
-              <div style={{
-                background: "#f0ede6",
-                border: "1px solid #e0d8ce",
-                borderRadius: 3,
-                padding: "10px 14px",
-                fontSize: 12,
-                color: "#7a6f5c",
-                lineHeight: 1.55,
-                marginTop: 4,
-              }}>
-                You'll appear in the <strong style={{ color: "#14110d" }}>Moveee Connect member directory</strong> so other members can find you. You can update or remove yourself from the directory any time in your profile settings.
-              </div>
+              <p style={{ fontSize: 12, color: "#7a6f5c", lineHeight: 1.6, marginTop: 4 }}>
+                You can add your bio, disciplines, and social links from your profile settings after joining.
+              </p>
             </div>
           )}
 
-          {/* Step 3: Membership tier */}
+          {/* ── Step 3: Membership ── */}
           {step === 3 && (
             <div>
-              <h2 style={styles.stepHeading}>Choose Your Membership</h2>
+              <h2 style={styles.stepHeading}>Choose your membership</h2>
 
-              {/* Billing Cycle Toggle (only for Patrons) */}
               <div style={{ ...styles.billingToggle, opacity: tier === "patron" ? 1 : 0.5 }}>
                 <button
                   type="button"
@@ -565,10 +405,10 @@ function RegisterForm() {
                       label: "Citizen",
                       price: "Free",
                       perks: [
-                        "One primary chapter",
+                        "Access to free member articles",
                         "Access to online events",
                         "The Cultural Digest newsletter",
-                        "Community forum",
+                        "Community forum & Pulse",
                       ],
                     },
                     {
@@ -580,9 +420,9 @@ function RegisterForm() {
                       period: billingCycle === "monthly" ? "/ mo" : "/ yr",
                       perks: [
                         "Everything in Citizen",
+                        "All patron-only articles",
                         "Featured directory listing",
-                        "Pro badge on Pulse posts",
-                        "Gated content & priority RSVP",
+                        "Pro badge · priority RSVP",
                       ],
                     },
                   ] as const
@@ -604,94 +444,34 @@ function RegisterForm() {
                       onChange={() => setTier(value)}
                       style={{ position: "absolute", opacity: 0, pointerEvents: "none" }}
                     />
-                    <div>
-                      <h3 style={styles.tierLabel}>{label}</h3>
-                      <div style={styles.priceContainer}>
-                        <span style={styles.tierPrice}>{price}</span>
-                        {"period" in rest && <span style={styles.pricePeriod}>{rest.period}</span>}
-                      </div>
-                      <ul style={styles.tierPerks}>
-                        {perks.map((p) => (
-                          <li key={p}>{p}</li>
-                        ))}
-                      </ul>
+                    <h3 style={styles.tierLabel}>{label}</h3>
+                    <div style={styles.priceContainer}>
+                      <span style={styles.tierPrice}>{price}</span>
+                      {"period" in rest && <span style={styles.pricePeriod}>{rest.period}</span>}
                     </div>
+                    <ul style={styles.tierPerks}>
+                      {perks.map((p) => <li key={p}>{p}</li>)}
+                    </ul>
                   </label>
                 ))}
               </div>
 
               <div style={styles.currencyNotice}>
-                Pricing based on residence: <strong>{currency}</strong>. 
-                <button 
-                  type="button" 
-                  onClick={() => setCurrency(c => c === "NGN" ? "USD" : "NGN")} 
+                Pricing based on residence: <strong>{currency}</strong>.
+                <button
+                  type="button"
+                  onClick={() => setCurrency(c => c === "NGN" ? "USD" : "NGN")}
                   style={styles.currencySwitch}
                 >
-                   Switch
+                  Switch
                 </button>
               </div>
             </div>
           )}
 
-          {/* Step 4: Chapter */}
-          {step === 4 && (
-            <div>
-              <h2 style={styles.stepHeading}>Select Your Chapter</h2>
-
-              <div style={styles.field}>
-                <label style={styles.label} htmlFor="primary_chapter">
-                  Primary Chapter
-                </label>
-                <select
-                  id="primary_chapter"
-                  required
-                  value={primaryChapter}
-                  onChange={(e) => setPrimaryChapter(Number(e.target.value))}
-                  style={styles.select}
-                >
-                  <option value={0}>— Select your chapter —</option>
-                  {chapters.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {tier === "patron" && (
-                <div style={styles.field}>
-                  <label style={styles.label} htmlFor="secondary_chapter">
-                    Secondary Chapter{" "}
-                    <span style={{ fontWeight: 400, color: "#7a6f5c" }}>(Connect Pro perk)</span>
-                  </label>
-                  <select
-                    id="secondary_chapter"
-                    value={secondaryChapter}
-                    onChange={(e) => setSecondaryChapter(Number(e.target.value))}
-                    style={styles.select}
-                  >
-                    <option value={0}>— Optional —</option>
-                    {chapters
-                      .filter((c) => c.id !== primaryChapter)
-                      .map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              )}
-
-              <p style={{ fontSize: 13, color: "#7a6f5c", lineHeight: 1.6, marginTop: 8 }}>
-                Chapters organise the community locally. You&apos;ll get access to events,
-                discussions, and members in your chapter.
-              </p>
-            </div>
-          )}
-
           {error && <p style={styles.error}>{error}</p>}
 
-          {/* Nav buttons */}
+          {/* Nav */}
           <div style={styles.nav}>
             {step > 1 ? (
               <button type="button" onClick={prevStep} style={styles.btnSecondary}>
@@ -701,19 +481,19 @@ function RegisterForm() {
               <span />
             )}
 
-            {step < 4 ? (
+            {step < 3 ? (
               <button type="button" onClick={nextStep} style={styles.btnPrimary}>
                 Continue →
               </button>
             ) : (
               <button
                 type="button"
-                onClick={handleSubmit}
+                onClick={() => handleSubmit()}
                 style={{ ...styles.btnPrimary, opacity: loading ? 0.7 : 1 }}
                 disabled={loading}
               >
                 {loading
-                  ? "Initializing…"
+                  ? "Creating account…"
                   : tier === "patron"
                   ? "Continue to payment →"
                   : "Create account →"}
@@ -724,9 +504,7 @@ function RegisterForm() {
 
         <p style={styles.footerText}>
           Already have an account?{" "}
-          <Link href="/login" style={styles.link}>
-            Sign in
-          </Link>
+          <Link href="/login" style={styles.link}>Sign in</Link>
         </p>
       </div>
     </div>
@@ -775,7 +553,6 @@ const styles: Record<string, React.CSSProperties> = {
     margin: "0 0 28px",
     color: "#14110d",
   },
-  // Progress
   progressWrap: {
     display: "flex",
     alignItems: "flex-start",
@@ -824,7 +601,6 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#14110d",
     transition: "width 0.3s ease",
   },
-  // Steps
   stepHeading: {
     fontSize: 18,
     fontWeight: 600,
@@ -859,51 +635,12 @@ const styles: Record<string, React.CSSProperties> = {
     boxSizing: "border-box",
     fontFamily: "inherit",
   },
-  select: {
-    display: "block",
-    width: "100%",
-    padding: "10px 14px",
-    border: "1px solid #d4cbbf",
-    borderRadius: 3,
-    fontSize: 15,
-    color: "#14110d",
-    background: "#fff",
-    outline: "none",
-    boxSizing: "border-box",
-    fontFamily: "inherit",
-    appearance: "none",
-    WebkitAppearance: "none",
-    backgroundImage:
-      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a6f5c' stroke-width='1.5' fill='none'/%3E%3C/svg%3E\")",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "right 14px center",
-    paddingRight: 36,
-  },
   hint: {
     display: "block",
     fontSize: 12,
     color: "#7a6f5c",
     marginTop: 4,
   },
-  checkRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
-  },
-  checkbox: {
-    width: 16,
-    height: 16,
-    accentColor: "#14110d",
-    cursor: "pointer",
-    margin: 0,
-  },
-  checkLabel: {
-    fontSize: 14,
-    color: "#14110d",
-    cursor: "pointer",
-  },
-  // Billing cycle
   billingToggle: {
     display: "flex",
     alignItems: "center",
@@ -934,7 +671,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 10,
     marginLeft: 4,
   },
-  // Tier cards
   tierGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
@@ -1002,7 +738,6 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: "0.05em",
     fontWeight: 600,
   },
-  // Nav
   nav: {
     display: "flex",
     justifyContent: "space-between",
