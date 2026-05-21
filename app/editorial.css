@@ -308,9 +308,9 @@
 }
 
 .prose h3 {
-  font-size: clamp(24px,2.7vw,40px);
-  font-weight: 400;
-  margin: 64px 0 22px;
+  font-size: clamp(18px,1.5vw,22px);
+  font-weight: 500;
+  margin: 52px 0 16px;
 }
 .prose h3 em { font-style: italic; color: var(--ochre); }
 .prose h3 .night-num {
@@ -662,9 +662,9 @@
 }
 
 .prose-content h2, .prose-content h3 {
-  font-size: clamp(24px,2.7vw,40px);
-  font-weight: 400;
-  margin: 64px 0 22px;
+  font-size: clamp(18px,1.5vw,22px);
+  font-weight: 500;
+  margin: 52px 0 16px;
 }
 .prose-content h2 em, .prose-content h3 em { font-style: italic; color: var(--ochre); }
 .prose-content blockquote {
