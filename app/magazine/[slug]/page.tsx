@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_STORY_BY_SLUG, GET_STORIES } from "@/lib/wp";
+import { getWPData, GET_STORY_BY_SLUG, GET_STORIES, getIssuesForPost } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -82,12 +82,17 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const canView = canViewContent(accessLevel, user);
   const isLoggedIn = !!user;
 
-  // Fetch related stories
+  // Fetch related stories and issue in parallel
   const primaryCategory = post.categories?.nodes?.[0]?.name || "";
   let relatedStories: any[] = [];
+  let postIssue: any = null;
   try {
-    const relData = await getWPData(GET_STORIES, { first: 4, categoryName: primaryCategory || undefined });
+    const [relData, issueTerms] = await Promise.all([
+      getWPData(GET_STORIES, { first: 4, categoryName: primaryCategory || undefined }),
+      getIssuesForPost(parseInt(post.databaseId)),
+    ]);
     relatedStories = (relData?.posts?.nodes || []).filter((s: any) => s.slug !== resolvedParams.slug).slice(0, 3);
+    postIssue = issueTerms?.[0] ?? null;
   } catch {}
 
   const publishedDate = new Date(post.date).toLocaleDateString('en-GB', {
@@ -380,6 +385,42 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <p>Film picks, exhibition openings, music worth your time. No noise.</p>
             <NewsletterSubscribeWidget placeholder="your@email.com" buttonLabel="Subscribe free →" />
           </div>
+
+          {/* Issue card */}
+          {postIssue && (
+            <Link href={`/magazine/issues/${postIssue.slug}`} style={{ textDecoration: 'none' }}>
+              <div className="s-card s-card--issue">
+                {postIssue.meta?.issue_cover_image_url && (
+                  <div style={{ position: 'relative', width: '100%', aspectRatio: '3/4', marginBottom: 12, overflow: 'hidden', background: 'var(--ink)' }}>
+                    <Image
+                      src={postIssue.meta.issue_cover_image_url}
+                      alt={postIssue.name}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                    />
+                  </div>
+                )}
+                <div className="s-label">
+                  {postIssue.meta?.issue_number ? `Issue ${postIssue.meta.issue_number}` : 'Featured in'}
+                </div>
+                <h4>{postIssue.name}</h4>
+                {postIssue.meta?.issue_subtitle && (
+                  <p style={{ fontStyle: 'italic', marginBottom: 12 }}>{postIssue.meta.issue_subtitle}</p>
+                )}
+                <span style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '9px',
+                  letterSpacing: '.14em',
+                  textTransform: 'uppercase' as const,
+                  borderBottom: '1px solid var(--ink)',
+                  paddingBottom: '1px',
+                  color: 'var(--ink)',
+                }}>
+                  Read the issue →
+                </span>
+              </div>
+            </Link>
+          )}
 
           {relatedStories.slice(0, 2).map((story: any) => (
             <Link href={`/magazine/${story.slug}`} key={story.id} style={{ textDecoration: 'none' }}>
