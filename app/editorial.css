@@ -208,6 +208,7 @@
 .toc-details { border: none; }
 /* Desktop: always show content, no toggle needed */
 @media(min-width:1101px) {
+  .toc-heading { display: block; }
   .toc-details { display: contents; }
   .toc-summary { display: none !important; }
   .toc-details ul, .toc-details .toc-meta { display: block !important; }
@@ -231,7 +232,8 @@
   transition: transform 0.2s;
   flex-shrink: 0;
 }
-.toc .label {
+/* Desktop heading — shown above TOC list on wide screens */
+.toc-heading {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   letter-spacing: .18em;
@@ -240,6 +242,14 @@
   margin-bottom: 16px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--rule);
+}
+/* Label inside the mobile toggle button */
+.toc-toggle-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ochre);
 }
 .toc ul { list-style: none; }
 .toc li {
@@ -740,9 +750,10 @@
 @media(max-width:1100px) {
   .article-wrap { grid-template-columns: 1fr; }
   .toc, .sidebar { position: static; }
-  /* Show the toggle and hide the static label on tablet/mobile */
+  /* Desktop heading hidden on mobile — summary label takes over */
+  .toc-heading { display: none; }
+  /* Show the toggle button on tablet/mobile */
   .toc-summary { display: flex; }
-  .toc .label { display: none; }
   /* Collapsed by default on mobile — hidden until user taps */
   .toc-details:not([open]) ul,
   .toc-details:not([open]) .toc-meta { display: none; }
