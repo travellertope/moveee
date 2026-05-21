@@ -198,7 +198,11 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <div className="byline-bar">
               <div className="b-item">
                 <div className="b-label">Words by</div>
-                <div className="b-val">{post.author?.node?.name || "The Moveee"}</div>
+                <div className="b-val">
+                  {post.asToldTo
+                    ? <>{post.asToldTo}, as told to {post.author?.node?.name || "The Moveee"}</>
+                    : post.author?.node?.name || "The Moveee"}
+                </div>
               </div>
               <div className="b-item">
                 <div className="b-label">Published</div>
@@ -235,7 +239,11 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           <div className="byline-bar">
             <div className="b-item">
               <div className="b-label">Words by</div>
-              <div className="b-val">{post.author?.node?.name || "The Moveee"}</div>
+              <div className="b-val">
+                {post.asToldTo
+                  ? <>{post.asToldTo}, as told to {post.author?.node?.name || "The Moveee"}</>
+                  : post.author?.node?.name || "The Moveee"}
+              </div>
             </div>
             <div className="b-item">
               <div className="b-label">Published</div>
@@ -280,7 +288,11 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           <div className="toc-meta">
             <div className="tm-item">
               <div className="tm-label">Writer</div>
-              <div className="tm-val">{post.author?.node?.name || "The Moveee"}</div>
+              <div className="tm-val">
+                {post.asToldTo
+                  ? <>{post.asToldTo}<br /><span style={{ fontSize: "0.75em", opacity: 0.7 }}>as told to {post.author?.node?.name || "The Moveee"}</span></>
+                  : post.author?.node?.name || "The Moveee"}
+              </div>
             </div>
             {post.countries?.nodes?.[0]?.name && (
               <div className="tm-item">
@@ -416,20 +428,30 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         </div>
         <div className="author-info">
           <div className="a-label">Words by</div>
-          <h4>
-            {post.author?.node?.name ? (
-              post.author.node.name.includes(" ") ? (
-                <>
-                  {post.author.node.name.split(" ").slice(0, -1).join(" ")} <em>{post.author.node.name.split(" ").slice(-1)}</em>
-                </>
-              ) : (
-                post.author.node.name
-              )
-            ) : (
-              <>The <em>Moveee</em></>
-            )}
-          </h4>
-          <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and the diaspora. Long-form essays and visual stories that document the things that matter."}</p>
+          {post.asToldTo ? (
+            <>
+              <h4>{post.asToldTo}</h4>
+              <p className="a-told-to">as told to <strong>{post.author?.node?.name || "The Moveee"}</strong></p>
+              <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and the diaspora."}</p>
+            </>
+          ) : (
+            <>
+              <h4>
+                {post.author?.node?.name ? (
+                  post.author.node.name.includes(" ") ? (
+                    <>
+                      {post.author.node.name.split(" ").slice(0, -1).join(" ")} <em>{post.author.node.name.split(" ").slice(-1)}</em>
+                    </>
+                  ) : (
+                    post.author.node.name
+                  )
+                ) : (
+                  <>The <em>Moveee</em></>
+                )}
+              </h4>
+              <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and the diaspora. Long-form essays and visual stories that document the things that matter."}</p>
+            </>
+          )}
         </div>
         {post.author?.node?.slug && (
           <Link

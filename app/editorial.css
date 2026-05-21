@@ -514,6 +514,13 @@
   margin-bottom: 8px;
 }
 .author-info h4 em { font-style: italic; }
+.author-info .a-told-to {
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.06em;
+  color: var(--ochre);
+  margin: -4px 0 8px;
+}
 .author-info p {
   font-size: 14px;
   color: var(--ink-soft);

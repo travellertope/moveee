@@ -496,6 +496,7 @@ const STORY_FIELDS_FRAGMENT = `
         altText
       }
     }
+    asToldTo
     author {
       node {
         name

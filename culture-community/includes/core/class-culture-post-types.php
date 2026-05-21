@@ -17,6 +17,7 @@ class Culture_Post_Types {
         add_action( 'add_meta_boxes', array( __CLASS__, 'register_meta_boxes' ) );
         add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
+        add_action( 'init', array( __CLASS__, 'register_as_told_to_meta' ) );
 
         // Issue taxonomy admin form fields
         add_action( 'issue_add_form_fields',  array( __CLASS__, 'issue_add_form_fields' ) );
@@ -61,6 +62,15 @@ class Culture_Post_Types {
             error_log( 'Culture Community: register_graphql_field function not found!' );
             return;
         }
+
+        // 0. As-told-to byline for standard posts
+        register_graphql_field( 'Post', 'asToldTo', array(
+            'type'        => 'String',
+            'description' => 'Guest/subject name for as-told-to stories. When set, byline reads "Words by [guest], as told to [WP author]".',
+            'resolve'     => function( $post ) {
+                return (string) get_post_meta( $post->databaseId, 'as_told_to', true );
+            },
+        ) );
 
         // 1. Quotes
         $quote_fields = array(
@@ -1066,6 +1076,41 @@ class Culture_Post_Types {
         add_meta_box( 'culture_event_meta', __( 'Event Details', 'culture-community' ), array( __CLASS__, 'render_event_meta_box' ), 'culture_event', 'normal', 'high' );
         add_meta_box( 'culture_directory_meta', __( 'Directory Entry Details', 'culture-community' ), array( __CLASS__, 'render_directory_meta_box' ), 'culture_directory', 'side', 'high' );
         add_meta_box( 'culture_quote_meta', __( 'Quote Details', 'culture-community' ), array( __CLASS__, 'render_quote_meta_box' ), 'culture_quote', 'normal', 'high' );
+        add_meta_box( 'culture_as_told_to', __( 'As-Told-To', 'culture-community' ), array( __CLASS__, 'render_as_told_to_meta_box' ), 'post', 'side', 'high' );
+    }
+
+    public static function register_as_told_to_meta() {
+        register_post_meta( 'post', 'as_told_to', array(
+            'type'              => 'string',
+            'single'            => true,
+            'show_in_rest'      => true,
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'auth_callback'     => function() { return current_user_can( 'edit_posts' ); },
+        ) );
+    }
+
+    public static function render_as_told_to_meta_box( $post ) {
+        wp_nonce_field( 'culture_as_told_to', 'culture_as_told_to_nonce' );
+        $value = get_post_meta( $post->ID, 'as_told_to', true );
+        ?>
+        <p style="margin-bottom:6px;">
+            <label for="as_told_to" style="display:block;margin-bottom:4px;font-weight:600;">
+                <?php esc_html_e( 'Guest / Subject name', 'culture-community' ); ?>
+            </label>
+            <input
+                type="text"
+                id="as_told_to"
+                name="as_told_to"
+                value="<?php echo esc_attr( $value ); ?>"
+                style="width:100%;"
+                placeholder="e.g. Nonye Jennifer Amaechi"
+            >
+        </p>
+        <p class="description" style="font-size:11px;color:#666;">
+            <?php esc_html_e( 'When set, the byline reads: "Words by [Guest], as told to [WP Author]".', 'culture-community' ); ?>
+        </p>
+        <?php
     }
 
     public static function render_chapter_meta_box( $post ) {
@@ -1156,6 +1201,9 @@ class Culture_Post_Types {
         if ( isset( $_POST['culture_quote_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_quote_meta_nonce'], 'culture_quote_meta' ) ) {
             if ( isset( $_POST['quote_source'] ) ) update_post_meta( $post_id, '_quote_source', sanitize_text_field( $_POST['quote_source'] ) );
             if ( isset( $_POST['quote_user_id'] ) ) update_post_meta( $post_id, '_quote_user_id', absint( $_POST['quote_user_id'] ) );
+        }
+        if ( isset( $_POST['culture_as_told_to_nonce'] ) && wp_verify_nonce( $_POST['culture_as_told_to_nonce'], 'culture_as_told_to' ) ) {
+            update_post_meta( $post_id, 'as_told_to', sanitize_text_field( $_POST['as_told_to'] ?? '' ) );
         }
     }
 
