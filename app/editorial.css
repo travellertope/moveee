@@ -713,9 +713,10 @@
 }
 .prose-content figure.wp-block-image img,
 .prose-content figure:not(.wp-block-embed):not(.wp-block-table) img {
-  width: 100%;
+  max-width: 100%;
+  height: auto;
   display: block;
-  margin: 0;
+  margin: 0 auto;
 }
 .prose-content figcaption {
   padding: 10px 12px 12px;
@@ -778,10 +779,6 @@
   display: block;
   margin: 0 auto;
   cursor: zoom-in;
-}
-/* Images inside a figure don't need extra margin — the figure handles spacing */
-.prose-content figure img {
-  margin: 0 auto;
 }
 
 /* ── Gallery carousel ── */
