@@ -84,7 +84,7 @@ const WP_BASE = `${WP_URL}/wp-json/wp/v2`;
 /** Fetch the latest community posts from the culture_post CPT. */
 async function getCommunityPosts(): Promise<FeedItem[]> {
   const res = await fetch(
-    `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,content,meta,comment_count`,
+    `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count`,
     { cache: "no-store" }
   );
   if (!res.ok) return [];
@@ -93,7 +93,9 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
   return posts.map((post) => {
     const raw = post.content?.rendered ?? "";
     const { authorName, imageUrl, tag, tier } = parseCommunityData(post.meta, raw);
-    const textContent = decodeHtml(stripHtml(raw.replace(/<!--[\s\S]*?-->/g, "")));
+    // Use content body; fall back to title (for posts created via WP admin)
+    const bodyText = decodeHtml(stripHtml(raw.replace(/<!--[\s\S]*?-->/g, "")));
+    const textContent = bodyText || decodeHtml(stripHtml(post.title?.rendered ?? ""));
 
     return {
       id: `community-${post.id}`,

@@ -6,6 +6,9 @@ import {
   GET_PRODUCTS,
   getEventsWithFallback,
   getWPQuotes,
+  getLatestIssue,
+  getPostsByIssue,
+  type IssueTerm,
 } from "@/lib/wp";
 
 /**
@@ -22,6 +25,9 @@ export async function fetchHomepageData(editionTag?: string) {
   let quotes: any[] = [];
   let pulseStories: any[] = [];
   let directoryEntries: any[] = [];
+  let latestIssue: IssueTerm | null = null;
+  let latestIssueStories: any[] = [];
+  let interviewStories: any[] = [];
 
   // Cover story — try edition-specific tag first, fall back to global cover-story
   try {
@@ -116,5 +122,19 @@ export async function fetchHomepageData(editionTag?: string) {
     if (res.ok) pulseStories = await res.json();
   } catch (err) { console.error("Pulse fetch error:", err); }
 
-  return { coverStory, stories, events, origins, products, quotes, pulseStories, directoryEntries };
+  // Latest Issue
+  try {
+    latestIssue = await getLatestIssue();
+    if (latestIssue) {
+      latestIssueStories = await getPostsByIssue(latestIssue.id);
+    }
+  } catch (err) { console.error("Latest issue fetch error:", err); }
+
+  // Interviews strip
+  try {
+    const data = await getWPData(GET_STORIES, { first: 5, categoryName: "Interviews" }, { revalidate: 0 });
+    interviewStories = data?.posts?.nodes || [];
+  } catch (err) { console.error("Interviews fetch error:", err); }
+
+  return { coverStory, stories, events, origins, products, quotes, pulseStories, directoryEntries, latestIssue, latestIssueStories, interviewStories };
 }

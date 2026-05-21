@@ -19,14 +19,18 @@ interface Props {
   directoryEntries: any[];
   isLoggedIn: boolean;
   edition: EditionSlug;
+  latestIssue?: any;
+  latestIssueStories?: any[];
+  interviewStories?: any[];
 }
 
 export default function HomepageContent({
   coverStory, stories, events, origins, products, quotes,
   pulseStories, directoryEntries, isLoggedIn, edition,
+  latestIssue, latestIssueStories = [], interviewStories = [],
 }: Props) {
   const heroStories   = stories.slice(0, 5);
-  const magazineStrip = stories.slice(0, 5);
+  const interviewStrip = interviewStories.slice(0, 5);
   const editionLabel  = EDITIONS[edition].label;
   const editionPrefix = edition === "global" ? "" : `/${edition}`;
 
@@ -161,17 +165,73 @@ export default function HomepageContent({
 
       <AdBanner slot="leaderboard-top" className="hp-ad-leaderboard" />
 
-      {/* ===== MAGAZINE ===== */}
+      {/* ===== LATEST ISSUE ===== */}
+      {latestIssue && (
+        <section className="hp-section hp-latest-issue" id="latest-issue">
+          <div className="hp-section-header">
+            <div className="hp-section-title">
+              <span className="hp-section-label">Magazine</span>
+              <h3>Latest Issue</h3>
+            </div>
+            <Link href={`/magazine/issues/${latestIssue.slug}`} className="hp-section-link">See Full Issue →</Link>
+          </div>
+          <div className="hp-issue-block">
+            {latestIssue.meta?.issue_cover_image_url && (
+              <Link href={`/magazine/issues/${latestIssue.slug}`} className="hp-issue-cover">
+                <Image
+                  src={latestIssue.meta.issue_cover_image_url}
+                  alt={latestIssue.name}
+                  fill
+                  className="object-cover"
+                />
+              </Link>
+            )}
+            <div className="hp-issue-meta">
+              <span className="hp-issue-number">
+                {latestIssue.meta?.issue_number ? `Issue ${latestIssue.meta.issue_number}` : latestIssue.name}
+              </span>
+              {latestIssue.meta?.issue_subtitle && (
+                <p className="hp-issue-subtitle">{latestIssue.meta.issue_subtitle}</p>
+              )}
+              {latestIssue.meta?.issue_editorial_note && (
+                <p className="hp-issue-note">{latestIssue.meta.issue_editorial_note}</p>
+              )}
+            </div>
+          </div>
+          {latestIssueStories.length > 0 && (
+            <div className="hp-mag-strip">
+              {latestIssueStories.slice(0, 5).map((story: any) => {
+                const img = story._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
+                const cat = story._embedded?.["wp:term"]?.[0]?.[0]?.name || "Culture";
+                return (
+                  <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-mag-card">
+                    <div className="hp-mag-card-image">
+                      {img && <Image src={img} alt={story.title?.rendered || ""} fill className="object-cover" />}
+                    </div>
+                    <span className="hp-mag-cat">{cat}</span>
+                    <h4 className="hp-mag-card-title">{story.title?.rendered || ""}</h4>
+                    <span className="hp-mag-card-meta">
+                      {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ===== MAGAZINE — INTERVIEWS ===== */}
       <section className="hp-section" id="magazine">
         <div className="hp-section-header">
           <div className="hp-section-title">
             <span className="hp-section-label">Editorial</span>
-            <h3>Magazine</h3>
+            <h3>Interviews</h3>
           </div>
-          <Link href="/magazine" className="hp-section-link">All Stories →</Link>
+          <Link href="/magazine/category/interviews" className="hp-section-link">All Interviews →</Link>
         </div>
         <div className="hp-mag-strip">
-          {magazineStrip.map((story: any) => (
+          {interviewStrip.map((story: any) => (
             <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-mag-card">
               <div className="hp-mag-card-image">
                 {story.featuredImage && (
