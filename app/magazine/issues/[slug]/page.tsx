@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getIssueBySlug, getAllIssues, getPostsByIssue } from "@/lib/wp";
+import { decodeHtml } from "@/lib/decode-html";
 import type { Metadata } from "next";
 
 export const revalidate = 300;
@@ -11,11 +12,7 @@ export async function generateStaticParams() {
   return issues.map((issue) => ({ slug: issue.slug }));
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const issue = await getIssueBySlug(slug);
   if (!issue) return { title: "Issue · Moveee Magazine" };
@@ -31,50 +28,106 @@ export async function generateMetadata({
   };
 }
 
-function getPostCategories(post: any): { id: number; name: string; slug: string }[] {
-  const terms: any[][] = post._embedded?.["wp:term"] || [];
-  // wp:term[0] is categories, wp:term[1] is tags
-  return (terms[0] || []).filter((t: any) => t.taxonomy === "category" && t.slug !== "uncategorized");
+// Flatten all embedded wp:term entries and filter by taxonomy slug
+function getTermsByTaxonomy(post: any, taxonomy: string): { id: number; name: string; slug: string }[] {
+  const groups: any[][] = post._embedded?.["wp:term"] || [];
+  return groups.flat().filter((t: any) => t.taxonomy === taxonomy && t.slug !== "uncategorized");
 }
 
 function getPostImage(post: any): string | null {
   return post._embedded?.["wp:featuredmedia"]?.[0]?.source_url || null;
 }
 
-export default async function IssuePage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+interface Section {
+  key: string;
+  label: string;
+  type: "series" | "category";
+  posts: any[];
+}
+
+function groupPosts(posts: any[]): Section[] {
+  const seriesMap: Record<string, Section> = {};
+  const seriesOrder: string[] = [];
+  const catMap: Record<string, Section> = {};
+  const catOrder: string[] = [];
+
+  for (const post of posts) {
+    const series = getTermsByTaxonomy(post, "series");
+    const cats = getTermsByTaxonomy(post, "category");
+
+    if (series.length > 0) {
+      // Post belongs to a series — put it there (first series wins)
+      const s = series[0];
+      if (!seriesMap[s.slug]) {
+        seriesMap[s.slug] = { key: s.slug, label: s.name, type: "series", posts: [] };
+        seriesOrder.push(s.slug);
+      }
+      seriesMap[s.slug].posts.push(post);
+    } else {
+      // No series — group by primary category
+      const cat = cats[0];
+      const key = cat ? cat.slug : "other";
+      const label = cat ? cat.name : "Other Stories";
+      if (!catMap[key]) {
+        catMap[key] = { key, label, type: "category", posts: [] };
+        catOrder.push(key);
+      }
+      catMap[key].posts.push(post);
+    }
+  }
+
+  return [
+    ...seriesOrder.map((k) => seriesMap[k]),
+    ...catOrder.map((k) => catMap[k]),
+  ];
+}
+
+function PostCard({ post }: { post: any }) {
+  const image = getPostImage(post);
+  const title = decodeHtml(post.title?.rendered || "");
+  const excerpt = post.excerpt?.rendered?.replace(/<[^>]*>/g, "").trim() || "";
+
+  return (
+    <Link href={`/magazine/${post.slug}`} className="mag-issue-post">
+      <div className="mag-issue-post-image">
+        {image ? (
+          <Image src={image} alt={title} fill className="object-cover" />
+        ) : (
+          <div className="mag-issue-post-image-placeholder" />
+        )}
+      </div>
+      <div className="mag-issue-post-text">
+        <h3 className="mag-issue-post-title">{title}</h3>
+        {excerpt && (
+          <p className="mag-issue-post-excerpt">
+            {excerpt.slice(0, 130)}{excerpt.length > 130 ? "…" : ""}
+          </p>
+        )}
+        <span className="mag-issue-post-cta">Read →</span>
+      </div>
+    </Link>
+  );
+}
+
+export default async function IssuePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const issue = await getIssueBySlug(slug);
   if (!issue) notFound();
 
-  const posts = await getPostsByIssue(issue.id);
+  const [posts, allIssues] = await Promise.all([
+    getPostsByIssue(issue.id),
+    getAllIssues(),
+  ]);
 
-  // Group posts by their first non-uncategorized category
-  const categoryOrder: string[] = [];
-  const categoryMap: Record<string, { name: string; posts: any[] }> = {};
-
-  for (const post of posts) {
-    const cats = getPostCategories(post);
-    const primary = cats[0];
-    const key = primary ? primary.slug : "uncategorized";
-    const label = primary ? primary.name : "Other";
-    if (!categoryMap[key]) {
-      categoryMap[key] = { name: label, posts: [] };
-      categoryOrder.push(key);
-    }
-    categoryMap[key].posts.push(post);
-  }
-
-  const allIssues = await getAllIssues();
+  const sections = groupPosts(posts);
   const currentIndex = allIssues.findIndex((i) => i.slug === slug);
   const prevIssue = currentIndex < allIssues.length - 1 ? allIssues[currentIndex + 1] : null;
   const nextIssue = currentIndex > 0 ? allIssues[currentIndex - 1] : null;
 
   return (
     <main className="mag-issue-page">
+
+      {/* ── Header ── */}
       <div className="mag-issue-page-header">
         <div className="mag-issue-page-cover">
           {issue.meta?.issue_cover_image_url ? (
@@ -83,7 +136,7 @@ export default async function IssuePage({
               alt={issue.name}
               width={220}
               height={330}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
               priority
             />
           ) : (
@@ -101,67 +154,48 @@ export default async function IssuePage({
           {issue.meta?.issue_editorial_note && (
             <p className="mag-issue-page-note">{issue.meta.issue_editorial_note}</p>
           )}
+          <div className="mag-issue-page-stats">
+            <span>{posts.length} {posts.length === 1 ? "story" : "stories"}</span>
+            {sections.filter(s => s.type === "series").length > 0 && (
+              <span>· {sections.filter(s => s.type === "series").length} {sections.filter(s => s.type === "series").length === 1 ? "series" : "series"}</span>
+            )}
+          </div>
           <div className="mag-issue-page-nav">
             {prevIssue && (
               <Link href={`/magazine/issues/${prevIssue.slug}`} className="mag-issue-nav-link">
-                ← Previous issue
+                ← {prevIssue.name}
               </Link>
             )}
             {nextIssue && (
               <Link href={`/magazine/issues/${nextIssue.slug}`} className="mag-issue-nav-link">
-                Next issue →
+                {nextIssue.name} →
               </Link>
             )}
           </div>
         </div>
       </div>
 
+      {/* ── Sections ── */}
       {posts.length === 0 ? (
         <p className="mag-issue-empty">No stories published in this issue yet.</p>
       ) : (
         <div className="mag-issue-sections">
-          {categoryOrder.map((catSlug) => {
-            const { name, posts: catPosts } = categoryMap[catSlug];
-            return (
-              <section key={catSlug} className="mag-issue-section">
-                <h2 className="mag-issue-section-title">{name}</h2>
-                <div className="mag-issue-posts">
-                  {catPosts.map((post) => {
-                    const image = getPostImage(post);
-                    const title = post.title?.rendered || "";
-                    const excerpt = post.excerpt?.rendered?.replace(/<[^>]*>/g, "").trim() || "";
-                    return (
-                      <Link
-                        key={post.id}
-                        href={`/magazine/${post.slug}`}
-                        className="mag-issue-post"
-                      >
-                        {image && (
-                          <div className="mag-issue-post-image">
-                            <Image
-                              src={image}
-                              alt={title}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="mag-issue-post-text">
-                          <h3
-                            className="mag-issue-post-title"
-                            dangerouslySetInnerHTML={{ __html: title }}
-                          />
-                          {excerpt && (
-                            <p className="mag-issue-post-excerpt">{excerpt.slice(0, 140)}{excerpt.length > 140 ? "…" : ""}</p>
-                          )}
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
+          {sections.map((section) => (
+            <section key={section.key} className={`mag-issue-section mag-issue-section--${section.type}`}>
+              <div className="mag-issue-section-hdr">
+                <span className="mag-issue-section-type">
+                  {section.type === "series" ? "Series" : "Category"}
+                </span>
+                <h2 className="mag-issue-section-title">{section.label}</h2>
+                <span className="mag-issue-section-count">{section.posts.length} {section.posts.length === 1 ? "story" : "stories"}</span>
+              </div>
+              <div className="mag-issue-posts">
+                {section.posts.map((post) => (
+                  <PostCard key={post.id} post={post} />
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       )}
 
