@@ -224,10 +224,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                 <div className="b-label">Reading time</div>
                 <div className="b-val">{readingTime} minutes</div>
               </div>
-              <div className="b-item">
-                <div className="b-label">Category</div>
-                <div className="b-val">{categoryName}</div>
-              </div>
               <ArticleActions postId={parseInt(post.databaseId)} />
             </div>
           </div>
@@ -264,10 +260,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <div className="b-item">
               <div className="b-label">Reading time</div>
               <div className="b-val">{readingTime} min</div>
-            </div>
-            <div className="b-item">
-              <div className="b-label">Category</div>
-              <div className="b-val">{categoryName}</div>
             </div>
             <ArticleActions postId={parseInt(post.databaseId)} />
           </div>
