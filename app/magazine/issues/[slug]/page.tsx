@@ -81,8 +81,9 @@ export default async function IssuePage({
             <Image
               src={issue.meta.issue_cover_image_url}
               alt={issue.name}
-              fill
-              className="object-cover"
+              width={220}
+              height={330}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               priority
             />
           ) : (

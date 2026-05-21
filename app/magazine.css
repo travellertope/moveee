@@ -572,9 +572,8 @@
 }
 .mag-issue-page-cover {
   flex-shrink: 0;
-  position: relative;
   width: 220px;
-  aspect-ratio: 2 / 3;
+  height: 330px;
   background: #f0ece6;
   overflow: hidden;
 }

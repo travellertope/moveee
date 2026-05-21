@@ -9,6 +9,7 @@ import FinishReading from "@/components/FinishReading";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import ArticleActions from "@/components/ArticleActions";
 import ContentGate from "@/components/ContentGate";
+import ImageLightbox from "@/components/ImageLightbox";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getAccessLevel, canViewContent } from "@/lib/access";
@@ -273,12 +274,13 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       )}
 
       {/* ── ARTICLE 3-COLUMN LAYOUT ── */}
+      <ImageLightbox>
       <div className="article-wrap">
 
         {/* LEFT — TOC */}
         <aside className="toc">
           <div className="toc-heading">In this piece</div>
-          <details className="toc-details">
+          <details className="toc-details" open>
           <summary className="toc-summary">
             <span className="toc-toggle-label">In this piece</span>
             <span className="toc-chevron" aria-hidden>▾</span>
@@ -379,19 +381,22 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
         {/* RIGHT — SIDEBAR */}
         <aside className="sidebar">
-          <div className="newsletter-card">
-            <div className="s-label">★ The Moveee Weekly</div>
-            <h4>Culture in your inbox, every Friday.</h4>
-            <p>Film picks, exhibition openings, music worth your time. No noise.</p>
-            <NewsletterSubscribeWidget placeholder="your@email.com" buttonLabel="Subscribe free →" />
-          </div>
 
-          {/* Issue card */}
+          {/* Issue card — shown first when post belongs to an issue */}
           {postIssue && (
             <Link href={`/magazine/issues/${postIssue.slug}`} style={{ textDecoration: 'none' }}>
-              <div className="s-card s-card--issue">
+              <div className="s-card" style={{ borderLeft: '3px solid var(--ochre)', marginBottom: 16 }}>
+                <div className="s-label">This piece is from</div>
+                <h4 style={{ marginBottom: postIssue.meta?.issue_subtitle ? 4 : 12 }}>
+                  {postIssue.meta?.issue_number ? `Issue ${postIssue.meta.issue_number}` : postIssue.name}
+                </h4>
+                {postIssue.meta?.issue_subtitle && (
+                  <p style={{ fontStyle: 'italic', fontSize: 13, marginBottom: 12, color: 'var(--ink-soft)' }}>
+                    {postIssue.meta.issue_subtitle}
+                  </p>
+                )}
                 {postIssue.meta?.issue_cover_image_url && (
-                  <div style={{ position: 'relative', width: '100%', aspectRatio: '3/4', marginBottom: 12, overflow: 'hidden', background: 'var(--ink)' }}>
+                  <div style={{ position: 'relative', width: '100%', aspectRatio: '3/4', marginBottom: 12, overflow: 'hidden', background: 'var(--paper-deep)' }}>
                     <Image
                       src={postIssue.meta.issue_cover_image_url}
                       alt={postIssue.name}
@@ -399,13 +404,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                       style={{ objectFit: 'cover' }}
                     />
                   </div>
-                )}
-                <div className="s-label">
-                  {postIssue.meta?.issue_number ? `Issue ${postIssue.meta.issue_number}` : 'Featured in'}
-                </div>
-                <h4>{postIssue.name}</h4>
-                {postIssue.meta?.issue_subtitle && (
-                  <p style={{ fontStyle: 'italic', marginBottom: 12 }}>{postIssue.meta.issue_subtitle}</p>
                 )}
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace",
@@ -416,11 +414,18 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                   paddingBottom: '1px',
                   color: 'var(--ink)',
                 }}>
-                  Read the issue →
+                  Read the full issue →
                 </span>
               </div>
             </Link>
           )}
+
+          <div className="newsletter-card">
+            <div className="s-label">★ The Moveee Weekly</div>
+            <h4>Culture in your inbox, every Friday.</h4>
+            <p>Film picks, exhibition openings, music worth your time. No noise.</p>
+            <NewsletterSubscribeWidget placeholder="your@email.com" buttonLabel="Subscribe free →" />
+          </div>
 
           {relatedStories.slice(0, 2).map((story: any) => (
             <Link href={`/magazine/${story.slug}`} key={story.id} style={{ textDecoration: 'none' }}>
@@ -455,6 +460,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           </div>
         </aside>
       </div>
+      </ImageLightbox>
 
       {/* ── AUTHOR BAND ── */}
       <div className="author-band">
