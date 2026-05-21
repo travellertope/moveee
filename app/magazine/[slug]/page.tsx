@@ -12,6 +12,7 @@ import ContentGate from "@/components/ContentGate";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getAccessLevel, canViewContent } from "@/lib/access";
+import { decodeHtml } from "@/lib/decode-html";
 
 export const revalidate = 600;
 
@@ -116,7 +117,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const allHeadingRegex = /<h([23])[^>]*>(.*?)<\/h\1>/gi;
   let match;
   while ((match = allHeadingRegex.exec(rawContent)) !== null) {
-    const rawText = match[2].replace(/<[^>]*>/g, "").trim();
+    const rawText = decodeHtml(match[2]);
     if (!rawText) continue;
 
     // Prefer an existing id attribute; otherwise generate one from text

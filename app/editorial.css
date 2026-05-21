@@ -87,10 +87,10 @@
 .article-title em { font-style: italic; color: var(--gold); }
 .article-standfirst {
   font-family: 'Fraunces', serif;
-  font-size: clamp(13px,1.3vw,17px);
-  font-weight: 300;
+  font-size: clamp(14px,1.4vw,19px);
+  font-weight: 500;
   font-style: italic;
-  color: rgba(243,236,224,.7);
+  color: rgba(243,236,224,.95);
   margin-bottom: 32px;
   max-width: 620px;
   line-height: 1.5;
@@ -150,7 +150,8 @@
 }
 .standard-hero .article-title em { color: var(--ochre); }
 .standard-hero .article-standfirst {
-  color: var(--ink-soft);
+  color: var(--ink);
+  font-weight: 500;
   margin-bottom: 30px;
 }
 .standard-hero .byline-bar {
