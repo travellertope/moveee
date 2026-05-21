@@ -207,12 +207,13 @@
 }
 /* details/summary wrapper */
 .toc-details { border: none; }
-/* Desktop: always show content, no toggle needed */
+/* Desktop: force all detail children visible, hide the toggle button */
 @media(min-width:1101px) {
   .toc-heading { display: block; }
-  .toc-details { display: contents; }
+  .toc-details { display: block !important; }
+  .toc-details > ul { display: block !important; }
+  .toc-details > .toc-meta { display: block !important; }
   .toc-summary { display: none !important; }
-  .toc-details ul, .toc-details .toc-meta { display: block !important; }
 }
 .toc-details[open] > .toc-summary .toc-chevron { transform: rotate(180deg); }
 .toc-summary {

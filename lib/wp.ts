@@ -1509,6 +1509,17 @@ export async function getIssueBySlug(slug: string): Promise<IssueTerm | null> {
   } catch { return null; }
 }
 
+export async function getIssuesForPost(postId: number): Promise<IssueTerm[]> {
+  try {
+    const res = await fetch(
+      `${WP_BASE_URL}/wp-json/wp/v2/issues?post=${postId}&_fields=id,name,slug,description,meta`,
+      { next: { revalidate: 300 } }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch { return []; }
+}
+
 export async function getPostsByIssue(issueId: number): Promise<any[]> {
   try {
     const res = await fetch(
