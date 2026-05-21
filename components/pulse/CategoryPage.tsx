@@ -84,7 +84,7 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
   }));
 
   return (
-    <div style={{ background: "#f7f5f2", minHeight: "100vh" }}>
+    <div style={{ background: "#ffffff", minHeight: "100vh" }}>
       {/* Header */}
       <div style={{
         background: "#fff",
@@ -152,7 +152,7 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
                   <div style={{
                     borderBottom: "1px solid #e8e2d8",
                     padding: "0.75rem 1.25rem",
-                    background: "#f7f5f2",
+                    background: "#ffffff",
                   }}>
                     <p style={{
                       fontFamily: "var(--font-mono), monospace",
@@ -176,7 +176,7 @@ export default async function CategoryPage({ slug, label, desc }: Props) {
                   <div style={{
                     borderBottom: "1px solid #e8e2d8",
                     padding: "0.75rem 1.25rem",
-                    background: "#f7f5f2",
+                    background: "#ffffff",
                   }}>
                     <p style={{
                       fontFamily: "var(--font-mono), monospace",

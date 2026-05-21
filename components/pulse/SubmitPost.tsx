@@ -191,7 +191,7 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
           </span>
         ) : (
           <select value={tag} onChange={e => setTag(e.target.value as Tag | "")} style={{
-            background: "#f7f5f2", border: "1px solid #e0d8ce", borderRadius: "2px",
+            background: "#ffffff", border: "1px solid #e0d8ce", borderRadius: "2px",
             color: tag ? "#c5491f" : "#7a6f5c", fontSize: "0.72rem", fontWeight: 600,
             letterSpacing: "0.06em", textTransform: "uppercase", padding: "0.28rem 0.55rem",
             cursor: "pointer", outline: "none",
@@ -296,7 +296,7 @@ function QuoteForm({ user }: { user: any }) {
           placeholder="Author *"
           required
           style={{
-            flex: 1, minWidth: "120px", background: "#f7f5f2",
+            flex: 1, minWidth: "120px", background: "#ffffff",
             border: "1px solid #e0d8ce", borderRadius: "2px",
             color: "#14110d", fontSize: "0.78rem", padding: "0.3rem 0.6rem", outline: "none",
           }}
@@ -307,7 +307,7 @@ function QuoteForm({ user }: { user: any }) {
           onChange={e => setSource(e.target.value.slice(0, 150))}
           placeholder="Source (optional)"
           style={{
-            flex: 1, minWidth: "120px", background: "#f7f5f2",
+            flex: 1, minWidth: "120px", background: "#ffffff",
             border: "1px solid #e0d8ce", borderRadius: "2px",
             color: "#14110d", fontSize: "0.78rem", padding: "0.3rem 0.6rem", outline: "none",
           }}
@@ -425,7 +425,7 @@ export default function SubmitPost({ onPosted, lockedTag }: SubmitPostProps) {
         <button
           onClick={() => window.dispatchEvent(new Event("open-auth-modal"))}
           style={{
-            flex: 1, background: "#f7f5f2", border: "1px solid #e0d8ce", borderRadius: "20px",
+            flex: 1, background: "#ffffff", border: "1px solid #e0d8ce", borderRadius: "20px",
             padding: "0.6rem 1rem", color: "#7a6f5c", fontSize: "0.85rem",
             textAlign: "left", cursor: "pointer", fontFamily: "var(--font-fraunces), serif",
           }}

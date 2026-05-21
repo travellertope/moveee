@@ -122,7 +122,7 @@ export default function ContentGate({ accessLevel, isLoggedIn }: ContentGateProp
     display: "inline-block",
     padding: "11px 22px",
     background: "#14110d",
-    color: "#f5f0e8",
+    color: "#ffffff",
     textDecoration: "none",
     fontFamily: "'JetBrains Mono', monospace",
     fontSize: 11,

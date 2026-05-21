@@ -199,7 +199,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   }, [items]);
 
   return (
-    <div style={{ background: "#f7f5f2" }}>
+    <div style={{ background: "#ffffff" }}>
       <div className="pulse-layout">
 
         {/* ── Left Sidebar ── */}
@@ -352,7 +352,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                           fontSize: "0.7rem",
                           color: "#3a342b",
                           textDecoration: "none",
-                          background: "#f7f5f2",
+                          background: "#ffffff",
                           border: "1px solid #e8e2d8",
                           whiteSpace: "nowrap",
                         }}

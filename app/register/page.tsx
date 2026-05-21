@@ -253,7 +253,7 @@ function RegisterForm() {
                   style={{
                     ...styles.progressDot,
                     background: step > i ? "#14110d" : step === i + 1 ? "#14110d" : "#d4cbbf",
-                    color: step >= i + 1 ? "#f5f0e8" : "#7a6f5c",
+                    color: step >= i + 1 ? "#ffffff" : "#7a6f5c",
                     border: step === i + 1 ? "2px solid #14110d" : "2px solid transparent",
                   }}
                 >
@@ -475,7 +475,7 @@ function RegisterForm() {
                         padding: "6px 14px",
                         border: disciplines.includes(d) ? "1px solid #14110d" : "1px solid #d4cbbf",
                         background: disciplines.includes(d) ? "#14110d" : "transparent",
-                        color: disciplines.includes(d) ? "#f5f0e8" : "#7a6f5c",
+                        color: disciplines.includes(d) ? "#ffffff" : "#7a6f5c",
                         fontSize: 12,
                         letterSpacing: "0.06em",
                         textTransform: "uppercase",
@@ -534,7 +534,7 @@ function RegisterForm() {
                   style={{
                     ...styles.cycleBtn,
                     background: billingCycle === "monthly" ? "#14110d" : "transparent",
-                    color: billingCycle === "monthly" ? "#f5f0e8" : "#7a6f5c",
+                    color: billingCycle === "monthly" ? "#ffffff" : "#7a6f5c",
                   }}
                   disabled={tier !== "patron"}
                 >
@@ -546,7 +546,7 @@ function RegisterForm() {
                   style={{
                     ...styles.cycleBtn,
                     background: billingCycle === "yearly" ? "#14110d" : "transparent",
-                    color: billingCycle === "yearly" ? "#f5f0e8" : "#7a6f5c",
+                    color: billingCycle === "yearly" ? "#ffffff" : "#7a6f5c",
                   }}
                   disabled={tier !== "patron"}
                 >
@@ -747,7 +747,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "#f5f0e8",
+    background: "#ffffff",
     padding: "60px 24px",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   },
@@ -1014,7 +1014,7 @@ const styles: Record<string, React.CSSProperties> = {
   btnPrimary: {
     padding: "11px 24px",
     background: "#14110d",
-    color: "#f5f0e8",
+    color: "#ffffff",
     border: "none",
     borderRadius: 3,
     fontSize: 13,

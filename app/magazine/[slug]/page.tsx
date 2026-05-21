@@ -346,7 +346,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                       right: 0,
                       height: 80,
                       background:
-                        "linear-gradient(to bottom, transparent, var(--paper, #f5f0e8))",
+                        "linear-gradient(to bottom, transparent, var(--paper, #ffffff))",
                     }}
                   />
                 </div>

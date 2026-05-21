@@ -62,7 +62,7 @@ export default async function UnsubscribePage({ searchParams }: Props) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#f5f0e8",
+        background: "#ffffff",
         padding: "40px 24px",
       }}
     >

@@ -6,7 +6,7 @@
 /* ── Shared tokens ─────────────────────────────────────── */
 :root {
   --dir-ink: #14110d;
-  --dir-paper: #f5f0e8;
+  --dir-paper: #ffffff;
   --dir-ochre: #b38238;
   --dir-muted: rgba(20, 17, 13, 0.55);
   --dir-border: rgba(20, 17, 13, 0.12);

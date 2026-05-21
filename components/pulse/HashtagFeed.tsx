@@ -71,7 +71,7 @@ export default function HashtagFeed({ initialItems, tag }: HashtagFeedProps) {
       {/* Count */}
       <div style={{
         padding: "0.5rem 1.25rem",
-        background: "#f7f5f2",
+        background: "#ffffff",
         borderBottom: "1px solid #e8e2d8",
       }}>
         <span style={{

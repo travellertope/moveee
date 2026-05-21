@@ -177,7 +177,7 @@ export default function QuoteComments({ postId, initialComments }: Props) {
             placeholder={replyTo ? `Reply to ${replyTo.name}…` : "Share your thoughts on this quote…"}
             rows={3}
             style={{
-              width: "100%", background: "#f7f5f2", border: "1px solid #e0d8ce",
+              width: "100%", background: "#ffffff", border: "1px solid #e0d8ce",
               borderRadius: "4px", color: "#14110d",
               fontFamily: "var(--font-fraunces), serif",
               fontSize: "0.9rem", lineHeight: 1.55, resize: "vertical",
