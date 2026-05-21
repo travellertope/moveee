@@ -49,8 +49,9 @@ function groupEventsByMonth(events: any[]) {
 }
 
 function isEventPast(event: any): boolean {
-  // Multi-day events stay visible until their end date passes
-  const checkDate = event.endDate || event.eventDate || event.date;
+  // Only filter as past when an explicit event date (or end date) is set.
+  // Events without a date are always shown so WP-admin-created drafts aren't hidden.
+  const checkDate = event.endDate || event.eventDate;
   if (!checkDate) return false;
   const d = new Date(checkDate);
   if (isNaN(d.getTime())) return false;

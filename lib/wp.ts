@@ -97,7 +97,7 @@ function mapRestEventToFrontendShape(item: any) {
     date: item?.date ?? null,
     excerpt: item?.excerpt?.rendered ?? "",
     content: item?.content?.rendered ?? "",
-    eventDate: pick(acf.event_date, meta.event_date, meta._culture_event_date, item?.date),
+    eventDate: pick(acf.event_date, meta.event_date, meta._culture_event_date) ?? null,
     endDate: pick(acf.end_date, meta.end_date, meta._culture_end_date),
     location: pick(acf.location, meta.location, meta._culture_location),
     city: pick(acf.city, meta.city, meta._culture_event_city),

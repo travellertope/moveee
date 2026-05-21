@@ -429,12 +429,8 @@ class Culture_Post_Types {
                             $value = get_post_meta( $post->databaseId, $meta_key, true );
                         }
 
-                        // Special Fallback for eventDate -> use post publication date
-                        if ( $field_name === 'eventDate' && empty($value) ) {
-                            $value = get_the_date( 'Y-m-d\TH:i:s', $post->databaseId );
-                        }
-
                         if ( $field_type === 'Boolean' ) return (bool) $value;
+                        if ( empty( $value ) ) return null;
                         return (string) $value;
                     },
                 ) );
