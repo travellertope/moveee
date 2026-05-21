@@ -279,7 +279,11 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
         {/* LEFT — TOC */}
         <aside className="toc">
-          <div className="label">In this piece</div>
+          <details className="toc-details toc-details--desktop-open">
+          <summary className="toc-summary">
+            <span className="label">In this piece</span>
+            <span className="toc-chevron" aria-hidden>▾</span>
+          </summary>
           {headings.length > 0 ? (
             <ul>
               {headings.map((h, i) => (
@@ -328,6 +332,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               </div>
             )}
           </div>
+          </details>
         </aside>
 
         {/* CENTER — PROSE (Interactive Paragraph Comments) */}

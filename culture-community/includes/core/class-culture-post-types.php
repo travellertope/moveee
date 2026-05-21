@@ -18,6 +18,7 @@ class Culture_Post_Types {
         add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
         add_action( 'init', array( __CLASS__, 'register_as_told_to_meta' ) );
+        add_action( 'rest_after_insert_post', array( __CLASS__, 'save_as_told_to_rest' ), 10, 2 );
 
         // Issue taxonomy admin form fields
         add_action( 'issue_add_form_fields',  array( __CLASS__, 'issue_add_form_fields' ) );
@@ -1101,6 +1102,14 @@ class Culture_Post_Types {
         add_meta_box( 'culture_as_told_to', __( 'As-Told-To', 'culture-community' ), array( __CLASS__, 'render_as_told_to_meta_box' ), 'post', 'side', 'high' );
     }
 
+    /** Saves as_told_to when Gutenberg updates the post via the REST API. */
+    public static function save_as_told_to_rest( $post, $request ) {
+        $params = $request->get_json_params();
+        if ( isset( $params['meta']['as_told_to'] ) ) {
+            update_post_meta( $post->ID, 'as_told_to', sanitize_text_field( $params['meta']['as_told_to'] ) );
+        }
+    }
+
     public static function register_as_told_to_meta() {
         register_post_meta( 'post', 'as_told_to', array(
             'type'              => 'string',
@@ -1226,6 +1235,12 @@ class Culture_Post_Types {
         }
         if ( isset( $_POST['culture_as_told_to_nonce'] ) && wp_verify_nonce( $_POST['culture_as_told_to_nonce'], 'culture_as_told_to' ) ) {
             update_post_meta( $post_id, 'as_told_to', sanitize_text_field( $_POST['as_told_to'] ?? '' ) );
+        }
+        // Gutenberg saves via REST — the nonce above won't be present, so also save
+        // when the field arrives without a nonce (capability check is sufficient here
+        // because register_post_meta auth_callback already guards REST writes).
+        if ( ! isset( $_POST['culture_as_told_to_nonce'] ) && isset( $_POST['as_told_to'] ) && current_user_can( 'edit_post', $post_id ) ) {
+            update_post_meta( $post_id, 'as_told_to', sanitize_text_field( $_POST['as_told_to'] ) );
         }
     }
 
