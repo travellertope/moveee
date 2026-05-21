@@ -15,6 +15,16 @@ import { getAccessLevel, canViewContent } from "@/lib/access";
 
 export const revalidate = 600;
 
+function resolveAioseoTitle(raw: string, postTitle: string): string {
+  // AIOSEO stores template tags — resolve the common ones then strip any leftovers
+  return raw
+    .replace(/#post_title/g, postTitle)
+    .replace(/#separator_sa/g, "|")
+    .replace(/#site_title/g, "The Moveee")
+    .replace(/#[a-z_]+/g, "")
+    .trim();
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
   let data;
@@ -25,25 +35,26 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!post) return { title: "Article · The Moveee" };
 
   const imageUrl = post.featuredImage?.node?.sourceUrl || "/og-fallback.png";
+  const plainExcerpt = post.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160) || "";
+
+  // Prefer AIOSEO values; fall back to post title / excerpt
+  const metaTitle = post.seoTitle
+    ? resolveAioseoTitle(post.seoTitle, post.title)
+    : `${post.title} · The Moveee`;
+  const metaDescription = post.seoDescription?.trim() || plainExcerpt;
 
   return {
-    title: `${post.title} · The Moveee`,
-    description: post.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
+    title: metaTitle,
+    description: metaDescription,
     openGraph: {
-      title: post.title,
-      description: post.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-        },
-      ],
+      title: metaTitle,
+      description: metaDescription,
+      images: [{ url: imageUrl, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
-      title: post.title,
-      description: post.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
+      title: metaTitle,
+      description: metaDescription,
       images: [imageUrl],
     },
   };

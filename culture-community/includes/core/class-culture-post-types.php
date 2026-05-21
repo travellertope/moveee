@@ -42,6 +42,16 @@ class Culture_Post_Types {
             '_culture_tagline'       => array( 'type' => 'string' ),
             '_culture_is_featured'   => array( 'type' => 'string' ),
         );
+        // Expose AIOSEO meta on standard posts so REST-based fetches can read them
+        foreach ( array( '_aioseo_title', '_aioseo_description' ) as $aioseo_key ) {
+            register_post_meta( 'post', $aioseo_key, array(
+                'type'         => 'string',
+                'single'       => true,
+                'show_in_rest' => true,
+                'auth_callback' => '__return_true',
+            ) );
+        }
+
         foreach ( $event_meta as $meta_key => $args ) {
             register_post_meta( 'culture_event', $meta_key, array(
                 'type'         => $args['type'],
@@ -63,7 +73,19 @@ class Culture_Post_Types {
             return;
         }
 
-        // 0. As-told-to byline for standard posts
+        // 0a. AIOSEO SEO title & description — expose so Next.js generateMetadata can use them
+        foreach ( array( '_aioseo_title' => 'seoTitle', '_aioseo_description' => 'seoDescription' ) as $meta_key => $field_name ) {
+            $key = $meta_key; // capture for closure
+            register_graphql_field( 'Post', $field_name, array(
+                'type'        => 'String',
+                'description' => "AIOSEO custom {$field_name} stored in {$meta_key}.",
+                'resolve'     => function( $post ) use ( $key ) {
+                    return (string) get_post_meta( $post->databaseId, $key, true );
+                },
+            ) );
+        }
+
+        // 0b. As-told-to byline for standard posts
         register_graphql_field( 'Post', 'asToldTo', array(
             'type'        => 'String',
             'description' => 'Guest/subject name for as-told-to stories. When set, byline reads "Words by [guest], as told to [WP author]".',
