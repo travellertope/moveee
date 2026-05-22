@@ -144,8 +144,16 @@ export async function fetchHomepageData(editionTag?: string) {
     usedSlugs.add(s.slug);
     return true;
   });
-  latestIssueStories = latestIssueStories.filter(s => s.slug && !usedSlugs.has(s.slug));
-  interviewStories   = interviewStories.filter(s => s.slug && !usedSlugs.has(s.slug));
+  latestIssueStories = latestIssueStories.filter(s => {
+    if (!s.slug || usedSlugs.has(s.slug)) return false;
+    usedSlugs.add(s.slug);
+    return true;
+  });
+  interviewStories = interviewStories.filter(s => {
+    if (!s.slug || usedSlugs.has(s.slug)) return false;
+    usedSlugs.add(s.slug);
+    return true;
+  });
 
   return { coverStory, stories, events, origins, products, quotes, pulseStories, directoryEntries, latestIssue, latestIssueStories, interviewStories };
 }
