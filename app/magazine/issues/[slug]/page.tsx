@@ -1,3 +1,4 @@
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -5,6 +6,25 @@ import { getIssueBySlug, getAllIssues, getPostsByIssue } from "@/lib/wp";
 import { decodeHtml } from "@/lib/decode-html";
 import "@/app/magazine.css";
 import type { Metadata } from "next";
+
+// Render plain text with paragraph and line-break preservation
+function PlainTextBody({ text }: { text: string }) {
+  const paras = text.split(/\n{2,}/);
+  return (
+    <>
+      {paras.map((para, i) => (
+        <p key={i} className="mag-issue-page-note">
+          {para.split("\n").map((line, j, arr) => (
+            <React.Fragment key={j}>
+              {line}
+              {j < arr.length - 1 && <br />}
+            </React.Fragment>
+          ))}
+        </p>
+      ))}
+    </>
+  );
+}
 
 export const revalidate = 300;
 
@@ -153,7 +173,7 @@ export default async function IssuePage({ params }: { params: Promise<{ slug: st
             <h1 className="mag-issue-page-title">{issue.meta.issue_subtitle}</h1>
           )}
           {issue.meta?.issue_editorial_note && (
-            <p className="mag-issue-page-note">{issue.meta.issue_editorial_note}</p>
+            <PlainTextBody text={issue.meta.issue_editorial_note} />
           )}
           <div className="mag-issue-page-stats">
             <span>{posts.length} {posts.length === 1 ? "story" : "stories"}</span>
