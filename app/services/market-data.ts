@@ -162,7 +162,7 @@ const amplifyUK: TierService = {
   name: "Moveee Amplify Britain",
   eyebrow: "Media Amplification",
   description:
-    "Amplify your story across the UK's African and Caribbean diaspora. From London to Birmingham and Manchester, Moveee Amplify Britain distributes your feature to the Black British audiences who are actively shaping culture — through targeted social, newsletter, influencer, and press channels.",
+    "Amplify your story across the UK's Black community and diaspora. From London to Birmingham and Manchester, Moveee Amplify Britain distributes your feature to the Black British audiences who are actively shaping culture — through targeted social, newsletter, influencer, and press channels.",
   packages: [
     {
       name: "Priority",
@@ -233,7 +233,7 @@ const amplifyUS: TierService = {
   name: "Moveee Amplify America",
   eyebrow: "Media Amplification",
   description:
-    "Put your story in front of the African and Caribbean diaspora across the United States. Moveee Amplify America reaches Black American, Nigerian-American, Ghanaian-American, and Caribbean audiences in NYC, Atlanta, Houston, DC, and LA — through targeted social, newsletter, influencer, and press distribution.",
+    "Put your story in front of the Black community and diaspora across the United States. Moveee Amplify America reaches Black American, Nigerian-American, Ghanaian-American, and Caribbean audiences in NYC, Atlanta, Houston, DC, and LA — through targeted social, newsletter, influencer, and press distribution.",
   packages: [
     {
       name: "Priority",
@@ -408,7 +408,7 @@ const moveeeProUS: TierService = {
   name: "Media Partnership America",
   eyebrow: "Media Partnership",
   description:
-    "A dedicated visibility package for African and Caribbean diaspora creative organisations in the US — independent publishers, art galleries, and filmmakers. We spotlight your work through reviews, interviews, news releases, and social content to the culturally engaged diaspora audience across NYC, Atlanta, Houston, DC, and LA.",
+    "A dedicated visibility package for Black diaspora creative organisations in the US — independent publishers, art galleries, and filmmakers. We spotlight your work through reviews, interviews, news releases, and social content to the culturally engaged diaspora audience across NYC, Atlanta, Houston, DC, and LA.",
   packages: [
     {
       name: "Publishers — Debut",
@@ -711,11 +711,11 @@ export const MARKETS: Market[] = [
     id: "uk",
     name: "The British Moveee",
     flag: "🇬🇧",
-    tagline: "Editorial, commerce, and media services for the African and Caribbean diaspora across Britain.",
+    tagline: "Editorial, commerce, and media services for the Black community and diaspora across Britain.",
     currency: "£",
     sections: [
       {
-        id: "editorial", label: "Sponsored Content", audience: "For brands targeting the African and Caribbean diaspora across Britain", kind: "cards",
+        id: "editorial", label: "Sponsored Content", audience: "For brands targeting the Black community and diaspora across Britain", kind: "cards",
         crossSellTo: "amplify",
         cards: [
           {
@@ -756,7 +756,7 @@ export const MARKETS: Market[] = [
           {
             name: "MoveeePR Britain — Starter",
             tag: "pr", tagLabel: "PR Subscription",
-            description: "Monthly PR subscription for UK-based African and Caribbean founders, creatives, and brands building their first media presence.",
+            description: "Monthly PR subscription for UK-based Black founders, creatives, and brands building their first media presence.",
             price: "£300",
             priceNote: "per month · rolling subscription",
             includes: [
@@ -770,7 +770,7 @@ export const MARKETS: Market[] = [
           {
             name: "MoveeePR Britain — Growth",
             tag: "pr", tagLabel: "PR Subscription",
-            description: "For established UK-based African and Caribbean brands and public figures needing consistent media presence and strategic visibility.",
+            description: "For established UK-based Black brands and public figures needing consistent media presence and strategic visibility.",
             price: "£575",
             priceNote: "per month · 3-month minimum",
             includes: [
@@ -961,17 +961,17 @@ export const MARKETS: Market[] = [
     id: "us",
     name: "The Moveee America",
     flag: "🇺🇸",
-    tagline: "Editorial, commerce, and media services for the African and Caribbean diaspora across the United States.",
+    tagline: "Editorial, commerce, and media services for the Black community and diaspora across the United States.",
     currency: "$",
     sections: [
       {
-        id: "editorial", label: "Sponsored Content", audience: "For brands targeting the African and Caribbean diaspora across the US", kind: "cards",
+        id: "editorial", label: "Sponsored Content", audience: "For brands targeting the Black community and diaspora across the US", kind: "cards",
         crossSellTo: "amplify",
         cards: [
           {
             name: "Brand Culture Partnership",
             tag: "editorial", tagLabel: "Sponsored Content",
-            description: "Sponsored editorial + newsletter placement for US brands targeting African and Caribbean diaspora audiences. The culturally-specific alternative to The Root or Essence.",
+            description: "Sponsored editorial + newsletter placement for US brands targeting Black diaspora audiences. The culturally-specific alternative to The Root or Essence.",
             price: "$800",
             priceNote: "per package",
             includes: [
@@ -1055,7 +1055,7 @@ export const MARKETS: Market[] = [
           {
             name: "Moveee Connect — US",
             tag: "community", tagLabel: "Community",
-            description: "Quarterly sponsorship inside The Moveee’s curated community of African and Caribbean diaspora creatives, entrepreneurs, and professionals across the United States.",
+            description: "Quarterly sponsorship inside The Moveee’s curated community of Black diaspora creatives, entrepreneurs, and professionals across the United States.",
             price: "$250",
             priceNote: "per quarter",
             includes: [
@@ -1171,7 +1171,7 @@ export const MARKETS: Market[] = [
         ],
       },
       {
-        id: "travel", label: "Travel & Tours", audience: "For tour operators and cultural travel experience providers serving the African and Caribbean diaspora in the US", kind: "cards",
+        id: "travel", label: "Travel & Tours", audience: "For tour operators and cultural travel experience providers serving the Black diaspora in the US", kind: "cards",
         cards: [
           {
             name: "Basic Listing",
