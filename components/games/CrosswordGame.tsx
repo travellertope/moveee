@@ -291,9 +291,7 @@ export default function CrosswordGame() {
                 let cls = "cw-cell";
                 if (isSelected) cls += " cw-cell--selected";
                 else if (inClue) cls += " cw-cell--highlight";
-                // Only show error highlight if Check was pressed OR cell has content
-                if (checked && userVal !== "" && !isCorrect) cls += " cw-cell--error";
-                else if (!checked && isWrong) cls += " cw-cell--error";
+                if (checked && isWrong) cls += " cw-cell--error";
                 if (isCorrect && userVal) cls += " cw-cell--correct";
 
                 return (

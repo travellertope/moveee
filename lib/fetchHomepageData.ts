@@ -136,5 +136,16 @@ export async function fetchHomepageData(editionTag?: string) {
     interviewStories = data?.posts?.nodes || [];
   } catch (err) { console.error("Interviews fetch error:", err); }
 
+  // Deduplicate by slug so the same post never appears in two sections
+  const usedSlugs = new Set<string>();
+  if (coverStory?.slug) usedSlugs.add(coverStory.slug);
+  stories = stories.filter(s => {
+    if (!s.slug || usedSlugs.has(s.slug)) return false;
+    usedSlugs.add(s.slug);
+    return true;
+  });
+  latestIssueStories = latestIssueStories.filter(s => s.slug && !usedSlugs.has(s.slug));
+  interviewStories   = interviewStories.filter(s => s.slug && !usedSlugs.has(s.slug));
+
   return { coverStory, stories, events, origins, products, quotes, pulseStories, directoryEntries, latestIssue, latestIssueStories, interviewStories };
 }
