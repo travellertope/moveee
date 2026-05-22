@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Privacy Policy",
+  title: { absolute: "Privacy Policy | The Moveee" },
   description: "How The Moveee collects, uses, and protects your personal data.",
 };
 

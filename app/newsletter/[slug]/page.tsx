@@ -24,7 +24,7 @@ export async function generateMetadata({
   try {
     issue = await getNewsletterBySlugWithFallback(resolvedParams.slug, { revalidate: 0 });
   } catch {}
-  if (!issue) return { title: "GetMeLit · The Moveee" };
+  if (!issue) return { title: { absolute: "GetMeLit · The Moveee" } };
 
   const imageUrl = issue.featuredImage?.node?.sourceUrl || "/og-fallback.png";
 

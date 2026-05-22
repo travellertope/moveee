@@ -471,13 +471,23 @@ class Culture_NL_Analytics {
         $ot = $wpdb->prefix . self::TABLE_OPENS;
         $ct = $wpdb->prefix . self::TABLE_CLICKS;
 
+        // Query newsletters that completed (have _culture_nl_sent_at set)
+        // OR that were marked sent before that meta existed.
         $posts = get_posts( array(
             'post_type'      => 'culture_newsletter',
             'posts_per_page' => -1,
-            'meta_key'       => '_culture_nl_send_status',
-            'meta_value'     => 'sent',
-            'orderby'        => 'meta_value_num',  // sent_at
-            'order'          => 'DESC',
+            'meta_query'     => array(
+                'relation' => 'OR',
+                'sent_at_clause' => array(
+                    'key'     => '_culture_nl_sent_at',
+                    'compare' => 'EXISTS',
+                ),
+                array(
+                    'key'   => '_culture_nl_send_status',
+                    'value' => 'sent',
+                ),
+            ),
+            'orderby'        => array( 'sent_at_clause' => 'DESC', 'date' => 'DESC' ),
         ) );
 
         $campaign_data = array();

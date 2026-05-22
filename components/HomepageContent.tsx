@@ -23,12 +23,17 @@ interface Props {
   latestIssue?: any;
   latestIssueStories?: any[];
   interviewStories?: any[];
+  seriesTheRadar?: any[];
+  seriesPortraits?: any[];
+  seriesTheLane?: any[];
+  seriesThinkCreative?: any[];
 }
 
 export default function HomepageContent({
   coverStory, stories, events, origins, products, quotes,
   pulseStories, directoryEntries, isLoggedIn, edition,
   latestIssue, latestIssueStories = [], interviewStories = [],
+  seriesTheRadar = [], seriesPortraits = [], seriesTheLane = [], seriesThinkCreative = [],
 }: Props) {
   const heroStories   = stories.slice(0, 5);
   const interviewStrip = interviewStories.slice(0, 5);
@@ -250,6 +255,118 @@ export default function HomepageContent({
           ))}
         </div>
       </section>
+
+      {seriesTheRadar.length > 0 && (
+        <section className="hp-section" id="the-radar">
+          <div className="hp-section-header">
+            <div className="hp-section-title">
+              <span className="hp-section-label">Series</span>
+              <h3>The Radar</h3>
+            </div>
+            <Link href="/magazine/series/the-radar" className="hp-section-link">See All →</Link>
+          </div>
+          <div className="hp-mag-strip">
+            {seriesTheRadar.map((story: any) => (
+              <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-mag-card">
+                <div className="hp-mag-card-image">
+                  {story.featuredImage && (
+                    <Image src={story.featuredImage.node.sourceUrl} alt={story.featuredImage.node.altText || ""} fill className="object-cover" />
+                  )}
+                </div>
+                <span className="hp-mag-cat">{story.categories?.nodes[0]?.name || "Culture"}</span>
+                <h4 className="hp-mag-card-title">{story.title}</h4>
+                <span className="hp-mag-card-meta">
+                  {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {seriesPortraits.length > 0 && (
+        <section className="hp-section" id="portraits-of-the-city">
+          <div className="hp-section-header">
+            <div className="hp-section-title">
+              <span className="hp-section-label">Series</span>
+              <h3>Portraits of the City</h3>
+            </div>
+            <Link href="/magazine/series/portraits-of-the-city" className="hp-section-link">See All →</Link>
+          </div>
+          <div className="hp-mag-strip">
+            {seriesPortraits.map((story: any) => (
+              <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-mag-card">
+                <div className="hp-mag-card-image">
+                  {story.featuredImage && (
+                    <Image src={story.featuredImage.node.sourceUrl} alt={story.featuredImage.node.altText || ""} fill className="object-cover" />
+                  )}
+                </div>
+                <span className="hp-mag-cat">{story.categories?.nodes[0]?.name || "Culture"}</span>
+                <h4 className="hp-mag-card-title">{story.title}</h4>
+                <span className="hp-mag-card-meta">
+                  {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {seriesTheLane.length > 0 && (
+        <section className="hp-section" id="the-lane">
+          <div className="hp-section-header">
+            <div className="hp-section-title">
+              <span className="hp-section-label">Series</span>
+              <h3>The Lane</h3>
+            </div>
+            <Link href="/magazine/series/the-lane" className="hp-section-link">See All →</Link>
+          </div>
+          <div className="hp-mag-strip">
+            {seriesTheLane.map((story: any) => (
+              <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-mag-card">
+                <div className="hp-mag-card-image">
+                  {story.featuredImage && (
+                    <Image src={story.featuredImage.node.sourceUrl} alt={story.featuredImage.node.altText || ""} fill className="object-cover" />
+                  )}
+                </div>
+                <span className="hp-mag-cat">{story.categories?.nodes[0]?.name || "Culture"}</span>
+                <h4 className="hp-mag-card-title">{story.title}</h4>
+                <span className="hp-mag-card-meta">
+                  {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {seriesThinkCreative.length > 0 && (
+        <section className="hp-section" id="think-like-a-creative">
+          <div className="hp-section-header">
+            <div className="hp-section-title">
+              <span className="hp-section-label">Series</span>
+              <h3>Think Like a Creative</h3>
+            </div>
+            <Link href="/magazine/series/think-like-a-creative" className="hp-section-link">See All →</Link>
+          </div>
+          <div className="hp-mag-strip">
+            {seriesThinkCreative.map((story: any) => (
+              <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-mag-card">
+                <div className="hp-mag-card-image">
+                  {story.featuredImage && (
+                    <Image src={story.featuredImage.node.sourceUrl} alt={story.featuredImage.node.altText || ""} fill className="object-cover" />
+                  )}
+                </div>
+                <span className="hp-mag-cat">{story.categories?.nodes[0]?.name || "Culture"}</span>
+                <h4 className="hp-mag-card-title">{story.title}</h4>
+                <span className="hp-mag-card-meta">
+                  {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <AdBanner slot="leaderboard-mid" className="hp-ad-leaderboard" />
 

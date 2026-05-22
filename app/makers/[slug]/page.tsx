@@ -60,10 +60,10 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const maker = await fetchMaker(slug);
-  if (!maker) return { title: "Maker Not Found | The Moveee" };
+  if (!maker) return { title: { absolute: "Maker Not Found | The Moveee" } };
   const name = maker.storeName || maker.display_name || "Maker";
   return {
-    title: `${name} | Makers | The Moveee`,
+    title: { absolute: `${name} | Makers | The Moveee` },
     description:
       maker.bio ||
       `Discover handcrafted pieces by ${name} on The Moveee.`,

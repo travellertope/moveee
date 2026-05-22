@@ -8,7 +8,7 @@ import "../../member.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "My Collection · The Moveee",
+  title: { absolute: "My Collection | The Moveee" },
 };
 
 export default async function CollectionPage() {

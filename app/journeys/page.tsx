@@ -7,7 +7,7 @@ import "@/app/origins.css";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: "Origins · Curated Journeys · The Moveee",
+  title: { absolute: "Origins · Curated Journeys · The Moveee" },
   description: "Curated cultural journeys across Africa and the diaspora. Not tours. Slow, deep, culturally anchored experiences.",
 };
 

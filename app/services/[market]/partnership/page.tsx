@@ -16,9 +16,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { market } = await params;
   const data = getMarket(market);
-  if (!data) return { title: "Media Partnership | The Moveee" };
+  if (!data) return { title: { absolute: "Media Partnership | The Moveee" } };
   return {
-    title: `Media Partnership — ${data.name} | The Moveee`,
+    title: { absolute: `Media Partnership — ${data.name} | The Moveee` },
     description:
       "A sustained editorial partnership for African cultural organisations — book publishers, art galleries, and filmmakers.",
   };

@@ -3,7 +3,7 @@ import GameCard from "@/components/games/GameCard";
 import "@/app/games.css";
 
 export const metadata: Metadata = {
-  title: "Culture Games — The Moveee",
+  title: { absolute: "Culture Games — The Moveee" },
   description:
     "Test your knowledge of African and diaspora culture through trivia, quotes, and daily challenges.",
 };

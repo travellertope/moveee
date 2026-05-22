@@ -6,8 +6,8 @@ import type { Visual } from "@/components/VisualsGrid";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: "Moveee Visuals",
-  description: "A curated library of AI-generated illustrations documenting African and diaspora culture. Free for creative use.",
+  title: { absolute: "Visuals | The Moveee" },
+  description: "A curated library of illustrations documenting African and diaspora culture — people, places, movements, and moments. Free for creative use.",
 };
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";

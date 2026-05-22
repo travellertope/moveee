@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!journey) {
     return {
-      title: "Journey Not Found | The Moveee",
+      title: { absolute: "Journey Not Found | The Moveee" },
       description: "This journey could not be found.",
     };
   }

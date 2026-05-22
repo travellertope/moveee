@@ -67,7 +67,14 @@ class Culture_Newsletter_Queue {
         $subscribers = get_transient( "culture_nl_job_{$post_id}" );
 
         if ( false === $subscribers ) {
-            update_post_meta( $post_id, '_culture_nl_send_status', 'idle' );
+            // Transient expired. Check if all batches already completed.
+            $total  = (int) get_post_meta( $post_id, '_culture_nl_send_total',  true );
+            $offset = (int) get_post_meta( $post_id, '_culture_nl_send_offset', true );
+            if ( $total > 0 && $offset >= $total ) {
+                self::mark_complete( $post_id );
+            } else {
+                update_post_meta( $post_id, '_culture_nl_send_status', 'idle' );
+            }
             return;
         }
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import "./makers.css";
 
 export const metadata = {
-  title: "Meet the Makers | The Moveee",
+  title: { absolute: "Meet the Makers | The Moveee" },
   description:
     "Discover the vetted craftspeople behind every piece in the Moveee shop — personally reviewed for craft integrity, fair production, and lasting quality.",
 };

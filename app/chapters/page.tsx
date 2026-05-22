@@ -7,8 +7,8 @@ import "@/app/chapters.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Chapters",
-  description: "Find a Moveee chapter near you and join our global community across Africa and the diaspora.",
+  title: { absolute: "Chapters | The Moveee" },
+  description: "Find your local Moveee chapter — city-based communities for African and diaspora creatives, culture lovers, and professionals across the globe.",
 };
 
 export default async function ChaptersPage() {

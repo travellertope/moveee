@@ -1,6 +1,7 @@
 import {
   getWPData,
   GET_STORIES,
+  GET_SERIES_STORIES,
   GET_JOURNEYS,
   GET_DIRECTORY_ENTRIES,
   GET_PRODUCTS,
@@ -28,6 +29,10 @@ export async function fetchHomepageData(editionTag?: string) {
   let latestIssue: IssueTerm | null = null;
   let latestIssueStories: any[] = [];
   let interviewStories: any[] = [];
+  let seriesTheRadar: any[] = [];
+  let seriesPortraits: any[] = [];
+  let seriesTheLane: any[] = [];
+  let seriesThinkCreative: any[] = [];
 
   // Cover story — try edition-specific tag first, fall back to global cover-story
   try {
@@ -136,16 +141,58 @@ export async function fetchHomepageData(editionTag?: string) {
     interviewStories = data?.posts?.nodes || [];
   } catch (err) { console.error("Interviews fetch error:", err); }
 
-  // Deduplicate by slug so the same post never appears in two sections
+  // Series strips — fetch in parallel
+  try {
+    const [radar, portraits, lane, creative] = await Promise.all([
+      getWPData(GET_SERIES_STORIES, { series: "the-radar" },           { revalidate: 300 }),
+      getWPData(GET_SERIES_STORIES, { series: "portraits-of-the-city" }, { revalidate: 300 }),
+      getWPData(GET_SERIES_STORIES, { series: "the-lane" },            { revalidate: 300 }),
+      getWPData(GET_SERIES_STORIES, { series: "think-like-a-creative" }, { revalidate: 300 }),
+    ]);
+    seriesTheRadar      = radar?.seriesItem?.posts?.nodes     || [];
+    seriesPortraits     = portraits?.seriesItem?.posts?.nodes || [];
+    seriesTheLane       = lane?.seriesItem?.posts?.nodes      || [];
+    seriesThinkCreative = creative?.seriesItem?.posts?.nodes  || [];
+  } catch (err) { console.error("Series fetch error:", err); }
+
+  // Deduplicate by slug. Priority: latestIssue > coverStory > stories > interviews > series
   const usedSlugs = new Set<string>();
+
+  // 1. Latest issue — highest priority, register its slugs first
+  latestIssueStories = latestIssueStories.filter(s => {
+    if (!s.slug || usedSlugs.has(s.slug)) return false;
+    usedSlugs.add(s.slug);
+    return true;
+  });
+
+  // 2. Cover story is always kept (explicitly chosen), just register its slug
   if (coverStory?.slug) usedSlugs.add(coverStory.slug);
+
+  // 3. Hero stories — skip anything already in issue or cover
   stories = stories.filter(s => {
     if (!s.slug || usedSlugs.has(s.slug)) return false;
     usedSlugs.add(s.slug);
     return true;
   });
-  latestIssueStories = latestIssueStories.filter(s => s.slug && !usedSlugs.has(s.slug));
-  interviewStories   = interviewStories.filter(s => s.slug && !usedSlugs.has(s.slug));
 
-  return { coverStory, stories, events, origins, products, quotes, pulseStories, directoryEntries, latestIssue, latestIssueStories, interviewStories };
+  // 4. Interviews — skip anything seen above
+  interviewStories = interviewStories.filter(s => {
+    if (!s.slug || usedSlugs.has(s.slug)) return false;
+    usedSlugs.add(s.slug);
+    return true;
+  });
+
+  // 5. Series strips — each independently filtered, don't add to usedSlugs
+  //    (series posts may legitimately repeat across different series)
+  const filterSeries = (posts: any[]) => posts.filter(s => s.slug && !usedSlugs.has(s.slug)).slice(0, 5);
+  seriesTheRadar      = filterSeries(seriesTheRadar);
+  seriesPortraits     = filterSeries(seriesPortraits);
+  seriesTheLane       = filterSeries(seriesTheLane);
+  seriesThinkCreative = filterSeries(seriesThinkCreative);
+
+  return {
+    coverStory, stories, events, origins, products, quotes, pulseStories,
+    directoryEntries, latestIssue, latestIssueStories, interviewStories,
+    seriesTheRadar, seriesPortraits, seriesTheLane, seriesThinkCreative,
+  };
 }

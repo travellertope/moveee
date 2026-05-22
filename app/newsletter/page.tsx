@@ -9,9 +9,8 @@ import "../newsletter.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "GetMeLit Newsletter",
-  description:
-    "Deep cultural essays, curated picks, and weekly dispatches from across the African diaspora. Delivered every other Friday by The Moveee.",
+  title: { absolute: "GetMeLit — The Moveee Newsletter" },
+  description: "Deep cultural essays, curated picks, and dispatches from across the African diaspora. The Moveee's flagship newsletter, delivered every other Friday.",
 };
 
 export default async function NewsletterArchive() {
