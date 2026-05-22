@@ -1488,6 +1488,7 @@
     overflow: hidden;
     border-right: 1px solid var(--rule);
     align-self: start;
+    padding-bottom: 20px;
   }
 
   .hp-cover-sticky {
@@ -1547,8 +1548,7 @@
     width: 100%;
     flex-shrink: 0;
     background: var(--paper);
-    padding: 20px;
-    margin-bottom: 20px;
+    padding: 0 20px;
   }
   .hp-cover-image {
     position: relative;
