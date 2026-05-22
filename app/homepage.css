@@ -1543,12 +1543,17 @@
   .hp-cover-excerpt p { margin: 0; }
 
   /* ── Image block (below text) — 632 × 474 ratio ── */
+  .hp-cover-image-box {
+    width: 100%;
+    flex-shrink: 0;
+    background: var(--paper-deep);
+    padding: 10px;
+  }
   .hp-cover-image {
     position: relative;
     width: 100%;
     aspect-ratio: 632 / 474;
     overflow: hidden;
-    flex-shrink: 0;
     background: var(--ink);
   }
 
