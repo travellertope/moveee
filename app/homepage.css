@@ -1548,7 +1548,7 @@
     width: 100%;
     flex-shrink: 0;
     background: var(--paper);
-    padding: 0 20px;
+    padding: 0 20px 20px;
   }
   .hp-cover-image {
     position: relative;
