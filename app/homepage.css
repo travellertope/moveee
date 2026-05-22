@@ -1478,6 +1478,7 @@
     background: var(--paper);
     position: relative;
     z-index: 2;
+    padding-bottom: 24px;
   }
 
   /* Sticky column — sticks while right col scrolls */
