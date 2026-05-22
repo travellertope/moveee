@@ -1467,22 +1467,38 @@ export interface IssueTerm {
   slug: string;
   description: string;
   meta: {
-    issue_number?: number;
+    issue_number?: string | number;
     issue_subtitle?: string;
     issue_editorial_note?: string;
     issue_cover_image_url?: string;
   };
 }
 
+// Sort issues by decimal version number (e.g. "1.0", "2.1", "2.1.2") descending
+function sortIssuesByNumber(issues: IssueTerm[]): IssueTerm[] {
+  return [...issues].sort((a, b) => {
+    const parse = (n: string | number | undefined) =>
+      String(n ?? "0").split(".").map((s) => parseInt(s, 10) || 0);
+    const pa = parse(a.meta?.issue_number);
+    const pb = parse(b.meta?.issue_number);
+    const len = Math.max(pa.length, pb.length);
+    for (let i = 0; i < len; i++) {
+      const diff = (pb[i] ?? 0) - (pa[i] ?? 0); // descending: latest first
+      if (diff !== 0) return diff;
+    }
+    return b.id - a.id; // fallback: higher id first
+  });
+}
+
 export async function getLatestIssue(): Promise<IssueTerm | null> {
   try {
     const res = await fetch(
-      `${WP_BASE_URL}/wp-json/wp/v2/issues?per_page=1&orderby=id&order=desc&_fields=id,name,slug,description,meta`,
+      `${WP_BASE_URL}/wp-json/wp/v2/issues?per_page=50&orderby=id&order=desc&_fields=id,name,slug,description,meta`,
       { next: { revalidate: 300 } }
     );
     if (!res.ok) return null;
     const data = await res.json();
-    return data?.[0] ?? null;
+    return sortIssuesByNumber(data ?? [])[0] ?? null;
   } catch { return null; }
 }
 
@@ -1493,7 +1509,7 @@ export async function getAllIssues(): Promise<IssueTerm[]> {
       { next: { revalidate: 300 } }
     );
     if (!res.ok) return [];
-    return await res.json();
+    return sortIssuesByNumber(await res.json());
   } catch { return []; }
 }
 
