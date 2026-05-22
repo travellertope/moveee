@@ -7,7 +7,7 @@ import DirectorySubmitForm from "./DirectorySubmitForm";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Submit a Directory Entry · The Moveee",
+  title: { absolute: "Submit a Directory Entry · The Moveee" },
   description: "Add a person, place, movement, or cultural institution to the Moveee Culture Directory. Help build the definitive reference of African and diaspora culture.",
 };
 

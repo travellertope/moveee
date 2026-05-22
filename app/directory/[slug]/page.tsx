@@ -29,11 +29,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   let data: any;
   try { data = await getWPData(GET_DIRECTORY_ENTRY_BY_SLUG, { slug }); } catch {}
   const entry = data?.cultureDirectory;
-  if (!entry) return { title: "Culture Directory · The Moveee" };
+  if (!entry) return { title: { absolute: "Culture Directory · The Moveee" } };
   const imageUrl = entry.featuredImage?.node?.sourceUrl || "/og-fallback.png";
   const desc = entry.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160);
   return {
-    title: `${entry.title} · Culture Directory · The Moveee`,
+    title: { absolute: `${entry.title} · Culture Directory · The Moveee` },
     description: desc,
     openGraph: { title: entry.title, description: desc, images: [{ url: imageUrl, width: 1200, height: 630 }] },
     twitter: { card: "summary_large_image", title: entry.title, description: desc, images: [imageUrl] },

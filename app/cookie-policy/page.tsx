@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Cookie Policy | The Moveee",
+  title: { absolute: "Cookie Policy | The Moveee" },
   description: "How The Moveee uses cookies and tracking technologies on its website and platform.",
 };
 

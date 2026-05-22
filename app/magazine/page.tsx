@@ -5,7 +5,7 @@ import { Metadata } from "next";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Editorials | The Moveee",
+  title: { absolute: "Editorials | The Moveee" },
   description: "Long-form essays, interviews, and cultural commentary from The Moveee.",
 };
 

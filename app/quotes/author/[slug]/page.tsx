@@ -14,10 +14,10 @@ export async function generateMetadata({ params }: AuthorPageProps): Promise<Met
   const data = await getWPData(GET_QUOTES_BY_AUTHOR, { slug: resolvedParams.slug });
   const author = data?.quoteAuthor;
 
-  if (!author) return { title: 'Author Not Found — The Moveee' };
+  if (!author) return { title: { absolute: 'Author Not Found — The Moveee' } };
 
   return {
-    title: `Quotes by ${author.name} — The Moveee`,
+    title: { absolute: `Quotes by ${author.name} — The Moveee` },
     description: author.description || `Browse the collection of quotes by ${author.name} archived on The Moveee.`,
   };
 }

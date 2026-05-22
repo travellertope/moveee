@@ -6,7 +6,7 @@ import type { Visual } from "@/components/VisualsGrid";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: "Visuals | The Moveee",
+  title: { absolute: "Visuals | The Moveee" },
   description: "A curated library of illustrations documenting African and diaspora culture — people, places, movements, and moments. Free for creative use.",
 };
 

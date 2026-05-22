@@ -11,10 +11,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const data = await getWPData(GET_DIRECTORY_ENTRY_BY_SLUG, { slug });
   const entry = data?.cultureDirectory;
-  if (!entry) return { title: "Visuals · The Moveee" };
+  if (!entry) return { title: { absolute: "Visuals · The Moveee" } };
 
   return {
-    title: `${entry.title} · Moveee Visuals`,
+    title: { absolute: `${entry.title} · Moveee Visuals` },
     description: entry.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160),
     openGraph: {
       images: [entry.featuredImage?.node?.sourceUrl],

@@ -4,7 +4,7 @@ import SudokuGame from "@/components/games/SudokuGame";
 import "@/app/games.css";
 
 export const metadata: Metadata = {
-  title: "Daily Sudoku — The Moveee Games",
+  title: { absolute: "Daily Sudoku — The Moveee Games" },
   description: "A new Sudoku grid every day — one puzzle, same for every player worldwide. Part of The Moveee's daily culture games.",
 };
 

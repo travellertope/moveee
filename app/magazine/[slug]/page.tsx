@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     data = await getWPData(GET_STORY_BY_SLUG, { slug: resolvedParams.slug });
   } catch {}
   const post = data?.post;
-  if (!post) return { title: "Article · The Moveee" };
+  if (!post) return { title: { absolute: "Article · The Moveee" } };
 
   const imageUrl = post.featuredImage?.node?.sourceUrl || "/og-fallback.png";
   const plainExcerpt = post.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160) || "";

@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!event) {
     return {
-      title: "Event Not Found | The Moveee",
+      title: { absolute: "Event Not Found | The Moveee" },
       description: "This event could not be found.",
     };
   }
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const excerpt = event.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160) || event.tagline || "A curated cultural event from The Moveee";
 
   return {
-    title: `${event.title} · ${dateFormatted} · ${location} | Moveee Happenings`,
+    title: { absolute: `${event.title} · ${dateFormatted} · ${location} | Moveee Happenings` },
     description: excerpt,
     openGraph: {
       title: event.title,

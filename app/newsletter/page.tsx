@@ -9,7 +9,7 @@ import "../newsletter.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "GetMeLit — The Moveee Newsletter",
+  title: { absolute: "GetMeLit — The Moveee Newsletter" },
   description: "Deep cultural essays, curated picks, and dispatches from across the African diaspora. The Moveee's flagship newsletter, delivered every other Friday.",
 };
 

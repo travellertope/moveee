@@ -9,7 +9,7 @@ import "@/app/events.css";
 export const revalidate = 180;
 
 export const metadata = {
-  title: "Happenings | The Moveee",
+  title: { absolute: "Happenings | The Moveee" },
   description: "Curated cultural events across Africa and the diaspora — openings, listening sessions, film screenings, performances, and community gatherings worth your time.",
 };
 

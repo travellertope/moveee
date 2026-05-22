@@ -4,7 +4,7 @@ import CrosswordGame from "@/components/games/CrosswordGame";
 import "@/app/games.css";
 
 export const metadata: Metadata = {
-  title: "Daily Crossword — The Moveee Games",
+  title: { absolute: "Daily Crossword — The Moveee Games" },
   description: "A new African culture crossword every day. Same puzzle for every player.",
 };
 

@@ -4,7 +4,7 @@ import TriviaGame from "@/components/games/TriviaGame";
 import "@/app/games.css";
 
 export const metadata: Metadata = {
-  title: "Culture Trivia — Culture Games · The Moveee",
+  title: { absolute: "Culture Trivia — Culture Games · The Moveee" },
   description:
     "10 daily trivia questions spanning Afrobeats, Nollywood, African literature, history, and visual art.",
 };

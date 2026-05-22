@@ -5,7 +5,7 @@ import "@/app/magazine.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Magazine Issues | The Moveee",
+  title: { absolute: "Magazine Issues | The Moveee" },
   description: "Browse every print and digital issue of The Moveee — Africa's independent culture magazine. Each issue digs into a distinct cultural theme through essays, interviews, and photography.",
 };
 

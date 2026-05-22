@@ -6,7 +6,7 @@ import '@/app/quotes.css';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Quotes | The Moveee',
+  title: { absolute: 'Quotes | The Moveee' },
   description: 'Words that define the culture. A growing archive of quotes from African and diaspora thinkers, artists, writers, and leaders — submitted and verified by the community.',
 };
 

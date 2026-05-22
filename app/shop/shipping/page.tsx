@@ -3,7 +3,7 @@ import "../../sections.css";
 import "../../legal.css";
 
 export const metadata = {
-  title: "Shipping & Returns | The Moveee",
+  title: { absolute: "Shipping & Returns | The Moveee" },
   description: "Shipping rates, delivery timelines, and returns policy for orders from The Moveee shop.",
 };
 

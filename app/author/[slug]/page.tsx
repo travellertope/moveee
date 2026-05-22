@@ -36,10 +36,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   } catch {}
 
   const author = data?.user;
-  if (!author) return { title: "Author Archive · The Moveee" };
+  if (!author) return { title: { absolute: "Author Archive · The Moveee" } };
 
   return {
-    title: `${author.name} · The Moveee`,
+    title: { absolute: `${author.name} · The Moveee` },
     description: author.description || `Articles by ${author.name} on The Moveee.`,
   };
 }
