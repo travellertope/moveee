@@ -1094,7 +1094,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Black British Audience Targeting",
-          body: "Every paid placement targets Black British and African Caribbean diaspora audiences — the same readership that already engages with The British Moveee. No wasted impressions on irrelevant demographics.",
+          body: "Every paid placement targets Black British audiences — the same readership that already engages with The British Moveee. No wasted impressions on irrelevant demographics.",
         },
         {
           title: "Credibility That Travels",
@@ -1259,7 +1259,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       faqs: [
         {
           question: "What product categories do you accept?",
-          answer: "Fashion, beauty, wellness, homeware, food & drink, books and media, and African or Caribbean diaspora-founded lifestyle brands. Each application is assessed individually.",
+          answer: "Fashion, beauty, wellness, homeware, food & drink, books and media, and Black diaspora-founded lifestyle brands. Each application is assessed individually.",
         },
         {
           question: "How does the affiliate commission work?",
@@ -1286,7 +1286,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Build a Consistent Media Presence Across the US.",
       tagline: "Monthly PR subscription for Black diaspora brands who need steady press coverage — not a one-off announcement.",
       intro: [
-        "Getting consistent press coverage as an African or Caribbean diaspora brand in the US requires a rhythm, not a one-off pitch. MoveeePR US gives you that rhythm: press release writing, ongoing media outreach to US digital news platforms, and monthly reporting on what's landing.",
+        "Getting consistent press coverage as a Black diaspora brand in the US requires a rhythm, not a one-off pitch. MoveeePR US gives you that rhythm: press release writing, ongoing media outreach to US digital news platforms, and monthly reporting on what's landing.",
         "Starter gives you one release per month and the brand narrative groundwork that makes every pitch more effective. Growth doubles the output, adds thought leadership content, and includes monthly strategy calls to keep your media presence building.",
         "PR compounds. A single press release is a single day's coverage. MoveeePR is the monthly infrastructure that makes your brand familiar to editors — and eventually, to the diaspora audiences they reach.",
       ],
@@ -1546,7 +1546,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "Buyers No Other Channel Gets Right",
-          body: "Diaspora remittance and fintech, immigration legal services, African property for diaspora buyers, Nigerian and Caribbean food and lifestyle brands, cultural education, diversity-focused employers — the buyer profile for this community is unusually broad. All of them need this audience and none of them can easily buy it.",
+          body: "Diaspora remittance and fintech, immigration legal services, African property for diaspora buyers, Black food and lifestyle brands, cultural education, diversity-focused employers — the buyer profile for this community is unusually broad. All of them need this audience and none of them can easily buy it.",
         },
         {
           title: "Value-First Format That Builds Real Brand Memory",
@@ -1568,7 +1568,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "What kinds of brands fit well?",
-          answer: "Diaspora fintech and remittance, legal and professional services targeting Black professionals, US real estate or Nigerian/Caribbean property for diaspora buyers, cultural education and training, event promoters, diversity-focused recruiters, and lifestyle brands with genuine diaspora cultural relevance.",
+          answer: "Diaspora fintech and remittance, legal and professional services targeting Black professionals, US real estate or diaspora property for diaspora buyers, cultural education and training, event promoters, diversity-focused recruiters, and lifestyle brands with genuine diaspora cultural relevance.",
         },
         {
           question: "Can I sponsor multiple markets?",
