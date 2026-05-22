@@ -230,6 +230,7 @@ export default function HomepageContent({
       )}
 
       {/* ===== MAGAZINE — INTERVIEWS ===== */}
+      {interviewStrip.length > 0 && (
       <section className="hp-section" id="magazine">
         <div className="hp-section-header">
           <div className="hp-section-title">
@@ -255,6 +256,7 @@ export default function HomepageContent({
           ))}
         </div>
       </section>
+      )}
 
       {seriesTheRadar.length > 0 && (
         <section className="hp-section" id="the-radar">

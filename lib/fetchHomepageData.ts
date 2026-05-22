@@ -137,7 +137,7 @@ export async function fetchHomepageData(editionTag?: string) {
 
   // Interviews strip
   try {
-    const data = await getWPData(GET_STORIES, { first: 5, categoryName: "Interviews" }, { revalidate: 0 });
+    const data = await getWPData(GET_STORIES, { first: 10, categoryName: "Interviews" }, { revalidate: 0 });
     interviewStories = data?.posts?.nodes || [];
   } catch (err) { console.error("Interviews fetch error:", err); }
 
