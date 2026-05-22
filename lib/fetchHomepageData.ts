@@ -136,19 +136,27 @@ export async function fetchHomepageData(editionTag?: string) {
     interviewStories = data?.posts?.nodes || [];
   } catch (err) { console.error("Interviews fetch error:", err); }
 
-  // Deduplicate by slug so the same post never appears in two sections
+  // Deduplicate by slug. Priority: latestIssue > coverStory > stories > interviews
   const usedSlugs = new Set<string>();
-  if (coverStory?.slug) usedSlugs.add(coverStory.slug);
-  stories = stories.filter(s => {
-    if (!s.slug || usedSlugs.has(s.slug)) return false;
-    usedSlugs.add(s.slug);
-    return true;
-  });
+
+  // 1. Latest issue — highest priority, register its slugs first
   latestIssueStories = latestIssueStories.filter(s => {
     if (!s.slug || usedSlugs.has(s.slug)) return false;
     usedSlugs.add(s.slug);
     return true;
   });
+
+  // 2. Cover story is always kept (explicitly chosen), just register its slug
+  if (coverStory?.slug) usedSlugs.add(coverStory.slug);
+
+  // 3. Hero stories — skip anything already in issue or cover
+  stories = stories.filter(s => {
+    if (!s.slug || usedSlugs.has(s.slug)) return false;
+    usedSlugs.add(s.slug);
+    return true;
+  });
+
+  // 4. Interviews — skip anything seen above
   interviewStories = interviewStories.filter(s => {
     if (!s.slug || usedSlugs.has(s.slug)) return false;
     usedSlugs.add(s.slug);
