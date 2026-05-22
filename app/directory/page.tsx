@@ -6,9 +6,8 @@ import DirectoryGrid from "@/components/DirectoryGrid";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: "Culture Directory",
-  description:
-    "A living wiki of African and diaspora culture — people, places, movements, genres, and more.",
+  title: "Culture Directory | The Moveee",
+  description: "A living reference of African and diaspora culture — creatives, institutions, movements, genres, cities, and more. Discover and add to the canon.",
 };
 
 export default async function DirectoryPage({

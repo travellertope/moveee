@@ -5,8 +5,8 @@ import { Metadata } from "next";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Shop · The Moveee",
-  description: "Curated lifestyle goods from vetted makers.",
+  title: "Shop | The Moveee",
+  description: "Curated lifestyle goods from vetted African and diaspora makers — clothing, objects, and editions reviewed for craft, integrity, and lasting quality.",
 };
 
 export default async function ShopPage() {

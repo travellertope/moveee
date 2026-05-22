@@ -10,7 +10,7 @@ import "../member.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "My Account · The Moveee",
+  title: { absolute: "My Account | The Moveee" },
 };
 
 export default async function MemberPage() {

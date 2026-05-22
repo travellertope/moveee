@@ -3,7 +3,8 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Unsubscribe · The Cultural Digest",
+  title: { absolute: "Unsubscribe | The Moveee" },
+  robots: { index: false, follow: false },
 };
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";

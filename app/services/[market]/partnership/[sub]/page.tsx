@@ -19,9 +19,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { sub } = await params;
   const cat = getPartnershipCategory(sub);
-  if (!cat) return { title: "Media Partnership | The Moveee" };
+  if (!cat) return { title: { absolute: "Media Partnership | The Moveee" } };
   return {
-    title: `${cat.label} — Media Partnership | The Moveee Africa`,
+    title: { absolute: `${cat.label} — Media Partnership | The Moveee` },
     description: cat.page.tagline,
   };
 }

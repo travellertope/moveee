@@ -9,8 +9,8 @@ import "@/app/events.css";
 export const revalidate = 180;
 
 export const metadata = {
-  title: "Happenings",
-  description: "Curated openings, listening sessions, film screenings, and community gatherings across Africa and the diaspora.",
+  title: "Happenings | The Moveee",
+  description: "Curated cultural events across Africa and the diaspora — openings, listening sessions, film screenings, performances, and community gatherings worth your time.",
 };
 
 /** Group events by Month Year with robust fallback */
