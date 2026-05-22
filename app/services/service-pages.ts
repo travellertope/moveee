@@ -621,7 +621,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Black British Stories, Told With the Weight They Deserve",
       tagline: "Longform editorial. Newsletter distribution. Social reach. For brands that understand the Black British market isn't a segment — it's a culture.",
       intro: [
-        "The Black British market — African and Caribbean diaspora across London, Birmingham, Manchester, and Bristol — is one of the most culturally sophisticated and brand-conscious audiences in the UK. It is also one of the most consistently misread by mainstream media. The British Moveee Sponsored Content package exists for brands that want to get it right.",
+        "The Black British market — across London, Birmingham, Manchester, and Bristol — is one of the most culturally sophisticated and brand-conscious audiences in the UK. It is also one of the most consistently misread by mainstream media. The British Moveee Sponsored Content package exists for brands that want to get it right.",
         "We produce an 800–1,200 word feature that earns its place in front of this audience: well-researched, culturally informed, and written by writers who are part of the communities they're speaking to. The feature distributes through our UK newsletter and goes out across our social channels as three native posts.",
         "The flat rate is £600, which covers the feature, newsletter inclusion, and social content. If your campaign requires extended reach — paid social, influencer activation, or press syndication — Amplify tiers start at £45 and are scoped to your needs. Everything is agreed before you commit.",
       ],
@@ -776,7 +776,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     presskit: {
       headline: "Build a Consistent Media Presence in the UK.",
-      tagline: "Monthly PR subscription for UK-based African and Caribbean brands, creatives, and founders who need steady press coverage — not a one-off announcement.",
+      tagline: "Monthly PR subscription for UK-based Black brands, creatives, and founders who need steady press coverage — not a one-off announcement.",
       intro: [
         "Consistent press coverage doesn't happen by accident. It happens through regular, well-written press releases pitched to the right journalists and publications on an ongoing basis. MoveeePR UK gives you that infrastructure: press release writing, ongoing media outreach across UK digital news platforms, and monthly reporting on what's landing.",
         "Starter gives you one release per month and the foundational brand narrative work to make every pitch count. Growth doubles the output, adds thought leadership content, and includes monthly strategy calls to keep your media presence building over time.",
@@ -993,7 +993,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "The Room Where Black British Culture Does Business",
       tagline: "Quarterly community sponsorship for brands that want trust-transferred access to Black British and diaspora creatives, professionals, and entrepreneurs.",
       intro: [
-        "Moveee Connect UK is the community layer of The Moveee — a curated, semi-private space where Black British and diaspora creatives, entrepreneurs, professionals, and culture lovers gather. Not a general social media audience. A self-selected community of people who care about African and Caribbean diaspora culture enough to opt in and actively participate.",
+        "Moveee Connect UK is the community layer of The Moveee — a curated, semi-private space where Black British and diaspora creatives, entrepreneurs, professionals, and culture lovers gather. Not a general social media audience. A self-selected community of people who care about Black culture enough to opt in and actively participate.",
         "A quarterly sponsorship isn't an ad placement. It's trust-transferred access — you show up inside a community that already has a relationship with The Moveee, introduced by the team, in a format that feels curated and useful rather than intrusive. The community knows who's in the room and why.",
         "£200 per quarter. A warm introduction, one sponsored content slot, one exclusive member offer. For brands that can't easily reach Black British professionals and creatives through mainstream UK media — which is most — Moveee Connect is the most direct route in.",
       ],
@@ -1044,7 +1044,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Who are the members?",
-          answer: "Black British and diaspora creatives, entrepreneurs, and professionals — people in the African and Caribbean community in the UK who engage with The Moveee's editorial content. Age range 20–40, career-building and culturally engaged.",
+          answer: "Black British and diaspora creatives, entrepreneurs, and professionals — people in the Black community in the UK who engage with The Moveee's editorial content. Age range 20–40, career-building and culturally engaged.",
         },
         {
           question: "What does the sponsored content slot look like in practice?",
@@ -1071,7 +1071,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The British Moveee.",
       intro: [
         "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The British Moveee. We don't amplify external content — only work published on our own platform.",
-        "Once your feature is live, Amplify extends its reach through paid social ads targeting Black British and African diaspora audiences across the UK, influencer shares within our network, and extended GetMeLit UK newsletter distribution. Choose the tier that matches your budget and reach objectives.",
+        "Once your feature is live, Amplify extends its reach through paid social ads targeting Black British audiences across the UK, influencer shares within our network, and extended GetMeLit UK newsletter distribution. Choose the tier that matches your budget and reach objectives.",
         "The editorial feature is the foundation — Amplify is what gets the story in front of more of the right people, faster than organic reach alone will manage.",
       ],
       howItWorks: [
@@ -1127,9 +1127,9 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
   us: {
     editorial: {
       headline: "For Brands That Know the Diaspora Isn't One Story",
-      tagline: "Longform editorial, newsletter distribution, and social reach for brands ready to engage Black American and African diaspora communities with substance.",
+      tagline: "Longform editorial, newsletter distribution, and social reach for brands ready to engage Black American and diaspora communities with substance.",
       intro: [
-        "The African and Caribbean diaspora in the United States — in New York, Atlanta, Houston, DC, and Los Angeles — is not a monolith, and any brand treating it like one will be seen through immediately. The Moveee America Sponsored Content package is built around cultural specificity: writing that understands the difference between a Yoruba cultural reference and a Trinidadian one, between Atlanta's Black creative economy and the Nigerian American professional community in the DMV.",
+        "The Black diaspora in the United States — in New York, Atlanta, Houston, DC, and Los Angeles — is not a monolith, and any brand treating it like one will be seen through immediately. The Moveee America Sponsored Content package is built around cultural specificity: writing that understands the difference between a Yoruba cultural reference and a Trinidadian one, between Atlanta's Black creative economy and the Nigerian American professional community in the DMV.",
         "An 800–1,200 word longform feature, distributed through our US newsletter and amplified by three native social posts, for $800 flat. The feature is written by writers who are part of these communities. You brief us, we handle the craft, and you get links and traffic data within 72 hours of publication.",
         "Amplify tiers start at $60 and extend reach through paid social, influencer networks, and press syndication — Priority, Sponsored, Sponsored+, and Invested options available at the brief stage. Everything is scoped before you commit.",
       ],
@@ -1162,7 +1162,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "Newsletter Reach Across Five Diaspora Cities",
-          body: "NYC, Atlanta, Houston, DC, and LA. Our US newsletter reaches African and Caribbean diaspora readers who are professionally established, culturally engaged, and brand-literate.",
+          body: "NYC, Atlanta, Houston, DC, and LA. Our US newsletter reaches Black diaspora readers who are professionally established, culturally engaged, and brand-literate.",
         },
         {
           title: "One Brief, Complete Execution",
@@ -1205,7 +1205,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     lifestyle: {
       headline: "The Diaspora Shops With Intention. Be Worth Discovering.",
-      tagline: "Curated commerce and editorial for brands that deserve a place in the African and Caribbean diaspora's cultural conversation.",
+      tagline: "Curated commerce and editorial for brands that deserve a place in the Black diaspora's cultural conversation.",
       intro: [
         "The Moveee America Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. It's how brands across NYC, Atlanta, Houston, DC, and LA get in front of the diaspora audience with zero risk.",
         "When you're ready for full editorial treatment, upgrade to a Brand Feature: a curated shop listing with an editorial write-up, GetMeLit US newsletter distribution, and social promotion for $450 flat. Seasonal Drop positions your brand inside Juneteenth, Black History Month, and holiday gifting season — coordinated editorial campaigns built around high-intent cultural moments.",
@@ -1284,7 +1284,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     presskit: {
       headline: "Build a Consistent Media Presence Across the US.",
-      tagline: "Monthly PR subscription for African and Caribbean diaspora brands who need steady press coverage — not a one-off announcement.",
+      tagline: "Monthly PR subscription for Black diaspora brands who need steady press coverage — not a one-off announcement.",
       intro: [
         "Getting consistent press coverage as an African or Caribbean diaspora brand in the US requires a rhythm, not a one-off pitch. MoveeePR US gives you that rhythm: press release writing, ongoing media outreach to US digital news platforms, and monthly reporting on what's landing.",
         "Starter gives you one release per month and the brand narrative groundwork that makes every pitch more effective. Growth doubles the output, adds thought leadership content, and includes monthly strategy calls to keep your media presence building.",
@@ -1358,7 +1358,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Do you work with brands based outside the US?",
-          answer: "Yes. African and Caribbean brands targeting the US diaspora market are welcome. Many of our clients are headquartered elsewhere and use MoveeePR US to build name recognition with American diaspora audiences specifically.",
+          answer: "Yes. Black diaspora brands targeting the US market are welcome. Many of our clients are headquartered elsewhere and use MoveeePR US to build name recognition with American diaspora audiences specifically.",
         },
       ],
       ctaLabel: "Book a strategy call →",
@@ -1367,7 +1367,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     events: {
       headline: "Diaspora Events Deserve More Than an Instagram Post",
-      tagline: "Official media partnership for US events — pre-event build-up, live coverage, and post-event editorial for the African and Caribbean diaspora.",
+      tagline: "Official media partnership for US events — pre-event build-up, live coverage, and post-event editorial for the Black diaspora.",
       intro: [
         "Afropunk Brooklyn. One Africa Music Fest. Essence Festival. The African Festival of the Arts. Diaspora events in New York, Atlanta, Houston, DC, and LA have built cultural institutions out of community — and community media is how those events reach the people who need to be there. The Moveee America Happenings partnership gives your event official media partner status, editorial build-up, live coverage, and a post-event write-up that becomes part of the permanent cultural record.",
         "We partner with events editorially. That selectivity is the reason our coverage carries weight with readers who've learned to trust our recommendations.",
@@ -1411,7 +1411,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "Diaspora Travel Is a Growing Market",
-          body: "African and Caribbean diaspora travel — heritage journeys, cultural tours, homeland visits — is a growing sector. Our Origins/Tours listing puts your experience in front of an audience actively looking for it.",
+          body: "Black diaspora travel — heritage journeys, cultural tours, homeland visits — is a growing sector. Our Origins/Tours listing puts your experience in front of an audience actively looking for it.",
         },
         {
           title: "Commission-Aligned Travel Promotion",
@@ -1442,9 +1442,9 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     travel: {
       headline: "Heritage Travel, Listed Where the Diaspora Already Looks.",
-      tagline: "Commission-based listing and editorial coverage for cultural travel operators serving the African and Caribbean diaspora across the United States.",
+      tagline: "Commission-based listing and editorial coverage for cultural travel operators serving the Black diaspora across the United States.",
       intro: [
-        "African and Caribbean diaspora Americans are among the most active heritage travellers in the world. Homeland trips to Nigeria, Ghana, Jamaica, and Trinidad. Cultural pilgrimages for Afropunk, GTCO, or carnival season. Reconnection journeys built around family, food, and roots. The Moveee Origins US lists the experiences worth booking for an audience that travels with purpose — not just for leisure.",
+        "Black diaspora Americans are among the most active heritage travellers in the world. Homeland trips to Nigeria, Ghana, Jamaica, and Trinidad. Cultural pilgrimages for Afropunk, GTCO, or carnival season. Reconnection journeys built around family, food, and roots. The Moveee Origins US lists the experiences worth booking for an audience that travels with purpose — not just for leisure.",
         "The model works in two tiers. Start with a free Basic Listing — your tour in the Origins US directory with a tracked booking link and 12% commission on confirmed bookings. No upfront cost, no editorial required. When you're ready for more reach, upgrade to an Editorial Feature: a $180 flat fee gets you a full write-up, GetMeLit US newsletter promotion, and social distribution.",
         "We only list experiences we'd genuinely recommend to our readers — which is exactly why our listings convert.",
       ],
@@ -1468,7 +1468,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "The Right Audience",
-          body: "GetMeLit US subscribers are African and Caribbean diaspora professionals with disposable income who travel intentionally — homecomings, cultural trips, festival travel. They are your exact customer.",
+          body: "GetMeLit US subscribers are Black diaspora professionals with disposable income who travel intentionally — homecomings, cultural trips, festival travel. They are your exact customer.",
         },
         {
           title: "Massive Underserved Market",
@@ -1507,9 +1507,9 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
 
     connect: {
       headline: "Access the Diaspora Community That Mainstream Doesn't Reach",
-      tagline: "Quarterly community sponsorship for brands targeting African and Caribbean diaspora professionals and creatives across the United States.",
+      tagline: "Quarterly community sponsorship for brands targeting Black diaspora professionals and creatives across the United States.",
       intro: [
-        "Moveee Connect US is the community layer of The Moveee — a curated, semi-private space where African and Caribbean diaspora creatives, entrepreneurs, professionals, and culture lovers gather across New York, Atlanta, Houston, DC, and Los Angeles. Not a passive social media audience. A self-selected community of people who actively sought this space out because they care about their culture.",
+        "Moveee Connect US is the community layer of The Moveee — a curated, semi-private space where Black diaspora creatives, entrepreneurs, professionals, and culture lovers gather across New York, Atlanta, Houston, DC, and Los Angeles. Not a passive social media audience. A self-selected community of people who actively sought this space out because they care about their culture.",
         "A quarterly sponsorship is trust-transferred access. You're introduced to the community by The Moveee team — in a context where the audience already trusts our editorial judgement. Your content has to be genuinely useful. Your member offer has to serve the people receiving it. In exchange, you reach an audience that mainstream US media rarely gets to accurately.",
         "$250 per quarter. One warm community introduction, one sponsored content slot, one exclusive member offer. For financial services, professional firms, technology companies, and brands that need to reach diaspora professionals — and can't find them through mainstream channels — this is the most direct route.",
       ],
@@ -1522,7 +1522,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "02",
           title: "Community Introduction",
-          body: "We write and post an introduction to the community — who you are, why we're working together this quarter, why we think you're relevant to African and Caribbean diaspora professionals in the US. Our voice vouches for you. That's the whole point.",
+          body: "We write and post an introduction to the community — who you are, why we're working together this quarter, why we think you're relevant to Black diaspora professionals in the US. Our voice vouches for you. That's the whole point.",
         },
         {
           step: "03",
@@ -1542,7 +1542,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "A Highly Specific Audience That's Hard to Buy Elsewhere",
-          body: "African and Caribbean diaspora professionals in the US aren't a meaningful targeting category in mainstream US digital advertising. Moveee Connect is a direct channel to exactly these people.",
+          body: "Black diaspora professionals in the US aren't a meaningful targeting category in mainstream US digital advertising. Moveee Connect is a direct channel to exactly these people.",
         },
         {
           title: "Buyers No Other Channel Gets Right",
@@ -1556,11 +1556,11 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       faqs: [
         {
           question: "What is Moveee Connect US?",
-          answer: "A curated, semi-private community — a moderated group on Telegram, Discord, or a similar platform — for African and Caribbean diaspora creatives, entrepreneurs, and professionals across the United States. Membership is opt-in, focused on New York, Atlanta, Houston, DC, and LA.",
+          answer: "A curated, semi-private community — a moderated group on Telegram, Discord, or a similar platform — for Black diaspora creatives, entrepreneurs, and professionals across the United States. Membership is opt-in, focused on New York, Atlanta, Houston, DC, and LA.",
         },
         {
           question: "Who are the members?",
-          answer: "African and Caribbean diaspora creatives, entrepreneurs, and professionals — people who engage with The Moveee America and care enough about diaspora culture to join a dedicated community. Age range 20–40, career-building and brand-aware.",
+          answer: "Black diaspora creatives, entrepreneurs, and professionals — people who engage with The Moveee America and care enough about diaspora culture to join a dedicated community. Age range 20–40, career-building and brand-aware.",
         },
         {
           question: "What does the sponsored content slot look like?",
@@ -1568,7 +1568,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "What kinds of brands fit well?",
-          answer: "Diaspora fintech and remittance, legal and professional services targeting African and Caribbean professionals, US real estate or Nigerian/Caribbean property for diaspora buyers, cultural education and training, event promoters, diversity-focused recruiters, and lifestyle brands with genuine diaspora cultural relevance.",
+          answer: "Diaspora fintech and remittance, legal and professional services targeting Black professionals, US real estate or Nigerian/Caribbean property for diaspora buyers, cultural education and training, event promoters, diversity-focused recruiters, and lifestyle brands with genuine diaspora cultural relevance.",
         },
         {
           question: "Can I sponsor multiple markets?",
@@ -1587,7 +1587,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The Moveee America.",
       intro: [
         "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The Moveee America. We don't amplify external content — only work published on our own platform.",
-        "Once your feature is live, Amplify extends its reach through paid social ads targeting African and Caribbean diaspora audiences across NYC, Atlanta, Houston, DC, and LA, plus influencer shares within our network and extended GetMeLit US newsletter distribution.",
+        "Once your feature is live, Amplify extends its reach through paid social ads targeting Black diaspora audiences across NYC, Atlanta, Houston, DC, and LA, plus influencer shares within our network and extended GetMeLit US newsletter distribution.",
         "The editorial feature is the foundation — Amplify is what gets the story in front of more of the right diaspora audience, faster than organic reach alone will manage.",
       ],
       howItWorks: [
@@ -1610,7 +1610,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Diaspora-Specific Targeting",
-          body: "Every paid placement targets African and Caribbean diaspora audiences across US cities — the same readership that already engages with The Moveee America. Precise, culturally specific, zero wasted spend.",
+          body: "Every paid placement targets Black diaspora audiences across US cities — the same readership that already engages with The Moveee America. Precise, culturally specific, zero wasted spend.",
         },
         {
           title: "Editorial Credibility Behind Every Promotion",
@@ -1618,7 +1618,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           title: "Influencer Distribution in Diaspora Spaces",
-          body: "Higher tiers include coordinated shares from influencers connected to our African and Caribbean diaspora network — authentic voices, not unfamiliar sponsored accounts.",
+          body: "Higher tiers include coordinated shares from influencers connected to our Black diaspora network — authentic voices, not unfamiliar sponsored accounts.",
         },
       ],
       faqs: [
