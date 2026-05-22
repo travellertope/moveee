@@ -1546,8 +1546,9 @@
   .hp-cover-image-box {
     width: 100%;
     flex-shrink: 0;
-    background: var(--paper-deep);
-    padding: 10px;
+    background: var(--paper);
+    padding: 20px;
+    margin-bottom: 20px;
   }
   .hp-cover-image {
     position: relative;
