@@ -621,7 +621,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Black British Stories, Told With the Weight They Deserve",
       tagline: "Longform editorial. Newsletter distribution. Social reach. For brands that understand the Black British market isn't a segment — it's a culture.",
       intro: [
-        "The Black British market — African and Caribbean diaspora across London, Birmingham, Manchester, and Bristol — is one of the most culturally sophisticated and brand-conscious audiences in the UK. It is also one of the most consistently misread by mainstream media. The Moveee UK Sponsored Content package exists for brands that want to get it right.",
+        "The Black British market — African and Caribbean diaspora across London, Birmingham, Manchester, and Bristol — is one of the most culturally sophisticated and brand-conscious audiences in the UK. It is also one of the most consistently misread by mainstream media. The British Moveee Sponsored Content package exists for brands that want to get it right.",
         "We produce an 800–1,200 word feature that earns its place in front of this audience: well-researched, culturally informed, and written by writers who are part of the communities they're speaking to. The feature distributes through our UK newsletter and goes out across our social channels as three native posts.",
         "The flat rate is £600, which covers the feature, newsletter inclusion, and social content. If your campaign requires extended reach — paid social, influencer activation, or press syndication — Amplify tiers start at £45 and are scoped to your needs. Everything is agreed before you commit.",
       ],
@@ -639,7 +639,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "03",
           title: "Publish & Distribute",
-          body: "The feature goes live on The Moveee UK, drops into our newsletter, and three native social posts roll out. You receive all links and a performance summary within 72 hours of publication.",
+          body: "The feature goes live on The British Moveee, drops into our newsletter, and three native social posts roll out. You receive all links and a performance summary within 72 hours of publication.",
         },
         {
           step: "04",
@@ -699,7 +699,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Black British Shoppers Are Intentional. Meet Them Where They Are.",
       tagline: "Curated commerce and editorial for brands the Black British community actually wants — not brands that want to be seen in it.",
       intro: [
-        "The Moveee UK Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. Zero risk, instant presence.",
+        "The British Moveee Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. Zero risk, instant presence.",
         "When you're ready for more, upgrade to a Brand Feature: a curated shop listing with an editorial write-up, GetMeLit UK newsletter distribution, and social promotion for £250 flat. Seasonal Drop takes it further — at Black History Month, Christmas gifting season, and other high-intent cultural moments, we build coordinated editorial campaigns around a select group of brands.",
         "At every tier, we earn on conversions. Our incentives are aligned with yours.",
       ],
@@ -861,7 +861,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Your Event Is Part of Black British Culture. Cover It Like It Is.",
       tagline: "Official media partnership for UK events — pre-event build-up, live coverage, and post-event editorial for the Black British community.",
       intro: [
-        "Notting Hill Carnival. Africa Oyé. Afropunk London. Migrate Festival. The events that define Black British cultural life succeed because community media builds the anticipation, documents the moment, and tells the story after. The Moveee UK Happenings partnership gives your event that editorial infrastructure — official media partner status, pre-event coverage, live documentation, and a post-event write-up that becomes part of the permanent record.",
+        "Notting Hill Carnival. Africa Oyé. Afropunk London. Migrate Festival. The events that define Black British cultural life succeed because community media builds the anticipation, documents the moment, and tells the story after. The British Moveee Happenings partnership gives your event that editorial infrastructure — official media partner status, pre-event coverage, live documentation, and a post-event write-up that becomes part of the permanent record.",
         "We partner with events we believe in editorially. That selectivity is what makes our coverage credible — and what makes readers trust our recommendations enough to show up.",
         "Choose from single-day coverage, multi-day festival partnerships, a pre-event rollout campaign, or the full Cultural Institution Partner package for recurring events and institutions.",
       ],
@@ -895,7 +895,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Official Media Partner Badge",
-          body: "Use the Moveee UK media partner badge in your event marketing, sponsor packs, and press materials. It signals editorial endorsement from a respected Black British media brand.",
+          body: "Use the British Moveee media partner badge in your event marketing, sponsor packs, and press materials. It signals editorial endorsement from a respected Black British media brand.",
         },
         {
           title: "Three Editorial Touchpoints",
@@ -1068,9 +1068,9 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
     amplify: {
       headline: "Push Your Moveee Feature Further",
-      tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The Moveee UK.",
+      tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The British Moveee.",
       intro: [
-        "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The Moveee UK. We don't amplify external content — only work published on our own platform.",
+        "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The British Moveee. We don't amplify external content — only work published on our own platform.",
         "Once your feature is live, Amplify extends its reach through paid social ads targeting Black British and African diaspora audiences across the UK, influencer shares within our network, and extended GetMeLit UK newsletter distribution. Choose the tier that matches your budget and reach objectives.",
         "The editorial feature is the foundation — Amplify is what gets the story in front of more of the right people, faster than organic reach alone will manage.",
       ],
@@ -1078,7 +1078,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "01",
           title: "Confirm Your Moveee Feature",
-          body: "Amplify requires a live Sponsored Content feature or an active Media Partnership on The Moveee UK. Share the link to your published piece when you enquire — we'll confirm eligibility within 24 hours.",
+          body: "Amplify requires a live Sponsored Content feature or an active Media Partnership on The British Moveee. Share the link to your published piece when you enquire — we'll confirm eligibility within 24 hours.",
         },
         {
           step: "02",
@@ -1094,7 +1094,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Black British Audience Targeting",
-          body: "Every paid placement targets Black British and African Caribbean diaspora audiences — the same readership that already engages with The Moveee UK. No wasted impressions on irrelevant demographics.",
+          body: "Every paid placement targets Black British and African Caribbean diaspora audiences — the same readership that already engages with The British Moveee. No wasted impressions on irrelevant demographics.",
         },
         {
           title: "Credibility That Travels",
@@ -1108,7 +1108,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       faqs: [
         {
           question: "Can I buy Content Amplification without a Sponsored Content or Media Partnership package?",
-          answer: "No. Content Amplification is exclusively available as an add-on to Sponsored Content or Media Partnership. The feature we amplify must be published on The Moveee UK.",
+          answer: "No. Content Amplification is exclusively available as an add-on to Sponsored Content or Media Partnership. The feature we amplify must be published on The British Moveee.",
         },
         {
           question: "Can I add Amplify after my feature has already gone live?",
@@ -1129,7 +1129,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "For Brands That Know the Diaspora Isn't One Story",
       tagline: "Longform editorial, newsletter distribution, and social reach for brands ready to engage Black American and African diaspora communities with substance.",
       intro: [
-        "The African and Caribbean diaspora in the United States — in New York, Atlanta, Houston, DC, and Los Angeles — is not a monolith, and any brand treating it like one will be seen through immediately. The Moveee US Sponsored Content package is built around cultural specificity: writing that understands the difference between a Yoruba cultural reference and a Trinidadian one, between Atlanta's Black creative economy and the Nigerian American professional community in the DMV.",
+        "The African and Caribbean diaspora in the United States — in New York, Atlanta, Houston, DC, and Los Angeles — is not a monolith, and any brand treating it like one will be seen through immediately. The Moveee America Sponsored Content package is built around cultural specificity: writing that understands the difference between a Yoruba cultural reference and a Trinidadian one, between Atlanta's Black creative economy and the Nigerian American professional community in the DMV.",
         "An 800–1,200 word longform feature, distributed through our US newsletter and amplified by three native social posts, for $800 flat. The feature is written by writers who are part of these communities. You brief us, we handle the craft, and you get links and traffic data within 72 hours of publication.",
         "Amplify tiers start at $60 and extend reach through paid social, influencer networks, and press syndication — Priority, Sponsored, Sponsored+, and Invested options available at the brief stage. Everything is scoped before you commit.",
       ],
@@ -1207,7 +1207,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "The Diaspora Shops With Intention. Be Worth Discovering.",
       tagline: "Curated commerce and editorial for brands that deserve a place in the African and Caribbean diaspora's cultural conversation.",
       intro: [
-        "The Moveee US Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. It's how brands across NYC, Atlanta, Houston, DC, and LA get in front of the diaspora audience with zero risk.",
+        "The Moveee America Lifestyle & Commerce offering works in three tiers. Start with a free Directory Listing — no editorial, no upfront fee, just your brand in the directory with a tracked shop link and 10% commission on sales. It's how brands across NYC, Atlanta, Houston, DC, and LA get in front of the diaspora audience with zero risk.",
         "When you're ready for full editorial treatment, upgrade to a Brand Feature: a curated shop listing with an editorial write-up, GetMeLit US newsletter distribution, and social promotion for $450 flat. Seasonal Drop positions your brand inside Juneteenth, Black History Month, and holiday gifting season — coordinated editorial campaigns built around high-intent cultural moments.",
         "At every tier, we earn on confirmed conversions. Our incentives are aligned with yours.",
       ],
@@ -1369,7 +1369,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       headline: "Diaspora Events Deserve More Than an Instagram Post",
       tagline: "Official media partnership for US events — pre-event build-up, live coverage, and post-event editorial for the African and Caribbean diaspora.",
       intro: [
-        "Afropunk Brooklyn. One Africa Music Fest. Essence Festival. The African Festival of the Arts. Diaspora events in New York, Atlanta, Houston, DC, and LA have built cultural institutions out of community — and community media is how those events reach the people who need to be there. The Moveee US Happenings partnership gives your event official media partner status, editorial build-up, live coverage, and a post-event write-up that becomes part of the permanent cultural record.",
+        "Afropunk Brooklyn. One Africa Music Fest. Essence Festival. The African Festival of the Arts. Diaspora events in New York, Atlanta, Houston, DC, and LA have built cultural institutions out of community — and community media is how those events reach the people who need to be there. The Moveee America Happenings partnership gives your event official media partner status, editorial build-up, live coverage, and a post-event write-up that becomes part of the permanent cultural record.",
         "We partner with events editorially. That selectivity is the reason our coverage carries weight with readers who've learned to trust our recommendations.",
         "Choose from single-day coverage, multi-day festival partnerships, a pre-event rollout campaign, or the full Cultural Institution Partner package for recurring events and institutions.",
       ],
@@ -1403,7 +1403,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Official Media Partner Badge",
-          body: "Use the Moveee US media partner badge in your marketing, sponsor decks, and press materials. It signals editorial endorsement from a respected Black diaspora media brand.",
+          body: "Use the Moveee America media partner badge in your marketing, sponsor decks, and press materials. It signals editorial endorsement from a respected Black diaspora media brand.",
         },
         {
           title: "Editorial Across Three Time Horizons",
@@ -1560,7 +1560,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         },
         {
           question: "Who are the members?",
-          answer: "African and Caribbean diaspora creatives, entrepreneurs, and professionals — people who engage with The Moveee US and care enough about diaspora culture to join a dedicated community. Age range 20–40, career-building and brand-aware.",
+          answer: "African and Caribbean diaspora creatives, entrepreneurs, and professionals — people who engage with The Moveee America and care enough about diaspora culture to join a dedicated community. Age range 20–40, career-building and brand-aware.",
         },
         {
           question: "What does the sponsored content slot look like?",
@@ -1584,9 +1584,9 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
     },
     amplify: {
       headline: "Push Your Moveee Feature Further",
-      tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The Moveee US.",
+      tagline: "Paid social promotion, influencer reach, and ad placements — exclusively for content already published on The Moveee America.",
       intro: [
-        "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The Moveee US. We don't amplify external content — only work published on our own platform.",
+        "Content Amplification is an add-on service, not a standalone purchase. To use it, you need an active or recently published Sponsored Content feature or Media Partnership with The Moveee America. We don't amplify external content — only work published on our own platform.",
         "Once your feature is live, Amplify extends its reach through paid social ads targeting African and Caribbean diaspora audiences across NYC, Atlanta, Houston, DC, and LA, plus influencer shares within our network and extended GetMeLit US newsletter distribution.",
         "The editorial feature is the foundation — Amplify is what gets the story in front of more of the right diaspora audience, faster than organic reach alone will manage.",
       ],
@@ -1594,7 +1594,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
         {
           step: "01",
           title: "Confirm Your Moveee Feature",
-          body: "Amplify requires a live Sponsored Content feature or an active Media Partnership on The Moveee US. Share the link to your published piece when you enquire — we'll confirm eligibility within 24 hours.",
+          body: "Amplify requires a live Sponsored Content feature or an active Media Partnership on The Moveee America. Share the link to your published piece when you enquire — we'll confirm eligibility within 24 hours.",
         },
         {
           step: "02",
@@ -1610,7 +1610,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       benefits: [
         {
           title: "Diaspora-Specific Targeting",
-          body: "Every paid placement targets African and Caribbean diaspora audiences across US cities — the same readership that already engages with The Moveee US. Precise, culturally specific, zero wasted spend.",
+          body: "Every paid placement targets African and Caribbean diaspora audiences across US cities — the same readership that already engages with The Moveee America. Precise, culturally specific, zero wasted spend.",
         },
         {
           title: "Editorial Credibility Behind Every Promotion",
@@ -1624,7 +1624,7 @@ export const SERVICE_PAGES: Record<string, Record<string, ServicePageContent>> =
       faqs: [
         {
           question: "Can I buy Content Amplification without a Sponsored Content or Media Partnership package?",
-          answer: "No. Content Amplification is exclusively available as an add-on to Sponsored Content or Media Partnership. The feature we amplify must be published on The Moveee US.",
+          answer: "No. Content Amplification is exclusively available as an add-on to Sponsored Content or Media Partnership. The feature we amplify must be published on The Moveee America.",
         },
         {
           question: "Can I add Amplify after my feature has already gone live?",

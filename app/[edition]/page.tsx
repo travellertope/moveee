@@ -14,15 +14,15 @@ interface Props {
 
 const EDITION_META: Record<RegionalSlug, { title: string; description: string; locale: string }> = {
   uk: {
-    title: "The Moveee UK — African Culture in Britain",
+    title: "The British Moveee — Black Culture in Britain",
     description:
-      "The Moveee UK edition: the best of African culture, community, events, and style for the diaspora in Britain.",
+      "The British Moveee: the best of Black culture, community, events, and style for the diaspora in Britain.",
     locale: "en_GB",
   },
   us: {
-    title: "The Moveee US — African Culture in America",
+    title: "The Moveee America — Black Culture in America",
     description:
-      "The Moveee US edition: the best of African culture, community, events, and lifestyle for the diaspora in North America.",
+      "The Moveee America: the best of Black culture, community, events, and lifestyle for the diaspora in North America.",
     locale: "en_US",
   },
   africa: {
