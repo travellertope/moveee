@@ -39,16 +39,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const slug = edition as RegionalSlug;
   const { title, description, locale } = EDITION_META[slug];
-  const url = `https://www.themoveee.com/${slug}`;
+  const root = "https://www.themoveee.com";
 
   return {
     title,
     description,
-    alternates: { canonical: url },
+    // Canonical always points to root — edition pages are regional views,
+    // not separate destinations. This prevents Google indexing /us instead of /.
+    alternates: {
+      canonical: root,
+      languages: {
+        "x-default": root,
+        "en-GB": `${root}/uk`,
+        "en-US": `${root}/us`,
+        "en": `${root}/africa`,
+      },
+    },
+    robots: { index: false, follow: true },
     openGraph: {
       title,
       description,
-      url,
+      url: root,
       siteName: "The Moveee",
       locale,
       type: "website",

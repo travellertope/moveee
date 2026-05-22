@@ -12,6 +12,12 @@ export const metadata: Metadata = {
     "The Moveee is an independent magazine celebrating the best of African culture — editorials, happenings, travel, lifestyle, and community, worldwide.",
   alternates: {
     canonical: "https://www.themoveee.com",
+    languages: {
+      "x-default": "https://www.themoveee.com",
+      "en-GB": "https://www.themoveee.com/uk",
+      "en-US": "https://www.themoveee.com/us",
+      "en": "https://www.themoveee.com/africa",
+    },
   },
   openGraph: {
     title: "The Moveee — Best in African Culture",
