@@ -56,14 +56,16 @@ export default function HomepageContent({
 
                 {/* Image below text — 632 × 474 aspect ratio */}
                 {coverStory.featuredImage && (
-                  <div className="hp-cover-image">
-                    <Image
-                      src={coverStory.featuredImage.node.sourceUrl}
-                      alt={coverStory.featuredImage.node.altText || coverStory.title}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                      priority
-                    />
+                  <div className="hp-cover-image-box">
+                    <div className="hp-cover-image">
+                      <Image
+                        src={coverStory.featuredImage.node.sourceUrl}
+                        alt={coverStory.featuredImage.node.altText || coverStory.title}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                        priority
+                      />
+                    </div>
                   </div>
                 )}
               </Link>
