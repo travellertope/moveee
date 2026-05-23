@@ -923,7 +923,7 @@
     cursor: pointer;
   }
   .product-img {
-    aspect-ratio: 4/5;
+    aspect-ratio: 1/1;
     margin-bottom: 16px;
     overflow: hidden;
     position: relative;
@@ -1944,7 +1944,7 @@
 
   .hp-mag-card-image {
     width: 100%;
-    aspect-ratio: 3/4;
+    aspect-ratio: 16/9;
     position: relative;
     overflow: hidden;
     margin-bottom: 14px;
@@ -2497,7 +2497,7 @@
 
   .hp-product-image {
     width: 100%;
-    aspect-ratio: 4/5;
+    aspect-ratio: 1/1;
     position: relative;
     overflow: hidden;
     margin-bottom: 14px;
@@ -3091,7 +3091,6 @@
     .hp-section-header { flex-direction: column; align-items: flex-start; gap: 12px; }
     .hp-section-title h3 { font-size: 32px; }
     /* Magazine: landscape images on mobile */
-    .hp-mag-card-image { aspect-ratio: 16/9; }
     .hp-mag-strip { grid-template-columns: 1fr; }
     /* Newsletter form stacks vertically */
     .hp-nl-cta { padding: 22px; }

@@ -68,7 +68,7 @@
   group: true;
 }
 .sec-card-img {
-  aspect-ratio: 4/3;
+  aspect-ratio: 16/9;
   background: var(--ink);
   overflow: hidden;
   margin-bottom: 16px;
@@ -81,7 +81,7 @@
   transition: transform .4s ease;
 }
 .sec-card:hover .sec-card-img img { transform: scale(1.03); }
-.sec-card-img--portrait { aspect-ratio: 3/4; }
+.sec-card-img--portrait { aspect-ratio: 16/9; }
 .sec-card-kicker {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
