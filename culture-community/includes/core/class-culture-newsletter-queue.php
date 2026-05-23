@@ -487,7 +487,7 @@ class Culture_Newsletter_Queue {
 <style>
   body { margin:0; padding:0; background:#ffffff; font-family:Georgia,'Times New Roman',serif; color:#14110d; }
   .wrap { max-width:600px; margin:0 auto; background:#ffffff; }
-  .content { padding:32px 32px 24px; font-size:16px; line-height:1.75; }
+  .content { padding:16px 16px 12px; font-size:16px; line-height:1.75; }
   .content p { margin:0 0 20px; }
   .content h1,.content h2,.content h3 { font-weight:400; line-height:1.3; margin:32px 0 14px; }
   .content h2 { font-size:22px; }
@@ -497,7 +497,7 @@ class Culture_Newsletter_Queue {
   .content hr { border:none; border-top:1px solid #e8e0d4; margin:32px 0; }
   .read-more { display:block; margin:32px 0 8px; }
   .read-more a { display:inline-block; font-family:-apple-system,BlinkMacSystemFont,'Courier New',monospace; font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:#14110d; text-decoration:none; border:1px solid #14110d; padding:10px 24px; }
-  .footer { padding:24px 32px 36px; border-top:1px solid #e8e0d4; font-family:-apple-system,BlinkMacSystemFont,'Courier New',monospace; font-size:10px; letter-spacing:.1em; color:#a09080; }
+  .footer { padding:12px 16px 18px; border-top:1px solid #e8e0d4; font-family:-apple-system,BlinkMacSystemFont,'Courier New',monospace; font-size:10px; letter-spacing:.1em; color:#a09080; }
   .footer a { color:#7a6f5c; text-decoration:none; }
 </style>
 </head>
