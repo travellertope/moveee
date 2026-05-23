@@ -114,15 +114,18 @@ class Culture_Cron {
     // ── Job handlers ──────────────────────────────────────────────────────
 
     /**
-     * Downgrade Patron users whose grace period has expired.
+     * Downgrade Patron users whose grace period has expired,
+     * and also expire any manually-set subscriptions past their expiry date.
      */
     public static function process_grace_periods() {
+
+        // ── 1. Grace-period expiry (payment gateway lapsed subscribers) ──────
         $days   = class_exists( 'Culture_Settings' )
             ? (int) Culture_Settings::get( 'culture_grace_period_days' )
             : self::GRACE_PERIOD_DAYS;
         $cutoff = gmdate( 'Y-m-d H:i:s', strtotime( '-' . $days . ' days' ) );
 
-        $users = get_users( array(
+        $grace_users = get_users( array(
             'meta_query' => array(
                 'relation' => 'AND',
                 array(
@@ -139,12 +142,50 @@ class Culture_Cron {
             'fields' => 'ID',
         ) );
 
-        foreach ( $users as $user_id ) {
-            update_user_meta( $user_id, '_culture_membership_tier', 'citizen' );
+        foreach ( $grace_users as $user_id ) {
+            update_user_meta( $user_id, '_culture_membership_tier',     'citizen' );
             update_user_meta( $user_id, '_culture_subscription_status', 'expired' );
             delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
             delete_user_meta( $user_id, '_culture_grace_period_start' );
             do_action( 'culture_grace_period_expired', $user_id );
+        }
+
+        // ── 2. Manual expiry (admin-set expiry date has passed) ──────────────
+        $now = time();
+
+        $manual_users = get_users( array(
+            'meta_query' => array(
+                'relation' => 'AND',
+                array(
+                    'key'   => '_culture_membership_tier',
+                    'value' => 'patron',
+                ),
+                array(
+                    'key'     => '_culture_subscription_expiry',
+                    'value'   => 0,
+                    'compare' => '>',       // only users with a real expiry date set
+                    'type'    => 'NUMERIC',
+                ),
+                array(
+                    'key'     => '_culture_subscription_expiry',
+                    'value'   => $now,
+                    'compare' => '<',       // expiry timestamp is in the past
+                    'type'    => 'NUMERIC',
+                ),
+                array(
+                    'key'     => '_culture_subscription_status',
+                    'value'   => 'expired',
+                    'compare' => '!=',      // skip already-expired rows
+                ),
+            ),
+            'fields' => 'ID',
+        ) );
+
+        foreach ( $manual_users as $user_id ) {
+            update_user_meta( $user_id, '_culture_membership_tier',     'citizen' );
+            update_user_meta( $user_id, '_culture_subscription_status', 'expired' );
+            delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
+            do_action( 'culture_manual_subscription_expired', $user_id );
         }
     }
 
