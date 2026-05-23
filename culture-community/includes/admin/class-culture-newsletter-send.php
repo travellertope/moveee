@@ -21,7 +21,7 @@ class Culture_Newsletter_Send {
     }
 
     /**
-     * Save _culture_nl_list post meta when the newsletter is saved.
+     * Save _culture_nl_list and _culture_nl_segment post meta when the newsletter is saved.
      */
     public static function save_list_meta( $post_id, $post ) {
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
@@ -29,10 +29,21 @@ class Culture_Newsletter_Send {
         if ( ! isset( $_POST['culture_nl_list_nonce'] ) ) return;
         if ( ! wp_verify_nonce( $_POST['culture_nl_list_nonce'], 'culture_nl_list_' . $post_id ) ) return;
 
-        $allowed = array( 'getmelit', 'culture-drop' );
-        $list    = sanitize_key( $_POST['culture_nl_list'] ?? 'getmelit' );
-        if ( in_array( $list, $allowed, true ) ) {
+        $allowed_lists = array( 'getmelit', 'culture-drop' );
+        $list = sanitize_key( $_POST['culture_nl_list'] ?? 'getmelit' );
+        if ( in_array( $list, $allowed_lists, true ) ) {
             update_post_meta( $post_id, '_culture_nl_list', $list );
+        }
+
+        // Segment is optional — empty string means send to all segments of this list.
+        $allowed_segments = array( '', 'us', 'uk', 'ng', 'gh', 'ca', 'au' );
+        $segment = sanitize_key( $_POST['culture_nl_segment'] ?? '' );
+        if ( in_array( $segment, $allowed_segments, true ) ) {
+            if ( $segment ) {
+                update_post_meta( $post_id, '_culture_nl_segment', $segment );
+            } else {
+                delete_post_meta( $post_id, '_culture_nl_segment' );
+            }
         }
     }
 
@@ -108,32 +119,53 @@ class Culture_Newsletter_Send {
         $subscribers  = get_option( 'culture_newsletter_subscribers', array() );
         $current_user = wp_get_current_user();
 
-        $nl_list = get_post_meta( $post->ID, '_culture_nl_list', true ) ?: 'getmelit';
+        $nl_list    = get_post_meta( $post->ID, '_culture_nl_list',    true ) ?: 'getmelit';
+        $nl_segment = get_post_meta( $post->ID, '_culture_nl_segment', true ) ?: '';
 
         $lists_config = array(
             'getmelit'     => 'GetMeLit',
             'culture-drop' => 'Culture Drop',
         );
 
-        // Count subscribers per list.
-        $counts = array( 'getmelit' => 0, 'culture-drop' => 0 );
+        $segments_config = array(
+            ''   => 'All segments',
+            'us' => 'The Moveee America (US)',
+            'uk' => 'The British Moveee (UK)',
+            'ng' => 'Nigeria',
+            'gh' => 'Ghana',
+            'ca' => 'Canada',
+            'au' => 'Australia',
+        );
+
+        // Count subscribers per list, then per list+segment combination.
+        $counts         = array( 'getmelit' => 0, 'culture-drop' => 0 );
+        $segment_counts = array();  // [ 'culture-drop:us' => N, ... ]
+
         if ( is_array( $subscribers ) ) {
             foreach ( $subscribers as $sub ) {
-                $sub_lists = is_array( $sub ) ? ( $sub['lists'] ?? array() ) : array();
+                $sub_lists   = is_array( $sub ) ? ( $sub['lists'] ?? array() ) : array();
+                $sub_segment = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
+
                 if ( empty( $sub_lists ) ) {
-                    // Legacy plain-string = GetMeLit
                     $counts['getmelit']++;
                 } else {
                     foreach ( array_keys( $counts ) as $lk ) {
                         if ( in_array( $lk, $sub_lists, true ) ) {
                             $counts[ $lk ]++;
+                            $seg_key = $lk . ':' . $sub_segment;
+                            $segment_counts[ $seg_key ] = ( $segment_counts[ $seg_key ] ?? 0 ) + 1;
                         }
                     }
                 }
             }
         }
 
-        $sub_count = $counts[ $nl_list ] ?? 0;
+        // Determine the count the editor will actually be sending to.
+        if ( $nl_segment ) {
+            $sub_count = $segment_counts[ $nl_list . ':' . $nl_segment ] ?? 0;
+        } else {
+            $sub_count = $counts[ $nl_list ] ?? 0;
+        }
         ?>
         <div class="culture-nl-box" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
 
@@ -148,8 +180,20 @@ class Culture_Newsletter_Send {
                         </option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+
+            <?php /* ── SEGMENT FILTER ── */ ?>
+            <div class="culture-nl-section" style="margin-top:12px;margin-bottom:0;">
+                <label class="culture-nl-label"><?php esc_html_e( 'Send to Segment', 'culture-community' ); ?></label>
+                <select name="culture_nl_segment" style="width:100%;margin-top:4px;">
+                    <?php foreach ( $segments_config as $sk => $sn ) : ?>
+                        <option value="<?php echo esc_attr( $sk ); ?>"<?php selected( $nl_segment, $sk ); ?>>
+                            <?php echo esc_html( $sn ); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
                 <p style="font-size:11px;color:#666;margin:4px 0 0;">
-                    <?php esc_html_e( 'Only subscribers on this list will receive the issue.', 'culture-community' ); ?>
+                    <?php esc_html_e( 'Leave on "All segments" to send to everyone on this list.', 'culture-community' ); ?>
                 </p>
             </div>
 
@@ -158,7 +202,13 @@ class Culture_Newsletter_Send {
             <div class="culture-nl-sub-count">
                 <span class="culture-nl-stat-num"><?php echo esc_html( number_format( $sub_count ) ); ?></span>
                 <span class="culture-nl-stat-label">
-                    <?php echo esc_html( sprintf( __( '%s Subscribers', 'culture-community' ), $lists_config[ $nl_list ] ?? '' ) ); ?>
+                    <?php
+                    $label = $lists_config[ $nl_list ] ?? '';
+                    if ( $nl_segment && isset( $segments_config[ $nl_segment ] ) ) {
+                        $label .= ' · ' . $segments_config[ $nl_segment ];
+                    }
+                    echo esc_html( sprintf( __( '%s Subscribers', 'culture-community' ), $label ) );
+                    ?>
                 </span>
             </div>
 

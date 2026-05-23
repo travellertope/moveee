@@ -32,10 +32,11 @@ class Culture_Newsletter_Queue {
             return false;
         }
 
-        // Determine which list this newsletter targets.
-        $nl_list = get_post_meta( $post_id, '_culture_nl_list', true ) ?: '';
+        // Determine which list and segment this newsletter targets.
+        $nl_list    = get_post_meta( $post_id, '_culture_nl_list',    true ) ?: '';
+        $nl_segment = get_post_meta( $post_id, '_culture_nl_segment', true ) ?: '';
 
-        // Standardize to email strings for the snapshot, filtering by list.
+        // Standardize to email strings for the snapshot, filtering by list and segment.
         $emails = array();
         foreach ( $subscribers as $sub ) {
             $e = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
@@ -51,6 +52,12 @@ class Culture_Newsletter_Queue {
                     // Legacy plain-string subscriber: treat as GetMeLit only.
                     if ( 'getmelit' !== $nl_list ) continue;
                 }
+            }
+
+            // Segment filter: if a segment is set, only include subscribers with that segment.
+            if ( $nl_segment ) {
+                $sub_segment = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
+                if ( $sub_segment !== $nl_segment ) continue;
             }
 
             $emails[] = $e;
