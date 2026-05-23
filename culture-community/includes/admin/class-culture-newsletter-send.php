@@ -137,37 +137,49 @@ class Culture_Newsletter_Send {
             'au' => 'Australia',
         );
 
-        // Count subscribers per list, then per list+segment combination.
-        $counts         = array( 'getmelit' => 0, 'culture-drop' => 0 );
-        $segment_counts = array();  // [ 'culture-drop:us' => N, ... ]
+        // Build counts[list][segment] — empty string segment = whole list total.
+        $counts_map = array(
+            'getmelit'     => array( '' => 0 ),
+            'culture-drop' => array( '' => 0 ),
+        );
 
         if ( is_array( $subscribers ) ) {
             foreach ( $subscribers as $sub ) {
                 $sub_lists   = is_array( $sub ) ? ( $sub['lists'] ?? array() ) : array();
                 $sub_segment = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
 
+                // Legacy entries (no lists field) count only towards getmelit.
                 if ( empty( $sub_lists ) ) {
-                    $counts['getmelit']++;
+                    $counts_map['getmelit']['']++;
+                    if ( $sub_segment ) {
+                        $counts_map['getmelit'][ $sub_segment ] = ( $counts_map['getmelit'][ $sub_segment ] ?? 0 ) + 1;
+                    }
                 } else {
-                    foreach ( array_keys( $counts ) as $lk ) {
+                    foreach ( array_keys( $counts_map ) as $lk ) {
                         if ( in_array( $lk, $sub_lists, true ) ) {
-                            $counts[ $lk ]++;
-                            $seg_key = $lk . ':' . $sub_segment;
-                            $segment_counts[ $seg_key ] = ( $segment_counts[ $seg_key ] ?? 0 ) + 1;
+                            $counts_map[ $lk ]['']++;
+                            if ( $sub_segment ) {
+                                $counts_map[ $lk ][ $sub_segment ] = ( $counts_map[ $lk ][ $sub_segment ] ?? 0 ) + 1;
+                            }
                         }
                     }
                 }
             }
         }
 
-        // Determine the count the editor will actually be sending to.
+        // Determine the count for the currently saved list/segment selection.
         if ( $nl_segment ) {
-            $sub_count = $segment_counts[ $nl_list . ':' . $nl_segment ] ?? 0;
+            $sub_count = $counts_map[ $nl_list ][ $nl_segment ] ?? 0;
         } else {
-            $sub_count = $counts[ $nl_list ] ?? 0;
+            $sub_count = $counts_map[ $nl_list ][''] ?? 0;
         }
         ?>
-        <div class="culture-nl-box" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
+        <div class="culture-nl-box"
+            data-post-id="<?php echo esc_attr( $post->ID ); ?>"
+            data-counts="<?php echo esc_attr( wp_json_encode( $counts_map ) ); ?>"
+            data-list-labels="<?php echo esc_attr( wp_json_encode( $lists_config ) ); ?>"
+            data-seg-labels="<?php echo esc_attr( wp_json_encode( $segments_config ) ); ?>"
+        >
 
             <?php /* ── LIST ASSIGNMENT ── */ ?>
             <div class="culture-nl-section" style="margin-bottom:0;">
@@ -200,8 +212,8 @@ class Culture_Newsletter_Send {
             <hr class="culture-nl-sep">
 
             <div class="culture-nl-sub-count">
-                <span class="culture-nl-stat-num"><?php echo esc_html( number_format( $sub_count ) ); ?></span>
-                <span class="culture-nl-stat-label">
+                <span class="culture-nl-stat-num js-nl-count-num"><?php echo esc_html( number_format( $sub_count ) ); ?></span>
+                <span class="culture-nl-stat-label js-nl-count-label">
                     <?php
                     $label = $lists_config[ $nl_list ] ?? '';
                     if ( $nl_segment && isset( $segments_config[ $nl_segment ] ) ) {
