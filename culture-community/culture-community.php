@@ -69,6 +69,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-stripe.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-ticket-payment.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-tickets-admin.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-memberships.php';
 
 /**
  * Plugin activation hook.
