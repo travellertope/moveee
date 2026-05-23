@@ -36,7 +36,7 @@ export default function HomepageContent({
   seriesTheRadar = [], seriesPortraits = [], seriesTheLane = [], seriesThinkCreative = [],
 }: Props) {
   const heroStories   = stories.slice(0, 5);
-  const interviewStrip = interviewStories.slice(0, 5);
+  const interviewStrip = interviewStories.slice(0, 4);
   const editionLabel  = EDITIONS[edition].label;
   const editionPrefix = edition === "global" ? "" : `/${edition}`;
 
@@ -208,7 +208,7 @@ export default function HomepageContent({
           </div>
           {latestIssueStories.length > 0 && (
             <div className="hp-mag-strip">
-              {latestIssueStories.slice(0, 5).map((story: any) => {
+              {latestIssueStories.slice(0, 4).map((story: any) => {
                 const img = story._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
                 const cat = story._embedded?.["wp:term"]?.[0]?.[0]?.name || "Culture";
                 return (
