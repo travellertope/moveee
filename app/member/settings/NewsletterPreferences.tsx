@@ -8,14 +8,14 @@ interface Props {
 
 const NEWSLETTERS = [
   {
-    id: "getmelit",
-    name: "GetMeLit",
-    desc: "Bi-weekly — the deep cultural essay, curated picks, and what's playing.",
-  },
-  {
     id: "culture-drop",
     name: "Culture Drop",
-    desc: "Weekly — a flash of what's moving in Black culture. Fast, sharp, every Thursday.",
+    desc: "Weekly — the deep dive into African and diasporan culture. Essays, music, events. Every Thursday.",
+  },
+  {
+    id: "getmelit",
+    name: "GetMeLit",
+    desc: "Weekly — stories, poems, book recommendations, and opportunities for writers and readers.",
   },
   {
     id: "events",

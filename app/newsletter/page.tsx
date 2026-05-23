@@ -9,8 +9,9 @@ import "../newsletter.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "GetMeLit — The Moveee Newsletter" },
-  description: "Deep cultural essays, curated picks, and dispatches from across the African diaspora. The Moveee's flagship newsletter, delivered every other Friday.",
+  title: { absolute: "Newsletters — The Moveee" },
+  description:
+    "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into African and diasporan culture. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
 };
 
 export default async function NewsletterArchive() {
@@ -22,132 +23,103 @@ export default async function NewsletterArchive() {
   }
 
   const totalCount = newsletters.length;
-  const latestIssue = newsletters[0] || null;
   const recentIssues = newsletters.slice(0, 3);
 
-  // Issue numbers: latest = totalCount, oldest = 1
   const issueNum = (index: number) =>
     totalCount > 0 ? totalCount - index : index + 1;
 
   return (
     <>
-      {/* Grain texture overlay */}
-      <div className="gml-grain" aria-hidden="true" />
-
-      {/* ══ HERO ══ */}
-      <section className="gml-hero">
-        <div className="gml-hero-inner">
-          {/* Left: copy + subscribe form */}
-          <div>
-            <div className="gml-badge">★ The Culture Dispatch</div>
-            <h1 className="gml-hero-title">
-              GetMe<span className="lit"><em>Lit</em></span>.
-            </h1>
-            <p className="gml-hero-sub">
-              If you want to understand the true heartbeat of contemporary
-              African culture, the headlines won&apos;t give you the full
-              story — but <strong>GetMeLit</strong> will. Delivered every
-              two weeks by The Moveee.
-            </p>
-            <div className="gml-hero-form">
-              <NewsletterSubscribeWidget
-                placeholder="your@email.com"
-                buttonLabel="Subscribe →"
-                buttonClassName="gml-hero-btn"
-                variant="dark"
-                list="getmelit"
-              />
-            </div>
-            <div className="gml-hero-note">
-              <span>✓ Free · Always</span>
-              <span>✓ Every other Friday</span>
-              <span>✓ Unsubscribe anytime</span>
-            </div>
-          </div>
-
-          {/* Right: issue mockup */}
-          <div className="gml-issue-mockup">
-            <span className="gml-mockup-float gml-float-readers">
-              12,400+ readers
-            </span>
-            <span className="gml-mockup-float gml-float-cadence">
-              Every 2 weeks
-            </span>
-            <div className="gml-mockup-frame">
-              <div className="gml-mockup-header">
-                <span className="gml-mockup-logo">
-                  Get<em>Me</em>Lit
-                </span>
-                <span className="gml-mockup-issue">
-                  {latestIssue
-                    ? `Issue N°${totalCount} · ${new Date(latestIssue.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
-                    : "The Moveee · Biweekly"}
-                </span>
-              </div>
-
-              {latestIssue ? (
-                <>
-                  <div
-                    className="gml-mockup-title"
-                    dangerouslySetInnerHTML={{ __html: latestIssue.title }}
-                  />
-                  {latestIssue.excerpt && (
-                    <div
-                      className="gml-mockup-sub"
-                      dangerouslySetInnerHTML={{
-                        __html: latestIssue.excerpt
-                          .replace(/<[^>]*>/g, "")
-                          .slice(0, 100),
-                      }}
-                    />
-                  )}
-                </>
-              ) : (
-                <>
-                  <div className="gml-mockup-title">
-                    Culture, art &amp; <em>ambition</em>
-                  </div>
-                  <div className="gml-mockup-sub">
-                    Dispatches from across the African diaspora.
-                  </div>
-                </>
-              )}
-
-              <ul className="gml-mockup-items">
-                <li>
-                  <span className="gml-mockup-num">01</span>
-                  <span className="gml-mockup-text">The Deep Dive — intro cultural commentary</span>
-                </li>
-                <li>
-                  <span className="gml-mockup-num">02</span>
-                  <span className="gml-mockup-text">The List — recommended things worth your time</span>
-                </li>
-                <li>
-                  <span className="gml-mockup-num">03</span>
-                  <span className="gml-mockup-text">What&apos;s Playing — music dispatch</span>
-                </li>
-                <li>
-                  <span className="gml-mockup-num">04</span>
-                  <span className="gml-mockup-text">The Calendar — Lagos, Accra, London, NYC</span>
-                </li>
-              </ul>
-              <div className="gml-mockup-footer">
-                The Moveee · Best in Culture · Unsubscribe
-              </div>
-            </div>
-          </div>
+      {/* ══ MASTHEAD ══ */}
+      <section className="nl-masthead">
+        <div className="nl-masthead-inner">
+          <div className="nl-masthead-eyebrow">★ The Moveee Newsletter Programme</div>
+          <h1 className="nl-masthead-title">
+            Two letters.
+            <br />
+            <em>One obsession.</em>
+          </h1>
+          <p className="nl-masthead-sub">
+            Culture Drop for the weekly cultural deep dive. GetMeLit for the
+            stories, poems, and reads that feed the literary mind. Both free.
+            Both essential.
+          </p>
         </div>
       </section>
 
-      {/* ══ WHAT'S INSIDE ══ */}
+      {/* ══ TWO NEWSLETTER CARDS ══ */}
+      <section className="nl-cards-section">
+        <div className="nl-cards-inner">
+
+          {/* Card 1 — Culture Drop */}
+          <div className="nl-card nl-card--culturedrop">
+            <span className="nl-card-eyebrow">Weekly · Every Thursday</span>
+            <h2 className="nl-card-title">
+              Culture <em>Drop</em>
+            </h2>
+            <p className="nl-card-desc">
+              The weekly dispatch on contemporary African and diasporan
+              culture. One deep essay, curated picks, a music dispatch, and
+              what&apos;s happening across Lagos, London, New York, and Accra.
+              Written to make you think, not just scroll.
+            </p>
+            <ul className="nl-card-features">
+              <li>The Deep Dive — long-form cultural commentary</li>
+              <li>The List — five picks worth your time</li>
+              <li>What&apos;s Playing — music dispatch</li>
+              <li>The Calendar — Lagos, London, New York, Accra</li>
+            </ul>
+            <div className="nl-card-form">
+              <small className="nl-card-form-label">Subscribe free</small>
+              <GmlCTAForm
+                list="culture-drop"
+                buttonLabel="Drop it in my inbox →"
+                successLabel="✓ Welcome to Culture Drop"
+              />
+              <p className="nl-card-note">Free · Weekly · Unsubscribe anytime</p>
+            </div>
+          </div>
+
+          {/* Card 2 — GetMeLit */}
+          <div className="nl-card nl-card--getmelit">
+            <span className="nl-card-eyebrow">Weekly · For readers &amp; writers</span>
+            <h2 className="nl-card-title">
+              Get<em>Me</em>Lit
+            </h2>
+            <p className="nl-card-desc">
+              A weekly letter for the literary mind. Stories, poems, essay
+              excerpts, and opportunities for writers and authors across
+              Africa and the diaspora — curated to keep you reading, writing,
+              and discovering.
+            </p>
+            <ul className="nl-card-features">
+              <li>A story or poem — fiction and poetry you&apos;ll want to share</li>
+              <li>The reading list — new books &amp; essays worth your time</li>
+              <li>Opportunities — calls for submissions, residencies, grants</li>
+              <li>Author spotlight — voices shaping African literature</li>
+            </ul>
+            <div className="nl-card-form">
+              <small className="nl-card-form-label">Subscribe free</small>
+              <NewsletterSubscribeWidget
+                placeholder="your@email.com"
+                buttonLabel="Subscribe →"
+                list="getmelit"
+              />
+              <p className="nl-card-note">Free · Weekly · Unsubscribe anytime</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ══ CULTURE DROP IN DEPTH ══ */}
       <section className="gml-whats-inside">
         <div className="gml-section-header">
           <div className="gml-section-title">
-            <h3>What&apos;s <em>inside</em></h3>
+            <h3>Inside <em>Culture Drop</em></h3>
             <p>
-              Every issue of GetMeLit is built around the same four
-              sections — so you always know what you&apos;re getting, but
-              never know what you&apos;ll find.
+              Every issue is built around four sections — so you always know
+              what you&apos;re getting, but never know what you&apos;ll find.
             </p>
           </div>
           <div className="gml-section-meta">4 sections · 8 min read</div>
@@ -159,9 +131,8 @@ export default async function NewsletterArchive() {
             <div className="gml-pc-name">The <em>Deep Dive</em></div>
             <p className="gml-pc-desc">
               One long-form cultural essay or commentary — the thing
-              you&apos;ll send to a friend. Art, identity, ambition, the
-              modern African experience. Written to make you think, not
-              just scroll.
+              you&apos;ll forward to a friend. Art, identity, ambition, the
+              modern African experience. Written to make you think.
             </p>
           </div>
           <div className="gml-pillar-card">
@@ -178,8 +149,8 @@ export default async function NewsletterArchive() {
             <div className="gml-pc-name">What&apos;s <em>Playing</em></div>
             <p className="gml-pc-desc">
               A sound dispatch. New releases, overlooked gems, playlists,
-              and the occasional hot take on what&apos;s happening in
-              African and diasporan music right now.
+              and the occasional hot take on what&apos;s moving in African
+              and diasporan music right now.
             </p>
           </div>
           <div className="gml-pillar-card">
@@ -199,13 +170,12 @@ export default async function NewsletterArchive() {
         <div className="gml-pull-bar" />
         <div>
           <blockquote className="gml-pull-quote">
-            We don&apos;t just tell you what&apos;s happening; we explore{" "}
-            <strong>why it matters</strong> — blending deep cultural
-            appreciation with sharp, relatable commentary on the modern
-            African experience.
+            We don&apos;t just tell you what&apos;s happening — we explore{" "}
+            <strong>why it matters</strong>. Sharp cultural commentary on the
+            modern African experience, delivered every week.
           </blockquote>
           <cite className="gml-pull-cite">
-            — The editorial mission of GetMeLit
+            — The editorial mission of Culture Drop
           </cite>
         </div>
       </div>
@@ -255,101 +225,43 @@ export default async function NewsletterArchive() {
         </section>
       )}
 
-      {/* ══ MAIN SIGNUP CTA ══ */}
-      <section className="gml-signup-section">
-        <div className="gml-signup-inner">
-          <div className="gml-signup-left">
-            <div className="gml-badge">★ Join the conversation</div>
+      {/* ══ GETMELIT FEATURE ══ */}
+      <section className="nl-culturedrop-feature">
+        <div className="nl-cdf-inner">
+          <div className="nl-cdf-left">
+            <div className="nl-cdf-eyebrow">★ GetMeLit · For readers &amp; writers</div>
             <h3>
-              A curated haven for the <em>culturally curious</em>.
+              Literature, <em>curated weekly.</em>
             </h3>
             <p>
-              Built for thinkers, creators, and anyone obsessed with the
-              art, literature, and quiet revolutions shaping our world
-              today.
+              GetMeLit is the weekly letter for everyone who loves to read
+              and write. Stories, poems, essay excerpts, calls for
+              submissions, grants, and residencies — everything the literary
+              mind needs, in one place, every week.
             </p>
-          </div>
-
-          <div className="gml-signup-right">
-            <div className="gml-form-label">Subscribe to GetMeLit</div>
-            <GmlCTAForm />
-            <div className="gml-signup-note">
-              Free · Biweekly · Unsubscribe anytime
-              <br />
-              Join 12,400+ readers across 58 countries
-            </div>
-            <div className="gml-signup-perks">
-              <div className="gml-perk">
-                <span className="gml-perk-n">✓</span>
-                <p>The <em>deep dive</em> — intro cultural commentary</p>
+            <div className="nl-cdf-rows">
+              <div className="nl-cdf-row">
+                <span className="nl-cdf-row-num">Stories</span>
+                <span className="nl-cdf-row-label">Fiction &amp; poetry from African and diasporan voices</span>
               </div>
-              <div className="gml-perk">
-                <span className="gml-perk-n">✓</span>
-                <p>The <em>list</em> — recommended things worth your time</p>
+              <div className="nl-cdf-row">
+                <span className="nl-cdf-row-num">Books</span>
+                <span className="nl-cdf-row-label">New releases, essential reads, and editor picks</span>
               </div>
-              <div className="gml-perk">
-                <span className="gml-perk-n">✓</span>
-                <p>The <em>calendar</em> — what&apos;s on in Lagos, Accra, London, NYC</p>
-              </div>
-              <div className="gml-perk">
-                <span className="gml-perk-n">✓</span>
-                <p>Early access to <em>Moveee Events</em> RSVP</p>
+              <div className="nl-cdf-row">
+                <span className="nl-cdf-row-num">Opps</span>
+                <span className="nl-cdf-row-label">Submissions, grants, residencies, and writing prizes</span>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ══ CULTURE DROP ══ */}
-      <section className="gml-signup-section" style={{ background: "var(--ink)", color: "var(--paper)" }} id="culture-drop">
-        <div className="gml-signup-inner">
-          <div className="gml-signup-left">
-            <div className="gml-badge" style={{ color: "var(--ochre)", borderColor: "var(--ochre)" }}>✦ New Dispatch</div>
-            <h3 style={{ color: "var(--paper)" }}>
-              Culture <em>Drop</em>.
-            </h3>
-            <p style={{ color: "rgba(255,255,255,0.65)" }}>
-              A weekly flash of what&apos;s moving in Black culture — new music,
-              film, art, conversation, and the moments that don&apos;t wait for
-              the biweekly edition. Fast, sharp, and always on time.
-            </p>
-            <ul style={{ listStyle: "none", padding: 0, margin: "24px 0 0", display: "flex", flexDirection: "column", gap: 10 }}>
-              <li style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", letterSpacing: ".1em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
-                <span style={{ color: "var(--ochre)", marginRight: 8 }}>✓</span> Weekly — every Thursday
-              </li>
-              <li style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", letterSpacing: ".1em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
-                <span style={{ color: "var(--ochre)", marginRight: 8 }}>✓</span> 3 min read · No filler
-              </li>
-              <li style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", letterSpacing: ".1em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
-                <span style={{ color: "var(--ochre)", marginRight: 8 }}>✓</span> Free · Unsubscribe anytime
-              </li>
-            </ul>
-          </div>
-
-          <div className="gml-signup-right">
-            <div className="gml-form-label" style={{ color: "rgba(255,255,255,0.5)" }}>Subscribe to Culture Drop</div>
-            <GmlCTAForm
-              list="culture-drop"
-              buttonLabel="Drop it in my inbox →"
-              successLabel="✓ Welcome to Culture Drop"
+          <div className="nl-cdf-right">
+            <div className="nl-cdf-form-label">Subscribe to GetMeLit</div>
+            <NewsletterSubscribeWidget
+              placeholder="your@email.com"
+              buttonLabel="Subscribe →"
+              list="getmelit"
             />
-            <div className="gml-signup-note" style={{ color: "rgba(255,255,255,0.4)" }}>
-              Free · Weekly · Unsubscribe anytime
-            </div>
-            <div className="gml-signup-perks">
-              <div className="gml-perk">
-                <span className="gml-perk-n">✓</span>
-                <p style={{ color: "rgba(255,255,255,0.6)" }}>The cultural <em>moment</em> of the week</p>
-              </div>
-              <div className="gml-perk">
-                <span className="gml-perk-n">✓</span>
-                <p style={{ color: "rgba(255,255,255,0.6)" }}>New <em>music, film &amp; art</em> you need to know</p>
-              </div>
-              <div className="gml-perk">
-                <span className="gml-perk-n">✓</span>
-                <p style={{ color: "rgba(255,255,255,0.6)" }}>The <em>conversation</em> that&apos;s happening right now</p>
-              </div>
-            </div>
+            <p className="nl-cdf-note">Free · Weekly · Unsubscribe anytime</p>
           </div>
         </div>
       </section>
@@ -362,9 +274,9 @@ export default async function NewsletterArchive() {
           </div>
           <h3>More <em>dispatches</em>, coming soon</h3>
           <p>
-            GetMeLit is our flagship. But we&apos;re building a family of
-            newsletters for different appetites — each one as considered
-            as the last.
+            Culture Drop and GetMeLit are just the start. We&apos;re building
+            a family of newsletters for different appetites — each one as
+            considered as the last.
           </p>
         </div>
         <div className="gml-cs-grid">
