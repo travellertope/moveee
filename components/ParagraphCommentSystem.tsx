@@ -225,7 +225,7 @@ export default function ParagraphCommentSystem({ postId, content }: ParagraphCom
             </form>
           ) : (
             <div className="login-to-comment">
-              Please <button onClick={() => window.dispatchEvent(new CustomEvent('open-auth-modal'))} style={{ background: 'none', border: 'none', padding: 0, textDecoration: 'underline', color: 'var(--ochre)', cursor: 'pointer', fontWeight: 700 }}>sign in</button> to join the discussion.
+              <button onClick={() => window.dispatchEvent(new CustomEvent('open-auth-modal'))} style={{ background: 'none', border: 'none', padding: 0, textDecoration: 'underline', color: 'var(--ochre)', cursor: 'pointer', fontWeight: 700 }}>Join the community or sign in</button> to leave a note on this paragraph.
             </div>
           )}
         </div>
