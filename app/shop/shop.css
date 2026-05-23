@@ -157,7 +157,7 @@
 .feat-img-wrap svg { width: 100%; height: 100%; display: block; transition: transform .5s; }
 .feat-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s; }
 .feat-card:hover .feat-img-wrap img { transform: scale(1.03); }
-.feat-large .feat-img-wrap { aspect-ratio: 3/4; }
+.feat-large .feat-img-wrap { aspect-ratio: 1/1; }
 .feat-small .feat-img-wrap { aspect-ratio: 1; }
 
 .feat-pip {
@@ -328,7 +328,7 @@
 .pcard .pimg {
   background: var(--ink);
   overflow: hidden;
-  aspect-ratio: 4/5;
+  aspect-ratio: 1/1;
   margin-bottom: 16px;
   position: relative;
   transition: transform .4s;
@@ -447,7 +447,7 @@
   gap: 14px;
 }
 .cat-item {
-  aspect-ratio: 3/4;
+  aspect-ratio: 1/1;
   background: var(--ink);
   overflow: hidden;
   position: relative;
@@ -1287,7 +1287,7 @@
   align-items: start;
 }
 .sp-story-image {
-  aspect-ratio: 4/5;
+  aspect-ratio: 1/1;
   background: var(--ink);
   overflow: hidden;
   position: relative;
@@ -1528,7 +1528,7 @@
 
 .mini-product { cursor: pointer; text-decoration: none; color: inherit; display: block; }
 .mini-product .img {
-  aspect-ratio: 4/5;
+  aspect-ratio: 1/1;
   background: var(--ink);
   overflow: hidden;
   margin-bottom: 14px;
