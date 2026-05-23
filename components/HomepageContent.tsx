@@ -201,9 +201,6 @@ export default function HomepageContent({
               {latestIssue.meta?.issue_subtitle && (
                 <p className="hp-issue-subtitle">{latestIssue.meta.issue_subtitle}</p>
               )}
-              {latestIssue.meta?.issue_editorial_note && (
-                <p className="hp-issue-note">{latestIssue.meta.issue_editorial_note}</p>
-              )}
             </div>
           </div>
           {latestIssueStories.length > 0 && (
