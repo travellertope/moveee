@@ -67,7 +67,7 @@ class Culture_Newsletter_Importer {
         <div class="wrap">
             <h1><?php esc_html_e( 'Import MailPoet Newsletters', 'culture-community' ); ?></h1>
             <p style="color:#646970;max-width:680px;">
-                <?php esc_html_e( 'Select sent MailPoet campaigns below to import as Cultural Digest issues. Content is extracted from the campaign body — text, images, and buttons — and saved as clean WordPress post content. Already-imported campaigns are marked and skipped automatically.', 'culture-community' ); ?>
+                <?php esc_html_e( 'Select sent MailPoet campaigns below to import as newsletter issues. Content is extracted from the campaign body — text, images, and buttons — and saved as clean WordPress post content. Already-imported campaigns are marked and skipped automatically.', 'culture-community' ); ?>
             </p>
 
             <?php if ( $notice ) : ?>

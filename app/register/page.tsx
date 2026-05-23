@@ -407,7 +407,7 @@ function RegisterForm() {
                       perks: [
                         "Access to free member articles",
                         "Access to online events",
-                        "The Cultural Digest newsletter",
+                        "GetMeLit & Culture Drop newsletters",
                         "Community forum & Pulse",
                       ],
                     },

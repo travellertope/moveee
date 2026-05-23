@@ -10,9 +10,9 @@ get_header();
 
 <div class="culture-template culture-archive-newsletter">
     <header class="culture-archive-newsletter__header">
-        <h1><?php esc_html_e( 'The Cultural Digest', 'culture-community' ); ?></h1>
+        <h1><?php esc_html_e( 'Newsletters', 'culture-community' ); ?></h1>
         <p class="culture-archive-newsletter__intro">
-            <?php esc_html_e( 'Read past issues of the Cultural Digest. React, comment, and engage with the community.', 'culture-community' ); ?>
+            <?php esc_html_e( 'Read past issues of GetMeLit and Culture Drop. React, comment, and engage with the community.', 'culture-community' ); ?>
         </p>
     </header>
 

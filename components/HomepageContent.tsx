@@ -463,9 +463,8 @@ export default function HomepageContent({
           </div>
           <div className="connect-right">
             <div className="perks">
-              <div className="perk"><span className="n">1.</span><p>Featured directory listing and <em>Connect Pro</em> badge on your posts.</p></div>
-              <div className="perk"><span className="n">2.</span><p>Exclusive gated content, editorials, and the full <em>GetMeLit</em> edition.</p></div>
-              <div className="perk"><span className="n">3.</span><p>Priority RSVP for all <em>Moveee Events</em> and 10% off the Moveee Shop.</p></div>
+              <div className="perk"><span className="n">1.</span><p><em>Connect Pro</em> badge on your Pulse posts and exclusive gated content.</p></div>
+              <div className="perk"><span className="n">2.</span><p>10% off the Moveee Shop and early access to new features.</p></div>
             </div>
             <div className="connect-cta">
               {isLoggedIn ? (

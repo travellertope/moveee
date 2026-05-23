@@ -105,12 +105,10 @@ export default async function MemberPage() {
                   Unlock the full experience.
                 </h3>
                 <ul className="mem-upgrade-perks">
-                  <li>Featured directory listing</li>
-                  <li>Pro badge on your Pulse posts</li>
-                  <li>Priority RSVP for all events</li>
-                  <li>Exclusive gated content</li>
-                  <li>Full GetMeLit newsletter edition</li>
+                  <li>Connect Pro badge on your Pulse posts</li>
+                  <li>Exclusive gated content &amp; editorials</li>
                   <li>10% Moveee Shop discount</li>
+                  <li>Early access to new features</li>
                 </ul>
                 <Link href="/connect/membership" className="mem-upgrade-btn">
                   Become a Connect Pro →
@@ -161,7 +159,7 @@ export default async function MemberPage() {
                 Account Settings →
               </Link>
               <Link href="/newsletter" className="mem-link">
-                The Cultural Digest →
+                Newsletters →
               </Link>
               <Link href="/events" className="mem-link">
                 Upcoming Events →
