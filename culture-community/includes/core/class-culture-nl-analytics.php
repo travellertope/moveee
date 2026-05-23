@@ -460,10 +460,26 @@ class Culture_NL_Analytics {
         );
     }
 
+    /** Human-readable labels for newsletter lists and segments. */
+    const LIST_LABELS = array(
+        'getmelit'     => 'GetMeLit',
+        'culture-drop' => 'Culture Drop',
+    );
+    const SEGMENT_LABELS = array(
+        'us' => 'The Moveee America (US)',
+        'uk' => 'The British Moveee (UK)',
+        'ng' => 'Nigeria',
+        'gh' => 'Ghana',
+        'ca' => 'Canada',
+        'au' => 'Australia',
+    );
+
     /**
      * Overview data across all sent campaigns.
+     * Each campaign entry now includes list + segment metadata.
+     * Returns per-list subscriber breakdowns in list_counts[].
      *
-     * @return array { campaigns[], avg_open_rate, avg_ctr, total_sent, subscribers }
+     * @return array { campaigns[], avg_open_rate, avg_ctr, total_sent, subscribers, list_counts[] }
      */
     public static function get_overview() {
         global $wpdb;
@@ -494,6 +510,8 @@ class Culture_NL_Analytics {
 
         foreach ( $posts as $post ) {
             $sent          = (int) get_post_meta( $post->ID, '_culture_nl_send_total', true );
+            $nl_list       = get_post_meta( $post->ID, '_culture_nl_list',    true ) ?: 'getmelit';
+            $nl_segment    = get_post_meta( $post->ID, '_culture_nl_segment', true ) ?: '';
             $unique_opens  = (int) $wpdb->get_var( $wpdb->prepare(
                 "SELECT COUNT(DISTINCT subscriber) FROM {$ot} WHERE campaign_id = %d",
                 $post->ID
@@ -504,14 +522,18 @@ class Culture_NL_Analytics {
             ) );
 
             $campaign_data[] = array(
-                'id'        => $post->ID,
-                'title'     => $post->post_title,
-                'sent_at'   => get_post_meta( $post->ID, '_culture_nl_sent_at', true ),
-                'sent'      => $sent,
-                'opens'     => $unique_opens,
-                'open_rate' => $sent > 0 ? round( $unique_opens  / $sent * 100, 1 ) : 0.0,
-                'clicks'    => $unique_clicks,
-                'ctr'       => $sent > 0 ? round( $unique_clicks / $sent * 100, 1 ) : 0.0,
+                'id'            => $post->ID,
+                'title'         => $post->post_title,
+                'list'          => $nl_list,
+                'list_label'    => self::LIST_LABELS[ $nl_list ] ?? $nl_list,
+                'segment'       => $nl_segment,
+                'segment_label' => $nl_segment ? ( self::SEGMENT_LABELS[ $nl_segment ] ?? $nl_segment ) : '',
+                'sent_at'       => get_post_meta( $post->ID, '_culture_nl_sent_at', true ),
+                'sent'          => $sent,
+                'opens'         => $unique_opens,
+                'open_rate'     => $sent > 0 ? round( $unique_opens  / $sent * 100, 1 ) : 0.0,
+                'clicks'        => $unique_clicks,
+                'ctr'           => $sent > 0 ? round( $unique_clicks / $sent * 100, 1 ) : 0.0,
             );
         }
 
@@ -522,9 +544,25 @@ class Culture_NL_Analytics {
         $avg_ctr       = $n > 0
             ? round( array_sum( array_column( $campaign_data, 'ctr' ) ) / $n, 1 )
             : 0.0;
-        $total_sent    = array_sum( array_column( $campaign_data, 'sent' ) );
+        $total_sent       = array_sum( array_column( $campaign_data, 'sent' ) );
         $subscribers_list = get_option( 'culture_newsletter_subscribers', array() );
         $subscribers      = is_array( $subscribers_list ) ? count( $subscribers_list ) : 0;
+
+        // Per-list (and per-list+segment) subscriber counts.
+        $list_counts = array_fill_keys( array_keys( self::LIST_LABELS ), 0 );
+        foreach ( $subscribers_list as $sub ) {
+            $sub_lists   = is_array( $sub ) ? ( $sub['lists']   ?? array() ) : array();
+            if ( empty( $sub_lists ) ) {
+                // Legacy plain-string subscriber counts as GetMeLit.
+                $list_counts['getmelit'] = ( $list_counts['getmelit'] ?? 0 ) + 1;
+            } else {
+                foreach ( array_keys( $list_counts ) as $lk ) {
+                    if ( in_array( $lk, $sub_lists, true ) ) {
+                        $list_counts[ $lk ]++;
+                    }
+                }
+            }
+        }
 
         return array(
             'campaigns'     => $campaign_data,
@@ -532,7 +570,40 @@ class Culture_NL_Analytics {
             'avg_ctr'       => $avg_ctr,
             'total_sent'    => $total_sent,
             'subscribers'   => $subscribers,
+            'list_counts'   => $list_counts,
         );
+    }
+
+    /**
+     * Find a subscriber's raw record from the subscribers option.
+     * Returns the record array (object subscriber) or a synthesised array for
+     * legacy plain-string entries. Returns null if not found.
+     *
+     * @param  string $email
+     * @return array|null
+     */
+    public static function get_subscriber_record( $email ) {
+        $email       = strtolower( trim( $email ) );
+        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
+
+        foreach ( $subscribers as $sub ) {
+            $sub_email = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
+            if ( strtolower( trim( $sub_email ) ) === $email ) {
+                if ( is_array( $sub ) ) {
+                    return $sub;
+                }
+                // Normalise legacy plain-string entry.
+                return array(
+                    'email'   => $email,
+                    'name'    => '',
+                    'date'    => '',
+                    'lists'   => array( 'getmelit' ),
+                    'segment' => '',
+                );
+            }
+        }
+
+        return null;
     }
 
     /**

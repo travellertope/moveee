@@ -78,6 +78,26 @@ class Culture_NL_Analytics_Admin {
 
     private static function render_overview() {
         $data = Culture_NL_Analytics::get_overview();
+
+        // List / segment filter from URL.
+        $filter_list    = sanitize_key( $_GET['nl_list']    ?? '' );
+        $filter_segment = sanitize_key( $_GET['nl_segment'] ?? '' );
+
+        $campaigns = $data['campaigns'];
+        if ( $filter_list ) {
+            $campaigns = array_values( array_filter( $campaigns, fn( $c ) => $c['list'] === $filter_list ) );
+        }
+        if ( $filter_segment ) {
+            $campaigns = array_values( array_filter( $campaigns, fn( $c ) => $c['segment'] === $filter_segment ) );
+        }
+
+        // Re-compute averages over the filtered set.
+        $n             = count( $campaigns );
+        $avg_open_rate = $n > 0 ? round( array_sum( array_column( $campaigns, 'open_rate' ) ) / $n, 1 ) : $data['avg_open_rate'];
+        $avg_ctr       = $n > 0 ? round( array_sum( array_column( $campaigns, 'ctr' )       ) / $n, 1 ) : $data['avg_ctr'];
+
+        $list_counts    = $data['list_counts'];
+        $all_list_slugs = array_keys( Culture_NL_Analytics::LIST_LABELS );
         ?>
         <div class="culture-nla-wrap">
 
@@ -86,43 +106,76 @@ class Culture_NL_Analytics_Admin {
                 <?php
                 self::stat_card(
                     __( 'Avg Open Rate', 'culture-community' ),
-                    $data['avg_open_rate'] . '%',
-                    self::rate_class( $data['avg_open_rate'] ),
+                    $avg_open_rate . '%',
+                    self::rate_class( $avg_open_rate ),
                     'dashicons-visibility'
                 );
                 self::stat_card(
                     __( 'Avg CTR', 'culture-community' ),
-                    $data['avg_ctr'] . '%',
-                    self::rate_class( $data['avg_ctr'], 5, 2 ),
+                    $avg_ctr . '%',
+                    self::rate_class( $avg_ctr, 5, 2 ),
                     'dashicons-admin-links'
                 );
                 self::stat_card(
                     __( 'Campaigns Sent', 'culture-community' ),
-                    number_format( count( $data['campaigns'] ) ),
+                    number_format( count( $campaigns ) ),
                     '',
                     'dashicons-megaphone'
                 );
-                self::stat_card(
-                    __( 'Current Subscribers', 'culture-community' ),
-                    number_format( $data['subscribers'] ),
-                    '',
-                    'dashicons-groups'
-                );
+                // Per-list subscriber counts.
+                foreach ( Culture_NL_Analytics::LIST_LABELS as $lk => $ln ) {
+                    self::stat_card(
+                        /* translators: %s newsletter list name */
+                        sprintf( __( '%s Subscribers', 'culture-community' ), $ln ),
+                        number_format( $list_counts[ $lk ] ?? 0 ),
+                        '',
+                        'dashicons-groups'
+                    );
+                }
                 ?>
             </div>
+
+            <?php /* ── List / Segment Filter ── */ ?>
+            <form method="get" action="" style="margin-bottom:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input type="hidden" name="page" value="culture-analytics">
+                <input type="hidden" name="tab"  value="newsletter">
+                <select name="nl_list" onchange="this.form.submit()" style="min-width:160px;">
+                    <option value=""><?php esc_html_e( 'All Lists', 'culture-community' ); ?></option>
+                    <?php foreach ( Culture_NL_Analytics::LIST_LABELS as $lk => $ln ) : ?>
+                        <option value="<?php echo esc_attr( $lk ); ?>"<?php selected( $filter_list, $lk ); ?>>
+                            <?php echo esc_html( $ln ); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="nl_segment" onchange="this.form.submit()" style="min-width:200px;">
+                    <option value=""><?php esc_html_e( 'All Segments', 'culture-community' ); ?></option>
+                    <?php foreach ( Culture_NL_Analytics::SEGMENT_LABELS as $sk => $sn ) : ?>
+                        <option value="<?php echo esc_attr( $sk ); ?>"<?php selected( $filter_segment, $sk ); ?>>
+                            <?php echo esc_html( $sn ); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <?php if ( $filter_list || $filter_segment ) : ?>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-analytics&tab=newsletter' ) ); ?>" class="button">
+                        <?php esc_html_e( 'Clear filter', 'culture-community' ); ?>
+                    </a>
+                <?php endif; ?>
+            </form>
 
             <?php /* ── Campaigns Table ── */ ?>
             <h2 class="culture-nla-section-title"><?php esc_html_e( 'Sent Campaigns', 'culture-community' ); ?></h2>
 
-            <?php if ( empty( $data['campaigns'] ) ) : ?>
+            <?php if ( empty( $campaigns ) ) : ?>
                 <p class="culture-nla-empty">
-                    <?php esc_html_e( 'No campaigns have been sent yet. Send your first newsletter issue to start seeing data here.', 'culture-community' ); ?>
+                    <?php esc_html_e( 'No campaigns match the current filter. Send your first newsletter issue to start seeing data here.', 'culture-community' ); ?>
                 </p>
             <?php else : ?>
                 <table class="wp-list-table widefat fixed striped culture-nla-table">
                     <thead>
                         <tr>
                             <th><?php esc_html_e( 'Campaign', 'culture-community' ); ?></th>
+                            <th class="col-badge"><?php esc_html_e( 'List', 'culture-community' ); ?></th>
+                            <th class="col-badge"><?php esc_html_e( 'Segment', 'culture-community' ); ?></th>
                             <th class="col-date"><?php esc_html_e( 'Sent', 'culture-community' ); ?></th>
                             <th class="col-num"><?php esc_html_e( 'Recipients', 'culture-community' ); ?></th>
                             <th class="col-num"><?php esc_html_e( 'Unique Opens', 'culture-community' ); ?></th>
@@ -132,12 +185,26 @@ class Culture_NL_Analytics_Admin {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ( $data['campaigns'] as $c ) : ?>
+                        <?php foreach ( $campaigns as $c ) : ?>
                             <tr>
                                 <td>
                                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-analytics&tab=newsletter&campaign=' . $c['id'] ) ); ?>">
                                         <strong><?php echo esc_html( $c['title'] ); ?></strong>
                                     </a>
+                                </td>
+                                <td class="col-badge">
+                                    <span class="culture-nla-list-badge culture-nla-list-<?php echo esc_attr( $c['list'] ); ?>">
+                                        <?php echo esc_html( $c['list_label'] ); ?>
+                                    </span>
+                                </td>
+                                <td class="col-badge">
+                                    <?php if ( $c['segment'] ) : ?>
+                                        <span class="culture-nla-seg-badge">
+                                            <?php echo esc_html( $c['segment_label'] ?: strtoupper( $c['segment'] ) ); ?>
+                                        </span>
+                                    <?php else : ?>
+                                        <span style="color:#aaa;">—</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="col-date">
                                     <?php echo $c['sent_at']
@@ -175,10 +242,17 @@ class Culture_NL_Analytics_Admin {
             wp_die( esc_html__( 'Campaign not found.', 'culture-community' ) );
         }
 
-        $stats   = Culture_NL_Analytics::get_campaign_stats( $campaign_id );
-        $sent_at = get_post_meta( $campaign_id, '_culture_nl_sent_at', true );
-        $page    = max( 1, absint( $_GET['paged'] ?? 1 ) );
-        $openers = Culture_NL_Analytics::get_campaign_openers( $campaign_id, $page );
+        $stats      = Culture_NL_Analytics::get_campaign_stats( $campaign_id );
+        $sent_at    = get_post_meta( $campaign_id, '_culture_nl_sent_at',    true );
+        $nl_list    = get_post_meta( $campaign_id, '_culture_nl_list',       true ) ?: 'getmelit';
+        $nl_segment = get_post_meta( $campaign_id, '_culture_nl_segment',    true ) ?: '';
+        $page       = max( 1, absint( $_GET['paged'] ?? 1 ) );
+        $openers    = Culture_NL_Analytics::get_campaign_openers( $campaign_id, $page );
+
+        $list_label    = Culture_NL_Analytics::LIST_LABELS[ $nl_list ]       ?? $nl_list;
+        $segment_label = $nl_segment
+            ? ( Culture_NL_Analytics::SEGMENT_LABELS[ $nl_segment ] ?? strtoupper( $nl_segment ) )
+            : __( 'All segments', 'culture-community' );
 
         // Inline chart data for JS.
         $chart_data = array(
@@ -200,6 +274,16 @@ class Culture_NL_Analytics_Admin {
             </p>
 
             <h1 class="culture-nla-page-title"><?php echo esc_html( $post->post_title ); ?></h1>
+
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+                <span class="culture-nla-list-badge culture-nla-list-<?php echo esc_attr( $nl_list ); ?>">
+                    <?php echo esc_html( $list_label ); ?>
+                </span>
+                <span class="culture-nla-seg-badge">
+                    <?php echo esc_html( $segment_label ); ?>
+                </span>
+            </div>
+
             <?php if ( $sent_at ) : ?>
                 <p class="culture-nla-subtitle">
                     <?php
@@ -372,7 +456,8 @@ class Culture_NL_Analytics_Admin {
     // ── SUBSCRIBER DETAIL ─────────────────────────────────────────────────────
 
     private static function render_subscriber_detail( $email ) {
-        $stats = Culture_NL_Analytics::get_subscriber_stats( $email );
+        $stats  = Culture_NL_Analytics::get_subscriber_stats( $email );
+        $record = Culture_NL_Analytics::get_subscriber_record( $email );
 
         $tier_labels = array(
             'hot'       => __( 'Hot', 'culture-community' ),
@@ -381,6 +466,11 @@ class Culture_NL_Analytics_Admin {
             'unengaged' => __( 'Unengaged', 'culture-community' ),
         );
         $tier = $stats['engagement'];
+
+        $sub_lists   = $record ? ( $record['lists']   ?? array( 'getmelit' ) ) : array();
+        $sub_segment = $record ? ( $record['segment'] ?? '' ) : '';
+        $sub_name    = $record ? ( $record['name']    ?? '' ) : '';
+        $sub_date    = $record ? ( $record['date']    ?? '' ) : '';
         ?>
         <div class="culture-nla-wrap">
             <p>
@@ -390,7 +480,37 @@ class Culture_NL_Analytics_Admin {
             </p>
 
             <div class="culture-nla-sub-header">
-                <h1 class="culture-nla-page-title"><?php echo esc_html( $email ); ?></h1>
+                <div>
+                    <h1 class="culture-nla-page-title"><?php echo esc_html( $email ); ?></h1>
+                    <?php if ( $sub_name ) : ?>
+                        <p style="margin:0 0 4px;color:#666;"><?php echo esc_html( $sub_name ); ?></p>
+                    <?php endif; ?>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+                        <?php foreach ( $sub_lists as $lk ) :
+                            $ll = Culture_NL_Analytics::LIST_LABELS[ $lk ] ?? $lk;
+                        ?>
+                            <span class="culture-nla-list-badge culture-nla-list-<?php echo esc_attr( $lk ); ?>">
+                                <?php echo esc_html( $ll ); ?>
+                            </span>
+                        <?php endforeach; ?>
+                        <?php if ( $sub_segment ) : ?>
+                            <span class="culture-nla-seg-badge">
+                                <?php echo esc_html( Culture_NL_Analytics::SEGMENT_LABELS[ $sub_segment ] ?? strtoupper( $sub_segment ) ); ?>
+                            </span>
+                        <?php endif; ?>
+                        <?php if ( $sub_date ) : ?>
+                            <span style="font-size:12px;color:#aaa;align-self:center;">
+                                <?php
+                                printf(
+                                    /* translators: subscription date */
+                                    esc_html__( 'Subscribed %s', 'culture-community' ),
+                                    esc_html( date_i18n( get_option( 'date_format' ), strtotime( $sub_date ) ) )
+                                );
+                                ?>
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
                 <span class="culture-nla-engagement-badge culture-nla-tier-<?php echo esc_attr( $tier ); ?>">
                     <?php echo esc_html( $tier_labels[ $tier ] ?? $tier ); ?>
                 </span>

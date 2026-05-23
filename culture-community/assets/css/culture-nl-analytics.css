@@ -196,6 +196,36 @@
     margin: 0 0 12px;
 }
 
+/* ── List & Segment Badges ───────────────────────────────────────────────────  */
+
+.col-badge { width: 130px; }
+
+.culture-nla-list-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+.culture-nla-list-getmelit     { background: #edfaef; color: #008a20; }
+.culture-nla-list-culture-drop { background: #f0f2ff; color: #3858e9; }
+
+.culture-nla-seg-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: #f0f0f1;
+    color: #646970;
+    white-space: nowrap;
+}
+
 /* ── Engagement Tier Badges ──────────────────────────────────────────────────  */
 
 .culture-nla-engagement-badge {
