@@ -456,22 +456,23 @@ export default function HomepageContent({
           <div className="connect-left">
             <h3>An archive <em>alive</em>.</h3>
             <p>
-              The Moveee is entirely independent. Moveee Connect is our membership tier — supporting
-              our editorial independence while granting you access to the physical manifestations of the magazine.
+              Join free and become part of the community — read, comment, share quotes,
+              and receive <em>GetMeLit</em> and <em>Culture Drop</em> in your inbox.
+              Upgrade to Connect Pro for the full experience.
             </p>
           </div>
           <div className="connect-right">
             <div className="perks">
-              <div className="perk"><span className="n">1.</span><p>The biannual physical print issue delivered worldwide.</p></div>
-              <div className="perk"><span className="n">2.</span><p>Priority access and discounted tickets to <em>Moveee Events</em> and <em>Origins</em> journeys.</p></div>
-              <div className="perk"><span className="n">3.</span><p>Full digital access to the entire editorial archive.</p></div>
+              <div className="perk"><span className="n">1.</span><p>The biannual <em>physical print issue</em> delivered worldwide.</p></div>
+              <div className="perk"><span className="n">2.</span><p>Priority access and exclusive invitations to <em>Moveee Events</em> and <em>Origins</em> journeys.</p></div>
+              <div className="perk"><span className="n">3.</span><p>Access to the dual-chapter feature — two cities, one membership.</p></div>
             </div>
             <div className="connect-cta">
               {isLoggedIn ? (
                 <Link href="/member" className="btn-gold">Go to Dashboard <span className="arrow">→</span></Link>
               ) : (
                 <>
-                  <Link href="/connect" className="btn-gold">Join Now <span className="arrow">→</span></Link>
+                  <Link href="/connect" className="btn-gold">Explore Connect Pro <span className="arrow">→</span></Link>
                   <div className="connect-price"><PatronPrice variant="yearly" /> (Cancel anytime)</div>
                 </>
               )}
