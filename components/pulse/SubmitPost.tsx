@@ -430,7 +430,7 @@ export default function SubmitPost({ onPosted, lockedTag }: SubmitPostProps) {
             textAlign: "left", cursor: "pointer", fontFamily: "var(--font-fraunces), serif",
           }}
         >
-          What&apos;s happening in culture? Sign in to share.
+          What&apos;s happening in culture? Join the community to share.
         </button>
         <SubmitDropdown />
       </div>

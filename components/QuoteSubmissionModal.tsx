@@ -27,13 +27,19 @@ export default function QuoteSubmissionModal({ onClose }: ModalProps) {
       <div className="fixed inset-0 bg-ink/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
         <div className="bg-paper p-8 max-w-md w-full relative">
           <button onClick={onClose} className="absolute top-4 right-4 text-ink-soft"><X size={20}/></button>
-          <h3 className="font-fraunces text-2xl mb-4">Members Only</h3>
-          <p className="text-ink-soft mb-6">You need to be a part of the Moveee community to contribute to the quotes archive.</p>
-          <button 
-            onClick={() => router.push('/login')}
+          <h3 className="font-fraunces text-2xl mb-4">Add a voice to the archive</h3>
+          <p className="text-ink-soft mb-6">The quotes archive is built by the community. Create a free Moveee account to contribute — takes 30 seconds, no card needed.</p>
+          <button
+            onClick={() => router.push('/register')}
             className="btn-gold w-full"
           >
-            Sign In to Contribute
+            Join free →
+          </button>
+          <button
+            onClick={() => router.push('/login')}
+            className="w-full mt-3 text-sm text-ink-soft underline underline-offset-2 bg-transparent border-0 cursor-pointer"
+          >
+            Already have an account? Sign in
           </button>
         </div>
       </div>

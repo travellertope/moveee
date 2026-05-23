@@ -147,7 +147,7 @@ export default function CommentThread({ postId, initialComments }: CommentThread
           }}
         >
           <p style={{ color: "#888", fontSize: "0.85rem", marginBottom: "1rem" }}>
-            Sign in to join the conversation.
+            Have something to say? Join the community — it's free.
           </p>
           <button
             onClick={() => signIn()}
@@ -164,7 +164,7 @@ export default function CommentThread({ postId, initialComments }: CommentThread
               borderRadius: "2px",
             }}
           >
-            Sign in
+            Join free or sign in
           </button>
         </div>
       )}

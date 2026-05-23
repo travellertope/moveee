@@ -35,24 +35,23 @@ export default function ContentGate({ accessLevel, isLoggedIn }: ContentGateProp
   let footnote: React.ReactNode;
 
   if (isPatronGate && !isLoggedIn) {
-    tierLabel = "Patron Members";
-    heading = "This piece is for Patron members.";
+    tierLabel = "Connect Pro";
+    heading = "There's more on the other side.";
     body =
-      "Become a Patron to read this and all exclusive long-form content — plus in-person events, dual chapter membership, priority RSVPs, and more.";
-    primaryBtn = { label: "Become a Patron →", href: "/register?tier=patron" };
-    secondaryBtn = { label: "Sign in", href: "/login" };
+      "This piece goes deeper — reserved for Connect Pro members. Join a community of culture-forward people across Africa and the diaspora. Events, dual chapter access, priority RSVPs, and long-form content worth your time.";
+    primaryBtn = { label: "Explore Connect Pro →", href: "/register?tier=patron" };
+    secondaryBtn = { label: "Already a member? Sign in", href: "/login" };
     footnote = (
       <span>
-        Patron · <PatronPrice variant="yearly" /> · Cancel anytime
+        Connect Pro · <PatronPrice variant="yearly" /> · Cancel anytime · Free account always available
       </span>
     );
   } else if (isPatronGate && isLoggedIn) {
-    // Logged in as Citizen (if they were Patron, canViewContent would be true)
-    tierLabel = "Patron Members";
-    heading = "Patron membership required.";
+    tierLabel = "Connect Pro";
+    heading = "You're one step away.";
     body =
-      "Upgrade your membership to unlock this piece and all exclusive Patron content — plus in-person events and dual chapter access.";
-    primaryBtn = { label: "Upgrade to Patron →", href: "/connect" };
+      "This piece is part of our Connect Pro archive — extended reads, member events, and dual chapter access for people who want to go further with The Moveee community.";
+    primaryBtn = { label: "Upgrade to Connect Pro →", href: "/connect" };
     secondaryBtn = null;
     footnote = (
       <span>
@@ -60,14 +59,14 @@ export default function ContentGate({ accessLevel, isLoggedIn }: ContentGateProp
       </span>
     );
   } else {
-    // member-only + visitor (logged-in members never see this state)
-    tierLabel = "Members";
-    heading = "This piece is for members.";
+    // member-only + visitor
+    tierLabel = "Moveee Community";
+    heading = "This one's for the community.";
     body =
-      "Join The Moveee to read this and all member content. Citizen membership is free, forever.";
-    primaryBtn = { label: "Create Free Account →", href: "/register" };
-    secondaryBtn = { label: "Sign in", href: "/login" };
-    footnote = "Citizen membership · Free forever";
+      "Create a free Moveee account to read this and everything else in the member archive. Takes 30 seconds — no card needed, free forever.";
+    primaryBtn = { label: "Join free — it takes 30 seconds →", href: "/register" };
+    secondaryBtn = { label: "Already have an account? Sign in", href: "/login" };
+    footnote = "Free membership · No credit card · Cancel anytime";
   }
 
   /* ── Styles ────────────────────────────────────────────────────────────── */
@@ -154,7 +153,7 @@ export default function ContentGate({ accessLevel, isLoggedIn }: ContentGateProp
 
   return (
     <div style={wrap}>
-      {/* Lock icon */}
+      {/* Key icon */}
       <svg
         style={lockIconStyle}
         viewBox="0 0 24 24"
@@ -165,8 +164,10 @@ export default function ContentGate({ accessLevel, isLoggedIn }: ContentGateProp
         strokeLinejoin="round"
         aria-hidden="true"
       >
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        <circle cx="7.5" cy="15.5" r="5.5" />
+        <path d="M21 2L13 10" />
+        <path d="M18 5l3 3" />
+        <path d="M15 8l1.5 1.5" />
       </svg>
 
       {/* Tier label */}
