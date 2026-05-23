@@ -183,46 +183,51 @@ export default function HomepageContent({
             </div>
             <Link href={`/magazine/issues/${latestIssue.slug}`} className="hp-section-link">See Full Issue →</Link>
           </div>
-          <div className="hp-issue-block">
-            {latestIssue.meta?.issue_cover_image_url && (
-              <Link href={`/magazine/issues/${latestIssue.slug}`} className="hp-issue-cover">
-                <Image
-                  src={latestIssue.meta.issue_cover_image_url}
-                  alt={latestIssue.name}
-                  fill
-                  className="object-cover"
-                />
-              </Link>
-            )}
-            <div className="hp-issue-meta">
-              <span className="hp-issue-number">
-                {latestIssue.meta?.issue_number ? `Issue ${latestIssue.meta.issue_number}` : latestIssue.name}
-              </span>
-              {latestIssue.meta?.issue_subtitle && (
-                <p className="hp-issue-subtitle">{latestIssue.meta.issue_subtitle}</p>
+          <div className="hp-issue-layout">
+            {/* Left: cover + meta */}
+            <div className="hp-issue-left">
+              {latestIssue.meta?.issue_cover_image_url && (
+                <Link href={`/magazine/issues/${latestIssue.slug}`} className="hp-issue-cover">
+                  <Image
+                    src={latestIssue.meta.issue_cover_image_url}
+                    alt={latestIssue.name}
+                    fill
+                    className="object-cover"
+                  />
+                </Link>
               )}
+              <div className="hp-issue-meta">
+                <span className="hp-issue-number">
+                  {latestIssue.meta?.issue_number ? `Issue ${latestIssue.meta.issue_number}` : latestIssue.name}
+                </span>
+                {latestIssue.meta?.issue_subtitle && (
+                  <p className="hp-issue-subtitle">{latestIssue.meta.issue_subtitle}</p>
+                )}
+              </div>
             </div>
+
+            {/* Right: 2×2 post grid */}
+            {latestIssueStories.length > 0 && (
+              <div className="hp-issue-grid">
+                {latestIssueStories.slice(0, 4).map((story: any) => {
+                  const img = story._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
+                  const cat = decodeHtml(story._embedded?.["wp:term"]?.[0]?.[0]?.name || "Culture");
+                  return (
+                    <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-mag-card">
+                      <div className="hp-mag-card-image">
+                        {img && <Image src={img} alt={story.title?.rendered || ""} fill className="object-cover" />}
+                      </div>
+                      <span className="hp-mag-cat">{cat}</span>
+                      <h4 className="hp-mag-card-title">{decodeHtml(story.title?.rendered || "")}</h4>
+                      <span className="hp-mag-card-meta">
+                        {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          {latestIssueStories.length > 0 && (
-            <div className="hp-mag-strip">
-              {latestIssueStories.slice(0, 4).map((story: any) => {
-                const img = story._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
-                const cat = decodeHtml(story._embedded?.["wp:term"]?.[0]?.[0]?.name || "Culture");
-                return (
-                  <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-mag-card">
-                    <div className="hp-mag-card-image">
-                      {img && <Image src={img} alt={story.title?.rendered || ""} fill className="object-cover" />}
-                    </div>
-                    <span className="hp-mag-cat">{cat}</span>
-                    <h4 className="hp-mag-card-title">{decodeHtml(story.title?.rendered || "")}</h4>
-                    <span className="hp-mag-card-meta">
-                      {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
         </section>
       )}
 
