@@ -373,6 +373,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               <ContentGate
                 accessLevel={accessLevel as "member-only" | "patron-only"}
                 isLoggedIn={isLoggedIn}
+                callbackUrl={`/magazine/${resolvedParams.slug}`}
               />
             </>
           )}

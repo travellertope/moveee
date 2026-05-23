@@ -7,6 +7,8 @@ interface ContentGateProps {
   accessLevel: Exclude<AccessLevel, "public">;
   /** Whether the current visitor is authenticated (any tier). */
   isLoggedIn: boolean;
+  /** The page path to return to after sign-in. Defaults to /member. */
+  callbackUrl?: string;
 }
 
 /**
@@ -23,7 +25,7 @@ interface ContentGateProps {
  *
  * (member-only + logged-in user is handled by canViewContent and never shown.)
  */
-export default function ContentGate({ accessLevel, isLoggedIn }: ContentGateProps) {
+export default function ContentGate({ accessLevel, isLoggedIn, callbackUrl = "/member" }: ContentGateProps) {
   const isPatronGate = accessLevel === "patron-only";
 
   /* ── Copy ─────────────────────────────────────────────────────────────── */
@@ -40,7 +42,7 @@ export default function ContentGate({ accessLevel, isLoggedIn }: ContentGateProp
     body =
       "This piece goes deeper — reserved for Connect Pro members. Join a community of culture-forward people across Africa and the diaspora, with exclusive editorials, a Pro badge, and long-form content worth your time.";
     primaryBtn = { label: "Explore Connect Pro →", href: "/register?tier=patron" };
-    secondaryBtn = { label: "Already a member? Sign in", href: "/login" };
+    secondaryBtn = { label: "Already a member? Sign in", href: `/login?callbackUrl=${encodeURIComponent(callbackUrl)}` };
     footnote = (
       <span>
         Connect Pro · <PatronPrice variant="yearly" /> · Cancel anytime · Free account always available
@@ -65,7 +67,7 @@ export default function ContentGate({ accessLevel, isLoggedIn }: ContentGateProp
     body =
       "Create a free Moveee account to read this and everything else in the member archive. Takes 30 seconds — no card needed, free forever.";
     primaryBtn = { label: "Join free — it takes 30 seconds →", href: "/register" };
-    secondaryBtn = { label: "Already have an account? Sign in", href: "/login" };
+    secondaryBtn = { label: "Already have an account? Sign in", href: `/login?callbackUrl=${encodeURIComponent(callbackUrl)}` };
     footnote = "Free membership · No credit card · Cancel anytime";
   }
 

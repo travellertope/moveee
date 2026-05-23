@@ -92,7 +92,7 @@ export default function DirectorySubmitForm({
           </p>
           <div style={{ display: "flex", gap: 12 }}>
             <Link
-              href="/login?redirect=/directory/submit"
+              href="/login?callbackUrl=/directory/submit"
               className="dir-submit-btn"
             >
               Sign in →

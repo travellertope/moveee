@@ -273,7 +273,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
               <p className="dir-wiki-no-content">Full article coming soon. Know this subject? Help us build it.</p>
             )
           ) : (
-            <ContentGate accessLevel={accessLevel as "member-only" | "patron-only"} isLoggedIn={isLoggedIn} />
+            <ContentGate accessLevel={accessLevel as "member-only" | "patron-only"} isLoggedIn={isLoggedIn} callbackUrl={`/directory/${slug}`} />
           )}
 
           {/* Interests / tags */}

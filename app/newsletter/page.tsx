@@ -348,7 +348,7 @@ export default async function NewsletterArchive({
             </div>
             <nav className="nl-archive-tabs">
               <Link
-                href="#archive"
+                href="/newsletter#archive"
                 className={`nl-archive-tab${activeFilter === "all" ? " nl-archive-tab--active" : ""}`}
                 scroll={false}
               >
