@@ -456,22 +456,23 @@ export default function HomepageContent({
           <div className="connect-left">
             <h3>An archive <em>alive</em>.</h3>
             <p>
-              Join free and become part of the community — read, comment, share quotes,
-              and receive <em>GetMeLit</em> and <em>Culture Drop</em> in your inbox.
-              Upgrade to Connect Pro for the full experience.
+              Join free as a Connect Citizen — read, post to the Pulse feed,
+              get listed in the directory, and receive <em>Culture Drop</em> weekly.
+              Upgrade to <em>Connect Pro</em> for the full experience.
             </p>
           </div>
           <div className="connect-right">
             <div className="perks">
-              <div className="perk"><span className="n">1.</span><p>The biannual <em>physical print issue</em> delivered worldwide.</p></div>
-              <div className="perk"><span className="n">2.</span><p>Priority access and exclusive invitations to <em>Moveee Events</em> and <em>Origins</em> journeys.</p></div>
+              <div className="perk"><span className="n">1.</span><p>Featured directory listing and <em>Connect Pro</em> badge on your posts.</p></div>
+              <div className="perk"><span className="n">2.</span><p>Exclusive gated content, editorials, and the full <em>GetMeLit</em> edition.</p></div>
+              <div className="perk"><span className="n">3.</span><p>Priority RSVP for all <em>Moveee Events</em> and 10% off the Moveee Shop.</p></div>
             </div>
             <div className="connect-cta">
               {isLoggedIn ? (
                 <Link href="/member" className="btn-gold">Go to Dashboard <span className="arrow">→</span></Link>
               ) : (
                 <>
-                  <Link href="/connect" className="btn-gold">Explore Connect Pro <span className="arrow">→</span></Link>
+                  <Link href="/connect/membership" className="btn-gold">View Membership <span className="arrow">→</span></Link>
                   <div className="connect-price"><PatronPrice variant="yearly" /> (Cancel anytime)</div>
                 </>
               )}
