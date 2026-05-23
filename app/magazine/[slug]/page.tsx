@@ -107,7 +107,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const wordCount = post.content?.replace(/<[^>]*>/g, "").split(/\s+/).length || 0;
   const readingTime = Math.max(1, Math.ceil(wordCount / 250));
 
-  const categoryName = post.categories?.nodes?.[0]?.name || "Article";
+  const categoryName = decodeHtml(post.categories?.nodes?.[0]?.name || "Article");
   const categorySlug = post.categories?.nodes?.[0]?.slug || "";
   const hasFeaturedImage = !!post.featuredImage?.node?.sourceUrl;
 
@@ -430,7 +430,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           {relatedStories.slice(0, 2).map((story: any) => (
             <Link href={`/magazine/${story.slug}`} key={story.id} style={{ textDecoration: 'none' }}>
               <div className="s-card">
-                <div className="s-label">{story.categories?.nodes?.[0]?.name || "Culture"}</div>
+                <div className="s-label">{decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}</div>
                 <h4>{story.title}</h4>
                 {story.excerpt && (
                   <p dangerouslySetInnerHTML={{ __html: story.excerpt.replace(/<[^>]*>/g, "").slice(0, 100) + "…" }} />
@@ -569,7 +569,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                       </svg>
                     )}
                   </div>
-                  <div className="rk">{story.categories?.nodes?.[0]?.name || "Culture"}</div>
+                  <div className="rk">{decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}</div>
                   <h4>{story.title}</h4>
                   <div className="rm">
                     {new Date(story.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}

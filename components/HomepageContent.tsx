@@ -53,7 +53,7 @@ export default function HomepageContent({
                 {/* Text block: category → title → excerpt → meta */}
                 <div className="hp-cover-text">
                   <div className="hp-cover-kicker">
-                    {coverStory.categories?.nodes[0]?.name?.toUpperCase() || "CULTURE"}
+                    {decodeHtml(coverStory.categories?.nodes[0]?.name || "Culture").toUpperCase()}
                   </div>
                   <h2 className="hp-cover-title">{coverStory.title}</h2>
                   <div className="hp-cover-excerpt" dangerouslySetInnerHTML={{ __html: coverStory.excerpt }} />
@@ -99,7 +99,7 @@ export default function HomepageContent({
                     />
                   )}
                 </div>
-                <span className="hp-story-cat">{story.categories?.nodes[0]?.name || "Culture"}</span>
+                <span className="hp-story-cat">{decodeHtml(story.categories?.nodes[0]?.name || "Culture")}</span>
                 <h4 className="hp-story-title">{story.title}</h4>
                 <span className="hp-story-meta">
                   {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
@@ -210,7 +210,7 @@ export default function HomepageContent({
             <div className="hp-mag-strip">
               {latestIssueStories.slice(0, 4).map((story: any) => {
                 const img = story._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
-                const cat = story._embedded?.["wp:term"]?.[0]?.[0]?.name || "Culture";
+                const cat = decodeHtml(story._embedded?.["wp:term"]?.[0]?.[0]?.name || "Culture");
                 return (
                   <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-mag-card">
                     <div className="hp-mag-card-image">
@@ -247,7 +247,7 @@ export default function HomepageContent({
                   <Image src={story.featuredImage.node.sourceUrl} alt={story.featuredImage.node.altText || ""} fill className="object-cover" />
                 )}
               </div>
-              <span className="hp-mag-cat">{story.categories?.nodes[0]?.name || "Culture"}</span>
+              <span className="hp-mag-cat">{decodeHtml(story.categories?.nodes[0]?.name || "Culture")}</span>
               <h4 className="hp-mag-card-title">{story.title}</h4>
               <span className="hp-mag-card-meta">
                 {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
@@ -275,7 +275,7 @@ export default function HomepageContent({
                     <Image src={story.featuredImage.node.sourceUrl} alt={story.featuredImage.node.altText || ""} fill className="object-cover" />
                   )}
                 </div>
-                <span className="hp-mag-cat">{story.categories?.nodes[0]?.name || "Culture"}</span>
+                <span className="hp-mag-cat">{decodeHtml(story.categories?.nodes[0]?.name || "Culture")}</span>
                 <h4 className="hp-mag-card-title">{story.title}</h4>
                 <span className="hp-mag-card-meta">
                   {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
@@ -303,7 +303,7 @@ export default function HomepageContent({
                     <Image src={story.featuredImage.node.sourceUrl} alt={story.featuredImage.node.altText || ""} fill className="object-cover" />
                   )}
                 </div>
-                <span className="hp-mag-cat">{story.categories?.nodes[0]?.name || "Culture"}</span>
+                <span className="hp-mag-cat">{decodeHtml(story.categories?.nodes[0]?.name || "Culture")}</span>
                 <h4 className="hp-mag-card-title">{story.title}</h4>
                 <span className="hp-mag-card-meta">
                   {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
@@ -331,7 +331,7 @@ export default function HomepageContent({
                     <Image src={story.featuredImage.node.sourceUrl} alt={story.featuredImage.node.altText || ""} fill className="object-cover" />
                   )}
                 </div>
-                <span className="hp-mag-cat">{story.categories?.nodes[0]?.name || "Culture"}</span>
+                <span className="hp-mag-cat">{decodeHtml(story.categories?.nodes[0]?.name || "Culture")}</span>
                 <h4 className="hp-mag-card-title">{story.title}</h4>
                 <span className="hp-mag-card-meta">
                   {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
@@ -359,7 +359,7 @@ export default function HomepageContent({
                     <Image src={story.featuredImage.node.sourceUrl} alt={story.featuredImage.node.altText || ""} fill className="object-cover" />
                   )}
                 </div>
-                <span className="hp-mag-cat">{story.categories?.nodes[0]?.name || "Culture"}</span>
+                <span className="hp-mag-cat">{decodeHtml(story.categories?.nodes[0]?.name || "Culture")}</span>
                 <h4 className="hp-mag-card-title">{story.title}</h4>
                 <span className="hp-mag-card-meta">
                   {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}

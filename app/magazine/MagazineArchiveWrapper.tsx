@@ -1,5 +1,6 @@
 import React from "react";
 import { getWPData, GET_STORIES, GET_FILTERS, GET_SERIES_STORIES, GET_INDUSTRY_STORIES, GET_COUNTRY_STORIES, GET_TAG_INFO, GET_CATEGORY_INFO } from "@/lib/wp";
+import { decodeHtml } from "@/lib/decode-html";
 import Link from "next/link";
 import Image from "next/image";
 import Ticker from "@/components/Ticker";
@@ -137,7 +138,7 @@ export default async function MagazineArchiveWrapper({
                     )}
                   </div>
                   <div className="kicker font-mono text-[9px] tracking-[0.14em] uppercase text-ochre mb-2">
-                    {story.categories?.nodes[0]?.name || "Article"}
+                    {decodeHtml(story.categories?.nodes[0]?.name || "Article")}
                   </div>
                   <h4 className="font-serif text-[22px] font-normal leading-[1.05] mb-2 group-hover:text-ochre transition-colors" dangerouslySetInnerHTML={{ __html: story.title }} />
                   <div className="dek text-ink-soft text-[13px] line-clamp-2" dangerouslySetInnerHTML={{ __html: story.excerpt?.replace(/<[^>]*>/g, "") || "" }} />
@@ -166,7 +167,7 @@ export default async function MagazineArchiveWrapper({
             <section className="hero-feature">
               <div className="hf-main">
                 <div className="hf-eyebrow">
-                  {heroStory.categories?.nodes?.[0]?.name || "Featured"}
+                  {decodeHtml(heroStory.categories?.nodes?.[0]?.name || "Featured")}
                 </div>
                 <Link href={`/magazine/${heroStory.slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
                   <div className="hf-img tall">
@@ -198,7 +199,7 @@ export default async function MagazineArchiveWrapper({
                   {sidebarStories.map((story) => (
                     <Link key={story.id} href={`/magazine/${story.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                       <div className="sf-story">
-                        <div className="sf-kicker">{story.categories?.nodes?.[0]?.name || "Culture"}</div>
+                        <div className="sf-kicker">{decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}</div>
                         <div className="sf-img">
                           {story.featuredImage?.node?.sourceUrl && (
                             <Image src={story.featuredImage.node.sourceUrl} alt={story.title} fill style={{ objectFit: 'cover' }} />
@@ -249,7 +250,7 @@ export default async function MagazineArchiveWrapper({
                         <Image src={story.featuredImage.node.sourceUrl} alt={story.title} fill style={{ objectFit: 'cover' }} />
                       )}
                     </div>
-                    <div className="pk">{story.categories?.nodes?.[0]?.name || "Portrait"}</div>
+                    <div className="pk">{decodeHtml(story.categories?.nodes?.[0]?.name || "Portrait")}</div>
                     <h4 dangerouslySetInnerHTML={{ __html: story.title }} />
                     <div className="pm">{new Date(story.date).toLocaleDateString('en-GB')}</div>
                   </Link>
@@ -270,7 +271,7 @@ export default async function MagazineArchiveWrapper({
                         <Image src={story.featuredImage.node.sourceUrl} alt={story.title} fill style={{ objectFit: 'cover' }} />
                       )}
                     </div>
-                    <div className="di-kicker">{story.categories?.nodes?.[0]?.name || "News"}</div>
+                    <div className="di-kicker">{decodeHtml(story.categories?.nodes?.[0]?.name || "News")}</div>
                     <div className="di-title" dangerouslySetInnerHTML={{ __html: story.title }} />
                     <div className="di-meta">{new Date(story.date).toLocaleDateString('en-GB')}</div>
                   </Link>
@@ -289,7 +290,7 @@ export default async function MagazineArchiveWrapper({
                       <div className="op-quote font-serif italic text-[22px] font-light leading-[1.3] text-ink hover:text-ochre mb-4 transition-colors" dangerouslySetInnerHTML={{ __html: story.title }} />
                       <div className="op-author">{story.author?.node?.name || "The Moveee"}</div>
                       <div className="op-dek" dangerouslySetInnerHTML={{ __html: story.excerpt?.replace(/<[^>]*>/g, "").slice(0, 100) + "..." || "" }} />
-                      <div className="op-kicker">{story.categories?.nodes?.[0]?.name || "Essay"}</div>
+                      <div className="op-kicker">{decodeHtml(story.categories?.nodes?.[0]?.name || "Essay")}</div>
                     </Link>
                   ))}
                 </div>
