@@ -11,6 +11,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Culture_Subscribers {
 
+    const LIST_OPTIONS    = array( 'getmelit' => 'GetMeLit', 'culture-drop' => 'Culture Drop' );
+    const SEGMENT_OPTIONS = array(
+        ''   => 'All segments',
+        'us' => 'The Moveee America (US)',
+        'uk' => 'The British Moveee (UK)',
+        'ng' => 'Nigeria',
+        'gh' => 'Ghana',
+        'ca' => 'Canada',
+        'au' => 'Australia',
+    );
+
     public static function init() {
         // Run migration if needed
         self::maybe_migrate();
@@ -22,6 +33,7 @@ class Culture_Subscribers {
         add_action( 'admin_post_culture_import_wp_users',      array( __CLASS__, 'handle_import_wp_users' ) );
         add_action( 'admin_post_culture_nl_auto_subscribe',    array( __CLASS__, 'handle_auto_subscribe_toggle' ) );
         add_action( 'admin_post_culture_bulk_import_emails',   array( __CLASS__, 'handle_bulk_import' ) );
+        add_action( 'admin_post_culture_edit_subscriber',      array( __CLASS__, 'handle_edit' ) );
 
         // Auto-subscribe new registrations if the option is enabled.
         if ( get_option( 'culture_nl_auto_subscribe', '0' ) === '1' ) {
@@ -91,6 +103,80 @@ class Culture_Subscribers {
             $notice = __( 'Subscriber removed successfully.', 'culture-community' );
         } elseif ( isset( $_GET['saved'] ) && '1' === $_GET['saved'] ) {
             $notice = __( 'Settings saved.', 'culture-community' );
+        } elseif ( isset( $_GET['sub_saved'] ) && '1' === $_GET['sub_saved'] ) {
+            $notice = __( 'Subscriber updated.', 'culture-community' );
+        }
+
+        // ── INLINE EDIT FORM ─────────────────────────────────────────────────
+        $editing_email = isset( $_GET['sub_action'], $_GET['sub_email'] )
+            && 'edit' === $_GET['sub_action']
+            ? sanitize_email( wp_unslash( $_GET['sub_email'] ) )
+            : '';
+
+        if ( $editing_email ) {
+            $edit_sub = null;
+            foreach ( $subscribers as $s ) {
+                $e = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
+                if ( strtolower( trim( $e ) ) === strtolower( $editing_email ) ) {
+                    $edit_sub = is_array( $s ) ? $s : array( 'email' => $s );
+                    break;
+                }
+            }
+            if ( $edit_sub ) : ?>
+        <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:24px 28px;max-width:600px;margin-bottom:28px;">
+            <h2 style="margin:0 0 18px;font-size:14px;font-weight:600;">
+                <?php esc_html_e( 'Edit Subscriber', 'culture-community' ); ?> —
+                <span style="font-weight:400;color:#646970;"><?php echo esc_html( $edit_sub['email'] ); ?></span>
+            </h2>
+            <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+                <input type="hidden" name="action" value="culture_edit_subscriber">
+                <input type="hidden" name="subscriber_email" value="<?php echo esc_attr( $edit_sub['email'] ); ?>">
+                <?php wp_nonce_field( 'culture_edit_subscriber' ); ?>
+                <table class="form-table" style="margin:0;">
+                    <tr>
+                        <th style="padding:8px 16px 8px 0;font-size:13px;width:120px;"><?php esc_html_e( 'Name', 'culture-community' ); ?></th>
+                        <td><input type="text" name="sub_name" class="regular-text" value="<?php echo esc_attr( $edit_sub['name'] ?? '' ); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th style="padding:8px 16px 8px 0;font-size:13px;"><?php esc_html_e( 'Location', 'culture-community' ); ?></th>
+                        <td><input type="text" name="sub_location" class="regular-text" value="<?php echo esc_attr( $edit_sub['location'] ?? '' ); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th style="padding:8px 16px 8px 0;font-size:13px;"><?php esc_html_e( 'Lists', 'culture-community' ); ?></th>
+                        <td>
+                            <?php
+                            $sub_lists = $edit_sub['lists'] ?? array();
+                            foreach ( self::LIST_OPTIONS as $list_id => $list_label ) : ?>
+                            <label style="display:inline-flex;align-items:center;gap:6px;margin-right:18px;">
+                                <input type="checkbox" name="sub_lists[]" value="<?php echo esc_attr( $list_id ); ?>"
+                                    <?php checked( in_array( $list_id, $sub_lists, true ) ); ?>>
+                                <?php echo esc_html( $list_label ); ?>
+                            </label>
+                            <?php endforeach; ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th style="padding:8px 16px 8px 0;font-size:13px;"><?php esc_html_e( 'Segment', 'culture-community' ); ?></th>
+                        <td>
+                            <select name="sub_segment">
+                                <?php foreach ( self::SEGMENT_OPTIONS as $seg_id => $seg_label ) : ?>
+                                <option value="<?php echo esc_attr( $seg_id ); ?>" <?php selected( ( $edit_sub['segment'] ?? '' ), $seg_id ); ?>>
+                                    <?php echo esc_html( $seg_label ); ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                    </tr>
+                </table>
+                <div style="margin-top:18px;display:flex;gap:10px;">
+                    <button type="submit" class="button button-primary"><?php esc_html_e( 'Save Changes', 'culture-community' ); ?></button>
+                    <a href="<?php echo esc_url( add_query_arg( 'page', 'culture-subscribers', admin_url( 'admin.php' ) ) ); ?>" class="button button-secondary">
+                        <?php esc_html_e( 'Cancel', 'culture-community' ); ?>
+                    </a>
+                </div>
+            </form>
+        </div>
+            <?php endif;
         }
         ?>
         <div class="wrap">
@@ -252,41 +338,68 @@ class Culture_Subscribers {
                     <thead>
                         <tr>
                             <th scope="col" style="width:40px;">#</th>
-                            <th scope="col" style="width:240px;"><?php esc_html_e( 'Email Address', 'culture-community' ); ?></th>
-                            <th scope="col"><?php esc_html_e( 'Name', 'culture-community' ); ?></th>
-                            <th scope="col"><?php esc_html_e( 'Location', 'culture-community' ); ?></th>
-                            <th scope="col" style="width:140px;"><?php esc_html_e( 'Joined', 'culture-community' ); ?></th>
-                            <th scope="col" style="width:100px;"><?php esc_html_e( 'Action', 'culture-community' ); ?></th>
+                            <th scope="col" style="width:220px;"><?php esc_html_e( 'Email Address', 'culture-community' ); ?></th>
+                            <th scope="col" style="width:150px;"><?php esc_html_e( 'Name', 'culture-community' ); ?></th>
+                            <th scope="col" style="width:160px;"><?php esc_html_e( 'Lists', 'culture-community' ); ?></th>
+                            <th scope="col" style="width:140px;"><?php esc_html_e( 'Segment', 'culture-community' ); ?></th>
+                            <th scope="col" style="width:120px;"><?php esc_html_e( 'Joined', 'culture-community' ); ?></th>
+                            <th scope="col" style="width:130px;"><?php esc_html_e( 'Actions', 'culture-community' ); ?></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ( array_reverse( $subscribers ) as $idx => $sub ) : ?>
-                            <?php 
-                            // Safety for mixed types during migration/bulk ingestion
-                            $email = is_array( $sub ) ? $sub['email'] : $sub;
-                            $name  = is_array( $sub ) ? ( $sub['name'] ?? '' ) : '';
-                            $loc   = is_array( $sub ) ? ( $sub['location'] ?? '' ) : '';
-                            $date  = is_array( $sub ) ? ( ! empty($sub['date']) ? date_i18n( get_option( 'date_format' ), strtotime( $sub['date'] ) ) : '' ) : '';
+                            <?php
+                            $email    = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
+                            $name     = is_array( $sub ) ? ( $sub['name'] ?? '' ) : '';
+                            $sub_lists = is_array( $sub ) ? ( $sub['lists'] ?? array() ) : array();
+                            $segment  = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
+                            $date     = is_array( $sub ) && ! empty( $sub['date'] )
+                                ? date_i18n( get_option( 'date_format' ), strtotime( $sub['date'] ) )
+                                : '';
+                            $is_editing = ( strtolower( trim( $email ) ) === strtolower( $editing_email ) );
                             ?>
-                            <tr>
+                            <tr<?php echo $is_editing ? ' style="background:#fffbe6;"' : ''; ?>>
                                 <td style="color:#646970;"><?php echo esc_html( $count - $idx ); ?></td>
                                 <td><strong><?php echo esc_html( $email ); ?></strong></td>
                                 <td><?php echo esc_html( $name ); ?></td>
-                                <td><?php echo esc_html( $loc ); ?></td>
+                                <td>
+                                    <?php if ( ! empty( $sub_lists ) ) : ?>
+                                        <?php foreach ( $sub_lists as $l ) : ?>
+                                            <span style="display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.05em;margin:1px;background:<?php echo $l === 'getmelit' ? '#d1fae5' : '#e0e7ff'; ?>;color:<?php echo $l === 'getmelit' ? '#065f46' : '#3730a3'; ?>;">
+                                                <?php echo esc_html( self::LIST_OPTIONS[ $l ] ?? $l ); ?>
+                                            </span>
+                                        <?php endforeach; ?>
+                                    <?php else : ?>
+                                        <span style="font-size:11px;color:#aaa;">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="font-size:12px;color:#646970;">
+                                    <?php echo $segment ? esc_html( self::SEGMENT_OPTIONS[ $segment ] ?? $segment ) : '<span style="color:#aaa;">—</span>'; ?>
+                                </td>
                                 <td style="font-size:12px;color:#646970;"><?php echo esc_html( $date ); ?></td>
                                 <td>
-                                    <form
-                                        method="post"
-                                        action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
-                                        onsubmit="return confirm('<?php echo esc_js( sprintf( __( 'Remove %s?', 'culture-community' ), $email ) ); ?>')"
-                                    >
-                                        <input type="hidden" name="action" value="culture_delete_subscriber">
-                                        <input type="hidden" name="subscriber_email" value="<?php echo esc_attr( $email ); ?>">
-                                        <?php wp_nonce_field( 'culture_delete_subscriber' ); ?>
-                                        <button type="submit" class="button button-small">
-                                            <?php esc_html_e( 'Remove', 'culture-community' ); ?>
-                                        </button>
-                                    </form>
+                                    <div style="display:flex;gap:6px;align-items:center;">
+                                        <a
+                                            href="<?php echo esc_url( add_query_arg( array(
+                                                'page'       => 'culture-subscribers',
+                                                'sub_action' => 'edit',
+                                                'sub_email'  => rawurlencode( $email ),
+                                            ), admin_url( 'admin.php' ) ) ); ?>#edit-subscriber"
+                                            class="button button-small"
+                                        ><?php esc_html_e( 'Edit', 'culture-community' ); ?></a>
+                                        <form
+                                            method="post"
+                                            action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+                                            onsubmit="return confirm('<?php echo esc_js( sprintf( __( 'Remove %s?', 'culture-community' ), $email ) ); ?>')"
+                                        >
+                                            <input type="hidden" name="action" value="culture_delete_subscriber">
+                                            <input type="hidden" name="subscriber_email" value="<?php echo esc_attr( $email ); ?>">
+                                            <?php wp_nonce_field( 'culture_delete_subscriber' ); ?>
+                                            <button type="submit" class="button button-small button-link-delete">
+                                                <?php esc_html_e( 'Remove', 'culture-community' ); ?>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -298,6 +411,60 @@ class Culture_Subscribers {
     }
 
     // ── HANDLERS ─────────────────────────────────────────────────────────────
+
+    /**
+     * Handle edit subscriber POST action — updates name, location, lists, segment.
+     */
+    public static function handle_edit() {
+        check_admin_referer( 'culture_edit_subscriber' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Permission denied.', 'culture-community' ) );
+        }
+
+        $email    = sanitize_email( $_POST['subscriber_email'] ?? '' );
+        $name     = sanitize_text_field( $_POST['sub_name'] ?? '' );
+        $location = sanitize_text_field( $_POST['sub_location'] ?? '' );
+        $segment  = sanitize_text_field( $_POST['sub_segment'] ?? '' );
+        $lists    = array_values( array_intersect(
+            array_map( 'sanitize_text_field', (array) ( $_POST['sub_lists'] ?? array() ) ),
+            array_keys( self::LIST_OPTIONS )
+        ) );
+
+        if ( ! $email ) {
+            wp_safe_redirect( add_query_arg( 'page', 'culture-subscribers', admin_url( 'admin.php' ) ) );
+            exit;
+        }
+
+        $subscribers = get_option( 'culture_newsletter_subscribers', array() );
+        $found       = false;
+
+        foreach ( $subscribers as &$sub ) {
+            $sub_email = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
+            if ( strtolower( trim( $sub_email ) ) === strtolower( $email ) ) {
+                if ( ! is_array( $sub ) ) {
+                    $sub = array( 'email' => $sub_email, 'date' => current_time( 'mysql' ) );
+                }
+                $sub['name']     = $name;
+                $sub['location'] = $location;
+                $sub['lists']    = $lists;
+                $sub['segment']  = $segment;
+                $found = true;
+                break;
+            }
+        }
+        unset( $sub );
+
+        if ( $found ) {
+            update_option( 'culture_newsletter_subscribers', $subscribers );
+        }
+
+        wp_safe_redirect( add_query_arg( array(
+            'page'      => 'culture-subscribers',
+            'sub_saved' => '1',
+        ), admin_url( 'admin.php' ) ) );
+        exit;
+    }
 
     /**
      * Handle delete subscriber POST action.
