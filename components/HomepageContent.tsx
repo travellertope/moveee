@@ -465,7 +465,6 @@ export default function HomepageContent({
             <div className="perks">
               <div className="perk"><span className="n">1.</span><p>The biannual <em>physical print issue</em> delivered worldwide.</p></div>
               <div className="perk"><span className="n">2.</span><p>Priority access and exclusive invitations to <em>Moveee Events</em> and <em>Origins</em> journeys.</p></div>
-              <div className="perk"><span className="n">3.</span><p>Access to the dual-chapter feature — two cities, one membership.</p></div>
             </div>
             <div className="connect-cta">
               {isLoggedIn ? (
