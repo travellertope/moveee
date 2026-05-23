@@ -4,7 +4,19 @@ import { useState, FormEvent } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
-export default function GmlCTAForm() {
+interface Props {
+  list?: string;
+  segment?: string;
+  buttonLabel?: string;
+  successLabel?: string;
+}
+
+export default function GmlCTAForm({
+  list = "getmelit",
+  segment = "",
+  buttonLabel = "Get Me Lit →",
+  successLabel = "✓ Welcome to GetMeLit",
+}: Props) {
   const { status } = useSession();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,7 +41,7 @@ export default function GmlCTAForm() {
       const res = await fetch("/api/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name }),
+        body: JSON.stringify({ email, name, list, segment }),
       });
       if (res.ok) {
         setSubmitStatus("success");
@@ -53,7 +65,7 @@ export default function GmlCTAForm() {
         color: "var(--ochre)",
         padding: "24px 0",
       }}>
-        ✓ Welcome to GetMeLit
+        {successLabel}
       </p>
     );
   }
@@ -80,7 +92,7 @@ export default function GmlCTAForm() {
         className="gml-signup-submit"
         disabled={submitStatus === "loading"}
       >
-        {submitStatus === "loading" ? "Subscribing…" : "Get Me Lit →"}
+        {submitStatus === "loading" ? "Subscribing…" : buttonLabel}
       </button>
       {submitStatus === "error" && (
         <p style={{

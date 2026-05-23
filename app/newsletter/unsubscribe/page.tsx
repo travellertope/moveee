@@ -84,7 +84,7 @@ export default async function UnsubscribePage({ searchParams }: Props) {
             marginBottom: 16,
           }}
         >
-          The Moveee &mdash; The Cultural Digest
+          The Moveee &mdash; Newsletters
         </p>
 
         {status === "success" && (

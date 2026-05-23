@@ -679,7 +679,7 @@ class Culture_Settings {
                 <tr><td><?php esc_html_e( 'Physical events', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td></tr>
                 <tr><td><?php esc_html_e( 'Primary chapter', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
                 <tr><td><?php esc_html_e( 'Secondary chapter', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Cultural Digest', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'GetMeLit & Culture Drop', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
                 <tr><td><?php esc_html_e( 'Priority RSVP', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td></tr>
                 <tr><td><?php esc_html_e( 'Points & badges', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
                 <tr><td><?php esc_html_e( 'Referral system', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
@@ -766,7 +766,7 @@ class Culture_Settings {
             <tbody>
                 <tr><td><code>[culture_passport]</code></td><td><?php esc_html_e( 'Member\'s Cultural Passport with points, badges and QR code.', 'culture-community' ); ?></td></tr>
                 <tr><td><code>[culture_events]</code></td><td><?php esc_html_e( 'List of upcoming events with RSVP buttons.', 'culture-community' ); ?></td></tr>
-                <tr><td><code>[culture_digest]</code></td><td><?php esc_html_e( 'Latest Cultural Digest newsletters.', 'culture-community' ); ?></td></tr>
+                <tr><td><code>[culture_digest]</code></td><td><?php esc_html_e( 'Latest newsletter issues (GetMeLit / Culture Drop).', 'culture-community' ); ?></td></tr>
                 <tr><td><code>[culture_referral]</code></td><td><?php esc_html_e( 'Referral link widget with share button and stats.', 'culture-community' ); ?></td></tr>
                 <tr><td><code>[culture_register]</code></td><td><?php esc_html_e( 'Multi-step registration wizard.', 'culture-community' ); ?></td></tr>
             </tbody>

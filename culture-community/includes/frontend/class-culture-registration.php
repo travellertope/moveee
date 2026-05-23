@@ -191,7 +191,7 @@ class Culture_Registration {
                                 <ul>
                                     <li><?php esc_html_e( 'Virtual event access', 'culture-community' ); ?></li>
                                     <li><?php esc_html_e( 'One primary chapter', 'culture-community' ); ?></li>
-                                    <li><?php esc_html_e( 'Cultural Digest access', 'culture-community' ); ?></li>
+                                    <li><?php esc_html_e( 'GetMeLit & Culture Drop newsletters', 'culture-community' ); ?></li>
                                     <li><?php esc_html_e( 'Gamification & badges', 'culture-community' ); ?></li>
                                 </ul>
                             </div>

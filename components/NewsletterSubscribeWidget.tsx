@@ -12,6 +12,8 @@ interface Props {
   successMessage?: string;
   /** 'dark' for ink/dark backgrounds, 'light' for paper backgrounds */
   variant?: 'dark' | 'light';
+  list?: string;
+  segment?: string;
 }
 
 export default function NewsletterSubscribeWidget({

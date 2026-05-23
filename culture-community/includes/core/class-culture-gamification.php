@@ -50,7 +50,7 @@ class Culture_Gamification {
         ),
         'commentator' => array(
             'name'        => 'Commentator',
-            'description' => 'Left 10 comments on The Cultural Digest.',
+            'description' => 'Left 10 comments on Moveee newsletters.',
             'icon'        => 'dashicons-format-chat',
             'trigger'     => 'comment_count',
             'threshold'   => 10,

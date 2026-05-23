@@ -9,7 +9,7 @@ import "../connect.css";
 export const metadata: Metadata = {
   title: "Membership — Moveee Connect",
   description:
-    "Join Moveee Connect as a Citizen for free, or become a Connect Pro member for featured directory listing, gated content access, exclusive perks, and more.",
+    "Join Moveee Connect as a Citizen for free, or upgrade to Connect Pro for exclusive gated content, a Pro badge, priority event access, shop discounts, and more.",
 };
 
 export default async function MembershipPage() {
@@ -67,7 +67,7 @@ export default async function MembershipPage() {
               <li>Member directory listing</li>
               <li>Primary chapter</li>
               <li>Online event access</li>
-              <li>The Cultural Digest newsletter</li>
+              <li>GetMeLit &amp; Culture Drop newsletters</li>
               <li>Culture points &amp; badges</li>
             </ul>
             {!loggedIn && (
@@ -92,11 +92,8 @@ export default async function MembershipPage() {
             </div>
             <ul className="mco-tier-perks">
               <li>Everything in Citizen</li>
-              <li>Featured directory listing</li>
               <li>Connect Pro badge on your Pulse posts</li>
               <li>Exclusive gated content &amp; editorials</li>
-              <li>Priority RSVP for all events</li>
-              <li>Full GetMeLit newsletter edition</li>
               <li>10% discount in the Moveee Shop</li>
               <li>Early access to new features</li>
             </ul>
@@ -131,13 +128,9 @@ export default async function MembershipPage() {
                 {[
                   ["Pulse feed & community posts",         true,  true],
                   ["Member directory listing",             true,  true],
-                  ["Featured directory listing",           false, true],
-                  ["Pro badge on Pulse posts",             false, true],
-                  ["Primary chapter",                      true,  true],
+                  ["Connect Pro badge on Pulse posts",     false, true],
                   ["Online event access",                  true,  true],
-                  ["Priority RSVP",                        false, true],
-                  ["The Cultural Digest",                  true,  true],
-                  ["Full GetMeLit edition",                false, true],
+                  ["GetMeLit & Culture Drop newsletters",  true,  true],
                   ["Exclusive gated content",              false, true],
                   ["10% Moveee Shop discount",             false, true],
                   ["Early access to features",             false, true],

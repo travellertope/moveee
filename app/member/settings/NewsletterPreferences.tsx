@@ -8,14 +8,14 @@ interface Props {
 
 const NEWSLETTERS = [
   {
-    id: "cultural-digest",
-    name: "The Cultural Digest",
-    desc: "Weekly — events, culture, stories, and what's moving in your city.",
-  },
-  {
     id: "getmelit",
     name: "GetMeLit",
-    desc: "Bi-weekly — curated reading list for the culturally curious.",
+    desc: "Bi-weekly — the deep cultural essay, curated picks, and what's playing.",
+  },
+  {
+    id: "culture-drop",
+    name: "Culture Drop",
+    desc: "Weekly — a flash of what's moving in Black culture. Fast, sharp, every Thursday.",
   },
   {
     id: "events",
@@ -36,15 +36,15 @@ export default function NewsletterPreferences({ email }: Props) {
       .then((r) => r.json())
       .then((data) => {
         setSubscribed(data.subscriptions ?? {
-          "cultural-digest": true,
           "getmelit": true,
+          "culture-drop": true,
           "events": true,
         });
         setLoadState("ready");
       })
       .catch(() => {
         // Fall back to all-on so we don't wrongly unsubscribe anyone
-        setSubscribed({ "cultural-digest": true, "getmelit": true, "events": true });
+        setSubscribed({ "getmelit": true, "culture-drop": true, "events": true });
         setLoadState("ready");
       });
   }, [email]);

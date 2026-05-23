@@ -176,7 +176,7 @@ function MemberCard({ member }: { member: Member }) {
         )}
       </div>
       {isPatron && (
-        <span className="mco-member-tier" aria-label="Patron member">Patron</span>
+        <span className="mco-member-tier" aria-label="Connect Pro member">Pro</span>
       )}
     </div>
   );

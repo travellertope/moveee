@@ -156,7 +156,7 @@ export default function ChapterSelector({
         )}
       </div>
 
-      {/* Secondary chapter — Patrons only */}
+      {/* Secondary chapter — Connect Pro only */}
       {isPatron && (
         <div className="mem-field mem-field--editable">
           <div className="mem-field-label">Secondary chapter</div>
@@ -211,7 +211,7 @@ export default function ChapterSelector({
 
       {!isPatron && (
         <p className="mem-settings-note">
-          Patron members can join a second chapter.
+          Connect Pro members can join a second chapter.
         </p>
       )}
     </div>

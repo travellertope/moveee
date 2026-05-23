@@ -55,6 +55,7 @@ export default async function NewsletterArchive() {
                 buttonLabel="Subscribe →"
                 buttonClassName="gml-hero-btn"
                 variant="dark"
+                list="getmelit"
               />
             </div>
             <div className="gml-hero-note">
@@ -293,6 +294,60 @@ export default async function NewsletterArchive() {
               <div className="gml-perk">
                 <span className="gml-perk-n">✓</span>
                 <p>Early access to <em>Moveee Events</em> RSVP</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ CULTURE DROP ══ */}
+      <section className="gml-signup-section" style={{ background: "var(--ink)", color: "var(--paper)" }} id="culture-drop">
+        <div className="gml-signup-inner">
+          <div className="gml-signup-left">
+            <div className="gml-badge" style={{ color: "var(--ochre)", borderColor: "var(--ochre)" }}>✦ New Dispatch</div>
+            <h3 style={{ color: "var(--paper)" }}>
+              Culture <em>Drop</em>.
+            </h3>
+            <p style={{ color: "rgba(255,255,255,0.65)" }}>
+              A weekly flash of what&apos;s moving in Black culture — new music,
+              film, art, conversation, and the moments that don&apos;t wait for
+              the biweekly edition. Fast, sharp, and always on time.
+            </p>
+            <ul style={{ listStyle: "none", padding: 0, margin: "24px 0 0", display: "flex", flexDirection: "column", gap: 10 }}>
+              <li style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", letterSpacing: ".1em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
+                <span style={{ color: "var(--ochre)", marginRight: 8 }}>✓</span> Weekly — every Thursday
+              </li>
+              <li style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", letterSpacing: ".1em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
+                <span style={{ color: "var(--ochre)", marginRight: 8 }}>✓</span> 3 min read · No filler
+              </li>
+              <li style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", letterSpacing: ".1em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
+                <span style={{ color: "var(--ochre)", marginRight: 8 }}>✓</span> Free · Unsubscribe anytime
+              </li>
+            </ul>
+          </div>
+
+          <div className="gml-signup-right">
+            <div className="gml-form-label" style={{ color: "rgba(255,255,255,0.5)" }}>Subscribe to Culture Drop</div>
+            <GmlCTAForm
+              list="culture-drop"
+              buttonLabel="Drop it in my inbox →"
+              successLabel="✓ Welcome to Culture Drop"
+            />
+            <div className="gml-signup-note" style={{ color: "rgba(255,255,255,0.4)" }}>
+              Free · Weekly · Unsubscribe anytime
+            </div>
+            <div className="gml-signup-perks">
+              <div className="gml-perk">
+                <span className="gml-perk-n">✓</span>
+                <p style={{ color: "rgba(255,255,255,0.6)" }}>The cultural <em>moment</em> of the week</p>
+              </div>
+              <div className="gml-perk">
+                <span className="gml-perk-n">✓</span>
+                <p style={{ color: "rgba(255,255,255,0.6)" }}>New <em>music, film &amp; art</em> you need to know</p>
+              </div>
+              <div className="gml-perk">
+                <span className="gml-perk-n">✓</span>
+                <p style={{ color: "rgba(255,255,255,0.6)" }}>The <em>conversation</em> that&apos;s happening right now</p>
               </div>
             </div>
           </div>

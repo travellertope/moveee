@@ -118,7 +118,7 @@ export default async function MemberSettingsPage() {
             <section className="mem-card mem-links-card">
               <Link href="/member" className="mem-link">Dashboard →</Link>
               <Link href="/member/collection" className="mem-link">My Collection →</Link>
-              <Link href="/newsletter" className="mem-link">The Cultural Digest →</Link>
+              <Link href="/newsletter" className="mem-link">Newsletters →</Link>
               <Link href="/events" className="mem-link">Upcoming Events →</Link>
               <Link href="/magazine" className="mem-link">Magazine →</Link>
               <Link href="/api/auth/signout" className="mem-link mem-link--muted">Sign out</Link>

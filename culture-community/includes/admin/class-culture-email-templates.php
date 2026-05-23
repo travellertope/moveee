@@ -45,7 +45,7 @@ class Culture_Email_Templates {
 <p>Here\'s what you can do next:</p>
 <ul>
 <li>Browse upcoming events in your chapter</li>
-<li>Read the latest Cultural Digest newsletter</li>
+<li>Read the latest GetMeLit and Culture Drop newsletters</li>
 <li>Share your referral link to earn Culture Points</li>
 <li>Check your Cultural Passport to track badges and progress</li>
 </ul>',
@@ -147,11 +147,11 @@ class Culture_Email_Templates {
 <p>You can still:</p>
 <ul>
 <li>Attend virtual events</li>
-<li>Read the Cultural Digest</li>
+<li>Read GetMeLit and Culture Drop newsletters</li>
 <li>Earn points and badges</li>
 <li>Refer friends</li>
 </ul>
-<p>To regain Patron benefits, you can re-subscribe at any time.</p>',
+<p>To regain Connect Pro benefits, you can re-subscribe at any time.</p>',
             ),
 
             'event_rsvp_confirmation' => array(

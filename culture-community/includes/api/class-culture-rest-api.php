@@ -64,6 +64,24 @@ class Culture_REST_API {
                         return is_email( $value );
                     },
                 ),
+                'name' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'default'           => '',
+                ),
+                'list' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_key',
+                    'default'           => 'culture-drop',
+                ),
+                'segment' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_key',
+                    'default'           => '',
+                ),
             ),
         ) );
 
@@ -794,20 +812,69 @@ class Culture_REST_API {
 
     /**
      * Handle newsletter subscription.
+     * Stores subscribers as objects: { email, name, date, lists[], segment }.
+     * Legacy plain-string entries are preserved and treated as GetMeLit subscribers.
      */
     public static function handle_newsletter_subscribe( $request ) {
-        $email = $request->get_param( 'email' );
+        $email   = $request->get_param( 'email' );
+        $name    = $request->get_param( 'name' ) ?: '';
+        $list    = $request->get_param( 'list' ) ?: 'culture-drop';
+        $segment = $request->get_param( 'segment' ) ?: '';
+
+        $allowed_lists = array( 'getmelit', 'culture-drop' );
+        if ( ! in_array( $list, $allowed_lists, true ) ) {
+            $list = 'culture-drop';
+        }
 
         $subscribers = get_option( 'culture_newsletter_subscribers', array() );
 
-        if ( in_array( $email, $subscribers, true ) ) {
+        // Find existing subscriber (handles both legacy strings and new objects).
+        $found_idx = null;
+        foreach ( $subscribers as $i => $sub ) {
+            $sub_email = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
+            if ( strtolower( trim( $sub_email ) ) === strtolower( $email ) ) {
+                $found_idx = $i;
+                break;
+            }
+        }
+
+        if ( null !== $found_idx ) {
+            $existing = $subscribers[ $found_idx ];
+
+            if ( is_array( $existing ) ) {
+                // Already an object — add list if not present.
+                $lists = $existing['lists'] ?? array();
+                if ( ! in_array( $list, $lists, true ) ) {
+                    $lists[] = $list;
+                    $subscribers[ $found_idx ]['lists'] = $lists;
+                    update_option( 'culture_newsletter_subscribers', $subscribers );
+                }
+            } else {
+                // Upgrade legacy plain-string to object, add new list.
+                $subscribers[ $found_idx ] = array(
+                    'email'   => $email,
+                    'name'    => $name,
+                    'date'    => current_time( 'mysql' ),
+                    'lists'   => array( 'getmelit', $list ),
+                    'segment' => $segment,
+                );
+                update_option( 'culture_newsletter_subscribers', $subscribers );
+            }
+
             return rest_ensure_response( array(
                 'success' => true,
                 'message' => __( 'You are already subscribed.', 'culture-community' ),
             ) );
         }
 
-        $subscribers[] = $email;
+        // New subscriber.
+        $subscribers[] = array(
+            'email'   => $email,
+            'name'    => $name,
+            'date'    => current_time( 'mysql' ),
+            'lists'   => array( $list ),
+            'segment' => $segment,
+        );
         update_option( 'culture_newsletter_subscribers', $subscribers );
 
         return rest_ensure_response( array(
@@ -1218,6 +1285,7 @@ class Culture_REST_API {
         $prefs = array(
             'cultural-digest' => true,
             'getmelit'        => true,
+            'culture-drop'    => true,
             'events'          => true,
         );
 
@@ -1247,7 +1315,7 @@ class Culture_REST_API {
             return new WP_Error( 'invalid_subs', 'subscriptions must be an object.', array( 'status' => 400 ) );
         }
 
-        $allowed = array( 'cultural-digest', 'getmelit', 'events' );
+        $allowed = array( 'cultural-digest', 'getmelit', 'culture-drop', 'events' );
         $clean   = array();
         foreach ( $allowed as $key ) {
             if ( isset( $subs[ $key ] ) ) {

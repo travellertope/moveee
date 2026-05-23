@@ -19,6 +19,8 @@ class Culture_Newsletter_Queue {
 
     /**
      * Snapshot subscribers and schedule the first batch.
+     * Filters by _culture_nl_list post meta so each newsletter only goes to
+     * its own list. Legacy plain-string subscribers are treated as GetMeLit subscribers.
      *
      * @param int $post_id Newsletter post ID.
      * @return int|false Total count queued, or false if no subscribers.
@@ -30,13 +32,35 @@ class Culture_Newsletter_Queue {
             return false;
         }
 
-        // Standardize to email strings for the snapshot
+        // Determine which list and segment this newsletter targets.
+        $nl_list    = get_post_meta( $post_id, '_culture_nl_list',    true ) ?: '';
+        $nl_segment = get_post_meta( $post_id, '_culture_nl_segment', true ) ?: '';
+
+        // Standardize to email strings for the snapshot, filtering by list and segment.
         $emails = array();
         foreach ( $subscribers as $sub ) {
             $e = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
-            if ( is_email( $e ) ) {
-                $emails[] = $e;
+            if ( ! is_email( $e ) ) continue;
+
+            if ( $nl_list ) {
+                $sub_lists = is_array( $sub ) ? ( $sub['lists'] ?? array() ) : array();
+
+                if ( ! empty( $sub_lists ) ) {
+                    // Object subscriber: must have the target list.
+                    if ( ! in_array( $nl_list, $sub_lists, true ) ) continue;
+                } else {
+                    // Legacy plain-string subscriber: treat as GetMeLit only.
+                    if ( 'getmelit' !== $nl_list ) continue;
+                }
             }
+
+            // Segment filter: if a segment is set, only include subscribers with that segment.
+            if ( $nl_segment ) {
+                $sub_segment = is_array( $sub ) ? ( $sub['segment'] ?? '' ) : '';
+                if ( $sub_segment !== $nl_segment ) continue;
+            }
+
+            $emails[] = $e;
         }
 
         if ( empty( $emails ) ) {
@@ -138,8 +162,9 @@ class Culture_Newsletter_Queue {
                       . '&token=' . rawurlencode( $unsub_token )
                       . '&c='    . $post_id;
 
+        $nl_list = get_post_meta( $post_id, '_culture_nl_list', true ) ?: 'getmelit';
         $content = self::render_content( $post );
-        $body    = self::build_email( $title, $content, $permalink, $unsub_url, false, $post_id, $tracking_token );
+        $body    = self::build_email( $title, $content, $permalink, $unsub_url, false, $post_id, $tracking_token, $nl_list );
 
         wp_mail(
             $email,
@@ -169,8 +194,9 @@ class Culture_Newsletter_Queue {
         $frontend_url = rtrim( get_option( 'culture_frontend_url', home_url( '/' ) ), '/' );
         $title     = '[TEST] ' . get_the_title( $post_id );
         $permalink = $frontend_url . '/newsletter/' . $post->post_name;
+        $nl_list_test = get_post_meta( $post_id, '_culture_nl_list', true ) ?: 'getmelit';
         $content   = self::render_content( $post );
-        $body      = self::build_email( $title, $content, $permalink, '#', true );
+        $body      = self::build_email( $title, $content, $permalink, '#', true, 0, '', $nl_list_test );
 
         return wp_mail(
             $test_email,
@@ -380,7 +406,7 @@ class Culture_Newsletter_Queue {
             . '<p style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#7a6f5c;margin-bottom:16px;">' . esc_html( $site_name ) . '</p>'
             . '<h2 style="font-size:28px;font-weight:300;margin:0 0 16px;">You\'ve been unsubscribed.</h2>'
             . '<p style="color:#7a6f5c;font-size:15px;line-height:1.6;margin-bottom:28px;">'
-            . esc_html( $email ) . ' has been removed from The Cultural Digest.'
+            . esc_html( $email ) . ' has been unsubscribed from The Moveee newsletters.'
             . '</p>'
             . '<a href="' . esc_url( $home_url ) . '" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#14110d;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px;">Return Home</a>'
             . '</div>',
@@ -408,9 +434,12 @@ class Culture_Newsletter_Queue {
         $unsub_url,
         $is_test        = false,
         $campaign_id    = 0,
-        $tracking_token = ''
+        $tracking_token = '',
+        $nl_list        = 'getmelit'
     ) {
         $site_name = get_bloginfo( 'name' );
+        $nl_labels = array( 'getmelit' => 'GetMeLit', 'culture-drop' => 'Culture Drop' );
+        $nl_label  = $nl_labels[ $nl_list ] ?? 'GetMeLit';
 
         // ── Link rewriting (click tracking) ──────────────────────────────────
         if ( ! $is_test && $campaign_id && $tracking_token ) {
@@ -456,12 +485,9 @@ class Culture_Newsletter_Queue {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?php echo esc_html( $title ); ?></title>
 <style>
-  body { margin:0; padding:0; background:#f5f0e8; font-family:Georgia,'Times New Roman',serif; color:#14110d; }
-  .wrap { max-width:600px; margin:0 auto; background:#fffdf8; }
-  .header { padding:36px 48px 28px; border-bottom:2px solid #14110d; }
-  .header-label { font-family:-apple-system,BlinkMacSystemFont,'Courier New',monospace; font-size:10px; letter-spacing:.25em; text-transform:uppercase; color:#7a6f5c; margin:0 0 8px; }
-  .header-title { font-size:26px; font-weight:400; line-height:1.25; margin:0; color:#14110d; }
-  .content { padding:24px 32px 24px; font-size:16px; line-height:1.75; }
+  body { margin:0; padding:0; background:#ffffff; font-family:Georgia,'Times New Roman',serif; color:#14110d; }
+  .wrap { max-width:600px; margin:0 auto; background:#ffffff; }
+  .content { padding:16px 16px 12px; font-size:16px; line-height:1.75; }
   .content p { margin:0 0 20px; }
   .content h1,.content h2,.content h3 { font-weight:400; line-height:1.3; margin:32px 0 14px; }
   .content h2 { font-size:22px; }
@@ -471,16 +497,12 @@ class Culture_Newsletter_Queue {
   .content hr { border:none; border-top:1px solid #e8e0d4; margin:32px 0; }
   .read-more { display:block; margin:32px 0 8px; }
   .read-more a { display:inline-block; font-family:-apple-system,BlinkMacSystemFont,'Courier New',monospace; font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:#14110d; text-decoration:none; border:1px solid #14110d; padding:10px 24px; }
-  .footer { padding:24px 48px 36px; border-top:1px solid #e8e0d4; font-family:-apple-system,BlinkMacSystemFont,'Courier New',monospace; font-size:10px; letter-spacing:.1em; color:#a09080; }
+  .footer { padding:12px 16px 18px; border-top:1px solid #e8e0d4; font-family:-apple-system,BlinkMacSystemFont,'Courier New',monospace; font-size:10px; letter-spacing:.1em; color:#a09080; }
   .footer a { color:#7a6f5c; text-decoration:none; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="header">
-    <p class="header-label"><?php echo esc_html( $site_name ); ?> &mdash; The Cultural Digest</p>
-    <h1 class="header-title"><?php echo esc_html( $title ); ?></h1>
-  </div>
   <div class="content">
     <?php
     // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -496,7 +518,7 @@ class Culture_Newsletter_Queue {
   <?php endif; ?>
   <div class="footer">
     <p>
-      You are receiving this because you subscribed to The Cultural Digest.<br>
+      You are receiving this because you subscribed to <?php echo esc_html( $nl_label ); ?>.<br>
       <a href="<?php echo esc_url( $unsub_url ); ?>">Unsubscribe</a>
     </p>
   </div>
