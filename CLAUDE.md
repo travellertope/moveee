@@ -5,6 +5,25 @@ It captures project conventions, architecture decisions, and step-by-step
 processes for recurring tasks so they can be completed correctly without
 re-discovering context.
 
+## Instructions for Claude
+
+**After completing any task, update this file if the work reveals anything
+worth capturing** — a new process, a gotcha, a changed convention, a new
+file that matters, a decision that would otherwise need re-explaining. The
+bar is: "would a future agent need to rediscover this?" If yes, write it
+down here before closing the session.
+
+Specifically update this file when you:
+- Add a new feature with its own recurring setup process (like newsletters)
+- Change a naming convention or architectural decision
+- Discover a non-obvious constraint or dependency in the codebase
+- Add a new important file, component, or API route
+- Fix a bug caused by a subtle gotcha that could recur
+
+Keep entries concise and actionable — this is a working reference, not a
+changelog. Update in place (edit existing sections) rather than appending
+stale history.
+
 ---
 
 ## Project overview
