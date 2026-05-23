@@ -526,6 +526,7 @@ const STORY_FIELDS_FRAGMENT = `
       nodes {
         name
         slug
+        description
       }
     }
     countries {

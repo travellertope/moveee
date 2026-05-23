@@ -462,6 +462,21 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       </div>
       </ImageLightbox>
 
+      {/* ── SERIES CONTEXT (data-nosnippet keeps it out of Google snippets/excerpts) ── */}
+      {post.series?.nodes?.[0]?.description && (
+        <div className="series-context" data-nosnippet>
+          <div className="series-context-inner">
+            <div className="series-context-label">Part of the series</div>
+            <Link href={`/magazine/series/${post.series.nodes[0].slug}`} className="series-context-name">
+              {post.series.nodes[0].name}
+            </Link>
+            <p className="series-context-desc"
+              dangerouslySetInnerHTML={{ __html: post.series.nodes[0].description }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* ── AUTHOR BAND ── */}
       <div className="author-band">
         <div className="author-avatar">
