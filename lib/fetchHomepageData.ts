@@ -184,7 +184,7 @@ export async function fetchHomepageData(editionTag?: string) {
 
   // 5. Series strips — each independently filtered, don't add to usedSlugs
   //    (series posts may legitimately repeat across different series)
-  const filterSeries = (posts: any[]) => posts.filter(s => s.slug && !usedSlugs.has(s.slug)).slice(0, 5);
+  const filterSeries = (posts: any[]) => posts.filter(s => s.slug && !usedSlugs.has(s.slug)).slice(0, 4);
   seriesTheRadar      = filterSeries(seriesTheRadar);
   seriesPortraits     = filterSeries(seriesPortraits);
   seriesTheLane       = filterSeries(seriesTheLane);
