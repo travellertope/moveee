@@ -67,12 +67,40 @@
         }, 8000 );
     }
 
+    /**
+     * Update the subscriber count display when the list or segment dropdown changes.
+     */
+    function updateCountDisplay() {
+        var $box       = $( '.culture-nl-box' );
+        var counts     = $box.data( 'counts' )     || {};
+        var listLabels = $box.data( 'list-labels' ) || {};
+        var segLabels  = $box.data( 'seg-labels' )  || {};
+
+        var list    = $( '[name="culture_nl_list"]' ).val()    || 'getmelit';
+        var segment = $( '[name="culture_nl_segment"]' ).val() || '';
+
+        var listCounts = counts[ list ] || {};
+        var count      = segment ? ( listCounts[ segment ] || 0 ) : ( listCounts[ '' ] || 0 );
+
+        var label = listLabels[ list ] || list;
+        if ( segment && segLabels[ segment ] ) {
+            label += ' · ' + segLabels[ segment ];
+        }
+        label += ' Subscribers';
+
+        $( '.js-nl-count-num' ).text( count.toLocaleString() );
+        $( '.js-nl-count-label' ).text( label );
+    }
+
     $( function () {
 
         // Start polling immediately if the page loads mid-send.
         if ( $( '.js-nl-status' ).data( 'status' ) === 'sending' ) {
             startPolling();
         }
+
+        // Live-update count when list or segment changes.
+        $( document ).on( 'change', '[name="culture_nl_list"], [name="culture_nl_segment"]', updateCountDisplay );
 
         // ── Send Test ──────────────────────────────────────────────
         $( document ).on( 'click', '.js-nl-test-btn', function () {
