@@ -1930,6 +1930,15 @@
     gap: 28px;
   }
 
+  /* ===== SERIES / INTERVIEW STRIPS ===== */
+  .hp-mag-strip {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+  }
+
   .hp-mag-card {
     display: flex;
     flex-direction: column;
@@ -3014,6 +3023,7 @@
   /* ===== HP RESPONSIVE ===== */
   @media (max-width: 1280px) {
     .hp-issue-layout { grid-template-columns: 220px 1fr; gap: 32px; }
+    .hp-mag-strip { grid-template-columns: repeat(3, 1fr); }
   }
 
   @media (max-width: 1280px) {
@@ -3058,6 +3068,7 @@
     .hp-story-card { border-right: none !important; }
     .hp-issue-layout { grid-template-columns: 1fr; }
     .hp-issue-grid { grid-template-columns: repeat(2, 1fr); }
+    .hp-mag-strip { grid-template-columns: repeat(2, 1fr); }
     .hp-quotes-grid { grid-template-columns: 1fr; }
     .hp-quote-card { border-right: none; border-bottom: 1px solid rgba(243,236,224,0.12); }
     .hp-origins-carousel-wrap { padding: 0 22px 4px; }
@@ -3089,6 +3100,7 @@
     .hp-section-title h3 { font-size: 16px; }
     /* Magazine: landscape images on mobile */
     .hp-issue-grid { grid-template-columns: 1fr; }
+    .hp-mag-strip { grid-template-columns: 1fr; }
     /* Newsletter form stacks vertically */
     .hp-nl-cta { padding: 22px; }
     .hp-nl-cta-form { flex-direction: column; gap: 0; }
