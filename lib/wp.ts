@@ -426,6 +426,7 @@ function mapRestNewsletterToFrontendShape(item: any) {
     date: item?.date ?? null,
     excerpt: item?.excerpt?.rendered ?? "",
     content: item?.content?.rendered ?? "",
+    nlList: item?.meta?.["_culture_nl_list"] ?? item?.["_culture_nl_list"] ?? "culture-drop",
     featuredImage: embeddedMedia?.source_url
       ? { node: { sourceUrl: embeddedMedia.source_url, altText: embeddedMedia.alt_text || "" } }
       : null,
@@ -972,6 +973,7 @@ const NEWSLETTER_FIELDS_FRAGMENT = `
     slug
     date
     excerpt
+    nlList: metaValue(key: "_culture_nl_list")
     featuredImage {
       node {
         sourceUrl

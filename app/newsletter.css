@@ -1900,3 +1900,64 @@
   .nl-cdf-inner { padding: 60px 22px; }
   .nl-cdf-right { padding: 36px 24px; }
 }
+
+/* ── ARCHIVE: FILTER TABS + NL BADGE ── */
+.nl-archive-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+.nl-archive-tabs {
+  display: flex;
+  gap: 0;
+}
+.nl-archive-tab {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--mute);
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid var(--rule);
+  border-right: none;
+  transition: color .2s, background .2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nl-archive-tab:last-child { border-right: 1px solid var(--rule); }
+.nl-archive-tab:hover { color: var(--ink); background: var(--paper-deep); }
+.nl-archive-tab--active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.nl-archive-tab--active:hover { background: var(--ink); color: var(--paper); }
+.nl-archive-tab-count {
+  font-size: 8px;
+  opacity: .6;
+}
+
+.nl-list-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+.nl-list-badge--culture-drop {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+.nl-list-badge--getmelit {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+@media (max-width: 640px) {
+  .nl-archive-header { flex-direction: column; align-items: flex-start; }
+}

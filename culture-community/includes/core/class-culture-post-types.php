@@ -860,6 +860,14 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'cultureNewsletters',
         ) );
 
+        // Expose _culture_nl_list so the frontend knows which newsletter each post belongs to.
+        register_post_meta( 'culture_newsletter', '_culture_nl_list', array(
+            'type'         => 'string',
+            'single'       => true,
+            'default'      => 'culture-drop',
+            'show_in_rest' => true,
+        ) );
+
         // Quote CPT – nested under Culture Community menu.
         register_post_type( 'culture_quote', array(
             'labels' => array(

@@ -14,7 +14,16 @@ export const metadata = {
     "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into African and diasporan culture. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
 };
 
-export default async function NewsletterArchive() {
+const NL_LABELS: Record<string, string> = {
+  "culture-drop": "Culture Drop",
+  "getmelit": "GetMeLit",
+};
+
+export default async function NewsletterArchive({
+  searchParams,
+}: {
+  searchParams?: { list?: string };
+}) {
   let newsletters: any[] = [];
   try {
     newsletters = await getNewslettersWithFallback(50, { revalidate: 0 });
@@ -22,11 +31,22 @@ export default async function NewsletterArchive() {
     // CMS unreachable
   }
 
-  const totalCount = newsletters.length;
-  const recentIssues = newsletters.slice(0, 3);
+  const activeFilter = searchParams?.list ?? "all";
+  const allCount    = newsletters.length;
+  const cdCount     = newsletters.filter((n: any) => (n.nlList ?? "culture-drop") === "culture-drop").length;
+  const gmlCount    = newsletters.filter((n: any) => (n.nlList ?? "culture-drop") === "getmelit").length;
+
+  const filtered = activeFilter === "all"
+    ? newsletters
+    : newsletters.filter((n: any) => (n.nlList ?? "culture-drop") === activeFilter);
+
+  const totalCount  = filtered.length;
+  const recentIssues = newsletters
+    .filter((n: any) => (n.nlList ?? "culture-drop") === "culture-drop")
+    .slice(0, 3);
 
   const issueNum = (index: number) =>
-    totalCount > 0 ? totalCount - index : index + 1;
+    allCount > 0 ? allCount - index : index + 1;
 
   return (
     <>
@@ -320,44 +340,75 @@ export default async function NewsletterArchive() {
       </section>
 
       {/* ══ FULL ARCHIVE ══ */}
-      {totalCount > 0 && (
+      {allCount > 0 && (
         <section className="digest-archive" id="archive">
-          <div className="digest-section-label">
-            Full Archive · {totalCount} issue{totalCount !== 1 ? "s" : ""}
+          <div className="nl-archive-header">
+            <div className="digest-section-label" style={{ borderBottom: "none", marginBottom: 0, paddingBottom: 0 }}>
+              Full Archive
+            </div>
+            <nav className="nl-archive-tabs">
+              <Link
+                href="#archive"
+                className={`nl-archive-tab${activeFilter === "all" ? " nl-archive-tab--active" : ""}`}
+                scroll={false}
+              >
+                All <span className="nl-archive-tab-count">{allCount}</span>
+              </Link>
+              <Link
+                href="?list=culture-drop#archive"
+                className={`nl-archive-tab${activeFilter === "culture-drop" ? " nl-archive-tab--active" : ""}`}
+                scroll={false}
+              >
+                Culture Drop <span className="nl-archive-tab-count">{cdCount}</span>
+              </Link>
+              <Link
+                href="?list=getmelit#archive"
+                className={`nl-archive-tab${activeFilter === "getmelit" ? " nl-archive-tab--active" : ""}`}
+                scroll={false}
+              >
+                GetMeLit <span className="nl-archive-tab-count">{gmlCount}</span>
+              </Link>
+            </nav>
           </div>
           <div className="digest-archive-list">
-            {newsletters.map((issue: any, idx: number) => (
-              <Link
-                key={issue.id}
-                href={`/newsletter/${issue.slug}`}
-                className="digest-archive-row"
-              >
-                <span className="digest-archive-num">
-                  {String(issueNum(idx)).padStart(2, "0")}
-                </span>
-                <span className="digest-archive-date">
-                  {new Date(issue.date).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </span>
-                <span
-                  className="digest-archive-title"
-                  dangerouslySetInnerHTML={{ __html: issue.title }}
-                />
-                <div className="digest-archive-tags">
-                  {issue.cultureInterests?.nodes
-                    ?.slice(0, 2)
-                    .map((t: any) => (
-                      <span key={t.slug} className="digest-tag">
-                        {t.name}
-                      </span>
-                    ))}
-                </div>
-                <span className="digest-archive-arrow">→</span>
-              </Link>
-            ))}
+            {filtered.map((issue: any, idx: number) => {
+              const list = issue.nlList ?? "culture-drop";
+              return (
+                <Link
+                  key={issue.id}
+                  href={`/newsletter/${issue.slug}`}
+                  className="digest-archive-row"
+                >
+                  <span className="digest-archive-num">
+                    {String(issueNum(idx)).padStart(2, "0")}
+                  </span>
+                  <span className="digest-archive-date">
+                    {new Date(issue.date).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                  <span
+                    className="digest-archive-title"
+                    dangerouslySetInnerHTML={{ __html: issue.title }}
+                  />
+                  <div className="digest-archive-tags">
+                    <span className={`nl-list-badge nl-list-badge--${list}`}>
+                      {NL_LABELS[list] ?? list}
+                    </span>
+                    {issue.cultureInterests?.nodes
+                      ?.slice(0, 1)
+                      .map((t: any) => (
+                        <span key={t.slug} className="digest-tag">
+                          {t.name}
+                        </span>
+                      ))}
+                  </div>
+                  <span className="digest-archive-arrow">→</span>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
