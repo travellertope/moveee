@@ -19,6 +19,8 @@ class Culture_Newsletter_Queue {
 
     /**
      * Snapshot subscribers and schedule the first batch.
+     * Filters by _culture_nl_list post meta so each newsletter only goes to
+     * its own list. Legacy plain-string subscribers are treated as GetMeLit subscribers.
      *
      * @param int $post_id Newsletter post ID.
      * @return int|false Total count queued, or false if no subscribers.
@@ -30,13 +32,28 @@ class Culture_Newsletter_Queue {
             return false;
         }
 
-        // Standardize to email strings for the snapshot
+        // Determine which list this newsletter targets.
+        $nl_list = get_post_meta( $post_id, '_culture_nl_list', true ) ?: '';
+
+        // Standardize to email strings for the snapshot, filtering by list.
         $emails = array();
         foreach ( $subscribers as $sub ) {
             $e = is_array( $sub ) ? ( $sub['email'] ?? '' ) : $sub;
-            if ( is_email( $e ) ) {
-                $emails[] = $e;
+            if ( ! is_email( $e ) ) continue;
+
+            if ( $nl_list ) {
+                $sub_lists = is_array( $sub ) ? ( $sub['lists'] ?? array() ) : array();
+
+                if ( ! empty( $sub_lists ) ) {
+                    // Object subscriber: must have the target list.
+                    if ( ! in_array( $nl_list, $sub_lists, true ) ) continue;
+                } else {
+                    // Legacy plain-string subscriber: treat as GetMeLit only.
+                    if ( 'getmelit' !== $nl_list ) continue;
+                }
             }
+
+            $emails[] = $e;
         }
 
         if ( empty( $emails ) ) {

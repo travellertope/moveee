@@ -8,6 +8,8 @@ interface SubscribeFormProps {
   buttonClassName?: string;
   inputClassName?: string;
   successMessage?: string;
+  list?: string;
+  segment?: string;
 }
 
 export default function SubscribeForm({
@@ -16,6 +18,8 @@ export default function SubscribeForm({
   buttonClassName = "",
   inputClassName = "",
   successMessage = "You're in. First issue arrives Friday.",
+  list = "culture-drop",
+  segment = "",
 }: SubscribeFormProps) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -28,7 +32,7 @@ export default function SubscribeForm({
       const res = await fetch("/api/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, list, segment }),
       });
       if (res.ok) {
         setStatus("success");
