@@ -1803,7 +1803,7 @@
 
   /* ===== GENERIC HP SECTIONS ===== */
   .hp-section {
-    padding: 80px 56px;
+    padding: 40px 56px;
     border-bottom: 1px solid var(--rule);
     position: relative;
     z-index: 2;
@@ -1817,11 +1817,11 @@
 
   .hp-section-header {
     max-width: 1440px;
-    margin: 0 auto 48px;
+    margin: 0 auto 24px;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    padding-bottom: 20px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--rule);
   }
   .hp-section--dark .hp-section-header {
@@ -1878,7 +1878,7 @@
     align-items: flex-start;
     gap: 32px;
     max-width: 1440px;
-    margin: 0 auto 40px;
+    margin: 0 auto 20px;
   }
 
   .hp-issue-cover {
@@ -3052,7 +3052,7 @@
     .hp-quotes-grid { grid-template-columns: 1fr 1fr; }
     .hp-directory-cta { grid-template-columns: 1fr; gap: 24px; }
     .hp-directory-links { align-items: flex-start; flex-direction: row; flex-wrap: wrap; }
-    .hp-section { padding: 60px 32px; }
+    .hp-section { padding: 32px 32px; }
     .hb-footer-main { padding: 36px 32px; }
     .hb-footer-bottom { padding: 14px 32px; }
   }
@@ -3087,7 +3087,7 @@
   }
 
   @media (max-width: 640px) {
-    .hp-section { padding: 48px 22px; }
+    .hp-section { padding: 24px 22px; }
     .hp-section-header { flex-direction: column; align-items: flex-start; gap: 12px; }
     .hp-section-title h3 { font-size: 16px; }
     /* Magazine: landscape images on mobile */
