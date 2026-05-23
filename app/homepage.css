@@ -1873,21 +1873,28 @@
   }
 
   /* ===== LATEST ISSUE BLOCK ===== */
-  .hp-issue-block {
-    display: flex;
-    align-items: flex-start;
-    gap: 32px;
+  /* ===== LATEST ISSUE — side-by-side layout ===== */
+  .hp-issue-layout {
     max-width: 1440px;
-    margin: 0 auto 20px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+
+  .hp-issue-left {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
 
   .hp-issue-cover {
-    flex-shrink: 0;
-    width: 180px;
+    display: block;
+    width: 100%;
     aspect-ratio: 2/3;
     position: relative;
     overflow: hidden;
-    display: block;
     background: var(--paper-deep);
   }
 
@@ -1897,8 +1904,7 @@
   .hp-issue-meta {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding-top: 4px;
+    gap: 8px;
   }
 
   .hp-issue-number {
@@ -1911,26 +1917,16 @@
 
   .hp-issue-subtitle {
     font-family: 'Fraunces', serif;
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 400;
     line-height: 1.15;
     margin: 0;
   }
 
-  .hp-issue-note {
-    font-size: 14px;
-    line-height: 1.65;
-    color: var(--ink-mute);
-    max-width: 540px;
-    margin: 0;
-  }
-
-  /* ===== MAGAZINE STRIP ===== */
-  .hp-mag-strip {
-    max-width: 1440px;
-    margin: 0 auto;
+  /* 2×2 post grid on the right */
+  .hp-issue-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 28px;
   }
 
@@ -3017,7 +3013,7 @@
 
   /* ===== HP RESPONSIVE ===== */
   @media (max-width: 1280px) {
-    .hp-mag-strip { grid-template-columns: repeat(3, 1fr); }
+    .hp-issue-layout { grid-template-columns: 220px 1fr; gap: 32px; }
   }
 
   @media (max-width: 1280px) {
@@ -3060,7 +3056,8 @@
   @media (max-width: 768px) {
     .hp-right-stories { grid-template-columns: 1fr; }
     .hp-story-card { border-right: none !important; }
-    .hp-mag-strip { grid-template-columns: repeat(2, 1fr); }
+    .hp-issue-layout { grid-template-columns: 1fr; }
+    .hp-issue-grid { grid-template-columns: repeat(2, 1fr); }
     .hp-quotes-grid { grid-template-columns: 1fr; }
     .hp-quote-card { border-right: none; border-bottom: 1px solid rgba(243,236,224,0.12); }
     .hp-origins-carousel-wrap { padding: 0 22px 4px; }
@@ -3091,7 +3088,7 @@
     .hp-section-header { flex-direction: column; align-items: flex-start; gap: 12px; }
     .hp-section-title h3 { font-size: 16px; }
     /* Magazine: landscape images on mobile */
-    .hp-mag-strip { grid-template-columns: 1fr; }
+    .hp-issue-grid { grid-template-columns: 1fr; }
     /* Newsletter form stacks vertically */
     .hp-nl-cta { padding: 22px; }
     .hp-nl-cta-form { flex-direction: column; gap: 0; }
