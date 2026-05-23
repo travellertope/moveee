@@ -1,5 +1,5 @@
 import React from "react";
-import { getWPData, GET_STORIES, GET_FILTERS, GET_SERIES_STORIES, GET_INDUSTRY_STORIES, GET_COUNTRY_STORIES, GET_TAG_INFO } from "@/lib/wp";
+import { getWPData, GET_STORIES, GET_FILTERS, GET_SERIES_STORIES, GET_INDUSTRY_STORIES, GET_COUNTRY_STORIES, GET_TAG_INFO, GET_CATEGORY_INFO } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 import Ticker from "@/components/Ticker";
@@ -26,6 +26,7 @@ export default async function MagazineArchiveWrapper({
   let stories: any[] = [];
   let filters: any = null;
   let termName = "";
+  let termDescription = "";
 
   try {
     filters = await getWPData(GET_FILTERS);
@@ -34,14 +35,17 @@ export default async function MagazineArchiveWrapper({
       const data = await getWPData(GET_SERIES_STORIES, { series });
       stories = data?.seriesItem?.posts?.nodes || [];
       termName = data?.seriesItem?.name || series;
+      termDescription = data?.seriesItem?.description || "";
     } else if (industry) {
       const data = await getWPData(GET_INDUSTRY_STORIES, { industry });
       stories = data?.industry?.posts?.nodes || [];
       termName = data?.industry?.name || industry;
+      termDescription = data?.industry?.description || "";
     } else if (country) {
       const data = await getWPData(GET_COUNTRY_STORIES, { country });
       stories = data?.country?.posts?.nodes || [];
       termName = data?.country?.name || country;
+      termDescription = data?.country?.description || "";
     } else if (tag) {
       const [storyData, tagData] = await Promise.all([
         getWPData(GET_STORIES, { first: 48, tag }),
@@ -49,10 +53,15 @@ export default async function MagazineArchiveWrapper({
       ]);
       stories = storyData?.posts?.nodes || [];
       termName = tagData?.tag?.name || tag;
+      termDescription = tagData?.tag?.description || "";
     } else if (category) {
-      const data = await getWPData(GET_STORIES, { first: 27, categoryName: category });
-      stories = data?.posts?.nodes || [];
-      termName = filters?.categories?.nodes?.find((c: any) => c.slug === category)?.name || category;
+      const [storyData, catData] = await Promise.all([
+        getWPData(GET_STORIES, { first: 27, categoryName: category }),
+        getWPData(GET_CATEGORY_INFO, { slug: category }),
+      ]);
+      stories = storyData?.posts?.nodes || [];
+      termName = catData?.category?.name || filters?.categories?.nodes?.find((c: any) => c.slug === category)?.name || category;
+      termDescription = catData?.category?.description || "";
     } else {
       const data = await getWPData(GET_STORIES, { first: 27 });
       stories = data?.posts?.nodes || [];
@@ -112,6 +121,12 @@ export default async function MagazineArchiveWrapper({
             <h3>Stories from <em>{termName}</em></h3>
             <Link href="/magazine" className="font-mono text-[9px] uppercase tracking-[0.1em] text-ochre border-b border-ochre pb-1 transition-colors hover:text-ochre-deep hover:border-ochre-deep">Clear Filters ✕</Link>
           </div>
+          {termDescription && (
+            <div
+              className="tax-description"
+              dangerouslySetInnerHTML={{ __html: termDescription }}
+            />
+          )}
           {stories.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
               {stories.map((story) => (

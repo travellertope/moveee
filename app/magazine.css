@@ -358,6 +358,11 @@
 .sec-header h3 em { font-style:italic; color:var(--ochre); }
 .sec-header a { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.15em; text-transform:uppercase; border-bottom:1px solid var(--ink); padding-bottom:1px; }
 .sec-header a:hover { color:var(--ochre); border-bottom-color:var(--ochre); }
+.tax-description { font-family:'Fraunces',serif; font-size:16px; font-weight:300; font-style:italic; color:var(--ink-soft); line-height:1.65; max-width:720px; margin-bottom:48px; }
+.tax-description p { margin-bottom:12px; }
+.tax-description p:last-child { margin-bottom:0; }
+.tax-description a { color:var(--ochre); text-decoration:underline; text-underline-offset:2px; }
+.tax-description strong { font-weight:600; font-style:normal; color:var(--ink); }
 
 .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:32px; }
 .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; }
