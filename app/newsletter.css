@@ -1936,6 +1936,13 @@
   border: 1px solid var(--rule);
   align-self: start;
 }
+.nl-cdf-right .nl-cdf-rows {
+  border-top: none;
+  margin-bottom: 28px;
+}
+.nl-cdf-right .nl-cdf-row:first-child {
+  padding-top: 0;
+}
 .nl-cdf-form-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;

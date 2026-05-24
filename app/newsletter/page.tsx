@@ -259,6 +259,8 @@ export default async function NewsletterArchive({
               submissions, grants, and residencies — everything the literary
               mind needs, in one place, every week.
             </p>
+          </div>
+          <div className="nl-cdf-right">
             <div className="nl-cdf-rows">
               <div className="nl-cdf-row">
                 <span className="nl-cdf-row-num">Stories</span>
@@ -273,8 +275,6 @@ export default async function NewsletterArchive({
                 <span className="nl-cdf-row-label">Submissions, grants, residencies, and writing prizes</span>
               </div>
             </div>
-          </div>
-          <div className="nl-cdf-right">
             <div className="nl-cdf-form-label">Subscribe to GetMeLit</div>
             <NewsletterSubscribeWidget
               placeholder="your@email.com"
