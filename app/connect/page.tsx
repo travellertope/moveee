@@ -42,7 +42,7 @@ export default async function ConnectPage() {
             </div>
             <div className="mco-hero-cta">
               <Link href="/register" className="con-btn-primary">Join Moveee Connect →</Link>
-              <Link href="/login" className="con-btn-ghost">Already a member? Sign in</Link>
+              <Link href="/login?callbackUrl=/connect" className="con-btn-ghost">Already a member? Sign in</Link>
             </div>
           </div>
           <nav className="mco-section-nav" aria-label="Connect sections">

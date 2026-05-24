@@ -212,6 +212,7 @@ export default async function GmlIssuePage({
               <ContentGate
                 accessLevel={accessLevel as "member-only" | "patron-only"}
                 isLoggedIn={isLoggedIn}
+                callbackUrl={`/newsletter/${resolvedParams.slug}`}
               />
             </>
           )}

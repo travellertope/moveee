@@ -1632,7 +1632,7 @@
 .nl-masthead-inner {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 100px 60px 80px;
+  padding: 32px 60px 28px;
 }
 .nl-masthead-eyebrow {
   font-family: 'JetBrains Mono', monospace;
@@ -1640,7 +1640,7 @@
   letter-spacing: .2em;
   text-transform: uppercase;
   color: var(--ochre);
-  margin-bottom: 32px;
+  margin-bottom: 14px;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -1653,12 +1653,12 @@
 }
 .nl-masthead-title {
   font-family: 'Fraunces', serif;
-  font-size: clamp(56px, 8vw, 120px);
+  font-size: clamp(32px, 4vw, 56px);
   font-weight: 400;
-  line-height: .88;
-  letter-spacing: -.04em;
+  line-height: .92;
+  letter-spacing: -.03em;
   color: var(--ink);
-  margin: 0 0 32px;
+  margin: 0 0 14px;
 }
 .nl-masthead-title em {
   font-style: italic;
@@ -1782,6 +1782,78 @@
   color: var(--mute);
 }
 
+/* ── NEWSLETTER PAGE FORM INPUTS ── */
+.nl-card-form input[type="text"],
+.nl-card-form input[type="email"] {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: .04em;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .2s;
+  margin-bottom: 10px;
+}
+.nl-card-form input::placeholder { color: var(--mute); }
+.nl-card-form input:focus { border-color: var(--ochre); }
+/* Inline subscribe button rendered by SubscribeForm inside nl-card-form */
+.nl-card-form > button {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--ink);
+  border: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background .2s;
+  display: inline-block;
+}
+.nl-card-form > button:hover { background: var(--ochre); }
+.nl-card-form > button:disabled { opacity: .6; cursor: default; }
+
+/* Inputs + button inside nl-cdf-right (GetMeLit feature section) */
+.nl-cdf-right input[type="email"] {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .2s;
+  margin-bottom: 12px;
+}
+.nl-cdf-right input::placeholder { color: var(--mute); }
+.nl-cdf-right input:focus { border-color: var(--ochre); }
+.nl-cdf-right > button {
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .2s;
+}
+.nl-cdf-right > button:hover { background: var(--ochre); }
+.nl-cdf-right > button:disabled { opacity: .6; cursor: default; }
+
 /* ── CULTURE DROP FEATURE ── */
 .nl-culturedrop-feature {
   background: var(--paper-deep);
@@ -1860,8 +1932,9 @@
 }
 .nl-cdf-right {
   background: var(--paper);
-  padding: 50px 44px;
+  padding: 36px 40px;
   border: 1px solid var(--rule);
+  align-self: start;
 }
 .nl-cdf-form-label {
   font-family: 'JetBrains Mono', monospace;
@@ -1887,14 +1960,14 @@
 
 /* ── RESPONSIVE: NEW SECTIONS ── */
 @media (max-width: 1100px) {
-  .nl-masthead-inner { padding: 80px 40px 60px; }
+  .nl-masthead-inner { padding: 28px 40px 22px; }
   .nl-cards-inner { grid-template-columns: 1fr; padding: 0 40px 60px; }
   .nl-card { border-right: none; border-bottom: 1px solid var(--rule); padding: 48px 0; }
   .nl-card:last-child { border-bottom: none; }
   .nl-cdf-inner { grid-template-columns: 1fr; gap: 50px; padding: 80px 40px; }
 }
 @media (max-width: 768px) {
-  .nl-masthead-inner { padding: 60px 22px 48px; }
+  .nl-masthead-inner { padding: 22px 22px 18px; }
   .nl-cards-inner { padding: 0 22px 48px; }
   .nl-card { padding: 40px 0; }
   .nl-cdf-inner { padding: 60px 22px; }
