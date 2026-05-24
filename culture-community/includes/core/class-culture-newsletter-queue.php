@@ -438,7 +438,13 @@ class Culture_Newsletter_Queue {
         $nl_list        = 'getmelit'
     ) {
         $site_name = get_bloginfo( 'name' );
-        $nl_labels = array( 'getmelit' => 'GetMeLit', 'culture-drop' => 'Culture Drop' );
+        $nl_labels = array(
+            'getmelit'                  => 'GetMeLit',
+            'culture-drop'              => 'Culture Drop',
+            'culture-narratives-digest' => 'Culture Narratives Digest',
+            'vendor-letter'             => 'The Vendor Letter',
+            'origins-field-notes'       => 'Origins Field Notes',
+        );
         $nl_label  = $nl_labels[ $nl_list ] ?? 'GetMeLit';
 
         // ── Link rewriting (click tracking) ──────────────────────────────────

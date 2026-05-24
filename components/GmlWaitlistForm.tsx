@@ -4,9 +4,10 @@ import { useState, FormEvent } from "react";
 
 interface Props {
   label: string;
+  id: string;
 }
 
-export default function GmlWaitlistForm({ label }: Props) {
+export default function GmlWaitlistForm({ id }: Props) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
 
@@ -18,7 +19,7 @@ export default function GmlWaitlistForm({ label }: Props) {
       await fetch("/api/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, list: label }),
+        body: JSON.stringify({ email, list: id }),
       });
     } catch {
       // optimistic
