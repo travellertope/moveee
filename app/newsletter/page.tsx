@@ -33,16 +33,16 @@ export default async function NewsletterArchive({
 
   const activeFilter = searchParams?.list ?? "all";
   const allCount    = newsletters.length;
-  const cdCount     = newsletters.filter((n: any) => (n.nlList ?? "culture-drop") === "culture-drop").length;
-  const gmlCount    = newsletters.filter((n: any) => (n.nlList ?? "culture-drop") === "getmelit").length;
+  const cdCount     = newsletters.filter((n: any) => (n.nlList || "") === "culture-drop").length;
+  const gmlCount    = newsletters.filter((n: any) => (n.nlList || "") === "getmelit").length;
 
   const filtered = activeFilter === "all"
     ? newsletters
-    : newsletters.filter((n: any) => (n.nlList ?? "culture-drop") === activeFilter);
+    : newsletters.filter((n: any) => (n.nlList || "") === activeFilter);
 
   const totalCount  = filtered.length;
   const recentIssues = newsletters
-    .filter((n: any) => (n.nlList ?? "culture-drop") === "culture-drop")
+    .filter((n: any) => (n.nlList || "") === "culture-drop")
     .slice(0, 3);
 
   const issueNum = (index: number) =>
@@ -372,7 +372,7 @@ export default async function NewsletterArchive({
           </div>
           <div className="digest-archive-list">
             {filtered.map((issue: any, idx: number) => {
-              const list = issue.nlList ?? "culture-drop";
+              const list = issue.nlList || null;
               return (
                 <Link
                   key={issue.id}
@@ -394,9 +394,11 @@ export default async function NewsletterArchive({
                     dangerouslySetInnerHTML={{ __html: issue.title }}
                   />
                   <div className="digest-archive-tags">
-                    <span className={`nl-list-badge nl-list-badge--${list}`}>
-                      {NL_LABELS[list] ?? list}
-                    </span>
+                    {list && (
+                      <span className={`nl-list-badge nl-list-badge--${list}`}>
+                        {NL_LABELS[list] ?? list}
+                      </span>
+                    )}
                     {issue.cultureInterests?.nodes
                       ?.slice(0, 1)
                       .map((t: any) => (

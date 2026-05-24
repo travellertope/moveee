@@ -744,6 +744,15 @@ class Culture_Post_Types {
             },
         ) );
 
+        // Newsletter list field — exposed explicitly because metaValue() blocks underscore-prefixed meta.
+        register_graphql_field( 'CultureNewsletter', 'nlList', array(
+            'type'        => 'String',
+            'description' => 'Which newsletter list this post belongs to (getmelit, culture-drop, etc.).',
+            'resolve'     => function( $post ) {
+                return (string) ( get_post_meta( $post->databaseId, '_culture_nl_list', true ) ?: '' );
+            },
+        ) );
+
         error_log( 'Culture Community: GraphQL fields registration completed.' );
     }
 
@@ -864,7 +873,7 @@ class Culture_Post_Types {
         register_post_meta( 'culture_newsletter', '_culture_nl_list', array(
             'type'         => 'string',
             'single'       => true,
-            'default'      => 'culture-drop',
+            'default'      => '',
             'show_in_rest' => true,
         ) );
 
