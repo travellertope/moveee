@@ -29,7 +29,7 @@ class Culture_Newsletter_Send {
         if ( ! isset( $_POST['culture_nl_list_nonce'] ) ) return;
         if ( ! wp_verify_nonce( $_POST['culture_nl_list_nonce'], 'culture_nl_list_' . $post_id ) ) return;
 
-        $allowed_lists = array( 'getmelit', 'culture-drop' );
+        $allowed_lists = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes' );
         $list = sanitize_key( $_POST['culture_nl_list'] ?? 'getmelit' );
         if ( in_array( $list, $allowed_lists, true ) ) {
             update_post_meta( $post_id, '_culture_nl_list', $list );
@@ -123,8 +123,11 @@ class Culture_Newsletter_Send {
         $nl_segment = get_post_meta( $post->ID, '_culture_nl_segment', true ) ?: '';
 
         $lists_config = array(
-            'getmelit'     => 'GetMeLit',
-            'culture-drop' => 'Culture Drop',
+            'getmelit'                  => 'GetMeLit',
+            'culture-drop'              => 'Culture Drop',
+            'culture-narratives-digest' => 'Culture Narratives Digest (waitlist)',
+            'vendor-letter'             => 'The Vendor Letter (waitlist)',
+            'origins-field-notes'       => 'Origins Field Notes (waitlist)',
         );
 
         $segments_config = array(

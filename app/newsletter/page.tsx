@@ -310,7 +310,7 @@ export default async function NewsletterArchive({
               one excerpt, one behind-the-scenes note from the editor,
               and a reading list that extends each issue&apos;s themes.
             </p>
-            <GmlWaitlistForm label="Culture Narratives Digest" />
+            <GmlWaitlistForm label="Culture Narratives Digest" id="culture-narratives-digest" />
           </div>
           <div className="gml-cs-card">
             <h4>
@@ -322,7 +322,7 @@ export default async function NewsletterArchive({
               in the Moveee Lifestyle ecosystem — covering sourcing,
               craft, pricing, and the business of culture-led commerce.
             </p>
-            <GmlWaitlistForm label="The Vendor Letter" />
+            <GmlWaitlistForm label="The Vendor Letter" id="vendor-letter" />
           </div>
           <div className="gml-cs-card">
             <h4>
@@ -334,7 +334,7 @@ export default async function NewsletterArchive({
               cities, the food, the things you can&apos;t Google. Sent
               before and during each Origins journey season.
             </p>
-            <GmlWaitlistForm label="Origins Field Notes" />
+            <GmlWaitlistForm label="Origins Field Notes" id="origins-field-notes" />
           </div>
         </div>
       </section>

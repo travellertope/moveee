@@ -821,7 +821,7 @@ class Culture_REST_API {
         $list    = $request->get_param( 'list' ) ?: 'culture-drop';
         $segment = $request->get_param( 'segment' ) ?: '';
 
-        $allowed_lists = array( 'getmelit', 'culture-drop' );
+        $allowed_lists = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes' );
         if ( ! in_array( $list, $allowed_lists, true ) ) {
             $list = 'culture-drop';
         }

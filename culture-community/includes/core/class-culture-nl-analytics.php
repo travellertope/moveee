@@ -462,8 +462,11 @@ class Culture_NL_Analytics {
 
     /** Human-readable labels for newsletter lists and segments. */
     const LIST_LABELS = array(
-        'getmelit'     => 'GetMeLit',
-        'culture-drop' => 'Culture Drop',
+        'getmelit'                  => 'GetMeLit',
+        'culture-drop'              => 'Culture Drop',
+        'culture-narratives-digest' => 'Culture Narratives Digest',
+        'vendor-letter'             => 'The Vendor Letter',
+        'origins-field-notes'       => 'Origins Field Notes',
     );
     const SEGMENT_LABELS = array(
         'us' => 'The Moveee America (US)',

@@ -11,7 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Culture_Subscribers {
 
-    const LIST_OPTIONS    = array( 'getmelit' => 'GetMeLit', 'culture-drop' => 'Culture Drop' );
+    const LIST_OPTIONS    = array(
+        'getmelit'                  => 'GetMeLit',
+        'culture-drop'              => 'Culture Drop',
+        'culture-narratives-digest' => 'Culture Narratives Digest (waitlist)',
+        'vendor-letter'             => 'The Vendor Letter (waitlist)',
+        'origins-field-notes'       => 'Origins Field Notes (waitlist)',
+    );
     const SEGMENT_OPTIONS = array(
         ''   => 'All segments',
         'us' => 'The Moveee America (US)',
