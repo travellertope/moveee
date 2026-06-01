@@ -1142,6 +1142,12 @@ class Culture_REST_API {
             ? 'patron'
             : $stored_tier;
 
+        // Vendor status — check WCFM vendor roles.
+        $vendor_roles = array( 'wcfm_vendor', 'seller', 'vendor', 'wcfm_affiliate' );
+        $is_vendor    = (bool) array_intersect( $vendor_roles, (array) $user->roles )
+                        || (bool) get_user_meta( $user->ID, '_wcfm_vendor_data', true );
+        $vendor_slug  = $is_vendor ? $user->user_nicename : '';
+
         return array(
             // Core identity
             'id'                  => $user->ID,
@@ -1168,6 +1174,9 @@ class Culture_REST_API {
             'referral_code'       => $referral_code,
             'referral_count'      => $referral_count,
             'visual_downloads_today' => self::get_daily_visual_downloads( $user->ID ),
+            // Vendor
+            'is_vendor'           => $is_vendor,
+            'vendor_slug'         => $vendor_slug,
         );
     }
 
