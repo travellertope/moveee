@@ -1239,7 +1239,8 @@ export const GET_PRODUCTS_BY_VENDOR = `
 `;
 
 const VENDOR_PROFILE_FIELDS = `
-  slug storeName bio city country avatarUrl yearsActive rating productCount
+  slug storeName bio city country avatarUrl bannerUrl yearsActive rating productCount
+  website instagram twitter directorySlug
 `;
 
 export const GET_ALL_MAKERS = `
@@ -1251,6 +1252,21 @@ export const GET_ALL_MAKERS = `
 export const GET_MAKER_BY_SLUG = `
   query GetMakerBySlug($slug: String!) {
     moveeeVendorBySlug(slug: $slug) { ${VENDOR_PROFILE_FIELDS} }
+  }
+`;
+
+export const GET_POSTS_BY_SEARCH = `
+  query GetPostsBySearch($search: String!, $first: Int) {
+    posts(first: $first, where: { search: $search, status: PUBLISH }) {
+      nodes {
+        title
+        slug
+        excerpt
+        featuredImage { node { sourceUrl altText } }
+        categories { nodes { name slug } }
+        date
+      }
+    }
   }
 `;
 

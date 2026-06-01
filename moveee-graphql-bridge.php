@@ -47,15 +47,20 @@ add_action( 'graphql_register_types', function () {
     register_graphql_object_type( 'MoveeeVendorProfile', [
         'description' => 'WCFM vendor / maker profile data',
         'fields'      => [
-            'slug'         => [ 'type' => 'String' ],
-            'storeName'    => [ 'type' => 'String' ],
-            'bio'          => [ 'type' => 'String' ],
-            'city'         => [ 'type' => 'String' ],
-            'country'      => [ 'type' => 'String' ],
-            'avatarUrl'    => [ 'type' => 'String' ],
-            'yearsActive'  => [ 'type' => 'String' ],
-            'rating'       => [ 'type' => 'String' ],
-            'productCount' => [ 'type' => 'Int'    ],
+            'slug'           => [ 'type' => 'String' ],
+            'storeName'      => [ 'type' => 'String' ],
+            'bio'            => [ 'type' => 'String' ],
+            'city'           => [ 'type' => 'String' ],
+            'country'        => [ 'type' => 'String' ],
+            'avatarUrl'      => [ 'type' => 'String' ],
+            'bannerUrl'      => [ 'type' => 'String' ],
+            'yearsActive'    => [ 'type' => 'String' ],
+            'rating'         => [ 'type' => 'String' ],
+            'productCount'   => [ 'type' => 'Int'    ],
+            'website'        => [ 'type' => 'String' ],
+            'instagram'      => [ 'type' => 'String' ],
+            'twitter'        => [ 'type' => 'String' ],
+            'directorySlug'  => [ 'type' => 'String' ],
         ],
     ] );
 
@@ -234,16 +239,40 @@ function moveee_vendor_profile_by_id( int $vendor_id ): ?array {
         $count = (int) count_user_posts( $vendor_id, 'product' );
     }
 
+    // Banner image: WCFM stores an attachment ID under the banner key.
+    $banner_url  = '';
+    $banner_id = $d['banner'] ?? get_user_meta( $vendor_id, '_wcfmmp_profile_banner', true );
+    if ( $banner_id ) {
+        $banner_url = (string) wp_get_attachment_image_url( (int) $banner_id, 'full' );
+    }
+
+    // Social links from WCFM store settings.
+    $website   = $d['store_url']  ?? get_user_meta( $vendor_id, '_store_url',       true ) ?: '';
+    $instagram = $d['instagram']  ?? get_user_meta( $vendor_id, '_wcfm_instagram',  true ) ?: '';
+    $twitter   = $d['twitter']    ?? get_user_meta( $vendor_id, '_wcfm_twitter',    true ) ?: '';
+
+    // Linked culture_directory entry — stored on the vendor user or queried by vendor slug.
+    $dir_slug = (string) get_user_meta( $vendor_id, '_moveee_directory_slug', true );
+    if ( ! $dir_slug ) {
+        $dir_post = get_page_by_path( $user->user_nicename, OBJECT, 'culture_directory' );
+        if ( $dir_post ) $dir_slug = $dir_post->post_name;
+    }
+
     return [
-        'slug'         => $user->user_nicename,
-        'storeName'    => $store_name,
-        'bio'          => $bio,
-        'city'         => $city,
-        'country'      => $country,
-        'avatarUrl'    => $avatar_url,
-        'yearsActive'  => $years,
-        'rating'       => $rating,
-        'productCount' => $count,
+        'slug'          => $user->user_nicename,
+        'storeName'     => $store_name,
+        'bio'           => $bio,
+        'city'          => $city,
+        'country'       => $country,
+        'avatarUrl'     => $avatar_url,
+        'bannerUrl'     => $banner_url,
+        'yearsActive'   => $years,
+        'rating'        => $rating,
+        'productCount'  => $count,
+        'website'       => $website,
+        'instagram'     => $instagram,
+        'twitter'       => $twitter,
+        'directorySlug' => $dir_slug,
     ];
 }
 
