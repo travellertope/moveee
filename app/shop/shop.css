@@ -2031,3 +2031,177 @@
   text-decoration: none;
 }
 .sp-btn-add--gated:hover { opacity: 0.85; }
+
+/* ══ BRAND STOREFRONT (/shop/brand/[slug]) ══════════════════════════════════ */
+
+.brand-page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px 96px;
+}
+
+.brand-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--mute);
+}
+.brand-breadcrumb a { color: var(--mute); text-decoration: none; }
+.brand-breadcrumb a:hover { color: var(--ink); }
+.brand-breadcrumb .sep { color: var(--rule); }
+
+.brand-header {
+  margin-bottom: 56px;
+}
+.brand-header-visual {
+  width: 100%;
+  height: 320px;
+  background: var(--paper-deep);
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+}
+.brand-header-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper-deep);
+  font-family: var(--font-serif);
+  font-size: 80px;
+  color: var(--rule);
+}
+.brand-header-meta {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 28px 0 0;
+}
+.brand-avatar {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--paper);
+  margin-top: -36px;
+  position: relative;
+  z-index: 1;
+  background: var(--paper-deep);
+}
+.brand-header-text { flex: 1; min-width: 0; }
+.brand-name {
+  font-family: var(--font-serif);
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.brand-location {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--mute);
+  margin-bottom: 10px;
+}
+.brand-bio {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.7;
+  max-width: 600px;
+  margin: 0 0 12px;
+}
+.brand-maker-link {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ochre);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+}
+.brand-maker-link:hover { text-decoration: underline; }
+
+.brand-products-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 28px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 32px;
+}
+.brand-products-heading {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0;
+}
+.brand-products-count { color: var(--mute); font-weight: 400; }
+
+.brand-products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+}
+@media (max-width: 900px) { .brand-products-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px) { .brand-products-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.brand-product-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--paper);
+  transition: background 0.2s;
+}
+.brand-product-card:hover { background: var(--paper-deep); }
+.brand-product-img {
+  aspect-ratio: 1;
+  background: var(--paper-deep);
+  position: relative;
+  overflow: hidden;
+}
+.brand-product-body { padding: 14px 16px 18px; }
+.brand-product-name {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+.brand-product-price {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ochre);
+}
+
+.brand-empty {
+  padding: 80px 0;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--mute);
+}
+.brand-empty-link {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+}
+.brand-empty-link:hover { border-color: var(--ink); }
+
+@media (max-width: 768px) {
+  .brand-page { padding: 0 20px 64px; }
+  .brand-header-visual { height: 200px; }
+  .brand-header-meta { flex-wrap: wrap; }
+}

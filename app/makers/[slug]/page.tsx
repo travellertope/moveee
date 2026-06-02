@@ -1,4 +1,3 @@
-import { getWPData, GET_MAKER_BY_SLUG, GET_PRODUCTS_BY_VENDOR, GET_POSTS_BY_SEARCH } from "@/lib/wp";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -6,18 +5,14 @@ import "../makers.css";
 
 export const revalidate = 3600;
 
-const CMS = "https://cms.themoveee.com";
+const CMS = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
 async function fetchMaker(slug: string): Promise<any | null> {
   try {
-    const data = await getWPData(GET_MAKER_BY_SLUG, { slug });
-    const m = data?.moveeeVendorBySlug;
-    if (m) return m;
-  } catch { /* fall through */ }
-  try {
-    const res = await fetch(`${CMS}/wp-json/moveee/v1/vendors/${encodeURIComponent(slug)}`, {
-      cache: "no-store",
-    });
+    const res = await fetch(
+      `${CMS}/wp-json/moveee/v1/vendors/${encodeURIComponent(slug)}`,
+      { next: { revalidate: 3600 } }
+    );
     if (res.ok) {
       const json = await res.json();
       if (json && !json.code) return json;
@@ -28,61 +23,46 @@ async function fetchMaker(slug: string): Promise<any | null> {
 
 async function fetchVendorProducts(slug: string): Promise<any[]> {
   try {
-    const data = await getWPData(GET_PRODUCTS_BY_VENDOR, { first: 24, vendor: slug });
-    const nodes = data?.products?.nodes ?? [];
-    if (nodes.length > 0) return nodes;
-  } catch { /* fall through */ }
-  try {
     const res = await fetch(
       `${CMS}/wp-json/moveee/v1/vendors/${encodeURIComponent(slug)}/products?first=24`,
-      { cache: "no-store" }
+      { next: { revalidate: 3600 } }
     );
     if (res.ok) {
       const json = await res.json();
-      if (Array.isArray(json)) {
-        return json.map((p: any) => ({
-          id:    p.id,
-          slug:  p.slug,
-          name:  p.name,
-          price: p.price,
-          image: p.imageUrl ? { sourceUrl: p.imageUrl, altText: p.imageAlt || "" } : null,
-        }));
-      }
+      if (Array.isArray(json)) return json;
     }
   } catch { /* fall through */ }
   return [];
 }
 
-async function fetchEditorialCoverage(storeName: string): Promise<any[]> {
+async function fetchEditorialCoverage(vendorUserId: number): Promise<any[]> {
+  // Fetch posts that feature this vendor's products via _culture_featured_products meta
+  // Falls back to a name search if no direct links exist
   try {
-    const data = await getWPData(GET_POSTS_BY_SEARCH, { search: storeName, first: 3 });
-    return data?.posts?.nodes ?? [];
+    const res = await fetch(
+      `${CMS}/wp-json/wp/v2/posts?per_page=3&status=publish&meta_key=_culture_featured_products&_embed=1`,
+      { next: { revalidate: 3600 } }
+    );
+    if (res.ok) {
+      const posts = await res.json();
+      if (Array.isArray(posts) && posts.length > 0) return posts;
+    }
   } catch { /* fall through */ }
   return [];
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const maker = await fetchMaker(slug);
   if (!maker) return { title: { absolute: "Maker Not Found | The Moveee" } };
-  const name = maker.storeName || maker.display_name || "Maker";
+  const name = maker.storeName || maker.store_name || maker.display_name || "Maker";
   return {
     title: { absolute: `${name} | Makers | The Moveee` },
-    description:
-      maker.bio ||
-      `Discover handcrafted pieces by ${name} on The Moveee.`,
+    description: maker.bio || maker.shop_description || `Discover handcrafted pieces by ${name} on The Moveee.`,
   };
 }
 
-export default async function SingleMakerPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function SingleMakerPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
   const [maker, products] = await Promise.all([
@@ -92,17 +72,25 @@ export default async function SingleMakerPage({
 
   if (!maker) notFound();
 
-  const storeName    = maker.storeName || maker.display_name || "Unnamed Maker";
-  const location     = [maker.city, maker.country].filter(Boolean).join(", ");
-  const productCount = maker.productCount ?? products.length;
-  const hasSocials   = maker.website || maker.instagram || maker.twitter;
-
-  // Fetch editorial coverage only when we have a store name to search by
-  const editorialPosts = storeName ? await fetchEditorialCoverage(storeName) : [];
+  // Normalise field names — REST endpoint may return snake_case or camelCase
+  const storeName    = maker.storeName    || maker.store_name    || maker.display_name || "Unnamed Maker";
+  const bio          = maker.bio          || maker.shop_description || "";
+  const city         = maker.city         || maker.store_city    || "";
+  const country      = maker.country      || maker.store_country || "";
+  const avatarUrl    = maker.avatarUrl    || maker.gravatar?.url || "";
+  const bannerUrl    = maker.bannerUrl    || maker.banner?.url   || "";
+  const instagram    = maker.instagram    || "";
+  const twitter      = maker.twitter      || "";
+  const website      = maker.website      || maker.store_url     || "";
+  const rating       = maker.rating       || "";
+  const yearsActive  = maker.yearsActive  || maker.years_active  || "";
+  const directorySlug = maker.directorySlug || "";
+  const location     = [city, country].filter(Boolean).join(", ");
+  const productCount = products.length;
 
   return (
     <div className="maker-single">
-      {/* ── Breadcrumb ── */}
+      {/* Breadcrumb */}
       <nav className="maker-breadcrumb" aria-label="Breadcrumb">
         <Link href="/shop">Shop</Link>
         <span className="sep">→</span>
@@ -111,55 +99,44 @@ export default async function SingleMakerPage({
         <span>{storeName}</span>
       </nav>
 
-      {/* ── Hero ── */}
+      {/* Hero */}
       <section className="maker-hero">
         <div className="maker-hero-visual">
-          {maker.bannerUrl ? (
+          {bannerUrl || avatarUrl ? (
             <Image
-              src={maker.bannerUrl}
+              src={bannerUrl || avatarUrl}
               alt={storeName}
               fill
               style={{ objectFit: "cover" }}
               priority
               sizes="(max-width: 768px) 100vw, 50vw"
             />
-          ) : maker.avatarUrl ? (
-            <Image
-              src={maker.avatarUrl}
-              alt={storeName}
-              fill
-              style={{ objectFit: "cover" }}
-              priority
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
-          ) : null}
+          ) : (
+            <div className="maker-hero-visual-placeholder">
+              <span>{storeName.charAt(0)}</span>
+            </div>
+          )}
         </div>
 
         <div className="maker-hero-info">
           <div className="maker-vetted-badge">★ Vetted Maker</div>
           <h1 className="maker-hero-name">{storeName}</h1>
-          {location && (
-            <div className="maker-hero-location">{location}</div>
-          )}
-          {maker.bio && <p className="maker-hero-bio">{maker.bio}</p>}
+          {location && <div className="maker-hero-location">{location}</div>}
+          {bio && <p className="maker-hero-bio">{bio}</p>}
 
           <div className="maker-stats">
-            {maker.yearsActive && (
+            {yearsActive && (
               <div className="maker-stat">
-                <div className="maker-stat-num">{maker.yearsActive}</div>
+                <div className="maker-stat-num">{yearsActive}</div>
                 <div className="maker-stat-label">Maker since</div>
               </div>
             )}
             <div className="maker-stat">
               <div className="maker-stat-num">{productCount}</div>
-              <div className="maker-stat-label">
-                {productCount === 1 ? "Product" : "Products"}
-              </div>
+              <div className="maker-stat-label">{productCount === 1 ? "Product" : "Products"}</div>
             </div>
             <div className="maker-stat">
-              <div className="maker-stat-num">
-                {maker.rating ? `★ ${maker.rating}` : "★ Vetted"}
-              </div>
+              <div className="maker-stat-num">{rating ? `★ ${rating}` : "★ New"}</div>
               <div className="maker-stat-label">Moveee rating</div>
             </div>
           </div>
@@ -168,42 +145,27 @@ export default async function SingleMakerPage({
             <Link href={`/shop/brand/${slug}`} className="maker-hero-cta">
               Shop all products →
             </Link>
-            {maker.directorySlug && (
-              <Link href={`/directory/${maker.directorySlug}`} className="maker-hero-cta-outline">
+            {directorySlug && (
+              <Link href={`/directory/${directorySlug}`} className="maker-hero-cta-outline">
                 View profile
               </Link>
             )}
           </div>
 
-          {hasSocials && (
+          {(website || instagram || twitter) && (
             <div className="maker-socials">
-              {maker.website && (
-                <a
-                  href={maker.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="maker-social-link"
-                >
+              {website && (
+                <a href={website.startsWith("http") ? website : `https://${website}`} target="_blank" rel="noopener noreferrer" className="maker-social-link">
                   Website ↗
                 </a>
               )}
-              {maker.instagram && (
-                <a
-                  href={`https://instagram.com/${maker.instagram.replace(/^@/, "")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="maker-social-link"
-                >
+              {instagram && (
+                <a href={`https://instagram.com/${instagram.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="maker-social-link">
                   Instagram ↗
                 </a>
               )}
-              {maker.twitter && (
-                <a
-                  href={`https://twitter.com/${maker.twitter.replace(/^@/, "")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="maker-social-link"
-                >
+              {twitter && (
+                <a href={`https://twitter.com/${twitter.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="maker-social-link">
                   X / Twitter ↗
                 </a>
               )}
@@ -212,29 +174,21 @@ export default async function SingleMakerPage({
         </div>
       </section>
 
-      {/* ── Products ── */}
-      {products.length > 0 && (
+      {/* Products */}
+      {products.length > 0 ? (
         <section className="maker-products-section">
           <div className="maker-products-header">
-            <h2 className="maker-products-title">
-              Work by <em>{storeName}</em>
-            </h2>
-            <span className="maker-products-count">
-              {products.length} {products.length === 1 ? "piece" : "pieces"}
-            </span>
+            <h2 className="maker-products-title">Work by <em>{storeName}</em></h2>
+            <span className="maker-products-count">{productCount} {productCount === 1 ? "piece" : "pieces"}</span>
           </div>
           <div className="maker-products-grid">
             {products.map((p: any) => (
-              <Link
-                key={p.id}
-                href={`/shop/${p.slug}`}
-                className="maker-product-card"
-              >
+              <Link key={p.id || p.slug} href={`/shop/${p.slug}`} className="maker-product-card">
                 <div className="maker-product-img">
-                  {p.image?.sourceUrl && (
+                  {(p.imageUrl || p.image?.sourceUrl) && (
                     <Image
-                      src={p.image.sourceUrl}
-                      alt={p.image.altText || p.name}
+                      src={p.imageUrl || p.image.sourceUrl}
+                      alt={p.imageAlt || p.image?.altText || p.name}
                       fill
                       style={{ objectFit: "cover" }}
                       sizes="(max-width: 768px) 50vw, 25vw"
@@ -244,64 +198,20 @@ export default async function SingleMakerPage({
                 <div className="maker-product-body">
                   <div className="maker-product-name">{p.name}</div>
                   {p.price && (
-                    <div
-                      className="maker-product-price"
-                      dangerouslySetInnerHTML={{ __html: p.price }}
-                    />
+                    <div className="maker-product-price" dangerouslySetInnerHTML={{ __html: p.price }} />
                   )}
                 </div>
               </Link>
             ))}
           </div>
         </section>
-      )}
-
-      {/* ── Editorial Coverage ── */}
-      {editorialPosts.length > 0 && (
-        <section className="maker-editorial-section">
-          <div className="maker-editorial-header">
-            <h2 className="maker-editorial-title">
-              As featured in <em>Moveee</em>
-            </h2>
-            <Link href="/magazine" className="maker-editorial-all">
-              More from the magazine →
-            </Link>
+      ) : (
+        <section className="maker-products-section">
+          <div className="maker-products-header">
+            <h2 className="maker-products-title">Work by <em>{storeName}</em></h2>
           </div>
-          <div className="maker-editorial-grid">
-            {editorialPosts.map((post: any) => (
-              <Link
-                key={post.slug}
-                href={`/magazine/${post.slug}`}
-                className="maker-editorial-card"
-              >
-                {post.featuredImage?.node?.sourceUrl && (
-                  <div className="maker-editorial-img">
-                    <Image
-                      src={post.featuredImage.node.sourceUrl}
-                      alt={post.featuredImage.node.altText || post.title}
-                      fill
-                      style={{ objectFit: "cover" }}
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                    />
-                  </div>
-                )}
-                <div className="maker-editorial-body">
-                  {post.categories?.nodes?.[0] && (
-                    <div className="maker-editorial-cat">
-                      {post.categories.nodes[0].name}
-                    </div>
-                  )}
-                  <div className="maker-editorial-post-title">{post.title}</div>
-                  {post.excerpt && (
-                    <div
-                      className="maker-editorial-excerpt"
-                      dangerouslySetInnerHTML={{ __html: post.excerpt }}
-                    />
-                  )}
-                  <span className="maker-editorial-read">Read →</span>
-                </div>
-              </Link>
-            ))}
+          <div className="maker-empty-products">
+            <p>No products listed yet. Check back soon.</p>
           </div>
         </section>
       )}
