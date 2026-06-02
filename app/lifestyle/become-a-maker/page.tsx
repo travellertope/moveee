@@ -78,8 +78,12 @@ export default function BecomeAMakerPage() {
         setError(data.error ?? "Something went wrong. Please try again.");
         return;
       }
-      // Refresh the session so isVendor / vendorSlug are set on next navigation
-      await updateSession();
+      // Pass vendor fields directly into the JWT so isVendor is immediately true.
+      // data is the WP user profile returned by the apply endpoint.
+      await updateSession({
+        isVendor:   data.is_vendor   ?? true,
+        vendorSlug: data.vendor_slug ?? storeUrl,
+      });
       setStep("success");
     } finally {
       setSubmitting(false);
