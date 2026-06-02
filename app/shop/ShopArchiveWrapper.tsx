@@ -176,8 +176,8 @@ export default async function ShopArchiveWrapper({
             <h2 className="feat-title">
               Editorial <em>Picks</em>
             </h2>
-            <Link href="/shop" className="feat-all">
-              View all →
+            <Link href="/shop/edit" className="feat-all">
+              The Moveee Edit →
             </Link>
           </div>
           <div className="featured-grid">

@@ -556,6 +556,14 @@ export const GET_STORY_BY_SLUG = `
     post(id: $slug, idType: SLUG) {
       ...StoryFields
       content
+      featuredProducts {
+        id
+        slug
+        name
+        price
+        imageUrl
+        imageAlt
+      }
     }
   }
   ${STORY_FIELDS_FRAGMENT}
@@ -1252,6 +1260,31 @@ export const GET_ALL_MAKERS = `
 export const GET_MAKER_BY_SLUG = `
   query GetMakerBySlug($slug: String!) {
     moveeeVendorBySlug(slug: $slug) { ${VENDOR_PROFILE_FIELDS} }
+  }
+`;
+
+export const GET_MOVEEE_EDIT = `
+  query GetMoveeeEdit($first: Int, $tag: String) {
+    posts(first: $first, where: { tag: $tag, status: PUBLISH, orderby: { field: DATE, order: DESC } }) {
+      nodes {
+        id
+        databaseId
+        title
+        slug
+        date
+        excerpt
+        featuredImage { node { sourceUrl altText } }
+        categories { nodes { name slug } }
+        featuredProducts {
+          id
+          slug
+          name
+          price
+          imageUrl
+          imageAlt
+        }
+      }
+    }
   }
 `;
 

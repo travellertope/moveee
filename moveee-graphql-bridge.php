@@ -441,7 +441,109 @@ add_action( 'acf/init', function () {
 } );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. REST API endpoint — /wp-json/moveee/v1/vendors
+// 6. Editorial × Commerce — featuredProducts on Post / magazine story.
+//    Editors tag up to 6 WC products on any post via a meta box.
+//    The data is exposed through WPGraphQL and through the REST meta so the
+//    headless frontend can render a "Shop the Edit" strip on article pages.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// 6a. Register the post meta so it's available via REST and WPGraphQL.
+add_action( 'init', function () {
+    register_post_meta( 'post', '_culture_featured_products', [
+        'type'          => 'string',   // JSON-encoded array of product IDs
+        'single'        => true,
+        'show_in_rest'  => true,
+        'auth_callback' => function () { return current_user_can( 'edit_posts' ); },
+    ] );
+} );
+
+// 6b. WP Admin meta box — "Shop the Edit" product picker on post edit screens.
+add_action( 'add_meta_boxes', function () {
+    add_meta_box(
+        'moveee-shop-the-edit',
+        'Shop the Edit — Featured Products',
+        'moveee_shop_the_edit_meta_box',
+        'post',
+        'side',
+        'default'
+    );
+} );
+
+function moveee_shop_the_edit_meta_box( WP_Post $post ): void {
+    wp_nonce_field( 'moveee_shop_the_edit', 'moveee_shop_the_edit_nonce' );
+    $raw      = get_post_meta( $post->ID, '_culture_featured_products', true );
+    $saved    = $raw ? json_decode( $raw, true ) : [];
+    $saved    = is_array( $saved ) ? array_map( 'absint', $saved ) : [];
+    $products = wc_get_products( [ 'status' => 'publish', 'limit' => 200, 'orderby' => 'title', 'order' => 'ASC' ] );
+    echo '<p style="font-size:12px;color:#666;margin-top:0">Select up to 6 products to feature in "Shop the Edit" on this article.</p>';
+    echo '<select name="moveee_featured_products[]" multiple style="width:100%;height:140px;font-size:12px">';
+    foreach ( $products as $p ) {
+        $sel = in_array( $p->get_id(), $saved, true ) ? ' selected' : '';
+        echo '<option value="' . esc_attr( $p->get_id() ) . '"' . $sel . '>' . esc_html( $p->get_name() ) . '</option>';
+    }
+    echo '</select>';
+    echo '<p style="font-size:11px;color:#999;margin-bottom:0">Ctrl/Cmd+click to select multiple.</p>';
+}
+
+add_action( 'save_post_post', function ( int $post_id ) {
+    if ( ! isset( $_POST['moveee_shop_the_edit_nonce'] ) ) return;
+    if ( ! wp_verify_nonce( $_POST['moveee_shop_the_edit_nonce'], 'moveee_shop_the_edit' ) ) return;
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+    if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+
+    $ids = array_map( 'absint', (array) ( $_POST['moveee_featured_products'] ?? [] ) );
+    $ids = array_filter( $ids );
+    $ids = array_slice( array_unique( $ids ), 0, 6 );
+    update_post_meta( $post_id, '_culture_featured_products', json_encode( array_values( $ids ) ) );
+} );
+
+// 6c. WPGraphQL — expose featuredProducts on Post as a list of product stubs.
+add_action( 'graphql_register_types', function () {
+
+    register_graphql_object_type( 'MoveeeProductStub', [
+        'description' => 'Lightweight product reference for editorial cross-links',
+        'fields'      => [
+            'id'       => [ 'type' => 'Int'    ],
+            'slug'     => [ 'type' => 'String' ],
+            'name'     => [ 'type' => 'String' ],
+            'price'    => [ 'type' => 'String' ],
+            'imageUrl' => [ 'type' => 'String' ],
+            'imageAlt' => [ 'type' => 'String' ],
+        ],
+    ] );
+
+    register_graphql_field( 'Post', 'featuredProducts', [
+        'type'        => [ 'list_of' => 'MoveeeProductStub' ],
+        'description' => 'WooCommerce products featured in this editorial post',
+        'resolve'     => function ( $post ) {
+            $pid  = absint( $post->databaseId ?? 0 );
+            if ( ! $pid ) return [];
+            $raw  = get_post_meta( $pid, '_culture_featured_products', true );
+            $ids  = $raw ? json_decode( $raw, true ) : [];
+            if ( ! is_array( $ids ) || empty( $ids ) ) return [];
+
+            $stubs = [];
+            foreach ( $ids as $product_id ) {
+                $product = wc_get_product( (int) $product_id );
+                if ( ! $product ) continue;
+                $img_id  = $product->get_image_id();
+                $stubs[] = [
+                    'id'       => $product->get_id(),
+                    'slug'     => $product->get_slug(),
+                    'name'     => $product->get_name(),
+                    'price'    => wc_price( $product->get_price() ),
+                    'imageUrl' => $img_id ? wp_get_attachment_image_url( $img_id, 'woocommerce_thumbnail' ) : null,
+                    'imageAlt' => $img_id ? (string) get_post_meta( $img_id, '_wp_attachment_image_alt', true ) : '',
+                ];
+            }
+            return $stubs;
+        },
+    ] );
+
+}, 99 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. REST API endpoint — /wp-json/moveee/v1/vendors
 //    Public endpoint that returns all WCFM vendor profiles as JSON.
 //    Used by the Next.js /makers page as a reliable fallback when the
 //    WPGraphQL moveeeVendors query is unavailable or returning empty.
@@ -585,7 +687,7 @@ add_action( 'rest_api_init', function () {
 } );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 7. WCFM vendor store URLs → Next.js frontend
+// 9. WCFM vendor store URLs → Next.js frontend
 //    WCFM generates links like cms.themoveee.com/store/vendor-slug throughout
 //    WooCommerce (checkout page, product pages, emails). These filters rewrite
 //    the URL at the source so it already points to the Next.js shop.

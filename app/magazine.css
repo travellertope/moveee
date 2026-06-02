@@ -774,3 +774,101 @@
   .mag-issue-section-hdr { flex-wrap: wrap; gap: 8px; }
   .mag-issue-section-title { font-size: 18px; width: 100%; order: -1; }
 }
+
+/* ── Shop the Edit — article × product cross-link ───────────────────────── */
+.ste-section {
+  background: var(--ink);
+  padding: clamp(48px, 7vw, 80px) 24px;
+}
+.ste-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.ste-header {
+  margin-bottom: 32px;
+}
+.ste-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--ochre);
+  margin-bottom: 8px;
+}
+.ste-title {
+  font-family: var(--font-serif);
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 700;
+  color: var(--paper);
+  margin: 0;
+}
+.ste-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.ste-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 10px;
+  overflow: hidden;
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.ste-card:hover {
+  border-color: var(--ochre);
+  transform: translateY(-2px);
+}
+.ste-card-img {
+  position: relative;
+  aspect-ratio: 1;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.ste-card-img-placeholder {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.06);
+}
+.ste-card-body {
+  padding: 12px 14px 14px;
+}
+.ste-card-name {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--paper);
+  margin-bottom: 5px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ste-card-price {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--ochre);
+  font-weight: 600;
+}
+.ste-card-price * { color: inherit !important; font-size: inherit !important; }
+.ste-footer {
+  text-align: center;
+}
+.ste-browse-link {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(243,236,224,0.5);
+  text-decoration: none;
+  letter-spacing: .04em;
+}
+.ste-browse-link:hover { color: var(--paper); }
+
+@media (max-width: 600px) {
+  .ste-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}

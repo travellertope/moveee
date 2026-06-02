@@ -1682,3 +1682,278 @@
   .sp-more-from { padding-left: 16px; padding-right: 16px; }
   .sp-price     { font-size: 24px; }
 }
+
+/* ── Moveee Edit page ─────────────────────────────────────────────────────── */
+.edit-page {
+  background: var(--paper);
+  min-height: 100vh;
+}
+
+.edit-hero {
+  background: var(--ink);
+  padding: clamp(64px, 10vw, 120px) 24px clamp(56px, 8vw, 96px);
+  text-align: center;
+}
+.edit-hero-inner {
+  max-width: 680px;
+  margin: 0 auto;
+}
+.edit-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--ochre);
+  margin-bottom: 16px;
+}
+.edit-headline {
+  font-family: var(--font-serif);
+  font-size: clamp(36px, 6vw, 64px);
+  font-weight: 700;
+  color: var(--paper);
+  margin: 0 0 16px;
+  line-height: 1.05;
+}
+.edit-lede {
+  font-family: var(--font-sans);
+  font-size: clamp(14px, 2vw, 17px);
+  color: rgba(243,236,224,0.65);
+  max-width: 520px;
+  margin: 0 auto 24px;
+  line-height: 1.65;
+}
+.edit-hero-link {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(243,236,224,0.5);
+  text-decoration: none;
+  letter-spacing: .04em;
+}
+.edit-hero-link:hover { color: var(--paper); }
+
+.edit-empty {
+  padding: clamp(64px, 10vw, 120px) 24px;
+  text-align: center;
+}
+.edit-empty-inner {
+  max-width: 460px;
+  margin: 0 auto;
+}
+.edit-empty-icon {
+  font-size: 32px;
+  color: var(--ochre);
+  margin-bottom: 20px;
+}
+.edit-empty h2 {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  color: var(--ink);
+  margin: 0 0 12px;
+}
+.edit-empty p {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--mute);
+  margin: 0 0 24px;
+  line-height: 1.6;
+}
+
+.edit-stream {
+  padding: clamp(40px, 6vw, 72px) 24px;
+}
+.edit-stream-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(48px, 7vw, 80px);
+}
+
+.edit-feature {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 40px;
+  align-items: start;
+  padding-bottom: clamp(48px, 7vw, 80px);
+  border-bottom: 1px solid var(--rule);
+}
+.edit-feature:last-child { border-bottom: none; }
+
+.edit-feature-story {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.edit-feature-cover {
+  position: relative;
+  aspect-ratio: 4/3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--rule);
+}
+.edit-feature-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.edit-feature-cat {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ochre);
+}
+.edit-feature-title {
+  font-family: var(--font-serif);
+  font-size: clamp(18px, 2.5vw, 24px);
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+  line-height: 1.2;
+}
+.edit-feature-title:hover { color: var(--ochre); }
+.edit-feature-excerpt {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--mute);
+  margin: 0;
+  line-height: 1.6;
+}
+.edit-feature-date {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--mute);
+}
+.edit-read-link {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  padding-top: 4px;
+}
+.edit-read-link:hover { color: var(--ochre); }
+
+.edit-feature-products {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.edit-products-label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--mute);
+}
+.edit-products-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.edit-product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-decoration: none;
+}
+.edit-product-img {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--paper-deep, #ede6d9);
+  transition: opacity 0.15s;
+}
+.edit-product-card:hover .edit-product-img { opacity: 0.88; }
+.edit-product-img-placeholder {
+  position: absolute;
+  inset: 0;
+  background: var(--rule);
+}
+.edit-product-name {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.edit-product-price {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--ochre);
+  font-weight: 600;
+}
+.edit-product-price * { color: inherit !important; font-size: inherit !important; }
+
+.edit-browse-cta {
+  background: var(--ink);
+  padding: clamp(48px, 7vw, 88px) 24px;
+  text-align: center;
+}
+.edit-browse-inner {
+  max-width: 560px;
+  margin: 0 auto;
+}
+.edit-browse-title {
+  font-family: var(--font-serif);
+  font-size: clamp(26px, 4vw, 40px);
+  font-weight: 700;
+  color: var(--paper);
+  margin: 0 0 12px;
+}
+.edit-browse-sub {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: rgba(243,236,224,0.6);
+  margin: 0 0 28px;
+  line-height: 1.6;
+}
+.edit-browse-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.edit-btn-primary {
+  display: inline-flex;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 13px 28px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.edit-btn-primary:hover { opacity: 0.88; }
+.edit-btn-outline {
+  display: inline-flex;
+  background: transparent;
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(243,236,224,0.25);
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.edit-btn-outline:hover { border-color: var(--paper); }
+
+@media (max-width: 900px) {
+  .edit-feature { grid-template-columns: 1fr; gap: 28px; }
+}
+@media (max-width: 600px) {
+  .edit-products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+}
