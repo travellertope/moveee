@@ -1205,6 +1205,8 @@ export const GET_PRODUCT_EXTRA = `
         processSteps
         asSeenInPostId
         deliveryInfo
+        memberPrice
+        earlyAccessUntil
       }
     }
   }

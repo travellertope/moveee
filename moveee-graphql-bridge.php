@@ -137,11 +137,14 @@ add_action( 'graphql_register_types', function () {
     register_graphql_object_type( 'MoveeeProductMeta', [
         'description' => 'Moveee editorial / craft metadata for a product',
         'fields'      => [
-            'makerStory'       => [ 'type' => 'String' ],
-            'careInstructions' => [ 'type' => 'String' ],
-            'processSteps'     => [ 'type' => 'String' ],
-            'asSeenInPostId'   => [ 'type' => 'String' ],
-            'deliveryInfo'     => [ 'type' => 'String' ],
+            'makerStory'        => [ 'type' => 'String' ],
+            'careInstructions'  => [ 'type' => 'String' ],
+            'processSteps'      => [ 'type' => 'String' ],
+            'asSeenInPostId'    => [ 'type' => 'String' ],
+            'deliveryInfo'      => [ 'type' => 'String' ],
+            // Pro member perks
+            'memberPrice'       => [ 'type' => 'String' ],  // HTML price for patron members
+            'earlyAccessUntil'  => [ 'type' => 'String' ],  // ISO datetime; patron-only until this passes
         ],
     ] );
 
@@ -302,14 +305,35 @@ function moveee_product_meta( int $product_id ): array {
         $steps_raw = (string) get_post_meta( $product_id, 'process_steps', true );
     }
 
+    // Member price: stored as a raw decimal; return as formatted WC price HTML.
+    $member_price_raw = (string) get_post_meta( $product_id, '_culture_member_price', true );
+    $member_price_html = '';
+    if ( $member_price_raw !== '' && is_numeric( $member_price_raw ) ) {
+        $member_price_html = wc_price( (float) $member_price_raw );
+    }
+
     return [
-        'makerStory'       => (string) get_post_meta( $product_id, 'maker_story',        true ),
-        'careInstructions' => (string) get_post_meta( $product_id, 'care_instructions',  true ),
+        'makerStory'       => (string) get_post_meta( $product_id, 'maker_story',              true ),
+        'careInstructions' => (string) get_post_meta( $product_id, 'care_instructions',        true ),
         'processSteps'     => $steps_raw,
-        'asSeenInPostId'   => (string) get_post_meta( $product_id, 'as_seen_in_post_id', true ),
-        'deliveryInfo'     => (string) get_post_meta( $product_id, 'delivery_info',      true ),
+        'asSeenInPostId'   => (string) get_post_meta( $product_id, 'as_seen_in_post_id',       true ),
+        'deliveryInfo'     => (string) get_post_meta( $product_id, 'delivery_info',            true ),
+        'memberPrice'      => $member_price_html,
+        'earlyAccessUntil' => (string) get_post_meta( $product_id, '_culture_early_access_until', true ),
     ];
 }
+
+// Register meta keys so they are writable from REST (used by the vendor dashboard).
+add_action( 'init', function () {
+    $args = [
+        'type'          => 'string',
+        'single'        => true,
+        'show_in_rest'  => true,
+        'auth_callback' => '__return_true',
+    ];
+    register_post_meta( 'product', '_culture_member_price',       $args );
+    register_post_meta( 'product', '_culture_early_access_until', $args );
+} );
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. ACF field groups — only registered when ACF (free or Pro) is active.
@@ -368,6 +392,27 @@ add_action( 'acf/init', function () {
                 'required'     => 0,
                 'min'          => 1,
                 'step'         => 1,
+            ],
+            [
+                'key'          => 'field_moveee_member_price',
+                'label'        => 'Pro Member Price',
+                'name'         => '_culture_member_price',
+                'type'         => 'number',
+                'instructions' => 'Optional discounted price for Connect Pro members. Leave blank to use the standard price.',
+                'required'     => 0,
+                'min'          => 0,
+                'step'         => 0.01,
+                'prepend'      => '£',
+            ],
+            [
+                'key'          => 'field_moveee_early_access_until',
+                'label'        => 'Early Access Until (Pro members only)',
+                'name'         => '_culture_early_access_until',
+                'type'         => 'date_time_picker',
+                'instructions' => 'While this datetime is in the future, only Connect Pro members can add this product to cart. Leave blank for no early-access gate.',
+                'required'     => 0,
+                'display_format' => 'd/m/Y g:i a',
+                'return_format'  => 'Y-m-d H:i:s',
             ],
             [
                 'key'          => 'field_moveee_process_steps',

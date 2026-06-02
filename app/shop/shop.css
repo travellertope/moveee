@@ -1957,3 +1957,77 @@
 @media (max-width: 600px) {
   .edit-products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 }
+
+/* ── Pro member perks — product page ──────────────────────────────────────── */
+.sp-early-access-banner {
+  background: var(--ink);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sp-early-access-banner--open {
+  background: #1a2e1a;
+  border: 1px solid #2d4d2d;
+}
+.sp-ea-badge {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ochre);
+}
+.sp-ea-msg {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: rgba(243,236,224,0.7);
+  line-height: 1.5;
+}
+.sp-ea-upgrade {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--paper);
+  text-decoration: none;
+  margin-top: 4px;
+}
+.sp-ea-upgrade:hover { color: var(--ochre); }
+
+.sp-price-stack { display: flex; flex-direction: column; gap: 2px; }
+.sp-price-pro-label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--ochre);
+}
+.sp-price-member--teaser {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sp-price-member-link {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+.sp-price-member-link:hover { color: var(--ochre); border-color: var(--ochre); }
+
+.sp-btn-add--gated {
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.sp-btn-add--gated:hover { opacity: 0.85; }

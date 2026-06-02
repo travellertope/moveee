@@ -1,0 +1,251 @@
+/* ── Connect Pro — Shop Perks page ─────────────────────────────────────── */
+
+.perks-page {
+  background: var(--paper);
+  min-height: 100vh;
+}
+
+/* Hero */
+.perks-hero {
+  background: var(--ink);
+  padding: clamp(64px, 10vw, 120px) 24px clamp(56px, 8vw, 96px);
+}
+.perks-hero-inner {
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: center;
+}
+.perks-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--ochre);
+  margin-bottom: 18px;
+}
+.perks-headline {
+  font-family: var(--font-serif);
+  font-size: clamp(40px, 7vw, 72px);
+  font-weight: 700;
+  color: var(--paper);
+  margin: 0 0 18px;
+  line-height: 1.05;
+}
+.perks-headline em { font-style: italic; color: var(--ochre); }
+.perks-lede {
+  font-family: var(--font-sans);
+  font-size: clamp(14px, 2vw, 17px);
+  color: rgba(243,236,224,0.65);
+  max-width: 520px;
+  margin: 0 auto 28px;
+  line-height: 1.65;
+}
+.perks-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(179,130,56,0.18);
+  border: 1px solid rgba(179,130,56,0.35);
+  color: var(--ochre);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 18px;
+  border-radius: 100px;
+}
+.perks-hero-ctas {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Perks grid */
+.perks-grid-section {
+  padding: clamp(48px, 7vw, 88px) 24px;
+}
+.perks-grid-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.perks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.perks-card {
+  background: var(--paper-deep, #ede6d9);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 28px 24px 26px;
+  transition: transform 0.15s;
+}
+.perks-card:hover { transform: translateY(-2px); }
+.perks-card-icon {
+  font-size: 22px;
+  color: var(--ochre);
+  margin-bottom: 14px;
+}
+.perks-card-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 10px;
+  line-height: 1.2;
+}
+.perks-card-desc {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--mute);
+  margin: 0;
+  line-height: 1.65;
+}
+
+/* How it works */
+.perks-how {
+  background: var(--ink);
+  padding: clamp(48px, 7vw, 88px) 24px;
+}
+.perks-how-inner {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.perks-how-title {
+  font-family: var(--font-serif);
+  font-size: clamp(24px, 3.5vw, 38px);
+  font-weight: 700;
+  color: var(--paper);
+  margin: 0 0 40px;
+  text-align: center;
+}
+.perks-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.perks-step {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 20px;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  align-items: start;
+}
+.perks-step:last-child { border-bottom: none; }
+.perks-step-num {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ochre);
+  letter-spacing: .08em;
+  padding-top: 3px;
+}
+.perks-step-title {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--paper);
+  margin-bottom: 6px;
+}
+.perks-step-desc {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: rgba(243,236,224,0.6);
+  line-height: 1.6;
+}
+.perks-step-desc a {
+  color: var(--ochre);
+  text-decoration: none;
+}
+
+/* Shop CTA strip */
+.perks-shop-strip {
+  background: var(--ochre);
+  padding: clamp(32px, 5vw, 56px) 24px;
+}
+.perks-shop-strip-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.perks-strip-label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: rgba(20,17,13,0.55);
+  margin-bottom: 4px;
+}
+.perks-strip-title {
+  font-family: var(--font-serif);
+  font-size: clamp(18px, 2.5vw, 26px);
+  font-weight: 700;
+  color: var(--ink);
+}
+.perks-strip-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.perks-btn-light {
+  display: inline-flex;
+  background: rgba(20,17,13,0.10);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.perks-btn-light:hover { background: rgba(20,17,13,0.18); }
+
+/* Shared buttons */
+.perks-btn-primary {
+  display: inline-flex;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 13px 28px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.perks-btn-primary:hover { opacity: 0.88; }
+.perks-btn-primary--light {
+  background: var(--ink);
+  color: var(--paper);
+}
+.perks-btn-outline {
+  display: inline-flex;
+  background: transparent;
+  color: rgba(243,236,224,0.8);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(243,236,224,0.25);
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+.perks-btn-outline:hover { border-color: var(--paper); color: var(--paper); }
+
+@media (max-width: 900px) {
+  .perks-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .perks-grid { grid-template-columns: 1fr; }
+  .perks-shop-strip-inner { flex-direction: column; align-items: flex-start; }
+}
