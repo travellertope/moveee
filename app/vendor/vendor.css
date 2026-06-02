@@ -1086,3 +1086,414 @@
 @media (max-width: 400px) {
   .iup-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ORDERS LIST
+   ═══════════════════════════════════════════════════════════════════ */
+
+.vdo-list { display: flex; flex-direction: column; gap: 2px; }
+
+.vdo-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 20px;
+  background: var(--paper-deep);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s;
+}
+
+.vdo-row:hover { background: #ede8dc; }
+
+.vdo-row-main { flex: 1; min-width: 0; }
+
+.vdo-row-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.vdo-order-num {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.vdo-status-badge {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+}
+
+.vdo-status--pending    { background: #fef3c7; color: #92400e; }
+.vdo-status--processing { background: #dbeafe; color: #1e40af; }
+.vdo-status--hold       { background: #f3f4f6; color: #374151; }
+.vdo-status--completed  { background: #d1fae5; color: #065f46; }
+.vdo-status--cancelled  { background: #fee2e2; color: #991b1b; }
+.vdo-status--refunded   { background: #ede9fe; color: #5b21b6; }
+
+.vdo-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--mute);
+  margin-bottom: 10px;
+}
+
+.vdo-sep { opacity: 0.35; }
+.vdo-total { color: var(--ink); font-weight: 500; }
+
+.vdo-items-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vdo-item-thumb {
+  width: 36px;
+  height: 36px;
+  background: var(--paper);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.vdo-item-thumb-placeholder { width: 100%; height: 100%; background: var(--paper); }
+
+.vdo-item-more {
+  width: 36px;
+  height: 36px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.vdo-items-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--mute);
+  margin-left: 4px;
+}
+
+.vdo-row-arrow {
+  font-size: 16px;
+  color: var(--mute);
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ORDER DETAIL
+   ═══════════════════════════════════════════════════════════════════ */
+
+.vdo-detail-page { max-width: 1100px; }
+
+.vdo-detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 6px;
+}
+
+.vdo-detail-meta {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--mute);
+}
+
+.vdo-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Card */
+.vdo-card {
+  background: var(--paper-deep);
+  margin-bottom: 16px;
+}
+
+.vdo-card-header {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mute);
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Items list */
+.vdo-items-list { padding: 0 20px; }
+
+.vdo-item-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.vdo-item-row:last-child { border-bottom: none; }
+
+.vdo-item-img {
+  width: 56px;
+  height: 56px;
+  background: var(--paper);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.vdo-item-img-placeholder { width: 100%; height: 100%; background: var(--paper); }
+
+.vdo-item-body { flex: 1; min-width: 0; }
+
+.vdo-item-name {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vdo-item-sku {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--mute);
+}
+
+.vdo-item-qty {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--mute);
+  flex-shrink: 0;
+}
+
+.vdo-item-price {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--ink);
+  flex-shrink: 0;
+  min-width: 60px;
+  text-align: right;
+}
+
+/* Totals */
+.vdo-totals {
+  padding: 14px 20px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vdo-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--mute);
+}
+
+.vdo-total-row--bold {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 14px;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+}
+
+/* Fulfilment */
+.vdo-action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 16px 20px 0;
+}
+
+.vdo-btn-danger { color: #991b1b !important; border-color: #fca5a5 !important; }
+.vdo-btn-danger:hover { background: #fee2e2 !important; color: #991b1b !important; }
+
+/* Tracking */
+.vdo-tracking-section { padding: 16px 20px 20px; }
+
+.vdo-tracking-set { margin-bottom: 4px; }
+
+.vdo-tracking-label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 4px;
+}
+
+.vdo-tracking-value {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.vdo-tracking-link {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--ochre);
+  text-decoration: none;
+}
+
+.vdo-tracking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.vdo-tracking-form-title {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 4px;
+}
+
+/* Notes */
+.vdo-note-form { padding: 16px 20px; border-bottom: 1px solid var(--rule); }
+
+.vdo-note-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.vdo-note-customer-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--mute);
+  cursor: pointer;
+}
+
+.vdo-notes-list {
+  padding: 8px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vdo-note {
+  background: var(--paper);
+  padding: 12px 14px;
+  border-left: 2px solid var(--rule);
+}
+
+.vdo-note--customer { border-left-color: var(--ochre); }
+
+.vdo-note-text {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.55;
+  margin-bottom: 6px;
+}
+
+.vdo-note-text p { margin: 0; }
+
+.vdo-note-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--mute);
+}
+
+.vdo-note-tag {
+  background: rgba(179,130,56,0.15);
+  color: var(--ochre);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+}
+
+/* Customer card */
+.vdo-customer-name {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: var(--ink);
+  padding: 14px 20px 4px;
+}
+
+.vdo-customer-email {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--ochre);
+  text-decoration: none;
+  padding: 0 20px 4px;
+}
+
+.vdo-customer-phone {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--mute);
+  padding: 0 20px 14px;
+}
+
+/* Address block */
+.vdo-address-block { padding: 12px 20px; border-top: 1px solid var(--rule); }
+.vdo-address-block:first-of-type { border-top: none; padding-top: 14px; }
+
+.vdo-address-label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 6px;
+}
+
+.vdo-address-line {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.7;
+}
+
+.vdo-customer-note-text {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--mute);
+  padding: 12px 20px 16px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .vdo-detail-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .vdo-row      { padding: 16px; }
+  .vdo-row-meta { flex-wrap: wrap; gap: 4px; }
+}
