@@ -603,6 +603,23 @@ class Culture_REST_API {
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
 
+        // Vendor application — authenticated member applies to become a vendor.
+        register_rest_route( 'culture/v1', '/vendor/apply', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_vendor_apply' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'     => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'store_name'  => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+                'store_url'   => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_key' ),
+                'bio'         => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_textarea_field', 'default' => '' ),
+                'country'     => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_text_field', 'default' => '' ),
+                'category'    => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_text_field', 'default' => '' ),
+                'instagram'   => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_text_field', 'default' => '' ),
+                'website'     => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'esc_url_raw', 'default' => '' ),
+            ),
+        ) );
+
         // Initiate membership upgrade for an existing user.
         register_rest_route( 'culture/v1', '/user/upgrade-init', array(
             'methods'             => 'POST',
@@ -2488,5 +2505,77 @@ class Culture_REST_API {
         }, $users );
 
         return rest_ensure_response( $members );
+    }
+
+    /**
+     * Promote an existing WP user to WCFM vendor.
+     * Creates the WCFM vendor data, assigns the wcfm_vendor role, and sets up
+     * the basic store profile so the vendor can immediately use the dashboard.
+     */
+    public static function handle_vendor_apply( $request ) {
+        $user_id    = $request->get_param( 'user_id' );
+        $store_name = $request->get_param( 'store_name' );
+        $store_url  = $request->get_param( 'store_url' );
+        $bio        = $request->get_param( 'bio' );
+        $country    = $request->get_param( 'country' );
+        $category   = $request->get_param( 'category' );
+        $instagram  = $request->get_param( 'instagram' );
+        $website    = $request->get_param( 'website' );
+
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        // Idempotency — already a vendor.
+        $vendor_roles = array( 'wcfm_vendor', 'seller', 'vendor' );
+        if ( array_intersect( $vendor_roles, (array) $user->roles ) ) {
+            return rest_ensure_response( self::user_profile( $user ) );
+        }
+
+        // Validate/slugify the store URL.
+        $slug = sanitize_title( $store_url ?: $store_name );
+        if ( empty( $slug ) ) {
+            return new WP_Error( 'invalid_slug', 'Store URL is invalid.', array( 'status' => 422 ) );
+        }
+
+        // Check slug uniqueness (WC stores use user_nicename / shop slug).
+        $existing = get_users( array(
+            'meta_key'    => '_store_url',
+            'meta_value'  => $slug,
+            'number'      => 1,
+            'fields'      => 'ID',
+        ) );
+        if ( ! empty( $existing ) && (int) $existing[0] !== $user_id ) {
+            return new WP_Error( 'slug_taken', 'That store URL is already taken.', array( 'status' => 409 ) );
+        }
+
+        // Assign vendor role.
+        $user->add_role( 'wcfm_vendor' );
+
+        // Core WCFM vendor data.
+        $wcfm_vendor_data = array(
+            'store_name'  => $store_name,
+            'store_url'   => $slug,
+            'seller_info' => $bio,
+        );
+        update_user_meta( $user_id, '_wcfm_vendor_data', $wcfm_vendor_data );
+        update_user_meta( $user_id, '_store_url',    $slug );
+        update_user_meta( $user_id, '_store_name',   $store_name );
+
+        // WCFM profile extras.
+        if ( $bio )       update_user_meta( $user_id, '_seller_info',     $bio );
+        if ( $country )   update_user_meta( $user_id, '_store_country',   $country );
+        if ( $category )  update_user_meta( $user_id, '_store_category',  $category );
+        if ( $instagram ) update_user_meta( $user_id, '_wcfm_instagram',  $instagram );
+        if ( $website )   update_user_meta( $user_id, '_store_url_ext',   $website );
+
+        // Update nicename to match the store slug so /makers/{slug} works.
+        wp_update_user( array( 'ID' => $user_id, 'user_nicename' => $slug ) );
+
+        // Fire WCFM's own hook if available so any WCFM automations run.
+        do_action( 'wcfmmp_vendor_registration_complete', $user_id );
+
+        return rest_ensure_response( self::user_profile( get_userdata( $user_id ) ) );
     }
 }
