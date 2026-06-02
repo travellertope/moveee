@@ -1715,3 +1715,101 @@
   .vda-lower-grid   { grid-template-columns: 1fr; }
   .vda-period-tabs  { flex-wrap: wrap; }
 }
+
+/* ─── Store Profile ─────────────────────────────────── */
+.vsp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 720px;
+}
+.vsp-section {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 24px 28px;
+  margin-bottom: 16px;
+}
+.vsp-section--info {
+  background: var(--paper-deep, #ede6d9);
+}
+.vsp-section-title {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--mute);
+  margin-bottom: 18px;
+}
+.vsp-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  margin-bottom: 14px;
+}
+.vsp-field-group:last-child { margin-bottom: 0; }
+.vsp-label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.vsp-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.vsp-select { cursor: pointer; }
+.vsp-char-count {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--mute);
+  text-align: right;
+}
+.vsp-input-prefix-wrap { position: relative; }
+.vsp-input-prefix {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--mute);
+  pointer-events: none;
+}
+.vsp-input--prefixed { padding-left: 26px !important; }
+.vsp-info-text {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--mute);
+  margin: 0 0 16px;
+  line-height: 1.6;
+}
+.vsp-error {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: #b91c1c;
+  margin-bottom: 12px;
+}
+.vsp-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 4px;
+}
+.vsp-saved-msg {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: #16a34a;
+  font-weight: 600;
+}
+@media (max-width: 600px) {
+  .vsp-row { grid-template-columns: 1fr; }
+  .vsp-section { padding: 18px 16px; }
+}
