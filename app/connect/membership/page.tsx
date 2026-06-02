@@ -94,9 +94,11 @@ export default async function MembershipPage() {
               <li>Everything in Citizen</li>
               <li>Connect Pro badge on your Pulse posts</li>
               <li>Exclusive gated content &amp; editorials</li>
-              <li>10% discount in the Moveee Shop</li>
+              <li>Early access to new product drops</li>
+              <li>Pro member pricing on selected products</li>
               <li>Early access to new features</li>
             </ul>
+            <Link href="/connect/perks" className="mco-perks-link">See all shop perks →</Link>
             {!loggedIn && (
               <Link href="/register?tier=patron" className="mco-tier-btn mco-tier-btn--pro">
                 Become a Connect Pro →

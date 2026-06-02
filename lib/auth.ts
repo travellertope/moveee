@@ -28,6 +28,9 @@ export interface CultureUser {
   referralCode: string;
   referralCount: number;
   visual_downloads_today: number;
+  // Vendor
+  isVendor: boolean;
+  vendorSlug: string;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -77,6 +80,8 @@ export const authOptions: NextAuthOptions = {
             referralCode: data.referral_code ?? "",
             referralCount: data.referral_count ?? 0,
             visual_downloads_today: data.visual_downloads_today ?? 0,
+            isVendor: data.is_vendor ?? false,
+            vendorSlug: data.vendor_slug ?? "",
           };
         } catch {
           return null;
@@ -107,6 +112,8 @@ export const authOptions: NextAuthOptions = {
         token.referralCode = u.referralCode;
         token.referralCount = u.referralCount;
         token.visualDownloadsToday = u.visual_downloads_today;
+        token.isVendor = u.isVendor ?? false;
+        token.vendorSlug = u.vendorSlug ?? "";
       }
       return token;
     },
@@ -131,6 +138,8 @@ export const authOptions: NextAuthOptions = {
         s.referralCode = token.referralCode;
         s.referralCount = token.referralCount;
         s.visual_downloads_today = token.visualDownloadsToday;
+        s.isVendor = token.isVendor ?? false;
+        s.vendorSlug = token.vendorSlug ?? "";
       }
       return session;
     },

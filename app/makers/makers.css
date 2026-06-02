@@ -297,6 +297,127 @@
   color: var(--ink);
 }
 
+/* ── Hero actions row ────────────────────────────────────────────────────────*/
+.maker-hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.maker-hero-cta-outline {
+  display: inline-block;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 12px 24px;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.maker-hero-cta-outline:hover { background: var(--ink); color: var(--paper); }
+
+/* ── Social links ────────────────────────────────────────────────────────────*/
+.maker-socials {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+}
+.maker-social-link {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--mute);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.maker-social-link:hover { color: var(--ochre); }
+
+/* ── Editorial coverage ──────────────────────────────────────────────────────*/
+.maker-editorial-section {
+  margin-top: 80px;
+  padding-top: 48px;
+  border-top: 1px solid var(--rule);
+}
+.maker-editorial-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+.maker-editorial-title {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.maker-editorial-title em { font-style: italic; color: var(--ochre); }
+.maker-editorial-all {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--ochre);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+}
+.maker-editorial-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+.maker-editorial-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--paper);
+  transition: background 0.2s;
+}
+.maker-editorial-card:hover { background: var(--paper-deep); }
+.maker-editorial-img {
+  aspect-ratio: 16 / 9;
+  background: var(--paper-deep);
+  position: relative;
+  overflow: hidden;
+}
+.maker-editorial-body { padding: 18px 18px 22px; }
+.maker-editorial-cat {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 8px;
+}
+.maker-editorial-post-title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+.maker-editorial-excerpt {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--mute);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.maker-editorial-excerpt p { margin: 0; }
+.maker-editorial-read {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--ochre);
+  letter-spacing: 0.04em;
+}
+
 /* Not found */
 .maker-not-found {
   text-align: center;
@@ -334,8 +455,12 @@
   .maker-hero-visual    { aspect-ratio: 4 / 3; min-height: 0; }
   .maker-hero-info      { border-left: 1px solid var(--rule); padding: 32px 24px; }
   .maker-stats          { gap: 20px; }
-  .maker-products-grid  { grid-template-columns: repeat(2, 1fr); }
+  .maker-products-grid    { grid-template-columns: repeat(2, 1fr); }
+  .maker-editorial-grid   { grid-template-columns: 1fr; }
+  .maker-hero-actions     { flex-direction: column; }
+  .maker-hero-cta,
+  .maker-hero-cta-outline { text-align: center; }
 }
 @media (max-width: 480px) {
-  .makers-grid          { grid-template-columns: repeat(2, 1fr); }
+  .makers-grid            { grid-template-columns: repeat(2, 1fr); }
 }

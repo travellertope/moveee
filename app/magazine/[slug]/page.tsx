@@ -538,6 +538,38 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         )}
       </div>
 
+      {/* ── SHOP THE EDIT ── only when the editor has tagged products ── */}
+      {(post.featuredProducts ?? []).length > 0 && (
+        <section className="ste-section">
+          <div className="ste-inner">
+            <div className="ste-header">
+              <div className="ste-eyebrow">Shop the Edit</div>
+              <h2 className="ste-title">From this story</h2>
+            </div>
+            <div className="ste-grid">
+              {(post.featuredProducts as any[]).map((p: any) => (
+                <Link key={p.id} href={`/shop/${p.slug}`} className="ste-card">
+                  <div className="ste-card-img">
+                    {p.imageUrl ? (
+                      <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="220px" />
+                    ) : (
+                      <div className="ste-card-img-placeholder" />
+                    )}
+                  </div>
+                  <div className="ste-card-body">
+                    <div className="ste-card-name">{p.name}</div>
+                    <div className="ste-card-price" dangerouslySetInnerHTML={{ __html: p.price }} />
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <div className="ste-footer">
+              <Link href="/shop" className="ste-browse-link">Browse all products →</Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── RELATED ── */}
       {relatedStories.length > 0 && (
         <section className="related">

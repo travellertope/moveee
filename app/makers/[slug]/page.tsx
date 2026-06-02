@@ -1,4 +1,4 @@
-import { getWPData, GET_MAKER_BY_SLUG, GET_PRODUCTS_BY_VENDOR } from "@/lib/wp";
+import { getWPData, GET_MAKER_BY_SLUG, GET_PRODUCTS_BY_VENDOR, GET_POSTS_BY_SEARCH } from "@/lib/wp";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -53,6 +53,14 @@ async function fetchVendorProducts(slug: string): Promise<any[]> {
   return [];
 }
 
+async function fetchEditorialCoverage(storeName: string): Promise<any[]> {
+  try {
+    const data = await getWPData(GET_POSTS_BY_SEARCH, { search: storeName, first: 3 });
+    return data?.posts?.nodes ?? [];
+  } catch { /* fall through */ }
+  return [];
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -84,9 +92,13 @@ export default async function SingleMakerPage({
 
   if (!maker) notFound();
 
-  const storeName = maker.storeName || maker.display_name || "Unnamed Maker";
-  const location = [maker.city, maker.country].filter(Boolean).join(", ");
+  const storeName    = maker.storeName || maker.display_name || "Unnamed Maker";
+  const location     = [maker.city, maker.country].filter(Boolean).join(", ");
   const productCount = maker.productCount ?? products.length;
+  const hasSocials   = maker.website || maker.instagram || maker.twitter;
+
+  // Fetch editorial coverage only when we have a store name to search by
+  const editorialPosts = storeName ? await fetchEditorialCoverage(storeName) : [];
 
   return (
     <div className="maker-single">
@@ -102,7 +114,16 @@ export default async function SingleMakerPage({
       {/* ── Hero ── */}
       <section className="maker-hero">
         <div className="maker-hero-visual">
-          {maker.avatarUrl && (
+          {maker.bannerUrl ? (
+            <Image
+              src={maker.bannerUrl}
+              alt={storeName}
+              fill
+              style={{ objectFit: "cover" }}
+              priority
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
+          ) : maker.avatarUrl ? (
             <Image
               src={maker.avatarUrl}
               alt={storeName}
@@ -111,7 +132,7 @@ export default async function SingleMakerPage({
               priority
               sizes="(max-width: 768px) 100vw, 50vw"
             />
-          )}
+          ) : null}
         </div>
 
         <div className="maker-hero-info">
@@ -143,9 +164,51 @@ export default async function SingleMakerPage({
             </div>
           </div>
 
-          <Link href="/shop" className="maker-hero-cta">
-            Browse the shop →
-          </Link>
+          <div className="maker-hero-actions">
+            <Link href={`/shop/brand/${slug}`} className="maker-hero-cta">
+              Shop all products →
+            </Link>
+            {maker.directorySlug && (
+              <Link href={`/directory/${maker.directorySlug}`} className="maker-hero-cta-outline">
+                View profile
+              </Link>
+            )}
+          </div>
+
+          {hasSocials && (
+            <div className="maker-socials">
+              {maker.website && (
+                <a
+                  href={maker.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="maker-social-link"
+                >
+                  Website ↗
+                </a>
+              )}
+              {maker.instagram && (
+                <a
+                  href={`https://instagram.com/${maker.instagram.replace(/^@/, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="maker-social-link"
+                >
+                  Instagram ↗
+                </a>
+              )}
+              {maker.twitter && (
+                <a
+                  href={`https://twitter.com/${maker.twitter.replace(/^@/, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="maker-social-link"
+                >
+                  X / Twitter ↗
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -186,6 +249,56 @@ export default async function SingleMakerPage({
                       dangerouslySetInnerHTML={{ __html: p.price }}
                     />
                   )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Editorial Coverage ── */}
+      {editorialPosts.length > 0 && (
+        <section className="maker-editorial-section">
+          <div className="maker-editorial-header">
+            <h2 className="maker-editorial-title">
+              As featured in <em>Moveee</em>
+            </h2>
+            <Link href="/magazine" className="maker-editorial-all">
+              More from the magazine →
+            </Link>
+          </div>
+          <div className="maker-editorial-grid">
+            {editorialPosts.map((post: any) => (
+              <Link
+                key={post.slug}
+                href={`/magazine/${post.slug}`}
+                className="maker-editorial-card"
+              >
+                {post.featuredImage?.node?.sourceUrl && (
+                  <div className="maker-editorial-img">
+                    <Image
+                      src={post.featuredImage.node.sourceUrl}
+                      alt={post.featuredImage.node.altText || post.title}
+                      fill
+                      style={{ objectFit: "cover" }}
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                  </div>
+                )}
+                <div className="maker-editorial-body">
+                  {post.categories?.nodes?.[0] && (
+                    <div className="maker-editorial-cat">
+                      {post.categories.nodes[0].name}
+                    </div>
+                  )}
+                  <div className="maker-editorial-post-title">{post.title}</div>
+                  {post.excerpt && (
+                    <div
+                      className="maker-editorial-excerpt"
+                      dangerouslySetInnerHTML={{ __html: post.excerpt }}
+                    />
+                  )}
+                  <span className="maker-editorial-read">Read →</span>
                 </div>
               </Link>
             ))}

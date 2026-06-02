@@ -2,6 +2,8 @@ import { getWPData, GET_PRODUCT_BY_SLUG, GET_PRODUCT_EXTRA, GET_PRODUCTS, GET_PO
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import ProductGallery from "./ProductGallery";
 import ProductSelectors from "./ProductSelectors";
 import ProductAccordion from "./ProductAccordion";
@@ -61,11 +63,26 @@ export default async function ProductPage({
   const vendorProductCount: string = vp.productCount ? String(vp.productCount) : "";
   const vendorAvatarUrl: string = vp.avatarUrl    || "";
 
+  // ── Session — needed for Pro member perks ────────────────────────────────
+  const session = await getServerSession(authOptions);
+  const sessionUser = session?.user as any;
+  const isPro = sessionUser?.tier === "patron";
+  const isLoggedIn = !!session;
+
   // ── Product editorial meta (set as WooCommerce custom fields) ─────────────
   const pm = product.moveeeMeta ?? {};
   const makerStory: string       = pm.makerStory       || "";
   const careInstructions: string = pm.careInstructions || "";
   const deliveryInfo: string     = pm.deliveryInfo     || "";
+
+  // ── Pro member perks ──────────────────────────────────────────────────────
+  const memberPriceHtml: string  = pm.memberPrice      || "";
+  const earlyAccessUntil: string = pm.earlyAccessUntil || "";
+  const isEarlyAccessActive = earlyAccessUntil
+    ? new Date(earlyAccessUntil) > new Date()
+    : false;
+  // Early access: only Pro members can add to cart while the gate is active
+  const isGated = isEarlyAccessActive && !isPro;
 
   const variations = product.variations?.nodes ?? [];
 
@@ -169,11 +186,37 @@ export default async function ProductPage({
             />
           )}
 
+          {/* Early access gate banner */}
+          {isEarlyAccessActive && (
+            <div className={`sp-early-access-banner${isPro ? " sp-early-access-banner--open" : ""}`}>
+              <span className="sp-ea-badge">★ Pro Early Access</span>
+              {isPro ? (
+                <span className="sp-ea-msg">You have early access to this drop as a Connect Pro member.</span>
+              ) : (
+                <>
+                  <span className="sp-ea-msg">
+                    This drop is available to Connect Pro members first.
+                    {earlyAccessUntil && (
+                      <> Opens publicly on {new Date(earlyAccessUntil).toLocaleDateString("en-GB", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}.</>
+                    )}
+                  </span>
+                  <Link href="/connect/membership" className="sp-ea-upgrade">
+                    {isLoggedIn ? "Upgrade to Pro →" : "Join Connect Pro →"}
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+
           <ProductSelectors
             productId={product.databaseId}
             price={product.price}
             regularPrice={product.regularPrice}
             variations={variations}
+            memberPrice={memberPriceHtml}
+            isPro={isPro}
+            isLoggedIn={isLoggedIn}
+            isGated={isGated}
           />
 
           <ProductAccordion items={accordionItems} />

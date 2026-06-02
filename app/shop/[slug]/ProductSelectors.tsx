@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 
 interface VariationAttribute { name: string; value: string; }
@@ -15,6 +16,10 @@ interface ProductSelectorsProps {
   price?: string;
   regularPrice?: string;
   variations?: Variation[];
+  memberPrice?: string;   // HTML price string for patron members
+  isPro?: boolean;
+  isLoggedIn?: boolean;
+  isGated?: boolean;      // true = early access active and user is not Pro
 }
 
 export default function ProductSelectors({
@@ -22,6 +27,10 @@ export default function ProductSelectors({
   price,
   regularPrice,
   variations,
+  memberPrice,
+  isPro,
+  isLoggedIn,
+  isGated,
 }: ProductSelectorsProps) {
   const { addItem, isLoading } = useCart();
   const [selectedColor, setSelectedColor] = useState(0);
@@ -31,22 +40,55 @@ export default function ProductSelectors({
   const colorAttrs = extractAttr(variations, "color");
   const sizeAttrs  = extractAttr(variations, "size");
 
+  const showMemberPrice = memberPrice && isPro;
+  const showMemberPriceTeaser = memberPrice && !isPro;
+
   return (
     <>
       {/* Price */}
       <div className="sp-price-row">
-        <div>
-          {regularPrice && regularPrice !== price && (
-            <span style={{ textDecoration: "line-through", color: "var(--mute)", fontSize: 14, marginRight: 10 }}>
-              {regularPrice}
-            </span>
+        <div className="sp-price-stack">
+          {showMemberPrice ? (
+            // Pro member sees the discounted price prominently
+            <>
+              <div className="sp-price-pro-label">★ Your Pro price</div>
+              <div>
+                {price && (
+                  <span style={{ textDecoration: "line-through", color: "var(--mute)", fontSize: 14, marginRight: 10 }}>
+                    {price}
+                  </span>
+                )}
+                <span
+                  className="sp-price"
+                  dangerouslySetInnerHTML={{ __html: memberPrice }}
+                />
+              </div>
+            </>
+          ) : (
+            <div>
+              {regularPrice && regularPrice !== price && (
+                <span style={{ textDecoration: "line-through", color: "var(--mute)", fontSize: 14, marginRight: 10 }}>
+                  {regularPrice}
+                </span>
+              )}
+              <span className="sp-price">{price ?? "—"}</span>
+            </div>
           )}
-          <span className="sp-price">{price ?? "—"}</span>
         </div>
         <span className="sp-price-sub">GBP</span>
-        <div className="sp-price-member">
-          Connect members save <strong>10%</strong>
-        </div>
+        {showMemberPriceTeaser ? (
+          // Non-Pro user: show teaser for the member price
+          <div className="sp-price-member sp-price-member--teaser">
+            <span>Pro member price available</span>
+            <Link href="/connect/membership" className="sp-price-member-link">
+              {isLoggedIn ? "Upgrade →" : "Join Pro →"}
+            </Link>
+          </div>
+        ) : !showMemberPrice ? (
+          <div className="sp-price-member">
+            Connect Pro members get exclusive pricing
+          </div>
+        ) : null}
       </div>
 
       {/* Colour selector — only rendered when WooCommerce has colour variations */}
@@ -93,15 +135,22 @@ export default function ProductSelectors({
 
       {/* CTA */}
       <div className="sp-cta-row">
-        <button
-          className="sp-btn-add"
-          onClick={() => addItem(productId)}
-          disabled={isLoading}
-          style={{ opacity: isLoading ? 0.7 : 1 }}
-        >
-          {isLoading ? "Adding…" : "Add to Cart"}
-          {!isLoading && <span>→</span>}
-        </button>
+        {isGated ? (
+          // Early access gate — show upgrade CTA instead of add-to-cart
+          <Link href="/connect/membership" className="sp-btn-add sp-btn-add--gated">
+            <span>★</span> Get early access
+          </Link>
+        ) : (
+          <button
+            className="sp-btn-add"
+            onClick={() => addItem(productId)}
+            disabled={isLoading}
+            style={{ opacity: isLoading ? 0.7 : 1 }}
+          >
+            {isLoading ? "Adding…" : "Add to Cart"}
+            {!isLoading && <span>→</span>}
+          </button>
+        )}
         <button
           className="sp-btn-save"
           onClick={() => setSaved((s) => !s)}

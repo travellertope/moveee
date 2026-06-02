@@ -596,3 +596,14 @@
   .mco-dir-filters         { flex-direction: column; }
   .mco-dir-select          { width: 100%; }
 }
+
+.mco-perks-link {
+  display: inline-flex;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ochre);
+  text-decoration: none;
+  margin-top: 8px;
+}
+.mco-perks-link:hover { text-decoration: underline; }

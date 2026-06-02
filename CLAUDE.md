@@ -274,5 +274,5 @@ single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
 
 ## Git branch
 
-Active development branch: `claude/build-moveee-pulse-N4TvG`
+Active development branch: `claude/pensive-einstein-dXi9v`
 Always commit and push to this branch.
