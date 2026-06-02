@@ -91,7 +91,9 @@ export const authOptions: NextAuthOptions = {
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user }) {
+  callbacks: {
+    async jwt({ token, user, trigger }) {
+      // On initial sign-in — populate everything from the authorize response.
       if (user) {
         const u = user as any;
         token.id = u.id;
@@ -115,6 +117,24 @@ export const authOptions: NextAuthOptions = {
         token.isVendor = u.isVendor ?? false;
         token.vendorSlug = u.vendorSlug ?? "";
       }
+
+      // When the client calls updateSession() (trigger === "update"), re-fetch
+      // vendor status from WordPress so the JWT reflects the new role immediately
+      // without requiring a full sign-out / sign-in cycle.
+      if (trigger === "update" && token.id) {
+        try {
+          const res = await fetch(
+            `${WP_URL}/wp-json/culture/v1/user/profile?user_id=${token.id}`,
+            { cache: "no-store" }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            token.isVendor   = data.is_vendor   ?? token.isVendor;
+            token.vendorSlug = data.vendor_slug ?? token.vendorSlug;
+          }
+        } catch { /* keep existing token values on network error */ }
+      }
+
       return token;
     },
     async session({ session, token }) {
