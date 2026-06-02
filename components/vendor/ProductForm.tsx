@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import ImageUploader, { type UploadedImage } from "./ImageUploader";
 
 export interface ProductFormValues {
   name:             string;
@@ -14,7 +15,7 @@ export interface ProductFormValues {
   stockQty:         string;
   stockStatus:      string;
   categories:       number[];
-  images:           string[];
+  images:           UploadedImage[];
   makerStory:       string;
   careInstructions: string;
   deliveryInfo:     string;
@@ -38,7 +39,7 @@ const EMPTY: ProductFormValues = {
   stockQty:         "",
   stockStatus:      "instock",
   categories:       [],
-  images:           [],
+  images:           [] as UploadedImage[],
   makerStory:       "",
   careInstructions: "",
   deliveryInfo:     "",
@@ -48,9 +49,22 @@ export default function ProductForm({ productId, initial }: ProductFormProps) {
   const router  = useRouter();
   const isEdit  = Boolean(productId);
 
-  const [form,       setForm]       = useState<ProductFormValues>({ ...EMPTY, ...initial });
+  // Normalise images: the edit API returns string[], uploader expects UploadedImage[]
+  const normImages = (raw: any): UploadedImage[] => {
+    if (!raw) return [];
+    return (raw as any[]).map((item: any) =>
+      typeof item === "string"
+        ? { url: item, name: item.split("/").pop() ?? "image" }
+        : item
+    );
+  };
+
+  const [form,       setForm]       = useState<ProductFormValues>({
+    ...EMPTY,
+    ...initial,
+    images: normImages((initial as any)?.images),
+  });
   const [categories, setCategories] = useState<WCCategory[]>([]);
-  const [imageInput, setImageInput] = useState("");
   const [saving,     setSaving]     = useState(false);
   const [error,      setError]      = useState("");
   const [tab,        setTab]        = useState<"details" | "media" | "story">("details");
@@ -65,19 +79,6 @@ export default function ProductForm({ productId, initial }: ProductFormProps) {
 
   function set(field: keyof ProductFormValues, value: any) {
     setForm((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function addImage() {
-    const url = imageInput.trim();
-    if (!url) return;
-    if (!form.images.includes(url)) {
-      set("images", [...form.images, url]);
-    }
-    setImageInput("");
-  }
-
-  function removeImage(url: string) {
-    set("images", form.images.filter((u) => u !== url));
   }
 
   function toggleCategory(id: number) {
@@ -98,6 +99,8 @@ export default function ProductForm({ productId, initial }: ProductFormProps) {
       const payload = {
         ...form,
         status: publishNow ? "publish" : form.status,
+        // Send image URLs as strings — the API routes map them to [{ src }] for WC
+        images: form.images.map((img) => img.url),
       };
 
       const url    = isEdit ? `/api/vendor/products/${productId}` : "/api/vendor/products";
@@ -271,42 +274,14 @@ export default function ProductForm({ productId, initial }: ProductFormProps) {
           <div className="vpf-field">
             <label className="vpf-label">Product images</label>
             <p className="vpf-hint">
-              Paste image URLs below. Upload images to your WordPress media
-              library first, then copy the URL here.
+              Drag and drop or click to upload. First image is the main listing
+              photo. Use ← → buttons to reorder. Max 8 images, 8 MB each.
             </p>
-
-            {form.images.length > 0 && (
-              <div className="vpf-images-grid">
-                {form.images.map((url, i) => (
-                  <div key={url} className="vpf-image-item">
-                    {i === 0 && <div className="vpf-image-main-badge">Main</div>}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" className="vpf-image-preview" />
-                    <button
-                      type="button"
-                      className="vpf-image-remove"
-                      onClick={() => removeImage(url)}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="vpf-image-input-row">
-              <input
-                className="vpf-input"
-                type="url"
-                value={imageInput}
-                onChange={(e) => setImageInput(e.target.value)}
-                placeholder="https://cms.themoveee.com/wp-content/uploads/…"
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImage(); } }}
-              />
-              <button type="button" className="vd-btn-outline" onClick={addImage}>
-                Add
-              </button>
-            </div>
+            <ImageUploader
+              images={form.images}
+              onChange={(imgs) => set("images", imgs)}
+              max={8}
+            />
           </div>
         </div>
       )}

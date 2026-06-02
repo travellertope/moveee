@@ -896,3 +896,193 @@
   .vpf-actions     { flex-direction: column; align-items: stretch; }
   .vpf-actions-right { flex-direction: column; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   IMAGE UPLOADER
+   ═══════════════════════════════════════════════════════════════════ */
+
+.iup-wrap { display: flex; flex-direction: column; gap: 16px; }
+
+/* Uploaded images grid */
+.iup-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.iup-item {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--paper-deep);
+  overflow: hidden;
+}
+
+.iup-main-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 6px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.iup-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.iup-img--dim { opacity: 0.4; }
+
+/* Hover actions overlay */
+.iup-item-actions {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 17, 13, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.iup-item:hover .iup-item-actions { opacity: 1; }
+
+.iup-action-btn {
+  width: 28px;
+  height: 28px;
+  background: rgba(243, 236, 224, 0.15);
+  border: 1px solid rgba(243, 236, 224, 0.35);
+  color: var(--paper);
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.iup-action-btn:hover              { background: rgba(243, 236, 224, 0.3); }
+.iup-action-btn--remove            { border-color: rgba(252, 165, 165, 0.5); }
+.iup-action-btn--remove:hover      { background: rgba(239, 68, 68, 0.4); }
+
+/* Upload progress overlay */
+.iup-item--uploading { position: relative; }
+
+.iup-progress-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 17, 13, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iup-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(243, 236, 224, 0.25);
+  border-top-color: var(--paper);
+  border-radius: 50%;
+  animation: iup-spin 0.7s linear infinite;
+}
+
+@keyframes iup-spin { to { transform: rotate(360deg); } }
+
+/* Error banner */
+.iup-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 10px 14px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+.iup-error-dismiss {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #991b1b;
+  font-size: 12px;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+/* Drop zone */
+.iup-zone {
+  border: 2px dashed var(--rule);
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  outline: none;
+}
+
+.iup-zone:hover,
+.iup-zone:focus  { border-color: var(--ink); background: var(--paper-deep); }
+.iup-zone--active { border-color: var(--ochre); background: rgba(179,130,56,0.06); }
+
+.iup-zone-icon { color: var(--mute); }
+
+.iup-zone-label {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.iup-zone-sub {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--mute);
+  letter-spacing: 0.04em;
+}
+
+.iup-zone-count {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--ochre);
+  margin-top: 4px;
+}
+
+.iup-limit-note {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--mute);
+}
+
+.iup-limit-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ochre);
+  font-size: 12px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .iup-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 400px) {
+  .iup-grid { grid-template-columns: repeat(2, 1fr); }
+}
