@@ -91,7 +91,6 @@ export const authOptions: NextAuthOptions = {
   ],
   session: { strategy: "jwt" },
   callbacks: {
-  callbacks: {
     async jwt({ token, user, trigger }) {
       // On initial sign-in — populate everything from the authorize response.
       if (user) {
