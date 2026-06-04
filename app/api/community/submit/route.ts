@@ -46,6 +46,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: spamCheck.reason }, { status: spamCheck.status });
   }
 
+  // New-member moderation: accounts registered within 7 days start in pending.
+  const SEVEN_DAYS_S = 7 * 24 * 60 * 60;
+  const registeredAt: number = user?.registeredAt ?? 0;
+  const isNewAccount = registeredAt > 0 && (Date.now() / 1000 - registeredAt) < SEVEN_DAYS_S;
+  const postStatus = isNewAccount ? "pending" : "publish";
+
   const validTag = tag && (TAGS as readonly string[]).includes(tag) ? tag : null;
   const authorName: string = user?.name ?? user?.displayName ?? user?.username ?? "Community Member";
   const authorId: string = userId;
@@ -59,7 +65,7 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       title,
       content: htmlContent,
-      status: "publish",
+      status: postStatus,
       comment_status: "open",
       meta: {
         community_author_name: authorName,
@@ -79,5 +85,13 @@ export async function POST(req: NextRequest) {
   }
 
   const post = await createRes.json();
-  return NextResponse.json({ success: true, id: post.id, slug: post.slug });
+  return NextResponse.json({
+    success: true,
+    id: post.id,
+    slug: post.slug,
+    pending: postStatus === "pending",
+    message: postStatus === "pending"
+      ? "Your post is under review and will appear shortly."
+      : undefined,
+  });
 }

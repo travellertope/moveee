@@ -156,6 +156,21 @@ export default function FeedCard({
     const [lightbox, setLightbox] = useState<string | null>(null);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const closeLightbox = useCallback(() => setLightbox(null), []);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [reportState, setReportState] = useState<"idle" | "confirm" | "sent" | "error">("idle");
+
+    async function submitReport(reason: string) {
+      setReportState("sent");
+      try {
+        await fetch("/api/community/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ postId: item.wpId, reason }),
+        });
+      } catch {
+        setReportState("error");
+      }
+    }
 
     return (
       <article
@@ -294,6 +309,38 @@ export default function FeedCard({
                 <span style={{ fontVariantNumeric: "tabular-nums" }}>{item.commentCount}</span>
               )}
             </Link>
+
+            {/* Report */}
+            {reportState === "idle" && (
+              <button
+                onClick={() => setReportState("confirm")}
+                title="Report this post"
+                style={{ background: "none", border: "none", padding: "0 0 0 4px", cursor: "pointer", color: "#c8bfb0", fontSize: "0.68rem", flexShrink: 0, lineHeight: 1 }}
+              >
+                ⚑
+              </button>
+            )}
+            {reportState === "confirm" && (
+              <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
+                <span style={{ fontSize: "0.68rem", color: "#7a6f5c" }}>Report as:</span>
+                {(["spam", "harassment", "inappropriate"] as const).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => submitReport(r)}
+                    style={{ background: "#fef2f2", border: "1px solid rgba(192,57,43,.2)", color: "#c0392b", borderRadius: 3, padding: "1px 6px", fontSize: "0.62rem", cursor: "pointer", fontFamily: "inherit" }}
+                  >
+                    {r}
+                  </button>
+                ))}
+                <button onClick={() => setReportState("idle")} style={{ background: "none", border: "none", color: "#bbb", fontSize: "0.68rem", cursor: "pointer" }}>✕</button>
+              </div>
+            )}
+            {reportState === "sent" && (
+              <span style={{ fontSize: "0.68rem", color: "#7a6f5c", flexShrink: 0 }}>Reported — thank you.</span>
+            )}
+            {reportState === "error" && (
+              <span style={{ fontSize: "0.68rem", color: "#c0392b", flexShrink: 0 }}>Couldn't send report.</span>
+            )}
           </div>
         </div>
       </article>

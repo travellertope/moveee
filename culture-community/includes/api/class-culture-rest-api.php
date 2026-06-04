@@ -1339,6 +1339,7 @@ class Culture_REST_API {
             'username'            => $user->user_login,
             'email'               => $user->user_email,
             'display_name'        => $user->display_name,
+            'registered_at'       => strtotime( $user->user_registered ),
             // Contact
             'phone'               => get_user_meta( $user->ID, '_culture_phone', true ) ?: '',
             'whatsapp'            => get_user_meta( $user->ID, '_culture_whatsapp', true ) ?: '',
