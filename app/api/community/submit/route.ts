@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { checkPostSpam } from "@/lib/spam-protection";
 
 export const runtime = "nodejs";
 
@@ -36,11 +37,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Post must be 500 characters or fewer." }, { status: 400 });
   }
 
-  const validTag = tag && (TAGS as readonly string[]).includes(tag) ? tag : null;
   const user = session.user as any;
-  const authorName: string = user?.name ?? user?.displayName ?? user?.username ?? "Community Member";
-  const authorId: string = String(user?.id ?? user?.databaseId ?? "");
+  const userId: string = String(user?.id ?? user?.databaseId ?? "");
   const sessionTier: string = user?.tier ?? "";
+
+  const spamCheck = checkPostSpam(userId, content, sessionTier);
+  if (!spamCheck.allowed) {
+    return NextResponse.json({ error: spamCheck.reason }, { status: spamCheck.status });
+  }
+
+  const validTag = tag && (TAGS as readonly string[]).includes(tag) ? tag : null;
+  const authorName: string = user?.name ?? user?.displayName ?? user?.username ?? "Community Member";
+  const authorId: string = userId;
 
   const title = content.slice(0, 80) + (content.length > 80 ? "…" : "");
   const htmlContent = `<p>${content.replace(/\n/g, "</p><p>")}</p>`;
