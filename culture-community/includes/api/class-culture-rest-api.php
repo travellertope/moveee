@@ -348,6 +348,13 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Community blocklist — returns admin-configured blocked phrases for the Next.js layer.
+        register_rest_route( 'culture/v1', '/community-blocklist', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_community_blocklist' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
         // Verify email — validates the one-time token sent after registration.
         register_rest_route( 'culture/v1', '/verify-email', array(
             'methods'             => 'POST',
@@ -1183,6 +1190,25 @@ class Culture_REST_API {
             'requires_verification' => true,
             'user_id'               => $user_id,
             'username'              => get_userdata( $user_id )->user_login,
+        ) );
+    }
+
+    /**
+     * GET /culture/v1/community-blocklist
+     * Returns admin-configured blocked phrases so the Next.js layer can enforce them.
+     * The default hardcoded list lives in lib/spam-protection.ts; this endpoint
+     * only returns custom additions made via WP Admin → Settings → Moderation.
+     */
+    public static function handle_get_community_blocklist() {
+        $raw     = get_option( 'culture_community_blocklist', '' );
+        $phrases = array_values( array_filter(
+            array_map( 'trim', explode( "\n", $raw ) ),
+            function ( $line ) { return strlen( $line ) > 1; }
+        ) );
+        $review_days = (int) get_option( 'culture_new_member_review_days', 7 );
+        return rest_ensure_response( array(
+            'phrases'      => $phrases,
+            'review_days'  => $review_days,
         ) );
     }
 

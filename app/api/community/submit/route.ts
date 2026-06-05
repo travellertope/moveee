@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { checkPostSpam } from "@/lib/spam-protection";
+import { checkPostSpam, checkBlocklist, getReviewDays } from "@/lib/spam-protection";
 
 export const runtime = "nodejs";
 
@@ -46,10 +46,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: spamCheck.reason }, { status: spamCheck.status });
   }
 
-  // New-member moderation: accounts registered within 7 days start in pending.
-  const SEVEN_DAYS_S = 7 * 24 * 60 * 60;
+  // Both blocklist and review-days come from the same cached WP fetch — no extra round-trip.
+  const [blocklistCheck, reviewDays] = await Promise.all([
+    checkBlocklist(content),
+    getReviewDays(),
+  ]);
+  if (!blocklistCheck.allowed) {
+    return NextResponse.json({ error: blocklistCheck.reason }, { status: blocklistCheck.status });
+  }
+
+  // New-member moderation: accounts newer than the admin-configured review period go to pending.
+  const REVIEW_DAYS_S = reviewDays * 24 * 60 * 60;
   const registeredAt: number = user?.registeredAt ?? 0;
-  const isNewAccount = registeredAt > 0 && (Date.now() / 1000 - registeredAt) < SEVEN_DAYS_S;
+  const isNewAccount = REVIEW_DAYS_S > 0 && registeredAt > 0 && (Date.now() / 1000 - registeredAt) < REVIEW_DAYS_S;
   const postStatus = isNewAccount ? "pending" : "publish";
 
   const validTag = tag && (TAGS as readonly string[]).includes(tag) ? tag : null;

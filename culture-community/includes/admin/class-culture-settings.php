@@ -312,6 +312,11 @@ class Culture_Settings {
         register_setting( 'culture_settings_automation', 'culture_twitter_interval',            $text );
 
         // Advertising.
+        register_setting( 'culture_settings_moderation', 'culture_community_blocklist', array(
+            'sanitize_callback' => 'sanitize_textarea_field',
+        ) );
+        register_setting( 'culture_settings_moderation', 'culture_new_member_review_days', $int );
+
         register_setting( 'culture_settings_advertising', 'culture_ads_enabled',                     $bool );
         register_setting( 'culture_settings_advertising', 'culture_ads_publisher_id',                $text );
         register_setting( 'culture_settings_advertising', 'culture_ads_custom_script',               array( 'sanitize_callback' => 'wp_kses_post' ) );
@@ -333,6 +338,7 @@ class Culture_Settings {
             'emails'       => __( 'Emails', 'culture-community' ),
             'membership'   => __( 'Membership', 'culture-community' ),
             'general'      => __( 'General', 'culture-community' ),
+            'moderation'   => __( 'Moderation', 'culture-community' ),
             'automation'   => __( 'Automation', 'culture-community' ),
             'advertising'  => __( 'Advertising', 'culture-community' ),
         );
@@ -368,6 +374,9 @@ class Culture_Settings {
                         break;
                     case 'general':
                         self::render_general_tab();
+                        break;
+                    case 'moderation':
+                        self::render_moderation_tab();
                         break;
                     case 'automation':
                         self::render_automation_tab();
@@ -770,6 +779,49 @@ class Culture_Settings {
                 <tr><td><code>[culture_referral]</code></td><td><?php esc_html_e( 'Referral link widget with share button and stats.', 'culture-community' ); ?></td></tr>
                 <tr><td><code>[culture_register]</code></td><td><?php esc_html_e( 'Multi-step registration wizard.', 'culture-community' ); ?></td></tr>
             </tbody>
+        </table>
+        <?php
+    }
+
+    private static function render_moderation_tab() {
+        $blocklist   = get_option( 'culture_community_blocklist', '' );
+        $review_days = (int) get_option( 'culture_new_member_review_days', 7 );
+        ?>
+        <h2><?php esc_html_e( 'Community Moderation', 'culture-community' ); ?></h2>
+        <p><?php esc_html_e( 'Configure spam protection for the Connect community feed.', 'culture-community' ); ?></p>
+
+        <table class="form-table">
+            <tr>
+                <th scope="row">
+                    <label for="culture_new_member_review_days"><?php esc_html_e( 'New-member review period', 'culture-community' ); ?></label>
+                </th>
+                <td>
+                    <input type="number" id="culture_new_member_review_days"
+                           name="culture_new_member_review_days"
+                           value="<?php echo esc_attr( $review_days ); ?>"
+                           min="0" max="90" style="width:80px;" />
+                    <?php esc_html_e( 'days', 'culture-community' ); ?>
+                    <p class="description"><?php esc_html_e( 'Posts from accounts registered within this many days are held as Pending until approved. Set to 0 to disable.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label for="culture_community_blocklist"><?php esc_html_e( 'Custom blocked phrases', 'culture-community' ); ?></label>
+                </th>
+                <td>
+                    <textarea id="culture_community_blocklist"
+                              name="culture_community_blocklist"
+                              rows="12"
+                              style="width:100%;max-width:600px;font-family:monospace;font-size:13px;"
+                    ><?php echo esc_textarea( $blocklist ); ?></textarea>
+                    <p class="description">
+                        <?php esc_html_e( 'One phrase or word per line. Case-insensitive. Single words are matched as whole words; multi-word phrases match anywhere in the post. These are added on top of the built-in default list in the codebase.', 'culture-community' ); ?>
+                    </p>
+                    <p class="description">
+                        <?php esc_html_e( 'Changes take effect within 5 minutes (Next.js caches the list).', 'culture-community' ); ?>
+                    </p>
+                </td>
+            </tr>
         </table>
         <?php
     }
