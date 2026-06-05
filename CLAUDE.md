@@ -274,5 +274,71 @@ single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
 
 ## Git branch
 
-Active development branch: `claude/pensive-einstein-dXi9v`
+Active development branch: `claude/sweet-dijkstra-Pde1e`
 Always commit and push to this branch.
+
+---
+
+## Registration flow (redesigned)
+
+New flow: 3-field quick signup → email verification → 2 post-verification steps.
+
+**Step 1 — `/register`:** Email, Username, Password only. On submit:
+- Account created with `_culture_email_verified = 0`
+- Verification token (24h expiry) stored as `_culture_email_verify_token` (hashed)
+- Verification email sent via `Culture_Emails::send_verification_email()`
+- Returns `{ requires_verification: true }` — frontend shows "Check your inbox"
+
+**Step 2 & 3 — `/register/complete?uid=xxx&token=xxx&next=/article`:**
+- Page load calls `POST /api/verify-email` → `POST /culture/v1/verify-email` to validate token
+- Step 2: DOB, Country, City, Occupation
+- Step 3: Membership tier (Citizen / Connect Pro)
+- On submit calls `POST /api/complete-profile` → `POST /culture/v1/complete-profile`
+  - Saves KYC fields, marks email verified, clears token, sends welcome email
+  - Returns `checkout_url` for patron; otherwise redirects to `/login?registered=1&callbackUrl=<next>`
+
+**`?next=` redirect:** Any "Register" CTA on an article should link to `/register?next=/article-slug`. The param is carried through the entire flow and used as `callbackUrl` on the final login redirect.
+
+**Upgrade flow:** `?upgrade=patron` on either `/register` or `/register/complete` — skips verification, goes straight to membership step for logged-in members.
+
+**Key files:**
+- `app/register/page.tsx` — Step 1 + check-email screen
+- `app/register/complete/page.tsx` — Steps 2 & 3
+- `app/api/verify-email/route.ts` — proxy to WP
+- `app/api/complete-profile/route.ts` — proxy to WP
+- PHP handlers in `class-culture-rest-api.php`: `handle_verify_email`, `handle_complete_profile`
+- `class-culture-emails.php`: `send_verification_email($user_id, $token, $next_url)`
+
+---
+
+## Community feed spam protection
+
+All checks run server-side in `lib/spam-protection.ts` before posts reach WordPress.
+
+**Checks applied to posts (`app/api/community/submit/route.ts`):**
+1. URL/link blocking — Citizens cannot post links; Connect Pro members can
+2. Rate limit — 5 posts per 10 minutes per user (HTTP 429)
+3. Duplicate detection — same text rejected within 30 minutes (HTTP 409)
+4. Keyword blocklist — default phrases + admin-configured custom phrases (HTTP 400)
+5. New-member queue — accounts newer than N days get `status: "pending"` instead of `"publish"`
+
+**Checks applied to comments (`app/api/community/comment/route.ts`):**
+1. URL/link blocking (same as posts)
+2. Rate limit — 10 comments per 10 minutes (HTTP 429)
+3. Keyword blocklist
+
+**Report button (`components/pulse/FeedCard.tsx`):**
+- ⚑ icon in community card footer → expands to spam/harassment/inappropriate options
+- `app/api/community/report/route.ts` records reporter ID in post meta
+- After 3 unique reports: post auto-moved to `pending`, removed from public feed
+- Meta fields: `community_reporter_ids`, `community_report_count`, `community_report_reason`
+  (registered in `class-culture-community.php`)
+
+**Admin configuration (WP Admin → Culture Community → Moderation tab):**
+- Custom blocked phrases — one per line, added on top of hardcoded defaults
+- New-member review period in days (0 = disabled)
+- Settings cached in Next.js for 5 minutes via `GET /culture/v1/community-blocklist`
+
+**User account age for moderation queue:**
+- WP `user_registered` now included as `registered_at` (Unix timestamp) in `user_profile()`
+- Threaded into NextAuth session as `registeredAt` via `lib/auth.ts`
