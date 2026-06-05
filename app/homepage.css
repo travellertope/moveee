@@ -1496,9 +1496,9 @@
     color: inherit;
   }
 
-  /* ── Text block (top) ── */
+  /* ── Text block (below image) ── */
   .hp-cover-text {
-    padding: 32px 36px 24px;
+    padding: 16px 36px 24px;
     background: var(--paper);
     flex-shrink: 0;
   }
@@ -1536,17 +1536,17 @@
   }
   .hp-cover-excerpt p { margin: 0; }
 
-  /* ── Image block (below text) — 632 × 474 ratio ── */
+  /* ── Image block (now above text) ── */
   .hp-cover-image-box {
     width: 100%;
     flex-shrink: 0;
     background: var(--paper);
-    padding: 0 20px 20px;
+    padding: 0 20px 8px;
   }
   .hp-cover-image {
     position: relative;
     width: 100%;
-    aspect-ratio: 632 / 474;
+    aspect-ratio: 16 / 9;
     overflow: hidden;
     background: var(--ink);
   }
