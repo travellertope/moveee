@@ -1915,11 +1915,11 @@
     margin: 0;
   }
 
-  /* 2×2 post grid on the right */
+  /* 3×2 post grid on the right */
   .hp-issue-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 28px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
   }
 
   /* ===== SERIES / INTERVIEW STRIPS ===== */
@@ -1941,7 +1941,7 @@
 
   .hp-mag-card-image {
     width: 100%;
-    aspect-ratio: 16/9;
+    aspect-ratio: 4/3;
     position: relative;
     overflow: hidden;
     margin-bottom: 14px;

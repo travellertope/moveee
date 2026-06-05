@@ -50,16 +50,7 @@ export default function HomepageContent({
           <div className="hp-cover-sticky">
             {coverStory ? (
               <Link href={`/magazine/${coverStory.slug}`} className="hp-cover-link">
-                {/* Text block: category → title → excerpt → meta */}
-                <div className="hp-cover-text">
-                  <div className="hp-cover-kicker">
-                    {decodeHtml(coverStory.categories?.nodes[0]?.name || "Culture").toUpperCase()}
-                  </div>
-                  <h2 className="hp-cover-title">{coverStory.title}</h2>
-                  <div className="hp-cover-excerpt" dangerouslySetInnerHTML={{ __html: coverStory.excerpt }} />
-                </div>
-
-                {/* Image below text — 632 × 474 aspect ratio */}
+                    {/* Image above text */}
                 {coverStory.featuredImage && (
                   <div className="hp-cover-image-box">
                     <div className="hp-cover-image">
@@ -73,6 +64,15 @@ export default function HomepageContent({
                     </div>
                   </div>
                 )}
+
+                {/* Text block: category → title → excerpt → meta */}
+                <div className="hp-cover-text">
+                  <div className="hp-cover-kicker">
+                    {decodeHtml(coverStory.categories?.nodes[0]?.name || "Culture").toUpperCase()}
+                  </div>
+                  <h2 className="hp-cover-title">{coverStory.title}</h2>
+                  <div className="hp-cover-excerpt" dangerouslySetInnerHTML={{ __html: coverStory.excerpt }} />
+                </div>
               </Link>
             ) : (
               <div className="hp-cover-placeholder">
@@ -209,7 +209,7 @@ export default function HomepageContent({
             {/* Right: 2×2 post grid */}
             {latestIssueStories.length > 0 && (
               <div className="hp-issue-grid">
-                {latestIssueStories.slice(0, 4).map((story: any) => {
+                {latestIssueStories.slice(0, 6).map((story: any) => {
                   const img = story._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
                   const cat = decodeHtml(story._embedded?.["wp:term"]?.[0]?.[0]?.name || "Culture");
                   return (
