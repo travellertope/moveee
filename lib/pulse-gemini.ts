@@ -121,54 +121,60 @@ NEWS ITEMS:
 ${list}`;
 }
 
-// ─── Try all models until one succeeds ───────────────────────────────────────
+const isRateLimitErr = (msg: string) =>
+  msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("Quota exceeded");
+
+// ─── Try all models, retry up to 3× if all are rate-limited ─────────────────
 async function tryModels(prompt: string): Promise<PulseStoryRaw[] | null> {
-  const errors: string[] = [];
+  for (let pass = 0; pass < 4; pass++) {
+    if (pass > 0) {
+      const wait = 60_000 * pass;
+      console.warn(`[pulse-gemini] All models quota-limited — waiting ${wait / 1000}s (retry ${pass}/3)…`);
+      await sleep(wait);
+    }
 
-  for (let i = 0; i < TEXT_MODELS.length; i++) {
-    const modelId = TEXT_MODELS[i];
-    try {
-      const timeoutMs = modelId.includes("pro") ? 60_000 : 45_000;
-      const model = ai.getGenerativeModel({
-        model: modelId,
-        safetySettings: SAFETY_SETTINGS,
-        generationConfig: {
-          temperature: 0.3,
-        },
-      });
+    const errors: string[] = [];
+    let rateLimitedCount = 0;
 
-      const result = await withTimeout(
-        model.generateContent(prompt),
-        timeoutMs,
-        modelId
-      );
+    for (let i = 0; i < TEXT_MODELS.length; i++) {
+      const modelId = TEXT_MODELS[i];
+      try {
+        const timeoutMs = modelId.includes("pro") ? 60_000 : 45_000;
+        const model = ai.getGenerativeModel({
+          model: modelId,
+          safetySettings: SAFETY_SETTINGS,
+          generationConfig: { temperature: 0.3 },
+        });
 
-      const response = await result.response;
-      const raw = response.text().trim();
+        const result = await withTimeout(model.generateContent(prompt), timeoutMs, modelId) as any;
+        const raw = (await result.response).text().trim();
 
-      if (!raw) { errors.push(`${modelId}: empty response`); continue; }
+        if (!raw) { errors.push(`${modelId}: empty response`); continue; }
 
-      const jsonStr = extractJsonArray(raw);
-      const parsed: unknown[] = JSON.parse(jsonStr);
-      if (!Array.isArray(parsed)) { errors.push(`${modelId}: response was not an array`); continue; }
+        const parsed: unknown[] = JSON.parse(extractJsonArray(raw));
+        if (!Array.isArray(parsed)) { errors.push(`${modelId}: not an array`); continue; }
 
-      const stories = parsed
-        .filter(isValidStory)
-        .map(s => ({ ...s, category: normaliseCategory(s.category) }));
+        const stories = parsed.filter(isValidStory).map(s => ({ ...s, category: normaliseCategory(s.category) }));
+        if (stories.length === 0) { errors.push(`${modelId}: 0 valid stories`); continue; }
 
-      if (stories.length === 0) { errors.push(`${modelId}: 0 valid stories after filtering`); continue; }
+        console.log(`[pulse-gemini] ${modelId} selected ${stories.length} stories`);
+        return stories;
+      } catch (err: any) {
+        const msg = err?.message?.slice(0, 200) ?? "unknown error";
+        errors.push(`${modelId}: ${msg}`);
+        if (isRateLimitErr(msg)) rateLimitedCount++;
+        console.warn(`[pulse-gemini] ${modelId} failed:`, msg);
+      }
+    }
 
-      console.log(`[pulse-gemini] ${modelId} selected ${stories.length} stories from RSS feed`);
-      return stories;
-    } catch (err: any) {
-      const msg = err?.message?.slice(0, 200) ?? "unknown error";
-      errors.push(`${modelId}: ${msg}`);
-      console.warn(`[pulse-gemini] ${modelId} failed:`, msg);
-      if (i < TEXT_MODELS.length - 1) await sleep(2_000);
+    // If errors weren't all rate-limit related, no point retrying
+    if (rateLimitedCount < TEXT_MODELS.length) {
+      console.error("[pulse-gemini] All models failed (non-rate-limit):\n" + errors.map((e, i) => `  ${i + 1}. ${e}`).join("\n"));
+      return null;
     }
   }
 
-  console.error("[pulse-gemini] All models failed:\n" + errors.map((e, i) => `  ${i + 1}. ${e}`).join("\n"));
+  console.error("[pulse-gemini] All models exhausted after retries.");
   return null;
 }
 

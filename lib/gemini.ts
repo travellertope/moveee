@@ -27,6 +27,58 @@ const TEXT_MODELS = [
   "gemini-1.5-flash-8b",          // legacy fallback
 ];
 
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+function isRateLimitErr(msg: string): boolean {
+  return msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("Quota exceeded");
+}
+
+/**
+ * Try every model in TEXT_MODELS. If all are rate-limited, wait 60 s and retry
+ * — up to 3 extra attempts. Stops retrying immediately if any failure is NOT
+ * a rate-limit error (e.g. bad prompt, JSON parse failure).
+ *
+ * The callback receives the modelId and should return a non-null value on
+ * success, or null/undefined to silently skip to the next model.
+ */
+async function loopWithRetry<T>(
+  label: string,
+  attempt: (modelId: string) => Promise<T | null | undefined>
+): Promise<T> {
+  let lastErr: any;
+
+  for (let pass = 0; pass < 4; pass++) {
+    if (pass > 0) {
+      const wait = 60_000 * pass; // 60 s, 120 s, 180 s
+      console.warn(`[gemini:${label}] All models quota-limited — waiting ${wait / 1000}s (retry ${pass}/3)…`);
+      await sleep(wait);
+    }
+
+    let rateLimitedCount = 0;
+
+    for (const modelId of TEXT_MODELS) {
+      try {
+        const result = await attempt(modelId);
+        if (result !== null && result !== undefined) return result as T;
+      } catch (err: any) {
+        lastErr = err;
+        const msg: string = err?.message ?? "";
+        if (isRateLimitErr(msg)) {
+          rateLimitedCount++;
+          console.warn(`[gemini:${label}] ${modelId} rate-limited`);
+        } else {
+          console.warn(`[gemini:${label}] ${modelId} failed: ${msg.slice(0, 120)}`);
+        }
+      }
+    }
+
+    // Not all failures were rate-limit errors — retrying won't help
+    if (rateLimitedCount < TEXT_MODELS.length) break;
+  }
+
+  throw lastErr ?? new Error(`[gemini:${label}] All models failed`);
+}
+
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
 const SAFETY_SETTINGS = [
   {
@@ -301,37 +353,28 @@ async function buildImagePromptWithAI(
     `\n\nEntry: "${title}" (type: ${entryType}, template: ${template})\n` +
     `Description: ${excerpt.slice(0, 400) || "(no description provided)"}`;
 
-  for (const modelId of TEXT_MODELS) {
-    try {
+  try {
+    return await loopWithRetry("image-prompt", async (modelId) => {
       const model = ai.getGenerativeModel({
         model: modelId,
         safetySettings: SAFETY_SETTINGS,
-        generationConfig: {
-          temperature: 0.9,
-          maxOutputTokens: 200,
-        },
+        generationConfig: { temperature: 0.9, maxOutputTokens: 200 },
       });
-      const res = await model.generateContent(contents);
-      const response = await res.response;
-      const brief = response.text().trim();
-      if (brief.length > 30) {
-        const fullPrompt =
-          brief + " " +
-          "Strictly restricted palette: deep ink (#14110d), burnt ochre (#c5491f), dark ochre (#8a2d10), " +
-          "gold brass (#b38238), moss green (#3d4a2a), cream paper (#f3ece0), indigo (#1e2b42) — no saturated blues/purples, no white. " +
-          "Premium editorial magazine illustration. Flat geometric shapes with dry-brush paper grain, coarse stippling, ink bleeds. " +
-          "Shading via sharp geometric shadow blocks, no soft gradients. No photorealism, no 3D rendering, matte finish, generous negative space.";
-        console.log(`[image-prompt] AI brief for "${title}": ${brief.slice(0, 120)}...`);
-        return fullPrompt;
-      }
-      console.warn(`[image-prompt] ${modelId} returned empty brief for "${title}" — trying next`);
-    } catch (err: any) {
-      console.warn(`[image-prompt] ${modelId} failed for "${title}": ${err?.message?.slice(0, 100)}`);
-    }
+      const brief = (await (await model.generateContent(contents)).response).text().trim();
+      if (brief.length <= 30) return null;
+      const fullPrompt =
+        brief + " " +
+        "Strictly restricted palette: deep ink (#14110d), burnt ochre (#c5491f), dark ochre (#8a2d10), " +
+        "gold brass (#b38238), moss green (#3d4a2a), cream paper (#f3ece0), indigo (#1e2b42) — no saturated blues/purples, no white. " +
+        "Premium editorial magazine illustration. Flat geometric shapes with dry-brush paper grain, coarse stippling, ink bleeds. " +
+        "Shading via sharp geometric shadow blocks, no soft gradients. No photorealism, no 3D rendering, matte finish, generous negative space.";
+      console.log(`[image-prompt] AI brief for "${title}": ${brief.slice(0, 120)}...`);
+      return fullPrompt;
+    });
+  } catch {
+    console.warn(`[image-prompt] All models failed for "${title}" — using fallback template`);
+    return buildImagePromptFallback(title, entryType, excerpt);
   }
-
-  console.warn(`[image-prompt] All models failed for "${title}" — using fallback template`);
-  return buildImagePromptFallback(title, entryType, excerpt);
 }
 
 function buildImagePromptFallback(title: string, entryType: string, excerpt: string): string {
@@ -483,55 +526,30 @@ export async function generateDirectoryImage(
 export async function generateDirectoryStub(
   topic: string
 ): Promise<DirectoryStub> {
-  let lastError: any = null;
+  return loopWithRetry("generateDirectoryStub", async (modelId) => {
+    const model = ai.getGenerativeModel({
+      model: modelId,
+      systemInstruction: SYSTEM_PROMPT,
+      safetySettings: SAFETY_SETTINGS,
+    });
+    const raw = (await (await model.generateContent(`Generate a Culture Directory entry for: "${topic}"`)).response).text().trim();
+    if (!raw) return null;
 
-  for (const modelId of TEXT_MODELS) {
-    try {
-      const model = ai.getGenerativeModel({
-        model: modelId,
-        systemInstruction: SYSTEM_PROMPT,
-        safetySettings: SAFETY_SETTINGS,
-      });
-      const res = await model.generateContent(`Generate a Culture Directory entry for: "${topic}"`);
-      const response = await res.response;
-      console.log(`[gemini] ${modelId} response for "${topic}":`, JSON.stringify(response).slice(0, 200));
-
-      const raw = response.text().trim();
-      if (!raw) continue; // Try next model
-
-      const jsonStr = extractJson(raw);
-      const parsed = JSON.parse(jsonStr) as DirectoryStub;
-
-      // Normalise entry type to a known slug.
-      if (!ENTRY_TYPE_SLUGS.includes(parsed.entryType as EntryType)) {
-        parsed.entryType = "concept";
+    const parsed = JSON.parse(extractJson(raw)) as DirectoryStub;
+    if (!ENTRY_TYPE_SLUGS.includes(parsed.entryType as EntryType)) parsed.entryType = "concept";
+    if (!Array.isArray(parsed.interests)) parsed.interests = [];
+    if (!Array.isArray(parsed.suggestedLinks)) parsed.suggestedLinks = [];
+    if (!parsed.infobox || typeof parsed.infobox !== "object" || Array.isArray(parsed.infobox)) {
+      parsed.infobox = {};
+    } else {
+      const clean: DirectoryInfobox = {};
+      for (const [k, v] of Object.entries(parsed.infobox)) {
+        if (typeof v === "string" && v.trim()) (clean as any)[k] = v.trim();
       }
-
-      // Ensure arrays are arrays.
-      if (!Array.isArray(parsed.interests)) parsed.interests = [];
-      if (!Array.isArray(parsed.suggestedLinks)) parsed.suggestedLinks = [];
-
-      // Ensure infobox is a plain object of string values.
-      if (!parsed.infobox || typeof parsed.infobox !== "object" || Array.isArray(parsed.infobox)) {
-        parsed.infobox = {};
-      } else {
-        // Strip any non-string, null, or empty values.
-        const clean: DirectoryInfobox = {};
-        for (const [k, v] of Object.entries(parsed.infobox)) {
-          if (typeof v === "string" && v.trim()) (clean as any)[k] = v.trim();
-        }
-        parsed.infobox = clean;
-      }
-
-      return parsed;
-    } catch (err: any) {
-      console.warn(`Model ${modelId} failed for "${topic}":`, err?.message);
-      lastError = err;
-      continue; // Try next model
+      parsed.infobox = clean;
     }
-  }
-
-  throw new Error(`All models failed for "${topic}". Last error: ${lastError?.message || "Unknown error"}`);
+    return parsed;
+  });
 }
 
 /**
@@ -561,39 +579,19 @@ Aim for geographic diversity across West Africa, East Africa, Southern Africa, t
 Return ONLY a JSON array of strings — topic names only, no descriptions, no numbering. Example format:
 ["Zanele Muholi", "Kuduro", "Brixton Market", "Afrocomix"]`;
 
-  let lastError: any = null;
+  const existingLower = new Set(existingTitles.map((t) => t.toLowerCase().trim()));
 
-  for (const modelId of TEXT_MODELS) {
-    try {
-      const model = ai.getGenerativeModel({
-        model: modelId,
-        safetySettings: SAFETY_SETTINGS,
-      });
-      const res = await model.generateContent(prompt);
-      const response = await res.response;
-
-      const raw = response.text().trim();
-      if (!raw) continue;
-
-      const jsonStr = extractJson(raw);
-      const topics: unknown = JSON.parse(jsonStr);
-
-      if (!Array.isArray(topics)) continue;
-
-      // Deduplicate against existing titles.
-      const existingLower = new Set(existingTitles.map((t) => t.toLowerCase().trim()));
-      return (topics as unknown[])
-        .filter((t): t is string => typeof t === "string" && t.trim().length > 0)
-        .filter((t) => !existingLower.has(t.toLowerCase().trim()))
-        .slice(0, 20);
-    } catch (err: any) {
-      console.warn(`Model ${modelId} failed for topics suggestion:`, err?.message);
-      lastError = err;
-      continue;
-    }
-  }
-
-  throw new Error(`Failed to generate topic suggestions: ${lastError?.message || "Unknown error"}`);
+  return loopWithRetry("generateTopicSuggestions", async (modelId) => {
+    const model = ai.getGenerativeModel({ model: modelId, safetySettings: SAFETY_SETTINGS });
+    const raw = (await (await model.generateContent(prompt)).response).text().trim();
+    if (!raw) return null;
+    const topics: unknown = JSON.parse(extractJson(raw));
+    if (!Array.isArray(topics)) return null;
+    return (topics as unknown[])
+      .filter((t): t is string => typeof t === "string" && t.trim().length > 0)
+      .filter((t) => !existingLower.has(t.toLowerCase().trim()))
+      .slice(0, 20);
+  });
 }
 
 /**
@@ -625,41 +623,18 @@ Example format:
   { "text": "...", "author": "...", "source": "..." }
 ]`;
 
-  let lastError: any = null;
-
-  for (const modelId of TEXT_MODELS) {
-    try {
-      const model = ai.getGenerativeModel({
-        model: modelId,
-        safetySettings: SAFETY_SETTINGS,
-      });
-      const res = await model.generateContent(prompt);
-      const response = await res.response;
-
-      const raw = response.text().trim();
-      if (!raw) continue;
-
-      const jsonStr = extractJson(raw);
-      const quotes: any = JSON.parse(jsonStr);
-
-      if (!Array.isArray(quotes)) continue;
-
-      return quotes
-        .filter((q: any) => q.text && q.author)
-        .map((q: any) => ({
-          text: String(q.text),
-          author: String(q.author),
-          source: String(q.source || ""),
-        }))
-        .slice(0, count);
-    } catch (err: any) {
-      console.warn(`Model ${modelId} failed for quotes generation:`, err?.message);
-      lastError = err;
-      continue;
-    }
-  }
-
-  throw new Error(`Failed to generate seed quotes: ${lastError?.message || "Unknown error"}`);
+  return loopWithRetry("generateSeedQuotes", async (modelId) => {
+    const model = ai.getGenerativeModel({ model: modelId, safetySettings: SAFETY_SETTINGS });
+    const raw = (await (await model.generateContent(prompt)).response).text().trim();
+    if (!raw) return null;
+    const quotes: any = JSON.parse(extractJson(raw));
+    if (!Array.isArray(quotes)) return null;
+    const filtered = quotes
+      .filter((q: any) => q.text && q.author)
+      .map((q: any) => ({ text: String(q.text), author: String(q.author), source: String(q.source || "") }))
+      .slice(0, count);
+    return filtered.length ? filtered : null;
+  });
 }
 
 /**
@@ -710,26 +685,13 @@ Return ONLY the JSON array, no commentary. If nothing is verifiable, return [].
 Search results:
 ${resultsJson}`;
 
-  let lastError: any = null;
-
-  for (const modelId of TEXT_MODELS) {
-    try {
-      const model = ai.getGenerativeModel({
-        model: modelId,
-        safetySettings: SAFETY_SETTINGS,
-        generationConfig: {
-        },
-      });
-      const res = await model.generateContent(prompt);
-      const response = await res.response;
-
-      const raw = response.text().trim();
-      if (!raw) continue;
-
-      const jsonStr = extractJson(raw);
-      const quotes: unknown = JSON.parse(jsonStr);
-      if (!Array.isArray(quotes)) continue;
-
+  try {
+    return await loopWithRetry("searchAndExtractQuotes", async (modelId) => {
+      const model = ai.getGenerativeModel({ model: modelId, safetySettings: SAFETY_SETTINGS });
+      const raw = (await (await model.generateContent(prompt)).response).text().trim();
+      if (!raw) return null;
+      const quotes: unknown = JSON.parse(extractJson(raw));
+      if (!Array.isArray(quotes)) return null;
       return (quotes as any[])
         .filter((q) => q.text && String(q.text).trim().split(/\s+/).length >= 10)
         .map((q) => ({
@@ -739,15 +701,11 @@ ${resultsJson}`;
           source_url: String(q.source_url || ""),
         }))
         .slice(0, maxQuotes);
-    } catch (err: any) {
-      console.warn(`[searchAndExtractQuotes] Model ${modelId} failed:`, err?.message);
-      lastError = err;
-      continue;
-    }
+    });
+  } catch (err: any) {
+    console.error("[searchAndExtractQuotes] All models failed:", err?.message);
+    return [];
   }
-
-  console.error("[searchAndExtractQuotes] All models failed:", lastError?.message);
-  return [];
 }
 
 // ── Quote authenticity verification ──────────────────────────────────────────
@@ -810,39 +768,21 @@ Return ONLY valid JSON — no commentary:
 Search results:
 ${resultsJson}`;
 
-  let lastError: any = null;
-
-  for (const modelId of TEXT_MODELS) {
-    try {
-      const model = ai.getGenerativeModel({
-        model: modelId,
-        safetySettings: SAFETY_SETTINGS,
-        generationConfig: {
-        },
-      });
-      const res = await model.generateContent(prompt);
-      const response = await res.response;
-
-      const raw = response.text().trim();
-      if (!raw) continue;
-
-      const jsonStr = extractJson(raw);
-      const parsed: any = JSON.parse(jsonStr);
-
-      const validVerdicts: AuditVerdict[] = ["verified", "suspicious", "likely-fabricated", "unverifiable"];
+  const validVerdicts: AuditVerdict[] = ["verified", "suspicious", "likely-fabricated", "unverifiable"];
+  try {
+    return await loopWithRetry("verifyExistingQuote", async (modelId) => {
+      const model = ai.getGenerativeModel({ model: modelId, safetySettings: SAFETY_SETTINGS });
+      const raw = (await (await model.generateContent(prompt)).response).text().trim();
+      if (!raw) return null;
+      const parsed: any = JSON.parse(extractJson(raw));
       const verdict: AuditVerdict = validVerdicts.includes(parsed.verdict) ? parsed.verdict : "unverifiable";
       const reason: string = String(parsed.reason ?? "No reason provided.").slice(0, 400);
-
       return { verdict, reason };
-    } catch (err: any) {
-      console.warn(`[verifyExistingQuote] Model ${modelId} failed:`, err?.message);
-      lastError = err;
-      continue;
-    }
+    });
+  } catch (err: any) {
+    console.error("[verifyExistingQuote] All models failed:", err?.message);
+    return { verdict: "unverifiable", reason: "Verification service unavailable." };
   }
-
-  console.error("[verifyExistingQuote] All models failed:", lastError?.message);
-  return { verdict: "unverifiable", reason: "Verification service unavailable." };
 }
 
 // ── Events discovery ─────────────────────────────────────────────────────────
@@ -907,27 +847,20 @@ Write 3–4 paragraphs (total ~250–350 words) covering:
 
 Use an editorial voice — warm, knowledgeable, specific. No marketing clichés. Return ONLY the plain text (no JSON, no markdown, no headings). Separate paragraphs with a blank line.`;
 
-  for (const modelId of TEXT_MODELS) {
-    try {
+  try {
+    return await loopWithRetry("enrichEventContent", async (modelId) => {
       const model = ai.getGenerativeModel({
         model: modelId,
         safetySettings: SAFETY_SETTINGS,
-        generationConfig: {
-          temperature: 0.3,
-        },
+        generationConfig: { temperature: 0.3 },
         tools: [{ googleSearch: {} }] as any,
       });
-      const res = await model.generateContent(prompt);
-      const response = await res.response;
-
-      const text = response.text().trim();
-      if (text && text.length > 100) return text;
-    } catch {
-      // try next model
-    }
+      const text = (await (await model.generateContent(prompt)).response).text().trim();
+      return text && text.length > 100 ? text : null;
+    });
+  } catch {
+    return originalExcerpt;
   }
-
-  return originalExcerpt;
 }
 
 export async function evaluateAndExtractEvents(
@@ -999,51 +932,29 @@ Return at most ${maxEvents} events. Return ONLY the JSON array, no commentary.
 Search results:
 ${resultsJson}`;
 
-  let lastError: any = null;
-
-  for (const modelId of TEXT_MODELS) {
-    try {
-      const model = ai.getGenerativeModel({
-        model: modelId,
-        safetySettings: SAFETY_SETTINGS,
-        generationConfig: {
-        },
-      });
-      const res = await model.generateContent(prompt);
-      const response = await res.response;
-
-      const raw = response.text().trim();
-      if (!raw) continue;
-
-      const jsonStr = extractJson(raw);
-      const parsed: unknown = JSON.parse(jsonStr);
-
-      if (!Array.isArray(parsed)) continue;
-
-      return (parsed as any[])
-        .filter((e) => e.title && e.event_date && e.relevant !== false)
-        .map((e) => ({
-          title:        String(e.title || "").trim(),
-          tagline:      String(e.tagline || "").trim(),
-          excerpt:      String(e.excerpt || "").trim(),
-          content:      String(e.content || e.excerpt || "").trim(),
-          event_date:   String(e.event_date || "").trim(),
-          end_date:     String(e.end_date || "").trim(),
-          location:     String(e.location || "").trim(),
-          city:         String(e.city || city).trim(),
-          admission:    String(e.admission || "").trim(),
-          ticketing_url: String(e.ticketing_url || "").trim(),
-          attribution:  String(e.attribution || "").trim(),
-          interests:    Array.isArray(e.interests) ? e.interests.filter((s: any) => INTEREST_SLUGS.includes(s)) : [],
-          relevant:     true,
-        }))
-        .slice(0, maxEvents);
-    } catch (err: any) {
-      console.warn(`Model ${modelId} failed for event extraction (${city}):`, err?.message);
-      lastError = err;
-      continue;
-    }
-  }
-
-  throw new Error(`Event extraction failed for ${city}: ${lastError?.message || "Unknown error"}`);
+  return loopWithRetry("evaluateAndExtractEvents", async (modelId) => {
+    const model = ai.getGenerativeModel({ model: modelId, safetySettings: SAFETY_SETTINGS });
+    const raw = (await (await model.generateContent(prompt)).response).text().trim();
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(extractJson(raw));
+    if (!Array.isArray(parsed)) return null;
+    return (parsed as any[])
+      .filter((e) => e.title && e.event_date && e.relevant !== false)
+      .map((e) => ({
+        title:         String(e.title || "").trim(),
+        tagline:       String(e.tagline || "").trim(),
+        excerpt:       String(e.excerpt || "").trim(),
+        content:       String(e.content || e.excerpt || "").trim(),
+        event_date:    String(e.event_date || "").trim(),
+        end_date:      String(e.end_date || "").trim(),
+        location:      String(e.location || "").trim(),
+        city:          String(e.city || city).trim(),
+        admission:     String(e.admission || "").trim(),
+        ticketing_url: String(e.ticketing_url || "").trim(),
+        attribution:   String(e.attribution || "").trim(),
+        interests:     Array.isArray(e.interests) ? e.interests.filter((s: any) => INTEREST_SLUGS.includes(s)) : [],
+        relevant:      true,
+      }))
+      .slice(0, maxEvents);
+  });
 }
