@@ -34,19 +34,8 @@ export async function fetchHomepageData(editionTag?: string) {
   let seriesTheLane: any[] = [];
   let seriesThinkCreative: any[] = [];
 
-  // Cover story — try edition-specific tag first, fall back to global cover-story
-  try {
-    if (editionTag) {
-      const edCover = await getWPData(GET_STORIES, { first: 1, tag: `cover-story-${editionTag}` }, { revalidate: 0 });
-      coverStory = edCover?.posts?.nodes?.[0] || null;
-    }
-    if (!coverStory) {
-      const globalCover = await getWPData(GET_STORIES, { first: 1, tag: "cover-story" }, { revalidate: 0 });
-      coverStory = globalCover?.posts?.nodes?.[0] || null;
-    }
-  } catch (err) { console.error("Cover story fetch error:", err); }
-
   // Stories — edition-tagged first, fall back to latest
+  // The first post in the pool becomes the left-panel cover story; the rest feed the right grid.
   try {
     const vars = editionTag
       ? { first: 14, tag: editionTag }
@@ -63,12 +52,8 @@ export async function fetchHomepageData(editionTag?: string) {
       pool = [...all, ...fallbackStories.filter((s: any) => !existingIds.has(s.id))].slice(0, 14);
     }
 
-    if (!coverStory) {
-      coverStory = pool[0];
-      stories = pool.slice(1, 14);
-    } else {
-      stories = pool.filter((s: any) => s.id !== coverStory.id).slice(0, 13);
-    }
+    coverStory = pool[0] || null;
+    stories = pool.slice(1, 14);
   } catch (err) { console.error("Stories fetch error:", err); }
 
   // Events — filter by edition tag if provided
