@@ -104,6 +104,7 @@ function CompleteProfileForm() {
     e.preventDefault();
     if (!dateOfBirth) { setError("Date of birth is required."); return; }
     if (!countryOfResidence.trim()) { setError("Country of residence is required."); return; }
+    if (!city.trim()) { setError("City is required."); return; }
     setError("");
     setStep("membership");
   }
@@ -226,7 +227,7 @@ function CompleteProfileForm() {
             <div style={styles.row}>
               <div style={{ ...styles.field, flex: 1 }}>
                 <label style={styles.label} htmlFor="city">
-                  City <span style={{ fontWeight: 400, color: "#7a6f5c" }}>(optional)</span>
+                  City <span style={{ color: "#c5491f" }}>*</span>
                 </label>
                 <CitySelect
                   id="city"
