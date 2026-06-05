@@ -13,12 +13,16 @@ function createVertexClient(): any | null {
   return null; // Disabled: incompatible with new SDK. Use Gemini or Pollinations fallback.
 }
 
-// Model priority order — newest first, 1.5-series as fallback.
+// Model priority order — highest free-tier RPM first (15 RPM → 5 RPM → legacy fallback).
+// gemini-2.5-flash-lite and gemini-3.1-flash-lite both have 15 RPM free quota.
 const TEXT_MODELS = [
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-8b",
+  "gemini-2.5-flash-lite",      // 15 RPM free
+  "gemini-3.1-flash-lite",      // 15 RPM free
+  "gemini-3-flash",             //  5 RPM free, underused
+  "gemini-2.0-flash",           //  5 RPM free
+  "gemini-2.0-flash-lite",      //  5 RPM free
+  "gemini-1.5-flash",           // legacy fallback
+  "gemini-1.5-flash-8b",        // legacy fallback
 ];
 
 // Safety Settings: Relaxed to ensure cultural/historical topics are not blocked.
