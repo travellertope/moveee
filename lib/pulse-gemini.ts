@@ -17,14 +17,17 @@ import { fetchAllFeeds, type FeedItem } from "./pulse-rss";
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
 
 // Models in preference order — highest free-tier RPM first.
+// 15 RPM: gemini-2.5-flash-lite, gemini-3.1-flash-lite
+// 10 RPM: gemini-3-flash-preview
+//  5 RPM: gemini-2.0-flash, gemini-2.0-flash-lite
 const TEXT_MODELS = [
-  "gemini-2.5-flash-lite",      // 15 RPM free
-  "gemini-3.1-flash-lite",      // 15 RPM free
-  "gemini-3-flash",             //  5 RPM free, underused
-  "gemini-2.0-flash",           //  5 RPM free
-  "gemini-2.0-flash-lite",      //  5 RPM free
-  "gemini-1.5-flash",           // legacy fallback
-  "gemini-1.5-flash-8b",        // legacy fallback
+  "gemini-2.5-flash-lite",        // 15 RPM free
+  "gemini-3.1-flash-lite",        // 15 RPM free
+  "gemini-3-flash-preview",       // 10 RPM free (confirmed ID)
+  "gemini-2.0-flash",             //  5 RPM free
+  "gemini-2.0-flash-lite",        //  5 RPM free
+  "gemini-1.5-flash",             // legacy fallback
+  "gemini-1.5-flash-8b",          // legacy fallback
 ];
 
 const SAFETY_SETTINGS = [
