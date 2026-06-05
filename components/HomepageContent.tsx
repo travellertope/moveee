@@ -5,6 +5,7 @@ import PatronPrice from "@/components/PatronPrice";
 import AdBanner from "@/components/AdBanner";
 import { decodeHtml } from "@/lib/decode-html";
 import ShopCarousel from "@/components/ShopCarousel";
+import IssueCarousel from "@/components/IssueCarousel";
 import HomepageNewsletterForm from "@/components/HomepageNewsletterForm";
 import type { EditionSlug } from "@/lib/editions";
 import { EDITIONS } from "@/lib/editions";
@@ -212,26 +213,9 @@ export default function HomepageContent({
               </div>
             </div>
 
-            {/* Right: 2×2 post grid */}
+            {/* Right: single-row scrolling carousel */}
             {latestIssueStories.length > 0 && (
-              <div className="hp-issue-grid">
-                {latestIssueStories.slice(0, 6).map((story: any) => {
-                  const img = story._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
-                  const cat = decodeHtml(story._embedded?.["wp:term"]?.[0]?.[0]?.name || "Culture");
-                  return (
-                    <Link key={story.id} href={`/magazine/${story.slug}`} className="hp-mag-card">
-                      <div className="hp-mag-card-image">
-                        {img && <Image src={img} alt={story.title?.rendered || ""} fill className="object-cover" />}
-                      </div>
-                      <span className="hp-mag-cat">{cat}</span>
-                      <h4 className="hp-mag-card-title">{decodeHtml(story.title?.rendered || "")}</h4>
-                      <span className="hp-mag-card-meta">
-                        {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
+              <IssueCarousel stories={latestIssueStories.slice(0, 8)} />
             )}
           </div>
         </section>

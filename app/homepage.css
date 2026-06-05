@@ -1915,12 +1915,37 @@
     margin: 0;
   }
 
-  /* 3×2 post grid on the right */
-  .hp-issue-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
+  /* Issue carousel — neutralise the full-width shop-carousel overrides */
+  .hp-carousel-wrap.hp-issue-carousel {
+    max-width: none;
+    margin: 0;
+    align-self: start;
   }
+
+  /* Portrait card matching the left cover (aspect-ratio: 2/3) */
+  .hp-issue-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    /* show ~3 cards + peek of 4th */
+    flex: 0 0 calc(33.33% - 16px);
+    min-width: 160px;
+    scroll-snap-align: start;
+  }
+
+  .hp-issue-card-image {
+    width: 100%;
+    aspect-ratio: 2/3;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 12px;
+    background: var(--paper-deep);
+    border: 1px solid var(--ink);
+    transition: transform 0.4s ease;
+  }
+  .hp-issue-card:hover .hp-issue-card-image { transform: translateY(-4px); }
 
   /* ===== SERIES / INTERVIEW STRIPS ===== */
   .hp-mag-strip {
@@ -3063,7 +3088,6 @@
     .hp-right-stories { grid-template-columns: 1fr; }
     .hp-story-card { border-right: none !important; }
     .hp-issue-layout { grid-template-columns: 1fr; }
-    .hp-issue-grid { grid-template-columns: repeat(2, 1fr); }
     .hp-mag-strip { grid-template-columns: repeat(2, 1fr); }
     .hp-quotes-grid { grid-template-columns: 1fr; }
     .hp-quote-card { border-right: none; border-bottom: 1px solid rgba(243,236,224,0.12); }
@@ -3094,8 +3118,6 @@
     .hp-section { padding: 24px 22px; }
     .hp-section-header { flex-direction: column; align-items: flex-start; gap: 12px; }
     .hp-section-title h3 { font-size: 16px; }
-    /* Magazine: landscape images on mobile */
-    .hp-issue-grid { grid-template-columns: 1fr; }
     .hp-mag-strip { grid-template-columns: 1fr; }
     /* Newsletter form stacks vertically */
     .hp-nl-cta { padding: 22px; }
