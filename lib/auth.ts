@@ -8,6 +8,7 @@ export interface CultureUser {
   username: string;
   email: string;
   displayName: string;
+  registeredAt: number;
   // Contact
   phone: string;
   whatsapp: string;
@@ -72,6 +73,7 @@ export const authOptions: NextAuthOptions = {
             countryOfResidence: data.country_of_residence ?? "",
             city: data.city ?? "",
             occupation: data.occupation ?? "",
+            registeredAt: data.registered_at ?? 0,
             tier: data.tier,
             primaryChapter: data.primary_chapter,
             secondaryChapter: data.secondary_chapter,
@@ -97,6 +99,7 @@ export const authOptions: NextAuthOptions = {
         const u = user as any;
         token.id = u.id;
         token.username = u.username;
+        token.registeredAt = u.registeredAt ?? 0;
         token.phone = u.phone;
         token.whatsapp = u.whatsapp;
         token.gender = u.gender;
@@ -131,6 +134,7 @@ export const authOptions: NextAuthOptions = {
         const s = session.user as any;
         s.id = token.id;
         s.username = token.username;
+        s.registeredAt = token.registeredAt ?? 0;
         s.phone = token.phone;
         s.whatsapp = token.whatsapp;
         s.gender = token.gender;

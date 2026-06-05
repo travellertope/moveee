@@ -69,6 +69,27 @@ class Culture_Community {
         register_post_meta( 'culture_post', 'community_image_url', $image_url_args );
         register_post_meta( 'post',         'community_image_url', $image_url_args ); // legacy
 
+        // ── Moderation / report fields ────────────────────────────────────────
+        $report_string_fields = [
+            'community_reporter_ids',  // JSON-encoded array of user ID strings
+            'community_report_reason', // last reported reason label
+        ];
+        foreach ( $report_string_fields as $field ) {
+            register_post_meta( 'culture_post', $field, $string_meta_args );
+            register_post_meta( 'post',         $field, $string_meta_args );
+        }
+        foreach ( [ 'culture_post', 'post' ] as $post_type ) {
+            register_post_meta( $post_type, 'community_report_count', [
+                'show_in_rest'  => true,
+                'single'        => true,
+                'type'          => 'integer',
+                'default'       => 0,
+                'auth_callback' => function () {
+                    return current_user_can( 'edit_posts' );
+                },
+            ] );
+        }
+
         // ── Reaction count fields ─────────────────────────────────────────────
         $reaction_fields = [ 'reaction_love', 'reaction_fire', 'reaction_clap' ];
 

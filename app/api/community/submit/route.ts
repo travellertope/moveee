@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { checkPostSpam, checkBlocklist, getReviewDays } from "@/lib/spam-protection";
 
 export const runtime = "nodejs";
 
@@ -36,11 +37,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Post must be 500 characters or fewer." }, { status: 400 });
   }
 
-  const validTag = tag && (TAGS as readonly string[]).includes(tag) ? tag : null;
   const user = session.user as any;
-  const authorName: string = user?.name ?? user?.displayName ?? user?.username ?? "Community Member";
-  const authorId: string = String(user?.id ?? user?.databaseId ?? "");
+  const userId: string = String(user?.id ?? user?.databaseId ?? "");
   const sessionTier: string = user?.tier ?? "";
+
+  const spamCheck = checkPostSpam(userId, content, sessionTier);
+  if (!spamCheck.allowed) {
+    return NextResponse.json({ error: spamCheck.reason }, { status: spamCheck.status });
+  }
+
+  // Both blocklist and review-days come from the same cached WP fetch — no extra round-trip.
+  const [blocklistCheck, reviewDays] = await Promise.all([
+    checkBlocklist(content),
+    getReviewDays(),
+  ]);
+  if (!blocklistCheck.allowed) {
+    return NextResponse.json({ error: blocklistCheck.reason }, { status: blocklistCheck.status });
+  }
+
+  // New-member moderation: accounts newer than the admin-configured review period go to pending.
+  const REVIEW_DAYS_S = reviewDays * 24 * 60 * 60;
+  const registeredAt: number = user?.registeredAt ?? 0;
+  const isNewAccount = REVIEW_DAYS_S > 0 && registeredAt > 0 && (Date.now() / 1000 - registeredAt) < REVIEW_DAYS_S;
+  const postStatus = isNewAccount ? "pending" : "publish";
+
+  const validTag = tag && (TAGS as readonly string[]).includes(tag) ? tag : null;
+  const authorName: string = user?.name ?? user?.displayName ?? user?.username ?? "Community Member";
+  const authorId: string = userId;
 
   const title = content.slice(0, 80) + (content.length > 80 ? "…" : "");
   const htmlContent = `<p>${content.replace(/\n/g, "</p><p>")}</p>`;
@@ -51,7 +74,7 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       title,
       content: htmlContent,
-      status: "publish",
+      status: postStatus,
       comment_status: "open",
       meta: {
         community_author_name: authorName,
@@ -71,5 +94,13 @@ export async function POST(req: NextRequest) {
   }
 
   const post = await createRes.json();
-  return NextResponse.json({ success: true, id: post.id, slug: post.slug });
+  return NextResponse.json({
+    success: true,
+    id: post.id,
+    slug: post.slug,
+    pending: postStatus === "pending",
+    message: postStatus === "pending"
+      ? "Your post is under review and will appear shortly."
+      : undefined,
+  });
 }

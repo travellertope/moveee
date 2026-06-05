@@ -9,6 +9,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/member";
+  const isNewMember = searchParams.get("registered") === "1";
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -40,9 +41,11 @@ function LoginForm() {
     <div style={styles.page}>
       <div style={styles.card}>
         <p style={styles.eyebrow}>The Moveee &mdash; Culture Community</p>
-        <h1 style={styles.heading}>Sign in</h1>
+        <h1 style={styles.heading}>{isNewMember ? "You're in!" : "Sign in"}</h1>
         <p style={styles.subheading}>
-          Welcome back. Sign in to access your chapter and member perks.
+          {isNewMember
+            ? "Your account is ready. Sign in to access your dashboard and member perks."
+            : "Welcome back. Sign in to access your chapter and member perks."}
         </p>
 
         <form onSubmit={handleSubmit} noValidate>

@@ -348,6 +348,83 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Community blocklist — returns admin-configured blocked phrases for the Next.js layer.
+        register_rest_route( 'culture/v1', '/community-blocklist', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_community_blocklist' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
+        // Verify email — validates the one-time token sent after registration.
+        register_rest_route( 'culture/v1', '/verify-email', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_verify_email' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'uid' => array(
+                    'required'          => true,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                ),
+                'token' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
+        ) );
+
+        // Complete profile — saves KYC fields + tier after email verification.
+        register_rest_route( 'culture/v1', '/complete-profile', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_complete_profile' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'uid' => array(
+                    'required'          => true,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                ),
+                'token' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'date_of_birth' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'country_of_residence' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'city' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'occupation' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'tier' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_key',
+                    'default'           => 'citizen',
+                ),
+                'plan_key' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'default'           => 'monthly_ngn',
+                ),
+            ),
+        ) );
+
         // Forgot-password — generates a reset key and emails it.
         register_rest_route( 'culture/v1', '/forgot-password', array(
             'methods'             => 'POST',
@@ -1090,45 +1167,162 @@ class Culture_REST_API {
         update_user_meta( $user_id, '_culture_points', 0 );
         update_user_meta( $user_id, '_culture_badges', array() );
 
-        // Process referral if present (cookie/POST not available in REST context,
-        // so inject the code directly and call the handler).
+        // Process referral if present.
         if ( ! empty( $referral ) && class_exists( 'Culture_Referrals' ) ) {
             $_COOKIE['culture_ref'] = $referral;
             Culture_Referrals::process_referral( $user_id );
         }
 
-        // Send welcome email once, now that all metadata is in place.
+        // Generate email verification token (valid for 24 hours).
+        $verify_token = wp_generate_password( 32, false );
+        update_user_meta( $user_id, '_culture_email_verify_token', wp_hash( $verify_token ) );
+        update_user_meta( $user_id, '_culture_email_verify_expires', time() + DAY_IN_SECONDS );
+        update_user_meta( $user_id, '_culture_email_verified', '0' );
+
+        $next_url = sanitize_text_field( $request->get_param( 'next' ) ?: '' );
+
+        if ( class_exists( 'Culture_Emails' ) ) {
+            Culture_Emails::send_verification_email( $user_id, $verify_token, $next_url );
+        }
+
+        return rest_ensure_response( array(
+            'success'               => true,
+            'requires_verification' => true,
+            'user_id'               => $user_id,
+            'username'              => get_userdata( $user_id )->user_login,
+        ) );
+    }
+
+    /**
+     * GET /culture/v1/community-blocklist
+     * Returns admin-configured blocked phrases so the Next.js layer can enforce them.
+     * The default hardcoded list lives in lib/spam-protection.ts; this endpoint
+     * only returns custom additions made via WP Admin → Settings → Moderation.
+     */
+    public static function handle_get_community_blocklist() {
+        $raw     = get_option( 'culture_community_blocklist', '' );
+        $phrases = array_values( array_filter(
+            array_map( 'trim', explode( "\n", $raw ) ),
+            function ( $line ) { return strlen( $line ) > 1; }
+        ) );
+        $review_days = (int) get_option( 'culture_new_member_review_days', 7 );
+        return rest_ensure_response( array(
+            'phrases'      => $phrases,
+            'review_days'  => $review_days,
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/verify-email
+     * Validates the one-time token issued after registration.
+     * Does not consume the token — the user can reload the complete-profile page.
+     */
+    public static function handle_verify_email( $request ) {
+        $user_id = (int) $request->get_param( 'uid' );
+        $token   = $request->get_param( 'token' );
+
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', __( 'Invalid verification link.', 'culture-community' ), array( 'status' => 404 ) );
+        }
+
+        $stored_hash = get_user_meta( $user_id, '_culture_email_verify_token', true );
+        $expires     = (int) get_user_meta( $user_id, '_culture_email_verify_expires', true );
+
+        if ( ! $stored_hash || ! hash_equals( $stored_hash, wp_hash( $token ) ) ) {
+            return new WP_Error( 'invalid_token', __( 'Verification link is invalid.', 'culture-community' ), array( 'status' => 400 ) );
+        }
+
+        if ( time() > $expires ) {
+            return new WP_Error( 'token_expired', __( 'Verification link has expired. Please register again.', 'culture-community' ), array( 'status' => 410 ) );
+        }
+
+        return rest_ensure_response( array(
+            'success'      => true,
+            'user_id'      => $user_id,
+            'username'     => $user->user_login,
+            'display_name' => $user->display_name,
+            'email'        => $user->user_email,
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/complete-profile
+     * Saves KYC fields and membership tier after email verification.
+     * Consumes the verification token and sends the welcome email.
+     */
+    public static function handle_complete_profile( $request ) {
+        $user_id  = (int) $request->get_param( 'uid' );
+        $token    = $request->get_param( 'token' );
+        $tier     = $request->get_param( 'tier' ) ?: 'citizen';
+        $plan_key = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
+
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', __( 'User not found.', 'culture-community' ), array( 'status' => 404 ) );
+        }
+
+        $stored_hash = get_user_meta( $user_id, '_culture_email_verify_token', true );
+        $expires     = (int) get_user_meta( $user_id, '_culture_email_verify_expires', true );
+
+        if ( ! $stored_hash || ! hash_equals( $stored_hash, wp_hash( $token ) ) ) {
+            return new WP_Error( 'invalid_token', __( 'Verification link is invalid.', 'culture-community' ), array( 'status' => 400 ) );
+        }
+
+        if ( time() > $expires ) {
+            return new WP_Error( 'token_expired', __( 'Verification link has expired.', 'culture-community' ), array( 'status' => 410 ) );
+        }
+
+        // Save KYC fields.
+        $meta_map = array(
+            'date_of_birth'        => '_culture_dob',
+            'country_of_residence' => '_culture_country_of_residence',
+            'city'                 => '_culture_city',
+            'occupation'           => '_culture_occupation',
+        );
+        foreach ( $meta_map as $param => $meta_key ) {
+            $val = $request->get_param( $param );
+            if ( $val ) {
+                update_user_meta( $user_id, $meta_key, sanitize_text_field( $val ) );
+            }
+        }
+
+        if ( ! in_array( $tier, array( 'citizen', 'patron' ), true ) ) {
+            $tier = 'citizen';
+        }
+        update_user_meta( $user_id, '_culture_membership_tier', 'citizen' );
+
+        // Mark email as verified and consume the token.
+        update_user_meta( $user_id, '_culture_email_verified', '1' );
+        delete_user_meta( $user_id, '_culture_email_verify_token' );
+        delete_user_meta( $user_id, '_culture_email_verify_expires' );
+
+        // Send welcome email now that all data is in place.
         if ( class_exists( 'Culture_Emails' ) ) {
             Culture_Emails::send_welcome_email( $user_id );
         }
 
-        $user = get_userdata( $user_id );
-
-        // Patron tier — return Paystack checkout URL so Next.js can redirect.
+        // Patron tier — return payment checkout URL.
         if ( 'patron' === $tier ) {
             $checkout_url = '';
-            
-            // Route to appropriate gateway
             if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
                 $checkout_url = Culture_Paystack::get_checkout_url( $user_id, $plan_key );
             } elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {
                 $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key );
             }
-
             if ( $checkout_url ) {
-                return rest_ensure_response( array_merge(
-                    self::user_profile( $user ),
-                    array(
-                        'requires_payment' => true,
-                        'checkout_url'     => $checkout_url,
-                    )
+                return rest_ensure_response( array(
+                    'success'          => true,
+                    'requires_payment' => true,
+                    'checkout_url'     => $checkout_url,
                 ) );
             }
         }
 
-        return rest_ensure_response( array_merge(
-            self::user_profile( $user ),
-            array( 'requires_payment' => false )
+        return rest_ensure_response( array(
+            'success'          => true,
+            'requires_payment' => false,
+            'username'         => $user->user_login,
         ) );
     }
 
@@ -1171,6 +1365,7 @@ class Culture_REST_API {
             'username'            => $user->user_login,
             'email'               => $user->user_email,
             'display_name'        => $user->display_name,
+            'registered_at'       => strtotime( $user->user_registered ),
             // Contact
             'phone'               => get_user_meta( $user->ID, '_culture_phone', true ) ?: '',
             'whatsapp'            => get_user_meta( $user->ID, '_culture_whatsapp', true ) ?: '',

@@ -14,6 +14,7 @@ interface RegisterBody {
   directory_opt_in?: string;
   directory_disciplines?: string;
   directory_bio?: string;
+  next?: string;
 }
 
 export async function POST(req: Request) {

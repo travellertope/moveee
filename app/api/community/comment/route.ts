@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { checkCommentSpam, checkBlocklist } from "@/lib/spam-protection";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const BASE = `${WP_URL}/wp-json/wp/v2`;
@@ -20,7 +21,20 @@ export async function POST(req: NextRequest) {
   }
 
   const user = session.user as any;
-  const authorName = user.name ?? user.displayName ?? "Community Member";
+  const userId = String(user?.id ?? user?.databaseId ?? "");
+  const tier   = user?.tier ?? "";
+
+  const spamCheck = checkCommentSpam(userId, content.trim(), tier);
+  if (!spamCheck.allowed) {
+    return NextResponse.json({ error: spamCheck.reason }, { status: spamCheck.status });
+  }
+
+  const blocklistCheck = await checkBlocklist(content.trim());
+  if (!blocklistCheck.allowed) {
+    return NextResponse.json({ error: blocklistCheck.reason }, { status: blocklistCheck.status });
+  }
+
+  const authorName  = user.name ?? user.displayName ?? "Community Member";
   const authorEmail = user.email ?? "noreply@themoveee.com";
 
   const body: Record<string, any> = {

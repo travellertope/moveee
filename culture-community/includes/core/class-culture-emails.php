@@ -118,6 +118,36 @@ class Culture_Emails {
     }
 
     /**
+     * Send email verification link to a newly registered user.
+     *
+     * @param int    $user_id
+     * @param string $token     Plain-text token (not the stored hash).
+     * @param string $next_url  Optional path to redirect to after completing registration.
+     */
+    public static function send_verification_email( $user_id, $token, $next_url = '' ) {
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return;
+        }
+
+        $base      = self::get_frontend_url();
+        $link      = $base . 'register/complete?uid=' . $user_id . '&token=' . rawurlencode( $token );
+        if ( $next_url ) {
+            $link .= '&next=' . rawurlencode( $next_url );
+        }
+
+        $subject = 'Verify your Moveee account';
+
+        $body  = self::get_header( 'Almost there, ' . esc_html( $user->display_name ) . '!' );
+        $body .= '<p style="font-size:15px;line-height:1.7;color:#3d3d3d;margin:0 0 20px;">Thanks for signing up. Click the button below to verify your email address and complete your profile — it only takes a minute.</p>';
+        $body .= self::get_button( $link, 'Verify my email' );
+        $body .= '<p style="font-size:13px;color:#7a6f5c;margin:20px 0 0;">This link expires in 24 hours. If you didn\'t create a Moveee account you can safely ignore this email.</p>';
+        $body .= self::get_footer();
+
+        self::send( $user->user_email, $subject, $body );
+    }
+
+    /**
      * Send referral confirmation to the referrer.
      *
      * @param int $referrer_id
