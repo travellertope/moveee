@@ -542,11 +542,6 @@ const STORY_FIELDS_FRAGMENT = `
         slug
       }
     }
-    tags {
-      nodes {
-        slug
-      }
-    }
     # Event specific fields (expected from ACF/JetEngine)
     location
     eventStatus: status
@@ -584,6 +579,23 @@ export const GET_STORIES = `
     }
   }
   ${STORY_FIELDS_FRAGMENT}
+`;
+
+// Lightweight query — only fetches id + tags for edition-exclusion logic.
+// Avoids touching STORY_FIELDS_FRAGMENT in case post_tag isn't in the schema.
+export const GET_STORIES_TAGS = `
+  query GetStoriesTags($first: Int, $tag: String) {
+    posts(first: $first, where: { tag: $tag }) {
+      nodes {
+        id
+        tags {
+          nodes {
+            slug
+          }
+        }
+      }
+    }
+  }
 `;
 
 export const GET_FILTERS = `

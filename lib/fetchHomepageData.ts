@@ -1,6 +1,7 @@
 import {
   getWPData,
   GET_STORIES,
+  GET_STORIES_TAGS,
   GET_SERIES_STORIES,
   GET_JOURNEYS,
   GET_DIRECTORY_ENTRIES,
@@ -12,16 +13,6 @@ import {
   type IssueTerm,
 } from "@/lib/wp";
 import { REGIONAL_SLUGS } from "@/lib/editions";
-
-// Returns true if the post/event belongs in the given edition view.
-// A piece of content is "universal" (no edition tags) → shown in every edition.
-// A piece tagged for another edition is excluded from the current one.
-function isEditionRelevant(item: any, editionTag: string): boolean {
-  const tags: string[] = item.tags?.nodes?.map((t: any) => t.slug) ?? [];
-  const otherEditionTags = (REGIONAL_SLUGS as readonly string[]).filter(t => t !== editionTag);
-  const taggedForOtherEdition = otherEditionTags.some(t => tags.includes(t));
-  return !taggedForOtherEdition;
-}
 
 /**
  * Fetch all data needed for a homepage edition.
@@ -45,30 +36,66 @@ export async function fetchHomepageData(editionTag?: string) {
   let seriesTheLane: any[] = [];
   let seriesThinkCreative: any[] = [];
 
-  // Stories — fetch a wider pool then filter by edition relevance.
-  // Universal posts (no edition tag) appear in every edition.
-  // Posts tagged for a different edition are excluded from the current one.
-  // The first post in the filtered pool becomes the left-panel cover story.
+  // Stories — two parallel fetches for edition views:
+  //   1. Posts tagged for this edition (guaranteed to appear)
+  //   2. All latest posts (the universal/untagged ones live here)
+  // Posts tagged for a DIFFERENT edition are excluded from pool 2.
+  // First post in the merged pool becomes the left-panel cover story.
   try {
-    // Fetch more when edition-filtering so we always have enough after the filter.
-    const data = await getWPData(GET_STORIES, { first: editionTag ? 50 : 14 }, { revalidate: 0 });
-    const all: any[] = data?.posts?.nodes || [];
+    if (editionTag) {
+      const otherEditions = (REGIONAL_SLUGS as readonly string[]).filter(t => t !== editionTag);
 
-    const pool = editionTag
-      ? all.filter(s => isEditionRelevant(s, editionTag))
-      : all;
+      // Run three queries in parallel: edition posts, all-latest, and tag-only
+      // data for each other edition (lightweight — just id + tags).
+      const [editionData, latestData, ...otherTagData] = await Promise.all([
+        getWPData(GET_STORIES, { first: 14, tag: editionTag }, { revalidate: 0 }),
+        getWPData(GET_STORIES, { first: 20 }, { revalidate: 0 }),
+        ...otherEditions.map(tag =>
+          getWPData(GET_STORIES_TAGS, { first: 50, tag }, { revalidate: 0 })
+        ),
+      ]);
 
-    coverStory = pool[0] || null;
-    stories = pool.slice(1, 14);
+      const editionPosts: any[] = editionData?.posts?.nodes || [];
+      const latestPosts: any[]  = latestData?.posts?.nodes  || [];
+
+      // Build a set of IDs that belong to other editions (to exclude from latest pool).
+      const otherEditionIds = new Set<string>(
+        otherTagData.flatMap((d: any) => d?.posts?.nodes?.map((p: any) => p.id) ?? [])
+      );
+
+      const editionIds = new Set(editionPosts.map((p: any) => p.id));
+
+      // From the all-latest pool take posts not already in editionPosts and not
+      // belonging to another edition.
+      const universalPosts = latestPosts.filter(
+        (p: any) => !editionIds.has(p.id) && !otherEditionIds.has(p.id)
+      );
+
+      // Edition-specific posts first, then universal posts (both already date-ordered by WP).
+      const pool = [...editionPosts, ...universalPosts];
+      coverStory = pool[0] || null;
+      stories = pool.slice(1, 14);
+    } else {
+      const data = await getWPData(GET_STORIES, { first: 14 }, { revalidate: 0 });
+      const pool: any[] = data?.posts?.nodes || [];
+      coverStory = pool[0] || null;
+      stories = pool.slice(1, 14);
+    }
   } catch (err) { console.error("Stories fetch error:", err); }
 
-  // Events — fetch more then apply the same edition-relevance filter:
-  // show events for the current edition + universal (untagged) events,
-  // exclude events tagged only for other editions.
+  // Events — for edition views: show events tagged for this edition + universal events.
+  // Universal = not explicitly tagged for any other edition.
+  // Events use the same tag structure as posts so we can check .tags?.nodes.
   try {
     events = await getEventsWithFallback(editionTag ? 18 : 6, { revalidate: 0 });
     if (editionTag && events.length > 0) {
-      events = events.filter(e => isEditionRelevant(e, editionTag)).slice(0, 6);
+      const otherEditions = (REGIONAL_SLUGS as readonly string[]).filter(t => t !== editionTag);
+      events = events.filter((e: any) => {
+        const eventTags: string[] = e.tags?.nodes?.map((t: any) => t.slug) ?? [];
+        // If we have no tag data, include the event (fail open rather than fail closed).
+        if (eventTags.length === 0 && !e.tags) return true;
+        return !otherEditions.some(t => eventTags.includes(t));
+      }).slice(0, 6);
     }
   } catch (err) { console.error("Events fetch error:", err); }
 
