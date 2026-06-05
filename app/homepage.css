@@ -2274,22 +2274,26 @@
 
   .hp-nl-cta-left {
     border-right: 1px solid var(--rule);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 56px 40px;
+    position: relative;
+    overflow: hidden;
     background: var(--ink);
+    min-height: 340px;
   }
 
-  .hp-nl-cta-deco {
-    font-family: 'Fraunces', serif;
-    font-size: clamp(120px, 14vw, 200px);
-    font-weight: 300;
-    color: rgba(243,236,224,0.06);
-    line-height: 1;
-    user-select: none;
-    letter-spacing: -0.05em;
-    font-variation-settings: "opsz" 144, "SOFT" 100;
+  .hp-nl-cta-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+  }
+
+  .hp-nl-cta-photo-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(20,17,13,0.55) 0%, rgba(20,17,13,0.2) 100%);
   }
 
   .hp-nl-cta-right {
