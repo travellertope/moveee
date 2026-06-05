@@ -42,7 +42,7 @@ export default function HomepageNewsletterForm() {
         required
       />
       <button type="submit" className="hp-nl-cta-btn" disabled={status === "loading"}>
-        {status === "loading" ? "Subscribing…" : "Get Me Lit →"}
+        {status === "loading" ? "Subscribing…" : "Drop it in my inbox →"}
       </button>
       {status === "error" && (
         <span className="hp-nl-cta-error">Something went wrong — try again.</span>

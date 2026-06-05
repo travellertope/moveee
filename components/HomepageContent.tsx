@@ -365,15 +365,21 @@ export default function HomepageContent({
       <section className="hp-nl-cta">
         <div className="hp-nl-cta-box">
           <div className="hp-nl-cta-left">
-            <div className="hp-nl-cta-deco" aria-hidden="true"><span>G</span></div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=800&fit=crop"
+              alt="Culture Drop — The Moveee"
+              className="hp-nl-cta-photo"
+            />
+            <div className="hp-nl-cta-photo-overlay" aria-hidden="true" />
           </div>
           <div className="hp-nl-cta-right">
-            <div className="hp-nl-cta-tag">GetMeLit · Our Flagship Newsletter</div>
-            <h3 className="hp-nl-cta-heading">Stay lit.<br />Every Thursday.</h3>
+            <div className="hp-nl-cta-tag">Culture Drop · Our Flagship Newsletter</div>
+            <h3 className="hp-nl-cta-heading">The drop.<br />Every Thursday.</h3>
             <p className="hp-nl-cta-body">
-              GetMeLit is the weekly culture briefing from The Moveee — the stories, art, music,
-              and ideas moving the African diaspora forward, curated by our editors and delivered
-              straight to your inbox. No noise. Just the good stuff.
+              Culture Drop is the weekly dispatch from The Moveee — one deep essay, curated picks,
+              a music dispatch, and what&apos;s happening across Lagos, London, New York, and Accra.
+              Written to make you think. Delivered to your inbox.
             </p>
             <HomepageNewsletterForm />
           </div>
