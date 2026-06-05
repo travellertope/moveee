@@ -491,6 +491,7 @@ const STORY_FIELDS_FRAGMENT = `
     slug
     date
     excerpt
+    content
     featuredImage {
       node {
         sourceUrl

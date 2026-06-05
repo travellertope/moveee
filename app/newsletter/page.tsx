@@ -73,7 +73,7 @@ export default async function NewsletterArchive({
 
           {/* Card 1 — Culture Drop */}
           <div className="nl-card nl-card--culturedrop">
-            <span className="nl-card-eyebrow">Weekly · Every Thursday</span>
+            <span className="nl-card-eyebrow">Weekly · Every Tuesday</span>
             <h2 className="nl-card-title">
               Culture <em>Drop</em>
             </h2>

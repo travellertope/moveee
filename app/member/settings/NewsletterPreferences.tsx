@@ -10,7 +10,7 @@ const NEWSLETTERS = [
   {
     id: "culture-drop",
     name: "Culture Drop",
-    desc: "Weekly — the deep dive into African and diasporan culture. Essays, music, events. Every Thursday.",
+    desc: "Weekly — the deep dive into African and diasporan culture. Essays, music, events. Every Tuesday.",
   },
   {
     id: "getmelit",
