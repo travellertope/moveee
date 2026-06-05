@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body       = await req.json().catch(() => ({}));
-  const batchSize  = Math.min(parseInt(String(body.batch_size ?? "10"), 10) || 10, 20);
+  const batchSize  = Math.min(parseInt(String(body.batch_size ?? "5"), 10) || 5, 20);
   const quarantine = body.quarantine === true;
 
   let quotes: WpQuote[];
