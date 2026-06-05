@@ -367,7 +367,7 @@ export default function HomepageContent({
           <div className="hp-nl-cta-left">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=800&fit=crop"
+              src="https://images.unsplash.com/photo-1631613638095-74b03814ac08?q=80&w=770&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
               alt="Culture Drop — The Moveee"
               className="hp-nl-cta-photo"
             />
