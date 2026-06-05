@@ -3,77 +3,6 @@ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/ge
 // Google AI Studio client — used for all text generation.
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
 
-// ── Groq fallback (free, OpenAI-compatible, separate quota) ──────────────────
-
-async function callGroq(
-  prompt: string,
-  opts: { maxTokens?: number; temperature?: number; systemInstruction?: string } = {}
-): Promise<string> {
-  const key = process.env.GROQ_API_KEY;
-  if (!key) throw new Error("GROQ_API_KEY not set");
-
-  const messages: { role: string; content: string }[] = [];
-  if (opts.systemInstruction) messages.push({ role: "system", content: opts.systemInstruction });
-  messages.push({ role: "user", content: prompt });
-
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "llama-3.1-8b-instant",
-      messages,
-      max_tokens: opts.maxTokens ?? 2048,
-      temperature: opts.temperature ?? 0.7,
-    }),
-    signal: AbortSignal.timeout(30_000),
-  });
-
-  if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
-  const json = await res.json();
-  return json.choices?.[0]?.message?.content?.trim() ?? "";
-}
-
-// ── Shared text generation with Groq fallback ────────────────────────────────
-
-async function generateTextRaw(
-  prompt: string,
-  opts: { maxTokens?: number; temperature?: number; systemInstruction?: string } = {}
-): Promise<string> {
-  let lastErr: any;
-
-  for (const modelId of TEXT_MODELS) {
-    try {
-      const model = ai.getGenerativeModel({
-        model: modelId,
-        safetySettings: SAFETY_SETTINGS,
-        ...(opts.systemInstruction ? { systemInstruction: opts.systemInstruction } : {}),
-        generationConfig: {
-          ...(opts.maxTokens !== undefined ? { maxOutputTokens: opts.maxTokens } : {}),
-          ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
-        },
-      });
-      const text = (await (await model.generateContent(prompt)).response).text().trim();
-      if (text) return text;
-    } catch (err: any) {
-      lastErr = err;
-      const msg: string = err?.message ?? "";
-      const isRateLimit = msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("Quota exceeded");
-      if (isRateLimit) {
-        console.warn(`[gemini] ${modelId} rate-limited — waiting 2 s before next model`);
-        await new Promise(r => setTimeout(r, 2000));
-      }
-    }
-  }
-
-  // All Gemini models exhausted — try Groq
-  if (process.env.GROQ_API_KEY) {
-    console.log("[gemini] All Gemini models failed — falling back to Groq");
-    return callGroq(prompt, opts);
-  }
-
-  throw lastErr ?? new Error("All text models failed and GROQ_API_KEY is not set");
-}
-
 /**
  * Lazily create a Vertex AI client for Imagen 3 image generation.
  * Requires VERTEX_PROJECT, VERTEX_CLIENT_EMAIL, and VERTEX_PRIVATE_KEY env vars.
@@ -366,23 +295,36 @@ async function buildImagePromptWithAI(
     `\n\nEntry: "${title}" (type: ${entryType}, template: ${template})\n` +
     `Description: ${excerpt.slice(0, 400) || "(no description provided)"}`;
 
-  try {
-    const brief = await generateTextRaw(contents, { temperature: 0.9, maxTokens: 200 });
-    if (brief.length > 30) {
-      const fullPrompt =
-        brief + " " +
-        "Strictly restricted palette: deep ink (#14110d), burnt ochre (#c5491f), dark ochre (#8a2d10), " +
-        "gold brass (#b38238), moss green (#3d4a2a), cream paper (#f3ece0), indigo (#1e2b42) — no saturated blues/purples, no white. " +
-        "Premium editorial magazine illustration. Flat geometric shapes with dry-brush paper grain, coarse stippling, ink bleeds. " +
-        "Shading via sharp geometric shadow blocks, no soft gradients. No photorealism, no 3D rendering, matte finish, generous negative space.";
-      console.log(`[image-prompt] AI brief for "${title}": ${brief.slice(0, 120)}...`);
-      return fullPrompt;
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
+          temperature: 0.9,
+          maxOutputTokens: 200,
+        },
+      });
+      const res = await model.generateContent(contents);
+      const response = await res.response;
+      const brief = response.text().trim();
+      if (brief.length > 30) {
+        const fullPrompt =
+          brief + " " +
+          "Strictly restricted palette: deep ink (#14110d), burnt ochre (#c5491f), dark ochre (#8a2d10), " +
+          "gold brass (#b38238), moss green (#3d4a2a), cream paper (#f3ece0), indigo (#1e2b42) — no saturated blues/purples, no white. " +
+          "Premium editorial magazine illustration. Flat geometric shapes with dry-brush paper grain, coarse stippling, ink bleeds. " +
+          "Shading via sharp geometric shadow blocks, no soft gradients. No photorealism, no 3D rendering, matte finish, generous negative space.";
+        console.log(`[image-prompt] AI brief for "${title}": ${brief.slice(0, 120)}...`);
+        return fullPrompt;
+      }
+      console.warn(`[image-prompt] ${modelId} returned empty brief for "${title}" — trying next`);
+    } catch (err: any) {
+      console.warn(`[image-prompt] ${modelId} failed for "${title}": ${err?.message?.slice(0, 100)}`);
     }
-  } catch (err: any) {
-    console.warn(`[image-prompt] All models failed for "${title}": ${err?.message?.slice(0, 100)}`);
   }
 
-  console.warn(`[image-prompt] Using fallback template for "${title}"`);
+  console.warn(`[image-prompt] All models failed for "${title}" — using fallback template`);
   return buildImagePromptFallback(title, entryType, excerpt);
 }
 
@@ -535,28 +477,55 @@ export async function generateDirectoryImage(
 export async function generateDirectoryStub(
   topic: string
 ): Promise<DirectoryStub> {
-  const raw = await generateTextRaw(`Generate a Culture Directory entry for: "${topic}"`, {
-    systemInstruction: SYSTEM_PROMPT,
-  });
-  console.log(`[gemini] response for "${topic}":`, raw.slice(0, 200));
+  let lastError: any = null;
 
-  const jsonStr = extractJson(raw);
-  const parsed = JSON.parse(jsonStr) as DirectoryStub;
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        systemInstruction: SYSTEM_PROMPT,
+        safetySettings: SAFETY_SETTINGS,
+      });
+      const res = await model.generateContent(`Generate a Culture Directory entry for: "${topic}"`);
+      const response = await res.response;
+      console.log(`[gemini] ${modelId} response for "${topic}":`, JSON.stringify(response).slice(0, 200));
 
-  if (!ENTRY_TYPE_SLUGS.includes(parsed.entryType as EntryType)) parsed.entryType = "concept";
-  if (!Array.isArray(parsed.interests)) parsed.interests = [];
-  if (!Array.isArray(parsed.suggestedLinks)) parsed.suggestedLinks = [];
-  if (!parsed.infobox || typeof parsed.infobox !== "object" || Array.isArray(parsed.infobox)) {
-    parsed.infobox = {};
-  } else {
-    const clean: DirectoryInfobox = {};
-    for (const [k, v] of Object.entries(parsed.infobox)) {
-      if (typeof v === "string" && v.trim()) (clean as any)[k] = v.trim();
+      const raw = response.text().trim();
+      if (!raw) continue; // Try next model
+
+      const jsonStr = extractJson(raw);
+      const parsed = JSON.parse(jsonStr) as DirectoryStub;
+
+      // Normalise entry type to a known slug.
+      if (!ENTRY_TYPE_SLUGS.includes(parsed.entryType as EntryType)) {
+        parsed.entryType = "concept";
+      }
+
+      // Ensure arrays are arrays.
+      if (!Array.isArray(parsed.interests)) parsed.interests = [];
+      if (!Array.isArray(parsed.suggestedLinks)) parsed.suggestedLinks = [];
+
+      // Ensure infobox is a plain object of string values.
+      if (!parsed.infobox || typeof parsed.infobox !== "object" || Array.isArray(parsed.infobox)) {
+        parsed.infobox = {};
+      } else {
+        // Strip any non-string, null, or empty values.
+        const clean: DirectoryInfobox = {};
+        for (const [k, v] of Object.entries(parsed.infobox)) {
+          if (typeof v === "string" && v.trim()) (clean as any)[k] = v.trim();
+        }
+        parsed.infobox = clean;
+      }
+
+      return parsed;
+    } catch (err: any) {
+      console.warn(`Model ${modelId} failed for "${topic}":`, err?.message);
+      lastError = err;
+      continue; // Try next model
     }
-    parsed.infobox = clean;
   }
 
-  return parsed;
+  throw new Error(`All models failed for "${topic}". Last error: ${lastError?.message || "Unknown error"}`);
 }
 
 /**
@@ -586,14 +555,39 @@ Aim for geographic diversity across West Africa, East Africa, Southern Africa, t
 Return ONLY a JSON array of strings — topic names only, no descriptions, no numbering. Example format:
 ["Zanele Muholi", "Kuduro", "Brixton Market", "Afrocomix"]`;
 
-  const raw = await generateTextRaw(prompt);
-  const topics: unknown = JSON.parse(extractJson(raw));
-  if (!Array.isArray(topics)) throw new Error("Topics response was not an array");
-  const existingLower = new Set(existingTitles.map((t) => t.toLowerCase().trim()));
-  return (topics as unknown[])
-    .filter((t): t is string => typeof t === "string" && t.trim().length > 0)
-    .filter((t) => !existingLower.has(t.toLowerCase().trim()))
-    .slice(0, 20);
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+      });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
+
+      const raw = response.text().trim();
+      if (!raw) continue;
+
+      const jsonStr = extractJson(raw);
+      const topics: unknown = JSON.parse(jsonStr);
+
+      if (!Array.isArray(topics)) continue;
+
+      // Deduplicate against existing titles.
+      const existingLower = new Set(existingTitles.map((t) => t.toLowerCase().trim()));
+      return (topics as unknown[])
+        .filter((t): t is string => typeof t === "string" && t.trim().length > 0)
+        .filter((t) => !existingLower.has(t.toLowerCase().trim()))
+        .slice(0, 20);
+    } catch (err: any) {
+      console.warn(`Model ${modelId} failed for topics suggestion:`, err?.message);
+      lastError = err;
+      continue;
+    }
+  }
+
+  throw new Error(`Failed to generate topic suggestions: ${lastError?.message || "Unknown error"}`);
 }
 
 /**
@@ -625,17 +619,41 @@ Example format:
   { "text": "...", "author": "...", "source": "..." }
 ]`;
 
-  const raw = await generateTextRaw(prompt);
-  const quotes: any = JSON.parse(extractJson(raw));
-  if (!Array.isArray(quotes)) throw new Error("Quotes response was not an array");
-  return quotes
-    .filter((q: any) => q.text && q.author)
-    .map((q: any) => ({
-      text: String(q.text),
-      author: String(q.author),
-      source: String(q.source || ""),
-    }))
-    .slice(0, count);
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+      });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
+
+      const raw = response.text().trim();
+      if (!raw) continue;
+
+      const jsonStr = extractJson(raw);
+      const quotes: any = JSON.parse(jsonStr);
+
+      if (!Array.isArray(quotes)) continue;
+
+      return quotes
+        .filter((q: any) => q.text && q.author)
+        .map((q: any) => ({
+          text: String(q.text),
+          author: String(q.author),
+          source: String(q.source || ""),
+        }))
+        .slice(0, count);
+    } catch (err: any) {
+      console.warn(`Model ${modelId} failed for quotes generation:`, err?.message);
+      lastError = err;
+      continue;
+    }
+  }
+
+  throw new Error(`Failed to generate seed quotes: ${lastError?.message || "Unknown error"}`);
 }
 
 /**
@@ -686,23 +704,44 @@ Return ONLY the JSON array, no commentary. If nothing is verifiable, return [].
 Search results:
 ${resultsJson}`;
 
-  try {
-    const raw = await generateTextRaw(prompt);
-    const quotes: unknown = JSON.parse(extractJson(raw));
-    if (!Array.isArray(quotes)) return [];
-    return (quotes as any[])
-      .filter((q) => q.text && String(q.text).trim().split(/\s+/).length >= 10)
-      .map((q) => ({
-        text:       String(q.text).trim(),
-        author:     String(q.author  || author),
-        source:     String(q.source  || ""),
-        source_url: String(q.source_url || ""),
-      }))
-      .slice(0, maxQuotes);
-  } catch (err: any) {
-    console.error("[searchAndExtractQuotes] All models failed:", err?.message);
-    return [];
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
+        },
+      });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
+
+      const raw = response.text().trim();
+      if (!raw) continue;
+
+      const jsonStr = extractJson(raw);
+      const quotes: unknown = JSON.parse(jsonStr);
+      if (!Array.isArray(quotes)) continue;
+
+      return (quotes as any[])
+        .filter((q) => q.text && String(q.text).trim().split(/\s+/).length >= 10)
+        .map((q) => ({
+          text:       String(q.text).trim(),
+          author:     String(q.author  || author),
+          source:     String(q.source  || ""),
+          source_url: String(q.source_url || ""),
+        }))
+        .slice(0, maxQuotes);
+    } catch (err: any) {
+      console.warn(`[searchAndExtractQuotes] Model ${modelId} failed:`, err?.message);
+      lastError = err;
+      continue;
+    }
   }
+
+  console.error("[searchAndExtractQuotes] All models failed:", lastError?.message);
+  return [];
 }
 
 // ── Quote authenticity verification ──────────────────────────────────────────
@@ -765,17 +804,39 @@ Return ONLY valid JSON — no commentary:
 Search results:
 ${resultsJson}`;
 
-  try {
-    const raw = await generateTextRaw(prompt);
-    const parsed: any = JSON.parse(extractJson(raw));
-    const validVerdicts: AuditVerdict[] = ["verified", "suspicious", "likely-fabricated", "unverifiable"];
-    const verdict: AuditVerdict = validVerdicts.includes(parsed.verdict) ? parsed.verdict : "unverifiable";
-    const reason: string = String(parsed.reason ?? "No reason provided.").slice(0, 400);
-    return { verdict, reason };
-  } catch (err: any) {
-    console.error("[verifyExistingQuote] All models failed:", err?.message);
-    return { verdict: "unverifiable", reason: "Verification service unavailable." };
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
+        },
+      });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
+
+      const raw = response.text().trim();
+      if (!raw) continue;
+
+      const jsonStr = extractJson(raw);
+      const parsed: any = JSON.parse(jsonStr);
+
+      const validVerdicts: AuditVerdict[] = ["verified", "suspicious", "likely-fabricated", "unverifiable"];
+      const verdict: AuditVerdict = validVerdicts.includes(parsed.verdict) ? parsed.verdict : "unverifiable";
+      const reason: string = String(parsed.reason ?? "No reason provided.").slice(0, 400);
+
+      return { verdict, reason };
+    } catch (err: any) {
+      console.warn(`[verifyExistingQuote] Model ${modelId} failed:`, err?.message);
+      lastError = err;
+      continue;
+    }
   }
+
+  console.error("[verifyExistingQuote] All models failed:", lastError?.message);
+  return { verdict: "unverifiable", reason: "Verification service unavailable." };
 }
 
 // ── Events discovery ─────────────────────────────────────────────────────────
@@ -932,25 +993,51 @@ Return at most ${maxEvents} events. Return ONLY the JSON array, no commentary.
 Search results:
 ${resultsJson}`;
 
-  const raw = await generateTextRaw(prompt);
-  const parsed: unknown = JSON.parse(extractJson(raw));
-  if (!Array.isArray(parsed)) throw new Error(`Event extraction for ${city} returned non-array`);
-  return (parsed as any[])
-    .filter((e) => e.title && e.event_date && e.relevant !== false)
-    .map((e) => ({
-      title:        String(e.title || "").trim(),
-      tagline:      String(e.tagline || "").trim(),
-      excerpt:      String(e.excerpt || "").trim(),
-      content:      String(e.content || e.excerpt || "").trim(),
-      event_date:   String(e.event_date || "").trim(),
-      end_date:     String(e.end_date || "").trim(),
-      location:     String(e.location || "").trim(),
-      city:         String(e.city || city).trim(),
-      admission:    String(e.admission || "").trim(),
-      ticketing_url: String(e.ticketing_url || "").trim(),
-      attribution:  String(e.attribution || "").trim(),
-      interests:    Array.isArray(e.interests) ? e.interests.filter((s: any) => INTEREST_SLUGS.includes(s)) : [],
-      relevant:     true,
-    }))
-    .slice(0, maxEvents);
+  let lastError: any = null;
+
+  for (const modelId of TEXT_MODELS) {
+    try {
+      const model = ai.getGenerativeModel({
+        model: modelId,
+        safetySettings: SAFETY_SETTINGS,
+        generationConfig: {
+        },
+      });
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
+
+      const raw = response.text().trim();
+      if (!raw) continue;
+
+      const jsonStr = extractJson(raw);
+      const parsed: unknown = JSON.parse(jsonStr);
+
+      if (!Array.isArray(parsed)) continue;
+
+      return (parsed as any[])
+        .filter((e) => e.title && e.event_date && e.relevant !== false)
+        .map((e) => ({
+          title:        String(e.title || "").trim(),
+          tagline:      String(e.tagline || "").trim(),
+          excerpt:      String(e.excerpt || "").trim(),
+          content:      String(e.content || e.excerpt || "").trim(),
+          event_date:   String(e.event_date || "").trim(),
+          end_date:     String(e.end_date || "").trim(),
+          location:     String(e.location || "").trim(),
+          city:         String(e.city || city).trim(),
+          admission:    String(e.admission || "").trim(),
+          ticketing_url: String(e.ticketing_url || "").trim(),
+          attribution:  String(e.attribution || "").trim(),
+          interests:    Array.isArray(e.interests) ? e.interests.filter((s: any) => INTEREST_SLUGS.includes(s)) : [],
+          relevant:     true,
+        }))
+        .slice(0, maxEvents);
+    } catch (err: any) {
+      console.warn(`Model ${modelId} failed for event extraction (${city}):`, err?.message);
+      lastError = err;
+      continue;
+    }
+  }
+
+  throw new Error(`Event extraction failed for ${city}: ${lastError?.message || "Unknown error"}`);
 }

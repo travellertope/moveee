@@ -162,39 +162,6 @@ async function tryModels(prompt: string): Promise<PulseStoryRaw[] | null> {
     }
   }
 
-  // Final fallback: Groq
-  if (process.env.GROQ_API_KEY) {
-    try {
-      console.log("[pulse-gemini] All Gemini models failed — falling back to Groq");
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${process.env.GROQ_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "llama-3.1-8b-instant",
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: 4096,
-          temperature: 0.3,
-        }),
-        signal: AbortSignal.timeout(45_000),
-      });
-      if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
-      const json = await res.json();
-      const raw = json.choices?.[0]?.message?.content?.trim() ?? "";
-      if (raw) {
-        const parsed: unknown[] = JSON.parse(extractJsonArray(raw));
-        if (Array.isArray(parsed)) {
-          const stories = parsed.filter(isValidStory).map(s => ({ ...s, category: normaliseCategory(s.category) }));
-          if (stories.length > 0) {
-            console.log(`[pulse-gemini] Groq selected ${stories.length} stories`);
-            return stories;
-          }
-        }
-      }
-    } catch (groqErr: any) {
-      console.error("[pulse-gemini] Groq fallback failed:", groqErr?.message);
-    }
-  }
-
   console.error("[pulse-gemini] All models failed:\n" + errors.map((e, i) => `  ${i + 1}. ${e}`).join("\n"));
   return null;
 }
