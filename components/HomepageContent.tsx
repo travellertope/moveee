@@ -40,6 +40,12 @@ export default function HomepageContent({
   const editionLabel  = EDITIONS[edition].label;
   const editionPrefix = edition === "global" ? "" : `/${edition}`;
 
+  const coverExcerpt = (() => {
+    const src = coverStory?.content || coverStory?.excerpt || "";
+    const plain = src.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    return plain.length > 220 ? plain.slice(0, 220).replace(/\s\S+$/, "") + "…" : plain;
+  })();
+
   return (
     <>
       {/* ===== HERO: STICKY COVER STORY + SCROLLING RIGHT ===== */}
@@ -71,7 +77,7 @@ export default function HomepageContent({
                     {decodeHtml(coverStory.categories?.nodes[0]?.name || "Culture").toUpperCase()}
                   </div>
                   <h2 className="hp-cover-title">{coverStory.title}</h2>
-                  <div className="hp-cover-excerpt" dangerouslySetInnerHTML={{ __html: coverStory.excerpt }} />
+                  <p className="hp-cover-excerpt">{coverExcerpt}</p>
                 </div>
               </Link>
             ) : (
@@ -375,7 +381,7 @@ export default function HomepageContent({
           </div>
           <div className="hp-nl-cta-right">
             <div className="hp-nl-cta-tag">Culture Drop · Our Flagship Newsletter</div>
-            <h3 className="hp-nl-cta-heading">The drop.<br />Every Thursday.</h3>
+            <h3 className="hp-nl-cta-heading">The drop.<br />Every Tuesday.</h3>
             <p className="hp-nl-cta-body">
               Culture Drop is the weekly dispatch from The Moveee — one deep essay, curated picks,
               a music dispatch, and what&apos;s happening across Lagos, London, New York, and Accra.

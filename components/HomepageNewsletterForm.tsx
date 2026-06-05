@@ -25,7 +25,7 @@ export default function HomepageNewsletterForm() {
 
   if (status === "success") {
     return (
-      <p className="hp-nl-cta-success">✓ You&rsquo;re on the list — see you Thursday.</p>
+      <p className="hp-nl-cta-success">✓ You&rsquo;re on the list — see you Tuesday.</p>
     );
   }
 
