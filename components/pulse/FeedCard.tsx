@@ -2,9 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import type { FeedItem } from "@/lib/unified-feed";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
+import SourcePreviewCard from "./SourcePreviewCard";
+import InternalLinkCard from "./InternalLinkCard";
+
+const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
 
 function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
   useEffect(() => {
@@ -347,7 +352,260 @@ export default function FeedCard({
     );
   }
 
-  // ── Standard cards (pulse, editorial, happening, directory) — horizontal timeline style ──
+  // ── Pulse card — inline content with source preview ──
+  if (item.type === "pulse") {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [modalOpen, setModalOpen] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const closeModal = useCallback(() => setModalOpen(false), []);
+
+    const bodyText = item.body ? item.body.replace(/<[^>]+>/g, "").trim() : (item.excerpt ?? "");
+    const CLAMP_CHARS = 380;
+    const isLong = bodyText.length > CLAMP_CHARS;
+    const [expanded, setExpanded] = useState(false);
+    const displayText = isLong && !expanded ? bodyText.slice(0, CLAMP_CHARS) + "…" : bodyText;
+
+    const goUrl = item.wpId ? `/go/${item.wpId}` : item.sourceUrl ?? "#";
+
+    return (
+      <>
+        <article
+          style={{
+            background: "#fff",
+            borderBottom: "1px solid #e8e2d8",
+            padding: "1rem 1.25rem",
+            overflow: "hidden",
+            minWidth: 0,
+          }}
+        >
+          {/* Badges row */}
+          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
+            <span style={{ display: "inline-block", background: "#fef3e2", color: "#b38238", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.18rem 0.45rem", borderRadius: "2px" }}>
+              Pulse
+            </span>
+            {item.region && (
+              <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500, alignSelf: "center" }}>
+                {item.region}
+              </span>
+            )}
+            {item.arm && (
+              <span style={{ fontSize: "0.58rem", color: "#c5491f", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500, alignSelf: "center" }}>
+                {item.arm}
+              </span>
+            )}
+            <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+          </div>
+
+          {/* Clickable body opens modal */}
+          <div
+            onClick={() => setModalOpen(true)}
+            style={{ cursor: "pointer" }}
+          >
+            <h3 style={{
+              color: "#14110d",
+              fontFamily: "var(--font-fraunces), serif",
+              fontSize: "0.97rem",
+              fontWeight: 700,
+              lineHeight: 1.35,
+              marginBottom: "0.5rem",
+            }}>
+              {item.title}
+            </h3>
+
+            {item.image && (
+              <div style={{ width: "100%", maxHeight: "220px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8" }}>
+                <img src={item.image} alt={item.title} style={{ width: "100%", height: "220px", objectFit: "cover", display: "block" }} loading="lazy" />
+              </div>
+            )}
+
+            {displayText && (
+              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+                {displayText}
+              </p>
+            )}
+          </div>
+
+          {isLong && !expanded && (
+            <button
+              onClick={() => setModalOpen(true)}
+              style={{ background: "none", border: "none", color: "#b38238", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", padding: "0.25rem 0", marginTop: "0.25rem" }}
+            >
+              Read more
+            </button>
+          )}
+
+          {/* Source preview card */}
+          {item.sourceUrl && (
+            <SourcePreviewCard
+              goUrl={goUrl}
+              sourceName={item.source ?? ""}
+              sourceUrl={item.sourceUrl}
+              ogTitle={item.ogTitle}
+              ogDescription={item.ogDescription}
+              ogImage={item.ogImage}
+            />
+          )}
+
+          {/* Reactions + comment link */}
+          {item.wpId && (
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", paddingTop: "0.6rem", marginTop: "0.5rem", borderTop: "1px solid #e8e2d8" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <ReactionBar
+                  noBorder
+                  itemId={item.wpId}
+                  itemType="pulse"
+                  initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
+                  shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/connect`}
+                />
+              </div>
+              <button
+                onClick={() => setModalOpen(true)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                  color: "#7a6f5c",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "0.75rem",
+                  flexShrink: 0,
+                  padding: 0,
+                  fontFamily: "inherit",
+                }}
+                aria-label="View comments"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                {(item.commentCount ?? 0) > 0 && (
+                  <span style={{ fontVariantNumeric: "tabular-nums" }}>{item.commentCount}</span>
+                )}
+              </button>
+            </div>
+          )}
+        </article>
+
+        {modalOpen && <PulseDetailModal item={item} onClose={closeModal} />}
+      </>
+    );
+  }
+
+  // ── Editorial card — inline excerpt + internal link card ──
+  if (item.type === "editorial") {
+    const CLAMP_CHARS = 320;
+    const text = item.excerpt ?? "";
+    const isLong = text.length > CLAMP_CHARS;
+    const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
+    const typeMeta = TYPE_BADGE.editorial;
+
+    return (
+      <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
+        {/* Badges row */}
+        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
+          <Badge {...typeMeta} />
+          {item.category && (
+            <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
+              {item.category}
+            </span>
+          )}
+          <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+        </div>
+
+        {/* Body — clicking navigates to the editorial page */}
+        <Link href={item.href} style={{ textDecoration: "none", display: "block" }}>
+          <h3 style={{
+            color: "#14110d",
+            fontFamily: "var(--font-fraunces), serif",
+            fontSize: "0.97rem",
+            fontWeight: 700,
+            lineHeight: 1.35,
+            marginBottom: "0.5rem",
+          }}>
+            {item.title}
+          </h3>
+          {displayText && (
+            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+              {displayText}
+            </p>
+          )}
+          {isLong && (
+            <span style={{ color: "#c5491f", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+              Read more →
+            </span>
+          )}
+        </Link>
+
+        {/* Internal link card */}
+        <InternalLinkCard
+          href={item.href}
+          label="Moveee Magazine"
+          title={item.title}
+          description={item.excerpt}
+          image={item.image}
+        />
+      </article>
+    );
+  }
+
+  // ── Directory card — inline excerpt + internal link card ──
+  if (item.type === "directory") {
+    const CLAMP_CHARS = 280;
+    const text = item.excerpt ?? "";
+    const isLong = text.length > CLAMP_CHARS;
+    const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
+    const typeMeta = TYPE_BADGE.directory;
+
+    return (
+      <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
+        {/* Badges row */}
+        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
+          <Badge {...typeMeta} />
+          {item.entryType && (
+            <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
+              {item.entryType}
+            </span>
+          )}
+          <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+        </div>
+
+        {/* Body — clicking navigates to the directory entry */}
+        <Link href={item.href} style={{ textDecoration: "none", display: "block" }}>
+          <h3 style={{
+            color: "#14110d",
+            fontFamily: "var(--font-fraunces), serif",
+            fontSize: "0.97rem",
+            fontWeight: 700,
+            lineHeight: 1.35,
+            marginBottom: "0.5rem",
+          }}>
+            {item.title}
+          </h3>
+          {displayText && (
+            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+              {displayText}
+            </p>
+          )}
+          {isLong && (
+            <span style={{ color: "#085041", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+              Read more →
+            </span>
+          )}
+        </Link>
+
+        {/* Internal link card */}
+        <InternalLinkCard
+          href={item.href}
+          label="Culture Directory"
+          title={item.title}
+          description={item.excerpt}
+          image={item.image}
+        />
+      </article>
+    );
+  }
+
+  // ── Standard cards (happening) — horizontal timeline style ──
   const hasImage = !!item.image;
   const subLabel = item.source || item.location || item.category || item.entryType || item.arm || "";
 
@@ -433,17 +691,6 @@ export default function FeedCard({
         )}
       </Link>
 
-      {/* Reactions for pulse stories */}
-      {item.type === "pulse" && item.wpId && (
-        <div style={{ paddingTop: "0.5rem" }}>
-          <ReactionBar
-            itemId={item.wpId}
-            itemType="pulse"
-            initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
-            shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/pulse/${item.slug}`}
-          />
-        </div>
-      )}
     </article>
   );
 }
