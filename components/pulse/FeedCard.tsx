@@ -289,6 +289,20 @@ export default function FeedCard({
               </>
             )}
 
+            {/* Link preview card (only if no image) */}
+            {!item.image && item.sourceUrl && (
+              <div style={{ marginBottom: "0.5rem" }}>
+                <SourcePreviewCard
+                  goUrl={item.sourceUrl}
+                  sourceName={item.source ?? ""}
+                  sourceUrl={item.sourceUrl}
+                  ogTitle={item.ogTitle}
+                  ogDescription={item.ogDescription}
+                  ogImage={item.ogImage}
+                />
+              </div>
+            )}
+
             {/* Reactions + comment button */}
             <div style={{
               display: "flex", alignItems: "center", gap: "0.5rem",

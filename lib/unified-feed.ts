@@ -88,7 +88,7 @@ const WP_BASE = `${WP_URL}/wp-json/wp/v2`;
 /** Fetch the latest community posts from the culture_post CPT. */
 async function getCommunityPosts(): Promise<FeedItem[]> {
   const res = await fetch(
-    `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count`,
+    `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count&meta_fields=community_author_name,community_author_id,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap`,
     { cache: "no-store" }
   );
   if (!res.ok) return [];
@@ -117,6 +117,13 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
       communityTag: tag ?? "",
       communityTier: tier ?? undefined,
       region: (post.meta?.community_region as string) || undefined,
+      sourceUrl: (post.meta?.community_link_url as string) || undefined,
+      source: post.meta?.community_link_url
+        ? (() => { try { return new URL(post.meta.community_link_url as string).hostname.replace(/^www\./, ""); } catch { return ""; } })()
+        : undefined,
+      ogTitle: (post.meta?.community_og_title as string) || undefined,
+      ogDescription: (post.meta?.community_og_description as string) || undefined,
+      ogImage: (post.meta?.community_og_image as string) || undefined,
       commentCount: Number(post.comment_count ?? 0),
       reactions: {
         love: Number(post.meta?.reaction_love ?? 0),

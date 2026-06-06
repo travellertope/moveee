@@ -33,6 +33,10 @@ class Culture_Community {
             'community_tag',
             'community_region',
             'community_author_tier',
+            'community_link_url',
+            'community_og_title',
+            'community_og_description',
+            'community_og_image',
         ];
 
         $string_meta_args = [

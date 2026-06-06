@@ -6,6 +6,7 @@ import type { WpComment } from "@/lib/pulse-wordpress";
 import CommentThread from "./CommentThread";
 import HashtagText from "./HashtagText";
 import ReactionBar from "./ReactionBar";
+import SourcePreviewCard from "./SourcePreviewCard";
 import type { FeedItem } from "@/lib/unified-feed";
 
 interface CommunityDetailModalProps {
@@ -157,6 +158,20 @@ export default function CommunityDetailModal({ item, onClose, onHashtagClick }: 
           {item.image && (
             <div style={{ marginBottom: "1rem", borderRadius: "6px", overflow: "hidden", border: "1px solid #e8e2d8" }}>
               <img src={item.image} alt="" style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: "320px" }} loading="lazy" />
+            </div>
+          )}
+
+          {/* Link preview (only if no image) */}
+          {!item.image && item.sourceUrl && (
+            <div style={{ marginBottom: "1rem" }}>
+              <SourcePreviewCard
+                goUrl={item.sourceUrl}
+                sourceName={item.source ?? ""}
+                sourceUrl={item.sourceUrl}
+                ogTitle={item.ogTitle}
+                ogDescription={item.ogDescription}
+                ogImage={item.ogImage}
+              />
             </div>
           )}
 

@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { parseHashtags } from "@/lib/hashtags";
+import SourcePreviewCard from "./SourcePreviewCard";
+
+const URL_RE = /https?:\/\/[^\s]+/i;
 
 const EDITION_TO_REGION: Record<string, string> = {
   uk:     "Diaspora UK",
@@ -88,6 +91,38 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
   const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
   const remaining = MAX_WORDS - wordCount;
 
+  // Link preview state
+  const [linkPreview, setLinkPreview] = useState<{ url: string; ogTitle: string; ogDescription: string; ogImage: string } | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const previewFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchLinkPreview = useCallback((url: string) => {
+    if (previewFetchRef.current) clearTimeout(previewFetchRef.current);
+    setPreviewLoading(true);
+    previewFetchRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/community/link-preview?url=${encodeURIComponent(url)}`);
+        const og = await res.json();
+        setLinkPreview({ url, ogTitle: og.title || "", ogDescription: og.description || "", ogImage: og.image || "" });
+      } catch {
+        setLinkPreview({ url, ogTitle: "", ogDescription: "", ogImage: "" });
+      } finally {
+        setPreviewLoading(false);
+      }
+    }, 800);
+  }, []);
+
+  useEffect(() => {
+    const match = text.match(URL_RE);
+    if (match) {
+      const url = match[0];
+      if (!linkPreview || linkPreview.url !== url) fetchLinkPreview(url);
+    } else {
+      setLinkPreview(null);
+      setPreviewLoading(false);
+    }
+  }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
     setImageFile(file);
@@ -135,6 +170,10 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
           tag: tag || undefined,
           region: detectRegion(user?.countryOfResidence) ?? undefined,
           authorTier: user?.tier ?? undefined,
+          linkUrl: linkPreview?.url || undefined,
+          ogTitle: linkPreview?.ogTitle || undefined,
+          ogDescription: linkPreview?.ogDescription || undefined,
+          ogImage: linkPreview?.ogImage || undefined,
         }),
       });
       const data = await res.json();
@@ -172,6 +211,23 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
         }}
       />
       <HashtagPreview text={text} />
+
+      {/* Link preview — hidden if user has attached an image */}
+      {!imagePreview && linkPreview && (
+        previewLoading ? (
+          <p style={{ color: "#bbb", fontSize: "0.72rem", margin: 0 }}>Fetching link preview…</p>
+        ) : (
+          <SourcePreviewCard
+            goUrl={linkPreview.url}
+            sourceName={(() => { try { return new URL(linkPreview.url).hostname.replace(/^www\./, ""); } catch { return linkPreview.url; } })()}
+            sourceUrl={linkPreview.url}
+            ogTitle={linkPreview.ogTitle}
+            ogDescription={linkPreview.ogDescription}
+            ogImage={linkPreview.ogImage}
+          />
+        )
+      )}
+
       {imagePreview && (
         <div style={{ position: "relative", display: "inline-block", maxWidth: "200px" }}>
           <img src={imagePreview} alt="Preview" style={{ width: "100%", borderRadius: "4px", border: "1px solid #e0d8ce", display: "block" }} />
