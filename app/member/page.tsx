@@ -30,7 +30,11 @@ export default async function MemberPage() {
       {/* ── PROFILE HERO ── */}
       <div className="mem-hero">
         <div className="mem-hero-inner">
-          <div className="mem-avatar">{initial}</div>
+          <div className="mem-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+            ) : initial}
+          </div>
           <div className="mem-hero-body">
             <div className="mem-eyebrow">The Moveee &mdash; Culture Community</div>
             <h1 className="mem-name">{displayName}</h1>

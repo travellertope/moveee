@@ -1421,6 +1421,8 @@ class Culture_REST_API {
             // Vendor
             'is_vendor'           => $is_vendor,
             'vendor_slug'         => $vendor_slug,
+            // Profile photo
+            'avatar_url'          => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
         );
     }
 
@@ -1471,6 +1473,7 @@ class Culture_REST_API {
             'directory_instagram'    => '_culture_directory_instagram',
             'directory_linkedin'     => '_culture_directory_linkedin',
             'directory_website'      => '_culture_directory_website',
+            'avatar_url'             => '_culture_avatar_url',
         );
 
         foreach ( $meta_map as $param => $meta_key ) {

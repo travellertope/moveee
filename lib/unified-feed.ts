@@ -40,6 +40,7 @@ export interface FeedItem {
   category?: string;
   // community-specific
   communityAuthor?: string;
+  communityAuthorAvatar?: string;
   communityTag?: string;
   communityTier?: string;
   commentCount?: number;
@@ -114,6 +115,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
       image: imageUrl ?? undefined,
       href: `/community/${post.slug}`,
       communityAuthor: authorName || (post.excerpt?.rendered ? stripHtml(post.excerpt.rendered) : ""),
+      communityAuthorAvatar: (post.meta?.community_author_avatar as string) || undefined,
       communityTag: tag ?? "",
       communityTier: tier ?? undefined,
       region: (post.meta?.community_region as string) || undefined,

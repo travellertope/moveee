@@ -120,8 +120,11 @@ export default function CommunityDetailModal({ item, onClose, onHashtagClick }: 
               background: "#edf7ed", border: "1px solid #c8e6c9",
               color: "#2e7d32", fontSize: "0.65rem", fontWeight: 700,
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              overflow: "hidden",
             }}>
-              {initials}
+              {item.communityAuthorAvatar ? (
+                <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : initials}
             </div>
             <div>
               <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>

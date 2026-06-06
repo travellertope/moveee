@@ -21,12 +21,13 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const { text, imageUrl, tag, region, authorTier, linkUrl, ogTitle, ogDescription, ogImage } = body as {
+  const { text, imageUrl, tag, region, authorTier, authorAvatar, linkUrl, ogTitle, ogDescription, ogImage } = body as {
     text?: string;
     imageUrl?: string;
     tag?: string;
     region?: string;
     authorTier?: string;
+    authorAvatar?: string;
     linkUrl?: string;
     ogTitle?: string;
     ogDescription?: string;
@@ -82,9 +83,10 @@ export async function POST(req: NextRequest) {
       status: postStatus,
       comment_status: "open",
       meta: {
-        community_author_name:  authorName,
-        community_author_id:    authorId,
-        community_image_url:    imageUrl?.trim() || "",
+        community_author_name:   authorName,
+        community_author_id:     authorId,
+        community_author_avatar: authorAvatar?.trim() || "",
+        community_image_url:     imageUrl?.trim() || "",
         community_tag:          validTag ?? "",
         community_region:       region?.trim() || "",
         community_author_tier:  (authorTier?.trim() || sessionTier) || "",

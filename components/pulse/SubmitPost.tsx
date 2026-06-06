@@ -170,6 +170,7 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
           tag: tag || undefined,
           region: detectRegion(user?.countryOfResidence) ?? undefined,
           authorTier: user?.tier ?? undefined,
+          authorAvatar: user?.avatarUrl || undefined,
           linkUrl: linkPreview?.url || undefined,
           ogTitle: linkPreview?.ogTitle || undefined,
           ogDescription: linkPreview?.ogDescription || undefined,
@@ -523,8 +524,11 @@ export default function SubmitPost({ onPosted, lockedTag }: SubmitPostProps) {
           color: mode === "quote" ? "#7a4da0" : "#c5491f",
           fontSize: "0.65rem", fontWeight: 700, flexShrink: 0, letterSpacing: "0.05em",
           display: "flex", alignItems: "center", justifyContent: "center",
+          overflow: "hidden",
         }}>
-          {initials}
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : initials}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
