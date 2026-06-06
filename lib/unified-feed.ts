@@ -97,8 +97,12 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
   return posts.map((post) => {
     const raw = post.content?.rendered ?? "";
     const { authorName, imageUrl, tag, tier } = parseCommunityData(post.meta, raw);
-    // Use content body; fall back to title (for posts created via WP admin)
-    const bodyText = decodeHtml(stripHtml(raw.replace(/<!--[\s\S]*?-->/g, "")));
+    // Preserve paragraph breaks before stripping HTML tags
+    const withBreaks = raw
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+      .replace(/<br\s*\/?>/gi, "\n");
+    const bodyText = decodeHtml(stripHtml(withBreaks));
     const textContent = bodyText || decodeHtml(stripHtml(post.title?.rendered ?? ""));
 
     return {

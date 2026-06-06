@@ -84,8 +84,9 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const MAX = 500;
-  const remaining = MAX - text.length;
+  const MAX_WORDS = 600;
+  const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+  const remaining = MAX_WORDS - wordCount;
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -160,14 +161,14 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
       <textarea
         value={text}
-        onChange={e => setText(e.target.value.slice(0, MAX))}
+        onChange={e => setText(e.target.value)}
         placeholder="What's happening in culture?"
-        rows={3}
+        rows={4}
         style={{
           background: "transparent", border: "none", borderBottom: "1px solid #e0d8ce",
           color: "#14110d", fontFamily: "var(--font-fraunces), serif",
-          fontSize: "0.92rem", lineHeight: 1.55, resize: "none", width: "100%",
-          outline: "none", paddingBottom: "0.4rem",
+          fontSize: "0.92rem", lineHeight: 1.55, resize: "vertical", width: "100%",
+          outline: "none", paddingBottom: "0.4rem", minHeight: "80px",
         }}
       />
       <HashtagPreview text={text} />
@@ -219,7 +220,7 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
         </button>
         <div style={{ flex: 1 }} />
         <span style={{ fontSize: "0.7rem", color: remaining < 50 ? (remaining < 0 ? "#c5491f" : "#b38238") : "#bbb", fontVariantNumeric: "tabular-nums" }}>
-          {remaining}
+          {remaining}w
         </span>
         <button type="submit" disabled={!text.trim() || loading || remaining < 0} style={{
           background: text.trim() && !loading && remaining >= 0 ? "#c93c2a" : "#e8e2d8",

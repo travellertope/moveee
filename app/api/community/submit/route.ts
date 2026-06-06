@@ -33,8 +33,9 @@ export async function POST(req: NextRequest) {
   if (!content || content.length < 3) {
     return NextResponse.json({ error: "Post must be at least 3 characters." }, { status: 400 });
   }
-  if (content.length > 500) {
-    return NextResponse.json({ error: "Post must be 500 characters or fewer." }, { status: 400 });
+  const wordCount = content.split(/\s+/).filter(Boolean).length;
+  if (wordCount > 600) {
+    return NextResponse.json({ error: "Post must be 600 words or fewer." }, { status: 400 });
   }
 
   const user = session.user as any;
