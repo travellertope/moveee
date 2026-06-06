@@ -624,92 +624,71 @@ export default function FeedCard({
     );
   }
 
-  // ── Standard cards (happening) — horizontal timeline style ──
-  const hasImage = !!item.image;
-  const subLabel = item.source || item.location || item.category || item.entryType || item.arm || "";
+  // ── Happening card — inline description + internal link card ──
+  if (item.type === "happening") {
+    const CLAMP_CHARS = 280;
+    const text = decodeHtml(item.excerpt ?? "");
+    const isLong = text.length > CLAMP_CHARS;
+    const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
+    const typeMeta = TYPE_BADGE.happening;
 
-  return (
-    <article style={{
-      background: "#fff",
-      borderBottom: "1px solid #e8e2d8",
-      padding: "0.9rem 1.25rem",
-      overflow: "hidden",
-      minWidth: 0,
-    }}>
-      <Link href={item.href} style={{ display: "flex", gap: "0.9rem", textDecoration: "none" }} aria-label={item.title}>
-        {/* Text block */}
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.3rem" }}>
-          {/* Badges */}
-          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
-            <Badge {...typeMeta} />
-            {item.region && (
-              <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
-                {item.region}
-              </span>
-            )}
-            {item.entryType && (
-              <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
-                {item.entryType}
-              </span>
-            )}
-          </div>
+    const eventDateStr = item.eventDate
+      ? new Date(item.eventDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+      : null;
 
-          {/* Title */}
+    return (
+      <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
+        {/* Badges row */}
+        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
+          <Badge {...typeMeta} />
+          {eventDateStr && (
+            <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.03em" }}>
+              {eventDateStr}
+            </span>
+          )}
+          {item.location && (
+            <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.04em" }}>
+              · {item.location}
+            </span>
+          )}
+          <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+        </div>
+
+        {/* Body */}
+        <Link href={item.href} style={{ textDecoration: "none", display: "block" }}>
           <h3 style={{
             color: "#14110d",
             fontFamily: "var(--font-fraunces), serif",
-            fontSize: "0.92rem",
-            fontWeight: 600,
+            fontSize: "0.97rem",
+            fontWeight: 700,
             lineHeight: 1.35,
-            display: "-webkit-box",
-            WebkitLineClamp: hasImage ? 2 : 3,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            margin: 0,
+            marginBottom: "0.5rem",
           }}>
-            {item.title}
+            {decodeHtml(item.title)}
           </h3>
-
-          {/* Excerpt */}
-          {!hasImage && item.excerpt && (
-            <p style={{
-              color: "#7a6f5c",
-              fontSize: "0.78rem",
-              lineHeight: 1.5,
-              display: "-webkit-box",
-              WebkitLineClamp: hasImage ? 2 : 3,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              margin: 0,
-            }}>
-              {item.excerpt}
+          {displayText && (
+            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+              {displayText}
             </p>
           )}
+          {isLong && (
+            <span style={{ color: "#3c3489", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+              Read more →
+            </span>
+          )}
+        </Link>
 
-          {/* Footer */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.1rem" }}>
-            {subLabel && <span style={{ color: "#c5491f", fontSize: "0.68rem", fontWeight: 500 }}>{subLabel}</span>}
-            {subLabel && <span style={{ color: "#d8d0c6", fontSize: "0.65rem" }}>·</span>}
-            <span style={{ color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
-          </div>
-        </div>
+        {/* Internal link card */}
+        <InternalLinkCard
+          href={item.href}
+          label="Moveee Happenings"
+          title={decodeHtml(item.title)}
+          description={item.excerpt}
+          image={item.image}
+        />
+      </article>
+    );
+  }
 
-        {/* Image thumbnail */}
-        {hasImage && (
-          <div style={{
-            width: "90px",
-            height: "90px",
-            flexShrink: 0,
-            borderRadius: "4px",
-            overflow: "hidden",
-            border: "1px solid #e8e2d8",
-            alignSelf: "center",
-          }}>
-            <img src={item.image} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} loading="lazy" />
-          </div>
-        )}
-      </Link>
-
-    </article>
-  );
+  return null;
 }
