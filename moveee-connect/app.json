@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Moveee Connect",
+    "slug": "moveee-connect",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#f3ece0"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.moveee.connect"
+    },
+    "android": {
+      "package": "com.moveee.connect",
+      "adaptiveIcon": {
+        "backgroundColor": "#f3ece0"
+      },
+      "permissions": [
+        "NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
+    },
+    "plugins": [
+      "expo-notifications",
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      }
+    }
+  }
+}
