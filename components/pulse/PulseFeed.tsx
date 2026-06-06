@@ -249,7 +249,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
             </div>
 
             <div style={{ marginBottom: "1.25rem" }}>
-              <SidebarHeading>Sections</SidebarHeading>
+              <SidebarHeading>Content Type</SidebarHeading>
               <ul style={{ margin: 0, padding: 0 }}>
                 {TYPE_FILTERS.map(({ label, value }) => (
                   <SidebarLink
@@ -263,7 +263,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
             </div>
 
             <div style={{ marginTop: "1.25rem" }}>
-              <SidebarHeading>Sections</SidebarHeading>
+              <SidebarHeading>Category</SidebarHeading>
               <ul style={{ margin: 0, padding: 0 }}>
                 {CATEGORY_FILTERS.map(cat => (
                   <SidebarLink
@@ -359,7 +359,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 </div>
                 {/* Categories — horizontal scroll */}
                 <div style={{ padding: "0.5rem 0.75rem 0.6rem" }}>
-                  <p style={{ margin: "0 0 0.35rem", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a6f5c" }}>Sections</p>
+                  <p style={{ margin: "0 0 0.35rem", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a6f5c" }}>Category</p>
                   <div style={{ display: "flex", gap: "0.35rem", overflowX: "auto", scrollbarWidth: "none" }}>
                     {CATEGORY_FILTERS.map(cat => (
                       <button
