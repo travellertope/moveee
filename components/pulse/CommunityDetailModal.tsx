@@ -176,7 +176,7 @@ export default function CommunityDetailModal({ item, onClose, onHashtagClick }: 
           {!item.image && item.sourceUrl && (
             <div style={{ marginBottom: "1rem" }}>
               <SourcePreviewCard
-                goUrl={item.sourceUrl}
+                goUrl={`/go/link?url=${encodeURIComponent(item.sourceUrl!)}`}
                 sourceName={item.source ?? ""}
                 sourceUrl={item.sourceUrl}
                 ogTitle={item.ogTitle}

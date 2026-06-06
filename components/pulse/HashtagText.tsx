@@ -1,6 +1,9 @@
 "use client";
 
-const SPLIT_RE = /(#[a-zA-Z][a-zA-Z0-9_]{1,49})/g;
+const HASHTAG_RE = /#[a-zA-Z][a-zA-Z0-9_]{1,49}/g;
+const URL_RE = /https?:\/\/[^\s<>"]+[^\s<>".,;:!?)'"\]]/g;
+// Combined splitter — captures hashtags and URLs as separate tokens
+const TOKEN_RE = /(#[a-zA-Z][a-zA-Z0-9_]{1,49}|https?:\/\/[^\s<>"]+[^\s<>".,;:!?)'"\]])/g;
 
 interface HashtagTextProps {
   text: string;
@@ -8,23 +11,44 @@ interface HashtagTextProps {
   clamp?: number;
 }
 
+function brandedHref(url: string) {
+  return `/go/link?url=${encodeURIComponent(url)}`;
+}
+
 function InlineTokens({ text, onHashtagClick }: { text: string; onHashtagClick?: (h: string) => void }) {
-  const parts = text.split(SPLIT_RE);
+  const parts = text.split(TOKEN_RE);
   return (
     <>
-      {parts.map((part, i) =>
-        SPLIT_RE.test(part) ? (
-          <button
-            key={i}
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onHashtagClick?.(part); }}
-            style={{ color: "#D4A847", background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", lineHeight: "inherit" }}
-          >
-            {part}
-          </button>
-        ) : (
-          <span key={i}>{part}</span>
-        )
-      )}
+      {parts.map((part, i) => {
+        if (HASHTAG_RE.test(part)) {
+          HASHTAG_RE.lastIndex = 0;
+          return (
+            <button
+              key={i}
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); onHashtagClick?.(part); }}
+              style={{ color: "#D4A847", background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", lineHeight: "inherit" }}
+            >
+              {part}
+            </button>
+          );
+        }
+        if (URL_RE.test(part)) {
+          URL_RE.lastIndex = 0;
+          return (
+            <a
+              key={i}
+              href={brandedHref(part)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              style={{ color: "#b38238", textDecoration: "underline", wordBreak: "break-all" }}
+            >
+              {part}
+            </a>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
     </>
   );
 }
