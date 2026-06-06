@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import {
   View, Text, FlatList, TextInput, TouchableOpacity,
-  StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
-  ActivityIndicator,
+  StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -48,9 +47,7 @@ export default function PostDetailScreen() {
         />
       )}
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <View style={styles.inputRow}>
           <TextInput
             style={styles.input}
@@ -60,11 +57,7 @@ export default function PostDetailScreen() {
             multiline
           />
           <TouchableOpacity onPress={submit} disabled={submitting}>
-            <Ionicons
-              name="send"
-              size={22}
-              color={text.trim() ? "#b38238" : "#ccc"}
-            />
+            <Ionicons name="send" size={22} color={text.trim() ? "#b38238" : "#ccc"} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -85,8 +78,7 @@ const styles = StyleSheet.create({
   commentContent: { fontSize: 14, color: "#333", lineHeight: 20 },
   inputRow: {
     flexDirection: "row", alignItems: "center", gap: 12,
-    padding: 12, borderTopWidth: 1, borderTopColor: "#e0d8cc",
-    backgroundColor: "#fff",
+    padding: 12, borderTopWidth: 1, borderTopColor: "#e0d8cc", backgroundColor: "#fff",
   },
   input: {
     flex: 1, backgroundColor: "#f3ece0", borderRadius: 20,

@@ -14,10 +14,7 @@ interface RequestOptions {
   auth?: boolean;
 }
 
-async function request<T>(
-  url: string,
-  options: RequestOptions = {}
-): Promise<T> {
+async function request<T>(url: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, auth = true } = options;
 
   const headers: Record<string, string> = {
@@ -44,10 +41,7 @@ async function request<T>(
 }
 
 export class ApiError extends Error {
-  constructor(
-    public status: number,
-    message: string
-  ) {
+  constructor(public status: number, message: string) {
     super(message);
     this.name = "ApiError";
   }
@@ -63,5 +57,3 @@ export const api = {
     request<T>(url, { method: "PATCH", body }),
   delete: <T>(url: string) => request<T>(url, { method: "DELETE" }),
 };
-
-export { CULTURE_API as BASE };

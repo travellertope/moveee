@@ -23,6 +23,18 @@ export interface User {
   vendorSlug: string;
 }
 
+export interface CommunityPost {
+  id: string;
+  content: string;
+  imageUrl?: string;
+  author: { id: string; name: string; avatarUrl: string; tier: Tier };
+  publishedAt: string;
+  likeCount: number;
+  commentCount: number;
+  liked: boolean;
+  status: "publish" | "pending";
+}
+
 export interface Article {
   id: string;
   slug: string;
@@ -39,28 +51,6 @@ export interface Article {
   likeCount: number;
 }
 
-export interface PulseStory {
-  id: string;
-  title: string;
-  url: string;
-  source: string;
-  imageUrl: string;
-  publishedAt: string;
-  commentCount: number;
-}
-
-export interface CommunityPost {
-  id: string;
-  content: string;
-  imageUrl?: string;
-  author: { id: string; name: string; avatarUrl: string; tier: Tier };
-  publishedAt: string;
-  likeCount: number;
-  commentCount: number;
-  liked: boolean;
-  status: "publish" | "pending";
-}
-
 export interface Event {
   id: string;
   slug: string;
@@ -75,14 +65,4 @@ export interface Event {
   spotsLeft: number;
   rsvpd: boolean;
   tier: "all" | "citizen" | "patron";
-}
-
-export interface Quote {
-  id: string;
-  text: string;
-  authorName: string;
-  authorSlug: string;
-  category: string;
-  liked: boolean;
-  likeCount: number;
 }

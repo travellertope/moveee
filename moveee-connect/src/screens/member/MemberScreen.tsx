@@ -1,8 +1,5 @@
 import React from "react";
-import {
-  View, Text, Image, StyleSheet, SafeAreaView,
-  TouchableOpacity, ScrollView,
-} from "react-native";
+import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
@@ -41,11 +38,7 @@ export default function MemberScreen() {
             { icon: "settings-outline", label: "Settings", screen: "Settings" },
             { icon: "card-outline", label: "Membership", screen: "Membership" },
           ].map((item) => (
-            <TouchableOpacity
-              key={item.label}
-              style={styles.menuItem}
-              onPress={() => nav.navigate(item.screen)}
-            >
+            <TouchableOpacity key={item.label} style={styles.menuItem} onPress={() => nav.navigate(item.screen)}>
               <Ionicons name={item.icon as never} size={22} color="#14110d" />
               <Text style={styles.menuLabel}>{item.label}</Text>
               <Ionicons name="chevron-forward" size={18} color="#ccc" />
@@ -69,9 +62,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 22, fontWeight: "800", color: "#14110d" },
   pointsRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
   points: { fontSize: 14, color: "#b38238", fontWeight: "600" },
-  upgradeCard: {
-    margin: 16, backgroundColor: "#14110d", borderRadius: 12, padding: 18,
-  },
+  upgradeCard: { margin: 16, backgroundColor: "#14110d", borderRadius: 12, padding: 18 },
   upgradeTitle: { color: "#b38238", fontWeight: "800", fontSize: 16, marginBottom: 4 },
   upgradeSub: { color: "#f3ece0", fontSize: 13 },
   menu: { margin: 16, backgroundColor: "#fff", borderRadius: 12, overflow: "hidden" },
