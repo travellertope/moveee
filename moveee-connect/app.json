@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Moveee Connect",
-    "slug": "moveee-connect",
+    "slug": "moveee-platform",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -30,7 +30,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+        "projectId": "943d1ee4-9194-4a36-8b6a-48ab32dfd813"
       }
     }
   }
