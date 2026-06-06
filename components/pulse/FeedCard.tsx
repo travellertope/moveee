@@ -11,6 +11,7 @@ import SourcePreviewCard from "./SourcePreviewCard";
 import InternalLinkCard from "./InternalLinkCard";
 
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
+const CommunityDetailModal = dynamic(() => import("./CommunityDetailModal"), { ssr: false });
 
 function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
   useEffect(() => {
@@ -164,6 +165,10 @@ export default function FeedCard({
     const closeLightbox = useCallback(() => setLightbox(null), []);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [reportState, setReportState] = useState<"idle" | "confirm" | "sent" | "error">("idle");
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [modalOpen, setModalOpen] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const closeModal = useCallback(() => setModalOpen(false), []);
 
     async function submitReport(reason: string) {
       setReportState("sent");
@@ -179,177 +184,185 @@ export default function FeedCard({
     }
 
     return (
-      <article
-        id={`community-${item.id.replace("community-", "")}`}
-        style={{
-          background: "#fff",
-          borderBottom: "1px solid #e8e2d8",
-          borderLeft: "3px solid #81c784",
-          padding: "1rem 1.25rem",
-          display: "flex",
-          gap: "0.75rem",
-          overflow: "hidden",
-          minWidth: 0,
-        }}
-      >
-        {/* Avatar */}
-        <div style={{
-          width: "34px",
-          height: "34px",
-          borderRadius: "50%",
-          background: "#edf7ed",
-          border: "1px solid #c8e6c9",
-          color: "#2e7d32",
-          fontSize: "0.62rem",
-          fontWeight: 700,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}>
-          {(item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"}
-        </div>
+      <>
+        <article
+          id={`community-${item.id.replace("community-", "")}`}
+          style={{
+            background: "#fff",
+            borderBottom: "1px solid #e8e2d8",
+            borderLeft: "3px solid #81c784",
+            padding: "1rem 1.25rem",
+            display: "flex",
+            gap: "0.75rem",
+            overflow: "hidden",
+            minWidth: 0,
+          }}
+        >
+          {/* Avatar */}
+          <div style={{
+            width: "34px",
+            height: "34px",
+            borderRadius: "50%",
+            background: "#edf7ed",
+            border: "1px solid #c8e6c9",
+            color: "#2e7d32",
+            fontSize: "0.62rem",
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}>
+            {(item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"}
+          </div>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
-            <span style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600 }}>
-              {item.communityAuthor || "Community Member"}
-            </span>
-            {item.communityTier === "patron" && (
-              <span style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: "0.52rem",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                color: "#b38238",
-                background: "rgba(179,130,56,.1)",
-                border: "1px solid rgba(179,130,56,.25)",
-                padding: "1px 5px",
-                lineHeight: 1.6,
-                flexShrink: 0,
-              }}>Pro</span>
-            )}
-            <span style={{ color: "#c8bfb0", fontSize: "0.7rem" }}>·</span>
-            <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>
-            {item.communityTag && (
-              <button
-                onClick={() => onTagClick?.(item.communityTag!)}
-                style={{
-                  marginLeft: "auto",
-                  background: "#edf7ed",
-                  color: "#2e7d32",
-                  fontSize: "0.58rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
+              <span style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600 }}>
+                {item.communityAuthor || "Community Member"}
+              </span>
+              {item.communityTier === "patron" && (
+                <span style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "0.52rem",
+                  letterSpacing: "0.14em",
                   textTransform: "uppercase",
-                  padding: "0.15rem 0.4rem",
-                  borderRadius: "2px",
-                  border: "none",
-                  cursor: onTagClick ? "pointer" : "default",
+                  color: "#b38238",
+                  background: "rgba(179,130,56,.1)",
+                  border: "1px solid rgba(179,130,56,.25)",
+                  padding: "1px 5px",
+                  lineHeight: 1.6,
                   flexShrink: 0,
-                }}
-              >
-                {item.communityTag}
-              </button>
-            )}
-          </div>
-
-          {/* Text */}
-          <div style={{
-            color: "#14110d",
-            fontSize: "0.9rem",
-            lineHeight: 1.6,
-            marginBottom: item.image ? "0.65rem" : "0.5rem",
-          }}>
-            <HashtagText text={item.title} onHashtagClick={onHashtagClick} clamp={6} />
-          </div>
-
-          {/* Image */}
-          {item.image && (
-            <>
-              <div
-                onClick={() => setLightbox(item.image!)}
-                style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8", cursor: "zoom-in" }}
-              >
-                <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.15s" }} loading="lazy" />
-              </div>
-              {lightbox && <ImageLightbox src={lightbox} alt={item.title} onClose={closeLightbox} />}
-            </>
-          )}
-
-          {/* Reactions + comment link — share the same border-top row */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: "0.5rem",
-            minWidth: 0, paddingTop: "0.5rem",
-            borderTop: "1px solid #e8e2d8", marginTop: "0.25rem",
-          }}>
-            {item.wpId && (
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <ReactionBar
-                  noBorder
-                  itemId={item.wpId}
-                  itemType="community"
-                  initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
-                  shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/pulse#community-${item.wpId}`}
-                />
-              </div>
-            )}
-            <Link
-              href={`/community/${item.slug}`}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.3rem",
-                color: "#7a6f5c",
-                textDecoration: "none",
-                fontSize: "0.75rem",
-                flexShrink: 0,
-              }}
-              aria-label="View comments"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              {(item.commentCount ?? 0) > 0 && (
-                <span style={{ fontVariantNumeric: "tabular-nums" }}>{item.commentCount}</span>
+                }}>Pro</span>
               )}
-            </Link>
+              <span style={{ color: "#c8bfb0", fontSize: "0.7rem" }}>·</span>
+              <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>{formatDate(item.date)}</span>
+              {item.communityTag && (
+                <button
+                  onClick={() => onTagClick?.(item.communityTag!)}
+                  style={{
+                    marginLeft: "auto",
+                    background: "#edf7ed",
+                    color: "#2e7d32",
+                    fontSize: "0.58rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    padding: "0.15rem 0.4rem",
+                    borderRadius: "2px",
+                    border: "none",
+                    cursor: onTagClick ? "pointer" : "default",
+                    flexShrink: 0,
+                  }}
+                >
+                  {item.communityTag}
+                </button>
+              )}
+            </div>
 
-            {/* Report */}
-            {reportState === "idle" && (
-              <button
-                onClick={() => setReportState("confirm")}
-                title="Report this post"
-                style={{ background: "none", border: "none", padding: "0 0 0 4px", cursor: "pointer", color: "#c8bfb0", fontSize: "0.68rem", flexShrink: 0, lineHeight: 1 }}
-              >
-                ⚑
-              </button>
-            )}
-            {reportState === "confirm" && (
-              <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
-                <span style={{ fontSize: "0.68rem", color: "#7a6f5c" }}>Report as:</span>
-                {(["spam", "harassment", "inappropriate"] as const).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => submitReport(r)}
-                    style={{ background: "#fef2f2", border: "1px solid rgba(192,57,43,.2)", color: "#c0392b", borderRadius: 3, padding: "1px 6px", fontSize: "0.62rem", cursor: "pointer", fontFamily: "inherit" }}
-                  >
-                    {r}
-                  </button>
-                ))}
-                <button onClick={() => setReportState("idle")} style={{ background: "none", border: "none", color: "#bbb", fontSize: "0.68rem", cursor: "pointer" }}>✕</button>
+            {/* Text — clicking opens modal */}
+            <div
+              onClick={() => setModalOpen(true)}
+              style={{ cursor: "pointer" }}
+            >
+              <div style={{
+                color: "#14110d",
+                fontSize: "0.9rem",
+                lineHeight: 1.6,
+                marginBottom: item.image ? "0.65rem" : "0.5rem",
+              }}>
+                <HashtagText text={item.title} onHashtagClick={onHashtagClick} clamp={6} />
               </div>
+            </div>
+
+            {/* Image */}
+            {item.image && (
+              <>
+                <div
+                  onClick={() => setLightbox(item.image!)}
+                  style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8", cursor: "zoom-in" }}
+                >
+                  <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.15s" }} loading="lazy" />
+                </div>
+                {lightbox && <ImageLightbox src={lightbox} alt={item.title} onClose={closeLightbox} />}
+              </>
             )}
-            {reportState === "sent" && (
-              <span style={{ fontSize: "0.68rem", color: "#7a6f5c", flexShrink: 0 }}>Reported — thank you.</span>
-            )}
-            {reportState === "error" && (
-              <span style={{ fontSize: "0.68rem", color: "#c0392b", flexShrink: 0 }}>Couldn't send report.</span>
-            )}
+
+            {/* Reactions + comment button */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: "0.5rem",
+              minWidth: 0, paddingTop: "0.5rem",
+              borderTop: "1px solid #e8e2d8", marginTop: "0.25rem",
+            }}>
+              {item.wpId && (
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <ReactionBar
+                    noBorder
+                    itemId={item.wpId}
+                    itemType="community"
+                    initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
+                    shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/community/${item.slug}`}
+                  />
+                </div>
+              )}
+              <button
+                onClick={() => setModalOpen(true)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.3rem",
+                  color: "#7a6f5c", background: "none", border: "none",
+                  cursor: "pointer", fontSize: "0.75rem", flexShrink: 0,
+                  padding: 0, fontFamily: "inherit",
+                }}
+                aria-label="View comments"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                {(item.commentCount ?? 0) > 0 && (
+                  <span style={{ fontVariantNumeric: "tabular-nums" }}>{item.commentCount}</span>
+                )}
+              </button>
+
+              {/* Report */}
+              {reportState === "idle" && (
+                <button
+                  onClick={() => setReportState("confirm")}
+                  title="Report this post"
+                  style={{ background: "none", border: "none", padding: "0 0 0 4px", cursor: "pointer", color: "#c8bfb0", fontSize: "0.68rem", flexShrink: 0, lineHeight: 1 }}
+                >
+                  ⚑
+                </button>
+              )}
+              {reportState === "confirm" && (
+                <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
+                  <span style={{ fontSize: "0.68rem", color: "#7a6f5c" }}>Report as:</span>
+                  {(["spam", "harassment", "inappropriate"] as const).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => submitReport(r)}
+                      style={{ background: "#fef2f2", border: "1px solid rgba(192,57,43,.2)", color: "#c0392b", borderRadius: 3, padding: "1px 6px", fontSize: "0.62rem", cursor: "pointer", fontFamily: "inherit" }}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                  <button onClick={() => setReportState("idle")} style={{ background: "none", border: "none", color: "#bbb", fontSize: "0.68rem", cursor: "pointer" }}>✕</button>
+                </div>
+              )}
+              {reportState === "sent" && (
+                <span style={{ fontSize: "0.68rem", color: "#7a6f5c", flexShrink: 0 }}>Reported — thank you.</span>
+              )}
+              {reportState === "error" && (
+                <span style={{ fontSize: "0.68rem", color: "#c0392b", flexShrink: 0 }}>Couldn't send report.</span>
+              )}
+            </div>
           </div>
-        </div>
-      </article>
+        </article>
+
+        {modalOpen && (
+          <CommunityDetailModal item={item} onClose={closeModal} onHashtagClick={onHashtagClick} />
+        )}
+      </>
     );
   }
 
