@@ -15,7 +15,7 @@ interface AuthState {
   hydrate: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
   isLoading: true,
@@ -26,10 +26,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const token = await SecureStore.getItemAsync("auth_token");
       if (!token) return;
       storage.set("auth_token", token);
-      const user = await api.get<User>(`${CULTURE_API}/user/profile`);
+      // Validate token by fetching the authed user's profile
+      const user = await api.get<User>(`${CULTURE_API}/mobile/me`);
       set({ user, token, isAuthenticated: true });
     } catch {
       await SecureStore.deleteItemAsync("auth_token");
+      storage.delete("auth_token");
     } finally {
       set({ isLoading: false });
     }
@@ -37,7 +39,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (email, password) => {
     const res = await api.post<{ token: string; user: User }>(
-      `${CULTURE_API}/login`,
+      `${CULTURE_API}/mobile/login`,
       { email, password },
       false
     );
@@ -47,13 +49,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
+    // Best-effort server-side token invalidation
+    await api.post(`${CULTURE_API}/mobile/logout`, {}).catch(() => null);
     await SecureStore.deleteItemAsync("auth_token");
     storage.delete("auth_token");
     set({ user: null, token: null, isAuthenticated: false });
   },
 
   refreshProfile: async () => {
-    const user = await api.get<User>(`${CULTURE_API}/user/profile`);
+    const user = await api.get<User>(`${CULTURE_API}/mobile/me`);
     set({ user });
   },
 }));

@@ -16,7 +16,7 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     setLoading(true);
     try {
-      await api.post(`${CULTURE_API}/register`, { email, username, password }, false);
+      await api.post(`${CULTURE_API}/mobile/register`, { email, username, password }, false);
       nav.replace("VerifyEmail", { email });
     } catch (e: unknown) {
       Alert.alert("Error", e instanceof Error ? e.message : "Registration failed.");
