@@ -57,12 +57,6 @@
 
 		if ( target === 'search' && searchOverlay ) {
 			togglePanel( searchOverlay );
-			if ( ! searchOverlay.hidden ) {
-				var input = searchOverlay.querySelector( 'input[type="search"], input[name="s"]' );
-				if ( input ) {
-					input.focus();
-				}
-			}
 		}
 	} );
 

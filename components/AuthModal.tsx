@@ -124,7 +124,6 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                 onChange={(e) => setUsername(e.target.value)}
                 style={s.input}
                 disabled={loginLoading}
-                autoFocus
               />
             </div>
             <div style={s.field}>
@@ -192,7 +191,6 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                     onChange={(e) => setFpEmail(e.target.value)}
                     style={s.input}
                     disabled={fpStatus === "loading"}
-                    autoFocus
                   />
                 </div>
                 {fpError && <p style={s.error}>{fpError}</p>}

@@ -275,7 +275,6 @@ export default function DirectorySubmitForm({
                 e.key === "Enter" && step === "input" && handleGenerate()
               }
               disabled={step === "generating"}
-              autoFocus
             />
             <button
               className="dir-generate-btn"
