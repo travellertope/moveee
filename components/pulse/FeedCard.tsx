@@ -652,7 +652,7 @@ export default function FeedCard({
           </h3>
 
           {/* Excerpt */}
-          {(item.type === "directory" || !hasImage) && item.excerpt && (
+          {!hasImage && item.excerpt && (
             <p style={{
               color: "#7a6f5c",
               fontSize: "0.78rem",
