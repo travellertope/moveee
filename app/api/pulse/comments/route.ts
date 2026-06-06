@@ -6,7 +6,16 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { postPulseComment } from "@/lib/pulse-wordpress";
+import { postPulseComment, getPulseComments } from "@/lib/pulse-wordpress";
+
+export async function GET(req: NextRequest) {
+  const postId = req.nextUrl.searchParams.get("postId");
+  if (!postId || isNaN(Number(postId))) {
+    return NextResponse.json([], { status: 200 });
+  }
+  const comments = await getPulseComments(Number(postId));
+  return NextResponse.json(comments);
+}
 
 export const runtime = "nodejs";
 
