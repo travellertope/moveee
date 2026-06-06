@@ -200,20 +200,17 @@ export default function FeedCard({
         >
           {/* Avatar */}
           <div style={{
-            width: "34px",
-            height: "34px",
-            borderRadius: "50%",
-            background: "#edf7ed",
-            border: "1px solid #c8e6c9",
-            color: "#2e7d32",
-            fontSize: "0.62rem",
-            fontWeight: 700,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
+            width: "34px", height: "34px", borderRadius: "50%",
+            background: "#edf7ed", border: "1px solid #c8e6c9",
+            color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0, overflow: "hidden",
           }}>
-            {(item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"}
+            {item.communityAuthorAvatar ? (
+              <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              (item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
+            )}
           </div>
 
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -287,6 +284,20 @@ export default function FeedCard({
                 </div>
                 {lightbox && <ImageLightbox src={lightbox} alt={item.title} onClose={closeLightbox} />}
               </>
+            )}
+
+            {/* Link preview card (only if no image) */}
+            {!item.image && item.sourceUrl && (
+              <div style={{ marginBottom: "0.5rem" }}>
+                <SourcePreviewCard
+                  goUrl={item.sourceUrl}
+                  sourceName={item.source ?? ""}
+                  sourceUrl={item.sourceUrl}
+                  ogTitle={item.ogTitle}
+                  ogDescription={item.ogDescription}
+                  ogImage={item.ogImage}
+                />
+              </div>
             )}
 
             {/* Reactions + comment button */}
