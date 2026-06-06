@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import type { FeedItem } from "@/lib/unified-feed";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
+import { decodeHtml } from "@/lib/decode-html";
 import SourcePreviewCard from "./SourcePreviewCard";
 import InternalLinkCard from "./InternalLinkCard";
 
@@ -359,11 +360,14 @@ export default function FeedCard({
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const closeModal = useCallback(() => setModalOpen(false), []);
 
-    const bodyText = item.body ? item.body.replace(/<[^>]+>/g, "").trim() : (item.excerpt ?? "");
-    const CLAMP_CHARS = 380;
-    const isLong = bodyText.length > CLAMP_CHARS;
+    // Use the raw HTML body for rendering (preserves <p> paragraphs).
+    // Fall back to excerpt (already plain text) if no body.
+    const hasHtmlBody = !!item.body;
+    const CLAMP_LINES = 6; // CSS line-clamp applied when not expanded
     const [expanded, setExpanded] = useState(false);
-    const displayText = isLong && !expanded ? bodyText.slice(0, CLAMP_CHARS) + "…" : bodyText;
+    // For "is long" heuristic on plain-text fallback path
+    const plainText = hasHtmlBody ? item.body!.replace(/<[^>]+>/g, "") : (item.excerpt ?? "");
+    const isLong = plainText.length > 320;
 
     const goUrl = item.wpId ? `/go/${item.wpId}` : item.sourceUrl ?? "#";
 
@@ -409,7 +413,7 @@ export default function FeedCard({
               lineHeight: 1.35,
               marginBottom: "0.5rem",
             }}>
-              {item.title}
+              {decodeHtml(item.title)}
             </h3>
 
             {item.image && (
@@ -418,11 +422,25 @@ export default function FeedCard({
               </div>
             )}
 
-            {displayText && (
+            {hasHtmlBody ? (
+              <div
+                className="pulse-body"
+                dangerouslySetInnerHTML={{ __html: item.body! }}
+                style={{
+                  color: "#3a342b",
+                  fontSize: "0.88rem",
+                  lineHeight: 1.6,
+                  overflow: "hidden",
+                  display: "-webkit-box",
+                  WebkitBoxOrient: "vertical",
+                  WebkitLineClamp: expanded ? "unset" : CLAMP_LINES,
+                }}
+              />
+            ) : plainText ? (
               <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
-                {displayText}
+                {decodeHtml(plainText)}
               </p>
-            )}
+            ) : null}
           </div>
 
           {isLong && !expanded && (
@@ -487,6 +505,7 @@ export default function FeedCard({
         </article>
 
         {modalOpen && <PulseDetailModal item={item} onClose={closeModal} />}
+        <style>{`.pulse-body p { margin: 0 0 0.6em; } .pulse-body p:last-child { margin-bottom: 0; }`}</style>
       </>
     );
   }
@@ -494,7 +513,7 @@ export default function FeedCard({
   // ── Editorial card — inline excerpt + internal link card ──
   if (item.type === "editorial") {
     const CLAMP_CHARS = 320;
-    const text = item.excerpt ?? "";
+    const text = decodeHtml(item.excerpt ?? "");
     const isLong = text.length > CLAMP_CHARS;
     const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
     const typeMeta = TYPE_BADGE.editorial;
@@ -551,7 +570,7 @@ export default function FeedCard({
   // ── Directory card — inline excerpt + internal link card ──
   if (item.type === "directory") {
     const CLAMP_CHARS = 280;
-    const text = item.excerpt ?? "";
+    const text = decodeHtml(item.excerpt ?? "");
     const isLong = text.length > CLAMP_CHARS;
     const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
     const typeMeta = TYPE_BADGE.directory;

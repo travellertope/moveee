@@ -1,9 +1,9 @@
 "use client";
 
 interface SourcePreviewCardProps {
-  goUrl: string;      // /go/[id]
+  goUrl: string;
   sourceName: string;
-  sourceUrl: string;  // original URL for displaying domain
+  sourceUrl: string;
   ogTitle?: string;
   ogDescription?: string;
   ogImage?: string;
@@ -25,8 +25,6 @@ export default function SourcePreviewCard({
   ogDescription,
   ogImage,
 }: SourcePreviewCardProps) {
-  const hasOg = !!(ogTitle || ogImage);
-
   return (
     <a
       href={goUrl}
@@ -34,7 +32,8 @@ export default function SourcePreviewCard({
       rel="noopener noreferrer"
       onClick={(e) => e.stopPropagation()}
       style={{
-        display: "block",
+        display: "flex",
+        alignItems: "stretch",
         textDecoration: "none",
         border: "1px solid #e8e2d8",
         borderRadius: "8px",
@@ -42,48 +41,47 @@ export default function SourcePreviewCard({
         marginTop: "0.65rem",
         background: "#faf8f4",
         transition: "border-color 0.15s",
+        minHeight: "72px",
       }}
       onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "#c5b89a")}
       onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "#e8e2d8")}
     >
-      {hasOg && ogImage && (
-        <div style={{ width: "100%", maxHeight: "160px", overflow: "hidden" }}>
+      {ogImage && (
+        <div style={{ width: "110px", flexShrink: 0, overflow: "hidden" }}>
           <img
             src={ogImage}
             alt={ogTitle || sourceName}
-            style={{ width: "100%", height: "160px", objectFit: "cover", display: "block" }}
+            style={{ width: "110px", height: "100%", minHeight: "72px", objectFit: "cover", display: "block" }}
             loading="lazy"
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            onError={(e) => { (e.currentTarget as HTMLImageElement).parentElement!.style.display = "none"; }}
           />
         </div>
       )}
-      <div style={{ padding: "0.6rem 0.75rem" }}>
-        <div style={{ fontSize: "0.62rem", color: "#b38238", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.25rem" }}>
+      <div style={{ padding: "0.55rem 0.75rem", flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div style={{ fontSize: "0.6rem", color: "#b38238", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.2rem" }}>
           {sourceName || domain(sourceUrl)}
-          <span style={{ color: "#c8bfb0", fontWeight: 400, marginLeft: "0.35rem" }}>· {domain(sourceUrl)}</span>
+          <span style={{ color: "#c8bfb0", fontWeight: 400, marginLeft: "0.3rem" }}>· {domain(sourceUrl)}</span>
         </div>
-        {(ogTitle || !hasOg) && (
-          <div style={{
-            color: "#14110d",
-            fontSize: "0.82rem",
-            fontWeight: 600,
-            lineHeight: 1.35,
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}>
-            {ogTitle || `Read on ${sourceName || domain(sourceUrl)} →`}
-          </div>
-        )}
+        <div style={{
+          color: "#14110d",
+          fontSize: "0.82rem",
+          fontWeight: 600,
+          lineHeight: 1.35,
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+        }}>
+          {ogTitle || `Read on ${sourceName || domain(sourceUrl)} →`}
+        </div>
         {ogDescription && (
           <div style={{
             color: "#7a6f5c",
-            fontSize: "0.74rem",
-            lineHeight: 1.45,
-            marginTop: "0.2rem",
+            fontSize: "0.72rem",
+            lineHeight: 1.4,
+            marginTop: "0.15rem",
             display: "-webkit-box",
-            WebkitLineClamp: 2,
+            WebkitLineClamp: 1,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
           }}>

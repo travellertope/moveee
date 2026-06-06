@@ -158,16 +158,20 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
 
           {/* Full body */}
           {item.body && (
-            <div
-              style={{
-                fontFamily: "var(--font-fraunces), serif",
-                fontSize: "0.95rem",
-                lineHeight: 1.7,
-                color: "#3a342b",
-                marginBottom: "1rem",
-              }}
-              dangerouslySetInnerHTML={{ __html: item.body }}
-            />
+            <>
+              <style>{`.modal-pulse-body p { margin: 0 0 0.75em; } .modal-pulse-body p:last-child { margin-bottom: 0; }`}</style>
+              <div
+                className="modal-pulse-body"
+                style={{
+                  fontFamily: "var(--font-fraunces), serif",
+                  fontSize: "0.95rem",
+                  lineHeight: 1.7,
+                  color: "#3a342b",
+                  marginBottom: "1rem",
+                }}
+                dangerouslySetInnerHTML={{ __html: item.body }}
+              />
+            </>
           )}
 
           {/* Source preview card */}
