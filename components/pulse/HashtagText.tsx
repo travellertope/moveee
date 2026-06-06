@@ -33,9 +33,9 @@ export default function HashtagText({ text, onHashtagClick, clamp }: HashtagText
   const paragraphs = text.split(/\n\n+/);
   const hasMultipleParagraphs = paragraphs.length > 1;
 
-  if (hasMultipleParagraphs && !clamp) {
+  if (hasMultipleParagraphs) {
     return (
-      <div>
+      <div style={clamp ? { display: "-webkit-box", WebkitLineClamp: clamp, WebkitBoxOrient: "vertical", overflow: "hidden" } : undefined}>
         {paragraphs.map((para, i) => (
           <p key={i} style={{ margin: i === 0 ? 0 : "0.65em 0 0" }}>
             <InlineTokens text={para.replace(/\n/g, " ")} onHashtagClick={onHashtagClick} />
@@ -45,7 +45,7 @@ export default function HashtagText({ text, onHashtagClick, clamp }: HashtagText
     );
   }
 
-  // Single paragraph or clamped (clamp collapses to single -webkit-box)
+  // Single paragraph
   return (
     <span
       style={
