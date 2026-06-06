@@ -7,6 +7,7 @@ import type { FeedItem } from "@/lib/unified-feed";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
 import SourcePreviewCard from "./SourcePreviewCard";
+import InternalLinkCard from "./InternalLinkCard";
 
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
 
@@ -490,7 +491,121 @@ export default function FeedCard({
     );
   }
 
-  // ── Standard cards (editorial, happening, directory) — horizontal timeline style ──
+  // ── Editorial card — inline excerpt + internal link card ──
+  if (item.type === "editorial") {
+    const CLAMP_CHARS = 320;
+    const text = item.excerpt ?? "";
+    const isLong = text.length > CLAMP_CHARS;
+    const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
+    const typeMeta = TYPE_BADGE.editorial;
+
+    return (
+      <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
+        {/* Badges row */}
+        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
+          <Badge {...typeMeta} />
+          {item.category && (
+            <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
+              {item.category}
+            </span>
+          )}
+          <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+        </div>
+
+        {/* Body — clicking navigates to the editorial page */}
+        <Link href={item.href} style={{ textDecoration: "none", display: "block" }}>
+          <h3 style={{
+            color: "#14110d",
+            fontFamily: "var(--font-fraunces), serif",
+            fontSize: "0.97rem",
+            fontWeight: 700,
+            lineHeight: 1.35,
+            marginBottom: "0.5rem",
+          }}>
+            {item.title}
+          </h3>
+          {displayText && (
+            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+              {displayText}
+            </p>
+          )}
+          {isLong && (
+            <span style={{ color: "#c5491f", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+              Read more →
+            </span>
+          )}
+        </Link>
+
+        {/* Internal link card */}
+        <InternalLinkCard
+          href={item.href}
+          label="Moveee Magazine"
+          title={item.title}
+          description={item.excerpt}
+          image={item.image}
+        />
+      </article>
+    );
+  }
+
+  // ── Directory card — inline excerpt + internal link card ──
+  if (item.type === "directory") {
+    const CLAMP_CHARS = 280;
+    const text = item.excerpt ?? "";
+    const isLong = text.length > CLAMP_CHARS;
+    const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
+    const typeMeta = TYPE_BADGE.directory;
+
+    return (
+      <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
+        {/* Badges row */}
+        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
+          <Badge {...typeMeta} />
+          {item.entryType && (
+            <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
+              {item.entryType}
+            </span>
+          )}
+          <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+        </div>
+
+        {/* Body — clicking navigates to the directory entry */}
+        <Link href={item.href} style={{ textDecoration: "none", display: "block" }}>
+          <h3 style={{
+            color: "#14110d",
+            fontFamily: "var(--font-fraunces), serif",
+            fontSize: "0.97rem",
+            fontWeight: 700,
+            lineHeight: 1.35,
+            marginBottom: "0.5rem",
+          }}>
+            {item.title}
+          </h3>
+          {displayText && (
+            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+              {displayText}
+            </p>
+          )}
+          {isLong && (
+            <span style={{ color: "#085041", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+              Read more →
+            </span>
+          )}
+        </Link>
+
+        {/* Internal link card */}
+        <InternalLinkCard
+          href={item.href}
+          label="Culture Directory"
+          title={item.title}
+          description={item.excerpt}
+          image={item.image}
+        />
+      </article>
+    );
+  }
+
+  // ── Standard cards (happening) — horizontal timeline style ──
   const hasImage = !!item.image;
   const subLabel = item.source || item.location || item.category || item.entryType || item.arm || "";
 
