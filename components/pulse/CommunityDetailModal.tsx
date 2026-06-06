@@ -9,6 +9,12 @@ import ReactionBar from "./ReactionBar";
 import SourcePreviewCard from "./SourcePreviewCard";
 import type { FeedItem } from "@/lib/unified-feed";
 
+function stripTrailingUrl(text: string, sourceUrl?: string): string {
+  if (!sourceUrl) return text;
+  const escaped = sourceUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return text.replace(new RegExp(`\\s*${escaped}\\s*$`), "").trimEnd();
+}
+
 interface CommunityDetailModalProps {
   item: FeedItem;
   onClose: () => void;
@@ -153,8 +159,10 @@ export default function CommunityDetailModal({ item, onClose, onHashtagClick }: 
             lineHeight: 1.7,
             color: "#3a342b",
             marginBottom: "1rem",
+            wordBreak: "break-word",
+            overflowWrap: "break-word",
           }}>
-            <HashtagText text={item.title} onHashtagClick={onHashtagClick} />
+            <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onHashtagClick={onHashtagClick} />
           </div>
 
           {/* Image */}
