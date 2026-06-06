@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import type { WpComment } from "@/lib/pulse-wordpress";
 import CommentThread from "./CommentThread";
 import SourcePreviewCard from "./SourcePreviewCard";
@@ -94,21 +95,41 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
               </span>
             )}
           </div>
-          <button
-            onClick={close}
-            aria-label="Close"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#7a6f5c",
-              fontSize: "1.1rem",
-              lineHeight: 1,
-              padding: "0.25rem",
-            }}
-          >
-            ✕
-          </button>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            {item.slug && (
+              <Link
+                href={`/pulse/${item.slug}`}
+                style={{
+                  color: "#7a6f5c",
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                  padding: "0.2rem 0.5rem",
+                  border: "1px solid #d8d0c6",
+                  borderRadius: "2px",
+                }}
+              >
+                Open full page ↗
+              </Link>
+            )}
+            <button
+              onClick={close}
+              aria-label="Close"
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#7a6f5c",
+                fontSize: "1.1rem",
+                lineHeight: 1,
+                padding: "0.25rem",
+              }}
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* Content */}
