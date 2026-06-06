@@ -191,8 +191,8 @@ export async function fetchVerifiedQuotesForAuthor(
  * window without needing persistent state.
  */
 export async function runVerifiedQuotesBatch(
-  authorsPerRun: number = 3,
-  quotesPerAuthor: number = 4
+  authorsPerRun: number = 2,
+  quotesPerAuthor: number = 3
 ): Promise<Array<{ text: string; author: string; source: string; source_url: string }>> {
   const total     = QUOTE_AUTHORS.length;
   const dayOfYear = Math.floor(

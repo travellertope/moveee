@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   const envErr = checkEnv();
   if (envErr) return envErr;
-  return run(3);
+  return run(2);
 }
 
 export async function POST(req: NextRequest) {

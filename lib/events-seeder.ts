@@ -23,11 +23,9 @@ export type SeedResult = { cities: string[]; submitted: number; detail: Record<s
 
 export function buildQueries(city: string, monthYear: string, nextMonthYear: string): string[] {
   return [
-    `African diaspora cultural events ${city} ${monthYear}`,
-    `African diaspora cultural events ${city} ${nextMonthYear}`,
+    `African diaspora cultural events ${city} ${monthYear} OR ${nextMonthYear}`,
     `art exhibition music film events ${city} ${monthYear} OR ${nextMonthYear}`,
     `Black culture events ${city} ${monthYear} site:eventbrite.com OR site:dice.fm OR site:ra.co`,
-    `gallery opening supper club pop-up cultural event ${city} ${nextMonthYear}`,
   ];
 }
 
@@ -93,7 +91,7 @@ export async function submitEvent(
 
 export async function seedCities(
   citiesToRun: typeof CITIES,
-  maxEventsPerCity = 10
+  maxEventsPerCity = 5
 ): Promise<SeedResult> {
   const now         = new Date();
   const monthYear   = now.toLocaleString("en-US", { month: "long", year: "numeric" });
