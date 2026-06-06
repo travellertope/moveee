@@ -94,7 +94,7 @@ export default function CommunityDetailModal({ item, onClose, onHashtagClick }: 
                   border: "1px solid #d8d0c6", borderRadius: "2px",
                 }}
               >
-                Open full page ↗
+                Open full page <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle", marginLeft: "2px" }}><path d="M3 9L9 3M4 3h5v5"/></svg>
               </Link>
             )}
             <button
