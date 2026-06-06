@@ -1,12 +1,7 @@
 import React from "react";
 import {
-  View,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  Text,
-  ActivityIndicator,
+  View, FlatList, StyleSheet, TouchableOpacity,
+  SafeAreaView, Text, ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,10 +26,7 @@ export default function ConnectFeedScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Connect</Text>
-        <TouchableOpacity
-          style={styles.newPostBtn}
-          onPress={() => nav.navigate("NewPost")}
-        >
+        <TouchableOpacity style={styles.newPostBtn} onPress={() => nav.navigate("NewPost")}>
           <Ionicons name="add" size={24} color="#f3ece0" />
         </TouchableOpacity>
       </View>
@@ -71,23 +63,14 @@ export default function ConnectFeedScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f3ece0" },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0d8cc",
-    backgroundColor: "#f3ece0",
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: "#e0d8cc", backgroundColor: "#f3ece0",
   },
   headerTitle: { fontSize: 20, fontWeight: "700", color: "#14110d" },
   newPostBtn: {
-    backgroundColor: "#14110d",
-    borderRadius: 20,
-    width: 36,
-    height: 36,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "#14110d", borderRadius: 20, width: 36, height: 36,
+    justifyContent: "center", alignItems: "center",
   },
   list: { paddingVertical: 8 },
   loader: { paddingVertical: 20 },

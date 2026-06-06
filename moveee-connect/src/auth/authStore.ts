@@ -26,7 +26,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       const token = await SecureStore.getItemAsync("auth_token");
       if (!token) return;
       storage.set("auth_token", token);
-      // Validate token by fetching the authed user's profile
       const user = await api.get<User>(`${CULTURE_API}/mobile/me`);
       set({ user, token, isAuthenticated: true });
     } catch {
@@ -49,7 +48,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    // Best-effort server-side token invalidation
     await api.post(`${CULTURE_API}/mobile/logout`, {}).catch(() => null);
     await SecureStore.deleteItemAsync("auth_token");
     storage.delete("auth_token");

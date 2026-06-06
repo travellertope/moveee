@@ -32,7 +32,6 @@ async function registerPushToken() {
     });
   }
 
-  // Store token on the user's WP profile for server-side push
   await api.post(`${CULTURE_API}/user/push-token`, { token }).catch(() => null);
 }
 

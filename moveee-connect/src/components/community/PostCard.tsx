@@ -1,12 +1,5 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from "react-native";
+import React from "react";
+import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { CommunityPost } from "../../types";
 import TierBadge from "../ui/TierBadge";
@@ -20,13 +13,11 @@ interface Props {
 }
 
 export default function PostCard({ post, onPress, onLike, onAuthorPress }: Props) {
-  const [reportOpen, setReportOpen] = useState(false);
-
   const handleReport = () => {
     Alert.alert("Report post", "Why are you reporting this?", [
-      { text: "Spam", onPress: () => setReportOpen(false) },
-      { text: "Harassment", onPress: () => setReportOpen(false) },
-      { text: "Inappropriate", onPress: () => setReportOpen(false) },
+      { text: "Spam", onPress: () => {} },
+      { text: "Harassment", onPress: () => {} },
+      { text: "Inappropriate", onPress: () => {} },
       { text: "Cancel", style: "cancel" },
     ]);
   };
@@ -90,22 +81,13 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  authorRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
+  authorRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#e0d8cc" },
   authorMeta: { flex: 1, marginLeft: 10 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   authorName: { fontWeight: "600", fontSize: 14, color: "#14110d" },
   content: { fontSize: 15, color: "#14110d", lineHeight: 22, marginBottom: 10 },
-  postImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
+  postImage: { width: "100%", height: 200, borderRadius: 8, marginBottom: 10 },
   actions: { flexDirection: "row", gap: 20, paddingTop: 8, borderTopWidth: 1, borderTopColor: "#f3ece0" },
   actionBtn: { flexDirection: "row", alignItems: "center", gap: 5 },
   actionCount: { fontSize: 13, color: "#9e9e9e" },

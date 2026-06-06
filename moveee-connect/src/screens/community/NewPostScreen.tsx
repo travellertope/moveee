@@ -77,9 +77,7 @@ export default function NewPostScreen() {
         maxLength={MAX_CHARS}
       />
 
-      <Text style={styles.charCount}>
-        {content.length}/{MAX_CHARS}
-      </Text>
+      <Text style={styles.charCount}>{content.length}/{MAX_CHARS}</Text>
     </SafeAreaView>
   );
 }
@@ -91,16 +89,11 @@ const styles = StyleSheet.create({
     padding: 16, borderBottomWidth: 1, borderBottomColor: "#e0d8cc",
   },
   title: { fontSize: 16, fontWeight: "600", color: "#14110d" },
-  postBtn: {
-    backgroundColor: "#14110d", borderRadius: 20, paddingHorizontal: 16, paddingVertical: 7,
-  },
+  postBtn: { backgroundColor: "#14110d", borderRadius: 20, paddingHorizontal: 16, paddingVertical: 7 },
   postBtnDisabled: { backgroundColor: "#ccc" },
   postBtnLabel: { color: "#fff", fontWeight: "600", fontSize: 14 },
   authorRow: { flexDirection: "row", alignItems: "center", gap: 8, padding: 16 },
   username: { fontWeight: "600", fontSize: 15, color: "#14110d" },
-  input: {
-    flex: 1, paddingHorizontal: 16, fontSize: 16, color: "#14110d",
-    lineHeight: 24, textAlignVertical: "top",
-  },
+  input: { flex: 1, paddingHorizontal: 16, fontSize: 16, color: "#14110d", lineHeight: 24, textAlignVertical: "top" },
   charCount: { textAlign: "right", paddingHorizontal: 16, paddingBottom: 8, color: "#9e9e9e", fontSize: 12 },
 });

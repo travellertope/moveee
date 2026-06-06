@@ -72,20 +72,14 @@ export function useFeed() {
     }
   }, []);
 
-  const submitPost = useCallback(
-    async (content: string, imageUri?: string) => {
-      const body: Record<string, unknown> = { content };
-      if (imageUri) body.image_url = imageUri;
-      const newPost = await api.post<CommunityPost>(
-        `${CULTURE_API}/community/submit`,
-        body
-      );
-      setPosts((prev) => [newPost, ...prev]);
-      cache.invalidate(CACHE_KEY);
-      return newPost;
-    },
-    []
-  );
+  const submitPost = useCallback(async (content: string, imageUri?: string) => {
+    const body: Record<string, unknown> = { content };
+    if (imageUri) body.image_url = imageUri;
+    const newPost = await api.post<CommunityPost>(`${CULTURE_API}/community/submit`, body);
+    setPosts((prev) => [newPost, ...prev]);
+    cache.invalidate(CACHE_KEY);
+    return newPost;
+  }, []);
 
   return { posts, refreshing, loading, hasMore, error, refresh, loadMore, likePost, submitPost };
 }

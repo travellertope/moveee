@@ -32,8 +32,6 @@ class Culture_Mobile_API {
 
     public static function register_routes() {
 
-        // POST /culture/v1/mobile/login
-        // Accepts email OR username + password. Returns { token, user }.
         register_rest_route( 'culture/v1', '/mobile/login', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_login' ),
@@ -45,16 +43,12 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        // POST /culture/v1/mobile/logout
-        // Invalidates the current mobile token.
         register_rest_route( 'culture/v1', '/mobile/logout', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_logout' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
-        // POST /culture/v1/mobile/register
-        // Public registration without needing the Next.js API key.
         register_rest_route( 'culture/v1', '/mobile/register', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_register' ),
@@ -78,24 +72,18 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        // GET /culture/v1/mobile/me
-        // Returns the authenticated user's full profile.
         register_rest_route( 'culture/v1', '/mobile/me', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_me' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
-        // POST /culture/v1/mobile/me
-        // Updates writable profile fields.
         register_rest_route( 'culture/v1', '/mobile/me', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_update_me' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
-        // POST /culture/v1/user/push-token
-        // Stores or updates the FCM push token for the authenticated user.
         register_rest_route( 'culture/v1', '/user/push-token', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_push_token' ),
@@ -109,8 +97,6 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        // GET /culture/v1/community/posts
-        // Paginated community feed (culture_post CPT).
         register_rest_route( 'culture/v1', '/community/posts', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_community_posts' ),
@@ -121,8 +107,6 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        // POST /culture/v1/community/submit
-        // Submit a new community post from the mobile app.
         register_rest_route( 'culture/v1', '/community/submit', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_submit_post' ),
@@ -142,8 +126,6 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        // GET /culture/v1/community/comments?post_id=X
-        // Returns approved comments on a community post.
         register_rest_route( 'culture/v1', '/community/comments', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_comments' ),
@@ -157,8 +139,6 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        // POST /culture/v1/community/comment
-        // Add a comment to a community post.
         register_rest_route( 'culture/v1', '/community/comment', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_add_comment' ),
@@ -177,8 +157,6 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        // POST /culture/v1/community/react
-        // Toggle a like on a community post.
         register_rest_route( 'culture/v1', '/community/react', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_react' ),
@@ -196,8 +174,6 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        // POST /culture/v1/community/report
-        // Report a community post (spam / harassment / inappropriate).
         register_rest_route( 'culture/v1', '/community/report', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_report' ),
@@ -219,8 +195,6 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        // GET /culture/v1/member/{id}
-        // Returns a public member profile (no private fields).
         register_rest_route( 'culture/v1', '/member/(?P<id>\d+)', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_member' ),
@@ -239,10 +213,6 @@ class Culture_Mobile_API {
     // Auth helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Validate a mobile Bearer token.
-     * Sets the WP current user so downstream code can call get_current_user_id().
-     */
     public static function mobile_permission( $request ) {
         $header = $request->get_header( 'Authorization' );
         if ( ! $header || 0 !== strpos( $header, 'Bearer ' ) ) {
@@ -272,16 +242,12 @@ class Culture_Mobile_API {
             return new WP_Error( 'token_expired', 'Token has expired. Please log in again.', array( 'status' => 401 ) );
         }
 
-        // Slide the expiry window on each use.
         update_user_meta( $user_id, self::TOKEN_EXP_META, time() + self::TOKEN_TTL );
 
         wp_set_current_user( $user_id );
         return true;
     }
 
-    /**
-     * Issue a new mobile token for a user.
-     */
     private static function issue_token( int $user_id ): string {
         $raw    = wp_generate_password( 64, false );
         $hashed = wp_hash( $raw );
@@ -296,7 +262,6 @@ class Culture_Mobile_API {
     // Auth handlers
     // -------------------------------------------------------------------------
 
-    /** POST /culture/v1/mobile/login */
     public static function handle_login( $request ) {
         $email    = $request->get_param( 'email' );
         $username = $request->get_param( 'username' );
@@ -329,7 +294,6 @@ class Culture_Mobile_API {
         ) );
     }
 
-    /** POST /culture/v1/mobile/logout */
     public static function handle_logout( $request ) {
         $user_id = get_current_user_id();
         delete_user_meta( $user_id, self::TOKEN_META );
@@ -337,7 +301,6 @@ class Culture_Mobile_API {
         return rest_ensure_response( array( 'success' => true ) );
     }
 
-    /** POST /culture/v1/mobile/register */
     public static function handle_register( $request ) {
         $ip       = sanitize_text_field( $_SERVER['REMOTE_ADDR'] ?? '' );
         $rl_key   = 'culture_mobile_reg_' . md5( $ip );
@@ -385,13 +348,11 @@ class Culture_Mobile_API {
     // Profile handlers
     // -------------------------------------------------------------------------
 
-    /** GET /culture/v1/mobile/me */
     public static function handle_get_me( $request ) {
         $user = get_userdata( get_current_user_id() );
         return rest_ensure_response( self::full_profile( $user ) );
     }
 
-    /** POST /culture/v1/mobile/me */
     public static function handle_update_me( $request ) {
         $user_id = get_current_user_id();
 
@@ -421,12 +382,10 @@ class Culture_Mobile_API {
         return rest_ensure_response( self::full_profile( get_userdata( $user_id ) ) );
     }
 
-    /** POST /culture/v1/user/push-token */
     public static function handle_push_token( $request ) {
         $user_id = get_current_user_id();
         $token   = $request->get_param( 'token' );
 
-        // Store up to 3 FCM tokens per user (multiple devices).
         $tokens = (array) get_user_meta( $user_id, '_culture_fcm_tokens', true );
         if ( ! in_array( $token, $tokens, true ) ) {
             $tokens[] = $token;
@@ -441,7 +400,6 @@ class Culture_Mobile_API {
     // Community feed handlers
     // -------------------------------------------------------------------------
 
-    /** GET /culture/v1/community/posts */
     public static function handle_get_community_posts( $request ) {
         $user_id  = get_current_user_id();
         $page     = (int) $request->get_param( 'page' );
@@ -465,7 +423,6 @@ class Culture_Mobile_API {
         return rest_ensure_response( $posts );
     }
 
-    /** POST /culture/v1/community/submit */
     public static function handle_submit_post( $request ) {
         $user_id = get_current_user_id();
         $content = $request->get_param( 'content' );
@@ -479,13 +436,11 @@ class Culture_Mobile_API {
             return new WP_Error( 'too_long', 'Post content exceeds 1000 characters.', array( 'status' => 400 ) );
         }
 
-        // Citizens cannot post links.
         $tier = get_user_meta( $user_id, '_culture_membership_tier', true ) ?: 'citizen';
         if ( 'citizen' === $tier && preg_match( '/https?:\/\//i', $content ) ) {
             return new WP_Error( 'links_not_allowed', 'Connect Citizen members cannot post links.', array( 'status' => 403 ) );
         }
 
-        // Rate limit — 5 posts per 10 minutes.
         $rl_key   = 'culture_post_rate_' . $user_id;
         $rl_count = (int) get_transient( $rl_key );
         if ( $rl_count >= 5 ) {
@@ -493,7 +448,6 @@ class Culture_Mobile_API {
         }
         set_transient( $rl_key, $rl_count + 1, 10 * MINUTE_IN_SECONDS );
 
-        // Duplicate detection — same content within 30 minutes.
         $content_hash = md5( strtolower( trim( $content ) ) );
         $dup_key      = 'culture_post_dup_' . $user_id . '_' . $content_hash;
         if ( get_transient( $dup_key ) ) {
@@ -501,7 +455,6 @@ class Culture_Mobile_API {
         }
         set_transient( $dup_key, true, 30 * MINUTE_IN_SECONDS );
 
-        // New-member review period.
         $review_days = (int) get_option( 'culture_new_member_review_days', 7 );
         $user        = get_userdata( $user_id );
         $age_days    = (int) floor( ( time() - strtotime( $user->user_registered ) ) / DAY_IN_SECONDS );
@@ -531,7 +484,6 @@ class Culture_Mobile_API {
         return rest_ensure_response( self::format_community_post( $post, array() ) );
     }
 
-    /** GET /culture/v1/community/comments?post_id=X */
     public static function handle_get_comments( $request ) {
         $post_id = (int) $request->get_param( 'post_id' );
         $post    = get_post( $post_id );
@@ -567,7 +519,6 @@ class Culture_Mobile_API {
         return rest_ensure_response( $out );
     }
 
-    /** POST /culture/v1/community/comment */
     public static function handle_add_comment( $request ) {
         $user_id = get_current_user_id();
         $post_id = (int) $request->get_param( 'post_id' );
@@ -578,7 +529,6 @@ class Culture_Mobile_API {
             return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
         }
 
-        // Rate limit — 10 comments per 10 minutes.
         $rl_key   = 'culture_comment_rate_' . $user_id;
         $rl_count = (int) get_transient( $rl_key );
         if ( $rl_count >= 10 ) {
@@ -620,7 +570,6 @@ class Culture_Mobile_API {
         ) );
     }
 
-    /** POST /culture/v1/community/react */
     public static function handle_react( $request ) {
         $user_id = get_current_user_id();
         $post_id = (int) $request->get_param( 'post_id' );
@@ -653,7 +602,6 @@ class Culture_Mobile_API {
         ) );
     }
 
-    /** POST /culture/v1/community/report */
     public static function handle_report( $request ) {
         $user_id = get_current_user_id();
         $post_id = (int) $request->get_param( 'post_id' );
@@ -686,7 +634,6 @@ class Culture_Mobile_API {
         return rest_ensure_response( array( 'success' => true ) );
     }
 
-    /** GET /culture/v1/member/{id} */
     public static function handle_get_member( $request ) {
         $user_id = (int) $request->get_param( 'id' );
         $user    = get_userdata( $user_id );

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
-  Alert, ActivityIndicator,
+  View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,7 +20,6 @@ export default function MembershipScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleUpgrade = async () => {
-    // TODO: wire react-native-iap once Google Play console is configured
     Alert.alert(
       "Upgrade to Connect Pro",
       "Google Play Billing will be wired here. SKU: " + PRO_SKU
