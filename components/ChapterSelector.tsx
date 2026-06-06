@@ -112,7 +112,6 @@ export default function ChapterSelector({
               className="mem-field-input"
               value={draftPrimary}
               onChange={(e) => setDraftPrimary(Number(e.target.value))}
-              autoFocus
             >
               <option value={0}>— Select a chapter —</option>
               {chapters.map((c) => (
@@ -166,7 +165,6 @@ export default function ChapterSelector({
                 className="mem-field-input"
                 value={draftSecondary}
                 onChange={(e) => setDraftSecondary(Number(e.target.value))}
-                autoFocus
               >
                 <option value={0}>— None —</option>
                 {availableSecondary.map((c) => (

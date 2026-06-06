@@ -45,7 +45,6 @@ interface SelectProps {
   /** Pass a CSS class name (e.g. "mem-field-input") OR inline style object */
   inputClassName?: string;
   inputStyle?: React.CSSProperties;
-  autoFocus?: boolean;
   id?: string;
 }
 
@@ -57,7 +56,6 @@ function Combobox({
   placeholder,
   inputClassName,
   inputStyle,
-  autoFocus,
   id,
 }: SelectProps & { options: string[] }) {
   const [query, setQuery] = useState(value);
@@ -116,7 +114,6 @@ function Combobox({
         style={inputStyle}
         value={query}
         placeholder={placeholder ?? "Type to search…"}
-        autoFocus={autoFocus}
         autoComplete="off"
         onChange={e => {
           setQuery(e.target.value);
@@ -213,7 +210,6 @@ export function CitySelect({
       value={props.value}
       placeholder={placeholder}
       disabled={loading}
-      autoFocus={props.autoFocus}
       onChange={e => props.onChange(e.target.value)}
     />
   );

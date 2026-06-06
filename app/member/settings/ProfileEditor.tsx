@@ -136,7 +136,6 @@ function EditableField({
               className="mem-field-input"
               value={draft}
               onChange={e => setDraft(e.target.value)}
-              autoFocus
             >
               <option value="">— Select —</option>
               {field.options!.map(o => (
@@ -148,7 +147,6 @@ function EditableField({
               value={draft}
               onChange={setDraft}
               inputClassName="mem-field-input"
-              autoFocus
             />
           ) : field.type === "city" ? (
             <CitySelect
@@ -156,7 +154,6 @@ function EditableField({
               value={draft}
               onChange={setDraft}
               inputClassName="mem-field-input"
-              autoFocus
             />
           ) : (
             <input
@@ -164,7 +161,6 @@ function EditableField({
               type={field.type ?? "text"}
               value={draft}
               onChange={e => setDraft(e.target.value)}
-              autoFocus
               onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") cancel(); }}
             />
           )}
