@@ -6,7 +6,13 @@ import { authOptions } from "@/lib/auth";
 export const runtime = "nodejs";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
-const AUTH = Buffer.from(
+const API_SECRET = process.env.CULTURE_API_SECRET ?? "";
+const WP_AUTH_HEADERS = {
+  "Content-Type": "application/json",
+  "Authorization": `Bearer ${API_SECRET}`,
+  "X-Culture-API-Secret": API_SECRET,
+};
+const WP_UPLOAD_AUTH = Buffer.from(
   `${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`
 ).toString("base64");
 
@@ -53,7 +59,7 @@ export async function POST(req: NextRequest) {
   const wpRes = await fetch(`${WP_URL}/wp-json/wp/v2/media`, {
     method: "POST",
     headers: {
-      Authorization: `Basic ${AUTH}`,
+      Authorization: `Basic ${WP_UPLOAD_AUTH}`,
       "Content-Type": "image/webp",
       "Content-Disposition": `attachment; filename="${filename}"`,
     },
@@ -72,12 +78,9 @@ export async function POST(req: NextRequest) {
   const avatarUrl: string = media.source_url ?? media.guid?.rendered ?? "";
 
   // Save the URL to user meta via the culture REST API.
-  const updateRes = await fetch(`${WP_URL}/wp-json/culture/v1/user/${userId}/profile`, {
+  const updateRes = await fetch(`${WP_URL}/wp-json/culture/v1/user/update`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${AUTH}`,
-    },
+    headers: WP_AUTH_HEADERS,
     body: JSON.stringify({ user_id: userId, avatar_url: avatarUrl }),
   });
 
