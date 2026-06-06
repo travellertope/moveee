@@ -916,7 +916,7 @@
   .b-item .b-val { font-size: 13px; }
   .b-item .b-label { font-size: 8px; }
   .breadcrumb { padding: 14px 20px; font-size: 8px; }
-  .article-wrap { padding: 50px 24px 80px; }
+  .article-wrap { padding: 20px 24px 80px; }
   .author-band { grid-template-columns: 1fr; padding-left: 24px; padding-right: 24px; }
   .author-avatar { display: none; }
   .related-grid { grid-template-columns: 1fr; }
