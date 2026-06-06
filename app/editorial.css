@@ -895,7 +895,7 @@
 
 /* ── RESPONSIVE ── */
 @media(max-width:1100px) {
-  .article-wrap { grid-template-columns: 1fr; }
+  .article-wrap { grid-template-columns: 1fr; gap: 20px; }
   .toc, .sidebar { position: static; }
   /* Desktop heading hidden on mobile — summary label takes over */
   .toc-heading { display: none; }
