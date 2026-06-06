@@ -19,15 +19,6 @@ const TYPE_FILTERS: { label: string; value: FeedItemType | "all" }[] = [
   { label: "Quote",      value: "quote"     },
 ];
 
-const ARM_FILTERS = [
-  { label: "Lifestyle",  value: "lifestyle"  },
-  { label: "Origins",    value: "origins"    },
-  { label: "Happenings", value: "happenings" },
-  { label: "Magazine",   value: "magazine"   },
-];
-
-// Category values that appear across pulse (category), editorial (category),
-// and directory (entryType).
 const CATEGORY_FILTERS = [
   "Music", "Film", "Art", "Fashion", "Literature",
   "Food", "Tech", "Sport", "Travel", "Design",
@@ -90,7 +81,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [activeType, setActiveType] = useState<FeedItemType | "all">("all");
   const [activeRegion, setActiveRegion] = useState<string>("All");
   const [activeTag, setActiveTag] = useState<string>("");
-  const [activeArm, setActiveArm] = useState<string>("");
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(20);
   const [showSectionsMenu, setShowSectionsMenu] = useState(false);
@@ -132,15 +122,14 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
         ? item.title.toLowerCase().includes(activeTag.toLowerCase())
         : item.communityTag === activeTag
     ));
-    const armMatch = !activeArm || (item.type === "pulse" && (item.arm ?? "").toLowerCase() === activeArm.toLowerCase());
     const catLower = activeCategory.toLowerCase();
     const categoryMatch = !activeCategory || (
-      (item.type === "pulse"      && (item.arm ?? "").toLowerCase()       === catLower) ||
+      (item.type === "pulse"      && (item.category ?? "").toLowerCase()  === catLower) ||
       (item.type === "editorial"  && (item.category ?? "").toLowerCase()  === catLower) ||
       (item.type === "directory"  && (item.entryType ?? "").toLowerCase() === catLower)
     );
-    return typeMatch && regionMatch && tagMatch && armMatch && categoryMatch;
-  }), [items, activeType, activeRegion, activeTag, activeArm, activeCategory]);
+    return typeMatch && regionMatch && tagMatch && categoryMatch;
+  }), [items, activeType, activeRegion, activeTag, activeCategory]);
 
   const sorted = useMemo(() => {
     if (activeRegion === "All") return filtered;
@@ -204,27 +193,18 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const handleType = (type: FeedItemType | "all") => {
     setActiveType(type);
     setActiveTag("");
-    setActiveArm("");
     setActiveCategory("");
     setVisibleCount(20);
     if (type !== "pulse") setActiveRegion("All");
   };
 
-  const handleArm = (arm: string) => {
-    setActiveArm(prev => prev === arm ? "" : arm);
-    setActiveCategory("");
-    setActiveType("pulse");
-    setVisibleCount(20);
-  };
-
   const handleCategory = (cat: string) => {
     setActiveCategory(prev => prev === cat ? "" : cat);
-    setActiveArm("");
     setActiveType("all");
     setVisibleCount(20);
   };
 
-  const showRegions = (activeType === "all" || activeType === "pulse") && !activeArm;
+  const showRegions = activeType === "all" || activeType === "pulse";
   const showTags = availableTags.length > 0 && (activeType === "all" || activeType === "community");
 
   const trendingHashtags = useMemo(() => {
@@ -277,20 +257,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                     label={label}
                     active={activeType === value}
                     onClick={() => handleType(value)}
-                  />
-                ))}
-              </ul>
-            </div>
-
-            <div style={{ marginTop: "1.25rem" }}>
-              <SidebarHeading>Pulse Arms</SidebarHeading>
-              <ul style={{ margin: 0, padding: 0 }}>
-                {ARM_FILTERS.map(({ label, value }) => (
-                  <SidebarLink
-                    key={value}
-                    label={label}
-                    active={activeArm === value}
-                    onClick={() => handleArm(value)}
                   />
                 ))}
               </ul>
@@ -391,34 +357,8 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                     </Link>
                   ))}
                 </div>
-                {/* Pulse Arms */}
-                <div style={{ padding: "0.5rem 0.75rem 0.25rem" }}>
-                  <p style={{ margin: "0 0 0.35rem", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a6f5c" }}>Pulse Arms</p>
-                  <div style={{ display: "flex", gap: "0.35rem", overflowX: "auto", scrollbarWidth: "none" }}>
-                    {ARM_FILTERS.map(({ label, value }) => (
-                      <button
-                        key={value}
-                        onClick={() => { handleArm(value); setShowSectionsMenu(false); }}
-                        style={{
-                          flexShrink: 0,
-                          padding: "0.25rem 0.7rem",
-                          fontSize: "0.7rem",
-                          cursor: "pointer",
-                          background: activeArm === value ? "#b38238" : "#ffffff",
-                          color: activeArm === value ? "#fff" : "#3a342b",
-                          border: `1px solid ${activeArm === value ? "#b38238" : "#e8e2d8"}`,
-                          whiteSpace: "nowrap",
-                          fontFamily: "inherit",
-                        }}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Categories — horizontal scroll */}
-                <div style={{ padding: "0.25rem 0.75rem 0.6rem" }}>
+                <div style={{ padding: "0.5rem 0.75rem 0.6rem" }}>
                   <p style={{ margin: "0 0 0.35rem", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a6f5c" }}>Categories</p>
                   <div style={{ display: "flex", gap: "0.35rem", overflowX: "auto", scrollbarWidth: "none" }}>
                     {CATEGORY_FILTERS.map(cat => (
@@ -445,17 +385,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
               </div>
             )}
           </div>
-
-          {/* Active arm chip */}
-          {activeArm && (
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.6rem 1.25rem", borderBottom: "1px solid #e8e2d8", background: "#fff" }}>
-              <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>Pulse arm</span>
-              <span style={{ background: "#fdf5e6", color: "#b38238", fontSize: "0.7rem", fontWeight: 700, padding: "0.15rem 0.45rem", borderRadius: "2px" }}>
-                {ARM_FILTERS.find(a => a.value === activeArm)?.label ?? activeArm}
-              </span>
-              <button onClick={() => { setActiveArm(""); setVisibleCount(20); }} style={{ background: "transparent", border: "none", color: "#bbb", cursor: "pointer", fontSize: "0.85rem", lineHeight: 1, padding: "0 0.1rem" }} aria-label="Clear arm filter">×</button>
-            </div>
-          )}
 
           {/* Active category chip */}
           {activeCategory && (
