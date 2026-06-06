@@ -298,7 +298,7 @@ export default function FeedCard({
             {!item.image && item.sourceUrl && (
               <div style={{ marginBottom: "0.5rem" }}>
                 <SourcePreviewCard
-                  goUrl={item.sourceUrl}
+                  goUrl={`/go/link?url=${encodeURIComponent(item.sourceUrl)}`}
                   sourceName={item.source ?? ""}
                   sourceUrl={item.sourceUrl}
                   ogTitle={item.ogTitle}
