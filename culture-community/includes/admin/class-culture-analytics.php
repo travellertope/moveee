@@ -95,10 +95,19 @@ class Culture_Analytics {
                    class="nav-tab<?php echo 'newsletter' === $tab ? ' nav-tab-active' : ''; ?>">
                     <?php esc_html_e( 'Newsletter', 'culture-community' ); ?>
                 </a>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-analytics&tab=pulse' ) ); ?>"
+                   class="nav-tab<?php echo 'pulse' === $tab ? ' nav-tab-active' : ''; ?>">
+                    <?php esc_html_e( 'Pulse', 'culture-community' ); ?>
+                </a>
             </nav>
 
             <?php if ( 'newsletter' === $tab ) : ?>
                 <?php Culture_NL_Analytics_Admin::render_for_tab(); ?>
+                </div><!-- .wrap -->
+            <?php return; endif; ?>
+
+            <?php if ( 'pulse' === $tab ) : ?>
+                <?php self::render_pulse_tab(); ?>
                 </div><!-- .wrap -->
             <?php return; endif; ?>
 
@@ -465,6 +474,106 @@ class Culture_Analytics {
         }
 
         return $members;
+    }
+
+    /**
+     * Render the Pulse external-click analytics tab.
+     */
+    private static function render_pulse_tab() {
+        $stories = self::get_top_clicked_pulse_stories();
+        $total   = array_sum( array_column( $stories, 'clicks' ) );
+        ?>
+        <div class="culture-analytics__cards" style="margin-bottom:20px;">
+            <div class="culture-analytics__card culture-analytics__card--accent">
+                <div class="culture-analytics__card-value"><?php echo esc_html( $total ); ?></div>
+                <div class="culture-analytics__card-label"><?php esc_html_e( 'Total External Clicks', 'culture-community' ); ?></div>
+            </div>
+            <div class="culture-analytics__card">
+                <div class="culture-analytics__card-value"><?php echo esc_html( count( $stories ) ); ?></div>
+                <div class="culture-analytics__card-label"><?php esc_html_e( 'Stories Clicked', 'culture-community' ); ?></div>
+            </div>
+        </div>
+
+        <div class="culture-analytics__section">
+            <h2><?php esc_html_e( 'Top Clicked Pulse Stories', 'culture-community' ); ?></h2>
+            <?php if ( empty( $stories ) ) : ?>
+                <p class="culture-analytics__empty"><?php esc_html_e( 'No click data yet.', 'culture-community' ); ?></p>
+            <?php else : ?>
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"><?php esc_html_e( '#', 'culture-community' ); ?></th>
+                            <th><?php esc_html_e( 'Story', 'culture-community' ); ?></th>
+                            <th style="width:160px;"><?php esc_html_e( 'Source', 'culture-community' ); ?></th>
+                            <th style="width:100px;"><?php esc_html_e( 'Clicks', 'culture-community' ); ?></th>
+                            <th style="width:180px;"><?php esc_html_e( 'Published', 'culture-community' ); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ( $stories as $rank => $story ) : ?>
+                            <tr>
+                                <td><?php echo esc_html( $rank + 1 ); ?></td>
+                                <td>
+                                    <a href="<?php echo esc_url( get_edit_post_link( $story['id'] ) ); ?>" target="_blank">
+                                        <?php echo esc_html( $story['title'] ); ?>
+                                    </a>
+                                </td>
+                                <td>
+                                    <?php if ( ! empty( $story['source_url'] ) ) : ?>
+                                        <a href="<?php echo esc_url( $story['source_url'] ); ?>" target="_blank" rel="noopener">
+                                            <?php echo esc_html( $story['source'] ?: wp_parse_url( $story['source_url'], PHP_URL_HOST ) ); ?>
+                                        </a>
+                                    <?php else : ?>
+                                        <?php echo esc_html( $story['source'] ?: '—' ); ?>
+                                    <?php endif; ?>
+                                </td>
+                                <td><strong><?php echo esc_html( number_format( $story['clicks'] ) ); ?></strong></td>
+                                <td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $story['date'] ) ) ); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Get top 25 pulse stories ordered by external click count.
+     *
+     * @return array
+     */
+    private static function get_top_clicked_pulse_stories() {
+        $posts = get_posts( array(
+            'post_type'      => 'pulse_story',
+            'posts_per_page' => 25,
+            'post_status'    => 'publish',
+            'meta_key'       => 'pulse_click_count',
+            'orderby'        => 'meta_value_num',
+            'order'          => 'DESC',
+            'meta_query'     => array(
+                array(
+                    'key'     => 'pulse_click_count',
+                    'value'   => 0,
+                    'compare' => '>',
+                    'type'    => 'NUMERIC',
+                ),
+            ),
+        ) );
+
+        $results = array();
+        foreach ( $posts as $post ) {
+            $results[] = array(
+                'id'         => $post->ID,
+                'title'      => $post->post_title,
+                'date'       => $post->post_date,
+                'source'     => get_post_meta( $post->ID, 'pulse_source', true ),
+                'source_url' => get_post_meta( $post->ID, 'pulse_external_url', true ),
+                'clicks'     => (int) get_post_meta( $post->ID, 'pulse_click_count', true ),
+            );
+        }
+
+        return $results;
     }
 
     /**

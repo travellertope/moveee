@@ -24,6 +24,10 @@ export interface FeedItem {
   region?: string;
   source?: string;
   sourceUrl?: string;
+  body?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
   // happening-specific
   eventDate?: string;
   location?: string;
@@ -149,12 +153,17 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         slug: story.slug,
         date: story.date,
         excerpt: stripHtml(story.excerpt?.rendered ?? ""),
+        body: story.content?.rendered ?? "",
         image: story._embedded?.["wp:featuredmedia"]?.[0]?.source_url,
         href: `/pulse/${story.slug}`,
         arm: story.meta?.pulse_arm_label ?? "",
         region: story.meta?.pulse_region_label ?? "",
         source: story.meta?.pulse_source ?? "",
         sourceUrl: story.meta?.pulse_external_url ?? "",
+        ogTitle: story.meta?.pulse_og_title ?? "",
+        ogDescription: story.meta?.pulse_og_description ?? "",
+        ogImage: story.meta?.pulse_og_image ?? "",
+        commentCount: story.comment_count ?? 0,
         reactions: {
           love: Number((story.meta as any)?.reaction_love ?? 0),
           fire: Number((story.meta as any)?.reaction_fire ?? 0),
