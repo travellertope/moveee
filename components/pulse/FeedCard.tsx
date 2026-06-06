@@ -13,6 +13,14 @@ import InternalLinkCard from "./InternalLinkCard";
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
 const CommunityDetailModal = dynamic(() => import("./CommunityDetailModal"), { ssr: false });
 
+/** Remove the last URL from text when a link preview will be shown for it. */
+function stripTrailingUrl(text: string, sourceUrl?: string): string {
+  if (!sourceUrl) return text;
+  // Escape special regex chars in the URL then strip it (with surrounding whitespace)
+  const escaped = sourceUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return text.replace(new RegExp(`\\s*${escaped}\\s*$`), "").trimEnd();
+}
+
 function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -269,7 +277,7 @@ export default function FeedCard({
                 lineHeight: 1.6,
                 marginBottom: item.image ? "0.65rem" : "0.5rem",
               }}>
-                <HashtagText text={item.title} onHashtagClick={onHashtagClick} clamp={6} />
+                <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onHashtagClick={onHashtagClick} clamp={6} />
               </div>
             </div>
 
