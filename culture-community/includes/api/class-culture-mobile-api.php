@@ -117,6 +117,15 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Mobile community image upload — multipart file, returns the WP media URL
+        // for use as `image_url` on /community/submit (mirrors web's
+        // /api/community/upload-image, minus server-side WebP compression).
+        register_rest_route( 'culture/v1', '/community/upload-image', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_upload_image' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         register_rest_route( 'culture/v1', '/community/submit', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_submit_post' ),
@@ -483,6 +492,50 @@ class Culture_Mobile_API {
     }
 
     const SECTION_TAGS = array( 'Music', 'Fashion', 'Art', 'Film', 'Food', 'Sport', 'Travel', 'Ideas', 'Literature', 'Design', 'Tech' );
+
+    const UPLOAD_ALLOWED_TYPES = array( 'image/jpeg', 'image/png', 'image/webp', 'image/gif' );
+    const UPLOAD_MAX_BYTES     = 8 * 1024 * 1024; // 8 MB, matches web's limit.
+
+    /**
+     * Mobile community image upload — accepts a multipart `file` field,
+     * stores it as a WP attachment, and returns its URL for use as
+     * `image_url` on /community/submit. Mirrors web's
+     * /api/community/upload-image (without the WebP re-compression step).
+     */
+    public static function handle_upload_image( $request ) {
+        $files = $request->get_file_params();
+        $file  = $files['file'] ?? null;
+
+        if ( empty( $file ) || empty( $file['tmp_name'] ) ) {
+            return new WP_Error( 'no_file', __( 'No file provided.', 'culture-community' ), array( 'status' => 400 ) );
+        }
+
+        if ( ! in_array( $file['type'], self::UPLOAD_ALLOWED_TYPES, true ) ) {
+            return new WP_Error( 'invalid_type', __( 'Only JPEG, PNG, WebP, or GIF allowed.', 'culture-community' ), array( 'status' => 400 ) );
+        }
+
+        if ( $file['size'] > self::UPLOAD_MAX_BYTES ) {
+            return new WP_Error( 'too_large', __( 'Image must be under 8 MB.', 'culture-community' ), array( 'status' => 400 ) );
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+
+        // media_handle_upload() reads from $_FILES — the REST request's file
+        // params are sourced from there, so this is already populated.
+        $_FILES['file']['name'] = 'community-' . time() . '-' . sanitize_file_name( $file['name'] );
+
+        $attachment_id = media_handle_upload( 'file', 0, array(), array( 'test_form' => false ) );
+
+        if ( is_wp_error( $attachment_id ) ) {
+            return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), array( 'status' => 500 ) );
+        }
+
+        return rest_ensure_response( array(
+            'url' => wp_get_attachment_url( $attachment_id ),
+        ) );
+    }
 
     public static function handle_submit_post( $request ) {
         $user_id = get_current_user_id();

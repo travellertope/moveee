@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, Alert, ActivityIndicator, Platform,
+  SafeAreaView, Alert, ActivityIndicator, Platform, Image,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFeed } from "../../features/community/useFeed";
@@ -51,20 +52,49 @@ function SectionPicker({ value, onChange }: { value: string; onChange: (v: strin
   );
 }
 
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
 function PostForm({ onDone }: { onDone: () => void }) {
   const { submitPost } = useFeed();
   const user = useAuthStore((s) => s.user);
   const [content, setContent] = useState("");
   const [section, setSection] = useState("");
+  const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const canPost = content.trim().length > 0 && content.length <= MAX_CHARS;
+
+  const pickImage = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert("Permission needed", "Allow photo library access to attach an image.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.85,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    if (asset.fileSize && asset.fileSize > MAX_IMAGE_BYTES) {
+      Alert.alert("Image too large", "Please choose an image under 8 MB.");
+      return;
+    }
+    setImage(asset);
+  };
 
   const handleSubmit = async () => {
     if (!canPost) return;
     setSubmitting(true);
     try {
-      const post = await submitPost(content.trim(), undefined, section || undefined);
+      let imageUrl: string | undefined;
+      if (image) {
+        const name = image.fileName ?? `community-${Date.now()}.jpg`;
+        const type = image.mimeType ?? "image/jpeg";
+        const uploaded = await api.upload<{ url: string }>(`${CULTURE_API}/community/upload-image`, image.uri, name, type);
+        imageUrl = uploaded.url;
+      }
+      const post = await submitPost(content.trim(), imageUrl, section || undefined);
       if (post.status === "pending") {
         Alert.alert(
           "Post submitted",
@@ -99,7 +129,20 @@ function PostForm({ onDone }: { onDone: () => void }) {
         maxLength={MAX_CHARS}
       />
 
+      {image ? (
+        <View style={styles.imagePreviewWrap}>
+          <Image source={{ uri: image.uri }} style={styles.imagePreview} resizeMode="cover" />
+          <TouchableOpacity style={styles.imageRemoveBtn} onPress={() => setImage(null)}>
+            <Ionicons name="close" size={16} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       <View style={styles.footer}>
+        <TouchableOpacity style={[styles.imageBtn, image && styles.imageBtnActive]} onPress={pickImage}>
+          <Ionicons name="image-outline" size={15} color={image ? "#c5491f" : "#7a6f5c"} />
+          <Text style={[styles.imageBtnLabel, image && styles.imageBtnLabelActive]}>{image ? "Change" : "Image"}</Text>
+        </TouchableOpacity>
         <SectionPicker value={section} onChange={setSection} />
         <View style={{ flex: 1 }} />
         <Text style={styles.charCount}>{content.length}/{MAX_CHARS}</Text>
@@ -271,6 +314,22 @@ const styles = StyleSheet.create({
     flex: 1, borderWidth: 1, borderColor: "#e0d8cc", borderRadius: 4,
     paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, color: "#14110d", backgroundColor: "#fff",
   },
+
+  imagePreviewWrap: { marginHorizontal: 16, marginTop: 4, position: "relative" },
+  imagePreview: { width: "100%", height: 180, borderRadius: 4, borderWidth: 1, borderColor: "#e0d8ce", backgroundColor: "#f0ece4" },
+  imageRemoveBtn: {
+    position: "absolute", top: 8, right: 8,
+    backgroundColor: "rgba(20,17,13,0.6)", borderRadius: 12,
+    width: 24, height: 24, justifyContent: "center", alignItems: "center",
+  },
+  imageBtn: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    borderWidth: 1, borderColor: "#e0d8ce", borderRadius: 2,
+    paddingHorizontal: 9, paddingVertical: 6,
+  },
+  imageBtnActive: { backgroundColor: "#fff0eb", borderColor: "#c5491f" },
+  imageBtnLabel: { fontSize: 12, color: "#7a6f5c", fontWeight: "600" },
+  imageBtnLabelActive: { color: "#c5491f" },
 
   sectionPicker: {
     flexDirection: "row", alignItems: "center", gap: 6,
