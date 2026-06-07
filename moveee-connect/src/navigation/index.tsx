@@ -12,6 +12,7 @@ import VerifyEmailScreen from "../screens/auth/VerifyEmailScreen";
 
 import ConnectFeedScreen from "../screens/community/ConnectFeedScreen";
 import PostDetailScreen from "../screens/community/PostDetailScreen";
+import PulseDetailScreen from "../screens/community/PulseDetailScreen";
 import NewPostScreen from "../screens/community/NewPostScreen";
 import MemberProfileScreen from "../screens/community/MemberProfileScreen";
 
@@ -34,6 +35,7 @@ function ConnectStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ConnectFeed" component={ConnectFeedScreen} />
       <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+      <Stack.Screen name="PulseDetail" component={PulseDetailScreen} />
       <Stack.Screen name="NewPost" component={NewPostScreen} />
       <Stack.Screen name="MemberProfile" component={MemberProfileScreen} />
     </Stack.Navigator>

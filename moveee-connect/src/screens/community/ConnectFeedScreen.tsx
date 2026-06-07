@@ -47,7 +47,11 @@ export default function ConnectFeedScreen() {
       nav.navigate("PostDetail", { postId: feedItemToPostId(item), post: feedItemToCommunityPost(item) });
       return;
     }
-    if (item.type === "pulse" || item.type === "editorial") {
+    if (item.type === "pulse") {
+      nav.navigate("PulseDetail", { item });
+      return;
+    }
+    if (item.type === "editorial") {
       nav.navigate("Magazine", { screen: "Article", params: { slug: item.slug } });
       return;
     }

@@ -519,11 +519,13 @@ class Culture_Mobile_API {
         return rest_ensure_response( self::format_community_post( $post, array() ) );
     }
 
+    const COMMENTABLE_POST_TYPES = array( 'culture_post', 'pulse_story' );
+
     public static function handle_get_comments( $request ) {
         $post_id = (int) $request->get_param( 'post_id' );
         $post    = get_post( $post_id );
 
-        if ( ! $post || 'culture_post' !== $post->post_type ) {
+        if ( ! $post || ! in_array( $post->post_type, self::COMMENTABLE_POST_TYPES, true ) ) {
             return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
         }
 
@@ -560,7 +562,7 @@ class Culture_Mobile_API {
         $content = $request->get_param( 'content' );
 
         $post = get_post( $post_id );
-        if ( ! $post || 'culture_post' !== $post->post_type || 'publish' !== $post->post_status ) {
+        if ( ! $post || ! in_array( $post->post_type, self::COMMENTABLE_POST_TYPES, true ) || 'publish' !== $post->post_status ) {
             return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
         }
 
