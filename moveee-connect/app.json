@@ -33,6 +33,12 @@
     "plugins": [
       "expo-notifications",
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Moveee to access your photos so you can share images in Connect posts."
+        }
+      ],
       "./plugins/withAndroidIapStoreFlavor"
     ],
     "extra": {

@@ -12,7 +12,10 @@ import VerifyEmailScreen from "../screens/auth/VerifyEmailScreen";
 
 import ConnectFeedScreen from "../screens/community/ConnectFeedScreen";
 import PostDetailScreen from "../screens/community/PostDetailScreen";
+import PulseDetailScreen from "../screens/community/PulseDetailScreen";
 import NewPostScreen from "../screens/community/NewPostScreen";
+import EventSubmitScreen from "../screens/community/EventSubmitScreen";
+import DirectorySubmitScreen from "../screens/community/DirectorySubmitScreen";
 import MemberProfileScreen from "../screens/community/MemberProfileScreen";
 
 import MagazineScreen from "../screens/magazine/MagazineScreen";
@@ -34,7 +37,10 @@ function ConnectStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ConnectFeed" component={ConnectFeedScreen} />
       <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+      <Stack.Screen name="PulseDetail" component={PulseDetailScreen} />
       <Stack.Screen name="NewPost" component={NewPostScreen} />
+      <Stack.Screen name="EventSubmit" component={EventSubmitScreen} />
+      <Stack.Screen name="DirectorySubmit" component={DirectorySubmitScreen} />
       <Stack.Screen name="MemberProfile" component={MemberProfileScreen} />
     </Stack.Navigator>
   );

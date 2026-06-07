@@ -2,91 +2,26 @@ import React, { useState } from "react";
 import {
   View, Text, Image, FlatList, TextInput, TouchableOpacity,
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
-  ActivityIndicator, Linking,
+  ActivityIndicator, useWindowDimensions, Linking,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import RenderHtml from "react-native-render-html";
 import { useComments } from "../../features/community/useComments";
 import { useAuthStore } from "../../auth/authStore";
-import { api, CULTURE_API } from "../../api/client";
 import type { FeedItem } from "../../types";
 
 const PLACEHOLDER_AVATAR = "https://cms.themoveee.com/wp-content/uploads/placeholder-avatar.png";
 const SERIF = Platform.select({ ios: "Georgia", android: "serif", default: "serif" });
 
+const HTML_TAG_STYLES = {
+  p: { fontSize: 15, lineHeight: 25, color: "#3a342b", fontFamily: SERIF, marginBottom: 12 },
+  a: { color: "#b38238", textDecorationLine: "underline" as const },
+};
+
 function formatLongDate(dateStr: string): string {
   if (!dateStr) return "";
   return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-}
-
-function initials(name: string): string {
-  return (name || "?").split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
-}
-
-const REACTION_ENTRIES: Array<{ key: "love" | "fire" | "clap"; emoji: string }> = [
-  { key: "love", emoji: "❤️" },
-  { key: "fire", emoji: "🔥" },
-  { key: "clap", emoji: "👏" },
-];
-
-function ReactionRow({ item }: { item: FeedItem }) {
-  const [counts, setCounts] = useState(item.reactions ?? { love: 0, fire: 0, clap: 0 });
-  const [mine, setMine] = useState<"love" | "fire" | "clap" | null>(null);
-  const [pending, setPending] = useState(false);
-
-  if (!item.wpId) return null;
-
-  const handleReact = async (key: "love" | "fire" | "clap") => {
-    if (pending) return;
-    const isRemoving = mine === key;
-    const prevCounts = counts;
-    const prevMine = mine;
-
-    const next = { ...counts };
-    if (mine && mine !== key) next[mine] = Math.max(0, next[mine] - 1);
-    next[key] = isRemoving ? Math.max(0, next[key] - 1) : next[key] + 1;
-    setCounts(next);
-    setMine(isRemoving ? null : key);
-    setPending(true);
-    try {
-      await api.post(`${CULTURE_API}/community/react`, { post_id: Number(item.wpId), type: key });
-    } catch {
-      setCounts(prevCounts);
-      setMine(prevMine);
-    } finally {
-      setPending(false);
-    }
-  };
-
-  const handleShare = () => {
-    if (!item.slug) return;
-    const url = `https://themoveee.com/community/${item.slug}`;
-    Linking.openURL(url).catch(() => {});
-  };
-
-  return (
-    <View style={styles.reactionRow}>
-      {REACTION_ENTRIES.map(({ key, emoji }) => {
-        const active = mine === key;
-        return (
-          <TouchableOpacity
-            key={key}
-            style={[styles.reactionBtn, active && styles.reactionBtnActive]}
-            onPress={() => handleReact(key)}
-          >
-            <Text style={styles.reactionEmoji}>{emoji}</Text>
-            {counts[key] > 0 ? <Text style={styles.reactionCount}>{counts[key]}</Text> : null}
-          </TouchableOpacity>
-        );
-      })}
-      <View style={{ flex: 1 }} />
-      {item.slug ? (
-        <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
-          <Ionicons name="share-outline" size={16} color="#7a6f5c" />
-        </TouchableOpacity>
-      ) : null}
-    </View>
-  );
 }
 
 function SourcePreview({ item }: { item: FeedItem }) {
@@ -104,11 +39,12 @@ function SourcePreview({ item }: { item: FeedItem }) {
   );
 }
 
-export default function PostDetailScreen() {
+export default function PulseDetailScreen() {
   const { params } = useRoute<any>();
   const nav = useNavigation<any>();
+  const { width } = useWindowDimensions();
   const item: FeedItem = params?.item;
-  const postId = item?.wpId ?? params?.postId ?? "";
+  const postId = item?.wpId ?? "";
   const user = useAuthStore((s) => s.user);
   const { comments, loading, addComment } = useComments(postId);
   const [text, setText] = useState("");
@@ -125,8 +61,6 @@ export default function PostDetailScreen() {
     }
   };
 
-  const goToAuthor = () => item?.communityAuthorId && nav.navigate("MemberProfile", { userId: item.communityAuthorId });
-
   if (!item) return null;
 
   return (
@@ -134,15 +68,15 @@ export default function PostDetailScreen() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>Community</Text>
+            <Text style={styles.badgeText}>Pulse</Text>
           </View>
-          {item.communityTag ? <Text style={styles.tag}>{item.communityTag}</Text> : null}
+          {item.region ? <Text style={styles.region}>{item.region}</Text> : null}
         </View>
         <View style={styles.headerRight}>
           {item.slug ? (
             <TouchableOpacity
               style={styles.openFullBtn}
-              onPress={() => Linking.openURL(`https://themoveee.com/community/${item.slug}`).catch(() => {})}
+              onPress={() => Linking.openURL(`https://themoveee.com/pulse/${item.slug}`).catch(() => {})}
             >
               <Text style={styles.openFullBtnText}>Open full page</Text>
               <Ionicons name="open-outline" size={12} color="#7a6f5c" />
@@ -160,40 +94,31 @@ export default function PostDetailScreen() {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <View>
-            <TouchableOpacity style={styles.authorRow} onPress={goToAuthor} disabled={!item.communityAuthorId}>
-              {item.communityAuthorAvatar ? (
-                <Image source={{ uri: item.communityAuthorAvatar }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarFallback}>
-                  <Text style={styles.avatarFallbackText}>{initials(item.communityAuthor || "?")}</Text>
-                </View>
-              )}
-              <View>
-                <View style={styles.nameRow}>
-                  <Text style={styles.authorName}>{item.communityAuthor || "Community Member"}</Text>
-                  {item.communityTier === "patron" ? (
-                    <View style={styles.proBadge}>
-                      <Text style={styles.proBadgeText}>Pro</Text>
-                    </View>
-                  ) : null}
-                </View>
-                <Text style={styles.metaDate}>{formatLongDate(item.date)}</Text>
-              </View>
-            </TouchableOpacity>
+            <Text style={styles.title}>{item.title}</Text>
 
-            <Text style={styles.content}>{item.title}</Text>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaDate}>{formatLongDate(item.date)}</Text>
+              {item.source ? (
+                <Text style={styles.metaVia}>Via <Text style={styles.metaSource}>{item.source}</Text></Text>
+              ) : null}
+              <View style={styles.curatedBadge}>
+                <Text style={styles.curatedBadgeText}>Curated with AI</Text>
+              </View>
+            </View>
 
             {item.image ? (
-              <Image source={{ uri: item.image }} style={styles.postImage} resizeMode="cover" />
-            ) : (
-              <SourcePreview item={item} />
-            )}
+              <Image source={{ uri: item.image }} style={styles.heroImage} resizeMode="cover" />
+            ) : null}
 
-            <ReactionRow item={item} />
+            {item.body ? (
+              <RenderHtml contentWidth={width - 40} source={{ html: item.body }} tagsStyles={HTML_TAG_STYLES} />
+            ) : item.excerpt ? (
+              <Text style={styles.bodyText}>{item.excerpt}</Text>
+            ) : null}
 
-            <Text style={styles.commentsLabel}>
-              {comments.length > 0 ? `${comments.length} Comment${comments.length === 1 ? "" : "s"}` : "Start the conversation"}
-            </Text>
+            <SourcePreview item={item} />
+
+            <Text style={styles.commentsLabel}>Start the conversation</Text>
           </View>
         }
         ListEmptyComponent={
@@ -246,9 +171,9 @@ const styles = StyleSheet.create({
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
-  badge: { backgroundColor: "#edf7ed", borderRadius: 2, paddingHorizontal: 6, paddingVertical: 3 },
-  badgeText: { fontSize: 10, fontWeight: "700", letterSpacing: 1.4, textTransform: "uppercase", color: "#2e7d32" },
-  tag: { fontSize: 11, color: "#7a6f5c", letterSpacing: 0.6, textTransform: "uppercase" },
+  badge: { backgroundColor: "#fef3e2", borderRadius: 2, paddingHorizontal: 6, paddingVertical: 3 },
+  badgeText: { fontSize: 10, fontWeight: "700", letterSpacing: 1.4, textTransform: "uppercase", color: "#b38238" },
+  region: { fontSize: 11, color: "#7a6f5c", letterSpacing: 0.6, textTransform: "uppercase" },
   openFullBtn: {
     flexDirection: "row", alignItems: "center", gap: 4,
     borderWidth: 1, borderColor: "#d8d0c6", borderRadius: 2,
@@ -258,29 +183,20 @@ const styles = StyleSheet.create({
   closeBtn: { padding: 2 },
 
   listContent: { padding: 18, paddingBottom: 8 },
+  title: { fontSize: 21, fontWeight: "700", fontFamily: SERIF, color: "#14110d", lineHeight: 28, marginBottom: 12 },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 14 },
+  metaDate: { fontSize: 12, color: "#999" },
+  metaVia: { fontSize: 12, color: "#7a6f5c" },
+  metaSource: { color: "#b38238", fontWeight: "600" },
+  curatedBadge: { backgroundColor: "rgba(179,130,56,0.08)", borderRadius: 2, paddingHorizontal: 6, paddingVertical: 2 },
+  curatedBadgeText: { fontSize: 9, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", color: "#b38238" },
 
-  authorRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 14 },
-  avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#edf7ed" },
-  avatarFallback: {
-    width: 38, height: 38, borderRadius: 19, backgroundColor: "#edf7ed",
-    borderWidth: 1, borderColor: "#c8e6c9", justifyContent: "center", alignItems: "center",
-  },
-  avatarFallbackText: { fontSize: 12, fontWeight: "700", color: "#2e7d32" },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  authorName: { fontWeight: "600", fontSize: 14, color: "#14110d" },
-  proBadge: {
-    backgroundColor: "rgba(179,130,56,0.1)", borderWidth: 1, borderColor: "rgba(179,130,56,0.25)",
-    borderRadius: 2, paddingHorizontal: 5, paddingVertical: 1,
-  },
-  proBadgeText: { fontSize: 9, fontWeight: "700", letterSpacing: 1.4, textTransform: "uppercase", color: "#b38238" },
-  metaDate: { fontSize: 12, color: "#999", marginTop: 2 },
-
-  content: { fontSize: 15, lineHeight: 25, color: "#3a342b", fontFamily: SERIF, marginBottom: 14 },
-  postImage: { width: "100%", height: 240, borderRadius: 6, marginBottom: 14, borderWidth: 1, borderColor: "#e8e2d8", backgroundColor: "#e0d8cc" },
+  heroImage: { width: "100%", height: 200, borderRadius: 6, marginBottom: 14, borderWidth: 1, borderColor: "#e8e2d8", backgroundColor: "#e0d8cc" },
+  bodyText: { fontSize: 15, lineHeight: 25, color: "#3a342b", fontFamily: SERIF, marginBottom: 14 },
 
   sourceCard: {
     flexDirection: "row", borderWidth: 1, borderColor: "#e8e2d8", borderRadius: 6,
-    overflow: "hidden", marginBottom: 14, backgroundColor: "#faf8f4",
+    overflow: "hidden", marginTop: 4, marginBottom: 14, backgroundColor: "#faf8f4",
   },
   sourceImage: { width: 96, backgroundColor: "#e0d8cc" },
   sourceBody: { flex: 1, padding: 10, justifyContent: "center", gap: 3 },
@@ -288,21 +204,7 @@ const styles = StyleSheet.create({
   sourceTitle: { fontSize: 13, fontWeight: "600", color: "#14110d", lineHeight: 18 },
   sourceDesc: { fontSize: 11, color: "#7a6f5c", lineHeight: 15 },
 
-  reactionRow: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    paddingBottom: 16, marginBottom: 16, borderBottomWidth: 1, borderBottomColor: "#e8e2d8",
-  },
-  reactionBtn: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    borderWidth: 1, borderColor: "transparent", borderRadius: 20,
-    paddingHorizontal: 10, paddingVertical: 4,
-  },
-  reactionBtnActive: { backgroundColor: "#f0ece4", borderColor: "#d8cfc4" },
-  reactionEmoji: { fontSize: 15 },
-  reactionCount: { fontSize: 12, color: "#7a6f5c" },
-  shareBtn: { padding: 4 },
-
-  commentsLabel: { fontSize: 17, fontWeight: "700", fontFamily: SERIF, color: "#14110d", marginBottom: 14 },
+  commentsLabel: { fontSize: 17, fontWeight: "700", fontFamily: SERIF, color: "#14110d", marginTop: 8, marginBottom: 14, paddingTop: 18, borderTopWidth: 1, borderTopColor: "#e8e2d8" },
   emptyText: { color: "#9e9e9e", fontSize: 13, marginBottom: 12 },
 
   comment: { flexDirection: "row", gap: 10, marginBottom: 16 },

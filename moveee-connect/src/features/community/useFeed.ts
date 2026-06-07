@@ -72,9 +72,10 @@ export function useFeed() {
     }
   }, []);
 
-  const submitPost = useCallback(async (content: string, imageUri?: string) => {
+  const submitPost = useCallback(async (content: string, imageUri?: string, tag?: string) => {
     const body: Record<string, unknown> = { content };
     if (imageUri) body.image_url = imageUri;
+    if (tag) body.tag = tag;
     const newPost = await api.post<CommunityPost>(`${CULTURE_API}/community/submit`, body);
     setPosts((prev) => [newPost, ...prev]);
     cache.invalidate(CACHE_KEY);

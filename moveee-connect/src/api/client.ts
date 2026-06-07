@@ -40,6 +40,28 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
   return res.json() as Promise<T>;
 }
 
+/**
+ * Uploads a local file URI as multipart/form-data. `name`/`type` describe the
+ * file as React Native's fetch expects for FormData entries.
+ */
+async function upload<T>(url: string, uri: string, name: string, type: string): Promise<T> {
+  const form = new FormData();
+  form.append("file", { uri, name, type } as unknown as Blob);
+
+  const headers: Record<string, string> = {};
+  const token = storage.getString("auth_token");
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(url, { method: "POST", headers, body: form });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new ApiError(res.status, err?.message ?? res.statusText);
+  }
+
+  return res.json() as Promise<T>;
+}
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -56,4 +78,5 @@ export const api = {
   patch: <T>(url: string, body: Record<string, unknown>) =>
     request<T>(url, { method: "PATCH", body }),
   delete: <T>(url: string) => request<T>(url, { method: "DELETE" }),
+  upload: <T>(url: string, uri: string, name: string, type: string) => upload<T>(url, uri, name, type),
 };
