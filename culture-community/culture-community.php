@@ -97,4 +97,4 @@ function culture_community_init() {
         Culture_Email_Templates::init();
     }
 }
-add_action( 'plugins_loaded', 'culture_community_init' );
+add_action( 'init', 'culture_community_init', 5 );
