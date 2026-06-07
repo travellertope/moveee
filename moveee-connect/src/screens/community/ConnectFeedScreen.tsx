@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   FlatList,
@@ -7,45 +7,62 @@ import {
   SafeAreaView,
   Text,
   ActivityIndicator,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useUnifiedFeed } from "../../features/community/useUnifiedFeed";
 import FeedItemCard from "../../components/community/FeedItemCard";
-import type { CommunityPost, FeedItem, Tier } from "../../types";
+import type { FeedItem } from "../../types";
 
 function feedItemToPostId(item: FeedItem): string {
   return item.wpId ?? item.id.replace(/^community-/, "");
 }
 
-function feedItemToCommunityPost(item: FeedItem): CommunityPost {
-  return {
-    id: feedItemToPostId(item),
-    content: item.title,
-    imageUrl: item.image ?? undefined,
-    author: {
-      id: item.communityAuthorId ?? "",
-      name: item.communityAuthor || "Member",
-      avatarUrl: item.communityAuthorAvatar ?? "",
-      tier: (item.communityTier as Tier) || "citizen",
-    },
-    publishedAt: item.date,
-    likeCount: item.reactions?.love ?? 0,
-    commentCount: item.commentCount ?? 0,
-    liked: item.liked ?? false,
-    status: "publish",
-  };
+// Mirrors CATEGORY_FILTERS in components/pulse/PulseFeed.tsx (web app)
+const CATEGORY_FILTERS = [
+  "Music", "Film", "Art", "Fashion", "Literature",
+  "Food", "Tech", "Sport", "Travel", "Design",
+];
+
+function matchesCategory(item: FeedItem, category: string): boolean {
+  const cat = category.toLowerCase();
+  if (item.type === "pulse" || item.type === "editorial") return (item.category ?? "").toLowerCase() === cat;
+  if (item.type === "directory") return (item.entryType ?? "").toLowerCase() === cat;
+  return false;
 }
 
 export default function ConnectFeedScreen() {
   const nav = useNavigation<any>();
   const { items, refreshing, loading, hasMore, error, refresh, loadMore, react } = useUnifiedFeed();
+  const [showSections, setShowSections] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("");
+
+  const visibleItems = useMemo(
+    () => (activeCategory ? items.filter((i) => matchesCategory(i, activeCategory)) : items),
+    [items, activeCategory]
+  );
+
+  const handleCategory = (cat: string) => {
+    setActiveCategory((prev) => (prev === cat ? "" : cat));
+    setShowSections(false);
+  };
 
   const openItem = (item: FeedItem) => {
     if (item.type === "community") {
-      nav.navigate("PostDetail", { postId: feedItemToPostId(item), post: feedItemToCommunityPost(item) });
+      nav.navigate("PostDetail", { postId: feedItemToPostId(item), item });
+      return;
     }
-    // Other content types open in-app web preview / dedicated screens once those exist.
+    if (item.type === "pulse") {
+      nav.navigate("PulseDetail", { item });
+      return;
+    }
+    if (item.type === "editorial") {
+      nav.navigate("Magazine", { screen: "Article", params: { slug: item.slug } });
+      return;
+    }
+    // Happening / directory / quote open dedicated screens once those exist.
   };
 
   const renderItem = ({ item }: { item: FeedItem }) => (
@@ -65,13 +82,50 @@ export default function ConnectFeedScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Connect</Text>
-        <TouchableOpacity
-          style={styles.newPostBtn}
-          onPress={() => nav.navigate("NewPost")}
-        >
-          <Ionicons name="add" size={24} color="#f3ece0" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={[styles.sectionsBtn, (showSections || activeCategory) && styles.sectionsBtnActive]}
+            onPress={() => setShowSections((s) => !s)}
+          >
+            <Text style={styles.sectionsBtnLabel}>⊞ Sections</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.newPostBtn}
+            onPress={() => nav.navigate("NewPost")}
+          >
+            <Ionicons name="add" size={24} color="#f3ece0" />
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {showSections ? (
+        <View style={styles.sectionsPanel}>
+          <Text style={styles.sectionsPanelLabel}>Category</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionsRow}>
+            {CATEGORY_FILTERS.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.categoryPill, activeCategory === cat && styles.categoryPillActive]}
+                onPress={() => handleCategory(cat)}
+              >
+                <Text style={[styles.categoryPillText, activeCategory === cat && styles.categoryPillTextActive]}>{cat}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
+      {activeCategory ? (
+        <View style={styles.activeChipRow}>
+          <Text style={styles.activeChipLabel}>Category</Text>
+          <View style={styles.activeChip}>
+            <Text style={styles.activeChipText}>{activeCategory}</Text>
+          </View>
+          <TouchableOpacity onPress={() => setActiveCategory("")} hitSlop={8}>
+            <Ionicons name="close" size={14} color="#bbb" />
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       {error ? (
         <View style={styles.center}>
@@ -80,13 +134,13 @@ export default function ConnectFeedScreen() {
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
         </View>
-      ) : items.length === 0 && loading ? (
+      ) : visibleItems.length === 0 && loading ? (
         <View style={styles.center}>
           <ActivityIndicator color="#b38238" />
         </View>
       ) : (
         <FlatList
-          data={items}
+          data={visibleItems}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           onRefresh={refresh}
@@ -104,7 +158,7 @@ export default function ConnectFeedScreen() {
               <ActivityIndicator style={styles.loader} color="#b38238" />
             ) : null
           }
-          contentContainerStyle={items.length === 0 ? styles.listEmpty : styles.list}
+          contentContainerStyle={visibleItems.length === 0 ? styles.listEmpty : styles.list}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -113,18 +167,46 @@ export default function ConnectFeedScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f3ece0" },
+  container: { flex: 1, backgroundColor: "#fff" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#e0d8cc",
-    backgroundColor: "#f3ece0",
+    borderBottomColor: "#e8e2d8",
+    backgroundColor: "#fff",
   },
-  headerTitle: { fontSize: 20, fontWeight: "700", color: "#14110d" },
+  headerTitle: { fontSize: 19, fontWeight: "700", fontFamily: Platform.select({ ios: "Georgia", android: "serif", default: "serif" }), color: "#14110d" },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 10 },
+  sectionsBtn: {
+    backgroundColor: "#14110d", borderRadius: 2,
+    paddingHorizontal: 11, paddingVertical: 8,
+  },
+  sectionsBtnActive: { backgroundColor: "#c5491f" },
+  sectionsBtnLabel: { color: "#f3ece0", fontSize: 11, fontWeight: "700", letterSpacing: 0.6 },
+
+  sectionsPanel: { borderBottomWidth: 1, borderBottomColor: "#e8e2d8", backgroundColor: "#fff", paddingTop: 10, paddingBottom: 10 },
+  sectionsPanelLabel: { fontSize: 9, fontWeight: "700", letterSpacing: 1.4, textTransform: "uppercase", color: "#7a6f5c", marginLeft: 18, marginBottom: 7 },
+  sectionsRow: { flexDirection: "row", gap: 7, paddingHorizontal: 18 },
+  categoryPill: {
+    borderWidth: 1, borderColor: "#e8e2d8", borderRadius: 2,
+    paddingHorizontal: 12, paddingVertical: 5, backgroundColor: "#fff",
+  },
+  categoryPillActive: { backgroundColor: "#c5491f", borderColor: "#c5491f" },
+  categoryPillText: { fontSize: 12, color: "#3a342b" },
+  categoryPillTextActive: { color: "#fff" },
+
+  activeChipRow: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 18, paddingVertical: 10,
+    borderBottomWidth: 1, borderBottomColor: "#e8e2d8", backgroundColor: "#fff",
+  },
+  activeChipLabel: { fontSize: 11, color: "#7a6f5c" },
+  activeChip: { backgroundColor: "#fff0eb", borderRadius: 2, paddingHorizontal: 7, paddingVertical: 2 },
+  activeChipText: { fontSize: 11, fontWeight: "700", color: "#c5491f" },
+
   newPostBtn: {
     backgroundColor: "#14110d",
     borderRadius: 20,
@@ -133,7 +215,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  list: { paddingVertical: 8 },
+  list: {},
   listEmpty: { flexGrow: 1 },
   loader: { paddingVertical: 20 },
   center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32, gap: 10 },
