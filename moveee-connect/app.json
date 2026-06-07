@@ -29,7 +29,8 @@
     },
     "plugins": [
       "expo-notifications",
-      "expo-secure-store"
+      "expo-secure-store",
+      "./plugins/withAndroidIapStoreFlavor"
     ],
     "extra": {
       "eas": {
