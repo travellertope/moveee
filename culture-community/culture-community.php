@@ -5,6 +5,7 @@
  * Description: Core plugin for Moveee Connect — membership tiers, community feed, newsletters, events, gamification, and mobile API.
  * Version:     2.0.0
  * Author:      Moveee
+ * License:     GPL-2.0+
  * Text Domain: culture-community
  */
 
@@ -12,32 +13,31 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+define( 'CULTURE_VERSION', '2.0.0' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'CULTURE_PLUGIN_FILE', __FILE__ );
+
+// Composer autoload.
+$culture_autoload = CULTURE_PLUGIN_DIR . 'vendor/autoload.php';
+if ( file_exists( $culture_autoload ) ) {
+    require_once $culture_autoload;
+}
 
 // Core includes.
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-activator.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-post-types.php';
-require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-gamification.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-referrals.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cron.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-emails.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-newsletter-queue.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-nl-analytics.php';
-
-// Admin includes.
-require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-settings.php';
-require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-send.php';
-require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-subscribers.php';
-require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-email-templates.php';
-
-// Email helpers.
-require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-emails.php';
-
-// Payment gateways.
-require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
-require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-stripe.php';
-
-// Directory.
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cli.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-pulse.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-twitter.php';
 
 // API includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-rest-api.php';
@@ -50,11 +50,46 @@ require_once CULTURE_PLUGIN_DIR . 'includes/frontend/class-culture-registration.
 require_once CULTURE_PLUGIN_DIR . 'includes/frontend/class-culture-leader-dashboard.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/frontend/class-culture-templates.php';
 
-// Event RSVP.
+// Admin includes.
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-settings.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-analytics.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-email-templates.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-send.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-subscribers.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-games-subscribers.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-importer.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-nl-analytics-admin.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-directory-tools.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-acf-fields.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-redirects.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-rsvp-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-event-rsvp.php';
 
+// Payment includes.
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-stripe.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-ticket-payment.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-tickets-admin.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-memberships.php';
+
 /**
- * Bootstrap all plugin subsystems.
+ * Plugin activation hook.
+ */
+function culture_community_activate() {
+    Culture_Activator::activate();
+}
+register_activation_hook( __FILE__, 'culture_community_activate' );
+
+/**
+ * Plugin deactivation hook.
+ */
+function culture_community_deactivate() {
+    Culture_Activator::deactivate();
+}
+register_deactivation_hook( __FILE__, 'culture_community_deactivate' );
+
+/**
+ * Initialize plugin components.
  */
 function culture_community_init() {
     Culture_Post_Types::init();
@@ -64,37 +99,113 @@ function culture_community_init() {
     Culture_Ajax::init();
     Culture_Shortcodes::init();
     Culture_Paystack::init();
+    Culture_Referrals::init();
+    Culture_Cron::init();
+    Culture_Registration::init();
+    Culture_Leader_Dashboard::init();
+    Culture_Emails::init();
+    Culture_Newsletter_Queue::init();
+    Culture_Newsletter_Send::init();
+    Culture_Subscribers::init();
+    Culture_Games_Subscribers::init();
+    Culture_NL_Analytics::init();
+    Culture_NL_Analytics_Admin::init();
+    Culture_Newsletter_Importer::init();
+    Culture_Settings::init();
+    Culture_Directory_Tools::init();
+    Culture_Analytics::init();
+    Culture_Email_Templates::init();
+    Culture_Templates::init();
+    Culture_Redirects::init();
+    Culture_Event_RSVP::init();
+    Culture_RSVP_Admin::init();
+    Culture_RSVP_Admin::init_post_handlers();
+    Culture_Ticket_Payment::init();
+    Culture_Tickets_Admin::init();
 
-    if ( class_exists( 'Culture_NL_Analytics' ) ) {
-        Culture_NL_Analytics::init();
-    }
-
-    if ( class_exists( 'Culture_Event_RSVP' ) ) {
-        Culture_Event_RSVP::init();
-    }
-
-    if ( class_exists( 'Culture_Settings' ) ) {
-        Culture_Settings::init();
-    }
-
-    if ( class_exists( 'Culture_Newsletter_Send' ) ) {
-        Culture_Newsletter_Send::init();
-    }
-
-    if ( class_exists( 'Culture_Subscribers' ) ) {
-        Culture_Subscribers::init();
-    }
-
-    if ( class_exists( 'Culture_Registration' ) ) {
-        Culture_Registration::init();
-    }
-
-    if ( class_exists( 'Culture_Leader_Dashboard' ) ) {
-        Culture_Leader_Dashboard::init();
-    }
-
-    if ( class_exists( 'Culture_Email_Templates' ) ) {
-        Culture_Email_Templates::init();
+    // Register WP-CLI commands.
+    if ( defined( 'WP_CLI' ) && WP_CLI ) {
+        WP_CLI::add_command( 'culture', 'Culture_CLI' );
     }
 }
-add_action( 'plugins_loaded', 'culture_community_init' );
+add_action( 'init', 'culture_community_init', 5 );
+
+// Initialize ACF fields immediately to catch acf/init hook correctly.
+Culture_ACF_Fields::init();
+
+/**
+ * Enqueue frontend assets.
+ */
+function culture_community_enqueue_assets() {
+    wp_enqueue_style(
+        'culture-community',
+        CULTURE_PLUGIN_URL . 'assets/css/culture-community.css',
+        array(),
+        CULTURE_VERSION
+    );
+    wp_enqueue_script(
+        'culture-community',
+        CULTURE_PLUGIN_URL . 'assets/js/culture-community.js',
+        array( 'jquery' ),
+        CULTURE_VERSION,
+        true
+    );
+    wp_localize_script( 'culture-community', 'cultureData', array(
+        'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+        'restUrl'  => rest_url( 'culture/v1/' ),
+        'nonce'    => wp_create_nonce( 'culture_nonce' ),
+        'restNonce' => wp_create_nonce( 'wp_rest' ),
+    ) );
+}
+add_action( 'wp_enqueue_scripts', 'culture_community_enqueue_assets' );
+
+/* Settings page is now handled by Culture_Settings class (includes/admin/class-culture-settings.php). */
+
+/**
+ * Check if the current user can view a target user's phone number.
+ *
+ * Phone numbers are private. Only the user themselves, administrators,
+ * and chapter leaders of the target user's chapter(s) may see them.
+ *
+ * @param int $target_user_id The user whose phone number is being viewed.
+ * @return bool
+ */
+function culture_can_view_phone( $target_user_id ) {
+    $current_user_id = get_current_user_id();
+
+    if ( ! $current_user_id ) {
+        return false;
+    }
+
+    // Users can always see their own phone number.
+    if ( $current_user_id === (int) $target_user_id ) {
+        return true;
+    }
+
+    // Administrators can see all phone numbers.
+    if ( current_user_can( 'manage_options' ) ) {
+        return true;
+    }
+
+    // Chapter leaders can see phone numbers of members in their chapter.
+    $leader_chapters = get_posts( array(
+        'post_type'      => 'culture_chapter',
+        'posts_per_page' => -1,
+        'fields'         => 'ids',
+        'meta_key'       => '_culture_chapter_leader_id',
+        'meta_value'     => $current_user_id,
+    ) );
+
+    if ( ! empty( $leader_chapters ) ) {
+        $target_primary   = get_user_meta( $target_user_id, '_culture_primary_chapter_id', true );
+        $target_secondary = get_user_meta( $target_user_id, '_culture_secondary_chapter_id', true );
+
+        foreach ( $leader_chapters as $chapter_id ) {
+            if ( (int) $chapter_id === (int) $target_primary || (int) $chapter_id === (int) $target_secondary ) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
