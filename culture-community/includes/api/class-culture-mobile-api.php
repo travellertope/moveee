@@ -133,6 +133,12 @@ class Culture_Mobile_API {
                     'sanitize_callback' => 'esc_url_raw',
                     'default'           => '',
                 ),
+                'tag' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'default'           => '',
+                ),
             ),
         ) );
 
@@ -202,6 +208,17 @@ class Culture_Mobile_API {
                         return in_array( $v, array( 'spam', 'harassment', 'inappropriate' ), true );
                     },
                 ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/community/quote', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_submit_quote' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'text'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
+                'author' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'source' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
             ),
         ) );
 
@@ -433,10 +450,14 @@ class Culture_Mobile_API {
         return rest_ensure_response( $posts );
     }
 
+    const SECTION_TAGS = array( 'Music', 'Fashion', 'Art', 'Film', 'Food', 'Sport', 'Travel', 'Ideas', 'Literature', 'Design', 'Tech' );
+
     public static function handle_submit_post( $request ) {
         $user_id = get_current_user_id();
         $content = $request->get_param( 'content' );
         $image   = $request->get_param( 'image_url' ) ?: '';
+        $tag     = $request->get_param( 'tag' ) ?: '';
+        $tag     = in_array( $tag, self::SECTION_TAGS, true ) ? $tag : '';
 
         if ( empty( trim( $content ) ) ) {
             return new WP_Error( 'empty_content', 'Post content cannot be empty.', array( 'status' => 400 ) );
@@ -484,6 +505,10 @@ class Culture_Mobile_API {
 
         if ( $image ) {
             update_post_meta( $post_id, '_community_image_url', $image );
+        }
+
+        if ( $tag ) {
+            update_post_meta( $post_id, 'community_tag', $tag );
         }
 
         if ( class_exists( 'Culture_Gamification' ) ) {
@@ -578,6 +603,14 @@ class Culture_Mobile_API {
                 'avatarUrl' => $avatar,
             ),
         ) );
+    }
+
+    /**
+     * Mobile quote submission — delegates to the shared quote-creation logic
+     * in Culture_REST_API, authenticated as the current mobile (Bearer token) user.
+     */
+    public static function handle_submit_quote( $request ) {
+        return Culture_REST_API::handle_create_quote( $request );
     }
 
     public static function handle_react( $request ) {
