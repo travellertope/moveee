@@ -169,25 +169,12 @@ export default function FeedItemCard({ item, onPress, onAuthorPress, onReact }: 
     );
   }
 
-  // Pulse keeps a full-width hero image (matches web). Editorial / happening /
-  // directory show inline excerpt + a left-thumbnail "internal link" preview
-  // card instead — mirrors components/pulse/InternalLinkCard.tsx on the web.
-  if (item.type === "pulse") {
-    return (
-      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.95}>
-        <MetaRow item={item} accentColor={TYPE_META.pulse.color} />
-
-        <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-        {item.image ? <Image source={{ uri: item.image }} style={styles.mediaImage} resizeMode="cover" /> : null}
-        {item.excerpt ? <Text style={styles.excerpt} numberOfLines={4}>{item.excerpt}</Text> : null}
-
-        <LinkSnippet item={item} />
-        <ReactionBar item={item} onReact={onReact} />
-      </TouchableOpacity>
-    );
-  }
-
+  // Pulse / editorial / happening / directory all show inline excerpt + a
+  // left-thumbnail "internal link" preview card — mirrors
+  // components/pulse/InternalLinkCard.tsx on the web. No full-width hero
+  // images in the feed.
   const INTERNAL_LINK_LABEL: Record<string, string> = {
+    pulse: "Moveee Pulse",
     editorial: "Moveee Magazine",
     happening: "Moveee Happenings",
     directory: "Culture Directory",
@@ -208,6 +195,9 @@ export default function FeedItemCard({ item, onPress, onAuthorPress, onReact }: 
           {item.excerpt ? <Text style={styles.internalLinkDesc} numberOfLines={1}>{item.excerpt}</Text> : null}
         </View>
       </View>
+
+      <LinkSnippet item={item} />
+      <ReactionBar item={item} onReact={onReact} />
     </TouchableOpacity>
   );
 }
@@ -247,7 +237,6 @@ const styles = StyleSheet.create({
   // pulse / editorial / happening / directory cards
   title: { fontSize: 16, fontWeight: "700", fontFamily: SERIF, color: "#14110d", lineHeight: 22, marginBottom: 5 },
   excerpt: { fontSize: 14, color: "#3a342b", lineHeight: 21, marginBottom: 4 },
-  mediaImage: { width: "100%", height: 180, borderRadius: 6, marginTop: 8, marginBottom: 4, borderWidth: 1, borderColor: "#e8e2d8", backgroundColor: "#e0d8cc" },
 
   // internal link preview (editorial / happening / directory) — left thumbnail, mirrors web's InternalLinkCard
   internalLinkCard: {
@@ -261,7 +250,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#faf8f4",
     minHeight: 72,
   },
-  internalLinkImage: { width: 96, backgroundColor: "#e0d8cc" },
+  internalLinkImage: { width: 110, backgroundColor: "#e0d8cc" },
   internalLinkBody: { flex: 1, minWidth: 0, padding: 9, justifyContent: "center", gap: 2 },
   internalLinkLabel: { fontSize: 9, color: "#b38238", fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
   internalLinkTitle: { fontSize: 13, fontWeight: "600", color: "#14110d", lineHeight: 18 },

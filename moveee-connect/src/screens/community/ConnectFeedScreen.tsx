@@ -45,8 +45,13 @@ export default function ConnectFeedScreen() {
   const openItem = (item: FeedItem) => {
     if (item.type === "community") {
       nav.navigate("PostDetail", { postId: feedItemToPostId(item), post: feedItemToCommunityPost(item) });
+      return;
     }
-    // Other content types open in-app web preview / dedicated screens once those exist.
+    if (item.type === "pulse" || item.type === "editorial") {
+      nav.navigate("Magazine", { screen: "Article", params: { slug: item.slug } });
+      return;
+    }
+    // Happening / directory / quote open dedicated screens once those exist.
   };
 
   const renderItem = ({ item }: { item: FeedItem }) => (
