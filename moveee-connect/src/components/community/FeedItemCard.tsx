@@ -1,6 +1,7 @@
-import React from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { api, CULTURE_API } from "../../api/client";
 import type { FeedItem, Tier } from "../../types";
 import TierBadge from "../ui/TierBadge";
 import TimeAgo from "../ui/TimeAgo";
@@ -74,6 +75,29 @@ function LinkSnippet({ item }: { item: FeedItem }) {
 }
 
 export default function FeedItemCard({ item, onPress, onAuthorPress, onReact }: Props) {
+  const [reported, setReported] = useState(false);
+
+  const submitReport = async (reason: "spam" | "harassment" | "inappropriate") => {
+    if (!item.wpId) return;
+    try {
+      await api.post(`${CULTURE_API}/community/report`, { post_id: Number(item.wpId), reason });
+      setReported(true);
+      Alert.alert("Thanks", "We've recorded your report and will review this post.");
+    } catch (e: unknown) {
+      Alert.alert("Error", e instanceof Error ? e.message : "Could not submit report.");
+    }
+  };
+
+  const handleReport = () => {
+    if (reported) return;
+    Alert.alert("Report post", "Why are you reporting this?", [
+      { text: "Spam", onPress: () => submitReport("spam") },
+      { text: "Harassment", onPress: () => submitReport("harassment") },
+      { text: "Inappropriate", onPress: () => submitReport("inappropriate") },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
   if (item.type === "community") {
     return (
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.95}>
@@ -86,6 +110,9 @@ export default function FeedItemCard({ item, onPress, onAuthorPress, onReact }: 
             </View>
             <TimeAgo date={item.date} />
           </View>
+          <TouchableOpacity onPress={handleReport} style={styles.reportBtn}>
+            <Ionicons name={reported ? "flag" : "flag-outline"} size={16} color={reported ? "#b38238" : "#9e9e9e"} />
+          </TouchableOpacity>
         </TouchableOpacity>
 
         <Text style={styles.content} numberOfLines={6}>{item.title}</Text>
@@ -182,6 +209,7 @@ const styles = StyleSheet.create({
   authorMeta: { flex: 1, marginLeft: 10 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   authorName: { fontWeight: "600", fontSize: 14, color: "#14110d" },
+  reportBtn: { padding: 4 },
   content: { fontSize: 15, color: "#14110d", lineHeight: 22, marginBottom: 10 },
   postImage: { width: "100%", height: 200, borderRadius: 8, marginBottom: 10 },
 
