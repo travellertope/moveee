@@ -753,7 +753,7 @@ class Culture_Mobile_API {
                 'slug'          => $post->post_name,
                 'date'          => $post->post_date_gmt,
                 'excerpt'       => wp_strip_all_tags( $post->post_excerpt ),
-                'body'          => apply_filters( 'the_content', $post->post_content ),
+                'body'          => wpautop( $post->post_content ),
                 'image'         => $thumb ?: null,
                 'href'          => '/pulse/' . $post->post_name,
                 'arm'           => get_post_meta( $post->ID, 'pulse_arm_label', true ) ?: '',
@@ -892,7 +892,7 @@ class Culture_Mobile_API {
         return array_map( function( WP_Post $post ) use ( $liked_ids ) {
             $author_id   = (int) $post->post_author;
             $author      = get_userdata( $author_id );
-            $raw         = apply_filters( 'the_content', $post->post_content );
+            $raw         = wpautop( $post->post_content );
             $with_breaks = preg_replace( '/<\/p>\s*<p[^>]*>/i', "\n\n", $raw );
             $with_breaks = preg_replace( '/<br\s*\/?>/i', "\n", $with_breaks );
             $body_text   = trim( wp_strip_all_tags( $with_breaks ) );
