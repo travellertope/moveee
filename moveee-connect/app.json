@@ -24,6 +24,9 @@
       "permissions": [
         "NOTIFICATIONS",
         "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED",
         "VIBRATE"
       ]
     },
@@ -36,6 +39,12 @@
       "eas": {
         "projectId": "943d1ee4-9194-4a36-8b6a-48ab32dfd813"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/943d1ee4-9194-4a36-8b6a-48ab32dfd813"
     }
   }
 }
