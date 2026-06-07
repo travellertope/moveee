@@ -13,29 +13,10 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useUnifiedFeed } from "../../features/community/useUnifiedFeed";
 import FeedItemCard from "../../components/community/FeedItemCard";
-import type { CommunityPost, FeedItem, Tier } from "../../types";
+import type { FeedItem } from "../../types";
 
 function feedItemToPostId(item: FeedItem): string {
   return item.wpId ?? item.id.replace(/^community-/, "");
-}
-
-function feedItemToCommunityPost(item: FeedItem): CommunityPost {
-  return {
-    id: feedItemToPostId(item),
-    content: item.title,
-    imageUrl: item.image ?? undefined,
-    author: {
-      id: item.communityAuthorId ?? "",
-      name: item.communityAuthor || "Member",
-      avatarUrl: item.communityAuthorAvatar ?? "",
-      tier: (item.communityTier as Tier) || "citizen",
-    },
-    publishedAt: item.date,
-    likeCount: item.reactions?.love ?? 0,
-    commentCount: item.commentCount ?? 0,
-    liked: item.liked ?? false,
-    status: "publish",
-  };
 }
 
 export default function ConnectFeedScreen() {
@@ -44,7 +25,7 @@ export default function ConnectFeedScreen() {
 
   const openItem = (item: FeedItem) => {
     if (item.type === "community") {
-      nav.navigate("PostDetail", { postId: feedItemToPostId(item), post: feedItemToCommunityPost(item) });
+      nav.navigate("PostDetail", { postId: feedItemToPostId(item), item });
       return;
     }
     if (item.type === "pulse") {
