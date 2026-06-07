@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   Text,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -113,18 +114,18 @@ export default function ConnectFeedScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f3ece0" },
+  container: { flex: 1, backgroundColor: "#fff" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#e0d8cc",
-    backgroundColor: "#f3ece0",
+    borderBottomColor: "#e8e2d8",
+    backgroundColor: "#fff",
   },
-  headerTitle: { fontSize: 20, fontWeight: "700", color: "#14110d" },
+  headerTitle: { fontSize: 19, fontWeight: "700", fontFamily: Platform.select({ ios: "Georgia", android: "serif", default: "serif" }), color: "#14110d" },
   newPostBtn: {
     backgroundColor: "#14110d",
     borderRadius: 20,
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  list: { paddingVertical: 8 },
+  list: {},
   listEmpty: { flexGrow: 1 },
   loader: { paddingVertical: 20 },
   center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32, gap: 10 },

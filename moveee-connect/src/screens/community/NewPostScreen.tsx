@@ -9,7 +9,7 @@ import { useFeed } from "../../features/community/useFeed";
 import { useAuthStore } from "../../auth/authStore";
 import TierBadge from "../../components/ui/TierBadge";
 
-const MAX_CHARS = 1000;
+const MAX_CHARS = 600;
 
 export default function NewPostScreen() {
   const nav = useNavigation();
