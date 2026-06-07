@@ -51,6 +51,48 @@ export interface Article {
   likeCount: number;
 }
 
+export type FeedItemType = "pulse" | "editorial" | "happening" | "directory" | "quote" | "community";
+
+export interface FeedItem {
+  id: string;
+  type: FeedItemType;
+  title: string;
+  slug: string;
+  date: string;
+  excerpt?: string;
+  image?: string | null;
+  href: string;
+  // pulse-specific
+  arm?: string;
+  region?: string;
+  source?: string | null;
+  sourceUrl?: string | null;
+  body?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  // happening-specific
+  eventDate?: string;
+  location?: string;
+  // directory-specific
+  entryType?: string;
+  // quote-specific
+  quoteSource?: string;
+  quoteAuthor?: string;
+  // editorial-specific
+  category?: string;
+  // community-specific
+  communityAuthor?: string;
+  communityAuthorId?: string;
+  communityAuthorAvatar?: string;
+  communityTag?: string;
+  communityTier?: string;
+  commentCount?: number;
+  liked?: boolean;
+  reactions?: { love: number; fire: number; clap: number };
+  wpId?: string;
+}
+
 export interface Event {
   id: string;
   slug: string;
