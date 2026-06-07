@@ -28,7 +28,10 @@ src/
 
 ## Primary feature: Connect (community feed)
 
-- `ConnectFeedScreen` — paginated feed, pull-to-refresh, optimistic likes
+- `ConnectFeedScreen` — unified feed (community posts, Pulse stories, magazine
+  editorials, happenings/events, directory entries, quotes), paginated,
+  pull-to-refresh, optimistic emoji reactions — mirrors the webapp's `/connect`
+  unified feed (`getUnifiedFeed()` in `lib/unified-feed.ts`)
 - `PostDetailScreen` — comments thread + inline comment composer
 - `NewPostScreen` — 1000-char post composer, pending-state awareness
 - `MemberProfileScreen` — view any member's public profile
@@ -67,7 +70,8 @@ Set `extra.eas.projectId` in `app.json` after running `eas init`.
 |---|---|
 | Login | `POST /culture/v1/login` |
 | Register | `POST /culture/v1/register` |
-| Feed | `GET /culture/v1/community/posts` |
+| Unified feed | `GET /culture/v1/feed` |
+| Community feed | `GET /culture/v1/community/posts` |
 | Submit post | `POST /culture/v1/community/submit` |
 | Comments | `GET /culture/v1/community/comments` |
 | Add comment | `POST /culture/v1/community/comment` |

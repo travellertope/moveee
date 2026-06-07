@@ -107,6 +107,16 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        register_rest_route( 'culture/v1', '/feed', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_unified_feed' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'page'     => array( 'default' => 1,  'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'default' => 20, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/community/submit', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_submit_post' ),
@@ -693,6 +703,235 @@ class Culture_Mobile_API {
             'isVendor'           => $is_vendor,
             'vendorSlug'         => $is_vendor ? $user->user_nicename : '',
         );
+    }
+
+    // -------------------------------------------------------------------------
+    // Unified feed handler
+    // -------------------------------------------------------------------------
+
+    public static function handle_get_unified_feed( $request ) {
+        $page     = max( 1, (int) $request->get_param( 'page' ) );
+        $per_page = min( (int) $request->get_param( 'per_page' ), 50 );
+
+        $items = array();
+
+        foreach ( self::get_pulse_feed_items() as $item )     { $items[] = $item; }
+        foreach ( self::get_editorial_feed_items() as $item ) { $items[] = $item; }
+        foreach ( self::get_happening_feed_items() as $item ) { $items[] = $item; }
+        foreach ( self::get_directory_feed_items() as $item ) { $items[] = $item; }
+        foreach ( self::get_quote_feed_items() as $item )     { $items[] = $item; }
+        foreach ( self::get_community_feed_items() as $item ) { $items[] = $item; }
+
+        usort( $items, function( $a, $b ) {
+            return strtotime( $b['date'] ) <=> strtotime( $a['date'] );
+        } );
+
+        $offset     = ( $page - 1 ) * $per_page;
+        $page_items = array_slice( $items, $offset, $per_page );
+
+        return rest_ensure_response( array(
+            'items'   => array_values( $page_items ),
+            'hasMore' => ( $offset + $per_page ) < count( $items ),
+        ) );
+    }
+
+    private static function get_pulse_feed_items(): array {
+        $query = new WP_Query( array(
+            'post_type'      => 'pulse_story',
+            'post_status'    => 'publish',
+            'posts_per_page' => 30,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ) );
+
+        return array_map( function( WP_Post $post ) {
+            $thumb = get_the_post_thumbnail_url( $post->ID, 'large' );
+            return array(
+                'id'            => 'pulse-' . $post->ID,
+                'type'          => 'pulse',
+                'title'         => get_the_title( $post ),
+                'slug'          => $post->post_name,
+                'date'          => $post->post_date_gmt,
+                'excerpt'       => wp_strip_all_tags( $post->post_excerpt ),
+                'body'          => apply_filters( 'the_content', $post->post_content ),
+                'image'         => $thumb ?: null,
+                'href'          => '/pulse/' . $post->post_name,
+                'arm'           => get_post_meta( $post->ID, 'pulse_arm_label', true ) ?: '',
+                'region'        => get_post_meta( $post->ID, 'pulse_region_label', true ) ?: '',
+                'source'        => get_post_meta( $post->ID, 'pulse_source', true ) ?: '',
+                'sourceUrl'     => get_post_meta( $post->ID, 'pulse_external_url', true ) ?: '',
+                'ogTitle'       => get_post_meta( $post->ID, 'pulse_og_title', true ) ?: '',
+                'ogDescription' => get_post_meta( $post->ID, 'pulse_og_description', true ) ?: '',
+                'ogImage'       => get_post_meta( $post->ID, 'pulse_og_image', true ) ?: '',
+                'commentCount'  => (int) get_comments_number( $post->ID ),
+                'reactions'     => array(
+                    'love' => (int) get_post_meta( $post->ID, 'reaction_love', true ),
+                    'fire' => (int) get_post_meta( $post->ID, 'reaction_fire', true ),
+                    'clap' => (int) get_post_meta( $post->ID, 'reaction_clap', true ),
+                ),
+                'wpId'          => (string) $post->ID,
+            );
+        }, $query->posts );
+    }
+
+    private static function get_editorial_feed_items(): array {
+        $query = new WP_Query( array(
+            'post_type'      => 'post',
+            'post_status'    => 'publish',
+            'posts_per_page' => 30,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ) );
+
+        return array_map( function( WP_Post $post ) {
+            $thumb      = get_the_post_thumbnail_url( $post->ID, 'large' );
+            $categories = get_the_category( $post->ID );
+            return array(
+                'id'       => 'editorial-' . $post->post_name,
+                'type'     => 'editorial',
+                'title'    => get_the_title( $post ),
+                'slug'     => $post->post_name,
+                'date'     => $post->post_date_gmt,
+                'excerpt'  => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
+                'image'    => $thumb ?: null,
+                'href'     => '/magazine/' . $post->post_name,
+                'category' => ! empty( $categories ) ? $categories[0]->name : '',
+            );
+        }, $query->posts );
+    }
+
+    private static function get_happening_feed_items(): array {
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_event',
+            'post_status'    => 'publish',
+            'posts_per_page' => 30,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ) );
+
+        return array_map( function( WP_Post $post ) {
+            $thumb = get_the_post_thumbnail_url( $post->ID, 'large' );
+            return array(
+                'id'        => 'happening-' . $post->post_name,
+                'type'      => 'happening',
+                'title'     => get_the_title( $post ),
+                'slug'      => $post->post_name,
+                'date'      => $post->post_date_gmt,
+                'excerpt'   => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
+                'image'     => $thumb ?: null,
+                'href'      => '/events/' . $post->post_name,
+                'eventDate' => get_post_meta( $post->ID, '_culture_event_date', true ) ?: '',
+                'location'  => get_post_meta( $post->ID, '_culture_location', true ) ?: '',
+            );
+        }, $query->posts );
+    }
+
+    private static function get_directory_feed_items(): array {
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_directory',
+            'post_status'    => 'publish',
+            'posts_per_page' => 30,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ) );
+
+        return array_map( function( WP_Post $post ) {
+            $thumb = get_the_post_thumbnail_url( $post->ID, 'large' );
+            $terms = get_the_terms( $post->ID, 'culture_dir_type' );
+            return array(
+                'id'        => 'directory-' . $post->post_name,
+                'type'      => 'directory',
+                'title'     => get_the_title( $post ),
+                'slug'      => $post->post_name,
+                'date'      => $post->post_date_gmt,
+                'excerpt'   => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
+                'image'     => $thumb ?: null,
+                'href'      => '/directory/' . $post->post_name,
+                'entryType' => ( $terms && ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0]->name : '',
+            );
+        }, $query->posts );
+    }
+
+    private static function get_quote_feed_items(): array {
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_quote',
+            'post_status'    => 'publish',
+            'posts_per_page' => 50,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ) );
+
+        return array_map( function( WP_Post $post ) {
+            $authors = get_the_terms( $post->ID, 'culture_quote_author' );
+            return array(
+                'id'          => 'quote-' . $post->post_name,
+                'type'        => 'quote',
+                'title'       => wp_strip_all_tags( $post->post_content ?: get_the_title( $post ) ),
+                'slug'        => $post->post_name,
+                'date'        => $post->post_date_gmt,
+                'href'        => '/quotes/' . $post->ID . '-' . $post->post_name,
+                'wpId'        => (string) $post->ID,
+                'quoteSource' => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
+                'quoteAuthor' => ( $authors && ! is_wp_error( $authors ) && ! empty( $authors ) ) ? $authors[0]->name : '',
+            );
+        }, $query->posts );
+    }
+
+    private static function get_community_feed_items(): array {
+        $user_id   = get_current_user_id();
+        $liked_ids = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_post',
+            'post_status'    => 'publish',
+            'posts_per_page' => 24,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ) );
+
+        return array_map( function( WP_Post $post ) use ( $liked_ids ) {
+            $author_id   = (int) $post->post_author;
+            $author      = get_userdata( $author_id );
+            $raw         = apply_filters( 'the_content', $post->post_content );
+            $with_breaks = preg_replace( '/<\/p>\s*<p[^>]*>/i', "\n\n", $raw );
+            $with_breaks = preg_replace( '/<br\s*\/?>/i', "\n", $with_breaks );
+            $body_text   = trim( wp_strip_all_tags( $with_breaks ) );
+            $link_url    = get_post_meta( $post->ID, 'community_link_url', true ) ?: '';
+            $source      = '';
+            if ( $link_url ) {
+                $host   = wp_parse_url( $link_url, PHP_URL_HOST );
+                $source = $host ? preg_replace( '/^www\./', '', $host ) : '';
+            }
+
+            return array(
+                'id'                    => 'community-' . $post->ID,
+                'type'                  => 'community',
+                'title'                 => $body_text ?: get_the_title( $post ),
+                'slug'                  => $post->post_name,
+                'date'                  => $post->post_date_gmt,
+                'image'                 => get_post_meta( $post->ID, '_community_image_url', true ) ?: null,
+                'href'                  => '/community/' . $post->post_name,
+                'communityAuthorId'     => get_post_meta( $post->ID, 'community_author_id', true ) ?: (string) $author_id,
+                'communityAuthor'       => get_post_meta( $post->ID, 'community_author_name', true ) ?: ( $author ? $author->display_name : '' ),
+                'communityAuthorAvatar' => get_post_meta( $post->ID, 'community_author_avatar', true ) ?: '',
+                'communityTag'          => get_post_meta( $post->ID, 'community_tag', true ) ?: '',
+                'communityTier'         => get_post_meta( $post->ID, 'community_author_tier', true ) ?: '',
+                'region'                => get_post_meta( $post->ID, 'community_region', true ) ?: '',
+                'sourceUrl'             => $link_url ?: null,
+                'source'                => $source ?: null,
+                'ogTitle'               => get_post_meta( $post->ID, 'community_og_title', true ) ?: '',
+                'ogDescription'         => get_post_meta( $post->ID, 'community_og_description', true ) ?: '',
+                'ogImage'               => get_post_meta( $post->ID, 'community_og_image', true ) ?: '',
+                'commentCount'          => (int) get_comments_number( $post->ID ),
+                'reactions'             => array(
+                    'love' => (int) get_post_meta( $post->ID, 'reaction_love', true ),
+                    'fire' => (int) get_post_meta( $post->ID, 'reaction_fire', true ),
+                    'clap' => (int) get_post_meta( $post->ID, 'reaction_clap', true ),
+                ),
+                'liked'                 => in_array( $post->ID, $liked_ids, false ),
+                'wpId'                  => (string) $post->ID,
+            );
+        }, $query->posts );
     }
 
     private static function public_profile( WP_User $user ): array {

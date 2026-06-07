@@ -10,20 +10,54 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { useFeed } from "../../features/community/useFeed";
-import PostCard from "../../components/community/PostCard";
-import type { CommunityPost } from "../../types";
+import { useUnifiedFeed } from "../../features/community/useUnifiedFeed";
+import FeedItemCard from "../../components/community/FeedItemCard";
+import type { CommunityPost, FeedItem, Tier } from "../../types";
+
+function feedItemToPostId(item: FeedItem): string {
+  return item.wpId ?? item.id.replace(/^community-/, "");
+}
+
+function feedItemToCommunityPost(item: FeedItem): CommunityPost {
+  return {
+    id: feedItemToPostId(item),
+    content: item.title,
+    imageUrl: item.image ?? undefined,
+    author: {
+      id: item.communityAuthorId ?? "",
+      name: item.communityAuthor || "Member",
+      avatarUrl: item.communityAuthorAvatar ?? "",
+      tier: (item.communityTier as Tier) || "citizen",
+    },
+    publishedAt: item.date,
+    likeCount: item.reactions?.love ?? 0,
+    commentCount: item.commentCount ?? 0,
+    liked: item.liked ?? false,
+    status: "publish",
+  };
+}
 
 export default function ConnectFeedScreen() {
   const nav = useNavigation<any>();
-  const { posts, refreshing, loading, hasMore, error, refresh, loadMore, likePost } = useFeed();
+  const { items, refreshing, loading, hasMore, error, refresh, loadMore, react } = useUnifiedFeed();
 
-  const renderPost = ({ item }: { item: CommunityPost }) => (
-    <PostCard
-      post={item}
-      onPress={() => nav.navigate("PostDetail", { postId: item.id, post: item })}
-      onLike={() => likePost(item.id)}
-      onAuthorPress={() => nav.navigate("MemberProfile", { userId: item.author.id })}
+  const openItem = (item: FeedItem) => {
+    if (item.type === "community") {
+      nav.navigate("PostDetail", { postId: feedItemToPostId(item), post: feedItemToCommunityPost(item) });
+    }
+    // Other content types open in-app web preview / dedicated screens once those exist.
+  };
+
+  const renderItem = ({ item }: { item: FeedItem }) => (
+    <FeedItemCard
+      item={item}
+      onPress={() => openItem(item)}
+      onAuthorPress={
+        item.type === "community" && item.communityAuthorId
+          ? () => nav.navigate("MemberProfile", { userId: item.communityAuthorId })
+          : undefined
+      }
+      onReact={(type) => react(item, type)}
     />
   );
 
@@ -46,15 +80,15 @@ export default function ConnectFeedScreen() {
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
         </View>
-      ) : posts.length === 0 && loading ? (
+      ) : items.length === 0 && loading ? (
         <View style={styles.center}>
           <ActivityIndicator color="#b38238" />
         </View>
       ) : (
         <FlatList
-          data={posts}
+          data={items}
           keyExtractor={(item) => item.id}
-          renderItem={renderPost}
+          renderItem={renderItem}
           onRefresh={refresh}
           refreshing={refreshing}
           onEndReached={loadMore}
@@ -70,7 +104,7 @@ export default function ConnectFeedScreen() {
               <ActivityIndicator style={styles.loader} color="#b38238" />
             ) : null
           }
-          contentContainerStyle={posts.length === 0 ? styles.listEmpty : styles.list}
+          contentContainerStyle={items.length === 0 ? styles.listEmpty : styles.list}
           showsVerticalScrollIndicator={false}
         />
       )}
