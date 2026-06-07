@@ -33,8 +33,8 @@ require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-email-templates.
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-emails.php';
 
 // Payment gateways.
-require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-paystack.php';
-require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-stripe.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-stripe.php';
 
 // Directory.
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
