@@ -4,11 +4,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { api, CULTURE_API } from "../../api/client";
 import type { FeedItem, Tier } from "../../types";
 import TierBadge from "../ui/TierBadge";
-import TimeAgo from "../ui/TimeAgo";
 
 const PLACEHOLDER_AVATAR = "https://cms.themoveee.com/wp-content/uploads/placeholder-avatar.png";
 
 const SERIF = Platform.select({ ios: "Georgia", android: "serif", default: "serif" });
+
+// Mirrors formatDate() in components/pulse/FeedCard.tsx — web shows an
+// absolute date ("7 Jun 2026"), not relative "time ago".
+function formatDate(dateStr: string): string {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function DateLabel({ date, style }: { date: string; style?: object }) {
+  return <Text style={[styles.dateLabel, style]}>{formatDate(date)}</Text>;
+}
 
 // Mirrors TYPE_BADGE palette in components/pulse/FeedCard.tsx (web app)
 const TYPE_META: Record<FeedItem["type"], { label: string; bg: string; color: string }> = {
@@ -93,7 +103,7 @@ function MetaRow({ item, accentColor }: { item: FeedItem; accentColor: string })
         <Text style={styles.metaTagMuted}>{item.category}</Text>
       ) : null}
       <View style={{ flex: 1 }} />
-      <TimeAgo date={item.date} />
+      <DateLabel date={item.date} />
     </View>
   );
 }
@@ -132,7 +142,7 @@ export default function FeedItemCard({ item, onPress, onAuthorPress, onReact }: 
               <Text style={styles.authorName}>{item.communityAuthor || "Member"}</Text>
               {item.communityTier ? <TierBadge tier={item.communityTier as Tier} /> : null}
             </View>
-            <TimeAgo date={item.date} />
+            <DateLabel date={item.date} style={{ color: "#7a6f5c" }} />
           </View>
           <TouchableOpacity onPress={handleReport} style={styles.reportBtn}>
             <Ionicons name={reported ? "flag" : "flag-outline"} size={16} color={reported ? "#b38238" : "#c8bfb0"} />
@@ -161,7 +171,7 @@ export default function FeedItemCard({ item, onPress, onAuthorPress, onReact }: 
               {item.quoteAuthor ? <Text style={styles.quoteAuthor}>{item.quoteAuthor}</Text> : null}
               {item.quoteSource ? <Text style={styles.metaTagMuted}>· {item.quoteSource}</Text> : null}
               <View style={{ flex: 1 }} />
-              <TimeAgo date={item.date} />
+              <DateLabel date={item.date} />
             </View>
           </View>
         </View>
@@ -169,8 +179,9 @@ export default function FeedItemCard({ item, onPress, onAuthorPress, onReact }: 
     );
   }
 
-  // Pulse / editorial / happening / directory all show inline excerpt + a
-  // left-thumbnail "internal link" preview card — mirrors
+  // Pulse / editorial / happening / directory all show: title, clamped
+  // excerpt + "Read more →" (per-type accent, mirrors web's FeedCard), and a
+  // left-thumbnail "internal link" preview card below — mirrors
   // components/pulse/InternalLinkCard.tsx on the web. No full-width hero
   // images in the feed.
   const INTERNAL_LINK_LABEL: Record<string, string> = {
@@ -179,13 +190,27 @@ export default function FeedItemCard({ item, onPress, onAuthorPress, onReact }: 
     happening: "Moveee Happenings",
     directory: "Culture Directory",
   };
+  const READ_MORE_COLOR: Record<string, string> = {
+    pulse: "#b38238",
+    editorial: "#c5491f",
+    happening: "#3c3489",
+    directory: "#085041",
+  };
+
+  const CLAMP_CHARS = 280;
+  const excerpt = item.excerpt ?? "";
+  const isLong = excerpt.length > CLAMP_CHARS;
+  const displayExcerpt = isLong ? excerpt.slice(0, CLAMP_CHARS) + "…" : excerpt;
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.95}>
       <MetaRow item={item} accentColor={TYPE_META[item.type].color} />
 
       <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-      {item.excerpt ? <Text style={styles.excerpt} numberOfLines={3}>{item.excerpt}</Text> : null}
+      {displayExcerpt ? <Text style={styles.excerpt}>{displayExcerpt}</Text> : null}
+      {isLong ? (
+        <Text style={[styles.readMore, { color: READ_MORE_COLOR[item.type] }]}>Read more →</Text>
+      ) : null}
 
       <View style={styles.internalLinkCard}>
         {item.image ? <Image source={{ uri: item.image }} style={styles.internalLinkImage} resizeMode="cover" /> : null}
@@ -223,6 +248,7 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" },
   metaTag: { fontSize: 11, letterSpacing: 0.3 },
   metaTagMuted: { fontSize: 11, color: "#7a6f5c" },
+  dateLabel: { fontSize: 11, color: "#bbb" },
 
   // community
   authorRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
@@ -237,6 +263,7 @@ const styles = StyleSheet.create({
   // pulse / editorial / happening / directory cards
   title: { fontSize: 16, fontWeight: "700", fontFamily: SERIF, color: "#14110d", lineHeight: 22, marginBottom: 5 },
   excerpt: { fontSize: 14, color: "#3a342b", lineHeight: 21, marginBottom: 4 },
+  readMore: { fontSize: 13, fontWeight: "600", marginTop: 2, marginBottom: 2 },
 
   // internal link preview (editorial / happening / directory) — left thumbnail, mirrors web's InternalLinkCard
   internalLinkCard: {
