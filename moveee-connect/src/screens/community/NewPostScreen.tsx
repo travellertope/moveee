@@ -17,6 +17,23 @@ const SECTIONS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", 
 
 type Mode = "post" | "quote";
 
+function SubmitDropdown() {
+  const nav = useNavigation<any>();
+  const open = () => {
+    Alert.alert("Submit", "What would you like to add?", [
+      { text: "📅  List an Event", onPress: () => nav.navigate("EventSubmit") },
+      { text: "✦  Add to Directory", onPress: () => nav.navigate("DirectorySubmit") },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+  return (
+    <TouchableOpacity style={styles.submitDropdownBtn} onPress={open}>
+      <Text style={styles.submitDropdownLabel}>+ Submit</Text>
+      <Ionicons name="chevron-down" size={11} color="#7a6f5c" />
+    </TouchableOpacity>
+  );
+}
+
 function SectionPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const open = () => {
     Alert.alert("Section", "Post into a specific section feed", [
@@ -210,6 +227,8 @@ export default function NewPostScreen() {
           <Text style={[styles.tabLabel, mode === "quote" && styles.tabLabelActive]}>Quote</Text>
           {mode === "quote" && <View style={[styles.tabUnderline, { backgroundColor: "#7a4da0" }]} />}
         </TouchableOpacity>
+        <View style={{ flex: 1 }} />
+        <SubmitDropdown />
       </View>
 
       {mode === "post" ? <PostForm onDone={close} /> : <QuoteForm onDone={close} />}
@@ -225,7 +244,13 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 16, fontWeight: "600", color: "#14110d" },
 
-  tabRow: { flexDirection: "row", gap: 22, paddingHorizontal: 16, paddingTop: 12, borderBottomWidth: 1, borderBottomColor: "#e8e2d8" },
+  tabRow: { flexDirection: "row", alignItems: "center", gap: 22, paddingHorizontal: 16, paddingTop: 12, borderBottomWidth: 1, borderBottomColor: "#e8e2d8" },
+  submitDropdownBtn: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    borderWidth: 1, borderColor: "#e0d8ce", borderRadius: 2,
+    paddingHorizontal: 9, paddingVertical: 6, marginBottom: 10,
+  },
+  submitDropdownLabel: { fontSize: 11, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", color: "#7a6f5c" },
   tab: { paddingBottom: 10 },
   tabLabel: { fontSize: 13, fontWeight: "600", color: "#9e9e9e", letterSpacing: 0.3, textTransform: "uppercase" },
   tabLabelActive: { color: "#14110d" },

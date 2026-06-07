@@ -222,6 +222,38 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Mobile event submission — delegates to Culture_REST_API::handle_create_event,
+        // authenticated as the current Bearer-token user (mirrors web's /events/submit).
+        register_rest_route( 'culture/v1', '/events/submit-mobile', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_submit_event_mobile' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'title'         => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'description'   => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field', 'default' => '' ),
+                'event_date'    => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'end_date'      => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ),
+                'location'      => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ),
+                'city'          => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ),
+                'admission'     => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ),
+                'ticketing_url' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'esc_url_raw', 'default' => '' ),
+            ),
+        ) );
+
+        // Mobile directory entry submission — delegates to Culture_Directory::handle_submit,
+        // authenticated as the current Bearer-token user (mirrors web's /directory/submit).
+        register_rest_route( 'culture/v1', '/directory/submit-mobile', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_submit_directory_mobile' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'title'      => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'excerpt'    => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field' ),
+                'content'    => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
+                'entry_type' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_key', 'default' => 'concept' ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/member/(?P<id>\d+)', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_member' ),
@@ -613,6 +645,51 @@ class Culture_Mobile_API {
      */
     public static function handle_submit_quote( $request ) {
         return Culture_REST_API::handle_create_quote( $request );
+    }
+
+    /**
+     * Mobile event submission — maps the simplified mobile form fields onto
+     * Culture_REST_API::handle_create_event's expected params (excerpt/content
+     * derived from a single description field, submitter identity from the
+     * authenticated mobile user, never auto-published).
+     */
+    public static function handle_submit_event_mobile( $request ) {
+        $user = wp_get_current_user();
+        $description = (string) $request->get_param( 'description' );
+
+        $request->set_param( 'excerpt', $description );
+        $request->set_param( 'content', $description );
+        $request->set_param( 'auto_publish', false );
+        $request->set_param( 'ai_generated', false );
+        $request->set_param( 'submitter_name', $user->display_name );
+        $request->set_param( 'submitter_email', $user->user_email );
+
+        return Culture_REST_API::handle_create_event( $request );
+    }
+
+    /**
+     * Mobile directory entry submission — Connect Pro (patron) privilege,
+     * delegates to Culture_Directory::handle_submit with the authenticated
+     * mobile user as submitter (mirrors web's /api/directory/submit gate).
+     */
+    public static function handle_submit_directory_mobile( $request ) {
+        $user_id     = get_current_user_id();
+        $stored_tier = get_user_meta( $user_id, '_culture_membership_tier', true ) ?: 'citizen';
+        $tier        = ( is_super_admin( $user_id ) || user_can( $user_id, 'manage_options' ) ) ? 'patron' : $stored_tier;
+
+        if ( 'patron' !== $tier ) {
+            return new WP_Error(
+                'patron_required',
+                __( 'Connect Pro membership required to submit directory entries.', 'culture-community' ),
+                array( 'status' => 403 )
+            );
+        }
+
+        $request->set_param( 'user_id', $user_id );
+        $request->set_param( 'ai_generated', false );
+        $request->set_param( 'auto_publish', false );
+
+        return Culture_Directory::handle_submit( $request );
     }
 
     public static function handle_react( $request ) {
