@@ -50,3 +50,43 @@
   .pulse-timeline            { border-right: none; }
   .pulse-mobile-filters      { display: block; }
 }
+
+/* ── Category filter strip ───────────────────────────────── */
+.feed-category-strip {
+  border-bottom: 1px solid #e8e2d8;
+  background: #fff;
+}
+.feed-category-scroll {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.55rem 1.25rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.feed-category-scroll::-webkit-scrollbar { display: none; }
+.feed-category-pill {
+  flex-shrink: 0;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  background: transparent;
+  color: #3a342b;
+  border: 1px solid #e0d8ce;
+  border-radius: 20px;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+.feed-category-pill:hover:not(.feed-category-pill--active) {
+  border-color: #c5b89a;
+  color: #14110d;
+}
+.feed-category-pill--active {
+  background: #c5491f;
+  color: #fff;
+  border-color: #c5491f;
+  font-weight: 700;
+}
