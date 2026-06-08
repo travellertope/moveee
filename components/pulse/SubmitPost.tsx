@@ -68,6 +68,43 @@ const TEMPLATE_GUIDES: Record<TemplateType, { desc: string; chips: string[] }> =
   quote:               { desc: "Share a quote that moved you. Add the author and source below.",                           chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"] },
 };
 
+// Template → default section tag
+const TEMPLATE_TAGS: Partial<Record<TemplateType, Tag>> = {
+  "food-review":       "Food",
+  "itinerary":         "Travel",
+  "creative-showcase": "Art",
+};
+
+// Keyword lists for content-based tag detection
+const TAG_KEYWORDS: [Tag, string[]][] = [
+  ["Music",      ["music","song","album","artist","band","concert","gig","playlist","track","rapper","singer","lyrics","afrobeats","jazz","hip hop","r&b"]],
+  ["Film",       ["film","movie","cinema","watched","director","actor","actress","series","episode","netflix","streaming","documentary","tv show"]],
+  ["Literature", ["book","reading","novel","author","poetry","poem","writer","chapter","fiction","nonfiction","memoir","literature"]],
+  ["Food",       ["food","eating","restaurant","dish","meal","cuisine","recipe","chef","cooking","taste","cafe","brunch","dinner","lunch"]],
+  ["Travel",     ["travel","trip","city","country","visited","explore","destination","hotel","flight","vacation","holiday","abroad"]],
+  ["Art",        ["art","painting","gallery","exhibition","sculpture","artwork","illustration","mural","portrait","photography"]],
+  ["Fashion",    ["fashion","style","outfit","clothes","wearing","brand","designer","trend","runway","streetwear","sneakers","wardrobe"]],
+  ["Sport",      ["sport","football","basketball","tennis","match","game","player","team","league","athletics","cricket","rugby","fifa"]],
+  ["Tech",       ["tech","technology","app","software","coding","artificial intelligence","digital","startup","programming","algorithm"]],
+  ["Design",     ["design","graphic","logo","typography","interface","ux","ui","branding","visual identity","illustration"]],
+  ["Ideas",      ["idea","philosophy","society","politics","economy","future","innovation","theory","culture","mindset","movement"]],
+];
+
+function detectTagFromContent(text: string): Tag | null {
+  let best: Tag | null = null;
+  let bestScore = 0;
+  const lower = text.toLowerCase();
+  for (const [tag, keywords] of TAG_KEYWORDS) {
+    let score = 0;
+    for (const kw of keywords) {
+      let pos = lower.indexOf(kw);
+      while (pos !== -1) { score++; pos = lower.indexOf(kw, pos + 1); }
+    }
+    if (score > bestScore) { bestScore = score; best = tag; }
+  }
+  return bestScore >= 1 ? best : null;
+}
+
 const MAX_CHARS: Record<string, number> = {
   post: 3000, "hidden-gem": 500, "cultural-take": 1000, "food-review": 500,
   "creative-showcase": 500, poll: 280, itinerary: 300, quote: 600,
@@ -99,7 +136,10 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
   // Shared state
   const [text, setText] = useState("");
-  const [tag, setTag] = useState<Tag | "">(lockedTag as Tag ?? "");
+  const [tag, setTag] = useState<Tag | "">(
+    (lockedTag as Tag) ?? TEMPLATE_TAGS[initialTemplate ?? "post"] ?? ""
+  );
+  const [tagLocked, setTagLocked] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -205,7 +245,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   }
 
   function resetForm() {
-    setText(""); setTag(""); removeImage(); setError(""); setSuccess("");
+    setText(""); setTag(TEMPLATE_TAGS[template] ?? ""); setTagLocked(false); removeImage(); setError(""); setSuccess("");
     setStarRating(0); setDirectoryEntry(null);
     setPollOptions(["", ""]); setPollDuration("3");
     setItineraryStops([
@@ -225,6 +265,29 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Upload failed");
     return data.url;
+  }
+
+  function handleTemplateChange(t: TemplateType) {
+    setTemplate(t);
+    setError("");
+    if (!lockedTag) {
+      setTagLocked(false);
+      setTag(TEMPLATE_TAGS[t] ?? "");
+    }
+  }
+
+  function handleTagChange(value: Tag | "") {
+    setTag(value);
+    setTagLocked(value !== ""); // clearing resumes auto-detection
+  }
+
+  function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const val = e.target.value;
+    setText(val);
+    if (tagLocked || lockedTag || TEMPLATE_TAGS[template]) return;
+    if (val.length < 20) { setTag(""); return; }
+    const detected = detectTagFromContent(val);
+    if (detected) setTag(detected);
   }
 
   function canSubmit(): boolean {
@@ -415,7 +478,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             key={t.slug}
             type="button"
             className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}`}
-            onClick={() => { setTemplate(t.slug); setError(""); }}
+            onClick={() => handleTemplateChange(t.slug)}
           >
             <span className="composer-template-emoji">{t.emoji}</span>
             <span className="composer-template-label">{t.label}</span>
@@ -484,7 +547,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             <textarea
               ref={textareaRef}
               value={text}
-              onChange={e => setText(e.target.value)}
+              onChange={handleTextChange}
               placeholder={placeholders[template]}
               rows={template === "cultural-take" ? 6 : template === "creative-showcase" ? 2 : 4}
               className={`composer-textarea${template === "quote" ? " composer-textarea--italic" : ""}`}
@@ -612,7 +675,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                 ) : (
                   <select
                     value={tag}
-                    onChange={e => setTag(e.target.value as Tag | "")}
+                    onChange={e => handleTagChange(e.target.value as Tag | "")}
                     className={`composer-tag-select${tag ? " composer-tag-select--selected" : ""}`}
                   >
                     <option value="">Section</option>
