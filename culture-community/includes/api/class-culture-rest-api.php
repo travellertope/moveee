@@ -1264,9 +1264,10 @@ class Culture_REST_API {
         $interests_raw = $request->get_param( 'interests' );
         if ( is_array( $interests_raw ) && count( $interests_raw ) >= 3 ) {
             $allowed_interests = array(
-                'fashion-streetwear', 'food-drink', 'live-music', 'independent-film',
-                'art-architecture', 'literature', 'design-tech', 'sport-wellness',
-                'travel', 'ideas', 'music-production', 'photography',
+                'fashion-streetwear', 'food-drink', 'live-music', 'music-production',
+                'independent-film', 'visual-art', 'architecture', 'photography',
+                'literature', 'visual-design', 'tech-culture', 'sport-wellness',
+                'travel', 'ideas',
             );
             $valid_interests = array_values( array_filter( array_map( 'sanitize_key', $interests_raw ), function( $s ) use ( $allowed_interests ) {
                 return in_array( $s, $allowed_interests, true );

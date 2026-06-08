@@ -22,7 +22,7 @@ const TYPE_FILTERS: { label: string; value: FeedItemType | "all" }[] = [
 
 const CATEGORY_FILTERS = [
   "Music", "Film", "Art", "Fashion", "Literature",
-  "Food", "Tech", "Sport", "Travel", "Design",
+  "Food", "Tech", "Sport", "Travel", "Design", "Ideas",
 ];
 
 const REGIONS = ["All", "Africa", "Caribbean", "Diaspora UK", "Diaspora US", "Diaspora Europe", "Global"] as const;
