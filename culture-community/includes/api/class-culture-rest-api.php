@@ -12,6 +12,23 @@ class Culture_REST_API {
     public static function init() {
         add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
         add_action( 'save_post_culture_post', array( 'Culture_Directory', 'recompute_aggregates_on_post_save' ), 10, 2 );
+        // Award reputation when a community post is created via the REST API.
+        add_action( 'rest_after_insert_culture_post', array( __CLASS__, 'handle_community_post_created' ), 10, 3 );
+    }
+
+    /**
+     * Fires after a culture_post is inserted/updated via the REST API.
+     * Awards reputation + credits to the community author on first publish only.
+     */
+    public static function handle_community_post_created( $post, $request, $creating ) {
+        if ( ! $creating ) return;
+        if ( 'publish' !== $post->post_status ) return;
+        if ( ! class_exists( 'Culture_Gamification' ) ) return;
+
+        $author_id = (int) get_post_meta( $post->ID, 'community_author_id', true );
+        if ( ! $author_id ) return;
+
+        Culture_Gamification::award_points( $author_id, 'community_post', 0 );
     }
 
     /**
@@ -1068,6 +1085,18 @@ class Culture_REST_API {
         );
         update_option( 'culture_newsletter_subscribers', $subscribers );
 
+        // Award reputation to the matching WP user on their first newsletter subscription.
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            $wp_user = get_user_by( 'email', $email );
+            if ( $wp_user ) {
+                $already = get_user_meta( $wp_user->ID, '_culture_newsletter_subscribed_badge', true );
+                if ( ! $already ) {
+                    update_user_meta( $wp_user->ID, '_culture_newsletter_subscribed_badge', '1' );
+                    Culture_Gamification::award_points( $wp_user->ID, 'newsletter_subscribed' );
+                }
+            }
+        }
+
         return rest_ensure_response( array(
             'success' => true,
             'message' => __( 'Subscribed successfully.', 'culture-community' ),
@@ -1366,9 +1395,24 @@ class Culture_REST_API {
         update_user_meta( $user_id, '_culture_membership_tier', 'citizen' );
 
         // Mark email as verified and consume the token.
+        $was_unverified = get_user_meta( $user_id, '_culture_email_verified', true ) !== '1';
         update_user_meta( $user_id, '_culture_email_verified', '1' );
         delete_user_meta( $user_id, '_culture_email_verify_token' );
         delete_user_meta( $user_id, '_culture_email_verify_expires' );
+
+        // Award reputation for email verification (once only).
+        if ( $was_unverified && class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::award_points( $user_id, 'email_verified' );
+        }
+
+        // Award reputation for profile completion (once only).
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            $already_completed = get_user_meta( $user_id, '_culture_profile_completed', true );
+            if ( ! $already_completed ) {
+                update_user_meta( $user_id, '_culture_profile_completed', '1' );
+                Culture_Gamification::award_points( $user_id, 'profile_completed' );
+            }
+        }
 
         // Send welcome email now that all data is in place.
         if ( class_exists( 'Culture_Emails' ) ) {
@@ -2708,13 +2752,20 @@ class Culture_REST_API {
             return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
         }
 
-        $opt_in = $request->get_param( 'directory_opt_in' );
-        update_user_meta( $user_id, '_culture_directory_opt_in',     ( $opt_in === '1' || $opt_in === true ) ? '1' : '0' );
+        $opt_in         = $request->get_param( 'directory_opt_in' );
+        $was_opted_in   = get_user_meta( $user_id, '_culture_directory_opt_in', true ) === '1';
+        $new_opt_in_val = ( $opt_in === '1' || $opt_in === true ) ? '1' : '0';
+        update_user_meta( $user_id, '_culture_directory_opt_in',     $new_opt_in_val );
         update_user_meta( $user_id, '_culture_directory_bio',         sanitize_textarea_field( (string) $request->get_param( 'directory_bio' ) ) );
         update_user_meta( $user_id, '_culture_directory_disciplines', sanitize_text_field( (string) $request->get_param( 'directory_disciplines' ) ) );
         update_user_meta( $user_id, '_culture_directory_instagram',   sanitize_text_field( (string) $request->get_param( 'directory_instagram' ) ) );
         update_user_meta( $user_id, '_culture_directory_linkedin',    sanitize_text_field( (string) $request->get_param( 'directory_linkedin' ) ) );
         update_user_meta( $user_id, '_culture_directory_website',     sanitize_text_field( (string) $request->get_param( 'directory_website' ) ) );
+
+        // Award reputation the first time a user opts into the directory.
+        if ( '1' === $new_opt_in_val && ! $was_opted_in && class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::award_points( $user_id, 'directory_opt_in' );
+        }
 
         return rest_ensure_response( array( 'ok' => true ) );
     }
