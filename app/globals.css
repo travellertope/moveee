@@ -767,3 +767,294 @@ h1, h2, h3, h4 {
     font-size: 16px !important;
   }
 }
+
+/* ── Composer (Phase 4) ──────────────────────────────────── */
+.composer-template-bar {
+  display: flex;
+  gap: 4px;
+  padding: 8px 1.25rem;
+  border-bottom: 1px solid #f0ece4;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.composer-template-bar::-webkit-scrollbar { display: none; }
+
+.composer-template-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 1px solid #e0d8ce;
+  border-radius: 20px;
+  background: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #7a6f5c;
+  transition: all 0.15s;
+}
+.composer-template-pill--active {
+  border-color: #14110d;
+  background: rgba(20,17,13,0.05);
+  color: #14110d;
+  font-weight: 700;
+}
+.composer-template-emoji { font-size: 0.85rem; }
+.composer-template-label { letter-spacing: 0.03em; }
+
+.composer-input {
+  background: #fff;
+  border: 1px solid #e0d8ce;
+  border-radius: 2px;
+  color: #14110d;
+  font-size: 0.78rem;
+  padding: 0.35rem 0.6rem;
+  outline: none;
+  width: 100%;
+}
+
+/* Star rating */
+.composer-star-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.composer-star-label {
+  font-size: 0.72rem;
+  color: #7a6f5c;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  min-width: 50px;
+}
+.composer-stars { display: flex; gap: 2px; }
+.composer-star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #e0d8ce;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.1s;
+}
+.composer-star--active { color: var(--ochre, #b38238); }
+
+/* Multi-rating */
+.composer-multi-rating {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Directory search */
+.composer-dir-search { position: relative; }
+.composer-dir-input {
+  background: #fff;
+  border: 1px solid #e0d8ce;
+  border-radius: 2px;
+  color: #14110d;
+  font-size: 0.78rem;
+  padding: 0.4rem 0.6rem;
+  width: 100%;
+  outline: none;
+}
+.composer-dir-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0d8ce;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  z-index: 50;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.composer-dir-loading,
+.composer-dir-empty {
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  color: #7a6f5c;
+}
+.composer-dir-empty { display: flex; flex-direction: column; gap: 8px; }
+.composer-dir-create-btn {
+  background: var(--ochre, #b38238);
+  color: #fff;
+  border: none;
+  border-radius: 2px;
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.composer-dir-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.78rem;
+}
+.composer-dir-result:hover { background: #f9f6f1; }
+.composer-dir-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 2px;
+  object-fit: cover;
+}
+.composer-dir-result-title { flex: 1; color: #14110d; }
+.composer-dir-result-type {
+  font-size: 0.65rem;
+  color: #7a6f5c;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.composer-dir-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(179,130,56,0.08);
+  border: 1px solid var(--ochre, #b38238);
+  border-radius: 2px;
+}
+.composer-dir-selected-name {
+  flex: 1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #14110d;
+}
+.composer-dir-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #7a6f5c;
+  padding: 0;
+  line-height: 1;
+}
+
+/* Poll builder */
+.composer-poll { display: flex; flex-direction: column; gap: 6px; }
+.composer-poll-row { display: flex; gap: 6px; align-items: center; }
+.composer-poll-input {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #e0d8ce;
+  border-radius: 2px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.78rem;
+  color: #14110d;
+  outline: none;
+}
+.composer-poll-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #c5491f;
+  font-size: 1rem;
+  padding: 0 4px;
+}
+.composer-poll-add {
+  background: transparent;
+  border: 1px dashed #e0d8ce;
+  border-radius: 2px;
+  padding: 6px;
+  color: #7a6f5c;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+.composer-poll-duration {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.composer-poll-duration-label {
+  font-size: 0.72rem;
+  color: #7a6f5c;
+  font-weight: 600;
+}
+.composer-poll-select {
+  background: #fff;
+  border: 1px solid #e0d8ce;
+  border-radius: 2px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  color: #14110d;
+  outline: none;
+}
+
+/* Itinerary builder */
+.composer-itinerary { display: flex; flex-direction: column; gap: 8px; }
+.composer-itinerary-stop {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.composer-itinerary-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ochre, #b38238);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.composer-itinerary-fields { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.composer-itinerary-input {
+  background: #fff;
+  border: 1px solid #e0d8ce;
+  border-radius: 2px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.78rem;
+  color: #14110d;
+  outline: none;
+  width: 100%;
+}
+.composer-itinerary-note {
+  background: #fff;
+  border: 1px solid #e0d8ce;
+  border-radius: 2px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  color: #14110d;
+  outline: none;
+  resize: none;
+  width: 100%;
+  font-family: inherit;
+}
+.composer-itinerary-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #c5491f;
+  font-size: 1rem;
+  padding: 0;
+  margin-top: 6px;
+}
+.composer-itinerary-add {
+  background: transparent;
+  border: 1px dashed #e0d8ce;
+  border-radius: 2px;
+  padding: 8px;
+  color: #7a6f5c;
+  font-size: 0.72rem;
+  cursor: pointer;
+  text-align: center;
+}

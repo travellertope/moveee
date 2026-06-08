@@ -731,6 +731,13 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Phase 4 — poll voting.
+        register_rest_route( 'culture/v1', '/community/poll-vote', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_poll_vote' ),
+            'permission_callback' => function() { return is_user_logged_in(); },
+        ) );
+
         // Track an external link click on a pulse story.
         register_rest_route( 'culture/v1', '/pulse-click', array(
             'methods'             => 'POST',
@@ -2840,5 +2847,62 @@ class Culture_REST_API {
         do_action( 'wcfmmp_vendor_registration_complete', $user_id );
 
         return rest_ensure_response( self::user_profile( get_userdata( $user_id ) ) );
+    }
+
+    /**
+     * POST /culture/v1/community/poll-vote
+     * Vote on a poll post. Validates expiry and prevents double-voting.
+     */
+    public static function handle_poll_vote( WP_REST_Request $request ) {
+        $post_id      = (int) $request->get_param( 'post_id' );
+        $option_index = (int) $request->get_param( 'option_index' );
+        $user_id      = get_current_user_id();
+
+        $post = get_post( $post_id );
+        if ( ! $post || $post->post_type !== 'culture_post' ) {
+            return new WP_Error( 'invalid_post', 'Post not found.', array( 'status' => 404 ) );
+        }
+
+        $template = get_post_meta( $post_id, '_template_type', true );
+        if ( $template !== 'poll' ) {
+            return new WP_Error( 'not_poll', 'This post is not a poll.', array( 'status' => 400 ) );
+        }
+
+        // Check expiry.
+        $expires = get_post_meta( $post_id, '_poll_expires_at', true );
+        if ( $expires && strtotime( $expires ) < time() ) {
+            return new WP_Error( 'poll_expired', 'This poll has ended.', array( 'status' => 400 ) );
+        }
+
+        // Check double-voting.
+        $voters = json_decode( get_post_meta( $post_id, '_poll_voters', true ) ?: '[]', true ) ?: array();
+        if ( in_array( $user_id, $voters, true ) ) {
+            return new WP_Error( 'already_voted', 'You have already voted.', array( 'status' => 409 ) );
+        }
+
+        // Get options and validate index.
+        $options = json_decode( get_post_meta( $post_id, '_poll_options', true ) ?: '[]', true ) ?: array();
+        if ( $option_index < 0 || $option_index >= count( $options ) ) {
+            return new WP_Error( 'invalid_option', 'Invalid option.', array( 'status' => 400 ) );
+        }
+
+        // Increment vote.
+        $options[ $option_index ]['votes'] = ( $options[ $option_index ]['votes'] ?? 0 ) + 1;
+        update_post_meta( $post_id, '_poll_options', wp_json_encode( $options ) );
+
+        // Record voter.
+        $voters[] = $user_id;
+        update_post_meta( $post_id, '_poll_voters', wp_json_encode( $voters ) );
+
+        // Award reputation for participation.
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::award_reputation( $user_id, 2, 'poll_vote', $post_id );
+        }
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'options' => $options,
+            'voted'   => $option_index,
+        ) );
     }
 }

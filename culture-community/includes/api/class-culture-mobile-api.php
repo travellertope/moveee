@@ -596,6 +596,74 @@ class Culture_Mobile_API {
             update_post_meta( $post_id, 'community_tag', $tag );
         }
 
+        // Phase 4: Save template-specific meta.
+        $template = sanitize_key( $request->get_param( 'template_type' ) ?: 'post' );
+        $allowed_templates = array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'creative-showcase', 'poll', 'itinerary' );
+        if ( in_array( $template, $allowed_templates, true ) ) {
+            update_post_meta( $post_id, '_template_type', $template );
+        }
+
+        if ( $request->get_param( 'linked_directory_id' ) ) {
+            update_post_meta( $post_id, '_linked_directory_id', (int) $request->get_param( 'linked_directory_id' ) );
+        }
+        if ( in_array( $template, array( 'hidden-gem', 'food-review' ), true ) ) {
+            if ( $request->get_param( 'star_rating' ) ) {
+                update_post_meta( $post_id, '_star_rating', max( 1, min( 5, (int) $request->get_param( 'star_rating' ) ) ) );
+            }
+            if ( $request->get_param( 'location_name' ) ) {
+                update_post_meta( $post_id, '_location_name', sanitize_text_field( $request->get_param( 'location_name' ) ) );
+            }
+            if ( $request->get_param( 'location_lat' ) ) {
+                update_post_meta( $post_id, '_location_lat', (float) $request->get_param( 'location_lat' ) );
+            }
+            if ( $request->get_param( 'location_lng' ) ) {
+                update_post_meta( $post_id, '_location_lng', (float) $request->get_param( 'location_lng' ) );
+            }
+        }
+        if ( $template === 'food-review' ) {
+            if ( $request->get_param( 'food_dish_name' ) ) {
+                update_post_meta( $post_id, '_food_dish_name', sanitize_text_field( $request->get_param( 'food_dish_name' ) ) );
+            }
+            update_post_meta( $post_id, '_food_rating_taste', max( 1, min( 5, (int) $request->get_param( 'food_rating_taste' ) ) ) );
+            update_post_meta( $post_id, '_food_rating_value', max( 1, min( 5, (int) $request->get_param( 'food_rating_value' ) ) ) );
+            update_post_meta( $post_id, '_food_rating_vibe', max( 1, min( 5, (int) $request->get_param( 'food_rating_vibe' ) ) ) );
+        }
+        if ( $template === 'poll' ) {
+            $poll_options = $request->get_param( 'poll_options' );
+            if ( is_array( $poll_options ) ) {
+                $clean_options = array_map( function( $opt ) {
+                    return array( 'text' => sanitize_text_field( $opt['text'] ?? '' ), 'votes' => 0 );
+                }, array_slice( $poll_options, 0, 4 ) );
+                update_post_meta( $post_id, '_poll_options', wp_json_encode( $clean_options ) );
+            }
+            update_post_meta( $post_id, '_poll_expires_at', sanitize_text_field( $request->get_param( 'poll_expires_at' ) ?: '' ) );
+            update_post_meta( $post_id, '_poll_voters', wp_json_encode( array() ) );
+        }
+        if ( $template === 'itinerary' ) {
+            $stops = $request->get_param( 'itinerary_stops' );
+            if ( is_array( $stops ) ) {
+                $clean_stops = array_map( function( $stop ) {
+                    return array(
+                        'name'      => sanitize_text_field( $stop['name'] ?? '' ),
+                        'lat'       => (float) ( $stop['lat'] ?? 0 ),
+                        'lng'       => (float) ( $stop['lng'] ?? 0 ),
+                        'note'      => sanitize_text_field( $stop['note'] ?? '' ),
+                        'image_url' => esc_url_raw( $stop['image_url'] ?? '' ),
+                    );
+                }, array_slice( $stops, 0, 5 ) );
+                update_post_meta( $post_id, '_itinerary_stops', wp_json_encode( $clean_stops ) );
+            }
+        }
+        if ( $template === 'creative-showcase' ) {
+            $images = $request->get_param( 'gallery_images' );
+            if ( is_array( $images ) ) {
+                update_post_meta( $post_id, '_gallery_images', wp_json_encode( array_map( 'esc_url_raw', array_slice( $images, 0, 10 ) ) ) );
+            }
+            if ( $request->get_param( 'video_url' ) ) {
+                update_post_meta( $post_id, '_video_url', esc_url_raw( $request->get_param( 'video_url' ) ) );
+            }
+        }
+
         if ( class_exists( 'Culture_Gamification' ) ) {
             Culture_Gamification::award_points( $user_id, 'community_post' );
         }
@@ -1145,6 +1213,20 @@ class Culture_Mobile_API {
                 'avatarUrl' => $author ? ( get_user_meta( $author_id, '_culture_avatar_url', true ) ?: '' ) : '',
                 'tier'      => $author_tier,
             ),
+            // Phase 4: template meta.
+            'template_type'       => get_post_meta( $post->ID, '_template_type', true ) ?: 'post',
+            'linked_directory_id' => (int) get_post_meta( $post->ID, '_linked_directory_id', true ),
+            'star_rating'         => (int) get_post_meta( $post->ID, '_star_rating', true ),
+            'location_name'       => get_post_meta( $post->ID, '_location_name', true ) ?: '',
+            'poll_options'        => json_decode( get_post_meta( $post->ID, '_poll_options', true ) ?: '[]', true ),
+            'poll_expires_at'     => get_post_meta( $post->ID, '_poll_expires_at', true ) ?: '',
+            'gallery_images'      => json_decode( get_post_meta( $post->ID, '_gallery_images', true ) ?: '[]', true ),
+            'video_url'           => get_post_meta( $post->ID, '_video_url', true ) ?: '',
+            'itinerary_stops'     => json_decode( get_post_meta( $post->ID, '_itinerary_stops', true ) ?: '[]', true ),
+            'food_dish_name'      => get_post_meta( $post->ID, '_food_dish_name', true ) ?: '',
+            'food_rating_taste'   => (int) get_post_meta( $post->ID, '_food_rating_taste', true ),
+            'food_rating_value'   => (int) get_post_meta( $post->ID, '_food_rating_value', true ),
+            'food_rating_vibe'    => (int) get_post_meta( $post->ID, '_food_rating_vibe', true ),
         );
     }
 }

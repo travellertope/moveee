@@ -64,7 +64,7 @@ class Culture_Post_Types {
             ) );
         }
 
-        // community post meta (Phase 3)
+        // community post meta (Phase 3 + Phase 4)
         $community_post_meta = array(
             '_template_type'       => 'string',
             '_linked_directory_id' => 'integer',
@@ -72,6 +72,16 @@ class Culture_Post_Types {
             '_location_name'       => 'string',
             '_location_lat'        => 'number',
             '_location_lng'        => 'number',
+            '_poll_options'        => 'string',
+            '_poll_expires_at'     => 'string',
+            '_poll_voters'         => 'string',
+            '_itinerary_stops'     => 'string',
+            '_gallery_images'      => 'string',
+            '_video_url'           => 'string',
+            '_food_dish_name'      => 'string',
+            '_food_rating_taste'   => 'integer',
+            '_food_rating_value'   => 'integer',
+            '_food_rating_vibe'    => 'integer',
         );
         foreach ( $community_post_meta as $meta_key => $type ) {
             register_post_meta( 'culture_post', $meta_key, array(
