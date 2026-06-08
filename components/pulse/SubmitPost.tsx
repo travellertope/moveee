@@ -44,7 +44,7 @@ function detectRegion(countryOfResidence?: string): string | null {
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 
-type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "creative-showcase" | "poll" | "itinerary";
+type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "creative-showcase" | "poll" | "itinerary" | "event";
 
 const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "post",              label: "Update",    emoji: "📝" },
@@ -54,6 +54,7 @@ const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "creative-showcase", label: "Showcase",  emoji: "🎨" },
   { slug: "poll",              label: "Poll",      emoji: "📊" },
   { slug: "itinerary",         label: "Route",     emoji: "🗺️" },
+  { slug: "event",             label: "Event",     emoji: "📅" },
   { slug: "quote",             label: "Quote",     emoji: "✦" },
 ];
 
@@ -65,6 +66,7 @@ const TEMPLATE_GUIDES: Record<TemplateType, { desc: string; chips: string[] }> =
   "creative-showcase": { desc: "Share your creative work — art, photography, design, or music.",                           chips: ["Working on something:", "New piece:",             "Behind the work:"] },
   poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions.",             chips: ["Which is better:",    "Settle this for me:",    "Genuine question:"] },
   itinerary:           { desc: "Share a travel itinerary or a local route worth following.",                                chips: ["A perfect day in",    "My go-to route:",        "For first-timers in"] },
+  event:               { desc: "Submit a cultural event happening in your city. It will appear on the events calendar.",   chips: ["Happening this weekend:", "Don't miss this one:", "Tickets going fast:"] },
   quote:               { desc: "Share a quote that moved you. Add the author and source below.",                           chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"] },
 };
 
@@ -107,7 +109,7 @@ function detectTagFromContent(text: string): Tag | null {
 
 const MAX_CHARS: Record<string, number> = {
   post: 3000, "hidden-gem": 500, "cultural-take": 1000, "food-review": 500,
-  "creative-showcase": 500, poll: 280, itinerary: 300, quote: 600,
+  "creative-showcase": 500, poll: 280, itinerary: 300, event: 1000, quote: 600,
 };
 
 function HashtagPreview({ text }: { text: string }) {
@@ -176,6 +178,15 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   // Quote specific
   const [quoteAuthor, setQuoteAuthor] = useState("");
   const [quoteSource, setQuoteSource] = useState("");
+
+  // Event specific
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [eventEndDate, setEventEndDate] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
+  const [eventCity, setEventCity] = useState("");
+  const [eventAdmission, setEventAdmission] = useState("");
+  const [eventTicketUrl, setEventTicketUrl] = useState("");
 
   const user = session?.user as any;
   const loggedIn = status === "authenticated";
@@ -255,6 +266,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     setGalleryFiles([]); setGalleryPreviews([]); setVideoUrl("");
     setFoodDishName(""); setFoodTaste(0); setFoodValue(0); setFoodVibe(0);
     setQuoteAuthor(""); setQuoteSource("");
+    setEventTitle(""); setEventDate(""); setEventEndDate(""); setEventLocation("");
+    setEventCity(""); setEventAdmission(""); setEventTicketUrl("");
     setLinkPreview(null);
   }
 
@@ -311,6 +324,13 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         return text.trim().length >= 10 && pollOptions.filter(o => o.trim()).length >= 2;
       case "itinerary":
         return itineraryStops.filter(s => s.name.trim()).length >= 2;
+      case "event": {
+        if (!eventTitle.trim() || !eventDate) return false;
+        const d = new Date(eventDate);
+        if (isNaN(d.getTime())) return false;
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        return d >= today;
+      }
       default:
         return false;
     }
@@ -339,6 +359,31 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         setUploading(true);
         galleryUrls.push(await uploadImage(f));
         setUploading(false);
+      }
+
+      // Event goes to separate endpoint
+      if (template === "event") {
+        const res = await fetch("/api/events/member-submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: eventTitle.trim(),
+            description: text.trim() || undefined,
+            event_date: eventDate,
+            end_date: eventEndDate || undefined,
+            location: eventLocation.trim() || undefined,
+            city: eventCity.trim() || undefined,
+            admission: eventAdmission.trim() || undefined,
+            ticketing_url: eventTicketUrl.trim() || undefined,
+            cover_image: imageUrl || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to submit event.");
+        setSuccess("Event submitted — it will appear on the events calendar shortly.");
+        resetForm();
+        setTimeout(() => setSuccess(""), 5000);
+        return;
       }
 
       // Quote goes to separate endpoint
@@ -467,6 +512,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     "creative-showcase": "Caption (optional)",
     poll: "Ask a question…",
     itinerary: "Describe your route…",
+    event: "Describe the event — what to expect, why it matters… (optional)",
   };
 
   return (
@@ -524,6 +570,75 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                 placeholder="Dish or item name *"
                 className="composer-input"
               />
+            )}
+
+            {/* Event fields */}
+            {template === "event" && (
+              <>
+                <input
+                  type="text"
+                  value={eventTitle}
+                  onChange={e => setEventTitle(e.target.value.slice(0, 150))}
+                  placeholder="Event name *"
+                  className="composer-input"
+                />
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                  <div style={{ flex: 1, minWidth: "140px" }}>
+                    <label className="composer-field-label">Start date & time *</label>
+                    <input
+                      type="datetime-local"
+                      value={eventDate}
+                      onChange={e => setEventDate(e.target.value)}
+                      className="composer-input"
+                    />
+                  </div>
+                  <div style={{ flex: 1, minWidth: "140px" }}>
+                    <label className="composer-field-label">End date & time</label>
+                    <input
+                      type="datetime-local"
+                      value={eventEndDate}
+                      onChange={e => setEventEndDate(e.target.value)}
+                      className="composer-input"
+                    />
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                  <input
+                    type="text"
+                    value={eventLocation}
+                    onChange={e => setEventLocation(e.target.value.slice(0, 200))}
+                    placeholder="Venue / address"
+                    className="composer-input"
+                    style={{ flex: 2, minWidth: "140px" }}
+                  />
+                  <input
+                    type="text"
+                    value={eventCity}
+                    onChange={e => setEventCity(e.target.value.slice(0, 80))}
+                    placeholder="City"
+                    className="composer-input"
+                    style={{ flex: 1, minWidth: "100px" }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                  <input
+                    type="text"
+                    value={eventAdmission}
+                    onChange={e => setEventAdmission(e.target.value.slice(0, 80))}
+                    placeholder="Admission (e.g. Free, £10)"
+                    className="composer-input"
+                    style={{ flex: 1, minWidth: "120px" }}
+                  />
+                  <input
+                    type="url"
+                    value={eventTicketUrl}
+                    onChange={e => setEventTicketUrl(e.target.value)}
+                    placeholder="Ticket / event link"
+                    className="composer-input"
+                    style={{ flex: 2, minWidth: "140px" }}
+                  />
+                </div>
+              </>
             )}
 
             {/* Template guide */}
@@ -664,10 +779,11 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               style={{ display: "none" }}
             />
 
+
             {/* Action bar */}
             <div className="composer-action-bar">
-              {/* Tag selector (not for quote, food-review auto-sets Food) */}
-              {template !== "quote" && template !== "food-review" && (
+              {/* Tag selector (not for quote, food-review auto-sets Food, event has its own categories) */}
+              {template !== "quote" && template !== "food-review" && template !== "event" && (
                 lockedTag ? (
                   <span className="composer-tag-select composer-tag-select--selected" style={{ cursor: "default" }}>
                     {lockedTag}
@@ -684,8 +800,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                 )
               )}
 
-              {/* Image button (not for poll) */}
-              {template !== "poll" && template !== "quote" && (
+              {/* Image button (not for poll or itinerary) */}
+              {template !== "poll" && template !== "quote" && template !== "itinerary" && (
                 <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
