@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ProfileTabs from "./ProfileTabs";
 import ShareButton from "./ShareButton";
+import BadgeShelf from "./BadgeShelf";
 import "./profile.css";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
@@ -38,47 +39,6 @@ async function getProfile(username: string): Promise<Profile | null> {
     return null;
   }
 }
-
-const BADGE_LABELS: Record<string, string> = {
-  first_steps: "First Steps", regular: "Regular", culture_vulture: "Culture Vulture",
-  explorer: "Explorer", globetrotter: "Globetrotter",
-  commentator: "Commentator", century_club: "Century Club",
-  wordsmith: "Wordsmith", librarian: "Librarian", philosopher: "Philosopher",
-  influencer: "Influencer", thought_leader: "Thought Leader",
-  culture_archivist: "Culture Archivist", knowledge_keeper: "Knowledge Keeper",
-  cultural_encyclopaedist: "Cultural Encyclopaedist",
-  cultural_specialist: "Cultural Specialist", deep_diver: "Deep Diver",
-  culture_liaison: "Culture Liaison",
-  // New badges
-  first_post: "First Post", prolific_poster: "Prolific Poster", century_scribe: "Century Scribe",
-  conversationalist: "Conversationalist",
-  food_critic: "Food Critic", culture_guide: "Culture Guide",
-  itinerary_master: "Itinerary Master", poll_champion: "Poll Champion", gem_hunter: "Gem Hunter",
-  connector: "Connector", super_connector: "Super Connector",
-  profile_complete: "Profile Complete", directory_member: "In the Directory",
-  newsletter_subscriber: "Newsletter Subscriber",
-  monthly_member: "Monthly Member", veteran: "Veteran", annual_advocate: "Annual Advocate",
-  rising_star: "Rising Star", taste_maker_badge: "Taste Maker", culture_authority_badge: "Culture Authority",
-};
-
-const BADGE_EMOJI: Record<string, string> = {
-  first_steps: "🚩", regular: "🎖️", culture_vulture: "🦅",
-  explorer: "🌍", globetrotter: "✈️",
-  commentator: "💬", century_club: "💯",
-  wordsmith: "✍️", librarian: "📚", philosopher: "🧠",
-  influencer: "👍", thought_leader: "📣",
-  culture_archivist: "🗂️", knowledge_keeper: "📖", cultural_encyclopaedist: "🏛️",
-  cultural_specialist: "💬", deep_diver: "🔍", culture_liaison: "🤝",
-  // New
-  first_post: "📝", prolific_poster: "✏️", century_scribe: "📜",
-  conversationalist: "🗣️",
-  food_critic: "🍽️", culture_guide: "💡", itinerary_master: "🗺️",
-  poll_champion: "📊", gem_hunter: "💎",
-  connector: "🔗", super_connector: "🌐",
-  profile_complete: "🪪", directory_member: "📇", newsletter_subscriber: "📬",
-  monthly_member: "📅", veteran: "🎖️", annual_advocate: "⭐",
-  rising_star: "🌟", taste_maker_badge: "👑", culture_authority_badge: "🏆",
-};
 
 const REP_TIER_LABELS: Record<string, string> = {
   member:              "Member",
@@ -174,15 +134,7 @@ export default async function PublicProfilePage(
                 )}
               </div>
 
-              {profile.badges.length > 0 && (
-                <div className="prf-badge-shelf">
-                  {profile.badges.map(badge => (
-                    <span key={badge} className="prf-gamification-badge prf-gamification-badge--shelf" title={BADGE_LABELS[badge] ?? badge.replace(/_/g, " ")}>
-                      {BADGE_EMOJI[badge] ?? "🏅"} {BADGE_LABELS[badge] ?? badge.replace(/_/g, " ")}
-                    </span>
-                  ))}
-                </div>
-              )}
+              <BadgeShelf badges={profile.badges} />
 
               {profile.bio && <p className="prf-bio">{profile.bio}</p>}
 

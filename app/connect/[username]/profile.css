@@ -111,26 +111,60 @@
 .prf-badge-shelf {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   margin-bottom: 14px;
 }
-.prf-gamification-badge--shelf {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  padding: 4px 9px;
-  background: rgba(42,36,28,.04);
-  color: var(--ink-soft);
-  border: 1px solid rgba(42,36,28,.12);
-  white-space: nowrap;
-  cursor: default;
-  transition: background .12s, border-color .12s;
+.prf-badge-icon {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(42,36,28,.1);
+  background: rgba(42,36,28,.03);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background .12s, border-color .12s, transform .12s;
 }
-.prf-gamification-badge--shelf:hover {
+.prf-badge-icon:hover {
   background: rgba(179,130,56,.08);
   border-color: rgba(179,130,56,.25);
-  color: var(--ochre);
+  transform: scale(1.1);
+}
+.prf-badge-icon--active {
+  background: rgba(179,130,56,.1);
+  border-color: rgba(179,130,56,.3);
+}
+.prf-badge-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+.prf-badge-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 4px 8px;
+  pointer-events: none;
+  z-index: 10;
+}
+.prf-badge-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--ink);
 }
 
 .prf-bio {
@@ -231,9 +265,13 @@
 .prf-filter-bar {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
   margin-bottom: 28px;
+  padding-bottom: 2px;
 }
+.prf-filter-bar::-webkit-scrollbar { display: none; }
 .prf-filter-pill {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
@@ -245,6 +283,8 @@
   padding: 5px 12px;
   cursor: pointer;
   transition: all .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .prf-filter-pill:hover { border-color: rgba(42,36,28,.35); color: var(--ink); }
 .prf-filter-pill--active {
