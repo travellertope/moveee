@@ -104,7 +104,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
   // Template-specific state
   const [starRating, setStarRating] = useState(0);
-  const [locationName, setLocationName] = useState("");
   const [directoryEntry, setDirectoryEntry] = useState<any>(null);
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const [pollDuration, setPollDuration] = useState("3");
@@ -195,7 +194,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
   function resetForm() {
     setText(""); setTag(""); removeImage(); setError(""); setSuccess("");
-    setStarRating(0); setLocationName(""); setDirectoryEntry(null);
+    setStarRating(0); setDirectoryEntry(null);
     setPollOptions(["", ""]); setPollDuration("3");
     setItineraryStops([
       { name: "", lat: 0, lng: 0, note: "", image_url: "" },
@@ -226,7 +225,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       case "quote":
         return text.trim().length >= 10 && quoteAuthor.trim().length > 0;
       case "hidden-gem":
-        return text.trim().length >= 50 && starRating > 0 && locationName.trim().length > 0 && (!!imageFile || galleryFiles.length > 0);
+        return text.trim().length >= 50 && starRating > 0 && !!directoryEntry && (!!imageFile || galleryFiles.length > 0);
       case "cultural-take":
         return text.trim().length >= 100 && !!directoryEntry;
       case "food-review":
@@ -307,7 +306,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       }
       if (template === "hidden-gem") {
         payload.star_rating = starRating;
-        payload.location_name = locationName;
+        payload.location_name = directoryEntry?.title || "";
       }
       if (template === "food-review") {
         payload.food_dish_name = foodDishName;
@@ -315,7 +314,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         payload.food_rating_taste = foodTaste;
         payload.food_rating_value = foodValue;
         payload.food_rating_vibe = foodVibe;
-        payload.location_name = locationName || directoryEntry?.title || "";
+        payload.location_name = directoryEntry?.title || "";
       }
       if (template === "poll") {
         payload.poll_options = pollOptions.filter(o => o.trim()).map(text => ({ text }));
@@ -445,7 +444,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                 value={directoryEntry}
                 onChange={setDirectoryEntry}
                 typeFilter={template === "food-review" ? "restaurant" : undefined}
-                placeholder={template === "cultural-take" ? "What are you writing about?" : template === "food-review" ? "Which restaurant or venue?" : "Link to a directory entry (optional)"}
+                placeholder={template === "cultural-take" ? "What are you writing about?" : template === "food-review" ? "Which restaurant or venue?" : "Search or add a location *"}
               />
             )}
 
@@ -456,17 +455,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                 value={foodDishName}
                 onChange={e => setFoodDishName(e.target.value)}
                 placeholder="Dish or item name *"
-                className="composer-input"
-              />
-            )}
-
-            {/* Location name — hidden-gem */}
-            {template === "hidden-gem" && (
-              <input
-                type="text"
-                value={locationName}
-                onChange={e => setLocationName(e.target.value)}
-                placeholder="Location name *"
                 className="composer-input"
               />
             )}
