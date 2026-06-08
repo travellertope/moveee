@@ -198,9 +198,26 @@ export async function getDirectoryEntriesWithFallback(first = 200, options: any 
   }
 }
 
+function isEventExpired(event: any): boolean {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  // If an end_date exists, the event expires after that day
+  const end = event.endDate || event.end_date;
+  if (end) {
+    const d = new Date(end); d.setHours(0, 0, 0, 0);
+    return !isNaN(d.getTime()) && d < today;
+  }
+  // Otherwise expire after the event_date day itself
+  const start = event.eventDate || event.event_date || event.date;
+  if (start) {
+    const d = new Date(start); d.setHours(0, 0, 0, 0);
+    return !isNaN(d.getTime()) && d < today;
+  }
+  return false;
+}
+
 export async function getEventsWithFallback(first = 50, options: any = {}) {
   const gql = await getWPData(GET_EVENTS, { first }, options);
-  const gqlEvents = gql?.cultureEvents?.nodes ?? [];
+  const gqlEvents = (gql?.cultureEvents?.nodes ?? []).filter((e: any) => !isEventExpired(e));
   if (gqlEvents.length > 0) return gqlEvents;
 
   try {
@@ -215,7 +232,7 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
     if (!res.ok) return [];
     const json = await res.json();
     if (!Array.isArray(json)) return [];
-    return json.map(mapRestEventToFrontendShape);
+    return json.map(mapRestEventToFrontendShape).filter((e: any) => !isEventExpired(e));
   } catch {
     return [];
   }
