@@ -518,10 +518,14 @@
 }
 
 /* ── Responsive ── */
-@media (max-width: 768px) {
-  .prf-header-inner { padding: 32px 22px 0; }
-  .prf-body         { padding: 28px 22px 60px; }
-  .prf-identity     { gap: 16px; }
-  .prf-avatar       { width: 56px; height: 56px; font-size: 22px; }
-  .prf-not-found    { padding: 60px 22px; }
+@media (max-width: 900px) {
+  .prf-header-inner { padding: 32px 24px 0; }
+  .prf-body         { padding: 28px 24px 60px; }
+}
+@media (max-width: 600px) {
+  .prf-header-inner { padding: 20px 14px 0; }
+  .prf-body         { padding: 18px 14px 48px; }
+  .prf-identity     { gap: 14px; }
+  .prf-avatar       { width: 52px; height: 52px; font-size: 20px; }
+  .prf-not-found    { padding: 60px 16px; }
 }
