@@ -274,8 +274,39 @@ single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
 
 ## Git branch
 
-Active development branch: `claude/sweet-dijkstra-Pde1e`
+Active development branch: `claude/cool-heisenberg-0MOYA`
 Always commit and push to this branch.
+
+---
+
+## VIP Club Upgrade — Phase Status
+
+Phases 1-4 are implemented. Phase docs live in `docs/phases/`.
+
+| Phase | Status | Key files |
+|-------|--------|-----------|
+| 1. Interest Tagging | Done | `lib/interest-mappings.ts`, `components/InterestEditor.tsx`, registration complete page |
+| 2. Credits & Reputation | Done | `class-culture-gamification.php` (credit_ledger table, award_credits/reputation, check_post_threshold), `lib/auth.ts` |
+| 3. Directory Knowledge Graph | Done | `class-culture-directory.php` (search, quick-create, directory posts, aggregates), `DirectoryGrid.tsx` (partner badge), `app/directory/[slug]/page.tsx` (community section) |
+| 4. Post Templates & Composer | Done | `components/pulse/SubmitPost.tsx` (unified composer), `components/composer/` (StarRating, MultiRating, DirectorySearch, PollBuilder, ItineraryBuilder), `FeedCard.tsx` (template variants), poll-vote endpoint |
+| 5. Public Profiles | Planned | `docs/phases/phase-5-public-profiles.md` |
+| 6. Partner Perks | Planned | `docs/phases/phase-6-partner-perks.md` |
+| 7. Passkeys | Planned | `docs/phases/phase-7-passkeys.md` |
+
+### Interest taxonomy (16 canonical slugs)
+
+Stored in `lib/interest-mappings.ts`. PHP allowlists in `class-culture-rest-api.php`
+(both `handle_complete_profile` and `handle_update_user_profile`). WP taxonomy
+terms seeded by `Culture_Activator::seed_interests()`.
+
+### Post template types
+
+`post`, `hidden-gem`, `cultural-take`, `food-review`, `creative-showcase`, `poll`,
+`itinerary` — stored as `_template_type` meta on `culture_post`. Quote and Event
+templates create `culture_quote` and `culture_event` CPTs respectively.
+
+Per-template credit/reputation amounts in `check_post_threshold()` in
+`class-culture-gamification.php`.
 
 ---
 

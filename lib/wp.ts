@@ -172,6 +172,11 @@ function mapRestDirectoryToFrontendShape(item: any) {
     websiteUrl: pick(acf.website_url, acf.websiteUrl, item?.website_url),
     instagramHandle: pick(acf.instagram_handle, acf.instagramHandle),
     twitterHandle: pick(acf.twitter_handle, acf.twitterHandle),
+    isPartner: item?.meta?._is_partner === true || item?.meta?._is_partner === "1",
+    partnerStatus: item?.meta?._partner_status ?? null,
+    partnerPerk: item?.meta?._partner_perk_template ?? null,
+    communityReviewCount: item?.meta?._community_review_count ?? 0,
+    averageRating: item?.meta?._average_rating ? Number(item.meta._average_rating) : null,
     selectedWorks: [],
     infobox: null,
   };
@@ -729,6 +734,11 @@ const DIRECTORY_FIELDS_FRAGMENT = `
     websiteUrl
     instagramHandle
     twitterHandle
+    isPartner
+    partnerStatus
+    partnerPerk
+    communityReviewCount
+    averageRating
     selectedWorks {
       title
       imageUrl
@@ -1527,4 +1537,40 @@ export async function getPostsByIssue(issueId: number): Promise<any[]> {
     if (!res.ok) return [];
     return await res.json();
   } catch { return []; }
+}
+
+export interface DirectoryPostsSummary {
+  total_posts: number;
+  average_rating: number | null;
+  by_template: Record<string, number>;
+}
+
+export interface DirectoryPost {
+  id: number;
+  template_type: string;
+  content: string;
+  star_rating: number | null;
+  author: { name: string; avatar: string; tier: string };
+  reactions: Record<string, number>;
+  created_at: string;
+}
+
+export interface DirectoryPostsResponse {
+  posts: DirectoryPost[];
+  summary: DirectoryPostsSummary;
+}
+
+export async function getDirectoryPosts(directoryId: number): Promise<DirectoryPostsResponse> {
+  const empty: DirectoryPostsResponse = {
+    posts: [],
+    summary: { total_posts: 0, average_rating: null, by_template: {} },
+  };
+  try {
+    const res = await fetch(
+      `${WP_BASE_URL}/wp-json/culture/v1/directory/${directoryId}/posts`,
+      { next: { revalidate: 60 } }
+    );
+    if (!res.ok) return empty;
+    return await res.json();
+  } catch { return empty; }
 }

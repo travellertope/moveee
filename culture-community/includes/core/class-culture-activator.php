@@ -116,14 +116,18 @@ class Culture_Activator {
         }
 
         $terms = array(
-            'person'   => __( 'Person', 'culture-community' ),
-            'place'    => __( 'Place', 'culture-community' ),
-            'movement' => __( 'Movement', 'culture-community' ),
-            'genre'    => __( 'Genre', 'culture-community' ),
-            'concept'  => __( 'Concept', 'culture-community' ),
-            'artwork'  => __( 'Artwork', 'culture-community' ),
-            'food'     => __( 'Food & Drink', 'culture-community' ),
-            'fashion'  => __( 'Fashion', 'culture-community' ),
+            'person'      => __( 'Person', 'culture-community' ),
+            'place'       => __( 'Place', 'culture-community' ),
+            'movement'    => __( 'Movement', 'culture-community' ),
+            'genre'       => __( 'Genre', 'culture-community' ),
+            'concept'     => __( 'Concept', 'culture-community' ),
+            'artwork'     => __( 'Artwork', 'culture-community' ),
+            'food'        => __( 'Food & Drink', 'culture-community' ),
+            'fashion'     => __( 'Fashion', 'culture-community' ),
+            'album'       => __( 'Album', 'culture-community' ),
+            'restaurant'  => __( 'Restaurant', 'culture-community' ),
+            'event-venue' => __( 'Event Venue', 'culture-community' ),
+            'recipe'      => __( 'Recipe', 'culture-community' ),
         );
 
         foreach ( $terms as $slug => $name ) {

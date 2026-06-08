@@ -8,6 +8,74 @@ import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
 import { decodeHtml } from "@/lib/decode-html";
 import SourcePreviewCard from "./SourcePreviewCard";
+
+function PollDisplay({ postId, options, expiresAt }: { postId?: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
+  const [voted, setVoted] = useState<number | null>(null);
+  const [pollOpts, setPollOpts] = useState(options);
+  const [voting, setVoting] = useState(false);
+
+  const expired = expiresAt ? new Date(expiresAt).getTime() < Date.now() : false;
+  const showResults = voted !== null || expired;
+  const totalVotes = pollOpts.reduce((s, o) => s + (o.votes ?? 0), 0);
+
+  async function vote(i: number) {
+    if (voting || voted !== null || expired || !postId) return;
+    setVoting(true);
+    try {
+      const res = await fetch("/api/community/poll-vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: Number(postId), option_index: i }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPollOpts(data.options);
+        setVoted(i);
+      }
+    } catch {}
+    setVoting(false);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "0.6rem" }}>
+      {pollOpts.map((opt, i) => {
+        const pct = showResults && totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() => vote(i)}
+            disabled={showResults || voting}
+            style={{
+              position: "relative",
+              background: showResults
+                ? `linear-gradient(to right, rgba(46,125,50,0.1) ${pct}%, transparent ${pct}%)`
+                : "#fff",
+              border: `1px solid ${voted === i ? "#2e7d32" : "#e0d8ce"}`,
+              borderRadius: "4px",
+              padding: "8px 12px",
+              textAlign: "left",
+              cursor: showResults ? "default" : "pointer",
+              fontSize: "0.82rem",
+              color: "#14110d",
+              fontFamily: "inherit",
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <span>{opt.text}</span>
+            {showResults && <span style={{ fontSize: "0.72rem", color: "#7a6f5c", fontWeight: 600 }}>{pct}%</span>}
+          </button>
+        );
+      })}
+      <div style={{ fontSize: "0.68rem", color: "#7a6f5c" }}>
+        {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
+        {expiresAt && !expired && ` · ends ${new Date(expiresAt).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
+        {expired && " · ended"}
+      </div>
+    </div>
+  );
+}
 import InternalLinkCard from "./InternalLinkCard";
 
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
@@ -271,6 +339,44 @@ export default function FeedCard({
               onClick={() => setModalOpen(true)}
               style={{ cursor: "pointer" }}
             >
+              {/* Template-specific header badges */}
+              {item.templateType && item.templateType !== "post" && (
+                <div style={{ marginBottom: "0.4rem" }}>
+                  {item.templateType === "hidden-gem" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b38238", background: "rgba(179,130,56,0.1)", padding: "2px 6px", borderRadius: "2px" }}>
+                      Hidden Gem {item.starRating ? "★".repeat(item.starRating) : ""}
+                    </span>
+                  )}
+                  {item.templateType === "cultural-take" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6b48a8", background: "rgba(107,72,168,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                      Cultural Take
+                    </span>
+                  )}
+                  {item.templateType === "food-review" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#c5491f", background: "rgba(197,73,31,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                      Food Review {item.foodDishName ? `· ${item.foodDishName}` : ""}
+                    </span>
+                  )}
+                  {item.templateType === "creative-showcase" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#1976d2", background: "rgba(25,118,210,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                      Creative Showcase
+                    </span>
+                  )}
+                  {item.templateType === "itinerary" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2e7d32", background: "rgba(46,125,50,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                      Weekend Route
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Location badge */}
+              {item.locationName && (
+                <div style={{ fontSize: "0.72rem", color: "#7a6f5c", marginBottom: "0.3rem", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span>📍</span> {item.locationName}
+                </div>
+              )}
+
               <div style={{
                 color: "#14110d",
                 fontSize: "0.9rem",
@@ -280,6 +386,70 @@ export default function FeedCard({
                 <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onHashtagClick={onHashtagClick} clamp={6} />
               </div>
             </div>
+
+            {/* Food review ratings */}
+            {item.templateType === "food-review" && item.foodRatingTaste && (
+              <div style={{ display: "flex", gap: "16px", marginBottom: "0.5rem", fontSize: "0.72rem", color: "#7a6f5c" }}>
+                <span>Taste {"★".repeat(item.foodRatingTaste)}{"☆".repeat(5 - item.foodRatingTaste)}</span>
+                {item.foodRatingValue && <span>Value {"★".repeat(item.foodRatingValue)}{"☆".repeat(5 - item.foodRatingValue)}</span>}
+                {item.foodRatingVibe && <span>Vibe {"★".repeat(item.foodRatingVibe)}{"☆".repeat(5 - item.foodRatingVibe)}</span>}
+              </div>
+            )}
+
+            {/* Poll inline */}
+            {item.templateType === "poll" && item.pollOptions && (
+              <PollDisplay postId={item.wpId} options={item.pollOptions} expiresAt={item.pollExpiresAt} />
+            )}
+
+            {/* Gallery carousel (creative-showcase, hidden-gem, food-review) */}
+            {item.galleryImages && item.galleryImages.length > 1 && (
+              <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.6rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
+                {item.galleryImages.map((img: string, i: number) => (
+                  <img key={i} src={img} alt="" style={{ height: "200px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+                ))}
+              </div>
+            )}
+
+            {/* Video embed */}
+            {item.videoUrl && (
+              <div style={{ marginBottom: "0.6rem" }}>
+                {item.videoUrl.includes("youtube.com") || item.videoUrl.includes("youtu.be") ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${item.videoUrl.match(/(?:v=|youtu\.be\/)([^&\s]+)/)?.[1] ?? ""}`}
+                    style={{ width: "100%", aspectRatio: "16/9", border: "none", borderRadius: "6px" }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media"
+                    allowFullScreen
+                  />
+                ) : (
+                  <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#b38238", fontSize: "0.78rem" }}>
+                    Watch video →
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Itinerary stops */}
+            {item.templateType === "itinerary" && item.itineraryStops && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "0.6rem" }}>
+                {item.itineraryStops.map((stop: any, i: number) => (
+                  <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                    <div style={{
+                      width: "22px", height: "22px", borderRadius: "50%",
+                      background: "var(--ochre, #b38238)", color: "#fff",
+                      fontSize: "0.65rem", fontWeight: 700,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0, marginTop: "1px",
+                    }}>
+                      {i + 1}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: "0.82rem", color: "#14110d" }}>{stop.name}</div>
+                      {stop.note && <div style={{ fontSize: "0.75rem", color: "#7a6f5c", lineHeight: 1.4 }}>{stop.note}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Image */}
             {item.image && (

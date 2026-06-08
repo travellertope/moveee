@@ -1,4 +1,4 @@
-import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG, getDirectoryEntriesWithFallback } from "@/lib/wp";
+import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG, getDirectoryEntriesWithFallback, getDirectoryPosts } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -97,6 +97,12 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
   const instagramHandle = entry.instagramHandle ?? "";
   const twitterHandle   = entry.twitterHandle   ?? "";
   const infobox: Record<string, string> = entry.infobox ?? {};
+
+  // Community posts linked to this entry (Phase 3)
+  const communityData = entry.databaseId
+    ? await getDirectoryPosts(entry.databaseId)
+    : { posts: [], summary: { total_posts: 0, average_rating: null, by_template: {} } };
+  const { posts: communityPosts, summary: communitySummary } = communityData;
 
   type InfoboxField = { label: string; key: string };
   const INFOBOX_DEFS: Record<string, InfoboxField[]> = {
@@ -301,6 +307,64 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                       </div>
                     )}
                     {w.title && <div className="dir-wiki-work-title">{w.title}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Community Reviews & Takes (Phase 3) */}
+          {communitySummary.total_posts > 0 && (
+            <div className="dir-community-section">
+              <div className="dir-community-header">
+                <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>Community Reviews &amp; Takes</h2>
+                {communitySummary.average_rating && (
+                  <div className="dir-community-rating">
+                    <span className="dir-community-stars">{"★".repeat(Math.round(communitySummary.average_rating))}{"☆".repeat(5 - Math.round(communitySummary.average_rating))}</span>
+                    <span className="dir-community-rating-num">{communitySummary.average_rating.toFixed(1)}</span>
+                    <span className="dir-community-rating-count">({communitySummary.total_posts} {communitySummary.total_posts === 1 ? "review" : "reviews"})</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="dir-community-posts">
+                {communityPosts.map((post) => (
+                  <div key={post.id} className={`dir-community-card dir-community-card--${post.template_type}`}>
+                    <div className="dir-community-card-header">
+                      <img
+                        src={post.author.avatar}
+                        alt=""
+                        className="dir-community-avatar"
+                        width={32}
+                        height={32}
+                      />
+                      <div className="dir-community-card-meta">
+                        <span className="dir-community-author">{post.author.name}</span>
+                        {post.author.tier === "patron" && (
+                          <span className="dir-community-pro-badge">Pro</span>
+                        )}
+                        <span className="dir-community-date">
+                          · {new Date(post.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                        </span>
+                      </div>
+                      {post.star_rating && (
+                        <div className="dir-community-star-rating">
+                          {"★".repeat(post.star_rating)}{"☆".repeat(5 - post.star_rating)}
+                        </div>
+                      )}
+                    </div>
+                    <p className="dir-community-content">{post.content}</p>
+                    {Object.keys(post.reactions ?? {}).length > 0 && (
+                      <div className="dir-community-reactions">
+                        {Object.entries(post.reactions).map(([emoji, count]) =>
+                          count > 0 ? (
+                            <span key={emoji} className="dir-community-reaction">
+                              {emoji} {count}
+                            </span>
+                          ) : null
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

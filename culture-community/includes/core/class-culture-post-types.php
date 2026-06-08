@@ -63,6 +63,51 @@ class Culture_Post_Types {
                 'auth_callback' => '__return_true',
             ) );
         }
+
+        // community post meta (Phase 3 + Phase 4)
+        $community_post_meta = array(
+            '_template_type'       => 'string',
+            '_linked_directory_id' => 'integer',
+            '_star_rating'         => 'integer',
+            '_location_name'       => 'string',
+            '_location_lat'        => 'number',
+            '_location_lng'        => 'number',
+            '_poll_options'        => 'string',
+            '_poll_expires_at'     => 'string',
+            '_poll_voters'         => 'string',
+            '_itinerary_stops'     => 'string',
+            '_gallery_images'      => 'string',
+            '_video_url'           => 'string',
+            '_food_dish_name'      => 'string',
+            '_food_rating_taste'   => 'integer',
+            '_food_rating_value'   => 'integer',
+            '_food_rating_vibe'    => 'integer',
+        );
+        foreach ( $community_post_meta as $meta_key => $type ) {
+            register_post_meta( 'culture_post', $meta_key, array(
+                'type'          => $type,
+                'single'        => true,
+                'show_in_rest'  => true,
+                'auth_callback' => '__return_true',
+            ) );
+        }
+
+        // directory entry meta (Phase 3)
+        $directory_meta = array(
+            '_community_review_count' => 'integer',
+            '_average_rating'         => 'number',
+            '_is_partner'             => 'boolean',
+            '_partner_status'         => 'string',
+            '_partner_perk_template'  => 'string',
+        );
+        foreach ( $directory_meta as $meta_key => $type ) {
+            register_post_meta( 'culture_directory', $meta_key, array(
+                'type'          => $type,
+                'single'        => true,
+                'show_in_rest'  => true,
+                'auth_callback' => '__return_true',
+            ) );
+        }
     }
 
     /**
@@ -630,6 +675,39 @@ class Culture_Post_Types {
             },
         ) );
 
+        // 9b. Directory entry Phase 3 fields (partner, community aggregates)
+        register_graphql_field( 'CultureDirectory', 'isPartner', array(
+            'type'    => 'Boolean',
+            'resolve' => function( $post ) {
+                return get_post_meta( $post->databaseId, '_is_partner', true ) === '1';
+            },
+        ) );
+        register_graphql_field( 'CultureDirectory', 'partnerStatus', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                return (string) get_post_meta( $post->databaseId, '_partner_status', true );
+            },
+        ) );
+        register_graphql_field( 'CultureDirectory', 'partnerPerk', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                return (string) get_post_meta( $post->databaseId, '_partner_perk_template', true );
+            },
+        ) );
+        register_graphql_field( 'CultureDirectory', 'communityReviewCount', array(
+            'type'    => 'Int',
+            'resolve' => function( $post ) {
+                return (int) get_post_meta( $post->databaseId, '_community_review_count', true );
+            },
+        ) );
+        register_graphql_field( 'CultureDirectory', 'averageRating', array(
+            'type'    => 'Float',
+            'resolve' => function( $post ) {
+                $val = get_post_meta( $post->databaseId, '_average_rating', true );
+                return $val ? (float) $val : null;
+            },
+        ) );
+
         // 10. Global Membership Settings
         register_graphql_object_type( 'CultureMembershipSettings', array(
             'description' => __( 'Global membership pricing and tier labels', 'culture-community' ),
@@ -1032,6 +1110,7 @@ class Culture_Post_Types {
     public static function register_meta_boxes() {
         add_meta_box( 'culture_event_meta', __( 'Event Details', 'culture-community' ), array( __CLASS__, 'render_event_meta_box' ), 'culture_event', 'normal', 'high' );
         add_meta_box( 'culture_directory_meta', __( 'Directory Entry Details', 'culture-community' ), array( __CLASS__, 'render_directory_meta_box' ), 'culture_directory', 'side', 'high' );
+        add_meta_box( 'culture_partner_meta', __( 'Partner Programme', 'culture-community' ), array( __CLASS__, 'render_partner_meta_box' ), 'culture_directory', 'side', 'default' );
         add_meta_box( 'culture_quote_meta', __( 'Quote Details', 'culture-community' ), array( __CLASS__, 'render_quote_meta_box' ), 'culture_quote', 'normal', 'high' );
         add_meta_box( 'culture_as_told_to', __( 'As-Told-To', 'culture-community' ), array( __CLASS__, 'render_as_told_to_meta_box' ), 'post', 'side', 'high' );
     }
@@ -1105,6 +1184,43 @@ class Culture_Post_Types {
         <?php
     }
 
+    public static function render_partner_meta_box( $post ) {
+        wp_nonce_field( 'culture_partner_meta', 'culture_partner_meta_nonce' );
+        $is_partner   = get_post_meta( $post->ID, '_is_partner', true );
+        $status       = get_post_meta( $post->ID, '_partner_status', true ) ?: 'pending';
+        $perk         = get_post_meta( $post->ID, '_partner_perk_template', true );
+        $review_count = (int) get_post_meta( $post->ID, '_community_review_count', true );
+        $avg_rating   = (float) get_post_meta( $post->ID, '_average_rating', true );
+        ?>
+        <table class="form-table">
+            <tr>
+                <th><label for="culture_is_partner">Is Partner</label></th>
+                <td><input type="checkbox" id="culture_is_partner" name="culture_is_partner" value="1" <?php checked( $is_partner, '1' ); ?> /></td>
+            </tr>
+            <tr>
+                <th><label for="culture_partner_status">Status</label></th>
+                <td>
+                    <select id="culture_partner_status" name="culture_partner_status">
+                        <option value="pending"  <?php selected( $status, 'pending' ); ?>>Pending</option>
+                        <option value="active"   <?php selected( $status, 'active' ); ?>>Active</option>
+                        <option value="paused"   <?php selected( $status, 'paused' ); ?>>Paused</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th><label for="culture_partner_perk">Default Perk</label></th>
+                <td><input type="text" id="culture_partner_perk" name="culture_partner_perk" value="<?php echo esc_attr( $perk ); ?>" class="regular-text" placeholder="e.g. £5 off a £20 spend" /></td>
+            </tr>
+            <?php if ( $review_count || $avg_rating ) : ?>
+            <tr>
+                <th>Community</th>
+                <td><?php echo absint( $review_count ); ?> review<?php echo $review_count !== 1 ? 's' : ''; ?><?php if ( $avg_rating ) echo ' · ' . number_format( $avg_rating, 1 ) . '★'; ?></td>
+            </tr>
+            <?php endif; ?>
+        </table>
+        <?php
+    }
+
     public static function render_quote_meta_box( $post ) {
         wp_nonce_field( 'culture_quote_meta', 'culture_quote_meta_nonce' );
         $source  = get_post_meta( $post->ID, '_quote_source', true );
@@ -1123,6 +1239,17 @@ class Culture_Post_Types {
     public static function save_meta_boxes( $post_id ) {
         if ( isset( $_POST['culture_directory_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_directory_meta_nonce'], 'culture_directory_meta' ) ) {
             update_post_meta( $post_id, '_culture_dir_ai_generated', isset( $_POST['culture_dir_ai_generated'] ) ? '1' : '0' );
+        }
+        if ( isset( $_POST['culture_partner_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_partner_meta_nonce'], 'culture_partner_meta' ) ) {
+            update_post_meta( $post_id, '_is_partner', isset( $_POST['culture_is_partner'] ) ? '1' : '0' );
+            if ( isset( $_POST['culture_partner_status'] ) ) {
+                $allowed_statuses = array( 'pending', 'active', 'paused' );
+                $status = sanitize_key( $_POST['culture_partner_status'] );
+                update_post_meta( $post_id, '_partner_status', in_array( $status, $allowed_statuses, true ) ? $status : 'pending' );
+            }
+            if ( isset( $_POST['culture_partner_perk'] ) ) {
+                update_post_meta( $post_id, '_partner_perk_template', sanitize_text_field( $_POST['culture_partner_perk'] ) );
+            }
         }
         if ( isset( $_POST['culture_event_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_event_meta_nonce'], 'culture_event_meta' ) ) {
             if ( isset( $_POST['culture_event_date'] ) ) update_post_meta( $post_id, '_culture_event_date', sanitize_text_field( $_POST['culture_event_date'] ) );

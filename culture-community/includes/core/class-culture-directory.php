@@ -444,4 +444,220 @@ class Culture_Directory {
             'url'           => $upload['url'],
         ) );
     }
+
+    // ── Phase 3: Aggregate recomputation ─────────────────────────────────────
+
+    /**
+     * Hooked to save_post_{culture_post} — recomputes rating/review count on
+     * the linked directory entry whenever a community post is saved/deleted.
+     */
+    public static function recompute_aggregates_on_post_save( $post_id, $post ) {
+        if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+            return;
+        }
+        $dir_id = (int) get_post_meta( $post_id, '_linked_directory_id', true );
+        if ( $dir_id > 0 ) {
+            self::recompute_directory_aggregates( $dir_id );
+        }
+    }
+
+    /**
+     * Recompute _community_review_count and _average_rating on a directory entry.
+     */
+    public static function recompute_directory_aggregates( $dir_id ) {
+        global $wpdb;
+        $results = $wpdb->get_results( $wpdb->prepare(
+            "SELECT pm.meta_value AS rating
+             FROM {$wpdb->posts} p
+             JOIN {$wpdb->postmeta} pm_link ON pm_link.post_id = p.ID AND pm_link.meta_key = '_linked_directory_id' AND pm_link.meta_value = %d
+             LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '_star_rating'
+             WHERE p.post_type = 'culture_post' AND p.post_status = 'publish'",
+            $dir_id
+        ) );
+
+        $count      = count( $results );
+        $rated      = array_filter( $results, fn( $r ) => $r->rating > 0 );
+        $avg_rating = count( $rated ) > 0
+            ? round( array_sum( array_column( $rated, 'rating' ) ) / count( $rated ), 1 )
+            : 0;
+
+        update_post_meta( $dir_id, '_community_review_count', $count );
+        update_post_meta( $dir_id, '_average_rating', $avg_rating );
+    }
+
+    // ── Phase 3: Lightweight search ──────────────────────────────────────────
+
+    /**
+     * GET /culture/v1/directory/search?q=&type=
+     *
+     * Returns a list of matching directory entries for post-composer autocomplete.
+     * Public endpoint — no auth needed.
+     */
+    public static function handle_search( WP_REST_Request $request ) {
+        $q    = sanitize_text_field( $request->get_param( 'q' ) );
+        $type = sanitize_key( $request->get_param( 'type' ) );
+
+        $args = array(
+            'post_type'      => 'culture_directory',
+            'post_status'    => 'publish',
+            'posts_per_page' => 10,
+            's'              => $q,
+            'orderby'        => 'relevance',
+        );
+
+        if ( $type ) {
+            $args['tax_query'] = array( array(
+                'taxonomy' => 'culture_dir_type',
+                'field'    => 'slug',
+                'terms'    => $type,
+            ) );
+        }
+
+        $query   = new WP_Query( $args );
+        $results = array();
+
+        foreach ( $query->posts as $post ) {
+            $type_terms = get_the_terms( $post->ID, 'culture_dir_type' );
+            $type_slug  = ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : '';
+            $thumb      = get_the_post_thumbnail_url( $post->ID, 'thumbnail' );
+
+            $results[] = array(
+                'id'        => $post->ID,
+                'title'     => $post->post_title,
+                'slug'      => $post->post_name,
+                'type'      => $type_slug,
+                'thumbnail' => $thumb ?: null,
+            );
+        }
+
+        return rest_ensure_response( $results );
+    }
+
+    // ── Phase 3: Quick-create stub ───────────────────────────────────────────
+
+    /**
+     * POST /culture/v1/directory/quick-create
+     *
+     * Creates a minimal published directory stub from the post composer.
+     * Authenticated — requires a valid logged-in user.
+     */
+    public static function handle_quick_create( WP_REST_Request $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $title        = sanitize_text_field( $request->get_param( 'title' ) );
+        $entry_type   = sanitize_key( $request->get_param( 'entry_type' ) );
+        $location_name = sanitize_text_field( $request->get_param( 'location_name' ) );
+        $lat          = (float) $request->get_param( 'location_lat' );
+        $lng          = (float) $request->get_param( 'location_lng' );
+
+        if ( empty( $title ) ) {
+            return new WP_Error( 'missing_title', __( 'Title is required.', 'culture-community' ), array( 'status' => 400 ) );
+        }
+
+        $post_id = wp_insert_post( array(
+            'post_type'   => 'culture_directory',
+            'post_title'  => $title,
+            'post_status' => 'publish',
+            'post_author' => $user_id,
+        ), true );
+
+        if ( is_wp_error( $post_id ) ) {
+            return new WP_Error( 'create_failed', $post_id->get_error_message(), array( 'status' => 500 ) );
+        }
+
+        update_post_meta( $post_id, '_culture_dir_submitted_by', $user_id );
+        update_post_meta( $post_id, '_culture_dir_ai_generated', '0' );
+
+        if ( $entry_type && taxonomy_exists( 'culture_dir_type' ) ) {
+            wp_set_object_terms( $post_id, $entry_type, 'culture_dir_type' );
+        }
+        if ( $location_name ) {
+            update_post_meta( $post_id, 'dir_infobox_location_name', $location_name );
+        }
+        if ( $lat ) update_post_meta( $post_id, 'dir_infobox_lat', $lat );
+        if ( $lng ) update_post_meta( $post_id, 'dir_infobox_lng', $lng );
+
+        // Award reputation for creating a directory entry.
+        if ( class_exists( 'Culture_Gamification' ) && $user_id > 0 ) {
+            Culture_Gamification::award_reputation( $user_id, 15, 'directory_entry', $post_id );
+            Culture_Gamification::award_credits( $user_id, 2, 'directory_entry', $post_id );
+        }
+
+        return rest_ensure_response( array(
+            'id'    => $post_id,
+            'slug'  => get_post_field( 'post_name', $post_id ),
+            'title' => $title,
+        ) );
+    }
+
+    // ── Phase 3: Directory posts endpoint ────────────────────────────────────
+
+    /**
+     * GET /culture/v1/directory/{id}/posts
+     *
+     * Returns published community posts linked to a directory entry,
+     * plus aggregate summary (total, average rating, counts by template).
+     */
+    public static function handle_directory_posts( WP_REST_Request $request ) {
+        $dir_id = (int) $request->get_param( 'id' );
+
+        if ( ! get_post( $dir_id ) ) {
+            return new WP_Error( 'not_found', __( 'Directory entry not found.', 'culture-community' ), array( 'status' => 404 ) );
+        }
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_post',
+            'post_status'    => 'publish',
+            'posts_per_page' => 50,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'meta_query'     => array( array(
+                'key'   => '_linked_directory_id',
+                'value' => $dir_id,
+                'type'  => 'NUMERIC',
+            ) ),
+        ) );
+
+        $posts      = array();
+        $ratings    = array();
+        $by_template = array();
+
+        foreach ( $query->posts as $post ) {
+            $author      = get_userdata( $post->post_author );
+            $avatar_url  = get_avatar_url( $post->post_author, array( 'size' => 48 ) );
+            $tier        = get_user_meta( $post->post_author, '_culture_tier', true ) ?: 'citizen';
+            $template    = get_post_meta( $post->ID, '_template_type', true ) ?: 'post';
+            $star_rating = (int) get_post_meta( $post->ID, '_star_rating', true );
+            $reactions   = json_decode( get_post_meta( $post->ID, 'community_reactions', true ) ?: '{}', true ) ?: array();
+
+            if ( $star_rating > 0 ) $ratings[] = $star_rating;
+            $by_template[ $template ] = ( $by_template[ $template ] ?? 0 ) + 1;
+
+            $posts[] = array(
+                'id'            => $post->ID,
+                'template_type' => $template,
+                'content'       => wp_trim_words( $post->post_content, 60 ),
+                'star_rating'   => $star_rating ?: null,
+                'author'        => array(
+                    'name'   => $author ? $author->display_name : 'Member',
+                    'avatar' => $avatar_url,
+                    'tier'   => $tier,
+                ),
+                'reactions'     => $reactions,
+                'created_at'    => get_post_time( 'c', true, $post ),
+            );
+        }
+
+        $avg_rating = count( $ratings ) > 0
+            ? round( array_sum( $ratings ) / count( $ratings ), 1 )
+            : null;
+
+        return rest_ensure_response( array(
+            'posts'   => $posts,
+            'summary' => array(
+                'total_posts'    => $query->found_posts,
+                'average_rating' => $avg_rating,
+                'by_template'    => $by_template,
+            ),
+        ) );
+    }
 }

@@ -1,19 +1,20 @@
 "use client";
 
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { parseHashtags } from "@/lib/hashtags";
 import SourcePreviewCard from "./SourcePreviewCard";
+import StarRating from "@/components/composer/StarRating";
+import MultiRating from "@/components/composer/MultiRating";
+import DirectorySearch from "@/components/composer/DirectorySearch";
+import PollBuilder from "@/components/composer/PollBuilder";
+import ItineraryBuilder, { type ItineraryStop } from "@/components/composer/ItineraryBuilder";
 
 const URL_RE = /https?:\/\/[^\s]+/i;
 
 const EDITION_TO_REGION: Record<string, string> = {
-  uk:     "Diaspora UK",
-  us:     "Diaspora US",
-  africa: "Africa",
+  uk: "Diaspora UK", us: "Diaspora US", africa: "Africa",
 };
-
 const COUNTRY_TO_REGION: Record<string, string> = {
   ng: "Africa", ghana: "Africa", ke: "Africa", za: "Africa",
   nigeria: "Africa", kenya: "Africa", "south africa": "Africa",
@@ -42,7 +43,24 @@ function detectRegion(countryOfResidence?: string): string | null {
 
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
-type Mode = "post" | "quote";
+
+type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "creative-showcase" | "poll" | "itinerary";
+
+const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
+  { slug: "post",              label: "Post",      emoji: "📝" },
+  { slug: "hidden-gem",        label: "Gem",       emoji: "💎" },
+  { slug: "cultural-take",     label: "Take",      emoji: "💬" },
+  { slug: "food-review",       label: "Food",      emoji: "🍽️" },
+  { slug: "creative-showcase", label: "Showcase",  emoji: "🎨" },
+  { slug: "poll",              label: "Poll",      emoji: "📊" },
+  { slug: "itinerary",         label: "Route",     emoji: "🗺️" },
+  { slug: "quote",             label: "Quote",     emoji: "✦" },
+];
+
+const MAX_CHARS: Record<string, number> = {
+  post: 3000, "hidden-gem": 500, "cultural-take": 1000, "food-review": 500,
+  "creative-showcase": 500, poll: 280, itinerary: 300, quote: 600,
+};
 
 function HashtagPreview({ text }: { text: string }) {
   const tags = useMemo(() => parseHashtags(text), [text]);
@@ -58,27 +76,17 @@ function HashtagPreview({ text }: { text: string }) {
   );
 }
 
-const TAB_STYLE = (active: boolean): React.CSSProperties => ({
-  background: "transparent",
-  border: "none",
-  borderBottom: active ? "2px solid #14110d" : "2px solid transparent",
-  color: active ? "#14110d" : "#7a6f5c",
-  fontSize: "0.72rem",
-  fontWeight: active ? 700 : 400,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  padding: "0.3rem 0.1rem",
-  cursor: "pointer",
-  transition: "color 0.15s, border-color 0.15s",
-});
-
 interface SubmitPostProps {
   onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null }) => void;
   lockedTag?: string;
+  initialTemplate?: TemplateType;
 }
 
-// ── Post mode ────────────────────────────────────────────────────────────────
-function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitPostProps["onPosted"]; lockedTag?: string }) {
+export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: SubmitPostProps) {
+  const { data: session, status } = useSession();
+  const [template, setTemplate] = useState<TemplateType>(initialTemplate ?? "post");
+
+  // Shared state
   const [text, setText] = useState("");
   const [tag, setTag] = useState<Tag | "">(lockedTag as Tag ?? "");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -86,15 +94,43 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const MAX_WORDS = 600;
-  const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
-  const remaining = MAX_WORDS - wordCount;
 
-  // Link preview state
+  // Link preview
   const [linkPreview, setLinkPreview] = useState<{ url: string; ogTitle: string; ogDescription: string; ogImage: string } | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const previewFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Template-specific state
+  const [starRating, setStarRating] = useState(0);
+  const [locationName, setLocationName] = useState("");
+  const [directoryEntry, setDirectoryEntry] = useState<any>(null);
+  const [pollOptions, setPollOptions] = useState(["", ""]);
+  const [pollDuration, setPollDuration] = useState("3");
+  const [itineraryStops, setItineraryStops] = useState<ItineraryStop[]>([
+    { name: "", lat: 0, lng: 0, note: "", image_url: "" },
+    { name: "", lat: 0, lng: 0, note: "", image_url: "" },
+  ]);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+  const [videoUrl, setVideoUrl] = useState("");
+
+  // Food review specific
+  const [foodDishName, setFoodDishName] = useState("");
+  const [foodTaste, setFoodTaste] = useState(0);
+  const [foodValue, setFoodValue] = useState(0);
+  const [foodVibe, setFoodVibe] = useState(0);
+
+  // Quote specific
+  const [quoteAuthor, setQuoteAuthor] = useState("");
+  const [quoteSource, setQuoteSource] = useState("");
+
+  const user = session?.user as any;
+  const loggedIn = status === "authenticated";
+  const maxChars = MAX_CHARS[template] ?? 3000;
+  const charCount = text.length;
+  const charRemaining = maxChars - charCount;
 
   const fetchLinkPreview = useCallback((url: string) => {
     if (previewFetchRef.current) clearTimeout(previewFetchRef.current);
@@ -113,6 +149,7 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
   }, []);
 
   useEffect(() => {
+    if (template !== "post") return;
     const match = text.match(URL_RE);
     if (match) {
       const url = match[0];
@@ -121,7 +158,7 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
       setLinkPreview(null);
       setPreviewLoading(false);
     }
-  }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [text, template]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -135,353 +172,198 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
     }
   }
 
+  function handleGalleryChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []).slice(0, 10);
+    setGalleryFiles(prev => [...prev, ...files].slice(0, 10));
+    files.forEach(f => {
+      const reader = new FileReader();
+      reader.onload = ev => setGalleryPreviews(prev => [...prev, ev.target?.result as string].slice(0, 10));
+      reader.readAsDataURL(f);
+    });
+  }
+
   function removeImage() {
     setImageFile(null);
     setImagePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  function removeGalleryImage(i: number) {
+    setGalleryFiles(prev => prev.filter((_, j) => j !== i));
+    setGalleryPreviews(prev => prev.filter((_, j) => j !== i));
+  }
+
+  function resetForm() {
+    setText(""); setTag(""); removeImage(); setError(""); setSuccess("");
+    setStarRating(0); setLocationName(""); setDirectoryEntry(null);
+    setPollOptions(["", ""]); setPollDuration("3");
+    setItineraryStops([
+      { name: "", lat: 0, lng: 0, note: "", image_url: "" },
+      { name: "", lat: 0, lng: 0, note: "", image_url: "" },
+    ]);
+    setGalleryFiles([]); setGalleryPreviews([]); setVideoUrl("");
+    setFoodDishName(""); setFoodTaste(0); setFoodValue(0); setFoodVibe(0);
+    setQuoteAuthor(""); setQuoteSource("");
+    setLinkPreview(null);
+  }
+
+  async function uploadImage(file: File): Promise<string> {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/community/upload-image", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Upload failed");
+    return data.url;
+  }
+
+  function canSubmit(): boolean {
+    if (loading) return false;
+    if (charRemaining < 0) return false;
+
+    switch (template) {
+      case "post":
+        return text.trim().length >= 1;
+      case "quote":
+        return text.trim().length >= 10 && quoteAuthor.trim().length > 0;
+      case "hidden-gem":
+        return text.trim().length >= 50 && starRating > 0 && locationName.trim().length > 0 && (!!imageFile || galleryFiles.length > 0);
+      case "cultural-take":
+        return text.trim().length >= 100 && !!directoryEntry;
+      case "food-review":
+        return text.trim().length >= 50 && foodDishName.trim().length > 0 && foodTaste > 0 && foodValue > 0 && foodVibe > 0 && (!!imageFile || galleryFiles.length > 0);
+      case "creative-showcase":
+        return galleryFiles.length > 0 || videoUrl.trim().length > 0;
+      case "poll":
+        return text.trim().length >= 10 && pollOptions.filter(o => o.trim()).length >= 2;
+      case "itinerary":
+        return itineraryStops.filter(s => s.name.trim()).length >= 2;
+      default:
+        return false;
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim() || loading) return;
+    if (!canSubmit()) return;
     setLoading(true);
     setError("");
+
     try {
+      // Upload images
       let imageUrl: string | undefined;
+      const galleryUrls: string[] = [];
+
       if (imageFile) {
-        if (imageFile.size > 8 * 1024 * 1024) {
-          throw new Error("Image must be under 8 MB.");
-        }
+        if (imageFile.size > 8 * 1024 * 1024) throw new Error("Image must be under 8 MB.");
         setUploading(true);
-        const fd = new FormData();
-        fd.append("file", imageFile);
-        const uploadRes = await fetch("/api/community/upload-image", { method: "POST", body: fd });
-        const uploadData = await uploadRes.json().catch(() => ({ error: "Upload failed — please try again." }));
-        if (!uploadRes.ok) throw new Error(uploadData.error || "Image upload failed");
-        imageUrl = uploadData.url;
+        imageUrl = await uploadImage(imageFile);
         setUploading(false);
       }
+
+      for (const f of galleryFiles) {
+        if (f.size > 8 * 1024 * 1024) throw new Error("Each image must be under 8 MB.");
+        setUploading(true);
+        galleryUrls.push(await uploadImage(f));
+        setUploading(false);
+      }
+
+      // Quote goes to separate endpoint
+      if (template === "quote") {
+        const res = await fetch("/api/quotes/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: text.trim(), author: quoteAuthor.trim(), source: quoteSource.trim() || undefined }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to submit quote.");
+        setSuccess("Quote submitted — it will appear after review.");
+        resetForm();
+        setTimeout(() => setSuccess(""), 4000);
+        return;
+      }
+
+      // Build payload
+      const payload: Record<string, any> = {
+        text: text.trim(),
+        imageUrl: imageUrl || (galleryUrls[0] ?? undefined),
+        tag: template === "food-review" ? "Food" : (tag || undefined),
+        region: detectRegion(user?.countryOfResidence) ?? undefined,
+        authorTier: user?.tier ?? undefined,
+        authorAvatar: user?.avatarUrl || undefined,
+        template_type: template,
+      };
+
+      // Link preview (post only)
+      if (template === "post" && linkPreview) {
+        payload.linkUrl = linkPreview.url;
+        payload.ogTitle = linkPreview.ogTitle;
+        payload.ogDescription = linkPreview.ogDescription;
+        payload.ogImage = linkPreview.ogImage;
+      }
+
+      // Template-specific fields
+      if (directoryEntry) {
+        payload.linked_directory_id = directoryEntry.id;
+      }
+      if (template === "hidden-gem") {
+        payload.star_rating = starRating;
+        payload.location_name = locationName;
+      }
+      if (template === "food-review") {
+        payload.food_dish_name = foodDishName;
+        payload.star_rating = Math.round((foodTaste + foodValue + foodVibe) / 3);
+        payload.food_rating_taste = foodTaste;
+        payload.food_rating_value = foodValue;
+        payload.food_rating_vibe = foodVibe;
+        payload.location_name = locationName || directoryEntry?.title || "";
+      }
+      if (template === "poll") {
+        payload.poll_options = pollOptions.filter(o => o.trim()).map(text => ({ text }));
+        const expires = new Date();
+        expires.setDate(expires.getDate() + parseInt(pollDuration));
+        payload.poll_expires_at = expires.toISOString();
+      }
+      if (template === "itinerary") {
+        payload.itinerary_stops = itineraryStops.filter(s => s.name.trim());
+      }
+      if (template === "creative-showcase" && galleryUrls.length > 0) {
+        payload.gallery_images = galleryUrls;
+      }
+      if (template === "creative-showcase" && videoUrl.trim()) {
+        payload.video_url = videoUrl.trim();
+      }
+
       const res = await fetch("/api/community/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: text.trim(),
-          imageUrl,
-          tag: tag || undefined,
-          region: detectRegion(user?.countryOfResidence) ?? undefined,
-          authorTier: user?.tier ?? undefined,
-          authorAvatar: user?.avatarUrl || undefined,
-          linkUrl: linkPreview?.url || undefined,
-          ogTitle: linkPreview?.ogTitle || undefined,
-          ogDescription: linkPreview?.ogDescription || undefined,
-          ogImage: linkPreview?.ogImage || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to post");
+
       const region = detectRegion(user?.countryOfResidence);
       onPosted?.({
         id: data.id,
         text: text.trim(),
         authorName: user?.name ?? user?.displayName ?? "Community Member",
-        tag: tag || null,
-        imageUrl: imageUrl ?? null,
+        tag: payload.tag || null,
+        imageUrl: imageUrl ?? galleryUrls[0] ?? null,
         region,
       });
-      setText(""); setTag(""); removeImage();
+      resetForm();
     } catch (err: any) {
-      setError(err.message || "Something went wrong. Please try again.");
+      setError(err.message || "Something went wrong.");
       setUploading(false);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-      <textarea
-        value={text}
-        onChange={e => setText(e.target.value)}
-        placeholder="What's happening in culture?"
-        rows={4}
-        style={{
-          background: "transparent", border: "none", borderBottom: "1px solid #e0d8ce",
-          color: "#14110d", fontFamily: "var(--font-fraunces), serif",
-          fontSize: "0.92rem", lineHeight: 1.55, resize: "vertical", width: "100%",
-          outline: "none", paddingBottom: "0.4rem", minHeight: "80px",
-        }}
-      />
-      <HashtagPreview text={text} />
-
-      {/* Link preview — hidden if user has attached an image */}
-      {!imagePreview && linkPreview && (
-        previewLoading ? (
-          <p style={{ color: "#bbb", fontSize: "0.72rem", margin: 0 }}>Fetching link preview…</p>
-        ) : (
-          <SourcePreviewCard
-            goUrl={linkPreview.url}
-            sourceName={(() => { try { return new URL(linkPreview.url).hostname.replace(/^www\./, ""); } catch { return linkPreview.url; } })()}
-            sourceUrl={linkPreview.url}
-            ogTitle={linkPreview.ogTitle}
-            ogDescription={linkPreview.ogDescription}
-            ogImage={linkPreview.ogImage}
-          />
-        )
-      )}
-
-      {imagePreview && (
-        <div style={{ position: "relative", display: "inline-block", maxWidth: "200px" }}>
-          <img src={imagePreview} alt="Preview" style={{ width: "100%", borderRadius: "4px", border: "1px solid #e0d8ce", display: "block" }} />
-          <button type="button" onClick={removeImage} aria-label="Remove image" style={{
-            position: "absolute", top: "4px", right: "4px",
-            background: "rgba(20,17,13,0.65)", border: "none", borderRadius: "50%",
-            width: "20px", height: "20px", color: "#fff", fontSize: "0.7rem",
-            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-          }}>✕</button>
-        </div>
-      )}
-      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileChange} style={{ display: "none" }} />
-      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-        {lockedTag ? (
-          <span style={{
-            background: "#fff0eb", color: "#c5491f", fontSize: "0.65rem", fontWeight: 700,
-            letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.28rem 0.55rem",
-            borderRadius: "2px", border: "1px solid #f5d0c0",
-          }}>
-            {lockedTag}
-          </span>
-        ) : (
-          <select value={tag} onChange={e => setTag(e.target.value as Tag | "")} style={{
-            background: "#ffffff", border: "1px solid #e0d8ce", borderRadius: "2px",
-            color: tag ? "#c5491f" : "#7a6f5c", fontSize: "0.72rem", fontWeight: 600,
-            letterSpacing: "0.06em", textTransform: "uppercase", padding: "0.28rem 0.55rem",
-            cursor: "pointer", outline: "none",
-          }}>
-            <option value="">Section</option>
-            {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        )}
-        <button type="button" onClick={() => fileInputRef.current?.click()} title="Attach image" style={{
-          background: imageFile ? "#fff0eb" : "transparent",
-          border: `1px solid ${imageFile ? "#c5491f" : "#e0d8ce"}`,
-          borderRadius: "2px", color: imageFile ? "#c5491f" : "#7a6f5c",
-          fontSize: "0.72rem", padding: "0.28rem 0.55rem", cursor: "pointer",
-          display: "flex", alignItems: "center", gap: "0.3rem",
-        }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <polyline points="21 15 16 10 5 21" />
-          </svg>
-          {imageFile ? "Change" : "Image"}
-        </button>
-        <div style={{ flex: 1 }} />
-        <span style={{ fontSize: "0.7rem", color: remaining < 50 ? (remaining < 0 ? "#c5491f" : "#b38238") : "#bbb", fontVariantNumeric: "tabular-nums" }}>
-          {remaining}w
-        </span>
-        <button type="submit" disabled={!text.trim() || loading || remaining < 0} style={{
-          background: text.trim() && !loading && remaining >= 0 ? "#c93c2a" : "#e8e2d8",
-          color: text.trim() && !loading && remaining >= 0 ? "#fff" : "#aaa",
-          border: "none", borderRadius: "2px", padding: "0.32rem 0.9rem",
-          fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.08em",
-          textTransform: "uppercase", cursor: text.trim() && !loading ? "pointer" : "default",
-          transition: "all 0.15s",
-        }}>
-          {uploading ? "Uploading…" : loading ? "Posting…" : "Post"}
-        </button>
-      </div>
-      {error && <p style={{ color: "#c5491f", fontSize: "0.78rem", margin: 0 }}>{error}</p>}
-    </form>
-  );
-}
-
-// ── Quote mode ────────────────────────────────────────────────────────────────
-function QuoteForm({ user }: { user: any }) {
-  const [text, setText] = useState("");
-  const [author, setAuthor] = useState("");
-  const [source, setSource] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!text.trim() || !author.trim() || loading) return;
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/quotes/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text.trim(), author: author.trim(), source: source.trim() || undefined }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to submit quote.");
-      setSuccess(true);
-      setText(""); setAuthor(""); setSource("");
-      setTimeout(() => setSuccess(false), 4000);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (success) {
-    return (
-      <div style={{ background: "#f3eef8", border: "1px solid #e0d4f0", borderRadius: "4px", padding: "0.85rem 1rem", color: "#7a4da0", fontSize: "0.85rem", fontFamily: "var(--font-fraunces), serif", fontStyle: "italic" }}>
-        Quote submitted — thank you. It will appear in the archive after review.
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>
-      <textarea
-        value={text}
-        onChange={e => setText(e.target.value.slice(0, 600))}
-        placeholder="The quote…"
-        rows={3}
-        style={{
-          background: "transparent", border: "none", borderBottom: "1px solid #e0d8ce",
-          color: "#14110d", fontFamily: "var(--font-fraunces), serif",
-          fontSize: "0.92rem", lineHeight: 1.55, fontStyle: "italic",
-          resize: "none", width: "100%", outline: "none", paddingBottom: "0.4rem",
-        }}
-      />
-      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-        <input
-          type="text"
-          value={author}
-          onChange={e => setAuthor(e.target.value.slice(0, 100))}
-          placeholder="Author *"
-          required
-          style={{
-            flex: 1, minWidth: "120px", background: "#ffffff",
-            border: "1px solid #e0d8ce", borderRadius: "2px",
-            color: "#14110d", fontSize: "0.78rem", padding: "0.3rem 0.6rem", outline: "none",
-          }}
-        />
-        <input
-          type="text"
-          value={source}
-          onChange={e => setSource(e.target.value.slice(0, 150))}
-          placeholder="Source (optional)"
-          style={{
-            flex: 1, minWidth: "120px", background: "#ffffff",
-            border: "1px solid #e0d8ce", borderRadius: "2px",
-            color: "#14110d", fontSize: "0.78rem", padding: "0.3rem 0.6rem", outline: "none",
-          }}
-        />
-      </div>
-      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "0.5rem" }}>
-        <span style={{ fontSize: "0.68rem", color: "#bbb" }}>{600 - text.length}</span>
-        <button type="submit" disabled={!text.trim() || !author.trim() || loading} style={{
-          background: text.trim() && author.trim() && !loading ? "#7a4da0" : "#e8e2d8",
-          color: text.trim() && author.trim() && !loading ? "#fff" : "#aaa",
-          border: "none", borderRadius: "2px", padding: "0.32rem 0.9rem",
-          fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.08em",
-          textTransform: "uppercase", cursor: text.trim() && author.trim() && !loading ? "pointer" : "default",
-          transition: "all 0.15s",
-        }}>
-          {loading ? "Submitting…" : "Submit"}
-        </button>
-      </div>
-      {error && <p style={{ color: "#c5491f", fontSize: "0.78rem", margin: 0 }}>{error}</p>}
-    </form>
-  );
-}
-
-// ── Submit dropdown ───────────────────────────────────────────────────────────
-function SubmitDropdown() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return (
-    <div ref={ref} style={{ position: "relative" }}>
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        style={{
-          background: "transparent", border: "1px solid #e0d8ce", borderRadius: "2px",
-          color: "#7a6f5c", fontSize: "0.68rem", fontWeight: 600,
-          letterSpacing: "0.08em", textTransform: "uppercase",
-          padding: "0.28rem 0.55rem", cursor: "pointer",
-          display: "flex", alignItems: "center", gap: "0.25rem",
-        }}
-      >
-        + Submit
-        <svg width="8" height="8" viewBox="0 0 10 10" fill="currentColor" aria-hidden style={{ marginTop: "1px" }}>
-          <path d="M5 7L1 3h8z" />
-        </svg>
-      </button>
-      {open && (
-        <div style={{
-          position: "absolute", top: "calc(100% + 4px)", right: 0,
-          background: "#fff", border: "1px solid #e0d8ce", borderRadius: "4px",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.08)", zIndex: 100, minWidth: "180px",
-          overflow: "hidden",
-        }}>
-          <Link
-            href="/events/submit"
-            onClick={() => setOpen(false)}
-            style={{
-              display: "flex", alignItems: "center", gap: "0.6rem",
-              padding: "0.7rem 1rem", textDecoration: "none",
-              color: "#14110d", fontSize: "0.82rem", borderBottom: "1px solid #f0ece4",
-            }}
-          >
-            <span style={{ fontSize: "1rem" }}>📅</span>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: "0.78rem" }}>List an Event</div>
-              <div style={{ color: "#7a6f5c", fontSize: "0.68rem" }}>Happenings &amp; exhibitions</div>
-            </div>
-          </Link>
-          <Link
-            href="/directory/submit"
-            onClick={() => setOpen(false)}
-            style={{
-              display: "flex", alignItems: "center", gap: "0.6rem",
-              padding: "0.7rem 1rem", textDecoration: "none",
-              color: "#14110d", fontSize: "0.82rem",
-            }}
-          >
-            <span style={{ fontSize: "1rem" }}>✦</span>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: "0.78rem" }}>Add to Directory</div>
-              <div style={{ color: "#7a6f5c", fontSize: "0.68rem" }}>People, places &amp; movements</div>
-            </div>
-          </Link>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Main component ────────────────────────────────────────────────────────────
-export default function SubmitPost({ onPosted, lockedTag }: SubmitPostProps) {
-  const { data: session, status } = useSession();
-  const [mode, setMode] = useState<Mode>("post");
-
-  const user = session?.user as any;
-  const loggedIn = status === "authenticated";
-
   if (status === "loading") return null;
 
   if (!loggedIn) {
     return (
-      <div style={{
-        borderBottom: "1px solid #e8e2d8", padding: "0.9rem 1.25rem",
-        display: "flex", alignItems: "center", gap: "0.75rem", background: "#fff",
-      }}>
+      <div style={{ borderBottom: "1px solid #e8e2d8", padding: "0.9rem 1.25rem", display: "flex", alignItems: "center", gap: "0.75rem", background: "#fff" }}>
         <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "#f0ece4", border: "1px solid #e0d8ce", flexShrink: 0 }} />
         <button
           onClick={() => window.dispatchEvent(new Event("open-auth-modal"))}
@@ -493,7 +375,6 @@ export default function SubmitPost({ onPosted, lockedTag }: SubmitPostProps) {
         >
           What&apos;s happening in culture? Join the community to share.
         </button>
-        <SubmitDropdown />
       </div>
     );
   }
@@ -501,43 +382,283 @@ export default function SubmitPost({ onPosted, lockedTag }: SubmitPostProps) {
   const initials = (user?.name ?? user?.displayName ?? "?")
     .split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase();
 
+  if (success) {
+    return (
+      <div style={{ borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", background: "#fff" }}>
+        <div style={{ background: "#f3eef8", border: "1px solid #e0d4f0", borderRadius: "4px", padding: "0.85rem 1rem", color: "#7a4da0", fontSize: "0.85rem", fontFamily: "var(--font-fraunces), serif", fontStyle: "italic" }}>
+          {success}
+        </div>
+      </div>
+    );
+  }
+
+  const placeholders: Record<TemplateType, string> = {
+    post: "What's happening in culture?",
+    quote: "The quote…",
+    "hidden-gem": "Tell us about this gem — what makes it special?",
+    "cultural-take": "Share your take…",
+    "food-review": "How was the food?",
+    "creative-showcase": "Caption (optional)",
+    poll: "Ask a question…",
+    itinerary: "Describe your route…",
+  };
+
   return (
     <div style={{ borderBottom: "1px solid #e8e2d8", background: "#fff" }}>
-      {/* Mode tabs + Submit dropdown */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: "1rem",
-        padding: "0 1.25rem", borderBottom: "1px solid #f0ece4",
-      }}>
-        <button style={TAB_STYLE(mode === "post")} onClick={() => setMode("post")}>Post</button>
-        <button style={TAB_STYLE(mode === "quote")} onClick={() => setMode("quote")}>Quote</button>
-        <div style={{ flex: 1 }} />
-        <SubmitDropdown />
+      {/* Template selector */}
+      <div className="composer-template-bar">
+        {TEMPLATES.map(t => (
+          <button
+            key={t.slug}
+            type="button"
+            className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}`}
+            onClick={() => { setTemplate(t.slug); setError(""); }}
+          >
+            <span className="composer-template-emoji">{t.emoji}</span>
+            <span className="composer-template-label">{t.label}</span>
+          </button>
+        ))}
       </div>
 
-      {/* Form area */}
-      <div style={{ padding: "0.9rem 1.25rem", display: "flex", gap: "0.75rem" }}>
-        {/* Avatar */}
-        <div style={{
-          width: "34px", height: "34px", borderRadius: "50%",
-          background: mode === "quote" ? "#f3eef8" : "#fff0eb",
-          border: `1.5px solid ${mode === "quote" ? "#7a4da0" : "#c5491f"}`,
-          color: mode === "quote" ? "#7a4da0" : "#c5491f",
-          fontSize: "0.65rem", fontWeight: 700, flexShrink: 0, letterSpacing: "0.05em",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          overflow: "hidden",
-        }}>
-          {user?.avatarUrl ? (
-            <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : initials}
-        </div>
+      {/* Form */}
+      <form onSubmit={handleSubmit} style={{ padding: "0.9rem 1.25rem" }}>
+        <div style={{ display: "flex", gap: "0.75rem" }}>
+          {/* Avatar */}
+          <div style={{
+            width: "34px", height: "34px", borderRadius: "50%",
+            background: template === "quote" ? "#f3eef8" : "#fff0eb",
+            border: `1.5px solid ${template === "quote" ? "#7a4da0" : "#c5491f"}`,
+            color: template === "quote" ? "#7a4da0" : "#c5491f",
+            fontSize: "0.65rem", fontWeight: 700, flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            overflow: "hidden",
+          }}>
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : initials}
+          </div>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {mode === "post"
-            ? <PostForm user={user} onPosted={onPosted} lockedTag={lockedTag} />
-            : <QuoteForm user={user} />
-          }
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {/* Directory search — for cultural-take (required), hidden-gem, food-review */}
+            {(template === "cultural-take" || template === "hidden-gem" || template === "food-review") && (
+              <DirectorySearch
+                value={directoryEntry}
+                onChange={setDirectoryEntry}
+                typeFilter={template === "food-review" ? "restaurant" : undefined}
+                placeholder={template === "cultural-take" ? "What are you writing about?" : template === "food-review" ? "Which restaurant or venue?" : "Link to a directory entry (optional)"}
+              />
+            )}
+
+            {/* Food dish name */}
+            {template === "food-review" && (
+              <input
+                type="text"
+                value={foodDishName}
+                onChange={e => setFoodDishName(e.target.value)}
+                placeholder="Dish or item name *"
+                className="composer-input"
+              />
+            )}
+
+            {/* Location name — hidden-gem */}
+            {template === "hidden-gem" && (
+              <input
+                type="text"
+                value={locationName}
+                onChange={e => setLocationName(e.target.value)}
+                placeholder="Location name *"
+                className="composer-input"
+              />
+            )}
+
+            {/* Main text area */}
+            <textarea
+              value={text}
+              onChange={e => setText(e.target.value)}
+              placeholder={placeholders[template]}
+              rows={template === "cultural-take" ? 6 : template === "creative-showcase" ? 2 : 4}
+              style={{
+                background: "transparent", border: "none", borderBottom: "1px solid #e0d8ce",
+                color: "#14110d", fontFamily: "var(--font-fraunces), serif",
+                fontSize: "0.92rem", lineHeight: 1.55, resize: "vertical",
+                width: "100%", outline: "none", paddingBottom: "0.4rem",
+                fontStyle: template === "quote" ? "italic" : "normal",
+              }}
+            />
+            <HashtagPreview text={text} />
+
+            {/* Quote author/source */}
+            {template === "quote" && (
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                <input
+                  type="text" value={quoteAuthor} onChange={e => setQuoteAuthor(e.target.value.slice(0, 100))}
+                  placeholder="Author *" required className="composer-input" style={{ flex: 1, minWidth: "120px" }}
+                />
+                <input
+                  type="text" value={quoteSource} onChange={e => setQuoteSource(e.target.value.slice(0, 150))}
+                  placeholder="Source (optional)" className="composer-input" style={{ flex: 1, minWidth: "120px" }}
+                />
+              </div>
+            )}
+
+            {/* Star rating — hidden-gem */}
+            {template === "hidden-gem" && (
+              <StarRating value={starRating} onChange={setStarRating} label="Rating" />
+            )}
+
+            {/* Multi-rating — food-review */}
+            {template === "food-review" && (
+              <MultiRating
+                ratings={[
+                  { label: "Taste", value: foodTaste },
+                  { label: "Value", value: foodValue },
+                  { label: "Vibe", value: foodVibe },
+                ]}
+                onChange={(label, v) => {
+                  if (label === "Taste") setFoodTaste(v);
+                  if (label === "Value") setFoodValue(v);
+                  if (label === "Vibe") setFoodVibe(v);
+                }}
+              />
+            )}
+
+            {/* Poll builder */}
+            {template === "poll" && (
+              <PollBuilder
+                options={pollOptions}
+                onChange={setPollOptions}
+                duration={pollDuration}
+                onDurationChange={setPollDuration}
+              />
+            )}
+
+            {/* Itinerary builder */}
+            {template === "itinerary" && (
+              <ItineraryBuilder stops={itineraryStops} onChange={setItineraryStops} />
+            )}
+
+            {/* Link preview (post only) */}
+            {template === "post" && !imagePreview && linkPreview && (
+              previewLoading ? (
+                <p style={{ color: "#bbb", fontSize: "0.72rem", margin: 0 }}>Fetching link preview…</p>
+              ) : (
+                <SourcePreviewCard
+                  goUrl={linkPreview.url}
+                  sourceName={(() => { try { return new URL(linkPreview.url).hostname.replace(/^www\./, ""); } catch { return linkPreview.url; } })()}
+                  sourceUrl={linkPreview.url}
+                  ogTitle={linkPreview.ogTitle}
+                  ogDescription={linkPreview.ogDescription}
+                  ogImage={linkPreview.ogImage}
+                />
+              )
+            )}
+
+            {/* Single image preview */}
+            {imagePreview && (
+              <div style={{ position: "relative", display: "inline-block", maxWidth: "200px" }}>
+                <img src={imagePreview} alt="Preview" style={{ width: "100%", borderRadius: "4px", border: "1px solid #e0d8ce", display: "block" }} />
+                <button type="button" onClick={removeImage} aria-label="Remove image" style={{
+                  position: "absolute", top: "4px", right: "4px",
+                  background: "rgba(20,17,13,0.65)", border: "none", borderRadius: "50%",
+                  width: "20px", height: "20px", color: "#fff", fontSize: "0.7rem",
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                }}>✕</button>
+              </div>
+            )}
+
+            {/* Gallery previews (creative-showcase, hidden-gem, food-review) */}
+            {galleryPreviews.length > 0 && (
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                {galleryPreviews.map((p, i) => (
+                  <div key={i} style={{ position: "relative", width: "72px", height: "72px" }}>
+                    <img src={p} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "4px", border: "1px solid #e0d8ce" }} />
+                    <button type="button" onClick={() => removeGalleryImage(i)} style={{
+                      position: "absolute", top: "2px", right: "2px",
+                      background: "rgba(20,17,13,0.65)", border: "none", borderRadius: "50%",
+                      width: "16px", height: "16px", color: "#fff", fontSize: "0.6rem",
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Video URL — creative-showcase */}
+            {template === "creative-showcase" && (
+              <input
+                type="url" value={videoUrl} onChange={e => setVideoUrl(e.target.value)}
+                placeholder="Video URL (YouTube, Vimeo)" className="composer-input"
+              />
+            )}
+
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={template === "creative-showcase" || template === "hidden-gem" || template === "food-review" ? handleGalleryChange : handleFileChange}
+              multiple={template === "creative-showcase" || template === "hidden-gem" || template === "food-review"}
+              style={{ display: "none" }}
+            />
+
+            {/* Action bar */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+              {/* Tag selector (not for quote, food-review auto-sets Food) */}
+              {template !== "quote" && template !== "food-review" && (
+                lockedTag ? (
+                  <span style={{
+                    background: "#fff0eb", color: "#c5491f", fontSize: "0.65rem", fontWeight: 700,
+                    letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.28rem 0.55rem",
+                    borderRadius: "2px", border: "1px solid #f5d0c0",
+                  }}>
+                    {lockedTag}
+                  </span>
+                ) : (
+                  <select value={tag} onChange={e => setTag(e.target.value as Tag | "")} style={{
+                    background: "#ffffff", border: "1px solid #e0d8ce", borderRadius: "2px",
+                    color: tag ? "#c5491f" : "#7a6f5c", fontSize: "0.72rem", fontWeight: 600,
+                    letterSpacing: "0.06em", textTransform: "uppercase", padding: "0.28rem 0.55rem",
+                    cursor: "pointer", outline: "none",
+                  }}>
+                    <option value="">Section</option>
+                    {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                )
+              )}
+
+              {/* Image button (not for poll) */}
+              {template !== "poll" && template !== "quote" && (
+                <button type="button" onClick={() => fileInputRef.current?.click()} title="Attach image" style={{
+                  background: (imageFile || galleryFiles.length > 0) ? "#fff0eb" : "transparent",
+                  border: `1px solid ${(imageFile || galleryFiles.length > 0) ? "#c5491f" : "#e0d8ce"}`,
+                  borderRadius: "2px", color: (imageFile || galleryFiles.length > 0) ? "#c5491f" : "#7a6f5c",
+                  fontSize: "0.72rem", padding: "0.28rem 0.55rem", cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: "0.3rem",
+                }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                  {(imageFile || galleryFiles.length > 0) ? `${galleryFiles.length || 1} image${(galleryFiles.length || 1) > 1 ? "s" : ""}` : "Image"}
+                </button>
+              )}
+
+              <div style={{ flex: 1 }} />
+              <span style={{ fontSize: "0.7rem", color: charRemaining < 50 ? (charRemaining < 0 ? "#c5491f" : "#b38238") : "#bbb", fontVariantNumeric: "tabular-nums" }}>
+                {charRemaining}
+              </span>
+              <button type="submit" disabled={!canSubmit()} style={{
+                background: canSubmit() ? (template === "quote" ? "#7a4da0" : "#c93c2a") : "#e8e2d8",
+                color: canSubmit() ? "#fff" : "#aaa",
+                border: "none", borderRadius: "2px", padding: "0.32rem 0.9rem",
+                fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.08em",
+                textTransform: "uppercase", cursor: canSubmit() ? "pointer" : "default",
+                transition: "all 0.15s",
+              }}>
+                {uploading ? "Uploading…" : loading ? "Posting…" : template === "quote" ? "Submit" : "Post"}
+              </button>
+            </div>
+            {error && <p style={{ color: "#c5491f", fontSize: "0.78rem", margin: 0 }}>{error}</p>}
+          </div>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
