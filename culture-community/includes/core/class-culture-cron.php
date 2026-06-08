@@ -145,7 +145,6 @@ class Culture_Cron {
         foreach ( $grace_users as $user_id ) {
             update_user_meta( $user_id, '_culture_membership_tier',     'citizen' );
             update_user_meta( $user_id, '_culture_subscription_status', 'expired' );
-            delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
             delete_user_meta( $user_id, '_culture_grace_period_start' );
             do_action( 'culture_grace_period_expired', $user_id );
         }
@@ -184,7 +183,6 @@ class Culture_Cron {
         foreach ( $manual_users as $user_id ) {
             update_user_meta( $user_id, '_culture_membership_tier',     'citizen' );
             update_user_meta( $user_id, '_culture_subscription_status', 'expired' );
-            delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
             do_action( 'culture_manual_subscription_expired', $user_id );
         }
     }

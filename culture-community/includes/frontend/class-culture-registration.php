@@ -123,11 +123,6 @@ class Culture_Registration {
                         <span class="cr__pnum">2</span>
                         <span class="cr__plabel"><?php esc_html_e( 'Membership', 'culture-community' ); ?></span>
                     </div>
-                    <div class="cr__pbar"><div class="cr__pfill" id="cr-bar-2"></div></div>
-                    <div class="cr__pstep" data-ind="3">
-                        <span class="cr__pnum">3</span>
-                        <span class="cr__plabel"><?php esc_html_e( 'Chapter', 'culture-community' ); ?></span>
-                    </div>
                 </div>
 
                 <!-- Step 1: Account -->
@@ -181,7 +176,6 @@ class Culture_Registration {
                                 <span class="cr__tierprice"><?php esc_html_e( 'Free', 'culture-community' ); ?></span>
                                 <ul>
                                     <li><?php esc_html_e( 'Virtual event access', 'culture-community' ); ?></li>
-                                    <li><?php esc_html_e( 'One primary chapter', 'culture-community' ); ?></li>
                                     <li><?php esc_html_e( 'GetMeLit & Culture Drop newsletters', 'culture-community' ); ?></li>
                                     <li><?php esc_html_e( 'Gamification & badges', 'culture-community' ); ?></li>
                                 </ul>
@@ -195,7 +189,6 @@ class Culture_Registration {
                                 <ul>
                                     <li><?php esc_html_e( 'Everything in Citizen, plus:', 'culture-community' ); ?></li>
                                     <li><?php esc_html_e( 'Physical event access', 'culture-community' ); ?></li>
-                                    <li><?php esc_html_e( 'Dual chapter membership', 'culture-community' ); ?></li>
                                     <li><?php esc_html_e( 'Priority RSVP', 'culture-community' ); ?></li>
                                 </ul>
                             </div>
@@ -203,37 +196,6 @@ class Culture_Registration {
                     </div>
                     <div class="cr__nav">
                         <button type="button" class="cr__btn cr__btn--secondary" data-prev="1">
-                            <?php esc_html_e( 'Back', 'culture-community' ); ?>
-                        </button>
-                        <button type="button" class="cr__btn cr__btn--primary" data-next="3">
-                            <?php esc_html_e( 'Next: Select Chapter', 'culture-community' ); ?>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 3: Chapter Selection -->
-                <div class="cr__step" data-step="3">
-                    <h2><?php esc_html_e( 'Select Your Chapter', 'culture-community' ); ?></h2>
-                    <div class="cr__field">
-                        <label for="cr_primary_chapter"><?php esc_html_e( 'Primary Chapter', 'culture-community' ); ?></label>
-                        <select id="cr_primary_chapter" name="primary_chapter" required>
-                            <option value=""><?php esc_html_e( '-- Select your chapter --', 'culture-community' ); ?></option>
-                            <?php foreach ( $chapters as $chapter ) : ?>
-                                <option value="<?php echo esc_attr( $chapter->ID ); ?>"><?php echo esc_html( $chapter->post_title ); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="cr__field cr__field--secondary" id="cr-secondary-wrap">
-                        <label for="cr_secondary_chapter"><?php esc_html_e( 'Secondary Chapter (Patron Perk)', 'culture-community' ); ?></label>
-                        <select id="cr_secondary_chapter" name="secondary_chapter">
-                            <option value=""><?php esc_html_e( '-- Optional --', 'culture-community' ); ?></option>
-                            <?php foreach ( $chapters as $chapter ) : ?>
-                                <option value="<?php echo esc_attr( $chapter->ID ); ?>"><?php echo esc_html( $chapter->post_title ); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="cr__nav">
-                        <button type="button" class="cr__btn cr__btn--secondary" data-prev="2">
                             <?php esc_html_e( 'Back', 'culture-community' ); ?>
                         </button>
                         <button type="submit" class="cr__btn cr__btn--primary" id="cr-submit">
@@ -266,9 +228,7 @@ class Culture_Registration {
                     indicators[j].classList.toggle('cr__pstep--active', ind <= step);
                 }
                 var bar1 = document.getElementById('cr-bar-1');
-                var bar2 = document.getElementById('cr-bar-2');
                 if (bar1) bar1.classList.toggle('cr__pfill--done', step > 1);
-                if (bar2) bar2.classList.toggle('cr__pfill--done', step > 2);
             }
 
             function validateStep(stepEl) {
@@ -329,21 +289,6 @@ class Culture_Registration {
                     if (!this.checked) {
                         var waInput = waWrap.querySelector('input');
                         if (waInput) waInput.value = '';
-                    }
-                });
-            }
-
-            // Tier change — toggle secondary chapter.
-            var tierRadios = form.querySelectorAll('input[name="tier"]');
-            var secWrap = document.getElementById('cr-secondary-wrap');
-            for (var t = 0; t < tierRadios.length; t++) {
-                tierRadios[t].addEventListener('change', function() {
-                    if (this.value === 'patron') {
-                        secWrap.classList.add('cr__field--show');
-                    } else {
-                        secWrap.classList.remove('cr__field--show');
-                        var sel = secWrap.querySelector('select');
-                        if (sel) sel.value = '';
                     }
                 });
             }
@@ -417,8 +362,6 @@ class Culture_Registration {
         $diff_wa      = ! empty( $_POST['diff_whatsapp'] );
         $whatsapp     = ( $diff_wa && isset( $_POST['whatsapp'] ) ) ? sanitize_text_field( $_POST['whatsapp'] ) : '';
         $tier         = isset( $_POST['tier'] ) ? sanitize_key( $_POST['tier'] ) : 'citizen';
-        $primary      = isset( $_POST['primary_chapter'] ) ? absint( $_POST['primary_chapter'] ) : 0;
-        $secondary    = isset( $_POST['secondary_chapter'] ) ? absint( $_POST['secondary_chapter'] ) : 0;
         $referral     = isset( $_POST['culture_referral_code'] ) ? sanitize_key( $_POST['culture_referral_code'] ) : '';
 
         // Validate required fields.
@@ -432,15 +375,6 @@ class Culture_Registration {
 
         if ( ! in_array( $tier, array( 'citizen', 'patron' ), true ) ) {
             $tier = 'citizen';
-        }
-
-        // Validate tier-specific logic.
-        if ( 'citizen' === $tier ) {
-            $secondary = 0;
-        }
-
-        if ( $secondary && $secondary === $primary ) {
-            wp_send_json_error( array( 'message' => __( 'Secondary chapter must differ from primary.', 'culture-community' ) ) );
         }
 
         // Create the user.
@@ -462,11 +396,6 @@ class Culture_Registration {
         }
         if ( $whatsapp ) {
             update_user_meta( $user_id, '_culture_whatsapp', $whatsapp );
-        }
-
-        // Set chapters.
-        if ( $primary ) {
-            update_user_meta( $user_id, '_culture_primary_chapter_id', $primary );
         }
 
         // Initialize gamification.
