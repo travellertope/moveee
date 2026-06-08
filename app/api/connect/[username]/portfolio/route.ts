@@ -5,9 +5,9 @@ const API_SECRET = process.env.CULTURE_API_SECRET ?? "";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
-  const { username } = params;
+  const { username } = await params;
 
   const profileRes = await fetch(
     `${WP_URL}/wp-json/culture/v1/member/${encodeURIComponent(username)}`,
