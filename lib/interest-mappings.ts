@@ -13,6 +13,8 @@ export const INTERESTS = [
   { slug: "sport-wellness",     label: "Sport & Wellness",         emoji: "⚽" },
   { slug: "travel",             label: "Travel & Exploration",     emoji: "✈️" },
   { slug: "ideas",              label: "Ideas & Culture Theory",   emoji: "💡" },
+  { slug: "street-food",        label: "Street Food & Markets",    emoji: "🍜" },
+  { slug: "nightlife",          label: "Nightlife & Bars",         emoji: "🍸" },
 ] as const;
 
 export type InterestSlug = typeof INTERESTS[number]["slug"];
@@ -32,6 +34,8 @@ export const INTEREST_TO_TAGS: Record<string, string[]> = {
   "sport-wellness":     ["Sport", "sport"],
   "travel":             ["Travel", "travel"],
   "ideas":              ["Ideas", "ideas"],
+  "street-food":        ["Food", "food"],
+  "nightlife":          ["Food", "food"],
 };
 
 /** Given a user's interest slugs, return the flat set of tags they map to */
