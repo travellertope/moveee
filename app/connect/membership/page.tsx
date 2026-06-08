@@ -65,7 +65,6 @@ export default async function MembershipPage() {
             <ul className="mco-tier-perks">
               <li>Pulse feed &amp; community posts</li>
               <li>Member directory listing</li>
-              <li>Primary chapter</li>
               <li>Online event access</li>
               <li>GetMeLit &amp; Culture Drop newsletters</li>
               <li>Culture points &amp; badges</li>

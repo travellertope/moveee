@@ -496,11 +496,6 @@ class Culture_Memberships {
 		update_user_meta( $user_id, '_culture_subscription_expiry', $expiry_ts );
 		update_user_meta( $user_id, '_culture_subscription_notes',  $notes );
 
-		// If downgraded to citizen via the form, remove secondary chapter
-		if ( 'citizen' === $tier ) {
-			delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
-		}
-
 		self::redirect_with_notice(
 			'updated',
 			__( 'Membership saved successfully.', 'culture-community' ),
@@ -527,7 +522,6 @@ class Culture_Memberships {
 
 		update_user_meta( $user_id, '_culture_membership_tier',     'citizen' );
 		update_user_meta( $user_id, '_culture_subscription_status', 'cancelled' );
-		delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
 
 		self::redirect_with_notice( 'updated', __( 'User downgraded to Citizen.', 'culture-community' ) );
 	}

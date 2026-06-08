@@ -30,13 +30,6 @@ class Culture_Registration {
             return '<p style="text-align:center;padding:20px;background:#ecf0f1;border-radius:8px;color:#7f8c8d;">' . esc_html__( 'You are already registered and logged in.', 'culture-community' ) . '</p>';
         }
 
-        $chapters = get_posts( array(
-            'post_type'      => 'culture_chapter',
-            'posts_per_page' => -1,
-            'orderby'        => 'title',
-            'order'          => 'ASC',
-        ) );
-
         // Check for referral code in cookie or URL.
         $referral_code = '';
         if ( isset( $_COOKIE['culture_ref'] ) ) {
@@ -102,8 +95,6 @@ class Culture_Registration {
         .cr__check{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:500;color:#2c3e50}
         .cr__check input{width:18px;height:18px;accent-color:#e67e22;cursor:pointer;margin:0}
         /* Conditional fields */
-        .cr__field--secondary{display:none}
-        .cr__field--secondary.cr__field--show{display:block}
         .cr__field--whatsapp{display:none}
         .cr__field--whatsapp.cr__field--show{display:block}
         /* Mobile */

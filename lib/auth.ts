@@ -21,8 +21,6 @@ export interface CultureUser {
   occupation: string;
   // Membership
   tier: "citizen" | "patron";
-  primaryChapter: { id: number; name: string };
-  secondaryChapter: { id: number; name: string };
   // Gamification
   points: number;
   badges: string[];
@@ -75,8 +73,6 @@ export const authOptions: NextAuthOptions = {
             occupation: data.occupation ?? "",
             registeredAt: data.registered_at ?? 0,
             tier: data.tier,
-            primaryChapter: data.primary_chapter,
-            secondaryChapter: data.secondary_chapter,
             points: data.points,
             badges: data.badges ?? [],
             referralCode: data.referral_code ?? "",
@@ -109,8 +105,6 @@ export const authOptions: NextAuthOptions = {
         token.city = u.city;
         token.occupation = u.occupation;
         token.tier = u.tier;
-        token.primaryChapter = u.primaryChapter;
-        token.secondaryChapter = u.secondaryChapter;
         token.points = u.points;
         token.badges = u.badges;
         token.referralCode = u.referralCode;
@@ -144,8 +138,6 @@ export const authOptions: NextAuthOptions = {
         s.city = token.city;
         s.occupation = token.occupation;
         s.tier = token.tier;
-        s.primaryChapter = token.primaryChapter;
-        s.secondaryChapter = token.secondaryChapter;
         s.points = token.points;
         s.badges = token.badges;
         s.referralCode = token.referralCode;

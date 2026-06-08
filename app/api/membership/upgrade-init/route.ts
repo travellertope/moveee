@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { plan_key, primary_chapter, secondary_chapter } = await req.json();
+    const { plan_key } = await req.json();
 
     const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/upgrade-init`, {
       method: "POST",
@@ -23,11 +23,9 @@ export async function POST(req: NextRequest) {
         "Authorization": `Bearer ${API_SECRET}`,
         "X-Culture-API-Secret": API_SECRET || "",
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         user_id: (session.user as any).id,
         plan_key,
-        primary_chapter,
-        secondary_chapter
       }),
     });
 

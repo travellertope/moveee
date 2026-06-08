@@ -10,7 +10,6 @@ interface Member {
   city: string;
   countryOfResidence: string;
   tier: "citizen" | "patron";
-  chapter?: string;
   bio?: string;
   disciplines?: string[];
   instagram?: string;
@@ -34,6 +33,7 @@ export default function MemberDirectory() {
   const [search, setSearch] = useState("");
   const [discipline, setDiscipline] = useState("All");
   const [location, setLocation] = useState("All");
+  const [cityFilter, setCityFilter] = useState("");
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
@@ -58,6 +58,15 @@ export default function MemberDirectory() {
     const timer = setTimeout(fetchMembers, search ? 350 : 0);
     return () => clearTimeout(timer);
   }, [fetchMembers, search]);
+
+  // Unique cities from loaded members (non-empty)
+  const uniqueCities = Array.from(
+    new Set(members.map(m => m.city).filter(Boolean))
+  ).sort();
+
+  const filteredMembers = cityFilter
+    ? members.filter(m => m.city === cityFilter)
+    : members;
 
   return (
     <div className="mco-dir">
@@ -93,6 +102,17 @@ export default function MemberDirectory() {
               <option key={l} value={l}>{l === "All" ? "All locations" : l}</option>
             ))}
           </select>
+          <select
+            value={cityFilter}
+            onChange={e => setCityFilter(e.target.value)}
+            className="mco-dir-select"
+            aria-label="Filter by city"
+          >
+            <option value="">All cities</option>
+            {uniqueCities.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -114,7 +134,7 @@ export default function MemberDirectory() {
         </div>
       ) : (
         <div className="mco-dir-grid">
-          {members.map(member => (
+          {filteredMembers.map(member => (
             <MemberCard key={member.id} member={member} />
           ))}
         </div>
@@ -170,9 +190,6 @@ function MemberCard({ member }: { member: Member }) {
               </a>
             ))}
           </div>
-        )}
-        {member.chapter && (
-          <p className="mco-member-chapter">{member.chapter}</p>
         )}
       </div>
       {isPatron && (

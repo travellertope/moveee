@@ -104,7 +104,6 @@ class Culture_Analytics {
 
         <?php
         $stats         = self::get_member_stats();
-        $chapters      = self::get_chapter_stats();
         $top_members   = self::get_top_members();
         $recent_events = self::get_recent_event_stats();
         ?>
@@ -155,37 +154,6 @@ class Culture_Analytics {
 
             <!-- Tables Row -->
             <div class="culture-analytics__tables">
-                <!-- Popular Chapters -->
-                <div class="culture-analytics__table-box">
-                    <h2><?php esc_html_e( 'Chapters by Membership', 'culture-community' ); ?></h2>
-                    <?php if ( empty( $chapters ) ) : ?>
-                        <p class="culture-analytics__empty"><?php esc_html_e( 'No chapter data yet.', 'culture-community' ); ?></p>
-                    <?php else : ?>
-                        <table class="wp-list-table widefat fixed striped">
-                            <thead>
-                                <tr>
-                                    <th><?php esc_html_e( 'Chapter', 'culture-community' ); ?></th>
-                                    <th><?php esc_html_e( 'Primary', 'culture-community' ); ?></th>
-                                    <th><?php esc_html_e( 'Secondary', 'culture-community' ); ?></th>
-                                    <th><?php esc_html_e( 'Total', 'culture-community' ); ?></th>
-                                    <th><?php esc_html_e( 'Check-ins', 'culture-community' ); ?></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ( $chapters as $chapter ) : ?>
-                                    <tr>
-                                        <td><strong><?php echo esc_html( $chapter['title'] ); ?></strong></td>
-                                        <td><?php echo esc_html( $chapter['primary'] ); ?></td>
-                                        <td><?php echo esc_html( $chapter['secondary'] ); ?></td>
-                                        <td><strong><?php echo esc_html( $chapter['primary'] + $chapter['secondary'] ); ?></strong></td>
-                                        <td><?php echo esc_html( $chapter['checkins'] ); ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    <?php endif; ?>
-                </div>
-
                 <!-- Top Members -->
                 <div class="culture-analytics__table-box">
                     <h2><?php esc_html_e( 'Top Members by Points', 'culture-community' ); ?></h2>
@@ -232,7 +200,6 @@ class Culture_Analytics {
                         <thead>
                             <tr>
                                 <th><?php esc_html_e( 'Event', 'culture-community' ); ?></th>
-                                <th><?php esc_html_e( 'Chapter', 'culture-community' ); ?></th>
                                 <th><?php esc_html_e( 'Date', 'culture-community' ); ?></th>
                                 <th><?php esc_html_e( 'Type', 'culture-community' ); ?></th>
                                 <th><?php esc_html_e( 'RSVPs', 'culture-community' ); ?></th>
@@ -244,7 +211,6 @@ class Culture_Analytics {
                             <?php foreach ( $recent_events as $event ) : ?>
                                 <tr>
                                     <td><strong><?php echo esc_html( $event['title'] ); ?></strong></td>
-                                    <td><?php echo esc_html( $event['chapter'] ); ?></td>
                                     <td><?php echo esc_html( $event['date'] ); ?></td>
                                     <td>
                                         <span class="culture-analytics__event-type culture-analytics__event-type--<?php echo esc_attr( $event['type'] ); ?>">
@@ -382,58 +348,6 @@ class Culture_Analytics {
     }
 
     /**
-     * Get chapter statistics sorted by total membership.
-     *
-     * @return array
-     */
-    private static function get_chapter_stats() {
-        global $wpdb;
-        $table = $wpdb->prefix . 'culture_attendance';
-
-        $chapters = get_posts( array(
-            'post_type'      => 'culture_chapter',
-            'posts_per_page' => -1,
-            'post_status'    => 'publish',
-        ) );
-
-        $stats = array();
-        foreach ( $chapters as $chapter ) {
-            $primary = (int) $wpdb->get_var( $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = '_culture_primary_chapter_id' AND meta_value = %s",
-                (string) $chapter->ID
-            ) );
-
-            $secondary = (int) $wpdb->get_var( $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = '_culture_secondary_chapter_id' AND meta_value = %s",
-                (string) $chapter->ID
-            ) );
-
-            $checkins = (int) $wpdb->get_var( $wpdb->prepare(
-                "SELECT COUNT(*)
-                 FROM {$table} a
-                 INNER JOIN {$wpdb->postmeta} pm ON a.event_id = pm.post_id AND pm.meta_key = '_culture_chapter_id'
-                 WHERE pm.meta_value = %s AND a.status = 'checked_in'",
-                (string) $chapter->ID
-            ) );
-
-            $stats[] = array(
-                'id'        => $chapter->ID,
-                'title'     => $chapter->post_title,
-                'primary'   => $primary,
-                'secondary' => $secondary,
-                'checkins'  => $checkins,
-            );
-        }
-
-        // Sort by total membership desc.
-        usort( $stats, function( $a, $b ) {
-            return ( $b['primary'] + $b['secondary'] ) - ( $a['primary'] + $a['secondary'] );
-        } );
-
-        return $stats;
-    }
-
-    /**
      * Get the top 10 members by points.
      *
      * @return array
@@ -487,7 +401,6 @@ class Culture_Analytics {
 
         $stats = array();
         foreach ( $events as $event ) {
-            $chapter_id  = get_post_meta( $event->ID, '_culture_chapter_id', true );
             $is_physical = get_post_meta( $event->ID, '_culture_is_physical', true );
             $event_date  = get_post_meta( $event->ID, '_culture_event_date', true );
 
@@ -505,7 +418,6 @@ class Culture_Analytics {
 
             $stats[] = array(
                 'title'      => $event->post_title,
-                'chapter'    => $chapter_id ? get_the_title( $chapter_id ) : '-',
                 'date'       => $event_date ? date_i18n( get_option( 'date_format' ), strtotime( $event_date ) ) : '-',
                 'type'       => '1' === $is_physical ? 'physical' : 'virtual',
                 'type_label' => '1' === $is_physical ? __( 'In-Person', 'culture-community' ) : __( 'Virtual', 'culture-community' ),

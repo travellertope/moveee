@@ -127,7 +127,6 @@ class Culture_Post_Types {
             'isFeatured'    => array( 'type' => 'Boolean', 'meta_key' => 'is_featured' ),
             'admission'     => array( 'type' => 'String',  'meta_key' => 'admission' ),
             'isPhysical'    => array( 'type' => 'Boolean', 'meta_key' => '_culture_is_physical' ),
-            'chapterId'     => array( 'type' => 'Int',     'meta_key' => '_culture_chapter_id' ),
             'capacity'      => array( 'type' => 'Int',     'meta_key' => '_culture_capacity' ),
             'openingHours'  => array( 'type' => 'String',  'meta_key' => 'opening_hours' ),
         );
@@ -162,62 +161,6 @@ class Culture_Post_Types {
                 },
             ) );
         }
-
-        // 3. Chapters
-        $chapter_fields = array(
-            'latitude'  => array( 'type' => 'String', 'meta_key' => '_culture_location_lat' ),
-            'longitude' => array( 'type' => 'String', 'meta_key' => '_culture_location_lng' ),
-            'lat'       => array( 'type' => 'String', 'meta_key' => '_culture_location_lat' ), // alias
-            'lng'       => array( 'type' => 'String', 'meta_key' => '_culture_location_lng' ), // alias
-            'leaderId'  => array( 'type' => 'Int',    'meta_key' => '_culture_chapter_leader_id' ),
-        );
-
-        foreach ( $chapter_fields as $field_name => $config ) {
-            $meta_key = $config['meta_key'];
-            $type     = $config['type'];
-            register_graphql_field( 'CultureChapter', $field_name, array(
-                'type'    => $type,
-                'resolve' => function( $post ) use ( $meta_key, $type ) {
-                    $value = get_post_meta( $post->databaseId, $meta_key, true );
-                    if ( $type === 'Int' ) return (int) $value;
-                    return (string) $value;
-                },
-            ) );
-        }
-
-        register_graphql_field( 'CultureChapter', 'leaderName', array(
-            'type'    => 'String',
-            'resolve' => function( $post ) {
-                $leader_id = get_post_meta( $post->databaseId, '_culture_chapter_leader_id', true );
-                if ( ! $leader_id ) return null;
-                $leader = get_userdata( $leader_id );
-                return $leader ? $leader->display_name : null;
-            },
-        ) );
-
-        register_graphql_field( 'CultureChapter', 'memberCount', array(
-            'type'    => 'Int',
-            'resolve' => function( $post ) {
-                $p_count = count( get_users( array('meta_key' => '_culture_primary_chapter_id', 'meta_value' => $post->databaseId, 'fields' => 'ID') ) );
-                $s_count = count( get_users( array('meta_key' => '_culture_secondary_chapter_id', 'meta_value' => $post->databaseId, 'fields' => 'ID') ) );
-                return $p_count + $s_count;
-            },
-        ) );
-
-        register_graphql_field( 'CultureChapter', 'relatedEvents', array(
-            'type'    => array( 'list_of' => 'Post' ),
-            'resolve' => function( $post ) {
-                return get_posts( array(
-                    'post_type'      => 'culture_event',
-                    'posts_per_page' => 10,
-                    'meta_query'     => array(
-                        array('key' => '_culture_chapter_id', 'value' => $post->databaseId),
-                        array('key' => '_culture_event_date', 'value' => current_time( 'Y-m-d\TH:i' ), 'compare' => '>=', 'type' => 'DATETIME'),
-                    ),
-                    'meta_key' => '_culture_event_date', 'orderby' => 'meta_value', 'order' => 'ASC',
-                ) );
-            },
-        ) );
 
         // 4. Object Types (Register first)
 
@@ -761,33 +704,6 @@ class Culture_Post_Types {
      * Register all custom post types.
      */
     public static function register_post_types() {
-        // Chapter CPT – nested under Culture Community menu.
-        register_post_type( 'culture_chapter', array(
-            'labels' => array(
-                'name'               => __( 'Chapters', 'culture-community' ),
-                'singular_name'      => __( 'Chapter', 'culture-community' ),
-                'add_new'            => __( 'Add New', 'culture-community' ),
-                'add_new_item'       => __( 'Add New Chapter', 'culture-community' ),
-                'edit_item'          => __( 'Edit Chapter', 'culture-community' ),
-                'view_item'          => __( 'View Chapter', 'culture-community' ),
-                'all_items'          => __( 'Chapters', 'culture-community' ),
-                'search_items'       => __( 'Search Chapters', 'culture-community' ),
-                'not_found'          => __( 'No chapters found', 'culture-community' ),
-            ),
-            'public'              => true,
-            'has_archive'         => true,
-            'show_in_menu'        => 'culture-community',
-            'menu_icon'           => 'dashicons-location-alt',
-            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
-            'rewrite'             => array( 'slug' => 'chapters' ),
-            'show_in_rest'        => true,
-            'capability_type'     => 'post',
-            // WPGraphQL support.
-            'show_in_graphql'     => true,
-            'graphql_single_name' => 'cultureChapter',
-            'graphql_plural_name' => 'cultureChapters',
-        ) );
-
         // Event CPT – nested under Culture Community menu.
         register_post_type( 'culture_event', array(
             'labels' => array(
@@ -1008,7 +924,7 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'quoteAuthors',
         ) );
 
-        register_taxonomy( 'culture_interest', array( 'culture_event', 'culture_newsletter', 'culture_chapter', 'culture_directory' ), array(
+        register_taxonomy( 'culture_interest', array( 'culture_event', 'culture_newsletter', 'culture_directory' ), array(
             'labels' => array(
                 'name'          => __( 'Interests', 'culture-community' ),
                 'singular_name' => __( 'Interest', 'culture-community' ),
@@ -1113,7 +1029,6 @@ class Culture_Post_Types {
      * Register meta boxes for custom post types.
      */
     public static function register_meta_boxes() {
-        add_meta_box( 'culture_chapter_meta', __( 'Chapter Details', 'culture-community' ), array( __CLASS__, 'render_chapter_meta_box' ), 'culture_chapter', 'normal', 'high' );
         add_meta_box( 'culture_event_meta', __( 'Event Details', 'culture-community' ), array( __CLASS__, 'render_event_meta_box' ), 'culture_event', 'normal', 'high' );
         add_meta_box( 'culture_directory_meta', __( 'Directory Entry Details', 'culture-community' ), array( __CLASS__, 'render_directory_meta_box' ), 'culture_directory', 'side', 'high' );
         add_meta_box( 'culture_quote_meta', __( 'Quote Details', 'culture-community' ), array( __CLASS__, 'render_quote_meta_box' ), 'culture_quote', 'normal', 'high' );
@@ -1162,42 +1077,14 @@ class Culture_Post_Types {
         <?php
     }
 
-    public static function render_chapter_meta_box( $post ) {
-        wp_nonce_field( 'culture_chapter_meta', 'culture_chapter_meta_nonce' );
-        $lat       = get_post_meta( $post->ID, '_culture_location_lat', true );
-        $lng       = get_post_meta( $post->ID, '_culture_location_lng', true );
-        $leader_id = get_post_meta( $post->ID, '_culture_chapter_leader_id', true );
-        ?>
-        <table class="form-table">
-            <tr><th><label for="culture_location_lat">Latitude</label></th><td><input type="text" id="culture_location_lat" name="culture_location_lat" value="<?php echo esc_attr( $lat ); ?>" /></td></tr>
-            <tr><th><label for="culture_location_lng">Longitude</label></th><td><input type="text" id="culture_location_lng" name="culture_location_lng" value="<?php echo esc_attr( $lng ); ?>" /></td></tr>
-            <tr><th><label for="culture_chapter_leader_id">Chapter Leader</label></th><td>
-                <?php $leaders = get_users( array( 'role__in' => array( 'chapter_leader', 'administrator' ) ) ); ?>
-                <select id="culture_chapter_leader_id" name="culture_chapter_leader_id">
-                    <option value="">-- Select --</option>
-                    <?php foreach ( $leaders as $leader ) : ?><option value="<?php echo esc_attr( $leader->ID ); ?>" <?php selected( $leader_id, $leader->ID ); ?>><?php echo esc_html( $leader->display_name ); ?></option><?php endforeach; ?>
-                </select>
-            </td></tr>
-        </table>
-        <?php
-    }
-
     public static function render_event_meta_box( $post ) {
         wp_nonce_field( 'culture_event_meta', 'culture_event_meta_nonce' );
         $event_date  = get_post_meta( $post->ID, '_culture_event_date', true );
-        $chapter_id  = get_post_meta( $post->ID, '_culture_chapter_id', true );
         $is_physical = get_post_meta( $post->ID, '_culture_is_physical', true );
         $capacity    = get_post_meta( $post->ID, '_culture_capacity', true );
         ?>
         <table class="form-table">
             <tr><th><label for="culture_event_date">Event Date</label></th><td><input type="datetime-local" id="culture_event_date" name="culture_event_date" value="<?php echo esc_attr( $event_date ); ?>" /></td></tr>
-            <tr><th><label for="culture_chapter_id">Chapter</label></th><td>
-                <?php $chapters = get_posts( array( 'post_type' => 'culture_chapter', 'numberposts' => -1 ) ); ?>
-                <select id="culture_chapter_id" name="culture_chapter_id">
-                    <option value="">-- Select --</option>
-                    <?php foreach ( $chapters as $chapter ) : ?><option value="<?php echo esc_attr( $chapter->ID ); ?>" <?php selected( $chapter_id, $chapter->ID ); ?>><?php echo esc_html( $chapter->post_title ); ?></option><?php endforeach; ?>
-                </select>
-            </td></tr>
             <tr><th><label for="culture_is_physical">Physical Event</label></th><td><input type="checkbox" id="culture_is_physical" name="culture_is_physical" value="1" <?php checked( $is_physical, '1' ); ?> /></td></tr>
             <tr><th><label for="culture_capacity">Capacity</label></th><td><input type="number" id="culture_capacity" name="culture_capacity" value="<?php echo esc_attr( $capacity ); ?>" min="0" /></td></tr>
         </table>
@@ -1233,17 +1120,11 @@ class Culture_Post_Types {
     }
 
     public static function save_meta_boxes( $post_id ) {
-        if ( isset( $_POST['culture_chapter_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_chapter_meta_nonce'], 'culture_chapter_meta' ) ) {
-            if ( isset( $_POST['culture_location_lat'] ) ) update_post_meta( $post_id, '_culture_location_lat', sanitize_text_field( $_POST['culture_location_lat'] ) );
-            if ( isset( $_POST['culture_location_lng'] ) ) update_post_meta( $post_id, '_culture_location_lng', sanitize_text_field( $_POST['culture_location_lng'] ) );
-            if ( isset( $_POST['culture_chapter_leader_id'] ) ) update_post_meta( $post_id, '_culture_chapter_leader_id', absint( $_POST['culture_chapter_leader_id'] ) );
-        }
         if ( isset( $_POST['culture_directory_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_directory_meta_nonce'], 'culture_directory_meta' ) ) {
             update_post_meta( $post_id, '_culture_dir_ai_generated', isset( $_POST['culture_dir_ai_generated'] ) ? '1' : '0' );
         }
         if ( isset( $_POST['culture_event_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_event_meta_nonce'], 'culture_event_meta' ) ) {
             if ( isset( $_POST['culture_event_date'] ) ) update_post_meta( $post_id, '_culture_event_date', sanitize_text_field( $_POST['culture_event_date'] ) );
-            if ( isset( $_POST['culture_chapter_id'] ) ) update_post_meta( $post_id, '_culture_chapter_id', absint( $_POST['culture_chapter_id'] ) );
             update_post_meta( $post_id, '_culture_is_physical', isset( $_POST['culture_is_physical'] ) ? '1' : '0' );
             if ( isset( $_POST['culture_capacity'] ) ) update_post_meta( $post_id, '_culture_capacity', absint( $_POST['culture_capacity'] ) );
         }

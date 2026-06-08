@@ -38,12 +38,10 @@ export default async function MemberPage() {
               <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
                 {isPatron ? "Connect Pro" : "Connect Citizen"}
               </span>
-              <span className="mem-sep">·</span>
-              <span>{user.primaryChapter?.name || "No chapter"}</span>
-              {user.secondaryChapter?.name && (
+              {user.city && (
                 <>
                   <span className="mem-sep">·</span>
-                  <span>{user.secondaryChapter.name}</span>
+                  <span>{user.city}</span>
                 </>
               )}
             </div>
@@ -130,25 +128,6 @@ export default async function MemberPage() {
                 </div>
               </section>
             )}
-
-            {/* Chapter(s) */}
-            <section className="mem-card">
-              <div className="mem-card-label">
-                Your Chapter{user.secondaryChapter?.name ? "s" : ""}
-              </div>
-              <div className="mem-chapter-item">
-                <div className="mem-chapter-role">Primary</div>
-                <div className="mem-chapter-name">
-                  {user.primaryChapter?.name || "Not set"}
-                </div>
-              </div>
-              {user.secondaryChapter?.name && (
-                <div className="mem-chapter-item">
-                  <div className="mem-chapter-role">Secondary</div>
-                  <div className="mem-chapter-name">{user.secondaryChapter.name}</div>
-                </div>
-              )}
-            </section>
 
             {/* Quick links */}
             <section className="mem-card mem-links-card">
