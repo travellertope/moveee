@@ -19,214 +19,195 @@ function formatDate(raw?: string) {
   const d = new Date(raw);
   return isNaN(d.getTime())
     ? "TBA"
-    : d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    : d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
 function formatShortDate(raw?: string) {
   if (!raw) return "TBA";
   const d = new Date(raw);
-  return isNaN(d.getTime())
-    ? "TBA"
-    : d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  if (isNaN(d.getTime())) return "TBA";
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }).toUpperCase();
+}
+
+function getDateParts(raw?: string) {
+  if (!raw) return { day: "—", month: "" };
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return { day: "—", month: "" };
+  return {
+    day: String(d.getDate()),
+    month: d.toLocaleDateString("en-GB", { month: "short" }).toUpperCase(),
+  };
 }
 
 export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props) {
   const dateFormatted = formatDate(event.eventDate || event.date);
-  const dayName = (() => {
-    const d = new Date(event.eventDate || event.date || "");
-    return !isNaN(d.getTime())
-      ? d.toLocaleDateString("en-GB", { weekday: "long" })
-      : "";
-  })();
   const endFormatted = event.endDate ? formatDate(event.endDate) : null;
+  const { day, month } = getDateParts(event.eventDate || event.date);
   const interests: { name: string; slug: string }[] = event.cultureInterests?.nodes ?? [];
   const excerpt = event.excerpt?.replace(/<[^>]*>/g, "").trim() || "";
   const city = event.city || "";
+  const img = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
+  const ctaUrl = event.ticketingUrl || event.attribution || null;
 
   return (
-    <div className="disc-event-page">
-      {/* Top bar: back link */}
-      <div className="disc-event-topbar">
-        <div className="disc-event-eyebrow">
-          <Link href="/events" className="disc-back">← Happenings</Link>
-          {city && <span className="disc-badge">{city}</span>}
-        </div>
-      </div>
+    <div className="luma-event-page">
+      <div className="luma-event-inner">
 
-      {/* Hero: title + tagline */}
-      <div className="disc-event-hero">
-        {(event.featuredImage?.node?.sourceUrl || event.eventImageUrl) && (
-          <div className="disc-event-hero-img">
-            <img
-              src={event.featuredImage?.node?.sourceUrl || event.eventImageUrl}
-              alt={event.title}
-              style={{ width: "100%", maxHeight: "360px", objectFit: "cover", borderRadius: "8px", marginBottom: "24px" }}
-            />
-          </div>
-        )}
-        <h1 className="disc-event-title" dangerouslySetInnerHTML={{ __html: event.title }} />
-        {event.tagline && (
-          <p className="disc-event-tagline">{event.tagline}</p>
-        )}
-      </div>
+        {/* ── LEFT: image + back ── */}
+        <div className="luma-left">
+          <Link href="/events" className="luma-back">← Happenings</Link>
 
-      {/* Two-column body */}
-      <div className="disc-event-body">
-        {/* ── Main content ── */}
-        <div className="disc-event-main">
-          {/* Key details table */}
-          <div className="disc-event-details">
-            <div className="disc-detail-row">
-              <span className="disc-detail-label">Date</span>
-              <span className="disc-detail-value">
-                {dayName && <>{dayName}, </>}{dateFormatted}
-                {endFormatted && <> — {endFormatted}</>}
-              </span>
-            </div>
-            {event.location && (
-              <div className="disc-detail-row">
-                <span className="disc-detail-label">Location</span>
-                <span className="disc-detail-value">{event.location}</span>
-              </div>
-            )}
-            {city && city !== event.location && (
-              <div className="disc-detail-row">
-                <span className="disc-detail-label">City</span>
-                <span className="disc-detail-value">{city}</span>
-              </div>
-            )}
-            {event.admission && (
-              <div className="disc-detail-row">
-                <span className="disc-detail-label">Admission</span>
-                <span className="disc-detail-value">{event.admission}</span>
+          <div className="luma-poster">
+            {img ? (
+              <img src={img} alt={event.title} />
+            ) : (
+              <div className="luma-poster-placeholder">
+                <span>{month}</span>
+                <span className="luma-poster-day">{day}</span>
               </div>
             )}
           </div>
 
-          {/* Interests */}
-          {interests.length > 0 && (
-            <div className="disc-interests">
-              {interests.map((i) => (
-                <span key={i.slug} className="disc-interest-pill">{i.name}</span>
-              ))}
-            </div>
-          )}
-
-          {/* Description */}
-          {excerpt && (
-            <p className="disc-event-excerpt">{excerpt}</p>
-          )}
-
-          {event.content && (
-            <div 
-              className="disc-event-content prose-custom" 
-              dangerouslySetInnerHTML={{ __html: event.content }} 
-              style={{ marginTop: "24px", color: "var(--ink-soft)", lineHeight: 1.6 }}
-            />
-          )}
-
-          {/* CTA — prefer ticketing URL, fall back to source attribution */}
-          {(event.ticketingUrl || event.attribution) ? (
+          {ctaUrl && (
             <a
-              href={event.ticketingUrl || event.attribution}
+              href={ctaUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="disc-cta-btn"
+              className="luma-cta-btn"
             >
               {event.ticketingUrl ? "Get Tickets ↗" : "View Full Event Details ↗"}
             </a>
-          ) : (
-            <div className="disc-cta-note">
-              Visit the host&rsquo;s website for full details and tickets.
-            </div>
           )}
 
           {event.attribution && (
-            <p className="disc-attribution">
+            <p className="luma-attribution">
               Source:{" "}
-              <a href={event.attribution} target="_blank" rel="noopener noreferrer"
-                style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: "3px" }}>
+              <a href={event.attribution} target="_blank" rel="noopener noreferrer">
                 {(() => { try { return new URL(event.attribution).hostname.replace(/^www\./, ""); } catch { return event.attribution; } })()}
               </a>
             </p>
           )}
+        </div>
 
-          <div className="disc-event-footer">
-            <Link href="/events" className="disc-back-footer">← All Happenings</Link>
+        {/* ── RIGHT: event info ── */}
+        <div className="luma-right">
+
+          {/* city chip */}
+          {city && (
+            <Link href={`/events/${city.toLowerCase().replace(/\s+/g, "-")}`} className="luma-city-chip">
+              ◉ {city}
+            </Link>
+          )}
+
+          {/* title */}
+          <h1 className="luma-title" dangerouslySetInnerHTML={{ __html: event.title }} />
+
+          {/* date row */}
+          <div className="luma-meta-rows">
+            <div className="luma-meta-row">
+              <div className="luma-date-chip">
+                <span className="luma-date-month">{month}</span>
+                <span className="luma-date-day">{day}</span>
+              </div>
+              <div className="luma-meta-text">
+                <div className="luma-meta-main">{dateFormatted}</div>
+                {endFormatted && (
+                  <div className="luma-meta-sub">Until {endFormatted}</div>
+                )}
+              </div>
+            </div>
+
+            {event.location && (
+              <div className="luma-meta-row">
+                <div className="luma-loc-icon">◍</div>
+                <div className="luma-meta-text">
+                  <div className="luma-meta-main">{event.location}</div>
+                  {city && city !== event.location && (
+                    <div className="luma-meta-sub">{city}</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {event.admission && (
+              <div className="luma-meta-row">
+                <div className="luma-loc-icon">◈</div>
+                <div className="luma-meta-text">
+                  <div className="luma-meta-main">{event.admission}</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* registration box */}
+          {ctaUrl && (
+            <div className="luma-register-box">
+              <div className="luma-register-label">
+                {event.ticketingUrl ? "Tickets" : "Registration"}
+              </div>
+              {event.tagline && (
+                <p className="luma-register-note">{event.tagline}</p>
+              )}
+              <a
+                href={ctaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="luma-register-btn"
+              >
+                {event.ticketingUrl ? "Get Tickets" : "View Event Details"}
+              </a>
+            </div>
+          )}
+
+          {/* about */}
+          {(excerpt || event.content) && (
+            <div className="luma-about">
+              <div className="luma-section-label">About</div>
+              {excerpt && <p className="luma-excerpt">{excerpt}</p>}
+              {event.content && (
+                <div
+                  className="luma-content"
+                  dangerouslySetInnerHTML={{ __html: event.content }}
+                />
+              )}
+            </div>
+          )}
+
+          {/* interests */}
+          {interests.length > 0 && (
+            <div className="luma-tags">
+              {interests.map((i) => (
+                <Link key={i.slug} href={`/events/${i.slug}`} className="luma-tag">
+                  #{i.name}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* more happenings */}
+          {relatedEvents.length > 0 && (
+            <div className="luma-related">
+              <div className="luma-section-label">More Happenings</div>
+              {relatedEvents.map((e) => (
+                <Link key={e.slug} href={`/events/${e.slug}`} className="luma-related-row">
+                  <span className="luma-related-date">{formatShortDate(e.eventDate || e.date)}</span>
+                  <div className="luma-related-info">
+                    <span className="luma-related-title">{e.title}</span>
+                    {(e.city || e.location) && (
+                      <span className="luma-related-loc">{e.city || e.location}</span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+              <Link href="/events" className="luma-all-link">All Happenings →</Link>
+            </div>
+          )}
+
+          <div className="luma-footer-nav">
+            <Link href="/events" className="luma-back-footer">← All Happenings</Link>
           </div>
         </div>
 
-        {/* ── Sidebar ── */}
-        <aside className="disc-event-sidebar">
-          {/* Quick-info card */}
-          <div className="disc-info-card">
-            <div className="disc-info-card-label">📅 When</div>
-            <div className="disc-info-card-value">
-              {dayName && <>{dayName},<br/></>}{dateFormatted}
-              {endFormatted && <><br/>Until {endFormatted}</>}
-            </div>
-          </div>
-
-          {event.location && (
-            <div className="disc-info-card">
-              <div className="disc-info-card-label">📍 Where</div>
-              <div className="disc-info-card-value">{event.location}</div>
-              {city && <div className="disc-info-card-sub">{city}</div>}
-            </div>
-          )}
-
-          {event.admission && (
-            <div className="disc-info-card">
-              <div className="disc-info-card-label">🎟 Admission</div>
-              <div className="disc-info-card-value">{event.admission}</div>
-            </div>
-          )}
-
-          {event.ticketingUrl && (
-            <a
-              href={event.ticketingUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="disc-cta-btn"
-              style={{ display: "block", textAlign: "center", marginBottom: "24px" }}
-            >
-              Get Tickets ↗
-            </a>
-          )}
-
-          {/* Related events */}
-          {relatedEvents.length > 0 && (
-            <div style={{ marginTop: "8px" }}>
-              <div className="disc-related-heading">More Happenings</div>
-              {relatedEvents.map((e) => (
-                <Link key={e.slug} href={`/events/${e.slug}`} className="disc-related-item">
-                  <div className="disc-related-item-date">
-                    {formatShortDate(e.eventDate || e.date)}
-                  </div>
-                  <div className="disc-related-item-title">{e.title}</div>
-                  {(e.city || e.location) && (
-                    <div className="disc-related-item-loc">{e.city || e.location}</div>
-                  )}
-                </Link>
-              ))}
-              <div style={{ paddingTop: "14px" }}>
-                <Link
-                  href="/events"
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "10px",
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: "var(--ochre)",
-                    textDecoration: "none",
-                  }}
-                >
-                  All Happenings →
-                </Link>
-              </div>
-            </div>
-          )}
-        </aside>
       </div>
     </div>
   );
