@@ -57,6 +57,17 @@ const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
   { slug: "quote",             label: "Quote",     emoji: "✦" },
 ];
 
+const TEMPLATE_GUIDES: Record<TemplateType, { desc: string; chips: string[] }> = {
+  post:                { desc: "Share news, a link, or a quick thought from your cultural world.",                          chips: ["Hot take:",           "Just saw that",          "Anyone else noticed"] },
+  "hidden-gem":        { desc: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues.",     chips: ["Hidden gem alert:",   "Not enough people know about", "If you haven't been to"] },
+  "cultural-take":     { desc: "Share a cultural opinion on a book, film, event, or idea worth discussing.",                chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"] },
+  "food-review":       { desc: "Review a dish or restaurant. Rate the taste, value, and vibe.",                            chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"] },
+  "creative-showcase": { desc: "Share your creative work — art, photography, design, or music.",                           chips: ["Working on something:", "New piece:",             "Behind the work:"] },
+  poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions.",             chips: ["Which is better:",    "Settle this for me:",    "Genuine question:"] },
+  itinerary:           { desc: "Share a travel itinerary or a local route worth following.",                                chips: ["A perfect day in",    "My go-to route:",        "For first-timers in"] },
+  quote:               { desc: "Share a quote that moved you. Add the author and source below.",                           chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"] },
+};
+
 const MAX_CHARS: Record<string, number> = {
   post: 3000, "hidden-gem": 500, "cultural-take": 1000, "food-review": 500,
   "creative-showcase": 500, poll: 280, itinerary: 300, quote: 600,
@@ -96,6 +107,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Link preview
   const [linkPreview, setLinkPreview] = useState<{ url: string; ogTitle: string; ogDescription: string; ogImage: string } | null>(null);
@@ -452,8 +464,26 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               />
             )}
 
+            {/* Template guide */}
+            <div className={`composer-guide${text.length > 0 ? " composer-guide--hidden" : ""}`}>
+              <p className="composer-guide-desc">{TEMPLATE_GUIDES[template].desc}</p>
+              <div className="composer-guide-chips">
+                {TEMPLATE_GUIDES[template].chips.map(chip => (
+                  <button
+                    key={chip}
+                    type="button"
+                    className="composer-guide-chip"
+                    onClick={() => { setText(chip + " "); setTimeout(() => textareaRef.current?.focus(), 0); }}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Main text area */}
             <textarea
+              ref={textareaRef}
               value={text}
               onChange={e => setText(e.target.value)}
               placeholder={placeholders[template]}
