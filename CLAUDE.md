@@ -289,7 +289,7 @@ Phases 1-4 are implemented. Phase docs live in `docs/phases/`.
 | 2. Credits & Reputation | Done | `class-culture-gamification.php` (credit_ledger table, award_credits/reputation, check_post_threshold), `lib/auth.ts` |
 | 3. Directory Knowledge Graph | Done | `class-culture-directory.php` (search, quick-create, directory posts, aggregates), `DirectoryGrid.tsx` (partner badge), `app/directory/[slug]/page.tsx` (community section) |
 | 4. Post Templates & Composer | Done | `components/pulse/SubmitPost.tsx` (unified composer), `components/composer/` (StarRating, MultiRating, DirectorySearch, PollBuilder, ItineraryBuilder), `FeedCard.tsx` (template variants), poll-vote endpoint |
-| 5. Public Profiles | Planned | `docs/phases/phase-5-public-profiles.md` |
+| 5. Public Profiles | Done | `app/connect/[username]/page.tsx`, `ProfileTabs`, `CommunityTab`, `PortfolioTab`, `app/member/portfolio/`, PHP: public member + community posts + portfolio endpoints |
 | 6. Partner Perks | Planned | `docs/phases/phase-6-partner-perks.md` |
 | 7. Passkeys | Planned | `docs/phases/phase-7-passkeys.md` |
 

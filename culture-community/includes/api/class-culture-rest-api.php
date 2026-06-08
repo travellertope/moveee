@@ -757,6 +757,43 @@ class Culture_REST_API {
                 'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
+
+        // Phase 5 — public member profile by username.
+        register_rest_route( 'culture/v1', '/member/(?P<username>[a-zA-Z0-9_\-]+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_public_profile' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'username' => array( 'type' => 'string', 'required' => true ),
+            ),
+        ) );
+
+        // Phase 5 — community posts (filterable by author_id and template_type).
+        register_rest_route( 'culture/v1', '/community/posts', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_community_posts' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'author_id'     => array( 'type' => 'integer', 'default' => 0 ),
+                'template_type' => array( 'type' => 'string',  'default' => '' ),
+                'per_page'      => array( 'type' => 'integer', 'default' => 20 ),
+                'page'          => array( 'type' => 'integer', 'default' => 1 ),
+            ),
+        ) );
+
+        // Phase 5 — portfolio (GET + POST). Requires Bearer auth.
+        register_rest_route( 'culture/v1', '/user/portfolio', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_portfolio' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_save_portfolio' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+        ) );
     }
 
     /**
@@ -2914,5 +2951,165 @@ class Culture_REST_API {
             'options' => $options,
             'voted'   => $option_index,
         ) );
+    }
+
+    // -------------------------------------------------------------------------
+    // Phase 5 — Public Profiles
+    // -------------------------------------------------------------------------
+
+    /**
+     * GET /culture/v1/member/{username}
+     * Returns public-safe profile data for the given username. No auth required.
+     */
+    public static function handle_get_public_profile( $request ) {
+        $username = sanitize_user( $request->get_param( 'username' ) );
+
+        $user = get_user_by( 'login', $username );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
+        }
+
+        $uid        = $user->ID;
+        $reputation = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $uid ) : 0;
+
+        return rest_ensure_response( array(
+            'id'              => $uid,
+            'username'        => $user->user_login,
+            'display_name'    => $user->display_name,
+            'avatar_url'      => get_user_meta( $uid, '_culture_avatar_url', true ) ?: '',
+            'bio'             => get_user_meta( $uid, '_culture_directory_bio', true ) ?: '',
+            'city'            => get_user_meta( $uid, '_culture_city', true ) ?: '',
+            'country'         => get_user_meta( $uid, '_culture_country_of_residence', true ) ?: '',
+            'occupation'      => get_user_meta( $uid, '_culture_occupation', true ) ?: '',
+            'tier'            => get_user_meta( $uid, '_culture_membership_tier', true ) ?: 'citizen',
+            'reputation'      => $reputation,
+            'reputation_tier' => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation_tier( $reputation ) : 'member',
+            'badges'          => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_badges( $uid ) : array(),
+            'interests'       => json_decode( get_user_meta( $uid, '_culture_interests', true ) ?: '[]', true ) ?: array(),
+            'joined'          => date( 'Y-m-d', strtotime( $user->user_registered ) ),
+            'post_count'      => (int) count_user_posts( $uid, 'culture_post' ),
+        ) );
+    }
+
+    /**
+     * GET /culture/v1/community/posts
+     * Returns published culture_post entries, optionally filtered by author_id
+     * and/or template_type. No auth required.
+     */
+    public static function handle_get_community_posts( $request ) {
+        $author_id     = (int) $request->get_param( 'author_id' );
+        $template_type = sanitize_text_field( $request->get_param( 'template_type' ) );
+        $per_page      = max( 1, min( 100, (int) $request->get_param( 'per_page' ) ) );
+        $page          = max( 1, (int) $request->get_param( 'page' ) );
+
+        $query_args = array(
+            'post_type'      => 'culture_post',
+            'post_status'    => 'publish',
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+            'meta_query'     => array( 'relation' => 'AND' ),
+        );
+
+        if ( $author_id > 0 ) {
+            $query_args['meta_query'][] = array(
+                'key'     => 'community_author_id',
+                'value'   => $author_id,
+                'compare' => '=',
+                'type'    => 'NUMERIC',
+            );
+        }
+
+        if ( '' !== $template_type ) {
+            $query_args['meta_query'][] = array(
+                'key'     => '_template_type',
+                'value'   => $template_type,
+                'compare' => '=',
+            );
+        }
+
+        $posts  = get_posts( $query_args );
+        $result = array();
+
+        foreach ( $posts as $post ) {
+            $pid      = $post->ID;
+            $result[] = array(
+                'id'             => $pid,
+                'slug'           => $post->post_name,
+                'date'           => get_the_date( 'c', $pid ),
+                'text'           => wp_strip_all_tags( $post->post_content ),
+                'image_url'      => get_post_meta( $pid, 'community_image_url', true ) ?: '',
+                'tag'            => get_post_meta( $pid, 'community_tag', true ) ?: '',
+                'region'         => get_post_meta( $pid, 'community_region', true ) ?: '',
+                'author_name'    => get_post_meta( $pid, 'community_author_name', true ) ?: '',
+                'author_tier'    => get_post_meta( $pid, 'community_author_tier', true ) ?: '',
+                'author_avatar'  => get_post_meta( $pid, 'community_author_avatar', true ) ?: '',
+                'template_type'  => get_post_meta( $pid, '_template_type', true ) ?: 'post',
+                'star_rating'    => (int) get_post_meta( $pid, '_star_rating', true ),
+                'location_name'  => get_post_meta( $pid, '_location_name', true ) ?: '',
+                'gallery_images' => json_decode( get_post_meta( $pid, '_gallery_images', true ) ?: '[]', true ),
+                'video_url'      => get_post_meta( $pid, '_video_url', true ) ?: '',
+                'food_dish_name' => get_post_meta( $pid, '_food_dish_name', true ) ?: '',
+                'reactions'      => array(
+                    'love' => (int) get_post_meta( $pid, 'reaction_love', true ),
+                    'fire' => (int) get_post_meta( $pid, 'reaction_fire', true ),
+                    'clap' => (int) get_post_meta( $pid, 'reaction_clap', true ),
+                ),
+                'comment_count'  => (int) $post->comment_count,
+            );
+        }
+
+        return rest_ensure_response( $result );
+    }
+
+    /**
+     * GET /culture/v1/user/portfolio
+     * Returns pinned posts and portfolio items for the given user. Requires Bearer auth.
+     */
+    public static function handle_get_portfolio( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $pinned_posts = json_decode( get_user_meta( $user_id, '_portfolio_pinned_posts', true ) ?: '[]', true ) ?: array();
+        $items        = json_decode( get_user_meta( $user_id, '_portfolio_items', true ) ?: '[]', true ) ?: array();
+
+        return rest_ensure_response( array(
+            'pinned_posts' => $pinned_posts,
+            'items'        => $items,
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/user/portfolio
+     * Saves pinned posts and portfolio items for the given user. Requires Bearer auth.
+     */
+    public static function handle_save_portfolio( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $pinned_posts = $request->get_param( 'pinned_posts' );
+        $items        = $request->get_param( 'items' );
+
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        // Sanitise: ensure pinned_posts is an array of integers.
+        if ( ! is_array( $pinned_posts ) ) {
+            $pinned_posts = array();
+        }
+        $pinned_posts = array_values( array_map( 'absint', $pinned_posts ) );
+
+        // Sanitise: ensure items is an array.
+        if ( ! is_array( $items ) ) {
+            $items = array();
+        }
+
+        update_user_meta( $user_id, '_portfolio_pinned_posts', wp_json_encode( $pinned_posts ) );
+        update_user_meta( $user_id, '_portfolio_items', wp_json_encode( $items ) );
+
+        return rest_ensure_response( array( 'success' => true ) );
     }
 }
