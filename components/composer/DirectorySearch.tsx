@@ -59,6 +59,12 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
       if (res.ok) {
         const data = await res.json();
         select({ id: data.id, title: data.title, slug: data.slug, type: typeFilter || "place", thumbnail: null });
+        // Fire AI enrichment in the background — do not await
+        fetch("/api/directory/enrich-stub", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: data.id, title: data.title, entry_type: typeFilter || "place" }),
+        }).catch(() => {});
       }
     } catch {}
     setCreating(false);

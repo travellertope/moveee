@@ -525,6 +525,16 @@ class Culture_REST_API {
             'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
         ) );
 
+        // Stub enrichment — AI content + image update for inline quick-create stubs.
+        register_rest_route( 'culture/v1', '/directory/(?P<id>\d+)/enrich', array(
+            'methods'             => 'POST',
+            'callback'            => array( 'Culture_Directory', 'handle_enrich_stub' ),
+            'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
+            'args'                => array(
+                'id' => array( 'type' => 'integer', 'required' => true ),
+            ),
+        ) );
+
         // Phase 3 — community posts linked to a directory entry.
         register_rest_route( 'culture/v1', '/directory/(?P<id>\d+)/posts', array(
             'methods'             => 'GET',

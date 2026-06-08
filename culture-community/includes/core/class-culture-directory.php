@@ -589,6 +589,57 @@ class Culture_Directory {
         ) );
     }
 
+    // ── Stub enrichment endpoint ─────────────────────────────────────────────
+
+    /**
+     * POST /culture/v1/directory/{id}/enrich
+     *
+     * Updates an existing stub post with AI-generated content, excerpt,
+     * infobox meta, entry type, and (optionally) a featured image.
+     * Auth: Bearer API secret only.
+     */
+    public static function handle_enrich_stub( WP_REST_Request $request ) {
+        $post_id = (int) $request->get_param( 'id' );
+        $post    = get_post( $post_id );
+
+        if ( ! $post || 'culture_directory' !== $post->post_type ) {
+            return new WP_Error( 'not_found', 'Directory entry not found.', array( 'status' => 404 ) );
+        }
+
+        $content    = wp_kses_post( $request->get_param( 'content' ) ?? '' );
+        $excerpt    = sanitize_text_field( $request->get_param( 'excerpt' ) ?? '' );
+        $entry_type = sanitize_key( $request->get_param( 'entry_type' ) ?? '' );
+        $interests  = (array) ( $request->get_param( 'interests' ) ?? array() );
+        $infobox    = (array) ( $request->get_param( 'infobox' ) ?? array() );
+
+        $update_data = array(
+            'ID'           => $post_id,
+            'post_content' => $content,
+            'post_excerpt' => $excerpt,
+        );
+        wp_update_post( $update_data );
+
+        update_post_meta( $post_id, '_culture_dir_ai_generated', '1' );
+
+        if ( $entry_type && taxonomy_exists( 'culture_dir_type' ) ) {
+            wp_set_object_terms( $post_id, $entry_type, 'culture_dir_type' );
+        }
+
+        if ( ! empty( $interests ) && taxonomy_exists( 'culture_interest' ) ) {
+            wp_set_object_terms( $post_id, $interests, 'culture_interest' );
+        }
+
+        foreach ( $infobox as $key => $value ) {
+            $clean_key   = 'dir_infobox_' . sanitize_key( $key );
+            $clean_value = sanitize_text_field( $value );
+            if ( $clean_value ) {
+                update_post_meta( $post_id, $clean_key, $clean_value );
+            }
+        }
+
+        return rest_ensure_response( array( 'success' => true, 'post_id' => $post_id ) );
+    }
+
     // ── Phase 3: Directory posts endpoint ────────────────────────────────────
 
     /**
