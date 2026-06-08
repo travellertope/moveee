@@ -426,10 +426,17 @@ export default function FeedCard({
             )}
 
             {/* Gallery carousel (creative-showcase, hidden-gem, food-review) */}
-            {item.galleryImages && item.galleryImages.length > 1 && (
+            {item.galleryImages && item.galleryImages.length >= 1 && (
               <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.6rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
                 {item.galleryImages.map((img: string, i: number) => (
-                  <img key={i} src={img} alt="" style={{ height: "200px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+                  <img
+                    key={i}
+                    src={img}
+                    alt=""
+                    onClick={() => setLightbox(img)}
+                    style={{ height: "200px", objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }}
+                    loading="lazy"
+                  />
                 ))}
               </div>
             )}
@@ -475,18 +482,16 @@ export default function FeedCard({
               </div>
             )}
 
-            {/* Image */}
-            {item.image && (
-              <>
-                <div
-                  onClick={() => setLightbox(item.image!)}
-                  style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8", cursor: "zoom-in" }}
-                >
-                  <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.15s" }} loading="lazy" />
-                </div>
-                {lightbox && <ImageLightbox src={lightbox} alt={item.title} onClose={closeLightbox} />}
-              </>
+            {/* Single image — only when no gallery */}
+            {item.image && !item.galleryImages?.length && (
+              <div
+                onClick={() => setLightbox(item.image!)}
+                style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8", cursor: "zoom-in" }}
+              >
+                <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.15s" }} loading="lazy" />
+              </div>
             )}
+            {lightbox && <ImageLightbox src={lightbox} alt={item.title} onClose={closeLightbox} />}
 
             {/* Link preview card (only if no image) */}
             {!item.image && item.sourceUrl && (

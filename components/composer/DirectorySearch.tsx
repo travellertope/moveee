@@ -8,6 +8,7 @@ interface DirectoryResult {
   slug: string;
   type: string;
   thumbnail: string | null;
+  city?: string;
 }
 
 interface Props {
@@ -23,6 +24,9 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  // quick-create city step
+  const [showCityInput, setShowCityInput] = useState(false);
+  const [cityInput, setCityInput] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
@@ -45,6 +49,8 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
     setQuery("");
     setResults([]);
     setOpen(false);
+    setShowCityInput(false);
+    setCityInput("");
   }
 
   async function quickCreate() {
@@ -54,11 +60,22 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
       const res = await fetch("/api/directory/quick-create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: query.trim(), entry_type: typeFilter || "place" }),
+        body: JSON.stringify({
+          title: query.trim(),
+          entry_type: typeFilter || "place",
+          city: cityInput.trim() || undefined,
+        }),
       });
       if (res.ok) {
         const data = await res.json();
-        select({ id: data.id, title: data.title, slug: data.slug, type: typeFilter || "place", thumbnail: null });
+        select({
+          id: data.id,
+          title: data.title,
+          slug: data.slug,
+          type: typeFilter || "place",
+          thumbnail: null,
+          city: cityInput.trim() || undefined,
+        });
         // Fire AI enrichment in the background — do not await
         fetch("/api/directory/enrich-stub", {
           method: "POST",
@@ -73,7 +90,10 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
   if (value) {
     return (
       <div className="composer-dir-selected">
-        <span className="composer-dir-selected-name">{value.title}</span>
+        <span className="composer-dir-selected-name">
+          {value.title}
+          {value.city && <span className="composer-dir-selected-city">, {value.city}</span>}
+        </span>
         <button type="button" className="composer-dir-clear" onClick={() => onChange(null)}>×</button>
       </div>
     );
@@ -84,7 +104,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
       <input
         type="text"
         value={query}
-        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); setShowCityInput(false); setCityInput(""); }}
         onFocus={() => setOpen(true)}
         placeholder={placeholder ?? "Search the directory..."}
         className="composer-dir-input"
@@ -94,16 +114,57 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           {loading && <div className="composer-dir-loading">Searching...</div>}
           {!loading && results.length === 0 && (
             <div className="composer-dir-empty">
-              <span>No matches found.</span>
-              <button type="button" onClick={quickCreate} disabled={creating} className="composer-dir-create-btn">
-                {creating ? "Creating..." : `+ Add "${query}" to directory`}
-              </button>
+              {!showCityInput ? (
+                <>
+                  <span>No matches for &ldquo;{query}&rdquo;.</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowCityInput(true)}
+                    className="composer-dir-create-btn"
+                  >
+                    + Add &ldquo;{query}&rdquo; to directory
+                  </button>
+                </>
+              ) : (
+                <div className="composer-dir-city-form">
+                  <label className="composer-dir-city-label">City or neighbourhood <span>(optional)</span></label>
+                  <input
+                    type="text"
+                    value={cityInput}
+                    onChange={e => setCityInput(e.target.value)}
+                    placeholder="e.g. London, Lagos, Brixton"
+                    className="composer-dir-city-input"
+                    autoFocus
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); quickCreate(); } }}
+                  />
+                  <div className="composer-dir-city-actions">
+                    <button
+                      type="button"
+                      onClick={quickCreate}
+                      disabled={creating}
+                      className="composer-dir-create-btn"
+                    >
+                      {creating ? "Creating..." : "Create entry"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowCityInput(false); setCityInput(""); }}
+                      className="composer-dir-cancel-btn"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {results.map((r) => (
             <button key={r.id} type="button" className="composer-dir-result" onClick={() => select(r)}>
               {r.thumbnail && <img src={r.thumbnail} alt="" className="composer-dir-thumb" />}
-              <span className="composer-dir-result-title">{r.title}</span>
+              <span className="composer-dir-result-text">
+                <span className="composer-dir-result-title">{r.title}</span>
+                {r.city && <span className="composer-dir-result-city">{r.city}</span>}
+              </span>
               {r.type && <span className="composer-dir-result-type">{r.type}</span>}
             </button>
           ))}
