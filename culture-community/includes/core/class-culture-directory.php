@@ -497,12 +497,22 @@ class Culture_Directory {
         $q    = sanitize_text_field( $request->get_param( 'q' ) );
         $type = sanitize_key( $request->get_param( 'type' ) );
 
+        // Search title only — WP's 's' parameter also searches content which
+        // returns unrelated entries when there's no exact title match.
+        $title_filter = function( $where ) use ( $q ) {
+            global $wpdb;
+            $like   = '%' . $wpdb->esc_like( $q ) . '%';
+            $where .= $wpdb->prepare( " AND {$wpdb->posts}.post_title LIKE %s", $like );
+            return $where;
+        };
+        add_filter( 'posts_where', $title_filter );
+
         $args = array(
             'post_type'      => 'culture_directory',
             'post_status'    => 'publish',
             'posts_per_page' => 10,
-            's'              => $q,
-            'orderby'        => 'relevance',
+            'orderby'        => 'title',
+            'order'          => 'ASC',
         );
 
         if ( $type ) {
@@ -513,7 +523,8 @@ class Culture_Directory {
             ) );
         }
 
-        $query   = new WP_Query( $args );
+        $query = new WP_Query( $args );
+        remove_filter( 'posts_where', $title_filter );
         $results = array();
 
         foreach ( $query->posts as $post ) {
