@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       ? data.map((m: any) => ({
           id: String(m.id),
           displayName: m.display_name ?? m.displayName ?? "",
+          username: m.username ?? m.user_login ?? "",
           occupation: m.occupation ?? "",
           city: m.city ?? "",
           countryOfResidence: m.country_of_residence ?? m.countryOfResidence ?? "",
