@@ -2446,6 +2446,7 @@ class Culture_REST_API {
         $ticketing_url = esc_url_raw( $request->get_param( 'ticketing_url' ) );
         $tagline       = sanitize_text_field( $request->get_param( 'tagline' ) );
         $attribution   = esc_url_raw( $request->get_param( 'attribution' ) );
+        $image_url     = esc_url_raw( $request->get_param( 'image_url' ) );
         $interests        = (array) $request->get_param( 'interests' );
         $auto_publish     = (bool) $request->get_param( 'auto_publish' );
         $ai_generated_raw = $request->get_param( 'ai_generated' );
@@ -2457,8 +2458,15 @@ class Culture_REST_API {
             return new WP_Error( 'missing_fields', 'title and event_date are required.', array( 'status' => 400 ) );
         }
 
-        // Deduplication: hash of title + date + location.
-        $dedup_hash = md5( strtolower( trim( $title ) ) . '|' . $event_date . '|' . strtolower( trim( $location ) ) );
+        // Deduplication: hash of normalised title + date + location.
+        // Normalise title: lowercase, strip year numbers, strip noise words
+        // (tickets, saturday, sunday, etc.), collapse whitespace.
+        $norm_title = strtolower( trim( $title ) );
+        $norm_title = preg_replace( '/\b(tickets?|saturday|sunday|monday|tuesday|wednesday|thursday|friday|buy now|register|free)\b/', '', $norm_title );
+        $norm_title = preg_replace( '/\b20\d{2}\b/', '', $norm_title ); // strip years
+        $norm_title = preg_replace( '/[^a-z0-9\s]/', '', $norm_title ); // strip punctuation
+        $norm_title = preg_replace( '/\s+/', ' ', trim( $norm_title ) );
+        $dedup_hash = md5( $norm_title . '|' . $event_date . '|' . strtolower( trim( $location ) ) );
         $existing = get_posts( array(
             'post_type'      => 'culture_event',
             'post_status'    => array( 'publish', 'pending' ),
@@ -2500,6 +2508,7 @@ class Culture_REST_API {
         update_post_meta( $post_id, '_culture_ticketing_url',   $ticketing_url );
         update_post_meta( $post_id, '_culture_tagline',         $tagline );
         update_post_meta( $post_id, '_culture_attribution',     $attribution );
+        update_post_meta( $post_id, '_culture_event_image_url', $image_url );
         update_post_meta( $post_id, '_culture_is_featured',     '0' );
         update_post_meta( $post_id, '_culture_ai_generated',    $ai_generated ? '1' : '0' );
         update_post_meta( $post_id, '_culture_event_dedup_hash', $dedup_hash );

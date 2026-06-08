@@ -71,11 +71,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: {
       title: event.title, description: excerpt,
       url: `https://themoveee.com/events/${slug}`, type: "website",
-      images: event.featuredImage?.node?.sourceUrl ? [{ url: event.featuredImage.node.sourceUrl, width: 1200, height: 630 }] : [],
+      images: (event.featuredImage?.node?.sourceUrl || event.eventImageUrl) ? [{ url: event.featuredImage?.node?.sourceUrl || event.eventImageUrl as string, width: 1200, height: 630 }] : [],
     },
     twitter: {
       card: "summary_large_image", title: event.title, description: excerpt,
-      images: event.featuredImage?.node?.sourceUrl ? [event.featuredImage.node.sourceUrl] : [],
+      images: (event.featuredImage?.node?.sourceUrl || event.eventImageUrl) ? [event.featuredImage?.node?.sourceUrl || event.eventImageUrl as string] : [],
     },
   };
 }
@@ -108,7 +108,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     return <DiscoveredEventPage event={event} relatedEvents={relatedEvents} />;
   }
 
-  const img          = event.featuredImage?.node?.sourceUrl;
+  const img          = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
   const cat          = event.cultureInterests?.nodes?.[0]?.name || "Happening";
   const dateRaw      = event.eventDate || event.date || new Date().toISOString();
   const dateObj      = new Date(dateRaw);
@@ -434,13 +434,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: excerpt,
       url: `https://themoveee.com/events/${slug}`,
       type: "website",
-      images: event.featuredImage?.node?.sourceUrl ? [{ url: event.featuredImage.node.sourceUrl, width: 1200, height: 630 }] : [],
+      images: (event.featuredImage?.node?.sourceUrl || event.eventImageUrl) ? [{ url: event.featuredImage?.node?.sourceUrl || event.eventImageUrl as string, width: 1200, height: 630 }] : [],
     },
     twitter: {
       card: "summary_large_image",
       title: event.title,
       description: excerpt,
-      images: event.featuredImage?.node?.sourceUrl ? [event.featuredImage.node.sourceUrl] : [],
+      images: (event.featuredImage?.node?.sourceUrl || event.eventImageUrl) ? [event.featuredImage?.node?.sourceUrl || event.eventImageUrl as string] : [],
     },
   };
 }
@@ -469,7 +469,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     return <DiscoveredEventPage event={event} relatedEvents={relatedEvents} />;
   }
 
-  const img = event.featuredImage?.node?.sourceUrl;
+  const img = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
   const cat = event.cultureInterests?.nodes?.[0]?.name || "Happening";
   const dateRaw = event.eventDate || event.date || new Date().toISOString();
   const dateObj = new Date(dateRaw);

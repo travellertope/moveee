@@ -93,7 +93,7 @@ export default async function CityArchive({ slug, cityInfo }: { slug: string; ci
                       location={event.location || event.city || cityInfo.name}
                       time={event.openingHours || ""}
                       category={cat}
-                      image={event.featuredImage?.node?.sourceUrl}
+                      image={event.featuredImage?.node?.sourceUrl || event.eventImageUrl}
                       status={event.isAiGenerated ? "upcoming" : (event.isFeatured ? "upcoming" : "upcoming")}
                       tags={event.isAiGenerated ? [] : ["RSVP"]}
                     />

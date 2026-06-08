@@ -148,7 +148,7 @@ export default async function EventsPage() {
                     location={event.location || event.city || ""}
                     time={event.openingHours || ""}
                     category={cat}
-                    image={event.featuredImage?.node?.sourceUrl}
+                    image={event.featuredImage?.node?.sourceUrl || event.eventImageUrl}
                     status={event.isFeatured ? "upcoming" : "upcoming"}
                     tags={["RSVP"]}
                   />
@@ -230,7 +230,7 @@ export default async function EventsPage() {
                       location={event.location || event.city || ""}
                       time={event.openingHours || ""}
                       category={cat}
-                      image={event.featuredImage?.node?.sourceUrl}
+                      image={event.featuredImage?.node?.sourceUrl || event.eventImageUrl}
                       status="upcoming"
                       tags={["RSVP"]}
                     />

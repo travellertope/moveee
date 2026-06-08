@@ -792,6 +792,7 @@ export interface SerperResult {
   link: string;
   snippet: string;
   date?: string;
+  imageUrl?: string; // thumbnail from Serper organic result
 }
 
 export interface EventStub {
@@ -806,6 +807,7 @@ export interface EventStub {
   admission: string;       // "Free" | "£15" | "From $20" etc.
   ticketing_url: string;
   attribution: string;     // Source URL
+  image_url?: string;      // Thumbnail from Serper — used directly, never stored on our servers
   interests: string[];     // culture_interest taxonomy slugs
   relevant: boolean;
 }

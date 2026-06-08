@@ -13,6 +13,7 @@ interface CarouselEvent {
   location?: string;
   city?: string;
   featuredImage?: { node?: { sourceUrl?: string } };
+  eventImageUrl?: string;
   cultureInterests?: { nodes: Array<{ name: string; slug: string }> };
   isAiGenerated?: boolean;
 }
@@ -78,7 +79,7 @@ export default function EventsCarousel({ events }: EventsCarouselProps) {
         {events.map((event) => {
           const { day, month } = fmtDate(event.eventDate || event.date);
           const cat = event.cultureInterests?.nodes?.[0]?.name || "";
-          const img = event.featuredImage?.node?.sourceUrl;
+          const img = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
           const place = event.city || event.location || "";
 
           return (

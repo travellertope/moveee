@@ -40,8 +40,9 @@ class Culture_Post_Types {
             '_culture_event_city'    => array( 'type' => 'string' ),
             '_culture_admission'     => array( 'type' => 'string' ),
             '_culture_ticketing_url' => array( 'type' => 'string' ),
-            '_culture_tagline'       => array( 'type' => 'string' ),
-            '_culture_is_featured'   => array( 'type' => 'string' ),
+            '_culture_tagline'           => array( 'type' => 'string' ),
+            '_culture_is_featured'       => array( 'type' => 'string' ),
+            '_culture_event_image_url'   => array( 'type' => 'string' ),
         );
         // Expose AIOSEO meta on standard posts so REST-based fetches can read them
         foreach ( array( '_aioseo_title', '_aioseo_description' ) as $aioseo_key ) {

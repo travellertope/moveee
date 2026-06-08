@@ -108,6 +108,7 @@ function mapRestEventToFrontendShape(item: any) {
     tagline: pick(acf.tagline, meta.tagline, meta._culture_tagline),
     attribution: pick(acf.attribution, meta.attribution, meta._culture_attribution),
     ticketingUrl: pick(acf.ticketing_url, meta.ticketing_url, meta._culture_ticketing_url),
+    eventImageUrl: pick(acf.event_image_url, meta.event_image_url, meta._culture_event_image_url),
     featuredImage: embeddedMedia?.source_url
       ? {
           node: {

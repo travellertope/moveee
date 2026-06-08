@@ -56,6 +56,15 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
 
       {/* Hero: title + tagline */}
       <div className="disc-event-hero">
+        {(event.featuredImage?.node?.sourceUrl || event.eventImageUrl) && (
+          <div className="disc-event-hero-img">
+            <img
+              src={event.featuredImage?.node?.sourceUrl || event.eventImageUrl}
+              alt={event.title}
+              style={{ width: "100%", maxHeight: "360px", objectFit: "cover", borderRadius: "8px", marginBottom: "24px" }}
+            />
+          </div>
+        )}
         <h1 className="disc-event-title" dangerouslySetInnerHTML={{ __html: event.title }} />
         {event.tagline && (
           <p className="disc-event-tagline">{event.tagline}</p>

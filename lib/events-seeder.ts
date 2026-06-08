@@ -42,10 +42,11 @@ export async function searchSerper(query: string, gl: string, hl: string): Promi
     if (!res.ok) return [];
     const data = await res.json();
     return (data.organic ?? []).map((r: any) => ({
-      title:   String(r.title   ?? ""),
-      link:    String(r.link    ?? ""),
-      snippet: String(r.snippet ?? ""),
-      date:    String(r.date    ?? ""),
+      title:    String(r.title    ?? ""),
+      link:     String(r.link     ?? ""),
+      snippet:  String(r.snippet  ?? ""),
+      date:     String(r.date     ?? ""),
+      imageUrl: r.imageUrl ? String(r.imageUrl) : undefined,
     }));
   } catch {
     return [];
@@ -53,24 +54,55 @@ export async function searchSerper(query: string, gl: string, hl: string): Promi
 }
 
 /**
- * Gemini often omits the attribution URL even though the source is right there
- * in the Serper results. Cross-reference by title similarity and attach the
- * Serper result's link as attribution when Gemini left it blank.
+ * Cross-reference stubs against Serper results by title similarity.
+ * Attaches the source link as attribution when Gemini omitted it,
+ * and the result thumbnail as image_url. Neither is stored on our servers.
  */
-function attachSourceUrls(stubs: EventStub[], serperResults: SerperResult[]): EventStub[] {
+function attachSerperData(stubs: EventStub[], serperResults: SerperResult[]): EventStub[] {
   return stubs.map((stub) => {
-    if (stub.attribution && stub.attribution.startsWith("http")) return stub;
     const words = stub.title.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
     const match = serperResults.find((r) => {
       const rt = r.title.toLowerCase() + " " + r.snippet.toLowerCase();
       return words.filter((w) => rt.includes(w)).length >= Math.min(2, words.length);
     });
-    return match ? { ...stub, attribution: match.link } : stub;
+    if (!match) return stub;
+    return {
+      ...stub,
+      attribution: (stub.attribution && stub.attribution.startsWith("http"))
+        ? stub.attribution
+        : match.link,
+      image_url: stub.image_url || match.imageUrl || undefined,
+    };
   });
 }
 
+/**
+ * Returns false for bare homepage/root URLs like https://www.eventbrite.com/
+ * so we never link to a generic site — only to specific event pages.
+ */
+function isDeepEventUrl(url: string): boolean {
+  if (!url || !url.startsWith("http")) return false;
+  try {
+    const { pathname } = new URL(url);
+    // Reject if the path has fewer than 2 meaningful segments (i.e. it's a root or one-level page)
+    const parts = pathname.replace(/\/$/, "").split("/").filter(Boolean);
+    return parts.length >= 2;
+  } catch {
+    return false;
+  }
+}
+
+export function normalizeEventTitle(title: string): string {
+  return title.toLowerCase().trim()
+    .replace(/\b(tickets?|saturday|sunday|monday|tuesday|wednesday|thursday|friday|buy now|register|free)\b/g, "")
+    .replace(/\b20\d{2}\b/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function buildDedupKey(title: string, eventDate: string, location: string): string {
-  return `${title.toLowerCase().trim()}|${eventDate}|${location.toLowerCase().trim()}`;
+  return `${normalizeEventTitle(title)}|${eventDate}|${location.toLowerCase().trim()}`;
 }
 
 export async function submitEvent(
@@ -89,10 +121,11 @@ export async function submitEvent(
       location:      stub.location,
       city:          stub.city,
       admission:     stub.admission,
-      ticketing_url: stub.ticketing_url || "",
+      ticketing_url: isDeepEventUrl(stub.ticketing_url) ? stub.ticketing_url : "",
       tagline:       stub.tagline,
       attribution:   stub.attribution,
-      source_url:    stub.attribution,  // redundant key so WP never misses it
+      source_url:    stub.attribution,
+      image_url:     stub.image_url || "",
       interests:     stub.interests,
       ai_generated:  true,
       auto_publish:  true,
@@ -147,8 +180,8 @@ export async function seedCities(
       continue;
     }
 
-    // Ensure every stub has its source URL even when Gemini omitted it.
-    stubs = attachSourceUrls(stubs, allRaw);
+    // Attach source URLs and thumbnail images from the Serper results.
+    stubs = attachSerperData(stubs, allRaw);
 
     detail[city.name].found = stubs.length;
 

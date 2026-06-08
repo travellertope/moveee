@@ -98,7 +98,7 @@ export default async function CategoryArchive({
                         location={event.city || event.location || ""}
                         time={event.openingHours || ""}
                         category={cat}
-                        image={event.featuredImage?.node?.sourceUrl}
+                        image={event.featuredImage?.node?.sourceUrl || event.eventImageUrl}
                         status="upcoming"
                         tags={["RSVP"]}
                       />
