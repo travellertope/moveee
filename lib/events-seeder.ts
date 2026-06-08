@@ -186,7 +186,7 @@ export async function seedCities(
 
     detail[city.name].found = stubs.length;
 
-    for (const stub of stubs) {
+    for (let stub of stubs) {
       const parsed = stub.event_date ? new Date(stub.event_date) : null;
       if (!parsed || isNaN(parsed.getTime()) || parsed < today || parsed > maxDate) {
         detail[city.name].skipped++;
