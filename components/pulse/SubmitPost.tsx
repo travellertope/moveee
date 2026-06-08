@@ -47,7 +47,7 @@ type Tag = (typeof TAGS)[number];
 type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "creative-showcase" | "poll" | "itinerary";
 
 const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
-  { slug: "post",              label: "Post",      emoji: "📝" },
+  { slug: "post",              label: "Update",    emoji: "📝" },
   { slug: "hidden-gem",        label: "Gem",       emoji: "💎" },
   { slug: "cultural-take",     label: "Take",      emoji: "💬" },
   { slug: "food-review",       label: "Food",      emoji: "🍽️" },
