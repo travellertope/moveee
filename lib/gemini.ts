@@ -839,11 +839,9 @@ Event: "${title}"
 City: ${city}
 Date: ${eventDate}
 
-Write 3–4 paragraphs (total ~250–350 words) covering:
-1. What the event is and who's involved (be specific — name artists, curators, speakers, or organisations)
-2. Cultural or historical context — why this event matters to the African/diaspora community
-3. What to expect: programme highlights, atmosphere, format
-4. Practical note: location/neighbourhood character, any ticketing detail found, and why this is worth attending
+Write 1–2 paragraphs (total ~80–120 words) covering:
+1. What the event is, who's involved, and why it matters to the African/diaspora community
+2. What to expect: highlights, atmosphere, and why it's worth attending
 
 Use an editorial voice — warm, knowledgeable, specific. No marketing clichés. Return ONLY the plain text (no JSON, no markdown, no headings). Separate paragraphs with a blank line.`;
 

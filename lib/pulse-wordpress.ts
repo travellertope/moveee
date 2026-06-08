@@ -36,6 +36,7 @@ export interface WpPulseStory {
     pulse_region_label?: string;
     pulse_arm_label?: string;
     pulse_external_url?: string;
+    pulse_image_url?: string;
     pulse_gemini_refreshed_at?: string;
   };
   _embedded?: {
@@ -145,6 +146,7 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> 
       pulse_region_label: story.region ?? "",
       pulse_arm_label: story.arm ?? "",
       pulse_external_url: story.source_url ?? "",
+      pulse_image_url: story.image_url ?? "",
       pulse_gemini_refreshed_at: new Date().toISOString(),
     },
   };

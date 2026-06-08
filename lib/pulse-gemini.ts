@@ -46,6 +46,7 @@ export interface PulseStoryRaw {
   category:   "music" | "film" | "fashion" | "art" | "literature" | "food" | "activism" | "sports" | "business" | "tech";
   source:     string;
   source_url: string;
+  image_url?: string; // from the RSS item — not uploaded, used directly as OG image
 }
 
 const VALID_ARMS       = new Set(["lifestyle", "origins", "happenings", "magazine"]);
@@ -199,5 +200,17 @@ export async function fetchGeminiPulseStories(): Promise<PulseStoryRaw[]> {
     );
   }
 
-  return stories;
+  // Step 3: Attach image URLs from the original RSS items by matching source_url.
+  // Images are stored as post meta and used directly as OG images — never uploaded.
+  const imageByUrl = new Map(
+    feedItems
+      .filter(item => item.imageUrl)
+      .map(item => [item.link, item.imageUrl as string])
+  );
+
+  return stories.map(story =>
+    imageByUrl.has(story.source_url)
+      ? { ...story, image_url: imageByUrl.get(story.source_url) }
+      : story
+  );
 }

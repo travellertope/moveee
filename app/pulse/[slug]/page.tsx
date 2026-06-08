@@ -60,6 +60,7 @@ export async function generateMetadata({
     const url = `${SITE_URL}/pulse/${story.slug}`;
     const ogImage =
       story._embedded?.["wp:featuredmedia"]?.[0]?.source_url ??
+      story.meta?.pulse_image_url ||
       `${SITE_URL}/og-fallback.png`;
 
     return {
