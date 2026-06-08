@@ -72,9 +72,6 @@ export default async function CityArchive({ slug, cityInfo }: { slug: string; ci
         />
       </div>
 
-      <div className="ev-archive-footer">
-        <Link href="/events" className="ev-archive-back">← All Happenings</Link>
-      </div>
     </div>
   );
 }
