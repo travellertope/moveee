@@ -117,15 +117,15 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
             />
           )}
 
-          {/* CTA */}
-          {event.ticketingUrl ? (
+          {/* CTA — prefer ticketing URL, fall back to source attribution */}
+          {(event.ticketingUrl || event.attribution) ? (
             <a
-              href={event.ticketingUrl}
+              href={event.ticketingUrl || event.attribution}
               target="_blank"
               rel="noopener noreferrer"
               className="disc-cta-btn"
             >
-              View Full Event Details ↗
+              {event.ticketingUrl ? "Get Tickets ↗" : "View Full Event Details ↗"}
             </a>
           ) : (
             <div className="disc-cta-note">
@@ -134,7 +134,13 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
           )}
 
           {event.attribution && (
-            <p className="disc-attribution">Source: {event.attribution}</p>
+            <p className="disc-attribution">
+              Source:{" "}
+              <a href={event.attribution} target="_blank" rel="noopener noreferrer"
+                style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: "3px" }}>
+                {(() => { try { return new URL(event.attribution).hostname.replace(/^www\./, ""); } catch { return event.attribution; } })()}
+              </a>
+            </p>
           )}
 
           <div className="disc-event-footer">
