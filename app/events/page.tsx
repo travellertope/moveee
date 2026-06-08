@@ -48,7 +48,7 @@ function fmtShort(raw?: string) {
 
 export default async function EventsPage() {
   let events: any[] = [];
-  try { events = await getEventsWithFallback(100, { revalidate: 0 }); } catch { /* CMS unreachable */ }
+  try { events = await getEventsWithFallback(100); } catch { /* CMS unreachable */ }
 
   const upcoming = events.sort(
     (a, b) => new Date(a.eventDate || a.date || 0).getTime() - new Date(b.eventDate || b.date || 0).getTime()
