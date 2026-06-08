@@ -1558,3 +1558,234 @@ html {
   .ev-section-title-row { padding-left: 24px; padding-right: 24px; }
   .ev-archive-title-row h1 { font-size: clamp(28px, 9vw, 48px); }
 }
+
+/* ==========================================================================
+   ── EVENT TIMELINE (Luma-style)
+   ========================================================================== */
+
+.ev-timeline-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 40px 60px;
+}
+
+.etl-wrap {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 48px;
+  align-items: start;
+}
+
+/* ── Month group ── */
+.etl-month { margin-bottom: 40px; }
+
+.etl-month-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(42,36,28,0.1);
+}
+.etl-month-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--ochre);
+  flex-shrink: 0;
+}
+.etl-month-label {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* ── Day group ── */
+.etl-day { display: flex; gap: 0; margin-bottom: 4px; }
+
+.etl-day-heading {
+  width: 130px;
+  flex-shrink: 0;
+  padding: 16px 0 0;
+}
+.etl-day-short {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-weight: 500;
+}
+.etl-day-weekday {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-top: 2px;
+}
+
+.etl-day-rows { flex: 1; border-left: 1px solid rgba(42,36,28,0.08); padding-left: 24px; }
+
+/* ── Event row ── */
+.etl-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.12s;
+  margin-bottom: 2px;
+}
+.etl-row:hover { background: rgba(42,36,28,0.04); }
+
+.etl-thumb {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(42,36,28,0.07);
+}
+.etl-thumb img { object-fit: cover; }
+.etl-thumb-ph { width: 100%; height: 100%; background: rgba(42,36,28,0.07); }
+
+.etl-body { flex: 1; min-width: 0; }
+.etl-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink);
+}
+.etl-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mute);
+}
+.etl-sep { opacity: 0.3; }
+
+.etl-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.etl-date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.etl-admission {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mute);
+}
+
+.etl-arrow {
+  font-size: 12px;
+  color: var(--ochre);
+  opacity: 0;
+  transition: opacity 0.12s;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+.etl-row:hover .etl-arrow { opacity: 1; }
+
+.etl-empty {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-style: italic;
+  color: var(--mute);
+  padding: 40px 0;
+}
+
+/* ── Sidebar ── */
+.etl-sidebar { position: sticky; top: 32px; }
+
+.etl-sb-block {
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid rgba(42,36,28,0.08);
+}
+.etl-sb-block:last-child { border-bottom: none; margin-bottom: 0; }
+
+.etl-sb-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--mute);
+  margin-bottom: 12px;
+}
+
+.etl-sb-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(42,36,28,0.06);
+  text-decoration: none;
+  color: var(--ink-soft);
+  font-size: 13px;
+  transition: color 0.12s;
+  gap: 8px;
+}
+.etl-sb-row:hover, .etl-sb-row.active { color: var(--ochre); }
+.etl-sb-row.active .etl-sb-name { font-weight: 500; }
+
+.etl-sb-icon {
+  width: 18px;
+  text-align: center;
+  font-size: 11px;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+.etl-sb-name { flex: 1; }
+.etl-sb-count {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--mute);
+  background: rgba(42,36,28,0.06);
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.etl-sb-all {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ochre);
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .etl-wrap { grid-template-columns: 1fr; }
+  .etl-sidebar { position: static; display: flex; gap: 24px; flex-wrap: wrap; }
+  .etl-sb-block { flex: 1; min-width: 160px; margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .ev-timeline-section { padding: 24px 24px 40px; }
+  .etl-day { flex-direction: column; gap: 0; }
+  .etl-day-heading { width: auto; padding: 12px 0 6px; }
+  .etl-day-rows { border-left: none; padding-left: 0; }
+}
