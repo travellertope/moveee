@@ -315,10 +315,10 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       // Template-specific fields
       if (directoryEntry) {
         payload.linked_directory_id = directoryEntry.id;
+        payload.location_name = directoryEntry.title || "";
       }
       if (template === "hidden-gem") {
         payload.star_rating = starRating;
-        payload.location_name = directoryEntry?.title || "";
       }
       if (template === "food-review") {
         payload.food_dish_name = foodDishName;
@@ -326,7 +326,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         payload.food_rating_taste = foodTaste;
         payload.food_rating_value = foodValue;
         payload.food_rating_vibe = foodVibe;
-        payload.location_name = directoryEntry?.title || "";
       }
       if (template === "poll") {
         payload.poll_options = pollOptions.filter(o => o.trim()).map(text => ({ text }));

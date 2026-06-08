@@ -349,7 +349,7 @@ export default function FeedCard({
                   )}
                   {item.templateType === "cultural-take" && (
                     <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6b48a8", background: "rgba(107,72,168,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
-                      Cultural Take
+                      Take{item.locationName ? ` · ${item.locationName}` : ""}
                     </span>
                   )}
                   {item.templateType === "food-review" && (
