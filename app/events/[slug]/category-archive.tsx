@@ -1,68 +1,56 @@
 import Link from "next/link";
 import { getEventsWithFallback } from "@/lib/wp";
-import EventCard from "../components/EventCard";
-import DiscoveredEventRow from "../components/DiscoveredEventRow";
+import EventTimeline from "../components/EventTimeline";
 
-interface CategoryInfo {
-  name: string;
-  icon: string;
-  desc: string;
-}
+interface CategoryInfo { name: string; icon: string; desc: string }
 
-function isEventPast(event: any): boolean {
-  const checkDate = event.endDate || event.eventDate;
-  if (!checkDate) return false;
-  const d = new Date(checkDate);
-  if (isNaN(d.getTime())) return false;
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  return d < today;
-}
+const ALL_CITIES = [
+  { slug: "lagos",    name: "Lagos",    country: "Nigeria" },
+  { slug: "london",   name: "London",   country: "UK" },
+  { slug: "accra",    name: "Accra",    country: "Ghana" },
+  { slug: "nairobi",  name: "Nairobi",  country: "Kenya" },
+  { slug: "new-york", name: "New York", country: "USA" },
+  { slug: "paris",    name: "Paris",    country: "France" },
+];
 
-function fmtShort(raw?: string): string {
-  if (!raw) return "TBA";
-  const d = new Date(raw);
-  return isNaN(d.getTime()) ? "TBA" : d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
+const ALL_CATEGORIES = [
+  { slug: "music",       name: "Music",       icon: "♪" },
+  { slug: "film",        name: "Film",        icon: "◉" },
+  { slug: "visual-arts", name: "Visual Arts", icon: "◈" },
+  { slug: "fashion",     name: "Fashion",     icon: "✦" },
+  { slug: "food",        name: "Food",        icon: "◆" },
+  { slug: "literature",  name: "Literature",  icon: "▬" },
+  { slug: "design",      name: "Design",      icon: "◻" },
+  { slug: "performance", name: "Performance", icon: "★" },
+  { slug: "community",   name: "Community",   icon: "◇" },
+  { slug: "tech",        name: "Tech",        icon: "○" },
+];
 
-function fmtDiscRow(raw?: string): string {
-  if (!raw) return "TBA";
-  const d = new Date(raw);
-  return isNaN(d.getTime()) ? "TBA" : d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
-
-export default async function CategoryArchive({
-  slug,
-  categoryInfo,
-}: {
-  slug: string;
-  categoryInfo: CategoryInfo;
-}) {
+export default async function CategoryArchive({ slug, categoryInfo }: { slug: string; categoryInfo: CategoryInfo }) {
   let allEvents: any[] = [];
-  try {
-    allEvents = await getEventsWithFallback(100);
-  } catch { /* CMS unreachable */ }
+  try { allEvents = await getEventsWithFallback(100); } catch { /* CMS unreachable */ }
 
   const matchesCategory = (event: any): boolean => {
     const nodes: Array<{ name: string; slug: string }> = event.cultureInterests?.nodes ?? [];
     return nodes.some(
-      (n) =>
-        n.slug === slug ||
-        n.name.toLowerCase() === categoryInfo.name.toLowerCase() ||
-        n.slug.includes(slug) ||
-        slug.includes(n.slug)
+      (n) => n.slug === slug || n.name.toLowerCase() === categoryInfo.name.toLowerCase() ||
+             n.slug.includes(slug) || slug.includes(n.slug)
     );
   };
 
   const upcoming = allEvents
-    .filter((e) => !isEventPast(e) && matchesCategory(e))
-    .sort(
-      (a, b) =>
-        new Date(a.eventDate || a.date || 0).getTime() -
-        new Date(b.eventDate || b.date || 0).getTime()
+    .filter((e) => matchesCategory(e))
+    .sort((a, b) =>
+      new Date(a.eventDate || a.date || 0).getTime() -
+      new Date(b.eventDate || b.date || 0).getTime()
     );
 
-  const curated = upcoming.filter((e) => !e.isAiGenerated);
-  const discovered = upcoming.filter((e) => e.isAiGenerated);
+  const sidebarCities = ALL_CITIES.map((c) => ({
+    ...c,
+    count: allEvents.filter((e) =>
+      `${e.city ?? ""} ${e.location ?? ""}`.toLowerCase().includes(c.name.toLowerCase())
+    ).length,
+  })).filter((c) => c.count > 0);
 
   return (
     <div className="ev-archive-page">
@@ -77,62 +65,14 @@ export default async function CategoryArchive({
         </div>
       </div>
 
-      <div className="ev-archive-body">
-        {upcoming.length === 0 ? (
-          <p className="ev-archive-empty">No upcoming {categoryInfo.name.toLowerCase()} events right now — check back soon.</p>
-        ) : (
-          <>
-            {curated.length > 0 && (
-              <div className="ev-archive-curated">
-                <div className="ev-archive-section-label">Curated</div>
-                <div className="ev-cat-grid">
-                  {curated.map((event) => {
-                    const cat = Array.isArray(event.cultureInterests?.nodes) && event.cultureInterests.nodes.length > 0
-                      ? event.cultureInterests.nodes[0].name : categoryInfo.name;
-                    return (
-                      <EventCard
-                        key={event.id}
-                        slug={event.slug}
-                        title={event.title}
-                        date={fmtShort(event.eventDate || event.date)}
-                        location={event.city || event.location || ""}
-                        time={event.openingHours || ""}
-                        category={cat}
-                        image={event.featuredImage?.node?.sourceUrl || event.eventImageUrl}
-                        status="upcoming"
-                        tags={["RSVP"]}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {discovered.length > 0 && (
-              <div className="ev-archive-discovered">
-                <div className="ev-archive-section-label">Discovered</div>
-                <div className="disc-list">
-                  {discovered.map((event) => {
-                    const cat = Array.isArray(event.cultureInterests?.nodes) && event.cultureInterests.nodes.length > 0
-                      ? event.cultureInterests.nodes[0].name : "";
-                    return (
-                      <DiscoveredEventRow
-                        key={event.id}
-                        slug={event.slug}
-                        title={event.title}
-                        date={fmtDiscRow(event.eventDate || event.date)}
-                        city={event.city || ""}
-                        location={event.location || ""}
-                        category={cat}
-                        ticketingUrl={event.ticketingUrl}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </>
-        )}
+      <div className="ev-timeline-section">
+        <EventTimeline
+          events={upcoming}
+          sidebarCities={sidebarCities}
+          sidebarCategories={ALL_CATEGORIES}
+          activeCategorySlug={slug}
+          emptyMessage={`No upcoming ${categoryInfo.name.toLowerCase()} events right now — check back soon.`}
+        />
       </div>
 
       <div className="ev-archive-footer">

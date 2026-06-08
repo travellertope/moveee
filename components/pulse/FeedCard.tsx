@@ -688,6 +688,11 @@ export default function FeedCard({
 
         {/* Body */}
         <Link href={item.href} style={{ textDecoration: "none", display: "block" }}>
+          {item.image && (
+            <div style={{ width: "100%", maxHeight: "220px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8" }}>
+              <img src={item.image} alt={item.title} style={{ width: "100%", height: "220px", objectFit: "cover", display: "block" }} loading="lazy" />
+            </div>
+          )}
           <h3 style={{
             color: "#14110d",
             fontFamily: "var(--font-fraunces), serif",
@@ -710,13 +715,12 @@ export default function FeedCard({
           )}
         </Link>
 
-        {/* Internal link card */}
+        {/* Internal link card — image already shown above so omit it here */}
         <InternalLinkCard
           href={item.href}
           label="Moveee Happenings"
           title={decodeHtml(item.title)}
           description={item.excerpt}
-          image={item.image}
         />
       </article>
     );

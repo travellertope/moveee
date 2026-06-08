@@ -1,43 +1,37 @@
 import Link from "next/link";
 import { getEventsWithFallback } from "@/lib/wp";
-import DiscoveredEventRow from "../components/DiscoveredEventRow";
-import EventCard from "../components/EventCard";
+import EventTimeline from "../components/EventTimeline";
 
-interface CityInfo {
-  name: string;
-  country: string;
-}
+interface CityInfo { name: string; country: string }
 
-function isEventPast(event: any): boolean {
-  const checkDate = event.endDate || event.eventDate;
-  if (!checkDate) return false;
-  const d = new Date(checkDate);
-  if (isNaN(d.getTime())) return false;
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  return d < today;
-}
+const CATEGORIES = [
+  { slug: "music",       name: "Music",       icon: "♪" },
+  { slug: "film",        name: "Film",        icon: "◉" },
+  { slug: "visual-arts", name: "Visual Arts", icon: "◈" },
+  { slug: "fashion",     name: "Fashion",     icon: "✦" },
+  { slug: "food",        name: "Food",        icon: "◆" },
+  { slug: "literature",  name: "Literature",  icon: "▬" },
+  { slug: "design",      name: "Design",      icon: "◻" },
+  { slug: "performance", name: "Performance", icon: "★" },
+  { slug: "community",   name: "Community",   icon: "◇" },
+  { slug: "tech",        name: "Tech",        icon: "○" },
+];
 
-function fmtDay(raw?: string): string {
-  if (!raw) return "TBA";
-  const d = new Date(raw);
-  return isNaN(d.getTime()) ? "TBA" : d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-}
-
-function fmtShort(raw?: string): string {
-  if (!raw) return "TBA";
-  const d = new Date(raw);
-  return isNaN(d.getTime()) ? "TBA" : d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
+const ALL_CITIES = [
+  { slug: "lagos",    name: "Lagos",    country: "Nigeria" },
+  { slug: "london",   name: "London",   country: "UK" },
+  { slug: "accra",    name: "Accra",    country: "Ghana" },
+  { slug: "nairobi",  name: "Nairobi",  country: "Kenya" },
+  { slug: "new-york", name: "New York", country: "USA" },
+  { slug: "paris",    name: "Paris",    country: "France" },
+];
 
 export default async function CityArchive({ slug, cityInfo }: { slug: string; cityInfo: CityInfo }) {
   let allEvents: any[] = [];
-  try {
-    allEvents = await getEventsWithFallback(100);
-  } catch { /* CMS unreachable */ }
+  try { allEvents = await getEventsWithFallback(100); } catch { /* CMS unreachable */ }
 
   const cityEvents = allEvents
     .filter((e) => {
-      if (isEventPast(e)) return false;
       const haystack = `${e.city ?? ""} ${e.location ?? ""}`.toLowerCase();
       return haystack.includes(cityInfo.name.toLowerCase());
     })
@@ -46,14 +40,12 @@ export default async function CityArchive({ slug, cityInfo }: { slug: string; ci
       new Date(b.eventDate || b.date || 0).getTime()
     );
 
-  // Group by date string
-  const dayMap = new Map<string, any[]>();
-  for (const e of cityEvents) {
-    const key = fmtDay(e.eventDate || e.date);
-    if (!dayMap.has(key)) dayMap.set(key, []);
-    dayMap.get(key)!.push(e);
-  }
-  const grouped = Array.from(dayMap.entries());
+  const sidebarCities = ALL_CITIES.map((c) => ({
+    ...c,
+    count: allEvents.filter((e) =>
+      `${e.city ?? ""} ${e.location ?? ""}`.toLowerCase().includes(c.name.toLowerCase())
+    ).length,
+  })).filter((c) => c.count > 0);
 
   return (
     <div className="ev-archive-page">
@@ -70,39 +62,14 @@ export default async function CityArchive({ slug, cityInfo }: { slug: string; ci
         </div>
       </div>
 
-      <div className="ev-archive-body">
-        {grouped.length === 0 ? (
-          <p className="ev-archive-empty">No upcoming events in {cityInfo.name} right now — check back soon.</p>
-        ) : (
-          grouped.map(([dateStr, events]) => (
-            <div key={dateStr} className="ev-date-group">
-              <div className="ev-date-group-label">{dateStr}</div>
-              <div className="ev-date-group-cards">
-                {events.map((event) => {
-                  const cat = Array.isArray(event.cultureInterests?.nodes) && event.cultureInterests.nodes.length > 0
-                    ? event.cultureInterests.nodes[0].name
-                    : "Culture";
-                  const shortDate = fmtShort(event.eventDate || event.date);
-                  const [d, m] = shortDate.split(" ");
-                  return (
-                    <EventCard
-                      key={event.id}
-                      slug={event.slug}
-                      title={event.title}
-                      date={shortDate}
-                      location={event.location || event.city || cityInfo.name}
-                      time={event.openingHours || ""}
-                      category={cat}
-                      image={event.featuredImage?.node?.sourceUrl || event.eventImageUrl}
-                      status={event.isAiGenerated ? "upcoming" : (event.isFeatured ? "upcoming" : "upcoming")}
-                      tags={event.isAiGenerated ? [] : ["RSVP"]}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          ))
-        )}
+      <div className="ev-timeline-section">
+        <EventTimeline
+          events={cityEvents}
+          sidebarCities={sidebarCities}
+          sidebarCategories={CATEGORIES}
+          activeCitySlug={slug}
+          emptyMessage={`No upcoming events in ${cityInfo.name} right now — check back soon.`}
+        />
       </div>
 
       <div className="ev-archive-footer">

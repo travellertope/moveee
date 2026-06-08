@@ -19,6 +19,7 @@ class Culture_Post_Types {
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
         add_action( 'init', array( __CLASS__, 'register_as_told_to_meta' ) );
         add_action( 'rest_after_insert_post', array( __CLASS__, 'save_as_told_to_rest' ), 10, 2 );
+        add_filter( 'rest_culture_event_query', array( __CLASS__, 'exclude_expired_events' ), 10, 2 );
 
         // Issue taxonomy admin form fields
         add_action( 'issue_add_form_fields',  array( __CLASS__, 'issue_add_form_fields' ) );
@@ -1220,5 +1221,66 @@ class Culture_Post_Types {
         if ( isset( $_POST['issue_cover_image_url'] ) ) {
             update_term_meta( $term_id, 'issue_cover_image_url', esc_url_raw( $_POST['issue_cover_image_url'] ) );
         }
+    }
+
+    /**
+     * Exclude expired culture_event posts from the WP REST API.
+     * An event is expired when today is past its end_date, or past its
+     * event_date if no end_date is set.
+     */
+    public static function exclude_expired_events( $args, $request ) {
+        $today = gmdate( 'Y-m-d' );
+
+        $expiry_clause = array(
+            'relation' => 'OR',
+            // Has an end_date that is today or in the future
+            array(
+                'key'     => '_culture_event_end_date',
+                'value'   => $today,
+                'compare' => '>=',
+                'type'    => 'DATE',
+            ),
+            // No end_date set — fall back to event_date being today or future
+            array(
+                'relation' => 'AND',
+                array(
+                    'key'     => '_culture_event_end_date',
+                    'value'   => '',
+                    'compare' => 'IN',
+                ),
+                array(
+                    'key'     => '_culture_event_date',
+                    'value'   => $today,
+                    'compare' => '>=',
+                    'type'    => 'DATE',
+                ),
+            ),
+            // end_date meta doesn't exist at all — use event_date
+            array(
+                'relation' => 'AND',
+                array(
+                    'key'     => '_culture_event_end_date',
+                    'compare' => 'NOT EXISTS',
+                ),
+                array(
+                    'key'     => '_culture_event_date',
+                    'value'   => $today,
+                    'compare' => '>=',
+                    'type'    => 'DATE',
+                ),
+            ),
+        );
+
+        if ( empty( $args['meta_query'] ) ) {
+            $args['meta_query'] = array( $expiry_clause );
+        } else {
+            $args['meta_query'] = array(
+                'relation' => 'AND',
+                $args['meta_query'],
+                $expiry_clause,
+            );
+        }
+
+        return $args;
     }
 }
