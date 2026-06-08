@@ -16,6 +16,7 @@ export interface FeedItem {
   pubDate:     Date | null;
   source:      string;
   sourceUrl:   string; // feed homepage
+  imageUrl?:   string; // first image found in the item (media:content, enclosure, or <img>)
 }
 
 interface FeedDef {
@@ -129,6 +130,20 @@ function parseDate(raw: string): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+function getImageUrl(raw: string): string | undefined {
+  // <media:content url="..."> or <media:thumbnail url="...">
+  const media = raw.match(/<media:(?:content|thumbnail)[^>]+url=["']([^"']+)["']/i);
+  if (media) return media[1];
+  // <enclosure url="..." type="image/...">
+  const encl = raw.match(/<enclosure[^>]+type=["']image\/[^"']*["'][^>]+url=["']([^"']+)["']/i)
+            ?? raw.match(/<enclosure[^>]+url=["']([^"']+)["'][^>]+type=["']image\/[^"']*["']/i);
+  if (encl) return encl[1];
+  // first <img src="..."> in the description/content
+  const img = raw.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (img) return img[1];
+  return undefined;
+}
+
 function parseItems(xml: string, feedDef: FeedDef): FeedItem[] {
   // Split on <item> or <entry> (Atom)
   const itemRegex = /(<item[\s>][\s\S]*?<\/item>|<entry[\s>][\s\S]*?<\/entry>)/gi;
@@ -148,9 +163,10 @@ function parseItems(xml: string, feedDef: FeedDef): FeedItem[] {
                     getTagContent(raw, "updated") ||
                     getTagContent(raw, "dc:date");
     const pubDate = parseDate(dateRaw);
+    const imageUrl = getImageUrl(raw);
 
     if (!title || !link) continue;
-    items.push({ title, link, description: desc, pubDate, source: feedDef.source, sourceUrl: feedDef.home });
+    items.push({ title, link, description: desc, pubDate, source: feedDef.source, sourceUrl: feedDef.home, imageUrl });
   }
   return items;
 }

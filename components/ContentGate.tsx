@@ -52,7 +52,7 @@ export default function ContentGate({ accessLevel, isLoggedIn, callbackUrl = "/m
     tierLabel = "Connect Pro";
     heading = "You're one step away.";
     body =
-      "This piece is part of our Connect Pro archive — extended reads, member events, and dual chapter access for people who want to go further with The Moveee community.";
+      "This piece is part of our Connect Pro archive — extended reads, exclusive member events, and long-form content for people who want to go further with The Moveee community.";
     primaryBtn = { label: "Upgrade to Connect Pro →", href: "/connect" };
     secondaryBtn = null;
     footnote = (

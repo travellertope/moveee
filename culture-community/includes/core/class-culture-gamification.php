@@ -36,16 +36,16 @@ class Culture_Gamification {
         ),
         'explorer' => array(
             'name'        => 'Explorer',
-            'description' => 'Attended events in 3 different chapters.',
+            'description' => 'Attended events in 3 different cities.',
             'icon'        => 'dashicons-admin-site',
-            'trigger'     => 'chapter_count',
+            'trigger'     => 'city_count',
             'threshold'   => 3,
         ),
         'globetrotter' => array(
             'name'        => 'Globetrotter',
-            'description' => 'Attended events in 10 different chapters.',
+            'description' => 'Attended events in 10 different cities.',
             'icon'        => 'dashicons-admin-site-alt3',
-            'trigger'     => 'chapter_count',
+            'trigger'     => 'city_count',
             'threshold'   => 10,
         ),
         'commentator' => array(
@@ -313,12 +313,12 @@ class Culture_Gamification {
                     $user_id
                 ) );
 
-            case 'chapter_count':
+            case 'city_count':
                 return (int) $wpdb->get_var( $wpdb->prepare(
                     "SELECT COUNT(DISTINCT pm.meta_value)
                      FROM {$table} a
-                     INNER JOIN {$wpdb->postmeta} pm ON a.event_id = pm.post_id AND pm.meta_key = '_culture_chapter_id'
-                     WHERE a.user_id = %d AND a.status = 'checked_in'",
+                     INNER JOIN {$wpdb->postmeta} pm ON a.event_id = pm.post_id AND pm.meta_key = '_culture_event_city'
+                     WHERE a.user_id = %d AND a.status = 'checked_in' AND pm.meta_value != ''",
                     $user_id
                 ) );
 

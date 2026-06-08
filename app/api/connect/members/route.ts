@@ -38,7 +38,6 @@ export async function GET(request: NextRequest) {
           city: m.city ?? "",
           countryOfResidence: m.country_of_residence ?? m.countryOfResidence ?? "",
           tier: m.tier ?? "citizen",
-          chapter: m.primary_chapter?.name ?? m.primaryChapter?.name ?? "",
           bio: m.directory_bio ?? "",
           disciplines: m.directory_disciplines
             ? String(m.directory_disciplines).split(",").map((s: string) => s.trim()).filter(Boolean)

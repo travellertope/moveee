@@ -13,14 +13,12 @@ class Culture_Ajax {
         // Authenticated AJAX handlers.
         add_action( 'wp_ajax_culture_rsvp', array( __CLASS__, 'handle_rsvp' ) );
         add_action( 'wp_ajax_culture_react', array( __CLASS__, 'handle_reaction' ) );
-        add_action( 'wp_ajax_culture_set_chapters', array( __CLASS__, 'handle_set_chapters' ) );
         add_action( 'wp_ajax_culture_paragraph_comment', array( __CLASS__, 'handle_paragraph_comment' ) );
         add_action( 'wp_ajax_culture_generate_qr', array( __CLASS__, 'handle_generate_qr' ) );
 
         // Unauthenticated handlers - return login prompt.
         add_action( 'wp_ajax_nopriv_culture_rsvp', array( __CLASS__, 'require_login' ) );
         add_action( 'wp_ajax_nopriv_culture_react', array( __CLASS__, 'require_login' ) );
-        add_action( 'wp_ajax_nopriv_culture_set_chapters', array( __CLASS__, 'require_login' ) );
         add_action( 'wp_ajax_nopriv_culture_paragraph_comment', array( __CLASS__, 'require_login' ) );
         add_action( 'wp_ajax_nopriv_culture_generate_qr', array( __CLASS__, 'require_login' ) );
     }
@@ -66,15 +64,6 @@ class Culture_Ajax {
                 'message'      => __( 'Physical events require a Patron membership. Upgrade to attend!', 'culture-community' ),
                 'upgrade_required' => true,
             ) );
-        }
-
-        // Chapter validation.
-        $event_chapter     = get_post_meta( $event_id, '_culture_chapter_id', true );
-        $primary_chapter   = get_user_meta( $user_id, '_culture_primary_chapter_id', true );
-        $secondary_chapter = get_user_meta( $user_id, '_culture_secondary_chapter_id', true );
-
-        if ( $event_chapter && $event_chapter != $primary_chapter && $event_chapter != $secondary_chapter ) {
-            wp_send_json_error( array( 'message' => __( 'This event is not in your chapter.', 'culture-community' ) ) );
         }
 
         // Capacity check.
@@ -166,56 +155,6 @@ class Culture_Ajax {
         }
 
         wp_send_json_success( array( 'counts' => $counts ) );
-    }
-
-    /**
-     * Handle chapter selection (primary/secondary).
-     */
-    public static function handle_set_chapters() {
-        check_ajax_referer( 'culture_nonce', 'nonce' );
-
-        if ( ! is_user_logged_in() ) {
-            wp_send_json_error( array( 'message' => __( 'Please log in.', 'culture-community' ) ) );
-        }
-
-        $user_id   = get_current_user_id();
-        $primary   = isset( $_POST['primary_chapter'] ) ? absint( $_POST['primary_chapter'] ) : 0;
-        $secondary = isset( $_POST['secondary_chapter'] ) ? absint( $_POST['secondary_chapter'] ) : 0;
-
-        if ( ! $primary ) {
-            wp_send_json_error( array( 'message' => __( 'Please select a primary chapter.', 'culture-community' ) ) );
-        }
-
-        // Validate chapter exists.
-        $chapter = get_post( $primary );
-        if ( ! $chapter || 'culture_chapter' !== $chapter->post_type ) {
-            wp_send_json_error( array( 'message' => __( 'Invalid chapter.', 'culture-community' ) ) );
-        }
-
-        update_user_meta( $user_id, '_culture_primary_chapter_id', $primary );
-
-        // Secondary chapter requires Patron tier.
-        if ( $secondary ) {
-            $tier = get_user_meta( $user_id, '_culture_membership_tier', true );
-            if ( 'patron' !== $tier ) {
-                wp_send_json_error( array(
-                    'message'          => __( 'Secondary chapter requires Patron tier.', 'culture-community' ),
-                    'upgrade_required' => true,
-                ) );
-            }
-            if ( $secondary === $primary ) {
-                wp_send_json_error( array( 'message' => __( 'Secondary chapter must differ from primary.', 'culture-community' ) ) );
-            }
-            $sec_chapter = get_post( $secondary );
-            if ( ! $sec_chapter || 'culture_chapter' !== $sec_chapter->post_type ) {
-                wp_send_json_error( array( 'message' => __( 'Invalid secondary chapter.', 'culture-community' ) ) );
-            }
-            update_user_meta( $user_id, '_culture_secondary_chapter_id', $secondary );
-        } else {
-            delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
-        }
-
-        wp_send_json_success( array( 'message' => __( 'Chapters updated.', 'culture-community' ) ) );
     }
 
     /**

@@ -20,7 +20,7 @@ const NEWSLETTERS = [
   {
     id: "events",
     name: "Events & Experiences",
-    desc: "As needed — first access to new events and exclusive chapter invites.",
+    desc: "As needed — first access to new events and exclusive member invites.",
   },
 ];
 

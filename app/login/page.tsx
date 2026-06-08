@@ -45,7 +45,7 @@ function LoginForm() {
         <p style={styles.subheading}>
           {isNewMember
             ? "Your account is ready. Sign in to access your dashboard and member perks."
-            : "Welcome back. Sign in to access your chapter and member perks."}
+            : "Welcome back. Sign in to access your community and member perks."}
         </p>
 
         <form onSubmit={handleSubmit} noValidate>

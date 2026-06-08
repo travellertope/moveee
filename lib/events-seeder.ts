@@ -3,7 +3,7 @@
  * (auto-seed) and the manual admin route (admin-seed).
  */
 
-import { evaluateAndExtractEvents, enrichEventContent, SerperResult } from "@/lib/gemini";
+import { evaluateAndExtractEvents, SerperResult, EventStub } from "@/lib/gemini";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
@@ -42,18 +42,67 @@ export async function searchSerper(query: string, gl: string, hl: string): Promi
     if (!res.ok) return [];
     const data = await res.json();
     return (data.organic ?? []).map((r: any) => ({
-      title:   String(r.title   ?? ""),
-      link:    String(r.link    ?? ""),
-      snippet: String(r.snippet ?? ""),
-      date:    String(r.date    ?? ""),
+      title:    String(r.title    ?? ""),
+      link:     String(r.link     ?? ""),
+      snippet:  String(r.snippet  ?? ""),
+      date:     String(r.date     ?? ""),
+      imageUrl: r.imageUrl ? String(r.imageUrl) : undefined,
     }));
   } catch {
     return [];
   }
 }
 
+/**
+ * Cross-reference stubs against Serper results by title similarity.
+ * Attaches the source link as attribution when Gemini omitted it,
+ * and the result thumbnail as image_url. Neither is stored on our servers.
+ */
+function attachSerperData(stubs: EventStub[], serperResults: SerperResult[]): EventStub[] {
+  return stubs.map((stub) => {
+    const words = stub.title.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+    const match = serperResults.find((r) => {
+      const rt = r.title.toLowerCase() + " " + r.snippet.toLowerCase();
+      return words.filter((w) => rt.includes(w)).length >= Math.min(2, words.length);
+    });
+    if (!match) return stub;
+    return {
+      ...stub,
+      attribution: (stub.attribution && stub.attribution.startsWith("http"))
+        ? stub.attribution
+        : match.link,
+      image_url: stub.image_url || match.imageUrl || undefined,
+    };
+  });
+}
+
+/**
+ * Returns false for bare homepage/root URLs like https://www.eventbrite.com/
+ * so we never link to a generic site — only to specific event pages.
+ */
+function isDeepEventUrl(url: string): boolean {
+  if (!url || !url.startsWith("http")) return false;
+  try {
+    const { pathname } = new URL(url);
+    // Reject if the path has fewer than 2 meaningful segments (i.e. it's a root or one-level page)
+    const parts = pathname.replace(/\/$/, "").split("/").filter(Boolean);
+    return parts.length >= 2;
+  } catch {
+    return false;
+  }
+}
+
+export function normalizeEventTitle(title: string): string {
+  return title.toLowerCase().trim()
+    .replace(/\b(tickets?|saturday|sunday|monday|tuesday|wednesday|thursday|friday|buy now|register|free)\b/g, "")
+    .replace(/\b20\d{2}\b/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function buildDedupKey(title: string, eventDate: string, location: string): string {
-  return `${title.toLowerCase().trim()}|${eventDate}|${location.toLowerCase().trim()}`;
+  return `${normalizeEventTitle(title)}|${eventDate}|${location.toLowerCase().trim()}`;
 }
 
 export async function submitEvent(
@@ -72,9 +121,11 @@ export async function submitEvent(
       location:      stub.location,
       city:          stub.city,
       admission:     stub.admission,
-      ticketing_url: stub.ticketing_url,
+      ticketing_url: isDeepEventUrl(stub.ticketing_url) ? stub.ticketing_url : "",
       tagline:       stub.tagline,
       attribution:   stub.attribution,
+      source_url:    stub.attribution,
+      image_url:     stub.image_url || "",
       interests:     stub.interests,
       ai_generated:  true,
       auto_publish:  true,
@@ -129,6 +180,9 @@ export async function seedCities(
       continue;
     }
 
+    // Attach source URLs and thumbnail images from the Serper results.
+    stubs = attachSerperData(stubs, allRaw);
+
     detail[city.name].found = stubs.length;
 
     for (const stub of stubs) {
@@ -143,15 +197,8 @@ export async function seedCities(
       seenThisRun.add(key);
 
       try {
-        // Enrich content with deeper Gemini research before submitting.
-        const richContent = await enrichEventContent(
-          stub.title,
-          stub.city || city.name,
-          stub.event_date,
-          stub.excerpt || stub.content
-        );
-        const enrichedStub = { ...stub, content: richContent };
-        const r = await submitEvent(enrichedStub);
+        // Use the Serper snippet content directly — no Gemini enrichment needed.
+        const r = await submitEvent(stub);
         if (r.success)        { detail[city.name].submitted++; totalSubmitted++; }
         else if (r.duplicate) { detail[city.name].skipped++; }
       } catch (err: any) {

@@ -332,29 +332,6 @@
 }
 .mem-upgrade-btn:hover { background: var(--ochre-deep); }
 
-/* ── Chapter card ── */
-.mem-chapter-item {
-  padding: 14px 0;
-  border-bottom: 1px solid rgba(42,36,28,.08);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.mem-chapter-item:last-of-type { border-bottom: none; }
-.mem-chapter-role {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px;
-  letter-spacing: .15em;
-  text-transform: uppercase;
-  color: var(--ochre);
-}
-.mem-chapter-name {
-  font-family: 'Fraunces', serif;
-  font-size: 17px;
-  font-weight: 300;
-  color: var(--ink);
-}
-
 /* ── Quick links card ── */
 .mem-links-card { gap: 0; padding: 0; overflow: hidden; }
 .mem-link {

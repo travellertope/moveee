@@ -130,13 +130,6 @@ class Culture_REST_API {
             ),
         ) );
 
-        // Chapter list for the Next.js registration form.
-        register_rest_route( 'culture/v1', '/chapters', array(
-            'methods'             => 'GET',
-            'callback'            => array( __CLASS__, 'handle_get_chapters' ),
-            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
-        ) );
-
         // Login endpoint — validates WP credentials, returns user profile.
         register_rest_route( 'culture/v1', '/login', array(
             'methods'             => 'POST',
@@ -297,18 +290,6 @@ class Culture_REST_API {
                     'type'              => 'string',
                     'sanitize_callback' => 'sanitize_key',
                     'default'           => 'citizen',
-                ),
-                'primary_chapter' => array(
-                    'required'          => false,
-                    'type'              => 'integer',
-                    'sanitize_callback' => 'absint',
-                    'default'           => 0,
-                ),
-                'secondary_chapter' => array(
-                    'required'          => false,
-                    'type'              => 'integer',
-                    'sanitize_callback' => 'absint',
-                    'default'           => 0,
                 ),
                 'referral_code' => array(
                     'required'          => false,
@@ -820,19 +801,6 @@ class Culture_REST_API {
             );
         }
 
-        // Check if user belongs to this event's chapter.
-        $event_chapter   = get_post_meta( $event_id, '_culture_chapter_id', true );
-        $primary_chapter = get_user_meta( $user_id, '_culture_primary_chapter_id', true );
-        $secondary_chapter = get_user_meta( $user_id, '_culture_secondary_chapter_id', true );
-
-        if ( $event_chapter && $event_chapter != $primary_chapter && $event_chapter != $secondary_chapter ) {
-            return new WP_Error(
-                'wrong_chapter',
-                __( 'This event is not in your chapter.', 'culture-community' ),
-                array( 'status' => 403 )
-            );
-        }
-
         $table = $wpdb->prefix . 'culture_attendance';
 
         // Check for duplicate check-in.
@@ -1046,26 +1014,6 @@ class Culture_REST_API {
      *
      * @return WP_REST_Response
      */
-    public static function handle_get_chapters( $request ) {
-        $posts = get_posts( array(
-            'post_type'      => 'culture_chapter',
-            'posts_per_page' => -1,
-            'orderby'        => 'title',
-            'order'          => 'ASC',
-            'post_status'    => 'publish',
-        ) );
-
-        $chapters = array_map( function( $p ) {
-            return array(
-                'id'   => $p->ID,
-                'name' => $p->post_title,
-                'slug' => $p->post_name,
-            );
-        }, $posts );
-
-        return rest_ensure_response( $chapters );
-    }
-
     /**
      * Authenticate a user via WordPress credentials.
      * Returns a minimal user profile — never the password hash.
@@ -1111,8 +1059,6 @@ class Culture_REST_API {
         $city       = $request->get_param( 'city' ) ?: '';
         $occupation = $request->get_param( 'occupation' ) ?: '';
         $tier       = $request->get_param( 'tier' ) ?: 'citizen';
-        $primary   = (int) $request->get_param( 'primary_chapter' );
-        $secondary = (int) $request->get_param( 'secondary_chapter' );
         $referral  = $request->get_param( 'referral_code' ) ?: '';
         $plan_key  = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
 
@@ -1126,18 +1072,6 @@ class Culture_REST_API {
 
         if ( ! in_array( $tier, array( 'citizen', 'patron' ), true ) ) {
             $tier = 'citizen';
-        }
-
-        if ( 'citizen' === $tier ) {
-            $secondary = 0;
-        }
-
-        if ( $secondary && $secondary === $primary ) {
-            return new WP_Error(
-                'chapter_conflict',
-                __( 'Secondary chapter must differ from primary.', 'culture-community' ),
-                array( 'status' => 422 )
-            );
         }
 
         $user_id = wp_create_user( $username, $password, $email );
@@ -1176,13 +1110,6 @@ class Culture_REST_API {
         if ( $occupation ) {
             update_user_meta( $user_id, '_culture_occupation', sanitize_text_field( $occupation ) );
         }
-        if ( $primary ) {
-            update_user_meta( $user_id, '_culture_primary_chapter_id', $primary );
-        }
-        if ( $secondary ) {
-            update_user_meta( $user_id, '_culture_secondary_chapter_id', $secondary );
-        }
-
         // Connect Directory — opt-in by default on registration
         $dir_opt_in      = $request->get_param( 'directory_opt_in' ) ?: '1';
         $dir_disciplines = $request->get_param( 'directory_disciplines' ) ?: '';
@@ -1366,12 +1293,6 @@ class Culture_REST_API {
      * @return array
      */
     private static function user_profile( $user ) {
-        $primary_id   = (int) get_user_meta( $user->ID, '_culture_primary_chapter_id', true );
-        $secondary_id = (int) get_user_meta( $user->ID, '_culture_secondary_chapter_id', true );
-
-        $primary_name   = $primary_id   ? get_the_title( $primary_id )   : '';
-        $secondary_name = $secondary_id ? get_the_title( $secondary_id ) : '';
-
         $referral_code  = get_user_meta( $user->ID, '_culture_referral_code', true ) ?: '';
         $referral_count = 0;
         if ( $referral_code && class_exists( 'Culture_Referrals' ) ) {
@@ -1410,8 +1331,6 @@ class Culture_REST_API {
             'occupation'          => get_user_meta( $user->ID, '_culture_occupation', true ) ?: '',
             // Membership
             'tier'                => $tier,
-            'primary_chapter'     => array( 'id' => $primary_id, 'name' => $primary_name ),
-            'secondary_chapter'   => array( 'id' => $secondary_id, 'name' => $secondary_name ),
             // Gamification
             'points'              => (int) get_user_meta( $user->ID, '_culture_points', true ),
             'badges'              => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_badges( $user->ID ) : array(),
@@ -1491,35 +1410,6 @@ class Culture_REST_API {
         if ( $request->has_param( 'directory_opt_in' ) ) {
             $opt_in_val = $request->get_param( 'directory_opt_in' );
             update_user_meta( $user_id, '_culture_directory_opt_in', ( $opt_in_val === '1' || $opt_in_val === true ) ? '1' : '0' );
-        }
-
-        // Chapter updates — validate the chapter ID is a published culture_chapter post.
-        if ( $request->has_param( 'primary_chapter' ) ) {
-            $primary_id = absint( $request->get_param( 'primary_chapter' ) );
-            if ( $primary_id ) {
-                $chapter = get_post( $primary_id );
-                if ( $chapter && $chapter->post_type === 'culture_chapter' && $chapter->post_status === 'publish' ) {
-                    update_user_meta( $user_id, '_culture_primary_chapter_id', $primary_id );
-                }
-            } else {
-                delete_user_meta( $user_id, '_culture_primary_chapter_id' );
-            }
-        }
-
-        if ( $request->has_param( 'secondary_chapter' ) ) {
-            $secondary_id = absint( $request->get_param( 'secondary_chapter' ) );
-            $tier = get_user_meta( $user_id, '_culture_membership_tier', true ) ?: 'citizen';
-            if ( $tier === 'patron' && $secondary_id ) {
-                $chapter = get_post( $secondary_id );
-                if ( $chapter && $chapter->post_type === 'culture_chapter' && $chapter->post_status === 'publish' ) {
-                    $primary_id_current = (int) get_user_meta( $user_id, '_culture_primary_chapter_id', true );
-                    if ( $secondary_id !== $primary_id_current ) {
-                        update_user_meta( $user_id, '_culture_secondary_chapter_id', $secondary_id );
-                    }
-                }
-            } else {
-                delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
-            }
         }
 
         $updated_user = get_userdata( $user_id );
@@ -2407,16 +2297,6 @@ class Culture_REST_API {
         }
 
         $plan_key          = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
-        $primary_chapter   = (int) $request->get_param( 'primary_chapter' );
-        $secondary_chapter = (int) $request->get_param( 'secondary_chapter' );
-
-        // Save chapter selections if provided (important for upgrades where user picks new chapters).
-        if ( $primary_chapter ) {
-            update_user_meta( $user_id, '_culture_primary_chapter_id', $primary_chapter );
-        }
-        if ( $secondary_chapter ) {
-            update_user_meta( $user_id, '_culture_secondary_chapter_id', $secondary_chapter );
-        }
 
         $checkout_url = '';
 
@@ -2481,6 +2361,7 @@ class Culture_REST_API {
         $ticketing_url = esc_url_raw( $request->get_param( 'ticketing_url' ) );
         $tagline       = sanitize_text_field( $request->get_param( 'tagline' ) );
         $attribution   = esc_url_raw( $request->get_param( 'attribution' ) );
+        $image_url     = esc_url_raw( $request->get_param( 'image_url' ) );
         $interests        = (array) $request->get_param( 'interests' );
         $auto_publish     = (bool) $request->get_param( 'auto_publish' );
         $ai_generated_raw = $request->get_param( 'ai_generated' );
@@ -2492,8 +2373,15 @@ class Culture_REST_API {
             return new WP_Error( 'missing_fields', 'title and event_date are required.', array( 'status' => 400 ) );
         }
 
-        // Deduplication: hash of title + date + location.
-        $dedup_hash = md5( strtolower( trim( $title ) ) . '|' . $event_date . '|' . strtolower( trim( $location ) ) );
+        // Deduplication: hash of normalised title + date + location.
+        // Normalise title: lowercase, strip year numbers, strip noise words
+        // (tickets, saturday, sunday, etc.), collapse whitespace.
+        $norm_title = strtolower( trim( $title ) );
+        $norm_title = preg_replace( '/\b(tickets?|saturday|sunday|monday|tuesday|wednesday|thursday|friday|buy now|register|free)\b/', '', $norm_title );
+        $norm_title = preg_replace( '/\b20\d{2}\b/', '', $norm_title ); // strip years
+        $norm_title = preg_replace( '/[^a-z0-9\s]/', '', $norm_title ); // strip punctuation
+        $norm_title = preg_replace( '/\s+/', ' ', trim( $norm_title ) );
+        $dedup_hash = md5( $norm_title . '|' . $event_date . '|' . strtolower( trim( $location ) ) );
         $existing = get_posts( array(
             'post_type'      => 'culture_event',
             'post_status'    => array( 'publish', 'pending' ),
@@ -2535,6 +2423,7 @@ class Culture_REST_API {
         update_post_meta( $post_id, '_culture_ticketing_url',   $ticketing_url );
         update_post_meta( $post_id, '_culture_tagline',         $tagline );
         update_post_meta( $post_id, '_culture_attribution',     $attribution );
+        update_post_meta( $post_id, '_culture_event_image_url', $image_url );
         update_post_meta( $post_id, '_culture_is_featured',     '0' );
         update_post_meta( $post_id, '_culture_ai_generated',    $ai_generated ? '1' : '0' );
         update_post_meta( $post_id, '_culture_event_dedup_hash', $dedup_hash );
@@ -2714,8 +2603,6 @@ class Culture_REST_API {
 
         $members = array_map( function( $user ) {
             $tier             = get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen';
-            $primary_id       = (int) get_user_meta( $user->ID, '_culture_primary_chapter_id', true );
-            $primary_name     = $primary_id ? get_the_title( $primary_id ) : '';
             $disciplines_raw  = get_user_meta( $user->ID, '_culture_directory_disciplines', true ) ?: '';
 
             return array(
@@ -2725,7 +2612,6 @@ class Culture_REST_API {
                 'city'                   => get_user_meta( $user->ID, '_culture_city',                   true ) ?: '',
                 'country_of_residence'   => get_user_meta( $user->ID, '_culture_country_of_residence',   true ) ?: '',
                 'tier'                   => $tier,
-                'primary_chapter'        => array( 'id' => $primary_id, 'name' => $primary_name ),
                 'directory_bio'          => get_user_meta( $user->ID, '_culture_directory_bio',          true ) ?: '',
                 'directory_disciplines'  => $disciplines_raw,
                 'directory_instagram'    => get_user_meta( $user->ID, '_culture_directory_instagram',    true ) ?: '',
