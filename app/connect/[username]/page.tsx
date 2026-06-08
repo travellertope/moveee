@@ -92,9 +92,10 @@ function formatJoined(iso: string) {
 }
 
 export async function generateMetadata(
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ): Promise<Metadata> {
-  const profile = await getProfile(params.username);
+  const { username } = await params;
+  const profile = await getProfile(username);
   if (!profile) return { title: "Member not found | Moveee" };
 
   const repLabel = REP_TIER_LABELS[profile.reputation_tier] ?? "Member";
@@ -121,9 +122,10 @@ export async function generateMetadata(
 }
 
 export default async function PublicProfilePage(
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
-  const profile = await getProfile(params.username);
+  const { username } = await params;
+  const profile = await getProfile(username);
   if (!profile) notFound();
 
   const isPatron = profile.tier === "patron";
