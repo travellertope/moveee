@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { action, post_id } = await request.json();
+  const { action, post_id, credits, reputation } = await request.json();
 
   if (!action) {
     return NextResponse.json({ error: "Action is required" }, { status: 400 });
@@ -30,6 +30,8 @@ export async function POST(request: Request) {
         user_id: parseInt(user.id),
         action,
         post_id: post_id ? parseInt(post_id) : undefined,
+        credits: credits ?? undefined,
+        reputation: reputation ?? undefined,
       }),
     });
 

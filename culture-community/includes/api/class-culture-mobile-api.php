@@ -674,6 +674,8 @@ class Culture_Mobile_API {
 
         if ( class_exists( 'Culture_Gamification' ) ) {
             Culture_Gamification::award_points( $user_id, 'community_comment' );
+            // Check if the post has now crossed the validation threshold.
+            Culture_Gamification::check_post_threshold( $post_id );
         }
 
         $avatar = get_user_meta( $user_id, '_culture_avatar_url', true ) ?: '';
@@ -770,6 +772,11 @@ class Culture_Mobile_API {
 
         update_user_meta( $user_id, '_culture_liked_posts', $liked_ids );
         update_post_meta( $post_id, '_culture_like_count', $new_count );
+
+        // Check if post has crossed the validation threshold for credit earning.
+        if ( ! $already_liked && class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::check_post_threshold( $post_id );
+        }
 
         return rest_ensure_response( array(
             'liked' => ! $already_liked,

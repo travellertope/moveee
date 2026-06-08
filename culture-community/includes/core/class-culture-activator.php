@@ -23,6 +23,7 @@ class Culture_Activator {
         }
         self::seed_access_levels();
         self::seed_dir_types();
+        self::seed_interests();
         flush_rewrite_rules();
     }
 
@@ -63,6 +64,21 @@ class Culture_Activator {
 
         // Newsletter analytics tables.
         Culture_NL_Analytics::create_tables();
+
+        // Credit ledger table.
+        $ledger_table = $wpdb->prefix . 'culture_credit_ledger';
+        dbDelta( "CREATE TABLE {$ledger_table} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            type varchar(20) NOT NULL DEFAULT 'reputation',
+            amount int(11) NOT NULL DEFAULT 0,
+            source varchar(50) NOT NULL DEFAULT '',
+            source_id bigint(20) NOT NULL DEFAULT 0,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY user_source (user_id, source, source_id),
+            KEY user_created (user_id, created_at)
+        ) {$charset_collate};" );
 
         update_option( 'culture_db_version', CULTURE_VERSION );
     }
@@ -113,6 +129,44 @@ class Culture_Activator {
         foreach ( $terms as $slug => $name ) {
             if ( ! term_exists( $slug, 'culture_dir_type' ) ) {
                 wp_insert_term( $name, 'culture_dir_type', array( 'slug' => $slug ) );
+            }
+        }
+    }
+
+    /**
+     * Seed the canonical culture_interest taxonomy terms.
+     *
+     * These terms must exist before events, newsletters, or directory entries
+     * can be tagged with them (term_exists() guards block orphan term creation).
+     * Safe to call multiple times — skips terms that already exist.
+     */
+    public static function seed_interests() {
+        if ( ! taxonomy_exists( 'culture_interest' ) ) {
+            return;
+        }
+
+        $terms = array(
+            'fashion-streetwear' => 'Fashion & Streetwear',
+            'food-drink'         => 'Specialty Coffee & Dining',
+            'street-food'        => 'Street Food & Markets',
+            'nightlife'          => 'Nightlife & Bars',
+            'live-music'         => 'Live Music',
+            'music-production'   => 'Music Production',
+            'independent-film'   => 'Independent Film',
+            'visual-art'         => 'Visual Art',
+            'architecture'       => 'Architecture',
+            'photography'        => 'Photography',
+            'literature'         => 'Literature & Poetry',
+            'visual-design'      => 'Visual Design',
+            'tech-culture'       => 'Tech & Digital Culture',
+            'sport-wellness'     => 'Sport & Wellness',
+            'travel'             => 'Travel & Exploration',
+            'ideas'              => 'Ideas & Culture Theory',
+        );
+
+        foreach ( $terms as $slug => $name ) {
+            if ( ! term_exists( $slug, 'culture_interest' ) ) {
+                wp_insert_term( $name, 'culture_interest', array( 'slug' => $slug ) );
             }
         }
     }

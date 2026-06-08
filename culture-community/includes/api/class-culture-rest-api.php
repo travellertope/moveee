@@ -1260,6 +1260,23 @@ class Culture_REST_API {
             }
         }
 
+        // Save interests.
+        $interests_raw = $request->get_param( 'interests' );
+        if ( is_array( $interests_raw ) && count( $interests_raw ) >= 3 ) {
+            $allowed_interests = array(
+                'fashion-streetwear', 'food-drink', 'live-music', 'music-production',
+                'independent-film', 'visual-art', 'architecture', 'photography',
+                'literature', 'visual-design', 'tech-culture', 'sport-wellness',
+                'travel', 'ideas', 'street-food', 'nightlife',
+            );
+            $valid_interests = array_values( array_filter( array_map( 'sanitize_key', $interests_raw ), function( $s ) use ( $allowed_interests ) {
+                return in_array( $s, $allowed_interests, true );
+            } ) );
+            if ( ! empty( $valid_interests ) ) {
+                update_user_meta( $user_id, '_culture_interests', wp_json_encode( $valid_interests ) );
+            }
+        }
+
         if ( ! in_array( $tier, array( 'citizen', 'patron' ), true ) ) {
             $tier = 'citizen';
         }
@@ -1345,12 +1362,19 @@ class Culture_REST_API {
             'occupation'          => get_user_meta( $user->ID, '_culture_occupation', true ) ?: '',
             // Membership
             'tier'                => $tier,
-            // Gamification
-            'points'              => (int) get_user_meta( $user->ID, '_culture_points', true ),
+            // Gamification — credits & reputation (Phase 2)
+            'credits'             => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_credits( $user->ID ) : 0,
+            'reputation'          => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user->ID ) : (int) get_user_meta( $user->ID, '_culture_points', true ),
+            'reputation_tier'     => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation_tier( Culture_Gamification::get_reputation( $user->ID ) ) : 'member',
+            'daily_credits_remaining' => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_daily_credits_remaining( $user->ID ) : 50,
+            // Legacy field — points now mirrors reputation for backwards compat
+            'points'              => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user->ID ) : (int) get_user_meta( $user->ID, '_culture_points', true ),
             'badges'              => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_badges( $user->ID ) : array(),
             'referral_code'       => $referral_code,
             'referral_count'      => $referral_count,
             'visual_downloads_today' => self::get_daily_visual_downloads( $user->ID ),
+            // Interests (Phase 1)
+            'interests'           => json_decode( get_user_meta( $user->ID, '_culture_interests', true ) ?: '[]', true ) ?: array(),
             // Vendor
             'is_vendor'           => $is_vendor,
             'vendor_slug'         => $vendor_slug,
@@ -1424,6 +1448,23 @@ class Culture_REST_API {
         if ( $request->has_param( 'directory_opt_in' ) ) {
             $opt_in_val = $request->get_param( 'directory_opt_in' );
             update_user_meta( $user_id, '_culture_directory_opt_in', ( $opt_in_val === '1' || $opt_in_val === true ) ? '1' : '0' );
+        }
+
+        // Interests (Phase 1) — array of interest slugs.
+        if ( $request->has_param( 'interests' ) ) {
+            $interests_raw = $request->get_param( 'interests' );
+            if ( is_array( $interests_raw ) ) {
+                $allowed_interests = array(
+                    'fashion-streetwear', 'food-drink', 'live-music', 'music-production',
+                    'independent-film', 'visual-art', 'architecture', 'photography',
+                    'literature', 'visual-design', 'tech-culture', 'sport-wellness',
+                    'travel', 'ideas', 'street-food', 'nightlife',
+                );
+                $valid = array_values( array_filter( array_map( 'sanitize_key', $interests_raw ), function( $s ) use ( $allowed_interests ) {
+                    return in_array( $s, $allowed_interests, true );
+                } ) );
+                update_user_meta( $user_id, '_culture_interests', wp_json_encode( $valid ) );
+            }
         }
 
         $updated_user = get_userdata( $user_id );
@@ -2070,10 +2111,13 @@ class Culture_REST_API {
         $new_total = Culture_Gamification::award_points( $user_id, $action );
 
         return rest_ensure_response( array(
-            'success'   => true,
-            'points'    => $new_total,
-            'awarded'   => Culture_Gamification::get_point_value( $action ),
-            'new_badges' => array(), // Logic for detecting newly awarded badges could go here if needed.
+            'success'                 => true,
+            'points'                  => $new_total,
+            'reputation'              => $new_total,
+            'credits'                 => Culture_Gamification::get_credits( $user_id ),
+            'daily_credits_remaining' => Culture_Gamification::get_daily_credits_remaining( $user_id ),
+            'awarded'                 => Culture_Gamification::get_point_value( $action ),
+            'new_badges'              => array(),
         ) );
     }
 

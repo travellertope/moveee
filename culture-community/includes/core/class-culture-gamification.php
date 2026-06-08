@@ -144,7 +144,8 @@ class Culture_Gamification {
     );
 
     /**
-     * Default point values for actions (used as fallback if options not set).
+     * Default reputation values per action. These replace the old points system
+     * — reputation is permanent and never spent.
      */
     const POINTS = array(
         'event_rsvp'          => 5,
@@ -156,6 +157,35 @@ class Culture_Gamification {
         'quote_like'          => 1,
         'magazine_read'       => 5,
         'magazine_share'      => 5,
+        'community_comment'   => 5,
+        'community_like'      => 2,
+        'directory_entry'     => 15,
+        'game_completed'      => 5,
+    );
+
+    /**
+     * Small credit bonuses for non-post actions.
+     * Post credits are earned only via validation threshold (see check_post_threshold).
+     */
+    const CREDIT_BONUSES = array(
+        'event_rsvp'         => 1,
+        'event_checkin'      => 2,
+        'referral'           => 3,
+        'newsletter_comment' => 1,
+        'quote_submission'   => 1,
+        'magazine_read'      => 1,
+        'magazine_share'     => 1,
+        'directory_entry'    => 2,
+        'game_completed'     => 1,
+    );
+
+    const DAILY_CREDIT_CAP = 50;
+
+    const REPUTATION_TIERS = array(
+        1500 => 'culture-authority',
+        500  => 'taste-maker',
+        100  => 'culture-contributor',
+        0    => 'member',
     );
 
     /**
@@ -198,41 +228,226 @@ class Culture_Gamification {
         // No hooks needed at init - methods are called directly by other components.
     }
 
+    // ── Reputation ────────────────────────────────────────────────────────────
+
     /**
-     * Award points to a user for an action.
-     *
-     * @param int    $user_id The user ID.
-     * @param string $action  The action key from self::POINTS.
-     * @param int    $custom_points Optional override for point value.
-     * @return int New total points.
+     * Award reputation to a user. Reputation never decreases or gets capped.
+     * Also updates legacy _culture_points for backwards compatibility.
      */
-    public static function award_points( $user_id, $action, $custom_points = 0 ) {
-        $points_to_add = $custom_points > 0 ? $custom_points : self::get_point_value( $action );
+    public static function award_reputation( $user_id, $amount, $source = '', $source_id = 0 ) {
+        if ( $amount <= 0 ) return self::get_reputation( $user_id );
 
-        if ( $points_to_add <= 0 ) {
-            return self::get_points( $user_id );
-        }
-
-        $current = self::get_points( $user_id );
-        $new_total = $current + $points_to_add;
+        $current  = self::get_reputation( $user_id );
+        $new_total = $current + $amount;
+        update_user_meta( $user_id, '_culture_reputation', $new_total );
+        // Keep legacy field in sync so older code still works.
         update_user_meta( $user_id, '_culture_points', $new_total );
 
-        // Check for point-based badges after awarding.
+        self::ledger_add( $user_id, 'reputation', $amount, $source, $source_id );
         self::evaluate_badges( $user_id );
-
-        do_action( 'culture_points_awarded', $user_id, $action, $points_to_add, $new_total );
+        do_action( 'culture_reputation_awarded', $user_id, $source, $amount, $new_total );
 
         return $new_total;
     }
 
     /**
-     * Get a user's total points.
+     * Get a user's reputation score.
+     * Falls back to _culture_points for users who existed before Phase 2.
+     */
+    public static function get_reputation( $user_id ) {
+        $rep = get_user_meta( $user_id, '_culture_reputation', true );
+        if ( $rep !== '' && $rep !== false ) return (int) $rep;
+        // Migration: seed from legacy points on first access.
+        $legacy = (int) get_user_meta( $user_id, '_culture_points', true );
+        if ( $legacy > 0 ) {
+            update_user_meta( $user_id, '_culture_reputation', $legacy );
+        }
+        return $legacy;
+    }
+
+    /** Get the reputation tier string for a given reputation score. */
+    public static function get_reputation_tier( $reputation ) {
+        foreach ( self::REPUTATION_TIERS as $threshold => $tier ) {
+            if ( $reputation >= $threshold ) return $tier;
+        }
+        return 'member';
+    }
+
+    // ── Credits ───────────────────────────────────────────────────────────────
+
+    /**
+     * Award spendable credits to a user, respecting the daily cap.
+     * Returns the number of credits actually awarded (may be less than requested
+     * if the daily cap is nearly reached).
+     */
+    public static function award_credits( $user_id, $amount, $source = '', $source_id = 0 ) {
+        if ( $amount <= 0 ) return 0;
+
+        // Reset daily counter if it's a new day.
+        $reset_date = get_user_meta( $user_id, '_culture_credits_reset_date', true );
+        $today      = gmdate( 'Y-m-d' );
+        if ( $reset_date !== $today ) {
+            update_user_meta( $user_id, '_culture_credits_earned_today', 0 );
+            update_user_meta( $user_id, '_culture_credits_reset_date', $today );
+        }
+
+        $earned_today = (int) get_user_meta( $user_id, '_culture_credits_earned_today', true );
+        $remaining    = self::DAILY_CREDIT_CAP - $earned_today;
+        if ( $remaining <= 0 ) return 0;
+
+        $actual = min( $amount, $remaining );
+        $current   = self::get_credits( $user_id );
+        $new_total = $current + $actual;
+        update_user_meta( $user_id, '_culture_credits', $new_total );
+        update_user_meta( $user_id, '_culture_credits_earned_today', $earned_today + $actual );
+
+        self::ledger_add( $user_id, 'credit', $actual, $source, $source_id );
+        do_action( 'culture_credits_awarded', $user_id, $source, $actual, $new_total );
+
+        return $actual;
+    }
+
+    /** Deduct credits (for redemption). Returns new balance or false if insufficient. */
+    public static function deduct_credits( $user_id, $amount, $source = '', $source_id = 0 ) {
+        $current = self::get_credits( $user_id );
+        if ( $current < $amount ) return false;
+        $new_total = $current - $amount;
+        update_user_meta( $user_id, '_culture_credits', $new_total );
+        self::ledger_add( $user_id, 'credit', -$amount, $source, $source_id );
+        return $new_total;
+    }
+
+    /** Get a user's spendable credit balance. */
+    public static function get_credits( $user_id ) {
+        return (int) get_user_meta( $user_id, '_culture_credits', true );
+    }
+
+    /** Get how many credits the user can still earn today. */
+    public static function get_daily_credits_remaining( $user_id ) {
+        $reset_date = get_user_meta( $user_id, '_culture_credits_reset_date', true );
+        if ( $reset_date !== gmdate( 'Y-m-d' ) ) return self::DAILY_CREDIT_CAP;
+        $earned = (int) get_user_meta( $user_id, '_culture_credits_earned_today', true );
+        return max( 0, self::DAILY_CREDIT_CAP - $earned );
+    }
+
+    // ── Threshold (upvote-to-earn) ────────────────────────────────────────────
+
+    /**
+     * Check if a community post has crossed the validation threshold and award
+     * credits + reputation to its author if so. Safe to call multiple times —
+     * checks the ledger to avoid double-awarding.
      *
-     * @param int $user_id
-     * @return int
+     * Threshold: 5+ total reactions OR 3+ unique commenters.
+     *
+     * Credit amounts vary by template type (stored as _template_type post meta).
+     */
+    public static function check_post_threshold( $post_id ) {
+        $post = get_post( $post_id );
+        if ( ! $post || 'culture_post' !== $post->post_type ) return;
+
+        $author_id = (int) get_post_meta( $post_id, 'community_author_id', true );
+        if ( ! $author_id ) {
+            // Fall back to WP post author.
+            $author_id = (int) $post->post_author;
+        }
+        if ( ! $author_id ) return;
+
+        // Already paid out for this post?
+        if ( self::ledger_has_entry( $author_id, 'post_validated', $post_id ) ) return;
+
+        // Check reactions.
+        $love  = (int) get_post_meta( $post_id, 'reaction_love', true );
+        $fire  = (int) get_post_meta( $post_id, 'reaction_fire', true );
+        $clap  = (int) get_post_meta( $post_id, 'reaction_clap', true );
+        $total_reactions = $love + $fire + $clap;
+
+        // Check unique commenters.
+        global $wpdb;
+        $unique_commenters = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(DISTINCT user_id) FROM {$wpdb->comments}
+             WHERE comment_post_ID = %d AND user_id > 0 AND comment_approved = '1'",
+            $post_id
+        ) );
+
+        if ( $total_reactions < 5 && $unique_commenters < 3 ) return;
+
+        // Determine credit/reputation amount by template type.
+        $template = get_post_meta( $post_id, '_template_type', true ) ?: 'post';
+        $credit_amounts = array(
+            'post'              => array( 'credits' => 10, 'reputation' => 5 ),
+            'hidden-gem'        => array( 'credits' => 15, 'reputation' => 10 ),
+            'cultural-take'     => array( 'credits' => 12, 'reputation' => 8 ),
+            'food-review'       => array( 'credits' => 15, 'reputation' => 10 ),
+            'creative-showcase' => array( 'credits' => 12, 'reputation' => 8 ),
+            'poll'              => array( 'credits' => 8,  'reputation' => 5 ),
+            'itinerary'         => array( 'credits' => 20, 'reputation' => 15 ),
+        );
+        $amounts = $credit_amounts[ $template ] ?? $credit_amounts['post'];
+
+        self::award_credits( $author_id, $amounts['credits'], 'post_validated', $post_id );
+        self::award_reputation( $author_id, $amounts['reputation'], 'post_validated', $post_id );
+    }
+
+    // ── Ledger ────────────────────────────────────────────────────────────────
+
+    /** Add a row to the credit ledger. */
+    public static function ledger_add( $user_id, $type, $amount, $source, $source_id = 0 ) {
+        global $wpdb;
+        $wpdb->insert(
+            $wpdb->prefix . 'culture_credit_ledger',
+            array(
+                'user_id'   => (int) $user_id,
+                'type'      => sanitize_key( $type ),
+                'amount'    => (int) $amount,
+                'source'    => sanitize_key( $source ),
+                'source_id' => (int) $source_id,
+            ),
+            array( '%d', '%s', '%d', '%s', '%d' )
+        );
+    }
+
+    /** Check if an exact (user, source, source_id) entry already exists. */
+    public static function ledger_has_entry( $user_id, $source, $source_id ) {
+        global $wpdb;
+        return (bool) $wpdb->get_var( $wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}culture_credit_ledger
+             WHERE user_id = %d AND source = %s AND source_id = %d LIMIT 1",
+            (int) $user_id,
+            sanitize_key( $source ),
+            (int) $source_id
+        ) );
+    }
+
+    // ── Legacy bridge ─────────────────────────────────────────────────────────
+
+    /**
+     * Award points to a user for an action.
+     * Now maps to award_reputation() + a small credit bonus for eligible actions.
+     * Kept for backwards compatibility — all existing callers continue to work.
+     */
+    public static function award_points( $user_id, $action, $custom_points = 0 ) {
+        $rep_to_add = $custom_points > 0 ? $custom_points : self::get_point_value( $action );
+
+        if ( $rep_to_add <= 0 ) {
+            return self::get_reputation( $user_id );
+        }
+
+        $new_rep = self::award_reputation( $user_id, $rep_to_add, $action );
+
+        // Award small credit bonus for eligible actions.
+        $credit_bonus = self::CREDIT_BONUSES[ $action ] ?? 0;
+        if ( $credit_bonus > 0 ) {
+            self::award_credits( $user_id, $credit_bonus, $action );
+        }
+
+        return $new_rep;
+    }
+
+    /**
+     * Get a user's total points (now returns reputation for backwards compat).
      */
     public static function get_points( $user_id ) {
-        return (int) get_user_meta( $user_id, '_culture_points', true );
+        return self::get_reputation( $user_id );
     }
 
     /**
@@ -332,7 +547,7 @@ class Culture_Gamification {
                 ) );
 
             case 'points':
-                return self::get_points( $user_id );
+                return self::get_reputation( $user_id );
             
             case 'quote_count':
                 return (int) $wpdb->get_var( $wpdb->prepare(

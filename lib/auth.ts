@@ -21,7 +21,14 @@ export interface CultureUser {
   occupation: string;
   // Membership
   tier: "citizen" | "patron";
-  // Gamification
+  // Interests (Phase 1)
+  interests: string[];
+  // Gamification — Phase 2
+  credits: number;
+  reputation: number;
+  reputationTier: string;
+  dailyCreditsRemaining: number;
+  // Legacy (mirrors reputation for backwards compat)
   points: number;
   badges: string[];
   referralCode: string;
@@ -75,7 +82,12 @@ export const authOptions: NextAuthOptions = {
             occupation: data.occupation ?? "",
             registeredAt: data.registered_at ?? 0,
             tier: data.tier,
-            points: data.points,
+            interests: data.interests ?? [],
+            credits: data.credits ?? 0,
+            reputation: data.reputation ?? data.points ?? 0,
+            reputationTier: data.reputation_tier ?? "member",
+            dailyCreditsRemaining: data.daily_credits_remaining ?? 50,
+            points: data.points ?? 0,
             badges: data.badges ?? [],
             referralCode: data.referral_code ?? "",
             referralCount: data.referral_count ?? 0,
@@ -108,7 +120,12 @@ export const authOptions: NextAuthOptions = {
         token.city = u.city;
         token.occupation = u.occupation;
         token.tier = u.tier;
-        token.points = u.points;
+        token.interests = u.interests ?? [];
+        token.credits = u.credits ?? 0;
+        token.reputation = u.reputation ?? u.points ?? 0;
+        token.reputationTier = u.reputationTier ?? "member";
+        token.dailyCreditsRemaining = u.dailyCreditsRemaining ?? 50;
+        token.points = u.points ?? 0;
         token.badges = u.badges;
         token.referralCode = u.referralCode;
         token.referralCount = u.referralCount;
@@ -119,9 +136,14 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (trigger === "update" && updatePayload) {
-        if (updatePayload.isVendor   !== undefined) token.isVendor   = updatePayload.isVendor;
-        if (updatePayload.vendorSlug !== undefined) token.vendorSlug = updatePayload.vendorSlug;
-        if (updatePayload.avatarUrl  !== undefined) token.avatarUrl  = updatePayload.avatarUrl;
+        if (updatePayload.isVendor             !== undefined) token.isVendor             = updatePayload.isVendor;
+        if (updatePayload.vendorSlug           !== undefined) token.vendorSlug           = updatePayload.vendorSlug;
+        if (updatePayload.avatarUrl            !== undefined) token.avatarUrl            = updatePayload.avatarUrl;
+        if (updatePayload.interests            !== undefined) token.interests            = updatePayload.interests;
+        if (updatePayload.credits              !== undefined) token.credits              = updatePayload.credits;
+        if (updatePayload.reputation           !== undefined) token.reputation           = updatePayload.reputation;
+        if (updatePayload.reputationTier       !== undefined) token.reputationTier       = updatePayload.reputationTier;
+        if (updatePayload.dailyCreditsRemaining !== undefined) token.dailyCreditsRemaining = updatePayload.dailyCreditsRemaining;
       }
 
       return token;
@@ -141,7 +163,12 @@ export const authOptions: NextAuthOptions = {
         s.city = token.city;
         s.occupation = token.occupation;
         s.tier = token.tier;
-        s.points = token.points;
+        s.interests = token.interests ?? [];
+        s.credits = token.credits ?? 0;
+        s.reputation = token.reputation ?? 0;
+        s.reputationTier = token.reputationTier ?? "member";
+        s.dailyCreditsRemaining = token.dailyCreditsRemaining ?? 50;
+        s.points = token.points ?? 0;
         s.badges = token.badges;
         s.referralCode = token.referralCode;
         s.referralCount = token.referralCount;

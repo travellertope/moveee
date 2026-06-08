@@ -5,8 +5,9 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CountrySelect, CitySelect } from "@/components/LocationSelect";
+import { INTERESTS } from "@/lib/interest-mappings";
 
-type Step = "verify" | "about" | "membership" | "done";
+type Step = "verify" | "about" | "interests" | "membership" | "done";
 
 function CompleteProfileForm() {
   const router = useRouter();
@@ -19,6 +20,7 @@ function CompleteProfileForm() {
   const isUpgrade = searchParams.get("upgrade") === "patron";
 
   const [step, setStep] = useState<Step>(isUpgrade ? "membership" : "verify");
+  const [interests, setInterests] = useState<string[]>([]);
   const [verifyError, setVerifyError] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
@@ -106,6 +108,19 @@ function CompleteProfileForm() {
     if (!countryOfResidence.trim()) { setError("Country of residence is required."); return; }
     if (!city.trim()) { setError("City is required."); return; }
     setError("");
+    setStep("interests");
+  }
+
+  function toggleInterest(slug: string) {
+    setInterests(prev =>
+      prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]
+    );
+  }
+
+  function handleInterestsSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (interests.length < 3) { setError("Please select at least 3 interests."); return; }
+    setError("");
     setStep("membership");
   }
 
@@ -127,6 +142,7 @@ function CompleteProfileForm() {
           country_of_residence: countryOfResidence.trim(),
           city: city.trim(),
           occupation: occupation.trim(),
+          interests,
           tier,
           plan_key: tier === "patron" ? `${billingCycle}_${currency.toLowerCase()}` : undefined,
         }),
@@ -179,9 +195,9 @@ function CompleteProfileForm() {
     );
   }
 
-  const stepLabels = ["About You", "Membership"] as const;
-  const currentStepIdx = step === "about" ? 0 : 1;
-  const progressPercent = (currentStepIdx / 1) * 100;
+  const stepLabels = ["About You", "Your Interests", "Membership"] as const;
+  const currentStepIdx = step === "about" ? 0 : step === "interests" ? 1 : 2;
+  const progressPercent = (currentStepIdx / 2) * 100;
 
   // ── About You (Step 2) ────────────────────────────────────────────────────
   if (step === "about") {
@@ -270,6 +286,76 @@ function CompleteProfileForm() {
     );
   }
 
+  // ── Interests (Step 2) ───────────────────────────────────────────────────
+  if (step === "interests") {
+    return (
+      <div style={styles.page}>
+        <div style={styles.card}>
+          <p style={styles.eyebrow}>The Moveee — Culture Community</p>
+          <h1 style={styles.heading}>What moves you?</h1>
+
+          <ProgressBar labels={stepLabels} currentIdx={currentStepIdx} percent={progressPercent} />
+
+          <form onSubmit={handleInterestsSubmit} noValidate>
+            <h2 style={styles.stepHeading}>Pick your interests</h2>
+            <p style={{ fontSize: 13, color: "#7a6f5c", marginTop: -12, marginBottom: 20, lineHeight: 1.6 }}>
+              Select at least 3. This shapes your feed and connects you with the right community.
+            </p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 8 }}>
+              {INTERESTS.map(({ slug, label, emoji }) => {
+                const active = interests.includes(slug);
+                return (
+                  <button
+                    key={slug}
+                    type="button"
+                    onClick={() => toggleInterest(slug)}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "14px 8px",
+                      border: active ? "2px solid #14110d" : "2px solid #d4cbbf",
+                      borderRadius: 4,
+                      background: active ? "rgba(20,17,13,.05)" : "#fff",
+                      cursor: "pointer",
+                      transition: "border-color 0.15s, background 0.15s",
+                      fontFamily: "inherit",
+                      boxShadow: active ? "0 0 0 2px #14110d" : "none",
+                    }}
+                  >
+                    <span style={{ fontSize: 22 }}>{emoji}</span>
+                    <span style={{ fontSize: 11, fontWeight: active ? 700 : 400, color: "#14110d", textAlign: "center", lineHeight: 1.3 }}>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p style={{ fontSize: 12, color: interests.length >= 3 ? "#2e7d32" : "#7a6f5c", marginBottom: 4 }}>
+              {interests.length} selected {interests.length < 3 ? `— ${3 - interests.length} more needed` : "✓"}
+            </p>
+
+            {error && <p style={styles.error}>{error}</p>}
+
+            <div style={styles.nav}>
+              <button type="button" onClick={() => setStep("about")} style={styles.btnSecondary}>
+                ← Back
+              </button>
+              <button
+                type="submit"
+                style={{ ...styles.btnPrimary, opacity: interests.length < 3 ? 0.5 : 1 }}
+                disabled={interests.length < 3}
+              >
+                Continue →
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   // ── Membership (Step 3) ───────────────────────────────────────────────────
   return (
     <div style={styles.page}>
@@ -278,7 +364,7 @@ function CompleteProfileForm() {
         <h1 style={styles.heading}>{isUpgrade ? "Upgrade to Connect Pro" : "Choose your membership"}</h1>
 
         {!isUpgrade && (
-          <ProgressBar labels={stepLabels} currentIdx={1} percent={100} />
+          <ProgressBar labels={stepLabels} currentIdx={2} percent={100} />
         )}
 
         <form onSubmit={handleMembershipSubmit} noValidate>
@@ -342,7 +428,7 @@ function CompleteProfileForm() {
 
           <div style={styles.nav}>
             {!isUpgrade && (
-              <button type="button" onClick={() => setStep("about")} style={styles.btnSecondary}>
+              <button type="button" onClick={() => setStep("interests")} style={styles.btnSecondary}>
                 ← Back
               </button>
             )}
@@ -374,7 +460,7 @@ function ProgressBar({ labels, currentIdx, percent }: { labels: readonly string[
           </span>
         </div>
       ))}
-      <div style={{ position: "absolute", top: 15, left: "25%", right: "25%", height: 2, background: "#e8e0d4", zIndex: 0 }}>
+      <div style={{ position: "absolute", top: 15, left: `${Math.round(50 / labels.length)}%`, right: `${Math.round(50 / labels.length)}%`, height: 2, background: "#e8e0d4", zIndex: 0 }}>
         <div style={{ height: "100%", background: "#14110d", width: `${percent}%`, transition: "width 0.3s ease" }} />
       </div>
     </div>
