@@ -30,6 +30,7 @@ class Culture_Community {
         $string_fields = [
             'community_author_name',
             'community_author_id',
+            'community_author_username',
             'community_author_avatar',
             'community_tag',
             'community_region',

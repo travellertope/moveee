@@ -275,26 +275,50 @@ export default function FeedCard({
           }}
         >
           {/* Avatar */}
-          <div style={{
-            width: "34px", height: "34px", borderRadius: "50%",
-            background: "#edf7ed", border: "1px solid #c8e6c9",
-            color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0, overflow: "hidden",
-          }}>
-            {item.communityAuthorAvatar ? (
-              <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              (item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
-            )}
-          </div>
+          {item.communityAuthorUsername ? (
+            <Link href={`/connect/${item.communityAuthorUsername}`} onClick={e => e.stopPropagation()} style={{ textDecoration: "none", flexShrink: 0 }}>
+              <div style={{
+                width: "34px", height: "34px", borderRadius: "50%",
+                background: "#edf7ed", border: "1px solid #c8e6c9",
+                color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                overflow: "hidden",
+              }}>
+                {item.communityAuthorAvatar ? (
+                  <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  (item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
+                )}
+              </div>
+            </Link>
+          ) : (
+            <div style={{
+              width: "34px", height: "34px", borderRadius: "50%",
+              background: "#edf7ed", border: "1px solid #c8e6c9",
+              color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0, overflow: "hidden",
+            }}>
+              {item.communityAuthorAvatar ? (
+                <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                (item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
+              )}
+            </div>
+          )}
 
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Header */}
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
-              <span style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600 }}>
-                {item.communityAuthor || "Community Member"}
-              </span>
+              {item.communityAuthorUsername ? (
+                <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }} onClick={e => e.stopPropagation()}>
+                  {item.communityAuthor || "Community Member"}
+                </Link>
+              ) : (
+                <span style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600 }}>
+                  {item.communityAuthor || "Community Member"}
+                </span>
+              )}
               {item.communityTier === "patron" && (
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace",

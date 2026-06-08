@@ -3092,6 +3092,7 @@ class Culture_REST_API {
                 'tag'            => get_post_meta( $pid, 'community_tag', true ) ?: '',
                 'region'         => get_post_meta( $pid, 'community_region', true ) ?: '',
                 'author_name'    => get_post_meta( $pid, 'community_author_name', true ) ?: '',
+                'author_username' => get_post_meta( $pid, 'community_author_username', true ) ?: '',
                 'author_tier'    => get_post_meta( $pid, 'community_author_tier', true ) ?: '',
                 'author_avatar'  => get_post_meta( $pid, 'community_author_avatar', true ) ?: '',
                 'template_type'  => get_post_meta( $pid, '_template_type', true ) ?: 'post',
