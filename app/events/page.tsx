@@ -58,11 +58,12 @@ export default async function EventsPage() {
     .map((c) => ({ ...c, count: cityCount(upcoming, c.name) }))
     .filter((c) => c.count > 0);
 
-  // Featured: isFeatured first, then events with images, up to 4
+  // Featured: isFeatured first, then any upcoming events — always show up to 4
   const withImage = (e: any) => e.featuredImage?.node?.sourceUrl || e.eventImageUrl;
   const featured = [
-    ...upcoming.filter((e) => e.isFeatured && withImage(e)),
+    ...upcoming.filter((e) => e.isFeatured),
     ...upcoming.filter((e) => !e.isFeatured && withImage(e)),
+    ...upcoming.filter((e) => !e.isFeatured && !withImage(e)),
   ].slice(0, 4);
 
   return (
@@ -94,7 +95,7 @@ export default async function EventsPage() {
       </div>
 
       {/* ── FEATURED EVENTS GRID ── */}
-      {featured.length > 0 && (
+      {upcoming.length > 0 && (
         <section className="ev-featured-section">
           <div className="ev-featured-inner">
             <div className="ev-featured-header">
@@ -129,24 +130,25 @@ export default async function EventsPage() {
       )}
 
       {/* ── FEATURED CITIES GRID ── */}
-      {sidebarCities.length > 0 && (
-        <section className="ev-cities-section">
-          <div className="ev-cities-inner">
-            <div className="ev-featured-header">
-              <span className="ev-featured-label">By City</span>
-            </div>
-            <div className="ev-cities-grid">
-              {sidebarCities.map((city) => (
+      <section className="ev-cities-section">
+        <div className="ev-cities-inner">
+          <div className="ev-featured-header">
+            <span className="ev-featured-label">By City</span>
+          </div>
+          <div className="ev-cities-grid">
+            {FEATURED_CITIES.map((city) => {
+              const count = cityCount(upcoming, city.name);
+              return (
                 <Link key={city.slug} href={`/events/${city.slug}`} className="ev-city-card">
                   <span className="ev-city-name">{city.name}</span>
                   <span className="ev-city-country">{city.country}</span>
-                  <span className="ev-city-count">{city.count}</span>
+                  {count > 0 && <span className="ev-city-count">{count}</span>}
                 </Link>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* ── TIMELINE + SIDEBAR ── */}
       <div className="ev-timeline-section" id="timeline">
