@@ -22,14 +22,11 @@ interface EventsCarouselProps {
   events: CarouselEvent[];
 }
 
-function fmtDate(raw?: string): { day: string; month: string } {
-  if (!raw) return { day: "TBA", month: "" };
+function fmtDate(raw?: string): string {
+  if (!raw) return "TBA";
   const d = new Date(raw);
-  if (isNaN(d.getTime())) return { day: "TBA", month: "" };
-  return {
-    day: String(d.getDate()),
-    month: d.toLocaleDateString("en-GB", { month: "short" }).toUpperCase(),
-  };
+  if (isNaN(d.getTime())) return "TBA";
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }).toUpperCase();
 }
 
 export default function EventsCarousel({ events }: EventsCarouselProps) {
@@ -60,7 +57,7 @@ export default function EventsCarousel({ events }: EventsCarouselProps) {
     const el = trackRef.current;
     if (!el) return;
     const card = el.querySelector<HTMLElement>(".evc-card");
-    const amount = (card?.offsetWidth ?? 280) + 24;
+    const amount = (card?.offsetWidth ?? 340) + 20;
     el.scrollBy({ left: dir === "next" ? amount : -amount, behavior: "smooth" });
   }, []);
 
@@ -77,7 +74,7 @@ export default function EventsCarousel({ events }: EventsCarouselProps) {
 
       <div className="evc-track" ref={trackRef}>
         {events.map((event) => {
-          const { day, month } = fmtDate(event.eventDate || event.date);
+          const dateStr = fmtDate(event.eventDate || event.date);
           const cat = event.cultureInterests?.nodes?.[0]?.name || "";
           const img = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
           const place = event.city || event.location || "";
@@ -85,25 +82,19 @@ export default function EventsCarousel({ events }: EventsCarouselProps) {
           return (
             <Link key={event.slug} href={`/events/${event.slug}`} className="evc-card">
               <div className="evc-image">
-                {event.isAiGenerated && (
-                  <span className="evc-discovered">Discovered</span>
-                )}
                 {img ? (
                   <Image src={img} alt={event.title} fill style={{ objectFit: "cover" }} />
                 ) : (
                   <div className="evc-placeholder" />
                 )}
+                <div className="evc-image-overlay">
+                  <span className="evc-overlay-date">{dateStr}</span>
+                  {place && <span className="evc-overlay-place">{place}</span>}
+                </div>
               </div>
               <div className="evc-body">
-                <div className="evc-date">
-                  <span className="evc-day">{day}</span>
-                  <span className="evc-month">{month}</span>
-                </div>
+                {cat && <span className="evc-cat">{cat}</span>}
                 <h4 className="evc-title" dangerouslySetInnerHTML={{ __html: event.title }} />
-                <div className="evc-meta">
-                  {place}{place && cat ? " · " : ""}{cat}
-                </div>
-                <span className="evc-cta">View →</span>
               </div>
             </Link>
           );

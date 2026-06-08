@@ -49,8 +49,7 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
       <div className="disc-event-topbar">
         <div className="disc-event-eyebrow">
           <Link href="/events" className="disc-back">← Happenings</Link>
-          <span className="disc-badge">Discovered Event{city ? ` · ${city}` : ""}</span>
-          <span className="disc-ai-badge">Curated with AI</span>
+          {city && <span className="disc-badge">{city}</span>}
         </div>
       </div>
 
