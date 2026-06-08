@@ -634,6 +634,7 @@ class Culture_Directory {
 
             $posts[] = array(
                 'id'            => $post->ID,
+                'slug'          => $post->post_name,
                 'template_type' => $template,
                 'content'       => wp_trim_words( $post->post_content, 60 ),
                 'star_rating'   => $star_rating ?: null,

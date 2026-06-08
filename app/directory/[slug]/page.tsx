@@ -354,17 +354,24 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                       )}
                     </div>
                     <p className="dir-community-content">{post.content}</p>
-                    {Object.keys(post.reactions ?? {}).length > 0 && (
-                      <div className="dir-community-reactions">
-                        {Object.entries(post.reactions).map(([emoji, count]) =>
-                          count > 0 ? (
-                            <span key={emoji} className="dir-community-reaction">
-                              {emoji} {count}
-                            </span>
-                          ) : null
-                        )}
-                      </div>
-                    )}
+                    <div className="dir-community-card-footer">
+                      {Object.keys(post.reactions ?? {}).length > 0 && (
+                        <div className="dir-community-reactions">
+                          {Object.entries(post.reactions).map(([emoji, count]) =>
+                            count > 0 ? (
+                              <span key={emoji} className="dir-community-reaction">
+                                {emoji} {count}
+                              </span>
+                            ) : null
+                          )}
+                        </div>
+                      )}
+                      {post.slug && (
+                        <a href={`/community/${post.slug}`} className="dir-community-read-more">
+                          Read full post →
+                        </a>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

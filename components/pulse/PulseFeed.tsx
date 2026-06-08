@@ -399,43 +399,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                     </Link>
                   ))}
                 </div>
-                {/* Categories — horizontal scroll */}
-                <div style={{ padding: "0.5rem 0.75rem 0.6rem" }}>
-                  <p style={{ margin: "0 0 0.35rem", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a6f5c" }}>Category</p>
-                  <div style={{ display: "flex", gap: "0.35rem", overflowX: "auto", scrollbarWidth: "none" }}>
-                    {CATEGORY_FILTERS.map(cat => (
-                      <button
-                        key={cat}
-                        onClick={() => { handleCategory(cat); setShowSectionsMenu(false); }}
-                        style={{
-                          flexShrink: 0,
-                          padding: "0.25rem 0.7rem",
-                          fontSize: "0.7rem",
-                          cursor: "pointer",
-                          background: activeCategory === cat ? "#c5491f" : "#ffffff",
-                          color: activeCategory === cat ? "#fff" : "#3a342b",
-                          border: `1px solid ${activeCategory === cat ? "#c5491f" : "#e8e2d8"}`,
-                          whiteSpace: "nowrap",
-                          fontFamily: "inherit",
-                        }}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
           </div>
-
-          {/* Active category chip */}
-          {activeCategory && (
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.6rem 1.25rem", borderBottom: "1px solid #e8e2d8", background: "#fff" }}>
-              <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>Category</span>
-              <span style={{ background: "#fff0eb", color: "#c5491f", fontSize: "0.7rem", fontWeight: 700, padding: "0.15rem 0.45rem", borderRadius: "2px" }}>{activeCategory}</span>
-              <button onClick={() => { setActiveCategory(""); setVisibleCount(20); }} style={{ background: "transparent", border: "none", color: "#bbb", cursor: "pointer", fontSize: "0.85rem", lineHeight: 1, padding: "0 0.1rem" }} aria-label="Clear category filter">×</button>
-            </div>
-          )}
 
           {/* Active hashtag chip */}
           {activeTag.startsWith("#") && (
@@ -468,6 +434,27 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
           )}
 
           <SubmitPost onPosted={handlePosted} />
+
+          {/* Category filter strip */}
+          <div className="feed-category-strip">
+            <div className="feed-category-scroll">
+              <button
+                className={`feed-category-pill${!activeCategory ? " feed-category-pill--active" : ""}`}
+                onClick={() => { setActiveCategory(""); setVisibleCount(20); }}
+              >
+                All
+              </button>
+              {CATEGORY_FILTERS.map(cat => (
+                <button
+                  key={cat}
+                  className={`feed-category-pill${activeCategory === cat ? " feed-category-pill--active" : ""}`}
+                  onClick={() => handleCategory(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {visible.length === 0 ? (
             <div style={{ color: "#aaa", textAlign: "center", padding: "4rem 0", fontSize: "0.85rem" }}>

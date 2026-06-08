@@ -1157,3 +1157,45 @@ h1, h2, h3, h4 {
   transition: border-color 0.15s, color 0.15s;
 }
 .composer-itinerary-add:hover { border-color: #c5b89a; color: #14110d; }
+
+/* Template guide */
+.composer-guide {
+  overflow: hidden;
+  max-height: 80px;
+  opacity: 1;
+  transition: opacity 0.2s, max-height 0.25s ease;
+}
+.composer-guide--hidden {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.composer-guide-desc {
+  font-size: 0.74rem;
+  color: #8a7d6a;
+  font-style: italic;
+  line-height: 1.45;
+  margin: 0 0 6px;
+}
+.composer-guide-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.composer-guide-chip {
+  background: var(--paper, #f3ece0);
+  border: 1px solid #e0d8ce;
+  border-radius: 20px;
+  padding: 3px 11px;
+  font-size: 0.68rem;
+  color: #5a4f3c;
+  cursor: pointer;
+  font-family: var(--font-fraunces), serif;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.composer-guide-chip:hover {
+  background: var(--ochre, #b38238);
+  color: #fff;
+  border-color: var(--ochre, #b38238);
+}
