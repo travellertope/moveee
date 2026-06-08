@@ -827,6 +827,18 @@ h1, h2, h3, h4 {
   gap: 0.6rem;
 }
 
+/* Event date row — side by side on tablet+, stacked on mobile */
+.composer-event-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+@media (max-width: 480px) {
+  .composer-event-dates {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Field label for date inputs etc. */
 .composer-field-label {
   display: block;

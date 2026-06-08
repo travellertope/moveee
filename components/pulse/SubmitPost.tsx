@@ -582,8 +582,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                   placeholder="Event name *"
                   className="composer-input"
                 />
-                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                  <div style={{ flex: 1, minWidth: "140px" }}>
+                <div className="composer-event-dates">
+                  <div>
                     <label className="composer-field-label">Start date & time *</label>
                     <input
                       type="datetime-local"
@@ -592,7 +592,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                       className="composer-input"
                     />
                   </div>
-                  <div style={{ flex: 1, minWidth: "140px" }}>
+                  <div>
                     <label className="composer-field-label">End date & time</label>
                     <input
                       type="datetime-local"
@@ -602,14 +602,14 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                     />
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
                   <input
                     type="text"
                     value={eventLocation}
                     onChange={e => setEventLocation(e.target.value.slice(0, 200))}
                     placeholder="Venue / address"
                     className="composer-input"
-                    style={{ flex: 2, minWidth: "140px" }}
+                    style={{ flex: 2 }}
                   />
                   <input
                     type="text"
@@ -617,27 +617,23 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                     onChange={e => setEventCity(e.target.value.slice(0, 80))}
                     placeholder="City"
                     className="composer-input"
-                    style={{ flex: 1, minWidth: "100px" }}
+                    style={{ flex: 1 }}
                   />
                 </div>
-                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                  <input
-                    type="text"
-                    value={eventAdmission}
-                    onChange={e => setEventAdmission(e.target.value.slice(0, 80))}
-                    placeholder="Admission (e.g. Free, £10)"
-                    className="composer-input"
-                    style={{ flex: 1, minWidth: "120px" }}
-                  />
-                  <input
-                    type="url"
-                    value={eventTicketUrl}
-                    onChange={e => setEventTicketUrl(e.target.value)}
-                    placeholder="Ticket / event link"
-                    className="composer-input"
-                    style={{ flex: 2, minWidth: "140px" }}
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={eventAdmission}
+                  onChange={e => setEventAdmission(e.target.value.slice(0, 80))}
+                  placeholder="Admission (e.g. Free, £10)"
+                  className="composer-input"
+                />
+                <input
+                  type="url"
+                  value={eventTicketUrl}
+                  onChange={e => setEventTicketUrl(e.target.value)}
+                  placeholder="Ticket / event link"
+                  className="composer-input"
+                />
               </>
             )}
 
