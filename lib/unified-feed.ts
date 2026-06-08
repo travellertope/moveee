@@ -171,6 +171,8 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         href: `/pulse/${story.slug}`,
         arm: story.meta?.pulse_arm_label ?? "",
         region: story.meta?.pulse_region_label ?? "",
+        category: story._embedded?.["wp:term"]?.flat()
+          ?.find((t) => t.taxonomy === "pulse-categories")?.name ?? "",
         source: story.meta?.pulse_source ?? "",
         sourceUrl: story.meta?.pulse_external_url ?? "",
         ogTitle: story.meta?.pulse_og_title ?? "",
@@ -214,7 +216,7 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         slug: event.slug,
         date: event.date ?? event.eventDate ?? "",
         excerpt: stripHtml(event.excerpt ?? ""),
-        image: event.featuredImage?.node?.sourceUrl,
+        image: event.featuredImage?.node?.sourceUrl || event.eventImageUrl,
         href: `/events/${event.slug}`,
         eventDate: event.eventDate ?? "",
         location: event.location ?? "",
