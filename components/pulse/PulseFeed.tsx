@@ -160,7 +160,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     return () => io.disconnect();
   }, [hasMore, filtered.length]);
 
-  const handlePosted = useCallback((post: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null }) => {
+  const handlePosted = useCallback((post: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null; galleryImages?: string[]; templateType?: string }) => {
     const sessionUser = session?.user as any;
     const newItem: FeedItem = {
       id: `community-${post.id}`,
@@ -176,6 +176,8 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       region: post.region ?? undefined,
       reactions: { love: 0, fire: 0, clap: 0 },
       wpId: post.id,
+      galleryImages: post.galleryImages,
+      templateType: post.templateType,
     };
     setItems(prev => [newItem, ...prev]);
     setActiveType("community");

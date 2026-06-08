@@ -127,7 +127,7 @@ function HashtagPreview({ text }: { text: string }) {
 }
 
 interface SubmitPostProps {
-  onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null }) => void;
+  onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null; galleryImages?: string[]; templateType?: string }) => void;
   lockedTag?: string;
   initialTemplate?: TemplateType;
 }
@@ -465,8 +465,10 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         text: text.trim(),
         authorName: user?.name ?? user?.displayName ?? "Community Member",
         tag: payload.tag || null,
-        imageUrl: imageUrl ?? galleryUrls[0] ?? null,
+        imageUrl: galleryUrls.length > 0 ? null : (imageUrl ?? null),
         region,
+        galleryImages: galleryUrls.length > 0 ? galleryUrls : undefined,
+        templateType: template,
       });
       resetForm();
     } catch (err: any) {
