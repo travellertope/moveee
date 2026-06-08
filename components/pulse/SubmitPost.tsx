@@ -362,16 +362,9 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
   if (!loggedIn) {
     return (
-      <div style={{ borderBottom: "1px solid #e8e2d8", padding: "0.9rem 1.25rem", display: "flex", alignItems: "center", gap: "0.75rem", background: "#fff" }}>
+      <div className="composer-card" style={{ padding: "0.9rem 1.25rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "#f0ece4", border: "1px solid #e0d8ce", flexShrink: 0 }} />
-        <button
-          onClick={() => window.dispatchEvent(new Event("open-auth-modal"))}
-          style={{
-            flex: 1, background: "#ffffff", border: "1px solid #e0d8ce", borderRadius: "20px",
-            padding: "0.6rem 1rem", color: "#7a6f5c", fontSize: "0.85rem",
-            textAlign: "left", cursor: "pointer", fontFamily: "var(--font-fraunces), serif",
-          }}
-        >
+        <button onClick={() => window.dispatchEvent(new Event("open-auth-modal"))} className="composer-prompt-btn">
           What&apos;s happening in culture? Join the community to share.
         </button>
       </div>
@@ -383,8 +376,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
   if (success) {
     return (
-      <div style={{ borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", background: "#fff" }}>
-        <div style={{ background: "#f3eef8", border: "1px solid #e0d4f0", borderRadius: "4px", padding: "0.85rem 1rem", color: "#7a4da0", fontSize: "0.85rem", fontFamily: "var(--font-fraunces), serif", fontStyle: "italic" }}>
+      <div className="composer-card" style={{ padding: "1rem 1.25rem" }}>
+        <div style={{ background: "#f3eef8", border: "1px solid #e0d4f0", borderRadius: "6px", padding: "0.85rem 1rem", color: "#7a4da0", fontSize: "0.85rem", fontFamily: "var(--font-fraunces), serif", fontStyle: "italic" }}>
           {success}
         </div>
       </div>
@@ -403,7 +396,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   };
 
   return (
-    <div style={{ borderBottom: "1px solid #e8e2d8", background: "#fff" }}>
+    <div className="composer-card">
       {/* Template selector */}
       <div className="composer-template-bar">
         {TEMPLATES.map(t => (
@@ -420,7 +413,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} style={{ padding: "0.9rem 1.25rem" }}>
+      <form onSubmit={handleSubmit} className="composer-form-body">
         <div style={{ display: "flex", gap: "0.75rem" }}>
           {/* Avatar */}
           <div style={{
@@ -437,7 +430,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             ) : initials}
           </div>
 
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <div className="composer-fields">
             {/* Directory search — for cultural-take (required), hidden-gem, food-review */}
             {(template === "cultural-take" || template === "hidden-gem" || template === "food-review") && (
               <DirectorySearch
@@ -465,13 +458,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               onChange={e => setText(e.target.value)}
               placeholder={placeholders[template]}
               rows={template === "cultural-take" ? 6 : template === "creative-showcase" ? 2 : 4}
-              style={{
-                background: "transparent", border: "none", borderBottom: "1px solid #e0d8ce",
-                color: "#14110d", fontFamily: "var(--font-fraunces), serif",
-                fontSize: "0.92rem", lineHeight: 1.55, resize: "vertical",
-                width: "100%", outline: "none", paddingBottom: "0.4rem",
-                fontStyle: template === "quote" ? "italic" : "normal",
-              }}
+              className={`composer-textarea${template === "quote" ? " composer-textarea--italic" : ""}`}
             />
             <HashtagPreview text={text} />
 
@@ -586,24 +573,19 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             />
 
             {/* Action bar */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+            <div className="composer-action-bar">
               {/* Tag selector (not for quote, food-review auto-sets Food) */}
               {template !== "quote" && template !== "food-review" && (
                 lockedTag ? (
-                  <span style={{
-                    background: "#fff0eb", color: "#c5491f", fontSize: "0.65rem", fontWeight: 700,
-                    letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.28rem 0.55rem",
-                    borderRadius: "2px", border: "1px solid #f5d0c0",
-                  }}>
+                  <span className="composer-tag-select composer-tag-select--selected" style={{ cursor: "default" }}>
                     {lockedTag}
                   </span>
                 ) : (
-                  <select value={tag} onChange={e => setTag(e.target.value as Tag | "")} style={{
-                    background: "#ffffff", border: "1px solid #e0d8ce", borderRadius: "2px",
-                    color: tag ? "#c5491f" : "#7a6f5c", fontSize: "0.72rem", fontWeight: 600,
-                    letterSpacing: "0.06em", textTransform: "uppercase", padding: "0.28rem 0.55rem",
-                    cursor: "pointer", outline: "none",
-                  }}>
+                  <select
+                    value={tag}
+                    onChange={e => setTag(e.target.value as Tag | "")}
+                    className={`composer-tag-select${tag ? " composer-tag-select--selected" : ""}`}
+                  >
                     <option value="">Section</option>
                     {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
@@ -612,38 +594,34 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
               {/* Image button (not for poll) */}
               {template !== "poll" && template !== "quote" && (
-                <button type="button" onClick={() => fileInputRef.current?.click()} title="Attach image" style={{
-                  background: (imageFile || galleryFiles.length > 0) ? "#fff0eb" : "transparent",
-                  border: `1px solid ${(imageFile || galleryFiles.length > 0) ? "#c5491f" : "#e0d8ce"}`,
-                  borderRadius: "2px", color: (imageFile || galleryFiles.length > 0) ? "#c5491f" : "#7a6f5c",
-                  fontSize: "0.72rem", padding: "0.28rem 0.55rem", cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: "0.3rem",
-                }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                  {(imageFile || galleryFiles.length > 0) ? `${galleryFiles.length || 1} image${(galleryFiles.length || 1) > 1 ? "s" : ""}` : "Image"}
-                </button>
+                <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title="Attach image"
+                className={`composer-image-btn${(imageFile || galleryFiles.length > 0) ? " composer-image-btn--active" : ""}`}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <polyline points="21 15 16 10 5 21" />
+                </svg>
+                {(imageFile || galleryFiles.length > 0) ? `${galleryFiles.length || 1} image${(galleryFiles.length || 1) > 1 ? "s" : ""}` : "Image"}
+              </button>
               )}
 
-              <div style={{ flex: 1 }} />
-              <span style={{ fontSize: "0.7rem", color: charRemaining < 50 ? (charRemaining < 0 ? "#c5491f" : "#b38238") : "#bbb", fontVariantNumeric: "tabular-nums" }}>
+              <div className="composer-spacer" />
+              <span className={`composer-char-count${charRemaining < 0 ? " composer-char-count--error" : charRemaining < 50 ? " composer-char-count--warn" : ""}`}>
                 {charRemaining}
               </span>
-              <button type="submit" disabled={!canSubmit()} style={{
-                background: canSubmit() ? (template === "quote" ? "#7a4da0" : "#c93c2a") : "#e8e2d8",
-                color: canSubmit() ? "#fff" : "#aaa",
-                border: "none", borderRadius: "2px", padding: "0.32rem 0.9rem",
-                fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.08em",
-                textTransform: "uppercase", cursor: canSubmit() ? "pointer" : "default",
-                transition: "all 0.15s",
-              }}>
+              <button
+                type="submit"
+                disabled={!canSubmit()}
+                className={`composer-submit${template === "quote" ? " composer-submit--quote" : ""}`}
+              >
                 {uploading ? "Uploading…" : loading ? "Posting…" : template === "quote" ? "Submit" : "Post"}
               </button>
             </div>
-            {error && <p style={{ color: "#c5491f", fontSize: "0.78rem", margin: 0 }}>{error}</p>}
+            {error && <p className="composer-error">{error}</p>}
           </div>
         </div>
       </form>
