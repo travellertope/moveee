@@ -97,16 +97,19 @@ class Culture_Pulse {
     }
 
     public static function register_meta() {
-        $fields = [
+        $string_fields = [
             'pulse_source',
             'pulse_region_label',
             'pulse_arm_label',
             'pulse_external_url',
             'pulse_image_url',
             'pulse_gemini_refreshed_at',
+            'pulse_og_title',
+            'pulse_og_description',
+            'pulse_og_image',
         ];
 
-        foreach ( $fields as $field ) {
+        foreach ( $string_fields as $field ) {
             register_post_meta( 'pulse_story', $field, [
                 'show_in_rest'  => true,
                 'single'        => true,
@@ -117,6 +120,16 @@ class Culture_Pulse {
                 },
             ] );
         }
+
+        register_post_meta( 'pulse_story', 'pulse_click_count', [
+            'show_in_rest'  => true,
+            'single'        => true,
+            'type'          => 'integer',
+            'default'       => 0,
+            'auth_callback' => function () {
+                return current_user_can( 'edit_posts' );
+            },
+        ] );
     }
 
     /**

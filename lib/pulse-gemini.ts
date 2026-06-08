@@ -111,6 +111,10 @@ Each object must have:
 - "summary": 1–2 sentences, max 30 words, Moveee voice, name the real artist/place/event
 - "body": 2 short paragraphs, 80–120 words total, separated by \\n\\n. (1) what happened and why it matters, (2) significance for African/diaspora audiences.
 - "arm": one of: "lifestyle" | "origins" | "happenings" | "magazine"
+    • "lifestyle"  — fashion, beauty, food, travel, wellness, style, everyday culture
+    • "origins"    — history, heritage, identity, diaspora roots, language, tradition, social justice
+    • "happenings" — new music releases, film/TV drops, events, shows, album announcements, what's on right now
+    • "magazine"   — in-depth profiles, interviews, essays, longform analysis, business/entrepreneurship stories
 - "region": one of: "Africa" | "Caribbean" | "Diaspora UK" | "Diaspora US" | "Diaspora Europe" | "Global"
 - "source": publication name (e.g. OkayAfrica, BellaNaija, The Root)
 - "source_url": the EXACT URL from the item — copy verbatim

@@ -1,6 +1,7 @@
 import {
   getWPData,
   GET_STORIES,
+  GET_STORIES_TAGS,
   GET_SERIES_STORIES,
   GET_JOURNEYS,
   GET_DIRECTORY_ENTRIES,
@@ -11,6 +12,7 @@ import {
   getPostsByIssue,
   type IssueTerm,
 } from "@/lib/wp";
+import { REGIONAL_SLUGS } from "@/lib/editions";
 
 /**
  * Fetch all data needed for a homepage edition.
@@ -34,52 +36,66 @@ export async function fetchHomepageData(editionTag?: string) {
   let seriesTheLane: any[] = [];
   let seriesThinkCreative: any[] = [];
 
-  // Cover story — try edition-specific tag first, fall back to global cover-story
+  // Stories — two parallel fetches for edition views:
+  //   1. Posts tagged for this edition (guaranteed to appear)
+  //   2. All latest posts (the universal/untagged ones live here)
+  // Posts tagged for a DIFFERENT edition are excluded from pool 2.
+  // First post in the merged pool becomes the left-panel cover story.
   try {
     if (editionTag) {
-      const edCover = await getWPData(GET_STORIES, { first: 1, tag: `cover-story-${editionTag}` }, { revalidate: 0 });
-      coverStory = edCover?.posts?.nodes?.[0] || null;
-    }
-    if (!coverStory) {
-      const globalCover = await getWPData(GET_STORIES, { first: 1, tag: "cover-story" }, { revalidate: 0 });
-      coverStory = globalCover?.posts?.nodes?.[0] || null;
-    }
-  } catch (err) { console.error("Cover story fetch error:", err); }
+      const otherEditions = (REGIONAL_SLUGS as readonly string[]).filter(t => t !== editionTag);
 
-  // Stories — edition-tagged first, fall back to latest
-  try {
-    const vars = editionTag
-      ? { first: 14, tag: editionTag }
-      : { first: 14 };
-    const data = await getWPData(GET_STORIES, vars, { revalidate: 0 });
-    const all: any[] = data?.posts?.nodes || [];
+      // Run three queries in parallel: edition posts, all-latest, and tag-only
+      // data for each other edition (lightweight — just id + tags).
+      const [editionData, latestData, ...otherTagData] = await Promise.all([
+        getWPData(GET_STORIES, { first: 14, tag: editionTag }, { revalidate: 0 }),
+        getWPData(GET_STORIES, { first: 20 }, { revalidate: 0 }),
+        ...otherEditions.map(tag =>
+          getWPData(GET_STORIES_TAGS, { first: 50, tag }, { revalidate: 0 })
+        ),
+      ]);
 
-    // If edition tag returned fewer than 4 stories, supplement with latest
-    let pool = all;
-    if (editionTag && all.length < 4) {
-      const fallback = await getWPData(GET_STORIES, { first: 14 }, { revalidate: 0 });
-      const fallbackStories: any[] = fallback?.posts?.nodes || [];
-      const existingIds = new Set(all.map((s: any) => s.id));
-      pool = [...all, ...fallbackStories.filter((s: any) => !existingIds.has(s.id))].slice(0, 14);
-    }
+      const editionPosts: any[] = editionData?.posts?.nodes || [];
+      const latestPosts: any[]  = latestData?.posts?.nodes  || [];
 
-    if (!coverStory) {
-      coverStory = pool[0];
+      // Build a set of IDs that belong to other editions (to exclude from latest pool).
+      const otherEditionIds = new Set<string>(
+        otherTagData.flatMap((d: any) => d?.posts?.nodes?.map((p: any) => p.id) ?? [])
+      );
+
+      const editionIds = new Set(editionPosts.map((p: any) => p.id));
+
+      // From the all-latest pool take posts not already in editionPosts and not
+      // belonging to another edition.
+      const universalPosts = latestPosts.filter(
+        (p: any) => !editionIds.has(p.id) && !otherEditionIds.has(p.id)
+      );
+
+      // Edition-specific posts first, then universal posts (both already date-ordered by WP).
+      const pool = [...editionPosts, ...universalPosts];
+      coverStory = pool[0] || null;
       stories = pool.slice(1, 14);
     } else {
-      stories = pool.filter((s: any) => s.id !== coverStory.id).slice(0, 13);
+      const data = await getWPData(GET_STORIES, { first: 14 }, { revalidate: 0 });
+      const pool: any[] = data?.posts?.nodes || [];
+      coverStory = pool[0] || null;
+      stories = pool.slice(1, 14);
     }
   } catch (err) { console.error("Stories fetch error:", err); }
 
-  // Events — filter by edition tag if provided
+  // Events — for edition views: show events tagged for this edition + universal events.
+  // Universal = not explicitly tagged for any other edition.
+  // Events use the same tag structure as posts so we can check .tags?.nodes.
   try {
-    events = await getEventsWithFallback(6, { revalidate: 0 });
+    events = await getEventsWithFallback(editionTag ? 18 : 6, { revalidate: 0 });
     if (editionTag && events.length > 0) {
-      // Filter events tagged for this edition; fall back to all if none match
-      const tagged = events.filter((e: any) =>
-        e.tags?.nodes?.some((t: any) => t.slug === editionTag)
-      );
-      if (tagged.length >= 2) events = tagged;
+      const otherEditions = (REGIONAL_SLUGS as readonly string[]).filter(t => t !== editionTag);
+      events = events.filter((e: any) => {
+        const eventTags: string[] = e.tags?.nodes?.map((t: any) => t.slug) ?? [];
+        // If we have no tag data, include the event (fail open rather than fail closed).
+        if (eventTags.length === 0 && !e.tags) return true;
+        return !otherEditions.some(t => eventTags.includes(t));
+      }).slice(0, 6);
     }
   } catch (err) { console.error("Events fetch error:", err); }
 

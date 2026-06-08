@@ -280,7 +280,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         {/* LEFT — TOC */}
         <aside className="toc">
           <div className="toc-heading">In this piece</div>
-          <details className="toc-details" open>
+          <details className="toc-details">
           <summary className="toc-summary">
             <span className="toc-toggle-label">In this piece</span>
             <span className="toc-chevron" aria-hidden>▾</span>

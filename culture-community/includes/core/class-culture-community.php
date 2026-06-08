@@ -30,9 +30,14 @@ class Culture_Community {
         $string_fields = [
             'community_author_name',
             'community_author_id',
+            'community_author_avatar',
             'community_tag',
             'community_region',
             'community_author_tier',
+            'community_link_url',
+            'community_og_title',
+            'community_og_description',
+            'community_og_image',
         ];
 
         $string_meta_args = [

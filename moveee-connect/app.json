@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Moveee Connect",
+    "slug": "moveee-platform",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f3ece0"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.moveee.connect"
+    },
+    "android": {
+      "package": "com.moveee.connect",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#f3ece0"
+      },
+      "permissions": [
+        "NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
+    },
+    "plugins": [
+      "expo-notifications",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Moveee to access your photos so you can share images in Connect posts."
+        }
+      ],
+      "./plugins/withAndroidIapStoreFlavor"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "943d1ee4-9194-4a36-8b6a-48ab32dfd813"
+      }
+    }
+  }
+}

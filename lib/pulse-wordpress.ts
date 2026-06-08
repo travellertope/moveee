@@ -1,4 +1,5 @@
 import type { PulseStoryRaw } from "./pulse-gemini";
+import { scrapeOgTags } from "./og-scraper";
 
 // WordPress REST API base URL — derived from the existing WP URL env var.
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
@@ -38,6 +39,10 @@ export interface WpPulseStory {
     pulse_external_url?: string;
     pulse_image_url?: string;
     pulse_gemini_refreshed_at?: string;
+    pulse_og_title?: string;
+    pulse_og_description?: string;
+    pulse_og_image?: string;
+    pulse_click_count?: number;
   };
   _embedded?: {
     "wp:featuredmedia"?: Array<{ source_url: string; alt_text?: string }>;
@@ -128,10 +133,11 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> 
     "Global": "global"
   };
 
-  const [armId, regionId, categoryId] = await Promise.all([
+  const [armId, regionId, categoryId, ogData] = await Promise.all([
     story.arm      ? resolveTermId("pulse-arms",       story.arm)      : Promise.resolve(null),
     story.region   ? resolveTermId("pulse-regions",    story.region,   regionMap[story.region]) : Promise.resolve(null),
     story.category ? resolveTermId("pulse-categories", story.category) : Promise.resolve(null),
+    story.source_url ? scrapeOgTags(story.source_url) : Promise.resolve({ title: "", description: "", image: "" }),
   ]);
 
   const body: Record<string, any> = {
@@ -148,6 +154,9 @@ export async function savePulseStory(story: PulseStoryRaw): Promise<SaveResult> 
       pulse_external_url: story.source_url ?? "",
       pulse_image_url: story.image_url ?? "",
       pulse_gemini_refreshed_at: new Date().toISOString(),
+      pulse_og_title: ogData.title,
+      pulse_og_description: ogData.description,
+      pulse_og_image: ogData.image,
     },
   };
 

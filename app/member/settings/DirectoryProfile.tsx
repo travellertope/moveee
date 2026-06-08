@@ -206,7 +206,6 @@ function BioField({ value, onSave, status }: {
             value={draft}
             maxLength={BIO_MAX}
             onChange={e => setDraft(e.target.value)}
-            autoFocus
             placeholder="A sentence or two about what you do and what you're building."
           />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
@@ -265,7 +264,6 @@ function LinkField({ label, placeholder, value, onSave }: {
             value={draft}
             onChange={e => setDraft(e.target.value)}
             placeholder={placeholder}
-            autoFocus
             onKeyDown={e => { if (e.key === "Enter") commit(); if (e.key === "Escape") { setDraft(value); setEditing(false); } }}
           />
           <div className="mem-field-edit-actions">

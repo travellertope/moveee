@@ -760,3 +760,10 @@ h1, h2, h3, h4 {
   padding: 0 3px;
   pointer-events: none;
 }
+
+/* Prevent iOS Safari zoom on input focus (triggered when font-size < 16px) */
+@media (max-width: 768px) {
+  input, textarea {
+    font-size: 16px !important;
+  }
+}

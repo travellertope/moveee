@@ -1,10 +1,10 @@
 <?php
 /**
  * Plugin Name: Culture Community
- * Plugin URI:  https://example.com/culture-community
- * Description: A hybrid culture community plugin with dual chapter membership, event access restrictions, gamification, and interactive newsletters.
- * Version:     1.2.0
- * Author:      Culture Community Team
+ * Plugin URI:  https://themoveee.com
+ * Description: Core plugin for Moveee Connect — membership tiers, community feed, newsletters, events, gamification, and mobile API.
+ * Version:     2.0.0
+ * Author:      Moveee
  * License:     GPL-2.0+
  * Text Domain: culture-community
  */
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'CULTURE_VERSION', '1.2.0' );
+define( 'CULTURE_VERSION', '2.0.0' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CULTURE_PLUGIN_FILE', __FILE__ );
@@ -41,6 +41,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-twitter.php';
 
 // API includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-rest-api.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-mobile-api.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-ajax.php';
 
 // Frontend includes.
@@ -94,6 +95,7 @@ function culture_community_init() {
     Culture_Post_Types::init();
     Culture_Gamification::init();
     Culture_REST_API::init();
+    Culture_Mobile_API::init();
     Culture_Ajax::init();
     Culture_Shortcodes::init();
     Culture_Paystack::init();

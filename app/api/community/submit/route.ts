@@ -21,20 +21,26 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const { text, imageUrl, tag, region, authorTier } = body as {
+  const { text, imageUrl, tag, region, authorTier, authorAvatar, linkUrl, ogTitle, ogDescription, ogImage } = body as {
     text?: string;
     imageUrl?: string;
     tag?: string;
     region?: string;
     authorTier?: string;
+    authorAvatar?: string;
+    linkUrl?: string;
+    ogTitle?: string;
+    ogDescription?: string;
+    ogImage?: string;
   };
 
   const content = (text ?? "").trim();
   if (!content || content.length < 3) {
     return NextResponse.json({ error: "Post must be at least 3 characters." }, { status: 400 });
   }
-  if (content.length > 500) {
-    return NextResponse.json({ error: "Post must be 500 characters or fewer." }, { status: 400 });
+  const wordCount = content.split(/\s+/).filter(Boolean).length;
+  if (wordCount > 600) {
+    return NextResponse.json({ error: "Post must be 600 words or fewer." }, { status: 400 });
   }
 
   const user = session.user as any;
@@ -77,12 +83,17 @@ export async function POST(req: NextRequest) {
       status: postStatus,
       comment_status: "open",
       meta: {
-        community_author_name: authorName,
-        community_author_id:   authorId,
-        community_image_url:   imageUrl?.trim() || "",
-        community_tag:         validTag ?? "",
-        community_region:      region?.trim() || "",
-        community_author_tier: (authorTier?.trim() || sessionTier) || "",
+        community_author_name:   authorName,
+        community_author_id:     authorId,
+        community_author_avatar: authorAvatar?.trim() || "",
+        community_image_url:     imageUrl?.trim() || "",
+        community_tag:          validTag ?? "",
+        community_region:       region?.trim() || "",
+        community_author_tier:  (authorTier?.trim() || sessionTier) || "",
+        community_link_url:     linkUrl?.trim() || "",
+        community_og_title:     ogTitle?.trim() || "",
+        community_og_description: ogDescription?.trim() || "",
+        community_og_image:     ogImage?.trim() || "",
       },
     }),
     cache: "no-store",

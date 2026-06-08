@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { CountrySelect, CitySelect } from "@/components/LocationSelect";
 
 const GENDERS = ["Prefer not to say", "Male", "Female", "Non-binary", "Other"];
@@ -29,13 +30,79 @@ interface Props {
     countryOfResidence: string;
     city: string;
     occupation: string;
+    avatarUrl?: string;
   };
+}
+
+// ── AvatarUpload ──────────────────────────────────────────────────────────────
+function AvatarUpload({ initial, currentUrl }: { initial: string; currentUrl?: string }) {
+  const { update } = useSession();
+  const [preview, setPreview] = useState<string | null>(currentUrl || null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError("");
+    setUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await fetch("/api/member/upload-avatar", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      setPreview(data.url);
+      await update({ avatarUrl: data.url });
+    } catch (err: any) {
+      setError(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="mem-field" style={{ alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem", flex: 1 }}>
+        <div
+          style={{
+            width: 64, height: 64, borderRadius: "50%",
+            background: "#f0ece4", border: "2px solid #e0d8ce",
+            overflow: "hidden", flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          {preview ? (
+            <img src={preview} alt="Profile photo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            <span style={{ fontSize: "1.4rem", fontWeight: 700, color: "#7a6f5c" }}>{initial}</span>
+          )}
+        </div>
+        <div>
+          <div className="mem-field-label">Profile photo</div>
+          {error && <div style={{ color: "#c5491f", fontSize: "0.75rem", marginTop: "0.2rem" }}>{error}</div>}
+        </div>
+      </div>
+      <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFile} style={{ display: "none" }} />
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        disabled={uploading}
+        className="mem-field-btn"
+      >
+        {uploading ? "Uploading…" : preview ? "Change photo" : "Upload photo"}
+      </button>
+    </div>
+  );
 }
 
 // ── ProfileEditor ─────────────────────────────────────────────────────────────
 export default function ProfileEditor({ user }: Props) {
   // Track country of residence so city combobox always has the latest value
   const [currentCountry, setCurrentCountry] = useState(user.countryOfResidence);
+  const initial = user.displayName.charAt(0).toUpperCase() || "?";
 
   const fields: Array<Field & { onSaved?: (v: string) => void; countryContext?: string }> = [
     { key: "display_name",         label: "Display name",         value: user.displayName,        type: "text" },
@@ -59,6 +126,7 @@ export default function ProfileEditor({ user }: Props) {
 
   return (
     <div className="mem-field-list">
+      <AvatarUpload initial={initial} currentUrl={user.avatarUrl} />
       {fields.map((f) => (
         <EditableField
           key={f.key}
@@ -136,7 +204,6 @@ function EditableField({
               className="mem-field-input"
               value={draft}
               onChange={e => setDraft(e.target.value)}
-              autoFocus
             >
               <option value="">— Select —</option>
               {field.options!.map(o => (
@@ -148,7 +215,6 @@ function EditableField({
               value={draft}
               onChange={setDraft}
               inputClassName="mem-field-input"
-              autoFocus
             />
           ) : field.type === "city" ? (
             <CitySelect
@@ -156,7 +222,6 @@ function EditableField({
               value={draft}
               onChange={setDraft}
               inputClassName="mem-field-input"
-              autoFocus
             />
           ) : (
             <input
@@ -164,7 +229,6 @@ function EditableField({
               type={field.type ?? "text"}
               value={draft}
               onChange={e => setDraft(e.target.value)}
-              autoFocus
               onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") cancel(); }}
             />
           )}

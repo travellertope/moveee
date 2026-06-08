@@ -687,6 +687,38 @@ class Culture_REST_API {
                 'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
+
+        // Track an external link click on a pulse story.
+        register_rest_route( 'culture/v1', '/pulse-click', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_pulse_click' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+    }
+
+    /**
+     * Record an external click on a pulse story and return the destination URL.
+     */
+    public static function handle_pulse_click( $request ) {
+        $post_id = (int) $request->get_param( 'post_id' );
+        $post    = get_post( $post_id );
+
+        if ( ! $post || 'pulse_story' !== $post->post_type ) {
+            return new WP_Error( 'not_found', 'Pulse story not found.', array( 'status' => 404 ) );
+        }
+
+        $url = get_post_meta( $post_id, 'pulse_external_url', true );
+        if ( empty( $url ) ) {
+            return new WP_Error( 'no_url', 'No external URL for this story.', array( 'status' => 404 ) );
+        }
+
+        $current = (int) get_post_meta( $post_id, 'pulse_click_count', true );
+        update_post_meta( $post_id, 'pulse_click_count', $current + 1 );
+
+        return rest_ensure_response( array( 'url' => $url ) );
     }
 
     /**
@@ -1308,6 +1340,8 @@ class Culture_REST_API {
             // Vendor
             'is_vendor'           => $is_vendor,
             'vendor_slug'         => $vendor_slug,
+            // Profile photo
+            'avatar_url'          => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
         );
     }
 
@@ -1358,6 +1392,7 @@ class Culture_REST_API {
             'directory_instagram'    => '_culture_directory_instagram',
             'directory_linkedin'     => '_culture_directory_linkedin',
             'directory_website'      => '_culture_directory_website',
+            'avatar_url'             => '_culture_avatar_url',
         );
 
         foreach ( $meta_map as $param => $meta_key ) {

@@ -41,9 +41,7 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
 
   // Auto-focus on open; reset on close
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 60);
-    } else {
+    if (!isOpen) {
       setQuery('');
       setResults(null);
       setLoading(false);

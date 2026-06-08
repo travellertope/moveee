@@ -30,6 +30,8 @@ export interface CultureUser {
   // Vendor
   isVendor: boolean;
   vendorSlug: string;
+  // Profile photo
+  avatarUrl: string;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -80,6 +82,7 @@ export const authOptions: NextAuthOptions = {
             visual_downloads_today: data.visual_downloads_today ?? 0,
             isVendor: data.is_vendor ?? false,
             vendorSlug: data.vendor_slug ?? "",
+            avatarUrl: data.avatar_url ?? "",
           };
         } catch {
           return null;
@@ -112,13 +115,13 @@ export const authOptions: NextAuthOptions = {
         token.visualDownloadsToday = u.visual_downloads_today;
         token.isVendor = u.isVendor ?? false;
         token.vendorSlug = u.vendorSlug ?? "";
+        token.avatarUrl = u.avatarUrl ?? "";
       }
 
-      // updateSession({ isVendor, vendorSlug }) — payload arrives as `updatePayload`
-      // (the `session` param of the jwt callback) when trigger === "update".
       if (trigger === "update" && updatePayload) {
         if (updatePayload.isVendor   !== undefined) token.isVendor   = updatePayload.isVendor;
         if (updatePayload.vendorSlug !== undefined) token.vendorSlug = updatePayload.vendorSlug;
+        if (updatePayload.avatarUrl  !== undefined) token.avatarUrl  = updatePayload.avatarUrl;
       }
 
       return token;
@@ -145,6 +148,7 @@ export const authOptions: NextAuthOptions = {
         s.visual_downloads_today = token.visualDownloadsToday;
         s.isVendor = token.isVendor ?? false;
         s.vendorSlug = token.vendorSlug ?? "";
+        s.avatarUrl = token.avatarUrl ?? "";
       }
       return session;
     },

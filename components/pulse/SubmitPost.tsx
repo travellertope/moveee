@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { parseHashtags } from "@/lib/hashtags";
+import SourcePreviewCard from "./SourcePreviewCard";
+
+const URL_RE = /https?:\/\/[^\s]+/i;
 
 const EDITION_TO_REGION: Record<string, string> = {
   uk:     "Diaspora UK",
@@ -84,8 +87,41 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const MAX = 500;
-  const remaining = MAX - text.length;
+  const MAX_WORDS = 600;
+  const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+  const remaining = MAX_WORDS - wordCount;
+
+  // Link preview state
+  const [linkPreview, setLinkPreview] = useState<{ url: string; ogTitle: string; ogDescription: string; ogImage: string } | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const previewFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchLinkPreview = useCallback((url: string) => {
+    if (previewFetchRef.current) clearTimeout(previewFetchRef.current);
+    setPreviewLoading(true);
+    previewFetchRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/community/link-preview?url=${encodeURIComponent(url)}`);
+        const og = await res.json();
+        setLinkPreview({ url, ogTitle: og.title || "", ogDescription: og.description || "", ogImage: og.image || "" });
+      } catch {
+        setLinkPreview({ url, ogTitle: "", ogDescription: "", ogImage: "" });
+      } finally {
+        setPreviewLoading(false);
+      }
+    }, 800);
+  }, []);
+
+  useEffect(() => {
+    const match = text.match(URL_RE);
+    if (match) {
+      const url = match[0];
+      if (!linkPreview || linkPreview.url !== url) fetchLinkPreview(url);
+    } else {
+      setLinkPreview(null);
+      setPreviewLoading(false);
+    }
+  }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -134,6 +170,11 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
           tag: tag || undefined,
           region: detectRegion(user?.countryOfResidence) ?? undefined,
           authorTier: user?.tier ?? undefined,
+          authorAvatar: user?.avatarUrl || undefined,
+          linkUrl: linkPreview?.url || undefined,
+          ogTitle: linkPreview?.ogTitle || undefined,
+          ogDescription: linkPreview?.ogDescription || undefined,
+          ogImage: linkPreview?.ogImage || undefined,
         }),
       });
       const data = await res.json();
@@ -160,17 +201,34 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
       <textarea
         value={text}
-        onChange={e => setText(e.target.value.slice(0, MAX))}
+        onChange={e => setText(e.target.value)}
         placeholder="What's happening in culture?"
-        rows={3}
+        rows={4}
         style={{
           background: "transparent", border: "none", borderBottom: "1px solid #e0d8ce",
           color: "#14110d", fontFamily: "var(--font-fraunces), serif",
-          fontSize: "0.92rem", lineHeight: 1.55, resize: "none", width: "100%",
-          outline: "none", paddingBottom: "0.4rem",
+          fontSize: "0.92rem", lineHeight: 1.55, resize: "vertical", width: "100%",
+          outline: "none", paddingBottom: "0.4rem", minHeight: "80px",
         }}
       />
       <HashtagPreview text={text} />
+
+      {/* Link preview — hidden if user has attached an image */}
+      {!imagePreview && linkPreview && (
+        previewLoading ? (
+          <p style={{ color: "#bbb", fontSize: "0.72rem", margin: 0 }}>Fetching link preview…</p>
+        ) : (
+          <SourcePreviewCard
+            goUrl={linkPreview.url}
+            sourceName={(() => { try { return new URL(linkPreview.url).hostname.replace(/^www\./, ""); } catch { return linkPreview.url; } })()}
+            sourceUrl={linkPreview.url}
+            ogTitle={linkPreview.ogTitle}
+            ogDescription={linkPreview.ogDescription}
+            ogImage={linkPreview.ogImage}
+          />
+        )
+      )}
+
       {imagePreview && (
         <div style={{ position: "relative", display: "inline-block", maxWidth: "200px" }}>
           <img src={imagePreview} alt="Preview" style={{ width: "100%", borderRadius: "4px", border: "1px solid #e0d8ce", display: "block" }} />
@@ -219,7 +277,7 @@ function PostForm({ user, onPosted, lockedTag }: { user: any; onPosted?: SubmitP
         </button>
         <div style={{ flex: 1 }} />
         <span style={{ fontSize: "0.7rem", color: remaining < 50 ? (remaining < 0 ? "#c5491f" : "#b38238") : "#bbb", fontVariantNumeric: "tabular-nums" }}>
-          {remaining}
+          {remaining}w
         </span>
         <button type="submit" disabled={!text.trim() || loading || remaining < 0} style={{
           background: text.trim() && !loading && remaining >= 0 ? "#c93c2a" : "#e8e2d8",
@@ -466,8 +524,11 @@ export default function SubmitPost({ onPosted, lockedTag }: SubmitPostProps) {
           color: mode === "quote" ? "#7a4da0" : "#c5491f",
           fontSize: "0.65rem", fontWeight: 700, flexShrink: 0, letterSpacing: "0.05em",
           display: "flex", alignItems: "center", justifyContent: "center",
+          overflow: "hidden",
         }}>
-          {initials}
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : initials}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
