@@ -538,6 +538,7 @@ class Culture_Directory {
                 'slug'      => $post->post_name,
                 'type'      => $type_slug,
                 'thumbnail' => $thumb ?: null,
+                'city'      => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
             );
         }
 
@@ -559,6 +560,7 @@ class Culture_Directory {
         $location_name = sanitize_text_field( $request->get_param( 'location_name' ) );
         $lat          = (float) $request->get_param( 'location_lat' );
         $lng          = (float) $request->get_param( 'location_lng' );
+        $city         = sanitize_text_field( $request->get_param( 'city' ) );
 
         if ( empty( $title ) ) {
             return new WP_Error( 'missing_title', __( 'Title is required.', 'culture-community' ), array( 'status' => 400 ) );
@@ -586,6 +588,9 @@ class Culture_Directory {
         }
         if ( $lat ) update_post_meta( $post_id, 'dir_infobox_lat', $lat );
         if ( $lng ) update_post_meta( $post_id, 'dir_infobox_lng', $lng );
+        if ( $city ) {
+            update_post_meta( $post_id, '_entry_city', $city );
+        }
 
         // Award reputation for creating a directory entry.
         if ( class_exists( 'Culture_Gamification' ) && $user_id > 0 ) {
@@ -597,6 +602,7 @@ class Culture_Directory {
             'id'    => $post_id,
             'slug'  => get_post_field( 'post_name', $post_id ),
             'title' => $title,
+            'city'  => $city,
         ) );
     }
 

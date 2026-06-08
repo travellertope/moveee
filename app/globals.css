@@ -1080,6 +1080,69 @@ h1, h2, h3, h4 {
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
+.composer-dir-result-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.composer-dir-result-city {
+  font-size: 0.68rem;
+  color: #7a6f5c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.composer-dir-selected-city {
+  color: #7a6f5c;
+  font-weight: 400;
+}
+.composer-dir-city-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0;
+}
+.composer-dir-city-label {
+  font-size: 0.72rem;
+  color: #7a6f5c;
+  font-weight: 500;
+}
+.composer-dir-city-label span {
+  font-weight: 400;
+  opacity: 0.7;
+}
+.composer-dir-city-input {
+  width: 100%;
+  border: 1px solid #e0d8ce;
+  border-radius: 4px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: #14110d;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+}
+.composer-dir-city-input:focus {
+  border-color: #b38238;
+  box-shadow: 0 0 0 2px rgba(179,130,56,0.12);
+}
+.composer-dir-city-actions {
+  display: flex;
+  gap: 6px;
+}
+.composer-dir-cancel-btn {
+  background: transparent;
+  border: 1px solid #e0d8ce;
+  color: #7a6f5c;
+  border-radius: 4px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
 .composer-dir-selected {
   display: flex;
   align-items: center;

@@ -99,6 +99,7 @@ class Culture_Post_Types {
             '_is_partner'             => 'boolean',
             '_partner_status'         => 'string',
             '_partner_perk_template'  => 'string',
+            '_entry_city'             => 'string',
         );
         foreach ( $directory_meta as $meta_key => $type ) {
             register_post_meta( 'culture_directory', $meta_key, array(
@@ -1176,8 +1177,10 @@ class Culture_Post_Types {
         $ai_generated  = get_post_meta( $post->ID, '_culture_dir_ai_generated', true );
         $submitted_by  = get_post_meta( $post->ID, '_culture_dir_submitted_by', true );
         $submitter     = $submitted_by ? get_userdata( (int) $submitted_by ) : null;
+        $city          = get_post_meta( $post->ID, '_entry_city', true );
         ?>
         <table class="form-table">
+            <tr><th><label for="culture_dir_city">City / Location</label></th><td><input type="text" id="culture_dir_city" name="culture_dir_city" value="<?php echo esc_attr( $city ); ?>" class="regular-text" placeholder="e.g. London, Lagos, New York" /></td></tr>
             <tr><th><label for="culture_dir_ai_generated">AI Generated</label></th><td><input type="checkbox" id="culture_dir_ai_generated" name="culture_dir_ai_generated" value="1" <?php checked( $ai_generated, '1' ); ?> /></td></tr>
             <?php if ( $submitter ) : ?><tr><th>Submitted By</th><td><a href="<?php echo esc_url( get_edit_user_link( $submitter->ID ) ); ?>"><?php echo esc_html( $submitter->display_name ); ?></a></td></tr><?php endif; ?>
         </table>
@@ -1239,6 +1242,9 @@ class Culture_Post_Types {
     public static function save_meta_boxes( $post_id ) {
         if ( isset( $_POST['culture_directory_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_directory_meta_nonce'], 'culture_directory_meta' ) ) {
             update_post_meta( $post_id, '_culture_dir_ai_generated', isset( $_POST['culture_dir_ai_generated'] ) ? '1' : '0' );
+            if ( isset( $_POST['culture_dir_city'] ) ) {
+                update_post_meta( $post_id, '_entry_city', sanitize_text_field( $_POST['culture_dir_city'] ) );
+            }
         }
         if ( isset( $_POST['culture_partner_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_partner_meta_nonce'], 'culture_partner_meta' ) ) {
             update_post_meta( $post_id, '_is_partner', isset( $_POST['culture_is_partner'] ) ? '1' : '0' );
