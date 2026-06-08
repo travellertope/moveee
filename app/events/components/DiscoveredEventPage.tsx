@@ -55,8 +55,6 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
 
         {/* ── LEFT: image + back ── */}
         <div className="luma-left">
-          <Link href="/events" className="luma-back">← Happenings</Link>
-
           <div className="luma-poster">
             {img ? (
               <img src={img} alt={event.title} />
