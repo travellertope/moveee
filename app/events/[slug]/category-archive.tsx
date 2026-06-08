@@ -75,6 +75,9 @@ export default async function CategoryArchive({ slug, categoryInfo }: { slug: st
         />
       </div>
 
+      <div className="ev-archive-footer">
+        <Link href="/events" className="ev-archive-back">← All Happenings</Link>
+      </div>
     </div>
   );
 }
