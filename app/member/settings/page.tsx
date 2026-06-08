@@ -5,6 +5,7 @@ import Link from "next/link";
 import NewsletterPreferences from "./NewsletterPreferences";
 import ProfileEditor from "./ProfileEditor";
 import DirectoryProfile from "./DirectoryProfile";
+import InterestEditor from "@/components/InterestEditor";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -88,7 +89,16 @@ export default async function MemberSettingsPage() {
               />
             </section>
 
-            {/* ── 3. NOTIFICATIONS ── */}
+            {/* ── 3. INTERESTS ── */}
+            <section className="mem-card" id="interests">
+              <div className="mem-card-label">Your Interests</div>
+              <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 14px", lineHeight: 1.5 }}>
+                Your interests shape your personalised feed. Select at least 3.
+              </p>
+              <InterestEditor initialInterests={(user as any).interests ?? []} />
+            </section>
+
+            {/* ── 4. NEWSLETTERS ── */}
             <section className="mem-card">
               <div className="mem-card-label">Newsletter Subscriptions</div>
               <NewsletterPreferences email={email} />

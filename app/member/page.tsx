@@ -60,6 +60,10 @@ export default async function MemberPage() {
           initialBadges={user.badges ?? []}
           referralCount={user.referralCount ?? 0}
           membership={isPatron ? "Connect Pro" : "Connect Citizen"}
+          initialCredits={user.credits ?? 0}
+          initialReputation={user.reputation ?? user.points ?? 0}
+          reputationTier={user.reputationTier ?? "member"}
+          dailyCreditsRemaining={user.dailyCreditsRemaining ?? 50}
         />
 
         <div className="mem-grid">
@@ -69,25 +73,34 @@ export default async function MemberPage() {
             {/* Badges (live data) */}
             <MemberBadges initialBadges={user.badges ?? []} />
 
-            {/* How to earn points */}
+            {/* How to earn */}
             <section className="mem-card">
-              <div className="mem-card-label">How to Earn Points</div>
+              <div className="mem-card-label">How to Earn</div>
+              <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 12px", lineHeight: 1.5 }}>
+                Credits are spendable (capped at 50/day). Reputation is permanent and unlocks status.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0 12px", fontSize: "0.75rem", fontWeight: 700, color: "var(--mute)", marginBottom: 6, paddingBottom: 6, borderBottom: "1px solid var(--rule)" }}>
+                <span>Action</span><span>Credits</span><span>Rep</span>
+              </div>
               <div className="mem-points-list">
                 {[
-                  ["Event RSVP", "+5 pts"],
-                  ["Event check-in", "+15 pts"],
-                  ["Refer a member", "+25 pts"],
-                  ["Newsletter comment", "+10 pts"],
-                  ["Newsletter reaction", "+2 pts"],
-                  ["Share a quote", "+10 pts"],
-                  ["Quote liked", "+1 pt"],
-                  ["Read a magazine article", "+5 pts"],
-                  ["Share a magazine article", "+5 pts"],
-                  ["Directory submission", "+25 pts"],
-                ].map(([action, pts]) => (
-                  <div key={action} className="mem-points-row">
+                  ["Post validated (5 reactions or 3 comments)", "+10 cr", "+5"],
+                  ["Hidden Gem or Food Review validated",         "+15 cr", "+10"],
+                  ["Event RSVP",                                  "+1 cr",  "+5"],
+                  ["Event check-in",                              "+2 cr",  "+15"],
+                  ["Refer a member",                              "+3 cr",  "+25"],
+                  ["Newsletter comment",                          "+1 cr",  "+10"],
+                  ["Share a quote",              "+1 cr",  "+10"],
+                  ["Quote liked by others",       "—",      "+1"],
+                  ["Read a magazine article",     "+1 cr",  "+5"],
+                  ["Share a magazine article",    "+1 cr",  "+5"],
+                  ["Directory entry submitted",   "+2 cr",  "+15"],
+                  ["Game completed",              "+1 cr",  "+5"],
+                ].map(([action, cr, rep]) => (
+                  <div key={action} className="mem-points-row" style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0 12px" }}>
                     <span>{action}</span>
-                    <span className="mem-points-val">{pts}</span>
+                    <span className="mem-points-val" style={{ color: "var(--ochre)" }}>{cr}</span>
+                    <span className="mem-points-val">{rep}</span>
                   </div>
                 ))}
               </div>

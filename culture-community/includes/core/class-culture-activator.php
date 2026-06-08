@@ -64,6 +64,21 @@ class Culture_Activator {
         // Newsletter analytics tables.
         Culture_NL_Analytics::create_tables();
 
+        // Credit ledger table.
+        $ledger_table = $wpdb->prefix . 'culture_credit_ledger';
+        dbDelta( "CREATE TABLE {$ledger_table} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            type varchar(20) NOT NULL DEFAULT 'reputation',
+            amount int(11) NOT NULL DEFAULT 0,
+            source varchar(50) NOT NULL DEFAULT '',
+            source_id bigint(20) NOT NULL DEFAULT 0,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY user_source (user_id, source, source_id),
+            KEY user_created (user_id, created_at)
+        ) {$charset_collate};" );
+
         update_option( 'culture_db_version', CULTURE_VERSION );
     }
 

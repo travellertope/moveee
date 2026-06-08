@@ -22,10 +22,15 @@ export async function GET() {
 
   const u = session.user as any;
 
-  // Fetch the full live profile from WP (points, badges, etc.)
+  // Fetch the full live profile from WP (points, badges, credits, etc.)
   let live = {
-    points: u.points as number,
-    badges: u.badges as string[],
+    points:                u.points as number ?? 0,
+    badges:                u.badges as string[] ?? [],
+    credits:               u.credits as number ?? 0,
+    reputation:            u.reputation as number ?? 0,
+    reputationTier:        u.reputationTier as string ?? "member",
+    dailyCreditsRemaining: u.dailyCreditsRemaining as number ?? 50,
+    interests:             u.interests as string[] ?? [],
   };
   try {
     const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/profile?user_id=${u.id}`, {
@@ -34,8 +39,13 @@ export async function GET() {
     });
     if (res.ok) {
       const data = await res.json();
-      if (typeof data.points === 'number') live.points = data.points;
-      if (Array.isArray(data.badges)) live.badges = data.badges;
+      if (typeof data.points === 'number')                   live.points               = data.points;
+      if (Array.isArray(data.badges))                        live.badges               = data.badges;
+      if (typeof data.credits === 'number')                  live.credits              = data.credits;
+      if (typeof data.reputation === 'number')               live.reputation           = data.reputation;
+      if (typeof data.reputation_tier === 'string')          live.reputationTier       = data.reputation_tier;
+      if (typeof data.daily_credits_remaining === 'number')  live.dailyCreditsRemaining = data.daily_credits_remaining;
+      if (Array.isArray(data.interests))                     live.interests            = data.interests;
     }
   } catch (err) {
     console.error("Failed to fetch live profile data:", err);
@@ -58,6 +68,11 @@ export async function GET() {
     tier: u.tier,
     points: live.points,
     badges: live.badges,
+    credits: live.credits,
+    reputation: live.reputation,
+    reputationTier: live.reputationTier,
+    dailyCreditsRemaining: live.dailyCreditsRemaining,
+    interests: live.interests,
     referralCode: u.referralCode ?? null,
     referralCount: u.referralCount ?? 0,
   });
@@ -88,11 +103,15 @@ export async function PATCH(req: NextRequest) {
     "directory_instagram", "directory_linkedin", "directory_website",
   ];
 
-  const payload: Record<string, string | number> = { user_id: String(u.id) };
+  const payload: Record<string, unknown> = { user_id: String(u.id) };
   for (const key of allowed) {
     if (body[key] !== undefined) {
       payload[key] = String(body[key]).trim();
     }
+  }
+  // Interests is an array — pass through directly.
+  if (Array.isArray((body as any).interests)) {
+    payload.interests = (body as any).interests;
   }
 
   try {

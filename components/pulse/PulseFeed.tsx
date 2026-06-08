@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
+import { interestsToTagSet } from "@/lib/interest-mappings";
 import FeedCard from "./FeedCard";
 import SubmitPost from "./SubmitPost";
 import "@/app/pulse-layout.css";
@@ -79,6 +80,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const { data: session } = useSession();
   const [items, setItems] = useState<FeedItem[]>(initialItems);
   const [activeType, setActiveType] = useState<FeedItemType | "all">("all");
+  const [forYou, setForYou]         = useState(false);
   const [activeRegion, setActiveRegion] = useState<string>("All");
   const [activeTag, setActiveTag] = useState<string>("");
   const [activeCategory, setActiveCategory] = useState<string>("");
@@ -114,6 +116,10 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     return Array.from(tags).sort();
   }, [items]);
 
+  const userInterests = (session?.user as any)?.interests as string[] | undefined;
+  const interestTagSet = useMemo(() => interestsToTagSet(userInterests ?? []), [userInterests]);
+  const hasInterests = (userInterests?.length ?? 0) > 0;
+
   const filtered = useMemo(() => items.filter(item => {
     const typeMatch = activeType === "all" || item.type === activeType;
     const regionMatch = activeRegion === "All" || !item.region || item.region.toLowerCase() === activeRegion.toLowerCase();
@@ -128,8 +134,13 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       (item.type === "editorial"  && (item.category ?? "").toLowerCase()  === catLower) ||
       (item.type === "directory"  && (item.entryType ?? "").toLowerCase() === catLower)
     );
-    return typeMatch && regionMatch && tagMatch && categoryMatch;
-  }), [items, activeType, activeRegion, activeTag, activeCategory]);
+    // "For You" filter — match items whose tag/category is in the user's interest set
+    const forYouMatch = !forYou || (() => {
+      const tag = (item.communityTag ?? item.category ?? item.entryType ?? "").toLowerCase();
+      return interestTagSet.size === 0 || interestTagSet.has(tag);
+    })();
+    return typeMatch && regionMatch && tagMatch && categoryMatch && forYouMatch;
+  }), [items, activeType, activeRegion, activeTag, activeCategory, forYou, interestTagSet]);
 
   const sorted = useMemo(() => (
     [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -186,10 +197,19 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
   const handleType = (type: FeedItemType | "all") => {
     setActiveType(type);
+    setForYou(false);
     setActiveTag("");
     setActiveCategory("");
     setVisibleCount(20);
     if (type !== "pulse") setActiveRegion("All");
+  };
+
+  const handleForYou = () => {
+    setForYou(prev => !prev);
+    setActiveType("all");
+    setActiveTag("");
+    setActiveCategory("");
+    setVisibleCount(20);
   };
 
   const handleCategory = (cat: string) => {
@@ -242,6 +262,15 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
               </ul>
             </div>
 
+            {hasInterests && (
+              <div style={{ marginBottom: "1.25rem" }}>
+                <SidebarHeading>Personalised</SidebarHeading>
+                <ul style={{ margin: 0, padding: 0 }}>
+                  <SidebarLink label="For You" active={forYou} onClick={handleForYou} />
+                </ul>
+              </div>
+            )}
+
             <div style={{ marginBottom: "1.25rem" }}>
               <SidebarHeading>Content Type</SidebarHeading>
               <ul style={{ margin: 0, padding: 0 }}>
@@ -249,7 +278,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                   <SidebarLink
                     key={value}
                     label={label}
-                    active={activeType === value}
+                    active={!forYou && activeType === value}
                     onClick={() => handleType(value)}
                   />
                 ))}
@@ -278,6 +307,25 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
           <div className="pulse-mobile-filters">
             <div className="pulse-mobile-filters-scroll">
             <div style={{ display: "flex", gap: "0.35rem", padding: "0.65rem 1rem" }}>
+              {hasInterests && (
+                <button
+                  onClick={handleForYou}
+                  style={{
+                    background: forYou ? "#14110d" : "transparent",
+                    color: forYou ? "#fff" : "#3a342b",
+                    border: forYou ? "1px solid #14110d" : "1px solid #d8d0c6",
+                    borderRadius: "2px",
+                    padding: "0.25rem 0.7rem",
+                    fontSize: "0.72rem",
+                    fontWeight: forYou ? 700 : 400,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  For You
+                </button>
+              )}
               {TYPE_FILTERS.map(({ label, value }) => (
                 <button
                   key={value}
@@ -404,6 +452,18 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 style={{ background: "transparent", border: "none", color: "#bbb", cursor: "pointer", fontSize: "0.85rem", lineHeight: 1, padding: "0 0.1rem" }}
                 aria-label="Clear hashtag filter"
               >×</button>
+            </div>
+          )}
+
+          {/* Interests nudge for logged-in users with no interests set */}
+          {session && !hasInterests && (
+            <div style={{ margin: "0.75rem 1.25rem", padding: "0.75rem 1rem", background: "#fdf5e6", border: "1px solid #e8d8b0", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <p style={{ margin: 0, fontSize: "0.78rem", color: "#7a6f5c", lineHeight: 1.5 }}>
+                <strong style={{ color: "#14110d" }}>Personalise your feed</strong> — pick your interests for a For You view.
+              </p>
+              <Link href="/member/settings#interests" style={{ fontSize: "0.72rem", fontWeight: 700, color: "#14110d", whiteSpace: "nowrap", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                Set interests →
+              </Link>
             </div>
           )}
 
