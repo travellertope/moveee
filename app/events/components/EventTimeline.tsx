@@ -83,10 +83,18 @@ function groupByMonth(events: TimelineEvent[]) {
   return Array.from(map.entries()).map(([month, evs]) => ({ month, days: groupByDay(evs) }));
 }
 
+const CAT_ICONS: Record<string, string> = {
+  music: "♪", film: "◉", "visual-arts": "◈", fashion: "✦",
+  food: "◆", literature: "▬", design: "◻", performance: "★",
+  community: "◇", tech: "○",
+};
+
 function EventRow({ event }: { event: TimelineEvent }) {
-  const img    = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
-  const cat    = event.cultureInterests?.nodes?.[0]?.name || "";
-  const place  = event.city || event.location || "";
+  const img     = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
+  const catNode = event.cultureInterests?.nodes?.[0];
+  const cat     = catNode?.name || "";
+  const catSlug = catNode?.slug || "default";
+  const place   = event.city || event.location || "";
   const dateRange = fmtDateRange(event.eventDate || event.date, event.endDate);
 
   return (
@@ -95,14 +103,17 @@ function EventRow({ event }: { event: TimelineEvent }) {
         {img ? (
           <Image src={img} alt={event.title} fill style={{ objectFit: "cover" }} />
         ) : (
-          <div className="etl-thumb-ph" />
+          <div className="etl-thumb-ph" data-cat-ph={catSlug}>
+            <div className="ev-cat-ph">
+              <span className="ev-cat-ph-icon">{CAT_ICONS[catSlug] || "★"}</span>
+            </div>
+          </div>
         )}
       </div>
       <div className="etl-body">
         <h4 className="etl-title" dangerouslySetInnerHTML={{ __html: event.title }} />
         <div className="etl-meta">
-          {place && <span className="etl-place">{place}</span>}
-          {place && cat && <span className="etl-sep">·</span>}
+          {place && <span className="etl-place">◍ {place}</span>}
           {cat && <span className="etl-cat">{cat}</span>}
         </div>
       </div>

@@ -47,6 +47,12 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
   const excerpt = event.excerpt?.replace(/<[^>]*>/g, "").trim() || "";
   const city = event.city || "";
   const img = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
+  const catSlug = interests[0]?.slug || "default";
+  const CAT_ICONS: Record<string, string> = {
+    music: "♪", film: "◉", "visual-arts": "◈", fashion: "✦",
+    food: "◆", literature: "▬", design: "◻", performance: "★",
+    community: "◇", tech: "○",
+  };
   const ctaUrl = event.ticketingUrl || event.attribution || null;
 
   return (
@@ -55,15 +61,17 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
 
         {/* ── LEFT: image + back ── */}
         <div className="luma-left">
-          <Link href="/events" className="luma-back">← Happenings</Link>
-
           <div className="luma-poster">
             {img ? (
               <img src={img} alt={event.title} />
             ) : (
-              <div className="luma-poster-placeholder">
-                <span>{month}</span>
-                <span className="luma-poster-day">{day}</span>
+              <div className="luma-poster-placeholder" data-cat-ph={catSlug}>
+                <div className="ev-cat-ph">
+                  <span className="ev-cat-ph-icon">{CAT_ICONS[catSlug] || "★"}</span>
+                  <span className="ev-cat-ph-name">{interests[0]?.name || "Happening"}</span>
+                  <span style={{ marginTop: 12, fontFamily: "var(--font-mono)", fontSize: 28, fontWeight: 700, color: "rgba(255,255,255,0.55)" }}>{day}</span>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.14em", color: "rgba(255,255,255,0.35)", textTransform: "uppercase" }}>{month}</span>
+                </div>
               </div>
             )}
           </div>
@@ -92,12 +100,19 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
         {/* ── RIGHT: event info ── */}
         <div className="luma-right">
 
-          {/* city chip */}
-          {city && (
-            <Link href={`/events/${city.toLowerCase().replace(/\s+/g, "-")}`} className="luma-city-chip">
-              ◉ {city}
-            </Link>
-          )}
+          {/* city + category chips */}
+          <div className="luma-chips">
+            {city && (
+              <Link href={`/events/${city.toLowerCase().replace(/\s+/g, "-")}`} className="luma-city-chip">
+                ◉ {city}
+              </Link>
+            )}
+            {interests.length > 0 && (
+              <Link href={`/events/${interests[0].slug}`} className="luma-cat-chip">
+                {interests[0].name}
+              </Link>
+            )}
+          </div>
 
           {/* title */}
           <h1 className="luma-title" dangerouslySetInnerHTML={{ __html: event.title }} />
@@ -117,14 +132,23 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
               </div>
             </div>
 
-            {event.location && (
+            {(event.location || city) && (
               <div className="luma-meta-row">
                 <div className="luma-loc-icon">◍</div>
                 <div className="luma-meta-text">
-                  <div className="luma-meta-main">{event.location}</div>
-                  {city && city !== event.location && (
+                  <div className="luma-meta-main">{event.location || city}</div>
+                  {event.location && city && city !== event.location && (
                     <div className="luma-meta-sub">{city}</div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {interests.length > 0 && (
+              <div className="luma-meta-row">
+                <div className="luma-loc-icon">◈</div>
+                <div className="luma-meta-text">
+                  <div className="luma-meta-main">{interests.map((i) => i.name).join(", ")}</div>
                 </div>
               </div>
             )}
@@ -170,17 +194,6 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
                   dangerouslySetInnerHTML={{ __html: event.content }}
                 />
               )}
-            </div>
-          )}
-
-          {/* interests */}
-          {interests.length > 0 && (
-            <div className="luma-tags">
-              {interests.map((i) => (
-                <Link key={i.slug} href={`/events/${i.slug}`} className="luma-tag">
-                  #{i.name}
-                </Link>
-              ))}
             </div>
           )}
 

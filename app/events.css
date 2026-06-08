@@ -735,6 +735,13 @@ html {
 /* Right */
 .luma-right { padding-top: 4px; }
 
+.luma-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
 .luma-city-chip {
   display: inline-flex;
   align-items: center;
@@ -747,10 +754,23 @@ html {
   border: 1px solid rgba(197,73,31,0.3);
   padding: 5px 12px;
   text-decoration: none;
-  margin-bottom: 20px;
   transition: border-color 0.15s;
 }
 .luma-city-chip:hover { border-color: var(--ochre); }
+.luma-cat-chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: rgba(20,17,13,0.06);
+  padding: 5px 12px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.luma-cat-chip:hover { background: rgba(20,17,13,0.12); }
 
 .luma-title {
   font-family: var(--font-serif);
@@ -1669,14 +1689,26 @@ html {
 .etl-meta {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
+  margin-top: 3px;
+}
+.etl-place {
   font-family: var(--font-mono);
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--mute);
 }
-.etl-sep { opacity: 0.3; }
+.etl-cat {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ochre);
+  background: rgba(179,130,56,0.1);
+  padding: 1px 7px;
+}
 
 .etl-right {
   display: flex;
@@ -1789,3 +1821,184 @@ html {
   .etl-day-heading { width: auto; padding: 12px 0 6px; }
   .etl-day-rows { border-left: none; padding-left: 0; }
 }
+
+/* ── Featured events grid ─────────────────────────────────────────────── */
+.ev-featured-section {
+  padding: 0 0 40px;
+}
+.ev-featured-inner,
+.ev-cities-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+.ev-featured-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.ev-featured-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.ev-featured-all {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  text-decoration: none;
+}
+.ev-featured-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.ev-feat-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  overflow: hidden;
+}
+.ev-feat-img {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  background: #ddd;
+  overflow: hidden;
+}
+.ev-feat-img img { transition: transform 0.4s ease; }
+.ev-feat-card:hover .ev-feat-img img { transform: scale(1.04); }
+.ev-feat-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.55) 100%);
+  z-index: 1;
+}
+.ev-feat-cat {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: rgba(179,130,56,0.9);
+  color: #fff;
+  padding: 3px 8px;
+}
+.ev-feat-date {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.85);
+}
+.ev-feat-body {
+  padding: 10px 2px 0;
+}
+.ev-feat-title {
+  font-family: var(--font-serif);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+  margin: 0 0 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ev-feat-place {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* ── Featured cities grid ─────────────────────────────────────────────── */
+.ev-cities-section {
+  padding: 0 0 40px;
+}
+.ev-cities-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+.ev-city-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 18px 16px;
+  border: 1px solid var(--rule);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+  background: var(--paper);
+}
+.ev-city-card:hover {
+  border-color: var(--ochre);
+  background: rgba(179,130,56,0.04);
+}
+.ev-city-name {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.ev-city-country {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.ev-city-count {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--ochre);
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .ev-featured-grid { grid-template-columns: repeat(2, 1fr); }
+  .ev-cities-grid   { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 580px) {
+  .ev-featured-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .ev-cities-grid   { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Category placeholder colours ────────────────────────────────────────
+   Used as background when an event has no image.
+   Keep colours muted/earthy to stay on-brand.
+──────────────────────────────────────────────────────────────────────── */
+.ev-cat-ph { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; gap:4px; }
+.ev-cat-ph-icon { font-size:1.4rem; opacity:0.6; }
+.ev-cat-ph-name { font-family:var(--font-mono); font-size:7px; letter-spacing:0.14em; text-transform:uppercase; opacity:0.5; }
+
+[data-cat-ph="music"]       { background:#2c2240; }
+[data-cat-ph="film"]        { background:#1e2d1e; }
+[data-cat-ph="visual-arts"] { background:#1a2e38; }
+[data-cat-ph="fashion"]     { background:#352030; }
+[data-cat-ph="food"]        { background:#2e2010; }
+[data-cat-ph="literature"]  { background:#1c2c1c; }
+[data-cat-ph="design"]      { background:#1a2838; }
+[data-cat-ph="performance"] { background:#301828; }
+[data-cat-ph="community"]   { background:#2a2016; }
+[data-cat-ph="tech"]        { background:#101e30; }
+[data-cat-ph="default"]     { background:#1e1c18; }
+
+[data-cat-ph] .ev-cat-ph-icon,
+[data-cat-ph] .ev-cat-ph-name { color: #fff; }

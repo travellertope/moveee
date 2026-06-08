@@ -4,6 +4,7 @@
  */
 
 import { evaluateAndExtractEvents, SerperResult, EventStub } from "@/lib/gemini";
+import { scrapeOgTags } from "@/lib/og-scraper";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
@@ -197,7 +198,11 @@ export async function seedCities(
       seenThisRun.add(key);
 
       try {
-        // Use the Serper snippet content directly — no Gemini enrichment needed.
+        // If Serper gave no image, try scraping OG image from the attribution URL.
+        if (!stub.image_url && stub.attribution) {
+          const og = await scrapeOgTags(stub.attribution);
+          if (og.image) stub = { ...stub, image_url: og.image };
+        }
         const r = await submitEvent(stub);
         if (r.success)        { detail[city.name].submitted++; totalSubmitted++; }
         else if (r.duplicate) { detail[city.name].skipped++; }
