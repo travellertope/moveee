@@ -11,6 +11,7 @@ class Culture_REST_API {
 
     public static function init() {
         add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
+        add_action( 'save_post_culture_post', array( 'Culture_Directory', 'recompute_aggregates_on_post_save' ), 10, 2 );
     }
 
     /**
@@ -503,6 +504,34 @@ class Culture_REST_API {
                 'methods'             => 'POST',
                 'callback'            => array( __CLASS__, 'handle_update_newsletter_preferences' ),
                 'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+        ) );
+
+        // Phase 3 — lightweight directory search (public, used by post composer).
+        register_rest_route( 'culture/v1', '/directory/search', array(
+            'methods'             => 'GET',
+            'callback'            => array( 'Culture_Directory', 'handle_search' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'q'    => array( 'type' => 'string', 'default' => '' ),
+                'type' => array( 'type' => 'string', 'default' => '' ),
+            ),
+        ) );
+
+        // Phase 3 — inline directory stub creation from post composer.
+        register_rest_route( 'culture/v1', '/directory/quick-create', array(
+            'methods'             => 'POST',
+            'callback'            => array( 'Culture_Directory', 'handle_quick_create' ),
+            'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
+        ) );
+
+        // Phase 3 — community posts linked to a directory entry.
+        register_rest_route( 'culture/v1', '/directory/(?P<id>\d+)/posts', array(
+            'methods'             => 'GET',
+            'callback'            => array( 'Culture_Directory', 'handle_directory_posts' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'id' => array( 'type' => 'integer', 'required' => true ),
             ),
         ) );
 

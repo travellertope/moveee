@@ -17,6 +17,9 @@ interface DirectoryEntry {
   featuredImage?: { node: { sourceUrl: string; altText: string } };
   cultureDirectoryTypes?: { nodes: { name: string; slug: string }[] };
   cultureInterests?: { nodes: { name: string; slug: string }[] };
+  isPartner?: boolean;
+  communityReviewCount?: number;
+  averageRating?: number;
 }
 
 interface Props {
@@ -88,7 +91,7 @@ export default function DirectoryGrid({ entries, types, initialType = null }: Pr
             const excerpt = rawExcerpt.length > 120 ? rawExcerpt.slice(0, 120) + '…' : rawExcerpt;
 
             return (
-              <Link key={entry.slug} href={`/directory/${entry.slug}`} className="dir-card">
+              <Link key={entry.slug} href={`/directory/${entry.slug}`} className={`dir-card${entry.isPartner ? ' dir-card--partner' : ''}`}>
                 <div className={`dir-card-img${img ? '' : ' dir-card-img--placeholder'}`}>
                   {img && (
                     <Image
@@ -98,9 +101,20 @@ export default function DirectoryGrid({ entries, types, initialType = null }: Pr
                       style={{ objectFit: 'cover' }}
                     />
                   )}
+                  {entry.isPartner && (
+                    <span className="dir-partner-badge">Partner</span>
+                  )}
                 </div>
                 <div className="dir-card-body">
-                  {type && <span className="dir-card-type">{type.name}</span>}
+                  <div className="dir-card-type-row">
+                    {type && <span className="dir-card-type">{type.name}</span>}
+                    {entry.averageRating && entry.communityReviewCount ? (
+                      <span className="dir-card-rating">
+                        ★ {entry.averageRating.toFixed(1)}
+                        <span className="dir-card-rating-count"> ({entry.communityReviewCount})</span>
+                      </span>
+                    ) : null}
+                  </div>
                   <h3 className="dir-card-title" dangerouslySetInnerHTML={{ __html: entry.title }} />
                   {excerpt && <p className="dir-card-excerpt">{excerpt}</p>}
                   {entry.cultureInterests?.nodes?.length ? (
