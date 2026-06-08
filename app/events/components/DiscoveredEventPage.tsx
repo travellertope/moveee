@@ -216,9 +216,6 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
             </div>
           )}
 
-          <div className="luma-footer-nav">
-            <Link href="/events" className="luma-back-footer">← All Happenings</Link>
-          </div>
         </div>
 
       </div>
