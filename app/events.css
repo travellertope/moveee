@@ -735,6 +735,13 @@ html {
 /* Right */
 .luma-right { padding-top: 4px; }
 
+.luma-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
 .luma-city-chip {
   display: inline-flex;
   align-items: center;
@@ -747,10 +754,23 @@ html {
   border: 1px solid rgba(197,73,31,0.3);
   padding: 5px 12px;
   text-decoration: none;
-  margin-bottom: 20px;
   transition: border-color 0.15s;
 }
 .luma-city-chip:hover { border-color: var(--ochre); }
+.luma-cat-chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: rgba(20,17,13,0.06);
+  padding: 5px 12px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.luma-cat-chip:hover { background: rgba(20,17,13,0.12); }
 
 .luma-title {
   font-family: var(--font-serif);
@@ -1669,14 +1689,26 @@ html {
 .etl-meta {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
+  margin-top: 3px;
+}
+.etl-place {
   font-family: var(--font-mono);
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--mute);
 }
-.etl-sep { opacity: 0.3; }
+.etl-cat {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ochre);
+  background: rgba(179,130,56,0.1);
+  padding: 1px 7px;
+}
 
 .etl-right {
   display: flex;

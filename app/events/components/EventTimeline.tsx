@@ -101,8 +101,7 @@ function EventRow({ event }: { event: TimelineEvent }) {
       <div className="etl-body">
         <h4 className="etl-title" dangerouslySetInnerHTML={{ __html: event.title }} />
         <div className="etl-meta">
-          {place && <span className="etl-place">{place}</span>}
-          {place && cat && <span className="etl-sep">·</span>}
+          {place && <span className="etl-place">◍ {place}</span>}
           {cat && <span className="etl-cat">{cat}</span>}
         </div>
       </div>
