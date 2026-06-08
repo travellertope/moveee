@@ -577,6 +577,20 @@ class Culture_REST_API {
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
 
+        // Backfill image URL on an existing event.
+        register_rest_route( 'culture/v1', '/events/update-image', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_update_event_image' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
+        // List events missing an image (for the backfill tool).
+        register_rest_route( 'culture/v1', '/events/missing-images', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_list_events_missing_images' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
         // Paragraph comments — GET (public) and POST (auth/shared secret).
         register_rest_route( 'culture/v1', '/comments/paragraph', array(
             array(
@@ -2346,6 +2360,66 @@ class Culture_REST_API {
     /**
      * POST /culture/v1/events/submit
      *
+     * POST /culture/v1/events/update-image
+     * Update _culture_event_image_url on an existing event.
+     * Body: { id: int, image_url: string }
+     */
+    public static function handle_update_event_image( WP_REST_Request $request ) {
+        $post_id   = (int) $request->get_param( 'id' );
+        $image_url = esc_url_raw( $request->get_param( 'image_url' ) );
+
+        if ( ! $post_id || ! $image_url ) {
+            return new WP_Error( 'bad_request', 'id and image_url are required.', array( 'status' => 400 ) );
+        }
+        $post = get_post( $post_id );
+        if ( ! $post || $post->post_type !== 'culture_event' ) {
+            return new WP_Error( 'not_found', 'Event not found.', array( 'status' => 404 ) );
+        }
+        update_post_meta( $post_id, '_culture_event_image_url', $image_url );
+        return rest_ensure_response( array( 'success' => true, 'id' => $post_id ) );
+    }
+
+    /**
+     * GET /culture/v1/events/missing-images
+     * Return published culture_event posts that have no featured image and no _culture_event_image_url.
+     * Query params: per_page (default 50), page (default 1).
+     */
+    public static function handle_list_events_missing_images( WP_REST_Request $request ) {
+        $per_page = min( (int) ( $request->get_param( 'per_page' ) ?: 50 ), 100 );
+        $page     = max( (int) ( $request->get_param( 'page' ) ?: 1 ), 1 );
+
+        $args = array(
+            'post_type'      => 'culture_event',
+            'post_status'    => 'publish',
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+            'meta_query'     => array(
+                'relation' => 'OR',
+                array( 'key' => '_culture_event_image_url', 'value' => '', 'compare' => '=' ),
+                array( 'key' => '_culture_event_image_url', 'compare' => 'NOT EXISTS' ),
+            ),
+        );
+        $query = new WP_Query( $args );
+        $events = array();
+        foreach ( $query->posts as $post ) {
+            // Skip if it has a featured image.
+            if ( has_post_thumbnail( $post->ID ) ) continue;
+            $events[] = array(
+                'id'          => $post->ID,
+                'title'       => $post->post_title,
+                'slug'        => $post->post_name,
+                'attribution' => get_post_meta( $post->ID, '_culture_attribution', true ),
+                'ticketing_url' => get_post_meta( $post->ID, '_culture_ticketing_url', true ),
+            );
+        }
+        return rest_ensure_response( array(
+            'events'    => $events,
+            'total'     => $query->found_posts,
+            'pages'     => $query->max_num_pages,
+        ) );
+    }
+
+    /**
      * Creates a culture_event post. Called exclusively by the AI events seeder.
      * Deduplicates by a hash of normalised title + event_date + location.
      */

@@ -1979,3 +1979,26 @@ html {
   .ev-featured-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .ev-cities-grid   { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── Category placeholder colours ────────────────────────────────────────
+   Used as background when an event has no image.
+   Keep colours muted/earthy to stay on-brand.
+──────────────────────────────────────────────────────────────────────── */
+.ev-cat-ph { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; gap:4px; }
+.ev-cat-ph-icon { font-size:1.4rem; opacity:0.6; }
+.ev-cat-ph-name { font-family:var(--font-mono); font-size:7px; letter-spacing:0.14em; text-transform:uppercase; opacity:0.5; }
+
+[data-cat-ph="music"]       { background:#2c2240; }
+[data-cat-ph="film"]        { background:#1e2d1e; }
+[data-cat-ph="visual-arts"] { background:#1a2e38; }
+[data-cat-ph="fashion"]     { background:#352030; }
+[data-cat-ph="food"]        { background:#2e2010; }
+[data-cat-ph="literature"]  { background:#1c2c1c; }
+[data-cat-ph="design"]      { background:#1a2838; }
+[data-cat-ph="performance"] { background:#301828; }
+[data-cat-ph="community"]   { background:#2a2016; }
+[data-cat-ph="tech"]        { background:#101e30; }
+[data-cat-ph="default"]     { background:#1e1c18; }
+
+[data-cat-ph] .ev-cat-ph-icon,
+[data-cat-ph] .ev-cat-ph-name { color: #fff; }

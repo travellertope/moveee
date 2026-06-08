@@ -47,6 +47,12 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
   const excerpt = event.excerpt?.replace(/<[^>]*>/g, "").trim() || "";
   const city = event.city || "";
   const img = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
+  const catSlug = interests[0]?.slug || "default";
+  const CAT_ICONS: Record<string, string> = {
+    music: "♪", film: "◉", "visual-arts": "◈", fashion: "✦",
+    food: "◆", literature: "▬", design: "◻", performance: "★",
+    community: "◇", tech: "○",
+  };
   const ctaUrl = event.ticketingUrl || event.attribution || null;
 
   return (
@@ -59,9 +65,13 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
             {img ? (
               <img src={img} alt={event.title} />
             ) : (
-              <div className="luma-poster-placeholder">
-                <span>{month}</span>
-                <span className="luma-poster-day">{day}</span>
+              <div className="luma-poster-placeholder" data-cat-ph={catSlug}>
+                <div className="ev-cat-ph">
+                  <span className="ev-cat-ph-icon">{CAT_ICONS[catSlug] || "★"}</span>
+                  <span className="ev-cat-ph-name">{interests[0]?.name || "Happening"}</span>
+                  <span style={{ marginTop: 12, fontFamily: "var(--font-mono)", fontSize: 28, fontWeight: 700, color: "rgba(255,255,255,0.55)" }}>{day}</span>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.14em", color: "rgba(255,255,255,0.35)", textTransform: "uppercase" }}>{month}</span>
+                </div>
               </div>
             )}
           </div>
