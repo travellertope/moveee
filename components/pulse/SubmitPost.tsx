@@ -187,6 +187,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   const [eventCity, setEventCity] = useState("");
   const [eventAdmission, setEventAdmission] = useState("");
   const [eventTicketUrl, setEventTicketUrl] = useState("");
+  const [eventCategory, setEventCategory] = useState("");
 
   const user = session?.user as any;
   const loggedIn = status === "authenticated";
@@ -267,7 +268,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     setFoodDishName(""); setFoodTaste(0); setFoodValue(0); setFoodVibe(0);
     setQuoteAuthor(""); setQuoteSource("");
     setEventTitle(""); setEventDate(""); setEventEndDate(""); setEventLocation("");
-    setEventCity(""); setEventAdmission(""); setEventTicketUrl("");
+    setEventCity(""); setEventAdmission(""); setEventTicketUrl(""); setEventCategory("");
     setLinkPreview(null);
   }
 
@@ -347,7 +348,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       let imageUrl: string | undefined;
       const galleryUrls: string[] = [];
 
-      if (imageFile) {
+      // Non-event templates use the community upload endpoint
+      if (imageFile && template !== "event") {
         if (imageFile.size > 8 * 1024 * 1024) throw new Error("Image must be under 8 MB.");
         setUploading(true);
         imageUrl = await uploadImage(imageFile);
@@ -361,8 +363,23 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         setUploading(false);
       }
 
-      // Event goes to separate endpoint
+      // Event goes to separate endpoint (uses events upload endpoint to get WP attachment ID)
       if (template === "event") {
+        let eventImageUrl: string | undefined;
+        let eventImageId = 0;
+        if (imageFile) {
+          if (imageFile.size > 8 * 1024 * 1024) throw new Error("Image must be under 8 MB.");
+          setUploading(true);
+          const fd = new FormData();
+          fd.append("file", imageFile);
+          const upRes = await fetch("/api/events/upload-image", { method: "POST", body: fd });
+          setUploading(false);
+          if (upRes.ok) {
+            const upData = await upRes.json();
+            eventImageUrl = upData.url || undefined;
+            eventImageId  = upData.id  || 0;
+          }
+        }
         const res = await fetch("/api/events/member-submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -375,7 +392,9 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             city: eventCity.trim() || undefined,
             admission: eventAdmission.trim() || undefined,
             ticketing_url: eventTicketUrl.trim() || undefined,
-            cover_image: imageUrl || undefined,
+            image_url: eventImageUrl,
+            image_id: eventImageId || undefined,
+            category: eventCategory || undefined,
           }),
         });
         const data = await res.json();
@@ -636,6 +655,23 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                   placeholder="Ticket / event link"
                   className="composer-input"
                 />
+                <select
+                  value={eventCategory}
+                  onChange={e => setEventCategory(e.target.value)}
+                  className="composer-input"
+                >
+                  <option value="">Category (optional)</option>
+                  <option value="live-music">Music</option>
+                  <option value="independent-film">Film</option>
+                  <option value="visual-art">Visual Arts</option>
+                  <option value="fashion-streetwear">Fashion</option>
+                  <option value="food-drink">Food &amp; Drink</option>
+                  <option value="literature">Literature</option>
+                  <option value="visual-design">Design</option>
+                  <option value="event-performance">Performance</option>
+                  <option value="event-community">Community</option>
+                  <option value="tech-culture">Tech</option>
+                </select>
               </>
             )}
 
