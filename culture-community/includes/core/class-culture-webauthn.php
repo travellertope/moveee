@@ -17,6 +17,9 @@ class Culture_WebAuthn {
      * —————————————————————————————————————— */
 
     public static function rp_id() : string {
+        if ( defined( 'CULTURE_WEBAUTHN_RP_ID' ) ) {
+            return CULTURE_WEBAUTHN_RP_ID;
+        }
         $host = wp_parse_url( home_url(), PHP_URL_HOST );
         return preg_replace( '/^www\./', '', $host );
     }
