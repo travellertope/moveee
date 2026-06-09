@@ -6,6 +6,7 @@ import NewsletterPreferences from "./NewsletterPreferences";
 import ProfileEditor from "./ProfileEditor";
 import DirectoryProfile from "./DirectoryProfile";
 import InterestEditor from "@/components/InterestEditor";
+import PasskeyManager from "./PasskeyManager";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -125,6 +126,9 @@ export default async function MemberSettingsPage() {
               </div>
             </section>
 
+            {/* ── 4. PASSKEYS ── */}
+            <PasskeyManager />
+
 
           </div>
 
@@ -132,6 +136,8 @@ export default async function MemberSettingsPage() {
           <div className="mem-col-side">
             <section className="mem-card mem-links-card">
               <Link href="/member" className="mem-link">Dashboard →</Link>
+              <Link href="/member/wallet" className="mem-link">My Wallet →</Link>
+              <Link href="/member/coupons" className="mem-link">My Coupons →</Link>
               <Link href="/member/collection" className="mem-link">My Collection →</Link>
               <Link href="/member/portfolio" className="mem-link">Creative Portfolio →</Link>
               {user.username && (

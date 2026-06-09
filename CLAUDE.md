@@ -290,8 +290,33 @@ Phases 1-4 are implemented. Phase docs live in `docs/phases/`.
 | 3. Directory Knowledge Graph | Done | `class-culture-directory.php` (search, quick-create, directory posts, aggregates), `DirectoryGrid.tsx` (partner badge), `app/directory/[slug]/page.tsx` (community section) |
 | 4. Post Templates & Composer | Done | `components/pulse/SubmitPost.tsx` (unified composer), `components/composer/` (StarRating, MultiRating, DirectorySearch, PollBuilder, ItineraryBuilder), `FeedCard.tsx` (template variants), poll-vote endpoint |
 | 5. Public Profiles | Done | `app/connect/[username]/page.tsx`, `ProfileTabs`, `CommunityTab`, `PortfolioTab`, `app/member/portfolio/`, PHP: public member + community posts + portfolio endpoints |
-| 6. Partner Perks | Planned | `docs/phases/phase-6-partner-perks.md` |
-| 7. Passkeys | Planned | `docs/phases/phase-7-passkeys.md` |
+| 6. Partner Perks | Done | `class-culture-perks.php` (redeem, QR verify, cashout, fee tiers), `culture_partner_perks` + `culture_redemptions` tables, 13 REST endpoints, `app/connect/perks/` (browse+redeem), `app/member/wallet/` (balance+cashout), `app/member/coupons/` (QR display) |
+| 7. Passkeys | Done | `culture-community/includes/core/class-culture-webauthn.php`, `app/api/auth/passkey/`, `components/PasskeyPrompt.tsx`, `components/PasskeyBanner.tsx`, `app/member/settings/PasskeyManager.tsx` |
+
+### Phase 7 — Passkey architecture notes
+
+- **`class-culture-webauthn.php`** — self-contained WebAuthn handler (no external libs)
+  - ES256 (P-256 ECDSA) + RS256 (RSA) via PHP OpenSSL
+  - Custom minimal CBOR decoder — handles maps/arrays/byte strings/ints
+  - Challenges stored in WP transients (`culture_wn_` prefix), 5-min TTL
+  - Registration stores PEM (base64-encoded) + alg in `culture_passkeys` table
+  - Login issues one-time `passkey_token` (2-min transient) for NextAuth exchange
+  - Step-up issues `step_up_token` (5-min transient, single-use) for gating sensitive actions
+  - Credit escrow: `_culture_credits_escrowed` user meta; released on first passkey registration
+  - `MAX_ACCOUNTS_PER_AAGUID = 2` — soft limit per physical device model
+
+- **NextAuth integration**: `lib/auth.ts` credentials provider accepts `{ passkeyToken }` in addition to username/password. Exchange calls `/wp-json/culture/v1/passkey/exchange-token`.
+
+- **Step-up flow**: `PerksClient.tsx` calls `doStepUp()` before redeem; `WalletClient.tsx` calls it before cashout. Both are hard gates (no fallback).
+
+- **`culture_passkeys` table**: credential_id, public_key (base64 PEM), alg, sign_count, device_name, aaguid, transports, created_at, last_used_at.
+
+- **Frontend components**:
+  - `components/PasskeyPrompt.tsx` — reusable register/step-up modal using `@simplewebauthn/browser`
+  - `components/PasskeyBanner.tsx` — dashboard banner for users without passkeys
+  - `app/member/settings/PasskeyManager.tsx` — list/add/delete passkeys in settings
+
+- **DB version**: bump `CULTURE_VERSION` in plugin main file after activating (runs `dbDelta` for new table).
 
 ### Interest taxonomy (16 canonical slugs)
 
