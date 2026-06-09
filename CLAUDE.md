@@ -615,10 +615,10 @@ The app lives in `moveee-connect/` using Expo + React Navigation + Zustand + MMK
 | TriviaGameScreen | `screens/games/TriviaGameScreen.tsx` (fully native, ABCD options, explanation, MMKV played-today gate) |
 | WhoSaidItGameScreen | `screens/games/WhoSaidItGameScreen.tsx` (fully native, tap-author options, review, MMKV gate) |
 | GamesScreen (updated) | `screens/games/GamesScreen.tsx` (navigates to TriviaGame + WhoSaidIt; Crossword/Sudoku dimmed) |
+| PasskeyManager | `screens/member/MemberSettingsScreen.tsx` SecurityTab (full register/delete WebAuthn flow via `react-native-passkeys`) |
 
 ### What is missing (priority order)
-1. PasskeyManager full native implementation in Security tab (`react-native-passkeys` installed but `+ Add a passkey` button shows placeholder alert)
-2. MembershipScreen IAP wiring (Google Play Billing + App Store IAP)
+1. MembershipScreen IAP wiring (Google Play Billing + App Store IAP) — low priority; current behaviour directs users to the web to upgrade
 
 ### Event template endpoint note
 Event image upload: `POST https://themoveee.com/api/events/upload-image`
@@ -626,6 +626,16 @@ Event submit: `POST https://themoveee.com/api/events/member-submit`
 Both go via the Next.js proxy (NOT WordPress directly). The `PROXY` constant
 (`"https://themoveee.com/api"`) is defined at the top of NewPostScreen.tsx.
 All other post templates submit to `${CULTURE_API}/community/submit` (WordPress directly).
+
+### Passkey key notes
+- Registration: `GET ${PROXY}/auth/passkey/register-options` → `Passkeys.create(options)` → `POST ${PROXY}/auth/passkey/register-verify`
+- Verify body shape: `{ id, rawId, type, clientDataJSON, attestationObject, transports, device_name }`
+  (`credential.response` fields flattened to top level; `device_name` = `Platform.OS === "ios" ? "iPhone" : "Android"`)
+- `transports` must be cast as `any` — the `CreationResponse` type from `react-native-passkeys` doesn't expose it directly
+- Delete uses `api.delete(url, { credential_id })` — `api.delete` now accepts an optional body parameter
+- Auth store updated immediately after success: `updateUser({ hasPasskey: true, passkeyCount: ... })`
+- User-cancel from native prompt returns `null` from `Passkeys.create()` — must check before proceeding; also guard `e?.message?.includes("cancel")` in the catch block
+- `Passkeys.isSupported()` returns false on simulators and old OS versions — show warning banner rather than crashing
 
 ### Games key notes
 - Both Trivia and Who Said It use MMKV (`storage` from `src/store/storage.ts`) for played-today detection — keys `trivia_last_played_date` / `wsi_last_played_date` (ISO date string, e.g. `2026-06-09`)
