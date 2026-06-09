@@ -5,7 +5,57 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import HashtagText from "@/components/pulse/HashtagText";
 import ReactionBar from "@/components/pulse/ReactionBar";
+import SourcePreviewCard from "@/components/pulse/SourcePreviewCard";
 import type { WpComment } from "@/lib/community-wordpress";
+
+function PollDisplay({ postId, options, expiresAt }: { postId: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
+  const [voted, setVoted] = useState<number | null>(null);
+  const [pollOpts, setPollOpts] = useState(options);
+  const [voting, setVoting] = useState(false);
+
+  const expired = expiresAt ? new Date(expiresAt).getTime() < Date.now() : false;
+  const showResults = voted !== null || expired;
+  const totalVotes = pollOpts.reduce((s, o) => s + (o.votes ?? 0), 0);
+
+  async function vote(i: number) {
+    if (voting || voted !== null || expired) return;
+    setVoting(true);
+    try {
+      const res = await fetch("/api/community/poll-vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: Number(postId), option_index: i }),
+      });
+      if (res.ok) { const data = await res.json(); setPollOpts(data.options); setVoted(i); }
+    } catch {}
+    setVoting(false);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "1rem" }}>
+      {pollOpts.map((opt, i) => {
+        const pct = showResults && totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+        return (
+          <button key={i} type="button" onClick={() => vote(i)} disabled={showResults || voting} style={{
+            background: showResults ? `linear-gradient(to right, rgba(46,125,50,0.1) ${pct}%, transparent ${pct}%)` : "#fff",
+            border: `1px solid ${voted === i ? "#2e7d32" : "#e0d8ce"}`, borderRadius: "4px",
+            padding: "10px 14px", textAlign: "left", cursor: showResults ? "default" : "pointer",
+            fontSize: "0.9rem", color: "#14110d", fontFamily: "var(--font-fraunces), serif",
+            display: "flex", justifyContent: "space-between",
+          }}>
+            <span>{opt.text}</span>
+            {showResults && <span style={{ fontSize: "0.78rem", color: "#7a6f5c", fontWeight: 600 }}>{pct}%</span>}
+          </button>
+        );
+      })}
+      <div style={{ fontSize: "0.75rem", color: "#7a6f5c" }}>
+        {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
+        {expiresAt && !expired && ` · ends ${new Date(expiresAt).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
+        {expired && " · ended"}
+      </div>
+    </div>
+  );
+}
 
 interface Props {
   text: string;
@@ -15,6 +65,25 @@ interface Props {
   initialReactions: { love: number; fire: number; clap: number };
   shareUrl: string;
   initialComments: WpComment[];
+  // template fields
+  templateType?: string;
+  starRating?: number;
+  locationName?: string;
+  pollOptions?: { text: string; votes: number }[];
+  pollExpiresAt?: string;
+  galleryImages?: string[];
+  videoUrl?: string;
+  itineraryStops?: { name: string; lat: number; lng: number; note: string; image_url: string }[];
+  foodDishName?: string;
+  foodRatingTaste?: number;
+  foodRatingValue?: number;
+  foodRatingVibe?: number;
+  // link preview
+  sourceUrl?: string;
+  source?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
 }
 
 function stripHtml(html: string) {
@@ -102,6 +171,10 @@ function CommentItem({
 
 export default function CommunityPostClient({
   text, wpId, postId, initialReactions, shareUrl, initialComments,
+  templateType, starRating, locationName, pollOptions, pollExpiresAt,
+  galleryImages, videoUrl, itineraryStops, foodDishName,
+  foodRatingTaste, foodRatingValue, foodRatingVibe,
+  sourceUrl, source, ogTitle, ogDescription, ogImage,
 }: Props) {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -155,6 +228,44 @@ export default function CommunityPostClient({
 
   return (
     <div>
+      {/* Template badge */}
+      {templateType && templateType !== "post" && (
+        <div style={{ marginBottom: "0.65rem" }}>
+          {templateType === "hidden-gem" && (
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b38238", background: "rgba(179,130,56,0.1)", padding: "3px 8px", borderRadius: "2px" }}>
+              Hidden Gem {starRating ? "★".repeat(starRating) : ""}
+            </span>
+          )}
+          {templateType === "cultural-take" && (
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6b48a8", background: "rgba(107,72,168,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
+              Take{locationName ? ` · ${locationName}` : ""}
+            </span>
+          )}
+          {templateType === "food-review" && (
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#c5491f", background: "rgba(197,73,31,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
+              Food Review{foodDishName ? ` · ${foodDishName}` : ""}
+            </span>
+          )}
+          {templateType === "creative-showcase" && (
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#1976d2", background: "rgba(25,118,210,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
+              Creative Showcase
+            </span>
+          )}
+          {templateType === "itinerary" && (
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2e7d32", background: "rgba(46,125,50,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
+              Weekend Route
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Location badge (not shown for cultural-take since it's in the badge) */}
+      {locationName && templateType !== "cultural-take" && (
+        <div style={{ fontSize: "0.82rem", color: "#7a6f5c", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "5px" }}>
+          <span>📍</span> {locationName}
+        </div>
+      )}
+
       {/* Post text */}
       <p style={{
         color: "#14110d",
@@ -166,6 +277,85 @@ export default function CommunityPostClient({
       }}>
         <HashtagText text={text} onHashtagClick={handleHashtagClick} />
       </p>
+
+      {/* Food ratings */}
+      {templateType === "food-review" && foodRatingTaste && (
+        <div style={{ display: "flex", gap: "20px", marginBottom: "1rem", fontSize: "0.88rem", color: "#7a6f5c" }}>
+          <span>Taste {"★".repeat(foodRatingTaste)}{"☆".repeat(5 - foodRatingTaste)}</span>
+          {foodRatingValue && <span>Value {"★".repeat(foodRatingValue)}{"☆".repeat(5 - foodRatingValue)}</span>}
+          {foodRatingVibe && <span>Vibe {"★".repeat(foodRatingVibe)}{"☆".repeat(5 - foodRatingVibe)}</span>}
+        </div>
+      )}
+
+      {/* Poll */}
+      {templateType === "poll" && pollOptions && (
+        <PollDisplay postId={wpId} options={pollOptions} expiresAt={pollExpiresAt} />
+      )}
+
+      {/* Gallery */}
+      {galleryImages && galleryImages.length >= 1 && (
+        <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "1rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
+          {galleryImages.map((img, i) => (
+            <img key={i} src={img} alt="" style={{ height: "240px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+          ))}
+        </div>
+      )}
+
+      {/* Video embed */}
+      {videoUrl && (
+        <div style={{ marginBottom: "1rem" }}>
+          {videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be") ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${videoUrl.match(/(?:v=|youtu\.be\/)([^&\s]+)/)?.[1] ?? ""}`}
+              style={{ width: "100%", aspectRatio: "16/9", border: "none", borderRadius: "6px" }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media"
+              allowFullScreen
+            />
+          ) : (
+            <a href={videoUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#b38238", fontSize: "0.88rem" }}>Watch video →</a>
+          )}
+        </div>
+      )}
+
+      {/* Itinerary stops */}
+      {templateType === "itinerary" && itineraryStops && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "1rem" }}>
+          {itineraryStops.map((stop, i) => (
+            <div key={i} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <div style={{
+                width: "28px", height: "28px", borderRadius: "50%",
+                background: "var(--ochre, #b38238)", color: "#fff",
+                fontSize: "0.78rem", fontWeight: 700,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0, marginTop: "2px",
+              }}>
+                {i + 1}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "#14110d" }}>{stop.name}</div>
+                {stop.note && <div style={{ fontSize: "0.85rem", color: "#7a6f5c", lineHeight: 1.45, marginTop: "2px" }}>{stop.note}</div>}
+                {stop.image_url && (
+                  <img src={stop.image_url} alt={stop.name} style={{ marginTop: "8px", width: "100%", maxHeight: "180px", objectFit: "cover", borderRadius: "6px" }} loading="lazy" />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Link preview (community_link_url) */}
+      {sourceUrl && (
+        <div style={{ marginBottom: "1rem" }}>
+          <SourcePreviewCard
+            goUrl={`/go/link?url=${encodeURIComponent(sourceUrl)}`}
+            sourceName={source ?? ""}
+            sourceUrl={sourceUrl}
+            ogTitle={ogTitle}
+            ogDescription={ogDescription}
+            ogImage={ogImage}
+          />
+        </div>
+      )}
 
       <ReactionBar itemId={wpId} itemType="community" initialCounts={initialReactions} shareUrl={shareUrl} />
 
