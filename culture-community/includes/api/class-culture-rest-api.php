@@ -12,6 +12,23 @@ class Culture_REST_API {
     public static function init() {
         add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
         add_action( 'save_post_culture_post', array( 'Culture_Directory', 'recompute_aggregates_on_post_save' ), 10, 2 );
+        // Award reputation when a community post is created via the REST API.
+        add_action( 'rest_after_insert_culture_post', array( __CLASS__, 'handle_community_post_created' ), 10, 3 );
+    }
+
+    /**
+     * Fires after a culture_post is inserted/updated via the REST API.
+     * Awards reputation + credits to the community author on first publish only.
+     */
+    public static function handle_community_post_created( $post, $request, $creating ) {
+        if ( ! $creating ) return;
+        if ( 'publish' !== $post->post_status ) return;
+        if ( ! class_exists( 'Culture_Gamification' ) ) return;
+
+        $author_id = (int) get_post_meta( $post->ID, 'community_author_id', true );
+        if ( ! $author_id ) return;
+
+        Culture_Gamification::award_points( $author_id, 'community_post', 0 );
     }
 
     /**
@@ -525,6 +542,16 @@ class Culture_REST_API {
             'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
         ) );
 
+        // Stub enrichment — AI content + image update for inline quick-create stubs.
+        register_rest_route( 'culture/v1', '/directory/(?P<id>\d+)/enrich', array(
+            'methods'             => 'POST',
+            'callback'            => array( 'Culture_Directory', 'handle_enrich_stub' ),
+            'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
+            'args'                => array(
+                'id' => array( 'type' => 'integer', 'required' => true ),
+            ),
+        ) );
+
         // Phase 3 — community posts linked to a directory entry.
         register_rest_route( 'culture/v1', '/directory/(?P<id>\d+)/posts', array(
             'methods'             => 'GET',
@@ -746,6 +773,489 @@ class Culture_REST_API {
             'args'                => array(
                 'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
+        ) );
+
+        // Phase 5 — public member profile by username.
+        register_rest_route( 'culture/v1', '/member/(?P<username>[a-zA-Z0-9_\-]+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_public_profile' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'username' => array( 'type' => 'string', 'required' => true ),
+            ),
+        ) );
+
+        // Phase 5 — community posts (filterable by author_id and template_type).
+        register_rest_route( 'culture/v1', '/community/posts', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_community_posts' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'author_id'     => array( 'type' => 'integer', 'default' => 0 ),
+                'template_type' => array( 'type' => 'string',  'default' => '' ),
+                'per_page'      => array( 'type' => 'integer', 'default' => 20 ),
+                'page'          => array( 'type' => 'integer', 'default' => 1 ),
+            ),
+        ) );
+
+        // Phase 5 — portfolio (GET + POST). Requires Bearer auth.
+        register_rest_route( 'culture/v1', '/user/portfolio', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_portfolio' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_save_portfolio' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+        ) );
+
+        // ── Phase 6: Partner Perks & Wallet ──────────────────────────────────
+
+        register_rest_route( 'culture/v1', '/perks', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_list_perks' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/perks/redeem', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_redeem_perk' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'       => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'perk_id'       => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'step_up_token' => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/perks/verify', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_verify_qr' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'token' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/wallet/balance', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_wallet_balance' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/wallet/history', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_wallet_history' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'  => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'required' => false, 'type' => 'integer', 'default' => 20,  'sanitize_callback' => 'absint' ),
+                'page'     => array( 'required' => false, 'type' => 'integer', 'default' => 1,   'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/wallet/cashout', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_wallet_cashout' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'       => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'credits'       => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'method'        => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+                'account_name'  => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+                'account_ref'   => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+                'currency'      => array( 'required' => false, 'type' => 'string',  'default' => 'GBP', 'sanitize_callback' => 'sanitize_text_field' ),
+                'step_up_token' => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/admin/cashout-queue', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cashout_queue' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'status' => array( 'required' => false, 'type' => 'string', 'default' => 'pending', 'sanitize_callback' => 'sanitize_key' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/admin/cashout-approve', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cashout_approve' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'redemption_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'admin_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/admin/cashout-reject', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cashout_reject' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'redemption_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'admin_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'reason'        => array( 'required' => false, 'type' => 'string', 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/admin/perks', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_admin_list_perks' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_admin_create_perk' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/admin/perks/(?P<id>\d+)', array(
+            array(
+                'methods'             => 'PUT',
+                'callback'            => array( __CLASS__, 'handle_admin_update_perk' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+            array(
+                'methods'             => 'DELETE',
+                'callback'            => array( __CLASS__, 'handle_admin_delete_perk' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/user/redemptions', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_user_redemptions' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'status'  => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_key' ),
+            ),
+        ) );
+
+        // Passkey endpoints.
+        register_rest_route( 'culture/v1', '/passkey/register-options', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_register_options' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/register-verify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_register_verify' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/login-options', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_login_options' ),
+            'permission_callback' => '__return_true',
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/login-verify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_login_verify' ),
+            'permission_callback' => '__return_true',
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/exchange-token', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_exchange_token' ),
+            'permission_callback' => '__return_true',
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/step-up', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_step_up' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/step-up-verify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_step_up_verify' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/list', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_passkey_list' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/delete', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_passkey_delete' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
+        // Notification endpoints.
+        register_rest_route( 'culture/v1', '/notifications', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_notifications' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'limit'   => array( 'required' => false, 'type' => 'integer', 'default' => 30 ),
+                'offset'  => array( 'required' => false, 'type' => 'integer', 'default' => 0 ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/notifications/count', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_notification_count' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/notifications/read', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_mark_notifications_read' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
+        // Analytics
+        register_rest_route( 'culture/v1', '/member/analytics', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_member_analytics' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Passkey handlers
+     * —————————————————————————————————————— */
+
+    public static function handle_passkey_register_options( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        if ( ! $user_id || ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'invalid_user', 'Invalid user.', array( 'status' => 400 ) );
+        }
+        return rest_ensure_response( Culture_WebAuthn::get_register_options( $user_id ) );
+    }
+
+    public static function handle_passkey_register_verify( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $resp    = $request->get_param( 'response' );
+        if ( ! $user_id || ! is_array( $resp ) ) {
+            return new WP_Error( 'bad_request', 'Missing user_id or response.', array( 'status' => 400 ) );
+        }
+        $result = Culture_WebAuthn::verify_register( $user_id, $resp );
+        if ( ! $result['success'] ) {
+            return new WP_Error( 'passkey_error', $result['error'], array( 'status' => 400 ) );
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_passkey_login_options( $request ) {
+        $user_id = $request->get_param( 'user_id' ) ? (int) $request->get_param( 'user_id' ) : null;
+        return rest_ensure_response( Culture_WebAuthn::get_login_options( $user_id ) );
+    }
+
+    public static function handle_passkey_login_verify( $request ) {
+        $resp = $request->get_json_params();
+        if ( empty( $resp ) ) {
+            return new WP_Error( 'bad_request', 'Missing response body.', array( 'status' => 400 ) );
+        }
+        $result = Culture_WebAuthn::verify_login( $resp );
+        if ( ! $result['success'] ) {
+            return new WP_Error( 'passkey_error', $result['error'], array( 'status' => 401 ) );
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_passkey_exchange_token( $request ) {
+        $token   = sanitize_text_field( $request->get_param( 'passkey_token' ) ?? '' );
+        $user_id = Culture_WebAuthn::exchange_passkey_token( $token );
+        if ( ! $user_id ) {
+            return new WP_Error( 'invalid_token', 'Invalid or expired token.', array( 'status' => 401 ) );
+        }
+        // Return same profile data as login endpoint.
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'invalid_user', 'User not found.', array( 'status' => 404 ) );
+        }
+        return rest_ensure_response( self::user_profile( $user ) );
+    }
+
+    public static function handle_passkey_step_up( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        if ( ! $user_id ) return new WP_Error( 'bad_request', 'Missing user_id.', array( 'status' => 400 ) );
+        $creds = Culture_WebAuthn::get_credentials( $user_id );
+        if ( empty( $creds ) ) {
+            return new WP_Error( 'no_passkey', 'No passkey registered.', array( 'status' => 403 ) );
+        }
+        return rest_ensure_response( Culture_WebAuthn::get_step_up_options( $user_id ) );
+    }
+
+    public static function handle_passkey_step_up_verify( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $resp    = $request->get_param( 'response' );
+        if ( ! $user_id || ! is_array( $resp ) ) {
+            return new WP_Error( 'bad_request', 'Missing user_id or response.', array( 'status' => 400 ) );
+        }
+        $result = Culture_WebAuthn::verify_step_up( $user_id, $resp );
+        if ( ! $result['success'] ) {
+            return new WP_Error( 'passkey_error', $result['error'], array( 'status' => 401 ) );
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_passkey_list( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $creds   = Culture_WebAuthn::get_credentials( $user_id );
+        $out     = array_map( fn($c) => [
+            'id'           => $c['credential_id'],
+            'device_name'  => $c['device_name'],
+            'created_at'   => $c['created_at'],
+            'last_used_at' => $c['last_used_at'],
+            'aaguid'       => $c['aaguid'],
+        ], $creds );
+        return rest_ensure_response( $out );
+    }
+
+    public static function handle_passkey_delete( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $cred_id = sanitize_text_field( $request->get_param( 'credential_id' ) ?? '' );
+        if ( ! $user_id || ! $cred_id ) {
+            return new WP_Error( 'bad_request', 'Missing user_id or credential_id.', array( 'status' => 400 ) );
+        }
+        $deleted = Culture_WebAuthn::delete_credential( $user_id, $cred_id );
+        if ( ! $deleted ) {
+            return new WP_Error( 'not_found', 'Credential not found.', array( 'status' => 404 ) );
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Notification handlers
+     * —————————————————————————————————————— */
+
+    public static function handle_get_notifications( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $limit   = min( 50, max( 1, (int) $request->get_param( 'limit' ) ) );
+        $offset  = max( 0, (int) $request->get_param( 'offset' ) );
+        $rows    = Culture_Notifications::get_for_user( $user_id, $limit, $offset );
+        foreach ( $rows as &$row ) {
+            $row['meta'] = json_decode( $row['meta'] ?? '{}', true ) ?: array();
+        }
+        return rest_ensure_response( $rows );
+    }
+
+    public static function handle_notification_count( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        return rest_ensure_response( array( 'unread' => Culture_Notifications::count_unread( $user_id ) ) );
+    }
+
+    public static function handle_mark_notifications_read( $request ) {
+        $user_id         = (int) $request->get_param( 'user_id' );
+        $notification_id = $request->get_param( 'notification_id' );
+        if ( $notification_id ) {
+            Culture_Notifications::mark_read( $user_id, (int) $notification_id );
+        } else {
+            Culture_Notifications::mark_all_read( $user_id );
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Analytics handler
+     * —————————————————————————————————————— */
+
+    public static function handle_member_analytics( $request ) {
+        global $wpdb;
+        $user_id = (int) $request->get_param( 'user_id' );
+        if ( ! $user_id || ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'invalid_user', 'Invalid user.', array( 'status' => 400 ) );
+        }
+
+        $ledger_table = $wpdb->prefix . 'culture_credit_ledger';
+        $notif_table  = $wpdb->prefix . 'culture_notifications';
+
+        // Credits earned/spent per day — last 30 days.
+        $credit_days = $wpdb->get_results( $wpdb->prepare(
+            "SELECT DATE(created_at) AS day,
+                    SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END)  AS earned,
+                    SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END) AS spent
+             FROM {$ledger_table}
+             WHERE user_id = %d AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+             GROUP BY DATE(created_at)
+             ORDER BY day ASC",
+            $user_id
+        ), ARRAY_A );
+
+        // Total credits balance.
+        $balance = (int) get_user_meta( $user_id, 'culture_credits', true );
+
+        // Total reputation.
+        $reputation = (int) get_user_meta( $user_id, 'culture_reputation', true );
+
+        // Post counts by status/type.
+        $post_counts = $wpdb->get_results( $wpdb->prepare(
+            "SELECT post_status, COUNT(*) AS cnt
+             FROM {$wpdb->posts}
+             WHERE post_author = %d AND post_type = 'culture_post'
+               AND post_status IN ('publish','pending')
+             GROUP BY post_status",
+            $user_id
+        ), ARRAY_A );
+        $posts_published = 0;
+        $posts_pending   = 0;
+        foreach ( $post_counts as $row ) {
+            if ( $row['post_status'] === 'publish' ) $posts_published = (int) $row['cnt'];
+            if ( $row['post_status'] === 'pending' )  $posts_pending   = (int) $row['cnt'];
+        }
+
+        // Badge count.
+        $badges = get_user_meta( $user_id, 'culture_badges', true );
+        $badge_count = is_array( $badges ) ? count( $badges ) : 0;
+
+        // Top posts by engagement (reactions + comments), last 90 days.
+        $top_posts = $wpdb->get_results( $wpdb->prepare(
+            "SELECT p.ID, p.post_title, p.post_date,
+                    CAST(COALESCE(pm_r.meta_value,'0') AS UNSIGNED) AS reactions,
+                    CAST(COALESCE(pm_c.meta_value,'0') AS UNSIGNED) AS comment_count
+             FROM {$wpdb->posts} p
+             LEFT JOIN {$wpdb->postmeta} pm_r ON pm_r.post_id = p.ID AND pm_r.meta_key = 'community_reactions_count'
+             LEFT JOIN {$wpdb->postmeta} pm_c ON pm_c.post_id = p.ID AND pm_c.meta_key = 'community_comment_count'
+             WHERE p.post_author = %d
+               AND p.post_type = 'culture_post'
+               AND p.post_status = 'publish'
+               AND p.post_date >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+             ORDER BY (CAST(COALESCE(pm_r.meta_value,'0') AS UNSIGNED) + CAST(COALESCE(pm_c.meta_value,'0') AS UNSIGNED)) DESC
+             LIMIT 5",
+            $user_id
+        ), ARRAY_A );
+
+        // Reputation growth — monthly totals for last 6 months.
+        $rep_months = $wpdb->get_results( $wpdb->prepare(
+            "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, SUM(amount) AS rep_earned
+             FROM {$ledger_table}
+             WHERE user_id = %d AND type = 'reputation' AND amount > 0
+               AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+             GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+             ORDER BY month ASC",
+            $user_id
+        ), ARRAY_A );
+
+        // Notification count (total received).
+        $notif_count = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$notif_table} WHERE user_id = %d",
+            $user_id
+        ) );
+
+        return rest_ensure_response( array(
+            'balance'          => $balance,
+            'reputation'       => $reputation,
+            'posts_published'  => $posts_published,
+            'posts_pending'    => $posts_pending,
+            'badge_count'      => $badge_count,
+            'notification_count' => $notif_count,
+            'credit_days'      => $credit_days,
+            'rep_months'       => $rep_months,
+            'top_posts'        => $top_posts,
         ) );
     }
 
@@ -1020,6 +1530,18 @@ class Culture_REST_API {
             'segment' => $segment,
         );
         update_option( 'culture_newsletter_subscribers', $subscribers );
+
+        // Award reputation to the matching WP user on their first newsletter subscription.
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            $wp_user = get_user_by( 'email', $email );
+            if ( $wp_user ) {
+                $already = get_user_meta( $wp_user->ID, '_culture_newsletter_subscribed_badge', true );
+                if ( ! $already ) {
+                    update_user_meta( $wp_user->ID, '_culture_newsletter_subscribed_badge', '1' );
+                    Culture_Gamification::award_points( $wp_user->ID, 'newsletter_subscribed' );
+                }
+            }
+        }
 
         return rest_ensure_response( array(
             'success' => true,
@@ -1319,9 +1841,24 @@ class Culture_REST_API {
         update_user_meta( $user_id, '_culture_membership_tier', 'citizen' );
 
         // Mark email as verified and consume the token.
+        $was_unverified = get_user_meta( $user_id, '_culture_email_verified', true ) !== '1';
         update_user_meta( $user_id, '_culture_email_verified', '1' );
         delete_user_meta( $user_id, '_culture_email_verify_token' );
         delete_user_meta( $user_id, '_culture_email_verify_expires' );
+
+        // Award reputation for email verification (once only).
+        if ( $was_unverified && class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::award_points( $user_id, 'email_verified' );
+        }
+
+        // Award reputation for profile completion (once only).
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            $already_completed = get_user_meta( $user_id, '_culture_profile_completed', true );
+            if ( ! $already_completed ) {
+                update_user_meta( $user_id, '_culture_profile_completed', '1' );
+                Culture_Gamification::award_points( $user_id, 'profile_completed' );
+            }
+        }
 
         // Send welcome email now that all data is in place.
         if ( class_exists( 'Culture_Emails' ) ) {
@@ -1416,6 +1953,10 @@ class Culture_REST_API {
             'vendor_slug'         => $vendor_slug,
             // Profile photo
             'avatar_url'          => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
+            // Passkeys (Phase 7)
+            'has_passkey'         => (bool) get_user_meta( $user->ID, '_culture_has_passkey', true ),
+            'passkey_count'       => (int) get_user_meta( $user->ID, '_culture_passkey_count', true ),
+            'credits_escrowed'    => (int) get_user_meta( $user->ID, '_culture_credits_escrowed', true ),
         );
     }
 
@@ -2661,13 +3202,20 @@ class Culture_REST_API {
             return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
         }
 
-        $opt_in = $request->get_param( 'directory_opt_in' );
-        update_user_meta( $user_id, '_culture_directory_opt_in',     ( $opt_in === '1' || $opt_in === true ) ? '1' : '0' );
+        $opt_in         = $request->get_param( 'directory_opt_in' );
+        $was_opted_in   = get_user_meta( $user_id, '_culture_directory_opt_in', true ) === '1';
+        $new_opt_in_val = ( $opt_in === '1' || $opt_in === true ) ? '1' : '0';
+        update_user_meta( $user_id, '_culture_directory_opt_in',     $new_opt_in_val );
         update_user_meta( $user_id, '_culture_directory_bio',         sanitize_textarea_field( (string) $request->get_param( 'directory_bio' ) ) );
         update_user_meta( $user_id, '_culture_directory_disciplines', sanitize_text_field( (string) $request->get_param( 'directory_disciplines' ) ) );
         update_user_meta( $user_id, '_culture_directory_instagram',   sanitize_text_field( (string) $request->get_param( 'directory_instagram' ) ) );
         update_user_meta( $user_id, '_culture_directory_linkedin',    sanitize_text_field( (string) $request->get_param( 'directory_linkedin' ) ) );
         update_user_meta( $user_id, '_culture_directory_website',     sanitize_text_field( (string) $request->get_param( 'directory_website' ) ) );
+
+        // Award reputation the first time a user opts into the directory.
+        if ( '1' === $new_opt_in_val && ! $was_opted_in && class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::award_points( $user_id, 'directory_opt_in' );
+        }
 
         return rest_ensure_response( array( 'ok' => true ) );
     }
@@ -2904,5 +3452,367 @@ class Culture_REST_API {
             'options' => $options,
             'voted'   => $option_index,
         ) );
+    }
+
+    // -------------------------------------------------------------------------
+    // Phase 5 — Public Profiles
+    // -------------------------------------------------------------------------
+
+    /**
+     * GET /culture/v1/member/{username}
+     * Returns public-safe profile data for the given username. No auth required.
+     */
+    public static function handle_get_public_profile( $request ) {
+        $username = sanitize_user( $request->get_param( 'username' ) );
+
+        $user = get_user_by( 'login', $username );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
+        }
+
+        $uid        = $user->ID;
+        $reputation = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $uid ) : 0;
+
+        return rest_ensure_response( array(
+            'id'              => $uid,
+            'username'        => $user->user_login,
+            'display_name'    => $user->display_name,
+            'avatar_url'      => get_user_meta( $uid, '_culture_avatar_url', true ) ?: '',
+            'bio'             => get_user_meta( $uid, '_culture_directory_bio', true ) ?: '',
+            'city'            => get_user_meta( $uid, '_culture_city', true ) ?: '',
+            'country'         => get_user_meta( $uid, '_culture_country_of_residence', true ) ?: '',
+            'occupation'      => get_user_meta( $uid, '_culture_occupation', true ) ?: '',
+            'tier'            => get_user_meta( $uid, '_culture_membership_tier', true ) ?: 'citizen',
+            'reputation'      => $reputation,
+            'reputation_tier' => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation_tier( $reputation ) : 'member',
+            'badges'          => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_badges( $uid ) : array(),
+            'interests'       => json_decode( get_user_meta( $uid, '_culture_interests', true ) ?: '[]', true ) ?: array(),
+            'joined'          => date( 'Y-m-d', strtotime( $user->user_registered ) ),
+            'post_count'      => (int) count_user_posts( $uid, 'culture_post' ),
+        ) );
+    }
+
+    /**
+     * GET /culture/v1/community/posts
+     * Returns published culture_post entries, optionally filtered by author_id
+     * and/or template_type. No auth required.
+     */
+    public static function handle_get_community_posts( $request ) {
+        $author_id     = (int) $request->get_param( 'author_id' );
+        $template_type = sanitize_text_field( $request->get_param( 'template_type' ) );
+        $per_page      = max( 1, min( 100, (int) $request->get_param( 'per_page' ) ) );
+        $page          = max( 1, (int) $request->get_param( 'page' ) );
+
+        $query_args = array(
+            'post_type'      => 'culture_post',
+            'post_status'    => 'publish',
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+            'meta_query'     => array( 'relation' => 'AND' ),
+        );
+
+        if ( $author_id > 0 ) {
+            $query_args['meta_query'][] = array(
+                'key'     => 'community_author_id',
+                'value'   => $author_id,
+                'compare' => '=',
+                'type'    => 'NUMERIC',
+            );
+        }
+
+        if ( '' !== $template_type ) {
+            $query_args['meta_query'][] = array(
+                'key'     => '_template_type',
+                'value'   => $template_type,
+                'compare' => '=',
+            );
+        }
+
+        $posts  = get_posts( $query_args );
+        $result = array();
+
+        foreach ( $posts as $post ) {
+            $pid      = $post->ID;
+            $result[] = array(
+                'id'             => $pid,
+                'slug'           => $post->post_name,
+                'date'           => get_the_date( 'c', $pid ),
+                'text'           => wp_strip_all_tags( $post->post_content ),
+                'image_url'      => get_post_meta( $pid, 'community_image_url', true ) ?: '',
+                'tag'            => get_post_meta( $pid, 'community_tag', true ) ?: '',
+                'region'         => get_post_meta( $pid, 'community_region', true ) ?: '',
+                'author_name'    => get_post_meta( $pid, 'community_author_name', true ) ?: '',
+                'author_username' => get_post_meta( $pid, 'community_author_username', true ) ?: '',
+                'author_tier'    => get_post_meta( $pid, 'community_author_tier', true ) ?: '',
+                'author_avatar'  => get_post_meta( $pid, 'community_author_avatar', true ) ?: '',
+                'template_type'  => get_post_meta( $pid, '_template_type', true ) ?: 'post',
+                'star_rating'    => (int) get_post_meta( $pid, '_star_rating', true ),
+                'location_name'  => get_post_meta( $pid, '_location_name', true ) ?: '',
+                'gallery_images' => json_decode( get_post_meta( $pid, '_gallery_images', true ) ?: '[]', true ),
+                'video_url'      => get_post_meta( $pid, '_video_url', true ) ?: '',
+                'food_dish_name' => get_post_meta( $pid, '_food_dish_name', true ) ?: '',
+                'reactions'      => array(
+                    'love' => (int) get_post_meta( $pid, 'reaction_love', true ),
+                    'fire' => (int) get_post_meta( $pid, 'reaction_fire', true ),
+                    'clap' => (int) get_post_meta( $pid, 'reaction_clap', true ),
+                ),
+                'comment_count'  => (int) $post->comment_count,
+            );
+        }
+
+        return rest_ensure_response( $result );
+    }
+
+    /**
+     * GET /culture/v1/user/portfolio
+     * Returns pinned posts and portfolio items for the given user. Requires Bearer auth.
+     */
+    public static function handle_get_portfolio( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $pinned_posts = json_decode( get_user_meta( $user_id, '_portfolio_pinned_posts', true ) ?: '[]', true ) ?: array();
+        $items        = json_decode( get_user_meta( $user_id, '_portfolio_items', true ) ?: '[]', true ) ?: array();
+
+        return rest_ensure_response( array(
+            'pinned_posts' => $pinned_posts,
+            'items'        => $items,
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/user/portfolio
+     * Saves pinned posts and portfolio items for the given user. Requires Bearer auth.
+     */
+    public static function handle_save_portfolio( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $pinned_posts = $request->get_param( 'pinned_posts' );
+        $items        = $request->get_param( 'items' );
+
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        // Sanitise: ensure pinned_posts is an array of integers.
+        if ( ! is_array( $pinned_posts ) ) {
+            $pinned_posts = array();
+        }
+        $pinned_posts = array_values( array_map( 'absint', $pinned_posts ) );
+
+        // Sanitise: ensure items is an array.
+        if ( ! is_array( $items ) ) {
+            $items = array();
+        }
+
+        update_user_meta( $user_id, '_portfolio_pinned_posts', wp_json_encode( $pinned_posts ) );
+        update_user_meta( $user_id, '_portfolio_items', wp_json_encode( $items ) );
+
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    // ── Phase 6: Partner Perks & Wallet Handlers ─────────────────────────────
+
+    public static function handle_list_perks( $request ) {
+        return rest_ensure_response( Culture_Perks::get_perks() );
+    }
+
+    public static function handle_redeem_perk( $request ) {
+        $user_id       = (int) $request->get_param( 'user_id' );
+        $perk_id       = (int) $request->get_param( 'perk_id' );
+        $step_up_token = (string) $request->get_param( 'step_up_token' );
+        if ( ! $step_up_token || ! Culture_WebAuthn::validate_step_up( $user_id, $step_up_token ) ) {
+            return new WP_Error( 'step_up_required', 'Passkey step-up verification required.', array( 'status' => 403 ) );
+        }
+        $result = Culture_Perks::redeem_perk( $user_id, $perk_id );
+        if ( is_wp_error( $result ) ) return $result;
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_verify_qr( $request ) {
+        return rest_ensure_response( Culture_Perks::verify_qr( $request->get_param( 'token' ) ) );
+    }
+
+    public static function handle_wallet_balance( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        if ( ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $credits         = Culture_Gamification::get_credits( $user_id );
+        $daily_remaining = Culture_Gamification::get_daily_credits_remaining( $user_id );
+        $earned_today    = Culture_Gamification::DAILY_CREDIT_CAP - $daily_remaining;
+        $credits_per_gbp = max( 1, (int) get_option( 'culture_credits_per_gbp', Culture_Perks::DEFAULT_CREDITS_PER_GBP ) );
+        $credit_value_gbp_pence = (int) round( ( $credits / $credits_per_gbp ) * 100 );
+
+        return rest_ensure_response( array(
+            'credits'               => $credits,
+            'earned_today'          => $earned_today,
+            'daily_remaining'       => $daily_remaining,
+            'credit_value_gbp'      => $credit_value_gbp_pence,
+            'credits_per_gbp'       => $credits_per_gbp,
+        ) );
+    }
+
+    public static function handle_wallet_history( $request ) {
+        global $wpdb;
+        $user_id  = (int) $request->get_param( 'user_id' );
+        $per_page = min( (int) $request->get_param( 'per_page' ), 100 );
+        $page     = max( (int) $request->get_param( 'page' ), 1 );
+        $offset   = ( $page - 1 ) * $per_page;
+
+        if ( ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $table = $wpdb->prefix . 'culture_credit_ledger';
+        $total = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND type = 'credit'", $user_id
+        ) );
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT id, amount, source, source_id, created_at FROM {$table}
+             WHERE user_id = %d AND type = 'credit' ORDER BY id DESC LIMIT %d OFFSET %d",
+            $user_id, $per_page, $offset
+        ), ARRAY_A ) ?: array();
+
+        return rest_ensure_response( array(
+            'entries'  => $rows,
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $per_page,
+            'pages'    => (int) ceil( $total / max( 1, $per_page ) ),
+        ) );
+    }
+
+    public static function handle_wallet_cashout( $request ) {
+        $user_id       = (int) $request->get_param( 'user_id' );
+        $step_up_token = (string) $request->get_param( 'step_up_token' );
+        if ( ! $step_up_token || ! Culture_WebAuthn::validate_step_up( $user_id, $step_up_token ) ) {
+            return new WP_Error( 'step_up_required', 'Passkey step-up verification required.', array( 'status' => 403 ) );
+        }
+        $result = Culture_Perks::request_cashout(
+            $user_id,
+            (int) $request->get_param( 'credits' ),
+            $request->get_param( 'method' ),
+            $request->get_param( 'account_name' ),
+            $request->get_param( 'account_ref' ),
+            $request->get_param( 'currency' ) ?: 'GBP'
+        );
+        if ( is_wp_error( $result ) ) return $result;
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_cashout_queue( $request ) {
+        return rest_ensure_response( Culture_Perks::get_cashout_queue(
+            sanitize_key( $request->get_param( 'status' ) ?: 'pending' )
+        ) );
+    }
+
+    public static function handle_cashout_approve( $request ) {
+        $result = Culture_Perks::approve_cashout(
+            (int) $request->get_param( 'redemption_id' ),
+            (int) $request->get_param( 'admin_id' )
+        );
+        if ( is_wp_error( $result ) ) return $result;
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_cashout_reject( $request ) {
+        $result = Culture_Perks::reject_cashout(
+            (int) $request->get_param( 'redemption_id' ),
+            (int) $request->get_param( 'admin_id' ),
+            $request->get_param( 'reason' ) ?: ''
+        );
+        if ( is_wp_error( $result ) ) return $result;
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_admin_list_perks( $request ) {
+        $status = sanitize_key( $request->get_param( 'status' ) ?: '' );
+        $args   = array( 'limit' => 200, 'offset' => 0 );
+        if ( $status ) {
+            $args['status'] = $status;
+        } else {
+            $args['status'] = '';
+        }
+        return rest_ensure_response( Culture_Perks::get_perks( $args ) );
+    }
+
+    public static function handle_admin_create_perk( $request ) {
+        global $wpdb;
+        $data = self::_sanitize_perk_data( $request );
+        if ( is_wp_error( $data ) ) return $data;
+        $table = $wpdb->prefix . 'culture_partner_perks';
+        if ( ! $wpdb->insert( $table, $data['values'], $data['formats'] ) ) {
+            return new WP_Error( 'db_error', 'Could not create perk.', array( 'status' => 500 ) );
+        }
+        return rest_ensure_response( array( 'success' => true, 'perk' => Culture_Perks::get_perk( (int) $wpdb->insert_id ) ) );
+    }
+
+    public static function handle_admin_update_perk( $request ) {
+        global $wpdb;
+        $perk_id = (int) $request->get_param( 'id' );
+        if ( ! Culture_Perks::get_perk( $perk_id ) ) {
+            return new WP_Error( 'not_found', 'Perk not found.', array( 'status' => 404 ) );
+        }
+        $data = self::_sanitize_perk_data( $request );
+        if ( is_wp_error( $data ) ) return $data;
+        $wpdb->update( $wpdb->prefix . 'culture_partner_perks', $data['values'], array( 'id' => $perk_id ), $data['formats'], array( '%d' ) );
+        return rest_ensure_response( array( 'success' => true, 'perk' => Culture_Perks::get_perk( $perk_id ) ) );
+    }
+
+    public static function handle_admin_delete_perk( $request ) {
+        global $wpdb;
+        $perk_id = (int) $request->get_param( 'id' );
+        if ( ! Culture_Perks::get_perk( $perk_id ) ) {
+            return new WP_Error( 'not_found', 'Perk not found.', array( 'status' => 404 ) );
+        }
+        $wpdb->update( $wpdb->prefix . 'culture_partner_perks', array( 'status' => 'paused' ), array( 'id' => $perk_id ), array( '%s' ), array( '%d' ) );
+        return rest_ensure_response( array( 'success' => true, 'perk_id' => $perk_id, 'status' => 'paused' ) );
+    }
+
+    public static function handle_user_redemptions( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $status  = $request->get_param( 'status' ) ?: null;
+        $rows    = Culture_Perks::get_user_redemptions( $user_id, $status );
+        $perks_table = $GLOBALS['wpdb']->prefix . 'culture_partner_perks';
+        foreach ( $rows as &$row ) {
+            if ( (int) $row['perk_id'] > 0 ) {
+                $perk = Culture_Perks::get_perk( (int) $row['perk_id'] );
+                $row['perk_title'] = $perk ? $perk['title'] : '';
+                $row['perk_description'] = $perk ? $perk['description'] : '';
+            }
+        }
+        return rest_ensure_response( $rows );
+    }
+
+    private static function _sanitize_perk_data( $request ) {
+        $title = sanitize_text_field( $request->get_param( 'title' ) ?: '' );
+        if ( empty( $title ) ) {
+            return new WP_Error( 'missing_title', 'Perk title is required.', array( 'status' => 400 ) );
+        }
+        $allowed = array( 'active', 'paused', 'expired' );
+        $status  = sanitize_key( $request->get_param( 'status' ) ?: 'active' );
+        if ( ! in_array( $status, $allowed, true ) ) $status = 'active';
+        return array(
+            'values'  => array(
+                'title'                => $title,
+                'description'          => sanitize_textarea_field( $request->get_param( 'description' ) ?: '' ),
+                'credit_cost'          => max( 0, (int) $request->get_param( 'credit_cost' ) ),
+                'min_spend'            => max( 0, (int) $request->get_param( 'min_spend' ) ),
+                'min_spend_currency'   => strtoupper( substr( sanitize_text_field( $request->get_param( 'min_spend_currency' ) ?: 'GBP' ), 0, 3 ) ),
+                'expiry_days'          => max( 1, (int) $request->get_param( 'expiry_days' ) ),
+                'max_per_user'         => max( 0, (int) $request->get_param( 'max_per_user' ) ),
+                'max_total'            => max( 0, (int) $request->get_param( 'max_total' ) ),
+                'status'               => $status,
+                'partner_directory_id' => max( 0, (int) $request->get_param( 'partner_directory_id' ) ),
+                'partner_vendor_id'    => max( 0, (int) $request->get_param( 'partner_vendor_id' ) ),
+            ),
+            'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d' ),
+        );
     }
 }

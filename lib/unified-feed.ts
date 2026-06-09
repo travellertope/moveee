@@ -40,6 +40,7 @@ export interface FeedItem {
   category?: string;
   // community-specific
   communityAuthor?: string;
+  communityAuthorUsername?: string;
   communityAuthorAvatar?: string;
   communityTag?: string;
   communityTier?: string;
@@ -103,7 +104,7 @@ const WP_BASE = `${WP_URL}/wp-json/wp/v2`;
 /** Fetch the latest community posts from the culture_post CPT. */
 async function getCommunityPosts(): Promise<FeedItem[]> {
   const res = await fetch(
-    `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count&meta_fields=community_author_name,community_author_id,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe`,
+    `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count&meta_fields=community_author_name,community_author_id,community_author_username,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe`,
     { cache: "no-store" }
   );
   if (!res.ok) return [];
@@ -130,6 +131,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
       image: imageUrl ?? undefined,
       href: `/community/${post.slug}`,
       communityAuthor: authorName || (post.excerpt?.rendered ? stripHtml(post.excerpt.rendered) : ""),
+      communityAuthorUsername: (m.community_author_username as string) || undefined,
       communityAuthorAvatar: (m.community_author_avatar as string) || undefined,
       communityTag: tag ?? "",
       communityTier: tier ?? undefined,

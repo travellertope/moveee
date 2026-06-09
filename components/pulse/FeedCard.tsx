@@ -182,10 +182,12 @@ export default function FeedCard({
   item,
   onTagClick,
   onHashtagClick,
+  interestMatch,
 }: {
   item: FeedItem;
   onTagClick?: (tag: string) => void;
   onHashtagClick?: (hashtag: string) => void;
+  interestMatch?: boolean;
 }) {
   const typeMeta = TYPE_BADGE[item.type] ?? TYPE_BADGE.pulse;
 
@@ -275,26 +277,50 @@ export default function FeedCard({
           }}
         >
           {/* Avatar */}
-          <div style={{
-            width: "34px", height: "34px", borderRadius: "50%",
-            background: "#edf7ed", border: "1px solid #c8e6c9",
-            color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0, overflow: "hidden",
-          }}>
-            {item.communityAuthorAvatar ? (
-              <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              (item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
-            )}
-          </div>
+          {item.communityAuthorUsername ? (
+            <Link href={`/connect/${item.communityAuthorUsername}`} onClick={e => e.stopPropagation()} style={{ textDecoration: "none", flexShrink: 0 }}>
+              <div style={{
+                width: "34px", height: "34px", borderRadius: "50%",
+                background: "#edf7ed", border: "1px solid #c8e6c9",
+                color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                overflow: "hidden",
+              }}>
+                {item.communityAuthorAvatar ? (
+                  <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  (item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
+                )}
+              </div>
+            </Link>
+          ) : (
+            <div style={{
+              width: "34px", height: "34px", borderRadius: "50%",
+              background: "#edf7ed", border: "1px solid #c8e6c9",
+              color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0, overflow: "hidden",
+            }}>
+              {item.communityAuthorAvatar ? (
+                <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                (item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
+              )}
+            </div>
+          )}
 
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Header */}
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
-              <span style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600 }}>
-                {item.communityAuthor || "Community Member"}
-              </span>
+              {item.communityAuthorUsername ? (
+                <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }} onClick={e => e.stopPropagation()}>
+                  {item.communityAuthor || "Community Member"}
+                </Link>
+              ) : (
+                <span style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600 }}>
+                  {item.communityAuthor || "Community Member"}
+                </span>
+              )}
               {item.communityTier === "patron" && (
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace",
@@ -332,6 +358,21 @@ export default function FeedCard({
                   {item.communityTag}
                 </button>
               )}
+              {interestMatch && (
+                <span title="Matches your interests" style={{
+                  fontSize: "0.55rem",
+                  fontWeight: 700,
+                  letterSpacing: ".08em",
+                  textTransform: "uppercase",
+                  color: "var(--ochre, #b38238)",
+                  border: "1px solid rgba(179,130,56,.4)",
+                  borderRadius: 2,
+                  padding: "0.1rem 0.35rem",
+                  flexShrink: 0,
+                }}>
+                  ✦ For You
+                </span>
+              )}
             </div>
 
             {/* Text — clicking opens modal */}
@@ -349,7 +390,7 @@ export default function FeedCard({
                   )}
                   {item.templateType === "cultural-take" && (
                     <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6b48a8", background: "rgba(107,72,168,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
-                      Cultural Take
+                      Take{item.locationName ? ` · ${item.locationName}` : ""}
                     </span>
                   )}
                   {item.templateType === "food-review" && (
@@ -402,10 +443,17 @@ export default function FeedCard({
             )}
 
             {/* Gallery carousel (creative-showcase, hidden-gem, food-review) */}
-            {item.galleryImages && item.galleryImages.length > 1 && (
+            {item.galleryImages && item.galleryImages.length >= 1 && (
               <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.6rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
                 {item.galleryImages.map((img: string, i: number) => (
-                  <img key={i} src={img} alt="" style={{ height: "200px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+                  <img
+                    key={i}
+                    src={img}
+                    alt=""
+                    onClick={() => setLightbox(img)}
+                    style={{ height: "200px", objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }}
+                    loading="lazy"
+                  />
                 ))}
               </div>
             )}
@@ -451,18 +499,16 @@ export default function FeedCard({
               </div>
             )}
 
-            {/* Image */}
-            {item.image && (
-              <>
-                <div
-                  onClick={() => setLightbox(item.image!)}
-                  style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8", cursor: "zoom-in" }}
-                >
-                  <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.15s" }} loading="lazy" />
-                </div>
-                {lightbox && <ImageLightbox src={lightbox} alt={item.title} onClose={closeLightbox} />}
-              </>
+            {/* Single image — only when no gallery */}
+            {item.image && !item.galleryImages?.length && (
+              <div
+                onClick={() => setLightbox(item.image!)}
+                style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8", cursor: "zoom-in" }}
+              >
+                <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.15s" }} loading="lazy" />
+              </div>
             )}
+            {lightbox && <ImageLightbox src={lightbox} alt={item.title} onClose={closeLightbox} />}
 
             {/* Link preview card (only if no image) */}
             {!item.image && item.sourceUrl && (

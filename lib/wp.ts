@@ -1547,6 +1547,7 @@ export interface DirectoryPostsSummary {
 
 export interface DirectoryPost {
   id: number;
+  slug?: string;
   template_type: string;
   content: string;
   star_rating: number | null;

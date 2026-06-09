@@ -1139,8 +1139,25 @@
   margin: 0 0 10px;
 }
 
+.dir-community-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
 .dir-community-reactions { display: flex; gap: 10px; flex-wrap: wrap; }
 .dir-community-reaction { font-size: 13px; color: var(--mute); }
+.dir-community-read-more {
+  font-size: 0.72rem;
+  color: var(--ochre, #b38238);
+  text-decoration: none;
+  white-space: nowrap;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.dir-community-read-more:hover { text-decoration: underline; }
 
 /* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 640px) {

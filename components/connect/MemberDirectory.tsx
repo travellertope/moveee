@@ -6,6 +6,7 @@ import Link from "next/link";
 interface Member {
   id: string;
   displayName: string;
+  username: string;
   occupation: string;
   city: string;
   countryOfResidence: string;
@@ -152,7 +153,7 @@ function MemberCard({ member }: { member: Member }) {
     member.website   && { label: "Website",   href: member.website.startsWith("http")  ? member.website  : `https://${member.website}` },
   ].filter(Boolean) as { label: string; href: string }[];
 
-  return (
+  const inner = (
     <div className={`mco-member-card${isPatron ? " mco-member-card--patron" : ""}`}>
       <div className="mco-member-avatar" aria-hidden="true">
         {member.displayName.charAt(0).toUpperCase()}
@@ -185,6 +186,7 @@ function MemberCard({ member }: { member: Member }) {
                 rel="noreferrer noopener"
                 className="mco-member-link"
                 aria-label={`${member.displayName} on ${l.label}`}
+                onClick={e => e.stopPropagation()}
               >
                 {l.label}
               </a>
@@ -197,4 +199,13 @@ function MemberCard({ member }: { member: Member }) {
       )}
     </div>
   );
+
+  if (member.username) {
+    return (
+      <Link href={`/connect/${member.username}`} style={{ textDecoration: "none", display: "block" }}>
+        {inner}
+      </Link>
+    );
+  }
+  return inner;
 }
