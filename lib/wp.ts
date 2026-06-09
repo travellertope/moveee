@@ -43,6 +43,7 @@ function mapRestEventToFrontendShape(item: any) {
   const embeddedMedia = item?._embedded?.["wp:featuredmedia"]?.[0];
   const acf = item?.acf || {};
   const meta = item?.meta || {};
+  const cem = item?.culture_event_meta || {};
   const pick = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== "" && v !== false) ?? null;
 
   const toMediaItem = (img: any) => {
@@ -97,18 +98,18 @@ function mapRestEventToFrontendShape(item: any) {
     date: item?.date ?? null,
     excerpt: item?.excerpt?.rendered ?? "",
     content: item?.content?.rendered ?? "",
-    eventDate: pick(acf.event_date, meta.event_date, meta._culture_event_date) ?? null,
-    endDate: pick(acf.end_date, meta.end_date, meta._culture_event_end_date),
-    location: pick(acf.location, meta.location, meta._culture_location),
-    city: pick(acf.city, meta.city, meta._culture_event_city),
-    admission: pick(acf.admission, meta.admission, meta._culture_admission),
+    eventDate: pick(cem.event_date, acf.event_date, meta.event_date, meta._culture_event_date) ?? null,
+    endDate: pick(cem.end_date, acf.end_date, meta.end_date, meta._culture_event_end_date),
+    location: pick(cem.location, acf.location, meta.location, meta._culture_location),
+    city: pick(cem.city, acf.city, meta.city, meta._culture_event_city),
+    admission: pick(cem.admission, acf.admission, meta.admission, meta._culture_admission),
     isFeatured: Boolean(pick(acf.is_featured, meta.is_featured, meta._culture_is_featured)),
-    isAiGenerated: [true, 1, '1', 'true', 'yes'].includes(acf.ai_generated ?? meta.ai_generated ?? meta._culture_ai_generated),
-    openingHours: pick(acf.opening_hours, meta.opening_hours, meta._culture_opening_hours),
+    isAiGenerated: [true, 1, '1', 'true', 'yes'].includes(cem.ai_generated ?? acf.ai_generated ?? meta.ai_generated ?? meta._culture_ai_generated),
+    openingHours: pick(cem.opening_hours, acf.opening_hours, meta.opening_hours, meta._culture_opening_hours),
     tagline: pick(acf.tagline, meta.tagline, meta._culture_tagline),
     attribution: pick(acf.attribution, meta.attribution, meta._culture_attribution),
-    ticketingUrl: pick(acf.ticketing_url, meta.ticketing_url, meta._culture_ticketing_url),
-    eventImageUrl: pick(acf.event_image_url, meta.event_image_url, meta._culture_event_image_url),
+    ticketingUrl: pick(cem.ticketing_url, acf.ticketing_url, meta.ticketing_url, meta._culture_ticketing_url),
+    eventImageUrl: pick(cem.image_url, acf.event_image_url, meta.event_image_url, meta._culture_event_image_url),
     featuredImage: embeddedMedia?.source_url
       ? {
           node: {
@@ -247,17 +248,36 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
   const gql = await getWPData(GET_EVENT_BY_SLUG, { slug }, options);
   if (gql?.cultureEvent) {
     const ev = gql.cultureEvent;
-    // WPGraphQL may not resolve some ACF fields — patch via REST for host
+    // WPGraphQL may not resolve ACF/meta fields reliably — patch via REST when missing
     const needsHostPatch = !ev.featuredHost?.title;
-    if (needsHostPatch) {
+    const needsMetaPatch = !ev.location && !ev.city && !ev.eventDate;
+    if (needsHostPatch || needsMetaPatch) {
       try {
         const metaRes = await fetch(
-          `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_fields=acf,meta`,
+          `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_fields=acf,meta,culture_event_meta`,
           { next: { revalidate: 3600 } }
         );
         if (metaRes.ok) {
           const metaJson = await metaRes.json();
           const acf = metaJson[0]?.acf ?? {};
+          const meta = metaJson[0]?.meta ?? {};
+          const cem = metaJson[0]?.culture_event_meta ?? {};
+          const pick = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== "" && v !== false) ?? null;
+
+          // Patch core event meta fields that WPGraphQL may return as null
+          if (needsMetaPatch) {
+            if (!ev.eventDate)    ev.eventDate    = pick(cem.event_date,    acf.event_date,    meta._culture_event_date);
+            if (!ev.endDate)      ev.endDate      = pick(cem.end_date,      acf.end_date,      meta._culture_event_end_date);
+            if (!ev.location)     ev.location     = pick(cem.location,      acf.location,      meta._culture_location);
+            if (!ev.city)         ev.city         = pick(cem.city,          acf.city,          meta._culture_event_city);
+            if (!ev.admission)    ev.admission    = pick(cem.admission,     acf.admission,     meta._culture_admission);
+            if (!ev.openingHours) ev.openingHours = pick(cem.opening_hours, acf.opening_hours, meta._culture_opening_hours);
+            if (!ev.ticketingUrl) ev.ticketingUrl = pick(cem.ticketing_url, acf.ticketing_url, meta._culture_ticketing_url);
+            if (!ev.eventImageUrl) ev.eventImageUrl = pick(cem.image_url, acf.event_image_url, meta._culture_event_image_url);
+            if (!ev.featuredImage?.node?.sourceUrl && cem.image_url) {
+              ev.featuredImage = { node: { sourceUrl: cem.image_url, altText: "" } };
+            }
+          }
 
           if (needsHostPatch) {
             const rawHost = acf.featured_host;
