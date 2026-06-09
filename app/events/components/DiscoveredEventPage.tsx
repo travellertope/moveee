@@ -183,16 +183,17 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
             </div>
           )}
 
-          {/* about */}
-          {(excerpt || event.content) && (
+          {/* about — prefer HTML content (properly formatted), fall back to plain excerpt */}
+          {(event.content || excerpt) && (
             <div className="luma-about">
               <div className="luma-section-label">About</div>
-              {excerpt && <p className="luma-excerpt">{excerpt}</p>}
-              {event.content && (
+              {event.content ? (
                 <div
                   className="luma-content"
                   dangerouslySetInnerHTML={{ __html: event.content }}
                 />
+              ) : (
+                <p className="luma-excerpt">{excerpt}</p>
               )}
             </div>
           )}

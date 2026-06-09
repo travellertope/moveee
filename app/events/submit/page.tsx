@@ -15,6 +15,8 @@ export default function EventSubmitPage() {
     description: "",
     admission: "",
     ticketing_url: "",
+    image_url: "",
+    category: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -122,7 +124,7 @@ export default function EventSubmitPage() {
                 View Happenings →
               </Link>
               <button
-                onClick={() => { setSuccess(false); setForm({ title: "", event_date: "", end_date: "", location: "", city: "", description: "", admission: "", ticketing_url: "" }); }}
+                onClick={() => { setSuccess(false); setForm({ title: "", event_date: "", end_date: "", location: "", city: "", description: "", admission: "", ticketing_url: "", image_url: "", category: "" }); }}
                 style={{
                   background: "transparent", color: "#7a6f5c", border: "1px solid #e0d8ce",
                   borderRadius: "2px", padding: "0.45rem 1rem",
@@ -175,6 +177,35 @@ export default function EventSubmitPage() {
               <div>
                 <label style={label}>Description</label>
                 <textarea value={form.description} onChange={set("description")} placeholder="Tell us about the event…" rows={4} style={{ ...input, resize: "vertical", lineHeight: 1.6 }} />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label style={label}>Category</label>
+                <select value={form.category} onChange={set("category") as any} style={{ ...input, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a6f5c'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.75rem center", paddingRight: "2rem" }}>
+                  <option value="">Select a category…</option>
+                  <option value="music">Music</option>
+                  <option value="film">Film</option>
+                  <option value="visual-arts">Visual Arts</option>
+                  <option value="fashion">Fashion</option>
+                  <option value="food">Food</option>
+                  <option value="literature">Literature</option>
+                  <option value="design">Design</option>
+                  <option value="performance">Performance</option>
+                  <option value="community">Community</option>
+                  <option value="tech">Tech</option>
+                </select>
+              </div>
+
+              {/* Event Image */}
+              <div>
+                <label style={label}>Event Image URL</label>
+                <input type="url" value={form.image_url} onChange={set("image_url")} placeholder="https://… (paste a direct image link)" style={input} />
+                {form.image_url && (
+                  <div style={{ marginTop: "0.5rem", borderRadius: "4px", overflow: "hidden", maxHeight: "140px", border: "1px solid #e0d8ce" }}>
+                    <img src={form.image_url} alt="Preview" style={{ width: "100%", height: "140px", objectFit: "cover", display: "block" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  </div>
+                )}
               </div>
 
               {/* Admission + Ticketing */}

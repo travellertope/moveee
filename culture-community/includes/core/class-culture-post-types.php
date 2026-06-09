@@ -36,7 +36,7 @@ class Culture_Post_Types {
         $event_meta = array(
             '_culture_ai_generated'  => array( 'type' => 'string' ),
             '_culture_event_date'    => array( 'type' => 'string' ),
-            '_culture_end_date'      => array( 'type' => 'string' ),
+            '_culture_event_end_date'    => array( 'type' => 'string' ),
             '_culture_location'      => array( 'type' => 'string' ),
             '_culture_event_city'    => array( 'type' => 'string' ),
             '_culture_admission'     => array( 'type' => 'string' ),
@@ -426,7 +426,7 @@ class Culture_Post_Types {
         // 6. Core Event Fields (Hybrid: Priority on ACF, fallback to Native Meta)
         $event_meta_fields = array(
             'eventDate'    => array( 'type' => 'String',  'acf_key' => 'event_date',  'meta_key' => '_culture_event_date' ),
-            'endDate'      => array( 'type' => 'String',  'acf_key' => 'end_date',    'meta_key' => '_culture_end_date' ),
+            'endDate'      => array( 'type' => 'String',  'acf_key' => 'end_date',    'meta_key' => '_culture_event_end_date' ),
             'location'     => array( 'type' => 'String',  'acf_key' => 'location',    'meta_key' => '_culture_location' ),
             'admission'    => array( 'type' => 'String',  'acf_key' => 'admission',   'meta_key' => '_culture_admission' ),
             'isFeatured'     => array( 'type' => 'Boolean', 'acf_key' => 'is_featured',    'meta_key' => '_culture_is_featured' ),
@@ -435,6 +435,7 @@ class Culture_Post_Types {
             'attribution'  => array( 'type' => 'String',  'acf_key' => 'attribution', 'meta_key' => '_culture_attribution' ),
             'openingHours' => array( 'type' => 'String',  'acf_key' => 'opening_hours', 'meta_key' => '_culture_opening_hours' ),
             'ticketingUrl' => array( 'type' => 'String',  'acf_key' => 'ticketing_url', 'meta_key' => '_culture_ticketing_url' ),
+            'eventImageUrl'=> array( 'type' => 'String',  'acf_key' => 'event_image_url', 'meta_key' => '_culture_event_image_url' ),
         );
 
         foreach ( array( 'Post', 'CultureEvent' ) as $type_name ) {

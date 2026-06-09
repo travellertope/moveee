@@ -30,7 +30,10 @@ export interface FeedItem {
   ogImage?: string;
   // happening-specific
   eventDate?: string;
+  endDate?: string;
   location?: string;
+  admission?: string;
+  eventCategory?: string;
   // directory-specific
   entryType?: string;
   // quote-specific
@@ -250,7 +253,10 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         image: event.featuredImage?.node?.sourceUrl || event.eventImageUrl,
         href: `/events/${event.slug}`,
         eventDate: event.eventDate ?? "",
+        endDate: event.endDate ?? "",
         location: event.location ?? "",
+        admission: event.admission ?? "",
+        eventCategory: event.cultureInterests?.nodes?.[0]?.name ?? "",
       });
     }
   }

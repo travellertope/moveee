@@ -98,7 +98,7 @@ function mapRestEventToFrontendShape(item: any) {
     excerpt: item?.excerpt?.rendered ?? "",
     content: item?.content?.rendered ?? "",
     eventDate: pick(acf.event_date, meta.event_date, meta._culture_event_date) ?? null,
-    endDate: pick(acf.end_date, meta.end_date, meta._culture_end_date),
+    endDate: pick(acf.end_date, meta.end_date, meta._culture_event_end_date),
     location: pick(acf.location, meta.location, meta._culture_location),
     city: pick(acf.city, meta.city, meta._culture_event_city),
     admission: pick(acf.admission, meta.admission, meta._culture_admission),
@@ -818,12 +818,14 @@ const EVENT_FIELDS_FRAGMENT = `
     eventLocation: location
     admission
     ticketingUrl
+    eventImageUrl
     isFeatured
     isAiGenerated
     tagline
     attribution
     openingHours
     excerpt
+    content
     featuredImage {
       node {
         sourceUrl
