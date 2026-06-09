@@ -96,7 +96,7 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
               rel="noopener noreferrer"
               className="luma-cta-btn"
             >
-              {event.ticketingUrl ? "Get Tickets ↗" : "View Full Event Details ↗"}
+              Find Out More ↗
             </a>
           )}
 
@@ -183,7 +183,7 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
           {ctaUrl && (
             <div className="luma-register-box">
               <div className="luma-register-label">
-                {event.ticketingUrl ? "Tickets" : "Registration"}
+                Event Details
               </div>
               {event.tagline && (
                 <p className="luma-register-note">{event.tagline}</p>
@@ -194,7 +194,7 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
                 rel="noopener noreferrer"
                 className="luma-register-btn"
               >
-                {event.ticketingUrl ? "Get Tickets" : "View Event Details"}
+                Find Out More →
               </a>
             </div>
           )}

@@ -224,12 +224,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
           {/* Registration box */}
           <div className="ehl-register-box">
-            <div className="ehl-register-label">Registration</div>
+            <div className="ehl-register-label">Event Details</div>
             {event.ticketingUrl ? (
               <>
                 <p className="ehl-register-note">{event.admission || "Paid Entry"} · {event.location}</p>
                 <a href={event.ticketingUrl} target="_blank" rel="noopener noreferrer" className="ehl-register-btn">
-                  Buy Ticket →
+                  Find Out More →
                 </a>
               </>
             ) : (
@@ -336,12 +336,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <div className="top-label">RSVP · {dateFormatted}</div>
             {event.ticketingUrl ? (
               <>
-                <h3>Secure your <em>ticket</em></h3>
+                <h3>More <em>details</em></h3>
                 <div className="event-date">{event.location} · {event.admission || "Paid Entry"}</div>
                 <a href={event.ticketingUrl} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ display: "block", textAlign: "center", marginTop: "24px" }}>
-                  Buy Ticket Now →
+                  Find Out More →
                 </a>
-                <p className="rsvp-small">Secure access via external partner</p>
+                <p className="rsvp-small">Opens external partner site</p>
               </>
             ) : (
               <>
