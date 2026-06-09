@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import "./homepage.css";
 import "./editorial.css";
 import "./not-found.css";
-import "./newsletter.css";
 import "./legal.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -16,7 +14,6 @@ import { CartProvider } from "@/context/CartContext";
 import { AdsProvider, type AdSettings } from "@/context/AdsContext";
 import Script from "next/script";
 import SessionProvider from "@/components/SessionProvider";
-import { headers } from "next/headers";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -75,9 +72,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const siteData = await getWPData(GET_SITE_SETTINGS);
-  const headersList = await headers();
-  const country = headersList.get("x-vercel-ip-country") || "US";
+  const siteData = await getWPData(GET_SITE_SETTINGS, {}, { revalidate: 3600 });
 
   const rawAds = siteData?.adSettings;
   const adSettings: AdSettings = {
@@ -97,7 +92,7 @@ export default async function RootLayout({
       >
         <SessionProvider>
           <CurrencyProvider
-            detectedCountry={country}
+            detectedCountry={undefined}
             initialPricing={siteData?.membershipSettings || null}
           >
             <LanguageProvider>

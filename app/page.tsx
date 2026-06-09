@@ -3,8 +3,9 @@ import { authOptions } from "@/lib/auth";
 import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import HomepageContent from "@/components/HomepageContent";
 import type { Metadata } from "next";
+import "@/app/homepage.css";
 
-export const revalidate = 120;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "The Moveee — Best in African Culture",

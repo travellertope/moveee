@@ -5,8 +5,10 @@ import { isValidRegionalSlug, EDITIONS, type RegionalSlug } from "@/lib/editions
 import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import HomepageContent from "@/components/HomepageContent";
 import type { Metadata } from "next";
+import "@/app/homepage.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export const dynamicParams = true;
 
 interface Props {
   params: Promise<{ edition: string }>;

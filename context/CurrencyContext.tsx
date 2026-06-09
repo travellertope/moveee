@@ -29,15 +29,12 @@ export const CurrencyProvider: React.FC<{
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Determine currency based on detected country (passed from server-side headers)
-    // or fallback to browser/stored preference.
-    let activeCurrency: "NGN" | "USD" = "USD";
-    
-    if (detectedCountry === "NG") {
-      activeCurrency = "NGN";
+    let country = detectedCountry;
+    if (!country) {
+      const match = document.cookie.match(/(?:^|;\s*)x-country=([^;]+)/);
+      country = match?.[1] || "US";
     }
-
-    setCurrency(activeCurrency);
+    setCurrency(country === "NG" ? "NGN" : "USD");
     setIsLoading(false);
   }, [detectedCountry]);
 
