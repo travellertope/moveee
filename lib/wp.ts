@@ -224,7 +224,46 @@ function isEventExpired(event: any): boolean {
 export async function getEventsWithFallback(first = 50, options: any = {}) {
   const gql = await getWPData(GET_EVENTS, { first }, options);
   const gqlEvents = (gql?.cultureEvents?.nodes ?? []).filter((e: any) => !isEventExpired(e));
-  if (gqlEvents.length > 0) return gqlEvents;
+  if (gqlEvents.length > 0) {
+    // WPGraphQL often returns null for ACF/meta fields — patch via REST bulk fetch
+    const needsPatch = gqlEvents.some((e: any) => !e.location || !e.city || !e.endDate || !e.venueAddress);
+    if (needsPatch) {
+      try {
+        const restUrl = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_fields=id,slug,acf,meta,culture_event_meta&orderby=date&order=desc`;
+        const restRes = await fetch(restUrl, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          next: { revalidate: options.revalidate !== undefined ? options.revalidate : 0 },
+        });
+        if (restRes.ok) {
+          const restJson = await restRes.json();
+          if (Array.isArray(restJson)) {
+            const metaBySlug = new Map<string, any>();
+            for (const r of restJson) {
+              metaBySlug.set(r.slug, r);
+            }
+            const pick = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== "" && v !== false) ?? null;
+            for (const ev of gqlEvents) {
+              const rest = metaBySlug.get(ev.slug);
+              if (!rest) continue;
+              const acf = rest.acf ?? {};
+              const meta = rest.meta ?? {};
+              const cem = rest.culture_event_meta ?? {};
+              if (!ev.eventDate)    ev.eventDate    = pick(cem.event_date,    acf.event_date,    meta._culture_event_date);
+              if (!ev.endDate)      ev.endDate      = pick(cem.end_date,      acf.end_date,      meta._culture_event_end_date);
+              if (!ev.location)     ev.location     = pick(cem.location,      acf.location,      meta._culture_location);
+              if (!ev.city)         ev.city         = pick(cem.city,          acf.city,          meta._culture_event_city);
+              if (!ev.admission)    ev.admission    = pick(cem.admission,     acf.admission,     meta._culture_admission);
+              if (!ev.openingHours) ev.openingHours = pick(cem.opening_hours, acf.opening_hours, meta._culture_opening_hours);
+              if (!ev.venueAddress) ev.venueAddress = pick(acf.venue_address, meta.venue_address);
+              if (!ev.ticketingUrl) ev.ticketingUrl = pick(cem.ticketing_url, acf.ticketing_url, meta._culture_ticketing_url);
+            }
+          }
+        }
+      } catch { /* patch is best-effort */ }
+    }
+    return gqlEvents;
+  }
 
   try {
     const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
