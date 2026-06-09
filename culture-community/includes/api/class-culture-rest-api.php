@@ -3111,12 +3111,13 @@ class Culture_REST_API {
         $opening_hours  = sanitize_text_field( $request->get_param( 'opening_hours' ) );
         $attribution    = esc_url_raw( $request->get_param( 'attribution' ) );
         $image_url     = esc_url_raw( $request->get_param( 'image_url' ) );
-        $interests        = (array) $request->get_param( 'interests' );
-        $auto_publish     = (bool) $request->get_param( 'auto_publish' );
-        $ai_generated_raw = $request->get_param( 'ai_generated' );
-        $ai_generated     = ( $ai_generated_raw === null ) ? true : (bool) $ai_generated_raw;
-        $submitter_name   = sanitize_text_field( $request->get_param( 'submitter_name' ) );
-        $submitter_email  = sanitize_email( $request->get_param( 'submitter_email' ) );
+        $interests           = (array) $request->get_param( 'interests' );
+        $auto_publish        = (bool) $request->get_param( 'auto_publish' );
+        $ai_generated_raw    = $request->get_param( 'ai_generated' );
+        $ai_generated        = ( $ai_generated_raw === null ) ? true : (bool) $ai_generated_raw;
+        $featured_image_id   = absint( $request->get_param( 'featured_image_id' ) );
+        $submitter_name      = sanitize_text_field( $request->get_param( 'submitter_name' ) );
+        $submitter_email     = sanitize_email( $request->get_param( 'submitter_email' ) );
 
         if ( empty( $title ) || empty( $event_date ) ) {
             return new WP_Error( 'missing_fields', 'title and event_date are required.', array( 'status' => 400 ) );
@@ -3177,6 +3178,11 @@ class Culture_REST_API {
         update_post_meta( $post_id, '_culture_is_featured',     '0' );
         update_post_meta( $post_id, '_culture_ai_generated',    $ai_generated ? '1' : '0' );
         update_post_meta( $post_id, '_culture_event_dedup_hash', $dedup_hash );
+
+        // Set featured image if a valid WP media attachment ID was provided.
+        if ( $featured_image_id > 0 && get_post( $featured_image_id ) ) {
+            set_post_thumbnail( $post_id, $featured_image_id );
+        }
 
         if ( ! empty( $submitter_name ) ) {
             update_post_meta( $post_id, '_culture_submitter_name',  $submitter_name );

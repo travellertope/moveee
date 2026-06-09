@@ -70,5 +70,6 @@ export async function POST(req: NextRequest) {
 
   const media = await wpRes.json();
   const url: string = media.source_url ?? media.guid?.rendered ?? "";
-  return NextResponse.json({ url });
+  const id: number  = media.id ?? 0;
+  return NextResponse.json({ url, id });
 }

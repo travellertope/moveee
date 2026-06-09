@@ -18,6 +18,7 @@ export default function EventSubmitPage() {
     admission: "",
     ticketing_url: "",
     image_url: "",
+    image_id: 0,
     category: "",
   });
   const [loading, setLoading] = useState(false);
@@ -45,7 +46,7 @@ export default function EventSubmitPage() {
       const res = await fetch("/api/events/upload-image", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed.");
-      setForm(prev => ({ ...prev, image_url: data.url }));
+      setForm(prev => ({ ...prev, image_url: data.url, image_id: data.id ?? 0 }));
     } catch (err: any) {
       setImageError(err.message || "Image upload failed. Please try again.");
       setImagePreview(null);
@@ -152,7 +153,7 @@ export default function EventSubmitPage() {
                 View Happenings →
               </Link>
               <button
-                onClick={() => { setSuccess(false); setForm({ title: "", event_date: "", start_time: "", end_date: "", end_time: "", location: "", city: "", description: "", admission: "", ticketing_url: "", image_url: "", category: "" }); }}
+                onClick={() => { setSuccess(false); setForm({ title: "", event_date: "", start_time: "", end_date: "", end_time: "", location: "", city: "", description: "", admission: "", ticketing_url: "", image_url: "", image_id: 0, category: "" }); }}
                 style={{
                   background: "transparent", color: "#7a6f5c", border: "1px solid #e0d8ce",
                   borderRadius: "2px", padding: "0.45rem 1rem",
