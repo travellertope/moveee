@@ -17,7 +17,7 @@ const WP_UPLOAD_AUTH = Buffer.from(
  * Returns the stable WP source_url, or null if anything fails.
  * Skips images > 8 MB to avoid timeout in serverless environments.
  */
-async function uploadImageToWP(imageUrl: string): Promise<string | null> {
+async function uploadImageToWP(imageUrl: string): Promise<{ url: string; id: number } | null> {
   if (!process.env.WP_USERNAME || !process.env.WP_APP_PASSWORD) return null;
   try {
     const imgRes = await fetch(imageUrl, {
@@ -54,7 +54,9 @@ async function uploadImageToWP(imageUrl: string): Promise<string | null> {
     if (!upload.ok) return null;
 
     const media = await upload.json();
-    return (media.source_url ?? media.guid?.rendered ?? null) as string | null;
+    const url = (media.source_url ?? media.guid?.rendered ?? null) as string | null;
+    if (!url) return null;
+    return { url, id: Number(media.id ?? 0) };
   } catch {
     return null;
   }
@@ -166,31 +168,38 @@ export async function submitEvent(
   // Upload the external image to WordPress so we own a permanent copy.
   // Falls back to the raw external URL only if the upload fails.
   let imageUrl = "";
+  let featuredImageId = 0;
   if (stub.image_url) {
-    const wpUrl = await uploadImageToWP(stub.image_url);
-    imageUrl = wpUrl ?? stub.image_url;
+    const uploaded = await uploadImageToWP(stub.image_url);
+    if (uploaded) {
+      imageUrl        = uploaded.url;
+      featuredImageId = uploaded.id;
+    } else {
+      imageUrl = stub.image_url; // fall back to external URL
+    }
   }
 
   const res = await fetch(`${WP_URL}/wp-json/culture/v1/events/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
     body: JSON.stringify({
-      title:         stub.title,
-      excerpt:       stub.excerpt,
-      content:       stub.content,
-      event_date:    stub.event_date,
-      end_date:      stub.end_date,
-      location:      stub.location,
-      city:          stub.city,
-      admission:     stub.admission,
-      ticketing_url: isDeepEventUrl(stub.ticketing_url) ? stub.ticketing_url : "",
-      tagline:       stub.tagline,
-      attribution:   stub.attribution,
-      source_url:    stub.attribution,
-      image_url:     imageUrl,
-      interests:     stub.interests,
-      ai_generated:  true,
-      auto_publish:  true,
+      title:             stub.title,
+      excerpt:           stub.excerpt,
+      content:           stub.content,
+      event_date:        stub.event_date,
+      end_date:          stub.end_date,
+      location:          stub.location,
+      city:              stub.city,
+      admission:         stub.admission,
+      ticketing_url:     isDeepEventUrl(stub.ticketing_url) ? stub.ticketing_url : "",
+      tagline:           stub.tagline,
+      attribution:       stub.attribution,
+      source_url:        stub.attribution,
+      image_url:         imageUrl,
+      featured_image_id: featuredImageId,
+      interests:         stub.interests,
+      ai_generated:      true,
+      auto_publish:      true,
     }),
     cache: "no-store",
   });

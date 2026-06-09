@@ -80,6 +80,28 @@ class Culture_Post_Types {
             'schema' => null,
         ) );
 
+        // Expose all core event meta as a single REST field so the Next.js
+        // frontend can reliably read these fields even when GraphQL returns nulls.
+        register_rest_field( 'culture_event', 'culture_event_meta', array(
+            'get_callback' => function ( $post_arr ) {
+                $id = $post_arr['id'];
+                return array(
+                    'event_date'    => get_post_meta( $id, '_culture_event_date',    true ),
+                    'end_date'      => get_post_meta( $id, '_culture_event_end_date', true ),
+                    'location'      => get_post_meta( $id, '_culture_location',      true ),
+                    'city'          => get_post_meta( $id, '_culture_event_city',    true ),
+                    'admission'     => get_post_meta( $id, '_culture_admission',     true ),
+                    'ticketing_url' => get_post_meta( $id, '_culture_ticketing_url', true ),
+                    'image_url'     => get_post_meta( $id, '_culture_event_image_url', true ),
+                    'opening_hours' => get_post_meta( $id, '_culture_opening_hours', true ),
+                    'tagline'       => get_post_meta( $id, '_culture_tagline',       true ),
+                    'attribution'   => get_post_meta( $id, '_culture_attribution',   true ),
+                    'ai_generated'  => get_post_meta( $id, '_culture_ai_generated',  true ),
+                );
+            },
+            'schema' => null,
+        ) );
+
         // community post meta (Phase 3 + Phase 4)
         $community_post_meta = array(
             '_template_type'       => 'string',

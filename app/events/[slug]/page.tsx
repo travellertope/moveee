@@ -23,6 +23,7 @@ const CITY_SLUGS: Record<string, { name: string; country: string }> = {
 };
 
 const CATEGORY_SLUGS: Record<string, { name: string; icon: string; desc: string }> = {
+  // Short legacy slugs (used in some existing posts + form fallback)
   "music":       { name: "Music",       icon: "♪", desc: "Concerts, listening sessions & releases" },
   "film":        { name: "Film",        icon: "◉", desc: "Screenings, premieres & cinema" },
   "visual-arts": { name: "Visual Arts", icon: "◈", desc: "Exhibitions, galleries & installations" },
@@ -33,6 +34,24 @@ const CATEGORY_SLUGS: Record<string, { name: string; icon: string; desc: string 
   "performance": { name: "Performance", icon: "★", desc: "Theatre, dance & live arts" },
   "community":   { name: "Community",   icon: "◇", desc: "Gatherings, panels & cultural events" },
   "tech":        { name: "Tech",        icon: "○", desc: "Innovation, startups & digital culture" },
+  // Canonical culture_interest taxonomy slugs
+  "live-music":          { name: "Live Music",          icon: "♪", desc: "Concerts, gigs & live sessions" },
+  "music-production":    { name: "Music Production",    icon: "♪", desc: "Studio, beatmaking & sound" },
+  "independent-film":    { name: "Independent Film",    icon: "◉", desc: "Screenings, premieres & cinema" },
+  "visual-art":          { name: "Visual Art",          icon: "◈", desc: "Exhibitions, galleries & installations" },
+  "architecture":        { name: "Architecture",        icon: "◈", desc: "Built environment & spatial design" },
+  "photography":         { name: "Photography",         icon: "◈", desc: "Shows, zines & photography" },
+  "fashion-streetwear":  { name: "Fashion",             icon: "✦", desc: "Shows, presentations & pop-ups" },
+  "food-drink":          { name: "Food & Drink",        icon: "◆", desc: "Supper clubs, markets & tastings" },
+  "street-food":         { name: "Street Food",         icon: "◆", desc: "Street food & market events" },
+  "nightlife":           { name: "Nightlife",           icon: "★", desc: "Clubs, bars & after-dark events" },
+  "visual-design":       { name: "Design",              icon: "◻", desc: "Craft, visual & creative direction" },
+  "tech-culture":        { name: "Tech & Culture",      icon: "○", desc: "Innovation, startups & digital culture" },
+  "sport-wellness":      { name: "Sport & Wellness",    icon: "●", desc: "Fitness, sports & wellness" },
+  "travel":              { name: "Travel",              icon: "→", desc: "Exploration, diaspora & journeys" },
+  "ideas":               { name: "Ideas & Culture",     icon: "◇", desc: "Panels, talks & cultural theory" },
+  "event-performance":   { name: "Performance",         icon: "★", desc: "Theatre, dance & live arts" },
+  "event-community":     { name: "Community",           icon: "◇", desc: "Gatherings, panels & community events" },
 };
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
