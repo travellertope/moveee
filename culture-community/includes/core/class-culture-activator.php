@@ -253,6 +253,9 @@ class Culture_Activator {
             'sport-wellness'     => 'Sport & Wellness',
             'travel'             => 'Travel & Exploration',
             'ideas'              => 'Ideas & Culture Theory',
+            // Event-specific categories used by the member submission form.
+            'event-performance'  => 'Performance',
+            'event-community'    => 'Community',
         );
 
         foreach ( $terms as $slug => $name ) {

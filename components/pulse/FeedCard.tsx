@@ -916,7 +916,7 @@ export default function FeedCard({
           )}
           {eventDateStr && (
             <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.03em" }}>
-              {eventDateStr}{endDateStr ? ` — ${endDateStr}` : ""}
+              {eventDateStr}{endDateStr ? ` — ${endDateStr}` : ""}{item.openingHours ? ` · ${item.openingHours}` : ""}
             </span>
           )}
           {item.location && (

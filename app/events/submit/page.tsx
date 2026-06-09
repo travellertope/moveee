@@ -9,7 +9,9 @@ export default function EventSubmitPage() {
   const [form, setForm] = useState({
     title: "",
     event_date: "",
+    start_time: "",
     end_date: "",
+    end_time: "",
     location: "",
     city: "",
     description: "",
@@ -150,7 +152,7 @@ export default function EventSubmitPage() {
                 View Happenings →
               </Link>
               <button
-                onClick={() => { setSuccess(false); setForm({ title: "", event_date: "", end_date: "", location: "", city: "", description: "", admission: "", ticketing_url: "", image_url: "", category: "" }); }}
+                onClick={() => { setSuccess(false); setForm({ title: "", event_date: "", start_time: "", end_date: "", end_time: "", location: "", city: "", description: "", admission: "", ticketing_url: "", image_url: "", category: "" }); }}
                 style={{
                   background: "transparent", color: "#7a6f5c", border: "1px solid #e0d8ce",
                   borderRadius: "2px", padding: "0.45rem 1rem",
@@ -187,6 +189,18 @@ export default function EventSubmitPage() {
                 </div>
               </div>
 
+              {/* Times */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                <div>
+                  <label style={label}>Start Time</label>
+                  <input type="time" value={form.start_time} onChange={set("start_time")} style={input} />
+                </div>
+                <div>
+                  <label style={label}>End Time</label>
+                  <input type="time" value={form.end_time} onChange={set("end_time")} style={input} />
+                </div>
+              </div>
+
               {/* Location */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
                 <div>
@@ -210,16 +224,16 @@ export default function EventSubmitPage() {
                 <label style={label}>Category</label>
                 <select value={form.category} onChange={set("category") as any} style={{ ...input, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a6f5c'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.75rem center", paddingRight: "2rem" }}>
                   <option value="">Select a category…</option>
-                  <option value="music">Music</option>
-                  <option value="film">Film</option>
-                  <option value="visual-arts">Visual Arts</option>
-                  <option value="fashion">Fashion</option>
-                  <option value="food">Food</option>
+                  <option value="live-music">Music</option>
+                  <option value="independent-film">Film</option>
+                  <option value="visual-art">Visual Arts</option>
+                  <option value="fashion-streetwear">Fashion</option>
+                  <option value="food-drink">Food & Drink</option>
                   <option value="literature">Literature</option>
-                  <option value="design">Design</option>
-                  <option value="performance">Performance</option>
-                  <option value="community">Community</option>
-                  <option value="tech">Tech</option>
+                  <option value="visual-design">Design</option>
+                  <option value="event-performance">Performance</option>
+                  <option value="event-community">Community</option>
+                  <option value="tech-culture">Tech</option>
                 </select>
               </div>
 

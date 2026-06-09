@@ -647,6 +647,13 @@ class Culture_REST_API {
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
 
+        // List events whose image is an external URL not hosted on this WP install.
+        register_rest_route( 'culture/v1', '/events/external-images', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_list_events_external_images' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
         // Paragraph comments — GET (public) and POST (auth/shared secret).
         register_rest_route( 'culture/v1', '/comments/paragraph', array(
             array(
@@ -3041,6 +3048,52 @@ class Culture_REST_API {
     }
 
     /**
+     * GET /culture/v1/events/external-images
+     * Return published culture_event posts whose _culture_event_image_url is an
+     * external URL (i.e. does not start with this site's upload directory or home_url).
+     * Query params: per_page (default 50), page (default 1).
+     */
+    public static function handle_list_events_external_images( WP_REST_Request $request ) {
+        $per_page   = min( (int) ( $request->get_param( 'per_page' ) ?: 50 ), 200 );
+        $page       = max( (int) ( $request->get_param( 'page' )     ?: 1  ), 1  );
+        $upload_dir = wp_upload_dir();
+        $base_url   = trailingslashit( $upload_dir['baseurl'] );
+        $home       = trailingslashit( home_url() );
+
+        $args = array(
+            'post_type'      => 'culture_event',
+            'post_status'    => 'publish',
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+            'meta_query'     => array(
+                array(
+                    'key'     => '_culture_event_image_url',
+                    'value'   => '',
+                    'compare' => '!=',
+                ),
+            ),
+        );
+        $query  = new WP_Query( $args );
+        $events = array();
+        foreach ( $query->posts as $post ) {
+            $img = get_post_meta( $post->ID, '_culture_event_image_url', true );
+            // Skip if already hosted on this WP install.
+            if ( strpos( $img, $base_url ) === 0 || strpos( $img, $home ) === 0 ) {
+                continue;
+            }
+            $events[] = array(
+                'id'        => $post->ID,
+                'title'     => $post->post_title,
+                'image_url' => $img,
+            );
+        }
+        return rest_ensure_response( array(
+            'events' => $events,
+            'total'  => count( $events ),
+        ) );
+    }
+
+    /**
      * Creates a culture_event post. Called exclusively by the AI events seeder.
      * Deduplicates by a hash of normalised title + event_date + location.
      */
@@ -3053,9 +3106,10 @@ class Culture_REST_API {
         $location      = sanitize_text_field( $request->get_param( 'location' ) );
         $city          = sanitize_text_field( $request->get_param( 'city' ) );
         $admission     = sanitize_text_field( $request->get_param( 'admission' ) );
-        $ticketing_url = esc_url_raw( $request->get_param( 'ticketing_url' ) );
-        $tagline       = sanitize_text_field( $request->get_param( 'tagline' ) );
-        $attribution   = esc_url_raw( $request->get_param( 'attribution' ) );
+        $ticketing_url  = esc_url_raw( $request->get_param( 'ticketing_url' ) );
+        $tagline        = sanitize_text_field( $request->get_param( 'tagline' ) );
+        $opening_hours  = sanitize_text_field( $request->get_param( 'opening_hours' ) );
+        $attribution    = esc_url_raw( $request->get_param( 'attribution' ) );
         $image_url     = esc_url_raw( $request->get_param( 'image_url' ) );
         $interests        = (array) $request->get_param( 'interests' );
         $auto_publish     = (bool) $request->get_param( 'auto_publish' );
@@ -3117,6 +3171,7 @@ class Culture_REST_API {
         update_post_meta( $post_id, '_culture_admission',       $admission );
         update_post_meta( $post_id, '_culture_ticketing_url',   $ticketing_url );
         update_post_meta( $post_id, '_culture_tagline',         $tagline );
+        update_post_meta( $post_id, '_culture_opening_hours',   $opening_hours );
         update_post_meta( $post_id, '_culture_attribution',     $attribution );
         update_post_meta( $post_id, '_culture_event_image_url', $image_url );
         update_post_meta( $post_id, '_culture_is_featured',     '0' );
