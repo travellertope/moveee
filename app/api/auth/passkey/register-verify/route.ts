@@ -10,10 +10,18 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
   const body = await req.json();
+  // SimpleWebAuthn nests clientDataJSON/attestationObject inside body.response.
+  // PHP's verify_register() expects them at the top level of the 'response' param.
+  const flatResp = {
+    clientDataJSON:    body.response?.clientDataJSON,
+    attestationObject: body.response?.attestationObject,
+    device_name:       body.device_name,
+    transports:        body.transports ?? body.response?.transports ?? [],
+  };
   const res = await fetch(`${WP_URL}/wp-json/culture/v1/passkey/register-verify`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${API_SECRET}` },
-    body: JSON.stringify({ user_id: session.user.id, response: body }),
+    body: JSON.stringify({ user_id: session.user.id, response: flatResp }),
     cache: "no-store",
   });
   const data = await res.json();
