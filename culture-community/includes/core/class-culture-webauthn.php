@@ -355,7 +355,7 @@ class Culture_WebAuthn {
 
             global $wpdb;
             $device_name = sanitize_text_field( $resp['device_name'] ?? 'My Device' );
-            $wpdb->insert(
+            $inserted = $wpdb->insert(
                 $wpdb->prefix . 'culture_passkeys',
                 [
                     'user_id'       => $user_id,
@@ -371,6 +371,9 @@ class Culture_WebAuthn {
                 ],
                 [ '%d', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s' ]
             );
+            if ( $inserted === false ) {
+                return [ 'success' => false, 'error' => 'DB error — passkey table may not exist. Deactivate and reactivate the plugin. (' . $wpdb->last_error . ')' ];
+            }
 
             $count = count( self::get_credentials( $user_id ) );
             update_user_meta( $user_id, '_culture_has_passkey', 1 );
