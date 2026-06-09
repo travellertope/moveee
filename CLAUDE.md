@@ -274,7 +274,7 @@ single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
 
 ## Git branch
 
-Active development branch: `claude/cool-heisenberg-0MOYA`
+Active development branch: `claude/post-errors-dqgchp`
 Always commit and push to this branch.
 
 ---
@@ -332,6 +332,16 @@ templates create `culture_quote` and `culture_event` CPTs respectively.
 
 Per-template credit/reputation amounts in `check_post_threshold()` in
 `class-culture-gamification.php`.
+
+### Directory entry city field
+
+`culture_directory` posts have an `_entry_city` meta field (string, `show_in_rest: true`)
+for disambiguation when similar names exist (e.g. "The Jazz Cafe, London" vs "The Jazz Cafe, Lagos").
+- PHP: registered in `class-culture-post-types.php` → `$directory_meta`; WP Admin meta box in same file
+- Search results include `city` in the JSON response (`class-culture-directory.php` → `handle_search`)
+- Quick-create accepts and saves `city` param (`handle_quick_create`)
+- Next.js: `app/api/directory/quick-create/route.ts` forwards `city` to WordPress
+- React: `DirectorySearch.tsx` shows city below title in results; two-step create UX (enter name → optionally add city → create)
 
 ---
 
