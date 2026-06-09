@@ -932,9 +932,9 @@ export default function FeedCard({
                 {eventDateStr}{endDateStr ? ` — ${endDateStr}` : ""}{item.openingHours ? ` · ${item.openingHours}` : ""}
               </span>
             )}
-            {item.location && (
+            {(item.location || item.city) && (
               <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.04em" }}>
-                · {item.location}
+                · {[item.location, item.city].filter(Boolean).join(", ")}
               </span>
             )}
             <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
