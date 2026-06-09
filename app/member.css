@@ -926,3 +926,22 @@ select.mem-field-input { cursor: pointer; }
   height: 2px;
   background: var(--ink);
 }
+
+.mem-action-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: 3px;
+  font-size: 0.82rem;
+  font-family: "'JetBrains Mono', monospace";
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.mem-action-btn:hover:not(:disabled) { opacity: .85; }
+.mem-action-btn:disabled { opacity: .45; cursor: not-allowed; }

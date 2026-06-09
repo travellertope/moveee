@@ -825,8 +825,9 @@ class Culture_REST_API {
             'callback'            => array( __CLASS__, 'handle_redeem_perk' ),
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             'args'                => array(
-                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
-                'perk_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'user_id'       => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'perk_id'       => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'step_up_token' => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
             ),
         ) );
 
@@ -864,12 +865,13 @@ class Culture_REST_API {
             'callback'            => array( __CLASS__, 'handle_wallet_cashout' ),
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             'args'                => array(
-                'user_id'      => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
-                'credits'      => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
-                'method'       => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
-                'account_name' => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
-                'account_ref'  => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
-                'currency'     => array( 'required' => false, 'type' => 'string',  'default' => 'GBP', 'sanitize_callback' => 'sanitize_text_field' ),
+                'user_id'       => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'credits'       => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'method'        => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+                'account_name'  => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+                'account_ref'   => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+                'currency'      => array( 'required' => false, 'type' => 'string',  'default' => 'GBP', 'sanitize_callback' => 'sanitize_text_field' ),
+                'step_up_token' => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
             ),
         ) );
 
@@ -3455,9 +3457,13 @@ class Culture_REST_API {
     }
 
     public static function handle_redeem_perk( $request ) {
-        $user_id = (int) $request->get_param( 'user_id' );
-        $perk_id = (int) $request->get_param( 'perk_id' );
-        $result  = Culture_Perks::redeem_perk( $user_id, $perk_id );
+        $user_id       = (int) $request->get_param( 'user_id' );
+        $perk_id       = (int) $request->get_param( 'perk_id' );
+        $step_up_token = (string) $request->get_param( 'step_up_token' );
+        if ( ! $step_up_token || ! Culture_WebAuthn::validate_step_up( $user_id, $step_up_token ) ) {
+            return new WP_Error( 'step_up_required', 'Passkey step-up verification required.', array( 'status' => 403 ) );
+        }
+        $result = Culture_Perks::redeem_perk( $user_id, $perk_id );
         if ( is_wp_error( $result ) ) return $result;
         return rest_ensure_response( $result );
     }
@@ -3518,8 +3524,13 @@ class Culture_REST_API {
     }
 
     public static function handle_wallet_cashout( $request ) {
+        $user_id       = (int) $request->get_param( 'user_id' );
+        $step_up_token = (string) $request->get_param( 'step_up_token' );
+        if ( ! $step_up_token || ! Culture_WebAuthn::validate_step_up( $user_id, $step_up_token ) ) {
+            return new WP_Error( 'step_up_required', 'Passkey step-up verification required.', array( 'status' => 403 ) );
+        }
         $result = Culture_Perks::request_cashout(
-            (int) $request->get_param( 'user_id' ),
+            $user_id,
             (int) $request->get_param( 'credits' ),
             $request->get_param( 'method' ),
             $request->get_param( 'account_name' ),
