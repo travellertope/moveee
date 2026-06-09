@@ -33,6 +33,8 @@ export interface FeedItem {
   endDate?: string;
   openingHours?: string;
   location?: string;
+  city?: string;
+  venueAddress?: string;
   admission?: string;
   eventCategory?: string;
   // directory-specific
@@ -263,6 +265,8 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         endDate: event.endDate ?? "",
         openingHours: event.openingHours ?? "",
         location: event.location ?? "",
+        city: event.city ?? "",
+        venueAddress: event.venueAddress ?? "",
         admission: event.admission ?? "",
         eventCategory: event.cultureInterests?.nodes?.[0]?.name ?? "",
       });

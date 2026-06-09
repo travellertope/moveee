@@ -958,11 +958,6 @@ export default function FeedCard({
 
           {/* Body — clicking opens modal */}
           <div onClick={() => setModalOpen(true)} style={{ cursor: "pointer" }}>
-            {item.image && (
-              <div style={{ width: "100%", maxHeight: "220px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8" }}>
-                <img src={item.image} alt={item.title} style={{ width: "100%", height: "220px", objectFit: "cover", display: "block" }} loading="lazy" />
-              </div>
-            )}
             <h3 style={{
               color: "#14110d",
               fontFamily: "var(--font-fraunces), serif",
@@ -976,7 +971,7 @@ export default function FeedCard({
             {displayParas.length > 0 && (
               <div style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6 }}>
                 {displayParas.map((p, i) => (
-                  <p key={i} style={{ margin: i === 0 ? 0 : "0.5em 0 0" }}>{p}</p>
+                  <p key={i} style={{ margin: 0, marginTop: i > 0 ? "0.75em" : 0 }}>{p}</p>
                 ))}
               </div>
             )}
@@ -992,12 +987,13 @@ export default function FeedCard({
             )}
           </div>
 
-          {/* Internal link card */}
+          {/* Internal link card with image thumbnail */}
           <InternalLinkCard
             href={item.href}
             label="Moveee Happenings"
             title={decodeHtml(item.title)}
             description={item.excerpt}
+            image={item.image}
           />
         </article>
         {modalOpen && <HappeningDetailModal item={item} onClose={closeModal} />}

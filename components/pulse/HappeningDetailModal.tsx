@@ -97,10 +97,10 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
 
         {/* Content */}
         <div style={{ padding: "1.25rem", flex: 1 }}>
-          {/* Featured image */}
+          {/* Featured image — preserved aspect ratio */}
           {item.image && (
             <div style={{ marginBottom: "1rem", borderRadius: "6px", overflow: "hidden", border: "1px solid #e8e2d8" }}>
-              <img src={item.image} alt={item.title} style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: "260px" }} loading="lazy" />
+              <img src={item.image} alt={item.title} style={{ width: "100%", maxHeight: "360px", display: "block", objectFit: "contain", background: "#f9f6f1" }} loading="lazy" />
             </div>
           )}
 
@@ -127,13 +127,24 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
                   {endDateStr && endDateStr !== eventDateStr && (
                     <span style={{ color: "#7a6f5c" }}> — {endDateStr}</span>
                   )}
+                  {item.openingHours && (
+                    <span style={{ color: "#7a6f5c" }}> · {item.openingHours}</span>
+                  )}
                 </div>
               </div>
             )}
-            {item.location && (
-              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            {(item.location || item.city) && (
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
                 <span style={{ color: "#3c3489", fontSize: "0.88rem", flexShrink: 0 }}>📍</span>
-                <span style={{ fontSize: "0.85rem", color: "#14110d" }}>{item.location}</span>
+                <div style={{ fontSize: "0.85rem", color: "#14110d", lineHeight: 1.45 }}>
+                  {item.location && <div>{item.location}</div>}
+                  {item.venueAddress && (
+                    <div style={{ color: "#7a6f5c", fontSize: "0.8rem" }}>{item.venueAddress}</div>
+                  )}
+                  {item.city && (
+                    <div style={{ color: "#7a6f5c", fontSize: "0.8rem" }}>{item.city}</div>
+                  )}
+                </div>
               </div>
             )}
             {item.admission && (
@@ -152,7 +163,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
               marginBottom: "1.25rem",
             }}>
               {paragraphs.map((p, i) => (
-                <p key={i} style={{ margin: i === 0 ? 0 : "0.65em 0 0" }}>{p}</p>
+                <p key={i} style={{ margin: 0, marginTop: i > 0 ? "0.85em" : 0 }}>{p}</p>
               ))}
             </div>
           )}
