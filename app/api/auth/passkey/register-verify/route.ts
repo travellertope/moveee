@@ -17,5 +17,9 @@ export async function POST(req: NextRequest) {
     cache: "no-store",
   });
   const data = await res.json();
+  // WP_Error comes back as { code, message, data } — normalise to { error }
+  if (!res.ok && !data.error && data.message) {
+    data.error = data.message;
+  }
   return NextResponse.json(data, { status: res.status });
 }

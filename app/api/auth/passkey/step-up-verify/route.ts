@@ -17,5 +17,6 @@ export async function POST(req: NextRequest) {
     cache: "no-store",
   });
   const data = await res.json();
+  if (!res.ok && !data.error && data.message) data.error = data.message;
   return NextResponse.json(data, { status: res.status });
 }
