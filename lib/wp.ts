@@ -252,7 +252,7 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           signal: patchCtrl.signal,
-          next: { revalidate: options.revalidate !== undefined ? options.revalidate : 0 },
+          next: { revalidate: 60 },
         });
         clearTimeout(patchTimeout);
         if (restRes.ok) {

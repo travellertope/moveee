@@ -6,7 +6,8 @@ import { notFound } from "next/navigation";
 import "@/app/homepage.css";
 import "@/app/magazine.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export const dynamicParams = true;
 
 async function fetchAuthorData(slug: string, first: number) {
   const isNumeric = /^\d+$/.test(slug);
