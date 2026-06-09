@@ -3053,9 +3053,10 @@ class Culture_REST_API {
         $location      = sanitize_text_field( $request->get_param( 'location' ) );
         $city          = sanitize_text_field( $request->get_param( 'city' ) );
         $admission     = sanitize_text_field( $request->get_param( 'admission' ) );
-        $ticketing_url = esc_url_raw( $request->get_param( 'ticketing_url' ) );
-        $tagline       = sanitize_text_field( $request->get_param( 'tagline' ) );
-        $attribution   = esc_url_raw( $request->get_param( 'attribution' ) );
+        $ticketing_url  = esc_url_raw( $request->get_param( 'ticketing_url' ) );
+        $tagline        = sanitize_text_field( $request->get_param( 'tagline' ) );
+        $opening_hours  = sanitize_text_field( $request->get_param( 'opening_hours' ) );
+        $attribution    = esc_url_raw( $request->get_param( 'attribution' ) );
         $image_url     = esc_url_raw( $request->get_param( 'image_url' ) );
         $interests        = (array) $request->get_param( 'interests' );
         $auto_publish     = (bool) $request->get_param( 'auto_publish' );
@@ -3117,6 +3118,7 @@ class Culture_REST_API {
         update_post_meta( $post_id, '_culture_admission',       $admission );
         update_post_meta( $post_id, '_culture_ticketing_url',   $ticketing_url );
         update_post_meta( $post_id, '_culture_tagline',         $tagline );
+        update_post_meta( $post_id, '_culture_opening_hours',   $opening_hours );
         update_post_meta( $post_id, '_culture_attribution',     $attribution );
         update_post_meta( $post_id, '_culture_event_image_url', $image_url );
         update_post_meta( $post_id, '_culture_is_featured',     '0' );

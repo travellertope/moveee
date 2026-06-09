@@ -44,6 +44,7 @@ class Culture_Post_Types {
             '_culture_tagline'           => array( 'type' => 'string' ),
             '_culture_is_featured'       => array( 'type' => 'string' ),
             '_culture_event_image_url'   => array( 'type' => 'string' ),
+            '_culture_opening_hours'     => array( 'type' => 'string' ),
         );
         // Expose AIOSEO meta on standard posts so REST-based fetches can read them
         foreach ( array( '_aioseo_title', '_aioseo_description' ) as $aioseo_key ) {
@@ -63,6 +64,21 @@ class Culture_Post_Types {
                 'auth_callback' => '__return_true',
             ) );
         }
+
+        // Expose culture_interest taxonomy terms as objects on the culture_event REST response
+        // so the Next.js REST fallback mapper can read category name/slug directly.
+        register_rest_field( 'culture_event', 'culture_interests', array(
+            'get_callback' => function ( $post_arr ) {
+                $terms = get_the_terms( $post_arr['id'], 'culture_interest' );
+                if ( ! $terms || is_wp_error( $terms ) ) {
+                    return array();
+                }
+                return array_map( function ( $t ) {
+                    return array( 'id' => $t->term_id, 'name' => $t->name, 'slug' => $t->slug );
+                }, array_values( $terms ) );
+            },
+            'schema' => null,
+        ) );
 
         // community post meta (Phase 3 + Phase 4)
         $community_post_meta = array(

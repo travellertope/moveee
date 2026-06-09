@@ -31,6 +31,7 @@ export interface FeedItem {
   // happening-specific
   eventDate?: string;
   endDate?: string;
+  openingHours?: string;
   location?: string;
   admission?: string;
   eventCategory?: string;
@@ -260,6 +261,7 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         href: `/events/${event.slug}`,
         eventDate: event.eventDate ?? "",
         endDate: event.endDate ?? "",
+        openingHours: event.openingHours ?? "",
         location: event.location ?? "",
         admission: event.admission ?? "",
         eventCategory: event.cultureInterests?.nodes?.[0]?.name ?? "",

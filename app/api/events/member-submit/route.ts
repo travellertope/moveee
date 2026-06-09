@@ -39,6 +39,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Event date must be in the future." }, { status: 400 });
   }
 
+  // Format start/end time into a human-readable opening_hours string.
+  const fmt12 = (t: string) => {
+    if (!t) return "";
+    const [h, m] = t.split(":");
+    const hour = parseInt(h, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const h12 = hour % 12 || 12;
+    return `${h12}:${m} ${ampm}`;
+  };
+  const startFmt = fmt12(body.start_time ?? "");
+  const endFmt   = fmt12(body.end_time ?? "");
+  const openingHours = startFmt
+    ? endFmt ? `${startFmt} – ${endFmt}` : startFmt
+    : "";
+
   // Forward to WordPress with server-side API key.
   const wpRes = await fetch(`${WP_URL}/wp-json/culture/v1/events/submit`, {
     method: "POST",
@@ -57,10 +72,11 @@ export async function POST(req: NextRequest) {
       admission:      body.admission?.trim() ?? "",
       ticketing_url:  body.ticketing_url?.trim() ?? "",
       image_url:      body.image_url?.trim() ?? "",
+      opening_hours:  openingHours,
       tagline:        "",
       attribution:    "",
       interests:      body.category ? [body.category] : (Array.isArray(body.interests) ? body.interests : []),
-      ai_generated:   true,
+      ai_generated:   false,
       auto_publish:   true,
       submitter_name:  session.user.name ?? "",
       submitter_email: session.user.email ?? "",
