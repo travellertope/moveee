@@ -34,6 +34,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
 
   const rawText = item.excerpt ?? "";
   const paragraphs = rawText.split(/\n\n+/).map(p => p.replace(/\n/g, " ").trim()).filter(Boolean);
+  const htmlBody = item.body && item.body.trim() !== "" ? item.body : null;
 
   return (
     <div
@@ -156,7 +157,20 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
           </div>
 
           {/* Description */}
-          {paragraphs.length > 0 && (
+          {htmlBody ? (
+            <>
+              <style>{`.happening-body p { margin: 0 0 0.9em; } .happening-body p:last-child { margin-bottom: 0; } .happening-body a { color: #3c3489; }`}</style>
+              <div
+                className="happening-body"
+                style={{
+                  fontFamily: "var(--font-fraunces), serif",
+                  fontSize: "0.95rem", lineHeight: 1.7, color: "#3a342b",
+                  marginBottom: "1.25rem",
+                }}
+                dangerouslySetInnerHTML={{ __html: htmlBody }}
+              />
+            </>
+          ) : paragraphs.length > 0 ? (
             <div style={{
               fontFamily: "var(--font-fraunces), serif",
               fontSize: "0.95rem", lineHeight: 1.7, color: "#3a342b",
@@ -166,7 +180,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
                 <p key={i} style={{ margin: 0, marginTop: i > 0 ? "0.85em" : 0 }}>{p}</p>
               ))}
             </div>
-          )}
+          ) : null}
 
           {/* CTA */}
           <Link

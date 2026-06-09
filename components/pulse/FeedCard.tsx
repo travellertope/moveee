@@ -903,26 +903,10 @@ export default function FeedCard({
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const closeModal = useCallback(() => setModalOpen(false), []);
 
-    const CLAMP_CHARS = 280;
-    const rawText = item.excerpt ?? "";
-    const paragraphs = rawText.split(/\n\n+/).map(p => p.replace(/\n/g, " ").trim()).filter(Boolean);
-    const fullText = paragraphs.join("\n\n");
-    const isLong = fullText.length > CLAMP_CHARS;
-    let displayParas: string[] = [];
-    if (!isLong) {
-      displayParas = paragraphs;
-    } else {
-      let count = 0;
-      for (const p of paragraphs) {
-        if (count + p.length > CLAMP_CHARS) {
-          const remaining = CLAMP_CHARS - count;
-          if (remaining > 40) displayParas.push(p.slice(0, remaining) + "…");
-          break;
-        }
-        displayParas.push(p);
-        count += p.length;
-      }
-    }
+    const CLAMP_LINES = 5;
+    const hasHtmlBody = !!item.body;
+    const plainText = hasHtmlBody ? item.body!.replace(/<[^>]+>/g, "") : (item.excerpt ?? "");
+    const isLong = plainText.length > 280;
     const typeMeta = TYPE_BADGE.happening;
 
     const eventDateStr = item.eventDate
@@ -968,13 +952,25 @@ export default function FeedCard({
             }}>
               {decodeHtml(item.title)}
             </h3>
-            {displayParas.length > 0 && (
-              <div style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6 }}>
-                {displayParas.map((p, i) => (
-                  <p key={i} style={{ margin: 0, marginTop: i > 0 ? "0.75em" : 0 }}>{p}</p>
-                ))}
-              </div>
-            )}
+            {hasHtmlBody ? (
+              <div
+                className="happening-body"
+                dangerouslySetInnerHTML={{ __html: item.body! }}
+                style={{
+                  color: "#3a342b",
+                  fontSize: "0.88rem",
+                  lineHeight: 1.6,
+                  overflow: "hidden",
+                  display: "-webkit-box",
+                  WebkitBoxOrient: "vertical",
+                  WebkitLineClamp: CLAMP_LINES,
+                }}
+              />
+            ) : plainText ? (
+              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+                {decodeHtml(plainText)}
+              </p>
+            ) : null}
             {isLong && (
               <span style={{ color: "#3c3489", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
                 Read more →
@@ -997,6 +993,7 @@ export default function FeedCard({
           />
         </article>
         {modalOpen && <HappeningDetailModal item={item} onClose={closeModal} />}
+        <style>{`.happening-body p { margin: 0 0 0.6em; } .happening-body p:last-child { margin-bottom: 0; }`}</style>
       </>
     );
   }
