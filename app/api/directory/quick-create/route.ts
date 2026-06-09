@@ -14,12 +14,13 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const { title, entry_type, location_name, location_lat, location_lng } = body as {
+  const { title, entry_type, location_name, location_lat, location_lng, city } = body as {
     title?: string;
     entry_type?: string;
     location_name?: string;
     location_lat?: number;
     location_lng?: number;
+    city?: string;
   };
 
   if (!title?.trim()) {
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
       location_name,
       location_lat,
       location_lng,
+      city,
     }),
   });
 

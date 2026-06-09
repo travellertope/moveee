@@ -141,6 +141,152 @@ class Culture_Gamification {
             'trigger'     => 'magazine_share_count',
             'threshold'   => 10,
         ),
+        // ── Community contribution badges ────────────────────────────────
+        'first_post' => array(
+            'name'        => 'First Post',
+            'description' => 'Made your first community post.',
+            'icon'        => 'dashicons-edit',
+            'trigger'     => 'community_post_count',
+            'threshold'   => 1,
+        ),
+        'prolific_poster' => array(
+            'name'        => 'Prolific Poster',
+            'description' => 'Created 10 community posts.',
+            'icon'        => 'dashicons-edit-large',
+            'trigger'     => 'community_post_count',
+            'threshold'   => 10,
+        ),
+        'century_scribe' => array(
+            'name'        => 'Century Scribe',
+            'description' => 'Created 50 community posts.',
+            'icon'        => 'dashicons-superhero-alt',
+            'trigger'     => 'community_post_count',
+            'threshold'   => 50,
+        ),
+        'conversationalist' => array(
+            'name'        => 'Conversationalist',
+            'description' => 'Left 25 comments in the community.',
+            'icon'        => 'dashicons-format-chat',
+            'trigger'     => 'community_comment_count',
+            'threshold'   => 25,
+        ),
+        // ── Template specialist badges ────────────────────────────────────
+        'food_critic' => array(
+            'name'        => 'Food Critic',
+            'description' => 'Posted 10 food reviews.',
+            'icon'        => 'dashicons-carrot',
+            'trigger'     => 'food_review_count',
+            'threshold'   => 10,
+        ),
+        'culture_guide' => array(
+            'name'        => 'Culture Guide',
+            'description' => 'Posted 5 cultural takes.',
+            'icon'        => 'dashicons-lightbulb',
+            'trigger'     => 'cultural_take_count',
+            'threshold'   => 5,
+        ),
+        'itinerary_master' => array(
+            'name'        => 'Itinerary Master',
+            'description' => 'Created 3 travel itineraries.',
+            'icon'        => 'dashicons-location-alt',
+            'trigger'     => 'itinerary_count',
+            'threshold'   => 3,
+        ),
+        'poll_champion' => array(
+            'name'        => 'Poll Champion',
+            'description' => 'Created 5 community polls.',
+            'icon'        => 'dashicons-chart-bar',
+            'trigger'     => 'poll_count',
+            'threshold'   => 5,
+        ),
+        'gem_hunter' => array(
+            'name'        => 'Gem Hunter',
+            'description' => 'Shared 5 hidden gems.',
+            'icon'        => 'dashicons-star-filled',
+            'trigger'     => 'hidden_gem_count',
+            'threshold'   => 5,
+        ),
+        // ── Social & referral badges ──────────────────────────────────────
+        'connector' => array(
+            'name'        => 'Connector',
+            'description' => 'Successfully referred 3 new members.',
+            'icon'        => 'dashicons-groups',
+            'trigger'     => 'referral_count',
+            'threshold'   => 3,
+        ),
+        'super_connector' => array(
+            'name'        => 'Super Connector',
+            'description' => 'Successfully referred 10 new members.',
+            'icon'        => 'dashicons-networking',
+            'trigger'     => 'referral_count',
+            'threshold'   => 10,
+        ),
+        // ── Profile & onboarding badges ───────────────────────────────────
+        'profile_complete' => array(
+            'name'        => 'Profile Complete',
+            'description' => 'Completed your Moveee Connect profile.',
+            'icon'        => 'dashicons-id',
+            'trigger'     => 'profile_completed',
+            'threshold'   => 1,
+        ),
+        'directory_member' => array(
+            'name'        => 'In the Directory',
+            'description' => 'Opted into the Moveee Connect member directory.',
+            'icon'        => 'dashicons-businessperson',
+            'trigger'     => 'directory_opted_in',
+            'threshold'   => 1,
+        ),
+        'newsletter_subscriber' => array(
+            'name'        => 'Newsletter Subscriber',
+            'description' => 'Subscribed to a Moveee newsletter.',
+            'icon'        => 'dashicons-email-alt',
+            'trigger'     => 'newsletter_subscribed',
+            'threshold'   => 1,
+        ),
+        // ── Loyalty & tenure badges ───────────────────────────────────────
+        'monthly_member' => array(
+            'name'        => 'Monthly Member',
+            'description' => 'Been a Moveee Connect member for 30 days.',
+            'icon'        => 'dashicons-calendar-alt',
+            'trigger'     => 'account_age_days',
+            'threshold'   => 30,
+        ),
+        'veteran' => array(
+            'name'        => 'Veteran',
+            'description' => 'Been a Moveee Connect member for 180 days.',
+            'icon'        => 'dashicons-awards',
+            'trigger'     => 'account_age_days',
+            'threshold'   => 180,
+        ),
+        'annual_advocate' => array(
+            'name'        => 'Annual Advocate',
+            'description' => 'Been a Moveee Connect member for a full year.',
+            'icon'        => 'dashicons-star-half',
+            'trigger'     => 'account_age_days',
+            'threshold'   => 365,
+        ),
+        // ── Reputation milestone badges ───────────────────────────────────
+        'rising_star' => array(
+            'name'        => 'Rising Star',
+            'description' => 'Earned 250 reputation.',
+            'icon'        => 'dashicons-star-empty',
+            'trigger'     => 'points',
+            'threshold'   => 250,
+        ),
+        'taste_maker_badge' => array(
+            'name'        => 'Taste Maker',
+            'description' => 'Earned 500 reputation.',
+            'icon'        => 'dashicons-star-filled',
+            'trigger'     => 'points',
+            'threshold'   => 500,
+        ),
+        'culture_authority_badge' => array(
+            'name'        => 'Culture Authority',
+            'description' => 'Earned 1500 reputation.',
+            'icon'        => 'dashicons-superhero',
+            'trigger'     => 'points',
+            'threshold'   => 1500,
+        ),
     );
 
     /**
@@ -148,19 +294,26 @@ class Culture_Gamification {
      * — reputation is permanent and never spent.
      */
     const POINTS = array(
-        'event_rsvp'          => 5,
-        'event_checkin'       => 15,
-        'newsletter_comment'  => 10,
-        'newsletter_reaction' => 2,
-        'referral'            => 25,
-        'quote_submission'    => 10,
-        'quote_like'          => 1,
-        'magazine_read'       => 5,
-        'magazine_share'      => 5,
-        'community_comment'   => 5,
-        'community_like'      => 2,
-        'directory_entry'     => 15,
-        'game_completed'      => 5,
+        'event_rsvp'             => 5,
+        'event_checkin'          => 15,
+        'newsletter_comment'     => 10,
+        'newsletter_reaction'    => 2,
+        'referral'               => 25,
+        'quote_submission'       => 10,
+        'quote_like'             => 1,
+        'magazine_read'          => 5,
+        'magazine_share'         => 5,
+        'community_comment'      => 5,
+        'community_like'         => 2,
+        'directory_entry'        => 15,
+        'game_completed'         => 5,
+        // New actions (Phase 5+)
+        'community_post'         => 5,   // initial post submission
+        'profile_completed'      => 10,  // all KYC fields filled
+        'email_verified'         => 5,   // email verification step
+        'directory_opt_in'       => 5,   // opted into member directory
+        'newsletter_subscribed'  => 3,   // first newsletter subscription
+        'poll_vote'              => 2,   // voting on a community poll
     );
 
     /**
@@ -168,15 +321,21 @@ class Culture_Gamification {
      * Post credits are earned only via validation threshold (see check_post_threshold).
      */
     const CREDIT_BONUSES = array(
-        'event_rsvp'         => 1,
-        'event_checkin'      => 2,
-        'referral'           => 3,
-        'newsletter_comment' => 1,
-        'quote_submission'   => 1,
-        'magazine_read'      => 1,
-        'magazine_share'     => 1,
-        'directory_entry'    => 2,
-        'game_completed'     => 1,
+        'event_rsvp'            => 1,
+        'event_checkin'         => 2,
+        'referral'              => 3,
+        'newsletter_comment'    => 1,
+        'quote_submission'      => 1,
+        'magazine_read'         => 1,
+        'magazine_share'        => 1,
+        'directory_entry'       => 2,
+        'game_completed'        => 1,
+        // New actions
+        'community_post'        => 2,
+        'profile_completed'     => 5,
+        'email_verified'        => 2,
+        'directory_opt_in'      => 2,
+        'newsletter_subscribed' => 1,
     );
 
     const DAILY_CREDIT_CAP = 50;
@@ -386,6 +545,7 @@ class Culture_Gamification {
 
         self::award_credits( $author_id, $amounts['credits'], 'post_validated', $post_id );
         self::award_reputation( $author_id, $amounts['reputation'], 'post_validated', $post_id );
+        do_action( 'culture_post_validated', $post_id, $author_id );
     }
 
     // ── Ledger ────────────────────────────────────────────────────────────────
@@ -588,6 +748,103 @@ class Culture_Gamification {
 
             case 'magazine_share_count':
                 return (int) get_user_meta( $user_id, '_magazine_share_count', true );
+
+            // Community post counts — queries culture_post by community_author_id meta
+            case 'community_post_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} pm
+                     INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+                     WHERE pm.meta_key = 'community_author_id' AND pm.meta_value = %d
+                       AND p.post_type = 'culture_post' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            case 'community_comment_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->comments} c
+                     INNER JOIN {$wpdb->posts} p ON c.comment_post_ID = p.ID
+                     WHERE c.user_id = %d AND p.post_type = 'culture_post' AND c.comment_approved = '1'",
+                    $user_id
+                ) );
+
+            // Template-specific community post counts
+            case 'food_review_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} pm1
+                     INNER JOIN {$wpdb->postmeta} pm2 ON pm1.post_id = pm2.post_id
+                     INNER JOIN {$wpdb->posts} p ON pm1.post_id = p.ID
+                     WHERE pm1.meta_key = 'community_author_id' AND pm1.meta_value = %d
+                       AND pm2.meta_key = '_template_type' AND pm2.meta_value = 'food-review'
+                       AND p.post_type = 'culture_post' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            case 'cultural_take_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} pm1
+                     INNER JOIN {$wpdb->postmeta} pm2 ON pm1.post_id = pm2.post_id
+                     INNER JOIN {$wpdb->posts} p ON pm1.post_id = p.ID
+                     WHERE pm1.meta_key = 'community_author_id' AND pm1.meta_value = %d
+                       AND pm2.meta_key = '_template_type' AND pm2.meta_value = 'cultural-take'
+                       AND p.post_type = 'culture_post' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            case 'itinerary_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} pm1
+                     INNER JOIN {$wpdb->postmeta} pm2 ON pm1.post_id = pm2.post_id
+                     INNER JOIN {$wpdb->posts} p ON pm1.post_id = p.ID
+                     WHERE pm1.meta_key = 'community_author_id' AND pm1.meta_value = %d
+                       AND pm2.meta_key = '_template_type' AND pm2.meta_value = 'itinerary'
+                       AND p.post_type = 'culture_post' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            case 'poll_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} pm1
+                     INNER JOIN {$wpdb->postmeta} pm2 ON pm1.post_id = pm2.post_id
+                     INNER JOIN {$wpdb->posts} p ON pm1.post_id = p.ID
+                     WHERE pm1.meta_key = 'community_author_id' AND pm1.meta_value = %d
+                       AND pm2.meta_key = '_template_type' AND pm2.meta_value = 'poll'
+                       AND p.post_type = 'culture_post' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            case 'hidden_gem_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} pm1
+                     INNER JOIN {$wpdb->postmeta} pm2 ON pm1.post_id = pm2.post_id
+                     INNER JOIN {$wpdb->posts} p ON pm1.post_id = p.ID
+                     WHERE pm1.meta_key = 'community_author_id' AND pm1.meta_value = %d
+                       AND pm2.meta_key = '_template_type' AND pm2.meta_value = 'hidden-gem'
+                       AND p.post_type = 'culture_post' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            // Referral count
+            case 'referral_count':
+                return class_exists( 'Culture_Referrals' )
+                    ? (int) Culture_Referrals::get_referral_count( $user_id )
+                    : 0;
+
+            // One-time flags stored as user meta (0 or 1)
+            case 'profile_completed':
+                return (int) get_user_meta( $user_id, '_culture_profile_completed', true );
+
+            case 'directory_opted_in':
+                return (int) get_user_meta( $user_id, '_culture_directory_opt_in', true );
+
+            case 'newsletter_subscribed':
+                return (int) get_user_meta( $user_id, '_culture_newsletter_subscribed_badge', true );
+
+            // Account age in full days since registration
+            case 'account_age_days':
+                $user = get_userdata( $user_id );
+                if ( ! $user ) return 0;
+                $registered = strtotime( $user->user_registered );
+                return (int) floor( ( time() - $registered ) / DAY_IN_SECONDS );
 
             default:
                 return 0;

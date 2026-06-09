@@ -26,7 +26,7 @@ function setStored(data: Record<string, ReactionKey | null>) {
 
 interface ReactionBarProps {
   itemId:       string;
-  itemType:     "community" | "pulse";
+  itemType:     "community" | "pulse" | "quote";
   initialCounts: { love: number; fire: number; clap: number };
   shareUrl?:    string;
   noBorder?:    boolean;

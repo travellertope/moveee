@@ -209,9 +209,17 @@ export async function getPulseStories({
   if (region)   url += `&pulse_region=${encodeURIComponent(region)}`;
   if (category) url += `&pulse_category=${encodeURIComponent(category)}`;
 
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) return [];
-  return res.json();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    clearTimeout(timer);
+    return [];
+  }
 }
 
 /** Fetch a single story by its slug. */

@@ -5,6 +5,8 @@ import Link from "next/link";
 import MemberReferralCopy from "@/components/MemberReferralCopy";
 import MemberDashboard from "@/components/MemberDashboard";
 import MemberBadges from "@/components/MemberBadges";
+import PasskeyBanner from "@/components/PasskeyBanner";
+import MemberNavSelect from "@/components/MemberNavSelect";
 import "../member.css";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +56,7 @@ export default async function MemberPage() {
       </div>
 
       <div className="mem-body">
+        {!user.hasPasskey && <PasskeyBanner creditsEscrowed={user.creditsEscrowed ?? 0} />}
         {/* ── STATS (live data) ── */}
         <MemberDashboard
           initialPoints={user.points ?? 0}
@@ -147,35 +150,21 @@ export default async function MemberPage() {
             )}
 
             {/* Quick links */}
-            <section className="mem-card mem-links-card">
-              <Link href="/member/collection" className="mem-link">
-                My Collection →
-              </Link>
-              <Link href="/member/settings" className="mem-link">
-                Account Settings →
-              </Link>
-              <Link href="/newsletter" className="mem-link">
-                Newsletters →
-              </Link>
-              <Link href="/events" className="mem-link">
-                Upcoming Events →
-              </Link>
-              <Link href="/magazine" className="mem-link">
-                Magazine →
-              </Link>
-              <Link href="/directory" className="mem-link">
-                Culture Directory →
-              </Link>
-              <Link href="/quotes" className="mem-link">
-                Quotes Archive →
-              </Link>
-              <Link
-                href="/api/auth/signout"
-                className="mem-link mem-link--muted"
-              >
-                Sign out
-              </Link>
-            </section>
+            <MemberNavSelect items={[
+              { label: "My Wallet",        href: "/member/wallet" },
+              { label: "My Coupons",       href: "/member/coupons" },
+              { label: "Notifications",    href: "/member/notifications" },
+              { label: "My Analytics",     href: "/member/analytics" },
+              { label: "Browse Perks",     href: "/connect/perks" },
+              { label: "My Collection",    href: "/member/collection" },
+              { label: "Account Settings", href: "/member/settings" },
+              { label: "Newsletters",      href: "/newsletter" },
+              { label: "Upcoming Events",  href: "/events" },
+              { label: "Magazine",         href: "/magazine" },
+              { label: "Culture Directory",href: "/directory" },
+              { label: "Quotes Archive",   href: "/quotes" },
+              { label: "Sign out",         href: "/api/auth/signout", muted: true },
+            ]} />
           </div>
         </div>
       </div>

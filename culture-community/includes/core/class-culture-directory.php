@@ -497,12 +497,22 @@ class Culture_Directory {
         $q    = sanitize_text_field( $request->get_param( 'q' ) );
         $type = sanitize_key( $request->get_param( 'type' ) );
 
+        // Search title only — WP's 's' parameter also searches content which
+        // returns unrelated entries when there's no exact title match.
+        $title_filter = function( $where ) use ( $q ) {
+            global $wpdb;
+            $like   = '%' . $wpdb->esc_like( $q ) . '%';
+            $where .= $wpdb->prepare( " AND {$wpdb->posts}.post_title LIKE %s", $like );
+            return $where;
+        };
+        add_filter( 'posts_where', $title_filter );
+
         $args = array(
             'post_type'      => 'culture_directory',
             'post_status'    => 'publish',
             'posts_per_page' => 10,
-            's'              => $q,
-            'orderby'        => 'relevance',
+            'orderby'        => 'title',
+            'order'          => 'ASC',
         );
 
         if ( $type ) {
@@ -513,7 +523,8 @@ class Culture_Directory {
             ) );
         }
 
-        $query   = new WP_Query( $args );
+        $query = new WP_Query( $args );
+        remove_filter( 'posts_where', $title_filter );
         $results = array();
 
         foreach ( $query->posts as $post ) {
@@ -527,6 +538,7 @@ class Culture_Directory {
                 'slug'      => $post->post_name,
                 'type'      => $type_slug,
                 'thumbnail' => $thumb ?: null,
+                'city'      => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
             );
         }
 
@@ -548,6 +560,7 @@ class Culture_Directory {
         $location_name = sanitize_text_field( $request->get_param( 'location_name' ) );
         $lat          = (float) $request->get_param( 'location_lat' );
         $lng          = (float) $request->get_param( 'location_lng' );
+        $city         = sanitize_text_field( $request->get_param( 'city' ) );
 
         if ( empty( $title ) ) {
             return new WP_Error( 'missing_title', __( 'Title is required.', 'culture-community' ), array( 'status' => 400 ) );
@@ -575,6 +588,9 @@ class Culture_Directory {
         }
         if ( $lat ) update_post_meta( $post_id, 'dir_infobox_lat', $lat );
         if ( $lng ) update_post_meta( $post_id, 'dir_infobox_lng', $lng );
+        if ( $city ) {
+            update_post_meta( $post_id, '_entry_city', $city );
+        }
 
         // Award reputation for creating a directory entry.
         if ( class_exists( 'Culture_Gamification' ) && $user_id > 0 ) {
@@ -586,7 +602,59 @@ class Culture_Directory {
             'id'    => $post_id,
             'slug'  => get_post_field( 'post_name', $post_id ),
             'title' => $title,
+            'city'  => $city,
         ) );
+    }
+
+    // ── Stub enrichment endpoint ─────────────────────────────────────────────
+
+    /**
+     * POST /culture/v1/directory/{id}/enrich
+     *
+     * Updates an existing stub post with AI-generated content, excerpt,
+     * infobox meta, entry type, and (optionally) a featured image.
+     * Auth: Bearer API secret only.
+     */
+    public static function handle_enrich_stub( WP_REST_Request $request ) {
+        $post_id = (int) $request->get_param( 'id' );
+        $post    = get_post( $post_id );
+
+        if ( ! $post || 'culture_directory' !== $post->post_type ) {
+            return new WP_Error( 'not_found', 'Directory entry not found.', array( 'status' => 404 ) );
+        }
+
+        $content    = wp_kses_post( $request->get_param( 'content' ) ?? '' );
+        $excerpt    = sanitize_text_field( $request->get_param( 'excerpt' ) ?? '' );
+        $entry_type = sanitize_key( $request->get_param( 'entry_type' ) ?? '' );
+        $interests  = (array) ( $request->get_param( 'interests' ) ?? array() );
+        $infobox    = (array) ( $request->get_param( 'infobox' ) ?? array() );
+
+        $update_data = array(
+            'ID'           => $post_id,
+            'post_content' => $content,
+            'post_excerpt' => $excerpt,
+        );
+        wp_update_post( $update_data );
+
+        update_post_meta( $post_id, '_culture_dir_ai_generated', '1' );
+
+        if ( $entry_type && taxonomy_exists( 'culture_dir_type' ) ) {
+            wp_set_object_terms( $post_id, $entry_type, 'culture_dir_type' );
+        }
+
+        if ( ! empty( $interests ) && taxonomy_exists( 'culture_interest' ) ) {
+            wp_set_object_terms( $post_id, $interests, 'culture_interest' );
+        }
+
+        foreach ( $infobox as $key => $value ) {
+            $clean_key   = 'dir_infobox_' . sanitize_key( $key );
+            $clean_value = sanitize_text_field( $value );
+            if ( $clean_value ) {
+                update_post_meta( $post_id, $clean_key, $clean_value );
+            }
+        }
+
+        return rest_ensure_response( array( 'success' => true, 'post_id' => $post_id ) );
     }
 
     // ── Phase 3: Directory posts endpoint ────────────────────────────────────
@@ -594,6 +662,69 @@ class Culture_Directory {
     /**
      * GET /culture/v1/directory/{id}/posts
      *
+     * Returns published community posts linked to a directory entry,
+     * plus aggregate summary (total, average rating, counts by template).
+     */
+    /**
+     * Returns upcoming culture_event posts where the organiser is this directory entry.
+     */
+    public static function handle_directory_events( WP_REST_Request $request ) {
+        $dir_id = (int) $request->get_param( 'id' );
+
+        if ( ! get_post( $dir_id ) ) {
+            return new WP_Error( 'not_found', __( 'Directory entry not found.', 'culture-community' ), array( 'status' => 404 ) );
+        }
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_event',
+            'post_status'    => 'publish',
+            'posts_per_page' => 20,
+            'orderby'        => 'meta_value',
+            'meta_key'       => '_culture_event_date',
+            'order'          => 'ASC',
+            'meta_query'     => array( array(
+                'key'     => '_culture_event_organiser_id',
+                'value'   => $dir_id,
+                'type'    => 'NUMERIC',
+                'compare' => '=',
+            ) ),
+        ) );
+
+        $today  = new DateTime( 'today', new DateTimeZone( 'UTC' ) );
+        $events = array();
+
+        foreach ( $query->posts as $post ) {
+            $event_date = get_post_meta( $post->ID, '_culture_event_date', true );
+            $end_date   = get_post_meta( $post->ID, '_culture_event_end_date', true );
+
+            // Skip events that have already passed.
+            $compare_date = $end_date ?: $event_date;
+            if ( $compare_date ) {
+                $d = new DateTime( $compare_date, new DateTimeZone( 'UTC' ) );
+                if ( $d < $today ) continue;
+            }
+
+            $thumb_id = get_post_thumbnail_id( $post->ID );
+            $image    = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'medium' ) : null;
+
+            $events[] = array(
+                'id'         => $post->ID,
+                'slug'       => $post->post_name,
+                'title'      => get_the_title( $post->ID ),
+                'href'       => '/events/' . $post->post_name,
+                'event_date' => $event_date,
+                'end_date'   => $end_date,
+                'location'   => get_post_meta( $post->ID, '_culture_location', true ),
+                'city'       => get_post_meta( $post->ID, '_culture_event_city', true ),
+                'admission'  => get_post_meta( $post->ID, '_culture_admission', true ),
+                'image'      => $image,
+            );
+        }
+
+        return rest_ensure_response( array( 'events' => $events, 'total' => count( $events ) ) );
+    }
+
+    /**
      * Returns published community posts linked to a directory entry,
      * plus aggregate summary (total, average rating, counts by template).
      */
@@ -634,6 +765,7 @@ class Culture_Directory {
 
             $posts[] = array(
                 'id'            => $post->ID,
+                'slug'          => $post->post_name,
                 'template_type' => $template,
                 'content'       => wp_trim_words( $post->post_content, 60 ),
                 'star_rating'   => $star_rating ?: null,

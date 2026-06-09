@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
 import { interestsToTagSet } from "@/lib/interest-mappings";
+import { rankFeed, getTrending, matchesInterests } from "@/lib/feed-recommendations";
 import FeedCard from "./FeedCard";
 import SubmitPost from "./SubmitPost";
 import "@/app/pulse-layout.css";
@@ -134,17 +135,20 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       (item.type === "editorial"  && (item.category ?? "").toLowerCase()  === catLower) ||
       (item.type === "directory"  && (item.entryType ?? "").toLowerCase() === catLower)
     );
-    // "For You" filter — match items whose tag/category is in the user's interest set
-    const forYouMatch = !forYou || (() => {
-      const tag = (item.communityTag ?? item.category ?? item.entryType ?? "").toLowerCase();
-      return interestTagSet.size === 0 || interestTagSet.has(tag);
-    })();
-    return typeMatch && regionMatch && tagMatch && categoryMatch && forYouMatch;
+    // "For You": don't hard-filter — scoring in `sorted` reranks by relevance.
+    // But if user has interests, boost matching items by keeping all; hide nothing.
+    return typeMatch && regionMatch && tagMatch && categoryMatch;
   }), [items, activeType, activeRegion, activeTag, activeCategory, forYou, interestTagSet]);
 
+  // When "For You" is active, rank by relevance score; otherwise newest-first.
   const sorted = useMemo(() => (
-    [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  ), [filtered]);
+    forYou && hasInterests
+      ? rankFeed(filtered, interestTagSet)
+      : [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  ), [filtered, forYou, hasInterests, interestTagSet]);
+
+  // Trending items (shown in sidebar and For You mode)
+  const trending = useMemo(() => getTrending(items), [items]);
 
   const visible = sorted.slice(0, visibleCount);
   const hasMore = visibleCount < sorted.length;
@@ -160,7 +164,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     return () => io.disconnect();
   }, [hasMore, filtered.length]);
 
-  const handlePosted = useCallback((post: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null }) => {
+  const handlePosted = useCallback((post: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null; galleryImages?: string[]; templateType?: string }) => {
     const sessionUser = session?.user as any;
     const newItem: FeedItem = {
       id: `community-${post.id}`,
@@ -176,6 +180,8 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       region: post.region ?? undefined,
       reactions: { love: 0, fire: 0, clap: 0 },
       wpId: post.id,
+      galleryImages: post.galleryImages,
+      templateType: post.templateType,
     };
     setItems(prev => [newItem, ...prev]);
     setActiveType("community");
@@ -399,43 +405,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                     </Link>
                   ))}
                 </div>
-                {/* Categories — horizontal scroll */}
-                <div style={{ padding: "0.5rem 0.75rem 0.6rem" }}>
-                  <p style={{ margin: "0 0 0.35rem", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a6f5c" }}>Category</p>
-                  <div style={{ display: "flex", gap: "0.35rem", overflowX: "auto", scrollbarWidth: "none" }}>
-                    {CATEGORY_FILTERS.map(cat => (
-                      <button
-                        key={cat}
-                        onClick={() => { handleCategory(cat); setShowSectionsMenu(false); }}
-                        style={{
-                          flexShrink: 0,
-                          padding: "0.25rem 0.7rem",
-                          fontSize: "0.7rem",
-                          cursor: "pointer",
-                          background: activeCategory === cat ? "#c5491f" : "#ffffff",
-                          color: activeCategory === cat ? "#fff" : "#3a342b",
-                          border: `1px solid ${activeCategory === cat ? "#c5491f" : "#e8e2d8"}`,
-                          whiteSpace: "nowrap",
-                          fontFamily: "inherit",
-                        }}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
           </div>
-
-          {/* Active category chip */}
-          {activeCategory && (
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.6rem 1.25rem", borderBottom: "1px solid #e8e2d8", background: "#fff" }}>
-              <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>Category</span>
-              <span style={{ background: "#fff0eb", color: "#c5491f", fontSize: "0.7rem", fontWeight: 700, padding: "0.15rem 0.45rem", borderRadius: "2px" }}>{activeCategory}</span>
-              <button onClick={() => { setActiveCategory(""); setVisibleCount(20); }} style={{ background: "transparent", border: "none", color: "#bbb", cursor: "pointer", fontSize: "0.85rem", lineHeight: 1, padding: "0 0.1rem" }} aria-label="Clear category filter">×</button>
-            </div>
-          )}
 
           {/* Active hashtag chip */}
           {activeTag.startsWith("#") && (
@@ -461,13 +433,34 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
               <p style={{ margin: 0, fontSize: "0.78rem", color: "#7a6f5c", lineHeight: 1.5 }}>
                 <strong style={{ color: "#14110d" }}>Personalise your feed</strong> — pick your interests for a For You view.
               </p>
-              <Link href="/member/settings#interests" style={{ fontSize: "0.72rem", fontWeight: 700, color: "#14110d", whiteSpace: "nowrap", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <Link href="/member/settings/interests" style={{ fontSize: "0.72rem", fontWeight: 700, color: "#14110d", whiteSpace: "nowrap", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 Set interests →
               </Link>
             </div>
           )}
 
           <SubmitPost onPosted={handlePosted} />
+
+          {/* Category filter strip */}
+          <div className="feed-category-strip">
+            <div className="feed-category-scroll">
+              <button
+                className={`feed-category-pill${!activeCategory ? " feed-category-pill--active" : ""}`}
+                onClick={() => { setActiveCategory(""); setVisibleCount(20); }}
+              >
+                All
+              </button>
+              {CATEGORY_FILTERS.map(cat => (
+                <button
+                  key={cat}
+                  className={`feed-category-pill${activeCategory === cat ? " feed-category-pill--active" : ""}`}
+                  onClick={() => handleCategory(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {visible.length === 0 ? (
             <div style={{ color: "#aaa", textAlign: "center", padding: "4rem 0", fontSize: "0.85rem" }}>
@@ -480,6 +473,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 item={item}
                 onTagClick={handleTagClick}
                 onHashtagClick={handleHashtagClick}
+                interestMatch={forYou && hasInterests && matchesInterests(item, interestTagSet)}
               />
             ))
           )}
@@ -508,6 +502,69 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {/* Most engaged posts this week */}
+            {trending.length > 0 && (
+              <div style={{ marginBottom: "1.5rem" }}>
+                <p style={{ color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.65rem" }}>
+                  Hot this week 🔥
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {trending.map(item => {
+                    const totalEng = (item.reactions?.love ?? 0) + (item.reactions?.fire ?? 0)
+                                   + (item.reactions?.clap ?? 0) + (item.commentCount ?? 0);
+                    return (
+                      <div key={item.id} style={{ borderLeft: "2px solid var(--ochre)", paddingLeft: 8 }}>
+                        <p style={{ margin: "0 0 2px", fontSize: "0.76rem", fontWeight: 600, color: "var(--ink)", lineHeight: 1.3 }}>
+                          {item.title.length > 60 ? item.title.slice(0, 57) + "…" : item.title}
+                        </p>
+                        {totalEng > 0 && (
+                          <p style={{ margin: 0, fontSize: "0.66rem", color: "var(--mute)" }}>
+                            {totalEng} reaction{totalEng !== 1 ? "s" : ""}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* For You hint */}
+            {hasInterests && !forYou && (
+              <div style={{
+                background: "rgba(179,130,56,.06)",
+                border: "1px solid rgba(179,130,56,.2)",
+                borderRadius: 4,
+                padding: "0.75rem",
+                marginBottom: "1.5rem",
+              }}>
+                <p style={{ margin: "0 0 6px", fontSize: "0.72rem", fontWeight: 700, color: "var(--ink)" }}>
+                  Personalised feed ready
+                </p>
+                <p style={{ margin: "0 0 8px", fontSize: "0.7rem", color: "var(--mute)", lineHeight: 1.4 }}>
+                  Switch to For You to see content ranked by your interests.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleForYou}
+                  style={{
+                    background: "var(--ochre)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 3,
+                    padding: "5px 10px",
+                    fontSize: "0.7rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    letterSpacing: ".06em",
+                  }}
+                >
+                  For You →
+                </button>
               </div>
             )}
 

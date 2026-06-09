@@ -49,9 +49,22 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
   const img = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
   const catSlug = interests[0]?.slug || "default";
   const CAT_ICONS: Record<string, string> = {
+    // seeded interest slugs
+    "live-music": "♪", "music-production": "♪",
+    "independent-film": "◉",
+    "visual-art": "◈", "photography": "◈", "architecture": "◈",
+    "fashion-streetwear": "✦",
+    "food-drink": "◆", "street-food": "◆",
+    "literature": "▬",
+    "visual-design": "◻",
+    "event-performance": "★", "nightlife": "★",
+    "event-community": "◇", "ideas": "◇",
+    "tech-culture": "○",
+    "sport-wellness": "●",
+    "travel": "→",
+    // legacy short slugs (in case old posts use them)
     music: "♪", film: "◉", "visual-arts": "◈", fashion: "✦",
-    food: "◆", literature: "▬", design: "◻", performance: "★",
-    community: "◇", tech: "○",
+    food: "◆", design: "◻", performance: "★", community: "◇", tech: "○",
   };
   const ctaUrl = event.ticketingUrl || event.attribution || null;
 
@@ -83,7 +96,7 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
               rel="noopener noreferrer"
               className="luma-cta-btn"
             >
-              {event.ticketingUrl ? "Get Tickets ↗" : "View Full Event Details ↗"}
+              Find Out More ↗
             </a>
           )}
 
@@ -129,6 +142,9 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
                 {endFormatted && (
                   <div className="luma-meta-sub">Until {endFormatted}</div>
                 )}
+                {event.openingHours && (
+                  <div className="luma-meta-sub">{event.openingHours}</div>
+                )}
               </div>
             </div>
 
@@ -167,7 +183,7 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
           {ctaUrl && (
             <div className="luma-register-box">
               <div className="luma-register-label">
-                {event.ticketingUrl ? "Tickets" : "Registration"}
+                Event Details
               </div>
               {event.tagline && (
                 <p className="luma-register-note">{event.tagline}</p>
@@ -178,21 +194,22 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
                 rel="noopener noreferrer"
                 className="luma-register-btn"
               >
-                {event.ticketingUrl ? "Get Tickets" : "View Event Details"}
+                Find Out More →
               </a>
             </div>
           )}
 
-          {/* about */}
-          {(excerpt || event.content) && (
+          {/* about — prefer HTML content (properly formatted), fall back to plain excerpt */}
+          {(event.content || excerpt) && (
             <div className="luma-about">
               <div className="luma-section-label">About</div>
-              {excerpt && <p className="luma-excerpt">{excerpt}</p>}
-              {event.content && (
+              {event.content ? (
                 <div
                   className="luma-content"
                   dangerouslySetInnerHTML={{ __html: event.content }}
                 />
+              ) : (
+                <p className="luma-excerpt">{excerpt}</p>
               )}
             </div>
           )}

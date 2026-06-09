@@ -44,22 +44,72 @@ function detectRegion(countryOfResidence?: string): string | null {
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 
-type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "creative-showcase" | "poll" | "itinerary";
+type TemplateType = "post" | "quote" | "hidden-gem" | "cultural-take" | "food-review" | "creative-showcase" | "poll" | "itinerary" | "event";
 
 const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] = [
-  { slug: "post",              label: "Post",      emoji: "📝" },
+  { slug: "post",              label: "Update",    emoji: "📝" },
   { slug: "hidden-gem",        label: "Gem",       emoji: "💎" },
   { slug: "cultural-take",     label: "Take",      emoji: "💬" },
   { slug: "food-review",       label: "Food",      emoji: "🍽️" },
   { slug: "creative-showcase", label: "Showcase",  emoji: "🎨" },
   { slug: "poll",              label: "Poll",      emoji: "📊" },
   { slug: "itinerary",         label: "Route",     emoji: "🗺️" },
+  { slug: "event",             label: "Event",     emoji: "📅" },
   { slug: "quote",             label: "Quote",     emoji: "✦" },
 ];
 
+const TEMPLATE_GUIDES: Record<TemplateType, { desc: string; chips: string[] }> = {
+  post:                { desc: "Share news, a link, or a quick thought from your cultural world.",                          chips: ["Hot take:",           "Just saw that",          "Anyone else noticed"] },
+  "hidden-gem":        { desc: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues.",     chips: ["Hidden gem alert:",   "Not enough people know about", "If you haven't been to"] },
+  "cultural-take":     { desc: "Share a cultural opinion on a book, film, event, or idea worth discussing.",                chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"] },
+  "food-review":       { desc: "Review a dish or restaurant. Rate the taste, value, and vibe.",                            chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"] },
+  "creative-showcase": { desc: "Share your creative work — art, photography, design, or music.",                           chips: ["Working on something:", "New piece:",             "Behind the work:"] },
+  poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions.",             chips: ["Which is better:",    "Settle this for me:",    "Genuine question:"] },
+  itinerary:           { desc: "Share a travel itinerary or a local route worth following.",                                chips: ["A perfect day in",    "My go-to route:",        "For first-timers in"] },
+  event:               { desc: "Submit a cultural event happening in your city. It will appear on the events calendar.",   chips: ["Happening this weekend:", "Don't miss this one:", "Tickets going fast:"] },
+  quote:               { desc: "Share a quote that moved you. Add the author and source below.",                           chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"] },
+};
+
+// Template → default section tag
+const TEMPLATE_TAGS: Partial<Record<TemplateType, Tag>> = {
+  "food-review":       "Food",
+  "itinerary":         "Travel",
+  "creative-showcase": "Art",
+};
+
+// Keyword lists for content-based tag detection
+const TAG_KEYWORDS: [Tag, string[]][] = [
+  ["Music",      ["music","song","album","artist","band","concert","gig","playlist","track","rapper","singer","lyrics","afrobeats","jazz","hip hop","r&b"]],
+  ["Film",       ["film","movie","cinema","watched","director","actor","actress","series","episode","netflix","streaming","documentary","tv show"]],
+  ["Literature", ["book","reading","novel","author","poetry","poem","writer","chapter","fiction","nonfiction","memoir","literature"]],
+  ["Food",       ["food","eating","restaurant","dish","meal","cuisine","recipe","chef","cooking","taste","cafe","brunch","dinner","lunch"]],
+  ["Travel",     ["travel","trip","city","country","visited","explore","destination","hotel","flight","vacation","holiday","abroad"]],
+  ["Art",        ["art","painting","gallery","exhibition","sculpture","artwork","illustration","mural","portrait","photography"]],
+  ["Fashion",    ["fashion","style","outfit","clothes","wearing","brand","designer","trend","runway","streetwear","sneakers","wardrobe"]],
+  ["Sport",      ["sport","football","basketball","tennis","match","game","player","team","league","athletics","cricket","rugby","fifa"]],
+  ["Tech",       ["tech","technology","app","software","coding","artificial intelligence","digital","startup","programming","algorithm"]],
+  ["Design",     ["design","graphic","logo","typography","interface","ux","ui","branding","visual identity","illustration"]],
+  ["Ideas",      ["idea","philosophy","society","politics","economy","future","innovation","theory","culture","mindset","movement"]],
+];
+
+function detectTagFromContent(text: string): Tag | null {
+  let best: Tag | null = null;
+  let bestScore = 0;
+  const lower = text.toLowerCase();
+  for (const [tag, keywords] of TAG_KEYWORDS) {
+    let score = 0;
+    for (const kw of keywords) {
+      let pos = lower.indexOf(kw);
+      while (pos !== -1) { score++; pos = lower.indexOf(kw, pos + 1); }
+    }
+    if (score > bestScore) { bestScore = score; best = tag; }
+  }
+  return bestScore >= 1 ? best : null;
+}
+
 const MAX_CHARS: Record<string, number> = {
   post: 3000, "hidden-gem": 500, "cultural-take": 1000, "food-review": 500,
-  "creative-showcase": 500, poll: 280, itinerary: 300, quote: 600,
+  "creative-showcase": 500, poll: 280, itinerary: 300, event: 1000, quote: 600,
 };
 
 function HashtagPreview({ text }: { text: string }) {
@@ -77,7 +127,7 @@ function HashtagPreview({ text }: { text: string }) {
 }
 
 interface SubmitPostProps {
-  onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null }) => void;
+  onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null; galleryImages?: string[]; templateType?: string }) => void;
   lockedTag?: string;
   initialTemplate?: TemplateType;
 }
@@ -88,7 +138,10 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
   // Shared state
   const [text, setText] = useState("");
-  const [tag, setTag] = useState<Tag | "">(lockedTag as Tag ?? "");
+  const [tag, setTag] = useState<Tag | "">(
+    (lockedTag as Tag) ?? TEMPLATE_TAGS[initialTemplate ?? "post"] ?? ""
+  );
+  const [tagLocked, setTagLocked] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -96,6 +149,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Link preview
   const [linkPreview, setLinkPreview] = useState<{ url: string; ogTitle: string; ogDescription: string; ogImage: string } | null>(null);
@@ -104,7 +158,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
   // Template-specific state
   const [starRating, setStarRating] = useState(0);
-  const [locationName, setLocationName] = useState("");
   const [directoryEntry, setDirectoryEntry] = useState<any>(null);
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const [pollDuration, setPollDuration] = useState("3");
@@ -125,6 +178,17 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   // Quote specific
   const [quoteAuthor, setQuoteAuthor] = useState("");
   const [quoteSource, setQuoteSource] = useState("");
+
+  // Event specific
+  const [eventOrganiser, setEventOrganiser] = useState<{ id: number; title: string; slug: string; type: string; thumbnail: string | null } | null>(null);
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [eventEndDate, setEventEndDate] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
+  const [eventCity, setEventCity] = useState("");
+  const [eventAdmission, setEventAdmission] = useState("");
+  const [eventTicketUrl, setEventTicketUrl] = useState("");
+  const [eventCategory, setEventCategory] = useState("");
 
   const user = session?.user as any;
   const loggedIn = status === "authenticated";
@@ -194,8 +258,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   }
 
   function resetForm() {
-    setText(""); setTag(""); removeImage(); setError(""); setSuccess("");
-    setStarRating(0); setLocationName(""); setDirectoryEntry(null);
+    setText(""); setTag(TEMPLATE_TAGS[template] ?? ""); setTagLocked(false); removeImage(); setError(""); setSuccess("");
+    setStarRating(0); setDirectoryEntry(null);
     setPollOptions(["", ""]); setPollDuration("3");
     setItineraryStops([
       { name: "", lat: 0, lng: 0, note: "", image_url: "" },
@@ -204,6 +268,9 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     setGalleryFiles([]); setGalleryPreviews([]); setVideoUrl("");
     setFoodDishName(""); setFoodTaste(0); setFoodValue(0); setFoodVibe(0);
     setQuoteAuthor(""); setQuoteSource("");
+    setEventTitle(""); setEventDate(""); setEventEndDate(""); setEventLocation("");
+    setEventCity(""); setEventAdmission(""); setEventTicketUrl(""); setEventCategory("");
+    setEventOrganiser(null);
     setLinkPreview(null);
   }
 
@@ -216,6 +283,29 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     return data.url;
   }
 
+  function handleTemplateChange(t: TemplateType) {
+    setTemplate(t);
+    setError("");
+    if (!lockedTag) {
+      setTagLocked(false);
+      setTag(TEMPLATE_TAGS[t] ?? "");
+    }
+  }
+
+  function handleTagChange(value: Tag | "") {
+    setTag(value);
+    setTagLocked(value !== ""); // clearing resumes auto-detection
+  }
+
+  function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const val = e.target.value;
+    setText(val);
+    if (tagLocked || lockedTag || TEMPLATE_TAGS[template]) return;
+    if (val.length < 20) { setTag(""); return; }
+    const detected = detectTagFromContent(val);
+    if (detected) setTag(detected);
+  }
+
   function canSubmit(): boolean {
     if (loading) return false;
     if (charRemaining < 0) return false;
@@ -226,7 +316,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       case "quote":
         return text.trim().length >= 10 && quoteAuthor.trim().length > 0;
       case "hidden-gem":
-        return text.trim().length >= 50 && starRating > 0 && locationName.trim().length > 0 && (!!imageFile || galleryFiles.length > 0);
+        return text.trim().length >= 50 && starRating > 0 && !!directoryEntry && (!!imageFile || galleryFiles.length > 0);
       case "cultural-take":
         return text.trim().length >= 100 && !!directoryEntry;
       case "food-review":
@@ -237,6 +327,13 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         return text.trim().length >= 10 && pollOptions.filter(o => o.trim()).length >= 2;
       case "itinerary":
         return itineraryStops.filter(s => s.name.trim()).length >= 2;
+      case "event": {
+        if (!eventTitle.trim() || !eventDate) return false;
+        const d = new Date(eventDate);
+        if (isNaN(d.getTime())) return false;
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        return d >= today;
+      }
       default:
         return false;
     }
@@ -253,7 +350,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       let imageUrl: string | undefined;
       const galleryUrls: string[] = [];
 
-      if (imageFile) {
+      // Non-event templates use the community upload endpoint
+      if (imageFile && template !== "event") {
         if (imageFile.size > 8 * 1024 * 1024) throw new Error("Image must be under 8 MB.");
         setUploading(true);
         imageUrl = await uploadImage(imageFile);
@@ -265,6 +363,49 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         setUploading(true);
         galleryUrls.push(await uploadImage(f));
         setUploading(false);
+      }
+
+      // Event goes to separate endpoint (uses events upload endpoint to get WP attachment ID)
+      if (template === "event") {
+        let eventImageUrl: string | undefined;
+        let eventImageId = 0;
+        if (imageFile) {
+          if (imageFile.size > 8 * 1024 * 1024) throw new Error("Image must be under 8 MB.");
+          setUploading(true);
+          const fd = new FormData();
+          fd.append("file", imageFile);
+          const upRes = await fetch("/api/events/upload-image", { method: "POST", body: fd });
+          setUploading(false);
+          if (upRes.ok) {
+            const upData = await upRes.json();
+            eventImageUrl = upData.url || undefined;
+            eventImageId  = upData.id  || 0;
+          }
+        }
+        const res = await fetch("/api/events/member-submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: eventTitle.trim(),
+            description: text.trim() || undefined,
+            event_date: eventDate,
+            end_date: eventEndDate || undefined,
+            location: eventLocation.trim() || undefined,
+            city: eventCity.trim() || undefined,
+            admission: eventAdmission.trim() || undefined,
+            ticketing_url: eventTicketUrl.trim() || undefined,
+            image_url: eventImageUrl,
+            image_id: eventImageId || undefined,
+            category: eventCategory || undefined,
+            organiser_directory_id: eventOrganiser?.id || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to submit event.");
+        setSuccess("Event submitted — it will appear on the events calendar shortly.");
+        resetForm();
+        setTimeout(() => setSuccess(""), 5000);
+        return;
       }
 
       // Quote goes to separate endpoint
@@ -304,10 +445,10 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       // Template-specific fields
       if (directoryEntry) {
         payload.linked_directory_id = directoryEntry.id;
+        payload.location_name = directoryEntry.title || "";
       }
       if (template === "hidden-gem") {
         payload.star_rating = starRating;
-        payload.location_name = locationName;
       }
       if (template === "food-review") {
         payload.food_dish_name = foodDishName;
@@ -315,7 +456,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         payload.food_rating_taste = foodTaste;
         payload.food_rating_value = foodValue;
         payload.food_rating_vibe = foodVibe;
-        payload.location_name = locationName || directoryEntry?.title || "";
       }
       if (template === "poll") {
         payload.poll_options = pollOptions.filter(o => o.trim()).map(text => ({ text }));
@@ -347,8 +487,10 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         text: text.trim(),
         authorName: user?.name ?? user?.displayName ?? "Community Member",
         tag: payload.tag || null,
-        imageUrl: imageUrl ?? galleryUrls[0] ?? null,
+        imageUrl: galleryUrls.length > 0 ? null : (imageUrl ?? null),
         region,
+        galleryImages: galleryUrls.length > 0 ? galleryUrls : undefined,
+        templateType: template,
       });
       resetForm();
     } catch (err: any) {
@@ -363,16 +505,9 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
   if (!loggedIn) {
     return (
-      <div style={{ borderBottom: "1px solid #e8e2d8", padding: "0.9rem 1.25rem", display: "flex", alignItems: "center", gap: "0.75rem", background: "#fff" }}>
+      <div className="composer-card" style={{ padding: "0.9rem 1.25rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "#f0ece4", border: "1px solid #e0d8ce", flexShrink: 0 }} />
-        <button
-          onClick={() => window.dispatchEvent(new Event("open-auth-modal"))}
-          style={{
-            flex: 1, background: "#ffffff", border: "1px solid #e0d8ce", borderRadius: "20px",
-            padding: "0.6rem 1rem", color: "#7a6f5c", fontSize: "0.85rem",
-            textAlign: "left", cursor: "pointer", fontFamily: "var(--font-fraunces), serif",
-          }}
-        >
+        <button onClick={() => window.dispatchEvent(new Event("open-auth-modal"))} className="composer-prompt-btn">
           What&apos;s happening in culture? Join the community to share.
         </button>
       </div>
@@ -384,8 +519,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
 
   if (success) {
     return (
-      <div style={{ borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", background: "#fff" }}>
-        <div style={{ background: "#f3eef8", border: "1px solid #e0d4f0", borderRadius: "4px", padding: "0.85rem 1rem", color: "#7a4da0", fontSize: "0.85rem", fontFamily: "var(--font-fraunces), serif", fontStyle: "italic" }}>
+      <div className="composer-card" style={{ padding: "1rem 1.25rem" }}>
+        <div style={{ background: "#f3eef8", border: "1px solid #e0d4f0", borderRadius: "6px", padding: "0.85rem 1rem", color: "#7a4da0", fontSize: "0.85rem", fontFamily: "var(--font-fraunces), serif", fontStyle: "italic" }}>
           {success}
         </div>
       </div>
@@ -401,10 +536,11 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     "creative-showcase": "Caption (optional)",
     poll: "Ask a question…",
     itinerary: "Describe your route…",
+    event: "Describe the event — what to expect, why it matters… (optional)",
   };
 
   return (
-    <div style={{ borderBottom: "1px solid #e8e2d8", background: "#fff" }}>
+    <div className="composer-card">
       {/* Template selector */}
       <div className="composer-template-bar">
         {TEMPLATES.map(t => (
@@ -412,7 +548,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             key={t.slug}
             type="button"
             className={`composer-template-pill${template === t.slug ? " composer-template-pill--active" : ""}`}
-            onClick={() => { setTemplate(t.slug); setError(""); }}
+            onClick={() => handleTemplateChange(t.slug)}
           >
             <span className="composer-template-emoji">{t.emoji}</span>
             <span className="composer-template-label">{t.label}</span>
@@ -421,7 +557,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} style={{ padding: "0.9rem 1.25rem" }}>
+      <form onSubmit={handleSubmit} className="composer-form-body">
         <div style={{ display: "flex", gap: "0.75rem" }}>
           {/* Avatar */}
           <div style={{
@@ -438,14 +574,14 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             ) : initials}
           </div>
 
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <div className="composer-fields">
             {/* Directory search — for cultural-take (required), hidden-gem, food-review */}
             {(template === "cultural-take" || template === "hidden-gem" || template === "food-review") && (
               <DirectorySearch
                 value={directoryEntry}
                 onChange={setDirectoryEntry}
                 typeFilter={template === "food-review" ? "restaurant" : undefined}
-                placeholder={template === "cultural-take" ? "What are you writing about?" : template === "food-review" ? "Which restaurant or venue?" : "Link to a directory entry (optional)"}
+                placeholder={template === "cultural-take" ? "What are you writing about?" : template === "food-review" ? "Which restaurant or venue?" : "Search or add a location *"}
               />
             )}
 
@@ -460,30 +596,119 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               />
             )}
 
-            {/* Location name — hidden-gem */}
-            {template === "hidden-gem" && (
-              <input
-                type="text"
-                value={locationName}
-                onChange={e => setLocationName(e.target.value)}
-                placeholder="Location name *"
-                className="composer-input"
-              />
+            {/* Event fields */}
+            {template === "event" && (
+              <>
+                <input
+                  type="text"
+                  value={eventTitle}
+                  onChange={e => setEventTitle(e.target.value.slice(0, 150))}
+                  placeholder="Event name *"
+                  className="composer-input"
+                />
+                <div className="composer-event-dates">
+                  <div>
+                    <label className="composer-field-label">Start date & time *</label>
+                    <input
+                      type="datetime-local"
+                      value={eventDate}
+                      onChange={e => setEventDate(e.target.value)}
+                      className="composer-input"
+                    />
+                  </div>
+                  <div>
+                    <label className="composer-field-label">End date & time</label>
+                    <input
+                      type="datetime-local"
+                      value={eventEndDate}
+                      onChange={e => setEventEndDate(e.target.value)}
+                      className="composer-input"
+                    />
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <input
+                    type="text"
+                    value={eventLocation}
+                    onChange={e => setEventLocation(e.target.value.slice(0, 200))}
+                    placeholder="Venue / address"
+                    className="composer-input"
+                    style={{ flex: 2 }}
+                  />
+                  <input
+                    type="text"
+                    value={eventCity}
+                    onChange={e => setEventCity(e.target.value.slice(0, 80))}
+                    placeholder="City"
+                    className="composer-input"
+                    style={{ flex: 1 }}
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={eventAdmission}
+                  onChange={e => setEventAdmission(e.target.value.slice(0, 80))}
+                  placeholder="Admission (e.g. Free, £10)"
+                  className="composer-input"
+                />
+                <input
+                  type="url"
+                  value={eventTicketUrl}
+                  onChange={e => setEventTicketUrl(e.target.value)}
+                  placeholder="Ticket / event link"
+                  className="composer-input"
+                />
+                <select
+                  value={eventCategory}
+                  onChange={e => setEventCategory(e.target.value)}
+                  className="composer-input"
+                >
+                  <option value="">Category (optional)</option>
+                  <option value="live-music">Music</option>
+                  <option value="independent-film">Film</option>
+                  <option value="visual-art">Visual Arts</option>
+                  <option value="fashion-streetwear">Fashion</option>
+                  <option value="food-drink">Food &amp; Drink</option>
+                  <option value="literature">Literature</option>
+                  <option value="visual-design">Design</option>
+                  <option value="event-performance">Performance</option>
+                  <option value="event-community">Community</option>
+                  <option value="tech-culture">Tech</option>
+                </select>
+                <label className="composer-field-label" style={{ marginTop: "0.25rem" }}>Organiser (optional)</label>
+                <DirectorySearch
+                  value={eventOrganiser}
+                  onChange={setEventOrganiser}
+                  placeholder="Search directory for organiser…"
+                />
+              </>
             )}
+
+            {/* Template guide */}
+            <div className={`composer-guide${text.length > 0 ? " composer-guide--hidden" : ""}`}>
+              <p className="composer-guide-desc">{TEMPLATE_GUIDES[template].desc}</p>
+              <div className="composer-guide-chips">
+                {TEMPLATE_GUIDES[template].chips.map(chip => (
+                  <button
+                    key={chip}
+                    type="button"
+                    className="composer-guide-chip"
+                    onClick={() => { setText(chip + " "); setTimeout(() => textareaRef.current?.focus(), 0); }}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Main text area */}
             <textarea
+              ref={textareaRef}
               value={text}
-              onChange={e => setText(e.target.value)}
+              onChange={handleTextChange}
               placeholder={placeholders[template]}
               rows={template === "cultural-take" ? 6 : template === "creative-showcase" ? 2 : 4}
-              style={{
-                background: "transparent", border: "none", borderBottom: "1px solid #e0d8ce",
-                color: "#14110d", fontFamily: "var(--font-fraunces), serif",
-                fontSize: "0.92rem", lineHeight: 1.55, resize: "vertical",
-                width: "100%", outline: "none", paddingBottom: "0.4rem",
-                fontStyle: template === "quote" ? "italic" : "normal",
-              }}
+              className={`composer-textarea${template === "quote" ? " composer-textarea--italic" : ""}`}
             />
             <HashtagPreview text={text} />
 
@@ -597,65 +822,57 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               style={{ display: "none" }}
             />
 
+
             {/* Action bar */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-              {/* Tag selector (not for quote, food-review auto-sets Food) */}
-              {template !== "quote" && template !== "food-review" && (
+            <div className="composer-action-bar">
+              {/* Tag selector (not for quote, food-review auto-sets Food, event has its own categories) */}
+              {template !== "quote" && template !== "food-review" && template !== "event" && (
                 lockedTag ? (
-                  <span style={{
-                    background: "#fff0eb", color: "#c5491f", fontSize: "0.65rem", fontWeight: 700,
-                    letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.28rem 0.55rem",
-                    borderRadius: "2px", border: "1px solid #f5d0c0",
-                  }}>
+                  <span className="composer-tag-select composer-tag-select--selected" style={{ cursor: "default" }}>
                     {lockedTag}
                   </span>
                 ) : (
-                  <select value={tag} onChange={e => setTag(e.target.value as Tag | "")} style={{
-                    background: "#ffffff", border: "1px solid #e0d8ce", borderRadius: "2px",
-                    color: tag ? "#c5491f" : "#7a6f5c", fontSize: "0.72rem", fontWeight: 600,
-                    letterSpacing: "0.06em", textTransform: "uppercase", padding: "0.28rem 0.55rem",
-                    cursor: "pointer", outline: "none",
-                  }}>
+                  <select
+                    value={tag}
+                    onChange={e => handleTagChange(e.target.value as Tag | "")}
+                    className={`composer-tag-select${tag ? " composer-tag-select--selected" : ""}`}
+                  >
                     <option value="">Section</option>
                     {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 )
               )}
 
-              {/* Image button (not for poll) */}
-              {template !== "poll" && template !== "quote" && (
-                <button type="button" onClick={() => fileInputRef.current?.click()} title="Attach image" style={{
-                  background: (imageFile || galleryFiles.length > 0) ? "#fff0eb" : "transparent",
-                  border: `1px solid ${(imageFile || galleryFiles.length > 0) ? "#c5491f" : "#e0d8ce"}`,
-                  borderRadius: "2px", color: (imageFile || galleryFiles.length > 0) ? "#c5491f" : "#7a6f5c",
-                  fontSize: "0.72rem", padding: "0.28rem 0.55rem", cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: "0.3rem",
-                }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                  {(imageFile || galleryFiles.length > 0) ? `${galleryFiles.length || 1} image${(galleryFiles.length || 1) > 1 ? "s" : ""}` : "Image"}
-                </button>
+              {/* Image button (not for poll or itinerary) */}
+              {template !== "poll" && template !== "quote" && template !== "itinerary" && (
+                <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title="Attach image"
+                className={`composer-image-btn${(imageFile || galleryFiles.length > 0) ? " composer-image-btn--active" : ""}`}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <polyline points="21 15 16 10 5 21" />
+                </svg>
+                {(imageFile || galleryFiles.length > 0) ? `${galleryFiles.length || 1} image${(galleryFiles.length || 1) > 1 ? "s" : ""}` : "Image"}
+              </button>
               )}
 
-              <div style={{ flex: 1 }} />
-              <span style={{ fontSize: "0.7rem", color: charRemaining < 50 ? (charRemaining < 0 ? "#c5491f" : "#b38238") : "#bbb", fontVariantNumeric: "tabular-nums" }}>
+              <div className="composer-spacer" />
+              <span className={`composer-char-count${charRemaining < 0 ? " composer-char-count--error" : charRemaining < 50 ? " composer-char-count--warn" : ""}`}>
                 {charRemaining}
               </span>
-              <button type="submit" disabled={!canSubmit()} style={{
-                background: canSubmit() ? (template === "quote" ? "#7a4da0" : "#c93c2a") : "#e8e2d8",
-                color: canSubmit() ? "#fff" : "#aaa",
-                border: "none", borderRadius: "2px", padding: "0.32rem 0.9rem",
-                fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.08em",
-                textTransform: "uppercase", cursor: canSubmit() ? "pointer" : "default",
-                transition: "all 0.15s",
-              }}>
+              <button
+                type="submit"
+                disabled={!canSubmit()}
+                className={`composer-submit${template === "quote" ? " composer-submit--quote" : ""}`}
+              >
                 {uploading ? "Uploading…" : loading ? "Posting…" : template === "quote" ? "Submit" : "Post"}
               </button>
             </div>
-            {error && <p style={{ color: "#c5491f", fontSize: "0.78rem", margin: 0 }}>{error}</p>}
+            {error && <p className="composer-error">{error}</p>}
           </div>
         </div>
       </form>

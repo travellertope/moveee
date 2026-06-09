@@ -9,7 +9,7 @@ import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
 import "@/app/events.css";
 
-export const revalidate = 180;
+export const dynamic = "force-dynamic";
 
 // ── Archive slug lookup tables ────────────────────────────────────────────────
 
@@ -23,6 +23,7 @@ const CITY_SLUGS: Record<string, { name: string; country: string }> = {
 };
 
 const CATEGORY_SLUGS: Record<string, { name: string; icon: string; desc: string }> = {
+  // Short legacy slugs (used in some existing posts + form fallback)
   "music":       { name: "Music",       icon: "♪", desc: "Concerts, listening sessions & releases" },
   "film":        { name: "Film",        icon: "◉", desc: "Screenings, premieres & cinema" },
   "visual-arts": { name: "Visual Arts", icon: "◈", desc: "Exhibitions, galleries & installations" },
@@ -33,6 +34,24 @@ const CATEGORY_SLUGS: Record<string, { name: string; icon: string; desc: string 
   "performance": { name: "Performance", icon: "★", desc: "Theatre, dance & live arts" },
   "community":   { name: "Community",   icon: "◇", desc: "Gatherings, panels & cultural events" },
   "tech":        { name: "Tech",        icon: "○", desc: "Innovation, startups & digital culture" },
+  // Canonical culture_interest taxonomy slugs
+  "live-music":          { name: "Live Music",          icon: "♪", desc: "Concerts, gigs & live sessions" },
+  "music-production":    { name: "Music Production",    icon: "♪", desc: "Studio, beatmaking & sound" },
+  "independent-film":    { name: "Independent Film",    icon: "◉", desc: "Screenings, premieres & cinema" },
+  "visual-art":          { name: "Visual Art",          icon: "◈", desc: "Exhibitions, galleries & installations" },
+  "architecture":        { name: "Architecture",        icon: "◈", desc: "Built environment & spatial design" },
+  "photography":         { name: "Photography",         icon: "◈", desc: "Shows, zines & photography" },
+  "fashion-streetwear":  { name: "Fashion",             icon: "✦", desc: "Shows, presentations & pop-ups" },
+  "food-drink":          { name: "Food & Drink",        icon: "◆", desc: "Supper clubs, markets & tastings" },
+  "street-food":         { name: "Street Food",         icon: "◆", desc: "Street food & market events" },
+  "nightlife":           { name: "Nightlife",           icon: "★", desc: "Clubs, bars & after-dark events" },
+  "visual-design":       { name: "Design",              icon: "◻", desc: "Craft, visual & creative direction" },
+  "tech-culture":        { name: "Tech & Culture",      icon: "○", desc: "Innovation, startups & digital culture" },
+  "sport-wellness":      { name: "Sport & Wellness",    icon: "●", desc: "Fitness, sports & wellness" },
+  "travel":              { name: "Travel",              icon: "→", desc: "Exploration, diaspora & journeys" },
+  "ideas":               { name: "Ideas & Culture",     icon: "◇", desc: "Panels, talks & cultural theory" },
+  "event-performance":   { name: "Performance",         icon: "★", desc: "Theatre, dance & live arts" },
+  "event-community":     { name: "Community",           icon: "◇", desc: "Gatherings, panels & community events" },
 };
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
@@ -205,12 +224,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
           {/* Registration box */}
           <div className="ehl-register-box">
-            <div className="ehl-register-label">Registration</div>
+            <div className="ehl-register-label">Event Details</div>
             {event.ticketingUrl ? (
               <>
                 <p className="ehl-register-note">{event.admission || "Paid Entry"} · {event.location}</p>
                 <a href={event.ticketingUrl} target="_blank" rel="noopener noreferrer" className="ehl-register-btn">
-                  Buy Ticket →
+                  Find Out More →
                 </a>
               </>
             ) : (
@@ -317,12 +336,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <div className="top-label">RSVP · {dateFormatted}</div>
             {event.ticketingUrl ? (
               <>
-                <h3>Secure your <em>ticket</em></h3>
+                <h3>More <em>details</em></h3>
                 <div className="event-date">{event.location} · {event.admission || "Paid Entry"}</div>
                 <a href={event.ticketingUrl} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ display: "block", textAlign: "center", marginTop: "24px" }}>
-                  Buy Ticket Now →
+                  Find Out More →
                 </a>
-                <p className="rsvp-small">Secure access via external partner</p>
+                <p className="rsvp-small">Opens external partner site</p>
               </>
             ) : (
               <>
@@ -338,6 +357,20 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             )}
           </div>
 
+
+          {event.organiserName && (
+            <div className="info-card" style={{ borderLeft: "3px solid #3c3489" }}>
+              <span className="label" style={{ color: "#3c3489" }}>Organised by</span>
+              {event.organiserSlug ? (
+                <Link href={`/directory/${event.organiserSlug}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "#14110d", textDecoration: "none" }}>
+                  <span style={{ fontWeight: 700, fontSize: "0.95rem" }}>{event.organiserName}</span>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#7a6f5c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9L9 3M4 3h5v5"/></svg>
+                </Link>
+              ) : (
+                <p style={{ fontWeight: 700, margin: 0 }}>{event.organiserName}</p>
+              )}
+            </div>
+          )}
 
           {event.associatedJourney && (
             <div className="info-card" style={{ background: "var(--ink)", color: "var(--paper)" }}>

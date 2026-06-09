@@ -30,7 +30,15 @@ export interface FeedItem {
   ogImage?: string;
   // happening-specific
   eventDate?: string;
+  endDate?: string;
+  openingHours?: string;
   location?: string;
+  city?: string;
+  venueAddress?: string;
+  admission?: string;
+  eventCategory?: string;
+  organiserName?: string;
+  organiserSlug?: string;
   // directory-specific
   entryType?: string;
   // quote-specific
@@ -40,6 +48,7 @@ export interface FeedItem {
   category?: string;
   // community-specific
   communityAuthor?: string;
+  communityAuthorUsername?: string;
   communityAuthorAvatar?: string;
   communityTag?: string;
   communityTier?: string;
@@ -102,10 +111,16 @@ const WP_BASE = `${WP_URL}/wp-json/wp/v2`;
 
 /** Fetch the latest community posts from the culture_post CPT. */
 async function getCommunityPosts(): Promise<FeedItem[]> {
-  const res = await fetch(
-    `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count&meta_fields=community_author_name,community_author_id,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe`,
-    { cache: "no-store" }
-  );
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 12000);
+  let res: Response;
+  try {
+    res = await fetch(
+      `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count&meta_fields=community_author_name,community_author_id,community_author_username,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe`,
+      { cache: "no-store", signal: ctrl.signal }
+    );
+  } catch { clearTimeout(timer); return []; }
+  clearTimeout(timer);
   if (!res.ok) return [];
   const posts: any[] = await res.json().catch(() => []);
 
@@ -130,6 +145,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
       image: imageUrl ?? undefined,
       href: `/community/${post.slug}`,
       communityAuthor: authorName || (post.excerpt?.rendered ? stripHtml(post.excerpt.rendered) : ""),
+      communityAuthorUsername: (m.community_author_username as string) || undefined,
       communityAuthorAvatar: (m.community_author_avatar as string) || undefined,
       communityTag: tag ?? "",
       communityTier: tier ?? undefined,
@@ -244,11 +260,26 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         title: decodeHtml(event.title ?? ""),
         slug: event.slug,
         date: event.date ?? event.eventDate ?? "",
-        excerpt: stripHtml(event.excerpt ?? ""),
+        excerpt: decodeHtml(
+          stripHtml(
+            (event.excerpt ?? "")
+              .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+              .replace(/<br\s*\/?>/gi, "\n")
+          )
+        ),
+        body: event.content ?? event.excerpt ?? "",
         image: event.featuredImage?.node?.sourceUrl || event.eventImageUrl,
         href: `/events/${event.slug}`,
         eventDate: event.eventDate ?? "",
+        endDate: event.endDate ?? "",
+        openingHours: event.openingHours ?? "",
         location: event.location ?? "",
+        city: event.city ?? "",
+        venueAddress: event.venueAddress ?? "",
+        admission: event.admission ?? "",
+        eventCategory: event.cultureInterests?.nodes?.[0]?.name ?? "",
+        organiserName: event.organiserName || undefined,
+        organiserSlug: event.organiserSlug || undefined,
       });
     }
   }

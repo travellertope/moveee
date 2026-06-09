@@ -1153,6 +1153,7 @@ class Culture_Mobile_API {
                 'href'                  => '/community/' . $post->post_name,
                 'communityAuthorId'     => get_post_meta( $post->ID, 'community_author_id', true ) ?: (string) $author_id,
                 'communityAuthor'       => get_post_meta( $post->ID, 'community_author_name', true ) ?: ( $author ? $author->display_name : '' ),
+                'communityAuthorUsername' => get_post_meta( $post->ID, 'community_author_username', true ) ?: ( $author ? $author->user_login : '' ),
                 'communityAuthorAvatar' => get_post_meta( $post->ID, 'community_author_avatar', true ) ?: '',
                 'communityTag'          => get_post_meta( $post->ID, 'community_tag', true ) ?: '',
                 'communityTier'         => get_post_meta( $post->ID, 'community_author_tier', true ) ?: '',

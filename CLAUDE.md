@@ -153,7 +153,8 @@ This ID is used everywhere as the canonical identifier.
 
 ### Step 4 — Frontend: newsletter preferences
 
-**`app/member/settings/NewsletterPreferences.tsx`**
+**`app/member/settings/newsletters/page.tsx`** (now a sub-route under settings)
+- The `NewsletterPreferences` component is rendered here.
 - Add to `NEWSLETTERS` array:
   ```ts
   {
@@ -477,6 +478,31 @@ Stored in `lib/interest-mappings.ts`. PHP allowlists in `class-culture-rest-api.
 `fashion-streetwear`, `food-drink`, `street-food`, `nightlife`, `live-music`, `music-production`, `independent-film`, `visual-art`, `architecture`, `photography`, `literature`, `visual-design`, `tech-culture`, `sport-wellness`, `travel`, `ideas`, `event-performance`, `event-community`
 
 The last two (`event-performance`, `event-community`) are only used as event categories — not shown in the user interest picker.
+
+### Directory entry city field
+
+`culture_directory` posts have an `_entry_city` meta field (string, `show_in_rest: true`)
+for disambiguation when similar names exist (e.g. "The Jazz Cafe, London" vs "The Jazz Cafe, Lagos").
+- PHP: registered in `class-culture-post-types.php` → `$directory_meta`; WP Admin meta box in same file
+- Search results include `city` in the JSON response (`class-culture-directory.php` → `handle_search`)
+- Quick-create accepts and saves `city` param (`handle_quick_create`)
+- Next.js: `app/api/directory/quick-create/route.ts` forwards `city` to WordPress
+- React: `DirectorySearch.tsx` shows city below title in results; two-step create UX (enter name → optionally add city → create)
+
+### NextAuth session shape (`lib/auth.ts`)
+
+The session `user` object includes these fields beyond the basics:
+```ts
+{
+  id, name, email, username, displayName, tier,     // core
+  avatarUrl, phone, whatsapp, gender,               // profile
+  dateOfBirth, nationality, city, occupation,       // KYC
+  credits, reputation, reputationTier, badges,      // gamification
+  dailyCreditsRemaining, registeredAt,              // gamification + moderation
+  hasPasskey, passkeyCount, creditsEscrowed,        // Phase 7
+}
+```
+All fields available as `session.user.X` in server components after `getServerSession(authOptions)`.
 
 ---
 

@@ -5,7 +5,7 @@ import EventHero from "./components/EventHero";
 import EventTimeline from "./components/EventTimeline";
 import "@/app/events.css";
 
-export const revalidate = 180;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: { absolute: "Happenings | The Moveee" },
