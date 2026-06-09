@@ -8,6 +8,7 @@ import { Search, User, ShoppingBag } from "lucide-react";
 import Ticker from "./Ticker";
 import AuthModal from "./AuthModal";
 import SearchOverlay from "./SearchOverlay";
+import NotificationBell from "./NotificationBell";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 interface HeaderProps {
@@ -127,6 +128,9 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
               )}
             </button>
 
+            {/* Notification bell — logged-in only */}
+            <NotificationBell />
+
             {/* User icon — links to /member when logged in, opens modal when not */}
             {loggedIn ? (
               <Link
@@ -153,8 +157,8 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
             )}
 
             {loggedIn ? (
-              <Link href="/member/settings" className="join-btn" style={{ textDecoration: "none" }}>
-                Settings →
+              <Link href="/member" className="join-btn" style={{ textDecoration: "none" }}>
+                Dashboard →
               </Link>
             ) : (
               <Link href="/connect" className="join-btn" style={{ textDecoration: "none" }}>
@@ -163,7 +167,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
             )}
           </div>
 
-          {/* Mobile: search + cart + sign-in icons + hamburger */}
+          {/* Mobile: search + cart + bell + hamburger */}
           <div className="masthead-mobile-actions">
             <button
               className="masthead-icon-btn"
@@ -183,19 +187,8 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
                 <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>
               )}
             </button>
-            {loggedIn ? (
-              <Link href="/member" className="masthead-icon-btn" aria-label="My account">
-                <User size={18} strokeWidth={1.5} />
-              </Link>
-            ) : (
-              <button
-                className="masthead-icon-btn"
-                aria-label="Sign in"
-                onClick={() => setModalOpen(true)}
-              >
-                <User size={18} strokeWidth={1.5} />
-              </button>
-            )}
+            {/* Notification bell on mobile (logged-in only) */}
+            <NotificationBell />
             <button
               className="masthead-hamburger"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -220,15 +213,32 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
             <Link href="/shop"     onClick={() => setMobileMenuOpen(false)} data-active={active("/shop")}>Lifestyle</Link>
             <Link href="/connect"  onClick={() => setMobileMenuOpen(false)} data-active={active("/connect")}>Connect</Link>
           </div>
+
+          {/* Member quick-links — only when logged in */}
+          {loggedIn && (
+            <div className="mobile-menu-member">
+              <div className="mobile-menu-member-name">
+                {user?.name?.split(" ")[0] ?? "Account"}
+              </div>
+              <div className="mobile-menu-member-links">
+                <Link href="/member"           onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+                <Link href="/member/wallet"    onClick={() => setMobileMenuOpen(false)}>Wallet</Link>
+                <Link href="/member/coupons"   onClick={() => setMobileMenuOpen(false)}>Coupons</Link>
+                <Link href="/connect/perks"    onClick={() => setMobileMenuOpen(false)}>Perks</Link>
+                <Link href="/member/settings"  onClick={() => setMobileMenuOpen(false)}>Settings</Link>
+              </div>
+            </div>
+          )}
+
           <div className="mobile-menu-actions">
             {loggedIn ? (
               <Link
-                href="/member/settings"
+                href="/member"
                 className="join-btn"
                 style={{ textDecoration: "none" }}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Settings →
+                Dashboard →
               </Link>
             ) : (
               <Link

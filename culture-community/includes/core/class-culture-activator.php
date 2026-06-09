@@ -123,11 +123,29 @@ class Culture_Activator {
             cashout_method varchar(50) NOT NULL DEFAULT '',
             cashout_account_name varchar(200) NOT NULL DEFAULT '',
             cashout_account_ref varchar(500) NOT NULL DEFAULT '',
+            expiry_notified tinyint(1) NOT NULL DEFAULT 0,
             PRIMARY KEY  (id),
             KEY user_idx (user_id),
             KEY perk_idx (perk_id),
             KEY status_type (status, type),
             KEY qr_token_idx (qr_token)
+        ) {$charset_collate};" );
+
+        // Notifications table.
+        $notif_table = $wpdb->prefix . 'culture_notifications';
+        dbDelta( "CREATE TABLE {$notif_table} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            type varchar(50) NOT NULL DEFAULT 'system',
+            title varchar(200) NOT NULL DEFAULT '',
+            body text NOT NULL,
+            action_url varchar(500) NOT NULL DEFAULT '',
+            meta text NOT NULL DEFAULT '{}',
+            read_at datetime DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY user_unread (user_id, read_at),
+            KEY user_created (user_id, created_at)
         ) {$charset_collate};" );
 
         // Passkeys table.

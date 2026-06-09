@@ -985,6 +985,31 @@ class Culture_REST_API {
             'callback'            => array( __CLASS__, 'handle_passkey_delete' ),
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
+
+        // Notification endpoints.
+        register_rest_route( 'culture/v1', '/notifications', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_notifications' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'limit'   => array( 'required' => false, 'type' => 'integer', 'default' => 30 ),
+                'offset'  => array( 'required' => false, 'type' => 'integer', 'default' => 0 ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/notifications/count', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_notification_count' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/notifications/read', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_mark_notifications_read' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
     }
 
     /* ——————————————————————————————————————
@@ -1088,6 +1113,37 @@ class Culture_REST_API {
         $deleted = Culture_WebAuthn::delete_credential( $user_id, $cred_id );
         if ( ! $deleted ) {
             return new WP_Error( 'not_found', 'Credential not found.', array( 'status' => 404 ) );
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Notification handlers
+     * —————————————————————————————————————— */
+
+    public static function handle_get_notifications( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $limit   = min( 50, max( 1, (int) $request->get_param( 'limit' ) ) );
+        $offset  = max( 0, (int) $request->get_param( 'offset' ) );
+        $rows    = Culture_Notifications::get_for_user( $user_id, $limit, $offset );
+        foreach ( $rows as &$row ) {
+            $row['meta'] = json_decode( $row['meta'] ?? '{}', true ) ?: array();
+        }
+        return rest_ensure_response( $rows );
+    }
+
+    public static function handle_notification_count( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        return rest_ensure_response( array( 'unread' => Culture_Notifications::count_unread( $user_id ) ) );
+    }
+
+    public static function handle_mark_notifications_read( $request ) {
+        $user_id         = (int) $request->get_param( 'user_id' );
+        $notification_id = $request->get_param( 'notification_id' );
+        if ( $notification_id ) {
+            Culture_Notifications::mark_read( $user_id, (int) $notification_id );
+        } else {
+            Culture_Notifications::mark_all_read( $user_id );
         }
         return rest_ensure_response( array( 'success' => true ) );
     }

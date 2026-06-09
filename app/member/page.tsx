@@ -150,6 +150,10 @@ export default async function MemberPage() {
 
             {/* Quick links */}
             <section className="mem-card mem-links-card">
+              <Link href="/member/wallet"        className="mem-link">My Wallet →</Link>
+              <Link href="/member/coupons"       className="mem-link">My Coupons →</Link>
+              <Link href="/member/notifications" className="mem-link">Notifications →</Link>
+              <Link href="/connect/perks"        className="mem-link">Browse Perks →</Link>
               <Link href="/member/collection" className="mem-link">
                 My Collection →
               </Link>

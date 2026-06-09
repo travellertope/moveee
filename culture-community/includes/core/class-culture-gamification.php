@@ -545,6 +545,7 @@ class Culture_Gamification {
 
         self::award_credits( $author_id, $amounts['credits'], 'post_validated', $post_id );
         self::award_reputation( $author_id, $amounts['reputation'], 'post_validated', $post_id );
+        do_action( 'culture_post_validated', $post_id, $author_id );
     }
 
     // ── Ledger ────────────────────────────────────────────────────────────────
