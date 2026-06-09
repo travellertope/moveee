@@ -100,7 +100,15 @@ export interface FeedItem {
 
   // Happening / event
   eventDate?: string;
+  endDate?: string;
   location?: string;
+  venueAddress?: string;
+  openingHours?: string;
+  admission?: string;
+  eventCategory?: string;
+  organiserName?: string;
+  organiserSlug?: string;
+  city?: string;          // used on happening + directory items
 
   // Directory
   entryType?: string;

@@ -11,6 +11,9 @@ import TypeBadge from "../ui/TypeBadge";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
 import ImageLightbox from "../ui/ImageLightbox";
+import HappeningDetailModal from "./HappeningDetailModal";
+import DirectoryDetailModal from "./DirectoryDetailModal";
+import QuoteDetailModal from "./QuoteDetailModal";
 import type { FeedItem, TemplateType, PollOption } from "../../types";
 
 const WINDOW_W = Dimensions.get("window").width;
@@ -447,24 +450,43 @@ function CommunityCard({ item, onPress, onAuthorPress, forYouBadge }: Props) {
 }
 
 // ── Quote card ────────────────────────────────────────────────────────────────
-function QuoteCard({ item, onPress }: Props) {
+function QuoteCard({ item }: Props) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
   return (
-    <TouchableOpacity style={[styles.card]} onPress={onPress} activeOpacity={0.95}>
-      <View style={styles.quoteRow}>
-        <Text style={styles.quoteMark}>"</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.quoteText}>{item.title}</Text>
-          <View style={styles.quoteFooter}>
-            <TypeBadge type="quote" />
-            {item.quoteAuthor ? <Text style={styles.quoteAuthor}>{item.quoteAuthor}</Text> : null}
-            {item.quoteSource ? <Text style={styles.quoteSrc}>· {item.quoteSource}</Text> : null}
-            <View style={{ flex: 1 }} />
-            <Text style={styles.dateText}>{formatDate(item.date)}</Text>
+    <>
+      <TouchableOpacity style={[styles.card]} onPress={() => setDrawerOpen(true)} activeOpacity={0.95}>
+        <View style={styles.quoteRow}>
+          <Text style={styles.quoteMark}>"</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.quoteText}>{item.title}</Text>
+            <View style={styles.quoteFooter}>
+              <TypeBadge type="quote" />
+              {item.quoteAuthor ? <Text style={styles.quoteAuthor}>{item.quoteAuthor}</Text> : null}
+              {item.quoteSource ? <Text style={styles.quoteSrc}>· {item.quoteSource}</Text> : null}
+              <View style={{ flex: 1 }} />
+              <Text style={styles.dateText}>{formatDate(item.date)}</Text>
+            </View>
           </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+      <QuoteDetailModal visible={drawerOpen} item={item} onClose={() => setDrawerOpen(false)} />
+    </>
   );
+}
+
+// ── Happening date range helper ────────────────────────────────────────────────
+function fmtHappeningDate(start: string, end?: string | null): string {
+  try {
+    const s = new Date(start);
+    const startStr = s.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    if (!end) return startStr;
+    const e = new Date(end);
+    if (s.toDateString() === e.toDateString()) return startStr;
+    if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+      return `${s.getDate()}–${e.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+    }
+    return `${startStr} – ${e.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+  } catch { return start; }
 }
 
 // ── Generic card (pulse / editorial / happening / directory) ──────────────────
@@ -482,27 +504,42 @@ const READ_MORE_COLOR: Record<string, string> = {
 };
 
 function GenericCard({ item, onPress }: Props) {
-  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [lightboxIdx, setLightboxIdx]     = useState<number | null>(null);
+  const [happeningOpen, setHappeningOpen] = useState(false);
+  const [directoryOpen, setDirectoryOpen] = useState(false);
+
   const CLAMP = 280;
   const excerpt = item.excerpt ?? "";
   const isLong = excerpt.length > CLAMP;
   const displayExcerpt = isLong ? excerpt.slice(0, CLAMP) + "…" : excerpt;
 
+  // Happening + Directory open their own detail drawer; others use onPress
+  const handlePress = () => {
+    if (item.type === "happening") { setHappeningOpen(true); return; }
+    if (item.type === "directory") { setDirectoryOpen(true); return; }
+    onPress();
+  };
+
   return (
     <>
-      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.95}>
+      <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.95}>
         <View style={styles.metaRow}>
           <TypeBadge type={item.type} />
           {item.type === "happening" && item.eventDate ? (
             <Text style={[styles.metaTag, { color: READ_MORE_COLOR.happening, fontFamily: fonts.sansBold }]}>
-              {item.eventDate}
+              {fmtHappeningDate(item.eventDate, item.endDate)}
             </Text>
           ) : null}
-          {item.type === "happening" && item.location ? (
-            <Text style={styles.metaTagMuted} numberOfLines={1}>· {item.location}</Text>
+          {item.type === "happening" && (item.location || item.city) ? (
+            <Text style={styles.metaTagMuted} numberOfLines={1}>
+              · {[item.location, item.city].filter(Boolean).join(", ")}
+            </Text>
           ) : null}
           {item.type === "directory" && item.entryType ? (
             <Text style={styles.metaTagMuted}>{item.entryType}</Text>
+          ) : null}
+          {item.type === "directory" && item.city ? (
+            <Text style={styles.metaTagMuted} numberOfLines={1}>· {item.city}</Text>
           ) : null}
           {item.type === "editorial" && item.category ? (
             <Text style={styles.metaTagMuted}>{item.category}</Text>
@@ -514,8 +551,22 @@ function GenericCard({ item, onPress }: Props) {
         <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
         {displayExcerpt ? <Text style={styles.excerpt}>{displayExcerpt}</Text> : null}
         {isLong ? (
-          <Text style={[styles.readMore, { color: READ_MORE_COLOR[item.type] ?? colors.gold }]}>Read more →</Text>
-        ) : null}
+          <Text style={[styles.readMore, { color: READ_MORE_COLOR[item.type] ?? colors.gold }]}>
+            {item.type === "happening" || item.type === "directory" ? "See details →" : "Read more →"}
+          </Text>
+        ) : (
+          (item.type === "happening" || item.type === "directory") ? (
+            <Text style={[styles.readMore, { color: READ_MORE_COLOR[item.type] }]}>See details →</Text>
+          ) : null
+        )}
+
+        {/* Happening: admission pill */}
+        {item.type === "happening" && item.admission && (
+          <View style={styles.admissionPill}>
+            <Ionicons name="ticket-outline" size={11} color={colors.badgeHappeningText} />
+            <Text style={styles.admissionText}>{item.admission}</Text>
+          </View>
+        )}
 
         <View style={styles.internalLinkCard}>
           {item.image ? (
@@ -544,6 +595,9 @@ function GenericCard({ item, onPress }: Props) {
           onClose={() => setLightboxIdx(null)}
         />
       )}
+
+      <HappeningDetailModal visible={happeningOpen} item={item} onClose={() => setHappeningOpen(false)} />
+      <DirectoryDetailModal visible={directoryOpen} item={item} onClose={() => setDirectoryOpen(false)} />
     </>
   );
 }
@@ -637,6 +691,13 @@ const styles = StyleSheet.create({
   title:   { fontFamily: fonts.serifBold, fontSize: fontSize.md, color: colors.ink, lineHeight: 22, marginBottom: space[1] },
   excerpt: { fontFamily: fonts.sans, fontSize: fontSize.sm + 1, color: colors.inkSoft, lineHeight: 21, marginBottom: 4 },
   readMore:{ fontFamily: fonts.sansBold, fontSize: fontSize.sm, marginTop: 2, marginBottom: 2 },
+
+  admissionPill: {
+    flexDirection: "row", alignItems: "center", gap: 4, alignSelf: "flex-start",
+    backgroundColor: colors.badgeHappeningBg, borderRadius: radius.full,
+    paddingHorizontal: space[2], paddingVertical: 2, marginTop: 4,
+  },
+  admissionText: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow, color: colors.badgeHappeningText, letterSpacing: 0.8 },
 
   internalLinkCard: {
     flexDirection: "row", alignItems: "stretch",

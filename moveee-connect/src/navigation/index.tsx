@@ -18,7 +18,6 @@ import ConnectFeedScreen from "../screens/community/ConnectFeedScreen";
 import PostDetailScreen from "../screens/community/PostDetailScreen";
 import PulseDetailScreen from "../screens/community/PulseDetailScreen";
 import NewPostScreen from "../screens/community/NewPostScreen";
-import EventSubmitScreen from "../screens/community/EventSubmitScreen";
 import DirectorySubmitScreen from "../screens/community/DirectorySubmitScreen";
 import MemberProfileScreen from "../screens/community/MemberProfileScreen";
 import MemberDirectoryScreen from "../screens/community/MemberDirectoryScreen";
@@ -50,7 +49,6 @@ type FeedStackParams = {
   PostDetail:        { item: FeedItem };
   PulseDetail:       { item: FeedItem };
   NewPost:           undefined;
-  EventSubmit:       undefined;
   DirectorySubmit:   undefined;
   MemberProfile:     { userId: string; username: string };
   MemberDirectory:   undefined;
@@ -77,7 +75,6 @@ function ConnectStack() {
       <Stack.Screen name="PostDetail"      component={PostDetailScreen} />
       <Stack.Screen name="PulseDetail"     component={PulseDetailScreen} />
       <Stack.Screen name="NewPost"         component={NewPostScreen} />
-      <Stack.Screen name="EventSubmit"     component={EventSubmitScreen} />
       <Stack.Screen name="DirectorySubmit" component={DirectorySubmitScreen} />
       <Stack.Screen name="MemberProfile"   component={MemberProfileScreen} />
       <Stack.Screen name="MemberDirectory" component={MemberDirectoryScreen} />
