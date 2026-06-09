@@ -815,15 +815,19 @@ class Culture_Mobile_API {
         return Culture_Directory::handle_submit( $request );
     }
 
+    const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote' );
+
     public static function handle_react( $request ) {
         $user_id = get_current_user_id();
         $post_id = (int) $request->get_param( 'post_id' );
+        $type    = sanitize_key( $request->get_param( 'type' ) ?: 'love' );
 
         $post = get_post( $post_id );
-        if ( ! $post || 'culture_post' !== $post->post_type ) {
+        if ( ! $post || ! in_array( $post->post_type, self::REACTABLE_POST_TYPES, true ) ) {
             return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
         }
 
+        $is_community  = $post->post_type === 'culture_post';
         $liked_ids     = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
         $already_liked = in_array( $post_id, $liked_ids, false );
 
@@ -833,7 +837,7 @@ class Culture_Mobile_API {
         } else {
             $liked_ids[] = $post_id;
             $new_count   = (int) get_post_meta( $post_id, '_culture_like_count', true ) + 1;
-            if ( class_exists( 'Culture_Gamification' ) ) {
+            if ( $is_community && class_exists( 'Culture_Gamification' ) ) {
                 Culture_Gamification::award_points( $user_id, 'community_like' );
             }
         }
@@ -841,8 +845,17 @@ class Culture_Mobile_API {
         update_user_meta( $user_id, '_culture_liked_posts', $liked_ids );
         update_post_meta( $post_id, '_culture_like_count', $new_count );
 
-        // Check if post has crossed the validation threshold for credit earning.
-        if ( ! $already_liked && class_exists( 'Culture_Gamification' ) ) {
+        // Also increment the named reaction counter (love/fire/clap) used by the feed.
+        $reaction_key = in_array( $type, array( 'love', 'fire', 'clap' ), true ) ? 'reaction_' . $type : 'reaction_love';
+        if ( ! $already_liked ) {
+            $current = (int) get_post_meta( $post_id, $reaction_key, true );
+            update_post_meta( $post_id, $reaction_key, $current + 1 );
+        } else {
+            $current = (int) get_post_meta( $post_id, $reaction_key, true );
+            update_post_meta( $post_id, $reaction_key, max( 0, $current - 1 ) );
+        }
+
+        if ( $is_community && ! $already_liked && class_exists( 'Culture_Gamification' ) ) {
             Culture_Gamification::check_post_threshold( $post_id );
         }
 
