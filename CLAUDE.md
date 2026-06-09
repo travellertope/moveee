@@ -612,13 +612,9 @@ The app lives in `moveee-connect/` using Expo + React Navigation + Zustand + MMK
 
 ### What is missing (priority order)
 1. PasskeyManager full implementation in Security tab (`react-native-passkeys` not yet installed)
-2. NotificationsScreen (Phase 8a — bell icon in header, badge count, list)
-3. "For You" toggle in ConnectFeedScreen (Phase 8b — client-side scoring)
-4. AnalyticsScreen (Phase 8c — credit/rep charts)
-5. MembershipScreen IAP wiring (Google Play Billing + App Store IAP)
-6. `react-native-qrcode-svg` — not yet installed; CouponsScreen shows QR placeholder
-7. EventsScreen / EventDetailScreen — still stubs ("Coming soon")
-8. GamesScreen — game grid but no game logic
+2. MembershipScreen IAP wiring (Google Play Billing + App Store IAP)
+3. EventsScreen / EventDetailScreen — still stubs ("Coming soon")
+4. GamesScreen — game grid but no game logic
 
 ### Event template endpoint note
 Event image upload: `POST https://themoveee.com/api/events/upload-image`
@@ -626,6 +622,13 @@ Event submit: `POST https://themoveee.com/api/events/member-submit`
 Both go via the Next.js proxy (NOT WordPress directly). The `PROXY` constant
 (`"https://themoveee.com/api"`) is defined at the top of NewPostScreen.tsx.
 All other post templates submit to `${CULTURE_API}/community/submit` (WordPress directly).
+
+### Phase 8 key notes
+- `useFeedRecommendations.ts` is a direct port of `lib/feed-recommendations.ts` — keep them in sync
+- `react-native-svg` and `react-native-qrcode-svg` are now installed
+- AnalyticsScreen uses `react-native-svg` for SVG bar/line charts — no external charting lib
+- Notification bell polls `/api/notifications/count` every 30s via `useNotificationCount` hook
+- "For You" badge on community cards: ochre `badgePulseBg` background, `badgePulseText` colour
 
 ### Key gotchas
 - The RN app calls **WordPress REST directly** for most endpoints. Wallet/Perks/Passkey endpoints require `CULTURE_API_SECRET` so those must go through Next.js proxy routes at `https://themoveee.com/api/...`
