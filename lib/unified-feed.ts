@@ -117,7 +117,7 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
   try {
     res = await fetch(
       `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count&meta_fields=community_author_name,community_author_id,community_author_username,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe`,
-      { cache: "no-store", signal: ctrl.signal }
+      { next: { revalidate: 60 }, signal: ctrl.signal }
     );
   } catch { clearTimeout(timer); return []; }
   clearTimeout(timer);
@@ -192,9 +192,9 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
     communityResult,
   ] = await Promise.allSettled([
     getPulseStories({ perPage: 40 }),
-    getWPData(GET_STORIES, { first: 30 }, { revalidate: 0 }),
-    getEventsWithFallback(30, { revalidate: 0 }),
-    getWPData(GET_DIRECTORY_ENTRIES, { first: 30 }, { revalidate: 0 }),
+    getWPData(GET_STORIES, { first: 30 }, { revalidate: 60 }),
+    getEventsWithFallback(30, { revalidate: 60 }),
+    getWPData(GET_DIRECTORY_ENTRIES, { first: 30 }, { revalidate: 60 }),
     getWPQuotes({ first: 50 }),
     getCommunityPosts(),
   ]);

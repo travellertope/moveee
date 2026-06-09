@@ -212,7 +212,7 @@ export async function getPulseStories({
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 12000);
   try {
-    const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+    const res = await fetch(url, { next: { revalidate: 60 }, signal: ctrl.signal });
     clearTimeout(timer);
     if (!res.ok) return [];
     return res.json();
