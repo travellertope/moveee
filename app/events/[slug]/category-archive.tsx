@@ -108,7 +108,7 @@ export default async function CategoryArchive({ slug, categoryInfo }: { slug: st
 
   const sidebarCities = ALL_CITIES.map((c) => ({
     ...c,
-    count: allEvents.filter((e) =>
+    count: allEvents.filter((e: any) =>
       `${e.city ?? ""} ${e.location ?? ""}`.toLowerCase().includes(c.name.toLowerCase())
     ).length,
   })).filter((c) => c.count > 0);
