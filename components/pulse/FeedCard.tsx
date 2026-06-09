@@ -80,6 +80,9 @@ import InternalLinkCard from "./InternalLinkCard";
 
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
 const CommunityDetailModal = dynamic(() => import("./CommunityDetailModal"), { ssr: false });
+const HappeningDetailModal = dynamic(() => import("./HappeningDetailModal"), { ssr: false });
+const DirectoryDetailModal = dynamic(() => import("./DirectoryDetailModal"), { ssr: false });
+const QuoteDetailModal = dynamic(() => import("./QuoteDetailModal"), { ssr: false });
 
 /** Remove the last URL from text when a link preview will be shown for it. */
 function stripTrailingUrl(text: string, sourceUrl?: string): string {
@@ -193,45 +196,58 @@ export default function FeedCard({
 
   // ── Quote card ──
   if (item.type === "quote") {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [modalOpen, setModalOpen] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const closeModal = useCallback(() => setModalOpen(false), []);
+
     return (
-      <article style={{
-        background: "#fff",
-        borderBottom: "1px solid #e8e2d8",
-        overflow: "hidden",
-        minWidth: 0,
-        padding: "1.1rem 1.25rem",
-      }}>
-        <div style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start" }}>
-          <span style={{ color: "#d8c9b0", fontFamily: "serif", fontSize: "2rem", lineHeight: 0.9, flexShrink: 0, marginTop: "0.2rem" }}>"</span>
-          <div style={{ flex: 1 }}>
-            <p style={{
-              color: "#14110d",
-              fontFamily: "var(--font-fraunces), serif",
-              fontSize: "0.95rem",
-              lineHeight: 1.55,
-              fontStyle: "italic",
-              marginBottom: "0.6rem",
-            }}>
-              {item.title}
-            </p>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <Badge {...typeMeta} />
-              {item.quoteAuthor && <span style={{ color: "#c5491f", fontSize: "0.75rem", fontWeight: 600 }}>{item.quoteAuthor}</span>}
-              {item.quoteSource && <span style={{ color: "#7a6f5c", fontSize: "0.72rem" }}>· {item.quoteSource}</span>}
-              <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
-              <Link
-                href={item.href}
-                style={{ display: "flex", alignItems: "center", color: "#7a6f5c", textDecoration: "none", flexShrink: 0 }}
-                aria-label="View quote"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-              </Link>
+      <>
+        <article
+          onClick={() => setModalOpen(true)}
+          style={{
+            background: "#fff",
+            borderBottom: "1px solid #e8e2d8",
+            overflow: "hidden",
+            minWidth: 0,
+            padding: "1.1rem 1.25rem",
+            cursor: "pointer",
+          }}
+        >
+          <div style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start" }}>
+            <span style={{ color: "#d8c9b0", fontFamily: "serif", fontSize: "2rem", lineHeight: 0.9, flexShrink: 0, marginTop: "0.2rem" }}>"</span>
+            <div style={{ flex: 1 }}>
+              <p style={{
+                color: "#14110d",
+                fontFamily: "var(--font-fraunces), serif",
+                fontSize: "0.95rem",
+                lineHeight: 1.55,
+                fontStyle: "italic",
+                marginBottom: "0.6rem",
+              }}>
+                {item.title}
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Badge {...typeMeta} />
+                {item.quoteAuthor && <span style={{ color: "#c5491f", fontSize: "0.75rem", fontWeight: 600 }}>{item.quoteAuthor}</span>}
+                {item.quoteSource && <span style={{ color: "#7a6f5c", fontSize: "0.72rem" }}>· {item.quoteSource}</span>}
+                <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+                <Link
+                  href={item.href}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ display: "flex", alignItems: "center", color: "#7a6f5c", textDecoration: "none", flexShrink: 0 }}
+                  aria-label="View quote"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </article>
+        </article>
+        {modalOpen && <QuoteDetailModal item={item} onClose={closeModal} />}
+      </>
     );
   }
 
@@ -815,8 +831,13 @@ export default function FeedCard({
     );
   }
 
-  // ── Directory card — inline excerpt + internal link card ──
+  // ── Directory card — inline excerpt + detail modal ──
   if (item.type === "directory") {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [modalOpen, setModalOpen] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const closeModal = useCallback(() => setModalOpen(false), []);
+
     const CLAMP_CHARS = 280;
     const text = decodeHtml(item.excerpt ?? "");
     const isLong = text.length > CLAMP_CHARS;
@@ -824,62 +845,69 @@ export default function FeedCard({
     const typeMeta = TYPE_BADGE.directory;
 
     return (
-      <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
-        {/* Badges row */}
-        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
-          <Badge {...typeMeta} />
-          {item.entryType && (
-            <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
-              {item.entryType}
-            </span>
-          )}
-          <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
-        </div>
+      <>
+        <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
+          {/* Badges row */}
+          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
+            <Badge {...typeMeta} />
+            {item.entryType && (
+              <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
+                {item.entryType}
+              </span>
+            )}
+            <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+          </div>
 
-        {/* Body — clicking navigates to the directory entry */}
-        <Link href={item.href} style={{ textDecoration: "none", display: "block" }}>
-          <h3 style={{
-            color: "#14110d",
-            fontFamily: "var(--font-fraunces), serif",
-            fontSize: "0.97rem",
-            fontWeight: 700,
-            lineHeight: 1.35,
-            marginBottom: "0.5rem",
-          }}>
-            {item.title}
-          </h3>
-          {displayText && (
-            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
-              {displayText}
-            </p>
-          )}
-          {isLong && (
-            <span style={{ color: "#085041", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
-              Read more →
-            </span>
-          )}
-        </Link>
+          {/* Body — clicking opens modal */}
+          <div onClick={() => setModalOpen(true)} style={{ cursor: "pointer" }}>
+            <h3 style={{
+              color: "#14110d",
+              fontFamily: "var(--font-fraunces), serif",
+              fontSize: "0.97rem",
+              fontWeight: 700,
+              lineHeight: 1.35,
+              marginBottom: "0.5rem",
+            }}>
+              {item.title}
+            </h3>
+            {displayText && (
+              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+                {displayText}
+              </p>
+            )}
+            {isLong && (
+              <span style={{ color: "#085041", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+                Read more →
+              </span>
+            )}
+          </div>
 
-        {/* Internal link card */}
-        <InternalLinkCard
-          href={item.href}
-          label="Culture Directory"
-          title={item.title}
-          description={item.excerpt}
-          image={item.image}
-        />
-      </article>
+          {/* Internal link card */}
+          <InternalLinkCard
+            href={item.href}
+            label="Culture Directory"
+            title={item.title}
+            description={item.excerpt}
+            image={item.image}
+          />
+        </article>
+        {modalOpen && <DirectoryDetailModal item={item} onClose={closeModal} />}
+      </>
     );
   }
 
-  // ── Happening card — inline description + internal link card ──
+  // ── Happening card — inline description + detail modal ──
   if (item.type === "happening") {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [modalOpen, setModalOpen] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const closeModal = useCallback(() => setModalOpen(false), []);
+
     const CLAMP_CHARS = 280;
     const rawText = item.excerpt ?? "";
     const paragraphs = rawText.split(/\n\n+/).map(p => p.replace(/\n/g, " ").trim()).filter(Boolean);
     const fullText = paragraphs.join("\n\n");
     const isLong = fullText.length > CLAMP_CHARS;
-    // Clamp at paragraph boundary when possible
     let displayParas: string[] = [];
     if (!isLong) {
       displayParas = paragraphs;
@@ -905,72 +933,75 @@ export default function FeedCard({
       : null;
 
     return (
-      <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
-        {/* Badges row */}
-        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
-          <Badge {...typeMeta} />
-          {item.eventCategory && (
-            <span style={{ fontSize: "0.58rem", color: "#b38238", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-              {item.eventCategory}
-            </span>
-          )}
-          {eventDateStr && (
-            <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.03em" }}>
-              {eventDateStr}{endDateStr ? ` — ${endDateStr}` : ""}{item.openingHours ? ` · ${item.openingHours}` : ""}
-            </span>
-          )}
-          {item.location && (
-            <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.04em" }}>
-              · {item.location}
-            </span>
-          )}
-          <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
-        </div>
+      <>
+        <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
+          {/* Badges row */}
+          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
+            <Badge {...typeMeta} />
+            {item.eventCategory && (
+              <span style={{ fontSize: "0.58rem", color: "#b38238", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                {item.eventCategory}
+              </span>
+            )}
+            {eventDateStr && (
+              <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.03em" }}>
+                {eventDateStr}{endDateStr ? ` — ${endDateStr}` : ""}{item.openingHours ? ` · ${item.openingHours}` : ""}
+              </span>
+            )}
+            {item.location && (
+              <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.04em" }}>
+                · {item.location}
+              </span>
+            )}
+            <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+          </div>
 
-        {/* Body */}
-        <Link href={item.href} style={{ textDecoration: "none", display: "block" }}>
-          {item.image && (
-            <div style={{ width: "100%", maxHeight: "220px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8" }}>
-              <img src={item.image} alt={item.title} style={{ width: "100%", height: "220px", objectFit: "cover", display: "block" }} loading="lazy" />
-            </div>
-          )}
-          <h3 style={{
-            color: "#14110d",
-            fontFamily: "var(--font-fraunces), serif",
-            fontSize: "0.97rem",
-            fontWeight: 700,
-            lineHeight: 1.35,
-            marginBottom: "0.5rem",
-          }}>
-            {decodeHtml(item.title)}
-          </h3>
-          {displayParas.length > 0 && (
-            <div style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6 }}>
-              {displayParas.map((p, i) => (
-                <p key={i} style={{ margin: i === 0 ? 0 : "0.5em 0 0" }}>{p}</p>
-              ))}
-            </div>
-          )}
-          {isLong && (
-            <span style={{ color: "#3c3489", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
-              Read more →
-            </span>
-          )}
-          {item.admission && (
-            <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "#7a6f5c", fontWeight: 600 }}>
-              {item.admission}
-            </div>
-          )}
-        </Link>
+          {/* Body — clicking opens modal */}
+          <div onClick={() => setModalOpen(true)} style={{ cursor: "pointer" }}>
+            {item.image && (
+              <div style={{ width: "100%", maxHeight: "220px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8" }}>
+                <img src={item.image} alt={item.title} style={{ width: "100%", height: "220px", objectFit: "cover", display: "block" }} loading="lazy" />
+              </div>
+            )}
+            <h3 style={{
+              color: "#14110d",
+              fontFamily: "var(--font-fraunces), serif",
+              fontSize: "0.97rem",
+              fontWeight: 700,
+              lineHeight: 1.35,
+              marginBottom: "0.5rem",
+            }}>
+              {decodeHtml(item.title)}
+            </h3>
+            {displayParas.length > 0 && (
+              <div style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6 }}>
+                {displayParas.map((p, i) => (
+                  <p key={i} style={{ margin: i === 0 ? 0 : "0.5em 0 0" }}>{p}</p>
+                ))}
+              </div>
+            )}
+            {isLong && (
+              <span style={{ color: "#3c3489", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+                Read more →
+              </span>
+            )}
+            {item.admission && (
+              <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "#7a6f5c", fontWeight: 600 }}>
+                {item.admission}
+              </div>
+            )}
+          </div>
 
-        {/* Internal link card — image already shown above so omit it here */}
-        <InternalLinkCard
-          href={item.href}
-          label="Moveee Happenings"
-          title={decodeHtml(item.title)}
-          description={item.excerpt}
-        />
-      </article>
+          {/* Internal link card */}
+          <InternalLinkCard
+            href={item.href}
+            label="Moveee Happenings"
+            title={decodeHtml(item.title)}
+            description={item.excerpt}
+          />
+        </article>
+        {modalOpen && <HappeningDetailModal item={item} onClose={closeModal} />}
+      </>
     );
   }
 
