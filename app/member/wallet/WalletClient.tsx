@@ -12,22 +12,55 @@ interface LedgerEntry {
 }
 
 const SOURCE_LABELS: Record<string, string> = {
-  post_validated: "Post published",
-  community_post: "Community post",
-  perk_redeem: "Perk redeemed",
+  post_validated:       "Post published",
+  community_post:       "Community post",
+  perk_redeem:          "Perk redeemed",
   perk_redeem_rollback: "Perk refund",
-  cashout: "Cash out",
-  cashout_refund: "Cash out refund",
-  profile_completed: "Profile completed",
-  email_verified: "Email verified",
-  directory_opt_in: "Directory opt-in",
-  newsletter_subscribed: "Newsletter signup",
-  poll_vote: "Poll vote",
+  cashout:              "Cash out",
+  cashout_refund:       "Cash out refund",
+  profile_completed:    "Profile completed",
+  email_verified:       "Email verified",
+  directory_opt_in:     "Directory opt-in",
+  newsletter_subscribed:"Newsletter signup",
+  poll_vote:            "Poll vote",
 };
+
+const CURRENCY_SYMBOL: Record<string, string> = { GBP: "£", USD: "$", NGN: "₦" };
+
+const NGN_BANKS = [
+  "Access Bank", "Citibank Nigeria", "Ecobank Nigeria", "Fidelity Bank",
+  "First Bank of Nigeria", "First City Monument Bank (FCMB)", "Globus Bank",
+  "Guaranty Trust Bank (GTBank)", "Heritage Bank", "Keystone Bank", "Lotus Bank",
+  "Polaris Bank", "Providus Bank", "Stanbic IBTC Bank", "Standard Chartered",
+  "Sterling Bank", "SunTrust Bank", "Titan Trust Bank", "Union Bank of Nigeria",
+  "United Bank for Africa (UBA)", "Unity Bank", "Wema Bank", "Zenith Bank",
+];
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "10px 12px",
+  border: "1px solid rgba(42,36,28,.15)",
+  borderRadius: 3,
+  fontSize: "0.85rem",
+  fontFamily: "inherit",
+  background: "var(--paper)",
+  color: "var(--ink)",
+  boxSizing: "border-box",
+};
+
+const fieldStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 6 };
+const labelStyle: React.CSSProperties = {
+  fontSize: "8px", fontFamily: "'JetBrains Mono', monospace",
+  letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ochre)",
+};
+const hintStyle: React.CSSProperties = {
+  fontSize: "0.7rem", color: "var(--mute)",
+  fontFamily: "'JetBrains Mono', monospace", letterSpacing: ".04em",
+};
 
 export default function WalletClient({
   credits,
@@ -38,11 +71,14 @@ export default function WalletClient({
   creditsPerGbp: number;
   entries: LedgerEntry[];
 }) {
-  const [tab, setTab] = useState<"history" | "cashout">("history");
+  const [tab, setTab]               = useState<"history" | "cashout">("history");
   const [cashCredits, setCashCredits] = useState("");
-  const [currency, setCurrency] = useState("GBP");
+  const [currency, setCurrency]     = useState("GBP");
   const [accountName, setAccountName] = useState("");
-  const [accountRef, setAccountRef] = useState("");
+  const [sortCode, setSortCode]     = useState("");
+  const [routingNumber, setRoutingNumber] = useState("");
+  const [bankName, setBankName]     = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [cashResult, setCashResult] = useState<{ success: boolean; message: string } | null>(null);
   const [stepUpError, setStepUpError] = useState("");
@@ -66,22 +102,30 @@ export default function WalletClient({
     }
   }
 
-  const creditsNum = parseInt(cashCredits) || 0;
-  const feePercent = 30;
-  const feeCredits = Math.round(creditsNum * feePercent / 100);
-  const netCredits = creditsNum - feeCredits;
-  const cashAmount = (netCredits / creditsPerGbp).toFixed(2);
+  const creditsNum  = parseInt(cashCredits) || 0;
+  const feePercent  = 30;
+  const feeCredits  = Math.round(creditsNum * feePercent / 100);
+  const netCredits  = creditsNum - feeCredits;
+  const symbol      = CURRENCY_SYMBOL[currency] ?? currency;
+  // Approximate conversion — server will use live rate for non-GBP
+  const cashAmount  = (netCredits / creditsPerGbp).toFixed(2);
+
+  // Per-currency validation
+  const gbpValid  = currency !== "GBP"  || (sortCode.trim().length > 0 && accountNumber.trim().length > 0);
+  const usdValid  = currency !== "USD"  || (bankName.trim().length > 0 && routingNumber.trim().length > 0 && accountNumber.trim().length > 0);
+  const ngnValid  = currency !== "NGN"  || (bankName.trim().length > 0 && accountNumber.trim().length > 0);
+  const formValid = creditsNum >= 100 && creditsNum <= credits && accountName.trim().length > 0 && gbpValid && usdValid && ngnValid;
 
   async function handleCashout(e: React.FormEvent) {
     e.preventDefault();
-    if (creditsNum < 100 || creditsNum > credits) return;
+    if (!formValid) return;
     setSubmitting(true);
     setCashResult(null);
     setStepUpError("");
     try {
       const stepUpToken = await doStepUp();
       if (!stepUpToken) {
-        setStepUpError("Passkey verification is required for cash-out. Please set up a passkey in your security settings.");
+        setStepUpError("Passkey verification is required for cash-out. Please set up a passkey in Security settings.");
         setSubmitting(false);
         return;
       }
@@ -89,17 +133,20 @@ export default function WalletClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          credits: creditsNum,
-          method: "bank_transfer",
-          account_name: accountName,
-          account_ref: accountRef,
+          credits:        creditsNum,
+          method:         "bank_transfer",
           currency,
-          step_up_token: stepUpToken,
+          account_name:   accountName,
+          account_number: accountNumber,
+          sort_code:      sortCode   || undefined,
+          routing_number: routingNumber || undefined,
+          bank_name:      bankName   || undefined,
+          step_up_token:  stepUpToken,
         }),
       });
       const data = await res.json();
       if (res.ok) {
-        setCashResult({ success: true, message: `Cash out request submitted. You'll receive £${cashAmount} after admin approval (48hr hold).` });
+        setCashResult({ success: true, message: `Cash out request submitted. You'll receive ${symbol}${cashAmount} after admin approval (48 hr hold).` });
       } else {
         setCashResult({ success: false, message: data.error || "Something went wrong." });
       }
@@ -160,11 +207,13 @@ export default function WalletClient({
           <div className="mem-card-label">Cash Out Credits</div>
           <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 8px", lineHeight: 1.5 }}>
             Minimum 100 credits. A flat 30% fee applies.
-            Partner perks are fee-free — consider <a href="/connect/perks" style={{ color: "var(--ochre)" }}>browsing perks</a> instead.
+            Partner perks are fee-free —{" "}
+            <a href="/connect/perks" style={{ color: "var(--ochre)" }}>browse perks</a> instead.
           </p>
-          <p style={{ fontSize: "0.76rem", color: "var(--mute)", margin: "0 0 16px" }}>
+          <p style={{ fontSize: "0.76rem", color: "var(--mute)", margin: "0 0 20px" }}>
             🔑 Passkey verification required at checkout.
           </p>
+
           {stepUpError && (
             <div style={{ padding: "10px 14px", background: "rgba(197,73,31,.06)", border: "1px solid rgba(197,73,31,.2)", borderRadius: 3, fontSize: "0.8rem", color: "#c5491f", marginBottom: 12 }}>
               {stepUpError}
@@ -183,60 +232,118 @@ export default function WalletClient({
               {cashResult.message}
             </div>
           ) : (
-            <form onSubmit={handleCashout}>
-              <div className="mem-field-list">
-                <div className="mem-field">
-                  <div className="mem-field-label">Credits to cash out</div>
-                  <input
-                    type="number"
-                    min={100}
-                    max={credits}
-                    value={cashCredits}
-                    onChange={e => setCashCredits(e.target.value)}
-                    placeholder="Min 100"
-                    className="composer-input"
-                    required
-                  />
-                  {creditsNum >= 100 && (
-                    <div style={{ fontSize: "0.72rem", color: "var(--mute)", marginTop: "4px", fontFamily: "'JetBrains Mono', monospace" }}>
-                      Fee: {feePercent}% ({feeCredits} credits) · You receive: £{cashAmount}
-                    </div>
-                  )}
-                </div>
-                <div className="mem-field">
-                  <div className="mem-field-label">Currency</div>
-                  <select value={currency} onChange={e => setCurrency(e.target.value)} className="composer-input">
-                    <option value="GBP">GBP (£)</option>
-                    <option value="USD">USD ($)</option>
-                    <option value="NGN">NGN (₦)</option>
-                  </select>
-                </div>
-                <div className="mem-field">
-                  <div className="mem-field-label">Account holder name</div>
-                  <input
-                    type="text"
-                    value={accountName}
-                    onChange={e => setAccountName(e.target.value)}
-                    className="composer-input"
-                    required
-                  />
-                </div>
-                <div className="mem-field">
-                  <div className="mem-field-label">Account number / reference</div>
-                  <input
-                    type="text"
-                    value={accountRef}
-                    onChange={e => setAccountRef(e.target.value)}
-                    className="composer-input"
-                    required
-                  />
-                </div>
+            <form onSubmit={handleCashout} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+
+              {/* Amount */}
+              <div style={fieldStyle}>
+                <div style={labelStyle}>Credits to cash out</div>
+                <input
+                  type="number" min={100} max={credits}
+                  value={cashCredits} onChange={e => setCashCredits(e.target.value)}
+                  placeholder="Min 100" style={inputStyle} required
+                />
+                {creditsNum >= 100 && (
+                  <div style={hintStyle}>
+                    Fee: {feePercent}% ({feeCredits} cr) · You receive: {symbol}{cashAmount}
+                  </div>
+                )}
               </div>
+
+              {/* Currency */}
+              <div style={fieldStyle}>
+                <div style={labelStyle}>Currency</div>
+                <select
+                  value={currency}
+                  onChange={e => { setCurrency(e.target.value); setSortCode(""); setRoutingNumber(""); setBankName(""); setAccountNumber(""); }}
+                  style={inputStyle}
+                >
+                  <option value="GBP">GBP — British Pound (£)</option>
+                  <option value="USD">USD — US Dollar ($)</option>
+                  <option value="NGN">NGN — Nigerian Naira (₦)</option>
+                </select>
+              </div>
+
+              {/* Account holder name — always shown */}
+              <div style={fieldStyle}>
+                <div style={labelStyle}>Account holder name</div>
+                <input
+                  type="text" value={accountName} onChange={e => setAccountName(e.target.value)}
+                  placeholder="Full name as on your bank account" style={inputStyle} required
+                />
+              </div>
+
+              {/* GBP fields */}
+              {currency === "GBP" && (
+                <>
+                  <div style={fieldStyle}>
+                    <div style={labelStyle}>Sort code</div>
+                    <input
+                      type="text" value={sortCode} onChange={e => setSortCode(e.target.value)}
+                      placeholder="00-00-00" maxLength={8} style={inputStyle} required
+                    />
+                  </div>
+                  <div style={fieldStyle}>
+                    <div style={labelStyle}>Account number</div>
+                    <input
+                      type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)}
+                      placeholder="8 digits" maxLength={8} style={inputStyle} required
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* USD fields */}
+              {currency === "USD" && (
+                <>
+                  <div style={fieldStyle}>
+                    <div style={labelStyle}>Bank name</div>
+                    <input
+                      type="text" value={bankName} onChange={e => setBankName(e.target.value)}
+                      placeholder="e.g. Chase, Bank of America" style={inputStyle} required
+                    />
+                  </div>
+                  <div style={fieldStyle}>
+                    <div style={labelStyle}>Routing number (ABA)</div>
+                    <input
+                      type="text" value={routingNumber} onChange={e => setRoutingNumber(e.target.value)}
+                      placeholder="9-digit ABA routing number" maxLength={9} style={inputStyle} required
+                    />
+                  </div>
+                  <div style={fieldStyle}>
+                    <div style={labelStyle}>Account number</div>
+                    <input
+                      type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)}
+                      placeholder="Your bank account number" style={inputStyle} required
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* NGN fields */}
+              {currency === "NGN" && (
+                <>
+                  <div style={fieldStyle}>
+                    <div style={labelStyle}>Bank name</div>
+                    <select value={bankName} onChange={e => setBankName(e.target.value)} style={inputStyle} required>
+                      <option value="">Select your bank…</option>
+                      {NGN_BANKS.map(b => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  </div>
+                  <div style={fieldStyle}>
+                    <div style={labelStyle}>Account number (NUBAN)</div>
+                    <input
+                      type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)}
+                      placeholder="10-digit NUBAN" maxLength={10} style={inputStyle} required
+                    />
+                    <div style={hintStyle}>10-digit number — same for all Nigerian banks</div>
+                  </div>
+                </>
+              )}
+
               <button
                 type="submit"
-                disabled={submitting || creditsNum < 100 || creditsNum > credits || !accountName.trim() || !accountRef.trim()}
-                className="perk-card-btn"
-                style={{ marginTop: "16px" }}
+                disabled={submitting || !formValid}
+                className="mem-action-btn"
               >
                 {submitting ? "Submitting…" : "Request Cash Out"}
               </button>
