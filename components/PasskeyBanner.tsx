@@ -33,7 +33,7 @@ export default function PasskeyBanner({ creditsEscrowed = 0 }: Props) {
             : "Passkeys are required to spend credits and redeem partner perks. Takes 30 seconds."}
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-          <Link href="/member/settings#passkeys" style={{
+          <Link href="/member/settings/security" style={{
             display: "inline-block",
             padding: "6px 14px",
             background: "var(--ochre)",

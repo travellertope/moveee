@@ -274,7 +274,7 @@ single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
 
 ## Git branch
 
-Active development branch: `claude/cool-heisenberg-0MOYA`
+Active development branch: `claude/post-errors-dqgchp`
 Always commit and push to this branch.
 
 ---
@@ -308,6 +308,25 @@ Phases 1-4 are implemented. Phase docs live in `docs/phases/`.
   - Credit escrow: `_culture_credits_escrowed` user meta; released on first passkey registration
   - `MAX_ACCOUNTS_PER_AAGUID = 2` — soft limit per physical device model
 
+- **RP ID (headless setup gotcha)**: WordPress runs at `cms.themoveee.com` but
+  WebAuthn RP ID must match the frontend domain (`themoveee.com`). The `rp_id()`
+  method has three-tier resolution: (1) `CULTURE_WEBAUTHN_RP_ID` constant in
+  `wp-config.php`, (2) `culture_webauthn_rp_id` WP option, (3) auto-strip common
+  CMS subdomains (`cms.`, `wp.`, `admin.`, `api.`, `backend.`) from `home_url()`.
+  **Server-side wp-config.php must have**: `define( 'CULTURE_WEBAUTHN_RP_ID', 'themoveee.com' );`
+  (no angle brackets). Git push does NOT deploy PHP to Lightsail — manual file copy required.
+
+- **SimpleWebAuthn response shape**: `startRegistration()` / `startAuthentication()`
+  return credentials with `clientDataJSON`, `attestationObject`, `authenticatorData`,
+  and `signature` **nested inside a `.response` sub-object**. The PHP `verify_register()`
+  and `verify_assertion()` expect these at the top level. The Next.js proxy routes
+  (`register-verify`, `login-verify`, `step-up-verify`) flatten the response before
+  forwarding to WordPress — do not remove this flattening.
+
+- **WP_Error normalisation**: PHP errors return `{ code, message, data }` (WP_Error
+  format) not `{ error }`. All three verify routes normalise this to `{ error }` so
+  the frontend error display works correctly.
+
 - **NextAuth integration**: `lib/auth.ts` credentials provider accepts `{ passkeyToken }` in addition to username/password. Exchange calls `/wp-json/culture/v1/passkey/exchange-token`.
 
 - **Step-up flow**: `PerksClient.tsx` calls `doStepUp()` before redeem; `WalletClient.tsx` calls it before cashout. Both are hard gates (no fallback).
@@ -316,8 +335,8 @@ Phases 1-4 are implemented. Phase docs live in `docs/phases/`.
 
 - **Frontend components**:
   - `components/PasskeyPrompt.tsx` — reusable register/step-up modal using `@simplewebauthn/browser`
-  - `components/PasskeyBanner.tsx` — dashboard banner for users without passkeys
-  - `app/member/settings/PasskeyManager.tsx` — list/add/delete passkeys in settings
+  - `components/PasskeyBanner.tsx` — dashboard banner for users without passkeys → links to `/member/settings/security`
+  - `app/member/settings/PasskeyManager.tsx` — list/add/delete passkeys in settings (now at `/member/settings/security` tab)
 
 - **DB version**: bump `CULTURE_VERSION` in plugin main file after activating (runs `dbDelta` for new table).
 
@@ -335,6 +354,16 @@ templates create `culture_quote` and `culture_event` CPTs respectively.
 
 Per-template credit/reputation amounts in `check_post_threshold()` in
 `class-culture-gamification.php`.
+
+### Directory entry city field
+
+`culture_directory` posts have an `_entry_city` meta field (string, `show_in_rest: true`)
+for disambiguation when similar names exist (e.g. "The Jazz Cafe, London" vs "The Jazz Cafe, Lagos").
+- PHP: registered in `class-culture-post-types.php` → `$directory_meta`; WP Admin meta box in same file
+- Search results include `city` in the JSON response (`class-culture-directory.php` → `handle_search`)
+- Quick-create accepts and saves `city` param (`handle_quick_create`)
+- Next.js: `app/api/directory/quick-create/route.ts` forwards `city` to WordPress
+- React: `DirectorySearch.tsx` shows city below title in results; two-step create UX (enter name → optionally add city → create)
 
 ---
 

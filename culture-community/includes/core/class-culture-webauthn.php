@@ -17,8 +17,18 @@ class Culture_WebAuthn {
      * —————————————————————————————————————— */
 
     public static function rp_id() : string {
+        // 1. Explicit constant in wp-config.php (highest priority)
+        if ( defined( 'CULTURE_WEBAUTHN_RP_ID' ) ) {
+            return CULTURE_WEBAUTHN_RP_ID;
+        }
+        // 2. WordPress option settable from DB/admin
+        $option = get_option( 'culture_webauthn_rp_id' );
+        if ( $option ) return (string) $option;
+        // 3. Auto-derive: strip www. and common headless CMS subdomains
+        //    so cms.themoveee.com → themoveee.com automatically
         $host = wp_parse_url( home_url(), PHP_URL_HOST );
-        return preg_replace( '/^www\./', '', $host );
+        $host = preg_replace( '/^www\./', '', $host );
+        return preg_replace( '/^(cms|wp|admin|api|backend)\./', '', $host );
     }
 
     /* ——————————————————————————————————————
@@ -345,7 +355,7 @@ class Culture_WebAuthn {
 
             global $wpdb;
             $device_name = sanitize_text_field( $resp['device_name'] ?? 'My Device' );
-            $wpdb->insert(
+            $inserted = $wpdb->insert(
                 $wpdb->prefix . 'culture_passkeys',
                 [
                     'user_id'       => $user_id,
@@ -361,6 +371,9 @@ class Culture_WebAuthn {
                 ],
                 [ '%d', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s' ]
             );
+            if ( $inserted === false ) {
+                return [ 'success' => false, 'error' => 'DB error — passkey table may not exist. Deactivate and reactivate the plugin. (' . $wpdb->last_error . ')' ];
+            }
 
             $count = count( self::get_credentials( $user_id ) );
             update_user_meta( $user_id, '_culture_has_passkey', 1 );

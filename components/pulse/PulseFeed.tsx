@@ -433,7 +433,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
               <p style={{ margin: 0, fontSize: "0.78rem", color: "#7a6f5c", lineHeight: 1.5 }}>
                 <strong style={{ color: "#14110d" }}>Personalise your feed</strong> — pick your interests for a For You view.
               </p>
-              <Link href="/member/settings#interests" style={{ fontSize: "0.72rem", fontWeight: 700, color: "#14110d", whiteSpace: "nowrap", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <Link href="/member/settings/interests" style={{ fontSize: "0.72rem", fontWeight: 700, color: "#14110d", whiteSpace: "nowrap", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 Set interests →
               </Link>
             </div>
