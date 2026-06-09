@@ -30,7 +30,10 @@ export interface FeedItem {
   ogImage?: string;
   // happening-specific
   eventDate?: string;
+  endDate?: string;
   location?: string;
+  admission?: string;
+  eventCategory?: string;
   // directory-specific
   entryType?: string;
   // quote-specific
@@ -246,11 +249,20 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         title: decodeHtml(event.title ?? ""),
         slug: event.slug,
         date: event.date ?? event.eventDate ?? "",
-        excerpt: stripHtml(event.excerpt ?? ""),
+        excerpt: decodeHtml(
+          stripHtml(
+            (event.excerpt ?? "")
+              .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+              .replace(/<br\s*\/?>/gi, "\n")
+          )
+        ),
         image: event.featuredImage?.node?.sourceUrl || event.eventImageUrl,
         href: `/events/${event.slug}`,
         eventDate: event.eventDate ?? "",
+        endDate: event.endDate ?? "",
         location: event.location ?? "",
+        admission: event.admission ?? "",
+        eventCategory: event.cultureInterests?.nodes?.[0]?.name ?? "",
       });
     }
   }

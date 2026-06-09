@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
@@ -15,15 +15,43 @@ export default function EventSubmitPage() {
     description: "",
     admission: "",
     ticketing_url: "",
+    image_url: "",
+    category: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loggedIn = status === "authenticated";
 
-  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }));
+
+  const handleImagePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageError("");
+    setImagePreview(URL.createObjectURL(file));
+    setImageUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/events/upload-image", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed.");
+      setForm(prev => ({ ...prev, image_url: data.url }));
+    } catch (err: any) {
+      setImageError(err.message || "Image upload failed. Please try again.");
+      setImagePreview(null);
+      setForm(prev => ({ ...prev, image_url: "" }));
+    } finally {
+      setImageUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,7 +150,7 @@ export default function EventSubmitPage() {
                 View Happenings →
               </Link>
               <button
-                onClick={() => { setSuccess(false); setForm({ title: "", event_date: "", end_date: "", location: "", city: "", description: "", admission: "", ticketing_url: "" }); }}
+                onClick={() => { setSuccess(false); setForm({ title: "", event_date: "", end_date: "", location: "", city: "", description: "", admission: "", ticketing_url: "", image_url: "", category: "" }); }}
                 style={{
                   background: "transparent", color: "#7a6f5c", border: "1px solid #e0d8ce",
                   borderRadius: "2px", padding: "0.45rem 1rem",
@@ -177,6 +205,87 @@ export default function EventSubmitPage() {
                 <textarea value={form.description} onChange={set("description")} placeholder="Tell us about the event…" rows={4} style={{ ...input, resize: "vertical", lineHeight: 1.6 }} />
               </div>
 
+              {/* Category */}
+              <div>
+                <label style={label}>Category</label>
+                <select value={form.category} onChange={set("category") as any} style={{ ...input, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a6f5c'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.75rem center", paddingRight: "2rem" }}>
+                  <option value="">Select a category…</option>
+                  <option value="music">Music</option>
+                  <option value="film">Film</option>
+                  <option value="visual-arts">Visual Arts</option>
+                  <option value="fashion">Fashion</option>
+                  <option value="food">Food</option>
+                  <option value="literature">Literature</option>
+                  <option value="design">Design</option>
+                  <option value="performance">Performance</option>
+                  <option value="community">Community</option>
+                  <option value="tech">Tech</option>
+                </select>
+              </div>
+
+              {/* Event Image */}
+              <div>
+                <label style={label}>Event Image</label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  style={{ display: "none" }}
+                  onChange={handleImagePick}
+                />
+                {imagePreview ? (
+                  <div style={{ position: "relative", borderRadius: "4px", overflow: "hidden", border: "1px solid #e0d8ce" }}>
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      style={{ width: "100%", height: "180px", objectFit: "cover", display: "block" }}
+                    />
+                    {imageUploading && (
+                      <div style={{
+                        position: "absolute", inset: 0, background: "rgba(20,17,13,0.55)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        color: "#fff", fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.08em",
+                      }}>
+                        Uploading…
+                      </div>
+                    )}
+                    {!imageUploading && (
+                      <button
+                        type="button"
+                        onClick={() => { setImagePreview(null); setForm(prev => ({ ...prev, image_url: "" })); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                        style={{
+                          position: "absolute", top: 6, right: 6,
+                          background: "rgba(20,17,13,0.7)", color: "#fff", border: "none",
+                          borderRadius: "50%", width: 24, height: 24, cursor: "pointer",
+                          fontSize: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center",
+                        }}
+                        aria-label="Remove image"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      width: "100%", padding: "1.25rem", border: "1.5px dashed #c8bfb2",
+                      borderRadius: "4px", background: "#faf8f5", cursor: "pointer",
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: "0.3rem",
+                      color: "#7a6f5c", fontFamily: "inherit",
+                    }}
+                  >
+                    <span style={{ fontSize: "1.4rem" }}>🖼</span>
+                    <span style={{ fontSize: "0.78rem", fontWeight: 600 }}>Choose image</span>
+                    <span style={{ fontSize: "0.68rem" }}>JPEG, PNG, WebP · max 12 MB</span>
+                  </button>
+                )}
+                {imageError && (
+                  <p style={{ color: "#c5491f", fontSize: "0.78rem", margin: "0.25rem 0 0" }}>{imageError}</p>
+                )}
+              </div>
+
               {/* Admission + Ticketing */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
                 <div>
@@ -195,17 +304,17 @@ export default function EventSubmitPage() {
 
               <button
                 type="submit"
-                disabled={!form.title.trim() || !form.event_date || loading}
+                disabled={!form.title.trim() || !form.event_date || loading || imageUploading}
                 style={{
-                  background: form.title.trim() && form.event_date && !loading ? "#c93c2a" : "#e8e2d8",
-                  color: form.title.trim() && form.event_date && !loading ? "#fff" : "#aaa",
+                  background: form.title.trim() && form.event_date && !loading && !imageUploading ? "#c93c2a" : "#e8e2d8",
+                  color: form.title.trim() && form.event_date && !loading && !imageUploading ? "#fff" : "#aaa",
                   border: "none", borderRadius: "2px", padding: "0.6rem 1.25rem",
                   fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.1em",
-                  textTransform: "uppercase", cursor: form.title.trim() && form.event_date && !loading ? "pointer" : "default",
+                  textTransform: "uppercase", cursor: form.title.trim() && form.event_date && !loading && !imageUploading ? "pointer" : "default",
                   transition: "all 0.15s", alignSelf: "flex-end",
                 }}
               >
-                {loading ? "Submitting…" : "Submit Event →"}
+                {loading ? "Submitting…" : imageUploading ? "Uploading image…" : "Submit Event →"}
               </button>
             </div>
           </form>

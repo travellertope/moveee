@@ -875,13 +875,33 @@ export default function FeedCard({
   // ── Happening card — inline description + internal link card ──
   if (item.type === "happening") {
     const CLAMP_CHARS = 280;
-    const text = decodeHtml(item.excerpt ?? "");
-    const isLong = text.length > CLAMP_CHARS;
-    const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
+    const rawText = item.excerpt ?? "";
+    const paragraphs = rawText.split(/\n\n+/).map(p => p.replace(/\n/g, " ").trim()).filter(Boolean);
+    const fullText = paragraphs.join("\n\n");
+    const isLong = fullText.length > CLAMP_CHARS;
+    // Clamp at paragraph boundary when possible
+    let displayParas: string[] = [];
+    if (!isLong) {
+      displayParas = paragraphs;
+    } else {
+      let count = 0;
+      for (const p of paragraphs) {
+        if (count + p.length > CLAMP_CHARS) {
+          const remaining = CLAMP_CHARS - count;
+          if (remaining > 40) displayParas.push(p.slice(0, remaining) + "…");
+          break;
+        }
+        displayParas.push(p);
+        count += p.length;
+      }
+    }
     const typeMeta = TYPE_BADGE.happening;
 
     const eventDateStr = item.eventDate
       ? new Date(item.eventDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+      : null;
+    const endDateStr = item.endDate
+      ? new Date(item.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
       : null;
 
     return (
@@ -889,9 +909,14 @@ export default function FeedCard({
         {/* Badges row */}
         <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
           <Badge {...typeMeta} />
+          {item.eventCategory && (
+            <span style={{ fontSize: "0.58rem", color: "#b38238", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              {item.eventCategory}
+            </span>
+          )}
           {eventDateStr && (
             <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.03em" }}>
-              {eventDateStr}
+              {eventDateStr}{endDateStr ? ` — ${endDateStr}` : ""}
             </span>
           )}
           {item.location && (
@@ -919,15 +944,22 @@ export default function FeedCard({
           }}>
             {decodeHtml(item.title)}
           </h3>
-          {displayText && (
-            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
-              {displayText}
-            </p>
+          {displayParas.length > 0 && (
+            <div style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6 }}>
+              {displayParas.map((p, i) => (
+                <p key={i} style={{ margin: i === 0 ? 0 : "0.5em 0 0" }}>{p}</p>
+              ))}
+            </div>
           )}
           {isLong && (
             <span style={{ color: "#3c3489", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
               Read more →
             </span>
+          )}
+          {item.admission && (
+            <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "#7a6f5c", fontWeight: 600 }}>
+              {item.admission}
+            </div>
           )}
         </Link>
 
