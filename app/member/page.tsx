@@ -5,6 +5,7 @@ import Link from "next/link";
 import MemberReferralCopy from "@/components/MemberReferralCopy";
 import MemberDashboard from "@/components/MemberDashboard";
 import MemberBadges from "@/components/MemberBadges";
+import PasskeyBanner from "@/components/PasskeyBanner";
 import "../member.css";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +55,7 @@ export default async function MemberPage() {
       </div>
 
       <div className="mem-body">
+        {!user.hasPasskey && <PasskeyBanner creditsEscrowed={user.creditsEscrowed ?? 0} />}
         {/* ── STATS (live data) ── */}
         <MemberDashboard
           initialPoints={user.points ?? 0}

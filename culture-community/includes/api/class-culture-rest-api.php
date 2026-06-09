@@ -938,6 +938,158 @@ class Culture_REST_API {
                 'status'  => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_key' ),
             ),
         ) );
+
+        // Passkey endpoints.
+        register_rest_route( 'culture/v1', '/passkey/register-options', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_register_options' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/register-verify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_register_verify' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/login-options', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_login_options' ),
+            'permission_callback' => '__return_true',
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/login-verify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_login_verify' ),
+            'permission_callback' => '__return_true',
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/exchange-token', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_exchange_token' ),
+            'permission_callback' => '__return_true',
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/step-up', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_step_up' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/step-up-verify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_step_up_verify' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/list', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_passkey_list' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/passkey/delete', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_passkey_delete' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Passkey handlers
+     * —————————————————————————————————————— */
+
+    public static function handle_passkey_register_options( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        if ( ! $user_id || ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'invalid_user', 'Invalid user.', array( 'status' => 400 ) );
+        }
+        return rest_ensure_response( Culture_WebAuthn::get_register_options( $user_id ) );
+    }
+
+    public static function handle_passkey_register_verify( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $resp    = $request->get_param( 'response' );
+        if ( ! $user_id || ! is_array( $resp ) ) {
+            return new WP_Error( 'bad_request', 'Missing user_id or response.', array( 'status' => 400 ) );
+        }
+        $result = Culture_WebAuthn::verify_register( $user_id, $resp );
+        if ( ! $result['success'] ) {
+            return new WP_Error( 'passkey_error', $result['error'], array( 'status' => 400 ) );
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_passkey_login_options( $request ) {
+        $user_id = $request->get_param( 'user_id' ) ? (int) $request->get_param( 'user_id' ) : null;
+        return rest_ensure_response( Culture_WebAuthn::get_login_options( $user_id ) );
+    }
+
+    public static function handle_passkey_login_verify( $request ) {
+        $resp = $request->get_json_params();
+        if ( empty( $resp ) ) {
+            return new WP_Error( 'bad_request', 'Missing response body.', array( 'status' => 400 ) );
+        }
+        $result = Culture_WebAuthn::verify_login( $resp );
+        if ( ! $result['success'] ) {
+            return new WP_Error( 'passkey_error', $result['error'], array( 'status' => 401 ) );
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_passkey_exchange_token( $request ) {
+        $token   = sanitize_text_field( $request->get_param( 'passkey_token' ) ?? '' );
+        $user_id = Culture_WebAuthn::exchange_passkey_token( $token );
+        if ( ! $user_id ) {
+            return new WP_Error( 'invalid_token', 'Invalid or expired token.', array( 'status' => 401 ) );
+        }
+        // Return same profile data as login endpoint.
+        $user = get_userdata( $user_id );
+        if ( ! $user ) {
+            return new WP_Error( 'invalid_user', 'User not found.', array( 'status' => 404 ) );
+        }
+        return rest_ensure_response( self::user_profile( $user ) );
+    }
+
+    public static function handle_passkey_step_up( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        if ( ! $user_id ) return new WP_Error( 'bad_request', 'Missing user_id.', array( 'status' => 400 ) );
+        $creds = Culture_WebAuthn::get_credentials( $user_id );
+        if ( empty( $creds ) ) {
+            return new WP_Error( 'no_passkey', 'No passkey registered.', array( 'status' => 403 ) );
+        }
+        return rest_ensure_response( Culture_WebAuthn::get_step_up_options( $user_id ) );
+    }
+
+    public static function handle_passkey_step_up_verify( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $resp    = $request->get_param( 'response' );
+        if ( ! $user_id || ! is_array( $resp ) ) {
+            return new WP_Error( 'bad_request', 'Missing user_id or response.', array( 'status' => 400 ) );
+        }
+        $result = Culture_WebAuthn::verify_step_up( $user_id, $resp );
+        if ( ! $result['success'] ) {
+            return new WP_Error( 'passkey_error', $result['error'], array( 'status' => 401 ) );
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_passkey_list( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $creds   = Culture_WebAuthn::get_credentials( $user_id );
+        $out     = array_map( fn($c) => [
+            'id'           => $c['credential_id'],
+            'device_name'  => $c['device_name'],
+            'created_at'   => $c['created_at'],
+            'last_used_at' => $c['last_used_at'],
+            'aaguid'       => $c['aaguid'],
+        ], $creds );
+        return rest_ensure_response( $out );
+    }
+
+    public static function handle_passkey_delete( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $cred_id = sanitize_text_field( $request->get_param( 'credential_id' ) ?? '' );
+        if ( ! $user_id || ! $cred_id ) {
+            return new WP_Error( 'bad_request', 'Missing user_id or credential_id.', array( 'status' => 400 ) );
+        }
+        $deleted = Culture_WebAuthn::delete_credential( $user_id, $cred_id );
+        if ( ! $deleted ) {
+            return new WP_Error( 'not_found', 'Credential not found.', array( 'status' => 404 ) );
+        }
+        return rest_ensure_response( array( 'success' => true ) );
     }
 
     /**
@@ -1634,6 +1786,10 @@ class Culture_REST_API {
             'vendor_slug'         => $vendor_slug,
             // Profile photo
             'avatar_url'          => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
+            // Passkeys (Phase 7)
+            'has_passkey'         => (bool) get_user_meta( $user->ID, '_culture_has_passkey', true ),
+            'passkey_count'       => (int) get_user_meta( $user->ID, '_culture_passkey_count', true ),
+            'credits_escrowed'    => (int) get_user_meta( $user->ID, '_culture_credits_escrowed', true ),
         );
     }
 

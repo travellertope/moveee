@@ -130,6 +130,25 @@ class Culture_Activator {
             KEY qr_token_idx (qr_token)
         ) {$charset_collate};" );
 
+        // Passkeys table.
+        $passkeys_table = $wpdb->prefix . 'culture_passkeys';
+        dbDelta( "CREATE TABLE {$passkeys_table} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            credential_id varchar(512) NOT NULL DEFAULT '',
+            public_key text NOT NULL,
+            alg int(11) NOT NULL DEFAULT -7,
+            sign_count int(11) NOT NULL DEFAULT 0,
+            device_name varchar(100) NOT NULL DEFAULT 'My Device',
+            aaguid varchar(36) NOT NULL DEFAULT '',
+            transports varchar(200) NOT NULL DEFAULT '[]',
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            last_used_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY credential_id (credential_id),
+            KEY user_idx (user_id)
+        ) {$charset_collate};" );
+
         update_option( 'culture_db_version', CULTURE_VERSION );
     }
 

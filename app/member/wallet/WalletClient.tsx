@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { startAuthentication } from "@simplewebauthn/browser";
 
 interface LedgerEntry {
   id: number;
@@ -44,6 +45,26 @@ export default function WalletClient({
   const [accountRef, setAccountRef] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [cashResult, setCashResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [stepUpError, setStepUpError] = useState("");
+
+  async function doStepUp(): Promise<string | null> {
+    try {
+      const optRes = await fetch("/api/auth/passkey/step-up", { method: "POST" });
+      if (!optRes.ok) return null;
+      const options = await optRes.json();
+      const assResp = await startAuthentication({ optionsJSON: options });
+      const verRes = await fetch("/api/auth/passkey/step-up-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(assResp),
+      });
+      if (!verRes.ok) return null;
+      const data = await verRes.json();
+      return data.step_up_token as string;
+    } catch {
+      return null;
+    }
+  }
 
   const creditsNum = parseInt(cashCredits) || 0;
   const feePercent = 30;
@@ -56,7 +77,14 @@ export default function WalletClient({
     if (creditsNum < 100 || creditsNum > credits) return;
     setSubmitting(true);
     setCashResult(null);
+    setStepUpError("");
     try {
+      const stepUpToken = await doStepUp();
+      if (!stepUpToken) {
+        setStepUpError("Passkey verification is required for cash-out. Please set up a passkey in your security settings.");
+        setSubmitting(false);
+        return;
+      }
       const res = await fetch("/api/wallet/cashout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,6 +94,7 @@ export default function WalletClient({
           account_name: accountName,
           account_ref: accountRef,
           currency,
+          step_up_token: stepUpToken,
         }),
       });
       const data = await res.json();
@@ -129,10 +158,18 @@ export default function WalletClient({
       {tab === "cashout" && (
         <section className="mem-card">
           <div className="mem-card-label">Cash Out Credits</div>
-          <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 16px", lineHeight: 1.5 }}>
+          <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 8px", lineHeight: 1.5 }}>
             Minimum 100 credits. A flat 30% fee applies.
             Partner perks are fee-free — consider <a href="/connect/perks" style={{ color: "var(--ochre)" }}>browsing perks</a> instead.
           </p>
+          <p style={{ fontSize: "0.76rem", color: "var(--mute)", margin: "0 0 16px" }}>
+            🔑 Passkey verification required at checkout.
+          </p>
+          {stepUpError && (
+            <div style={{ padding: "10px 14px", background: "rgba(197,73,31,.06)", border: "1px solid rgba(197,73,31,.2)", borderRadius: 3, fontSize: "0.8rem", color: "#c5491f", marginBottom: 12 }}>
+              {stepUpError}
+            </div>
+          )}
 
           {cashResult ? (
             <div style={{

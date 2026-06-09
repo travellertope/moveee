@@ -6,6 +6,7 @@ import NewsletterPreferences from "./NewsletterPreferences";
 import ProfileEditor from "./ProfileEditor";
 import DirectoryProfile from "./DirectoryProfile";
 import InterestEditor from "@/components/InterestEditor";
+import PasskeyManager from "./PasskeyManager";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -124,6 +125,9 @@ export default async function MemberSettingsPage() {
                 </div>
               </div>
             </section>
+
+            {/* ── 4. PASSKEYS ── */}
+            <PasskeyManager />
 
 
           </div>

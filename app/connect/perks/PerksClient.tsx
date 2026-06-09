@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { startAuthentication } from "@simplewebauthn/browser";
 
 interface Perk {
   id: number;
@@ -50,15 +51,50 @@ export default function PerksClient({
   const [result, setResult] = useState<{ qr_token: string; expires_at: string; new_balance: number } | null>(null);
   const [error, setError] = useState("");
   const [balance, setBalance] = useState(credits);
+  const [stepUpNeeded, setStepUpNeeded] = useState(false);
+  const [stepUpWorking, setStepUpWorking] = useState(false);
+  const [pendingPerk, setPendingPerk] = useState<Perk | null>(null);
+
+  async function doStepUp(): Promise<string | null> {
+    try {
+      const optRes = await fetch("/api/auth/passkey/step-up", { method: "POST" });
+      if (!optRes.ok) {
+        const e = await optRes.json();
+        if (e.code === "no_passkey") setStepUpNeeded(true);
+        return null;
+      }
+      const options = await optRes.json();
+      const assResp = await startAuthentication({ optionsJSON: options });
+      const verRes = await fetch("/api/auth/passkey/step-up-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(assResp),
+      });
+      const verData = await verRes.json();
+      if (!verRes.ok) return null;
+      return verData.step_up_token as string;
+    } catch {
+      return null;
+    }
+  }
 
   async function handleRedeem(perk: Perk) {
     setRedeeming(perk.id);
     setError("");
     try {
+      setStepUpWorking(true);
+      const stepUpToken = await doStepUp();
+      setStepUpWorking(false);
+      if (!stepUpToken) {
+        setPendingPerk(perk);
+        setRedeeming(null);
+        return;
+      }
+
       const res = await fetch("/api/perks/redeem", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ perk_id: perk.id }),
+        body: JSON.stringify({ perk_id: perk.id, step_up_token: stepUpToken }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -72,6 +108,7 @@ export default function PerksClient({
     } catch {
       setError("Network error. Please try again.");
       setConfirmPerk(null);
+      setStepUpWorking(false);
     }
     setRedeeming(null);
   }
@@ -93,6 +130,39 @@ export default function PerksClient({
 
   return (
     <>
+      {/* No passkey — prompt to set up */}
+      {stepUpNeeded && (
+        <div style={{
+          background: "rgba(179,130,56,.08)",
+          border: "1px solid rgba(179,130,56,.25)",
+          borderRadius: 6,
+          padding: "14px 18px",
+          margin: "0 0 20px",
+          fontSize: "0.82rem",
+          lineHeight: 1.5,
+        }}>
+          <strong>Passkey required to redeem perks.</strong>{" "}
+          <Link href="/member/settings#passkeys" style={{ color: "var(--ochre)" }}>
+            Set up a passkey in settings →
+          </Link>
+        </div>
+      )}
+
+      {/* Step-up working state */}
+      {stepUpWorking && (
+        <div style={{
+          background: "rgba(42,36,28,.04)",
+          border: "1px solid rgba(42,36,28,.1)",
+          borderRadius: 6,
+          padding: "14px 18px",
+          margin: "0 0 20px",
+          fontSize: "0.82rem",
+          color: "var(--ochre)",
+        }}>
+          ⬡ Waiting for your device biometrics…
+        </div>
+      )}
+
       {/* Success state */}
       {result && (
         <section className="perks-grid-section">
@@ -145,10 +215,10 @@ export default function PerksClient({
                       <button
                         type="button"
                         className="perk-card-btn"
-                        disabled={redeeming === perk.id}
+                        disabled={redeeming === perk.id || stepUpWorking}
                         onClick={() => setConfirmPerk(perk)}
                       >
-                        {redeeming === perk.id ? "Redeeming…" : `Redeem — ${perk.credit_cost} credits`}
+                        {redeeming === perk.id && stepUpWorking ? "Verifying…" : redeeming === perk.id ? "Redeeming…" : `Redeem — ${perk.credit_cost} credits`}
                       </button>
                     )}
                   </div>
