@@ -811,6 +811,133 @@ class Culture_REST_API {
                 'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             ),
         ) );
+
+        // ── Phase 6: Partner Perks & Wallet ──────────────────────────────────
+
+        register_rest_route( 'culture/v1', '/perks', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_list_perks' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/perks/redeem', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_redeem_perk' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'perk_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/perks/verify', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_verify_qr' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'token' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/wallet/balance', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_wallet_balance' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/wallet/history', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_wallet_history' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'  => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'required' => false, 'type' => 'integer', 'default' => 20,  'sanitize_callback' => 'absint' ),
+                'page'     => array( 'required' => false, 'type' => 'integer', 'default' => 1,   'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/wallet/cashout', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_wallet_cashout' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'credits'      => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'method'       => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+                'account_name' => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+                'account_ref'  => array( 'required' => true,  'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+                'currency'     => array( 'required' => false, 'type' => 'string',  'default' => 'GBP', 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/admin/cashout-queue', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cashout_queue' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'status' => array( 'required' => false, 'type' => 'string', 'default' => 'pending', 'sanitize_callback' => 'sanitize_key' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/admin/cashout-approve', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cashout_approve' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'redemption_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'admin_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/admin/cashout-reject', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cashout_reject' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'redemption_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'admin_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'reason'        => array( 'required' => false, 'type' => 'string', 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/admin/perks', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_admin_list_perks' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_admin_create_perk' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/admin/perks/(?P<id>\d+)', array(
+            array(
+                'methods'             => 'PUT',
+                'callback'            => array( __CLASS__, 'handle_admin_update_perk' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+            array(
+                'methods'             => 'DELETE',
+                'callback'            => array( __CLASS__, 'handle_admin_delete_perk' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/user/redemptions', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_user_redemptions' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'status'  => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_key' ),
+            ),
+        ) );
     }
 
     /**
@@ -3163,5 +3290,197 @@ class Culture_REST_API {
         update_user_meta( $user_id, '_portfolio_items', wp_json_encode( $items ) );
 
         return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    // ── Phase 6: Partner Perks & Wallet Handlers ─────────────────────────────
+
+    public static function handle_list_perks( $request ) {
+        return rest_ensure_response( Culture_Perks::get_perks() );
+    }
+
+    public static function handle_redeem_perk( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $perk_id = (int) $request->get_param( 'perk_id' );
+        $result  = Culture_Perks::redeem_perk( $user_id, $perk_id );
+        if ( is_wp_error( $result ) ) return $result;
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_verify_qr( $request ) {
+        return rest_ensure_response( Culture_Perks::verify_qr( $request->get_param( 'token' ) ) );
+    }
+
+    public static function handle_wallet_balance( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        if ( ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $credits         = Culture_Gamification::get_credits( $user_id );
+        $daily_remaining = Culture_Gamification::get_daily_credits_remaining( $user_id );
+        $earned_today    = Culture_Gamification::DAILY_CREDIT_CAP - $daily_remaining;
+        $credits_per_gbp = max( 1, (int) get_option( 'culture_credits_per_gbp', Culture_Perks::DEFAULT_CREDITS_PER_GBP ) );
+        $credit_value_gbp_pence = (int) round( ( $credits / $credits_per_gbp ) * 100 );
+
+        return rest_ensure_response( array(
+            'credits'               => $credits,
+            'earned_today'          => $earned_today,
+            'daily_remaining'       => $daily_remaining,
+            'credit_value_gbp'      => $credit_value_gbp_pence,
+            'credits_per_gbp'       => $credits_per_gbp,
+        ) );
+    }
+
+    public static function handle_wallet_history( $request ) {
+        global $wpdb;
+        $user_id  = (int) $request->get_param( 'user_id' );
+        $per_page = min( (int) $request->get_param( 'per_page' ), 100 );
+        $page     = max( (int) $request->get_param( 'page' ), 1 );
+        $offset   = ( $page - 1 ) * $per_page;
+
+        if ( ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $table = $wpdb->prefix . 'culture_credit_ledger';
+        $total = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND type = 'credit'", $user_id
+        ) );
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT id, amount, source, source_id, created_at FROM {$table}
+             WHERE user_id = %d AND type = 'credit' ORDER BY id DESC LIMIT %d OFFSET %d",
+            $user_id, $per_page, $offset
+        ), ARRAY_A ) ?: array();
+
+        return rest_ensure_response( array(
+            'entries'  => $rows,
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $per_page,
+            'pages'    => (int) ceil( $total / max( 1, $per_page ) ),
+        ) );
+    }
+
+    public static function handle_wallet_cashout( $request ) {
+        $result = Culture_Perks::request_cashout(
+            (int) $request->get_param( 'user_id' ),
+            (int) $request->get_param( 'credits' ),
+            $request->get_param( 'method' ),
+            $request->get_param( 'account_name' ),
+            $request->get_param( 'account_ref' ),
+            $request->get_param( 'currency' ) ?: 'GBP'
+        );
+        if ( is_wp_error( $result ) ) return $result;
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_cashout_queue( $request ) {
+        return rest_ensure_response( Culture_Perks::get_cashout_queue(
+            sanitize_key( $request->get_param( 'status' ) ?: 'pending' )
+        ) );
+    }
+
+    public static function handle_cashout_approve( $request ) {
+        $result = Culture_Perks::approve_cashout(
+            (int) $request->get_param( 'redemption_id' ),
+            (int) $request->get_param( 'admin_id' )
+        );
+        if ( is_wp_error( $result ) ) return $result;
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_cashout_reject( $request ) {
+        $result = Culture_Perks::reject_cashout(
+            (int) $request->get_param( 'redemption_id' ),
+            (int) $request->get_param( 'admin_id' ),
+            $request->get_param( 'reason' ) ?: ''
+        );
+        if ( is_wp_error( $result ) ) return $result;
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_admin_list_perks( $request ) {
+        $status = sanitize_key( $request->get_param( 'status' ) ?: '' );
+        $args   = array( 'limit' => 200, 'offset' => 0 );
+        if ( $status ) {
+            $args['status'] = $status;
+        } else {
+            $args['status'] = '';
+        }
+        return rest_ensure_response( Culture_Perks::get_perks( $args ) );
+    }
+
+    public static function handle_admin_create_perk( $request ) {
+        global $wpdb;
+        $data = self::_sanitize_perk_data( $request );
+        if ( is_wp_error( $data ) ) return $data;
+        $table = $wpdb->prefix . 'culture_partner_perks';
+        if ( ! $wpdb->insert( $table, $data['values'], $data['formats'] ) ) {
+            return new WP_Error( 'db_error', 'Could not create perk.', array( 'status' => 500 ) );
+        }
+        return rest_ensure_response( array( 'success' => true, 'perk' => Culture_Perks::get_perk( (int) $wpdb->insert_id ) ) );
+    }
+
+    public static function handle_admin_update_perk( $request ) {
+        global $wpdb;
+        $perk_id = (int) $request->get_param( 'id' );
+        if ( ! Culture_Perks::get_perk( $perk_id ) ) {
+            return new WP_Error( 'not_found', 'Perk not found.', array( 'status' => 404 ) );
+        }
+        $data = self::_sanitize_perk_data( $request );
+        if ( is_wp_error( $data ) ) return $data;
+        $wpdb->update( $wpdb->prefix . 'culture_partner_perks', $data['values'], array( 'id' => $perk_id ), $data['formats'], array( '%d' ) );
+        return rest_ensure_response( array( 'success' => true, 'perk' => Culture_Perks::get_perk( $perk_id ) ) );
+    }
+
+    public static function handle_admin_delete_perk( $request ) {
+        global $wpdb;
+        $perk_id = (int) $request->get_param( 'id' );
+        if ( ! Culture_Perks::get_perk( $perk_id ) ) {
+            return new WP_Error( 'not_found', 'Perk not found.', array( 'status' => 404 ) );
+        }
+        $wpdb->update( $wpdb->prefix . 'culture_partner_perks', array( 'status' => 'paused' ), array( 'id' => $perk_id ), array( '%s' ), array( '%d' ) );
+        return rest_ensure_response( array( 'success' => true, 'perk_id' => $perk_id, 'status' => 'paused' ) );
+    }
+
+    public static function handle_user_redemptions( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $status  = $request->get_param( 'status' ) ?: null;
+        $rows    = Culture_Perks::get_user_redemptions( $user_id, $status );
+        $perks_table = $GLOBALS['wpdb']->prefix . 'culture_partner_perks';
+        foreach ( $rows as &$row ) {
+            if ( (int) $row['perk_id'] > 0 ) {
+                $perk = Culture_Perks::get_perk( (int) $row['perk_id'] );
+                $row['perk_title'] = $perk ? $perk['title'] : '';
+                $row['perk_description'] = $perk ? $perk['description'] : '';
+            }
+        }
+        return rest_ensure_response( $rows );
+    }
+
+    private static function _sanitize_perk_data( $request ) {
+        $title = sanitize_text_field( $request->get_param( 'title' ) ?: '' );
+        if ( empty( $title ) ) {
+            return new WP_Error( 'missing_title', 'Perk title is required.', array( 'status' => 400 ) );
+        }
+        $allowed = array( 'active', 'paused', 'expired' );
+        $status  = sanitize_key( $request->get_param( 'status' ) ?: 'active' );
+        if ( ! in_array( $status, $allowed, true ) ) $status = 'active';
+        return array(
+            'values'  => array(
+                'title'                => $title,
+                'description'          => sanitize_textarea_field( $request->get_param( 'description' ) ?: '' ),
+                'credit_cost'          => max( 0, (int) $request->get_param( 'credit_cost' ) ),
+                'min_spend'            => max( 0, (int) $request->get_param( 'min_spend' ) ),
+                'min_spend_currency'   => strtoupper( substr( sanitize_text_field( $request->get_param( 'min_spend_currency' ) ?: 'GBP' ), 0, 3 ) ),
+                'expiry_days'          => max( 1, (int) $request->get_param( 'expiry_days' ) ),
+                'max_per_user'         => max( 0, (int) $request->get_param( 'max_per_user' ) ),
+                'max_total'            => max( 0, (int) $request->get_param( 'max_total' ) ),
+                'status'               => $status,
+                'partner_directory_id' => max( 0, (int) $request->get_param( 'partner_directory_id' ) ),
+                'partner_vendor_id'    => max( 0, (int) $request->get_param( 'partner_vendor_id' ) ),
+            ),
+            'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d' ),
+        );
     }
 }
