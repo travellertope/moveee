@@ -9,7 +9,7 @@ import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
 import "@/app/events.css";
 
-export const revalidate = 180;
+export const dynamic = "force-dynamic";
 
 // ── Archive slug lookup tables ────────────────────────────────────────────────
 

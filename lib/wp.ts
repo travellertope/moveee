@@ -232,12 +232,16 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
     const needsPatch = gqlEvents.some((e: any) => !e.location || !e.city || !e.endDate || !e.venueAddress);
     if (needsPatch) {
       try {
+        const patchCtrl = new AbortController();
+        const patchTimeout = setTimeout(() => patchCtrl.abort(), 10000);
         const restUrl = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_fields=id,slug,acf,meta,culture_event_meta&orderby=date&order=desc`;
         const restRes = await fetch(restUrl, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
+          signal: patchCtrl.signal,
           next: { revalidate: options.revalidate !== undefined ? options.revalidate : 0 },
         });
+        clearTimeout(patchTimeout);
         if (restRes.ok) {
           const restJson = await restRes.json();
           if (Array.isArray(restJson)) {
