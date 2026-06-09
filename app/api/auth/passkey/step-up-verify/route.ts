@@ -10,10 +10,20 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
   const body = await req.json();
+  // SimpleWebAuthn nests clientDataJSON/authenticatorData/signature inside body.response.
+  // PHP's verify_assertion() expects them at the top level.
+  const flatResp = {
+    id:                body.id,
+    rawId:             body.rawId,
+    clientDataJSON:    body.response?.clientDataJSON,
+    authenticatorData: body.response?.authenticatorData,
+    signature:         body.response?.signature,
+    userHandle:        body.response?.userHandle,
+  };
   const res = await fetch(`${WP_URL}/wp-json/culture/v1/passkey/step-up-verify`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${API_SECRET}` },
-    body: JSON.stringify({ user_id: session.user.id, response: body }),
+    body: JSON.stringify({ user_id: session.user.id, response: flatResp }),
     cache: "no-store",
   });
   const data = await res.json();
