@@ -7,11 +7,13 @@ interface CreditDay {
   day: string;
   earned: string;
   spent: string;
+  [key: string]: string;
 }
 
 interface RepMonth {
   month: string;
   rep_earned: string;
+  [key: string]: string;
 }
 
 interface TopPost {
