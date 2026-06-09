@@ -188,6 +188,17 @@ export default async function CommunityPostPage({
 
           {/* ── Main post ── */}
           <main className="pulse-timeline">
+            {/* Back link */}
+            <div style={{ padding: "0.85rem 1.25rem 0", display: "flex", alignItems: "center" }}>
+              <Link href="/connect" style={{
+                color: "#7a6f5c", fontSize: "0.75rem", textDecoration: "none",
+                letterSpacing: "0.06em", textTransform: "uppercase",
+                display: "inline-flex", alignItems: "center", gap: "0.3rem",
+              }}>
+                ← Connect Feed
+              </Link>
+            </div>
+
             {/* Post card — matches community card style from the feed */}
             <article style={{
               background: "#fff",
