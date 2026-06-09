@@ -893,8 +893,11 @@ select.mem-field-input { cursor: pointer; }
   border-bottom: 1px solid rgba(42,36,28,.1);
   margin-bottom: 28px;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
 }
 .mem-settings-tabs::-webkit-scrollbar { display: none; }
 
