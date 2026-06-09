@@ -296,6 +296,86 @@ All phases implemented. Phase docs live in `docs/phases/`.
 
 ---
 
+## moveee-connect React Native app — current state
+
+The RN app lives in `moveee-connect/` and was audited in June 2026. The full implementation spec is `docs/moveee-connect-rn-spec.md`.
+
+### What is built and working
+
+| Area | Key files |
+|------|-----------|
+| Auth (login, register, verify email) | `screens/auth/` |
+| Auth store | `src/auth/authStore.ts` (Zustand + SecureStore + MMKV) |
+| API client | `src/api/client.ts` (Bearer token, get/post/upload) |
+| MMKV cache with TTL | `src/store/storage.ts` |
+| 5-tab navigation | `src/navigation/index.tsx` |
+| Unified feed + community feed hooks | `src/features/community/` |
+| Comments hook | `src/features/community/useComments.ts` |
+| Magazine hook | `src/features/magazine/useMagazine.ts` |
+| ConnectFeedScreen | `screens/community/ConnectFeedScreen.tsx` |
+| FeedItemCard (all 6 type branches) | `components/community/FeedItemCard.tsx` |
+| PostDetailScreen | `screens/community/PostDetailScreen.tsx` |
+| PulseDetailScreen | `screens/community/PulseDetailScreen.tsx` |
+| NewPostScreen (**Post + Quote only**) | `screens/community/NewPostScreen.tsx` |
+| EventSubmitScreen, DirectorySubmitScreen | `screens/community/` |
+| MemberProfileScreen (basic) | `screens/community/MemberProfileScreen.tsx` |
+| MagazineScreen + ArticleScreen | `screens/magazine/` |
+| MemberScreen (basic dashboard) | `screens/member/MemberScreen.tsx` |
+| TierBadge, TimeAgo | `components/ui/` |
+
+### What is missing / needs building
+
+**Foundational:**
+- `src/theme.ts` — does not exist; colours/fonts hardcoded everywhere
+- Custom fonts (Fraunces, DM Sans, JetBrains Mono) not loaded — using system `Georgia/serif`
+- `User` type missing `hasPasskey`, `passkeyCount`, `creditsEscrowed` fields
+- Phase 6 types (`Perk`, `Redemption`, `LedgerEntry`, `Passkey`) not in `src/types/index.ts`
+
+**FeedItemCard gaps (existing file needs extending):**
+- Gallery carousel (`galleryImages`) not rendered
+- Template badge (`templateType`) not rendered
+- Poll options + voting not implemented
+- Itinerary stops not rendered
+- Star/multi-rating display not rendered
+
+**NewPostScreen gaps (existing file needs replacing):**
+- Only Post + Quote templates exist; need: hidden-gem, cultural-take, food-review, creative-showcase, poll, itinerary
+- Missing sub-components: `StarRating`, `MultiRating`, `PollBuilder`, `ItineraryBuilder`, `DirectorySearch`
+
+**Shared UI components (all missing):**
+- `Avatar` — used inline everywhere; needs extracting to `components/ui/Avatar.tsx`
+- `ReactionBar` — inline in FeedItemCard; extract to `components/community/ReactionBar.tsx`
+- `TypeBadge` — `components/ui/TypeBadge.tsx`
+- `HashtagText` — `components/community/HashtagText.tsx`
+- `ImageLightbox` — `components/ui/ImageLightbox.tsx`
+
+**Screens (entirely missing):**
+- `MemberDirectoryScreen` — browse/search member directory (§11 of spec)
+- Full `MemberDashboardScreen` — replaces basic `MemberScreen`; needs stats, badges, passkey banner
+- Tabbed `MemberSettingsScreen` — replaces placeholder; 5 tabs: Profile / Directory / Interests / Newsletters / Security
+- `PerksScreen` — partner perk redemption with passkey step-up gate (§14b)
+- `WalletScreen` — credit balance + currency-aware cashout form (§14c)
+- `CouponsScreen` — QR code display for active redemptions (§14d)
+- `PasskeyManager` — in Security settings tab; register/list/delete passkeys
+
+**Screens that are stubs:**
+- `EventsScreen` / `EventDetailScreen` — show "Coming soon"
+- `GamesScreen` — shows game grid but no game logic
+- `MembershipScreen` — IAP (Google Play Billing) not wired
+
+**Navigation missing routes:**
+- `MemberDirectory` (push from Feed tab)
+- `Wallet`, `Coupons`, `Perks` (push from Me tab)
+
+### Key constraints for RN implementation
+
+- **Wallet/Perks API requires a proxy** — `CULTURE_API_SECRET` must NOT be in the mobile app. The RN app calls `https://themoveee.com/api/wallet/…` and `https://themoveee.com/api/perks/…` (Next.js proxies) using the user JWT. The proxies add the server API key before forwarding to WordPress.
+- **Passkeys on RN** — use `react-native-passkeys` (Expo-compatible). Response must flatten `.response` sub-object before posting to WordPress verify endpoints (same as web).
+- **QR codes** — use `react-native-qrcode-svg` for `CouponsScreen`.
+- All colours and fonts are in `docs/moveee-connect-rn-spec.md` §1.
+
+---
+
 ## Phase 6 — Partner Perks & Credits architecture
 
 ### Database tables

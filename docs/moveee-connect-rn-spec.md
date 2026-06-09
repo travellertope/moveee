@@ -4,6 +4,94 @@
 
 ---
 
+## Current App State (as of June 2026)
+
+The app has a working skeleton. Before building anything, understand what already exists so you don't duplicate it.
+
+### What is complete and working
+
+| Area | Files | Notes |
+|------|-------|-------|
+| Auth flow | `screens/auth/LoginScreen`, `RegisterScreen`, `VerifyEmailScreen` | Login, register, check-email |
+| Auth store | `src/auth/authStore.ts` | Zustand + SecureStore + MMKV hydration |
+| API client | `src/api/client.ts` | `api.get/post/put/delete/upload()`, Bearer token injection |
+| MMKV cache | `src/store/storage.ts` | `cache.set/get/invalidate()` with TTL constants |
+| Navigation | `src/navigation/index.tsx` | 5-tab bottom nav + auth stack, full stack routing |
+| Unified feed hook | `src/features/community/useUnifiedFeed.ts` | Paged fetch, MMKV cache, react/optimistic |
+| Community feed hook | `src/features/community/useFeed.ts` | Community-only posts |
+| Comments hook | `src/features/community/useComments.ts` | Fetch, add, report |
+| Magazine hook | `src/features/magazine/useMagazine.ts` | Featured + sections + per-article |
+| ConnectFeedScreen | `screens/community/ConnectFeedScreen.tsx` | Category pills, FlatList, FAB |
+| FeedItemCard | `components/community/FeedItemCard.tsx` | All 6 type branches |
+| PostDetailScreen | `screens/community/PostDetailScreen.tsx` | Reactions, comments, report |
+| PulseDetailScreen | `screens/community/PulseDetailScreen.tsx` | HTML body, comments |
+| NewPostScreen | `screens/community/NewPostScreen.tsx` | **Post + Quote tabs only** |
+| EventSubmitScreen | `screens/community/EventSubmitScreen.tsx` | Submit event form |
+| DirectorySubmitScreen | `screens/community/DirectorySubmitScreen.tsx` | Patron-gated |
+| MemberProfileScreen | `screens/community/MemberProfileScreen.tsx` | Public profile (basic) |
+| MagazineScreen | `screens/magazine/MagazineScreen.tsx` | Featured + sections |
+| ArticleScreen | `screens/magazine/ArticleScreen.tsx` | HTML reader |
+| MemberScreen | `screens/member/MemberScreen.tsx` | Avatar, tier, points, basic menu |
+| MembershipScreen | `screens/member/MembershipScreen.tsx` | Stub — IAP not wired |
+| TierBadge | `components/ui/TierBadge.tsx` | Pro/Citizen badge |
+| TimeAgo | `components/ui/TimeAgo.tsx` | Relative date |
+
+### What is stubbed / missing
+
+| Area | Status | Section in spec |
+|------|--------|-----------------|
+| `src/theme.ts` design tokens | ❌ Missing — colours/fonts hardcoded | §1 |
+| Custom fonts (Fraunces, DM Sans, JetBrains Mono) | ❌ Using system "Georgia/serif" | §1 |
+| Phase 6 types (Perk, Redemption, LedgerEntry, Passkey) | ❌ Missing from types/index.ts | §2 |
+| Phase 7 fields on User type (hasPasskey, passkeyCount, creditsEscrowed) | ❌ Missing | §2 |
+| Passkey fields on User type | ❌ Missing | §2 |
+| API endpoint table for wallet/perks/passkey | ❌ Not in client.ts | §3 |
+| Composer: 6 additional templates | ❌ Only Post + Quote exist | §10 |
+| Composer: StarRating, MultiRating, PollBuilder, ItineraryBuilder, DirectorySearch | ❌ Missing components | §10 |
+| Gallery carousel in FeedItemCard | ❌ `galleryImages` not rendered | §8.1 |
+| Template badge in FeedItemCard | ❌ `templateType` not rendered | §8.1 |
+| Poll options / voting in FeedItemCard | ❌ Not implemented | §8.1 |
+| Itinerary stops in FeedItemCard | ❌ Not implemented | §8.1 |
+| Star rating display in FeedItemCard | ❌ Not implemented | §8.1 |
+| Multi-rating display in FeedItemCard | ❌ Not implemented | §8.1 |
+| ImageLightbox on gallery/image tap | ❌ Missing component | §16 |
+| HashtagText component | ❌ Missing | §16 |
+| TypeBadge component | ❌ Missing | §16 |
+| Avatar shared component | ❌ Missing — inline everywhere | §16 |
+| ReactionBar shared component | ❌ Missing — inline in FeedItemCard | §16 |
+| MemberDirectoryScreen | ❌ Screen does not exist | §11 |
+| MemberCard component | ❌ Missing | §11 |
+| MemberDashboardScreen (full) | ❌ MemberScreen is too basic | §13 |
+| PasskeyBanner on dashboard | ❌ Missing | §13 |
+| Badges grid on dashboard | ❌ Missing | §13 |
+| SettingsScreen tabbed layout | ❌ Placeholder only | §14 |
+| Profile/Directory/Interests/Newsletters/Security tabs | ❌ All missing | §14 |
+| PasskeyManager in Security tab | ❌ Missing | §14, §14e |
+| PerksScreen | ❌ Screen does not exist | §14b |
+| WalletScreen | ❌ Screen does not exist | §14c |
+| CouponsScreen | ❌ Screen does not exist | §14d |
+| EventsScreen / EventDetailScreen | ❌ Stub only "Coming soon" | — |
+| GamesScreen | ❌ Grid only, no game logic | — |
+| MembershipScreen IAP wiring | ❌ Stub — Google Play Billing not connected | §15 |
+| Navigation: Wallet, Coupons, Perks, MemberDirectory routes | ❌ Not in navigator | §6 |
+
+### Priority build order
+
+Follow the phased order in §17. When picking up where the app left off, start with:
+1. `src/theme.ts` + font loading (§1) — needed by everything else
+2. Update `src/types/index.ts` — add Phase 6/7 types (§2)
+3. Update `src/navigation/index.tsx` — add new routes (§6)
+4. `FeedItemCard` gaps — gallery, template badge, poll, ratings (§8.1)
+5. `NewPostScreen` templates (§10)
+6. Shared components: `Avatar`, `ReactionBar`, `TypeBadge`, `HashtagText`, `ImageLightbox` (§16)
+7. `MemberDirectoryScreen` + `MemberCard` (§11)
+8. Full `MemberDashboardScreen` (§13)
+9. Tabbed `MemberSettingsScreen` (§14)
+10. `PerksScreen`, `WalletScreen`, `CouponsScreen` (§14b–14d)
+11. `MembershipScreen` IAP wiring (§15)
+
+---
+
 ## 0. Orientation
 
 ### Repository layout
@@ -30,6 +118,8 @@ The web app in `app/` and `components/` is the **definitive reference**. When an
 ---
 
 ## 1. Design Tokens
+
+> **Current state:** `src/theme.ts` does NOT exist. All colours, font names, and spacing are currently hardcoded inline in each screen's `StyleSheet.create()` calls. This needs to be extracted into a central theme file. When creating `src/theme.ts`, do NOT change the existing hardcoded values — copy them into the theme file using the exact hex values below, then update each file to import from theme. Custom fonts (Fraunces, DM Sans, JetBrains Mono) are NOT loaded — screens currently use `fontFamily: 'Georgia'` (iOS) / `'serif'` (Android). Font loading must be added to `App.tsx` using `expo-font`.
 
 Copy these into `src/theme.ts`. Use them everywhere — never hardcode hex values or font names inline.
 
@@ -214,6 +304,11 @@ export interface User {
   // Interests
   interests: string[];
 
+  // Phase 7 — Passkeys & credit escrow
+  hasPasskey: boolean;       // false = escrow still held, show banner
+  passkeyCount: number;      // number in PasskeyManager list
+  creditsEscrowed: number;   // held credits released on first passkey registration
+
   // Misc
   isVendor: boolean;
   vendorSlug: string;
@@ -365,6 +460,56 @@ export interface Comment {
   date: string;
   parentId?: string;
 }
+
+// ── Phase 6 — Partner Perks & Wallet ─────────────────────────────────────────
+export interface Perk {
+  id: number;
+  title: string;
+  description: string;
+  credit_cost: number;
+  min_spend: number;
+  min_spend_currency: string;
+  expiry_days: number;
+  max_per_user: number;
+  max_total: number;
+  redeemed_count: number;
+  status: 'active' | 'inactive';
+  partner_directory_id: number;
+}
+
+export interface Redemption {
+  id: number;
+  perk_id: number;
+  type: 'perk' | 'cashout';
+  credits_spent: number;
+  fee_credits: number;
+  qr_token: string;
+  qr_scanned: 0 | 1;
+  status: 'active' | 'used' | 'expired' | 'pending' | 'approved' | 'rejected';
+  expires_at: string | null;
+  created_at: string;
+  perk_title?: string;
+  perk_description?: string;
+}
+
+export interface LedgerEntry {
+  id: number;
+  amount: number;         // positive = earned, negative = spent
+  source: string;         // 'post_validated' | 'perk_redeem' | 'cashout' | 'referral' | etc.
+  source_id: number;
+  note: string;
+  created_at: string;
+}
+
+// ── Phase 7 — Passkeys ────────────────────────────────────────────────────────
+export interface Passkey {
+  id: number;
+  credential_id: string;
+  device_name: string;
+  created_at: string;
+  last_used_at: string;
+  transports: string[];   // ['internal', 'hybrid', ...]
+}
 ```
 
 ---
@@ -404,20 +549,80 @@ export async function wpPost<T>(path: string, body: unknown, token: string): Pro
 
 ### Endpoint reference
 
+**Important:** The RN app talks directly to the WordPress REST API, NOT to the Next.js route handlers. Use `CULTURE_API = WP_URL + '/wp-json/culture/v1'` for all culture endpoints. Use `WP_API = WP_URL + '/wp-json/wp/v2'` for native WP endpoints.
+
+**Authentication:** After login, the app receives a JWT token stored in SecureStore. Pass as `Authorization: Bearer <token>` on all authenticated requests. The `api.get/post()` helpers in `client.ts` handle this automatically when `auth: true`.
+
+#### Auth & profile
 | Operation | Endpoint | Auth |
 |-----------|----------|------|
-| Login | `POST /culture/v1/login` { username, password } | No |
-| Fetch unified feed (community) | `GET /wp/v2/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count` | No |
-| Submit community post | `POST /wp/v2/community-posts` | Basic (app password) |
-| React to post | `POST /culture/v1/react` { post_id, reaction } | JWT |
-| Comment | `POST /culture/v1/comment` { post_id, content } | JWT |
-| Get comments | `GET /culture/v1/comments?post_id=X` | No |
-| Poll vote | `POST /culture/v1/poll-vote` { post_id, option_index } | JWT |
-| Report post | `POST /culture/v1/report` { post_id, reason } | JWT |
-| Member directory | `GET /culture/v1/members?search=&discipline=&location=&page=1` | No |
-| Member profile | `GET /culture/v1/members/{username}` | No |
-| Member posts | `GET /culture/v1/members/{username}/posts` | No |
-| Update profile | `POST /culture/v1/profile` { ...fields } | JWT |
+| Login | `POST /culture/v1/mobile/login` `{ email, password }` | No |
+| Register | `POST /culture/v1/mobile/register` `{ email, username, password }` | No |
+| Current user | `GET /culture/v1/mobile/me` | JWT |
+| Logout | `POST /culture/v1/mobile/logout` | JWT |
+| Update profile | `POST /culture/v1/user/update` `{ displayName, phone, city, … }` | JWT |
+| Register push token | `POST /culture/v1/user/push-token` `{ token, platform }` | JWT |
+
+#### Community feed
+| Operation | Endpoint | Auth |
+|-----------|----------|------|
+| Unified feed | `GET /culture/v1/feed?page=1&per_page=20` | No |
+| Community posts | `GET /culture/v1/community/posts?page=1&per_page=20` | No |
+| Submit post | `POST /culture/v1/community/submit` | JWT |
+| Upload image | `POST /culture/v1/community/upload-image` (multipart) | JWT |
+| React to post | `POST /culture/v1/community/react` `{ post_id, type }` | JWT |
+| Poll vote | `POST /culture/v1/community/poll-vote` `{ post_id, option_index }` | JWT |
+| Get comments | `GET /culture/v1/community/comments?post_id=X` | No |
+| Add comment | `POST /culture/v1/community/comment` `{ post_id, content }` | JWT |
+| Report post | `POST /culture/v1/community/report` `{ post_id, reason }` | JWT |
+| Submit quote | `POST /culture/v1/community/quote` `{ text, author, source? }` | JWT |
+
+#### Directory
+| Operation | Endpoint | Auth |
+|-----------|----------|------|
+| Search directory | `GET /culture/v1/directory/search?q=X&type=place` | No |
+| Quick-create entry | `POST /culture/v1/directory/quick-create` `{ title, entry_type, city? }` | JWT |
+| Submit full entry | `POST /culture/v1/directory/submit-mobile` | JWT (patron only) |
+
+#### Members
+| Operation | Endpoint | Auth |
+|-----------|----------|------|
+| Member directory list | `GET /culture/v1/members?search=&discipline=&location=&page=1` | No |
+| Public profile | `GET /culture/v1/member/{username}` | No |
+| Community posts by user | `GET /culture/v1/community/posts?author_username=X` | No |
+| Portfolio | `GET /culture/v1/user/portfolio` | JWT |
+
+#### Wallet & Perks (Phase 6)
+| Operation | Endpoint | Auth |
+|-----------|----------|------|
+| Wallet balance | `GET /culture/v1/wallet/balance?user_id=X` | API key (server-side only — proxy via Next.js `/api/wallet/balance`) |
+| Wallet history | `GET /culture/v1/wallet/history?user_id=X&per_page=20` | API key (proxy) |
+| Cash out request | `POST /culture/v1/wallet/cashout` | API key (proxy) |
+| List perks | `GET /culture/v1/perks` | No |
+| Redeem perk | `POST /culture/v1/perks/redeem` `{ user_id, perk_id, step_up_token }` | API key (proxy) |
+| My redemptions | `GET /culture/v1/perks/verify?user_id=X` | API key (proxy) |
+
+> **Proxy note:** Wallet and Perks endpoints require the `CULTURE_API_SECRET` server key which must NOT be in the mobile app. The RN app must call the Next.js proxy routes (`https://themoveee.com/api/wallet/…`, `https://themoveee.com/api/perks/…`) using the user's JWT instead. The Next.js proxy then adds the API key before forwarding to WordPress.
+
+#### Passkeys (Phase 7)
+| Operation | Endpoint | Auth |
+|-----------|----------|------|
+| Register options | `GET /culture/v1/passkey/register-options` | JWT |
+| Register verify | `POST /culture/v1/passkey/register-verify` | JWT |
+| Login options | `GET /culture/v1/passkey/login-options?username=X` | No |
+| Login verify | `POST /culture/v1/passkey/login-verify` | No |
+| Step-up options | `POST /culture/v1/passkey/step-up` | JWT |
+| Step-up verify | `POST /culture/v1/passkey/step-up-verify` | JWT |
+| List passkeys | `GET /culture/v1/passkey/list` | JWT |
+| Delete passkey | `DELETE /culture/v1/passkey/delete` `{ credential_id }` | JWT |
+
+> **Passkey on RN:** The browser `@simplewebauthn/browser` library does NOT work in React Native. Use `react-native-passkeys` (Expo-compatible) for native WebAuthn. The credential shapes (attestationObject, clientDataJSON, etc.) match; only the JS trigger library differs. Install: `npx expo install react-native-passkeys`. iOS 16+ / Android 9+ required.
+
+#### Newsletter preferences
+| Operation | Endpoint | Auth |
+|-----------|----------|------|
+| Get preferences | `GET /culture/v1/newsletter-preferences` | JWT |
+| Update preferences | `POST /culture/v1/newsletter-preferences` `{ lists: string[] }` | JWT |
 
 ---
 
@@ -531,30 +736,67 @@ export function useFeed() {
 
 ## 6. Navigation Structure
 
+The `src/navigation/index.tsx` file already exists with the 5-tab structure and most stacks. The changes below are **additions** needed on top of the existing navigator.
+
 ```
 Root Navigator (Stack)
-├── Auth Stack
-│   ├── LoginScreen
-│   └── RegisterScreen (WebView → /register)
-└── Main Tab Navigator
-    ├── Tab: Feed (ConnectFeedScreen)
-    ├── Tab: Magazine (MagazineScreen)
-    ├── Tab: Events (EventsScreen)
-    ├── Tab: Games (GamesScreen)
-    └── Tab: Me (MemberScreen or LoginPromptScreen)
+├── Auth Stack                      ← exists
+│   ├── LoginScreen                 ← exists
+│   ├── RegisterScreen              ← exists
+│   └── VerifyEmailScreen           ← exists
+└── Main Tab Navigator              ← exists
+    ├── Tab: Feed                   ← exists
+    ├── Tab: Magazine               ← exists
+    ├── Tab: Events                 ← exists (stub)
+    ├── Tab: Games                  ← exists (stub)
+    └── Tab: Me                     ← exists
 
-Feed Stack (pushed from ConnectFeedScreen)
-├── PostDetailScreen (post + comments)
-├── MemberProfileScreen (public profile)
-├── NewPostScreen (composer)
-└── HashtagFeedScreen
+Feed Stack                          ← exists — add these:
+├── PostDetailScreen                ← exists
+├── PulseDetailScreen               ← exists
+├── NewPostScreen                   ← exists
+├── EventSubmitScreen               ← exists
+├── DirectorySubmitScreen           ← exists
+├── MemberProfileScreen             ← exists
+└── MemberDirectoryScreen           ← ADD (§11)
 
-Member Stack (from Me tab)
-├── MemberDashboardScreen
-├── MemberSettingsScreen
-├── MemberCollectionScreen
-└── MembershipScreen
+Member Stack                        ← exists — expand:
+├── MemberDashboardScreen           ← REPLACE MemberScreen (§13)
+├── MemberSettingsScreen            ← REPLACE SettingsScreen stub (§14)
+│   (internal tabs: Profile/Directory/Interests/Newsletters/Security)
+├── WalletScreen                    ← ADD (§14c)
+├── CouponsScreen                   ← ADD (§14d)
+├── PerksScreen                     ← ADD (§14b)
+└── MembershipScreen                ← exists (needs IAP wiring)
 ```
+
+### Route param types (add to navigator TypeScript param list)
+```ts
+type MemberStackParams = {
+  MemberDashboard: undefined;
+  MemberSettings: { tab?: 'profile' | 'directory' | 'interests' | 'newsletters' | 'security' };
+  Wallet: undefined;
+  Coupons: undefined;
+  Perks: undefined;
+  Membership: undefined;
+};
+
+type FeedStackParams = {
+  ConnectFeed: undefined;
+  PostDetail: { item: FeedItem };
+  PulseDetail: { item: FeedItem };
+  NewPost: undefined;
+  EventSubmit: undefined;
+  DirectorySubmit: undefined;
+  MemberProfile: { userId: string; username: string };
+  MemberDirectory: undefined;
+};
+```
+
+### Tab icon updates needed
+The "Me" tab icon should change to a gold filled person when the user is Pro (`tier === 'patron'`). Use `Ionicons` `person` (inactive) / `person-sharp` (active).
+
+Add "My Wallet" and "Partner Perks" as quick-access items from the Me tab (not separate bottom tabs — push onto the MemberStack).
 
 ---
 
@@ -826,6 +1068,15 @@ Numbered circle: 22×22, `backgroundColor: colors.gold, color: '#fff', fontWeigh
 ## 10. NewPostScreen (Composer)
 
 **Source reference:** `components/pulse/SubmitPost.tsx`
+
+> **Current state:** `src/screens/community/NewPostScreen.tsx` exists and handles the `post` and `quote` templates with a simple two-tab UI. The remaining 6 templates (hidden-gem, cultural-take, food-review, creative-showcase, poll, itinerary) and their sub-components need to be built. The entire screen needs to be replaced with the full template-selector architecture described below. Keep the existing image upload, section picker, and submit logic — just extend it.
+
+**Sub-components to create** (all missing):
+- `src/components/composer/StarRating.tsx` — §below
+- `src/components/composer/MultiRating.tsx` — §below
+- `src/components/composer/PollBuilder.tsx` — §below
+- `src/components/composer/ItineraryBuilder.tsx` — §below
+- `src/components/composer/DirectorySearch.tsx` — §below (calls `/culture/v1/directory/search`)
 
 This is the most complex screen. Implement as a full-screen bottom sheet or modal stack.
 
@@ -1443,6 +1694,50 @@ Work through these in order. Each step is independently testable.
 25. `WalletScreen` (Section 14c) with currency-aware bank fields + step-up gate
 26. `CouponsScreen` (Section 14d) with QR code rendering
 27. Wire passkey WebAuthn flow using `react-native-passkeys` or equivalent library
+
+---
+
+## 14e. PasskeyManager (Security settings sub-component)
+
+**Source reference:** `app/member/settings/PasskeyManager.tsx`
+
+This is a client component rendered inside the Security tab of `MemberSettingsScreen`.
+
+### Layout
+```
+Passkeys
+─────────────────────────────────────────
+[Device name]    Added: 8 Jun 2026   [🗑]
+  Last used: 2 days ago
+─────────────────────────────────────────
+[Device name 2]  Added: ...          [🗑]
+─────────────────────────────────────────
+[+ Add a passkey]
+```
+
+Empty state: "No passkeys set up yet." with prominent "Set up a passkey →" button.
+
+### API flow — adding a passkey
+1. `GET /culture/v1/passkey/register-options` (with JWT) → `{ options }` (WebAuthn `PublicKeyCredentialCreationOptions`)
+2. `await startRegistration(options)` using `react-native-passkeys`
+3. The credential comes back with `response.clientDataJSON`, `response.attestationObject`
+4. `POST /culture/v1/passkey/register-verify` body: spread the credential, flattening `.response` fields to top level:
+   ```ts
+   {
+     id, rawId, type,
+     clientDataJSON:    credential.response.clientDataJSON,
+     attestationObject: credential.response.attestationObject,
+     transports:        credential.response.transports ?? [],
+     device_name:       Platform.OS === 'ios' ? 'iPhone' : 'Android',
+   }
+   ```
+5. On success: refresh passkey list, update `user.hasPasskey = true` in auth store, invalidate MMKV cache
+
+### API flow — deleting a passkey
+`DELETE /culture/v1/passkey/delete` body: `{ credential_id }` — then refresh list.
+
+### Minimum passkey note
+Always warn before deleting the last passkey: "Deleting your only passkey will lock you out of perks and cashouts."
 
 ---
 
