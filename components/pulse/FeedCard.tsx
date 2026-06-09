@@ -182,10 +182,12 @@ export default function FeedCard({
   item,
   onTagClick,
   onHashtagClick,
+  interestMatch,
 }: {
   item: FeedItem;
   onTagClick?: (tag: string) => void;
   onHashtagClick?: (hashtag: string) => void;
+  interestMatch?: boolean;
 }) {
   const typeMeta = TYPE_BADGE[item.type] ?? TYPE_BADGE.pulse;
 
@@ -355,6 +357,21 @@ export default function FeedCard({
                 >
                   {item.communityTag}
                 </button>
+              )}
+              {interestMatch && (
+                <span title="Matches your interests" style={{
+                  fontSize: "0.55rem",
+                  fontWeight: 700,
+                  letterSpacing: ".08em",
+                  textTransform: "uppercase",
+                  color: "var(--ochre, #b38238)",
+                  border: "1px solid rgba(179,130,56,.4)",
+                  borderRadius: 2,
+                  padding: "0.1rem 0.35rem",
+                  flexShrink: 0,
+                }}>
+                  ✦ For You
+                </span>
               )}
             </div>
 
