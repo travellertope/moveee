@@ -552,6 +552,16 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Events organised by a directory entry.
+        register_rest_route( 'culture/v1', '/directory/(?P<id>\d+)/events', array(
+            'methods'             => 'GET',
+            'callback'            => array( 'Culture_Directory', 'handle_directory_events' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'id' => array( 'required' => true, 'validate_callback' => 'is_numeric' ),
+            ),
+        ) );
+
         // Phase 3 — community posts linked to a directory entry.
         register_rest_route( 'culture/v1', '/directory/(?P<id>\d+)/posts', array(
             'methods'             => 'GET',

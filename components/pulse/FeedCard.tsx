@@ -937,6 +937,17 @@ export default function FeedCard({
                 · {[item.location, item.city].filter(Boolean).join(", ")}
               </span>
             )}
+            {item.organiserName && (
+              item.organiserSlug ? (
+                <Link href={`/directory/${item.organiserSlug}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.58rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.04em", textDecoration: "none" }}>
+                  · {item.organiserName}
+                </Link>
+              ) : (
+                <span style={{ fontSize: "0.58rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.04em" }}>
+                  · {item.organiserName}
+                </span>
+              )
+            )}
             <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
           </div>
 

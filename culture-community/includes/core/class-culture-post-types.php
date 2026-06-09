@@ -34,17 +34,18 @@ class Culture_Post_Types {
      */
     public static function register_rest_meta_fields() {
         $event_meta = array(
-            '_culture_ai_generated'  => array( 'type' => 'string' ),
-            '_culture_event_date'    => array( 'type' => 'string' ),
-            '_culture_event_end_date'    => array( 'type' => 'string' ),
-            '_culture_location'      => array( 'type' => 'string' ),
-            '_culture_event_city'    => array( 'type' => 'string' ),
-            '_culture_admission'     => array( 'type' => 'string' ),
-            '_culture_ticketing_url' => array( 'type' => 'string' ),
-            '_culture_tagline'           => array( 'type' => 'string' ),
-            '_culture_is_featured'       => array( 'type' => 'string' ),
-            '_culture_event_image_url'   => array( 'type' => 'string' ),
-            '_culture_opening_hours'     => array( 'type' => 'string' ),
+            '_culture_ai_generated'       => array( 'type' => 'string' ),
+            '_culture_event_date'         => array( 'type' => 'string' ),
+            '_culture_event_end_date'     => array( 'type' => 'string' ),
+            '_culture_location'           => array( 'type' => 'string' ),
+            '_culture_event_city'         => array( 'type' => 'string' ),
+            '_culture_admission'          => array( 'type' => 'string' ),
+            '_culture_ticketing_url'      => array( 'type' => 'string' ),
+            '_culture_tagline'            => array( 'type' => 'string' ),
+            '_culture_is_featured'        => array( 'type' => 'string' ),
+            '_culture_event_image_url'    => array( 'type' => 'string' ),
+            '_culture_opening_hours'      => array( 'type' => 'string' ),
+            '_culture_event_organiser_id' => array( 'type' => 'integer' ),
         );
         // Expose AIOSEO meta on standard posts so REST-based fetches can read them
         foreach ( array( '_aioseo_title', '_aioseo_description' ) as $aioseo_key ) {
@@ -97,6 +98,15 @@ class Culture_Post_Types {
                     'tagline'       => get_post_meta( $id, '_culture_tagline',       true ),
                     'attribution'   => get_post_meta( $id, '_culture_attribution',   true ),
                     'ai_generated'  => get_post_meta( $id, '_culture_ai_generated',  true ),
+                    'organiser_id'  => (int) get_post_meta( $id, '_culture_event_organiser_id', true ) ?: null,
+                    'organiser_name' => ( function() use ( $id ) {
+                        $oid = (int) get_post_meta( $id, '_culture_event_organiser_id', true );
+                        return $oid ? get_the_title( $oid ) : null;
+                    } )(),
+                    'organiser_slug' => ( function() use ( $id ) {
+                        $oid = (int) get_post_meta( $id, '_culture_event_organiser_id', true );
+                        return $oid ? get_post_field( 'post_name', $oid ) : null;
+                    } )(),
                 );
             },
             'schema' => null,
@@ -1199,14 +1209,26 @@ class Culture_Post_Types {
 
     public static function render_event_meta_box( $post ) {
         wp_nonce_field( 'culture_event_meta', 'culture_event_meta_nonce' );
-        $event_date  = get_post_meta( $post->ID, '_culture_event_date', true );
-        $is_physical = get_post_meta( $post->ID, '_culture_is_physical', true );
-        $capacity    = get_post_meta( $post->ID, '_culture_capacity', true );
+        $event_date   = get_post_meta( $post->ID, '_culture_event_date', true );
+        $is_physical  = get_post_meta( $post->ID, '_culture_is_physical', true );
+        $capacity     = get_post_meta( $post->ID, '_culture_capacity', true );
+        $organiser_id = (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true );
+        $organiser_title = $organiser_id ? get_the_title( $organiser_id ) : '';
         ?>
         <table class="form-table">
             <tr><th><label for="culture_event_date">Event Date</label></th><td><input type="datetime-local" id="culture_event_date" name="culture_event_date" value="<?php echo esc_attr( $event_date ); ?>" /></td></tr>
             <tr><th><label for="culture_is_physical">Physical Event</label></th><td><input type="checkbox" id="culture_is_physical" name="culture_is_physical" value="1" <?php checked( $is_physical, '1' ); ?> /></td></tr>
             <tr><th><label for="culture_capacity">Capacity</label></th><td><input type="number" id="culture_capacity" name="culture_capacity" value="<?php echo esc_attr( $capacity ); ?>" min="0" /></td></tr>
+            <tr>
+                <th><label for="culture_event_organiser_id">Organiser (Directory ID)</label></th>
+                <td>
+                    <input type="number" id="culture_event_organiser_id" name="culture_event_organiser_id" value="<?php echo esc_attr( $organiser_id ?: '' ); ?>" min="1" style="width:100px;" />
+                    <?php if ( $organiser_title ) : ?>
+                        <span style="margin-left:8px;color:#2e7d32;font-weight:600;"><?php echo esc_html( $organiser_title ); ?></span>
+                    <?php endif; ?>
+                    <p class="description">Enter the post ID of a Culture Directory entry. Leave blank for none.</p>
+                </td>
+            </tr>
         </table>
         <?php
     }
@@ -1300,6 +1322,14 @@ class Culture_Post_Types {
             if ( isset( $_POST['culture_event_date'] ) ) update_post_meta( $post_id, '_culture_event_date', sanitize_text_field( $_POST['culture_event_date'] ) );
             update_post_meta( $post_id, '_culture_is_physical', isset( $_POST['culture_is_physical'] ) ? '1' : '0' );
             if ( isset( $_POST['culture_capacity'] ) ) update_post_meta( $post_id, '_culture_capacity', absint( $_POST['culture_capacity'] ) );
+            if ( isset( $_POST['culture_event_organiser_id'] ) ) {
+                $oid = absint( $_POST['culture_event_organiser_id'] );
+                if ( $oid > 0 ) {
+                    update_post_meta( $post_id, '_culture_event_organiser_id', $oid );
+                } else {
+                    delete_post_meta( $post_id, '_culture_event_organiser_id' );
+                }
+            }
         }
         if ( isset( $_POST['culture_quote_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_quote_meta_nonce'], 'culture_quote_meta' ) ) {
             if ( isset( $_POST['quote_source'] ) ) update_post_meta( $post_id, '_quote_source', sanitize_text_field( $_POST['quote_source'] ) );

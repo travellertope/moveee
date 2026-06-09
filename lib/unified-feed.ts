@@ -37,6 +37,8 @@ export interface FeedItem {
   venueAddress?: string;
   admission?: string;
   eventCategory?: string;
+  organiserName?: string;
+  organiserSlug?: string;
   // directory-specific
   entryType?: string;
   // quote-specific
@@ -270,6 +272,8 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         venueAddress: event.venueAddress ?? "",
         admission: event.admission ?? "",
         eventCategory: event.cultureInterests?.nodes?.[0]?.name ?? "",
+        organiserName: event.organiserName || undefined,
+        organiserSlug: event.organiserSlug || undefined,
       });
     }
   }
