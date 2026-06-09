@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import AnalyticsClient from "./AnalyticsClient";
-import "../member.css";
+import "../../member.css";
 
 export const dynamic = "force-dynamic";
 
