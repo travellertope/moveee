@@ -29,6 +29,8 @@ import ArticleScreen from "../screens/magazine/ArticleScreen";
 
 // Events / Games
 import GamesScreen from "../screens/games/GamesScreen";
+import TriviaGameScreen from "../screens/games/TriviaGameScreen";
+import WhoSaidItGameScreen from "../screens/games/WhoSaidItGameScreen";
 import EventsScreen from "../screens/events/EventsScreen";
 import EventDetailScreen from "../screens/events/EventDetailScreen";
 
@@ -102,6 +104,16 @@ function EventsStack() {
   );
 }
 
+function GamesStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="GamesList"  component={GamesScreen} />
+      <Stack.Screen name="TriviaGame" component={TriviaGameScreen} />
+      <Stack.Screen name="WhoSaidIt"  component={WhoSaidItGameScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function MemberStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -151,7 +163,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Connect"  component={ConnectStack} />
       <Tab.Screen name="Magazine" component={MagazineStack} />
-      <Tab.Screen name="Games"    component={GamesScreen} />
+      <Tab.Screen name="Games"    component={GamesStack} />
       <Tab.Screen name="Events"   component={EventsStack} />
       <Tab.Screen name="Me"       component={MemberStack} />
     </Tab.Navigator>

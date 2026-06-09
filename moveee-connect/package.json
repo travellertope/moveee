@@ -31,6 +31,7 @@
     "react-native": "0.76.9",
     "react-native-iap": "^12.15.4",
     "react-native-mmkv": "^2.12.2",
+    "react-native-passkeys": "^0.4.1",
     "react-native-qrcode-svg": "^6.3.21",
     "react-native-render-html": "^6.3.4",
     "react-native-safe-area-context": "4.12.0",
