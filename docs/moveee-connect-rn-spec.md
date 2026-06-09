@@ -73,7 +73,14 @@ The app has a working skeleton. Before building anything, understand what alread
 | EventsScreen / EventDetailScreen | ❌ Stub only "Coming soon" | — |
 | GamesScreen | ❌ Grid only, no game logic | — |
 | MembershipScreen IAP wiring | ❌ Stub — Google Play Billing not connected | §15 |
-| Navigation: Wallet, Coupons, Perks, MemberDirectory routes | ❌ Not in navigator | §6 |
+| Navigation: Wallet, Coupons, Perks, MemberDirectory, Notifications, Analytics routes | ❌ Not in navigator | §6 |
+| NotificationsScreen | ❌ Screen does not exist | §14f |
+| "For You" toggle in ConnectFeedScreen | ❌ Not implemented | §7 |
+| AnalyticsScreen | ❌ Screen does not exist | §14g |
+| New FeedItem fields (endDate, eventCategory, organiserName, organiserSlug, openingHours, venueAddress, admission) | ❌ Missing from FeedItem type | §2 |
+| Happening/Directory/Quote detail bottom sheets | ❌ No detail drawer for these card types | §8.4–8.6 |
+| Event organiser field in EventSubmitScreen | ❌ `organiser_directory_id` not sent | §10 |
+| `Notification` type in types/index.ts | ❌ Missing | §2 |
 
 ### Priority build order
 
@@ -89,6 +96,9 @@ Follow the phased order in §17. When picking up where the app left off, start w
 9. Tabbed `MemberSettingsScreen` (§14)
 10. `PerksScreen`, `WalletScreen`, `CouponsScreen` (§14b–14d)
 11. `MembershipScreen` IAP wiring (§15)
+12. `NotificationsScreen` + bell icon in header (§14f) — Phase 8a
+13. "For You" toggle in `ConnectFeedScreen` with `useFeedRecommendations` (§7) — Phase 8b
+14. `AnalyticsScreen` with credit/rep charts (§14g) — Phase 8c
 
 ---
 
@@ -358,7 +368,15 @@ export interface FeedItem {
 
   // Happening / event
   eventDate?: string;
+  endDate?: string;
   location?: string;
+  venueAddress?: string;
+  openingHours?: string;
+  admission?: string;
+  eventCategory?: string;
+  organiserName?: string;   // display name of organiser directory entry
+  organiserSlug?: string;   // slug for /directory/{slug} link
+  city?: string;            // city for happening items
 
   // Directory
   entryType?: string;
@@ -510,6 +528,23 @@ export interface Passkey {
   last_used_at: string;
   transports: string[];   // ['internal', 'hybrid', ...]
 }
+
+// ── Phase 8a — Notifications ──────────────────────────────────────────────────
+export type NotificationType =
+  | 'credit_earned' | 'badge_unlocked' | 'perk_expiring' | 'perk_redeemed'
+  | 'cashout_approved' | 'cashout_rejected' | 'escrow_released'
+  | 'comment_received' | 'post_validated' | 'system';
+
+export interface Notification {
+  id: number;
+  type: NotificationType;
+  title: string;
+  body: string;
+  action_url: string | null;
+  meta: Record<string, unknown> | null;
+  read_at: string | null;      // null = unread
+  created_at: string;
+}
 ```
 
 ---
@@ -617,6 +652,18 @@ export async function wpPost<T>(path: string, body: unknown, token: string): Pro
 | Delete passkey | `DELETE /culture/v1/passkey/delete` `{ credential_id }` | JWT |
 
 > **Passkey on RN:** The browser `@simplewebauthn/browser` library does NOT work in React Native. Use `react-native-passkeys` (Expo-compatible) for native WebAuthn. The credential shapes (attestationObject, clientDataJSON, etc.) match; only the JS trigger library differs. Install: `npx expo install react-native-passkeys`. iOS 16+ / Android 9+ required.
+
+#### Notifications (Phase 8a)
+| Operation | Endpoint | Auth |
+|-----------|----------|------|
+| List notifications | `GET https://themoveee.com/api/notifications` | JWT (proxy adds API key) |
+| Unread count | `GET https://themoveee.com/api/notifications/count` | JWT (proxy) |
+| Mark read | `POST https://themoveee.com/api/notifications` `{ notification_id? }` | JWT (proxy) |
+
+#### Member analytics (Phase 8c)
+| Operation | Endpoint | Auth |
+|-----------|----------|------|
+| Get analytics | `GET https://themoveee.com/api/member/analytics` | JWT (proxy adds API key + user_id) |
 
 #### Newsletter preferences
 | Operation | Endpoint | Auth |
@@ -767,6 +814,8 @@ Member Stack                        ← exists — expand:
 ├── WalletScreen                    ← ADD (§14c)
 ├── CouponsScreen                   ← ADD (§14d)
 ├── PerksScreen                     ← ADD (§14b)
+├── NotificationsScreen             ← ADD (§14f)
+├── AnalyticsScreen                 ← ADD (§14g)
 └── MembershipScreen                ← exists (needs IAP wiring)
 ```
 
@@ -778,6 +827,8 @@ type MemberStackParams = {
   Wallet: undefined;
   Coupons: undefined;
   Perks: undefined;
+  Notifications: undefined;
+  Analytics: undefined;
   Membership: undefined;
 };
 
@@ -796,7 +847,9 @@ type FeedStackParams = {
 ### Tab icon updates needed
 The "Me" tab icon should change to a gold filled person when the user is Pro (`tier === 'patron'`). Use `Ionicons` `person` (inactive) / `person-sharp` (active).
 
-Add "My Wallet" and "Partner Perks" as quick-access items from the Me tab (not separate bottom tabs — push onto the MemberStack).
+Add "My Wallet", "Partner Perks", and "Notifications" as quick-access items from the Me tab (not separate bottom tabs — push onto the MemberStack).
+
+**Bell icon in app header (Phase 8a):** Add a bell icon button to the top-right of the Feed tab header. Badge shows unread count (red dot with number). Polls `GET /api/notifications/count` (via the Next.js proxy) every 30s. Tapping navigates to `NotificationsScreen`.
 
 ---
 
@@ -822,8 +875,9 @@ Add "My Wallet" and "Partner Perks" as quick-access items from the Me tab (not s
 
 ### FeedHeader
 Contains in order:
-1. **Category filter strip** (horizontal `ScrollView`, `horizontal showsHorizontalScrollIndicator={false}`)
-2. **Active filter chip** (if tag/category active, shows clearable chip)
+1. **For You / All toggle row** — two pills left-aligned. "All" shows newest-first; "For You" activates interest-based scoring (Phase 8b). Only show if `user.interests.length > 0`.
+2. **Category filter strip** (horizontal `ScrollView`, `horizontal showsHorizontalScrollIndicator={false}`)
+3. **Active filter chip** (if tag/category active, shows clearable chip)
 
 ### Category filter strip
 - Pills: All · Pulse · News · Editorial · Event · Directory · Quote
@@ -831,6 +885,22 @@ Contains in order:
 - Active pill: `color: ochre`, `borderBottomWidth: 2`, `borderBottomColor: ochre`
 - Inactive: `color: mute`
 - Font: `fonts.mono`, `fontSize.xs`, `letterSpacing.tracked`, uppercase
+
+### "For You" ranking (Phase 8b)
+When `forYou` mode is active, items are scored 0–100 and sorted by score descending:
+- **50 pts** — interest match: item's `category`, `communityTag`, `entryType`, or `arm` matches any of `user.interests`
+- **30 pts** — recency: 3-day half-life (`30 × 0.5 ^ (ageHours / 72)`)
+- **20 pts** — engagement: log scale (`min(20, log1p(reactions + comments) × 4)`)
+
+Matched cards show a `✦ For You` badge (ochre bg, `fontFamily: fonts.mono, fontSize: 9`).
+
+Implement as `src/features/community/useFeedRecommendations.ts` exporting:
+```ts
+export function scoreItem(item: FeedItem, interestSet: Set<string>): number
+export function rankFeed(items: FeedItem[], interestSet: Set<string>): FeedItem[]
+export function matchesInterests(item: FeedItem, interestSet: Set<string>): boolean
+```
+`interestSet` is built from `user.interests` (lowercase slugs). Pass `new Set(user.interests.map(s => s.toLowerCase()))`.
 
 ### Filtering logic (client-side on loaded items)
 ```ts
@@ -1015,14 +1085,18 @@ Numbered circle: 22×22, `backgroundColor: colors.gold, color: '#fff', fontWeigh
 ### 8.4 Happening / Event card
 
 - Badge: `HAPPENING` — `bg: colors.badgeHappeningBg, color: colors.badgeHappeningText`
-- Event date formatted as `"8 Jun 2026"` (same locale as web: `en-GB`)
-- Location subtitle
+- Start date formatted as `"8 Jun 2026"` (locale: `en-GB`); if `endDate` differs, show `"8–10 Jun 2026"`
+- Location subtitle (city, or `location` field)
 - Featured image
+- **Tapping the card body** opens a bottom sheet detail drawer with: full dates, `venueAddress`, `admission`, `openingHours`, organiser (linked), full HTML description
+- Bottom sheet: use `@gorhom/bottom-sheet` — 90% screen height, drag-to-dismiss
+- Organiser line (if `organiserName`): `"By {organiserName}"` tappable → navigate to `DirectorySubmit` or open a web link to `/directory/{organiserSlug}`
 
 ### 8.5 Directory card
 
 - Badge: `DIRECTORY` — `bg: colors.badgeDirectoryBg, color: colors.badgeDirectoryText`
 - Entry type subtitle
+- **Tapping the card body** opens a bottom sheet detail drawer with: entry name, type badge, excerpt, full body text, "View full entry →" link (`Linking.openURL`)
 
 ### 8.6 Quote card
 
@@ -1031,6 +1105,7 @@ Numbered circle: 22×22, `backgroundColor: colors.gold, color: '#fff', fontWeigh
 - Author: `color: colors.ochre, fontSize: 12, fontWeight: '600'`
 - Source: `color: colors.mute, fontSize: 11`
 - Type badge: `QUOTE` — purple
+- **Tapping the card body** opens a bottom sheet detail drawer with large quote text (Fraunces 22px), author, source, and `ReactionBar`
 
 ---
 
@@ -1154,6 +1229,12 @@ Chips: tappable → prepend chip text to textarea + focus
 - Each stop: name input (required) + note (optional)
 - "Add stop" button
 - Min 2 stops to submit
+
+**Event organiser field** (in `EventSubmitScreen`):
+- `DirectorySearch` component with `typeFilter="person"` — searches people entries
+- Stores as `organiser_directory_id` (integer) in the submit payload
+- Optional — not a required field
+- Shown in the Happening card footer as "By {organiserName}"
 
 **Quote author/source** (for `quote`):
 - Two inputs: Author * | Source (optional)
@@ -1568,6 +1649,134 @@ List of `CouponCard` components.
 
 ---
 
+## 14f. NotificationsScreen (Phase 8a)
+
+**Source reference:** `app/member/notifications/page.tsx` + `components/NotificationBell.tsx`
+
+Full-page list of notifications for the logged-in member.
+
+### Header bell icon (in Feed tab header)
+- Polls `GET https://themoveee.com/api/notifications/count` (Next.js proxy, adds API key) every 30s using `setInterval` in a `useEffect` (clear on unmount)
+- Shows red badge with unread count when `unread > 0`
+- Badge hidden when count is 0
+- Tapping → navigates to `NotificationsScreen`
+
+### NotificationsScreen layout
+```
+<SafeAreaView>
+  [Mark all read] button (top-right, disabled when none unread)
+  <FlatList
+    data={notifications}
+    renderItem={({ item }) => <NotificationRow item={item} />}
+    keyExtractor={item => String(item.id)}
+    refreshControl={<RefreshControl onRefresh={refresh} />}
+    ListEmptyComponent={<EmptyState text="No notifications yet" />}
+  />
+</SafeAreaView>
+```
+
+### NotificationRow
+```
+┌───────────────────────────────────────────────────────┐
+│ [Emoji 22px]  Title (bold if unread)     · Time ago   │
+│               Body text (muted, 2 lines)              │
+└───────────────────────────────────────────────────────┘
+```
+- Unread rows: `backgroundColor: 'rgba(179,130,56,0.06)'` (faint gold tint)
+- Read rows: `backgroundColor: colors.paper`
+- Left border 3px if unread: `borderLeftColor: colors.gold`
+- `borderBottomWidth: 1, borderBottomColor: colors.rule`
+- Tapping: calls `POST /api/notifications` body `{ notification_id: item.id }` to mark read, then follows `action_url` if set (`Linking.openURL` for external; navigate for internal routes)
+
+### Emoji map by type
+```ts
+const TYPE_EMOJI: Record<NotificationType, string> = {
+  credit_earned:    '✦',
+  badge_unlocked:   '🏅',
+  perk_expiring:    '⏳',
+  perk_redeemed:    '🎟️',
+  cashout_approved: '💸',
+  cashout_rejected: '❌',
+  escrow_released:  '🔓',
+  comment_received: '💬',
+  post_validated:   '✅',
+  system:           '📣',
+};
+```
+
+### API
+- `GET https://themoveee.com/api/notifications` — list (proxied, adds API key + `user_id`)
+- `POST https://themoveee.com/api/notifications` body `{ notification_id? }` — mark one or all read
+- `GET https://themoveee.com/api/notifications/count` — `{ unread: N }`
+
+---
+
+## 14g. AnalyticsScreen (Phase 8c)
+
+**Source reference:** `app/member/analytics/` + `AnalyticsClient.tsx`
+
+Private screen — shows logged-in member's activity statistics.
+
+### Layout (vertical scroll)
+```
+Summary stats row (4 columns)
+─────────────────────────────
+Credits chart (bar chart — last 30 days)
+─────────────────────────────
+Reputation chart (line chart — last 12 months)
+─────────────────────────────
+Top Posts table
+```
+
+### Summary stats row
+| Stat | Source |
+|------|--------|
+| Balance | `data.balance` credits |
+| Reputation | `data.reputation` pts |
+| Posts | `data.posts_published` |
+| Badges | `data.badge_count` |
+
+### Bar chart — Credits (last 30 days)
+- X axis: dates (show every 5th label)
+- Y axis: credit amounts
+- Two bars per day: **earned** (ochre `#c5491f`) and **spent** (muted rust `#7a4050`)
+- Implemented as SVG using `react-native-svg` — no external charting library
+- `viewBox="0 0 340 180"` to fit mobile width
+- Data: `data.credit_days` array of `{ day, earned, spent }`
+
+### Line chart — Reputation per month
+- Single line, filled area under curve
+- Line colour: `colors.gold`
+- `viewBox="0 0 340 120"`
+- Data: `data.rep_months` array of `{ month, reputation }`
+
+### Top Posts table
+Ranked by `reactions + comment_count`:
+```
+1. Post title snippet ...    ❤️ 12  💬 4
+2. ...
+```
+Up to 5 rows. Tapping a row → `PostDetailScreen`.
+
+### API
+- `GET https://themoveee.com/api/member/analytics` (Next.js proxy; adds API key + `user_id`)
+
+Response shape:
+```ts
+{
+  credit_days:      { day: string; earned: number; spent: number }[];
+  balance:          number;
+  reputation:       number;
+  posts_published:  number;
+  posts_pending:    number;
+  badge_count:      number;
+  top_posts:        { ID: number; post_title: string; reactions: number; comment_count: number }[];
+  rep_months:       { month: string; reputation: number }[];
+}
+```
+
+---
+
 ## 15. MembershipScreen
 
 **Source reference:** `app/connect/membership/page.tsx`
@@ -1695,6 +1904,14 @@ Work through these in order. Each step is independently testable.
 26. `CouponsScreen` (Section 14d) with QR code rendering
 27. Wire passkey WebAuthn flow using `react-native-passkeys` or equivalent library
 
+### Phase 8 — Notifications, For You Feed & Analytics
+28. `NotificationsScreen` + bell icon with unread badge in Feed tab header (Section 14f)
+29. "For You" toggle in `ConnectFeedScreen` + `useFeedRecommendations.ts` (Section 7)
+30. `AnalyticsScreen` with SVG bar/line charts using `react-native-svg` (Section 14g)
+31. Add event organiser field to `EventSubmitScreen` using `DirectorySearch` typeFilter="person"
+32. Update `FeedItemCard` Happening branch to show new fields (endDate, admission, organiser) and open bottom sheet detail drawer
+33. Update `FeedItemCard` Directory + Quote branches to open bottom sheet detail drawers
+
 ---
 
 ## 14e. PasskeyManager (Security settings sub-component)
@@ -1766,6 +1983,14 @@ Always warn before deleting the last passkey: "Deleting your only passkey will l
 - **WebAuthn on React Native**: the browser `@simplewebauthn/browser` package won't work in RN. Use `react-native-passkeys` (Expo-compatible) or implement via a WebView pointed at a thin passkey page. The step-up endpoints and shapes are identical to the web flow.
 - **Settings is now tabbed** — `app/member/settings/` is a nested route group. Implement as a top tab navigator (Profile / Directory / Interests / Newsletters / Security) rather than a single long scroll.
 - **`user.hasPasskey`** and **`user.passkeyCount`** are in the session. Use `hasPasskey` (boolean) for gate checks; `passkeyCount` for the "N passkeys registered" label in PasskeyManager.
+- **Notifications bell polls `/api/notifications/count` via Next.js proxy** — never call the WordPress endpoint directly for notifications (it requires an API key). The proxy adds the key server-side.
+- **"For You" ranking is pure client-side** — no API call needed. Apply `rankFeed()` after the feed items are fetched. When `forYou` mode is off, show items in the default `date` order returned by the API.
+- **`matchesInterests` checks four fields** — `category`, `communityTag`, `entryType`, and `arm`. If any one of them (lowercased) is in the user's interest set, the item is a match.
+- **SVG charts use `react-native-svg`** — install with `npx expo install react-native-svg`. Do NOT use `react-native-chart-kit` or any other charting library. Replicate the same pure-SVG approach used in the web `AnalyticsClient.tsx`.
+- **Bottom sheet detail drawers use `@gorhom/bottom-sheet`** — install with `npx expo install @gorhom/bottom-sheet`. The Happening, Directory, and Quote cards all open bottom sheets on tap (not separate screens), mirroring the right-side offcanvas drawers on the web.
+- **Happening `endDate`** — when `endDate` is the same as `eventDate`, only show the start date. Only show a range (`8–10 Jun`) when they differ.
+- **Event organiser** — `organiserSlug` links to `/directory/{slug}` on the web. In the RN app, opening the organiser link should use `Linking.openURL('https://themoveee.com/directory/{organiserSlug}')` since there is no in-app directory detail screen yet.
+- **`event-performance` and `event-community`** are interest slugs only used for event taxonomy — they do NOT appear in the user interest picker (Tab 3 of Settings). Do not include them in the interest chip list.
 
 ---
 
