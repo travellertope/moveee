@@ -249,7 +249,13 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         title: decodeHtml(event.title ?? ""),
         slug: event.slug,
         date: event.date ?? event.eventDate ?? "",
-        excerpt: stripHtml(event.excerpt ?? ""),
+        excerpt: decodeHtml(
+          stripHtml(
+            (event.excerpt ?? "")
+              .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+              .replace(/<br\s*\/?>/gi, "\n")
+          )
+        ),
         image: event.featuredImage?.node?.sourceUrl || event.eventImageUrl,
         href: `/events/${event.slug}`,
         eventDate: event.eventDate ?? "",

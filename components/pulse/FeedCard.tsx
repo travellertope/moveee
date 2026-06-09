@@ -875,9 +875,26 @@ export default function FeedCard({
   // ── Happening card — inline description + internal link card ──
   if (item.type === "happening") {
     const CLAMP_CHARS = 280;
-    const text = decodeHtml(item.excerpt ?? "");
-    const isLong = text.length > CLAMP_CHARS;
-    const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
+    const rawText = item.excerpt ?? "";
+    const paragraphs = rawText.split(/\n\n+/).map(p => p.replace(/\n/g, " ").trim()).filter(Boolean);
+    const fullText = paragraphs.join("\n\n");
+    const isLong = fullText.length > CLAMP_CHARS;
+    // Clamp at paragraph boundary when possible
+    let displayParas: string[] = [];
+    if (!isLong) {
+      displayParas = paragraphs;
+    } else {
+      let count = 0;
+      for (const p of paragraphs) {
+        if (count + p.length > CLAMP_CHARS) {
+          const remaining = CLAMP_CHARS - count;
+          if (remaining > 40) displayParas.push(p.slice(0, remaining) + "…");
+          break;
+        }
+        displayParas.push(p);
+        count += p.length;
+      }
+    }
     const typeMeta = TYPE_BADGE.happening;
 
     const eventDateStr = item.eventDate
@@ -927,10 +944,12 @@ export default function FeedCard({
           }}>
             {decodeHtml(item.title)}
           </h3>
-          {displayText && (
-            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
-              {displayText}
-            </p>
+          {displayParas.length > 0 && (
+            <div style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6 }}>
+              {displayParas.map((p, i) => (
+                <p key={i} style={{ margin: i === 0 ? 0 : "0.5em 0 0" }}>{p}</p>
+              ))}
+            </div>
           )}
           {isLong && (
             <span style={{ color: "#3c3489", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
