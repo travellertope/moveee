@@ -274,7 +274,7 @@
   .masthead-mobile-actions {
     display: none;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
   }
 
   /* Hamburger — part of mobile-actions */
@@ -321,7 +321,7 @@
     transition: max-height 0.35s ease;
   }
   .mobile-menu--open {
-    max-height: 600px;
+    max-height: 800px;
   }
 
   .mobile-menu-links,
@@ -372,6 +372,43 @@
   }
   .mobile-menu-actions .join-btn:hover {
     background: var(--ochre);
+  }
+
+  /* Member quick-links in mobile menu */
+  .mobile-menu-member {
+    border-top: 2px solid var(--ochre);
+    background: rgba(179,130,56,.04);
+  }
+  .mobile-menu-member-name {
+    padding: 10px 24px 6px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    font-weight: 600;
+  }
+  .mobile-menu-member-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .mobile-menu-member-links a {
+    display: block;
+    padding: 12px 24px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(42,36,28,.08);
+    border-right: 1px solid rgba(42,36,28,.08);
+    transition: background .15s;
+  }
+  .mobile-menu-member-links a:nth-child(even) {
+    border-right: none;
+  }
+  .mobile-menu-member-links a:hover {
+    background: rgba(179,130,56,.08);
   }
 
   /* ========== HERO ========== */
@@ -1394,7 +1431,15 @@
   }
 
   @media (max-width: 640px) {
-    .container, .hero, .pillar, .connect, footer, .masthead, .masthead-bar { padding-left: 22px; padding-right: 22px; }
+    .container, .hero, .pillar, .connect, footer, .masthead, .masthead-bar { padding-left: 16px; padding-right: 16px; }
+    .masthead-mobile-actions { gap: 6px; }
+    .masthead-mobile-actions .masthead-icon-btn { padding: 5px; }
+    .masthead { padding: 12px 16px; }
+    .wordmark img { height: 24px !important; }
+    .wordmark .kicker { display: none; }
+    .mobile-menu-links a { padding: 14px 20px; font-size: 14px; }
+    .mobile-menu-member-links a { padding: 10px 20px; font-size: 12px; }
+    .mobile-menu-member-name { padding: 8px 20px 4px; }
     .wordmark h1 { font-size: 32px; }
     .hero { padding: 48px 20px 60px; overflow: hidden; }
     .hero h2 { 

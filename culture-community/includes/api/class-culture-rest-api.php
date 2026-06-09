@@ -987,6 +987,41 @@ class Culture_REST_API {
             'callback'            => array( __CLASS__, 'handle_passkey_delete' ),
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
+
+        // Notification endpoints.
+        register_rest_route( 'culture/v1', '/notifications', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_notifications' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'limit'   => array( 'required' => false, 'type' => 'integer', 'default' => 30 ),
+                'offset'  => array( 'required' => false, 'type' => 'integer', 'default' => 0 ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/notifications/count', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_notification_count' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/notifications/read', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_mark_notifications_read' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
+        // Analytics
+        register_rest_route( 'culture/v1', '/member/analytics', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_member_analytics' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
     }
 
     /* ——————————————————————————————————————
@@ -1092,6 +1127,136 @@ class Culture_REST_API {
             return new WP_Error( 'not_found', 'Credential not found.', array( 'status' => 404 ) );
         }
         return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Notification handlers
+     * —————————————————————————————————————— */
+
+    public static function handle_get_notifications( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $limit   = min( 50, max( 1, (int) $request->get_param( 'limit' ) ) );
+        $offset  = max( 0, (int) $request->get_param( 'offset' ) );
+        $rows    = Culture_Notifications::get_for_user( $user_id, $limit, $offset );
+        foreach ( $rows as &$row ) {
+            $row['meta'] = json_decode( $row['meta'] ?? '{}', true ) ?: array();
+        }
+        return rest_ensure_response( $rows );
+    }
+
+    public static function handle_notification_count( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        return rest_ensure_response( array( 'unread' => Culture_Notifications::count_unread( $user_id ) ) );
+    }
+
+    public static function handle_mark_notifications_read( $request ) {
+        $user_id         = (int) $request->get_param( 'user_id' );
+        $notification_id = $request->get_param( 'notification_id' );
+        if ( $notification_id ) {
+            Culture_Notifications::mark_read( $user_id, (int) $notification_id );
+        } else {
+            Culture_Notifications::mark_all_read( $user_id );
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Analytics handler
+     * —————————————————————————————————————— */
+
+    public static function handle_member_analytics( $request ) {
+        global $wpdb;
+        $user_id = (int) $request->get_param( 'user_id' );
+        if ( ! $user_id || ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'invalid_user', 'Invalid user.', array( 'status' => 400 ) );
+        }
+
+        $ledger_table = $wpdb->prefix . 'culture_credit_ledger';
+        $notif_table  = $wpdb->prefix . 'culture_notifications';
+
+        // Credits earned/spent per day — last 30 days.
+        $credit_days = $wpdb->get_results( $wpdb->prepare(
+            "SELECT DATE(created_at) AS day,
+                    SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END)  AS earned,
+                    SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END) AS spent
+             FROM {$ledger_table}
+             WHERE user_id = %d AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+             GROUP BY DATE(created_at)
+             ORDER BY day ASC",
+            $user_id
+        ), ARRAY_A );
+
+        // Total credits balance.
+        $balance = (int) get_user_meta( $user_id, 'culture_credits', true );
+
+        // Total reputation.
+        $reputation = (int) get_user_meta( $user_id, 'culture_reputation', true );
+
+        // Post counts by status/type.
+        $post_counts = $wpdb->get_results( $wpdb->prepare(
+            "SELECT post_status, COUNT(*) AS cnt
+             FROM {$wpdb->posts}
+             WHERE post_author = %d AND post_type = 'culture_post'
+               AND post_status IN ('publish','pending')
+             GROUP BY post_status",
+            $user_id
+        ), ARRAY_A );
+        $posts_published = 0;
+        $posts_pending   = 0;
+        foreach ( $post_counts as $row ) {
+            if ( $row['post_status'] === 'publish' ) $posts_published = (int) $row['cnt'];
+            if ( $row['post_status'] === 'pending' )  $posts_pending   = (int) $row['cnt'];
+        }
+
+        // Badge count.
+        $badges = get_user_meta( $user_id, 'culture_badges', true );
+        $badge_count = is_array( $badges ) ? count( $badges ) : 0;
+
+        // Top posts by engagement (reactions + comments), last 90 days.
+        $top_posts = $wpdb->get_results( $wpdb->prepare(
+            "SELECT p.ID, p.post_title, p.post_date,
+                    CAST(COALESCE(pm_r.meta_value,'0') AS UNSIGNED) AS reactions,
+                    CAST(COALESCE(pm_c.meta_value,'0') AS UNSIGNED) AS comment_count
+             FROM {$wpdb->posts} p
+             LEFT JOIN {$wpdb->postmeta} pm_r ON pm_r.post_id = p.ID AND pm_r.meta_key = 'community_reactions_count'
+             LEFT JOIN {$wpdb->postmeta} pm_c ON pm_c.post_id = p.ID AND pm_c.meta_key = 'community_comment_count'
+             WHERE p.post_author = %d
+               AND p.post_type = 'culture_post'
+               AND p.post_status = 'publish'
+               AND p.post_date >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+             ORDER BY (CAST(COALESCE(pm_r.meta_value,'0') AS UNSIGNED) + CAST(COALESCE(pm_c.meta_value,'0') AS UNSIGNED)) DESC
+             LIMIT 5",
+            $user_id
+        ), ARRAY_A );
+
+        // Reputation growth — monthly totals for last 6 months.
+        $rep_months = $wpdb->get_results( $wpdb->prepare(
+            "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, SUM(amount) AS rep_earned
+             FROM {$ledger_table}
+             WHERE user_id = %d AND type = 'reputation' AND amount > 0
+               AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+             GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+             ORDER BY month ASC",
+            $user_id
+        ), ARRAY_A );
+
+        // Notification count (total received).
+        $notif_count = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$notif_table} WHERE user_id = %d",
+            $user_id
+        ) );
+
+        return rest_ensure_response( array(
+            'balance'          => $balance,
+            'reputation'       => $reputation,
+            'posts_published'  => $posts_published,
+            'posts_pending'    => $posts_pending,
+            'badge_count'      => $badge_count,
+            'notification_count' => $notif_count,
+            'credit_days'      => $credit_days,
+            'rep_months'       => $rep_months,
+            'top_posts'        => $top_posts,
+        ) );
     }
 
     /**

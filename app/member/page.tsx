@@ -151,14 +151,19 @@ export default async function MemberPage() {
 
             {/* Quick links */}
             <MemberNavSelect items={[
-              { label: "My Collection",   href: "/member/collection" },
-              { label: "Account Settings",href: "/member/settings" },
-              { label: "Newsletters",     href: "/newsletter" },
-              { label: "Upcoming Events", href: "/events" },
-              { label: "Magazine",        href: "/magazine" },
+              { label: "My Wallet",        href: "/member/wallet" },
+              { label: "My Coupons",       href: "/member/coupons" },
+              { label: "Notifications",    href: "/member/notifications" },
+              { label: "My Analytics",     href: "/member/analytics" },
+              { label: "Browse Perks",     href: "/connect/perks" },
+              { label: "My Collection",    href: "/member/collection" },
+              { label: "Account Settings", href: "/member/settings" },
+              { label: "Newsletters",      href: "/newsletter" },
+              { label: "Upcoming Events",  href: "/events" },
+              { label: "Magazine",         href: "/magazine" },
               { label: "Culture Directory",href: "/directory" },
-              { label: "Quotes Archive",  href: "/quotes" },
-              { label: "Sign out",        href: "/api/auth/signout", muted: true },
+              { label: "Quotes Archive",   href: "/quotes" },
+              { label: "Sign out",         href: "/api/auth/signout", muted: true },
             ]} />
           </div>
         </div>

@@ -580,6 +580,7 @@ class Culture_WebAuthn {
         $current = (int) get_user_meta( $user_id, '_culture_credits', true );
         update_user_meta( $user_id, '_culture_credits', $current + $held );
         Culture_Gamification::ledger_add( $user_id, 'credit', $held, 'escrow_release', 0 );
+        do_action( 'culture_escrow_released', $user_id, $held );
         return $held;
     }
 }

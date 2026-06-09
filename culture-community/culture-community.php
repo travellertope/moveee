@@ -36,6 +36,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-nl-analytics.php'
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-perks.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-webauthn.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-notifications.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cli.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-pulse.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community.php';
@@ -124,6 +125,7 @@ function culture_community_init() {
     Culture_RSVP_Admin::init_post_handlers();
     Culture_Ticket_Payment::init();
     Culture_Tickets_Admin::init();
+    Culture_Notifications::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {

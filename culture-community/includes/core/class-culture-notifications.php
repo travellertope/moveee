@@ -1,0 +1,295 @@
+<?php
+/**
+ * In-app notification system for The Moveee.
+ * Fires on credit awards, badge unlocks, comments, cashout approvals, etc.
+ */
+class Culture_Notifications {
+
+    /* ——————————————————————————————————————
+     *  Notification types
+     * —————————————————————————————————————— */
+
+    const TYPES = array(
+        'credit_earned'     => 'Credits Earned',
+        'badge_unlocked'    => 'Badge Unlocked',
+        'perk_expiring'     => 'Perk Expiring Soon',
+        'perk_redeemed'     => 'Perk Redeemed',
+        'cashout_approved'  => 'Cash Out Approved',
+        'cashout_rejected'  => 'Cash Out Rejected',
+        'escrow_released'   => 'Credits Released',
+        'comment_received'  => 'New Comment',
+        'post_validated'    => 'Post Reached Threshold',
+        'system'            => 'System',
+    );
+
+    /* ——————————————————————————————————————
+     *  Bootstrap
+     * —————————————————————————————————————— */
+
+    public static function init() {
+        add_action( 'culture_credits_awarded',    array( __CLASS__, 'on_credits_awarded'  ), 10, 4 );
+        add_action( 'culture_badge_awarded',      array( __CLASS__, 'on_badge_awarded'    ), 10, 2 );
+        add_action( 'wp_insert_comment',          array( __CLASS__, 'on_new_comment'      ), 10, 2 );
+        add_action( 'culture_cashout_approved',   array( __CLASS__, 'on_cashout_approved' ), 10, 2 );
+        add_action( 'culture_cashout_rejected',   array( __CLASS__, 'on_cashout_rejected' ), 10, 2 );
+        add_action( 'culture_escrow_released',    array( __CLASS__, 'on_escrow_released'  ), 10, 2 );
+        add_action( 'culture_post_validated',     array( __CLASS__, 'on_post_validated'   ), 10, 2 );
+        // Perk-expiry check via WP Cron (hourly).
+        add_action( 'culture_check_perk_expiry',  array( __CLASS__, 'check_perk_expiry'  ) );
+        if ( ! wp_next_scheduled( 'culture_check_perk_expiry' ) ) {
+            wp_schedule_event( time(), 'hourly', 'culture_check_perk_expiry' );
+        }
+    }
+
+    /* ——————————————————————————————————————
+     *  Core write
+     * —————————————————————————————————————— */
+
+    public static function add(
+        int    $user_id,
+        string $type,
+        string $title,
+        string $body,
+        string $action_url = '',
+        array  $meta       = []
+    ) : int {
+        global $wpdb;
+        $wpdb->insert(
+            $wpdb->prefix . 'culture_notifications',
+            array(
+                'user_id'    => $user_id,
+                'type'       => sanitize_key( $type ),
+                'title'      => sanitize_text_field( $title ),
+                'body'       => sanitize_textarea_field( $body ),
+                'action_url' => esc_url_raw( $action_url ),
+                'meta'       => wp_json_encode( $meta ),
+                'created_at' => current_time( 'mysql' ),
+            ),
+            array( '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
+        );
+        return (int) $wpdb->insert_id;
+    }
+
+    /* ——————————————————————————————————————
+     *  Core reads
+     * —————————————————————————————————————— */
+
+    public static function get_for_user( int $user_id, int $limit = 30, int $offset = 0 ) : array {
+        global $wpdb;
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}culture_notifications
+             WHERE user_id = %d
+             ORDER BY created_at DESC
+             LIMIT %d OFFSET %d",
+            $user_id, $limit, $offset
+        ), ARRAY_A );
+        return $rows ?: [];
+    }
+
+    public static function count_unread( int $user_id ) : int {
+        global $wpdb;
+        return (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}culture_notifications
+             WHERE user_id = %d AND read_at IS NULL",
+            $user_id
+        ) );
+    }
+
+    public static function mark_read( int $user_id, int $notification_id ) : void {
+        global $wpdb;
+        $wpdb->update(
+            $wpdb->prefix . 'culture_notifications',
+            array( 'read_at' => current_time('mysql') ),
+            array( 'id' => $notification_id, 'user_id' => $user_id ),
+            array( '%s' ), array( '%d', '%d' )
+        );
+    }
+
+    public static function mark_all_read( int $user_id ) : void {
+        global $wpdb;
+        $wpdb->query( $wpdb->prepare(
+            "UPDATE {$wpdb->prefix}culture_notifications
+             SET read_at = %s WHERE user_id = %d AND read_at IS NULL",
+            current_time('mysql'), $user_id
+        ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Event hooks
+     * —————————————————————————————————————— */
+
+    public static function on_credits_awarded( int $user_id, string $source, int $amount, int $new_total ) : void {
+        // Only notify for meaningful sources, not tiny poll votes etc.
+        $notify_sources = array( 'post_validated', 'escrow_release', 'perk_redeem_rollback', 'cashout_refund', 'directory_opt_in', 'profile_completed', 'email_verified' );
+        if ( ! in_array( $source, $notify_sources, true ) ) return;
+
+        $labels = array(
+            'post_validated'       => 'Your post was validated',
+            'escrow_release'       => 'Escrowed credits released',
+            'perk_redeem_rollback' => 'Perk refund',
+            'cashout_refund'       => 'Cash-out refund',
+            'directory_opt_in'     => 'Directory opt-in bonus',
+            'profile_completed'    => 'Profile completed bonus',
+            'email_verified'       => 'Email verified bonus',
+        );
+        $label = $labels[ $source ] ?? ucfirst( str_replace('_', ' ', $source) );
+        self::add(
+            $user_id,
+            'credit_earned',
+            "+{$amount} Credits",
+            "{$label}. Balance: {$new_total} credits.",
+            '/member/wallet',
+            array( 'amount' => $amount, 'source' => $source )
+        );
+    }
+
+    public static function on_badge_awarded( int $user_id, string $badge_slug ) : void {
+        $badges = class_exists('Culture_Gamification') ? Culture_Gamification::BADGES : array();
+        $badge  = $badges[ $badge_slug ] ?? array();
+        $name   = $badge['name'] ?? ucfirst( str_replace('_', ' ', $badge_slug) );
+        $emoji  = $badge['emoji'] ?? '🏅';
+        self::add(
+            $user_id,
+            'badge_unlocked',
+            "Badge Unlocked: {$name}",
+            "{$emoji} You earned the {$name} badge.",
+            '/connect/' . get_userdata( $user_id )->user_login . '#badges',
+            array( 'badge_slug' => $badge_slug )
+        );
+    }
+
+    public static function on_new_comment( int $comment_id, $comment ) : void {
+        if ( 'comment' !== $comment->comment_type && '' !== $comment->comment_type ) return;
+
+        $post = get_post( $comment->comment_post_ID );
+        if ( ! $post || 'culture_post' !== $post->post_type ) return;
+
+        // Get the community post author.
+        $author_id = (int) get_post_meta( $post->ID, 'community_author_id', true );
+        if ( ! $author_id ) return;
+
+        // Don't notify the author if they commented on their own post.
+        if ( (int) $comment->user_id === $author_id ) return;
+
+        $commenter = get_userdata( $comment->user_id );
+        $commenter_name = $commenter ? $commenter->display_name : 'Someone';
+        $excerpt = wp_trim_words( $post->post_title ?: $post->post_content, 8, '…' );
+
+        self::add(
+            $author_id,
+            'comment_received',
+            "{$commenter_name} commented on your post",
+            "\"{$excerpt}\"",
+            '/connect/pulse#post-' . $post->ID,
+            array( 'comment_id' => $comment_id, 'post_id' => $post->ID )
+        );
+    }
+
+    public static function on_cashout_approved( int $user_id, int $redemption_id ) : void {
+        global $wpdb;
+        $row = $wpdb->get_row( $wpdb->prepare(
+            "SELECT cashout_amount, cashout_currency FROM {$wpdb->prefix}culture_redemptions WHERE id = %d",
+            $redemption_id
+        ), ARRAY_A );
+        $amount   = $row ? number_format( (float) $row['cashout_amount'] / 100, 2 ) : '—';
+        $currency = $row['cashout_currency'] ?? 'GBP';
+        self::add(
+            $user_id,
+            'cashout_approved',
+            'Cash Out Approved',
+            "Your cash-out of {$currency} {$amount} has been approved and will be transferred within 2 business days.",
+            '/member/wallet',
+            array( 'redemption_id' => $redemption_id )
+        );
+    }
+
+    public static function on_cashout_rejected( int $user_id, int $redemption_id ) : void {
+        self::add(
+            $user_id,
+            'cashout_rejected',
+            'Cash Out Returned',
+            'Your cash-out request was not approved. Your credits have been returned to your balance.',
+            '/member/wallet',
+            array( 'redemption_id' => $redemption_id )
+        );
+    }
+
+    public static function on_escrow_released( int $user_id, int $amount ) : void {
+        self::add(
+            $user_id,
+            'escrow_released',
+            "{$amount} Credits Released",
+            "Your escrowed credits are now available in your wallet after setting up a passkey.",
+            '/member/wallet',
+            array( 'amount' => $amount )
+        );
+    }
+
+    public static function on_post_validated( int $post_id, int $author_id ) : void {
+        $post    = get_post( $post_id );
+        $excerpt = $post ? wp_trim_words( $post->post_title ?: $post->post_content, 8, '…' ) : 'your post';
+        self::add(
+            $author_id,
+            'post_validated',
+            'Your post is gaining traction!',
+            "\"{$excerpt}\" has reached the engagement threshold — credits on their way.",
+            '/member/wallet',
+            array( 'post_id' => $post_id )
+        );
+    }
+
+    /* ——————————————————————————————————————
+     *  Perk-expiry cron check
+     * —————————————————————————————————————— */
+
+    public static function check_perk_expiry() : void {
+        global $wpdb;
+        // Find active perks expiring in the next 48 hours that haven't been notified.
+        $rows = $wpdb->get_results(
+            "SELECT id, user_id, expires_at FROM {$wpdb->prefix}culture_redemptions
+             WHERE type = 'perk' AND status = 'active'
+             AND expires_at IS NOT NULL
+             AND expires_at > NOW()
+             AND expires_at < DATE_ADD(NOW(), INTERVAL 48 HOUR)
+             AND expiry_notified = 0",
+            ARRAY_A
+        );
+        foreach ( $rows as $row ) {
+            $days = max( 1, (int) ceil( ( strtotime( $row['expires_at'] ) - time() ) / 86400 ) );
+            self::add(
+                (int) $row['user_id'],
+                'perk_expiring',
+                'Your perk expires soon!',
+                "A perk in your wallet expires in {$days} day" . ( $days > 1 ? 's' : '' ) . ". Use it before it's gone.",
+                '/member/coupons',
+                array( 'redemption_id' => $row['id'] )
+            );
+            $wpdb->update(
+                $wpdb->prefix . 'culture_redemptions',
+                array( 'expiry_notified' => 1 ),
+                array( 'id' => (int) $row['id'] ),
+                array( '%d' ), array( '%d' )
+            );
+        }
+    }
+
+    /* ——————————————————————————————————————
+     *  Housekeeping — trim old notifications
+     * —————————————————————————————————————— */
+
+    public static function prune_old( int $user_id, int $keep = 50 ) : void {
+        global $wpdb;
+        $oldest_to_keep = $wpdb->get_var( $wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}culture_notifications
+             WHERE user_id = %d ORDER BY created_at DESC LIMIT 1 OFFSET %d",
+            $user_id, $keep - 1
+        ) );
+        if ( $oldest_to_keep ) {
+            $wpdb->query( $wpdb->prepare(
+                "DELETE FROM {$wpdb->prefix}culture_notifications
+                 WHERE user_id = %d AND id < %d",
+                $user_id, (int) $oldest_to_keep
+            ) );
+        }
+    }
+}
