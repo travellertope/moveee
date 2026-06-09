@@ -182,6 +182,21 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
             </div>
           ) : null}
 
+          {/* Organiser */}
+          {item.organiserName && (
+            <div style={{ marginBottom: "1.25rem" }}>
+              <p style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#7a6f5c", marginBottom: "0.4rem" }}>Organised by</p>
+              {item.organiserSlug ? (
+                <Link href={`/directory/${item.organiserSlug}`} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "#fff", border: "1px solid #e8e2d8", borderRadius: "4px", padding: "0.45rem 0.75rem", textDecoration: "none", color: "#14110d", fontSize: "0.85rem", fontWeight: 600 }}>
+                  {item.organiserName}
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#7a6f5c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9L9 3M4 3h5v5"/></svg>
+                </Link>
+              ) : (
+                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#14110d" }}>{item.organiserName}</span>
+              )}
+            </div>
+          )}
+
           {/* CTA */}
           <Link
             href={item.href}

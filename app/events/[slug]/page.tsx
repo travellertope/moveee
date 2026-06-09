@@ -358,6 +358,20 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </div>
 
 
+          {event.organiserName && (
+            <div className="info-card" style={{ borderLeft: "3px solid #3c3489" }}>
+              <span className="label" style={{ color: "#3c3489" }}>Organised by</span>
+              {event.organiserSlug ? (
+                <Link href={`/directory/${event.organiserSlug}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "#14110d", textDecoration: "none" }}>
+                  <span style={{ fontWeight: 700, fontSize: "0.95rem" }}>{event.organiserName}</span>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#7a6f5c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9L9 3M4 3h5v5"/></svg>
+                </Link>
+              ) : (
+                <p style={{ fontWeight: 700, margin: 0 }}>{event.organiserName}</p>
+              )}
+            </div>
+          )}
+
           {event.associatedJourney && (
             <div className="info-card" style={{ background: "var(--ink)", color: "var(--paper)" }}>
               <span className="label" style={{ color: "var(--ochre)" }}>★ {event.associatedJourney.title}</span>

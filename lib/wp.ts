@@ -109,6 +109,9 @@ function mapRestEventToFrontendShape(item: any) {
     tagline: pick(acf.tagline, meta.tagline, meta._culture_tagline),
     attribution: pick(acf.attribution, meta.attribution, meta._culture_attribution),
     ticketingUrl: pick(cem.ticketing_url, acf.ticketing_url, meta.ticketing_url, meta._culture_ticketing_url),
+    organiserDirectoryId: cem.organiser_id ? Number(cem.organiser_id) : (meta._culture_event_organiser_id ? Number(meta._culture_event_organiser_id) : undefined),
+    organiserName: cem.organiser_name || undefined,
+    organiserSlug: cem.organiser_slug || undefined,
     eventImageUrl: pick(cem.image_url, acf.event_image_url, meta.event_image_url, meta._culture_event_image_url),
     featuredImage: embeddedMedia?.source_url
       ? {
@@ -257,6 +260,9 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
               if (!ev.openingHours) ev.openingHours = pick(cem.opening_hours, acf.opening_hours, meta._culture_opening_hours);
               if (!ev.venueAddress) ev.venueAddress = pick(acf.venue_address, meta.venue_address);
               if (!ev.ticketingUrl) ev.ticketingUrl = pick(cem.ticketing_url, acf.ticketing_url, meta._culture_ticketing_url);
+              if (!ev.organiserDirectoryId && cem.organiser_id) ev.organiserDirectoryId = Number(cem.organiser_id);
+              if (!ev.organiserName && cem.organiser_name) ev.organiserName = cem.organiser_name;
+              if (!ev.organiserSlug && cem.organiser_slug) ev.organiserSlug = cem.organiser_slug;
             }
           }
         }
@@ -1635,4 +1641,29 @@ export async function getDirectoryPosts(directoryId: number): Promise<DirectoryP
     if (!res.ok) return empty;
     return await res.json();
   } catch { return empty; }
+}
+
+export interface DirectoryEvent {
+  id: number;
+  slug: string;
+  title: string;
+  href: string;
+  event_date: string | null;
+  end_date: string | null;
+  location: string | null;
+  city: string | null;
+  admission: string | null;
+  image: string | null;
+}
+
+export async function getDirectoryEvents(directoryId: number): Promise<DirectoryEvent[]> {
+  try {
+    const res = await fetch(
+      `${WP_BASE_URL}/wp-json/culture/v1/directory/${directoryId}/events`,
+      { next: { revalidate: 60 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data?.events) ? data.events : [];
+  } catch { return []; }
 }

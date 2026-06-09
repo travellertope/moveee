@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
       auto_publish:   true,
       submitter_name:  session.user.name ?? "",
       submitter_email: session.user.email ?? "",
+      organiser_directory_id: body.organiser_directory_id ? Number(body.organiser_directory_id) : 0,
     }),
     cache: "no-store",
   });

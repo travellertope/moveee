@@ -665,6 +665,69 @@ class Culture_Directory {
      * Returns published community posts linked to a directory entry,
      * plus aggregate summary (total, average rating, counts by template).
      */
+    /**
+     * Returns upcoming culture_event posts where the organiser is this directory entry.
+     */
+    public static function handle_directory_events( WP_REST_Request $request ) {
+        $dir_id = (int) $request->get_param( 'id' );
+
+        if ( ! get_post( $dir_id ) ) {
+            return new WP_Error( 'not_found', __( 'Directory entry not found.', 'culture-community' ), array( 'status' => 404 ) );
+        }
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_event',
+            'post_status'    => 'publish',
+            'posts_per_page' => 20,
+            'orderby'        => 'meta_value',
+            'meta_key'       => '_culture_event_date',
+            'order'          => 'ASC',
+            'meta_query'     => array( array(
+                'key'     => '_culture_event_organiser_id',
+                'value'   => $dir_id,
+                'type'    => 'NUMERIC',
+                'compare' => '=',
+            ) ),
+        ) );
+
+        $today  = new DateTime( 'today', new DateTimeZone( 'UTC' ) );
+        $events = array();
+
+        foreach ( $query->posts as $post ) {
+            $event_date = get_post_meta( $post->ID, '_culture_event_date', true );
+            $end_date   = get_post_meta( $post->ID, '_culture_event_end_date', true );
+
+            // Skip events that have already passed.
+            $compare_date = $end_date ?: $event_date;
+            if ( $compare_date ) {
+                $d = new DateTime( $compare_date, new DateTimeZone( 'UTC' ) );
+                if ( $d < $today ) continue;
+            }
+
+            $thumb_id = get_post_thumbnail_id( $post->ID );
+            $image    = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'medium' ) : null;
+
+            $events[] = array(
+                'id'         => $post->ID,
+                'slug'       => $post->post_name,
+                'title'      => get_the_title( $post->ID ),
+                'href'       => '/events/' . $post->post_name,
+                'event_date' => $event_date,
+                'end_date'   => $end_date,
+                'location'   => get_post_meta( $post->ID, '_culture_location', true ),
+                'city'       => get_post_meta( $post->ID, '_culture_event_city', true ),
+                'admission'  => get_post_meta( $post->ID, '_culture_admission', true ),
+                'image'      => $image,
+            );
+        }
+
+        return rest_ensure_response( array( 'events' => $events, 'total' => count( $events ) ) );
+    }
+
+    /**
+     * Returns published community posts linked to a directory entry,
+     * plus aggregate summary (total, average rating, counts by template).
+     */
     public static function handle_directory_posts( WP_REST_Request $request ) {
         $dir_id = (int) $request->get_param( 'id' );
 
