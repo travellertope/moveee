@@ -153,6 +153,7 @@ export default async function MemberPage() {
               <Link href="/member/wallet"        className="mem-link">My Wallet →</Link>
               <Link href="/member/coupons"       className="mem-link">My Coupons →</Link>
               <Link href="/member/notifications" className="mem-link">Notifications →</Link>
+              <Link href="/member/analytics"     className="mem-link">My Analytics →</Link>
               <Link href="/connect/perks"        className="mem-link">Browse Perks →</Link>
               <Link href="/member/collection" className="mem-link">
                 My Collection →

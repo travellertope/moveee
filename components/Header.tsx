@@ -224,6 +224,7 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
                 <Link href="/member"                onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
                 <Link href="/member/wallet"         onClick={() => setMobileMenuOpen(false)}>Wallet</Link>
                 <Link href="/member/notifications"  onClick={() => setMobileMenuOpen(false)}>Notifications</Link>
+                <Link href="/member/analytics"     onClick={() => setMobileMenuOpen(false)}>Analytics</Link>
                 <Link href="/member/coupons"        onClick={() => setMobileMenuOpen(false)}>Coupons</Link>
                 <Link href="/connect/perks"         onClick={() => setMobileMenuOpen(false)}>Perks</Link>
                 <Link href="/member/settings"       onClick={() => setMobileMenuOpen(false)}>Settings</Link>
