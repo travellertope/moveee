@@ -275,7 +275,7 @@ single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
 
 ## Git branch
 
-Active development branch: `claude/post-errors-dqgchp`
+Active development branch: `claude/moveee-connect-rn-dev-jsragz`
 Always commit and push to this branch.
 
 ---
@@ -585,25 +585,47 @@ The app lives in `moveee-connect/` using Expo + React Navigation + Zustand + MMK
 - `src/types/index.ts` — all TypeScript interfaces (User, FeedItem, Perk, Redemption, Passkey, etc.)
 
 ### What is complete
-Auth flow (Login/Register/VerifyEmail), unified feed hook, community feed hook, comments hook, magazine hook, ConnectFeedScreen, FeedItemCard (all 6 branches), PostDetailScreen, PulseDetailScreen, NewPostScreen (Post + Quote only), EventSubmitScreen, DirectorySubmitScreen, MemberProfileScreen (basic), MagazineScreen, ArticleScreen, MemberScreen (basic), MembershipScreen (stub), TierBadge, TimeAgo.
+| Area | Key files |
+|------|-----------|
+| Auth flow (Login/Register/VerifyEmail) | `screens/auth/` |
+| Auth store | `src/auth/authStore.ts` (Zustand + SecureStore + MMKV, incl. `updateUser`) |
+| API client | `src/api/client.ts` (get/post/put/delete/upload, Bearer token) |
+| Theme tokens | `src/theme.ts` (colors, fonts, fontSize, space, radius) |
+| Types | `src/types/index.ts` (User w/ Phase 6/7 fields, FeedItem, Perk, Redemption, Passkey, Notification) |
+| Custom fonts | App.tsx loads Fraunces + DM Sans + JetBrains Mono via useFonts() |
+| 5-tab navigation + new routes | `src/navigation/index.tsx` (MemberDirectory, Wallet, Coupons, Perks, MemberDashboard, MemberSettings) |
+| ConnectFeedScreen | `screens/community/ConnectFeedScreen.tsx` |
+| FeedItemCard (all templates) | `components/community/FeedItemCard.tsx` (gallery, polls, itinerary, ratings) |
+| PostDetailScreen, PulseDetailScreen | `screens/community/` |
+| NewPostScreen (all 9 templates) | `screens/community/NewPostScreen.tsx` (post, hidden-gem, cultural-take, food-review, creative-showcase, poll, itinerary, event, quote) |
+| Composer sub-components | `components/composer/` (StarRating, MultiRating, PollBuilder, ItineraryBuilder, DirectorySearch) |
+| Shared UI components | Avatar, TypeBadge, ImageLightbox (`components/ui/`), ReactionBar, HashtagText (`components/community/`) |
+| MemberDirectoryScreen | `screens/community/MemberDirectoryScreen.tsx` |
+| MemberDashboardScreen | `screens/member/MemberDashboardScreen.tsx` (passkey banner, stats, badges, quick links) |
+| MemberSettingsScreen | `screens/member/MemberSettingsScreen.tsx` (5 tabs: Profile/Directory/Interests/Newsletters/Security) |
+| PerksScreen | `screens/member/PerksScreen.tsx` (passkey gate, redeem → proxy) |
+| WalletScreen | `screens/member/WalletScreen.tsx` (history + cashout, GBP/USD/NGN fields) |
+| CouponsScreen | `screens/member/CouponsScreen.tsx` (QR placeholder, expiry countdown) |
+| MagazineScreen, ArticleScreen | `screens/magazine/` |
+| MemberProfileScreen (basic) | `screens/community/MemberProfileScreen.tsx` |
+| TierBadge, TimeAgo | `components/ui/` |
 
 ### What is missing (priority order)
-1. `src/theme.ts` — colours + fonts hardcoded everywhere; needs central token file
-2. Custom fonts — Fraunces, DM Sans, JetBrains Mono not loaded; using `Georgia/serif`
-3. Phase 6/7 types in `src/types/index.ts` (Perk, Redemption, LedgerEntry, Passkey, `hasPasskey` on User)
-4. FeedItemCard gaps: gallery carousel, template badge, poll voting, itinerary stops, star/multi ratings
-5. NewPostScreen: 6 missing templates + sub-components (StarRating, MultiRating, PollBuilder, ItineraryBuilder, DirectorySearch)
-6. Shared components: Avatar, ReactionBar, TypeBadge, HashtagText, ImageLightbox
-7. MemberDirectoryScreen + MemberCard
-8. MemberDashboardScreen (full, with passkey banner + badges grid)
-9. MemberSettingsScreen (5-tab: Profile / Directory / Interests / Newsletters / Security)
-10. PerksScreen, WalletScreen, CouponsScreen (Phase 6)
-11. PasskeyManager in Security tab (Phase 7 — uses `react-native-passkeys`)
-12. NotificationsScreen (Phase 8a — bell icon in header, polling `/api/notifications/count`)
-13. "For You" toggle in ConnectFeedScreen (Phase 8b — client-side scoring by interests)
-14. AnalyticsScreen (Phase 8c — credit/rep charts)
-15. MembershipScreen IAP wiring (Google Play Billing + App Store IAP)
-16. Navigation additions: Wallet, Coupons, Perks, MemberDirectory, Notifications, Analytics routes
+1. PasskeyManager full implementation in Security tab (`react-native-passkeys` not yet installed)
+2. NotificationsScreen (Phase 8a — bell icon in header, badge count, list)
+3. "For You" toggle in ConnectFeedScreen (Phase 8b — client-side scoring)
+4. AnalyticsScreen (Phase 8c — credit/rep charts)
+5. MembershipScreen IAP wiring (Google Play Billing + App Store IAP)
+6. `react-native-qrcode-svg` — not yet installed; CouponsScreen shows QR placeholder
+7. EventsScreen / EventDetailScreen — still stubs ("Coming soon")
+8. GamesScreen — game grid but no game logic
+
+### Event template endpoint note
+Event image upload: `POST https://themoveee.com/api/events/upload-image`
+Event submit: `POST https://themoveee.com/api/events/member-submit`
+Both go via the Next.js proxy (NOT WordPress directly). The `PROXY` constant
+(`"https://themoveee.com/api"`) is defined at the top of NewPostScreen.tsx.
+All other post templates submit to `${CULTURE_API}/community/submit` (WordPress directly).
 
 ### Key gotchas
 - The RN app calls **WordPress REST directly** for most endpoints. Wallet/Perks/Passkey endpoints require `CULTURE_API_SECRET` so those must go through Next.js proxy routes at `https://themoveee.com/api/...`
