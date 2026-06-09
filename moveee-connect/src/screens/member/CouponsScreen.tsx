@@ -4,6 +4,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import QRCode from "react-native-qrcode-svg";
 import { api } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import type { Redemption } from "../../types";
@@ -29,12 +30,13 @@ function CouponCard({ redemption }: { redemption: Redemption }) {
     <View style={[styles.card, (isUsed || isExpired) && styles.cardDimmed]}>
       <Text style={styles.cardTitle}>{redemption.perk_title ?? "Partner Perk"}</Text>
 
-      {/* QR placeholder — react-native-qrcode-svg not yet installed; shows token text */}
       <View style={styles.qrArea}>
-        <View style={styles.qrPlaceholder}>
-          <Text style={styles.qrPlaceholderText}>QR</Text>
-          <Text style={styles.qrTokenText} numberOfLines={2}>{redemption.qr_token}</Text>
-        </View>
+        <QRCode
+          value={qrValue}
+          size={200}
+          backgroundColor={colors.paper}
+          color={colors.ink}
+        />
       </View>
 
       <View style={styles.cardFooter}>
@@ -123,14 +125,6 @@ const styles = StyleSheet.create({
   cardTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: colors.ink, marginBottom: space[3] },
 
   qrArea: { alignItems: "center", marginBottom: space[3] },
-  qrPlaceholder: {
-    width: 200, height: 200,
-    backgroundColor: colors.paperDeep, borderWidth: 1, borderColor: colors.rule,
-    borderRadius: radius.md, justifyContent: "center", alignItems: "center", gap: space[2],
-    padding: space[3],
-  },
-  qrPlaceholderText: { fontFamily: fonts.monoBold, fontSize: fontSize.xl, color: colors.mute },
-  qrTokenText:       { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: colors.ghost, textAlign: "center" },
 
   cardFooter: { gap: 4 },
   expiryText:  { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute },

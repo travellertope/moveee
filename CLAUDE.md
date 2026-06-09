@@ -275,7 +275,7 @@ single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
 
 ## Git branch
 
-Active development branch: `claude/post-errors-dqgchp`
+Active development branch: `claude/moveee-connect-rn-dev-jsragz`
 Always commit and push to this branch.
 
 ---
@@ -585,25 +585,72 @@ The app lives in `moveee-connect/` using Expo + React Navigation + Zustand + MMK
 - `src/types/index.ts` — all TypeScript interfaces (User, FeedItem, Perk, Redemption, Passkey, etc.)
 
 ### What is complete
-Auth flow (Login/Register/VerifyEmail), unified feed hook, community feed hook, comments hook, magazine hook, ConnectFeedScreen, FeedItemCard (all 6 branches), PostDetailScreen, PulseDetailScreen, NewPostScreen (Post + Quote only), EventSubmitScreen, DirectorySubmitScreen, MemberProfileScreen (basic), MagazineScreen, ArticleScreen, MemberScreen (basic), MembershipScreen (stub), TierBadge, TimeAgo.
+| Area | Key files |
+|------|-----------|
+| Auth flow (Login/Register/VerifyEmail) | `screens/auth/` |
+| Auth store | `src/auth/authStore.ts` (Zustand + SecureStore + MMKV, incl. `updateUser`) |
+| API client | `src/api/client.ts` (get/post/put/delete/upload, Bearer token) |
+| Theme tokens | `src/theme.ts` (colors, fonts, fontSize, space, radius) |
+| Types | `src/types/index.ts` (User w/ Phase 6/7 fields, FeedItem, Perk, Redemption, Passkey, Notification) |
+| Custom fonts | App.tsx loads Fraunces + DM Sans + JetBrains Mono via useFonts() |
+| 5-tab navigation + new routes | `src/navigation/index.tsx` (MemberDirectory, Wallet, Coupons, Perks, MemberDashboard, MemberSettings) |
+| ConnectFeedScreen | `screens/community/ConnectFeedScreen.tsx` |
+| FeedItemCard (all templates) | `components/community/FeedItemCard.tsx` (gallery, polls, itinerary, ratings) |
+| PostDetailScreen, PulseDetailScreen | `screens/community/` |
+| NewPostScreen (all 9 templates) | `screens/community/NewPostScreen.tsx` (post, hidden-gem, cultural-take, food-review, creative-showcase, poll, itinerary, event, quote) |
+| Composer sub-components | `components/composer/` (StarRating, MultiRating, PollBuilder, ItineraryBuilder, DirectorySearch) |
+| Shared UI components | Avatar, TypeBadge, ImageLightbox (`components/ui/`), ReactionBar, HashtagText (`components/community/`) |
+| MemberDirectoryScreen | `screens/community/MemberDirectoryScreen.tsx` |
+| MemberDashboardScreen | `screens/member/MemberDashboardScreen.tsx` (passkey banner, stats, badges, quick links) |
+| MemberSettingsScreen | `screens/member/MemberSettingsScreen.tsx` (5 tabs: Profile/Directory/Interests/Newsletters/Security) |
+| PerksScreen | `screens/member/PerksScreen.tsx` (passkey gate, redeem → proxy) |
+| WalletScreen | `screens/member/WalletScreen.tsx` (history + cashout, GBP/USD/NGN fields) |
+| CouponsScreen | `screens/member/CouponsScreen.tsx` (QR placeholder, expiry countdown) |
+| MagazineScreen, ArticleScreen | `screens/magazine/` |
+| MemberProfileScreen (basic) | `screens/community/MemberProfileScreen.tsx` |
+| TierBadge, TimeAgo | `components/ui/` |
+| MembershipScreen | `screens/member/MembershipScreen.tsx` (two-tier cards, Citizen/Pro CTA logic) |
+| EventsScreen | `screens/events/EventsScreen.tsx` (WP CPT fetch, filter strip, event cards) |
+| EventDetailScreen | `screens/events/EventDetailScreen.tsx` (meta card, RSVP form → `/api/events/rsvp`) |
+| TriviaGameScreen | `screens/games/TriviaGameScreen.tsx` (fully native, ABCD options, explanation, MMKV played-today gate) |
+| WhoSaidItGameScreen | `screens/games/WhoSaidItGameScreen.tsx` (fully native, tap-author options, review, MMKV gate) |
+| GamesScreen (updated) | `screens/games/GamesScreen.tsx` (navigates to TriviaGame + WhoSaidIt; Crossword/Sudoku dimmed) |
+| PasskeyManager | `screens/member/MemberSettingsScreen.tsx` SecurityTab (full register/delete WebAuthn flow via `react-native-passkeys`) |
 
 ### What is missing (priority order)
-1. `src/theme.ts` — colours + fonts hardcoded everywhere; needs central token file
-2. Custom fonts — Fraunces, DM Sans, JetBrains Mono not loaded; using `Georgia/serif`
-3. Phase 6/7 types in `src/types/index.ts` (Perk, Redemption, LedgerEntry, Passkey, `hasPasskey` on User)
-4. FeedItemCard gaps: gallery carousel, template badge, poll voting, itinerary stops, star/multi ratings
-5. NewPostScreen: 6 missing templates + sub-components (StarRating, MultiRating, PollBuilder, ItineraryBuilder, DirectorySearch)
-6. Shared components: Avatar, ReactionBar, TypeBadge, HashtagText, ImageLightbox
-7. MemberDirectoryScreen + MemberCard
-8. MemberDashboardScreen (full, with passkey banner + badges grid)
-9. MemberSettingsScreen (5-tab: Profile / Directory / Interests / Newsletters / Security)
-10. PerksScreen, WalletScreen, CouponsScreen (Phase 6)
-11. PasskeyManager in Security tab (Phase 7 — uses `react-native-passkeys`)
-12. NotificationsScreen (Phase 8a — bell icon in header, polling `/api/notifications/count`)
-13. "For You" toggle in ConnectFeedScreen (Phase 8b — client-side scoring by interests)
-14. AnalyticsScreen (Phase 8c — credit/rep charts)
-15. MembershipScreen IAP wiring (Google Play Billing + App Store IAP)
-16. Navigation additions: Wallet, Coupons, Perks, MemberDirectory, Notifications, Analytics routes
+1. MembershipScreen IAP wiring (Google Play Billing + App Store IAP) — low priority; current behaviour directs users to the web to upgrade
+
+### Event template endpoint note
+Event image upload: `POST https://themoveee.com/api/events/upload-image`
+Event submit: `POST https://themoveee.com/api/events/member-submit`
+Both go via the Next.js proxy (NOT WordPress directly). The `PROXY` constant
+(`"https://themoveee.com/api"`) is defined at the top of NewPostScreen.tsx.
+All other post templates submit to `${CULTURE_API}/community/submit` (WordPress directly).
+
+### Passkey key notes
+- Registration: `GET ${PROXY}/auth/passkey/register-options` → `Passkeys.create(options)` → `POST ${PROXY}/auth/passkey/register-verify`
+- Verify body shape: `{ id, rawId, type, clientDataJSON, attestationObject, transports, device_name }`
+  (`credential.response` fields flattened to top level; `device_name` = `Platform.OS === "ios" ? "iPhone" : "Android"`)
+- `transports` must be cast as `any` — the `CreationResponse` type from `react-native-passkeys` doesn't expose it directly
+- Delete uses `api.delete(url, { credential_id })` — `api.delete` now accepts an optional body parameter
+- Auth store updated immediately after success: `updateUser({ hasPasskey: true, passkeyCount: ... })`
+- User-cancel from native prompt returns `null` from `Passkeys.create()` — must check before proceeding; also guard `e?.message?.includes("cancel")` in the catch block
+- `Passkeys.isSupported()` returns false on simulators and old OS versions — show warning banner rather than crashing
+
+### Games key notes
+- Both Trivia and Who Said It use MMKV (`storage` from `src/store/storage.ts`) for played-today detection — keys `trivia_last_played_date` / `wsi_last_played_date` (ISO date string, e.g. `2026-06-09`)
+- Trivia score is also persisted in `trivia_last_score` so the "already played" screen can show it
+- Both games fetch from `${PROXY}/games/trivia/daily` and `${PROXY}/games/who-said-it/daily` — routed through Next.js proxy with user JWT
+- GamesStack wraps GamesList + TriviaGame + WhoSaidIt; navigation name in tab is "Games" → resolves to GamesStack
+- EventsScreen fetches directly from WordPress CPT REST (no auth required): `https://cms.themoveee.com/wp-json/wp/v2/culture_event?per_page=50&status=publish&_embed=1`
+- EventDetailScreen RSVP posts to `${PROXY}/events/rsvp` (Next.js proxy)
+
+### Phase 8 key notes
+- `useFeedRecommendations.ts` is a direct port of `lib/feed-recommendations.ts` — keep them in sync
+- `react-native-svg` and `react-native-qrcode-svg` are now installed
+- AnalyticsScreen uses `react-native-svg` for SVG bar/line charts — no external charting lib
+- Notification bell polls `/api/notifications/count` every 30s via `useNotificationCount` hook
+- "For You" badge on community cards: ochre `badgePulseBg` background, `badgePulseText` colour
 
 ### Key gotchas
 - The RN app calls **WordPress REST directly** for most endpoints. Wallet/Perks/Passkey endpoints require `CULTURE_API_SECRET` so those must go through Next.js proxy routes at `https://themoveee.com/api/...`

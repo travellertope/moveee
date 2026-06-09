@@ -18,7 +18,6 @@ import ConnectFeedScreen from "../screens/community/ConnectFeedScreen";
 import PostDetailScreen from "../screens/community/PostDetailScreen";
 import PulseDetailScreen from "../screens/community/PulseDetailScreen";
 import NewPostScreen from "../screens/community/NewPostScreen";
-import EventSubmitScreen from "../screens/community/EventSubmitScreen";
 import DirectorySubmitScreen from "../screens/community/DirectorySubmitScreen";
 import MemberProfileScreen from "../screens/community/MemberProfileScreen";
 import MemberDirectoryScreen from "../screens/community/MemberDirectoryScreen";
@@ -29,6 +28,8 @@ import ArticleScreen from "../screens/magazine/ArticleScreen";
 
 // Events / Games
 import GamesScreen from "../screens/games/GamesScreen";
+import TriviaGameScreen from "../screens/games/TriviaGameScreen";
+import WhoSaidItGameScreen from "../screens/games/WhoSaidItGameScreen";
 import EventsScreen from "../screens/events/EventsScreen";
 import EventDetailScreen from "../screens/events/EventDetailScreen";
 
@@ -39,6 +40,8 @@ import MembershipScreen from "../screens/member/MembershipScreen";
 import PerksScreen from "../screens/member/PerksScreen";
 import WalletScreen from "../screens/member/WalletScreen";
 import CouponsScreen from "../screens/member/CouponsScreen";
+import NotificationsScreen from "../screens/member/NotificationsScreen";
+import AnalyticsScreen from "../screens/member/AnalyticsScreen";
 
 // ── Stack param types ──────────────────────────────────────────────────────────
 type FeedStackParams = {
@@ -46,10 +49,10 @@ type FeedStackParams = {
   PostDetail:        { item: FeedItem };
   PulseDetail:       { item: FeedItem };
   NewPost:           undefined;
-  EventSubmit:       undefined;
   DirectorySubmit:   undefined;
   MemberProfile:     { userId: string; username: string };
   MemberDirectory:   undefined;
+  Notifications:     undefined;
 };
 
 type MemberStackParams = {
@@ -59,6 +62,7 @@ type MemberStackParams = {
   Coupons:         undefined;
   Perks:           undefined;
   Membership:      undefined;
+  Analytics:       undefined;
 };
 
 const Tab   = createBottomTabNavigator();
@@ -71,10 +75,10 @@ function ConnectStack() {
       <Stack.Screen name="PostDetail"      component={PostDetailScreen} />
       <Stack.Screen name="PulseDetail"     component={PulseDetailScreen} />
       <Stack.Screen name="NewPost"         component={NewPostScreen} />
-      <Stack.Screen name="EventSubmit"     component={EventSubmitScreen} />
       <Stack.Screen name="DirectorySubmit" component={DirectorySubmitScreen} />
       <Stack.Screen name="MemberProfile"   component={MemberProfileScreen} />
       <Stack.Screen name="MemberDirectory" component={MemberDirectoryScreen} />
+    <Stack.Screen name="Notifications"   component={NotificationsScreen} />
     </Stack.Navigator>
   );
 }
@@ -97,6 +101,16 @@ function EventsStack() {
   );
 }
 
+function GamesStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="GamesList"  component={GamesScreen} />
+      <Stack.Screen name="TriviaGame" component={TriviaGameScreen} />
+      <Stack.Screen name="WhoSaidIt"  component={WhoSaidItGameScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function MemberStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -106,6 +120,7 @@ function MemberStack() {
       <Stack.Screen name="Coupons"         component={CouponsScreen} />
       <Stack.Screen name="Perks"           component={PerksScreen} />
       <Stack.Screen name="Membership"      component={MembershipScreen} />
+      <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
     </Stack.Navigator>
   );
 }
@@ -145,7 +160,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Connect"  component={ConnectStack} />
       <Tab.Screen name="Magazine" component={MagazineStack} />
-      <Tab.Screen name="Games"    component={GamesScreen} />
+      <Tab.Screen name="Games"    component={GamesStack} />
       <Tab.Screen name="Events"   component={EventsStack} />
       <Tab.Screen name="Me"       component={MemberStack} />
     </Tab.Navigator>

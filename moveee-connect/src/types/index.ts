@@ -100,7 +100,15 @@ export interface FeedItem {
 
   // Happening / event
   eventDate?: string;
+  endDate?: string;
   location?: string;
+  venueAddress?: string;
+  openingHours?: string;
+  admission?: string;
+  eventCategory?: string;
+  organiserName?: string;
+  organiserSlug?: string;
+  city?: string;          // used on happening + directory items
 
   // Directory
   entryType?: string;
@@ -251,4 +259,33 @@ export interface Passkey {
   created_at: string;
   last_used_at: string;
   transports: string[];
+}
+
+// ── Phase 8a — Notifications ─────────────────────────────────────────────────
+export type NotificationType =
+  | 'credit_earned' | 'badge_unlocked' | 'perk_expiring' | 'perk_redeemed'
+  | 'cashout_approved' | 'cashout_rejected' | 'escrow_released'
+  | 'comment_received' | 'post_validated' | 'system';
+
+export interface Notification {
+  id: number;
+  type: NotificationType;
+  title: string;
+  body: string;
+  action_url: string | null;
+  meta: Record<string, unknown> | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+// ── Phase 8c — Analytics ─────────────────────────────────────────────────────
+export interface AnalyticsData {
+  credit_days: { day: string; earned: number; spent: number }[];
+  balance: number;
+  reputation: number;
+  posts_published: number;
+  posts_pending: number;
+  badge_count: number;
+  top_posts: { ID: number; post_title: string; reactions: number; comment_count: number }[];
+  rep_months: { month: string; reputation: number }[];
 }

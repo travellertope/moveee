@@ -815,15 +815,19 @@ class Culture_Mobile_API {
         return Culture_Directory::handle_submit( $request );
     }
 
+    const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote' );
+
     public static function handle_react( $request ) {
         $user_id = get_current_user_id();
         $post_id = (int) $request->get_param( 'post_id' );
+        $type    = sanitize_key( $request->get_param( 'type' ) ?: 'love' );
 
         $post = get_post( $post_id );
-        if ( ! $post || 'culture_post' !== $post->post_type ) {
+        if ( ! $post || ! in_array( $post->post_type, self::REACTABLE_POST_TYPES, true ) ) {
             return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
         }
 
+        $is_community  = $post->post_type === 'culture_post';
         $liked_ids     = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
         $already_liked = in_array( $post_id, $liked_ids, false );
 
@@ -833,7 +837,7 @@ class Culture_Mobile_API {
         } else {
             $liked_ids[] = $post_id;
             $new_count   = (int) get_post_meta( $post_id, '_culture_like_count', true ) + 1;
-            if ( class_exists( 'Culture_Gamification' ) ) {
+            if ( $is_community && class_exists( 'Culture_Gamification' ) ) {
                 Culture_Gamification::award_points( $user_id, 'community_like' );
             }
         }
@@ -841,8 +845,17 @@ class Culture_Mobile_API {
         update_user_meta( $user_id, '_culture_liked_posts', $liked_ids );
         update_post_meta( $post_id, '_culture_like_count', $new_count );
 
-        // Check if post has crossed the validation threshold for credit earning.
-        if ( ! $already_liked && class_exists( 'Culture_Gamification' ) ) {
+        // Also increment the named reaction counter (love/fire/clap) used by the feed.
+        $reaction_key = in_array( $type, array( 'love', 'fire', 'clap' ), true ) ? 'reaction_' . $type : 'reaction_love';
+        if ( ! $already_liked ) {
+            $current = (int) get_post_meta( $post_id, $reaction_key, true );
+            update_post_meta( $post_id, $reaction_key, $current + 1 );
+        } else {
+            $current = (int) get_post_meta( $post_id, $reaction_key, true );
+            update_post_meta( $post_id, $reaction_key, max( 0, $current - 1 ) );
+        }
+
+        if ( $is_community && ! $already_liked && class_exists( 'Culture_Gamification' ) ) {
             Culture_Gamification::check_post_threshold( $post_id );
         }
 
@@ -918,30 +931,52 @@ class Culture_Mobile_API {
         $is_vendor    = (bool) array_intersect( $vendor_roles, (array) $user->roles )
                         || (bool) get_user_meta( $user->ID, '_wcfm_vendor_data', true );
 
+        $credits    = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_credits( $user->ID ) : 0;
+        $reputation = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user->ID ) : 0;
+        $rep_tier   = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation_tier( $reputation ) : 'member';
+        $daily_rem  = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_daily_credits_remaining( $user->ID ) : 50;
+        $passkey_count = (int) get_user_meta( $user->ID, '_culture_passkey_count', true );
+        $interests  = json_decode( get_user_meta( $user->ID, '_culture_interests', true ) ?: '[]', true ) ?: array();
+
         return array(
-            'id'                 => (string) $user->ID,
-            'username'           => $user->user_login,
-            'email'              => $user->user_email,
-            'displayName'        => $user->display_name,
-            'avatarUrl'          => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
-            'tier'               => $tier,
-            'points'             => (int) get_user_meta( $user->ID, '_culture_points', true ),
-            'badges'             => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_badges( $user->ID ) : array(),
-            'referralCode'       => $referral_code,
-            'referralCount'      => $referral_count,
-            'registeredAt'       => strtotime( $user->user_registered ),
-            'gender'             => get_user_meta( $user->ID, '_culture_gender', true ) ?: '',
-            'dateOfBirth'        => get_user_meta( $user->ID, '_culture_dob', true ) ?: '',
-            'nationality'        => get_user_meta( $user->ID, '_culture_nationality', true ) ?: '',
-            'countryOfResidence' => get_user_meta( $user->ID, '_culture_country_of_residence', true ) ?: '',
-            'city'               => get_user_meta( $user->ID, '_culture_city', true ) ?: '',
-            'occupation'         => get_user_meta( $user->ID, '_culture_occupation', true ) ?: '',
-            'phone'              => get_user_meta( $user->ID, '_culture_phone', true ) ?: '',
-            'whatsapp'           => get_user_meta( $user->ID, '_culture_whatsapp', true ) ?: '',
-            'primaryChapter'     => array( 'id' => $primary_id, 'name' => $primary_id ? get_the_title( $primary_id ) : '' ),
-            'secondaryChapter'   => array( 'id' => $secondary_id, 'name' => $secondary_id ? get_the_title( $secondary_id ) : '' ),
-            'isVendor'           => $is_vendor,
-            'vendorSlug'         => $is_vendor ? $user->user_nicename : '',
+            'id'                    => (string) $user->ID,
+            'username'              => $user->user_login,
+            'email'                 => $user->user_email,
+            'displayName'           => $user->display_name,
+            'avatarUrl'             => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
+            'tier'                  => $tier,
+            'points'                => (int) get_user_meta( $user->ID, '_culture_points', true ),
+            'credits'               => $credits,
+            'reputation'            => $reputation,
+            'reputationTier'        => $rep_tier,
+            'dailyCreditsRemaining' => $daily_rem,
+            'badges'                => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_badges( $user->ID ) : array(),
+            'interests'             => $interests,
+            'referralCode'          => $referral_code,
+            'referralCount'         => $referral_count,
+            'registeredAt'          => strtotime( $user->user_registered ),
+            'gender'                => get_user_meta( $user->ID, '_culture_gender', true ) ?: '',
+            'dateOfBirth'           => get_user_meta( $user->ID, '_culture_dob', true ) ?: '',
+            'nationality'           => get_user_meta( $user->ID, '_culture_nationality', true ) ?: '',
+            'countryOfResidence'    => get_user_meta( $user->ID, '_culture_country_of_residence', true ) ?: '',
+            'city'                  => get_user_meta( $user->ID, '_culture_city', true ) ?: '',
+            'occupation'            => get_user_meta( $user->ID, '_culture_occupation', true ) ?: '',
+            'phone'                 => get_user_meta( $user->ID, '_culture_phone', true ) ?: '',
+            'whatsapp'              => get_user_meta( $user->ID, '_culture_whatsapp', true ) ?: '',
+            'primaryChapter'        => array( 'id' => $primary_id, 'name' => $primary_id ? get_the_title( $primary_id ) : '' ),
+            'secondaryChapter'      => array( 'id' => $secondary_id, 'name' => $secondary_id ? get_the_title( $secondary_id ) : '' ),
+            'isVendor'              => $is_vendor,
+            'vendorSlug'            => $is_vendor ? $user->user_nicename : '',
+            'hasPasskey'            => $passkey_count > 0,
+            'passkeyCount'          => $passkey_count,
+            'creditsEscrowed'       => (int) get_user_meta( $user->ID, '_culture_credits_escrowed', true ),
+            // Directory profile fields
+            'directoryOptIn'        => (bool) get_user_meta( $user->ID, '_culture_directory_opt_in', true ),
+            'directoryBio'          => get_user_meta( $user->ID, '_culture_directory_bio', true ) ?: '',
+            'directoryDisciplines'  => json_decode( get_user_meta( $user->ID, '_culture_directory_disciplines', true ) ?: '[]', true ) ?: array(),
+            'directoryInstagram'    => get_user_meta( $user->ID, '_culture_directory_instagram', true ) ?: '',
+            'directoryLinkedIn'     => get_user_meta( $user->ID, '_culture_directory_linkedin', true ) ?: '',
+            'directoryWebsite'      => get_user_meta( $user->ID, '_culture_directory_website', true ) ?: '',
         );
     }
 
@@ -1051,17 +1086,40 @@ class Culture_Mobile_API {
 
         return array_map( function( WP_Post $post ) {
             $thumb = get_the_post_thumbnail_url( $post->ID, 'large' );
+
+            $organiser_id   = (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true );
+            $organiser_name = '';
+            $organiser_slug = '';
+            if ( $organiser_id ) {
+                $organiser_post = get_post( $organiser_id );
+                if ( $organiser_post ) {
+                    $organiser_name = get_the_title( $organiser_post );
+                    $organiser_slug = $organiser_post->post_name;
+                }
+            }
+
+            $interests = get_the_terms( $post->ID, 'culture_interest' );
+
             return array(
-                'id'        => 'happening-' . $post->post_name,
-                'type'      => 'happening',
-                'title'     => get_the_title( $post ),
-                'slug'      => $post->post_name,
-                'date'      => $post->post_date_gmt,
-                'excerpt'   => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
-                'image'     => $thumb ?: null,
-                'href'      => '/events/' . $post->post_name,
-                'eventDate' => get_post_meta( $post->ID, '_culture_event_date', true ) ?: '',
-                'location'  => get_post_meta( $post->ID, '_culture_location', true ) ?: '',
+                'id'            => 'happening-' . $post->post_name,
+                'type'          => 'happening',
+                'title'         => get_the_title( $post ),
+                'slug'          => $post->post_name,
+                'date'          => $post->post_date_gmt,
+                'excerpt'       => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
+                'body'          => wp_strip_all_tags( $post->post_content ),
+                'image'         => $thumb ?: null,
+                'href'          => '/events/' . $post->post_name,
+                'eventDate'     => get_post_meta( $post->ID, '_culture_event_date', true ) ?: '',
+                'endDate'       => get_post_meta( $post->ID, '_culture_event_end_date', true ) ?: '',
+                'location'      => get_post_meta( $post->ID, '_culture_location', true ) ?: '',
+                'venueAddress'  => get_post_meta( $post->ID, 'venue_address', true ) ?: '',
+                'openingHours'  => get_post_meta( $post->ID, '_culture_opening_hours', true ) ?: '',
+                'admission'     => get_post_meta( $post->ID, '_culture_admission', true ) ?: '',
+                'city'          => get_post_meta( $post->ID, '_culture_event_city', true ) ?: '',
+                'eventCategory' => ( $interests && ! is_wp_error( $interests ) && ! empty( $interests ) ) ? $interests[0]->name : '',
+                'organiserName' => $organiser_name,
+                'organiserSlug' => $organiser_slug,
             );
         }, $query->posts );
     }
@@ -1085,9 +1143,12 @@ class Culture_Mobile_API {
                 'slug'      => $post->post_name,
                 'date'      => $post->post_date_gmt,
                 'excerpt'   => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
+                'body'      => wp_strip_all_tags( $post->post_content ),
                 'image'     => $thumb ?: null,
                 'href'      => '/directory/' . $post->post_name,
                 'entryType' => ( $terms && ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0]->name : '',
+                'city'      => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
+                'location'  => get_post_meta( $post->ID, '_culture_location', true ) ?: '',
             );
         }, $query->posts );
     }
@@ -1143,34 +1204,50 @@ class Culture_Mobile_API {
                 $source = $host ? preg_replace( '/^www\./', '', $host ) : '';
             }
 
+            $template = get_post_meta( $post->ID, '_template_type', true ) ?: 'post';
+
             return array(
-                'id'                    => 'community-' . $post->ID,
-                'type'                  => 'community',
-                'title'                 => $body_text ?: get_the_title( $post ),
-                'slug'                  => $post->post_name,
-                'date'                  => $post->post_date_gmt,
-                'image'                 => get_post_meta( $post->ID, '_community_image_url', true ) ?: null,
-                'href'                  => '/community/' . $post->post_name,
-                'communityAuthorId'     => get_post_meta( $post->ID, 'community_author_id', true ) ?: (string) $author_id,
-                'communityAuthor'       => get_post_meta( $post->ID, 'community_author_name', true ) ?: ( $author ? $author->display_name : '' ),
+                'id'                      => 'community-' . $post->ID,
+                'type'                    => 'community',
+                'title'                   => $body_text ?: get_the_title( $post ),
+                'slug'                    => $post->post_name,
+                'date'                    => $post->post_date_gmt,
+                'image'                   => get_post_meta( $post->ID, '_community_image_url', true ) ?: null,
+                'href'                    => '/community/' . $post->post_name,
+                'communityAuthorId'       => get_post_meta( $post->ID, 'community_author_id', true ) ?: (string) $author_id,
+                'communityAuthor'         => get_post_meta( $post->ID, 'community_author_name', true ) ?: ( $author ? $author->display_name : '' ),
                 'communityAuthorUsername' => get_post_meta( $post->ID, 'community_author_username', true ) ?: ( $author ? $author->user_login : '' ),
-                'communityAuthorAvatar' => get_post_meta( $post->ID, 'community_author_avatar', true ) ?: '',
-                'communityTag'          => get_post_meta( $post->ID, 'community_tag', true ) ?: '',
-                'communityTier'         => get_post_meta( $post->ID, 'community_author_tier', true ) ?: '',
-                'region'                => get_post_meta( $post->ID, 'community_region', true ) ?: '',
-                'sourceUrl'             => $link_url ?: null,
-                'source'                => $source ?: null,
-                'ogTitle'               => get_post_meta( $post->ID, 'community_og_title', true ) ?: '',
-                'ogDescription'         => get_post_meta( $post->ID, 'community_og_description', true ) ?: '',
-                'ogImage'               => get_post_meta( $post->ID, 'community_og_image', true ) ?: '',
-                'commentCount'          => (int) get_comments_number( $post->ID ),
-                'reactions'             => array(
+                'communityAuthorAvatar'   => get_post_meta( $post->ID, 'community_author_avatar', true ) ?: '',
+                'communityTag'            => get_post_meta( $post->ID, 'community_tag', true ) ?: '',
+                'communityTier'           => get_post_meta( $post->ID, 'community_author_tier', true ) ?: '',
+                'region'                  => get_post_meta( $post->ID, 'community_region', true ) ?: '',
+                'sourceUrl'               => $link_url ?: null,
+                'source'                  => $source ?: null,
+                'ogTitle'                 => get_post_meta( $post->ID, 'community_og_title', true ) ?: '',
+                'ogDescription'           => get_post_meta( $post->ID, 'community_og_description', true ) ?: '',
+                'ogImage'                 => get_post_meta( $post->ID, 'community_og_image', true ) ?: '',
+                'commentCount'            => (int) get_comments_number( $post->ID ),
+                'reactions'               => array(
                     'love' => (int) get_post_meta( $post->ID, 'reaction_love', true ),
                     'fire' => (int) get_post_meta( $post->ID, 'reaction_fire', true ),
                     'clap' => (int) get_post_meta( $post->ID, 'reaction_clap', true ),
                 ),
-                'liked'                 => in_array( $post->ID, $liked_ids, false ),
-                'wpId'                  => (string) $post->ID,
+                'liked'                   => in_array( $post->ID, $liked_ids, false ),
+                'wpId'                    => (string) $post->ID,
+                // Template fields — all card variants
+                'templateType'            => $template,
+                'linkedDirectoryId'       => (int) get_post_meta( $post->ID, '_linked_directory_id', true ) ?: null,
+                'starRating'              => (int) get_post_meta( $post->ID, '_star_rating', true ) ?: null,
+                'locationName'            => get_post_meta( $post->ID, '_location_name', true ) ?: '',
+                'pollOptions'             => json_decode( get_post_meta( $post->ID, '_poll_options', true ) ?: '[]', true ),
+                'pollExpiresAt'           => get_post_meta( $post->ID, '_poll_expires_at', true ) ?: '',
+                'galleryImages'           => json_decode( get_post_meta( $post->ID, '_gallery_images', true ) ?: '[]', true ),
+                'videoUrl'                => get_post_meta( $post->ID, '_video_url', true ) ?: '',
+                'itineraryStops'          => json_decode( get_post_meta( $post->ID, '_itinerary_stops', true ) ?: '[]', true ),
+                'foodDishName'            => get_post_meta( $post->ID, '_food_dish_name', true ) ?: '',
+                'foodRatingTaste'         => (int) get_post_meta( $post->ID, '_food_rating_taste', true ) ?: null,
+                'foodRatingValue'         => (int) get_post_meta( $post->ID, '_food_rating_value', true ) ?: null,
+                'foodRatingVibe'          => (int) get_post_meta( $post->ID, '_food_rating_vibe', true ) ?: null,
             );
         }, $query->posts );
     }

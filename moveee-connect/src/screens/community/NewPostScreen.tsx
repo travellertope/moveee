@@ -7,6 +7,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { api, CULTURE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import StarRating from "../../components/composer/StarRating";
@@ -15,10 +16,12 @@ import PollBuilder, { PollDraft } from "../../components/composer/PollBuilder";
 import ItineraryBuilder, { StopDraft } from "../../components/composer/ItineraryBuilder";
 import DirectorySearch from "../../components/composer/DirectorySearch";
 
+const PROXY = "https://themoveee.com/api";
+
 // ── Template metadata ─────────────────────────────────────────────────────────
 type TemplateId =
   | "post" | "hidden-gem" | "cultural-take" | "food-review"
-  | "creative-showcase" | "poll" | "itinerary" | "quote";
+  | "creative-showcase" | "poll" | "itinerary" | "event" | "quote";
 
 interface TemplateMeta {
   id: TemplateId;
@@ -38,12 +41,31 @@ const TEMPLATES: TemplateMeta[] = [
   { id: "creative-showcase", label: "Showcase", emoji: "🎨", minText: 0,   maxText: 500,  description: "Share your creative work — art, photography, design, or music.", chips: ["Working on something:", "New piece:", "Behind the work:"] },
   { id: "poll",              label: "Poll",     emoji: "📊", minText: 10,  maxText: 280,  description: "Ask the community something. Great for settling debates or gathering opinions.", chips: ["Which is better:", "Settle this for me:", "Genuine question:"] },
   { id: "itinerary",         label: "Route",    emoji: "🗺️", minText: 0,   maxText: 300,  description: "Share a travel itinerary or a local route worth following.", chips: ["A perfect day in", "My go-to route:", "For first-timers in"] },
+  { id: "event",             label: "Event",    emoji: "📅", minText: 0,   maxText: 1000, description: "Submit an event to the Moveee calendar — exhibitions, gigs, screenings, markets, and more.", chips: ["Opening night:", "One night only:", "Catch it before it closes:"] },
   { id: "quote",             label: "Quote",    emoji: "✦",  minText: 10,  maxText: 600,  description: "Share a quote that moved you. Add the author and source below.", chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"] },
 ];
 
 const SECTION_TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"];
 
+const EVENT_CATEGORIES: { id: string; label: string }[] = [
+  { id: "live-music",         label: "Live Music" },
+  { id: "independent-film",   label: "Film" },
+  { id: "visual-art",         label: "Visual Art" },
+  { id: "fashion-streetwear", label: "Fashion" },
+  { id: "food-drink",         label: "Food & Drink" },
+  { id: "literature",         label: "Literature" },
+  { id: "visual-design",      label: "Design" },
+  { id: "event-performance",  label: "Performance" },
+  { id: "event-community",    label: "Community" },
+  { id: "tech-culture",       label: "Tech & Culture" },
+];
+
 interface DirectoryEntry { id: number; title: string; entry_type: string; city?: string }
+
+const fmtDate = (d: Date) =>
+  d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+const fmtTime = (d: Date) =>
+  d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
 export default function NewPostScreen() {
   const nav = useNavigation<any>();
@@ -64,6 +86,22 @@ export default function NewPostScreen() {
   const [stops, setStops] = useState<StopDraft[]>([{ name: "", note: "" }, { name: "", note: "" }]);
   const [quoteAuthor, setQuoteAuthor] = useState("");
   const [quoteSource, setQuoteSource] = useState("");
+
+  // Event-specific state
+  const [eventTitle,     setEventTitle]     = useState("");
+  const [eventDate,      setEventDate]      = useState<Date | null>(null);
+  const [eventEndDate,   setEventEndDate]   = useState<Date | null>(null);
+  const [eventVenue,     setEventVenue]     = useState("");
+  const [eventCity,      setEventCity]      = useState("");
+  const [eventAdmission, setEventAdmission] = useState("");
+  const [eventTicketUrl, setEventTicketUrl] = useState("");
+  const [eventCategory,  setEventCategory]  = useState("");
+  const [eventOrganiser, setEventOrganiser] = useState<DirectoryEntry | null>(null);
+
+  // Date/time picker state
+  const [showPicker,   setShowPicker]   = useState(false);
+  const [pickerMode,   setPickerMode]   = useState<"date" | "time">("date");
+  const [pickerTarget, setPickerTarget] = useState<"start" | "end">("start");
 
   const textRef = useRef<TextInput>(null);
   const tmpl = TEMPLATES.find((t) => t.id === template)!;
@@ -103,9 +141,38 @@ export default function NewPostScreen() {
     return urls;
   };
 
+  const openPicker = (target: "start" | "end", mode: "date" | "time") => {
+    setPickerTarget(target);
+    setPickerMode(mode);
+    setShowPicker(true);
+  };
+
+  const pickerValue = (): Date =>
+    (pickerTarget === "start" ? eventDate : eventEndDate) ?? new Date();
+
+  const onPickerChange = (event: any, date?: Date) => {
+    if (Platform.OS === "android") setShowPicker(false);
+    if (!date || event.type === "dismissed") return;
+    const apply = (base: Date | null): Date => {
+      const result = new Date(base ?? Date.now());
+      if (pickerMode === "date") {
+        result.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+      } else {
+        result.setHours(date.getHours(), date.getMinutes(), 0, 0);
+      }
+      return result;
+    };
+    if (pickerTarget === "start") setEventDate(apply(eventDate));
+    else setEventEndDate(apply(eventEndDate));
+  };
+
   const validateAndSubmit = async () => {
-    if (text.length < tmpl.minText) {
+    if (template !== "event" && text.length < tmpl.minText) {
       Alert.alert("Too short", `Need at least ${tmpl.minText} characters for this template.`); return;
+    }
+    if (template === "event") {
+      if (!eventTitle.trim()) { Alert.alert("Title required", "Add an event title."); return; }
+      if (!eventDate) { Alert.alert("Date required", "Select a start date and time."); return; }
     }
     if (template === "hidden-gem" && starRating === 0) {
       Alert.alert("Rating required", "Please give a star rating."); return;
@@ -131,6 +198,36 @@ export default function NewPostScreen() {
 
     setSubmitting(true);
     try {
+      // Event: different upload + submit endpoints (Next.js proxy)
+      if (template === "event") {
+        let imageUrl: string | undefined;
+        if (images.length > 0) {
+          const uri = images[0];
+          const fileName = uri.split("/").pop() ?? "event.jpg";
+          const fileType = fileName.endsWith(".png") ? "image/png" : "image/jpeg";
+          try {
+            const res = await api.upload<{ url: string }>(`${PROXY}/events/upload-image`, uri, fileName, fileType);
+            imageUrl = res.url;
+          } catch { /* skip */ }
+        }
+        await api.post(`${PROXY}/events/member-submit`, {
+          title:        eventTitle.trim(),
+          description:  text.trim() || undefined,
+          start_date:   eventDate!.toISOString(),
+          end_date:     eventEndDate?.toISOString() || undefined,
+          venue:        eventVenue.trim() || undefined,
+          city:         eventCity.trim() || undefined,
+          category:     eventCategory || undefined,
+          admission:    eventAdmission.trim() || undefined,
+          ticket_url:   eventTicketUrl.trim() || undefined,
+          organiser_id: eventOrganiser?.id || undefined,
+          image_url:    imageUrl,
+        } as Record<string, unknown>);
+        Alert.alert("Event submitted", "Your event will appear on the events calendar shortly.");
+        nav.goBack();
+        return;
+      }
+
       const uploadedUrls = await uploadImages();
 
       if (template === "quote") {
@@ -142,26 +239,26 @@ export default function NewPostScreen() {
       }
 
       const body: Record<string, unknown> = {
-        content:       text,
-        tag:           template === "food-review" ? "Food" : sectionTag,
-        template_type: template,
+        content:        text,
+        tag:            template === "food-review" ? "Food" : sectionTag,
+        template_type:  template,
         gallery_images: uploadedUrls.length > 1 ? uploadedUrls : undefined,
         image_url:      uploadedUrls[0] ?? undefined,
       };
 
       if (template === "hidden-gem") {
-        body.star_rating          = starRating;
-        body.linked_directory_id  = linkedEntry?.id;
+        body.star_rating         = starRating;
+        body.linked_directory_id = linkedEntry?.id;
       }
       if (template === "cultural-take") {
         body.linked_directory_id = linkedEntry?.id;
       }
       if (template === "food-review") {
-        body.food_dish_name       = foodDishName;
-        body.food_rating_taste    = foodRatings.taste;
-        body.food_rating_value    = foodRatings.value;
-        body.food_rating_vibe     = foodRatings.vibe;
-        body.linked_directory_id  = linkedEntry?.id;
+        body.food_dish_name      = foodDishName;
+        body.food_rating_taste   = foodRatings.taste;
+        body.food_rating_value   = foodRatings.value;
+        body.food_rating_vibe    = foodRatings.vibe;
+        body.linked_directory_id = linkedEntry?.id;
       }
       if (template === "poll") {
         const expiresAt = new Date(Date.now() + poll.durationDays * 24 * 60 * 60 * 1000).toISOString();
@@ -182,8 +279,12 @@ export default function NewPostScreen() {
   };
 
   const remaining = tmpl.maxText - text.length;
-  const showGuide = text.length === 0;
+  const showGuide = text.length === 0 && template !== "event";
   const multi = ["hidden-gem", "food-review", "creative-showcase"].includes(template);
+  const isSubmitDisabled =
+    submitting ||
+    (template !== "event" && text.length < tmpl.minText) ||
+    (template === "event" && (!eventTitle.trim() || !eventDate));
 
   return (
     <SafeAreaView style={styles.container}>
@@ -196,9 +297,9 @@ export default function NewPostScreen() {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>New post</Text>
           <TouchableOpacity
-            style={[styles.postBtn, (submitting || text.length < tmpl.minText) && styles.postBtnDisabled]}
+            style={[styles.postBtn, isSubmitDisabled && styles.postBtnDisabled]}
             onPress={validateAndSubmit}
-            disabled={submitting || text.length < tmpl.minText}
+            disabled={isSubmitDisabled}
           >
             {submitting
               ? <ActivityIndicator color={colors.paper} size="small" />
@@ -213,7 +314,7 @@ export default function NewPostScreen() {
             <TouchableOpacity
               key={t.id}
               style={[styles.templatePill, template === t.id && styles.templatePillActive]}
-              onPress={() => { setTemplate(t.id); setText(""); setTagLocked(false); }}
+              onPress={() => { setTemplate(t.id); setText(""); setTagLocked(false); setShowPicker(false); }}
             >
               <Text style={[styles.templatePillText, template === t.id && styles.templatePillTextActive]}>
                 {t.emoji} {t.label}
@@ -224,7 +325,7 @@ export default function NewPostScreen() {
 
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
 
-          {/* Guide */}
+          {/* Guide chips (not shown for event template) */}
           {showGuide && (
             <View style={styles.guide}>
               <Text style={styles.guideDesc}>{tmpl.description}</Text>
@@ -238,6 +339,21 @@ export default function NewPostScreen() {
             </View>
           )}
 
+          {/* Event title — above the description textarea */}
+          {template === "event" && (
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Event title *</Text>
+              <TextInput
+                style={styles.input}
+                value={eventTitle}
+                onChangeText={setEventTitle}
+                placeholder="Event title"
+                placeholderTextColor={colors.ghost}
+                autoFocus
+              />
+            </View>
+          )}
+
           {/* Main textarea */}
           <TextInput
             ref={textRef}
@@ -245,7 +361,11 @@ export default function NewPostScreen() {
             value={text}
             onChangeText={handleTextChange}
             multiline
-            placeholder={template === "quote" ? "The quote text…" : "What's on your cultural mind?"}
+            placeholder={
+              template === "quote"  ? "The quote text…"               :
+              template === "event"  ? "Event description (optional)…" :
+              "What's on your cultural mind?"
+            }
             placeholderTextColor={colors.ghost}
             maxLength={tmpl.maxText + 50}
           />
@@ -301,8 +421,131 @@ export default function NewPostScreen() {
             </View>
           )}
 
-          {/* Section tag */}
-          {template !== "food-review" && template !== "quote" && (
+          {/* ── Event fields ──────────────────────────────────────────── */}
+          {template === "event" && (
+            <View style={styles.fieldGroup}>
+
+              {/* Start date & time */}
+              <Text style={styles.fieldLabel}>Start date & time *</Text>
+              <View style={styles.dateRow}>
+                <TouchableOpacity style={[styles.dateBtn, { flex: 2 }]} onPress={() => openPicker("start", "date")}>
+                  <Ionicons name="calendar-outline" size={14} color={colors.mute} />
+                  <Text style={[styles.dateBtnText, !!eventDate && styles.dateBtnTextSet]}>
+                    {eventDate ? fmtDate(eventDate) : "Set date"}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.dateBtn, { flex: 1 }]} onPress={() => openPicker("start", "time")}>
+                  <Ionicons name="time-outline" size={14} color={colors.mute} />
+                  <Text style={[styles.dateBtnText, !!eventDate && styles.dateBtnTextSet]}>
+                    {eventDate ? fmtTime(eventDate) : "Time"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* End date & time */}
+              <Text style={styles.fieldLabel}>End date & time (optional)</Text>
+              <View style={styles.dateRow}>
+                <TouchableOpacity style={[styles.dateBtn, { flex: 2 }]} onPress={() => openPicker("end", "date")}>
+                  <Ionicons name="calendar-outline" size={14} color={colors.mute} />
+                  <Text style={[styles.dateBtnText, !!eventEndDate && styles.dateBtnTextSet]}>
+                    {eventEndDate ? fmtDate(eventEndDate) : "Set date"}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.dateBtn, { flex: 1 }]} onPress={() => openPicker("end", "time")}>
+                  <Ionicons name="time-outline" size={14} color={colors.mute} />
+                  <Text style={[styles.dateBtnText, !!eventEndDate && styles.dateBtnTextSet]}>
+                    {eventEndDate ? fmtTime(eventEndDate) : "Time"}
+                  </Text>
+                </TouchableOpacity>
+                {eventEndDate && (
+                  <TouchableOpacity onPress={() => setEventEndDate(null)} style={styles.clearEndDate}>
+                    <Ionicons name="close" size={16} color={colors.mute} />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Date/time picker (inline on iOS, modal dialog on Android) */}
+              {showPicker && (
+                <View style={styles.pickerWrap}>
+                  {Platform.OS === "ios" && (
+                    <TouchableOpacity onPress={() => setShowPicker(false)} style={styles.iosDoneBtn}>
+                      <Text style={styles.iosDoneBtnText}>Done</Text>
+                    </TouchableOpacity>
+                  )}
+                  <DateTimePicker
+                    value={pickerValue()}
+                    mode={pickerMode}
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
+                    onChange={onPickerChange}
+                  />
+                </View>
+              )}
+
+              {/* Venue + City side by side */}
+              <View style={styles.rowFields}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>Venue</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={eventVenue}
+                    onChangeText={setEventVenue}
+                    placeholder="Venue name"
+                    placeholderTextColor={colors.ghost}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>City</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={eventCity}
+                    onChangeText={setEventCity}
+                    placeholder="City"
+                    placeholderTextColor={colors.ghost}
+                  />
+                </View>
+              </View>
+
+              {/* Category */}
+              <Text style={styles.fieldLabel}>Category</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionTags}>
+                {EVENT_CATEGORIES.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.id}
+                    style={[styles.sectionTag, eventCategory === cat.id && styles.sectionTagActive]}
+                    onPress={() => setEventCategory(eventCategory === cat.id ? "" : cat.id)}
+                  >
+                    <Text style={[styles.sectionTagText, eventCategory === cat.id && styles.sectionTagTextActive]}>
+                      {cat.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Admission + Ticketing URL */}
+              <TextInput
+                style={styles.input}
+                value={eventAdmission}
+                onChangeText={setEventAdmission}
+                placeholder="Admission (e.g. Free, £10)"
+                placeholderTextColor={colors.ghost}
+              />
+              <TextInput
+                style={styles.input}
+                value={eventTicketUrl}
+                onChangeText={setEventTicketUrl}
+                placeholder="Ticketing URL (optional)"
+                placeholderTextColor={colors.ghost}
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+
+              {/* Organiser */}
+              <DirectorySearch selected={eventOrganiser} onSelect={setEventOrganiser} label="Organiser (optional)" />
+            </View>
+          )}
+
+          {/* Section tag (not for food-review, quote, or event) */}
+          {template !== "food-review" && template !== "quote" && template !== "event" && (
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Section tag</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionTags}>
@@ -433,4 +676,27 @@ const styles = StyleSheet.create({
     position: "absolute", top: 4, right: 4,
     backgroundColor: "rgba(0,0,0,0.55)", borderRadius: 8, padding: 2,
   },
+
+  // Event-specific styles
+  dateRow:        { flexDirection: "row", gap: space[2] },
+  dateBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    borderWidth: 1, borderColor: colors.rule, borderRadius: radius.md,
+    paddingHorizontal: space[3], paddingVertical: space[2],
+    backgroundColor: colors.paperDeep,
+  },
+  dateBtnText:    { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.ghost },
+  dateBtnTextSet: { color: colors.ink },
+  clearEndDate:   { padding: 4, justifyContent: "center" },
+  rowFields:      { flexDirection: "row", gap: space[2] },
+  pickerWrap: {
+    borderWidth: 1, borderColor: colors.rule, borderRadius: radius.md,
+    overflow: "hidden", backgroundColor: colors.paperDeep,
+  },
+  iosDoneBtn: {
+    alignSelf: "flex-end", margin: space[2],
+    backgroundColor: colors.ink, borderRadius: radius.md,
+    paddingHorizontal: space[3], paddingVertical: space[1],
+  },
+  iosDoneBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.paper },
 });

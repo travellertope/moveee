@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from "react";
 import {
   View, Text, TextInput, Switch, TouchableOpacity, ScrollView,
-  StyleSheet, SafeAreaView, Alert, ActivityIndicator,
+  StyleSheet, SafeAreaView, Alert, ActivityIndicator, Platform,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Passkeys from "react-native-passkeys";
 import { useAuthStore } from "../../auth/authStore";
 import { api, CULTURE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import type { Passkey } from "../../types";
+
+const PROXY = "https://themoveee.com/api";
 
 type Tab = "profile" | "directory" | "interests" | "newsletters" | "security";
 
@@ -296,15 +299,22 @@ function NewslettersTab() {
 
 // ── Security Tab ──────────────────────────────────────────────────────────────
 function SecurityTab() {
-  const { user, updateUser } = useAuthStore() as any;
-  const [passkeys, setPasskeys] = useState<Passkey[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);
+  const { user, updateUser } = useAuthStore();
+  const [passkeys,  setPasskeys]  = useState<Passkey[]>([]);
+  const [loading,   setLoading]   = useState(true);
+  const [adding,    setAdding]    = useState(false);
+  const [supported, setSupported] = useState(true);
+
+  useEffect(() => {
+    setSupported(Passkeys.isSupported());
+    loadPasskeys();
+  }, []);
 
   const loadPasskeys = async () => {
+    setLoading(true);
     try {
-      const data = await api.get<Passkey[]>(`${CULTURE_API}/passkey/list`);
-      setPasskeys(data);
+      const data = await api.get<Passkey[]>(`${PROXY}/auth/passkey/list`);
+      setPasskeys(Array.isArray(data) ? data : []);
     } catch {
       setPasskeys([]);
     } finally {
@@ -312,27 +322,66 @@ function SecurityTab() {
     }
   };
 
-  useEffect(() => { loadPasskeys(); }, []);
+  const addPasskey = async () => {
+    if (!supported) {
+      Alert.alert(
+        "Not supported",
+        "Passkeys require iOS 16+ or Android 9+. Please update your device."
+      );
+      return;
+    }
+    setAdding(true);
+    try {
+      const optData = await api.get<{ options: any }>(`${PROXY}/auth/passkey/register-options`);
+      const credential = await Passkeys.create(optData.options);
+      if (!credential) return; // user cancelled
 
-  const deletePasskey = async (credential_id: string) => {
+      await api.post(`${PROXY}/auth/passkey/register-verify`, {
+        id:                credential.id,
+        rawId:             credential.rawId,
+        type:              credential.type,
+        clientDataJSON:    credential.response.clientDataJSON,
+        attestationObject: credential.response.attestationObject,
+        transports:        (credential.response as any).transports ?? [],
+        device_name:       Platform.OS === "ios" ? "iPhone" : "Android",
+      });
+
+      updateUser({ hasPasskey: true, passkeyCount: (user?.passkeyCount ?? 0) + 1 });
+      await loadPasskeys();
+      Alert.alert("Passkey added", "Your passkey has been registered successfully.");
+    } catch (e: any) {
+      if (e?.message?.includes("cancel") || e?.code === "USER_CANCELLED") return;
+      Alert.alert("Error", "Could not register passkey. Please try again.");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const confirmDelete = (credential_id: string) => {
     if (passkeys.length === 1) {
       Alert.alert(
         "Last passkey",
-        "Deleting your only passkey will lock you out of perks and cashouts. Are you sure?",
+        "Deleting your only passkey will lock you out of perks and cashouts. Continue?",
         [
           { text: "Cancel", style: "cancel" },
           { text: "Delete", style: "destructive", onPress: () => doDelete(credential_id) },
         ]
       );
-      return;
+    } else {
+      Alert.alert("Delete passkey", "Remove this passkey from your account?", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => doDelete(credential_id) },
+      ]);
     }
-    doDelete(credential_id);
   };
 
   const doDelete = async (credential_id: string) => {
     try {
-      await api.delete(`${CULTURE_API}/passkey/delete`);
-      loadPasskeys();
+      await api.delete(`${PROXY}/auth/passkey/delete`, { credential_id });
+      const remaining = passkeys.filter((p) => p.credential_id !== credential_id);
+      setPasskeys(remaining);
+      if (remaining.length === 0) updateUser({ hasPasskey: false, passkeyCount: 0 });
+      else updateUser({ passkeyCount: remaining.length });
     } catch {
       Alert.alert("Error", "Could not delete passkey.");
     }
@@ -340,6 +389,7 @@ function SecurityTab() {
 
   return (
     <ScrollView contentContainerStyle={styles.tabContent}>
+      {/* Change password */}
       <View style={styles.securityCard}>
         <Text style={styles.securityCardTitle}>Change Password</Text>
         <Text style={styles.securityCardDesc}>
@@ -360,39 +410,71 @@ function SecurityTab() {
         </TouchableOpacity>
       </View>
 
+      {/* Passkey manager */}
       <View style={styles.passkeysSection}>
         <Text style={styles.sectionTitle}>Passkeys</Text>
-        {loading ? (
-          <ActivityIndicator color={colors.gold} />
-        ) : passkeys.length === 0 ? (
-          <View style={styles.noPasskeys}>
-            <Text style={styles.noPasskeysText}>No passkeys set up yet.</Text>
-            <Text style={styles.noPasskeysNote}>
-              Passkeys are required to redeem perks and request credit cashouts.
+        <Text style={styles.passkeyIntro}>
+          Passkeys are required to redeem perks and request credit cashouts.
+          Your device biometrics (Face ID, fingerprint) authenticate the action.
+        </Text>
+
+        {!supported && (
+          <View style={styles.unsupportedBanner}>
+            <Ionicons name="warning-outline" size={16} color={colors.ochre} />
+            <Text style={styles.unsupportedText}>
+              Passkeys require iOS 16+ or Android 9+.
             </Text>
           </View>
-        ) : (
-          passkeys.map((pk) => (
-            <View key={pk.credential_id} style={styles.passkeyRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.passkeyDevice}>{pk.device_name || "Unknown device"}</Text>
-                <Text style={styles.passkeySub}>
-                  Added {new Date(pk.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                  {pk.last_used_at ? ` · Last used ${new Date(pk.last_used_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : ""}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={() => deletePasskey(pk.credential_id)} style={styles.deleteBtn}>
-                <Ionicons name="trash-outline" size={18} color={colors.ochre} />
-              </TouchableOpacity>
-            </View>
-          ))
         )}
+
+        {loading ? (
+          <ActivityIndicator color={colors.gold} style={{ marginVertical: space[4] }} />
+        ) : passkeys.length === 0 ? (
+          <View style={styles.noPasskeys}>
+            <Ionicons name="key-outline" size={32} color={colors.ghost} />
+            <Text style={styles.noPasskeysText}>No passkeys set up yet.</Text>
+          </View>
+        ) : (
+          <View style={styles.passkeyList}>
+            {passkeys.map((pk, i) => (
+              <View
+                key={pk.credential_id}
+                style={[styles.passkeyRow, i > 0 && styles.passkeyRowBorder]}
+              >
+                <Ionicons name="key-outline" size={18} color={colors.gold} style={{ marginTop: 1 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.passkeyDevice}>{pk.device_name || "Unknown device"}</Text>
+                  <Text style={styles.passkeySub}>
+                    Added{" "}
+                    {new Date(pk.created_at).toLocaleDateString("en-GB", {
+                      day: "numeric", month: "short", year: "numeric",
+                    })}
+                    {pk.last_used_at
+                      ? ` · Last used ${new Date(pk.last_used_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
+                      : ""}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => confirmDelete(pk.credential_id)}
+                  style={styles.deleteBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="trash-outline" size={18} color={colors.ochre} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+
         <TouchableOpacity
-          style={[styles.saveBtn, adding && { opacity: 0.6 }]}
-          disabled={adding}
-          onPress={() => Alert.alert("Passkeys on mobile", "Passkey registration requires the native device authenticator. This feature will be enabled in the next app update.")}
+          style={[styles.saveBtn, (adding || !supported) && { opacity: 0.6 }]}
+          disabled={adding || !supported}
+          onPress={addPasskey}
         >
-          <Text style={styles.saveBtnText}>{adding ? "Registering…" : "+ Add a passkey"}</Text>
+          {adding
+            ? <ActivityIndicator color={colors.paper} />
+            : <Text style={styles.saveBtnText}>+ Add a passkey</Text>
+          }
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -524,19 +606,34 @@ const styles = StyleSheet.create({
   securityCardTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.ink, marginBottom: 4 },
   securityCardDesc:  { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute },
 
-  passkeysSection: { gap: space[2] },
-  sectionTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: colors.ink, marginBottom: space[2] },
+  passkeysSection: { gap: space[3] },
+  sectionTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: colors.ink },
+  passkeyIntro: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute, lineHeight: 18 },
 
-  noPasskeys:    { padding: space[4], alignItems: "center", gap: space[2] },
-  noPasskeysText:{ fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.inkSoft },
-  noPasskeysNote:{ fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute, textAlign: "center" },
-
-  passkeyRow: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.rule,
-    borderRadius: radius.md, paddingHorizontal: space[3], paddingVertical: space[3],
+  unsupportedBanner: {
+    flexDirection: "row", alignItems: "center", gap: space[2],
+    backgroundColor: "#fef3ee", borderWidth: 1, borderColor: colors.ochre + "40",
+    borderRadius: radius.md, padding: space[3],
   },
+  unsupportedText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.ochre, flex: 1 },
+
+  noPasskeys: {
+    alignItems: "center", gap: space[2],
+    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.rule,
+    borderRadius: radius.lg, paddingVertical: space[6],
+  },
+  noPasskeysText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute },
+
+  passkeyList: {
+    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.rule,
+    borderRadius: radius.lg, overflow: "hidden",
+  },
+  passkeyRow: {
+    flexDirection: "row", alignItems: "center", gap: space[3],
+    paddingHorizontal: space[3], paddingVertical: space[3],
+  },
+  passkeyRowBorder: { borderTopWidth: 1, borderTopColor: colors.rule },
   passkeyDevice: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.ink },
   passkeySub:    { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute, marginTop: 2 },
-  deleteBtn:     { padding: space[2] },
+  deleteBtn:     { padding: space[1] },
 });
