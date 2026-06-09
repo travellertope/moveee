@@ -609,12 +609,16 @@ The app lives in `moveee-connect/` using Expo + React Navigation + Zustand + MMK
 | MagazineScreen, ArticleScreen | `screens/magazine/` |
 | MemberProfileScreen (basic) | `screens/community/MemberProfileScreen.tsx` |
 | TierBadge, TimeAgo | `components/ui/` |
+| MembershipScreen | `screens/member/MembershipScreen.tsx` (two-tier cards, Citizen/Pro CTA logic) |
+| EventsScreen | `screens/events/EventsScreen.tsx` (WP CPT fetch, filter strip, event cards) |
+| EventDetailScreen | `screens/events/EventDetailScreen.tsx` (meta card, RSVP form → `/api/events/rsvp`) |
+| TriviaGameScreen | `screens/games/TriviaGameScreen.tsx` (fully native, ABCD options, explanation, MMKV played-today gate) |
+| WhoSaidItGameScreen | `screens/games/WhoSaidItGameScreen.tsx` (fully native, tap-author options, review, MMKV gate) |
+| GamesScreen (updated) | `screens/games/GamesScreen.tsx` (navigates to TriviaGame + WhoSaidIt; Crossword/Sudoku dimmed) |
 
 ### What is missing (priority order)
-1. PasskeyManager full implementation in Security tab (`react-native-passkeys` not yet installed)
+1. PasskeyManager full native implementation in Security tab (`react-native-passkeys` installed but `+ Add a passkey` button shows placeholder alert)
 2. MembershipScreen IAP wiring (Google Play Billing + App Store IAP)
-3. EventsScreen / EventDetailScreen — still stubs ("Coming soon")
-4. GamesScreen — game grid but no game logic
 
 ### Event template endpoint note
 Event image upload: `POST https://themoveee.com/api/events/upload-image`
@@ -622,6 +626,14 @@ Event submit: `POST https://themoveee.com/api/events/member-submit`
 Both go via the Next.js proxy (NOT WordPress directly). The `PROXY` constant
 (`"https://themoveee.com/api"`) is defined at the top of NewPostScreen.tsx.
 All other post templates submit to `${CULTURE_API}/community/submit` (WordPress directly).
+
+### Games key notes
+- Both Trivia and Who Said It use MMKV (`storage` from `src/store/storage.ts`) for played-today detection — keys `trivia_last_played_date` / `wsi_last_played_date` (ISO date string, e.g. `2026-06-09`)
+- Trivia score is also persisted in `trivia_last_score` so the "already played" screen can show it
+- Both games fetch from `${PROXY}/games/trivia/daily` and `${PROXY}/games/who-said-it/daily` — routed through Next.js proxy with user JWT
+- GamesStack wraps GamesList + TriviaGame + WhoSaidIt; navigation name in tab is "Games" → resolves to GamesStack
+- EventsScreen fetches directly from WordPress CPT REST (no auth required): `https://cms.themoveee.com/wp-json/wp/v2/culture_event?per_page=50&status=publish&_embed=1`
+- EventDetailScreen RSVP posts to `${PROXY}/events/rsvp` (Next.js proxy)
 
 ### Phase 8 key notes
 - `useFeedRecommendations.ts` is a direct port of `lib/feed-recommendations.ts` — keep them in sync
