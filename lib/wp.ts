@@ -1,13 +1,24 @@
 const WP_GRAPHQL_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || "https://cms.themoveee.com/graphql";
 const WP_BASE_URL = WP_GRAPHQL_URL.replace(/\/graphql\/?$/, "");
 
+/** Default timeout (ms) for all WP fetches — prevents server hangs when CMS is slow. */
+const WP_FETCH_TIMEOUT = 15000;
+
+function wpSignal(ms = WP_FETCH_TIMEOUT): { signal: AbortSignal; clear: () => void } {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return { signal: ctrl.signal, clear: () => clearTimeout(timer) };
+}
+
 export async function getWPData(query: string, variables = {}, options: any = {}) {
+  const { signal, clear } = wpSignal();
   try {
     const res = await fetch(WP_GRAPHQL_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
+      signal,
       next: {
         revalidate: options.revalidate !== undefined ? options.revalidate : 3600,
       },
@@ -16,6 +27,7 @@ export async function getWPData(query: string, variables = {}, options: any = {}
         variables,
       }),
     });
+    clear();
 
     if (!res.ok) {
       console.error(`Fetch failed for ${WP_GRAPHQL_URL}: ${res.statusText}`);
@@ -32,6 +44,7 @@ export async function getWPData(query: string, variables = {}, options: any = {}
 
     return json.data;
   } catch (error: any) {
+    clear();
     // Return null instead of throwing so the build doesn't crash
     // when the CMS is unreachable (e.g. DNS not configured yet)
     console.error(`Network or Parsing Error for ${WP_GRAPHQL_URL}:`, error.message);
@@ -273,13 +286,16 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
 
   try {
     const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const { signal, clear } = wpSignal();
     const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
+      signal,
       next: {
         revalidate: options.revalidate !== undefined ? options.revalidate : 3600,
       },
     });
+    clear();
     if (!res.ok) return [];
     const json = await res.json();
     if (!Array.isArray(json)) return [];
