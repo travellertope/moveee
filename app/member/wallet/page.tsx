@@ -105,7 +105,7 @@ export default async function WalletPage() {
               <div style={{ fontSize: "0.78rem", color: "var(--mute)", lineHeight: 1.6 }}>
                 <p style={{ margin: "0 0 8px" }}>Earn credits by posting, reviewing, and engaging with the community. Up to 50 credits per day.</p>
                 <p style={{ margin: "0 0 8px" }}><strong>Route A:</strong> Redeem at partner venues — 0% fee.</p>
-                <p style={{ margin: 0 }}><strong>Route B:</strong> Cash out to your bank — 20–30% fee.</p>
+                <p style={{ margin: 0 }}><strong>Route B:</strong> Cash out to your bank — flat 30% fee.</p>
               </div>
             </section>
           </div>

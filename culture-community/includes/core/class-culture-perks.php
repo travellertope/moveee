@@ -361,9 +361,6 @@ class Culture_Perks {
      * @return int  Percentage: 20, 25, or 30.
      */
     public static function cashout_fee_percent( $credits ) {
-        $credits = (int) $credits;
-        if ( $credits >= 1000 ) return 20;
-        if ( $credits >= 500  ) return 25;
         return 30;
     }
 

@@ -46,7 +46,7 @@ export default function WalletClient({
   const [cashResult, setCashResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const creditsNum = parseInt(cashCredits) || 0;
-  const feePercent = creditsNum >= 1000 ? 20 : creditsNum >= 500 ? 25 : 30;
+  const feePercent = 30;
   const feeCredits = Math.round(creditsNum * feePercent / 100);
   const netCredits = creditsNum - feeCredits;
   const cashAmount = (netCredits / creditsPerGbp).toFixed(2);
@@ -130,7 +130,7 @@ export default function WalletClient({
         <section className="mem-card">
           <div className="mem-card-label">Cash Out Credits</div>
           <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 16px", lineHeight: 1.5 }}>
-            Minimum 100 credits. A fee applies: 30% for &lt;500, 25% for 500–999, 20% for 1000+.
+            Minimum 100 credits. A flat 30% fee applies.
             Partner perks are fee-free — consider <a href="/connect/perks" style={{ color: "var(--ochre)" }}>browsing perks</a> instead.
           </p>
 
