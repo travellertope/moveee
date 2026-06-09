@@ -77,6 +77,6 @@ export const api = {
     request<T>(url, { method: "PUT", body }),
   patch: <T>(url: string, body: Record<string, unknown>) =>
     request<T>(url, { method: "PATCH", body }),
-  delete: <T>(url: string) => request<T>(url, { method: "DELETE" }),
+  delete: <T>(url: string, body?: Record<string, unknown>) => request<T>(url, { method: "DELETE", body }),
   upload: <T>(url: string, uri: string, name: string, type: string) => upload<T>(url, uri, name, type),
 };
