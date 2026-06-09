@@ -8,7 +8,8 @@ import { authOptions } from "@/lib/auth";
 import { getAccessLevel, canViewContent } from "@/lib/access";
 import "../../directory.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export const dynamicParams = true;
 
 const TYPE_LABELS: Record<string, string> = {
   person:   "Person",
