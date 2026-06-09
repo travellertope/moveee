@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import WalletClient from "./WalletClient";
+import MemberNavSelect from "@/components/MemberNavSelect";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -93,12 +94,12 @@ export default async function WalletPage() {
           </div>
 
           <div className="mem-col-side">
-            <section className="mem-card mem-links-card">
-              <Link href="/connect/perks" className="mem-link">Browse Perks →</Link>
-              <Link href="/member/coupons" className="mem-link">My Coupons →</Link>
-              <Link href="/member" className="mem-link">Dashboard →</Link>
-              <Link href="/member/settings" className="mem-link">Settings →</Link>
-            </section>
+            <MemberNavSelect items={[
+              { label: "Browse Perks", href: "/connect/perks" },
+              { label: "My Coupons",   href: "/member/coupons" },
+              { label: "Dashboard",    href: "/member" },
+              { label: "Settings",     href: "/member/settings" },
+            ]} />
 
             <section className="mem-card">
               <div className="mem-card-label">How Credits Work</div>

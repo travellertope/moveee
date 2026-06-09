@@ -332,6 +332,41 @@
 }
 .mem-upgrade-btn:hover { background: var(--ochre-deep); }
 
+/* ── Member nav (desktop list / mobile select) ── */
+.mem-nav--desktop { display: flex; }
+.mem-nav--mobile  { display: none; }
+
+.mem-nav-select-wrap {
+  position: relative;
+}
+.mem-nav-select {
+  width: 100%;
+  padding: 13px 40px 13px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid rgba(42,36,28,.15);
+  border-radius: 2px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s;
+}
+.mem-nav-select:focus { border-color: var(--ochre); }
+.mem-nav-select-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 11px;
+  color: var(--mute);
+}
+
 /* ── Quick links card ── */
 .mem-links-card { gap: 0; padding: 0; overflow: hidden; }
 .mem-link {
@@ -592,28 +627,9 @@ select.mem-field-input { cursor: pointer; }
   .mem-pref-row { flex-direction: column; gap: 12px; }
   .mem-pref-action { flex-direction: row; align-items: center; }
 
-  /* ── Quick links: 2-column tile grid on mobile ── */
-  .mem-links-card {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1px;
-    background: rgba(42,36,28,.1);
-    padding: 0;
-  }
-  .mem-link {
-    padding: 16px 14px;
-    font-size: 8px;
-    letter-spacing: .12em;
-    border-bottom: none;
-    background: var(--paper);
-  }
-  .mem-link--muted {
-    grid-column: 1 / -1;
-    text-align: center;
-    background: rgba(42,36,28,.02);
-    font-size: 7.5px;
-    letter-spacing: .14em;
-  }
+  /* ── Member nav: hide desktop list, show select ── */
+  .mem-nav--desktop { display: none !important; }
+  .mem-nav--mobile  { display: block; }
 }
 
 /* ═══════════════════════════════
@@ -869,6 +885,18 @@ select.mem-field-input { cursor: pointer; }
   border-color: var(--ochre);
 }
 .dir-discipline-tag:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Settings tab bar ── */
+.mem-settings-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid rgba(42,36,28,.1);
+  margin-bottom: 28px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.mem-settings-tabs::-webkit-scrollbar { display: none; }
 
 /* ── Shared tab bar (used by WalletClient and other member pages) ── */
 .prf-tab {
