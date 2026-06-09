@@ -3126,8 +3126,9 @@ class Culture_REST_API {
         $ai_generated_raw    = $request->get_param( 'ai_generated' );
         $ai_generated        = ( $ai_generated_raw === null ) ? true : (bool) $ai_generated_raw;
         $featured_image_id   = absint( $request->get_param( 'featured_image_id' ) );
-        $submitter_name      = sanitize_text_field( $request->get_param( 'submitter_name' ) );
-        $submitter_email     = sanitize_email( $request->get_param( 'submitter_email' ) );
+        $submitter_name          = sanitize_text_field( $request->get_param( 'submitter_name' ) );
+        $submitter_email         = sanitize_email( $request->get_param( 'submitter_email' ) );
+        $organiser_directory_id  = absint( $request->get_param( 'organiser_directory_id' ) );
 
         if ( empty( $title ) || empty( $event_date ) ) {
             return new WP_Error( 'missing_fields', 'title and event_date are required.', array( 'status' => 400 ) );
@@ -3188,6 +3189,9 @@ class Culture_REST_API {
         update_post_meta( $post_id, '_culture_is_featured',     '0' );
         update_post_meta( $post_id, '_culture_ai_generated',    $ai_generated ? '1' : '0' );
         update_post_meta( $post_id, '_culture_event_dedup_hash', $dedup_hash );
+        if ( $organiser_directory_id > 0 ) {
+            update_post_meta( $post_id, '_culture_event_organiser_id', $organiser_directory_id );
+        }
 
         // Set featured image if a valid WP media attachment ID was provided.
         if ( $featured_image_id > 0 && get_post( $featured_image_id ) ) {

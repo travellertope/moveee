@@ -180,6 +180,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   const [quoteSource, setQuoteSource] = useState("");
 
   // Event specific
+  const [eventOrganiser, setEventOrganiser] = useState<{ id: number; title: string; slug: string; type: string; thumbnail: string | null } | null>(null);
   const [eventTitle, setEventTitle] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [eventEndDate, setEventEndDate] = useState("");
@@ -269,6 +270,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     setQuoteAuthor(""); setQuoteSource("");
     setEventTitle(""); setEventDate(""); setEventEndDate(""); setEventLocation("");
     setEventCity(""); setEventAdmission(""); setEventTicketUrl(""); setEventCategory("");
+    setEventOrganiser(null);
     setLinkPreview(null);
   }
 
@@ -395,6 +397,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             image_url: eventImageUrl,
             image_id: eventImageId || undefined,
             category: eventCategory || undefined,
+            organiser_directory_id: eventOrganiser?.id || undefined,
           }),
         });
         const data = await res.json();
@@ -672,6 +675,12 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                   <option value="event-community">Community</option>
                   <option value="tech-culture">Tech</option>
                 </select>
+                <label className="composer-field-label" style={{ marginTop: "0.25rem" }}>Organiser (optional)</label>
+                <DirectorySearch
+                  value={eventOrganiser}
+                  onChange={setEventOrganiser}
+                  placeholder="Search directory for organiser…"
+                />
               </>
             )}
 
