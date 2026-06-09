@@ -13,6 +13,7 @@ interface AuthState {
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   hydrate: () => Promise<void>;
+  updateUser: (patch: Partial<User>) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -58,4 +59,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     const user = await api.get<User>(`${CULTURE_API}/mobile/me`);
     set({ user });
   },
+
+  updateUser: (patch) => set((s) => ({ user: s.user ? { ...s.user, ...patch } : null })),
 }));
