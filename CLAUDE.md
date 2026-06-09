@@ -153,7 +153,8 @@ This ID is used everywhere as the canonical identifier.
 
 ### Step 4 — Frontend: newsletter preferences
 
-**`app/member/settings/NewsletterPreferences.tsx`**
+**`app/member/settings/newsletters/page.tsx`** (now a sub-route under settings)
+- The `NewsletterPreferences` component is rendered here.
 - Add to `NEWSLETTERS` array:
   ```ts
   {
@@ -274,14 +275,14 @@ single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
 
 ## Git branch
 
-Active development branch: `claude/cool-heisenberg-0MOYA`
+Active development branch: `claude/post-errors-dqgchp`
 Always commit and push to this branch.
 
 ---
 
 ## VIP Club Upgrade — Phase Status
 
-Phases 1-4 are implemented. Phase docs live in `docs/phases/`.
+All phases implemented. Phase docs live in `docs/phases/`.
 
 | Phase | Status | Key files |
 |-------|--------|-----------|
@@ -289,9 +290,230 @@ Phases 1-4 are implemented. Phase docs live in `docs/phases/`.
 | 2. Credits & Reputation | Done | `class-culture-gamification.php` (credit_ledger table, award_credits/reputation, check_post_threshold), `lib/auth.ts` |
 | 3. Directory Knowledge Graph | Done | `class-culture-directory.php` (search, quick-create, directory posts, aggregates), `DirectoryGrid.tsx` (partner badge), `app/directory/[slug]/page.tsx` (community section) |
 | 4. Post Templates & Composer | Done | `components/pulse/SubmitPost.tsx` (unified composer), `components/composer/` (StarRating, MultiRating, DirectorySearch, PollBuilder, ItineraryBuilder), `FeedCard.tsx` (template variants), poll-vote endpoint |
-| 5. Public Profiles | Planned | `docs/phases/phase-5-public-profiles.md` |
-| 6. Partner Perks | Planned | `docs/phases/phase-6-partner-perks.md` |
-| 7. Passkeys | Planned | `docs/phases/phase-7-passkeys.md` |
+| 5. Public Profiles | Done | `app/connect/[username]/page.tsx`, `ProfileTabs`, `CommunityTab`, `PortfolioTab`, `app/member/portfolio/`, PHP: public member + community posts + portfolio endpoints |
+| 6. Partner Perks | Done | `class-culture-perks.php` (redeem, QR verify, cashout, fee tiers), `culture_partner_perks` + `culture_redemptions` tables, 13 REST endpoints, `app/connect/perks/` (browse+redeem), `app/member/wallet/` (balance+cashout), `app/member/coupons/` (QR display) |
+| 7. Passkeys | Done | `culture-community/includes/core/class-culture-webauthn.php`, `app/api/auth/passkey/`, `components/PasskeyPrompt.tsx`, `components/PasskeyBanner.tsx`, `app/member/settings/PasskeyManager.tsx` |
+
+---
+
+## Phase 6 — Partner Perks & Credits architecture
+
+### Database tables
+
+Three new tables created by `Culture_Activator::create_tables()`:
+
+**`wp_culture_partner_perks`**
+```
+id, partner_directory_id, partner_vendor_id, title, description,
+credit_cost, min_spend, min_spend_currency, expiry_days,
+max_per_user, max_total, redeemed_count, status, created_at
+```
+- `status`: `active` | `inactive`
+- `max_per_user` / `max_total`: 0 = unlimited
+- `expiry_days`: days from redemption until QR token expires (default 14)
+
+**`wp_culture_redemptions`** (shared for both perk redemptions and cashouts)
+```
+id, user_id, perk_id, type, credits_spent, fee_credits,
+qr_token, qr_scanned, status, expires_at, created_at,
+approved_at, approved_by,
+cashout_amount, cashout_currency, cashout_method,
+cashout_account_name, cashout_account_ref
+```
+- `type`: `'perk'` | `'cashout'`
+- For perks: `qr_token` is 64-char HMAC-SHA256 hex; `qr_scanned` flips to 1 on verify
+- For cashouts: `cashout_*` fields populated; `qr_token` is empty string
+
+**`wp_culture_passkeys`** (Phase 7 — see below)
+
+### PHP class: `class-culture-perks.php`
+
+Key static methods:
+- `get_perks($args)` — list active perks, filterable by `partner_directory_id`, `status`
+- `get_perk($id)` — single perk
+- `redeem_perk($user_id, $perk_id)` — validates credits, caps, deducts, inserts redemption row, generates QR token, returns `{ success, redemption_id, qr_token, expires_at }`
+- `verify_qr($token)` — looks up redemption by `qr_token`, validates HMAC + expiry + used status, marks `qr_scanned=1`, returns `{ valid, reason?, perk?, user?, redemption? }`
+- `get_user_redemptions($user_id, $status?)` — member's redemption history
+- `cashout_fee_percent($credits)` — returns `30` (flat 30%; previously tiered, now fixed)
+- `request_cashout($user_id, $credits, $method, $account_name, $account_ref, $currency)` — validates balance, deducts credits, inserts cashout redemption, returns `{ success, redemption_id, credits_spent, fee_credits, net_credits, cashout_amount, currency, new_balance }`
+- `get_cashout_queue($status)` / `approve_cashout($id, $admin_id)` / `reject_cashout($id, $admin_id, $reason)` — admin actions
+
+**Credits-to-GBP conversion**: `DEFAULT_CREDITS_PER_GBP = 10` (10 credits = £1). Overridden by WP option `culture_credits_per_gbp`. `cashout_amount` stored as **integer pence** in the DB.
+
+**HMAC signing key**: `CULTURE_API_SECRET` constant in `wp-config.php`, falls back to WP option `culture_api_secret`. Same secret used for QR tokens and newsletter analytics.
+
+### REST API endpoints (in `class-culture-rest-api.php`)
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/culture/v1/perks` | public | List active perks |
+| POST | `/culture/v1/perks/redeem` | API key | Redeem a perk (deducts credits, returns QR) |
+| GET | `/culture/v1/perks/verify?token=` | public | Partner verifies QR at POS |
+| GET | `/culture/v1/wallet/balance?user_id=` | API key | Credits balance + `credits_per_gbp` |
+| GET | `/culture/v1/wallet/history?user_id=` | API key | Credit ledger entries (paginated) |
+| POST | `/culture/v1/wallet/cashout` | API key | Request credit cashout |
+| GET | `/culture/v1/admin/cashout-queue` | API key | Admin: pending cashouts |
+| POST | `/culture/v1/admin/cashout-approve` | API key | Admin: approve cashout |
+| POST | `/culture/v1/admin/cashout-reject` | API key | Admin: reject cashout |
+| GET | `/culture/v1/admin/perks` | API key | Admin: list all perks |
+| POST | `/culture/v1/admin/perks` | API key | Admin: create perk |
+| PUT | `/culture/v1/admin/perks/{id}` | API key | Admin: update perk |
+| DELETE | `/culture/v1/admin/perks/{id}` | API key | Admin: delete perk |
+
+### Next.js route handlers
+
+| File | Purpose |
+|------|---------|
+| `app/api/perks/redeem/route.ts` | POST → WP `/perks/redeem` with `user_id` + `step_up_token` |
+| `app/api/perks/verify/route.ts` | GET → WP `/perks/verify` (QR verify for partners) |
+| `app/api/wallet/balance/route.ts` | GET → WP `/wallet/balance` |
+| `app/api/wallet/history/route.ts` | GET → WP `/wallet/history` |
+| `app/api/wallet/redemptions/route.ts` | GET → WP `/wallet/history` (redemptions only) |
+| `app/api/wallet/cashout/route.ts` | POST → WP `/wallet/cashout` — builds `account_ref` string from currency-specific fields before forwarding |
+
+### Frontend screens
+
+**`app/connect/perks/page.tsx` + `PerksClient.tsx`**
+- Fetches perks from WP server-side; passes to client along with current `credits` balance
+- Client: grid of perk cards with credit cost and redeem button
+- Redeem flow: passkey step-up → `POST /api/perks/redeem` → success screen with QR token URL
+- If user has no passkey: shows inline banner directing to `/member/settings/security`
+- `stepUpNeeded` state shown as a warning block (not a modal) when no passkey registered
+- QR URL format: `https://themoveee.com/api/perks/verify?token=<qr_token>`
+
+**`app/member/wallet/page.tsx` + `WalletClient.tsx`**
+- Server component fetches balance + last 50 ledger entries server-side
+- Two tabs: History (ledger entries) | Cash Out (form)
+- **Cash Out form — currency-aware bank fields**:
+  - GBP: Account Name + Sort Code + Account Number
+  - USD: Account Name + Bank Name + Routing Number + Account Number
+  - NGN: Account Name + Bank Name (select from `NGN_BANKS` list of 23 Nigerian banks) + NUBAN Account Number
+- Minimum: 100 credits. Fee: flat 30%. Preview shown: `Fee: 30% (N cr) · You receive: £X.XX`
+- `account_ref` built by Next.js route handler (`buildAccountRef()`) before forwarding to WP
+- Step-up passkey required before submitting — same `doStepUp()` helper as PerksClient
+
+**`app/member/coupons/page.tsx` + `CouponsClient.tsx`**
+- Shows a member's active (non-expired, non-used) perk redemptions as scannable QR codes
+- Fetches from `/api/perks/verify?list=mine` (returns user's own redemptions)
+- Each coupon card shows: perk title, expiry date/days remaining, QR code image
+- Partners scan the QR; verify endpoint marks it used server-side
+
+### Credit escrow
+
+When credits are awarded but the member has no passkey yet, credits are stored in
+`_culture_credits_escrowed` user meta and not added to the spendable balance.
+On first passkey registration, escrowed credits are released to the live balance.
+`creditsEscrowed` is surfaced in `lib/auth.ts` session as `session.user.creditsEscrowed`.
+The dashboard banner (`components/PasskeyBanner.tsx`) shows escrow amount to nudge signup.
+
+---
+
+## Phase 7 — Passkey architecture notes
+
+- **`class-culture-webauthn.php`** — self-contained WebAuthn handler (no external libs)
+  - ES256 (P-256 ECDSA) + RS256 (RSA) via PHP OpenSSL
+  - Custom minimal CBOR decoder — handles maps/arrays/byte strings/ints
+  - Challenges stored in WP transients (`culture_wn_` prefix), 5-min TTL
+  - Registration stores PEM (base64-encoded) + alg in `culture_passkeys` table
+  - Login issues one-time `passkey_token` (2-min transient) for NextAuth exchange
+  - Step-up issues `step_up_token` (5-min transient, single-use) for gating sensitive actions
+  - Credit escrow: `_culture_credits_escrowed` user meta; released on first passkey registration
+  - `MAX_ACCOUNTS_PER_AAGUID = 2` — soft limit per physical device model
+
+- **RP ID (headless setup gotcha)**: WordPress runs at `cms.themoveee.com` but
+  WebAuthn RP ID must match the frontend domain (`themoveee.com`). The `rp_id()`
+  method has three-tier resolution: (1) `CULTURE_WEBAUTHN_RP_ID` constant in
+  `wp-config.php`, (2) `culture_webauthn_rp_id` WP option, (3) auto-strip common
+  CMS subdomains (`cms.`, `wp.`, `admin.`, `api.`, `backend.`) from `home_url()`.
+  **Server-side wp-config.php must have**: `define( 'CULTURE_WEBAUTHN_RP_ID', 'themoveee.com' );`
+  (no angle brackets). Git push does NOT deploy PHP to Lightsail — manual file copy required.
+
+- **SimpleWebAuthn response shape**: `startRegistration()` / `startAuthentication()`
+  return credentials with `clientDataJSON`, `attestationObject`, `authenticatorData`,
+  and `signature` **nested inside a `.response` sub-object**. The PHP `verify_register()`
+  and `verify_assertion()` expect these at the top level. The Next.js proxy routes
+  (`register-verify`, `login-verify`, `step-up-verify`) flatten the response before
+  forwarding to WordPress — do not remove this flattening.
+
+- **WP_Error normalisation**: PHP errors return `{ code, message, data }` (WP_Error
+  format) not `{ error }`. All three verify routes normalise this to `{ error }` so
+  the frontend error display works correctly.
+
+- **DB insert silent failure gotcha**: `verify_register()` can return success from
+  WebAuthn validation but fail to insert the passkey row (e.g. duplicate credential_id).
+  The PHP handler now checks `$wpdb->insert_id` after insert and returns an explicit
+  error if 0. If passkey setup "succeeds" on the frontend but the passkey doesn't
+  appear in the list, this is the likely cause.
+
+- **NextAuth integration**: `lib/auth.ts` credentials provider accepts `{ passkeyToken }` in addition to username/password. Exchange calls `/wp-json/culture/v1/passkey/exchange-token`.
+
+- **Step-up flow**: `PerksClient.tsx` calls `doStepUp()` before redeem; `WalletClient.tsx` calls it before cashout. Both are hard gates (no fallback). `doStepUp()` pattern:
+  ```ts
+  const optRes = await fetch("/api/auth/passkey/step-up", { method: "POST" });
+  const { options } = await optRes.json();
+  const assertion = await startAuthentication(options);
+  const verRes = await fetch("/api/auth/passkey/step-up-verify", {
+    method: "POST", body: JSON.stringify(assertion)
+  });
+  const { step_up_token } = await verRes.json();
+  // pass step_up_token in the subsequent redeem/cashout request
+  ```
+
+- **Passkey REST routes** (in `class-culture-rest-api.php`):
+
+  | Route | Method | Purpose |
+  |-------|--------|---------|
+  | `/passkey/register-options` | GET | Get registration challenge |
+  | `/passkey/register-verify` | POST | Verify + store credential |
+  | `/passkey/login-options` | GET | Get authentication challenge |
+  | `/passkey/login-verify` | POST | Verify + issue `passkey_token` |
+  | `/passkey/exchange-token` | POST | Exchange `passkey_token` for NextAuth session |
+  | `/passkey/step-up` | POST | Get step-up challenge (auth required) |
+  | `/passkey/step-up-verify` | POST | Verify step-up + issue `step_up_token` |
+  | `/passkey/list` | GET | List user's passkeys |
+  | `/passkey/delete` | DELETE | Remove a passkey by credential_id |
+
+- **`culture_passkeys` table**: `credential_id` (unique, varchar 512), `public_key` (base64 PEM), `alg`, `sign_count`, `device_name`, `aaguid`, `transports`, `created_at`, `last_used_at`.
+
+- **Next.js passkey routes** (`app/api/auth/passkey/`):
+  - `register-options/`, `register-verify/`, `login-options/`, `login-verify/` — standard WebAuthn flow proxies
+  - `step-up/`, `step-up-verify/` — gate before sensitive actions
+  - `list/`, `delete/` — PasskeyManager CRUD
+
+- **Frontend components**:
+  - `components/PasskeyPrompt.tsx` — reusable register/step-up modal using `@simplewebauthn/browser`
+  - `components/PasskeyBanner.tsx` — dashboard banner for users without passkeys; shows escrowed credit amount → links to `/member/settings/security`
+  - `app/member/settings/PasskeyManager.tsx` — list/add/delete passkeys in the Security settings tab
+
+- **DB version**: bump `CULTURE_VERSION` in plugin main file after activating (runs `dbDelta` for new tables).
+
+---
+
+## Member settings — tabbed layout (redesigned)
+
+The settings area is now a nested route group under `app/member/settings/`.
+
+**URL structure**:
+- `/member/settings` → redirects to `/member/settings/profile`
+- `/member/settings/profile` — display name, email, phone, DOB, nationality, etc.
+- `/member/settings/directory` — directory preferences / linked entries
+- `/member/settings/interests` — interest tags (rendered from `InterestEditor`)
+- `/member/settings/newsletters` — newsletter subscriptions (`NewsletterPreferences`)
+- `/member/settings/security` — password reset link + `PasskeyManager`
+
+**Key files**:
+- `app/member/settings/layout.tsx` — shared server layout: auth guard, hero header, `SettingsTabs`, `MemberNavSelect` sidebar
+- `app/member/settings/SettingsTabs.tsx` — client component; 5 tab links highlighted by `usePathname()`
+- `app/member/settings/page.tsx` — only contains `redirect("/member/settings/profile")`
+- Sub-pages: `profile/page.tsx`, `directory/page.tsx`, `interests/page.tsx`, `newsletters/page.tsx`, `security/page.tsx`
+
+**`components/MemberNavSelect.tsx`** — responsive nav used in both Settings and Wallet layouts:
+- Desktop: renders as a `mem-card mem-links-card` bordered list (`.mem-nav--desktop`)
+- Mobile: renders as a `<select>` dropdown with `onChange` → `router.push()` (`.mem-nav--mobile`)
+
+**Settings tab CSS**: tabs use `.mem-settings-tabs` container and `.prf-tab` / `.prf-tab--active` classes (same class names as profile tabs).
+
+---
 
 ### Interest taxonomy (16 canonical slugs)
 
@@ -307,6 +529,31 @@ templates create `culture_quote` and `culture_event` CPTs respectively.
 
 Per-template credit/reputation amounts in `check_post_threshold()` in
 `class-culture-gamification.php`.
+
+### Directory entry city field
+
+`culture_directory` posts have an `_entry_city` meta field (string, `show_in_rest: true`)
+for disambiguation when similar names exist (e.g. "The Jazz Cafe, London" vs "The Jazz Cafe, Lagos").
+- PHP: registered in `class-culture-post-types.php` → `$directory_meta`; WP Admin meta box in same file
+- Search results include `city` in the JSON response (`class-culture-directory.php` → `handle_search`)
+- Quick-create accepts and saves `city` param (`handle_quick_create`)
+- Next.js: `app/api/directory/quick-create/route.ts` forwards `city` to WordPress
+- React: `DirectorySearch.tsx` shows city below title in results; two-step create UX (enter name → optionally add city → create)
+
+### NextAuth session shape (`lib/auth.ts`)
+
+The session `user` object includes these fields beyond the basics:
+```ts
+{
+  id, name, email, username, displayName, tier,     // core
+  avatarUrl, phone, whatsapp, gender,               // profile
+  dateOfBirth, nationality, city, occupation,       // KYC
+  credits, reputation, reputationTier, badges,      // gamification
+  dailyCreditsRemaining, registeredAt,              // gamification + moderation
+  hasPasskey, passkeyCount, creditsEscrowed,        // Phase 7
+}
+```
+All fields available as `session.user.X` in server components after `getServerSession(authOptions)`.
 
 ---
 
