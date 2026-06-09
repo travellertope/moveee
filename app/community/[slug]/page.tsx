@@ -9,6 +9,7 @@ import CommunityPostClient from "./CommunityPostClient";
 import "@/app/pulse-layout.css";
 
 export const dynamic = "force-dynamic";
+export const dynamicParams = true;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 
@@ -22,12 +23,7 @@ const NAV_LINKS = [
 ];
 
 export async function generateStaticParams() {
-  try {
-    const slugs = await getAllCommunitySlugs();
-    return slugs.map((slug) => ({ slug }));
-  } catch {
-    return [];
-  }
+  return [];
 }
 
 export async function generateMetadata({
