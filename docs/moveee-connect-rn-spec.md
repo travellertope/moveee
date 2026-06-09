@@ -79,7 +79,7 @@ The app has a working skeleton. Before building anything, understand what alread
 | AnalyticsScreen | ❌ Screen does not exist | §14g |
 | New FeedItem fields (endDate, eventCategory, organiserName, organiserSlug, openingHours, venueAddress, admission) | ❌ Missing from FeedItem type | §2 |
 | Happening/Directory/Quote detail bottom sheets | ❌ No detail drawer for these card types | §8.4–8.6 |
-| Event organiser field in EventSubmitScreen | ❌ `organiser_directory_id` not sent | §10 |
+| Event template in NewPostScreen composer | ❌ Event is a 9th composer template; `EventSubmitScreen` is superseded | §10 |
 | `Notification` type in types/index.ts | ❌ Missing | §2 |
 
 ### Priority build order
@@ -1156,7 +1156,7 @@ Numbered circle: 22×22, `backgroundColor: colors.gold, color: '#fff', fontWeigh
 This is the most complex screen. Implement as a full-screen bottom sheet or modal stack.
 
 ### Template selector (top scrollable row)
-8 pills, horizontal scroll:
+9 pills, horizontal scroll:
 
 | slug | label | emoji |
 |------|-------|-------|
@@ -1167,6 +1167,7 @@ This is the most complex screen. Implement as a full-screen bottom sheet or moda
 | `creative-showcase` | Showcase | 🎨 |
 | `poll` | Poll | 📊 |
 | `itinerary` | Route | 🗺️ |
+| `event` | Event | 📅 |
 | `quote` | Quote | ✦ |
 
 Active pill: filled `backgroundColor: colors.ink, color: '#fff'`
@@ -1186,6 +1187,7 @@ Each template has a description and 3 starter chips:
 | creative-showcase | Share your creative work — art, photography, design, or music. | "Working on something:", "New piece:", "Behind the work:" |
 | poll | Ask the community something. Great for settling debates or gathering opinions. | "Which is better:", "Settle this for me:", "Genuine question:" |
 | itinerary | Share a travel itinerary or a local route worth following. | "A perfect day in", "My go-to route:", "For first-timers in" |
+| event | Submit a cultural event happening in your city. It will appear on the events calendar. | "Happening this weekend:", "Don't miss this one:", "Tickets going fast:" |
 | quote | Share a quote that moved you. Add the author and source below. | "This has stayed with me:", "Still thinking about this:", "Words I keep returning to:" |
 
 Chips: tappable → prepend chip text to textarea + focus
@@ -1201,10 +1203,11 @@ Chips: tappable → prepend chip text to textarea + focus
 | creative-showcase | 0 | 500 | galleryFiles OR videoUrl |
 | poll | 10 | 280 | 2+ poll options |
 | itinerary | 0 | 300 | 2+ stops |
+| event | 0 | 1000 | eventTitle, eventDate (datetime-local) |
 | quote | 10 | 600 | quoteAuthor |
 
 ### Section tag selector
-- Not shown for `food-review` (auto-assigns "Food") or `quote`
+- Not shown for `food-review` (auto-assigns "Food"), `quote`, or `event` (uses its own category picker)
 - Dropdown / action sheet with: Music, Fashion, Art, Film, Food, Sport, Travel, Ideas, Literature, Design, Tech
 - Auto-detects from content using keyword scoring (see `TEMPLATE_TAGS` and `detectTagFromContent` in web `SubmitPost.tsx`)
 
@@ -1230,19 +1233,42 @@ Chips: tappable → prepend chip text to textarea + focus
 - "Add stop" button
 - Min 2 stops to submit
 
-**Event organiser field** (in `EventSubmitScreen`):
-- `DirectorySearch` component with `typeFilter="person"` — searches people entries
-- Stores as `organiser_directory_id` (integer) in the submit payload
-- Optional — not a required field
-- Shown in the Happening card footer as "By {organiserName}"
+**Event fields** (for `event` template — shown instead of the main text area):
+- Event name * (text, max 150 chars)
+- Start date & time * — date+time picker (`DateTimePicker` from `@react-native-community/datetimepicker`), stores as ISO string
+- End date & time — optional, same picker
+- Venue / address + City (side by side, 2:1 flex ratio)
+- Admission (text, max 80, e.g. "Free" / "£10")
+- Ticketing link (URL input, optional)
+- Category (picker/action sheet):
+  `live-music` Music · `independent-film` Film · `visual-art` Visual Arts · `fashion-streetwear` Fashion · `food-drink` Food & Drink · `literature` Literature · `visual-design` Design · `event-performance` Performance · `event-community` Community · `tech-culture` Tech
+- Organiser — `DirectorySearch` with no type filter, placeholder "Search directory for organiser…", optional
+
+**Event submit endpoint** — events use a **different API path** from community posts:
+- Image upload: `POST https://themoveee.com/api/events/upload-image` (FormData, same as community upload but different route)
+- Submit: `POST https://themoveee.com/api/events/member-submit` body:
+  ```ts
+  {
+    title, description,   // description = the optional text area
+    event_date, end_date?,
+    location?, city?,
+    admission?, ticketing_url?,
+    image_url?, image_id?,
+    category?,
+    organiser_directory_id?: number,
+  }
+  ```
+- Both go through the **Next.js proxy** (adds API key) — do NOT call WordPress directly
+- On success: dismiss composer, show "Event submitted — it will appear on the events calendar shortly."
 
 **Quote author/source** (for `quote`):
 - Two inputs: Author * | Source (optional)
 
 ### Image handling
-- Single image: `ImagePicker.launchImageLibraryAsync` (for `post`)
+- Single image: `ImagePicker.launchImageLibraryAsync` (for `post`, `event`)
 - Gallery (multi): up to 10 images (for `hidden-gem`, `food-review`, `creative-showcase`)
-- Upload via `POST /api/community/upload-image` (FormData)
+- Community post upload: `POST https://themoveee.com/api/community/upload-image` (FormData)
+- Event upload: `POST https://themoveee.com/api/events/upload-image` (FormData) — **different endpoint**
 - Max 8 MB per image
 
 ### Character counter
@@ -1987,6 +2013,9 @@ Always warn before deleting the last passkey: "Deleting your only passkey will l
 - **"For You" ranking is pure client-side** — no API call needed. Apply `rankFeed()` after the feed items are fetched. When `forYou` mode is off, show items in the default `date` order returned by the API.
 - **`matchesInterests` checks four fields** — `category`, `communityTag`, `entryType`, and `arm`. If any one of them (lowercased) is in the user's interest set, the item is a match.
 - **SVG charts use `react-native-svg`** — install with `npx expo install react-native-svg`. Do NOT use `react-native-chart-kit` or any other charting library. Replicate the same pure-SVG approach used in the web `AnalyticsClient.tsx`.
+- **`EventSubmitScreen` is superseded** — the web moved event submission into the main composer as a 9th template. The standalone `EventSubmitScreen` still exists in the RN app but should not be extended further; instead build the `event` template tab in `NewPostScreen` and deprecate the old screen. Remove its nav entry once the composer event tab is working.
+- **Event template uses different API endpoints** than community posts — `POST https://themoveee.com/api/events/upload-image` for images and `POST https://themoveee.com/api/events/member-submit` for submission. Both are Next.js proxies. Do NOT use `/api/community/upload-image` for event images.
+- **Event date is datetime-local** — store as a full ISO datetime string (`2026-06-10T19:00`), not just a date. Use `@react-native-community/datetimepicker` with `mode="datetime"`.
 - **Bottom sheet detail drawers use `@gorhom/bottom-sheet`** — install with `npx expo install @gorhom/bottom-sheet`. The Happening, Directory, and Quote cards all open bottom sheets on tap (not separate screens), mirroring the right-side offcanvas drawers on the web.
 - **Happening `endDate`** — when `endDate` is the same as `eventDate`, only show the start date. Only show a range (`8–10 Jun`) when they differ.
 - **Event organiser** — `organiserSlug` links to `/directory/{slug}` on the web. In the RN app, opening the organiser link should use `Linking.openURL('https://themoveee.com/directory/{organiserSlug}')` since there is no in-app directory detail screen yet.
