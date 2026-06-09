@@ -250,7 +250,7 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
     const ev = gql.cultureEvent;
     // WPGraphQL may not resolve ACF/meta fields reliably — patch via REST when missing
     const needsHostPatch = !ev.featuredHost?.title;
-    const needsMetaPatch = !ev.location && !ev.city && !ev.eventDate;
+    const needsMetaPatch = !ev.location || !ev.city || !ev.eventDate || !ev.endDate || !ev.openingHours || !ev.eventImageUrl;
     if (needsHostPatch || needsMetaPatch) {
       try {
         const metaRes = await fetch(
