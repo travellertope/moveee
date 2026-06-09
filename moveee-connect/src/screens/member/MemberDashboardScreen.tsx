@@ -38,6 +38,7 @@ const QUICK_LINKS = [
   { icon: "wallet-outline",          label: "My Wallet",       screen: "Wallet" },
   { icon: "pricetag-outline",        label: "Partner Perks",   screen: "Perks" },
   { icon: "qr-code-outline",         label: "My Coupons",      screen: "Coupons" },
+  { icon: "bar-chart-outline",       label: "Analytics",       screen: "Analytics" },
   { icon: "newspaper-outline",       label: "Magazine",        screen: "Magazine" },
   { icon: "settings-outline",        label: "Settings",        screen: "MemberSettings" },
   { icon: "mail-outline",            label: "Newsletters",     screen: "MemberSettings", tab: "newsletters" },

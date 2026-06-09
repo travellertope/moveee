@@ -305,10 +305,12 @@ interface Props {
   item: FeedItem;
   onPress: () => void;
   onAuthorPress?: () => void;
+  onReact?: (type: string) => void;
+  forYouBadge?: boolean;
 }
 
 // ── Community card ────────────────────────────────────────────────────────────
-function CommunityCard({ item, onPress, onAuthorPress }: Props) {
+function CommunityCard({ item, onPress, onAuthorPress, forYouBadge }: Props) {
   const [reportState, setReportState] = useState<ReportState>("idle");
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
@@ -359,6 +361,13 @@ function CommunityCard({ item, onPress, onAuthorPress }: Props) {
                 </View>
               )}
             </View>
+
+            {/* For You badge */}
+            {forYouBadge && (
+              <View style={fyStyles.badge}>
+                <Text style={fyStyles.text}>✦ For You</Text>
+              </View>
+            )}
 
             {/* Template badge */}
             <TemplateBadge item={item} />
@@ -540,15 +549,24 @@ function GenericCard({ item, onPress }: Props) {
 }
 
 // ── Entry point ───────────────────────────────────────────────────────────────
-export default function FeedItemCard({ item, onPress, onAuthorPress }: Props) {
+export default function FeedItemCard({ item, onPress, onAuthorPress, onReact, forYouBadge }: Props) {
   if (item.type === "community") {
-    return <CommunityCard item={item} onPress={onPress} onAuthorPress={onAuthorPress} />;
+    return <CommunityCard item={item} onPress={onPress} onAuthorPress={onAuthorPress} forYouBadge={forYouBadge} />;
   }
   if (item.type === "quote") {
     return <QuoteCard item={item} onPress={onPress} />;
   }
   return <GenericCard item={item} onPress={onPress} />;
 }
+
+const fyStyles = StyleSheet.create({
+  badge: {
+    backgroundColor: colors.badgePulseBg, borderRadius: radius.sm,
+    paddingHorizontal: 6, paddingVertical: 2, alignSelf: "flex-start",
+    marginBottom: space[1],
+  },
+  text: { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, letterSpacing: 1.4, color: colors.badgePulseText },
+});
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
