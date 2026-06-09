@@ -218,14 +218,15 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
           {loggedIn && (
             <div className="mobile-menu-member">
               <div className="mobile-menu-member-name">
-                {user?.name?.split(" ")[0] ?? "Account"}
+                {user?.name?.split(" ")[0] ?? "My Account"}
               </div>
               <div className="mobile-menu-member-links">
-                <Link href="/member"           onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
-                <Link href="/member/wallet"    onClick={() => setMobileMenuOpen(false)}>Wallet</Link>
-                <Link href="/member/coupons"   onClick={() => setMobileMenuOpen(false)}>Coupons</Link>
-                <Link href="/connect/perks"    onClick={() => setMobileMenuOpen(false)}>Perks</Link>
-                <Link href="/member/settings"  onClick={() => setMobileMenuOpen(false)}>Settings</Link>
+                <Link href="/member"                onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+                <Link href="/member/wallet"         onClick={() => setMobileMenuOpen(false)}>Wallet</Link>
+                <Link href="/member/notifications"  onClick={() => setMobileMenuOpen(false)}>Notifications</Link>
+                <Link href="/member/coupons"        onClick={() => setMobileMenuOpen(false)}>Coupons</Link>
+                <Link href="/connect/perks"         onClick={() => setMobileMenuOpen(false)}>Perks</Link>
+                <Link href="/member/settings"       onClick={() => setMobileMenuOpen(false)}>Settings</Link>
               </div>
             </div>
           )}

@@ -166,7 +166,7 @@ export default function NotificationBell() {
           position: "absolute",
           top: "calc(100% + 8px)",
           right: 0,
-          width: 340,
+          width: "min(340px, calc(100vw - 32px))",
           maxHeight: 440,
           overflowY: "auto",
           background: "#fff",
