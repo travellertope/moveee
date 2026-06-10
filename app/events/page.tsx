@@ -5,7 +5,8 @@ import EventHero from "./components/EventHero";
 import EventTimeline from "./components/EventTimeline";
 import "@/app/events.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export const dynamicParams = true;
 
 export const metadata = {
   title: { absolute: "Happenings | The Moveee" },
@@ -48,7 +49,7 @@ function fmtShort(raw?: string) {
 
 export default async function EventsPage() {
   let events: any[] = [];
-  try { events = await getEventsWithFallback(100); } catch { /* CMS unreachable */ }
+  try { events = await getEventsWithFallback(100, { revalidate: 300 }); } catch { /* CMS unreachable */ }
 
   const upcoming = events.sort(
     (a, b) => new Date(a.eventDate || a.date || 0).getTime() - new Date(b.eventDate || b.date || 0).getTime()

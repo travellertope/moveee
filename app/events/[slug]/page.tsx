@@ -9,7 +9,8 @@ import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
 import "@/app/events.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export const dynamicParams = true;
 
 // ── Archive slug lookup tables ────────────────────────────────────────────────
 
@@ -75,7 +76,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   let event: any = null;
-  try { event = await getEventBySlugWithFallback(slug, { revalidate: 0 }); } catch { /* CMS unreachable */ }
+  try { event = await getEventBySlugWithFallback(slug, { revalidate: 300 }); } catch { /* CMS unreachable */ }
   if (!event) return { title: { absolute: "Event Not Found | The Moveee" }, description: "This event could not be found." };
 
   const dateRaw = event.eventDate || event.date || new Date().toISOString();
@@ -112,7 +113,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   // Individual event
   let event: any = null;
-  try { event = await getEventBySlugWithFallback(slug, { revalidate: 0 }); } catch { /* CMS unreachable */ }
+  try { event = await getEventBySlugWithFallback(slug, { revalidate: 300 }); } catch { /* CMS unreachable */ }
   if (!event) notFound();
 
   if (event.isAiGenerated) {

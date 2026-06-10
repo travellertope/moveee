@@ -12,7 +12,8 @@ import { authOptions } from "@/lib/auth";
 import { getAccessLevel, canViewContent } from "@/lib/access";
 import "../../newsletter.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export const dynamicParams = true;
 
 export async function generateMetadata({
   params,
@@ -22,7 +23,7 @@ export async function generateMetadata({
   const resolvedParams = await params;
   let issue;
   try {
-    issue = await getNewsletterBySlugWithFallback(resolvedParams.slug, { revalidate: 0 });
+    issue = await getNewsletterBySlugWithFallback(resolvedParams.slug, { revalidate: 300 });
   } catch {}
   if (!issue) return { title: { absolute: "GetMeLit · The Moveee" } };
 
@@ -85,7 +86,7 @@ export default async function GmlIssuePage({
   const resolvedParams = await params;
   let issue: any = null;
   try {
-    issue = await getNewsletterBySlugWithFallback(resolvedParams.slug, { revalidate: 0 });
+    issue = await getNewsletterBySlugWithFallback(resolvedParams.slug, { revalidate: 300 });
   } catch (err: any) {
     console.error("GmlIssuePage error:", err);
   }
@@ -102,7 +103,7 @@ export default async function GmlIssuePage({
   // Fetch sibling issues for prev/next nav + issue numbering
   let allIssues: any[] = [];
   try {
-    allIssues = await getNewslettersWithFallback(50, { revalidate: 0 });
+    allIssues = await getNewslettersWithFallback(50, { revalidate: 300 });
   } catch {}
 
   const totalCount = allIssues.length;

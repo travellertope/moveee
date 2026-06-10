@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
   const res = await fetch(
     `${WP_URL}/wp-json/culture/v1/directory/search?${params}`,
-    { next: { revalidate: 0 } }
+    { next: { revalidate: 60 } }
   );
 
   if (!res.ok) {

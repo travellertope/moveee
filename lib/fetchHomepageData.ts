@@ -128,7 +128,7 @@ export async function fetchHomepageData(editionTag?: string) {
 
   // Quotes — random 3 from a larger pool
   try {
-    const data = await getWPQuotes({ first: 15 });
+    const data = await getWPQuotes({ first: 15 }, { revalidate: 300 });
     const all: any[] = data?.cultureQuotes?.nodes || [];
     quotes = all.sort(() => Math.random() - 0.5).slice(0, 3);
   } catch (err) { console.error("Quotes fetch error:", err); }

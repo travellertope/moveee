@@ -1493,10 +1493,11 @@ export const GET_QUOTES_BY_AUTHOR = `
  * because the culture-community plugin is not active and quoteSource /
  * quoteLikes are not registered), transparently fall back to the simpler query.
  */
-export async function getWPQuotes(variables: { first?: number }) {
-  const primary = await getWPData(GET_QUOTES, variables, { revalidate: 0 });
+export async function getWPQuotes(variables: { first?: number }, options: { revalidate?: number } = {}) {
+  const opts = { revalidate: options.revalidate ?? 3600 };
+  const primary = await getWPData(GET_QUOTES, variables, opts);
   if (primary !== null) return primary;
-  return getWPData(GET_QUOTES_BASIC, variables, { revalidate: 0 });
+  return getWPData(GET_QUOTES_BASIC, variables, opts);
 }
 
 export async function getWPQuoteById(variables: { id: string }) {

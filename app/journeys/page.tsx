@@ -14,7 +14,7 @@ export const metadata = {
 export default async function OriginsPage() {
   let journeys: any[] = [];
   try {
-    const data = await getWPData(GET_JOURNEYS, { first: 24 }, { revalidate: 0 });
+    const data = await getWPData(GET_JOURNEYS, { first: 24 }, { revalidate: 3600 });
     journeys = data?.cultureJourneys?.nodes ?? [];
   } catch (error) {
     console.error("❌ Error fetching journeys:", error);
