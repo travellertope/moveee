@@ -335,8 +335,42 @@ Endpoints that depend on WP logic and must stay on `WP_Query`/`get_user_meta`:
 
 ## Git branch
 
-Active development branch: `claude/moveee-connect-rn-dev-jsragz`
+Active development branch: `claude/admiring-dirac-lgzivc`
 Always commit and push to this branch.
+
+---
+
+## Site architecture — planned split (in progress)
+
+The site is being split into two Vercel projects in a monorepo:
+
+- **Site A (`themoveee.com`)** — Editorial + Shop. No auth. Fully cacheable.
+  - `/magazine`, `/newsletter`, `/journeys`, `/shop`, `/`
+  - Homepage is editorial-only (no events, community, pulse, directory, quotes)
+- **Site B (`connect.themoveee.com`)** — Community + Social. Auth required.
+  - `/connect`, `/member`, `/pulse`, `/community`, `/events`, `/directory`, `/quotes`
+  - All auth (`/login`, `/register`) lives here
+  - NextAuth cookie set with `domain: .themoveee.com` for cross-subdomain sharing
+
+Both share `cms.themoveee.com` (WordPress) as the backend.
+
+### Homepage queries (Site A) — current state
+`lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):
+stories, products, latest issue, interviews, series batch.
+Events, directory, quotes, pulse, origins removed from homepage.
+
+### Server stability fixes applied (June 10 2026)
+On `cms.themoveee.com` (AWS Lightsail 2GB, London):
+- `/opt/bitnami/php/etc/memory.conf` — `pm.max_children=5`, `memory_limit=128M`
+  - **This file overrides www.conf** — always edit memory.conf, not www.conf
+- `pm=ondemand`, `pm.process_idle_timeout=10s`, `pm.max_requests=50`
+- `DISABLE_WP_CRON=true` in wp-config.php (line 108) — real cron via crontab every 5 min
+- Varnish on port 80, Apache on 8080 — Varnish caches static assets 7 days, pages 300s
+- Redis Object Cache plugin active
+- Vercel KV (Upstash, EU London region) — caches GraphQL responses with `wp:` key prefix
+  - KV flush endpoint: `POST /api/revalidate-kv` (secret: `WP_REVALIDATE_SECRET` env var)
+  - WordPress fires flush on every post publish via `class-culture-community.php`
+- Circuit breaker in `lib/wp.ts`: 3 failures → 60s cooldown (`CB_COOLDOWN = 60_000`)
 
 ---
 
