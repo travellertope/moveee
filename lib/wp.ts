@@ -503,12 +503,15 @@ export async function getNewslettersWithFallback(first = 50, options: any = {}) 
   } catch {}
 
   try {
+    const { signal, clear } = wpSignal();
     const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_newsletter?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
     const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
+      signal,
       next: { revalidate: options.revalidate !== undefined ? options.revalidate : 3600 },
     });
+    clear();
     if (!res.ok) return [];
     const json = await res.json();
     if (!Array.isArray(json)) return [];
@@ -594,11 +597,6 @@ const STORY_FIELDS_FRAGMENT = `
     countries {
       nodes {
         name
-        slug
-      }
-    }
-    cultureAccesses {
-      nodes {
         slug
       }
     }
@@ -894,6 +892,48 @@ const JOURNEY_FIELDS_FRAGMENT = `
   }
 `;
 
+// Lightweight fragment for list/feed queries — omits complex ACF sub-objects that
+// can cause WP GraphQL internal server errors on malformed records.
+const EVENT_LIST_FIELDS_FRAGMENT = `
+  fragment EventListFields on CultureEvent {
+    id
+    databaseId
+    title
+    slug
+    date
+    eventDate
+    endDate
+    location
+    eventLocation: location
+    admission
+    ticketingUrl
+    eventImageUrl
+    isFeatured
+    isAiGenerated
+    tagline
+    attribution
+    openingHours
+    excerpt
+    content
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+    eventSubtype
+    aboutLabel
+    venueAddress
+  }
+`;
+
+// Full fragment for single-event detail pages — includes all ACF sub-objects.
 const EVENT_FIELDS_FRAGMENT = `
   fragment EventFields on CultureEvent {
     id
@@ -1125,12 +1165,11 @@ export const GET_EVENTS = `
   query GetEvents($first: Int) {
     cultureEvents(first: $first) {
       nodes {
-        ...EventFields
+        ...EventListFields
       }
     }
   }
-  ${EVENT_FIELDS_FRAGMENT}
-  ${JOURNEY_FIELDS_FRAGMENT}
+  ${EVENT_LIST_FIELDS_FRAGMENT}
 `;
 
 export const GET_EVENT_BY_SLUG = `

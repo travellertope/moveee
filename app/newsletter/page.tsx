@@ -6,7 +6,7 @@ import GmlCTAForm from "@/components/GmlCTAForm";
 import GmlWaitlistForm from "@/components/GmlWaitlistForm";
 import "../newsletter.css";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export const metadata = {
   title: { absolute: "Newsletters — The Moveee" },

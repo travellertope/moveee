@@ -9,10 +9,25 @@ export async function GET() {
   const session = await getServerSession(authOptions as any) as any;
   if (!session?.user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
-  const res = await fetch(
-    `${WP_URL}/wp-json/culture/v1/member/analytics?user_id=${session.user.id}`,
-    { headers: { Authorization: `Bearer ${API_SECRET}` }, cache: "no-store" }
-  );
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  let res: Response;
+  try {
+    res = await fetch(
+      `${WP_URL}/wp-json/culture/v1/member/analytics?user_id=${session.user.id}`,
+      { headers: { Authorization: `Bearer ${API_SECRET}` }, cache: "no-store", signal: ctrl.signal }
+    );
+  } catch {
+    clearTimeout(timer);
+    return NextResponse.json({ error: "CMS unavailable." }, { status: 503 });
+  }
+  clearTimeout(timer);
+
+  const ct = res.headers.get("content-type") ?? "";
+  if (!ct.includes("application/json")) {
+    return NextResponse.json({ error: "CMS returned an unexpected response." }, { status: 502 });
+  }
+
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });
 }
