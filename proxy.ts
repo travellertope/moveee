@@ -165,8 +165,11 @@ export async function proxy(request: NextRequest) {
       return r
     })() : NextResponse.next()
 
-    // Tell Vercel CDN to cache edition pages and serve stale while revalidating
+    // Tell Vercel CDN to cache edition pages and serve stale while revalidating.
+    // Vary on RSC headers so HTML and RSC-payload responses are cached separately —
+    // without this, a client-nav RSC payload can be served to a direct browser visit.
     res.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    res.headers.set('Vary', 'RSC, Next-Router-State-Tree, Next-Router-Prefetch')
     return setCountryCookie(res)
   }
 
