@@ -75,12 +75,13 @@ class Culture_Cron {
      */
     public static function schedule() {
         $jobs = array(
-            self::HOOK_GRACE_CHECK    => 'daily',
-            self::HOOK_SEED_DIRECTORY => 'weekly',
-            self::HOOK_REFRESH_PULSE  => 'daily',
-            self::HOOK_SEED_EVENTS    => 'daily',
-            self::HOOK_SEED_QUOTES    => 'weekly',
-            self::HOOK_TWEET_PULSE    => 'thirtyminutes',
+            self::HOOK_GRACE_CHECK      => 'daily',
+            self::HOOK_SEED_DIRECTORY   => 'weekly',
+            self::HOOK_REFRESH_PULSE    => 'daily',
+            self::HOOK_SEED_EVENTS      => 'daily',
+            self::HOOK_SEED_QUOTES      => 'weekly',
+            self::HOOK_TWEET_PULSE      => 'thirtyminutes',
+            'culture_check_perk_expiry' => 'hourly',
         );
 
         foreach ( $jobs as $hook => $recurrence ) {
@@ -101,6 +102,7 @@ class Culture_Cron {
             self::HOOK_SEED_EVENTS,
             self::HOOK_SEED_QUOTES,
             self::HOOK_TWEET_PULSE,
+            'culture_check_perk_expiry',
         );
 
         foreach ( $hooks as $hook ) {
