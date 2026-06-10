@@ -7,6 +7,9 @@ import "@/app/homepage.css";
 
 export const revalidate = 300;
 export const dynamicParams = true;
+// No generateStaticParams — edition pages use lazy ISR (generated on first
+// real request, then cached). Pre-rendering at build time is not viable because
+// the Vercel build environment cannot reach the WordPress CMS.
 
 interface Props {
   params: Promise<{ edition: string }>;
@@ -90,6 +93,3 @@ export default async function EditionPage({ params }: Props) {
   return <HomepageContent {...data} edition={edition as RegionalSlug} />;
 }
 
-export function generateStaticParams() {
-  return [{ edition: "uk" }, { edition: "us" }, { edition: "africa" }];
-}
