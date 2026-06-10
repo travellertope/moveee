@@ -22,12 +22,7 @@ const NAV_LINKS = [
 ];
 
 export async function generateStaticParams() {
-  try {
-    const slugs = await getAllCommunitySlugs();
-    return slugs.map((slug) => ({ slug }));
-  } catch {
-    return [];
-  }
+  return [];
 }
 
 export async function generateMetadata({
