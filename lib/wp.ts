@@ -32,24 +32,39 @@ function cbFail() {
   }
 }
 
-export async function getWPData(query: string, variables = {}, options: any = {}) {
+// ── Vercel KV cache ───────────────────────────────────────────────────────────
+// Wraps getWPData with a Redis (Vercel KV) cache so WordPress is only hit on
+// genuine cache misses. TTL matches the Next.js revalidate value.
+// Falls back gracefully if KV env vars are not set (local dev / non-KV deploys).
+let _kv: typeof import("@vercel/kv").kv | null = null;
+async function getKV() {
+  if (_kv) return _kv;
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null;
+  try {
+    const { kv } = await import("@vercel/kv");
+    _kv = kv;
+    return kv;
+  } catch { return null; }
+}
+
+function kvKey(query: string, variables: object): string {
+  // Short stable cache key: hash of query name + variables
+  const tag = query.match(/query\s+(\w+)/)?.[1] ?? query.slice(0, 40).replace(/\s+/g, "_");
+  const vars = Object.keys(variables).length ? JSON.stringify(variables) : "";
+  return `wp:${tag}:${vars}`;
+}
+
+async function getWPDataFromCMS(query: string, variables = {}, options: any = {}): Promise<any> {
   if (!cbCheck()) return null;
 
   const { signal, clear } = wpSignal();
   try {
     const res = await fetch(WP_GRAPHQL_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       signal,
-      next: {
-        revalidate: options.revalidate !== undefined ? options.revalidate : 3600,
-      },
-      body: JSON.stringify({
-        query,
-        variables,
-      }),
+      next: { revalidate: options.revalidate !== undefined ? options.revalidate : 3600 },
+      body: JSON.stringify({ query, variables }),
     });
     clear();
 
@@ -71,9 +86,31 @@ export async function getWPData(query: string, variables = {}, options: any = {}
   } catch (error: any) {
     clear();
     cbFail();
-    console.error(`Network or Parsing Error for ${WP_GRAPHQL_URL}:`, error.message);
+    console.error(`Network or Parsing Error for ${WP_GRAPHQL_URL}:`, error.message || error);
     return null;
   }
+}
+
+export async function getWPData(query: string, variables = {}, options: any = {}) {
+  const kv = await getKV();
+  const ttl = options.revalidate !== undefined ? options.revalidate : 3600;
+
+  if (kv) {
+    const key = kvKey(query, variables);
+    try {
+      const cached = await kv.get(key);
+      if (cached !== null && cached !== undefined) return cached;
+    } catch { /* KV unavailable — fall through to CMS */ }
+
+    const data = await getWPDataFromCMS(query, variables, options);
+    if (data) {
+      try { await kv.set(key, data, { ex: ttl }); } catch { /* ignore KV write errors */ }
+    }
+    return data;
+  }
+
+  // No KV configured — call CMS directly (original behaviour)
+  return getWPDataFromCMS(query, variables, options);
 }
 
 function mapRestEventToFrontendShape(item: any) {
