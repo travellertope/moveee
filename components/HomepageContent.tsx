@@ -13,7 +13,6 @@ import { EDITIONS } from "@/lib/editions";
 interface Props {
   coverStory: any;
   stories: any[];
-  origins: any[];
   products: any[];
   edition: EditionSlug;
   latestIssue?: any;
@@ -26,7 +25,7 @@ interface Props {
 }
 
 export default function HomepageContent({
-  coverStory, stories, origins, products, edition,
+  coverStory, stories, products, edition,
   latestIssue, latestIssueStories = [], interviewStories = [],
   seriesTheRadar = [], seriesPortraits = [], seriesTheLane = [], seriesThinkCreative = [],
 }: Props) {
@@ -196,35 +195,6 @@ export default function HomepageContent({
         </section>
       )}
 
-      {/* ===== ORIGINS ===== */}
-      {origins.length > 0 && (
-      <section className="hp-section" id="origins">
-        <div className="hp-section-header">
-          <div className="hp-section-title">
-            <span className="hp-section-label">Travel</span>
-            <h3>Origins</h3>
-          </div>
-          <Link href="/journeys" className="hp-section-link">All Tours →</Link>
-        </div>
-        <div className="hp-mag-strip">
-          {origins.slice(0, 4).map((origin: any) => (
-            <Link key={origin.id} href={`/journeys/${origin.slug}`} className="hp-mag-card">
-              <div className="hp-mag-card-image">
-                {origin.featuredImage && (
-                  <Image src={origin.featuredImage.node.sourceUrl} alt={origin.featuredImage.node.altText || origin.title} fill className="object-cover" />
-                )}
-              </div>
-              {(origin.journeyLocation || origin.journeyDates) && (
-                <span className="hp-mag-cat">
-                  {[origin.journeyLocation, origin.journeyDates].filter(Boolean).join(" · ").toUpperCase()}
-                </span>
-              )}
-              <h4 className="hp-mag-card-title">{origin.title}</h4>
-            </Link>
-          ))}
-        </div>
-      </section>
-      )}
 
       {/* ===== INTERVIEWS (post grid) ===== */}
       {interviewStrip.length > 0 && (
