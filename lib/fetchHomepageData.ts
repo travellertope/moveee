@@ -36,6 +36,10 @@ export async function fetchHomepageData(editionTag?: string) {
   let seriesTheLane: any[] = [];
   let seriesThinkCreative: any[] = [];
 
+  // Kick off latest-issue fetch immediately — it has a sequential dependency
+  // (getPostsByIssue needs the ID) so starting it early reduces total wall time.
+  const latestIssuePromise = getLatestIssue().catch(() => null);
+
   // Stories — two parallel fetches for edition views:
   //   1. Posts tagged for this edition (guaranteed to appear)
   //   2. All latest posts (the universal/untagged ones live here)
@@ -105,18 +109,17 @@ export async function fetchHomepageData(editionTag?: string) {
     origins = data?.cultureJourneys?.nodes || [];
   } catch (err) { console.error("Origins fetch error:", err); }
 
-  // Products — edition-tagged first, fall back to global if fewer than 4
+  // Products — fetch edition-tagged and global in parallel, then merge.
+  // Edition-tagged posts take priority; global fills gaps if fewer than 4 tagged.
   try {
-    if (editionTag) {
-      const tagged = await getWPData(GET_PRODUCTS, { first: 10, tag: editionTag });
-      products = tagged?.products?.nodes || [];
-    }
-    if (products.length < 4) {
-      const global = await getWPData(GET_PRODUCTS, { first: 10 });
-      const globalProducts: any[] = global?.products?.nodes || [];
-      const existingIds = new Set(products.map((p: any) => p.id));
-      products = [...products, ...globalProducts.filter((p: any) => !existingIds.has(p.id))].slice(0, 10);
-    }
+    const [taggedData, globalData] = await Promise.all([
+      editionTag ? getWPData(GET_PRODUCTS, { first: 10, tag: editionTag }) : Promise.resolve(null),
+      getWPData(GET_PRODUCTS, { first: 10 }),
+    ]);
+    const taggedProducts: any[] = taggedData?.products?.nodes || [];
+    const globalProducts: any[] = globalData?.products?.nodes || [];
+    const existingIds = new Set(taggedProducts.map((p: any) => p.id));
+    products = [...taggedProducts, ...globalProducts.filter((p: any) => !existingIds.has(p.id))].slice(0, 10);
   } catch (err) { console.error("Products fetch error:", err); }
 
   // Directory — random 8 from a larger pool
@@ -143,9 +146,9 @@ export async function fetchHomepageData(editionTag?: string) {
     if (res.ok) pulseStories = await res.json();
   } catch (err) { console.error("Pulse fetch error:", err); }
 
-  // Latest Issue
+  // Latest Issue — awaits the promise started at the top of this function
   try {
-    latestIssue = await getLatestIssue();
+    latestIssue = await latestIssuePromise;
     if (latestIssue) {
       latestIssueStories = await getPostsByIssue(latestIssue.id);
     }
