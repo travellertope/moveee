@@ -2023,4 +2023,21 @@ Always warn before deleting the last passkey: "Deleting your only passkey will l
 
 ---
 
+- **Several REST endpoints now use raw SQL** — the following endpoints bypass
+  `get_user_meta` / `get_option` and hit the DB directly for speed. Their
+  response shapes are **unchanged** — no client-side changes needed:
+  - `GET /culture/v1/user/interactions` (likes/bookmarks)
+  - `GET /culture/v1/community-blocklist` (moderation config)
+  - `GET /culture/v1/user/directory` (directory profile meta)
+  - `GET /culture/v1/user/portfolio` (pinned posts + portfolio items)
+  - `GET /culture/v1/notifications` + `/count` (already custom table)
+  - `GET /culture/v1/wallet/history` (already custom table)
+
+- **WPGraphQL is separate from the REST API** — the web frontend uses WPGraphQL
+  (`getWPData()`) for content reads (articles, newsletters, quotes). The RN app
+  calls WordPress REST directly. These are two parallel layers; optimising one
+  does not affect the other. Do not attempt to call the GraphQL endpoint from RN.
+
+---
+
 *Keep this document up to date as the app evolves. Any new template type, API endpoint, design token, or component added to the web app must be reflected here before implementing in the RN app.*

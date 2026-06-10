@@ -258,6 +258,66 @@ single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
 
 ---
 
+## Raw SQL REST endpoints
+
+Several REST handlers bypass `WP_Query` / `get_user_meta` / `get_option` and
+query the database directly via `$wpdb`. Do this for any endpoint that is
+purely a read with no WP hook/filter logic.
+
+### Pattern
+```php
+// Multiple user meta keys — single query, then build a map
+$rows = $wpdb->get_results( $wpdb->prepare(
+    "SELECT meta_key, meta_value FROM {$wpdb->usermeta}
+     WHERE user_id = %d AND meta_key IN ('key1','key2')",
+    $user_id
+), ARRAY_A );
+$map = array_column( $rows, 'meta_value', 'meta_key' );
+
+// Multiple wp_options — single query
+$rows = $wpdb->get_results(
+    "SELECT option_name, option_value FROM {$wpdb->options}
+     WHERE option_name IN ('opt1','opt2')",
+    ARRAY_A
+);
+$opts = array_column( $rows, 'option_value', 'option_name' );
+```
+
+### Endpoints already using raw SQL
+| Endpoint | Handler | What it reads |
+|----------|---------|---------------|
+| `GET /culture/v1/user/interactions` | `handle_get_interactions()` | 4 usermeta keys (likes/bookmarks) — single query |
+| `GET /culture/v1/community-blocklist` | `handle_get_community_blocklist()` | 2 wp_options rows — single query |
+| `GET /culture/v1/user/directory` | `handle_get_directory_profile()` | 6 usermeta keys + user exists check — single query |
+| `GET /culture/v1/user/portfolio` | `handle_get_portfolio()` | 2 JSON usermeta keys + user exists check — single query |
+| `GET /culture/v1/notifications` | `handle_get_notifications()` | custom `wp_culture_notifications` table |
+| `GET /culture/v1/notifications/count` | `handle_notification_count()` | COUNT on custom table |
+| `GET /culture/v1/wallet/history` | `handle_wallet_history()` | `wp_culture_credit_ledger` table |
+| `GET /culture/v1/member/analytics` | `handle_member_analytics()` | ledger + posts tables via `$wpdb` |
+
+### Why WPGraphQL is a separate concern
+WPGraphQL is a **parallel query layer** — it has its own resolver pipeline that
+also calls WordPress internals. Raw SQL optimisations only apply to the custom
+REST endpoints above. WPGraphQL resolvers (used by `getWPData()` in `lib/wp.ts`
+for content — articles, newsletters, quotes) are **not affected** and should not
+be replaced with raw SQL because they depend on WP's permission/filter system
+and the `show_in_rest`/`show_in_graphql` field registration.
+
+Rule of thumb:
+- **Content reads** (posts, taxonomies, media) → WPGraphQL via `getWPData()`
+- **User-specific reads** (profile meta, interactions, wallet, notifications) → custom REST + raw SQL
+- **Mutations** (submit post, redeem perk, mark read) → custom REST, WP logic required
+
+### Do NOT raw-SQL these
+Endpoints that depend on WP logic and must stay on `WP_Query`/`get_user_meta`:
+- `handle_get_user_profile()` — gamification ledger calculations
+- `handle_wallet_balance()` — `Culture_Gamification` computed state
+- `handle_get_public_profile()` — gamification + badges
+- Any mutation endpoint (insert/update) — use `$wpdb->insert/update` if needed,
+  but still fire the relevant `do_action()` hooks for notifications/credits
+
+---
+
 ## Key conventions
 
 - Internal tier value is `patron` — never rename it in PHP or the DB.
