@@ -34,6 +34,9 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-emails.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-newsletter-queue.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-nl-analytics.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-perks.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-webauthn.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-notifications.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cli.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-pulse.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community.php';
@@ -122,6 +125,7 @@ function culture_community_init() {
     Culture_RSVP_Admin::init_post_handlers();
     Culture_Ticket_Payment::init();
     Culture_Tickets_Admin::init();
+    Culture_Notifications::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -188,13 +192,21 @@ function culture_can_view_phone( $target_user_id ) {
     }
 
     // Chapter leaders can see phone numbers of members in their chapter.
-    $leader_chapters = get_posts( array(
-        'post_type'      => 'culture_chapter',
-        'posts_per_page' => -1,
-        'fields'         => 'ids',
-        'meta_key'       => '_culture_chapter_leader_id',
-        'meta_value'     => $current_user_id,
-    ) );
+    $cache_key     = 'culture_leader_chapters_' . $current_user_id;
+    $leader_chapters = get_transient( $cache_key );
+    if ( false === $leader_chapters ) {
+        $leader_chapters = get_posts( array(
+            'post_type'           => 'culture_chapter',
+            'posts_per_page'      => -1,
+            'fields'              => 'ids',
+            'meta_key'            => '_culture_chapter_leader_id',
+            'meta_value'          => $current_user_id,
+            'no_found_rows'       => true,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+        ) );
+        set_transient( $cache_key, $leader_chapters ?: [], HOUR_IN_SECONDS );
+    }
 
     if ( ! empty( $leader_chapters ) ) {
         $target_primary   = get_user_meta( $target_user_id, '_culture_primary_chapter_id', true );

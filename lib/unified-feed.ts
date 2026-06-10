@@ -30,7 +30,15 @@ export interface FeedItem {
   ogImage?: string;
   // happening-specific
   eventDate?: string;
+  endDate?: string;
+  openingHours?: string;
   location?: string;
+  city?: string;
+  venueAddress?: string;
+  admission?: string;
+  eventCategory?: string;
+  organiserName?: string;
+  organiserSlug?: string;
   // directory-specific
   entryType?: string;
   // quote-specific
@@ -40,10 +48,25 @@ export interface FeedItem {
   category?: string;
   // community-specific
   communityAuthor?: string;
+  communityAuthorUsername?: string;
   communityAuthorAvatar?: string;
   communityTag?: string;
   communityTier?: string;
   commentCount?: number;
+  // template fields (community posts)
+  templateType?: string;
+  linkedDirectoryId?: number;
+  starRating?: number;
+  locationName?: string;
+  pollOptions?: { text: string; votes: number }[];
+  pollExpiresAt?: string;
+  galleryImages?: string[];
+  videoUrl?: string;
+  itineraryStops?: { name: string; lat: number; lng: number; note: string; image_url: string }[];
+  foodDishName?: string;
+  foodRatingTaste?: number;
+  foodRatingValue?: number;
+  foodRatingVibe?: number;
   // reactions (community + pulse)
   reactions?: { love: number; fire: number; clap: number };
   wpId?: string;
@@ -88,16 +111,23 @@ const WP_BASE = `${WP_URL}/wp-json/wp/v2`;
 
 /** Fetch the latest community posts from the culture_post CPT. */
 async function getCommunityPosts(): Promise<FeedItem[]> {
-  const res = await fetch(
-    `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count&meta_fields=community_author_name,community_author_id,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap`,
-    { cache: "no-store" }
-  );
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  let res: Response;
+  try {
+    res = await fetch(
+      `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count&meta_fields=community_author_name,community_author_id,community_author_username,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe`,
+      { next: { revalidate: 300 }, signal: ctrl.signal }
+    );
+  } catch { clearTimeout(timer); return []; }
+  clearTimeout(timer);
   if (!res.ok) return [];
   const posts: any[] = await res.json().catch(() => []);
 
   return posts.map((post) => {
     const raw = post.content?.rendered ?? "";
-    const { authorName, imageUrl, tag, tier } = parseCommunityData(post.meta, raw);
+    const m = (post.meta ?? {}) as Record<string, any>;
+    const { authorName, imageUrl, tag, tier } = parseCommunityData(m, raw);
     // Preserve paragraph breaks before stripping HTML tags
     const withBreaks = raw
       .replace(/<!--[\s\S]*?-->/g, "")
@@ -115,24 +145,39 @@ async function getCommunityPosts(): Promise<FeedItem[]> {
       image: imageUrl ?? undefined,
       href: `/community/${post.slug}`,
       communityAuthor: authorName || (post.excerpt?.rendered ? stripHtml(post.excerpt.rendered) : ""),
-      communityAuthorAvatar: (post.meta?.community_author_avatar as string) || undefined,
+      communityAuthorUsername: (m.community_author_username as string) || undefined,
+      communityAuthorAvatar: (m.community_author_avatar as string) || undefined,
       communityTag: tag ?? "",
       communityTier: tier ?? undefined,
-      region: (post.meta?.community_region as string) || undefined,
-      sourceUrl: (post.meta?.community_link_url as string) || undefined,
-      source: post.meta?.community_link_url
-        ? (() => { try { return new URL(post.meta.community_link_url as string).hostname.replace(/^www\./, ""); } catch { return ""; } })()
+      region: (m.community_region as string) || undefined,
+      sourceUrl: (m.community_link_url as string) || undefined,
+      source: m.community_link_url
+        ? (() => { try { return new URL(m.community_link_url as string).hostname.replace(/^www\./, ""); } catch { return ""; } })()
         : undefined,
-      ogTitle: (post.meta?.community_og_title as string) || undefined,
-      ogDescription: (post.meta?.community_og_description as string) || undefined,
-      ogImage: (post.meta?.community_og_image as string) || undefined,
+      ogTitle: (m.community_og_title as string) || undefined,
+      ogDescription: (m.community_og_description as string) || undefined,
+      ogImage: (m.community_og_image as string) || undefined,
       commentCount: Number(post.comment_count ?? 0),
       reactions: {
-        love: Number(post.meta?.reaction_love ?? 0),
-        fire: Number(post.meta?.reaction_fire ?? 0),
-        clap: Number(post.meta?.reaction_clap ?? 0),
+        love: Number(m.reaction_love ?? 0),
+        fire: Number(m.reaction_fire ?? 0),
+        clap: Number(m.reaction_clap ?? 0),
       },
       wpId: String(post.id),
+      // Template fields
+      templateType: m._template_type || "post",
+      linkedDirectoryId: m._linked_directory_id ? Number(m._linked_directory_id) : undefined,
+      starRating: m._star_rating ? Number(m._star_rating) : undefined,
+      locationName: m._location_name || undefined,
+      pollOptions: m._poll_options ? (typeof m._poll_options === "string" ? JSON.parse(m._poll_options) : m._poll_options) : undefined,
+      pollExpiresAt: m._poll_expires_at || undefined,
+      galleryImages: m._gallery_images ? (typeof m._gallery_images === "string" ? JSON.parse(m._gallery_images) : m._gallery_images) : undefined,
+      videoUrl: m._video_url || undefined,
+      itineraryStops: m._itinerary_stops ? (typeof m._itinerary_stops === "string" ? JSON.parse(m._itinerary_stops) : m._itinerary_stops) : undefined,
+      foodDishName: m._food_dish_name || undefined,
+      foodRatingTaste: m._food_rating_taste ? Number(m._food_rating_taste) : undefined,
+      foodRatingValue: m._food_rating_value ? Number(m._food_rating_value) : undefined,
+      foodRatingVibe: m._food_rating_vibe ? Number(m._food_rating_vibe) : undefined,
     };
   });
 }
@@ -147,9 +192,9 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
     communityResult,
   ] = await Promise.allSettled([
     getPulseStories({ perPage: 40 }),
-    getWPData(GET_STORIES, { first: 30 }, { revalidate: 0 }),
-    getEventsWithFallback(30, { revalidate: 0 }),
-    getWPData(GET_DIRECTORY_ENTRIES, { first: 30 }, { revalidate: 0 }),
+    getWPData(GET_STORIES, { first: 30 }, { revalidate: 300 }),
+    getEventsWithFallback(30, { revalidate: 300 }),
+    getWPData(GET_DIRECTORY_ENTRIES, { first: 30 }, { revalidate: 300 }),
     getWPQuotes({ first: 50 }),
     getCommunityPosts(),
   ]);
@@ -171,6 +216,8 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         href: `/pulse/${story.slug}`,
         arm: story.meta?.pulse_arm_label ?? "",
         region: story.meta?.pulse_region_label ?? "",
+        category: story._embedded?.["wp:term"]?.flat()
+          ?.find((t) => t.taxonomy === "pulse-categories")?.name ?? "",
         source: story.meta?.pulse_source ?? "",
         sourceUrl: story.meta?.pulse_external_url ?? "",
         ogTitle: story.meta?.pulse_og_title ?? "",
@@ -213,11 +260,26 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         title: decodeHtml(event.title ?? ""),
         slug: event.slug,
         date: event.date ?? event.eventDate ?? "",
-        excerpt: stripHtml(event.excerpt ?? ""),
-        image: event.featuredImage?.node?.sourceUrl,
+        excerpt: decodeHtml(
+          stripHtml(
+            (event.excerpt ?? "")
+              .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+              .replace(/<br\s*\/?>/gi, "\n")
+          )
+        ),
+        body: event.content ?? event.excerpt ?? "",
+        image: event.featuredImage?.node?.sourceUrl || event.eventImageUrl,
         href: `/events/${event.slug}`,
         eventDate: event.eventDate ?? "",
+        endDate: event.endDate ?? "",
+        openingHours: event.openingHours ?? "",
         location: event.location ?? "",
+        city: event.city ?? "",
+        venueAddress: event.venueAddress ?? "",
+        admission: event.admission ?? "",
+        eventCategory: event.cultureInterests?.nodes?.[0]?.name ?? "",
+        organiserName: event.organiserName || undefined,
+        organiserSlug: event.organiserSlug || undefined,
       });
     }
   }

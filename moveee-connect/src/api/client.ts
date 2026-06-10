@@ -3,8 +3,9 @@ import { storage } from "../store/storage";
 const WP_URL = "https://cms.themoveee.com";
 const WP_REST = `${WP_URL}/wp-json`;
 const CULTURE_API = `${WP_REST}/culture/v1`;
+const MOBILE_API  = `${CULTURE_API}/mobile`;
 
-export { WP_URL, CULTURE_API };
+export { WP_URL, CULTURE_API, MOBILE_API };
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -77,6 +78,6 @@ export const api = {
     request<T>(url, { method: "PUT", body }),
   patch: <T>(url: string, body: Record<string, unknown>) =>
     request<T>(url, { method: "PATCH", body }),
-  delete: <T>(url: string) => request<T>(url, { method: "DELETE" }),
+  delete: <T>(url: string, body?: Record<string, unknown>) => request<T>(url, { method: "DELETE", body }),
   upload: <T>(url: string, uri: string, name: string, type: string) => upload<T>(url, uri, name, type),
 };

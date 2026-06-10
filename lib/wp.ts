@@ -1,13 +1,48 @@
 const WP_GRAPHQL_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || "https://cms.themoveee.com/graphql";
 const WP_BASE_URL = WP_GRAPHQL_URL.replace(/\/graphql\/?$/, "");
 
+/** Default timeout (ms) for all WP fetches — prevents server hangs when CMS is slow. */
+const WP_FETCH_TIMEOUT = 8000;
+
+function wpSignal(ms = WP_FETCH_TIMEOUT): { signal: AbortSignal; clear: () => void } {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return { signal: ctrl.signal, clear: () => clearTimeout(timer) };
+}
+
+// Circuit breaker: stop hammering the CMS when it's already struggling
+const _cb = { failures: 0, openUntil: 0 };
+const CB_THRESHOLD = 3;
+const CB_COOLDOWN = 30_000; // 30s cooldown after 3 consecutive failures
+
+function cbCheck(): boolean {
+  if (_cb.openUntil && Date.now() < _cb.openUntil) return false; // circuit open
+  if (_cb.openUntil && Date.now() >= _cb.openUntil) {
+    _cb.openUntil = 0;
+    _cb.failures = 0;
+  }
+  return true;
+}
+function cbSuccess() { _cb.failures = 0; }
+function cbFail() {
+  _cb.failures++;
+  if (_cb.failures >= CB_THRESHOLD) {
+    _cb.openUntil = Date.now() + CB_COOLDOWN;
+    console.warn(`[circuit-breaker] CMS circuit opened for ${CB_COOLDOWN / 1000}s after ${CB_THRESHOLD} failures`);
+  }
+}
+
 export async function getWPData(query: string, variables = {}, options: any = {}) {
+  if (!cbCheck()) return null;
+
+  const { signal, clear } = wpSignal();
   try {
     const res = await fetch(WP_GRAPHQL_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
+      signal,
       next: {
         revalidate: options.revalidate !== undefined ? options.revalidate : 3600,
       },
@@ -16,24 +51,26 @@ export async function getWPData(query: string, variables = {}, options: any = {}
         variables,
       }),
     });
+    clear();
 
     if (!res.ok) {
       console.error(`Fetch failed for ${WP_GRAPHQL_URL}: ${res.statusText}`);
+      cbFail();
       return null;
     }
 
     const json = await res.json();
+    cbSuccess();
 
     if (json.errors) {
       console.warn(`GraphQL partial errors for ${WP_GRAPHQL_URL}:`, json.errors);
-      // Return data anyway if it exists (standard GraphQL behavior)
       return json.data || null;
     }
 
     return json.data;
   } catch (error: any) {
-    // Return null instead of throwing so the build doesn't crash
-    // when the CMS is unreachable (e.g. DNS not configured yet)
+    clear();
+    cbFail();
     console.error(`Network or Parsing Error for ${WP_GRAPHQL_URL}:`, error.message);
     return null;
   }
@@ -43,6 +80,7 @@ function mapRestEventToFrontendShape(item: any) {
   const embeddedMedia = item?._embedded?.["wp:featuredmedia"]?.[0];
   const acf = item?.acf || {};
   const meta = item?.meta || {};
+  const cem = item?.culture_event_meta || {};
   const pick = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== "" && v !== false) ?? null;
 
   const toMediaItem = (img: any) => {
@@ -97,17 +135,21 @@ function mapRestEventToFrontendShape(item: any) {
     date: item?.date ?? null,
     excerpt: item?.excerpt?.rendered ?? "",
     content: item?.content?.rendered ?? "",
-    eventDate: pick(acf.event_date, meta.event_date, meta._culture_event_date) ?? null,
-    endDate: pick(acf.end_date, meta.end_date, meta._culture_end_date),
-    location: pick(acf.location, meta.location, meta._culture_location),
-    city: pick(acf.city, meta.city, meta._culture_event_city),
-    admission: pick(acf.admission, meta.admission, meta._culture_admission),
+    eventDate: pick(cem.event_date, acf.event_date, meta.event_date, meta._culture_event_date) ?? null,
+    endDate: pick(cem.end_date, acf.end_date, meta.end_date, meta._culture_event_end_date),
+    location: pick(cem.location, acf.location, meta.location, meta._culture_location),
+    city: pick(cem.city, acf.city, meta.city, meta._culture_event_city),
+    admission: pick(cem.admission, acf.admission, meta.admission, meta._culture_admission),
     isFeatured: Boolean(pick(acf.is_featured, meta.is_featured, meta._culture_is_featured)),
-    isAiGenerated: [true, 1, '1', 'true', 'yes'].includes(acf.ai_generated ?? meta.ai_generated ?? meta._culture_ai_generated),
-    openingHours: pick(acf.opening_hours, meta.opening_hours, meta._culture_opening_hours),
+    isAiGenerated: [true, 1, '1', 'true', 'yes'].includes(cem.ai_generated ?? acf.ai_generated ?? meta.ai_generated ?? meta._culture_ai_generated),
+    openingHours: pick(cem.opening_hours, acf.opening_hours, meta.opening_hours, meta._culture_opening_hours),
     tagline: pick(acf.tagline, meta.tagline, meta._culture_tagline),
     attribution: pick(acf.attribution, meta.attribution, meta._culture_attribution),
-    ticketingUrl: pick(acf.ticketing_url, meta.ticketing_url, meta._culture_ticketing_url),
+    ticketingUrl: pick(cem.ticketing_url, acf.ticketing_url, meta.ticketing_url, meta._culture_ticketing_url),
+    organiserDirectoryId: cem.organiser_id ? Number(cem.organiser_id) : (meta._culture_event_organiser_id ? Number(meta._culture_event_organiser_id) : undefined),
+    organiserName: cem.organiser_name || undefined,
+    organiserSlug: cem.organiser_slug || undefined,
+    eventImageUrl: pick(cem.image_url, acf.event_image_url, meta.event_image_url, meta._culture_event_image_url),
     featuredImage: embeddedMedia?.source_url
       ? {
           node: {
@@ -135,9 +177,6 @@ function mapRestEventToFrontendShape(item: any) {
     showcaseLabel: pick(acf.showcase_label, meta.showcase_label) || null,
     artistSectionLabel: pick(acf.artist_section_label, meta.artist_section_label) || null,
     artistLinkLabel: pick(acf.artist_link_label, meta.artist_link_label) || null,
-    chapterId: acf.chapter_id ? parseInt(String(acf.chapter_id), 10)
-      : meta._culture_chapter_id ? parseInt(String(meta._culture_chapter_id), 10)
-      : null,
     rsvpTicketTypes: Array.isArray(acf.rsvp_ticket_types)
       ? acf.rsvp_ticket_types.map((t: any) => ({
           ticketName:     t.ticket_name     ?? '',
@@ -148,7 +187,6 @@ function mapRestEventToFrontendShape(item: any) {
           ticketCurrency: t.ticket_currency ?? 'NGN',
         }))
       : [],
-    associatedChapter: null as { title: string; slug: string; excerpt: string; featuredImage: { node: { sourceUrl: string } } | null } | null,
   };
 }
 
@@ -175,6 +213,11 @@ function mapRestDirectoryToFrontendShape(item: any) {
     websiteUrl: pick(acf.website_url, acf.websiteUrl, item?.website_url),
     instagramHandle: pick(acf.instagram_handle, acf.instagramHandle),
     twitterHandle: pick(acf.twitter_handle, acf.twitterHandle),
+    isPartner: item?.meta?._is_partner === true || item?.meta?._is_partner === "1",
+    partnerStatus: item?.meta?._partner_status ?? null,
+    partnerPerk: item?.meta?._partner_perk_template ?? null,
+    communityReviewCount: item?.meta?._community_review_count ?? 0,
+    averageRating: item?.meta?._average_rating ? Number(item.meta._average_rating) : null,
     selectedWorks: [],
     infobox: null,
   };
@@ -201,24 +244,90 @@ export async function getDirectoryEntriesWithFallback(first = 200, options: any 
   }
 }
 
+function isEventExpired(event: any): boolean {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  // If an end_date exists, the event expires after that day
+  const end = event.endDate || event.end_date;
+  if (end) {
+    const d = new Date(end); d.setHours(0, 0, 0, 0);
+    return !isNaN(d.getTime()) && d < today;
+  }
+  // Otherwise expire after the event_date day itself
+  const start = event.eventDate || event.event_date || event.date;
+  if (start) {
+    const d = new Date(start); d.setHours(0, 0, 0, 0);
+    return !isNaN(d.getTime()) && d < today;
+  }
+  return false;
+}
+
 export async function getEventsWithFallback(first = 50, options: any = {}) {
   const gql = await getWPData(GET_EVENTS, { first }, options);
-  const gqlEvents = gql?.cultureEvents?.nodes ?? [];
-  if (gqlEvents.length > 0) return gqlEvents;
+  const gqlEvents = (gql?.cultureEvents?.nodes ?? []).filter((e: any) => !isEventExpired(e));
+  if (gqlEvents.length > 0) {
+    // WPGraphQL often returns null for ACF/meta fields — patch via REST bulk fetch
+    const needsPatch = gqlEvents.some((e: any) => !e.location || !e.city || !e.endDate || !e.venueAddress);
+    if (needsPatch) {
+      try {
+        const patchCtrl = new AbortController();
+        const patchTimeout = setTimeout(() => patchCtrl.abort(), 10000);
+        const restUrl = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_fields=id,slug,acf,meta,culture_event_meta&orderby=date&order=desc`;
+        const restRes = await fetch(restUrl, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal: patchCtrl.signal,
+          next: { revalidate: 60 },
+        });
+        clearTimeout(patchTimeout);
+        if (restRes.ok) {
+          const restJson = await restRes.json();
+          if (Array.isArray(restJson)) {
+            const metaBySlug = new Map<string, any>();
+            for (const r of restJson) {
+              metaBySlug.set(r.slug, r);
+            }
+            const pick = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== "" && v !== false) ?? null;
+            for (const ev of gqlEvents) {
+              const rest = metaBySlug.get(ev.slug);
+              if (!rest) continue;
+              const acf = rest.acf ?? {};
+              const meta = rest.meta ?? {};
+              const cem = rest.culture_event_meta ?? {};
+              if (!ev.eventDate)    ev.eventDate    = pick(cem.event_date,    acf.event_date,    meta._culture_event_date);
+              if (!ev.endDate)      ev.endDate      = pick(cem.end_date,      acf.end_date,      meta._culture_event_end_date);
+              if (!ev.location)     ev.location     = pick(cem.location,      acf.location,      meta._culture_location);
+              if (!ev.city)         ev.city         = pick(cem.city,          acf.city,          meta._culture_event_city);
+              if (!ev.admission)    ev.admission    = pick(cem.admission,     acf.admission,     meta._culture_admission);
+              if (!ev.openingHours) ev.openingHours = pick(cem.opening_hours, acf.opening_hours, meta._culture_opening_hours);
+              if (!ev.venueAddress) ev.venueAddress = pick(acf.venue_address, meta.venue_address);
+              if (!ev.ticketingUrl) ev.ticketingUrl = pick(cem.ticketing_url, acf.ticketing_url, meta._culture_ticketing_url);
+              if (!ev.organiserDirectoryId && cem.organiser_id) ev.organiserDirectoryId = Number(cem.organiser_id);
+              if (!ev.organiserName && cem.organiser_name) ev.organiserName = cem.organiser_name;
+              if (!ev.organiserSlug && cem.organiser_slug) ev.organiserSlug = cem.organiser_slug;
+            }
+          }
+        }
+      } catch { /* patch is best-effort */ }
+    }
+    return gqlEvents;
+  }
 
   try {
     const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const { signal, clear } = wpSignal();
     const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
+      signal,
       next: {
         revalidate: options.revalidate !== undefined ? options.revalidate : 3600,
       },
     });
+    clear();
     if (!res.ok) return [];
     const json = await res.json();
     if (!Array.isArray(json)) return [];
-    return json.map(mapRestEventToFrontendShape);
+    return json.map(mapRestEventToFrontendShape).filter((e: any) => !isEventExpired(e));
   } catch {
     return [];
   }
@@ -228,22 +337,35 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
   const gql = await getWPData(GET_EVENT_BY_SLUG, { slug }, options);
   if (gql?.cultureEvent) {
     const ev = gql.cultureEvent;
-    // WPGraphQL may not resolve some ACF fields — patch via REST for host, chapterId
+    // WPGraphQL may not resolve ACF/meta fields reliably — patch via REST when missing
     const needsHostPatch = !ev.featuredHost?.title;
-    if (needsHostPatch || !ev.chapterId) {
+    const needsMetaPatch = !ev.location || !ev.city || !ev.eventDate || !ev.endDate || !ev.openingHours || !ev.eventImageUrl;
+    if (needsHostPatch || needsMetaPatch) {
       try {
         const metaRes = await fetch(
-          `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_fields=acf,meta`,
+          `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_fields=acf,meta,culture_event_meta`,
           { next: { revalidate: 3600 } }
         );
         if (metaRes.ok) {
           const metaJson = await metaRes.json();
           const acf = metaJson[0]?.acf ?? {};
           const meta = metaJson[0]?.meta ?? {};
+          const cem = metaJson[0]?.culture_event_meta ?? {};
+          const pick = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== "" && v !== false) ?? null;
 
-          if (!ev.chapterId) {
-            const rawChapter = acf.chapter_id ?? meta._culture_chapter_id;
-            if (rawChapter) ev.chapterId = parseInt(String(rawChapter), 10) || null;
+          // Patch core event meta fields that WPGraphQL may return as null
+          if (needsMetaPatch) {
+            if (!ev.eventDate)    ev.eventDate    = pick(cem.event_date,    acf.event_date,    meta._culture_event_date);
+            if (!ev.endDate)      ev.endDate      = pick(cem.end_date,      acf.end_date,      meta._culture_event_end_date);
+            if (!ev.location)     ev.location     = pick(cem.location,      acf.location,      meta._culture_location);
+            if (!ev.city)         ev.city         = pick(cem.city,          acf.city,          meta._culture_event_city);
+            if (!ev.admission)    ev.admission    = pick(cem.admission,     acf.admission,     meta._culture_admission);
+            if (!ev.openingHours) ev.openingHours = pick(cem.opening_hours, acf.opening_hours, meta._culture_opening_hours);
+            if (!ev.ticketingUrl) ev.ticketingUrl = pick(cem.ticketing_url, acf.ticketing_url, meta._culture_ticketing_url);
+            if (!ev.eventImageUrl) ev.eventImageUrl = pick(cem.image_url, acf.event_image_url, meta._culture_event_image_url);
+            if (!ev.featuredImage?.node?.sourceUrl && cem.image_url) {
+              ev.featuredImage = { node: { sourceUrl: cem.image_url, altText: "" } };
+            }
           }
 
           if (needsHostPatch) {
@@ -286,37 +408,19 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
         })
         .filter(Boolean) as { i: number; id: number }[];
       if (missing.length > 0) {
-        await Promise.allSettled(missing.map(async ({ i, id }) => {
-          try {
-            const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
-            if (mRes.ok) {
-              const m = await mRes.json();
-              const url = m.source_url ?? m.guid?.rendered;
-              if (url) ev.showcase[i] = { ...ev.showcase[i], image: { sourceUrl: url } };
-            }
-          } catch { /* non-fatal */ }
-        }));
-      }
-    }
-
-    // Resolve chapter if chapterId is set but chapter object not yet populated
-    if (ev.chapterId && !ev.associatedChapter) {
-      try {
-        const chapterRes = await fetch(
-          `${WP_BASE_URL}/wp-json/wp/v2/culture_chapter/${ev.chapterId}?_embed=1`,
-          { next: { revalidate: 3600 } }
-        );
-        if (chapterRes.ok) {
-          const ch = await chapterRes.json();
-          const chImg = ch._embedded?.["wp:featuredmedia"]?.[0];
-          ev.associatedChapter = {
-            title: ch.title?.rendered ?? "",
-            slug: ch.slug ?? "",
-            excerpt: ch.excerpt?.rendered?.replace(/<[^>]+>/g, "") ?? "",
-            featuredImage: chImg?.source_url ? { node: { sourceUrl: chImg.source_url } } : null,
-          };
+        for (let b = 0; b < missing.length; b += 3) {
+          await Promise.allSettled(missing.slice(b, b + 3).map(async ({ i, id }) => {
+            try {
+              const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
+              if (mRes.ok) {
+                const m = await mRes.json();
+                const url = m.source_url ?? m.guid?.rendered;
+                if (url) ev.showcase[i] = { ...ev.showcase[i], image: { sourceUrl: url } };
+              }
+            } catch { /* non-fatal */ }
+          }));
         }
-      } catch { /* non-fatal */ }
+      }
     }
 
     return ev;
@@ -371,40 +475,20 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
       if (!s.image?.sourceUrl && typeof raw === "number" && raw > 0) showcaseImageIds.push({ i, id: raw });
     });
     if (showcaseImageIds.length > 0) {
-      await Promise.allSettled(showcaseImageIds.map(async ({ i, id }) => {
-        try {
-          const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
-          if (mRes.ok) {
-            const m = await mRes.json();
-            const url = m.source_url ?? m.guid?.rendered;
-            if (url) event.showcase[i].image = { sourceUrl: url };
-          }
-        } catch { /* non-fatal */ }
-      }));
+      for (let b = 0; b < showcaseImageIds.length; b += 3) {
+        await Promise.allSettled(showcaseImageIds.slice(b, b + 3).map(async ({ i, id }) => {
+          try {
+            const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
+            if (mRes.ok) {
+              const m = await mRes.json();
+              const url = m.source_url ?? m.guid?.rendered;
+              if (url) event.showcase[i].image = { sourceUrl: url };
+            }
+          } catch { /* non-fatal */ }
+        }));
+      }
     }
 
-    // Resolve chapter from meta
-    const chapterId = event.chapterId
-      ?? (json[0]?.meta?._culture_chapter_id ? parseInt(String(json[0].meta._culture_chapter_id), 10) : null);
-    if (chapterId) {
-      event.chapterId = chapterId;
-      try {
-        const chapterRes = await fetch(
-          `${WP_BASE_URL}/wp-json/wp/v2/culture_chapter/${chapterId}?_embed=1`,
-          { next: { revalidate: 3600 } }
-        );
-        if (chapterRes.ok) {
-          const ch = await chapterRes.json();
-          const chImg = ch._embedded?.["wp:featuredmedia"]?.[0];
-          event.associatedChapter = {
-            title: ch.title?.rendered ?? "",
-            slug: ch.slug ?? "",
-            excerpt: ch.excerpt?.rendered?.replace(/<[^>]+>/g, "") ?? "",
-            featuredImage: chImg?.source_url ? { node: { sourceUrl: chImg.source_url } } : null,
-          };
-        }
-      } catch { /* non-fatal */ }
-    }
 
     return event;
   } catch {
@@ -443,12 +527,14 @@ export async function getNewslettersWithFallback(first = 50, options: any = {}) 
   } catch {}
 
   try {
+    const { signal, clear } = wpSignal();
     const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_newsletter?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
     const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
+      signal,
       next: { revalidate: options.revalidate !== undefined ? options.revalidate : 3600 },
       signal: controller.signal,
     });
@@ -678,6 +764,16 @@ export const GET_SERIES_STORIES = `
   ${STORY_FIELDS_FRAGMENT}
 `;
 
+export const GET_SERIES_STORIES_BATCH = `
+  query GetSeriesBatch {
+    theRadar: seriesItem(id: "the-radar", idType: SLUG) { posts(first: 8) { nodes { ...StoryFields } } }
+    portraits: seriesItem(id: "portraits-of-the-city", idType: SLUG) { posts(first: 8) { nodes { ...StoryFields } } }
+    theLane: seriesItem(id: "the-lane", idType: SLUG) { posts(first: 8) { nodes { ...StoryFields } } }
+    thinkCreative: seriesItem(id: "think-like-a-creative", idType: SLUG) { posts(first: 8) { nodes { ...StoryFields } } }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
 export const GET_INDUSTRY_STORIES = `
   query GetIndustryStories($industry: ID!) {
     industry(id: $industry, idType: SLUG) {
@@ -762,6 +858,11 @@ const DIRECTORY_FIELDS_FRAGMENT = `
     websiteUrl
     instagramHandle
     twitterHandle
+    isPartner
+    partnerStatus
+    partnerPerk
+    communityReviewCount
+    averageRating
     selectedWorks {
       title
       imageUrl
@@ -828,6 +929,48 @@ const JOURNEY_FIELDS_FRAGMENT = `
   }
 `;
 
+// Lightweight fragment for list/feed queries — omits complex ACF sub-objects that
+// can cause WP GraphQL internal server errors on malformed records.
+const EVENT_LIST_FIELDS_FRAGMENT = `
+  fragment EventListFields on CultureEvent {
+    id
+    databaseId
+    title
+    slug
+    date
+    eventDate
+    endDate
+    location
+    eventLocation: location
+    admission
+    ticketingUrl
+    eventImageUrl
+    isFeatured
+    isAiGenerated
+    tagline
+    attribution
+    openingHours
+    excerpt
+    content
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+    cultureInterests {
+      nodes {
+        name
+        slug
+      }
+    }
+    eventSubtype
+    aboutLabel
+    venueAddress
+  }
+`;
+
+// Full fragment for single-event detail pages — includes all ACF sub-objects.
 const EVENT_FIELDS_FRAGMENT = `
   fragment EventFields on CultureEvent {
     id
@@ -841,12 +984,14 @@ const EVENT_FIELDS_FRAGMENT = `
     eventLocation: location
     admission
     ticketingUrl
+    eventImageUrl
     isFeatured
     isAiGenerated
     tagline
     attribution
     openingHours
     excerpt
+    content
     featuredImage {
       node {
         sourceUrl
@@ -913,7 +1058,6 @@ const EVENT_FIELDS_FRAGMENT = `
       ticketAmount
       ticketCurrency
     }
-    chapterId
   }
 `;
 
@@ -1058,12 +1202,11 @@ export const GET_EVENTS = `
   query GetEvents($first: Int) {
     cultureEvents(first: $first) {
       nodes {
-        ...EventFields
+        ...EventListFields
       }
     }
   }
-  ${EVENT_FIELDS_FRAGMENT}
-  ${JOURNEY_FIELDS_FRAGMENT}
+  ${EVENT_LIST_FIELDS_FRAGMENT}
 `;
 
 export const GET_EVENT_BY_SLUG = `
@@ -1075,61 +1218,6 @@ export const GET_EVENT_BY_SLUG = `
   }
   ${EVENT_FIELDS_FRAGMENT}
   ${JOURNEY_FIELDS_FRAGMENT}
-`;
-
-const CHAPTER_FIELDS_FRAGMENT = `
-  fragment ChapterFields on CultureChapter {
-    id
-    databaseId
-    title
-    slug
-    date
-    content
-    excerpt
-    latitude
-    longitude
-    lat
-    lng
-    leaderId
-    leaderName
-    memberCount
-    featuredImage {
-      node {
-        sourceUrl
-        altText
-      }
-    }
-    cultureInterests {
-      nodes {
-        name
-        slug
-      }
-    }
-  }
-`;
-
-export const GET_CHAPTERS = `
-  query GetChapters($first: Int) {
-    cultureChapters(first: $first) {
-      nodes {
-        ...ChapterFields
-      }
-    }
-  }
-  ${CHAPTER_FIELDS_FRAGMENT}
-`;
-
-export const GET_CHAPTER_BY_SLUG = `
-  query GetChapterBySlug($slug: ID!) {
-    cultureChapter(id: $slug, idType: SLUG) {
-      ...ChapterFields
-      relatedEvents {
-        ...StoryFields
-      }
-    }
-  }
-  ${CHAPTER_FIELDS_FRAGMENT}
-  ${STORY_FIELDS_FRAGMENT}
 `;
 
 export const GET_JOURNEY_BY_SLUG = `
@@ -1485,10 +1573,11 @@ export const GET_QUOTES_BY_AUTHOR = `
  * because the culture-community plugin is not active and quoteSource /
  * quoteLikes are not registered), transparently fall back to the simpler query.
  */
-export async function getWPQuotes(variables: { first?: number }) {
-  const primary = await getWPData(GET_QUOTES, variables, { revalidate: 0 });
+export async function getWPQuotes(variables: { first?: number }, options: { revalidate?: number } = {}) {
+  const opts = { revalidate: options.revalidate ?? 3600 };
+  const primary = await getWPData(GET_QUOTES, variables, opts);
   if (primary !== null) return primary;
-  return getWPData(GET_QUOTES_BASIC, variables, { revalidate: 0 });
+  return getWPData(GET_QUOTES_BASIC, variables, opts);
 }
 
 export async function getWPQuoteById(variables: { id: string }) {
@@ -1598,5 +1687,67 @@ export async function getPostsByIssue(issueId: number): Promise<any[]> {
     );
     if (!res.ok) return [];
     return await res.json();
+  } catch { return []; }
+}
+
+export interface DirectoryPostsSummary {
+  total_posts: number;
+  average_rating: number | null;
+  by_template: Record<string, number>;
+}
+
+export interface DirectoryPost {
+  id: number;
+  slug?: string;
+  template_type: string;
+  content: string;
+  star_rating: number | null;
+  author: { name: string; avatar: string; tier: string };
+  reactions: Record<string, number>;
+  created_at: string;
+}
+
+export interface DirectoryPostsResponse {
+  posts: DirectoryPost[];
+  summary: DirectoryPostsSummary;
+}
+
+export async function getDirectoryPosts(directoryId: number): Promise<DirectoryPostsResponse> {
+  const empty: DirectoryPostsResponse = {
+    posts: [],
+    summary: { total_posts: 0, average_rating: null, by_template: {} },
+  };
+  try {
+    const res = await fetch(
+      `${WP_BASE_URL}/wp-json/culture/v1/directory/${directoryId}/posts`,
+      { next: { revalidate: 60 } }
+    );
+    if (!res.ok) return empty;
+    return await res.json();
+  } catch { return empty; }
+}
+
+export interface DirectoryEvent {
+  id: number;
+  slug: string;
+  title: string;
+  href: string;
+  event_date: string | null;
+  end_date: string | null;
+  location: string | null;
+  city: string | null;
+  admission: string | null;
+  image: string | null;
+}
+
+export async function getDirectoryEvents(directoryId: number): Promise<DirectoryEvent[]> {
+  try {
+    const res = await fetch(
+      `${WP_BASE_URL}/wp-json/culture/v1/directory/${directoryId}/events`,
+      { next: { revalidate: 60 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data?.events) ? data.events : [];
   } catch { return []; }
 }

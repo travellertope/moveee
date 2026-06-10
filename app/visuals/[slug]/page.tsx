@@ -5,7 +5,8 @@ import { authOptions } from "@/lib/auth";
 import VisualsSingleClient from "@/components/VisualsSingleClient";
 import "@/app/visuals.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export const dynamicParams = true;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

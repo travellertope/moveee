@@ -8,8 +8,6 @@ interface RegisterBody {
   phone?: string;
   whatsapp?: string;
   tier?: "citizen" | "patron";
-  primary_chapter?: number;
-  secondary_chapter?: number;
   referral_code?: string;
   directory_opt_in?: string;
   directory_disciplines?: string;

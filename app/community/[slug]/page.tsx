@@ -8,7 +8,8 @@ import { parseHashtags } from "@/lib/hashtags";
 import CommunityPostClient from "./CommunityPostClient";
 import "@/app/pulse-layout.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export const dynamicParams = true;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 
@@ -89,6 +90,26 @@ export default async function CommunityPostPage({
   const initials = author.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
   const url      = `${SITE_URL}/community/${post.slug}`;
 
+  // Template meta
+  const m = post.meta;
+  const templateType  = m._template_type || "post";
+  const starRating    = m._star_rating ? Number(m._star_rating) : undefined;
+  const locationName  = m._location_name || undefined;
+  const pollOptions   = m._poll_options ? (typeof m._poll_options === "string" ? JSON.parse(m._poll_options) : m._poll_options) : undefined;
+  const pollExpiresAt = m._poll_expires_at || undefined;
+  const galleryImages = m._gallery_images ? (typeof m._gallery_images === "string" ? JSON.parse(m._gallery_images) : m._gallery_images) : undefined;
+  const videoUrl      = m._video_url || undefined;
+  const itineraryStops = m._itinerary_stops ? (typeof m._itinerary_stops === "string" ? JSON.parse(m._itinerary_stops) : m._itinerary_stops) : undefined;
+  const foodDishName  = m._food_dish_name || undefined;
+  const foodRatingTaste = m._food_rating_taste ? Number(m._food_rating_taste) : undefined;
+  const foodRatingValue = m._food_rating_value ? Number(m._food_rating_value) : undefined;
+  const foodRatingVibe  = m._food_rating_vibe  ? Number(m._food_rating_vibe)  : undefined;
+  const sourceUrl    = m.community_link_url || undefined;
+  const source       = sourceUrl ? (() => { try { return new URL(sourceUrl).hostname.replace(/^www\./, ""); } catch { return ""; } })() : undefined;
+  const ogTitle      = m.community_og_title || undefined;
+  const ogDescription = m.community_og_description || undefined;
+  const ogImage      = m.community_og_image || undefined;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SocialMediaPosting",
@@ -163,6 +184,17 @@ export default async function CommunityPostPage({
 
           {/* ── Main post ── */}
           <main className="pulse-timeline">
+            {/* Back link */}
+            <div style={{ padding: "0.85rem 1.25rem 0", display: "flex", alignItems: "center" }}>
+              <Link href="/connect" style={{
+                color: "#7a6f5c", fontSize: "0.75rem", textDecoration: "none",
+                letterSpacing: "0.06em", textTransform: "uppercase",
+                display: "inline-flex", alignItems: "center", gap: "0.3rem",
+              }}>
+                ← Connect Feed
+              </Link>
+            </div>
+
             {/* Post card — matches community card style from the feed */}
             <article style={{
               background: "#fff",
@@ -205,8 +237,17 @@ export default async function CommunityPostPage({
                   )}
                 </div>
 
-                {/* Image */}
-                {image && (
+                {/* Gallery (template-specific) */}
+                {galleryImages && galleryImages.length >= 1 && (
+                  <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.65rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
+                    {galleryImages.map((img: string, i: number) => (
+                      <img key={i} src={img} alt="" style={{ height: "260px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+                    ))}
+                  </div>
+                )}
+
+                {/* Single image (only when no gallery) */}
+                {image && !galleryImages?.length && (
                   <div style={{ marginBottom: "0.65rem", overflow: "hidden" }}>
                     <img
                       src={image}
@@ -229,6 +270,23 @@ export default async function CommunityPostPage({
                   }}
                   shareUrl={url}
                   initialComments={comments}
+                  templateType={templateType}
+                  starRating={starRating}
+                  locationName={locationName}
+                  pollOptions={pollOptions}
+                  pollExpiresAt={pollExpiresAt}
+                  galleryImages={galleryImages}
+                  videoUrl={videoUrl}
+                  itineraryStops={itineraryStops}
+                  foodDishName={foodDishName}
+                  foodRatingTaste={foodRatingTaste}
+                  foodRatingValue={foodRatingValue}
+                  foodRatingVibe={foodRatingVibe}
+                  sourceUrl={sourceUrl}
+                  source={source}
+                  ogTitle={ogTitle}
+                  ogDescription={ogDescription}
+                  ogImage={ogImage}
                 />
 
                 {/* Hashtags */}

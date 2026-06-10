@@ -153,7 +153,8 @@ This ID is used everywhere as the canonical identifier.
 
 ### Step 4 — Frontend: newsletter preferences
 
-**`app/member/settings/NewsletterPreferences.tsx`**
+**`app/member/settings/newsletters/page.tsx`** (now a sub-route under settings)
+- The `NewsletterPreferences` component is rendered here.
 - Add to `NEWSLETTERS` array:
   ```ts
   {
@@ -257,6 +258,66 @@ single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
 
 ---
 
+## Raw SQL REST endpoints
+
+Several REST handlers bypass `WP_Query` / `get_user_meta` / `get_option` and
+query the database directly via `$wpdb`. Do this for any endpoint that is
+purely a read with no WP hook/filter logic.
+
+### Pattern
+```php
+// Multiple user meta keys — single query, then build a map
+$rows = $wpdb->get_results( $wpdb->prepare(
+    "SELECT meta_key, meta_value FROM {$wpdb->usermeta}
+     WHERE user_id = %d AND meta_key IN ('key1','key2')",
+    $user_id
+), ARRAY_A );
+$map = array_column( $rows, 'meta_value', 'meta_key' );
+
+// Multiple wp_options — single query
+$rows = $wpdb->get_results(
+    "SELECT option_name, option_value FROM {$wpdb->options}
+     WHERE option_name IN ('opt1','opt2')",
+    ARRAY_A
+);
+$opts = array_column( $rows, 'option_value', 'option_name' );
+```
+
+### Endpoints already using raw SQL
+| Endpoint | Handler | What it reads |
+|----------|---------|---------------|
+| `GET /culture/v1/user/interactions` | `handle_get_interactions()` | 4 usermeta keys (likes/bookmarks) — single query |
+| `GET /culture/v1/community-blocklist` | `handle_get_community_blocklist()` | 2 wp_options rows — single query |
+| `GET /culture/v1/user/directory` | `handle_get_directory_profile()` | 6 usermeta keys + user exists check — single query |
+| `GET /culture/v1/user/portfolio` | `handle_get_portfolio()` | 2 JSON usermeta keys + user exists check — single query |
+| `GET /culture/v1/notifications` | `handle_get_notifications()` | custom `wp_culture_notifications` table |
+| `GET /culture/v1/notifications/count` | `handle_notification_count()` | COUNT on custom table |
+| `GET /culture/v1/wallet/history` | `handle_wallet_history()` | `wp_culture_credit_ledger` table |
+| `GET /culture/v1/member/analytics` | `handle_member_analytics()` | ledger + posts tables via `$wpdb` |
+
+### Why WPGraphQL is a separate concern
+WPGraphQL is a **parallel query layer** — it has its own resolver pipeline that
+also calls WordPress internals. Raw SQL optimisations only apply to the custom
+REST endpoints above. WPGraphQL resolvers (used by `getWPData()` in `lib/wp.ts`
+for content — articles, newsletters, quotes) are **not affected** and should not
+be replaced with raw SQL because they depend on WP's permission/filter system
+and the `show_in_rest`/`show_in_graphql` field registration.
+
+Rule of thumb:
+- **Content reads** (posts, taxonomies, media) → WPGraphQL via `getWPData()`
+- **User-specific reads** (profile meta, interactions, wallet, notifications) → custom REST + raw SQL
+- **Mutations** (submit post, redeem perk, mark read) → custom REST, WP logic required
+
+### Do NOT raw-SQL these
+Endpoints that depend on WP logic and must stay on `WP_Query`/`get_user_meta`:
+- `handle_get_user_profile()` — gamification ledger calculations
+- `handle_wallet_balance()` — `Culture_Gamification` computed state
+- `handle_get_public_profile()` — gamification + badges
+- Any mutation endpoint (insert/update) — use `$wpdb->insert/update` if needed,
+  but still fire the relevant `do_action()` hooks for notifications/credits
+
+---
+
 ## Key conventions
 
 - Internal tier value is `patron` — never rename it in PHP or the DB.
@@ -274,8 +335,251 @@ single-issue page components (`.gml-issue-hero`, `.digest-sidebar-card.dark`).
 
 ## Git branch
 
-Active development branch: `claude/sweet-dijkstra-Pde1e`
+Active development branch: `claude/moveee-connect-rn-dev-jsragz`
 Always commit and push to this branch.
+
+---
+
+## Next.js middleware — use proxy.ts, never middleware.ts
+
+This project uses Next.js 16 which replaces `middleware.ts` with `proxy.ts`.
+
+**NEVER create a `middleware.ts` file.** It will conflict with `proxy.ts` and
+cause a build failure:
+```
+Error: Both middleware file "./middleware.ts" and proxy file "./proxy.ts" are detected.
+Please use "./proxy.ts" only.
+```
+
+All edge logic (redirects, cache headers, cookie setting, rate limiting) must
+go into **`proxy.ts`** at the project root. The exported function is named
+`proxy` (not `middleware`) and uses the same `NextRequest`/`NextResponse` API.
+
+---
+
+## VIP Club Upgrade — Phase Status
+
+All phases implemented. Phase docs live in `docs/phases/`.
+
+| Phase | Status | Key files |
+|-------|--------|-----------|
+| 1. Interest Tagging | Done | `lib/interest-mappings.ts`, `components/InterestEditor.tsx`, registration complete page |
+| 2. Credits & Reputation | Done | `class-culture-gamification.php` (credit_ledger table, award_credits/reputation, check_post_threshold), `lib/auth.ts` |
+| 3. Directory Knowledge Graph | Done | `class-culture-directory.php` (search, quick-create, directory posts, aggregates), `DirectoryGrid.tsx` (partner badge), `app/directory/[slug]/page.tsx` (community section) |
+| 4. Post Templates & Composer | Done | `components/pulse/SubmitPost.tsx` (unified composer), `components/composer/` (StarRating, MultiRating, DirectorySearch, PollBuilder, ItineraryBuilder), `FeedCard.tsx` (template variants), poll-vote endpoint |
+| 5. Public Profiles | Done | `app/connect/[username]/page.tsx`, `ProfileTabs`, `CommunityTab`, `PortfolioTab`, `app/member/portfolio/`, PHP: public member + community posts + portfolio endpoints |
+| 6. Partner Perks | Done | `class-culture-perks.php` (redeem, QR verify, cashout, fee tiers), `culture_partner_perks` + `culture_redemptions` tables, 13 REST endpoints, `app/connect/perks/` (browse+redeem), `app/member/wallet/` (balance+cashout), `app/member/coupons/` (QR display) |
+| 7. Passkeys | Done | `culture-community/includes/core/class-culture-webauthn.php`, `app/api/auth/passkey/`, `components/PasskeyPrompt.tsx`, `components/PasskeyBanner.tsx`, `app/member/settings/PasskeyManager.tsx` |
+| 8a. Notifications | Done | `class-culture-notifications.php`, `wp_culture_notifications` table, `app/api/notifications/`, `components/NotificationBell.tsx`, `app/member/notifications/` |
+| 8b. Feed Recommendations | Done | `lib/feed-recommendations.ts` (score/rank/trending), `components/pulse/PulseFeed.tsx` (For You ranking + trending sidebar), `components/pulse/FeedCard.tsx` (For You badge) |
+| 8c. Analytics | Done | `GET /culture/v1/member/analytics`, `app/api/member/analytics/route.ts`, `app/member/analytics/` (SVG bar+line charts, top posts) |
+
+---
+
+## Phase 8a — Notifications architecture
+
+### Database table: `wp_culture_notifications`
+```
+id, user_id, type, title, body, action_url, meta (JSON), read_at, created_at
+```
+Indexes: `(user_id, read_at)` for unread count, `(user_id, created_at)` for listing.
+
+### Notification types
+`credit_earned`, `badge_unlocked`, `perk_expiring`, `perk_redeemed`, `cashout_approved`, `cashout_rejected`, `escrow_released`, `comment_received`, `post_validated`, `system`
+
+### PHP class: `class-culture-notifications.php`
+Auto-fires on WP action hooks:
+- `culture_credits_awarded` → `on_credits_awarded` (only fires for > 0 awards with sources other than `cashout`)
+- `culture_badge_awarded` → `on_badge_awarded`
+- `wp_insert_comment` → `on_new_comment` (only for `culture_post` CPT comments; notifies post author)
+- `culture_cashout_approved` / `_rejected` → `on_cashout_approved/rejected`
+- `culture_escrow_released` → `on_escrow_released`
+- `culture_post_validated` → `on_post_validated`
+- WP-Cron `culture_check_perk_expiry` (hourly) → fires `perk_expiring` when QR expires within 48h
+
+Key static methods: `add()`, `get_for_user()`, `count_unread()`, `mark_read()`, `mark_all_read()`, `prune_old()` (keeps last 50)
+
+### REST endpoints
+| Route | Method | Auth | Purpose |
+|-------|--------|------|---------|
+| `/culture/v1/notifications` | GET | API key | List (limit/offset params) |
+| `/culture/v1/notifications/count` | GET | API key | `{ unread: N }` |
+| `/culture/v1/notifications/read` | POST | API key | Mark one or all read (`notification_id` optional) |
+
+### Next.js routes
+- `GET /api/notifications` — proxy with `user_id` from session
+- `POST /api/notifications` — mark read (body `{ notification_id? }`)
+- `GET /api/notifications/count` — `{ unread: N }` (polled every 30s by `NotificationBell`)
+
+### Frontend
+- `components/NotificationBell.tsx` — bell icon in site header; polls count every 30s; dropdown panel on click; renders emoji + title + body + time-ago
+- `app/member/notifications/page.tsx` — full-page list, SSR, with `NotificationsClient` for mark-read
+- `CULTURE_VERSION` bumped to `2.0.0` — triggers `dbDelta` to create the table on next plugin activation/update
+
+---
+
+## Phase 8b — Feed recommendations
+
+### Library: `lib/feed-recommendations.ts`
+Pure TypeScript, no server dependency. Four exports:
+- `scoreItem(item, interestTagSet)` → 0–100 score: 50 pts interest match, 30 pts recency (3-day half-life), 20 pts engagement (log scale)
+- `rankFeed(items, interestTagSet)` → sorted by score descending; tiebreak: most recent
+- `getTrending(items, limit=5)` → highest engagement in last 7 days
+- `matchesInterests(item, interestTagSet)` → boolean (checks `category`, `communityTag`, `entryType`, `arm`)
+
+### PulseFeed integration (`components/pulse/PulseFeed.tsx`)
+- "For You" toggle button in feed header (desktop: sidebar link; mobile: pill chip)
+- When `forYou=true`: calls `rankFeed(filtered, interestTagSet)` to re-sort
+- When `forYou=false`: newest-first (default)
+- `interestTagSet` built from `session.user.interests` (array → Set of lowercase slugs)
+- Trending items displayed in sidebar (desktop) and at top of For You feed
+- `hasInterests = interestTagSet.size > 0` — if no interests, For You falls back to recency sort
+
+### FeedCard "For You" badge
+When `forYou=true` and `matchesInterests(item, interestTagSet)`: renders `✦ For You` badge on community cards (ochre background, 9px mono uppercase).
+
+---
+
+## Phase 8c — Member analytics
+
+### REST endpoint
+`GET /culture/v1/member/analytics?user_id=X` (API key auth)
+
+Returns:
+```json
+{
+  "credit_days": [{ "day": "2026-06-01", "earned": 20, "spent": 5 }],
+  "balance": 450,
+  "reputation": 280,
+  "posts_published": 12,
+  "posts_pending": 1,
+  "badge_count": 4,
+  "top_posts": [{ "ID": 123, "post_title": "...", "reactions": 18, "comment_count": 5 }],
+  "rep_months": [{ "month": "2026-05", "reputation": 45 }]
+}
+```
+
+### Frontend (`app/member/analytics/`)
+- `GET /api/member/analytics/route.ts` — proxy (API key added server-side)
+- `AnalyticsClient.tsx` — full SVG chart suite:
+  - **Bar chart** (`BarChart`): credits earned/spent per day (last 30 days), multi-bar (ochre = earned, rust = spent)
+  - **Line chart** (`LineChart`): reputation earned per month
+  - **Top posts table**: ranked by `reactions + comment_count`, last 90 days
+  - **Summary stats**: balance, reputation, posts published, badge count
+- Chart components are plain SVG (`viewBox="0 0 600 H"`) — no external charting library
+
+---
+
+## Feed card offcanvas detail modals
+
+All three are right-side slide-in drawer panels (`position: fixed, zIndex: 8000, width: min(520px, 100vw)`). Click outside or press Escape to close.
+
+| Component | Trigger | Content |
+|-----------|---------|---------|
+| `components/pulse/HappeningDetailModal.tsx` | Click Happening card body | Event details: name, full dates (start + end), location + city, venue address, admission, organiser (linked to directory), description paragraphs, HTML body, "Get tickets / Find out more" button |
+| `components/pulse/DirectoryDetailModal.tsx` | Click Directory card body | Entry name, type badge, excerpt, full body, "View full entry →" link |
+| `components/pulse/QuoteDetailModal.tsx` | Click Quote card body | Large quote text, author, source, `ReactionBar` |
+
+FeedCard lazy-loads all three modals via `dynamic(() => import(...), { ssr: false })`.
+
+---
+
+## Event system enhancements
+
+### Organiser field
+Community event posts (`_template_type = 'event'`) now support an organiser directory link:
+- Meta key: `_culture_event_organiser_id` (int, directory entry ID)
+- Saved by `SubmitPost.tsx` → `POST /culture/v1/community/submit` with `organiser_directory_id`
+- PHP handler `handle_community_submit()` reads `organiser_directory_id` and calls `update_post_meta`
+- FeedItem fields: `organiserName`, `organiserSlug` (populated from directory entry in `unified-feed.ts`)
+- Shown in `HappeningDetailModal` as a clickable link to `/directory/{slug}`
+
+### New FeedItem fields for Happening cards
+`endDate`, `openingHours`, `venueAddress`, `admission`, `eventCategory`, `organiserName`, `organiserSlug`, `city` — all optional strings. Used in `HappeningDetailModal` and the Happening card in `FeedCard.tsx`.
+
+### Event composer (SubmitPost.tsx)
+- Category field now present (maps to `culture_event_categories` taxonomy)
+- Organiser field: `DirectorySearch` component, typeFilter="person"
+- Image upload via WP Media API (not URL input)
+
+---
+
+## Reputation tier thresholds
+
+Defined in `Culture_Gamification::REPUTATION_TIERS`:
+```php
+1500 => 'culture-authority',
+500  => 'taste-maker',
+100  => 'culture-contributor',
+0    => 'member',
+```
+Daily credit cap: `DAILY_CREDIT_CAP = 50` credits per user per day.
+
+---
+
+## Public profiles (`app/connect/[username]/`)
+
+Full public profile page. Fetches from `GET /culture/v1/member/{username}`.
+
+### Components
+- `page.tsx` — server component; renders hero (avatar, name, tier, occupation, city, joined date)
+- `BadgeShelf.tsx` — horizontal scroll of earned badges (emoji + name chips)
+- `ProfileTabs.tsx` — tab switcher: Community | Portfolio
+- `CommunityTab.tsx` — paginated community posts by this user; calls `GET /api/connect/{username}/posts`
+- `PortfolioTab.tsx` — portfolio items; calls `GET /api/connect/{username}/portfolio`
+- `ShareButton.tsx` — navigator.share / clipboard copy
+
+### API routes
+- `GET /api/connect/[username]/posts` → proxies `GET /culture/v1/community/posts?author_username=X`
+- `GET /api/connect/[username]/portfolio` → proxies `GET /culture/v1/user/portfolio`
+
+---
+
+## Community post full page (`app/community/[slug]/`)
+
+Static-ish page for sharing individual community posts. URL: `/community/{slug}`.
+`CommunityPostClient.tsx` renders the full post with:
+- All template fields (poll with live voting, gallery, itinerary, ratings)
+- `PollDisplay` sub-component (self-contained — handles voting state)
+- `ReactionBar`, `HashtagText`, `SourcePreviewCard`
+- Comment thread with `WpComment` type
+- Back link to Connect Feed (`/connect`)
+
+---
+
+## Interest taxonomy (canonical slugs)
+
+Stored in `lib/interest-mappings.ts`. PHP allowlists in `class-culture-rest-api.php`. Seeded by `Culture_Activator::seed_interests()`.
+
+18 slugs (expanded from 16 — added 2 event-specific):
+`fashion-streetwear`, `food-drink`, `street-food`, `nightlife`, `live-music`, `music-production`, `independent-film`, `visual-art`, `architecture`, `photography`, `literature`, `visual-design`, `tech-culture`, `sport-wellness`, `travel`, `ideas`, `event-performance`, `event-community`
+
+The last two (`event-performance`, `event-community`) are only used as event categories — not shown in the user interest picker.
+
+### Directory entry city field
+
+`culture_directory` posts have an `_entry_city` meta field (string, `show_in_rest: true`)
+for disambiguation when similar names exist (e.g. "The Jazz Cafe, London" vs "The Jazz Cafe, Lagos").
+- PHP: registered in `class-culture-post-types.php` → `$directory_meta`; WP Admin meta box in same file
+- Search results include `city` in the JSON response (`class-culture-directory.php` → `handle_search`)
+- Quick-create accepts and saves `city` param (`handle_quick_create`)
+- Next.js: `app/api/directory/quick-create/route.ts` forwards `city` to WordPress
+- React: `DirectorySearch.tsx` shows city below title in results; two-step create UX (enter name → optionally add city → create)
+
+### NextAuth session shape (`lib/auth.ts`)
+
+The session `user` object includes these fields beyond the basics:
+```ts
+{
+  id, name, email, username, displayName, tier,     // core
+  avatarUrl, phone, whatsapp, gender,               // profile
+  dateOfBirth, nationality, city, occupation,       // KYC
+  credits, reputation, reputationTier, badges,      // gamification
+  dailyCreditsRemaining, registeredAt,              // gamification + moderation
+  hasPasskey, passkeyCount, creditsEscrowed,        // Phase 7
+}
+```
+All fields available as `session.user.X` in server components after `getServerSession(authOptions)`.
 
 ---
 
@@ -342,3 +646,94 @@ All checks run server-side in `lib/spam-protection.ts` before posts reach WordPr
 **User account age for moderation queue:**
 - WP `user_registered` now included as `registered_at` (Unix timestamp) in `user_profile()`
 - Threaded into NextAuth session as `registeredAt` via `lib/auth.ts`
+
+---
+
+## moveee-connect React Native app — current state
+
+The app lives in `moveee-connect/` using Expo + React Navigation + Zustand + MMKV.
+
+### Architecture
+- `src/api/client.ts` — `api.get/post/put/delete/upload()` with Bearer token injection
+- `src/auth/authStore.ts` — Zustand store, JWT in SecureStore, MMKV hydration
+- `src/store/storage.ts` — MMKV-backed cache with TTL constants
+- `src/navigation/index.tsx` — 5-tab bottom navigator + auth stack
+- `src/features/community/useUnifiedFeed.ts` — paged fetch, MMKV cache
+- `src/types/index.ts` — all TypeScript interfaces (User, FeedItem, Perk, Redemption, Passkey, etc.)
+
+### What is complete
+| Area | Key files |
+|------|-----------|
+| Auth flow (Login/Register/VerifyEmail) | `screens/auth/` |
+| Auth store | `src/auth/authStore.ts` (Zustand + SecureStore + MMKV, incl. `updateUser`) |
+| API client | `src/api/client.ts` (get/post/put/delete/upload, Bearer token) |
+| Theme tokens | `src/theme.ts` (colors, fonts, fontSize, space, radius) |
+| Types | `src/types/index.ts` (User w/ Phase 6/7 fields, FeedItem, Perk, Redemption, Passkey, Notification) |
+| Custom fonts | App.tsx loads Fraunces + DM Sans + JetBrains Mono via useFonts() |
+| 5-tab navigation + new routes | `src/navigation/index.tsx` (MemberDirectory, Wallet, Coupons, Perks, MemberDashboard, MemberSettings) |
+| ConnectFeedScreen | `screens/community/ConnectFeedScreen.tsx` |
+| FeedItemCard (all templates) | `components/community/FeedItemCard.tsx` (gallery, polls, itinerary, ratings) |
+| PostDetailScreen, PulseDetailScreen | `screens/community/` |
+| NewPostScreen (all 9 templates) | `screens/community/NewPostScreen.tsx` (post, hidden-gem, cultural-take, food-review, creative-showcase, poll, itinerary, event, quote) |
+| Composer sub-components | `components/composer/` (StarRating, MultiRating, PollBuilder, ItineraryBuilder, DirectorySearch) |
+| Shared UI components | Avatar, TypeBadge, ImageLightbox (`components/ui/`), ReactionBar, HashtagText (`components/community/`) |
+| MemberDirectoryScreen | `screens/community/MemberDirectoryScreen.tsx` |
+| MemberDashboardScreen | `screens/member/MemberDashboardScreen.tsx` (passkey banner, stats, badges, quick links) |
+| MemberSettingsScreen | `screens/member/MemberSettingsScreen.tsx` (5 tabs: Profile/Directory/Interests/Newsletters/Security) |
+| PerksScreen | `screens/member/PerksScreen.tsx` (passkey gate, redeem → proxy) |
+| WalletScreen | `screens/member/WalletScreen.tsx` (history + cashout, GBP/USD/NGN fields) |
+| CouponsScreen | `screens/member/CouponsScreen.tsx` (QR placeholder, expiry countdown) |
+| MagazineScreen, ArticleScreen | `screens/magazine/` |
+| MemberProfileScreen (basic) | `screens/community/MemberProfileScreen.tsx` |
+| TierBadge, TimeAgo | `components/ui/` |
+| MembershipScreen | `screens/member/MembershipScreen.tsx` (two-tier cards, Citizen/Pro CTA logic) |
+| EventsScreen | `screens/events/EventsScreen.tsx` (WP CPT fetch, filter strip, event cards) |
+| EventDetailScreen | `screens/events/EventDetailScreen.tsx` (meta card, RSVP form → `/api/events/rsvp`) |
+| TriviaGameScreen | `screens/games/TriviaGameScreen.tsx` (fully native, ABCD options, explanation, MMKV played-today gate) |
+| WhoSaidItGameScreen | `screens/games/WhoSaidItGameScreen.tsx` (fully native, tap-author options, review, MMKV gate) |
+| GamesScreen (updated) | `screens/games/GamesScreen.tsx` (navigates to TriviaGame + WhoSaidIt; Crossword/Sudoku dimmed) |
+| PasskeyManager | `screens/member/MemberSettingsScreen.tsx` SecurityTab (full register/delete WebAuthn flow via `react-native-passkeys`) |
+
+### What is missing (priority order)
+1. MembershipScreen IAP wiring (Google Play Billing + App Store IAP) — low priority; current behaviour directs users to the web to upgrade
+
+### Event template endpoint note
+Event image upload: `POST https://themoveee.com/api/events/upload-image`
+Event submit: `POST https://themoveee.com/api/events/member-submit`
+Both go via the Next.js proxy (NOT WordPress directly). The `PROXY` constant
+(`"https://themoveee.com/api"`) is defined at the top of NewPostScreen.tsx.
+All other post templates submit to `${CULTURE_API}/community/submit` (WordPress directly).
+
+### Passkey key notes
+- Registration: `GET ${PROXY}/auth/passkey/register-options` → `Passkeys.create(options)` → `POST ${PROXY}/auth/passkey/register-verify`
+- Verify body shape: `{ id, rawId, type, clientDataJSON, attestationObject, transports, device_name }`
+  (`credential.response` fields flattened to top level; `device_name` = `Platform.OS === "ios" ? "iPhone" : "Android"`)
+- `transports` must be cast as `any` — the `CreationResponse` type from `react-native-passkeys` doesn't expose it directly
+- Delete uses `api.delete(url, { credential_id })` — `api.delete` now accepts an optional body parameter
+- Auth store updated immediately after success: `updateUser({ hasPasskey: true, passkeyCount: ... })`
+- User-cancel from native prompt returns `null` from `Passkeys.create()` — must check before proceeding; also guard `e?.message?.includes("cancel")` in the catch block
+- `Passkeys.isSupported()` returns false on simulators and old OS versions — show warning banner rather than crashing
+
+### Games key notes
+- Both Trivia and Who Said It use MMKV (`storage` from `src/store/storage.ts`) for played-today detection — keys `trivia_last_played_date` / `wsi_last_played_date` (ISO date string, e.g. `2026-06-09`)
+- Trivia score is also persisted in `trivia_last_score` so the "already played" screen can show it
+- Both games fetch from `${PROXY}/games/trivia/daily` and `${PROXY}/games/who-said-it/daily` — routed through Next.js proxy with user JWT
+- GamesStack wraps GamesList + TriviaGame + WhoSaidIt; navigation name in tab is "Games" → resolves to GamesStack
+- EventsScreen fetches directly from WordPress CPT REST (no auth required): `https://cms.themoveee.com/wp-json/wp/v2/culture_event?per_page=50&status=publish&_embed=1`
+- EventDetailScreen RSVP posts to `${PROXY}/events/rsvp` (Next.js proxy)
+
+### Phase 8 key notes
+- `useFeedRecommendations.ts` is a direct port of `lib/feed-recommendations.ts` — keep them in sync
+- `react-native-svg` and `react-native-qrcode-svg` are now installed
+- AnalyticsScreen uses `react-native-svg` for SVG bar/line charts — no external charting lib
+- Notification bell polls `/api/notifications/count` every 30s via `useNotificationCount` hook
+- "For You" badge on community cards: ochre `badgePulseBg` background, `badgePulseText` colour
+
+### Key gotchas
+- The RN app calls **WordPress REST directly** for most endpoints. Wallet/Perks/Passkey endpoints require `CULTURE_API_SECRET` so those must go through Next.js proxy routes at `https://themoveee.com/api/...`
+- `patron` = Connect Pro DB value — never rename in code
+- `react-native-passkeys` replaces `@simplewebauthn/browser` for WebAuthn in RN
+- `react-native-qrcode-svg` for rendering perk QR codes
+- Cashout fee is flat 30% (not tiered); `credits_per_gbp` comes from the wallet balance API response — never hardcode
+- Phase 8b "For You" scoring is pure client-side TypeScript — `scoreItem()` from `lib/feed-recommendations.ts` on the web; replicate the same algorithm in `src/features/community/useFeedRecommendations.ts`
+- Full spec at `docs/moveee-connect-rn-spec.md` — that file is the single source of truth for RN implementation details

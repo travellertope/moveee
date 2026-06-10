@@ -221,19 +221,20 @@ function buildImageMetadata(entryType: string): { title: string; description: st
 
 const SYSTEM_PROMPT = `You are a knowledgeable curator for The Moveee's Culture Directory — a wiki-like reference celebrating African and diaspora culture.
 
-Given a topic name, generate a concise, encyclopedia-style entry stub. Return ONLY valid JSON — no markdown, no code fences, no explanation.
+Given a topic name, generate a concise, factual entry stub. Return ONLY valid JSON — no markdown, no code fences, no explanation.
+
+CRITICAL: Only include facts you are highly confident are true and verifiable. Do NOT pad the entry with speculative details, invented anecdotes, or filler paragraphs. A short, accurate entry is always better than a long, unreliable one.
 
 The JSON must match this exact structure:
 {
   "title": "The canonical name of the entry",
   "excerpt": "One or two sentences summarising this entry (plain text, no HTML tags)",
-  "content": "Full HTML body using ONLY <p>, <h2>, <ul>, <li> tags. Must include: an overview paragraph, a Cultural Significance section, and a Legacy or Related Works section. Minimum 4 paragraphs total.",
+  "content": "A single <p> paragraph (3-5 sentences) giving a factual overview of the topic — what it is, where it originates, and why it matters culturally. Use ONLY <p> tags. Do NOT add multiple sections, headings, or bullet lists. Keep it to one paragraph of verifiable information.",
   "entryType": "exactly one of the following — choose the most specific match:\n  person    = an individual human being (musician, writer, artist, activist, filmmaker, philosopher, etc.)\n  place     = a geographic location (city, neighbourhood, landmark, region, market)\n  movement  = a cultural, political, or artistic movement or era (Pan-Africanism, Harlem Renaissance)\n  genre     = a musical or artistic genre or style (Afrobeats, Highlife, Amapiano, Nollywood as a film industry)\n  concept   = an idea, philosophy, practice, or tradition (Ubuntu, Sankofa, Griot tradition, Adinkra symbols)\n  film      = a specific film or documentary (feature film, short film, documentary — NOT a series)\n  book      = a specific published book (novel, essay collection, poetry collection, memoir)\n  artwork   = a specific visual artwork, sculpture, installation, or album/music recording\n  food      = a specific dish, ingredient, or food tradition\n  fashion   = a specific garment, textile, fabric, or fashion tradition\n  tv-series = a television or streaming series, web series, or miniseries",
   "interests": ["2-5 relevant interest slugs, lowercase, hyphenated. Choose from: music, visual-art, food-drink, fashion, literature, film, history, politics, spirituality, dance, theatre, sport, architecture, photography"],
   "suggestedLinks": ["2-4 names of related topics that would make good linked entries in the same directory"],
   "infobox": {
-    // MANDATORY: Fill as many fields as possible for the given entryType. 
-    // High-density metadata is a priority. Omit a field ONLY if the information is impossible to find or estimate.
+    // Fill fields you are CERTAIN about for the given entryType. Omit any field you are not confident in — do not guess dates, names, or statistics.
     // All values must be strings.
     //
     // person:    born, died, nationality, occupation, knownFor, originCity, activeYears, awards, labels, education
@@ -250,7 +251,7 @@ The JSON must match this exact structure:
   }
 }
 
-Focus on African, Caribbean, and global diaspora contexts. Be factual, culturally respectful, and celebratory in tone. For infobox data, use approximate values (e.g. "c. 1920" or "late 90s") if exact data is unavailable, as this is better than an empty field.`;
+Focus on African, Caribbean, and global diaspora contexts. Be factual, culturally respectful, and celebratory in tone. For infobox data, only include values you are confident are accurate — leave a field out entirely rather than guessing.`;
 
 /**
  * Extract the first complete JSON value (object or array) from a string.
@@ -792,6 +793,7 @@ export interface SerperResult {
   link: string;
   snippet: string;
   date?: string;
+  imageUrl?: string; // thumbnail from Serper organic result
 }
 
 export interface EventStub {
@@ -806,6 +808,7 @@ export interface EventStub {
   admission: string;       // "Free" | "£15" | "From $20" etc.
   ticketing_url: string;
   attribution: string;     // Source URL
+  image_url?: string;      // Thumbnail from Serper — used directly, never stored on our servers
   interests: string[];     // culture_interest taxonomy slugs
   relevant: boolean;
 }
@@ -839,11 +842,9 @@ Event: "${title}"
 City: ${city}
 Date: ${eventDate}
 
-Write 3–4 paragraphs (total ~250–350 words) covering:
-1. What the event is and who's involved (be specific — name artists, curators, speakers, or organisations)
-2. Cultural or historical context — why this event matters to the African/diaspora community
-3. What to expect: programme highlights, atmosphere, format
-4. Practical note: location/neighbourhood character, any ticketing detail found, and why this is worth attending
+Write 1–2 paragraphs (total ~80–120 words) covering:
+1. What the event is, who's involved, and why it matters to the African/diaspora community
+2. What to expect: highlights, atmosphere, and why it's worth attending
 
 Use an editorial voice — warm, knowledgeable, specific. No marketing clichés. Return ONLY the plain text (no JSON, no markdown, no headings). Separate paragraphs with a blank line.`;
 

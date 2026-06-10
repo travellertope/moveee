@@ -12,7 +12,8 @@ import CommentThread from "@/components/pulse/CommentThread";
 import SourcePreviewCard from "@/components/pulse/SourcePreviewCard";
 import "@/app/pulse-layout.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export const dynamicParams = true;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 
@@ -35,6 +36,7 @@ export async function generateMetadata({
   const image =
     story.meta.pulse_og_image ||
     story._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
+    story.meta?.pulse_image_url ||
     `${SITE_URL}/og-fallback.png`;
   const url = `${SITE_URL}/pulse/${story.slug}`;
 

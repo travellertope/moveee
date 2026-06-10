@@ -5,6 +5,8 @@ import Link from "next/link";
 import MemberReferralCopy from "@/components/MemberReferralCopy";
 import MemberDashboard from "@/components/MemberDashboard";
 import MemberBadges from "@/components/MemberBadges";
+import PasskeyBanner from "@/components/PasskeyBanner";
+import MemberNavSelect from "@/components/MemberNavSelect";
 import "../member.css";
 
 export const dynamic = "force-dynamic";
@@ -42,12 +44,10 @@ export default async function MemberPage() {
               <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
                 {isPatron ? "Connect Pro" : "Connect Citizen"}
               </span>
-              <span className="mem-sep">·</span>
-              <span>{user.primaryChapter?.name || "No chapter"}</span>
-              {user.secondaryChapter?.name && (
+              {user.city && (
                 <>
                   <span className="mem-sep">·</span>
-                  <span>{user.secondaryChapter.name}</span>
+                  <span>{user.city}</span>
                 </>
               )}
             </div>
@@ -56,12 +56,17 @@ export default async function MemberPage() {
       </div>
 
       <div className="mem-body">
+        {!user.hasPasskey && <PasskeyBanner creditsEscrowed={user.creditsEscrowed ?? 0} />}
         {/* ── STATS (live data) ── */}
         <MemberDashboard
           initialPoints={user.points ?? 0}
           initialBadges={user.badges ?? []}
           referralCount={user.referralCount ?? 0}
           membership={isPatron ? "Connect Pro" : "Connect Citizen"}
+          initialCredits={user.credits ?? 0}
+          initialReputation={user.reputation ?? user.points ?? 0}
+          reputationTier={user.reputationTier ?? "member"}
+          dailyCreditsRemaining={user.dailyCreditsRemaining ?? 50}
         />
 
         <div className="mem-grid">
@@ -71,25 +76,34 @@ export default async function MemberPage() {
             {/* Badges (live data) */}
             <MemberBadges initialBadges={user.badges ?? []} />
 
-            {/* How to earn points */}
+            {/* How to earn */}
             <section className="mem-card">
-              <div className="mem-card-label">How to Earn Points</div>
+              <div className="mem-card-label">How to Earn</div>
+              <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 12px", lineHeight: 1.5 }}>
+                Credits are spendable (capped at 50/day). Reputation is permanent and unlocks status.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0 12px", fontSize: "0.75rem", fontWeight: 700, color: "var(--mute)", marginBottom: 6, paddingBottom: 6, borderBottom: "1px solid var(--rule)" }}>
+                <span>Action</span><span>Credits</span><span>Rep</span>
+              </div>
               <div className="mem-points-list">
                 {[
-                  ["Event RSVP", "+5 pts"],
-                  ["Event check-in", "+15 pts"],
-                  ["Refer a member", "+25 pts"],
-                  ["Newsletter comment", "+10 pts"],
-                  ["Newsletter reaction", "+2 pts"],
-                  ["Share a quote", "+10 pts"],
-                  ["Quote liked", "+1 pt"],
-                  ["Read a magazine article", "+5 pts"],
-                  ["Share a magazine article", "+5 pts"],
-                  ["Directory submission", "+25 pts"],
-                ].map(([action, pts]) => (
-                  <div key={action} className="mem-points-row">
+                  ["Post validated (5 reactions or 3 comments)", "+10 cr", "+5"],
+                  ["Hidden Gem or Food Review validated",         "+15 cr", "+10"],
+                  ["Event RSVP",                                  "+1 cr",  "+5"],
+                  ["Event check-in",                              "+2 cr",  "+15"],
+                  ["Refer a member",                              "+3 cr",  "+25"],
+                  ["Newsletter comment",                          "+1 cr",  "+10"],
+                  ["Share a quote",              "+1 cr",  "+10"],
+                  ["Quote liked by others",       "—",      "+1"],
+                  ["Read a magazine article",     "+1 cr",  "+5"],
+                  ["Share a magazine article",    "+1 cr",  "+5"],
+                  ["Directory entry submitted",   "+2 cr",  "+15"],
+                  ["Game completed",              "+1 cr",  "+5"],
+                ].map(([action, cr, rep]) => (
+                  <div key={action} className="mem-points-row" style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0 12px" }}>
                     <span>{action}</span>
-                    <span className="mem-points-val">{pts}</span>
+                    <span className="mem-points-val" style={{ color: "var(--ochre)" }}>{cr}</span>
+                    <span className="mem-points-val">{rep}</span>
                   </div>
                 ))}
               </div>
@@ -135,55 +149,22 @@ export default async function MemberPage() {
               </section>
             )}
 
-            {/* Chapter(s) */}
-            <section className="mem-card">
-              <div className="mem-card-label">
-                Your Chapter{user.secondaryChapter?.name ? "s" : ""}
-              </div>
-              <div className="mem-chapter-item">
-                <div className="mem-chapter-role">Primary</div>
-                <div className="mem-chapter-name">
-                  {user.primaryChapter?.name || "Not set"}
-                </div>
-              </div>
-              {user.secondaryChapter?.name && (
-                <div className="mem-chapter-item">
-                  <div className="mem-chapter-role">Secondary</div>
-                  <div className="mem-chapter-name">{user.secondaryChapter.name}</div>
-                </div>
-              )}
-            </section>
-
             {/* Quick links */}
-            <section className="mem-card mem-links-card">
-              <Link href="/member/collection" className="mem-link">
-                My Collection →
-              </Link>
-              <Link href="/member/settings" className="mem-link">
-                Account Settings →
-              </Link>
-              <Link href="/newsletter" className="mem-link">
-                Newsletters →
-              </Link>
-              <Link href="/events" className="mem-link">
-                Upcoming Events →
-              </Link>
-              <Link href="/magazine" className="mem-link">
-                Magazine →
-              </Link>
-              <Link href="/directory" className="mem-link">
-                Culture Directory →
-              </Link>
-              <Link href="/quotes" className="mem-link">
-                Quotes Archive →
-              </Link>
-              <Link
-                href="/api/auth/signout"
-                className="mem-link mem-link--muted"
-              >
-                Sign out
-              </Link>
-            </section>
+            <MemberNavSelect items={[
+              { label: "My Wallet",        href: "/member/wallet" },
+              { label: "My Coupons",       href: "/member/coupons" },
+              { label: "Notifications",    href: "/member/notifications" },
+              { label: "My Analytics",     href: "/member/analytics" },
+              { label: "Browse Perks",     href: "/connect/perks" },
+              { label: "My Collection",    href: "/member/collection" },
+              { label: "Account Settings", href: "/member/settings" },
+              { label: "Newsletters",      href: "/newsletter" },
+              { label: "Upcoming Events",  href: "/events" },
+              { label: "Magazine",         href: "/magazine" },
+              { label: "Culture Directory",href: "/directory" },
+              { label: "Quotes Archive",   href: "/quotes" },
+              { label: "Sign out",         href: "/api/auth/signout", muted: true },
+            ]} />
           </div>
         </div>
       </div>

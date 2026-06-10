@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { editionFromCountry, isValidRegionalSlug } from './lib/editions'
 
+// Crawler UA patterns to rate-limit on edition pages (prevents cache bypass stampedes)
+const CRAWLER_RE = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebookexternalhit|twitterbot|linkedinbot|discordbot/i
+const crawlerHits = new Map<string, { count: number; resetAt: number }>()
+const CRAWLER_LIMIT = 10
+const CRAWLER_WINDOW_MS = 60_000
+
 /**
  * Moveee SEO Redirect Proxy
  *
@@ -15,21 +21,42 @@ import { editionFromCountry, isValidRegionalSlug } from './lib/editions'
 
 // ── WP Admin redirect cache ───────────────────────────────────
 const WP_REDIRECTS_URL = 'https://cms.themoveee.com/wp-json/culture/v1/redirects'
+const WP_REDIRECT_TTL = 900_000 // 15 minutes
 
 let _wpRedirects: Array<{ from: string; to: string; permanent: boolean }> = []
 let _wpCacheUntil = 0
+let _wpRefreshPromise: Promise<void> | null = null
 
 async function getWPRedirects() {
   if (Date.now() < _wpCacheUntil) return _wpRedirects
-  try {
-    const res = await fetch(WP_REDIRECTS_URL)
-    if (res.ok) {
-      _wpRedirects = await res.json()
-      _wpCacheUntil = Date.now() + 120_000
-    }
-  } catch {
-    // keep stale cache on network errors
+
+  // Mutex: only one in-flight refresh; all other callers get stale data
+  if (_wpRefreshPromise) {
+    if (_wpRedirects.length > 0) return _wpRedirects
+    await _wpRefreshPromise
+    return _wpRedirects
   }
+
+  _wpRefreshPromise = (async () => {
+    try {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 5000)
+      const res = await fetch(WP_REDIRECTS_URL, { signal: ctrl.signal })
+      clearTimeout(timer)
+      if (res.ok) {
+        _wpRedirects = await res.json()
+        _wpCacheUntil = Date.now() + WP_REDIRECT_TTL
+      }
+    } catch {
+      // keep stale cache; retry after a short cooldown
+      _wpCacheUntil = Date.now() + 60_000
+    } finally {
+      _wpRefreshPromise = null
+    }
+  })()
+
+  if (_wpRedirects.length > 0) return _wpRedirects
+  await _wpRefreshPromise
   return _wpRedirects
 }
 
@@ -98,17 +125,49 @@ const EDITION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Set x-country cookie on every request so CurrencyProvider can read it client-side
+  const country = request.headers.get('x-vercel-ip-country') || 'US'
+  const setCountryCookie = (res: NextResponse) => {
+    res.cookies.set('x-country', country, {
+      path: '/',
+      maxAge: 3600,
+      sameSite: 'lax',
+      httpOnly: false,
+    })
+    return res
+  }
+
   // ── Edition routing ──────────────────────────────────────────
   // When a user visits a regional path (/uk, /us, /africa), lock cookie
+  // and apply CDN cache headers + crawler rate limiting.
   const firstSeg = pathname.split('/')[1]
   if (isValidRegionalSlug(firstSeg)) {
-    const saved = request.cookies.get(EDITION_COOKIE)?.value
-    if (saved !== firstSeg) {
-      const res = NextResponse.next()
-      res.cookies.set(EDITION_COOKIE, firstSeg, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
-      return res
+    const ua = request.headers.get('user-agent') ?? ''
+    if (CRAWLER_RE.test(ua)) {
+      const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+      const key = `${ip}:${firstSeg}`
+      const now = Date.now()
+      const slot = crawlerHits.get(key)
+      if (!slot || now > slot.resetAt) {
+        crawlerHits.set(key, { count: 1, resetAt: now + CRAWLER_WINDOW_MS })
+      } else {
+        slot.count++
+        if (slot.count > CRAWLER_LIMIT) {
+          return new NextResponse('Too Many Requests', { status: 429, headers: { 'Retry-After': '60' } })
+        }
+      }
     }
-    return NextResponse.next()
+
+    const saved = request.cookies.get(EDITION_COOKIE)?.value
+    const res = saved !== firstSeg ? (() => {
+      const r = NextResponse.next()
+      r.cookies.set(EDITION_COOKIE, firstSeg, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
+      return r
+    })() : NextResponse.next()
+
+    // Tell Vercel CDN to cache edition pages and serve stale while revalidating
+    res.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    return setCountryCookie(res)
   }
 
   // On the exact homepage, geo-redirect first-time visitors to their edition
@@ -237,7 +296,7 @@ export async function proxy(request: NextRequest) {
     )
   }
 
-  return NextResponse.next()
+  return setCountryCookie(NextResponse.next())
 }
 
 export const config = {

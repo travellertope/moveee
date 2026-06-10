@@ -1,10 +1,9 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import HomepageContent from "@/components/HomepageContent";
 import type { Metadata } from "next";
+import "@/app/homepage.css";
 
-export const revalidate = 120;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "The Moveee — Best in African Culture",
@@ -45,9 +44,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const session = await getServerSession(authOptions);
-  const isLoggedIn = !!session?.user;
   const data = await fetchHomepageData(); // global edition — no tag filter
 
-  return <HomepageContent {...data} isLoggedIn={isLoggedIn} edition="global" />;
+  return <HomepageContent {...data} edition="global" />;
 }

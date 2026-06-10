@@ -260,14 +260,7 @@
   color: var(--mute);
   margin: 0;
 }
-.mco-member-chapter {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--ochre);
-  margin: 4px 0 0;
-}
+
 .mco-member-disciplines {
   display: flex;
   flex-wrap: wrap;

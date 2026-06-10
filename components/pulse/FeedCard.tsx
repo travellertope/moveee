@@ -8,10 +8,81 @@ import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
 import { decodeHtml } from "@/lib/decode-html";
 import SourcePreviewCard from "./SourcePreviewCard";
+
+function PollDisplay({ postId, options, expiresAt }: { postId?: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
+  const [voted, setVoted] = useState<number | null>(null);
+  const [pollOpts, setPollOpts] = useState(options);
+  const [voting, setVoting] = useState(false);
+
+  const expired = expiresAt ? new Date(expiresAt).getTime() < Date.now() : false;
+  const showResults = voted !== null || expired;
+  const totalVotes = pollOpts.reduce((s, o) => s + (o.votes ?? 0), 0);
+
+  async function vote(i: number) {
+    if (voting || voted !== null || expired || !postId) return;
+    setVoting(true);
+    try {
+      const res = await fetch("/api/community/poll-vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: Number(postId), option_index: i }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPollOpts(data.options);
+        setVoted(i);
+      }
+    } catch {}
+    setVoting(false);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "0.6rem" }}>
+      {pollOpts.map((opt, i) => {
+        const pct = showResults && totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() => vote(i)}
+            disabled={showResults || voting}
+            style={{
+              position: "relative",
+              background: showResults
+                ? `linear-gradient(to right, rgba(46,125,50,0.1) ${pct}%, transparent ${pct}%)`
+                : "#fff",
+              border: `1px solid ${voted === i ? "#2e7d32" : "#e0d8ce"}`,
+              borderRadius: "4px",
+              padding: "8px 12px",
+              textAlign: "left",
+              cursor: showResults ? "default" : "pointer",
+              fontSize: "0.82rem",
+              color: "#14110d",
+              fontFamily: "inherit",
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <span>{opt.text}</span>
+            {showResults && <span style={{ fontSize: "0.72rem", color: "#7a6f5c", fontWeight: 600 }}>{pct}%</span>}
+          </button>
+        );
+      })}
+      <div style={{ fontSize: "0.68rem", color: "#7a6f5c" }}>
+        {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
+        {expiresAt && !expired && ` · ends ${new Date(expiresAt).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
+        {expired && " · ended"}
+      </div>
+    </div>
+  );
+}
 import InternalLinkCard from "./InternalLinkCard";
 
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
 const CommunityDetailModal = dynamic(() => import("./CommunityDetailModal"), { ssr: false });
+const HappeningDetailModal = dynamic(() => import("./HappeningDetailModal"), { ssr: false });
+const DirectoryDetailModal = dynamic(() => import("./DirectoryDetailModal"), { ssr: false });
+const QuoteDetailModal = dynamic(() => import("./QuoteDetailModal"), { ssr: false });
 
 /** Remove the last URL from text when a link preview will be shown for it. */
 function stripTrailingUrl(text: string, sourceUrl?: string): string {
@@ -114,54 +185,69 @@ export default function FeedCard({
   item,
   onTagClick,
   onHashtagClick,
+  interestMatch,
 }: {
   item: FeedItem;
   onTagClick?: (tag: string) => void;
   onHashtagClick?: (hashtag: string) => void;
+  interestMatch?: boolean;
 }) {
   const typeMeta = TYPE_BADGE[item.type] ?? TYPE_BADGE.pulse;
 
   // ── Quote card ──
   if (item.type === "quote") {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [modalOpen, setModalOpen] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const closeModal = useCallback(() => setModalOpen(false), []);
+
     return (
-      <article style={{
-        background: "#fff",
-        borderBottom: "1px solid #e8e2d8",
-        overflow: "hidden",
-        minWidth: 0,
-        padding: "1.1rem 1.25rem",
-      }}>
-        <div style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start" }}>
-          <span style={{ color: "#d8c9b0", fontFamily: "serif", fontSize: "2rem", lineHeight: 0.9, flexShrink: 0, marginTop: "0.2rem" }}>"</span>
-          <div style={{ flex: 1 }}>
-            <p style={{
-              color: "#14110d",
-              fontFamily: "var(--font-fraunces), serif",
-              fontSize: "0.95rem",
-              lineHeight: 1.55,
-              fontStyle: "italic",
-              marginBottom: "0.6rem",
-            }}>
-              {item.title}
-            </p>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <Badge {...typeMeta} />
-              {item.quoteAuthor && <span style={{ color: "#c5491f", fontSize: "0.75rem", fontWeight: 600 }}>{item.quoteAuthor}</span>}
-              {item.quoteSource && <span style={{ color: "#7a6f5c", fontSize: "0.72rem" }}>· {item.quoteSource}</span>}
-              <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
-              <Link
-                href={item.href}
-                style={{ display: "flex", alignItems: "center", color: "#7a6f5c", textDecoration: "none", flexShrink: 0 }}
-                aria-label="View quote"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-              </Link>
+      <>
+        <article
+          onClick={() => setModalOpen(true)}
+          style={{
+            background: "#fff",
+            borderBottom: "1px solid #e8e2d8",
+            overflow: "hidden",
+            minWidth: 0,
+            padding: "1.1rem 1.25rem",
+            cursor: "pointer",
+          }}
+        >
+          <div style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start" }}>
+            <span style={{ color: "#d8c9b0", fontFamily: "serif", fontSize: "2rem", lineHeight: 0.9, flexShrink: 0, marginTop: "0.2rem" }}>"</span>
+            <div style={{ flex: 1 }}>
+              <p style={{
+                color: "#14110d",
+                fontFamily: "var(--font-fraunces), serif",
+                fontSize: "0.95rem",
+                lineHeight: 1.55,
+                fontStyle: "italic",
+                marginBottom: "0.6rem",
+              }}>
+                {item.title}
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Badge {...typeMeta} />
+                {item.quoteAuthor && <span style={{ color: "#c5491f", fontSize: "0.75rem", fontWeight: 600 }}>{item.quoteAuthor}</span>}
+                {item.quoteSource && <span style={{ color: "#7a6f5c", fontSize: "0.72rem" }}>· {item.quoteSource}</span>}
+                <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+                <Link
+                  href={item.href}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ display: "flex", alignItems: "center", color: "#7a6f5c", textDecoration: "none", flexShrink: 0 }}
+                  aria-label="View quote"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </article>
+        </article>
+        {modalOpen && <QuoteDetailModal item={item} onClose={closeModal} />}
+      </>
     );
   }
 
@@ -207,26 +293,50 @@ export default function FeedCard({
           }}
         >
           {/* Avatar */}
-          <div style={{
-            width: "34px", height: "34px", borderRadius: "50%",
-            background: "#edf7ed", border: "1px solid #c8e6c9",
-            color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0, overflow: "hidden",
-          }}>
-            {item.communityAuthorAvatar ? (
-              <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              (item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
-            )}
-          </div>
+          {item.communityAuthorUsername ? (
+            <Link href={`/connect/${item.communityAuthorUsername}`} onClick={e => e.stopPropagation()} style={{ textDecoration: "none", flexShrink: 0 }}>
+              <div style={{
+                width: "34px", height: "34px", borderRadius: "50%",
+                background: "#edf7ed", border: "1px solid #c8e6c9",
+                color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                overflow: "hidden",
+              }}>
+                {item.communityAuthorAvatar ? (
+                  <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  (item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
+                )}
+              </div>
+            </Link>
+          ) : (
+            <div style={{
+              width: "34px", height: "34px", borderRadius: "50%",
+              background: "#edf7ed", border: "1px solid #c8e6c9",
+              color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0, overflow: "hidden",
+            }}>
+              {item.communityAuthorAvatar ? (
+                <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                (item.communityAuthor ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
+              )}
+            </div>
+          )}
 
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Header */}
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
-              <span style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600 }}>
-                {item.communityAuthor || "Community Member"}
-              </span>
+              {item.communityAuthorUsername ? (
+                <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }} onClick={e => e.stopPropagation()}>
+                  {item.communityAuthor || "Community Member"}
+                </Link>
+              ) : (
+                <span style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600 }}>
+                  {item.communityAuthor || "Community Member"}
+                </span>
+              )}
               {item.communityTier === "patron" && (
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace",
@@ -264,6 +374,21 @@ export default function FeedCard({
                   {item.communityTag}
                 </button>
               )}
+              {interestMatch && (
+                <span title="Matches your interests" style={{
+                  fontSize: "0.55rem",
+                  fontWeight: 700,
+                  letterSpacing: ".08em",
+                  textTransform: "uppercase",
+                  color: "var(--ochre, #b38238)",
+                  border: "1px solid rgba(179,130,56,.4)",
+                  borderRadius: 2,
+                  padding: "0.1rem 0.35rem",
+                  flexShrink: 0,
+                }}>
+                  ✦ For You
+                </span>
+              )}
             </div>
 
             {/* Text — clicking opens modal */}
@@ -271,6 +396,44 @@ export default function FeedCard({
               onClick={() => setModalOpen(true)}
               style={{ cursor: "pointer" }}
             >
+              {/* Template-specific header badges */}
+              {item.templateType && item.templateType !== "post" && (
+                <div style={{ marginBottom: "0.4rem" }}>
+                  {item.templateType === "hidden-gem" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b38238", background: "rgba(179,130,56,0.1)", padding: "2px 6px", borderRadius: "2px" }}>
+                      Hidden Gem {item.starRating ? "★".repeat(item.starRating) : ""}
+                    </span>
+                  )}
+                  {item.templateType === "cultural-take" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6b48a8", background: "rgba(107,72,168,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                      Take{item.locationName ? ` · ${item.locationName}` : ""}
+                    </span>
+                  )}
+                  {item.templateType === "food-review" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#c5491f", background: "rgba(197,73,31,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                      Food Review {item.foodDishName ? `· ${item.foodDishName}` : ""}
+                    </span>
+                  )}
+                  {item.templateType === "creative-showcase" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#1976d2", background: "rgba(25,118,210,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                      Creative Showcase
+                    </span>
+                  )}
+                  {item.templateType === "itinerary" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2e7d32", background: "rgba(46,125,50,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                      Weekend Route
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Location badge */}
+              {item.locationName && (
+                <div style={{ fontSize: "0.72rem", color: "#7a6f5c", marginBottom: "0.3rem", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span>📍</span> {item.locationName}
+                </div>
+              )}
+
               <div style={{
                 color: "#14110d",
                 fontSize: "0.9rem",
@@ -281,18 +444,87 @@ export default function FeedCard({
               </div>
             </div>
 
-            {/* Image */}
-            {item.image && (
-              <>
-                <div
-                  onClick={() => setLightbox(item.image!)}
-                  style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8", cursor: "zoom-in" }}
-                >
-                  <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.15s" }} loading="lazy" />
-                </div>
-                {lightbox && <ImageLightbox src={lightbox} alt={item.title} onClose={closeLightbox} />}
-              </>
+            {/* Food review ratings */}
+            {item.templateType === "food-review" && item.foodRatingTaste && (
+              <div style={{ display: "flex", gap: "16px", marginBottom: "0.5rem", fontSize: "0.72rem", color: "#7a6f5c" }}>
+                <span>Taste {"★".repeat(item.foodRatingTaste)}{"☆".repeat(5 - item.foodRatingTaste)}</span>
+                {item.foodRatingValue && <span>Value {"★".repeat(item.foodRatingValue)}{"☆".repeat(5 - item.foodRatingValue)}</span>}
+                {item.foodRatingVibe && <span>Vibe {"★".repeat(item.foodRatingVibe)}{"☆".repeat(5 - item.foodRatingVibe)}</span>}
+              </div>
             )}
+
+            {/* Poll inline */}
+            {item.templateType === "poll" && item.pollOptions && (
+              <PollDisplay postId={item.wpId} options={item.pollOptions} expiresAt={item.pollExpiresAt} />
+            )}
+
+            {/* Gallery carousel (creative-showcase, hidden-gem, food-review) */}
+            {item.galleryImages && item.galleryImages.length >= 1 && (
+              <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.6rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
+                {item.galleryImages.map((img: string, i: number) => (
+                  <img
+                    key={i}
+                    src={img}
+                    alt=""
+                    onClick={() => setLightbox(img)}
+                    style={{ height: "200px", objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }}
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Video embed */}
+            {item.videoUrl && (
+              <div style={{ marginBottom: "0.6rem" }}>
+                {item.videoUrl.includes("youtube.com") || item.videoUrl.includes("youtu.be") ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${item.videoUrl.match(/(?:v=|youtu\.be\/)([^&\s]+)/)?.[1] ?? ""}`}
+                    style={{ width: "100%", aspectRatio: "16/9", border: "none", borderRadius: "6px" }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media"
+                    allowFullScreen
+                  />
+                ) : (
+                  <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#b38238", fontSize: "0.78rem" }}>
+                    Watch video →
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Itinerary stops */}
+            {item.templateType === "itinerary" && item.itineraryStops && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "0.6rem" }}>
+                {item.itineraryStops.map((stop: any, i: number) => (
+                  <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                    <div style={{
+                      width: "22px", height: "22px", borderRadius: "50%",
+                      background: "var(--ochre, #b38238)", color: "#fff",
+                      fontSize: "0.65rem", fontWeight: 700,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0, marginTop: "1px",
+                    }}>
+                      {i + 1}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: "0.82rem", color: "#14110d" }}>{stop.name}</div>
+                      {stop.note && <div style={{ fontSize: "0.75rem", color: "#7a6f5c", lineHeight: 1.4 }}>{stop.note}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Single image — only when no gallery */}
+            {item.image && !item.galleryImages?.length && (
+              <div
+                onClick={() => setLightbox(item.image!)}
+                style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid #e8e2d8", cursor: "zoom-in" }}
+              >
+                <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.15s" }} loading="lazy" />
+              </div>
+            )}
+            {lightbox && <ImageLightbox src={lightbox} alt={item.title} onClose={closeLightbox} />}
 
             {/* Link preview card (only if no image) */}
             {!item.image && item.sourceUrl && (
@@ -599,8 +831,13 @@ export default function FeedCard({
     );
   }
 
-  // ── Directory card — inline excerpt + internal link card ──
+  // ── Directory card — inline excerpt + detail modal ──
   if (item.type === "directory") {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [modalOpen, setModalOpen] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const closeModal = useCallback(() => setModalOpen(false), []);
+
     const CLAMP_CHARS = 280;
     const text = decodeHtml(item.excerpt ?? "");
     const isLong = text.length > CLAMP_CHARS;
@@ -608,117 +845,167 @@ export default function FeedCard({
     const typeMeta = TYPE_BADGE.directory;
 
     return (
-      <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
-        {/* Badges row */}
-        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
-          <Badge {...typeMeta} />
-          {item.entryType && (
-            <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
-              {item.entryType}
-            </span>
-          )}
-          <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
-        </div>
+      <>
+        <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
+          {/* Badges row */}
+          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
+            <Badge {...typeMeta} />
+            {item.entryType && (
+              <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
+                {item.entryType}
+              </span>
+            )}
+            <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+          </div>
 
-        {/* Body — clicking navigates to the directory entry */}
-        <Link href={item.href} style={{ textDecoration: "none", display: "block" }}>
-          <h3 style={{
-            color: "#14110d",
-            fontFamily: "var(--font-fraunces), serif",
-            fontSize: "0.97rem",
-            fontWeight: 700,
-            lineHeight: 1.35,
-            marginBottom: "0.5rem",
-          }}>
-            {item.title}
-          </h3>
-          {displayText && (
-            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
-              {displayText}
-            </p>
-          )}
-          {isLong && (
-            <span style={{ color: "#085041", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
-              Read more →
-            </span>
-          )}
-        </Link>
+          {/* Body — clicking opens modal */}
+          <div onClick={() => setModalOpen(true)} style={{ cursor: "pointer" }}>
+            <h3 style={{
+              color: "#14110d",
+              fontFamily: "var(--font-fraunces), serif",
+              fontSize: "0.97rem",
+              fontWeight: 700,
+              lineHeight: 1.35,
+              marginBottom: "0.5rem",
+            }}>
+              {item.title}
+            </h3>
+            {displayText && (
+              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+                {displayText}
+              </p>
+            )}
+            {isLong && (
+              <span style={{ color: "#085041", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+                Read more →
+              </span>
+            )}
+          </div>
 
-        {/* Internal link card */}
-        <InternalLinkCard
-          href={item.href}
-          label="Culture Directory"
-          title={item.title}
-          description={item.excerpt}
-          image={item.image}
-        />
-      </article>
+          {/* Internal link card */}
+          <InternalLinkCard
+            href={item.href}
+            label="Culture Directory"
+            title={item.title}
+            description={item.excerpt}
+            image={item.image}
+          />
+        </article>
+        {modalOpen && <DirectoryDetailModal item={item} onClose={closeModal} />}
+      </>
     );
   }
 
-  // ── Happening card — inline description + internal link card ──
+  // ── Happening card — inline description + detail modal ──
   if (item.type === "happening") {
-    const CLAMP_CHARS = 280;
-    const text = decodeHtml(item.excerpt ?? "");
-    const isLong = text.length > CLAMP_CHARS;
-    const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [modalOpen, setModalOpen] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const closeModal = useCallback(() => setModalOpen(false), []);
+
+    const CLAMP_LINES = 5;
+    const hasHtmlBody = !!item.body;
+    const plainText = hasHtmlBody ? item.body!.replace(/<[^>]+>/g, "") : (item.excerpt ?? "");
+    const isLong = plainText.length > 280;
     const typeMeta = TYPE_BADGE.happening;
 
     const eventDateStr = item.eventDate
       ? new Date(item.eventDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
       : null;
+    const endDateStr = item.endDate
+      ? new Date(item.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+      : null;
 
     return (
-      <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
-        {/* Badges row */}
-        <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
-          <Badge {...typeMeta} />
-          {eventDateStr && (
-            <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.03em" }}>
-              {eventDateStr}
-            </span>
-          )}
-          {item.location && (
-            <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.04em" }}>
-              · {item.location}
-            </span>
-          )}
-          <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
-        </div>
+      <>
+        <article style={{ background: "#fff", borderBottom: "1px solid #e8e2d8", padding: "1rem 1.25rem", overflow: "hidden", minWidth: 0 }}>
+          {/* Badges row */}
+          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
+            <Badge {...typeMeta} />
+            {item.eventCategory && (
+              <span style={{ fontSize: "0.58rem", color: "#b38238", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                {item.eventCategory}
+              </span>
+            )}
+            {eventDateStr && (
+              <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.03em" }}>
+                {eventDateStr}{endDateStr ? ` — ${endDateStr}` : ""}{item.openingHours ? ` · ${item.openingHours}` : ""}
+              </span>
+            )}
+            {(item.location || item.city) && (
+              <span style={{ fontSize: "0.58rem", color: "#7a6f5c", letterSpacing: "0.04em" }}>
+                · {[item.location, item.city].filter(Boolean).join(", ")}
+              </span>
+            )}
+            {item.organiserName && (
+              item.organiserSlug ? (
+                <Link href={`/directory/${item.organiserSlug}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "0.58rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.04em", textDecoration: "none" }}>
+                  · {item.organiserName}
+                </Link>
+              ) : (
+                <span style={{ fontSize: "0.58rem", color: "#3c3489", fontWeight: 600, letterSpacing: "0.04em" }}>
+                  · {item.organiserName}
+                </span>
+              )
+            )}
+            <span style={{ marginLeft: "auto", color: "#bbb", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
+          </div>
 
-        {/* Body */}
-        <Link href={item.href} style={{ textDecoration: "none", display: "block" }}>
-          <h3 style={{
-            color: "#14110d",
-            fontFamily: "var(--font-fraunces), serif",
-            fontSize: "0.97rem",
-            fontWeight: 700,
-            lineHeight: 1.35,
-            marginBottom: "0.5rem",
-          }}>
-            {decodeHtml(item.title)}
-          </h3>
-          {displayText && (
-            <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
-              {displayText}
-            </p>
-          )}
-          {isLong && (
-            <span style={{ color: "#3c3489", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
-              Read more →
-            </span>
-          )}
-        </Link>
+          {/* Body — clicking opens modal */}
+          <div onClick={() => setModalOpen(true)} style={{ cursor: "pointer" }}>
+            <h3 style={{
+              color: "#14110d",
+              fontFamily: "var(--font-fraunces), serif",
+              fontSize: "0.97rem",
+              fontWeight: 700,
+              lineHeight: 1.35,
+              marginBottom: "0.5rem",
+            }}>
+              {decodeHtml(item.title)}
+            </h3>
+            {hasHtmlBody ? (
+              <div
+                className="happening-body"
+                dangerouslySetInnerHTML={{ __html: item.body! }}
+                style={{
+                  color: "#3a342b",
+                  fontSize: "0.88rem",
+                  lineHeight: 1.6,
+                  overflow: "hidden",
+                  display: "-webkit-box",
+                  WebkitBoxOrient: "vertical",
+                  WebkitLineClamp: CLAMP_LINES,
+                }}
+              />
+            ) : plainText ? (
+              <p style={{ color: "#3a342b", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+                {decodeHtml(plainText)}
+              </p>
+            ) : null}
+            {isLong && (
+              <span style={{ color: "#3c3489", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+                Read more →
+              </span>
+            )}
+            {item.admission && (
+              <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "#7a6f5c", fontWeight: 600 }}>
+                {item.admission}
+              </div>
+            )}
+          </div>
 
-        {/* Internal link card */}
-        <InternalLinkCard
-          href={item.href}
-          label="Moveee Happenings"
-          title={decodeHtml(item.title)}
-          description={item.excerpt}
-          image={item.image}
-        />
-      </article>
+          {/* Internal link card with image thumbnail */}
+          <InternalLinkCard
+            href={item.href}
+            label="Moveee Happenings"
+            title={decodeHtml(item.title)}
+            description={item.excerpt}
+            image={item.image}
+          />
+        </article>
+        {modalOpen && <HappeningDetailModal item={item} onClose={closeModal} />}
+        <style>{`.happening-body p { margin: 0 0 0.6em; } .happening-body p:last-child { margin-bottom: 0; }`}</style>
+      </>
     );
   }
 

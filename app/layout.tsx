@@ -4,7 +4,6 @@ import "./globals.css";
 import "./homepage.css";
 import "./editorial.css";
 import "./not-found.css";
-import "./newsletter.css";
 import "./legal.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";

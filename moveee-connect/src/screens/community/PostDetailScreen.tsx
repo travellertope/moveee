@@ -8,7 +8,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useComments } from "../../features/community/useComments";
 import { useAuthStore } from "../../auth/authStore";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import type { FeedItem } from "../../types";
 
 const PLACEHOLDER_AVATAR = "https://cms.themoveee.com/wp-content/uploads/placeholder-avatar.png";
@@ -49,7 +49,7 @@ function ReactionRow({ item }: { item: FeedItem }) {
     setMine(isRemoving ? null : key);
     setPending(true);
     try {
-      await api.post(`${CULTURE_API}/community/react`, { post_id: Number(item.wpId), type: key });
+      await api.post(`${MOBILE_API}/community/react`, { post_id: Number(item.wpId), type: key });
     } catch {
       setCounts(prevCounts);
       setMine(prevMine);

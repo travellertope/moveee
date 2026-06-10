@@ -9,19 +9,39 @@ const ALL_CITIES = [
   "Nairobi", "Paris", "Johannesburg", "Toronto",
 ];
 
-type CityResult = { found: number; submitted: number; skipped: number; errors: string[] };
-type RunResult  = { success?: boolean; submitted?: number; cities?: string[]; detail?: Record<string, CityResult>; error?: string };
+type CityResult    = { found: number; submitted: number; skipped: number; errors: string[] };
+type RunResult     = { success?: boolean; submitted?: number; cities?: string[]; detail?: Record<string, CityResult>; error?: string };
+type BackfillResult = { success?: boolean; patched?: number; skipped?: number; total?: number; errors?: string[]; error?: string };
 
 export default function EventsAdminPage() {
   const { data: session, status } = useSession();
   const [selected, setSelected]   = useState<string[]>(ALL_CITIES);
   const [loading, setLoading]     = useState(false);
   const [result, setResult]       = useState<RunResult | null>(null);
+  const [bfLoading, setBfLoading] = useState(false);
+  const [bfResult, setBfResult]   = useState<BackfillResult | null>(null);
 
   const toggle = (city: string) =>
     setSelected((prev) =>
       prev.includes(city) ? prev.filter((c) => c !== city) : [...prev, city]
     );
+
+  const handleBackfill = async () => {
+    setBfLoading(true);
+    setBfResult(null);
+    try {
+      const res = await fetch("/api/events/backfill-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ perPage: 50 }),
+      });
+      setBfResult(await res.json());
+    } catch (err: any) {
+      setBfResult({ error: `Network error: ${err?.message}` });
+    } finally {
+      setBfLoading(false);
+    }
+  };
 
   const handleRun = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +91,35 @@ export default function EventsAdminPage() {
         )}
 
         {status === "authenticated" && (
+          <>
+          {/* ── Backfill Images ── */}
+          <div style={{ marginBottom: "2.5rem", borderBottom: "1px solid #1e1e1e", paddingBottom: "2.5rem" }}>
+            <h2 style={{ ...headingStyle, fontSize: "1rem", marginBottom: "0.3rem" }}>Backfill Event Images</h2>
+            <p style={{ color: "#555", fontSize: "0.78rem", marginBottom: "1rem" }}>
+              Scrape OG images from attribution URLs for events that currently have no image. Processes up to 50 events per run.
+            </p>
+            <button onClick={handleBackfill} disabled={bfLoading} style={btnStyle(bfLoading)}>
+              {bfLoading ? "Scraping OG images…" : "Run Image Backfill"}
+            </button>
+            {bfResult && (
+              <div style={{ ...resultBox(!!bfResult.error), marginTop: "0.75rem" }}>
+                {bfResult.error ? (
+                  <p style={{ color: "#e05a4e", margin: 0 }}>Error: {bfResult.error}</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", fontSize: "0.82rem" }}>
+                    <p style={{ color: "#4caf77", margin: 0, fontWeight: 600 }}>
+                      {bfResult.patched} image{bfResult.patched === 1 ? "" : "s"} added · {bfResult.skipped} skipped · {bfResult.total} total missing
+                    </p>
+                    {bfResult.errors?.slice(0, 5).map((e, i) => (
+                      <p key={i} style={{ color: "#666", fontSize: "0.68rem", margin: 0, fontFamily: "monospace" }}>{e}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── Seed Events ── */}
           <form onSubmit={handleRun} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
             <p style={{ color: "#444", fontSize: "0.72rem" }}>
               Signed in as <span style={{ color: "#D4A847" }}>{session.user?.email}</span>
@@ -151,6 +200,7 @@ export default function EventsAdminPage() {
               </div>
             )}
           </form>
+          </>
         )}
       </div>
     </div>

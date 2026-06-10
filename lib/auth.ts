@@ -21,9 +21,14 @@ export interface CultureUser {
   occupation: string;
   // Membership
   tier: "citizen" | "patron";
-  primaryChapter: { id: number; name: string };
-  secondaryChapter: { id: number; name: string };
-  // Gamification
+  // Interests (Phase 1)
+  interests: string[];
+  // Gamification — Phase 2
+  credits: number;
+  reputation: number;
+  reputationTier: string;
+  dailyCreditsRemaining: number;
+  // Legacy (mirrors reputation for backwards compat)
   points: number;
   badges: string[];
   referralCode: string;
@@ -34,6 +39,10 @@ export interface CultureUser {
   vendorSlug: string;
   // Profile photo
   avatarUrl: string;
+  // Passkeys (Phase 7)
+  hasPasskey: boolean;
+  passkeyCount: number;
+  creditsEscrowed: number;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -45,6 +54,55 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        // Passkey login: exchange short-lived token issued after WebAuthn verification.
+        if ((credentials as any)?.passkeyToken) {
+          try {
+            const API_SECRET = process.env.CULTURE_API_SECRET ?? "";
+            const res = await fetch(`${WP_URL}/wp-json/culture/v1/passkey/exchange-token`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${API_SECRET}` },
+              body: JSON.stringify({ passkey_token: (credentials as any).passkeyToken }),
+              cache: "no-store",
+            });
+            if (!res.ok) return null;
+            const data = await res.json();
+            return {
+              id: String(data.id),
+              name: data.display_name,
+              email: data.email,
+              username: data.username,
+              phone: data.phone ?? "",
+              whatsapp: data.whatsapp ?? "",
+              gender: data.gender ?? "",
+              dateOfBirth: data.date_of_birth ?? "",
+              nationality: data.nationality ?? "",
+              countryOfResidence: data.country_of_residence ?? "",
+              city: data.city ?? "",
+              occupation: data.occupation ?? "",
+              registeredAt: data.registered_at ?? 0,
+              tier: data.tier,
+              interests: data.interests ?? [],
+              credits: data.credits ?? 0,
+              reputation: data.reputation ?? data.points ?? 0,
+              reputationTier: data.reputation_tier ?? "member",
+              dailyCreditsRemaining: data.daily_credits_remaining ?? 50,
+              points: data.points ?? 0,
+              badges: data.badges ?? [],
+              referralCode: data.referral_code ?? "",
+              referralCount: data.referral_count ?? 0,
+              visual_downloads_today: data.visual_downloads_today ?? 0,
+              isVendor: data.is_vendor ?? false,
+              vendorSlug: data.vendor_slug ?? "",
+              avatarUrl: data.avatar_url ?? "",
+              hasPasskey: data.has_passkey ?? true,
+              passkeyCount: data.passkey_count ?? 1,
+              creditsEscrowed: data.credits_escrowed ?? 0,
+            };
+          } catch {
+            return null;
+          }
+        }
+
         if (!credentials?.username || !credentials?.password) return null;
 
         try {
@@ -77,9 +135,12 @@ export const authOptions: NextAuthOptions = {
             occupation: data.occupation ?? "",
             registeredAt: data.registered_at ?? 0,
             tier: data.tier,
-            primaryChapter: data.primary_chapter,
-            secondaryChapter: data.secondary_chapter,
-            points: data.points,
+            interests: data.interests ?? [],
+            credits: data.credits ?? 0,
+            reputation: data.reputation ?? data.points ?? 0,
+            reputationTier: data.reputation_tier ?? "member",
+            dailyCreditsRemaining: data.daily_credits_remaining ?? 50,
+            points: data.points ?? 0,
             badges: data.badges ?? [],
             referralCode: data.referral_code ?? "",
             referralCount: data.referral_count ?? 0,
@@ -87,6 +148,9 @@ export const authOptions: NextAuthOptions = {
             isVendor: data.is_vendor ?? false,
             vendorSlug: data.vendor_slug ?? "",
             avatarUrl: data.avatar_url ?? "",
+            hasPasskey: data.has_passkey ?? false,
+            passkeyCount: data.passkey_count ?? 0,
+            creditsEscrowed: data.credits_escrowed ?? 0,
           };
         } catch {
           return null;
@@ -112,9 +176,12 @@ export const authOptions: NextAuthOptions = {
         token.city = u.city;
         token.occupation = u.occupation;
         token.tier = u.tier;
-        token.primaryChapter = u.primaryChapter;
-        token.secondaryChapter = u.secondaryChapter;
-        token.points = u.points;
+        token.interests = u.interests ?? [];
+        token.credits = u.credits ?? 0;
+        token.reputation = u.reputation ?? u.points ?? 0;
+        token.reputationTier = u.reputationTier ?? "member";
+        token.dailyCreditsRemaining = u.dailyCreditsRemaining ?? 50;
+        token.points = u.points ?? 0;
         token.badges = u.badges;
         token.referralCode = u.referralCode;
         token.referralCount = u.referralCount;
@@ -122,12 +189,23 @@ export const authOptions: NextAuthOptions = {
         token.isVendor = u.isVendor ?? false;
         token.vendorSlug = u.vendorSlug ?? "";
         token.avatarUrl = u.avatarUrl ?? "";
+        token.hasPasskey = u.hasPasskey ?? false;
+        token.passkeyCount = u.passkeyCount ?? 0;
+        token.creditsEscrowed = u.creditsEscrowed ?? 0;
       }
 
       if (trigger === "update" && updatePayload) {
-        if (updatePayload.isVendor   !== undefined) token.isVendor   = updatePayload.isVendor;
-        if (updatePayload.vendorSlug !== undefined) token.vendorSlug = updatePayload.vendorSlug;
-        if (updatePayload.avatarUrl  !== undefined) token.avatarUrl  = updatePayload.avatarUrl;
+        if (updatePayload.isVendor             !== undefined) token.isVendor             = updatePayload.isVendor;
+        if (updatePayload.vendorSlug           !== undefined) token.vendorSlug           = updatePayload.vendorSlug;
+        if (updatePayload.avatarUrl            !== undefined) token.avatarUrl            = updatePayload.avatarUrl;
+        if (updatePayload.interests            !== undefined) token.interests            = updatePayload.interests;
+        if (updatePayload.credits              !== undefined) token.credits              = updatePayload.credits;
+        if (updatePayload.reputation           !== undefined) token.reputation           = updatePayload.reputation;
+        if (updatePayload.reputationTier       !== undefined) token.reputationTier       = updatePayload.reputationTier;
+        if (updatePayload.dailyCreditsRemaining !== undefined) token.dailyCreditsRemaining = updatePayload.dailyCreditsRemaining;
+        if (updatePayload.hasPasskey           !== undefined) token.hasPasskey           = updatePayload.hasPasskey;
+        if (updatePayload.passkeyCount         !== undefined) token.passkeyCount         = updatePayload.passkeyCount;
+        if (updatePayload.creditsEscrowed      !== undefined) token.creditsEscrowed      = updatePayload.creditsEscrowed;
       }
 
       return token;
@@ -147,9 +225,12 @@ export const authOptions: NextAuthOptions = {
         s.city = token.city;
         s.occupation = token.occupation;
         s.tier = token.tier;
-        s.primaryChapter = token.primaryChapter;
-        s.secondaryChapter = token.secondaryChapter;
-        s.points = token.points;
+        s.interests = token.interests ?? [];
+        s.credits = token.credits ?? 0;
+        s.reputation = token.reputation ?? 0;
+        s.reputationTier = token.reputationTier ?? "member";
+        s.dailyCreditsRemaining = token.dailyCreditsRemaining ?? 50;
+        s.points = token.points ?? 0;
         s.badges = token.badges;
         s.referralCode = token.referralCode;
         s.referralCount = token.referralCount;
@@ -157,6 +238,9 @@ export const authOptions: NextAuthOptions = {
         s.isVendor = token.isVendor ?? false;
         s.vendorSlug = token.vendorSlug ?? "";
         s.avatarUrl = token.avatarUrl ?? "";
+        s.hasPasskey = token.hasPasskey ?? false;
+        s.passkeyCount = token.passkeyCount ?? 0;
+        s.creditsEscrowed = token.creditsEscrowed ?? 0;
       }
       return session;
     },

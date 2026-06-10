@@ -4,6 +4,7 @@ import { useState, FormEvent, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { startAuthentication } from "@simplewebauthn/browser";
 
 function LoginForm() {
   const router = useRouter();
@@ -15,6 +16,44 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
+
+  async function handlePasskeySignIn() {
+    setPasskeyLoading(true);
+    setError("");
+    try {
+      const optRes = await fetch("/api/auth/passkey/login-options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!optRes.ok) throw new Error("Could not get passkey options.");
+      const options = await optRes.json();
+
+      const assResp = await startAuthentication({ optionsJSON: options });
+      const verRes = await fetch("/api/auth/passkey/login-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...assResp, _challenge_key: options._challenge_key }),
+      });
+      const verData = await verRes.json();
+      if (!verRes.ok) throw new Error(verData.error ?? "Passkey sign-in failed.");
+
+      const result = await signIn("credentials", {
+        passkeyToken: verData.passkey_token,
+        redirect: false,
+      });
+      if (result?.error) throw new Error("Sign-in failed after passkey verification.");
+      router.push(callbackUrl);
+      router.refresh();
+    } catch (err: any) {
+      if (err?.name !== "NotAllowedError") {
+        setError(err.message ?? "Passkey sign-in failed. Try password instead.");
+      }
+    } finally {
+      setPasskeyLoading(false);
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -45,7 +84,7 @@ function LoginForm() {
         <p style={styles.subheading}>
           {isNewMember
             ? "Your account is ready. Sign in to access your dashboard and member perks."
-            : "Welcome back. Sign in to access your chapter and member perks."}
+            : "Welcome back. Sign in to access your community and member perks."}
         </p>
 
         <form onSubmit={handleSubmit} noValidate>
@@ -92,7 +131,39 @@ function LoginForm() {
           </button>
         </form>
 
-        <p style={{ ...styles.footer, marginTop: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0 4px" }}>
+          <div style={{ flex: 1, height: 1, background: "rgba(42,36,28,.12)" }} />
+          <span style={{ fontSize: 12, color: "#7a6f5c" }}>or</span>
+          <div style={{ flex: 1, height: 1, background: "rgba(42,36,28,.12)" }} />
+        </div>
+        <button
+          type="button"
+          onClick={handlePasskeySignIn}
+          disabled={passkeyLoading || loading}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            width: "100%",
+            padding: "11px 24px",
+            background: "transparent",
+            color: "#14110d",
+            border: "1px solid rgba(42,36,28,.25)",
+            borderRadius: 3,
+            fontSize: 13,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            cursor: passkeyLoading ? "not-allowed" : "pointer",
+            fontFamily: "inherit",
+            opacity: passkeyLoading ? 0.7 : 1,
+          }}
+        >
+          <span style={{ fontSize: 16 }}>🔑</span>
+          {passkeyLoading ? "Waiting for device…" : "Sign in with Passkey"}
+        </button>
+
+        <p style={{ ...styles.footer, marginTop: 16 }}>
           <Link href="/forgot-password" style={styles.link}>
             Forgot your password?
           </Link>

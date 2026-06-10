@@ -332,27 +332,39 @@
 }
 .mem-upgrade-btn:hover { background: var(--ochre-deep); }
 
-/* ── Chapter card ── */
-.mem-chapter-item {
-  padding: 14px 0;
-  border-bottom: 1px solid rgba(42,36,28,.08);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+/* ── Member nav (desktop list / mobile select) ── */
+.mem-nav--desktop { display: flex; }
+.mem-nav--mobile  { display: none; }
+
+.mem-nav-select-wrap {
+  position: relative;
 }
-.mem-chapter-item:last-of-type { border-bottom: none; }
-.mem-chapter-role {
+.mem-nav-select {
+  width: 100%;
+  padding: 13px 40px 13px 16px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 8px;
-  letter-spacing: .15em;
+  font-size: 9px;
+  letter-spacing: .12em;
   text-transform: uppercase;
-  color: var(--ochre);
-}
-.mem-chapter-name {
-  font-family: 'Fraunces', serif;
-  font-size: 17px;
-  font-weight: 300;
   color: var(--ink);
+  background: var(--paper);
+  border: 1px solid rgba(42,36,28,.15);
+  border-radius: 2px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s;
+}
+.mem-nav-select:focus { border-color: var(--ochre); }
+.mem-nav-select-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 11px;
+  color: var(--mute);
 }
 
 /* ── Quick links card ── */
@@ -614,6 +626,10 @@ select.mem-field-input { cursor: pointer; }
   .mem-avatar { width: 56px; height: 56px; font-size: 22px; }
   .mem-pref-row { flex-direction: column; gap: 12px; }
   .mem-pref-action { flex-direction: row; align-items: center; }
+
+  /* ── Member nav: hide desktop list, show select ── */
+  .mem-nav--desktop { display: none !important; }
+  .mem-nav--mobile  { display: block; }
 }
 
 /* ═══════════════════════════════
@@ -869,3 +885,63 @@ select.mem-field-input { cursor: pointer; }
   border-color: var(--ochre);
 }
 .dir-discipline-tag:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Settings tab bar ── */
+.mem-settings-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid rgba(42,36,28,.1);
+  margin-bottom: 28px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+}
+.mem-settings-tabs::-webkit-scrollbar { display: none; }
+
+/* ── Shared tab bar (used by WalletClient and other member pages) ── */
+.prf-tab {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--mute);
+  background: none;
+  border: none;
+  padding: 14px 24px 14px 0;
+  cursor: pointer;
+  transition: color .15s;
+  position: relative;
+}
+.prf-tab:hover { color: var(--ink); }
+.prf-tab--active { color: var(--ink); }
+.prf-tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 24px;
+  height: 2px;
+  background: var(--ink);
+}
+
+.mem-action-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: 3px;
+  font-size: 0.82rem;
+  font-family: "'JetBrains Mono', monospace";
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.mem-action-btn:hover:not(:disabled) { opacity: .85; }
+.mem-action-btn:disabled { opacity: .45; cursor: not-allowed; }

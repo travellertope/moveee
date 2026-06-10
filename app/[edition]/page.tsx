@@ -1,12 +1,15 @@
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { isValidRegionalSlug, EDITIONS, type RegionalSlug } from "@/lib/editions";
 import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import HomepageContent from "@/components/HomepageContent";
 import type { Metadata } from "next";
+import "@/app/homepage.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export const dynamicParams = true;
+// No generateStaticParams — edition pages use lazy ISR (generated on first
+// real request, then cached). Pre-rendering at build time is not viable because
+// the Vercel build environment cannot reach the WordPress CMS.
 
 interface Props {
   params: Promise<{ edition: string }>;
@@ -85,14 +88,8 @@ export default async function EditionPage({ params }: Props) {
 
   if (!isValidRegionalSlug(edition)) notFound();
 
-  const session = await getServerSession(authOptions);
-  const isLoggedIn = !!session?.user;
-
   const data = await fetchHomepageData(edition);
 
-  return <HomepageContent {...data} isLoggedIn={isLoggedIn} edition={edition as RegionalSlug} />;
+  return <HomepageContent {...data} edition={edition as RegionalSlug} />;
 }
 
-export function generateStaticParams() {
-  return [{ edition: "uk" }, { edition: "us" }, { edition: "africa" }];
-}

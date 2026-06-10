@@ -6,11 +6,11 @@ import Link from "next/link";
 interface Member {
   id: string;
   displayName: string;
+  username: string;
   occupation: string;
   city: string;
   countryOfResidence: string;
   tier: "citizen" | "patron";
-  chapter?: string;
   bio?: string;
   disciplines?: string[];
   instagram?: string;
@@ -34,6 +34,7 @@ export default function MemberDirectory() {
   const [search, setSearch] = useState("");
   const [discipline, setDiscipline] = useState("All");
   const [location, setLocation] = useState("All");
+  const [cityFilter, setCityFilter] = useState("");
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
@@ -58,6 +59,15 @@ export default function MemberDirectory() {
     const timer = setTimeout(fetchMembers, search ? 350 : 0);
     return () => clearTimeout(timer);
   }, [fetchMembers, search]);
+
+  // Unique cities from loaded members (non-empty)
+  const uniqueCities = Array.from(
+    new Set(members.map(m => m.city).filter(Boolean))
+  ).sort();
+
+  const filteredMembers = cityFilter
+    ? members.filter(m => m.city === cityFilter)
+    : members;
 
   return (
     <div className="mco-dir">
@@ -93,6 +103,17 @@ export default function MemberDirectory() {
               <option key={l} value={l}>{l === "All" ? "All locations" : l}</option>
             ))}
           </select>
+          <select
+            value={cityFilter}
+            onChange={e => setCityFilter(e.target.value)}
+            className="mco-dir-select"
+            aria-label="Filter by city"
+          >
+            <option value="">All cities</option>
+            {uniqueCities.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -114,7 +135,7 @@ export default function MemberDirectory() {
         </div>
       ) : (
         <div className="mco-dir-grid">
-          {members.map(member => (
+          {filteredMembers.map(member => (
             <MemberCard key={member.id} member={member} />
           ))}
         </div>
@@ -132,7 +153,7 @@ function MemberCard({ member }: { member: Member }) {
     member.website   && { label: "Website",   href: member.website.startsWith("http")  ? member.website  : `https://${member.website}` },
   ].filter(Boolean) as { label: string; href: string }[];
 
-  return (
+  const inner = (
     <div className={`mco-member-card${isPatron ? " mco-member-card--patron" : ""}`}>
       <div className="mco-member-avatar" aria-hidden="true">
         {member.displayName.charAt(0).toUpperCase()}
@@ -165,14 +186,12 @@ function MemberCard({ member }: { member: Member }) {
                 rel="noreferrer noopener"
                 className="mco-member-link"
                 aria-label={`${member.displayName} on ${l.label}`}
+                onClick={e => e.stopPropagation()}
               >
                 {l.label}
               </a>
             ))}
           </div>
-        )}
-        {member.chapter && (
-          <p className="mco-member-chapter">{member.chapter}</p>
         )}
       </div>
       {isPatron && (
@@ -180,4 +199,13 @@ function MemberCard({ member }: { member: Member }) {
       )}
     </div>
   );
+
+  if (member.username) {
+    return (
+      <Link href={`/connect/${member.username}`} style={{ textDecoration: "none", display: "block" }}>
+        {inner}
+      </Link>
+    );
+  }
+  return inner;
 }

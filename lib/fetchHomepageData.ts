@@ -2,7 +2,7 @@ import {
   getWPData,
   GET_STORIES,
   GET_STORIES_TAGS,
-  GET_SERIES_STORIES,
+  GET_SERIES_STORIES_BATCH,
   GET_JOURNEYS,
   GET_DIRECTORY_ENTRIES,
   GET_PRODUCTS,
@@ -35,6 +35,10 @@ export async function fetchHomepageData(editionTag?: string) {
   let seriesPortraits: any[] = [];
   let seriesTheLane: any[] = [];
   let seriesThinkCreative: any[] = [];
+
+  // Kick off latest-issue fetch immediately — it has a sequential dependency
+  // (getPostsByIssue needs the ID) so starting it early reduces total wall time.
+  const latestIssuePromise = getLatestIssue().catch(() => null);
 
   // Stories — two parallel fetches for edition views:
   //   1. Posts tagged for this edition (guaranteed to appear)
@@ -105,18 +109,17 @@ export async function fetchHomepageData(editionTag?: string) {
     origins = data?.cultureJourneys?.nodes || [];
   } catch (err) { console.error("Origins fetch error:", err); }
 
-  // Products — edition-tagged first, fall back to global if fewer than 4
+  // Products — fetch edition-tagged and global in parallel, then merge.
+  // Edition-tagged posts take priority; global fills gaps if fewer than 4 tagged.
   try {
-    if (editionTag) {
-      const tagged = await getWPData(GET_PRODUCTS, { first: 10, tag: editionTag });
-      products = tagged?.products?.nodes || [];
-    }
-    if (products.length < 4) {
-      const global = await getWPData(GET_PRODUCTS, { first: 10 });
-      const globalProducts: any[] = global?.products?.nodes || [];
-      const existingIds = new Set(products.map((p: any) => p.id));
-      products = [...products, ...globalProducts.filter((p: any) => !existingIds.has(p.id))].slice(0, 10);
-    }
+    const [taggedData, globalData] = await Promise.all([
+      editionTag ? getWPData(GET_PRODUCTS, { first: 10, tag: editionTag }) : Promise.resolve(null),
+      getWPData(GET_PRODUCTS, { first: 10 }),
+    ]);
+    const taggedProducts: any[] = taggedData?.products?.nodes || [];
+    const globalProducts: any[] = globalData?.products?.nodes || [];
+    const existingIds = new Set(taggedProducts.map((p: any) => p.id));
+    products = [...taggedProducts, ...globalProducts.filter((p: any) => !existingIds.has(p.id))].slice(0, 10);
   } catch (err) { console.error("Products fetch error:", err); }
 
   // Directory — random 8 from a larger pool
@@ -128,7 +131,7 @@ export async function fetchHomepageData(editionTag?: string) {
 
   // Quotes — random 3 from a larger pool
   try {
-    const data = await getWPQuotes({ first: 15 });
+    const data = await getWPQuotes({ first: 15 }, { revalidate: 300 });
     const all: any[] = data?.cultureQuotes?.nodes || [];
     quotes = all.sort(() => Math.random() - 0.5).slice(0, 3);
   } catch (err) { console.error("Quotes fetch error:", err); }
@@ -143,9 +146,9 @@ export async function fetchHomepageData(editionTag?: string) {
     if (res.ok) pulseStories = await res.json();
   } catch (err) { console.error("Pulse fetch error:", err); }
 
-  // Latest Issue
+  // Latest Issue — awaits the promise started at the top of this function
   try {
-    latestIssue = await getLatestIssue();
+    latestIssue = await latestIssuePromise;
     if (latestIssue) {
       latestIssueStories = await getPostsByIssue(latestIssue.id);
     }
@@ -157,18 +160,13 @@ export async function fetchHomepageData(editionTag?: string) {
     interviewStories = data?.posts?.nodes || [];
   } catch (err) { console.error("Interviews fetch error:", err); }
 
-  // Series strips — fetch in parallel
+  // Series strips — single batched GraphQL query (4→1 request)
   try {
-    const [radar, portraits, lane, creative] = await Promise.all([
-      getWPData(GET_SERIES_STORIES, { series: "the-radar" },           { revalidate: 300 }),
-      getWPData(GET_SERIES_STORIES, { series: "portraits-of-the-city" }, { revalidate: 300 }),
-      getWPData(GET_SERIES_STORIES, { series: "the-lane" },            { revalidate: 300 }),
-      getWPData(GET_SERIES_STORIES, { series: "think-like-a-creative" }, { revalidate: 300 }),
-    ]);
-    seriesTheRadar      = radar?.seriesItem?.posts?.nodes     || [];
-    seriesPortraits     = portraits?.seriesItem?.posts?.nodes || [];
-    seriesTheLane       = lane?.seriesItem?.posts?.nodes      || [];
-    seriesThinkCreative = creative?.seriesItem?.posts?.nodes  || [];
+    const seriesData = await getWPData(GET_SERIES_STORIES_BATCH, {}, { revalidate: 300 });
+    seriesTheRadar      = seriesData?.theRadar?.posts?.nodes      || [];
+    seriesPortraits     = seriesData?.portraits?.posts?.nodes     || [];
+    seriesTheLane       = seriesData?.theLane?.posts?.nodes       || [];
+    seriesThinkCreative = seriesData?.thinkCreative?.posts?.nodes || [];
   } catch (err) { console.error("Series fetch error:", err); }
 
   // Deduplicate by slug. Priority: latestIssue > coverStory > stories > interviews > series

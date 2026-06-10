@@ -3,9 +3,64 @@
  * (auto-seed) and the manual admin route (admin-seed).
  */
 
-import { evaluateAndExtractEvents, enrichEventContent, SerperResult } from "@/lib/gemini";
+import { evaluateAndExtractEvents, SerperResult, EventStub } from "@/lib/gemini";
+import { scrapeOgTags } from "@/lib/og-scraper";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
+
+const WP_UPLOAD_AUTH = Buffer.from(
+  `${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`
+).toString("base64");
+
+/**
+ * Download an external image and upload it to the WordPress Media Library.
+ * Returns the stable WP source_url, or null if anything fails.
+ * Skips images > 8 MB to avoid timeout in serverless environments.
+ */
+async function uploadImageToWP(imageUrl: string): Promise<{ url: string; id: number } | null> {
+  if (!process.env.WP_USERNAME || !process.env.WP_APP_PASSWORD) return null;
+  try {
+    const imgRes = await fetch(imageUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Moveee/1.0; +https://themoveee.com)",
+        Accept: "image/*,*/*;q=0.8",
+      },
+      redirect: "follow",
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!imgRes.ok) return null;
+
+    const contentType = imgRes.headers.get("content-type") ?? "";
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const mime = allowed.find((t) => contentType.startsWith(t));
+    if (!mime) return null;
+
+    const buffer = await imgRes.arrayBuffer();
+    if (buffer.byteLength > 8 * 1024 * 1024) return null; // skip >8 MB
+
+    const ext  = mime.split("/")[1].replace("jpeg", "jpg");
+    const name = `event-seed-${Date.now()}.${ext}`;
+
+    const upload = await fetch(`${WP_URL}/wp-json/wp/v2/media`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${WP_UPLOAD_AUTH}`,
+        "Content-Type": mime,
+        "Content-Disposition": `attachment; filename="${name}"`,
+      },
+      body: new Uint8Array(buffer),
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!upload.ok) return null;
+
+    const media = await upload.json();
+    const url = (media.source_url ?? media.guid?.rendered ?? null) as string | null;
+    if (!url) return null;
+    return { url, id: Number(media.id ?? 0) };
+  } catch {
+    return null;
+  }
+}
 
 export const CITIES = [
   { name: "London",       gl: "gb", hl: "en" },
@@ -42,42 +97,109 @@ export async function searchSerper(query: string, gl: string, hl: string): Promi
     if (!res.ok) return [];
     const data = await res.json();
     return (data.organic ?? []).map((r: any) => ({
-      title:   String(r.title   ?? ""),
-      link:    String(r.link    ?? ""),
-      snippet: String(r.snippet ?? ""),
-      date:    String(r.date    ?? ""),
+      title:    String(r.title    ?? ""),
+      link:     String(r.link     ?? ""),
+      snippet:  String(r.snippet  ?? ""),
+      date:     String(r.date     ?? ""),
+      imageUrl: r.imageUrl ? String(r.imageUrl) : undefined,
     }));
   } catch {
     return [];
   }
 }
 
+/**
+ * Cross-reference stubs against Serper results by title similarity.
+ * Attaches the source link as attribution when Gemini omitted it,
+ * and the result thumbnail as image_url. Neither is stored on our servers.
+ */
+function attachSerperData(stubs: EventStub[], serperResults: SerperResult[]): EventStub[] {
+  return stubs.map((stub) => {
+    const words = stub.title.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+    const match = serperResults.find((r) => {
+      const rt = r.title.toLowerCase() + " " + r.snippet.toLowerCase();
+      return words.filter((w) => rt.includes(w)).length >= Math.min(2, words.length);
+    });
+    if (!match) return stub;
+    return {
+      ...stub,
+      attribution: (stub.attribution && stub.attribution.startsWith("http"))
+        ? stub.attribution
+        : match.link,
+      image_url: stub.image_url || match.imageUrl || undefined,
+    };
+  });
+}
+
+/**
+ * Returns false for bare homepage/root URLs like https://www.eventbrite.com/
+ * so we never link to a generic site — only to specific event pages.
+ */
+function isDeepEventUrl(url: string): boolean {
+  if (!url || !url.startsWith("http")) return false;
+  try {
+    const { pathname } = new URL(url);
+    // Reject if the path has fewer than 2 meaningful segments (i.e. it's a root or one-level page)
+    const parts = pathname.replace(/\/$/, "").split("/").filter(Boolean);
+    return parts.length >= 2;
+  } catch {
+    return false;
+  }
+}
+
+export function normalizeEventTitle(title: string): string {
+  return title.toLowerCase().trim()
+    .replace(/\b(tickets?|saturday|sunday|monday|tuesday|wednesday|thursday|friday|buy now|register|free)\b/g, "")
+    .replace(/\b20\d{2}\b/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function buildDedupKey(title: string, eventDate: string, location: string): string {
-  return `${title.toLowerCase().trim()}|${eventDate}|${location.toLowerCase().trim()}`;
+  return `${normalizeEventTitle(title)}|${eventDate}|${location.toLowerCase().trim()}`;
 }
 
 export async function submitEvent(
   stub: Awaited<ReturnType<typeof evaluateAndExtractEvents>>[number]
 ): Promise<{ success: boolean; duplicate?: boolean; title: string }> {
   const secret = process.env.CULTURE_API_SECRET ?? "";
+
+  // Upload the external image to WordPress so we own a permanent copy.
+  // Falls back to the raw external URL only if the upload fails.
+  let imageUrl = "";
+  let featuredImageId = 0;
+  if (stub.image_url) {
+    const uploaded = await uploadImageToWP(stub.image_url);
+    if (uploaded) {
+      imageUrl        = uploaded.url;
+      featuredImageId = uploaded.id;
+    } else {
+      imageUrl = stub.image_url; // fall back to external URL
+    }
+  }
+
   const res = await fetch(`${WP_URL}/wp-json/culture/v1/events/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
     body: JSON.stringify({
-      title:         stub.title,
-      excerpt:       stub.excerpt,
-      content:       stub.content,
-      event_date:    stub.event_date,
-      end_date:      stub.end_date,
-      location:      stub.location,
-      city:          stub.city,
-      admission:     stub.admission,
-      ticketing_url: stub.ticketing_url,
-      tagline:       stub.tagline,
-      attribution:   stub.attribution,
-      interests:     stub.interests,
-      ai_generated:  true,
-      auto_publish:  true,
+      title:             stub.title,
+      excerpt:           stub.excerpt,
+      content:           stub.content,
+      event_date:        stub.event_date,
+      end_date:          stub.end_date,
+      location:          stub.location,
+      city:              stub.city,
+      admission:         stub.admission,
+      ticketing_url:     isDeepEventUrl(stub.ticketing_url) ? stub.ticketing_url : "",
+      tagline:           stub.tagline,
+      attribution:       stub.attribution,
+      source_url:        stub.attribution,
+      image_url:         imageUrl,
+      featured_image_id: featuredImageId,
+      interests:         stub.interests,
+      ai_generated:      true,
+      auto_publish:      true,
     }),
     cache: "no-store",
   });
@@ -129,9 +251,12 @@ export async function seedCities(
       continue;
     }
 
+    // Attach source URLs and thumbnail images from the Serper results.
+    stubs = attachSerperData(stubs, allRaw);
+
     detail[city.name].found = stubs.length;
 
-    for (const stub of stubs) {
+    for (let stub of stubs) {
       const parsed = stub.event_date ? new Date(stub.event_date) : null;
       if (!parsed || isNaN(parsed.getTime()) || parsed < today || parsed > maxDate) {
         detail[city.name].skipped++;
@@ -143,15 +268,12 @@ export async function seedCities(
       seenThisRun.add(key);
 
       try {
-        // Enrich content with deeper Gemini research before submitting.
-        const richContent = await enrichEventContent(
-          stub.title,
-          stub.city || city.name,
-          stub.event_date,
-          stub.excerpt || stub.content
-        );
-        const enrichedStub = { ...stub, content: richContent };
-        const r = await submitEvent(enrichedStub);
+        // If Serper gave no image, try scraping OG image from the attribution URL.
+        if (!stub.image_url && stub.attribution) {
+          const og = await scrapeOgTags(stub.attribution);
+          if (og.image) stub = { ...stub, image_url: og.image };
+        }
+        const r = await submitEvent(stub);
         if (r.success)        { detail[city.name].submitted++; totalSubmitted++; }
         else if (r.duplicate) { detail[city.name].skipped++; }
       } catch (err: any) {

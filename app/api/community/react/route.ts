@@ -27,7 +27,8 @@ type Emoji  = (typeof VALID_EMOJIS)[number];
 type Action = (typeof VALID_ACTIONS)[number];
 
 function restBase(itemType: string): string {
-  if (itemType === "pulse") return "pulse-stories";
+  if (itemType === "pulse")  return "pulse-stories";
+  if (itemType === "quote")  return "culture-quotes";
   return "community-posts";
 }
 
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
 
   if (
     !itemId ||
-    !["community", "pulse"].includes(itemType ?? "") ||
+    !["community", "pulse", "quote"].includes(itemType ?? "") ||
     !(VALID_EMOJIS as readonly string[]).includes(emoji ?? "") ||
     !(VALID_ACTIONS as readonly string[]).includes(action ?? "")
   ) {

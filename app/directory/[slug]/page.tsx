@@ -1,4 +1,4 @@
-import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG, getDirectoryEntriesWithFallback } from "@/lib/wp";
+import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG, getDirectoryEntriesWithFallback, getDirectoryPosts, getDirectoryEvents, type DirectoryEvent } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -8,7 +8,8 @@ import { authOptions } from "@/lib/auth";
 import { getAccessLevel, canViewContent } from "@/lib/access";
 import "../../directory.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export const dynamicParams = true;
 
 const TYPE_LABELS: Record<string, string> = {
   person:   "Person",
@@ -97,6 +98,17 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
   const instagramHandle = entry.instagramHandle ?? "";
   const twitterHandle   = entry.twitterHandle   ?? "";
   const infobox: Record<string, string> = entry.infobox ?? {};
+
+  // Community posts + events linked to this entry
+  const [communityData, directoryEvents] = await Promise.all([
+    entry.databaseId
+      ? getDirectoryPosts(entry.databaseId)
+      : Promise.resolve({ posts: [], summary: { total_posts: 0, average_rating: null, by_template: {} } }),
+    entry.databaseId
+      ? getDirectoryEvents(entry.databaseId)
+      : Promise.resolve([] as DirectoryEvent[]),
+  ]);
+  const { posts: communityPosts, summary: communitySummary } = communityData;
 
   type InfoboxField = { label: string; key: string };
   const INFOBOX_DEFS: Record<string, InfoboxField[]> = {
@@ -303,6 +315,114 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                     {w.title && <div className="dir-wiki-work-title">{w.title}</div>}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Community Reviews & Takes (Phase 3) */}
+          {communitySummary.total_posts > 0 && (
+            <div className="dir-community-section">
+              <div className="dir-community-header">
+                <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>Community Reviews &amp; Takes</h2>
+                {communitySummary.average_rating && (
+                  <div className="dir-community-rating">
+                    <span className="dir-community-stars">{"★".repeat(Math.round(communitySummary.average_rating))}{"☆".repeat(5 - Math.round(communitySummary.average_rating))}</span>
+                    <span className="dir-community-rating-num">{communitySummary.average_rating.toFixed(1)}</span>
+                    <span className="dir-community-rating-count">({communitySummary.total_posts} {communitySummary.total_posts === 1 ? "review" : "reviews"})</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="dir-community-posts">
+                {communityPosts.map((post) => (
+                  <div key={post.id} className={`dir-community-card dir-community-card--${post.template_type}`}>
+                    <div className="dir-community-card-header">
+                      <img
+                        src={post.author.avatar}
+                        alt=""
+                        className="dir-community-avatar"
+                        width={32}
+                        height={32}
+                      />
+                      <div className="dir-community-card-meta">
+                        <span className="dir-community-author">{post.author.name}</span>
+                        {post.author.tier === "patron" && (
+                          <span className="dir-community-pro-badge">Pro</span>
+                        )}
+                        <span className="dir-community-date">
+                          · {new Date(post.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                        </span>
+                      </div>
+                      {post.star_rating && (
+                        <div className="dir-community-star-rating">
+                          {"★".repeat(post.star_rating)}{"☆".repeat(5 - post.star_rating)}
+                        </div>
+                      )}
+                    </div>
+                    <p className="dir-community-content">{post.content}</p>
+                    <div className="dir-community-card-footer">
+                      {Object.keys(post.reactions ?? {}).length > 0 && (
+                        <div className="dir-community-reactions">
+                          {Object.entries(post.reactions).map(([emoji, count]) =>
+                            count > 0 ? (
+                              <span key={emoji} className="dir-community-reaction">
+                                {emoji} {count}
+                              </span>
+                            ) : null
+                          )}
+                        </div>
+                      )}
+                      {post.slug && (
+                        <a href={`/community/${post.slug}`} className="dir-community-read-more">
+                          Read full post →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Upcoming Events organised by this entry */}
+          {directoryEvents.length > 0 && (
+            <div className="dir-community-section" style={{ marginTop: "2rem" }}>
+              <div className="dir-community-header">
+                <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>Upcoming Events</h2>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "1rem" }}>
+                {directoryEvents.map((ev) => {
+                  const evDate = ev.event_date
+                    ? new Date(ev.event_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                    : null;
+                  const endDate = ev.end_date
+                    ? new Date(ev.end_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                    : null;
+                  return (
+                    <Link key={ev.id} href={ev.href} style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start", background: "#fff", border: "1px solid #e8e2d8", borderRadius: "6px", padding: "0.85rem 1rem", textDecoration: "none", color: "inherit" }}>
+                      {ev.image && (
+                        <img src={ev.image} alt={ev.title} style={{ width: "72px", height: "72px", objectFit: "cover", borderRadius: "4px", flexShrink: 0 }} loading="lazy" />
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.3rem" }}>
+                          <span style={{ background: "#eeedfe", color: "#3c3489", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.15rem 0.4rem", borderRadius: "2px" }}>Happening</span>
+                          {evDate && (
+                            <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600 }}>
+                              {evDate}{endDate && endDate !== evDate ? ` — ${endDate}` : ""}
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 600, color: "#14110d", lineHeight: 1.35 }}>{ev.title}</p>
+                        {(ev.location || ev.city) && (
+                          <p style={{ margin: "0.2rem 0 0", fontSize: "0.75rem", color: "#7a6f5c" }}>
+                            {[ev.location, ev.city].filter(Boolean).join(", ")}
+                            {ev.admission ? ` · ${ev.admission}` : ""}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}

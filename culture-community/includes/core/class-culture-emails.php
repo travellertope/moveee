@@ -97,13 +97,10 @@ class Culture_Emails {
         }
 
         $tier         = get_user_meta( $user_id, '_culture_membership_tier', true ) ?: 'citizen';
-        $chapter      = get_user_meta( $user_id, '_culture_primary_chapter_id', true );
-        $chapter_name = $chapter ? get_the_title( $chapter ) : '';
 
         $merge = array(
             '{display_name}' => esc_html( $user->display_name ),
             '{tier}'         => esc_html( ucfirst( $tier ) ),
-            '{chapter_name}' => esc_html( $chapter_name ),
         );
 
         $tpl     = Culture_Email_Templates::get_template( 'welcome' );
