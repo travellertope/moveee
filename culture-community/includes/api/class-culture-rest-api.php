@@ -1748,15 +1748,24 @@ class Culture_REST_API {
      * only returns custom additions made via WP Admin → Settings → Moderation.
      */
     public static function handle_get_community_blocklist() {
-        $raw     = get_option( 'culture_community_blocklist', '' );
+        global $wpdb;
+        $rows = $wpdb->get_results(
+            "SELECT option_name, option_value FROM {$wpdb->options}
+             WHERE option_name IN ('culture_community_blocklist','culture_new_member_review_days')",
+            ARRAY_A
+        );
+        $opts = array_column( $rows, 'option_value', 'option_name' );
+
+        $raw     = $opts['culture_community_blocklist'] ?? '';
         $phrases = array_values( array_filter(
             array_map( 'trim', explode( "\n", $raw ) ),
             function ( $line ) { return strlen( $line ) > 1; }
         ) );
-        $review_days = (int) get_option( 'culture_new_member_review_days', 7 );
+        $review_days = (int) ( $opts['culture_new_member_review_days'] ?? 7 );
+
         return rest_ensure_response( array(
-            'phrases'      => $phrases,
-            'review_days'  => $review_days,
+            'phrases'     => $phrases,
+            'review_days' => $review_days,
         ) );
     }
 
@@ -2577,13 +2586,33 @@ class Culture_REST_API {
      * GET /culture/v1/user/interactions
      */
     public static function handle_get_interactions( $request ) {
+        global $wpdb;
         $user_id = (int) $request->get_param( 'user_id' );
-        
+
+        $keys = array(
+            '_culture_like_article_ids',
+            '_culture_bookmark_article_ids',
+            '_culture_like_quote_ids',
+            '_culture_bookmark_quote_ids',
+        );
+        $placeholders = implode( ',', array_fill( 0, count( $keys ), '%s' ) );
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT meta_key, meta_value FROM {$wpdb->usermeta}
+             WHERE user_id = %d AND meta_key IN ({$placeholders})",
+            array_merge( array( $user_id ), $keys )
+        ), ARRAY_A );
+
+        $map = array_column( $rows, 'meta_value', 'meta_key' );
+        $unpack = function( $key ) use ( $map ) {
+            $val = isset( $map[ $key ] ) ? maybe_unserialize( $map[ $key ] ) : array();
+            return is_array( $val ) ? $val : array();
+        };
+
         return rest_ensure_response( array(
-            'liked_articles'      => get_user_meta( $user_id, '_culture_like_article_ids', true ) ?: array(),
-            'bookmarked_articles' => get_user_meta( $user_id, '_culture_bookmark_article_ids', true ) ?: array(),
-            'liked_quotes'        => get_user_meta( $user_id, '_culture_like_quote_ids', true ) ?: array(),
-            'bookmarked_quotes'   => get_user_meta( $user_id, '_culture_bookmark_quote_ids', true ) ?: array(),
+            'liked_articles'      => $unpack( '_culture_like_article_ids' ),
+            'bookmarked_articles' => $unpack( '_culture_bookmark_article_ids' ),
+            'liked_quotes'        => $unpack( '_culture_like_quote_ids' ),
+            'bookmarked_quotes'   => $unpack( '_culture_bookmark_quote_ids' ),
         ) );
     }
 
@@ -3300,21 +3329,42 @@ class Culture_REST_API {
      * Returns the Connect directory settings for the given user_id.
      */
     public static function handle_get_directory_profile( $request ) {
+        global $wpdb;
         $user_id = (int) $request->get_param( 'user_id' );
-        $user    = get_userdata( $user_id );
-        if ( ! $user ) {
+
+        $exists = $wpdb->get_var( $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->users} WHERE ID = %d LIMIT 1",
+            $user_id
+        ) );
+        if ( ! $exists ) {
             return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
         }
 
-        $disciplines_raw = get_user_meta( $user_id, '_culture_directory_disciplines', true ) ?: '';
+        $keys = array(
+            '_culture_directory_opt_in',
+            '_culture_directory_bio',
+            '_culture_directory_disciplines',
+            '_culture_directory_instagram',
+            '_culture_directory_linkedin',
+            '_culture_directory_website',
+        );
+        $placeholders = implode( ',', array_fill( 0, count( $keys ), '%s' ) );
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT meta_key, meta_value FROM {$wpdb->usermeta}
+             WHERE user_id = %d AND meta_key IN ({$placeholders})",
+            array_merge( array( $user_id ), $keys )
+        ), ARRAY_A );
+
+        $map = array_column( $rows, 'meta_value', 'meta_key' );
+        $get  = fn( $k, $default = '' ) => $map[ $k ] ?? $default;
 
         return rest_ensure_response( array(
-            'directory_opt_in'      => get_user_meta( $user_id, '_culture_directory_opt_in',     true ) === '1',
-            'directory_bio'         => get_user_meta( $user_id, '_culture_directory_bio',         true ) ?: '',
-            'directory_disciplines' => $disciplines_raw,
-            'directory_instagram'   => get_user_meta( $user_id, '_culture_directory_instagram',   true ) ?: '',
-            'directory_linkedin'    => get_user_meta( $user_id, '_culture_directory_linkedin',    true ) ?: '',
-            'directory_website'     => get_user_meta( $user_id, '_culture_directory_website',     true ) ?: '',
+            'directory_opt_in'      => $get( '_culture_directory_opt_in' ) === '1',
+            'directory_bio'         => $get( '_culture_directory_bio' ),
+            'directory_disciplines' => $get( '_culture_directory_disciplines' ),
+            'directory_instagram'   => $get( '_culture_directory_instagram' ),
+            'directory_linkedin'    => $get( '_culture_directory_linkedin' ),
+            'directory_website'     => $get( '_culture_directory_website' ),
         ) );
     }
 
@@ -3643,15 +3693,26 @@ class Culture_REST_API {
      * Returns pinned posts and portfolio items for the given user. Requires Bearer auth.
      */
     public static function handle_get_portfolio( $request ) {
+        global $wpdb;
         $user_id = (int) $request->get_param( 'user_id' );
 
-        $user = get_userdata( $user_id );
-        if ( ! $user ) {
+        $exists = $wpdb->get_var( $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->users} WHERE ID = %d LIMIT 1",
+            $user_id
+        ) );
+        if ( ! $exists ) {
             return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
         }
 
-        $pinned_posts = json_decode( get_user_meta( $user_id, '_portfolio_pinned_posts', true ) ?: '[]', true ) ?: array();
-        $items        = json_decode( get_user_meta( $user_id, '_portfolio_items', true ) ?: '[]', true ) ?: array();
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT meta_key, meta_value FROM {$wpdb->usermeta}
+             WHERE user_id = %d AND meta_key IN ('_portfolio_pinned_posts','_portfolio_items')",
+            $user_id
+        ), ARRAY_A );
+
+        $map          = array_column( $rows, 'meta_value', 'meta_key' );
+        $pinned_posts = json_decode( $map['_portfolio_pinned_posts'] ?? '[]', true ) ?: array();
+        $items        = json_decode( $map['_portfolio_items']        ?? '[]', true ) ?: array();
 
         return rest_ensure_response( array(
             'pinned_posts' => $pinned_posts,
