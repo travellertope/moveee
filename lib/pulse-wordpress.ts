@@ -210,9 +210,9 @@ export async function getPulseStories({
   if (category) url += `&pulse_category=${encodeURIComponent(category)}`;
 
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 12000);
+  const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
-    const res = await fetch(url, { next: { revalidate: 60 }, signal: ctrl.signal });
+    const res = await fetch(url, { next: { revalidate: 300 }, signal: ctrl.signal });
     clearTimeout(timer);
     if (!res.ok) return [];
     return res.json();
