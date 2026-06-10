@@ -4,6 +4,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { api, CULTURE_API } from "../../api/client";
+
+const PROXY = "https://themoveee.com/api";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 
 interface DirectoryEntry {
@@ -68,7 +70,7 @@ export default function DirectorySearch({ onSelect, selected, label }: Props) {
     if (!newName.trim()) return;
     setLoading(true);
     try {
-      const entry = await api.post<DirectoryEntry>(`${CULTURE_API}/directory/quick-create`, {
+      const entry = await api.post<DirectoryEntry>(`${PROXY}/directory/quick-create`, {
         title: newName.trim(),
         entry_type: "place",
         city: newCity.trim() || undefined,

@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import type { CommunityPost } from "../../types";
 import TierBadge from "../ui/TierBadge";
 import TimeAgo from "../ui/TimeAgo";
@@ -25,7 +25,7 @@ export default function PostCard({ post, onPress, onLike, onAuthorPress }: Props
 
   const submitReport = async (reason: "spam" | "harassment" | "inappropriate") => {
     try {
-      await api.post(`${CULTURE_API}/community/report`, { post_id: post.id, reason });
+      await api.post(`${MOBILE_API}/community/report`, { post_id: post.id, reason });
       setReported(true);
       Alert.alert("Thanks", "We've recorded your report and will review this post.");
     } catch (e: unknown) {

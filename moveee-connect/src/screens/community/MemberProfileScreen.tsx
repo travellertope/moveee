@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import TierBadge from "../../components/ui/TierBadge";
 import type { User } from "../../types";
 
@@ -13,7 +13,7 @@ export default function MemberProfileScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get<Partial<User>>(`${CULTURE_API}/member/${params.userId}`)
+    api.get<Partial<User>>(`${MOBILE_API}/member/${params.userId}`)
       .then(setMember)
       .finally(() => setLoading(false));
   }, [params.userId]);

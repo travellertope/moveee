@@ -84,7 +84,7 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
-        register_rest_route( 'culture/v1', '/user/push-token', array(
+        register_rest_route( 'culture/v1', '/mobile/push-token', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_push_token' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
@@ -97,7 +97,7 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        register_rest_route( 'culture/v1', '/community/posts', array(
+        register_rest_route( 'culture/v1', '/mobile/community/posts', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_community_posts' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
@@ -107,7 +107,7 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        register_rest_route( 'culture/v1', '/feed', array(
+        register_rest_route( 'culture/v1', '/mobile/feed', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_unified_feed' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
@@ -117,16 +117,13 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        // Mobile community image upload — multipart file, returns the WP media URL
-        // for use as `image_url` on /community/submit (mirrors web's
-        // /api/community/upload-image, minus server-side WebP compression).
-        register_rest_route( 'culture/v1', '/community/upload-image', array(
+        register_rest_route( 'culture/v1', '/mobile/community/upload-image', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_upload_image' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
-        register_rest_route( 'culture/v1', '/community/submit', array(
+        register_rest_route( 'culture/v1', '/mobile/community/submit', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_submit_post' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
@@ -151,7 +148,7 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        register_rest_route( 'culture/v1', '/community/comments', array(
+        register_rest_route( 'culture/v1', '/mobile/community/comments', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_comments' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
@@ -164,7 +161,7 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        register_rest_route( 'culture/v1', '/community/comment', array(
+        register_rest_route( 'culture/v1', '/mobile/community/comment', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_add_comment' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
@@ -182,7 +179,7 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        register_rest_route( 'culture/v1', '/community/react', array(
+        register_rest_route( 'culture/v1', '/mobile/community/react', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_react' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
@@ -199,7 +196,7 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        register_rest_route( 'culture/v1', '/community/report', array(
+        register_rest_route( 'culture/v1', '/mobile/community/report', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_report' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
@@ -220,7 +217,7 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        register_rest_route( 'culture/v1', '/community/quote', array(
+        register_rest_route( 'culture/v1', '/mobile/community/quote', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_submit_quote' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
@@ -231,9 +228,17 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        // Mobile event submission — delegates to Culture_REST_API::handle_create_event,
-        // authenticated as the current Bearer-token user (mirrors web's /events/submit).
-        register_rest_route( 'culture/v1', '/events/submit-mobile', array(
+        register_rest_route( 'culture/v1', '/mobile/community/poll-vote', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_poll_vote' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'option_index' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/events/submit', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_submit_event_mobile' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
@@ -249,9 +254,7 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        // Mobile directory entry submission — delegates to Culture_Directory::handle_submit,
-        // authenticated as the current Bearer-token user (mirrors web's /directory/submit).
-        register_rest_route( 'culture/v1', '/directory/submit-mobile', array(
+        register_rest_route( 'culture/v1', '/mobile/directory/submit', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_submit_directory_mobile' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
@@ -263,7 +266,7 @@ class Culture_Mobile_API {
             ),
         ) );
 
-        register_rest_route( 'culture/v1', '/member/(?P<id>\d+)', array(
+        register_rest_route( 'culture/v1', '/mobile/member/(?P<id>\d+)', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_member' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
@@ -274,6 +277,31 @@ class Culture_Mobile_API {
                     'sanitize_callback' => 'absint',
                 ),
             ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/members', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_members' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/newsletter-preferences', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_newsletter_prefs' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_update_newsletter_prefs' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/user/reset-password', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_request_password_reset' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
     }
 
@@ -430,20 +458,55 @@ class Culture_Mobile_API {
         }
 
         $meta_map = array(
-            'phone'                => '_culture_phone',
-            'whatsapp'             => '_culture_whatsapp',
-            'gender'               => '_culture_gender',
-            'date_of_birth'        => '_culture_dob',
-            'nationality'          => '_culture_nationality',
-            'country_of_residence' => '_culture_country_of_residence',
-            'city'                 => '_culture_city',
-            'occupation'           => '_culture_occupation',
-            'avatar_url'           => '_culture_avatar_url',
+            'phone'                  => '_culture_phone',
+            'whatsapp'               => '_culture_whatsapp',
+            'gender'                 => '_culture_gender',
+            'date_of_birth'          => '_culture_dob',
+            'nationality'            => '_culture_nationality',
+            'country_of_residence'   => '_culture_country_of_residence',
+            'city'                   => '_culture_city',
+            'occupation'             => '_culture_occupation',
+            'avatar_url'             => '_culture_avatar_url',
+            'directory_instagram'    => '_culture_directory_instagram',
+            'directory_linkedin'     => '_culture_directory_linkedin',
+            'directory_website'      => '_culture_directory_website',
         );
 
         foreach ( $meta_map as $param => $meta_key ) {
             if ( $request->has_param( $param ) ) {
                 update_user_meta( $user_id, $meta_key, sanitize_text_field( $request->get_param( $param ) ) );
+            }
+        }
+
+        if ( $request->has_param( 'directory_bio' ) ) {
+            update_user_meta( $user_id, '_culture_directory_bio', sanitize_textarea_field( $request->get_param( 'directory_bio' ) ) );
+        }
+
+        if ( $request->has_param( 'directory_opt_in' ) ) {
+            $val = $request->get_param( 'directory_opt_in' );
+            update_user_meta( $user_id, '_culture_directory_opt_in', ( $val === '1' || $val === true ) ? '1' : '0' );
+        }
+
+        if ( $request->has_param( 'directory_disciplines' ) ) {
+            $raw = $request->get_param( 'directory_disciplines' );
+            if ( is_array( $raw ) ) {
+                update_user_meta( $user_id, '_culture_directory_disciplines', array_map( 'sanitize_text_field', $raw ) );
+            }
+        }
+
+        if ( $request->has_param( 'interests' ) ) {
+            $interests_raw = $request->get_param( 'interests' );
+            if ( is_array( $interests_raw ) ) {
+                $allowed = array(
+                    'fashion-streetwear', 'food-drink', 'live-music', 'music-production',
+                    'independent-film', 'visual-art', 'architecture', 'photography',
+                    'literature', 'visual-design', 'tech-culture', 'sport-wellness',
+                    'travel', 'ideas', 'street-food', 'nightlife',
+                );
+                $valid = array_values( array_filter( array_map( 'sanitize_key', $interests_raw ), function( $s ) use ( $allowed ) {
+                    return in_array( $s, $allowed, true );
+                } ) );
+                update_user_meta( $user_id, '_culture_interests', wp_json_encode( $valid ) );
             }
         }
 
@@ -815,6 +878,39 @@ class Culture_Mobile_API {
         return Culture_Directory::handle_submit( $request );
     }
 
+    public static function handle_poll_vote( $request ) {
+        $user_id      = get_current_user_id();
+        $post_id      = (int) $request->get_param( 'post_id' );
+        $option_index = (int) $request->get_param( 'option_index' );
+
+        $post = get_post( $post_id );
+        if ( ! $post || 'culture_post' !== $post->post_type ) {
+            return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
+        }
+
+        $voters_raw = get_post_meta( $post_id, '_poll_voters', true );
+        $voters     = json_decode( $voters_raw ?: '{}', true );
+        if ( ! is_array( $voters ) ) $voters = array();
+
+        if ( isset( $voters[ (string) $user_id ] ) ) {
+            return new WP_Error( 'already_voted', 'You have already voted.', array( 'status' => 409 ) );
+        }
+
+        $options_raw = get_post_meta( $post_id, '_poll_options', true );
+        $options     = json_decode( $options_raw ?: '[]', true );
+        if ( ! is_array( $options ) || ! isset( $options[ $option_index ] ) ) {
+            return new WP_Error( 'invalid_option', 'Invalid option index.', array( 'status' => 400 ) );
+        }
+
+        $options[ $option_index ]['votes'] = (int) $options[ $option_index ]['votes'] + 1;
+        $voters[ (string) $user_id ]       = $option_index;
+
+        update_post_meta( $post_id, '_poll_options', wp_json_encode( $options ) );
+        update_post_meta( $post_id, '_poll_voters',  wp_json_encode( $voters ) );
+
+        return rest_ensure_response( array( 'options' => $options ) );
+    }
+
     const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote' );
 
     public static function handle_react( $request ) {
@@ -906,6 +1002,152 @@ class Culture_Mobile_API {
         }
 
         return rest_ensure_response( self::public_profile( $user ) );
+    }
+
+    public static function handle_get_members( $request ) {
+        $search     = $request->get_param( 'search' );
+        $discipline = $request->get_param( 'discipline' );
+        $location   = $request->get_param( 'location' );
+        $per_page   = min( (int) ( $request->get_param( 'per_page' ) ?: 100 ), 200 );
+
+        $meta_query = array(
+            'relation' => 'AND',
+            array(
+                'key'     => '_culture_directory_opt_in',
+                'value'   => '1',
+                'compare' => '=',
+            ),
+        );
+
+        if ( $discipline && $discipline !== 'All' ) {
+            $meta_query[] = array(
+                'key'     => '_culture_directory_disciplines',
+                'value'   => $discipline,
+                'compare' => 'LIKE',
+            );
+        }
+
+        if ( $location && $location !== 'All' ) {
+            $meta_query[] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => '_culture_city',
+                    'value'   => $location,
+                    'compare' => 'LIKE',
+                ),
+                array(
+                    'key'     => '_culture_country_of_residence',
+                    'value'   => $location,
+                    'compare' => 'LIKE',
+                ),
+            );
+        }
+
+        $args = array(
+            'number'     => $per_page,
+            'meta_query' => $meta_query,
+            'orderby'    => 'display_name',
+            'order'      => 'ASC',
+        );
+
+        if ( $search ) {
+            $args['search']         = '*' . $search . '*';
+            $args['search_columns'] = array( 'display_name', 'user_nicename' );
+        }
+
+        $users = get_users( $args );
+
+        $members = array_map( function( $user ) {
+            $tier            = get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen';
+            $disciplines_raw = get_user_meta( $user->ID, '_culture_directory_disciplines', true );
+            $disciplines     = is_array( $disciplines_raw ) ? $disciplines_raw : ( $disciplines_raw ? explode( ',', $disciplines_raw ) : array() );
+
+            return array(
+                'id'                 => (string) $user->ID,
+                'username'           => $user->user_login,
+                'displayName'        => $user->display_name,
+                'avatarUrl'          => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
+                'tier'               => $tier,
+                'occupation'         => get_user_meta( $user->ID, '_culture_occupation',           true ) ?: '',
+                'city'               => get_user_meta( $user->ID, '_culture_city',                 true ) ?: '',
+                'countryOfResidence' => get_user_meta( $user->ID, '_culture_country_of_residence', true ) ?: '',
+                'bio'                => get_user_meta( $user->ID, '_culture_directory_bio',        true ) ?: '',
+                'disciplines'        => $disciplines,
+                'instagram'          => get_user_meta( $user->ID, '_culture_directory_instagram',  true ) ?: '',
+                'linkedin'           => get_user_meta( $user->ID, '_culture_directory_linkedin',   true ) ?: '',
+                'website'            => get_user_meta( $user->ID, '_culture_directory_website',    true ) ?: '',
+            );
+        }, $users );
+
+        return rest_ensure_response( $members );
+    }
+
+    public static function handle_get_newsletter_prefs( $request ) {
+        $user_id = get_current_user_id();
+        $user    = get_userdata( $user_id );
+        $prefs   = get_user_meta( $user_id, '_culture_newsletter_prefs', true );
+        $prefs   = is_array( $prefs ) ? $prefs : array();
+
+        $allowed = array( 'getmelit', 'culture-drop' );
+        $lists   = array();
+        foreach ( $allowed as $list_id ) {
+            if ( ! empty( $prefs[ $list_id ] ) ) {
+                $lists[] = $list_id;
+            }
+        }
+
+        // Fall back: check subscriber record for legacy data
+        if ( empty( $lists ) && $user ) {
+            $subscribers = get_option( 'culture_newsletter_subscribers', array() );
+            foreach ( $subscribers as $sub ) {
+                if ( is_array( $sub ) && isset( $sub['email'] ) && $sub['email'] === $user->user_email ) {
+                    $lists = isset( $sub['lists'] ) ? (array) $sub['lists'] : array( 'getmelit' );
+                    break;
+                }
+            }
+        }
+
+        return rest_ensure_response( array( 'lists' => $lists ) );
+    }
+
+    public static function handle_update_newsletter_prefs( $request ) {
+        $user_id = get_current_user_id();
+        $lists   = $request->get_param( 'lists' );
+        if ( ! is_array( $lists ) ) {
+            return new WP_Error( 'invalid', 'lists must be an array.', array( 'status' => 400 ) );
+        }
+
+        $allowed = array( 'getmelit', 'culture-drop' );
+        $prefs   = array();
+        foreach ( $allowed as $list_id ) {
+            $prefs[ $list_id ] = in_array( $list_id, $lists, true );
+        }
+        update_user_meta( $user_id, '_culture_newsletter_prefs', $prefs );
+
+        return rest_ensure_response( array( 'lists' => array_keys( array_filter( $prefs ) ) ) );
+    }
+
+    public static function handle_request_password_reset( $request ) {
+        $user = get_userdata( get_current_user_id() );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $key = get_password_reset_key( $user );
+        if ( is_wp_error( $key ) ) {
+            return new WP_Error( 'reset_failed', 'Could not generate reset key.', array( 'status' => 500 ) );
+        }
+
+        $frontend_url = rtrim( get_option( 'culture_frontend_url', home_url( '/' ) ), '/' );
+        $reset_url    = $frontend_url
+            . '/reset-password?key=' . rawurlencode( $key )
+            . '&login='              . rawurlencode( $user->user_login );
+
+        $subject = 'Reset your Moveee password';
+        $message = "Hi {$user->display_name},\n\nClick the link below to reset your password:\n\n{$reset_url}\n\nThis link expires in 24 hours.\n\nIf you didn't request this, you can ignore this email.";
+        wp_mail( $user->user_email, $subject, $message );
+
+        return rest_ensure_response( array( 'success' => true ) );
     }
 
     // -------------------------------------------------------------------------

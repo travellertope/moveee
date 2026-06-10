@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 
 const SERIF = Platform.select({ ios: "Georgia", android: "serif", default: "serif" });
@@ -55,7 +55,7 @@ export default function DirectorySubmitScreen() {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      await api.post(`${CULTURE_API}/directory/submit-mobile`, {
+      await api.post(`${MOBILE_API}/directory/submit`, {
         title: title.trim(),
         excerpt: excerpt.trim(),
         content: content.trim(),

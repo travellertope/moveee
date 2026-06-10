@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Share, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space } from "../../theme";
 
 interface Props {
@@ -32,7 +32,7 @@ export default function ReactionBar({ postId, initialCounts, shareUrl, noBorder 
       return next;
     });
     try {
-      await api.post(`${CULTURE_API}/community/react`, { post_id: Number(postId), type: key });
+      await api.post(`${MOBILE_API}/community/react`, { post_id: Number(postId), type: key });
     } catch {
       // Revert on error
       setCounts((c) => ({ ...c, [key]: c[key] + (already ? 1 : -1) }));

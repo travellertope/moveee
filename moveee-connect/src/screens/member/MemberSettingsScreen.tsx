@@ -7,7 +7,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Passkeys from "react-native-passkeys";
 import { useAuthStore } from "../../auth/authStore";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import type { Passkey } from "../../types";
 
@@ -58,7 +58,17 @@ function ProfileTab() {
   const save = async () => {
     setSaving(true);
     try {
-      await api.post(`${CULTURE_API}/user/update`, form as Record<string, unknown>);
+      await api.post(`${MOBILE_API}/me`, {
+        display_name:         form.displayName,
+        phone:                form.phone,
+        whatsapp:             form.whatsapp,
+        gender:               form.gender,
+        date_of_birth:        form.dateOfBirth,
+        nationality:          form.nationality,
+        country_of_residence: form.countryOfResidence,
+        city:                 form.city,
+        occupation:           form.occupation,
+      });
       await refreshProfile();
       Alert.alert("Saved", "Profile updated.");
     } catch {
@@ -128,10 +138,13 @@ function DirectoryTab() {
   const save = async () => {
     setSaving(true);
     try {
-      await api.post(`${CULTURE_API}/user/update`, {
-        directoryOptIn: optIn, directoryBio: bio,
-        directoryDisciplines: disciplines,
-        directoryInstagram: instagram, directoryLinkedIn: linkedin, directoryWebsite: website,
+      await api.post(`${MOBILE_API}/me`, {
+        directory_opt_in:     optIn,
+        directory_bio:        bio,
+        directory_disciplines: disciplines,
+        directory_instagram:  instagram,
+        directory_linkedin:   linkedin,
+        directory_website:    website,
       });
       await refreshProfile();
       Alert.alert("Saved", "Directory profile updated.");
@@ -218,7 +231,7 @@ function InterestsTab() {
     }
     setSaving(true);
     try {
-      await api.post(`${CULTURE_API}/user/update`, { interests: selected });
+      await api.post(`${MOBILE_API}/me`, { interests: selected });
       await refreshProfile();
       Alert.alert("Saved", "Interests updated.");
     } catch {
@@ -258,7 +271,7 @@ function NewslettersTab() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get<{ lists: string[] }>(`${CULTURE_API}/newsletter-preferences`)
+    api.get<{ lists: string[] }>(`${MOBILE_API}/newsletter-preferences`)
       .then((data) => {
         const map: Record<string, boolean> = {};
         (data.lists || []).forEach((l) => { map[l] = true; });
@@ -272,7 +285,7 @@ function NewslettersTab() {
     const next = { ...subscribed, [id]: val };
     setSubscribed(next);
     const lists = Object.entries(next).filter(([, v]) => v).map(([k]) => k);
-    await api.post(`${CULTURE_API}/newsletter-preferences`, { lists }).catch(() => {});
+    await api.post(`${MOBILE_API}/newsletter-preferences`, { lists }).catch(() => {});
   };
 
   if (loading) return <ActivityIndicator style={{ marginTop: 40 }} color={colors.gold} />;
@@ -399,7 +412,7 @@ function SecurityTab() {
           style={styles.outlineBtn}
           onPress={async () => {
             try {
-              await api.post(`${CULTURE_API}/user/reset-password`, {});
+              await api.post(`${MOBILE_API}/user/reset-password`, {});
               Alert.alert("Email sent", "Check your inbox for a password reset link.");
             } catch {
               Alert.alert("Error", "Could not send reset email.");
