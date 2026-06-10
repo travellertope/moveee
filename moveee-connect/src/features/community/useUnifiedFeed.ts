@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { cache, TTL } from "../../store/storage";
 import type { FeedItem } from "../../types";
 
@@ -26,7 +26,7 @@ export function useUnifiedFeed() {
       setLoading(true);
       setError(null);
       const data = await api.get<FeedResponse>(
-        `${CULTURE_API}/feed?page=${pageNum}&per_page=${PAGE_SIZE}`
+        `${MOBILE_API}/feed?page=${pageNum}&per_page=${PAGE_SIZE}`
       );
       setItems((prev) => {
         const next = replace ? data.items : [...prev, ...data.items];
@@ -65,7 +65,7 @@ export function useUnifiedFeed() {
       })
     );
     try {
-      await api.post(`${CULTURE_API}/community/react`, { post_id: Number(item.wpId), type });
+      await api.post(`${MOBILE_API}/community/react`, { post_id: Number(item.wpId), type });
     } catch {
       setItems((prev) =>
         prev.map((i) => {

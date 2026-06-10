@@ -3,8 +3,9 @@ import { storage } from "../store/storage";
 const WP_URL = "https://cms.themoveee.com";
 const WP_REST = `${WP_URL}/wp-json`;
 const CULTURE_API = `${WP_REST}/culture/v1`;
+const MOBILE_API  = `${CULTURE_API}/mobile`;
 
-export { WP_URL, CULTURE_API };
+export { WP_URL, CULTURE_API, MOBILE_API };
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 

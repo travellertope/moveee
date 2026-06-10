@@ -8,7 +8,7 @@ import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import StarRating from "../../components/composer/StarRating";
 import MultiRating from "../../components/composer/MultiRating";
@@ -132,7 +132,7 @@ export default function NewPostScreen() {
       try {
         const fileName = uri.split("/").pop() ?? "photo.jpg";
         const fileType = fileName.endsWith(".png") ? "image/png" : "image/jpeg";
-        const res = await api.upload<{ url: string }>(`${CULTURE_API}/community/upload-image`, uri, fileName, fileType);
+        const res = await api.upload<{ url: string }>(`${MOBILE_API}/community/upload-image`, uri, fileName, fileType);
         urls.push(res.url);
       } catch {
         // skip failed uploads
@@ -231,7 +231,7 @@ export default function NewPostScreen() {
       const uploadedUrls = await uploadImages();
 
       if (template === "quote") {
-        await api.post(`${CULTURE_API}/community/quote`, {
+        await api.post(`${MOBILE_API}/community/quote`, {
           text, author: quoteAuthor, source: quoteSource || undefined,
         } as Record<string, unknown>);
         nav.goBack();
@@ -269,7 +269,7 @@ export default function NewPostScreen() {
         body.itinerary_stops = stops.filter((s) => s.name.trim());
       }
 
-      await api.post(`${CULTURE_API}/community/submit`, body);
+      await api.post(`${MOBILE_API}/community/submit`, body);
       nav.goBack();
     } catch (err: any) {
       Alert.alert("Error", err?.message ?? "Could not submit post.");

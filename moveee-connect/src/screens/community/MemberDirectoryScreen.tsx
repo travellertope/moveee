@@ -6,7 +6,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import type { Member } from "../../types";
 
 const DISCIPLINES = [
@@ -104,7 +104,7 @@ export default function MemberDirectoryScreen() {
   useEffect(() => {
     async function load() {
       try {
-        const data = await api.get<Member[]>(`${CULTURE_API}/members?per_page=100`, false);
+        const data = await api.get<Member[]>(`${MOBILE_API}/members?per_page=100`);
         setMembers(data);
         setFiltered(data);
       } catch {

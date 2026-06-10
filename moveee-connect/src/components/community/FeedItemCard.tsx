@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, fonts, fontSize, space, radius, letterSpacing } from "../../theme";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import Avatar from "../ui/Avatar";
 import TypeBadge from "../ui/TypeBadge";
 import ReactionBar from "./ReactionBar";
@@ -112,7 +112,7 @@ function PollBlock({ item, postId }: { item: FeedItem; postId: string }) {
     setVoted(true);
     setLocalOpts((prev) => prev.map((o, i) => i === idx ? { ...o, votes: o.votes + 1 } : o));
     try {
-      await api.post(`${CULTURE_API}/community/poll-vote`, { post_id: Number(postId), option_index: idx });
+      await api.post(`${MOBILE_API}/community/poll-vote`, { post_id: Number(postId), option_index: idx });
     } catch {
       setVoted(false);
       setLocalOpts(options);
@@ -320,7 +320,7 @@ function CommunityCard({ item, onPress, onAuthorPress, forYouBadge }: Props) {
   const submitReport = async (reason: "spam" | "harassment" | "inappropriate") => {
     if (!item.wpId) return;
     try {
-      await api.post(`${CULTURE_API}/community/report`, { post_id: Number(item.wpId), reason });
+      await api.post(`${MOBILE_API}/community/report`, { post_id: Number(item.wpId), reason });
       setReportState("sent");
     } catch {
       setReportState("error");

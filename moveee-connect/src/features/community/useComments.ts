@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 
 interface Comment {
   id: string;
@@ -17,14 +17,14 @@ export function useComments(postId: string) {
   useEffect(() => {
     setLoading(true);
     api
-      .get<Comment[]>(`${CULTURE_API}/community/comments?post_id=${postId}`)
+      .get<Comment[]>(`${MOBILE_API}/community/comments?post_id=${postId}`)
       .then(setComments)
       .finally(() => setLoading(false));
   }, [postId]);
 
   const addComment = useCallback(
     async (content: string) => {
-      const comment = await api.post<Comment>(`${CULTURE_API}/community/comment`, {
+      const comment = await api.post<Comment>(`${MOBILE_API}/community/comment`, {
         post_id: postId,
         content,
       });
@@ -36,7 +36,7 @@ export function useComments(postId: string) {
 
   const reportPost = useCallback(
     async (reason: "spam" | "harassment" | "inappropriate") => {
-      await api.post(`${CULTURE_API}/community/report`, { post_id: postId, reason });
+      await api.post(`${MOBILE_API}/community/report`, { post_id: postId, reason });
     },
     [postId]
   );

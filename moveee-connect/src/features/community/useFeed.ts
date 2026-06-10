@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { cache, TTL } from "../../store/storage";
 import type { CommunityPost } from "../../types";
 
@@ -21,7 +21,7 @@ export function useFeed() {
       setLoading(true);
       setError(null);
       const data = await api.get<CommunityPost[]>(
-        `${CULTURE_API}/community/posts?page=${pageNum}&per_page=${PAGE_SIZE}`
+        `${MOBILE_API}/community/posts?page=${pageNum}&per_page=${PAGE_SIZE}`
       );
       setPosts((prev) => {
         const next = replace ? data : [...prev, ...data];
@@ -60,7 +60,7 @@ export function useFeed() {
       )
     );
     try {
-      await api.post(`${CULTURE_API}/community/react`, { post_id: postId, type: "like" });
+      await api.post(`${MOBILE_API}/community/react`, { post_id: postId, type: "like" });
     } catch {
       setPosts((prev) =>
         prev.map((p) =>
@@ -76,7 +76,7 @@ export function useFeed() {
     const body: Record<string, unknown> = { content };
     if (imageUri) body.image_url = imageUri;
     if (tag) body.tag = tag;
-    const newPost = await api.post<CommunityPost>(`${CULTURE_API}/community/submit`, body);
+    const newPost = await api.post<CommunityPost>(`${MOBILE_API}/community/submit`, body);
     setPosts((prev) => [newPost, ...prev]);
     cache.invalidate(CACHE_KEY);
     return newPost;
