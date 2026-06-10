@@ -13,7 +13,7 @@ function wpSignal(ms = WP_FETCH_TIMEOUT): { signal: AbortSignal; clear: () => vo
 // Circuit breaker: stop hammering the CMS when it's already struggling
 const _cb = { failures: 0, openUntil: 0 };
 const CB_THRESHOLD = 3;
-const CB_COOLDOWN = 30_000; // 30s cooldown after 3 consecutive failures
+const CB_COOLDOWN = 60_000; // 60s cooldown after 3 consecutive failures
 
 function cbCheck(): boolean {
   if (_cb.openUntil && Date.now() < _cb.openUntil) return false; // circuit open
