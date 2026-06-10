@@ -340,6 +340,23 @@ Always commit and push to this branch.
 
 ---
 
+## Next.js middleware — use proxy.ts, never middleware.ts
+
+This project uses Next.js 16 which replaces `middleware.ts` with `proxy.ts`.
+
+**NEVER create a `middleware.ts` file.** It will conflict with `proxy.ts` and
+cause a build failure:
+```
+Error: Both middleware file "./middleware.ts" and proxy file "./proxy.ts" are detected.
+Please use "./proxy.ts" only.
+```
+
+All edge logic (redirects, cache headers, cookie setting, rate limiting) must
+go into **`proxy.ts`** at the project root. The exported function is named
+`proxy` (not `middleware`) and uses the same `NextRequest`/`NextResponse` API.
+
+---
+
 ## VIP Club Upgrade — Phase Status
 
 All phases implemented. Phase docs live in `docs/phases/`.

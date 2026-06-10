@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { editionFromCountry, isValidRegionalSlug } from './lib/editions'
 
+// Crawler UA patterns to rate-limit on edition pages (prevents cache bypass stampedes)
+const CRAWLER_RE = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebookexternalhit|twitterbot|linkedinbot|discordbot/i
+const crawlerHits = new Map<string, { count: number; resetAt: number }>()
+const CRAWLER_LIMIT = 10
+const CRAWLER_WINDOW_MS = 60_000
+
 /**
  * Moveee SEO Redirect Proxy
  *
@@ -112,15 +118,35 @@ export async function proxy(request: NextRequest) {
 
   // ── Edition routing ──────────────────────────────────────────
   // When a user visits a regional path (/uk, /us, /africa), lock cookie
+  // and apply CDN cache headers + crawler rate limiting.
   const firstSeg = pathname.split('/')[1]
   if (isValidRegionalSlug(firstSeg)) {
-    const saved = request.cookies.get(EDITION_COOKIE)?.value
-    if (saved !== firstSeg) {
-      const res = NextResponse.next()
-      res.cookies.set(EDITION_COOKIE, firstSeg, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
-      return setCountryCookie(res)
+    const ua = request.headers.get('user-agent') ?? ''
+    if (CRAWLER_RE.test(ua)) {
+      const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+      const key = `${ip}:${firstSeg}`
+      const now = Date.now()
+      const slot = crawlerHits.get(key)
+      if (!slot || now > slot.resetAt) {
+        crawlerHits.set(key, { count: 1, resetAt: now + CRAWLER_WINDOW_MS })
+      } else {
+        slot.count++
+        if (slot.count > CRAWLER_LIMIT) {
+          return new NextResponse('Too Many Requests', { status: 429, headers: { 'Retry-After': '60' } })
+        }
+      }
     }
-    return setCountryCookie(NextResponse.next())
+
+    const saved = request.cookies.get(EDITION_COOKIE)?.value
+    const res = saved !== firstSeg ? (() => {
+      const r = NextResponse.next()
+      r.cookies.set(EDITION_COOKIE, firstSeg, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
+      return r
+    })() : NextResponse.next()
+
+    // Tell Vercel CDN to cache edition pages and serve stale while revalidating
+    res.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    return setCountryCookie(res)
   }
 
   // On the exact homepage, geo-redirect first-time visitors to their edition
