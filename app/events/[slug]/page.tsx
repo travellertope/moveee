@@ -59,10 +59,6 @@ const CATEGORY_SLUGS: Record<string, { name: string; icon: string; desc: string 
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  let event: any = null;
-  try {
-    event = await getEventBySlugWithFallback(slug, { revalidate: 180 });
-  } catch { /* CMS unreachable */ }
 
   if (CITY_SLUGS[slug]) {
     const c = CITY_SLUGS[slug];
@@ -108,10 +104,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function EventPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  let event: any = null;
-  try {
-    event = await getEventBySlugWithFallback(slug, { revalidate: 180 });
-  } catch { /* CMS unreachable */ }
 
   // City archive
   if (CITY_SLUGS[slug]) return <CityArchive slug={slug} cityInfo={CITY_SLUGS[slug]} />;
