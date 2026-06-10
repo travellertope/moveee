@@ -3,14 +3,14 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { Search, User, ShoppingBag } from "lucide-react";
 import Ticker from "./Ticker";
-import AuthModal from "./AuthModal";
 import SearchOverlay from "./SearchOverlay";
-import NotificationBell from "./NotificationBell";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
+
+const CONNECT_URL = "https://connect.themoveee.com";
+
 interface HeaderProps {
   variant?: "light" | "dark";
   siteSettings?: any;
@@ -18,11 +18,9 @@ interface HeaderProps {
 
 const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   const { language, setLanguage } = useLanguage();
-  const { data: session, status } = useSession();
   const { itemCount, openDrawer } = useCart();
   const pathname = usePathname();
   const active = (href: string) => pathname === href || pathname.startsWith(href + "/") ? "true" : undefined;
-  const [modalOpen, setModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -34,24 +32,9 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
   });
 
   const tickerData = siteSettings?.mastheadTicker || {};
-  const user = session?.user as any;
-  const loggedIn = status === "authenticated";
-
-  React.useEffect(() => {
-    const handleOpenModal = () => {
-      if (!loggedIn) setModalOpen(true);
-    };
-    window.addEventListener('open-auth-modal', handleOpenModal);
-    return () => window.removeEventListener('open-auth-modal', handleOpenModal);
-  }, [loggedIn]);
 
   return (
     <>
-      {/* Auth modal — renders only when open and not logged in */}
-      {modalOpen && !loggedIn && (
-        <AuthModal onClose={() => setModalOpen(false)} />
-      )}
-
       <div className="relative z-50">
         <div className="relative group">
           <Ticker
@@ -87,11 +70,11 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         <header className="masthead">
           {/* Desktop left nav */}
           <nav className="masthead-left">
-            <Link href="/magazine" data-active={active("/magazine")}>Editorials</Link>
-            <Link href="/events"   data-active={active("/events")}>Happenings</Link>
-            <Link href="/journeys" data-active={active("/journeys")}>Origins</Link>
-            <Link href="/shop"     data-active={active("/shop")}>Lifestyle</Link>
-            <Link href="/connect"  data-active={active("/connect")}>Connect</Link>
+            <Link href="/magazine"            data-active={active("/magazine")}>Editorials</Link>
+            <a    href={`${CONNECT_URL}/events`}>Happenings</a>
+            <Link href="/journeys"            data-active={active("/journeys")}>Origins</Link>
+            <Link href="/shop"                data-active={active("/shop")}>Lifestyle</Link>
+            <a    href={CONNECT_URL}>Connect</a>
           </nav>
 
           {/* Wordmark */}
@@ -128,46 +111,17 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
               )}
             </button>
 
-            {/* Notification bell — logged-in only */}
-            <NotificationBell />
+            <a href={`${CONNECT_URL}/login`} className="auth-icon-btn" title="Sign in" aria-label="Sign in">
+              <User size={18} strokeWidth={1.5} />
+              <span className="auth-icon-label">Sign in</span>
+            </a>
 
-            {/* User icon — links to /member when logged in, opens modal when not */}
-            {loggedIn ? (
-              <Link
-                href="/member"
-                className="auth-icon-btn"
-                title={user?.name ?? "My account"}
-                aria-label="My account"
-              >
-                <User size={18} strokeWidth={1.5} />
-                <span className="auth-icon-label">
-                  {user?.name?.split(" ")[0] ?? "Account"}
-                </span>
-              </Link>
-            ) : (
-              <button
-                onClick={() => setModalOpen(true)}
-                className="auth-icon-btn"
-                title="Sign in"
-                aria-label="Sign in to your account"
-              >
-                <User size={18} strokeWidth={1.5} />
-                <span className="auth-icon-label">Sign in</span>
-              </button>
-            )}
-
-            {loggedIn ? (
-              <Link href="/member" className="join-btn" style={{ textDecoration: "none" }}>
-                Dashboard →
-              </Link>
-            ) : (
-              <Link href="/connect" className="join-btn" style={{ textDecoration: "none" }}>
-                Join →
-              </Link>
-            )}
+            <a href={CONNECT_URL} className="join-btn" style={{ textDecoration: "none" }}>
+              Join →
+            </a>
           </div>
 
-          {/* Mobile: search + cart + bell + hamburger */}
+          {/* Mobile: search + cart + hamburger */}
           <div className="masthead-mobile-actions">
             <button
               className="masthead-icon-btn"
@@ -187,8 +141,6 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
                 <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>
               )}
             </button>
-            {/* Notification bell on mobile (logged-in only) */}
-            <NotificationBell />
             <button
               className="masthead-hamburger"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -207,56 +159,22 @@ const Header = ({ variant = "light", siteSettings }: HeaderProps) => {
         {/* Mobile dropdown */}
         <nav className={`mobile-menu ${mobileMenuOpen ? "mobile-menu--open" : ""}`}>
           <div className="mobile-menu-links">
-            <Link href="/magazine" onClick={() => setMobileMenuOpen(false)} data-active={active("/magazine")}>Editorials</Link>
-            <Link href="/events"   onClick={() => setMobileMenuOpen(false)} data-active={active("/events")}>Happenings</Link>
-            <Link href="/journeys" onClick={() => setMobileMenuOpen(false)} data-active={active("/journeys")}>Origins</Link>
-            <Link href="/shop"     onClick={() => setMobileMenuOpen(false)} data-active={active("/shop")}>Lifestyle</Link>
-            <Link href="/connect"  onClick={() => setMobileMenuOpen(false)} data-active={active("/connect")}>Connect</Link>
+            <Link href="/magazine"            onClick={() => setMobileMenuOpen(false)} data-active={active("/magazine")}>Editorials</Link>
+            <a    href={`${CONNECT_URL}/events`} onClick={() => setMobileMenuOpen(false)}>Happenings</a>
+            <Link href="/journeys"            onClick={() => setMobileMenuOpen(false)} data-active={active("/journeys")}>Origins</Link>
+            <Link href="/shop"                onClick={() => setMobileMenuOpen(false)} data-active={active("/shop")}>Lifestyle</Link>
+            <a    href={CONNECT_URL}           onClick={() => setMobileMenuOpen(false)}>Connect</a>
           </div>
 
-          {/* Member quick-links — only when logged in */}
-          {loggedIn && (
-            <div className="mobile-menu-member">
-              <div className="mobile-menu-member-name">
-                {user?.name?.split(" ")[0] ?? "My Account"}
-              </div>
-              <div className="mobile-menu-member-links">
-                <Link href="/member"                onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
-                <Link href="/member/wallet"         onClick={() => setMobileMenuOpen(false)}>Wallet</Link>
-                <Link href="/member/notifications"  onClick={() => setMobileMenuOpen(false)}>Notifications</Link>
-                <Link href="/member/analytics"     onClick={() => setMobileMenuOpen(false)}>Analytics</Link>
-                <Link href="/member/coupons"        onClick={() => setMobileMenuOpen(false)}>Coupons</Link>
-                <Link href="/connect/perks"         onClick={() => setMobileMenuOpen(false)}>Perks</Link>
-                <Link href="/member/settings"       onClick={() => setMobileMenuOpen(false)}>Settings</Link>
-              </div>
-            </div>
-          )}
-
           <div className="mobile-menu-actions">
-            {loggedIn ? (
-              <Link
-                href="/member"
-                className="join-btn"
-                style={{ textDecoration: "none" }}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Dashboard →
-              </Link>
-            ) : (
-              <Link
-                href="/connect"
-                className="join-btn"
-                style={{ textDecoration: "none" }}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Join →
-              </Link>
-            )}
+            <a href={CONNECT_URL} className="join-btn" style={{ textDecoration: "none" }}>
+              Join Connect →
+            </a>
           </div>
         </nav>
       </div>
 
-      {/* Search overlay — rendered outside the z-50 header container */}
+      {/* Search overlay */}
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
