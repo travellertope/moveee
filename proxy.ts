@@ -63,49 +63,24 @@ async function getWPRedirects() {
 // Routes that exist (or will exist) in the Next.js app.
 // Add to this set as you create new pages.
 const APP_ROUTES = new Set([
+  // Editorial + Shop (Site A)
   'magazine',
-  'events',
   'journeys',
-  'lifestyle',
-  'about',
-  'contact',
   'newsletter',
-  'account',
-  'membership',
-  'privacy',
-  'terms',
-  'search',
-  'community',
-  'podcast',
-  'gallery',
-  'faq',
-  'careers',
-  'partners',
-  'press',
-  'advertise',
-  'donate',
-  // Auth + member routes
-  'login',
-  'register',
-  'member',
-  'reset-password',
-  'forgot-password',
-  'connect',
-  // Community features
-  'quotes',
-  'directory',
-  // Additional app pages
-  'chapters',
-  'author',
-  'api',
-  'ai-use',
-  'cookie-policy',
   'shop',
   'visuals',
   'makers',
-  'pulse',
-  'games',
+  'author',
   'services',
+  'vendor',
+  'about',
+  'contact',
+  'privacy',
+  'terms',
+  'ai-use',
+  'cookie-policy',
+  'search',
+  'api',
   // Regional edition homepages
   'uk',
   'us',
@@ -185,6 +160,19 @@ export async function proxy(request: NextRequest) {
       const res = NextResponse.redirect(new URL(`/${edition}`, request.url))
       res.cookies.set(EDITION_COOKIE, edition, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
       return res
+    }
+  }
+
+  // ── Site B redirects — moved to connect.themoveee.com ───────────
+  const CONNECT = 'https://connect.themoveee.com'
+  const connectPrefixes = [
+    '/connect', '/events', '/community', '/pulse', '/directory',
+    '/quotes', '/games', '/member', '/login', '/register',
+    '/forgot-password', '/reset-password', '/account', '/membership',
+  ]
+  for (const prefix of connectPrefixes) {
+    if (pathname === prefix || pathname.startsWith(prefix + '/')) {
+      return NextResponse.redirect(`${CONNECT}${pathname}`, 308)
     }
   }
 

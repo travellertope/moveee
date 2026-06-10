@@ -15,6 +15,7 @@ import { CartProvider } from "@/context/CartContext";
 import { AdsProvider, type AdSettings } from "@/context/AdsContext";
 import Script from "next/script";
 import SessionProvider from "@/components/SessionProvider";
+import { getWPData, GET_SITE_SETTINGS } from "@/lib/wp";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -66,8 +67,6 @@ export const metadata: Metadata = {
   },
 };
 
-import { getWPData, GET_SITE_SETTINGS } from "@/lib/wp";
-
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -92,37 +91,33 @@ export default async function RootLayout({
         className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}
       >
         <SessionProvider>
-          <CurrencyProvider
-            initialPricing={null}
-          >
-            <LanguageProvider>
-              <CartProvider>
-                <AdsProvider settings={adSettings}>
-                  {/* AdSense loader — only injected when a publisher ID is set */}
-                  {adSettings.adsEnabled && adSettings.publisherId && (
-                    <Script
-                      src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adSettings.publisherId}`}
-                      strategy="afterInteractive"
-                      crossOrigin="anonymous"
-                    />
-                  )}
-                  {/* Custom ad script (e.g. Google Tag Manager, Ad Manager) */}
-                  {adSettings.adsEnabled && adSettings.customScript && (
-                    <Script
-                      id="custom-ad-script"
-                      strategy="afterInteractive"
-                      dangerouslySetInnerHTML={{ __html: adSettings.customScript }}
-                    />
-                  )}
-                  <Header siteSettings={siteData} />
-                  <main>{children}</main>
-                  <Footer />
-                  <CartDrawer />
-                  <CookieConsent />
-                </AdsProvider>
-              </CartProvider>
-            </LanguageProvider>
-          </CurrencyProvider>
+        <CurrencyProvider initialPricing={null}>
+          <LanguageProvider>
+            <CartProvider>
+              <AdsProvider settings={adSettings}>
+                {adSettings.adsEnabled && adSettings.publisherId && (
+                  <Script
+                    src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adSettings.publisherId}`}
+                    strategy="afterInteractive"
+                    crossOrigin="anonymous"
+                  />
+                )}
+                {adSettings.adsEnabled && adSettings.customScript && (
+                  <Script
+                    id="custom-ad-script"
+                    strategy="afterInteractive"
+                    dangerouslySetInnerHTML={{ __html: adSettings.customScript }}
+                  />
+                )}
+                <Header siteSettings={siteData} />
+                <main>{children}</main>
+                <Footer />
+                <CartDrawer />
+                <CookieConsent />
+              </AdsProvider>
+            </CartProvider>
+          </LanguageProvider>
+        </CurrencyProvider>
         </SessionProvider>
       </body>
     </html>
