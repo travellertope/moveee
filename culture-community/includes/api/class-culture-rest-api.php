@@ -2840,7 +2840,7 @@ class Culture_REST_API {
                 'post__in'       => $liked_ids,
                 'post_type'      => array( 'post', 'culture_quote' ),
                 'post_status'    => 'publish',
-                'posts_per_page' => -1,
+                'posts_per_page' => 100,
                 'orderby'        => 'post__in',
             ) );
             foreach ( $posts as $p ) {
@@ -2853,7 +2853,7 @@ class Culture_REST_API {
                 'post__in'       => $bookmarked_ids,
                 'post_type'      => array( 'post', 'culture_quote' ),
                 'post_status'    => 'publish',
-                'posts_per_page' => -1,
+                'posts_per_page' => 100,
                 'orderby'        => 'post__in',
             ) );
             foreach ( $posts as $p ) {

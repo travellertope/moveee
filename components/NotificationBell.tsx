@@ -72,11 +72,13 @@ export default function NotificationBell() {
     }
   }, [loggedIn]);
 
-  // Poll for unread count every 30 seconds.
+  // Poll for unread count every 60 s, but skip when the tab is hidden.
   useEffect(() => {
     if (!loggedIn) return;
     fetchCount();
-    const id = setInterval(fetchCount, 30000);
+    const id = setInterval(() => {
+      if (!document.hidden) fetchCount();
+    }, 60000);
     return () => clearInterval(id);
   }, [loggedIn, fetchCount]);
 
