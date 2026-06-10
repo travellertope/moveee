@@ -98,6 +98,18 @@ const EDITION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Set x-country cookie on every request so CurrencyProvider can read it client-side
+  const country = request.headers.get('x-vercel-ip-country') || 'US'
+  const setCountryCookie = (res: NextResponse) => {
+    res.cookies.set('x-country', country, {
+      path: '/',
+      maxAge: 3600,
+      sameSite: 'lax',
+      httpOnly: false,
+    })
+    return res
+  }
+
   // ── Edition routing ──────────────────────────────────────────
   // When a user visits a regional path (/uk, /us, /africa), lock cookie
   const firstSeg = pathname.split('/')[1]
@@ -106,9 +118,9 @@ export async function proxy(request: NextRequest) {
     if (saved !== firstSeg) {
       const res = NextResponse.next()
       res.cookies.set(EDITION_COOKIE, firstSeg, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
-      return res
+      return setCountryCookie(res)
     }
-    return NextResponse.next()
+    return setCountryCookie(NextResponse.next())
   }
 
   // On the exact homepage, geo-redirect first-time visitors to their edition
@@ -237,7 +249,7 @@ export async function proxy(request: NextRequest) {
     )
   }
 
-  return NextResponse.next()
+  return setCountryCookie(NextResponse.next())
 }
 
 export const config = {
