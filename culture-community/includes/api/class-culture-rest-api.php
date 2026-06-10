@@ -1468,7 +1468,7 @@ class Culture_REST_API {
             $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
             return strtolower( trim( $sub_email ) ) !== strtolower( $email );
         } ) );
-        update_option( 'culture_newsletter_subscribers', $updated );
+        update_option( 'culture_newsletter_subscribers', $updated, false );
 
         // Log for analytics — this lets us attribute unsubs to the campaign that triggered them.
         if ( class_exists( 'Culture_NL_Analytics' ) ) {
@@ -1518,7 +1518,7 @@ class Culture_REST_API {
                 if ( ! in_array( $list, $lists, true ) ) {
                     $lists[] = $list;
                     $subscribers[ $found_idx ]['lists'] = $lists;
-                    update_option( 'culture_newsletter_subscribers', $subscribers );
+                    update_option( 'culture_newsletter_subscribers', $subscribers, false );
                 }
             } else {
                 // Upgrade legacy plain-string to object, add new list.
@@ -1529,7 +1529,7 @@ class Culture_REST_API {
                     'lists'   => array( 'getmelit', $list ),
                     'segment' => $segment,
                 );
-                update_option( 'culture_newsletter_subscribers', $subscribers );
+                update_option( 'culture_newsletter_subscribers', $subscribers, false );
             }
 
             return rest_ensure_response( array(
@@ -1546,16 +1546,18 @@ class Culture_REST_API {
             'lists'   => array( $list ),
             'segment' => $segment,
         );
-        update_option( 'culture_newsletter_subscribers', $subscribers );
+        update_option( 'culture_newsletter_subscribers', $subscribers, false );
 
         // Award reputation to the matching WP user on their first newsletter subscription.
+        // Deferred to WP-Cron so the public subscribe endpoint doesn't block on
+        // the full badge evaluation chain (up to 35 DB queries via award_points).
         if ( class_exists( 'Culture_Gamification' ) ) {
             $wp_user = get_user_by( 'email', $email );
             if ( $wp_user ) {
                 $already = get_user_meta( $wp_user->ID, '_culture_newsletter_subscribed_badge', true );
                 if ( ! $already ) {
                     update_user_meta( $wp_user->ID, '_culture_newsletter_subscribed_badge', '1' );
-                    Culture_Gamification::award_points( $wp_user->ID, 'newsletter_subscribed' );
+                    wp_schedule_single_event( time() + 5, 'culture_award_newsletter_points', array( $wp_user->ID ) );
                 }
             }
         }
@@ -2151,13 +2153,13 @@ class Culture_REST_API {
                     'location' => '',
                     'date'     => current_time( 'mysql' ),
                 );
-                update_option( 'culture_newsletter_subscribers', $subscribers );
+                update_option( 'culture_newsletter_subscribers', $subscribers, false );
             } elseif ( ! $wants_main && $in_list ) {
                 $subscribers = array_values( array_filter( $subscribers, function ( $s ) use ( $email ) {
                     $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
                     return strtolower( trim( $sub_email ) ) !== strtolower( $email );
                 } ) );
-                update_option( 'culture_newsletter_subscribers', $subscribers );
+                update_option( 'culture_newsletter_subscribers', $subscribers, false );
             }
         }
 
@@ -3428,22 +3430,52 @@ class Culture_REST_API {
 
         $users = get_users( $args );
 
-        $members = array_map( function( $user ) {
-            $tier             = get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen';
-            $disciplines_raw  = get_user_meta( $user->ID, '_culture_directory_disciplines', true ) ?: '';
+        if ( empty( $users ) ) {
+            return rest_ensure_response( array() );
+        }
 
+        // Fetch all required meta keys in one query instead of 9 get_user_meta()
+        // calls per user (up to 1,400 individual meta lookups at per_page=200).
+        global $wpdb;
+        $user_ids  = array_map( fn( $u ) => (int) $u->ID, $users );
+        $id_list   = implode( ',', $user_ids );
+        $meta_keys = array(
+            '_culture_membership_tier',
+            '_culture_occupation',
+            '_culture_city',
+            '_culture_country_of_residence',
+            '_culture_directory_bio',
+            '_culture_directory_disciplines',
+            '_culture_directory_instagram',
+            '_culture_directory_linkedin',
+            '_culture_directory_website',
+        );
+        $keys_in   = implode( ',', array_map( fn( $k ) => "'" . esc_sql( $k ) . "'", $meta_keys ) );
+        $rows      = $wpdb->get_results(
+            "SELECT user_id, meta_key, meta_value FROM {$wpdb->usermeta}
+             WHERE user_id IN ({$id_list}) AND meta_key IN ({$keys_in})",
+            ARRAY_A
+        );
+
+        $meta_map = array();
+        foreach ( $rows as $row ) {
+            $meta_map[ $row['user_id'] ][ $row['meta_key'] ] = $row['meta_value'];
+        }
+
+        $members = array_map( function( $user ) use ( $meta_map ) {
+            $m = $meta_map[ $user->ID ] ?? array();
             return array(
                 'id'                     => $user->ID,
                 'display_name'           => $user->display_name,
-                'occupation'             => get_user_meta( $user->ID, '_culture_occupation',             true ) ?: '',
-                'city'                   => get_user_meta( $user->ID, '_culture_city',                   true ) ?: '',
-                'country_of_residence'   => get_user_meta( $user->ID, '_culture_country_of_residence',   true ) ?: '',
-                'tier'                   => $tier,
-                'directory_bio'          => get_user_meta( $user->ID, '_culture_directory_bio',          true ) ?: '',
-                'directory_disciplines'  => $disciplines_raw,
-                'directory_instagram'    => get_user_meta( $user->ID, '_culture_directory_instagram',    true ) ?: '',
-                'directory_linkedin'     => get_user_meta( $user->ID, '_culture_directory_linkedin',     true ) ?: '',
-                'directory_website'      => get_user_meta( $user->ID, '_culture_directory_website',      true ) ?: '',
+                'occupation'             => $m['_culture_occupation']             ?? '',
+                'city'                   => $m['_culture_city']                   ?? '',
+                'country_of_residence'   => $m['_culture_country_of_residence']   ?? '',
+                'tier'                   => $m['_culture_membership_tier']        ?? 'citizen',
+                'directory_bio'          => $m['_culture_directory_bio']          ?? '',
+                'directory_disciplines'  => $m['_culture_directory_disciplines']  ?? '',
+                'directory_instagram'    => $m['_culture_directory_instagram']    ?? '',
+                'directory_linkedin'     => $m['_culture_directory_linkedin']     ?? '',
+                'directory_website'      => $m['_culture_directory_website']      ?? '',
             );
         }, $users );
 

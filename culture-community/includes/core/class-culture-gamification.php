@@ -652,6 +652,15 @@ class Culture_Gamification {
      * @param int $user_id
      */
     public static function evaluate_badges( $user_id ) {
+        // Rate-limit badge evaluation to once every 5 minutes per user.
+        // Each points/reputation award previously triggered up to 35 DB queries here;
+        // the transient gate collapses rapid-fire awards into a single evaluation window.
+        $transient_key = 'culture_badge_eval_' . (int) $user_id;
+        if ( get_transient( $transient_key ) ) {
+            return;
+        }
+        set_transient( $transient_key, 1, 5 * MINUTE_IN_SECONDS );
+
         foreach ( self::BADGES as $slug => $badge ) {
             // Always start with the hard-coded const threshold.
             // Only use the admin setting if it has been explicitly saved above 0 —
