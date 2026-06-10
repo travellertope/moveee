@@ -34,11 +34,9 @@ class Culture_Notifications {
         add_action( 'culture_cashout_rejected',   array( __CLASS__, 'on_cashout_rejected' ), 10, 2 );
         add_action( 'culture_escrow_released',    array( __CLASS__, 'on_escrow_released'  ), 10, 2 );
         add_action( 'culture_post_validated',     array( __CLASS__, 'on_post_validated'   ), 10, 2 );
-        // Perk-expiry check via WP Cron (hourly).
+        // Perk-expiry check via WP Cron (hourly). Scheduling is handled in
+        // Culture_Activator::activate() — not here — to avoid a DB lookup on every request.
         add_action( 'culture_check_perk_expiry',  array( __CLASS__, 'check_perk_expiry'  ) );
-        if ( ! wp_next_scheduled( 'culture_check_perk_expiry' ) ) {
-            wp_schedule_event( time(), 'hourly', 'culture_check_perk_expiry' );
-        }
     }
 
     /* ——————————————————————————————————————

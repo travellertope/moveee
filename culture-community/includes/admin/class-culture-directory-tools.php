@@ -104,10 +104,13 @@ class Culture_Directory_Tools {
     /** Returns published culture_directory titles (lowercase) already in WP. */
     private static function get_seeded_titles() {
         $posts = get_posts( array(
-            'post_type'      => 'culture_directory',
-            'post_status'    => 'publish',
-            'posts_per_page' => -1,
-            'fields'         => 'all',
+            'post_type'              => 'culture_directory',
+            'post_status'            => 'publish',
+            'posts_per_page'         => -1,
+            'fields'                 => 'all',
+            'no_found_rows'          => true,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
         ) );
         return array_map( function ( $p ) {
             return strtolower( trim( $p->post_title ) );
@@ -117,10 +120,14 @@ class Culture_Directory_Tools {
     /** Returns published culture_directory posts that have no featured image. */
     private static function get_posts_without_images() {
         return get_posts( array(
-            'post_type'      => 'culture_directory',
-            'post_status'    => 'publish',
-            'posts_per_page' => -1,
-            'meta_query'     => array(
+            'post_type'              => 'culture_directory',
+            'post_status'            => 'publish',
+            'posts_per_page'         => -1,
+            'fields'                 => 'ids',
+            'no_found_rows'          => true,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+            'meta_query'             => array(
                 array(
                     'key'     => '_thumbnail_id',
                     'compare' => 'NOT EXISTS',
@@ -718,12 +725,15 @@ class Culture_Directory_Tools {
                 <?php esc_html_e( 'Updates the title, description, caption, and alt text of every existing directory featured image so the Visuals library is searchable by visual keywords (illustration style, palette, composition) rather than the entry topic name.', 'culture-community' ); ?>
             </p>
             <?php
-            $backfill_total = count( get_posts( array(
+            $backfill_q = new WP_Query( array(
                 'post_type'      => 'culture_directory',
-                'posts_per_page' => -1,
-                'meta_query'     => array( array( 'key' => '_thumbnail_id', 'compare' => 'EXISTS' ) ),
+                'post_status'    => 'publish',
+                'posts_per_page' => 1,
                 'fields'         => 'ids',
-            ) ) );
+                'no_found_rows'  => false,
+                'meta_query'     => array( array( 'key' => '_thumbnail_id', 'compare' => 'EXISTS' ) ),
+            ) );
+            $backfill_total = $backfill_q->found_posts;
             ?>
             <p>
                 <strong><?php echo esc_html( $backfill_total ); ?></strong>
