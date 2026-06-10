@@ -13,12 +13,8 @@ import { EDITIONS } from "@/lib/editions";
 interface Props {
   coverStory: any;
   stories: any[];
-  events: any[];
   origins: any[];
   products: any[];
-  quotes: any[];
-  pulseStories: any[];
-  directoryEntries: any[];
   edition: EditionSlug;
   latestIssue?: any;
   latestIssueStories?: any[];
@@ -30,8 +26,7 @@ interface Props {
 }
 
 export default function HomepageContent({
-  coverStory, stories, events, origins, products, quotes,
-  pulseStories, directoryEntries, edition,
+  coverStory, stories, origins, products, edition,
   latestIssue, latestIssueStories = [], interviewStories = [],
   seriesTheRadar = [], seriesPortraits = [], seriesTheLane = [], seriesThinkCreative = [],
 }: Props) {
@@ -117,25 +112,6 @@ export default function HomepageContent({
 
           <AdBanner slot="hero-sidebar" className="hp-ad-sidebar" />
 
-          {pulseStories.length > 0 && (
-            <div className="hp-pulse-widget">
-              <div className="hp-widget-head">
-                <div className="hp-widget-label"><span className="hp-pulse-dot" />Latest from Pulse</div>
-                <Link href="/connect" className="hp-widget-see-all">See all →</Link>
-              </div>
-              <div className="hp-pulse-list">
-                {pulseStories.slice(0, 6).map((story: any) => (
-                  <Link key={story.id} href={`/pulse/${story.slug}`} className="hp-pulse-item">
-                    <span className="hp-pulse-title" dangerouslySetInnerHTML={{ __html: story.title?.rendered || story.title }} />
-                    <span className="hp-pulse-date">
-                      {new Date(story.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="hp-games-widget">
             <div className="hp-widget-head">
               <div className="hp-widget-label">Culture Games</div>
@@ -220,106 +196,35 @@ export default function HomepageContent({
         </section>
       )}
 
-      {/* ===== TRINITY: HAPPENINGS · ORIGINS · DIRECTORY ===== */}
-      <section className="hp-trinity">
-
-        {/* HAPPENINGS */}
-        <div className="hp-trinity-col">
-          <div className="hp-trinity-head">
-            <h3 className="hp-trinity-heading">Happenings</h3>
-            <Link href="/events" className="hp-trinity-all">All Events →</Link>
+      {/* ===== ORIGINS ===== */}
+      {origins.length > 0 && (
+      <section className="hp-section" id="origins">
+        <div className="hp-section-header">
+          <div className="hp-section-title">
+            <span className="hp-section-label">Travel</span>
+            <h3>Origins</h3>
           </div>
-          {events.length > 0 ? events.slice(0, 5).map((event: any) => {
-            const d = new Date(event.eventDate || event.date);
-            const dateMeta = d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).toUpperCase();
-            const loc = event.location || event.eventLocation;
-            return (
-              <Link key={event.id} href={`/events/${event.slug}`} className="hp-trinity-event">
-                <div className="hp-trinity-meta">
-                  <span>{dateMeta}</span>
-                  {loc && <><span className="hp-trinity-sep">·</span><span>{loc.toUpperCase()}</span></>}
-                </div>
-                <h4 className="hp-trinity-title">{event.title}</h4>
-                <div className="hp-trinity-excerpt" dangerouslySetInnerHTML={{ __html: event.excerpt }} />
-              </Link>
-            );
-          }) : <p className="hp-trinity-empty">New happenings soon.</p>}
+          <Link href="/journeys" className="hp-section-link">All Tours →</Link>
         </div>
-
-        {/* ORIGINS + FEATURED QUOTE */}
-        <div className="hp-trinity-col hp-trinity-col--origins">
-          <div className="hp-trinity-head">
-            <h3 className="hp-trinity-heading">Origins</h3>
-            <Link href="/journeys" className="hp-trinity-all">All Tours →</Link>
-          </div>
-          {origins.slice(0, 2).map((origin: any) => (
-            <Link key={origin.id} href={`/journeys/${origin.slug}`} className="hp-trinity-thumb-row">
-              {origin.featuredImage && (
-                <div className="hp-trinity-thumb">
+        <div className="hp-mag-strip">
+          {origins.slice(0, 4).map((origin: any) => (
+            <Link key={origin.id} href={`/journeys/${origin.slug}`} className="hp-mag-card">
+              <div className="hp-mag-card-image">
+                {origin.featuredImage && (
                   <Image src={origin.featuredImage.node.sourceUrl} alt={origin.featuredImage.node.altText || origin.title} fill className="object-cover" />
-                </div>
+                )}
+              </div>
+              {(origin.journeyLocation || origin.journeyDates) && (
+                <span className="hp-mag-cat">
+                  {[origin.journeyLocation, origin.journeyDates].filter(Boolean).join(" · ").toUpperCase()}
+                </span>
               )}
-              <div className="hp-trinity-thumb-body">
-                {(origin.journeyLocation || origin.journeyDates) && (
-                  <div className="hp-trinity-meta">
-                    {origin.journeyLocation && <span>{origin.journeyLocation.toUpperCase()}</span>}
-                    {origin.journeyLocation && origin.journeyDates && <span className="hp-trinity-sep">·</span>}
-                    {origin.journeyDates && <span>{origin.journeyDates}</span>}
-                  </div>
-                )}
-                <h4 className="hp-trinity-title">{origin.title}</h4>
-                {origin.excerpt && (
-                  <div className="hp-trinity-excerpt" dangerouslySetInnerHTML={{ __html: origin.excerpt }} />
-                )}
-              </div>
-            </Link>
-          ))}
-
-          {quotes.length > 0 && (
-            <div className="hp-trinity-fquote">
-              <div className="hp-trinity-fquote-label">Featured Quote</div>
-              <div className="hp-trinity-fquote-mark">&ldquo;</div>
-              <blockquote
-                className="hp-trinity-fquote-text"
-                dangerouslySetInnerHTML={{ __html: quotes[0].content || quotes[0].title }}
-              />
-              <div className="hp-trinity-fquote-author">
-                — {quotes[0].quoteAuthors?.nodes[0]?.name || quotes[0].quoteSource || "Anonymous"}
-              </div>
-              <Link href="/quotes" className="hp-trinity-fquote-link">All Quotes →</Link>
-            </div>
-          )}
-        </div>
-
-        {/* DIRECTORY */}
-        <div className="hp-trinity-col">
-          <div className="hp-trinity-head">
-            <h3 className="hp-trinity-heading">Directory</h3>
-            <Link href="/directory" className="hp-trinity-all">Browse All →</Link>
-          </div>
-          {directoryEntries.slice(0, 5).map((entry: any) => (
-            <Link key={entry.id} href={`/directory/${entry.slug}`} className="hp-trinity-thumb-row">
-              {entry.featuredImage ? (
-                <div className="hp-trinity-thumb">
-                  <Image src={entry.featuredImage.node.sourceUrl} alt={entry.featuredImage.node.altText || entry.title} fill className="object-cover" />
-                </div>
-              ) : (
-                <div className="hp-trinity-thumb hp-trinity-thumb--placeholder" />
-              )}
-              <div className="hp-trinity-thumb-body">
-                {entry.cultureDirectoryTypes?.nodes?.[0] && (
-                  <div className="hp-trinity-type">{entry.cultureDirectoryTypes.nodes[0].name.toUpperCase()}</div>
-                )}
-                <h4 className="hp-trinity-title">{entry.title}</h4>
-                {entry.excerpt && (
-                  <div className="hp-trinity-excerpt" dangerouslySetInnerHTML={{ __html: entry.excerpt }} />
-                )}
-              </div>
+              <h4 className="hp-mag-card-title">{origin.title}</h4>
             </Link>
           ))}
         </div>
-
       </section>
+      )}
 
       {/* ===== INTERVIEWS (post grid) ===== */}
       {interviewStrip.length > 0 && (
