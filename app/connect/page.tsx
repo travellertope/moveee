@@ -8,7 +8,7 @@ import Link from "next/link";
 import "../sections.css";
 import "./connect.css";
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Moveee Connect — Community for Black & Diaspora Creatives",

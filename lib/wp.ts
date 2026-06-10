@@ -2,7 +2,7 @@ const WP_GRAPHQL_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || "https://cms
 const WP_BASE_URL = WP_GRAPHQL_URL.replace(/\/graphql\/?$/, "");
 
 /** Default timeout (ms) for all WP fetches — prevents server hangs when CMS is slow. */
-const WP_FETCH_TIMEOUT = 15000;
+const WP_FETCH_TIMEOUT = 8000;
 
 function wpSignal(ms = WP_FETCH_TIMEOUT): { signal: AbortSignal; clear: () => void } {
   const ctrl = new AbortController();
@@ -10,7 +10,31 @@ function wpSignal(ms = WP_FETCH_TIMEOUT): { signal: AbortSignal; clear: () => vo
   return { signal: ctrl.signal, clear: () => clearTimeout(timer) };
 }
 
+// Circuit breaker: stop hammering the CMS when it's already struggling
+const _cb = { failures: 0, openUntil: 0 };
+const CB_THRESHOLD = 3;
+const CB_COOLDOWN = 30_000; // 30s cooldown after 3 consecutive failures
+
+function cbCheck(): boolean {
+  if (_cb.openUntil && Date.now() < _cb.openUntil) return false; // circuit open
+  if (_cb.openUntil && Date.now() >= _cb.openUntil) {
+    _cb.openUntil = 0;
+    _cb.failures = 0;
+  }
+  return true;
+}
+function cbSuccess() { _cb.failures = 0; }
+function cbFail() {
+  _cb.failures++;
+  if (_cb.failures >= CB_THRESHOLD) {
+    _cb.openUntil = Date.now() + CB_COOLDOWN;
+    console.warn(`[circuit-breaker] CMS circuit opened for ${CB_COOLDOWN / 1000}s after ${CB_THRESHOLD} failures`);
+  }
+}
+
 export async function getWPData(query: string, variables = {}, options: any = {}) {
+  if (!cbCheck()) return null;
+
   const { signal, clear } = wpSignal();
   try {
     const res = await fetch(WP_GRAPHQL_URL, {
@@ -31,22 +55,22 @@ export async function getWPData(query: string, variables = {}, options: any = {}
 
     if (!res.ok) {
       console.error(`Fetch failed for ${WP_GRAPHQL_URL}: ${res.statusText}`);
+      cbFail();
       return null;
     }
 
     const json = await res.json();
+    cbSuccess();
 
     if (json.errors) {
       console.warn(`GraphQL partial errors for ${WP_GRAPHQL_URL}:`, json.errors);
-      // Return data anyway if it exists (standard GraphQL behavior)
       return json.data || null;
     }
 
     return json.data;
   } catch (error: any) {
     clear();
-    // Return null instead of throwing so the build doesn't crash
-    // when the CMS is unreachable (e.g. DNS not configured yet)
+    cbFail();
     console.error(`Network or Parsing Error for ${WP_GRAPHQL_URL}:`, error.message);
     return null;
   }
@@ -733,6 +757,16 @@ export const GET_SERIES_STORIES = `
       description
       posts(first: 48) { nodes { ...StoryFields } }
     }
+  }
+  ${STORY_FIELDS_FRAGMENT}
+`;
+
+export const GET_SERIES_STORIES_BATCH = `
+  query GetSeriesBatch {
+    theRadar: seriesItem(id: "the-radar", idType: SLUG) { posts(first: 8) { nodes { ...StoryFields } } }
+    portraits: seriesItem(id: "portraits-of-the-city", idType: SLUG) { posts(first: 8) { nodes { ...StoryFields } } }
+    theLane: seriesItem(id: "the-lane", idType: SLUG) { posts(first: 8) { nodes { ...StoryFields } } }
+    thinkCreative: seriesItem(id: "think-like-a-creative", idType: SLUG) { posts(first: 8) { nodes { ...StoryFields } } }
   }
   ${STORY_FIELDS_FRAGMENT}
 `;

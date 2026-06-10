@@ -21,21 +21,42 @@ const CRAWLER_WINDOW_MS = 60_000
 
 // ── WP Admin redirect cache ───────────────────────────────────
 const WP_REDIRECTS_URL = 'https://cms.themoveee.com/wp-json/culture/v1/redirects'
+const WP_REDIRECT_TTL = 900_000 // 15 minutes
 
 let _wpRedirects: Array<{ from: string; to: string; permanent: boolean }> = []
 let _wpCacheUntil = 0
+let _wpRefreshPromise: Promise<void> | null = null
 
 async function getWPRedirects() {
   if (Date.now() < _wpCacheUntil) return _wpRedirects
-  try {
-    const res = await fetch(WP_REDIRECTS_URL)
-    if (res.ok) {
-      _wpRedirects = await res.json()
-      _wpCacheUntil = Date.now() + 120_000
-    }
-  } catch {
-    // keep stale cache on network errors
+
+  // Mutex: only one in-flight refresh; all other callers get stale data
+  if (_wpRefreshPromise) {
+    if (_wpRedirects.length > 0) return _wpRedirects
+    await _wpRefreshPromise
+    return _wpRedirects
   }
+
+  _wpRefreshPromise = (async () => {
+    try {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 5000)
+      const res = await fetch(WP_REDIRECTS_URL, { signal: ctrl.signal })
+      clearTimeout(timer)
+      if (res.ok) {
+        _wpRedirects = await res.json()
+        _wpCacheUntil = Date.now() + WP_REDIRECT_TTL
+      }
+    } catch {
+      // keep stale cache; retry after a short cooldown
+      _wpCacheUntil = Date.now() + 60_000
+    } finally {
+      _wpRefreshPromise = null
+    }
+  })()
+
+  if (_wpRedirects.length > 0) return _wpRedirects
+  await _wpRefreshPromise
   return _wpRedirects
 }
 

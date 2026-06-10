@@ -2,7 +2,7 @@ import {
   getWPData,
   GET_STORIES,
   GET_STORIES_TAGS,
-  GET_SERIES_STORIES,
+  GET_SERIES_STORIES_BATCH,
   GET_JOURNEYS,
   GET_DIRECTORY_ENTRIES,
   GET_PRODUCTS,
@@ -160,18 +160,13 @@ export async function fetchHomepageData(editionTag?: string) {
     interviewStories = data?.posts?.nodes || [];
   } catch (err) { console.error("Interviews fetch error:", err); }
 
-  // Series strips — fetch in parallel
+  // Series strips — single batched GraphQL query (4→1 request)
   try {
-    const [radar, portraits, lane, creative] = await Promise.all([
-      getWPData(GET_SERIES_STORIES, { series: "the-radar" },           { revalidate: 300 }),
-      getWPData(GET_SERIES_STORIES, { series: "portraits-of-the-city" }, { revalidate: 300 }),
-      getWPData(GET_SERIES_STORIES, { series: "the-lane" },            { revalidate: 300 }),
-      getWPData(GET_SERIES_STORIES, { series: "think-like-a-creative" }, { revalidate: 300 }),
-    ]);
-    seriesTheRadar      = radar?.seriesItem?.posts?.nodes     || [];
-    seriesPortraits     = portraits?.seriesItem?.posts?.nodes || [];
-    seriesTheLane       = lane?.seriesItem?.posts?.nodes      || [];
-    seriesThinkCreative = creative?.seriesItem?.posts?.nodes  || [];
+    const seriesData = await getWPData(GET_SERIES_STORIES_BATCH, {}, { revalidate: 300 });
+    seriesTheRadar      = seriesData?.theRadar?.posts?.nodes      || [];
+    seriesPortraits     = seriesData?.portraits?.posts?.nodes     || [];
+    seriesTheLane       = seriesData?.theLane?.posts?.nodes       || [];
+    seriesThinkCreative = seriesData?.thinkCreative?.posts?.nodes || [];
   } catch (err) { console.error("Series fetch error:", err); }
 
   // Deduplicate by slug. Priority: latestIssue > coverStory > stories > interviews > series
