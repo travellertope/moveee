@@ -986,7 +986,14 @@ class Culture_Mobile_API {
 
     public static function handle_get_unified_feed( $request ) {
         $page     = max( 1, (int) $request->get_param( 'page' ) );
-        $per_page = min( (int) $request->get_param( 'per_page' ), 50 );
+        $per_page = min( max( 1, (int) $request->get_param( 'per_page' ) ), 50 );
+        $user_id  = get_current_user_id();
+
+        $cache_key = 'culture_feed_u' . $user_id . '_p' . $page . '_n' . $per_page;
+        $cached    = get_transient( $cache_key );
+        if ( false !== $cached ) {
+            return rest_ensure_response( $cached );
+        }
 
         $items = array();
 
@@ -1001,22 +1008,25 @@ class Culture_Mobile_API {
             return strtotime( $b['date'] ) <=> strtotime( $a['date'] );
         } );
 
-        $offset     = ( $page - 1 ) * $per_page;
-        $page_items = array_slice( $items, $offset, $per_page );
-
-        return rest_ensure_response( array(
-            'items'   => array_values( $page_items ),
+        $offset   = ( $page - 1 ) * $per_page;
+        $response = array(
+            'items'   => array_values( array_slice( $items, $offset, $per_page ) ),
             'hasMore' => ( $offset + $per_page ) < count( $items ),
-        ) );
+        );
+
+        set_transient( $cache_key, $response, 2 * MINUTE_IN_SECONDS );
+
+        return rest_ensure_response( $response );
     }
 
     private static function get_pulse_feed_items(): array {
         $query = new WP_Query( array(
             'post_type'      => 'pulse_story',
             'post_status'    => 'publish',
-            'posts_per_page' => 30,
+            'posts_per_page' => 15,
             'orderby'        => 'date',
             'order'          => 'DESC',
+            'no_found_rows'  => true,
         ) );
 
         return array_map( function( WP_Post $post ) {
@@ -1053,9 +1063,10 @@ class Culture_Mobile_API {
         $query = new WP_Query( array(
             'post_type'      => 'post',
             'post_status'    => 'publish',
-            'posts_per_page' => 30,
+            'posts_per_page' => 15,
             'orderby'        => 'date',
             'order'          => 'DESC',
+            'no_found_rows'  => true,
         ) );
 
         return array_map( function( WP_Post $post ) {
@@ -1079,10 +1090,27 @@ class Culture_Mobile_API {
         $query = new WP_Query( array(
             'post_type'      => 'culture_event',
             'post_status'    => 'publish',
-            'posts_per_page' => 30,
+            'posts_per_page' => 15,
             'orderby'        => 'date',
             'order'          => 'DESC',
+            'no_found_rows'  => true,
         ) );
+
+        // Pre-warm the object cache for all organiser posts in one DB query.
+        $organiser_ids = array_unique( array_filter( array_map( function( $p ) {
+            return (int) get_post_meta( $p->ID, '_culture_event_organiser_id', true );
+        }, $query->posts ) ) );
+        if ( ! empty( $organiser_ids ) ) {
+            get_posts( array(
+                'post__in'               => array_values( $organiser_ids ),
+                'post_type'              => 'any',
+                'posts_per_page'         => count( $organiser_ids ),
+                'no_found_rows'          => true,
+                'update_post_meta_cache' => false,
+                'update_post_term_cache' => false,
+                'ignore_sticky_posts'    => true,
+            ) );
+        }
 
         return array_map( function( WP_Post $post ) {
             $thumb = get_the_post_thumbnail_url( $post->ID, 'large' );
@@ -1128,9 +1156,10 @@ class Culture_Mobile_API {
         $query = new WP_Query( array(
             'post_type'      => 'culture_directory',
             'post_status'    => 'publish',
-            'posts_per_page' => 30,
+            'posts_per_page' => 15,
             'orderby'        => 'date',
             'order'          => 'DESC',
+            'no_found_rows'  => true,
         ) );
 
         return array_map( function( WP_Post $post ) {
@@ -1157,9 +1186,10 @@ class Culture_Mobile_API {
         $query = new WP_Query( array(
             'post_type'      => 'culture_quote',
             'post_status'    => 'publish',
-            'posts_per_page' => 50,
+            'posts_per_page' => 20,
             'orderby'        => 'date',
             'order'          => 'DESC',
+            'no_found_rows'  => true,
         ) );
 
         return array_map( function( WP_Post $post ) {
@@ -1185,9 +1215,10 @@ class Culture_Mobile_API {
         $query = new WP_Query( array(
             'post_type'      => 'culture_post',
             'post_status'    => 'publish',
-            'posts_per_page' => 24,
+            'posts_per_page' => 15,
             'orderby'        => 'date',
             'order'          => 'DESC',
+            'no_found_rows'  => true,
         ) );
 
         return array_map( function( WP_Post $post ) use ( $liked_ids ) {

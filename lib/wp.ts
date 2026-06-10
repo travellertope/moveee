@@ -384,16 +384,18 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
         })
         .filter(Boolean) as { i: number; id: number }[];
       if (missing.length > 0) {
-        await Promise.allSettled(missing.map(async ({ i, id }) => {
-          try {
-            const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
-            if (mRes.ok) {
-              const m = await mRes.json();
-              const url = m.source_url ?? m.guid?.rendered;
-              if (url) ev.showcase[i] = { ...ev.showcase[i], image: { sourceUrl: url } };
-            }
-          } catch { /* non-fatal */ }
-        }));
+        for (let b = 0; b < missing.length; b += 3) {
+          await Promise.allSettled(missing.slice(b, b + 3).map(async ({ i, id }) => {
+            try {
+              const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
+              if (mRes.ok) {
+                const m = await mRes.json();
+                const url = m.source_url ?? m.guid?.rendered;
+                if (url) ev.showcase[i] = { ...ev.showcase[i], image: { sourceUrl: url } };
+              }
+            } catch { /* non-fatal */ }
+          }));
+        }
       }
     }
 
@@ -449,16 +451,18 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
       if (!s.image?.sourceUrl && typeof raw === "number" && raw > 0) showcaseImageIds.push({ i, id: raw });
     });
     if (showcaseImageIds.length > 0) {
-      await Promise.allSettled(showcaseImageIds.map(async ({ i, id }) => {
-        try {
-          const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
-          if (mRes.ok) {
-            const m = await mRes.json();
-            const url = m.source_url ?? m.guid?.rendered;
-            if (url) event.showcase[i].image = { sourceUrl: url };
-          }
-        } catch { /* non-fatal */ }
-      }));
+      for (let b = 0; b < showcaseImageIds.length; b += 3) {
+        await Promise.allSettled(showcaseImageIds.slice(b, b + 3).map(async ({ i, id }) => {
+          try {
+            const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
+            if (mRes.ok) {
+              const m = await mRes.json();
+              const url = m.source_url ?? m.guid?.rendered;
+              if (url) event.showcase[i].image = { sourceUrl: url };
+            }
+          } catch { /* non-fatal */ }
+        }));
+      }
     }
 
 
