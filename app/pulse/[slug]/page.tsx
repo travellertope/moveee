@@ -17,7 +17,7 @@ export const dynamicParams = true;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 
-export async function generateStaticParams() {
+export function generateStaticParams() {
   return [];
 }
 

@@ -29,7 +29,7 @@ function PlainTextBody({ text }: { text: string }) {
 export const revalidate = 300;
 export const dynamicParams = true;
 
-export async function generateStaticParams() {
+export function generateStaticParams() {
   return [];
 }
 

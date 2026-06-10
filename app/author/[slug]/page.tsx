@@ -6,8 +6,7 @@ import { notFound } from "next/navigation";
 import "@/app/homepage.css";
 import "@/app/magazine.css";
 
-export const revalidate = 300;
-export const dynamicParams = true;
+export const revalidate = 3600;
 
 async function fetchAuthorData(slug: string, first: number) {
   const isNumeric = /^\d+$/.test(slug);

@@ -26,7 +26,7 @@ export default async function NewsletterArchive({
 }) {
   let newsletters: any[] = [];
   try {
-    newsletters = await getNewslettersWithFallback(50, { revalidate: 300 });
+    newsletters = await getNewslettersWithFallback(50, { revalidate: 3600 });
   } catch {
     // CMS unreachable
   }

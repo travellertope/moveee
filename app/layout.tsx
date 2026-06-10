@@ -73,7 +73,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const siteData = await getWPData(GET_SITE_SETTINGS, {}, { revalidate: 3600 });
+  const siteData = await getWPData(GET_SITE_SETTINGS);
 
   const rawAds = siteData?.adSettings;
   const adSettings: AdSettings = {
@@ -93,8 +93,7 @@ export default async function RootLayout({
       >
         <SessionProvider>
           <CurrencyProvider
-            detectedCountry={undefined}
-            initialPricing={siteData?.membershipSettings || null}
+            initialPricing={null}
           >
             <LanguageProvider>
               <CartProvider>

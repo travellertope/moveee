@@ -22,7 +22,7 @@ const NAV_LINKS = [
   { label: "Directory", href: "/connect" },
 ];
 
-export async function generateStaticParams() {
+export function generateStaticParams() {
   return [];
 }
 
