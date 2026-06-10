@@ -1,6 +1,4 @@
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { isValidRegionalSlug, EDITIONS, type RegionalSlug } from "@/lib/editions";
 import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import HomepageContent from "@/components/HomepageContent";
@@ -87,12 +85,9 @@ export default async function EditionPage({ params }: Props) {
 
   if (!isValidRegionalSlug(edition)) notFound();
 
-  const session = await getServerSession(authOptions);
-  const isLoggedIn = !!session?.user;
-
   const data = await fetchHomepageData(edition);
 
-  return <HomepageContent {...data} isLoggedIn={isLoggedIn} edition={edition as RegionalSlug} />;
+  return <HomepageContent {...data} edition={edition as RegionalSlug} />;
 }
 
 export function generateStaticParams() {

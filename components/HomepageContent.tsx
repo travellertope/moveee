@@ -1,12 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import Marquee from "@/components/Marquee";
-import PatronPrice from "@/components/PatronPrice";
 import AdBanner from "@/components/AdBanner";
 import { decodeHtml } from "@/lib/decode-html";
 import ShopCarousel from "@/components/ShopCarousel";
 import IssueCarousel from "@/components/IssueCarousel";
 import HomepageNewsletterForm from "@/components/HomepageNewsletterForm";
+import ConnectCTA from "@/components/ConnectCTA";
 import type { EditionSlug } from "@/lib/editions";
 import { EDITIONS } from "@/lib/editions";
 
@@ -19,7 +19,6 @@ interface Props {
   quotes: any[];
   pulseStories: any[];
   directoryEntries: any[];
-  isLoggedIn: boolean;
   edition: EditionSlug;
   latestIssue?: any;
   latestIssueStories?: any[];
@@ -32,7 +31,7 @@ interface Props {
 
 export default function HomepageContent({
   coverStory, stories, events, origins, products, quotes,
-  pulseStories, directoryEntries, isLoggedIn, edition,
+  pulseStories, directoryEntries, edition,
   latestIssue, latestIssueStories = [], interviewStories = [],
   seriesTheRadar = [], seriesPortraits = [], seriesTheLane = [], seriesThinkCreative = [],
 }: Props) {
@@ -462,16 +461,7 @@ export default function HomepageContent({
               <div className="perk"><span className="n">1.</span><p><em>Connect Pro</em> badge on your Pulse posts and exclusive gated content.</p></div>
               <div className="perk"><span className="n">2.</span><p>10% off the Moveee Shop and early access to new features.</p></div>
             </div>
-            <div className="connect-cta">
-              {isLoggedIn ? (
-                <Link href="/member" className="btn-gold">Go to Dashboard <span className="arrow">→</span></Link>
-              ) : (
-                <>
-                  <Link href="/connect/membership" className="btn-gold">View Membership <span className="arrow">→</span></Link>
-                  <div className="connect-price"><PatronPrice variant="yearly" /> (Cancel anytime)</div>
-                </>
-              )}
-            </div>
+            <ConnectCTA />
           </div>
         </div>
       </section>
