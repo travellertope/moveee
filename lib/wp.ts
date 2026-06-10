@@ -444,11 +444,15 @@ export async function getNewslettersWithFallback(first = 50, options: any = {}) 
 
   try {
     const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_newsletter?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
     const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       next: { revalidate: options.revalidate !== undefined ? options.revalidate : 3600 },
+      signal: controller.signal,
     });
+    clearTimeout(timer);
     if (!res.ok) return [];
     const json = await res.json();
     if (!Array.isArray(json)) return [];
@@ -534,11 +538,6 @@ const STORY_FIELDS_FRAGMENT = `
     countries {
       nodes {
         name
-        slug
-      }
-    }
-    cultureAccesses {
-      nodes {
         slug
       }
     }
@@ -1510,23 +1509,6 @@ export const GET_SITE_SETTINGS = `
       announcementText
       announcementUrl
       locations
-    }
-    membershipSettings {
-      patronLabel
-      citizenLabel
-      monthlyNgn
-      yearlyNgn
-      monthlyUsd
-      yearlyUsd
-    }
-    adSettings {
-      adsEnabled
-      publisherId
-      customScript
-      slotLeaderboardTop
-      slotLeaderboardMid
-      slotLeaderboardPreQuotes
-      slotHeroSidebar
     }
   }
 `;

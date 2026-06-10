@@ -16,7 +16,6 @@ import { CartProvider } from "@/context/CartContext";
 import { AdsProvider, type AdSettings } from "@/context/AdsContext";
 import Script from "next/script";
 import SessionProvider from "@/components/SessionProvider";
-import { headers } from "next/headers";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -76,8 +75,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const siteData = await getWPData(GET_SITE_SETTINGS);
-  const headersList = await headers();
-  const country = headersList.get("x-vercel-ip-country") || "US";
 
   const rawAds = siteData?.adSettings;
   const adSettings: AdSettings = {
@@ -97,8 +94,7 @@ export default async function RootLayout({
       >
         <SessionProvider>
           <CurrencyProvider
-            detectedCountry={country}
-            initialPricing={siteData?.membershipSettings || null}
+            initialPricing={null}
           >
             <LanguageProvider>
               <CartProvider>

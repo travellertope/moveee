@@ -28,9 +28,8 @@ function PlainTextBody({ text }: { text: string }) {
 
 export const revalidate = 300;
 
-export async function generateStaticParams() {
-  const issues = await getAllIssues();
-  return issues.map((issue) => ({ slug: issue.slug }));
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

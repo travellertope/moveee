@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   let event: any = null;
   try {
-    event = await getEventBySlugWithFallback(slug, { revalidate: 0 });
+    event = await getEventBySlugWithFallback(slug, { revalidate: 180 });
   } catch { /* CMS unreachable */ }
 
   if (!event) {
@@ -52,7 +52,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   let event: any = null;
   try {
-    event = await getEventBySlugWithFallback(slug, { revalidate: 0 });
+    event = await getEventBySlugWithFallback(slug, { revalidate: 180 });
   } catch { /* CMS unreachable */ }
 
   if (!event) notFound();

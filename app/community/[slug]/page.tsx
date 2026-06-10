@@ -21,13 +21,8 @@ const NAV_LINKS = [
   { label: "Directory", href: "/connect" },
 ];
 
-export async function generateStaticParams() {
-  try {
-    const slugs = await getAllCommunitySlugs();
-    return slugs.map((slug) => ({ slug }));
-  } catch {
-    return [];
-  }
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata({

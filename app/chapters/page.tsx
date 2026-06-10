@@ -4,7 +4,7 @@ import ChapterCard from "./components/ChapterCard";
 import Marquee from "@/components/Marquee";
 import "@/app/chapters.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = {
   title: { absolute: "Chapters | The Moveee" },
@@ -14,7 +14,7 @@ export const metadata = {
 export default async function ChaptersPage() {
   let chapters: any[] = [];
   try {
-    const data = await getWPData(GET_CHAPTERS, { first: 100 }, { revalidate: 0 });
+    const data = await getWPData(GET_CHAPTERS, { first: 100 }, { revalidate: 3600 });
     chapters = data?.cultureChapters?.nodes ?? [];
   } catch (error) {
     console.error("Error fetching chapters:", error);

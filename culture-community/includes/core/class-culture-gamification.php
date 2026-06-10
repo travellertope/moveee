@@ -277,6 +277,12 @@ class Culture_Gamification {
      * @param int $user_id
      */
     public static function evaluate_badges( $user_id ) {
+        $cache_key = 'culture_badge_eval_' . $user_id;
+        if ( get_transient( $cache_key ) ) {
+            return;
+        }
+        set_transient( $cache_key, 1, 5 * MINUTE_IN_SECONDS );
+
         foreach ( self::BADGES as $slug => $badge ) {
             // Always start with the hard-coded const threshold.
             // Only use the admin setting if it has been explicitly saved above 0 —

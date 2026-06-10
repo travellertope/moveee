@@ -48,10 +48,10 @@ export async function fetchHomepageData(editionTag?: string) {
       // Run three queries in parallel: edition posts, all-latest, and tag-only
       // data for each other edition (lightweight — just id + tags).
       const [editionData, latestData, ...otherTagData] = await Promise.all([
-        getWPData(GET_STORIES, { first: 14, tag: editionTag }, { revalidate: 0 }),
-        getWPData(GET_STORIES, { first: 20 }, { revalidate: 0 }),
+        getWPData(GET_STORIES, { first: 14, tag: editionTag }, { revalidate: 300 }),
+        getWPData(GET_STORIES, { first: 20 }, { revalidate: 300 }),
         ...otherEditions.map(tag =>
-          getWPData(GET_STORIES_TAGS, { first: 50, tag }, { revalidate: 0 })
+          getWPData(GET_STORIES_TAGS, { first: 50, tag }, { revalidate: 300 })
         ),
       ]);
 
@@ -76,7 +76,7 @@ export async function fetchHomepageData(editionTag?: string) {
       coverStory = pool[0] || null;
       stories = pool.slice(1, 14);
     } else {
-      const data = await getWPData(GET_STORIES, { first: 14 }, { revalidate: 0 });
+      const data = await getWPData(GET_STORIES, { first: 14 }, { revalidate: 300 });
       const pool: any[] = data?.posts?.nodes || [];
       coverStory = pool[0] || null;
       stories = pool.slice(1, 14);
@@ -87,7 +87,7 @@ export async function fetchHomepageData(editionTag?: string) {
   // Universal = not explicitly tagged for any other edition.
   // Events use the same tag structure as posts so we can check .tags?.nodes.
   try {
-    events = await getEventsWithFallback(editionTag ? 18 : 6, { revalidate: 0 });
+    events = await getEventsWithFallback(editionTag ? 18 : 6, { revalidate: 300 });
     if (editionTag && events.length > 0) {
       const otherEditions = (REGIONAL_SLUGS as readonly string[]).filter(t => t !== editionTag);
       events = events.filter((e: any) => {
@@ -101,7 +101,7 @@ export async function fetchHomepageData(editionTag?: string) {
 
   // Origins
   try {
-    const data = await getWPData(GET_JOURNEYS, { first: 6 }, { revalidate: 0 });
+    const data = await getWPData(GET_JOURNEYS, { first: 6 }, { revalidate: 300 });
     origins = data?.cultureJourneys?.nodes || [];
   } catch (err) { console.error("Origins fetch error:", err); }
 
@@ -121,7 +121,7 @@ export async function fetchHomepageData(editionTag?: string) {
 
   // Directory — random 8 from a larger pool
   try {
-    const data = await getWPData(GET_DIRECTORY_ENTRIES, { first: 24 }, { revalidate: 0 });
+    const data = await getWPData(GET_DIRECTORY_ENTRIES, { first: 24 }, { revalidate: 300 });
     const all: any[] = data?.cultureDirectories?.nodes || [];
     directoryEntries = all.sort(() => Math.random() - 0.5).slice(0, 8);
   } catch (err) { console.error("Directory fetch error:", err); }
@@ -138,7 +138,7 @@ export async function fetchHomepageData(editionTag?: string) {
     const WP_URL = process.env.NEXT_PUBLIC_WP_URL || "https://cms.themoveee.com";
     const res = await fetch(
       `${WP_URL}/wp-json/wp/v2/pulse-stories?per_page=4&orderby=date&order=desc&_embed=1`,
-      { next: { revalidate: 0 } }
+      { next: { revalidate: 300 } }
     );
     if (res.ok) pulseStories = await res.json();
   } catch (err) { console.error("Pulse fetch error:", err); }
@@ -153,7 +153,7 @@ export async function fetchHomepageData(editionTag?: string) {
 
   // Interviews strip
   try {
-    const data = await getWPData(GET_STORIES, { first: 10, categoryName: "Interviews" }, { revalidate: 0 });
+    const data = await getWPData(GET_STORIES, { first: 10, categoryName: "Interviews" }, { revalidate: 300 });
     interviewStories = data?.posts?.nodes || [];
   } catch (err) { console.error("Interviews fetch error:", err); }
 

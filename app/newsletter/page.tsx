@@ -6,7 +6,7 @@ import GmlCTAForm from "@/components/GmlCTAForm";
 import GmlWaitlistForm from "@/components/GmlWaitlistForm";
 import "../newsletter.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = {
   title: { absolute: "Newsletters — The Moveee" },
@@ -26,7 +26,7 @@ export default async function NewsletterArchive({
 }) {
   let newsletters: any[] = [];
   try {
-    newsletters = await getNewslettersWithFallback(50, { revalidate: 0 });
+    newsletters = await getNewslettersWithFallback(50, { revalidate: 3600 });
   } catch {
     // CMS unreachable
   }

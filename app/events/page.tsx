@@ -63,7 +63,7 @@ function isEventPast(event: any): boolean {
 export default async function EventsPage() {
   let events: any[] = [];
   try {
-    events = await getEventsWithFallback(50, { revalidate: 0 });
+    events = await getEventsWithFallback(50, { revalidate: 180 });
   } catch { /* CMS unreachable */ }
 
   const ownEvents    = events.filter(e => !e.isAiGenerated && !isEventPast(e));

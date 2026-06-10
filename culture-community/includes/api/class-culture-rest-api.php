@@ -923,7 +923,7 @@ class Culture_REST_API {
             $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
             return strtolower( trim( $sub_email ) ) !== strtolower( $email );
         } ) );
-        update_option( 'culture_newsletter_subscribers', $updated );
+        update_option( 'culture_newsletter_subscribers', $updated, false );
 
         // Log for analytics — this lets us attribute unsubs to the campaign that triggered them.
         if ( class_exists( 'Culture_NL_Analytics' ) ) {
@@ -973,7 +973,7 @@ class Culture_REST_API {
                 if ( ! in_array( $list, $lists, true ) ) {
                     $lists[] = $list;
                     $subscribers[ $found_idx ]['lists'] = $lists;
-                    update_option( 'culture_newsletter_subscribers', $subscribers );
+                    update_option( 'culture_newsletter_subscribers', $subscribers, false );
                 }
             } else {
                 // Upgrade legacy plain-string to object, add new list.
@@ -984,7 +984,7 @@ class Culture_REST_API {
                     'lists'   => array( 'getmelit', $list ),
                     'segment' => $segment,
                 );
-                update_option( 'culture_newsletter_subscribers', $subscribers );
+                update_option( 'culture_newsletter_subscribers', $subscribers, false );
             }
 
             return rest_ensure_response( array(
@@ -1001,7 +1001,7 @@ class Culture_REST_API {
             'lists'   => array( $list ),
             'segment' => $segment,
         );
-        update_option( 'culture_newsletter_subscribers', $subscribers );
+        update_option( 'culture_newsletter_subscribers', $subscribers, false );
 
         return rest_ensure_response( array(
             'success' => true,
@@ -1603,13 +1603,13 @@ class Culture_REST_API {
                     'location' => '',
                     'date'     => current_time( 'mysql' ),
                 );
-                update_option( 'culture_newsletter_subscribers', $subscribers );
+                update_option( 'culture_newsletter_subscribers', $subscribers, false );
             } elseif ( ! $wants_main && $in_list ) {
                 $subscribers = array_values( array_filter( $subscribers, function ( $s ) use ( $email ) {
                     $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
                     return strtolower( trim( $sub_email ) ) !== strtolower( $email );
                 } ) );
-                update_option( 'culture_newsletter_subscribers', $subscribers );
+                update_option( 'culture_newsletter_subscribers', $subscribers, false );
             }
         }
 

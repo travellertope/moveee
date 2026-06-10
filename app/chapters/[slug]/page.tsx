@@ -7,7 +7,7 @@ import ChapterMap from "../components/ChapterMap";
 import EventCard from "../../events/components/EventCard";
 import "@/app/chapters.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
