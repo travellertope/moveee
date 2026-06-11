@@ -41,7 +41,7 @@ export default function ContentGate({ accessLevel, isLoggedIn, callbackUrl = "/m
     heading = "There's more on the other side.";
     body =
       "This piece goes deeper — reserved for Connect Pro members. Join a community of culture-forward people across Africa and the diaspora, with exclusive editorials, a Pro badge, and long-form content worth your time.";
-    primaryBtn = { label: "Explore Connect Pro →", href: "/register?tier=patron" };
+    primaryBtn = { label: "Explore Connect Pro →", href: "https://connect.themoveee.com/register?tier=patron" };
     secondaryBtn = { label: "Already a member? Sign in", href: `/login?callbackUrl=${encodeURIComponent(callbackUrl)}` };
     footnote = (
       <span>
@@ -53,7 +53,7 @@ export default function ContentGate({ accessLevel, isLoggedIn, callbackUrl = "/m
     heading = "You're one step away.";
     body =
       "This piece is part of our Connect Pro archive — extended reads, exclusive member events, and long-form content for people who want to go further with The Moveee community.";
-    primaryBtn = { label: "Upgrade to Connect Pro →", href: "/connect" };
+    primaryBtn = { label: "Upgrade to Connect Pro →", href: "https://connect.themoveee.com" };
     secondaryBtn = null;
     footnote = (
       <span>
@@ -66,7 +66,7 @@ export default function ContentGate({ accessLevel, isLoggedIn, callbackUrl = "/m
     heading = "This one's for the community.";
     body =
       "Create a free Moveee account to read this and everything else in the member archive. Takes 30 seconds — no card needed, free forever.";
-    primaryBtn = { label: "Join free — it takes 30 seconds →", href: "/register" };
+    primaryBtn = { label: "Join free — it takes 30 seconds →", href: "https://connect.themoveee.com/register" };
     secondaryBtn = { label: "Already have an account? Sign in", href: `/login?callbackUrl=${encodeURIComponent(callbackUrl)}` };
     footnote = "Free membership · No credit card · Cancel anytime";
   }

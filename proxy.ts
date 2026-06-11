@@ -167,8 +167,8 @@ export async function proxy(request: NextRequest) {
   const CONNECT = 'https://connect.themoveee.com'
   const connectPrefixes = [
     '/connect', '/events', '/community', '/pulse', '/directory',
-    '/quotes', '/games', '/member', '/login', '/register',
-    '/forgot-password', '/reset-password', '/account', '/membership',
+    '/quotes', '/games', '/member',
+    '/register', '/forgot-password', '/reset-password', '/account', '/membership',
   ]
   for (const prefix of connectPrefixes) {
     if (pathname === prefix || pathname.startsWith(prefix + '/')) {
