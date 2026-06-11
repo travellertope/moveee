@@ -13,7 +13,18 @@
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["../../packages/shared/*", "../../packages/utils/*", "./*"] },
+    "paths": {
+      "@/lib/*": [
+        "../../packages/shared/lib/*",
+        "../../packages/utils/*",
+        "./lib/*"
+      ],
+      "@/*": [
+        "../../packages/shared/*",
+        "../../packages/utils/*",
+        "./*"
+      ]
+    },
     "target": "ES2017"
   },
   "include": [

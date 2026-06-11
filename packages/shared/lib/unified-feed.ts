@@ -6,7 +6,7 @@ import {
   GET_DIRECTORY_ENTRIES,
 } from "./wp";
 import { getPulseStories } from "./pulse-wordpress";
-import { decodeHtml } from "./decode-html";
+import { decodeHtml } from "@/lib/decode-html";
 
 export type FeedItemType = "pulse" | "editorial" | "happening" | "directory" | "quote" | "community";
 
