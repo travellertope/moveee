@@ -1,12 +1,14 @@
 /** @type {import('next').NextConfig} */
 import { readFileSync } from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const tempRedirects = JSON.parse(readFileSync("./redirects.json", "utf-8"));
 
 const nextConfig = {
   transpilePackages: [],
-  experimental: {
-    outputFileTracingRoot: '../../',
-  },
+  outputFileTracingRoot: path.join(__dirname, "../../"),
   images: {
     unoptimized: true,
     remotePatterns: [
