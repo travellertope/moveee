@@ -6,15 +6,22 @@ import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import ParagraphCommentSystem from "@/components/ParagraphCommentSystem";
-import ContentGate from "@/components/ContentGate";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getAccessLevel, canViewContent } from "@/lib/access";
+import ArticleContentGate from "@/components/ArticleContentGate";
+import { getAccessLevel } from "@/lib/access";
 import "../../newsletter.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 300;
 export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  try {
+    const issues = await getNewslettersWithFallback(100, { revalidate: 300 });
+    return issues.map((n: any) => ({ slug: n.slug }));
+  } catch {
+    return [];
+  }
+}
 
 export async function generateMetadata({
   params,
@@ -94,12 +101,8 @@ export default async function GmlIssuePage({
 
   if (!issue) notFound();
 
-  // Access control
-  const session = await getServerSession(authOptions);
-  const user = session?.user as any;
+  // Access level — session check deferred to ArticleContentGate client component
   const accessLevel = getAccessLevel(issue);
-  const canView = canViewContent(accessLevel, user);
-  const isLoggedIn = !!user;
 
   // Fetch sibling issues for prev/next nav + issue numbering
   let allIssues: any[] = [];
@@ -181,43 +184,17 @@ export default async function GmlIssuePage({
       <div className="gml-issue-wrap">
         {/* Main content (Interactive Paragraph Comments) */}
         <article id="issue-body">
-          {canView ? (
-            <ParagraphCommentSystem 
-              postId={parseInt(issue.databaseId)} 
-              content={sanitiseContent(issue.content || "")} 
-            />
-          ) : (
-            <>
-              {/* Faded excerpt teaser */}
-              {issue.excerpt && (
-                <div style={{ position: "relative", marginBottom: 0 }}>
-                  <div
-                    className="gml-issue-prose"
-                    style={{ maxHeight: 100, overflow: "hidden" }}
-                    dangerouslySetInnerHTML={{
-                      __html: sanitizeHtml(issue.excerpt.replace(/<[^>]*>/g, "")),
-                    }}
-                  />
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 70,
-                      background:
-                        "linear-gradient(to bottom, transparent, var(--paper, #ffffff))",
-                    }}
-                  />
-                </div>
-              )}
-              <ContentGate
-                accessLevel={accessLevel as "member-only" | "patron-only"}
-                isLoggedIn={isLoggedIn}
-                callbackUrl={`/newsletter/${resolvedParams.slug}`}
+          <ArticleContentGate
+            accessLevel={accessLevel}
+            callbackUrl={`/newsletter/${resolvedParams.slug}`}
+            previewHtml={issue.excerpt ? sanitizeHtml(issue.excerpt.replace(/<[^>]*>/g, "")) : undefined}
+            fullContent={
+              <ParagraphCommentSystem
+                postId={parseInt(issue.databaseId)}
+                content={sanitiseContent(issue.content || "")}
               />
-            </>
-          )}
+            }
+          />
         </article>
 
         {/* Sidebar */}
