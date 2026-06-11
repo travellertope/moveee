@@ -134,11 +134,19 @@ export async function getWPData(query: string, variables = {}, options: any = {}
     try {
       const cached = await kv.get(key);
       if (cached !== null && cached !== undefined) return cached;
-    } catch { /* KV unavailable — fall through to CMS */ }
+      // Cache miss — log for Vercel function log monitoring
+      console.log(`[wp:kv-miss] ${key.slice(0, 100)}`);
+    } catch {
+      console.warn(`[wp:kv-error] KV read failed for ${key.slice(0, 80)}`);
+    }
 
     const data = await getWPDataFromCMS(query, variables, options);
     if (data) {
-      try { await kv.set(key, data, { ex: ttl }); } catch { /* ignore KV write errors */ }
+      try {
+        await kv.set(key, data, { ex: ttl });
+      } catch (e: any) {
+        console.warn(`[wp:kv-write-fail] ${key.slice(0, 80)}: ${e?.message ?? e}`);
+      }
     }
     return data;
   }
@@ -330,6 +338,23 @@ function isEventExpired(event: any): boolean {
     return !isNaN(d.getTime()) && d < today;
   }
   return false;
+}
+
+/** REST-only event list fetch for feed/list views — single request, all meta fields. */
+export async function getEventsForFeed(first = 30, options: any = {}): Promise<any[]> {
+  try {
+    const revalidate = options.revalidate !== undefined ? options.revalidate : 300;
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_embed=wp:featuredmedia&_fields=id,slug,title,date,excerpt,content,acf,meta,culture_event_meta,_links,_embedded&orderby=date&order=desc`;
+    const { signal, clear } = wpSignal();
+    const res = await fetch(url, { signal, next: { revalidate } });
+    clear();
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    return json.map(mapRestEventToFrontendShape).filter((e: any) => !isEventExpired(e));
+  } catch {
+    return [];
+  }
 }
 
 export async function getEventsWithFallback(first = 50, options: any = {}) {

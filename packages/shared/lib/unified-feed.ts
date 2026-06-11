@@ -1,6 +1,6 @@
 import {
   getWPData,
-  getEventsWithFallback,
+  getEventsForFeed,
   getWPQuotes,
   GET_STORIES,
   GET_DIRECTORY_ENTRIES,
@@ -193,7 +193,7 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
   ] = await Promise.allSettled([
     getPulseStories({ perPage: 40 }),
     getWPData(GET_STORIES, { first: 30 }, { revalidate: 300 }),
-    getEventsWithFallback(30, { revalidate: 300 }),
+    getEventsForFeed(30, { revalidate: 300 }),
     getWPData(GET_DIRECTORY_ENTRIES, { first: 30 }, { revalidate: 300 }),
     getWPQuotes({ first: 50 }),
     getCommunityPosts(),
