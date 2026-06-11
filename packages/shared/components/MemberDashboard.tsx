@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface Props {
   initialPoints: number;
@@ -37,18 +37,6 @@ export default function MemberDashboard({
   const [badgeCount, setBadgeCount] = useState(initialBadges.length);
   const TOTAL_BADGES = 18;
 
-  useEffect(() => {
-    fetch('/api/user/profile', { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((data) => {
-        if (typeof data.credits === 'number')              setCredits(data.credits);
-        if (typeof data.reputation === 'number')           setReputation(data.reputation);
-        if (typeof data.reputationTier === 'string')       setRepTier(data.reputationTier);
-        if (typeof data.dailyCreditsRemaining === 'number') setDailyLeft(data.dailyCreditsRemaining);
-        if (Array.isArray(data.badges))                    setBadgeCount(data.badges.length);
-      })
-      .catch(() => {});
-  }, []);
 
   const tierLabel = TIER_LABELS[repTier] ?? 'Member';
   const capHit    = dailyCreditsRemaining === 0;

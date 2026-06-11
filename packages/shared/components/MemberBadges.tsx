@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const ALL_BADGES = [
   { slug: 'first_steps', name: 'First Steps', desc: 'Attended your first event' },
@@ -31,14 +31,6 @@ interface Props {
 export default function MemberBadges({ initialBadges }: Props) {
   const [earnedBadges, setEarnedBadges] = useState<string[]>(initialBadges);
 
-  useEffect(() => {
-    fetch('/api/user/profile', { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data.badges)) setEarnedBadges(data.badges);
-      })
-      .catch(() => {});
-  }, []);
 
   const earnedCount = earnedBadges.length;
 

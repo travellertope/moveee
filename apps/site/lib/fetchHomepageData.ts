@@ -36,11 +36,9 @@ export async function fetchHomepageData(editionTag?: string) {
       const editionData = await getWPData(GET_STORIES, { first: 14, tag: editionTag }, OPT);
       const latestData  = await getWPData(GET_STORIES, { first: 20 }, OPT);
 
-      const otherTagData: any[] = [];
-      for (const tag of otherEditions) {
-        const d = await getWPData(GET_STORIES_TAGS, { first: 50, tag }, OPT);
-        otherTagData.push(d);
-      }
+      const otherTagData = await Promise.all(
+        otherEditions.map(tag => getWPData(GET_STORIES_TAGS, { first: 50, tag }, OPT))
+      );
 
       const editionPosts: any[] = editionData?.posts?.nodes || [];
       const latestPosts: any[]  = latestData?.posts?.nodes  || [];

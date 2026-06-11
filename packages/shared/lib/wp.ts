@@ -10,25 +10,59 @@ function wpSignal(ms = WP_FETCH_TIMEOUT): { signal: AbortSignal; clear: () => vo
   return { signal: ctrl.signal, clear: () => clearTimeout(timer) };
 }
 
-// Circuit breaker: stop hammering the CMS when it's already struggling
-const _cb = { failures: 0, openUntil: 0 };
+// Circuit breaker: stop hammering the CMS when it's already struggling.
+// State is stored in Vercel KV so it's shared across all serverless instances.
+// Falls back to a per-process variable when KV is not configured (local dev).
+const _cbLocal = { failures: 0, openUntil: 0 };
 const CB_THRESHOLD = 3;
 const CB_COOLDOWN = 60_000; // 60s cooldown after 3 consecutive failures
+const CB_KEY = "cb:cms";
 
-function cbCheck(): boolean {
-  if (_cb.openUntil && Date.now() < _cb.openUntil) return false; // circuit open
-  if (_cb.openUntil && Date.now() >= _cb.openUntil) {
-    _cb.openUntil = 0;
-    _cb.failures = 0;
+async function cbCheck(): Promise<boolean> {
+  const kv = await getKV();
+  if (kv) {
+    try {
+      const state = await kv.get<{ openUntil: number; failures: number }>(CB_KEY);
+      if (state?.openUntil && Date.now() < state.openUntil) return false;
+      return true;
+    } catch { return true; }
+  }
+  // Local fallback
+  if (_cbLocal.openUntil && Date.now() < _cbLocal.openUntil) return false;
+  if (_cbLocal.openUntil && Date.now() >= _cbLocal.openUntil) {
+    _cbLocal.openUntil = 0;
+    _cbLocal.failures = 0;
   }
   return true;
 }
-function cbSuccess() { _cb.failures = 0; }
-function cbFail() {
-  _cb.failures++;
-  if (_cb.failures >= CB_THRESHOLD) {
-    _cb.openUntil = Date.now() + CB_COOLDOWN;
-    console.warn(`[circuit-breaker] CMS circuit opened for ${CB_COOLDOWN / 1000}s after ${CB_THRESHOLD} failures`);
+
+async function cbSuccess(): Promise<void> {
+  const kv = await getKV();
+  if (kv) {
+    try { await kv.del(CB_KEY); } catch { /* ignore */ }
+    return;
+  }
+  _cbLocal.failures = 0;
+}
+
+async function cbFail(): Promise<void> {
+  const kv = await getKV();
+  if (kv) {
+    try {
+      const state = (await kv.get<{ openUntil: number; failures: number }>(CB_KEY)) ?? { openUntil: 0, failures: 0 };
+      state.failures++;
+      if (state.failures >= CB_THRESHOLD) {
+        state.openUntil = Date.now() + CB_COOLDOWN;
+        console.warn(`[circuit-breaker] CMS circuit opened (shared) for ${CB_COOLDOWN / 1000}s after ${CB_THRESHOLD} failures`);
+      }
+      await kv.set(CB_KEY, state, { ex: Math.ceil(CB_COOLDOWN / 1000) + 30 });
+    } catch { /* KV write failure: degrade gracefully */ }
+    return;
+  }
+  _cbLocal.failures++;
+  if (_cbLocal.failures >= CB_THRESHOLD) {
+    _cbLocal.openUntil = Date.now() + CB_COOLDOWN;
+    console.warn(`[circuit-breaker] CMS circuit opened (local) for ${CB_COOLDOWN / 1000}s after ${CB_THRESHOLD} failures`);
   }
 }
 
@@ -55,7 +89,7 @@ function kvKey(query: string, variables: object): string {
 }
 
 async function getWPDataFromCMS(query: string, variables = {}, options: any = {}): Promise<any> {
-  if (!cbCheck()) return null;
+  if (!(await cbCheck())) return null;
 
   const { signal, clear } = wpSignal();
   try {
@@ -70,12 +104,12 @@ async function getWPDataFromCMS(query: string, variables = {}, options: any = {}
 
     if (!res.ok) {
       console.error(`Fetch failed for ${WP_GRAPHQL_URL}: ${res.statusText}`);
-      cbFail();
+      await cbFail();
       return null;
     }
 
     const json = await res.json();
-    cbSuccess();
+    await cbSuccess();
 
     if (json.errors) {
       console.warn(`GraphQL partial errors for ${WP_GRAPHQL_URL}:`, json.errors);
@@ -85,7 +119,7 @@ async function getWPDataFromCMS(query: string, variables = {}, options: any = {}
     return json.data;
   } catch (error: any) {
     clear();
-    cbFail();
+    await cbFail();
     console.error(`Network or Parsing Error for ${WP_GRAPHQL_URL}:`, error.message || error);
     return null;
   }
@@ -350,7 +384,7 @@ export async function getEventsWithFallback(first = 50, options: any = {}) {
   }
 
   try {
-    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_embed=1&orderby=date&order=desc`;
+    const url = `${WP_BASE_URL}/wp-json/wp/v2/culture_event?per_page=${first}&status=publish&_embed=wp:featuredmedia&_fields=id,slug,title,date,excerpt,content,acf,meta,culture_event_meta,_links,_embedded&orderby=date&order=desc`;
     const { signal, clear } = wpSignal();
     const res = await fetch(url, {
       method: "GET",
