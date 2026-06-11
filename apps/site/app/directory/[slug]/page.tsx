@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getAccessLevel, canViewContent } from "@/lib/access";
 import "../../directory.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -268,9 +269,9 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
         <article className="dir-wiki-main">
           <div className="dir-wiki-article-header">
             <span className="dir-single-type">{typeLabel}</span>
-            <h1 className="dir-wiki-title" dangerouslySetInnerHTML={{ __html: entry.title }} />
+            <h1 className="dir-wiki-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.title) }} />
             {entry.excerpt && (
-              <p className="dir-wiki-lead" dangerouslySetInnerHTML={{ __html: entry.excerpt.replace(/<[^>]*>/g, "") }} />
+              <p className="dir-wiki-lead" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.excerpt.replace(/<[^>]*>/g, "")) }} />
             )}
             {date && <div className="dir-wiki-date">Added to directory {date}</div>}
           </div>
@@ -280,7 +281,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
 
           {canView ? (
             entry.content ? (
-              <div className="dir-single-body" dangerouslySetInnerHTML={{ __html: entry.content }} />
+              <div className="dir-single-body" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.content) }} />
             ) : (
               <p className="dir-wiki-no-content">Full article coming soon. Know this subject? Help us build it.</p>
             )

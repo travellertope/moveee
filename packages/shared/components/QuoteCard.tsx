@@ -5,6 +5,7 @@ import { Heart, Flag, Share2, Bookmark } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface QuoteCardProps {
   quote: {
@@ -142,7 +143,7 @@ export default function QuoteCard({ quote, initialLiked = false, initialBookmark
   return (
     <article className="quote-card">
       <Link href={`/quotes/${quote.databaseId}-${quote.slug}`} className="quote-content-link" style={{ textDecoration: 'none', color: 'inherit' }}>
-        <div className="quote-content" dangerouslySetInnerHTML={{ __html: quote.content }} />
+        <div className="quote-content" dangerouslySetInnerHTML={{ __html: sanitizeHtml(quote.content) }} />
       </Link>
 
       <div className="quote-footer">

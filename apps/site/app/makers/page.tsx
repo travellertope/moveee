@@ -11,7 +11,7 @@ export const metadata = {
 
 export const revalidate = 3600;
 
-const CMS = "https://cms.themoveee.com";
+const CMS = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
 async function fetchMakers(): Promise<any[]> {
   // Try GraphQL first.

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export interface Visual {
   id: number;
@@ -80,7 +81,7 @@ export default function VisualsGrid({ visuals }: Props) {
                 </span>
                 <h3
                   className="visual-card-title"
-                  dangerouslySetInnerHTML={{ __html: visual.entryTitle }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(visual.entryTitle) }}
                 />
               </div>
             </Link>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchCommunityPosts } from '@/lib/community-wordpress';
 
-const WP_GRAPHQL_URL = 'https://cms.themoveee.com/graphql';
+const WP_GRAPHQL_URL = `${process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com"}/graphql`;
 const WP_REST_URL    = `${process.env.NEXT_PUBLIC_WP_URL ?? 'https://cms.themoveee.com'}/wp-json/wp/v2`;
 
 async function gql(query: string, variables: object) {

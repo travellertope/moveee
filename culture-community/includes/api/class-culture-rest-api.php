@@ -779,7 +779,7 @@ class Culture_REST_API {
         register_rest_route( 'culture/v1', '/community/poll-vote', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_poll_vote' ),
-            'permission_callback' => function() { return is_user_logged_in(); },
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
 
         // Track an external link click on a pulse story.
@@ -1309,7 +1309,7 @@ class Culture_REST_API {
 
     /**
      * Raw verification of a Bearer token string.
-     * Supports both standard 'Authorization' and fallback 'X-Culture-API-Secret' headers.
+     * Only accepts the standard 'Authorization: Bearer <token>' header.
      *
      * @param string $header The Authorization header string.
      * @return bool
@@ -1320,17 +1320,9 @@ class Culture_REST_API {
             return false;
         }
 
-        // 1. Try standard 'Authorization: Bearer ...' header.
         if ( ! empty( $header ) ) {
             $expected = 'Bearer ' . $stored;
             if ( hash_equals( $expected, (string) $header ) ) {
-                return true;
-            }
-        }
-
-        // 2. Try fallback 'X-Culture-API-Secret' header (bypasses server header stripping).
-        if ( isset( $_SERVER['HTTP_X_CULTURE_API_SECRET'] ) ) {
-            if ( hash_equals( $stored, (string) $_SERVER['HTTP_X_CULTURE_API_SECRET'] ) ) {
                 return true;
             }
         }
@@ -3561,7 +3553,14 @@ class Culture_REST_API {
     public static function handle_poll_vote( WP_REST_Request $request ) {
         $post_id      = (int) $request->get_param( 'post_id' );
         $option_index = (int) $request->get_param( 'option_index' );
-        $user_id      = get_current_user_id();
+        $user_id      = (int) $request->get_param( 'user_id' );
+
+        if ( ! $user_id ) {
+            return new WP_Error( 'missing_user', 'user_id is required.', array( 'status' => 400 ) );
+        }
+        if ( ! get_user_by( 'id', $user_id ) ) {
+            return new WP_Error( 'invalid_user', 'User not found.', array( 'status' => 400 ) );
+        }
 
         $post = get_post( $post_id );
         if ( ! $post || $post->post_type !== 'culture_post' ) {

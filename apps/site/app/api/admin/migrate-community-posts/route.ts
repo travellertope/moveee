@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
-// Trigger via: POST /api/admin/migrate-community-posts?key={CULTURE_API_SECRET}
+// Trigger via: POST /api/admin/migrate-community-posts
+// Authorization: Bearer {CULTURE_API_SECRET}
 // Safe to run multiple times — idempotent.
 export async function POST(req: NextRequest) {
-  const key = req.nextUrl.searchParams.get("key") ?? "";
   const secret = process.env.CULTURE_API_SECRET ?? "";
+  const authHeader = req.headers.get("Authorization") ?? "";
 
-  if (!secret || key !== secret) {
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

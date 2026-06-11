@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-const CMS = "https://cms.themoveee.com";
+const CMS = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
 interface DashStats {
   totalProducts: number;

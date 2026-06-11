@@ -2,6 +2,7 @@ import { getWPData, GET_MOVEEE_EDIT } from "@/lib/wp";
 import Link from "next/link";
 import Image from "next/image";
 import "../shop.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 1800;
 
@@ -92,7 +93,7 @@ export default async function MoveeeEditPage() {
                             )}
                           </div>
                           <div className="edit-product-name">{p.name}</div>
-                          <div className="edit-product-price" dangerouslySetInnerHTML={{ __html: p.price }} />
+                          <div className="edit-product-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
                         </Link>
                       ))}
                     </div>

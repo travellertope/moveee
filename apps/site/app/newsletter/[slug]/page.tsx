@@ -11,6 +11,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getAccessLevel, canViewContent } from "@/lib/access";
 import "../../newsletter.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -152,13 +153,13 @@ export default async function GmlIssuePage({
           </div>
           <h1
             className="gml-issue-title"
-            dangerouslySetInnerHTML={{ __html: issue.title }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(issue.title) }}
           />
           {issue.excerpt && (
             <p
               className="gml-issue-standfirst"
               dangerouslySetInnerHTML={{
-                __html: issue.excerpt.replace(/<[^>]*>/g, ""),
+                __html: sanitizeHtml(issue.excerpt.replace(/<[^>]*>/g, "")),
               }}
             />
           )}
@@ -194,7 +195,7 @@ export default async function GmlIssuePage({
                     className="gml-issue-prose"
                     style={{ maxHeight: 100, overflow: "hidden" }}
                     dangerouslySetInnerHTML={{
-                      __html: issue.excerpt.replace(/<[^>]*>/g, ""),
+                      __html: sanitizeHtml(issue.excerpt.replace(/<[^>]*>/g, "")),
                     }}
                   />
                   <div
@@ -299,7 +300,7 @@ export default async function GmlIssuePage({
             <span className="gml-nav-label">← Previous Issue</span>
             <span
               className="gml-nav-title"
-              dangerouslySetInnerHTML={{ __html: prevIssue.title }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(prevIssue.title) }}
             />
             <span className="gml-nav-date">
               {new Date(prevIssue.date).toLocaleDateString("en-GB", {
@@ -320,7 +321,7 @@ export default async function GmlIssuePage({
             <span className="gml-nav-label">Next Issue →</span>
             <span
               className="gml-nav-title"
-              dangerouslySetInnerHTML={{ __html: nextIssue.title }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(nextIssue.title) }}
             />
             <span className="gml-nav-date">
               {new Date(nextIssue.date).toLocaleDateString("en-GB", {

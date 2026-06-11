@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface Props {
   entry: any;
@@ -119,11 +120,11 @@ export default function VisualsSingleClient({ entry, user }: Props) {
           </div>
 
           <div className="visual-single-info">
-            <h1 className="visual-single-title" dangerouslySetInnerHTML={{ __html: entry.title }} />
+            <h1 className="visual-single-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.title) }} />
             
             <div className="visual-single-desc">
               {entry.excerpt ? (
-                <div dangerouslySetInnerHTML={{ __html: entry.excerpt }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.excerpt) }} />
               ) : (
                 <p>A curated AI-generated illustration representing African culture. This artwork is part of the Moveee Visuals archive.</p>
               )}

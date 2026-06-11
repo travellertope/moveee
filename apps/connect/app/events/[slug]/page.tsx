@@ -8,6 +8,7 @@ import DiscoveredEventPage from "../components/DiscoveredEventPage";
 import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
 import "@/app/events.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -279,7 +280,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         {/* LEFT COLUMN */}
         <div className="left-col">
           <div className="section-label">{aboutLabel}</div>
-          <div className="about-text prose-custom" dangerouslySetInnerHTML={{ __html: event.content || "<p>Event details coming soon.</p>" }} />
+          <div className="about-text prose-custom" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.content || "<p>Event details coming soon.</p>") }} />
 
           {event.tagline && (
             <div className="pull-quote">
@@ -410,7 +411,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <div className="section-label">{artistSectionLabel}</div>
             <h3>{host.title?.split(" ")[0] || "Featured"} <em>{host.title?.split(" ").slice(1).join(" ") || "Artist"}</em></h3>
             <div style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: "18px", color: "var(--ink-soft)", lineHeight: 1.5, marginBottom: "20px" }}
-              dangerouslySetInnerHTML={{ __html: host.excerpt }} />
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(host.excerpt) }} />
             <Link href={`/directory/${host.slug}`}
               style={{ display: "inline-block", fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.15em", borderBottom: "1px solid var(--ink)", paddingBottom: "2px", textDecoration: "none", color: "var(--ink)" }}>
               {artistLinkLabel} →

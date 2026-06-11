@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import "@/app/homepage.css";
 import "@/app/magazine.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -167,9 +168,9 @@ export default async function AuthorArchivePage({ params }: { params: Promise<{ 
                 <div className="kicker">
                   {story.categories?.nodes?.[0]?.name || "Article"}
                 </div>
-                <h4 dangerouslySetInnerHTML={{ __html: story.title }} />
+                <h4 dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }} />
                 {story.excerpt && (
-                  <div className="dek" dangerouslySetInnerHTML={{ __html: story.excerpt.replace(/<[^>]*>/g, "").slice(0, 100) + "…" }} />
+                  <div className="dek" dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.excerpt.replace(/<[^>]*>/g, "").slice(0, 100) + "…") }} />
                 )}
                 <div className="meta">
                   {new Date(story.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}

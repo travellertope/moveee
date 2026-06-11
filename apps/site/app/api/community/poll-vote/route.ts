@@ -20,15 +20,18 @@ export async function POST(req: NextRequest) {
   }
 
   const user = session.user as any;
-  const wpCookie = user.wpCookie ?? "";
+  const userId: string = user.id ?? "";
+
+  const API_SECRET = process.env.CULTURE_API_SECRET;
 
   const res = await fetch(`${WP_URL}/wp-json/culture/v1/community/poll-vote`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Cookie: wpCookie,
+      "Authorization": `Bearer ${API_SECRET}`,
     },
-    body: JSON.stringify({ post_id, option_index }),
+    body: JSON.stringify({ post_id, option_index, user_id: userId }),
+    cache: "no-store",
   });
 
   const data = await res.json();

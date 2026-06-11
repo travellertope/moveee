@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface Story {
   id: string;
@@ -33,7 +34,7 @@ export default function EditorialSection({ stories }: { stories: Story[] }) {
                 onMouseEnter={() => setActiveIdx(i)}
               >
                 <div className="ek">{story.categories?.nodes?.[0]?.name || 'Opinion'}</div>
-                <h4 dangerouslySetInnerHTML={{ __html: story.title }} />
+                <h4 dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.title) }} />
                 <div className="em">
                   {new Date(story.date).toLocaleDateString('en-GB')}
                 </div>

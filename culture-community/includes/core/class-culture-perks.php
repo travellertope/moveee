@@ -533,6 +533,11 @@ class Culture_Perks {
     public static function approve_cashout( $redemption_id, $admin_id ) {
         global $wpdb;
 
+        $admin = get_user_by( 'id', (int) $admin_id );
+        if ( ! $admin || ! user_can( $admin, 'manage_options' ) ) {
+            return new WP_Error( 'forbidden', 'admin_id must belong to an administrator.', array( 'status' => 403 ) );
+        }
+
         $table = $wpdb->prefix . 'culture_redemptions';
         $row   = $wpdb->get_row( $wpdb->prepare(
             "SELECT * FROM {$table} WHERE id = %d AND type = 'cashout' AND status = 'pending'",
@@ -576,6 +581,11 @@ class Culture_Perks {
      */
     public static function reject_cashout( $redemption_id, $admin_id, $reason = '' ) {
         global $wpdb;
+
+        $admin = get_user_by( 'id', (int) $admin_id );
+        if ( ! $admin || ! user_can( $admin, 'manage_options' ) ) {
+            return new WP_Error( 'forbidden', 'admin_id must belong to an administrator.', array( 'status' => 403 ) );
+        }
 
         $table = $wpdb->prefix . 'culture_redemptions';
         $row   = $wpdb->get_row( $wpdb->prepare(

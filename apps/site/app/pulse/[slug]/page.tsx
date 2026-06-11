@@ -11,6 +11,7 @@ import {
 import CommentThread from "@/components/pulse/CommentThread";
 import SourcePreviewCard from "@/components/pulse/SourcePreviewCard";
 import "@/app/pulse-layout.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -290,7 +291,7 @@ export default async function PulseStoryPage({
                     color: "#3a342b",
                     marginBottom: "1.5rem",
                   }}
-                  dangerouslySetInnerHTML={{ __html: story.content.rendered }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.content.rendered) }}
                 />
 
                 {/* Source preview */}

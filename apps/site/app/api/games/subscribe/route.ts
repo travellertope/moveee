@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const WP_GAMES_SUBSCRIBE_URL = "https://cms.themoveee.com/wp-json/culture/v1/games-subscribe";
+const WP_GAMES_SUBSCRIBE_URL = `${process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com"}/wp-json/culture/v1/games-subscribe`;
 
 export async function POST(req: NextRequest) {
   let email: string;

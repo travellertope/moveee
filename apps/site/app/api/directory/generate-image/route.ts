@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
   if (!attachRes.ok) {
     const err = await attachRes.json().catch(() => ({}));
     return NextResponse.json(
-      { error: err.message ?? "Failed to attach image to WordPress post." },
+      { error: "Failed to attach image to WordPress post." },
       { status: 502 }
     );
   }

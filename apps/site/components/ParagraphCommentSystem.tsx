@@ -1,4 +1,5 @@
 "use client";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { X, MessageSquare, Send, Loader2 } from "lucide-react";
@@ -191,7 +192,7 @@ export default function ParagraphCommentSystem({ postId, content }: ParagraphCom
                           {new Date(c.date).toLocaleDateString()}
                         </span>
                       </div>
-                      <div className="comment-body" dangerouslySetInnerHTML={{ __html: c.content }} />
+                      <div className="comment-body" dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.content) }} />
                     </div>
                   ))
                 ) : (
@@ -257,7 +258,7 @@ export default function ParagraphCommentSystem({ postId, content }: ParagraphCom
                     On: "{paragraphSnippets[c.paragraphIdx]}"
                   </button>
                 )}
-                <div className="collated-comment-body" dangerouslySetInnerHTML={{ __html: c.content }} />
+                <div className="collated-comment-body" dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.content) }} />
               </div>
             ))}
           </div>

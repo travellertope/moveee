@@ -4,6 +4,7 @@ import { Metadata } from "next";
 import { getMarket, type Section, type RateCard, type TierPackage } from "../../market-data";
 import { getServicePage } from "../../service-pages";
 import MarketNav from "../../components/MarketNav";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 const SECTION_ICONS: Record<string, string> = {
   editorial: "◈",
@@ -202,7 +203,7 @@ export default async function SlugPage({
           </p>
           <h1
             className="slug-headline"
-            dangerouslySetInnerHTML={{ __html: content.headline.replace(/\*(.*?)\*/g, "<em>$1</em>") }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.headline.replace(/\*(.*?)\*/g, "<em>$1</em>")) }}
           />
           <p className="slug-tagline">{content.tagline}</p>
           <div className="slug-intro">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getWPData, GET_JOURNEYS } from "@/lib/wp";
+import { sanitizeHtml } from "@/lib/sanitize";
 import OriginHero from "./components/OriginHero";
 import "@/app/origins.css";
 
@@ -93,7 +94,7 @@ export default async function OriginsPage() {
                 <span className="live">● {featuredJourney.journeyStatus === "active" ? "Now Booking" : "Upcoming"}</span>
                 <span>{featuredJourney.journeyEdition || "N°01"}</span>
               </div>
-              <h2 className="origins-cj-title" dangerouslySetInnerHTML={{ __html: featuredJourney.title }} />
+              <h2 className="origins-cj-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(featuredJourney.title) }} />
               <p className="origins-cj-sub">{stripHtml(featuredJourney.excerpt || "").slice(0, 160)}</p>
               <div className="origins-cj-details">
                 <div className="origins-cj-det">
@@ -168,7 +169,7 @@ export default async function OriginsPage() {
                   </div>
                   <div className="origins-jcard-body">
                     <div className="origins-j-num-tag">{j.journeyEdition || "Origins"}</div>
-                    <h4 dangerouslySetInnerHTML={{ __html: j.title }} />
+                    <h4 dangerouslySetInnerHTML={{ __html: sanitizeHtml(j.title) }} />
                     {j.excerpt && (
                       <p className="origins-j-desc">{stripHtml(j.excerpt).slice(0, 100)}</p>
                     )}
@@ -206,7 +207,7 @@ export default async function OriginsPage() {
             ].map((step) => (
               <div key={step.n} className="origins-how-step">
                 <div className="origins-sn">{step.n}</div>
-                <h4 dangerouslySetInnerHTML={{ __html: step.title }} />
+                <h4 dangerouslySetInnerHTML={{ __html: sanitizeHtml(step.title) }} />
                 <p>{step.body}</p>
               </div>
             ))}
@@ -231,7 +232,7 @@ export default async function OriginsPage() {
           ].map((item, idx) => (
             <div key={idx} className="origins-ai-item">
               <div className="origins-ai-icon">{item.icon}</div>
-              <div className="origins-ai-title" dangerouslySetInnerHTML={{ __html: item.title }} />
+              <div className="origins-ai-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.title) }} />
               <p className="origins-ai-desc">{item.body}</p>
             </div>
           ))}

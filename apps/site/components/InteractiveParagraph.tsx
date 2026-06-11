@@ -1,4 +1,5 @@
 "use client";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 import React from "react";
 import { MessageSquare } from "lucide-react";
@@ -26,7 +27,7 @@ export default function InteractiveParagraph({
   return (
     <div className={`interactive-paragraph-wrapper ${isFirst ? 'is-first-paragraph' : ''}`}>
       <p 
-        dangerouslySetInnerHTML={{ __html: htmlContent }} 
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }} 
         style={isActive ? { backgroundColor: 'rgba(189, 163, 121, 0.08)' } : {}}
       />
       

@@ -10,6 +10,10 @@ const nextConfig = {
   transpilePackages: ["@moveee/shared", "@moveee/utils"],
   outputFileTracingRoot: path.join(__dirname, "../../"),
   images: {
+    // NOTE: unoptimized=true delegates optimisation to the Optimole CDN.
+    // As a side-effect, Next.js remotePatterns allowlist is NOT enforced —
+    // any domain can be loaded via <Image>. Dynamic image src values must
+    // be validated at the component level. See security-audit finding #27.
     unoptimized: true,
     remotePatterns: [
       {
@@ -47,6 +51,22 @@ const nextConfig = {
         hostname: 'i1.wp.com',
       },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "X-XSS-Protection", value: "1; mode=block" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://cms.themoveee.com https://connect.themoveee.com https://www.google-analytics.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self';" },
+        ],
+      },
+    ];
   },
   async redirects() {
     // Temporary redirects — edit redirects.json to add/remove, then redeploy.

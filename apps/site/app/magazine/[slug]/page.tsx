@@ -14,6 +14,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getAccessLevel, canViewContent } from "@/lib/access";
 import { decodeHtml } from "@/lib/decode-html";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 600;
 
@@ -209,9 +210,9 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                 </>
               )}
             </div>
-            <h1 className="article-title" dangerouslySetInnerHTML={{ __html: post.title }} />
+            <h1 className="article-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.title) }} />
             {post.excerpt && (
-              <p className="article-standfirst" dangerouslySetInnerHTML={{ __html: post.excerpt.replace(/<[^>]*>/g, "") }} />
+              <p className="article-standfirst" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.excerpt.replace(/<[^>]*>/g, "")) }} />
             )}
             <div className="byline-bar">
               <div className="b-item">
@@ -248,7 +249,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           </div>
           <h1 className="article-title">{post.title}</h1>
           {post.excerpt && (
-            <p className="article-standfirst" dangerouslySetInnerHTML={{ __html: post.excerpt.replace(/<[^>]*>/g, "") }} />
+            <p className="article-standfirst" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.excerpt.replace(/<[^>]*>/g, "")) }} />
           )}
           <div className="byline-bar">
             <div className="b-item">
@@ -354,7 +355,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                   <div style={{ position: "relative", marginBottom: 0 }}>
                     <div
                       className="prose-content"
-                      dangerouslySetInnerHTML={{ __html: preview }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(preview) }}
                     />
                     <div
                       style={{
@@ -434,7 +435,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                 <div className="s-label">{decodeHtml(story.categories?.nodes?.[0]?.name || "Culture")}</div>
                 <h4>{story.title}</h4>
                 {story.excerpt && (
-                  <p dangerouslySetInnerHTML={{ __html: story.excerpt.replace(/<[^>]*>/g, "").slice(0, 100) + "…" }} />
+                  <p dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.excerpt.replace(/<[^>]*>/g, "").slice(0, 100) + "…") }} />
                 )}
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace",
@@ -472,7 +473,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               {post.series.nodes[0].name}
             </Link>
             <p className="series-context-desc"
-              dangerouslySetInnerHTML={{ __html: post.series.nodes[0].description }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.series.nodes[0].description) }}
             />
           </div>
         </div>
@@ -558,7 +559,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                   </div>
                   <div className="ste-card-body">
                     <div className="ste-card-name">{p.name}</div>
-                    <div className="ste-card-price" dangerouslySetInnerHTML={{ __html: p.price }} />
+                    <div className="ste-card-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
                   </div>
                 </Link>
               ))}

@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface EntryType {
   name: string;
@@ -115,7 +116,7 @@ export default function DirectoryGrid({ entries, types, initialType = null }: Pr
                       </span>
                     ) : null}
                   </div>
-                  <h3 className="dir-card-title" dangerouslySetInnerHTML={{ __html: entry.title }} />
+                  <h3 className="dir-card-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.title) }} />
                   {excerpt && <p className="dir-card-excerpt">{excerpt}</p>}
                   {entry.cultureInterests?.nodes?.length ? (
                     <div className="dir-card-tags">

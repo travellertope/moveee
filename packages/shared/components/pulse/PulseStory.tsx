@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { WpPulseStory, WpComment } from "@/lib/pulse-wordpress";
 import { decodeHtml } from "@/lib/decode-html";
+import { sanitizeHtml } from "@/lib/sanitize";
 import CommentThread from "./CommentThread";
 
 const ARM_STYLES: Record<string, { bg: string; color: string }> = {
@@ -261,7 +262,7 @@ export default function PulseStory({ story, initialComments, relatedStories = []
           {/* Story body */}
           <div
             className="pulse-story-body"
-            dangerouslySetInnerHTML={{ __html: story.content?.rendered ?? "" }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(story.content?.rendered ?? "") }}
           />
 
           {/* Comments */}

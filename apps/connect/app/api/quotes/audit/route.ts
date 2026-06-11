@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
   try {
     quotes = await fetchAuditBatch(batchSize);
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 502 });
+    return NextResponse.json({ error: "Internal server error." }, { status: 502 });
   }
 
   if (quotes.length === 0) {

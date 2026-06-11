@@ -6,6 +6,7 @@ import type { WpComment } from "@/lib/pulse-wordpress";
 import CommentThread from "./CommentThread";
 import SourcePreviewCard from "./SourcePreviewCard";
 import type { FeedItem } from "@/lib/unified-feed";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface PulseDetailModalProps {
   item: FeedItem;
@@ -190,7 +191,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
                   color: "#3a342b",
                   marginBottom: "1rem",
                 }}
-                dangerouslySetInnerHTML={{ __html: item.body }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.body) }}
               />
             </>
           )}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface EventHeroProps {
   title: string;
@@ -63,7 +64,7 @@ const EventHero: React.FC<EventHeroProps> = ({
   return (
     <section className="events-hero">
       <div className="hero-inner">
-        <h1 className="hero-title" dangerouslySetInnerHTML={{ __html: title }} />
+        <h1 className="hero-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(title) }} />
         {standfirst && <p className="hero-standfirst">{standfirst}</p>}
       </div>
     </section>

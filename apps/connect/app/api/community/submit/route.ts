@@ -3,13 +3,15 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { checkPostSpam, checkBlocklist, getReviewDays } from "@/lib/spam-protection";
 
+function getAuth() {
+  return Buffer.from(`${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`).toString("base64");
+}
+
 export const runtime = "nodejs";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const BASE = `${WP_URL}/wp-json/wp/v2`;
-const AUTH = Buffer.from(
-  `${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`
-).toString("base64");
+
 
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
@@ -22,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const {
-    text, imageUrl, tag, region, authorTier, authorAvatar, linkUrl, ogTitle, ogDescription, ogImage,
+    text, imageUrl, tag, region, authorAvatar, linkUrl, ogTitle, ogDescription, ogImage,
     template_type, linked_directory_id, star_rating, location_name, location_lat, location_lng,
     poll_options, poll_expires_at, itinerary_stops, gallery_images, video_url,
     food_dish_name, food_rating_taste, food_rating_value, food_rating_vibe,
@@ -31,7 +33,6 @@ export async function POST(req: NextRequest) {
     imageUrl?: string;
     tag?: string;
     region?: string;
-    authorTier?: string;
     authorAvatar?: string;
     linkUrl?: string;
     ogTitle?: string;
@@ -80,6 +81,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Post must be 600 words or fewer." }, { status: 400 });
   }
 
+  if (poll_options !== undefined) {
+    if (!Array.isArray(poll_options) || poll_options.length < 2 || poll_options.length > 6) {
+      return NextResponse.json({ error: "Polls must have between 2 and 6 options." }, { status: 400 });
+    }
+    for (const opt of poll_options) {
+      if (!opt || typeof opt.text !== "string" || !opt.text.trim()) {
+        return NextResponse.json({ error: "Each poll option must have non-empty text." }, { status: 400 });
+      }
+      if (opt.text.trim().length > 120) {
+        return NextResponse.json({ error: "Poll option text must be 120 characters or fewer." }, { status: 400 });
+      }
+    }
+  }
+
   const user = session.user as any;
   const userId: string = String(user?.id ?? user?.databaseId ?? "");
   const sessionTier: string = user?.tier ?? "";
@@ -108,12 +123,14 @@ export async function POST(req: NextRequest) {
   const authorName: string = user?.name ?? user?.displayName ?? user?.username ?? "Community Member";
   const authorId: string = userId;
 
+  const escHtml = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const title = content.slice(0, 80) + (content.length > 80 ? "…" : "");
-  const htmlContent = `<p>${content.replace(/\n/g, "</p><p>")}</p>`;
+  const htmlContent = `<p>${escHtml(content).replace(/\n/g, "</p><p>")}</p>`;
 
   const createRes = await fetch(`${BASE}/community-posts`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Basic ${AUTH}` },
+    headers: { "Content-Type": "application/json", Authorization: `Basic ${getAuth()}` },
     body: JSON.stringify({
       title,
       content: htmlContent,
@@ -127,7 +144,7 @@ export async function POST(req: NextRequest) {
         community_image_url:     imageUrl?.trim() || "",
         community_tag:          validTag ?? "",
         community_region:       region?.trim() || "",
-        community_author_tier:  (authorTier?.trim() || sessionTier) || "",
+        community_author_tier:  sessionTier,
         community_link_url:     linkUrl?.trim() || "",
         community_og_title:     ogTitle?.trim() || "",
         community_og_description: ogDescription?.trim() || "",

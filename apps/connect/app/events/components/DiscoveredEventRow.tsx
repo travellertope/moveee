@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface DiscoveredEventRowProps {
   slug: string;
@@ -30,7 +31,7 @@ export default function DiscoveredEventRow({
         </span>
       )}
       <Link href={`/events/${slug}`} className="disc-title">
-        <span dangerouslySetInnerHTML={{ __html: title }} />
+        <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(title) }} />
       </Link>
       <span className="disc-meta">
         {category}

@@ -3,6 +3,10 @@ import { getServerSession } from "next-auth/next";
 import sharp from "sharp";
 import { authOptions } from "@/lib/auth";
 
+function getWpUploadAuth() {
+  return Buffer.from(`${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`).toString("base64");
+}
+
 export const runtime = "nodejs";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
@@ -12,9 +16,7 @@ const WP_AUTH_HEADERS = {
   "Authorization": `Bearer ${API_SECRET}`,
   "X-Culture-API-Secret": API_SECRET,
 };
-const WP_UPLOAD_AUTH = Buffer.from(
-  `${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`
-).toString("base64");
+
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
   const wpRes = await fetch(`${WP_URL}/wp-json/wp/v2/media`, {
     method: "POST",
     headers: {
-      Authorization: `Basic ${WP_UPLOAD_AUTH}`,
+      Authorization: `Basic ${getWpUploadAuth()}`,
       "Content-Type": "image/webp",
       "Content-Disposition": `attachment; filename="${filename}"`,
     },
