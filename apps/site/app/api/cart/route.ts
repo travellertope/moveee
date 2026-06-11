@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const CMS        = "https://cms.themoveee.com";
+const CMS = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const STORE_API  = `${CMS}/wp-json/wc/store/v1`;
 
 // ─── GET /api/cart ────────────────────────────────────────────────────────────

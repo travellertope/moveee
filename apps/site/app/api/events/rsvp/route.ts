@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const WP_RSVP_URL = "https://cms.themoveee.com/wp-json/culture/v1/event-rsvp";
+const WP_RSVP_URL = `${process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com"}/wp-json/culture/v1/event-rsvp`;
 
 export async function POST(req: NextRequest) {
   let payload: any;

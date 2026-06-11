@@ -13,9 +13,7 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const WP_GRAPHQL =
-  process.env.NEXT_PUBLIC_WORDPRESS_API_URL ||
-  "https://cms.themoveee.com/graphql";
+const WP_GRAPHQL = `${process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com"}/graphql`;
 
 async function probe(label: string, query: string, variables: object) {
   const start = Date.now();

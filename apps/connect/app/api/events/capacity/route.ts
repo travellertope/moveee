@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const WP_CAPACITY_URL = "https://cms.themoveee.com/wp-json/culture/v1/event-rsvp/capacity";
+const WP_CAPACITY_URL = `${process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com"}/wp-json/culture/v1/event-rsvp/capacity`;
 
 export async function GET(req: NextRequest) {
   const eventSlug = req.nextUrl.searchParams.get("event_slug");

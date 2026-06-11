@@ -6,7 +6,7 @@ import ShopFilterBar from "./components/ShopFilterBar";
 import AddToCartButton from "@/components/AddToCartButton";
 import "./shop.css";
 
-const CMS = "https://cms.themoveee.com";
+const CMS = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
 interface ShopArchiveProps {
   category?: string;

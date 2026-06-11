@@ -79,6 +79,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Post must be 600 words or fewer." }, { status: 400 });
   }
 
+  if (poll_options !== undefined) {
+    if (!Array.isArray(poll_options) || poll_options.length < 2 || poll_options.length > 6) {
+      return NextResponse.json({ error: "Polls must have between 2 and 6 options." }, { status: 400 });
+    }
+    for (const opt of poll_options) {
+      if (!opt || typeof opt.text !== "string" || !opt.text.trim()) {
+        return NextResponse.json({ error: "Each poll option must have non-empty text." }, { status: 400 });
+      }
+      if (opt.text.trim().length > 120) {
+        return NextResponse.json({ error: "Poll option text must be 120 characters or fewer." }, { status: 400 });
+      }
+    }
+  }
+
   const user = session.user as any;
   const userId: string = String(user?.id ?? user?.databaseId ?? "");
   const sessionTier: string = user?.tier ?? "";
