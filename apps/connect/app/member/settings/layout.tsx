@@ -16,9 +16,9 @@ const NAV_ITEMS = [
   { label: "My Coupons",         href: "/member/coupons" },
   { label: "My Collection",      href: "/member/collection" },
   { label: "Creative Portfolio", href: "/member/portfolio" },
-  { label: "Newsletters",        href: "/newsletter" },
+  { label: "Newsletters",        href: "https://themoveee.com/newsletter" },
   { label: "Upcoming Events",    href: "/events" },
-  { label: "Magazine",           href: "/magazine" },
+  { label: "Magazine",           href: "https://themoveee.com/magazine" },
   { label: "Sign out",           href: "/api/auth/signout", muted: true },
 ];
 
