@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const tempRedirects = JSON.parse(readFileSync("./redirects.json", "utf-8"));
 
 const nextConfig = {
-  transpilePackages: [],
+  transpilePackages: ["@moveee/shared", "@moveee/utils"],
   outputFileTracingRoot: path.join(__dirname, "../../"),
   images: {
     unoptimized: true,

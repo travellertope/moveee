@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@moveee/shared": "*",
+    "@moveee/utils": "*",
     "@google/generative-ai": "^0.24.1",
     "@next/third-parties": "^16.2.3",
     "@simplewebauthn/browser": "^13.3.0",
