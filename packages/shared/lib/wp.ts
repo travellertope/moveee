@@ -411,7 +411,9 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
     // WPGraphQL may not resolve ACF/meta fields reliably — patch via REST when missing
     const needsHostPatch = !ev.featuredHost?.title;
     const needsMetaPatch = !ev.location || !ev.city || !ev.eventDate || !ev.endDate || !ev.openingHours || !ev.eventImageUrl;
-    if (needsHostPatch || needsMetaPatch) {
+    const needsShowcasePatch = Array.isArray(ev.showcase) && ev.showcase.some((s: any) => !s.image?.sourceUrl && !s.image?.mediaItemUrl);
+    let precomputedShowcaseUrls: string[] | null = null;
+    if (needsHostPatch || needsMetaPatch || needsShowcasePatch) {
       try {
         const metaRes = await fetch(
           `${WP_BASE_URL}/wp-json/wp/v2/culture_event?slug=${encodeURIComponent(slug)}&status=publish&_fields=acf,meta,culture_event_meta`,
@@ -424,7 +426,11 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
           const cem = metaJson[0]?.culture_event_meta ?? {};
           const pick = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== "" && v !== false) ?? null;
 
-          // Patch core event meta fields that WPGraphQL may return as null
+          // Read pre-computed showcase URLs (written by cache_event_showcase_urls PHP hook on save)
+          if (meta._culture_event_showcase_urls) {
+            try { precomputedShowcaseUrls = JSON.parse(meta._culture_event_showcase_urls); } catch { /* ignore */ }
+          }
+
           if (needsMetaPatch) {
             if (!ev.eventDate)    ev.eventDate    = pick(cem.event_date,    acf.event_date,    meta._culture_event_date);
             if (!ev.endDate)      ev.endDate      = pick(cem.end_date,      acf.end_date,      meta._culture_event_end_date);
@@ -441,7 +447,6 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
 
           if (needsHostPatch) {
             const rawHost = acf.featured_host;
-            // ACF returns object, array-of-objects, or bare integer ID depending on return_format
             const hostId = typeof rawHost === "number" ? rawHost
               : Array.isArray(rawHost) ? (typeof rawHost[0] === "number" ? rawHost[0] : rawHost[0]?.ID ?? rawHost[0]?.id ?? null)
               : typeof rawHost === "object" && rawHost ? (rawHost.ID ?? rawHost.id ?? null)
@@ -467,29 +472,36 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
       } catch { /* non-fatal */ }
     }
 
-    // Resolve missing showcase images via WP media API when GraphQL returns null
+    // Resolve missing showcase images — use pre-computed URLs when available (no media API calls)
     if (Array.isArray(ev.showcase)) {
-      const missing = ev.showcase
-        .map((s: any, i: number) => {
-          if (s.image?.sourceUrl) return null;
-          // Try mediaItemUrl first, then fall back to databaseId fetch
-          if (s.image?.mediaItemUrl) { ev.showcase[i].image = { sourceUrl: s.image.mediaItemUrl }; return null; }
-          const id = s.image?.databaseId ?? null;
-          return id ? { i, id } : null;
-        })
-        .filter(Boolean) as { i: number; id: number }[];
-      if (missing.length > 0) {
-        for (let b = 0; b < missing.length; b += 3) {
-          await Promise.allSettled(missing.slice(b, b + 3).map(async ({ i, id }) => {
-            try {
-              const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
-              if (mRes.ok) {
-                const m = await mRes.json();
-                const url = m.source_url ?? m.guid?.rendered;
-                if (url) ev.showcase[i] = { ...ev.showcase[i], image: { sourceUrl: url } };
-              }
-            } catch { /* non-fatal */ }
-          }));
+      if (Array.isArray(precomputedShowcaseUrls)) {
+        ev.showcase.forEach((s: any, i: number) => {
+          if (!s.image?.sourceUrl && precomputedShowcaseUrls![i]) {
+            ev.showcase[i] = { ...s, image: { sourceUrl: precomputedShowcaseUrls![i] } };
+          }
+        });
+      } else {
+        const missing = ev.showcase
+          .map((s: any, i: number) => {
+            if (s.image?.sourceUrl) return null;
+            if (s.image?.mediaItemUrl) { ev.showcase[i].image = { sourceUrl: s.image.mediaItemUrl }; return null; }
+            const id = s.image?.databaseId ?? null;
+            return id ? { i, id } : null;
+          })
+          .filter(Boolean) as { i: number; id: number }[];
+        if (missing.length > 0) {
+          for (let b = 0; b < missing.length; b += 3) {
+            await Promise.allSettled(missing.slice(b, b + 3).map(async ({ i, id }) => {
+              try {
+                const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
+                if (mRes.ok) {
+                  const m = await mRes.json();
+                  const url = m.source_url ?? m.guid?.rendered;
+                  if (url) ev.showcase[i] = { ...ev.showcase[i], image: { sourceUrl: url } };
+                }
+              } catch { /* non-fatal */ }
+            }));
+          }
         }
       }
     }
@@ -539,24 +551,37 @@ export async function getEventBySlugWithFallback(slug: string, options: any = {}
       }
     }
 
-    // Resolve showcase image IDs → actual URLs
-    const showcaseImageIds: { i: number; id: number }[] = [];
-    (event.showcase ?? []).forEach((s: any, i: number) => {
-      const raw = json[0]?.acf?.showcase?.[i]?.image;
-      if (!s.image?.sourceUrl && typeof raw === "number" && raw > 0) showcaseImageIds.push({ i, id: raw });
-    });
-    if (showcaseImageIds.length > 0) {
-      for (let b = 0; b < showcaseImageIds.length; b += 3) {
-        await Promise.allSettled(showcaseImageIds.slice(b, b + 3).map(async ({ i, id }) => {
-          try {
-            const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
-            if (mRes.ok) {
-              const m = await mRes.json();
-              const url = m.source_url ?? m.guid?.rendered;
-              if (url) event.showcase[i].image = { sourceUrl: url };
-            }
-          } catch { /* non-fatal */ }
-        }));
+    // Resolve showcase image IDs → URLs; prefer pre-computed meta to avoid media API calls
+    const preUrls = (() => {
+      try {
+        const raw = json[0]?.meta?._culture_event_showcase_urls;
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    })();
+
+    if (Array.isArray(preUrls) && Array.isArray(event.showcase)) {
+      event.showcase.forEach((s: any, i: number) => {
+        if (!s.image?.sourceUrl && preUrls[i]) event.showcase[i].image = { sourceUrl: preUrls[i] };
+      });
+    } else {
+      const showcaseImageIds: { i: number; id: number }[] = [];
+      (event.showcase ?? []).forEach((s: any, i: number) => {
+        const raw = json[0]?.acf?.showcase?.[i]?.image;
+        if (!s.image?.sourceUrl && typeof raw === "number" && raw > 0) showcaseImageIds.push({ i, id: raw });
+      });
+      if (showcaseImageIds.length > 0) {
+        for (let b = 0; b < showcaseImageIds.length; b += 3) {
+          await Promise.allSettled(showcaseImageIds.slice(b, b + 3).map(async ({ i, id }) => {
+            try {
+              const mRes = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/media/${id}`, { next: { revalidate: 3600 } });
+              if (mRes.ok) {
+                const m = await mRes.json();
+                const url = m.source_url ?? m.guid?.rendered;
+                if (url) event.showcase[i].image = { sourceUrl: url };
+              }
+            } catch { /* non-fatal */ }
+          }));
+        }
       }
     }
 

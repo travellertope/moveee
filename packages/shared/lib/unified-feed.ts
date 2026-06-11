@@ -110,7 +110,7 @@ const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const WP_BASE = `${WP_URL}/wp-json/wp/v2`;
 
 /** Fetch the latest community posts from the culture_post CPT. */
-async function getCommunityPosts(): Promise<FeedItem[]> {
+export async function getCommunityPosts(): Promise<FeedItem[]> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 8000);
   let res: Response;
