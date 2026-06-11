@@ -16,6 +16,7 @@ class Culture_Post_Types {
         self::register_rest_meta_fields();
         add_action( 'add_meta_boxes', array( __CLASS__, 'register_meta_boxes' ) );
         add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
+        add_action( 'acf/save_post', array( __CLASS__, 'cache_event_showcase_urls' ), 20 );
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
         add_action( 'init', array( __CLASS__, 'register_as_told_to_meta' ) );
         add_action( 'rest_after_insert_post', array( __CLASS__, 'save_as_told_to_rest' ), 10, 2 );
@@ -45,7 +46,8 @@ class Culture_Post_Types {
             '_culture_is_featured'        => array( 'type' => 'string' ),
             '_culture_event_image_url'    => array( 'type' => 'string' ),
             '_culture_opening_hours'      => array( 'type' => 'string' ),
-            '_culture_event_organiser_id' => array( 'type' => 'integer' ),
+            '_culture_event_organiser_id'  => array( 'type' => 'integer' ),
+            '_culture_event_showcase_urls' => array( 'type' => 'string' ),
         );
         // Expose AIOSEO meta on standard posts so REST-based fetches can read them
         foreach ( array( '_aioseo_title', '_aioseo_description' ) as $aioseo_key ) {
@@ -1344,6 +1346,40 @@ class Culture_Post_Types {
         if ( ! isset( $_POST['culture_as_told_to_nonce'] ) && isset( $_POST['as_told_to'] ) && current_user_can( 'edit_post', $post_id ) ) {
             update_post_meta( $post_id, 'as_told_to', sanitize_text_field( $_POST['as_told_to'] ) );
         }
+    }
+
+    /**
+     * After ACF saves a culture_event, resolve showcase image attachment IDs to
+     * URLs and store them in _culture_event_showcase_urls (JSON). The Next.js
+     * frontend reads this field to avoid batching media API calls at render time.
+     * Runs at acf/save_post priority 20 (after ACF writes its fields at priority 5).
+     */
+    public static function cache_event_showcase_urls( $post_id ) {
+        if ( get_post_type( $post_id ) !== 'culture_event' ) {
+            return;
+        }
+        if ( ! function_exists( 'get_field' ) ) {
+            return;
+        }
+        $showcase = get_field( 'showcase', $post_id );
+        if ( ! is_array( $showcase ) || empty( $showcase ) ) {
+            return;
+        }
+        $urls = array();
+        foreach ( $showcase as $item ) {
+            $img = $item['image'] ?? null;
+            $url = '';
+            if ( is_array( $img ) ) {
+                $url = $img['url'] ?? $img['sizes']['large'] ?? $img['sizes']['full'] ?? '';
+            } elseif ( is_numeric( $img ) ) {
+                $src = wp_get_attachment_image_url( (int) $img, 'large' );
+                $url = $src ?: wp_get_attachment_url( (int) $img ) ?: '';
+            } elseif ( is_string( $img ) ) {
+                $url = $img;
+            }
+            $urls[] = esc_url_raw( $url );
+        }
+        update_post_meta( $post_id, '_culture_event_showcase_urls', wp_json_encode( $urls ) );
     }
 
     // ── Issue taxonomy admin UI ──────────────────────────────────────────

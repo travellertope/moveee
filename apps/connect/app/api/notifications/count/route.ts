@@ -14,5 +14,10 @@ export async function GET(_req: NextRequest) {
     { headers: { Authorization: `Bearer ${API_SECRET}` }, cache: "no-store" }
   );
   const data = await res.json();
-  return NextResponse.json(data, { status: res.status });
+  // private: browser-level cache only (not shared/CDN). 30s TTL absorbs rapid
+  // re-renders without delaying notification delivery beyond the 120s poll cycle.
+  return NextResponse.json(data, {
+    status: res.status,
+    headers: { "Cache-Control": "private, max-age=30" },
+  });
 }

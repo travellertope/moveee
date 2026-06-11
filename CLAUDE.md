@@ -410,7 +410,19 @@ On `cms.themoveee.com` (AWS Lightsail 2GB, London):
 - Vercel KV (Upstash, EU London region) — caches GraphQL responses with `wp:` key prefix
   - KV flush endpoint: `POST /api/revalidate-kv` (secret: `WP_REVALIDATE_SECRET` env var)
   - WordPress fires flush on every post publish via `class-culture-community.php`
-- Circuit breaker in `lib/wp.ts`: 3 failures → 60s cooldown (`CB_COOLDOWN = 60_000`)
+- Circuit breaker in `lib/wp.ts`: 3 failures → 60s cooldown — **now KV-backed** (`cb:cms` key in Vercel KV) so it trips across all serverless function instances, not just in-process
+
+### WordPress newsletter sends via WP-CLI (recommended)
+For large newsletter sends, use WP-CLI rather than the web UI to avoid PHP-FPM timeout:
+```bash
+wp eval 'Culture_Newsletter_Queue::dispatch_batch( $post_id );' --path=/opt/bitnami/wordpress
+```
+The queue processor runs in 50-post batches every 60s via WP-Cron (real cron at `/opt/bitnami/cron`).
+
+### Scaling pm.max_children
+Current value is `5` — safe for 2GB RAM. To increase: edit `/opt/bitnami/php/etc/memory.conf`
+(NOT www.conf — memory.conf overrides it). Each PHP-FPM worker uses ~90–120MB. Formula:
+`pm.max_children = floor((available_RAM_MB - 512) / 110)`. For 4GB: safe to set to ~30.
 
 ---
 

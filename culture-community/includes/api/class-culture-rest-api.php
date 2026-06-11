@@ -3685,6 +3685,13 @@ class Culture_REST_API {
         }
 
         $posts  = get_posts( $query_args );
+
+        // Prime the WP object cache for all post metas in one SQL query so the
+        // get_post_meta() calls below are served from memory, not individual DB queries.
+        if ( ! empty( $posts ) ) {
+            update_meta_cache( 'post', wp_list_pluck( $posts, 'ID' ) );
+        }
+
         $result = array();
 
         foreach ( $posts as $post ) {

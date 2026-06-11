@@ -8,15 +8,23 @@ import ParagraphCommentSystem from "@/components/ParagraphCommentSystem";
 import FinishReading from "@/components/FinishReading";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import ArticleActions from "@/components/ArticleActions";
-import ContentGate from "@/components/ContentGate";
+import ArticleContentGate from "@/components/ArticleContentGate";
 import ImageLightbox from "@/components/ImageLightbox";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getAccessLevel, canViewContent } from "@/lib/access";
+import { getAccessLevel } from "@/lib/access";
 import { decodeHtml } from "@/lib/decode-html";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 600;
+
+export async function generateStaticParams() {
+  try {
+    const data = await getWPData(GET_STORIES, { first: 100 }, { revalidate: 600 });
+    const nodes: { slug: string }[] = data?.posts?.nodes ?? [];
+    return nodes.map((n) => ({ slug: n.slug }));
+  } catch {
+    return [];
+  }
+}
 
 function resolveAioseoTitle(raw: string, postTitle: string): string {
   // AIOSEO stores template tags — resolve the common ones then strip any leftovers
@@ -77,12 +85,8 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     notFound();
   }
 
-  // Access control
-  const session = await getServerSession(authOptions);
-  const user = session?.user as any;
+  // Access level — session check is deferred to the ArticleContentGate client component
   const accessLevel = getAccessLevel(post);
-  const canView = canViewContent(accessLevel, user);
-  const isLoggedIn = !!user;
 
   // Fetch related stories and issue in parallel
   const primaryCategory = post.categories?.nodes?.[0]?.name || "";
@@ -339,46 +343,24 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
         {/* CENTER — PROSE (Interactive Paragraph Comments) */}
         <div className="prose" id="article-body">
-          {canView ? (
-            <ParagraphCommentSystem
-              postId={parseInt(post.databaseId)}
-              content={processedContent || ""}
-            />
-          ) : (
-            <>
-              {/* First ~5% of article content with gradient fade */}
-              {(() => {
-                const firstParas = (processedContent.match(/<p[\s\S]*?<\/p>/gi) || []).slice(0, 3).join("");
-                const preview = firstParas || post.excerpt || "";
-                if (!preview) return null;
-                return (
-                  <div style={{ position: "relative", marginBottom: 0 }}>
-                    <div
-                      className="prose-content"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(preview) }}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: 160,
-                        background: "linear-gradient(to bottom, transparent, var(--paper, #ffffff))",
-                        pointerEvents: "none",
-                      }}
-                    />
-                  </div>
-                );
-              })()}
-              <ContentGate
-                accessLevel={accessLevel as "member-only" | "patron-only"}
-                isLoggedIn={isLoggedIn}
-                callbackUrl={`/magazine/${resolvedParams.slug}`}
-              />
-            </>
-          )}
-          {canView && <FinishReading postId={parseInt(post.databaseId)} />}
+          <ArticleContentGate
+            accessLevel={accessLevel}
+            callbackUrl={`/magazine/${resolvedParams.slug}`}
+            previewHtml={sanitizeHtml(
+              (processedContent.match(/<p[\s\S]*?<\/p>/gi) || []).slice(0, 3).join("") ||
+              post.excerpt ||
+              ""
+            )}
+            fullContent={
+              <>
+                <ParagraphCommentSystem
+                  postId={parseInt(post.databaseId)}
+                  content={processedContent || ""}
+                />
+                <FinishReading postId={parseInt(post.databaseId)} />
+              </>
+            }
+          />
         </div>
 
         {/* RIGHT — SIDEBAR */}

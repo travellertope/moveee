@@ -15,12 +15,33 @@ export const metadata = {
   title: { absolute: "My Account | The Moveee" },
 };
 
+const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
+
+async function fetchLiveStats(userId: string) {
+  const secret = process.env.CULTURE_API_SECRET ?? "";
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/profile?user_id=${userId}`, {
+      headers: { Authorization: `Bearer ${secret}` },
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
+}
+
 export default async function MemberPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/login?callbackUrl=/member");
 
   const user = session.user as any;
   const isPatron = user.tier === "patron";
+
+  const live = await fetchLiveStats(String(user.id));
+  const liveCredits             = live?.credits               ?? user.credits              ?? 0;
+  const liveReputation          = live?.reputation            ?? user.reputation            ?? user.points ?? 0;
+  const liveReputationTier      = live?.reputation_tier       ?? user.reputationTier        ?? "member";
+  const liveDailyCreditsRemaining = live?.daily_credits_remaining ?? user.dailyCreditsRemaining ?? 50;
+  const liveBadges: string[]    = Array.isArray(live?.badges) ? live.badges : (user.badges ?? []);
   const displayName = user.displayName || user.name || user.username || "Member";
   const initial = displayName.charAt(0).toUpperCase();
   const referralUrl = user.referralCode
@@ -59,14 +80,14 @@ export default async function MemberPage() {
         {!user.hasPasskey && <PasskeyBanner creditsEscrowed={user.creditsEscrowed ?? 0} />}
         {/* ── STATS (live data) ── */}
         <MemberDashboard
-          initialPoints={user.points ?? 0}
-          initialBadges={user.badges ?? []}
+          initialPoints={liveReputation}
+          initialBadges={liveBadges}
           referralCount={user.referralCount ?? 0}
           membership={isPatron ? "Connect Pro" : "Connect Citizen"}
-          initialCredits={user.credits ?? 0}
-          initialReputation={user.reputation ?? user.points ?? 0}
-          reputationTier={user.reputationTier ?? "member"}
-          dailyCreditsRemaining={user.dailyCreditsRemaining ?? 50}
+          initialCredits={liveCredits}
+          initialReputation={liveReputation}
+          reputationTier={liveReputationTier}
+          dailyCreditsRemaining={liveDailyCreditsRemaining}
         />
 
         <div className="mem-grid">
@@ -74,7 +95,7 @@ export default async function MemberPage() {
           <div className="mem-col-main">
 
             {/* Badges (live data) */}
-            <MemberBadges initialBadges={user.badges ?? []} />
+            <MemberBadges initialBadges={liveBadges} />
 
             {/* How to earn */}
             <section className="mem-card">
