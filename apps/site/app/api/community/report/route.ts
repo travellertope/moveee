@@ -11,14 +11,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+function getAuth() {
+  return Buffer.from(`${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`).toString("base64");
+}
 
 export const runtime = "nodejs";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const BASE   = `${WP_URL}/wp-json/wp/v2`;
-const AUTH   = Buffer.from(
-  `${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`
-).toString("base64");
+
 
 const REPORT_THRESHOLD = 3;
 
@@ -31,22 +34,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Sign in to report a post." }, { status: 401 });
   }
 
+  const user = session.user as any;
+  const reporterId = String(user?.id ?? "");
+
+  const { allowed } = await checkRateLimit("community-report", reporterId, 5, "1h");
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many reports. Please try again later." }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => ({}));
   const { postId, reason } = body as { postId?: string; reason?: string };
 
   if (!postId) {
     return NextResponse.json({ error: "postId is required." }, { status: 400 });
   }
-
-  const user = session.user as any;
-  const reporterId = String(user?.id ?? "");
   const safeReason: ReportReason = (ALLOWED_REASONS as readonly string[]).includes(reason ?? "")
     ? (reason as ReportReason)
     : "other";
 
   // Fetch current post meta.
   const getRes = await fetch(`${BASE}/community-posts/${postId}?_fields=meta,status`, {
-    headers: { Authorization: `Basic ${AUTH}` },
+    headers: { Authorization: `Basic ${getAuth()}` },
     cache: "no-store",
   });
 
@@ -87,7 +95,7 @@ export async function POST(req: NextRequest) {
 
   const patchRes = await fetch(`${BASE}/community-posts/${postId}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", Authorization: `Basic ${AUTH}` },
+    headers: { "Content-Type": "application/json", Authorization: `Basic ${getAuth()}` },
     body: JSON.stringify(patch),
     cache: "no-store",
   });

@@ -7,6 +7,10 @@ const nextConfig = {
   transpilePackages: ["@moveee/shared", "@moveee/utils"],
   outputFileTracingRoot: path.join(__dirname, "../../"),
   images: {
+    // NOTE: unoptimized=true delegates optimisation to the Optimole CDN.
+    // As a side-effect, Next.js remotePatterns allowlist is NOT enforced —
+    // any domain can be loaded via <Image>. Dynamic image src values must
+    // be validated at the component level. See security-audit finding #27.
     unoptimized: true,
     remotePatterns: [
       { protocol: 'https', hostname: 'themoveee.com' },

@@ -171,12 +171,8 @@ export const authOptions: NextAuthOptions = {
         token.id = u.id;
         token.username = u.username;
         token.registeredAt = u.registeredAt ?? 0;
-        token.phone = u.phone;
-        token.whatsapp = u.whatsapp;
-        token.gender = u.gender;
-        token.dateOfBirth = u.dateOfBirth;
-        token.nationality = u.nationality;
-        token.countryOfResidence = u.countryOfResidence;
+        // KYC/contact PII intentionally omitted from JWT — fetched on-demand
+        // from the profile API on settings pages only.
         token.city = u.city;
         token.occupation = u.occupation;
         token.tier = u.tier;
@@ -220,12 +216,7 @@ export const authOptions: NextAuthOptions = {
         s.id = token.id;
         s.username = token.username;
         s.registeredAt = token.registeredAt ?? 0;
-        s.phone = token.phone;
-        s.whatsapp = token.whatsapp;
-        s.gender = token.gender;
-        s.dateOfBirth = token.dateOfBirth;
-        s.nationality = token.nationality;
-        s.countryOfResidence = token.countryOfResidence;
+        // KYC/contact PII not stored in JWT — see profile settings pages.
         s.city = token.city;
         s.occupation = token.occupation;
         s.tier = token.tier;

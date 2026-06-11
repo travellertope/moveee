@@ -11,14 +11,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+function getAuth() {
+  return Buffer.from(`${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`).toString("base64");
+}
 
 export const runtime = "nodejs";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const BASE   = `${WP_URL}/wp-json/wp/v2`;
-const AUTH   = Buffer.from(
-  `${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`
-).toString("base64");
+
 
 const REPORT_THRESHOLD = 3;
 
@@ -29,6 +32,13 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Sign in to report a post." }, { status: 401 });
+  }
+
+  // 5 reports per user per hour — prevents coordinated censorship attacks.
+  const userId = String((session.user as any)?.id ?? "");
+  const { allowed } = await checkRateLimit("community-report", userId, 5, "1h");
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many reports. Please try again later." }, { status: 429 });
   }
 
   const body = await req.json().catch(() => ({}));
@@ -46,7 +56,7 @@ export async function POST(req: NextRequest) {
 
   // Fetch current post meta.
   const getRes = await fetch(`${BASE}/community-posts/${postId}?_fields=meta,status`, {
-    headers: { Authorization: `Basic ${AUTH}` },
+    headers: { Authorization: `Basic ${getAuth()}` },
     cache: "no-store",
   });
 
@@ -87,7 +97,7 @@ export async function POST(req: NextRequest) {
 
   const patchRes = await fetch(`${BASE}/community-posts/${postId}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", Authorization: `Basic ${AUTH}` },
+    headers: { "Content-Type": "application/json", Authorization: `Basic ${getAuth()}` },
     body: JSON.stringify(patch),
     cache: "no-store",
   });

@@ -3,13 +3,15 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { checkPostSpam, checkBlocklist, getReviewDays } from "@/lib/spam-protection";
 
+function getAuth() {
+  return Buffer.from(`${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`).toString("base64");
+}
+
 export const runtime = "nodejs";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const BASE = `${WP_URL}/wp-json/wp/v2`;
-const AUTH = Buffer.from(
-  `${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`
-).toString("base64");
+
 
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
@@ -128,7 +130,7 @@ export async function POST(req: NextRequest) {
 
   const createRes = await fetch(`${BASE}/community-posts`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Basic ${AUTH}` },
+    headers: { "Content-Type": "application/json", Authorization: `Basic ${getAuth()}` },
     body: JSON.stringify({
       title,
       content: htmlContent,
