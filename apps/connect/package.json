@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@moveee/shared": "*",
+    "@moveee/utils": "*",
     "@simplewebauthn/browser": "^13.3.0",
     "clsx": "^2.1.0",
     "lucide-react": "latest",

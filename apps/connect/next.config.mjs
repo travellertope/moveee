@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig = {
+  transpilePackages: ["@moveee/shared", "@moveee/utils"],
   outputFileTracingRoot: path.join(__dirname, "../../"),
   images: {
     unoptimized: true,
