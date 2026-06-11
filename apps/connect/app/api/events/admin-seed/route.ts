@@ -20,12 +20,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Sign in to access Events Admin." }, { status: 401 });
   }
 
-  const allowlist = process.env.PULSE_ADMIN_EMAILS; // reuse the same allowlist env var
-  if (allowlist) {
-    const allowed = allowlist.split(",").map((e) => e.trim().toLowerCase());
-    if (!allowed.includes(session.user.email.toLowerCase())) {
-      return NextResponse.json({ error: "Your account is not authorised for Events Admin." }, { status: 403 });
-    }
+  const allowlist = process.env.PULSE_ADMIN_EMAILS;
+  if (!allowlist) {
+    return NextResponse.json({ error: "Events Admin is not configured." }, { status: 403 });
+  }
+  const allowed = allowlist.split(",").map((e) => e.trim().toLowerCase());
+  if (!allowed.includes(session.user.email.toLowerCase())) {
+    return NextResponse.json({ error: "Your account is not authorised for Events Admin." }, { status: 403 });
   }
 
   if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: "GEMINI_API_KEY not configured." }, { status: 503 });

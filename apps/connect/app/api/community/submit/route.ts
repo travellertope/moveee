@@ -107,8 +107,10 @@ export async function POST(req: NextRequest) {
   const authorName: string = user?.name ?? user?.displayName ?? user?.username ?? "Community Member";
   const authorId: string = userId;
 
+  const escHtml = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const title = content.slice(0, 80) + (content.length > 80 ? "…" : "");
-  const htmlContent = `<p>${content.replace(/\n/g, "</p><p>")}</p>`;
+  const htmlContent = `<p>${escHtml(content).replace(/\n/g, "</p><p>")}</p>`;
 
   const createRes = await fetch(`${BASE}/community-posts`, {
     method: "POST",

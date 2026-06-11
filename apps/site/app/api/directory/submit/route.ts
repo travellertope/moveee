@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       return NextResponse.json(
-        { error: err.message ?? "Submission failed. Please try again." },
+        { error: "Submission failed. Please try again." },
         { status: 502 }
       );
     }

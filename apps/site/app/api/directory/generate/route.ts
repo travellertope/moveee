@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { generateDirectoryStub } from "@/lib/gemini";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+
   if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json(
       { error: "AI service not configured. Set GEMINI_API_KEY." },

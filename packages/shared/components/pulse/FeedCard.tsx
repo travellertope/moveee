@@ -7,6 +7,7 @@ import type { FeedItem } from "@/lib/unified-feed";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
 import { decodeHtml } from "@/lib/decode-html";
+import { sanitizeHtml } from "@/lib/sanitize";
 import SourcePreviewCard from "./SourcePreviewCard";
 
 function PollDisplay({ postId, options, expiresAt }: { postId?: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
@@ -689,7 +690,7 @@ export default function FeedCard({
             {hasHtmlBody ? (
               <div
                 className="pulse-body"
-                dangerouslySetInnerHTML={{ __html: item.body! }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.body!) }}
                 style={{
                   color: "#3a342b",
                   fontSize: "0.88rem",
@@ -966,7 +967,7 @@ export default function FeedCard({
             {hasHtmlBody ? (
               <div
                 className="happening-body"
-                dangerouslySetInnerHTML={{ __html: item.body! }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.body!) }}
                 style={{
                   color: "#3a342b",
                   fontSize: "0.88rem",

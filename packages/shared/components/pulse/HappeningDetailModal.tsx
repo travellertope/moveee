@@ -4,6 +4,7 @@ import { useEffect, useCallback } from "react";
 import Link from "next/link";
 import type { FeedItem } from "@/lib/unified-feed";
 import { decodeHtml } from "@/lib/decode-html";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface Props {
   item: FeedItem;
@@ -167,7 +168,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
                   fontSize: "0.95rem", lineHeight: 1.7, color: "#3a342b",
                   marginBottom: "1.25rem",
                 }}
-                dangerouslySetInnerHTML={{ __html: htmlBody }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlBody!) }}
               />
             </>
           ) : paragraphs.length > 0 ? (
