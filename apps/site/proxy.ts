@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { editionFromCountry, isValidRegionalSlug } from './lib/editions'
+import { editionFromCountry, isValidRegionalSlug } from '@/lib/editions'
 
 // Crawler UA patterns to rate-limit on edition pages (prevents cache bypass stampedes)
 const CRAWLER_RE = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebookexternalhit|twitterbot|linkedinbot|discordbot/i
