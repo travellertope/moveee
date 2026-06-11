@@ -1778,6 +1778,667 @@ and the other stats (badges, daily) in #14110D (ink). Only credits and reputatio
 
 ---
 
+## 16. LIFESTYLE SHOP SCREENS
+
+*The Moveee Lifestyle shop sells handcrafted and culturally-curated products from vetted independent makers.
+Built on WooCommerce with editorial integration — products link to magazine stories, maker profiles,
+and "How It's Made" process documentation. Connect Pro members get early access and member-only pricing.*
+
+**Shop navigation tab: added as a 6th tab in the bottom nav — or accessible via Magazine/Lifestyle section.
+Products are WooCommerce variable products (color + size variants). Checkout redirects to the WooCommerce
+hosted checkout at cms.themoveee.com. Cart is managed via the WooCommerce Store API.**
+
+---
+
+### PROMPT 16A — Shop Home (Lifestyle Tab)
+
+```
+Senior mobile UX/UI designer — Moveee Connect Lifestyle Shop. iOS, 390×844px.
+Brand: paper-warm bg #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D,
+Fraunces for editorial headlines, DM Sans for UI, JetBrains Mono for prices/metadata.
+
+Design the Lifestyle Shop home screen. This is a premium independent maker marketplace —
+handcrafted, culturally curated objects. The aesthetic should feel like a high-end
+editorial boutique, not a standard e-commerce grid. Warm, artisanal, intentional.
+
+HEADER (white, 64px including status bar):
+Left: "Lifestyle" Fraunces 20px bold ink (NOT "Shop" — use "Lifestyle")
+Right: shopping bag icon (24px ink) with small count badge (ochre circle, white "2" in 8px mono)
+  + search icon (24px ink)
+
+HERO BANNER (full-bleed, 390×200px):
+Warm editorial image placeholder — ochre/terracotta abstract textile pattern.
+Dark gradient overlay bottom 50%.
+Eyebrow: "VETTED MAKERS · HANDCRAFTED OBJECTS" DM Sans 9px bold uppercase gold, letter-spacing 2px
+Headline: Fraunces 28px bold white: "Objects that carry a story."
+Subtext: DM Sans 14px white mute: "Curated from independent makers across the diaspora."
+"Shop the edit →" small white outline pill button (DM Sans 12px bold white, ink outline, 36px height)
+
+CATEGORY SCROLL (horizontal, 48px height, paper-warm bg, 8px gap, 16px start padding):
+6 category chips (40px height, radius-full, 12px horizontal padding):
+Active "All": ochre fill white DM Sans 13px bold.
+Inactive: white fill, ghost border, ink-soft 13px.
+Categories: All · Ceramics · Textiles · Leather · Jewellery · Objects · Paper
+
+FEATURED PICKS SECTION:
+"Featured Picks" DM Sans 14px bold ink left (16px padding) + "The Edit →" 13px ochre right.
+LARGE FEATURED CARD (full-width minus 32px, white fill, radius-xl, shadow-card, overflow hidden):
+  Product image: full-width × 200px, object-fit cover (top radius only)
+  Bottom (16px padding):
+    Maker name eyebrow: "BISI CERAMICS · LAGOS" DM Sans 9px bold uppercase mute
+    Product name: Fraunces 18px bold ink: "Terracotta Ritual Bowl"
+    Price: DM Sans 16px bold ink: "£68" — Pro member price below: "£61 for Pro ★" DM Sans 13px gold
+    "Add to bag" — primary ochre pill button (full width, 40px height, DM Sans 13px bold white)
+    "NEW" tag chip if applicable: small ochre filled pill "NEW" DM Sans 9px bold white, top-right of image
+
+2-COLUMN SMALL PICKS (below large card, 12px gap, 16px horizontal padding):
+2 smaller product cards (equal width, white fill, radius-xl, shadow-card):
+  Image: full-width × 140px, radius-xl top corners
+  16px padding bottom section:
+    Maker: DM Sans 9px bold uppercase mute
+    Name: DM Sans 13px bold ink, 2 lines
+    Price: DM Sans 14px bold ink + Pro price DM Sans 11px gold if different
+    "Add to bag" small pill button (full width, 36px, ochre, DM Sans 12px bold)
+
+EDITORIAL BRIDGE — "AS SEEN IN" STRIP (paper-warm bg, 64px height, 16px padding, row):
+📖 book icon (20px ochre) left + 
+"As seen in The Magazine →" DM Sans 14px bold ink + article excerpt DM Sans 12px mute 1 line
+Chevron right.
+
+PRODUCT GRID SECTION:
+"All Products" DM Sans 14px bold ink left + sort control "Sort: Featured ▼" 13px mute right.
+2-column product grid (12px gap, 16px horizontal padding):
+6 product cards:
+
+PRODUCT CARD (white fill, radius-xl, shadow-card):
+Image (full-width, square aspect ratio, radius-xl top corners, object-fit cover):
+  "NEW" badge top-left if tagged new (ochre pill, DM Sans 9px bold white, 4px 8px padding)
+  "PRO EARLY ACCESS" badge top-left if gated (gold fill, DM Sans 9px bold white) — for non-Pro users
+  "ONLY 2 LEFT" stock badge bottom-left if low stock (ink fill, white DM Sans 9px, pill)
+16px padding bottom:
+  Maker: DM Sans 9px bold uppercase mute, truncate 1 line
+  Name: DM Sans 13px bold ink, 2 lines, min-height 36px
+  Price row: DM Sans 14px bold ink "£68" — if on sale: strikethrough regular "£85" grey + "£68" ochre
+
+Show 6 varied product cards:
+1. "Terracotta Ritual Bowl" — Bisi Ceramics, Lagos — £68 — NEW badge
+2. "Indigo Resist-Dye Throw" — Adire Studio, Abeokuta — £145 — PRO EARLY ACCESS (gold badge)
+3. "Leather Card Holder" — Craft Co, Accra — £42 — 2 variants shown
+4. "Oxidised Silver Cuff" — Atelier Nne — £120 — SALE: ~~£150~~ £120
+5. "Hand-Bound Journal" — Paper Works Lagos — £28 — NEW badge
+6. "Brass Incense Holder" — Objects Lagos — £55 — ONLY 2 LEFT badge
+
+VENDOR SHOWCASE SECTION:
+"Meet the Makers" DM Sans 14px bold ink left + "See all →" 13px ochre right.
+Horizontal scroll of 3 vendor mini-cards (170×100px, white fill, radius-xl, shadow-card, 12px gap):
+  Vendor avatar (44px circle, gold border if Pro seller) left + text right:
+  Store name: DM Sans 13px bold ink
+  City: DM Sans 11px mute
+  Product count: JetBrains Mono 10px mute "12 products"
+
+CONNECT PRO BAND (ochre fill #C5491F, 120px height, 16px padding, centred):
+★ "Connect Pro Members" DM Sans 9px bold uppercase gold, letter-spacing 2px
+"Early access · Member pricing · Free returns" Fraunces 18px bold white, centred
+"Upgrade →" white outline pill button, 36px height, DM Sans 12px bold white
+
+Bottom navigation: Lifestyle tab active (bag icon, ochre).
+
+Output 1 full-length screen frame showing all sections.
+```
+
+---
+
+### PROMPT 16B — Product Listing / Category Browse
+
+```
+Senior mobile UX/UI designer — Moveee Connect Lifestyle shop listing. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D,
+Fraunces + DM Sans + JetBrains Mono.
+
+Design the product listing/browse screen — shown when a category is selected or
+"All Products" is tapped. Generate 3 frames: Grid View, List View, and Empty/No Results state.
+
+SHARED HEADER (white, 56px + status bar):
+Back chevron + "Ceramics" Fraunces 18px bold ink centred + cart bag icon (24px, ink) right.
+
+SHARED FILTER BAR (white bg, 56px height, ghost bottom border):
+ROW 1 (horizontal scroll category pills — same as shop home):
+Ceramics (active ochre) · Textiles · Leather · Jewellery · Objects · Paper
+ROW 2 (below, 44px height): sort + filter controls row:
+  "Sort: Featured ▼" — ghost border pill, DM Sans 12px ink-soft
+  "Filter ⚙" — ghost border pill, DM Sans 12px ink-soft, filter icon 14px
+  RIGHT: view toggle — 2 icon buttons (grid-2x2 icon, list icon), active = ink fill white, inactive = paper-deep
+
+Results count: "14 products" JetBrains Mono 10px mute, 16px left padding, 8px vertical.
+
+---
+
+FRAME 1 — GRID VIEW (2-column, 12px gap, 16px horizontal padding):
+
+8 product cards (vary across the grid):
+
+PRODUCT CARD STANDARD:
+Image: full-width, square, radius-xl top corners (12px), object-fit cover.
+Badges on image:
+  — "NEW" top-left: ochre pill, DM Sans 9px bold white, 4px 8px padding
+  — "SALE" top-left: error red pill, same style (mutually exclusive with NEW)
+  — "PRO EARLY ACCESS" top-left: gold fill pill (when gated, non-Pro user view)
+  — "ONLY X LEFT" bottom-left: ink fill semi-transparent, white text 9px (low stock warning)
+  — Wishlist heart top-right: white circle 28px, heart icon 14px (outline = unsaved, filled red = saved)
+
+CARD BOTTOM (16px padding):
+Maker: DM Sans 9px bold uppercase mute, 1 line truncate
+Name: DM Sans 13px bold ink, 2 lines (min-height 36px)
+PRICE ROW (row, space-between):
+  Regular price: DM Sans 14px bold ink "£68"
+  If sale: strikethrough "~~£85~~" DM Sans 13px ghost + "£68" DM Sans 14px bold ochre
+  If Pro member and member price exists: "£61 ★" DM Sans 12px gold (shown BELOW regular price, 2px top)
+Quick-add button: small "+" circle button (28px, paper-deep bg, ink + icon 14px) bottom-right of price row.
+  On tap: becomes ochre fill with white ✓ checkmark for 1s (optimistic feedback)
+
+Show 8 cards across 4 rows (2 per row):
+Row 1: Terracotta Bowl (£68, NEW) + Indigo Throw (£145, PRO EARLY ACCESS)
+Row 2: Leather Card Holder (£42, 3 left) + Silver Cuff (~~£150~~ £112, SALE)
+Row 3: Bound Journal (£28, NEW) + Brass Holder (£55)
+Row 4: Batik Cushion (£89) + Woven Basket (£65, Pro price £58 ★)
+
+---
+
+FRAME 2 — LIST VIEW (full-width cards, single column):
+
+PRODUCT CARD LIST STYLE (white fill, radius-xl, shadow-card, 16px margin horizontal, 8px gap):
+Row layout: image left (100×100px square, radius-lg) + content right (12px gap).
+CONTENT RIGHT:
+  Maker: DM Sans 9px bold uppercase mute
+  Name: DM Sans 14px bold ink, 2 lines
+  Short description: DM Sans 12px ink-soft, 1 line truncate
+  PRICE + ACTION ROW:
+    Price: DM Sans 15px bold ink + Pro price DM Sans 11px gold below
+    "Add to bag" button: small ochre pill (60px width, 32px height, DM Sans 11px bold white) right-aligned
+
+Show 5 list cards with same product variety.
+
+---
+
+FRAME 3 — EMPTY / NO RESULTS:
+Centred content on paper-warm background.
+Filter bar still visible at top (showing active filter "Leather", 0 results).
+Empty state:
+  Shopping bag outline icon (64px, ghost colour)
+  "No products found." Fraunces 20px bold ink, centred, 20px top margin
+  "Try a different category or clear your filters." DM Sans 14px mute centred, max 260px
+  "Clear filters" ghost button (ink border, 48px height, 200px width, DM Sans 14px) 16px below
+
+Output 3 frames labelled Grid, List, Empty.
+```
+
+---
+
+### PROMPT 16C — Product Detail Page
+
+```
+Senior mobile UX/UI designer — Moveee Connect Lifestyle product detail. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white bg, ochre #C5491F, gold #B38238, ink #14110D,
+Fraunces editorial headlines, DM Sans UI, JetBrains Mono metadata.
+
+Design a full product detail screen. The product is a premium handcrafted ceramic bowl.
+This screen combines e-commerce functionality with editorial depth — maker story,
+process steps, magazine integration, and Pro member pricing.
+
+Generate 2 frames: Standard view (all sections) + Pro Member view (early access unlocked).
+
+HEADER (56px + status bar, white):
+Back chevron left (ink, 44px) + "Lifestyle" DM Sans 14px mute centred + 
+cart bag icon right (24px ink, ochre "2" badge) + share icon (24px ink).
+
+---
+
+PRODUCT GALLERY (full-bleed, 390×360px):
+Large hero product image (terracotta ceramic bowl on ochre/warm linen background — placeholder).
+GALLERY CONTROLS:
+  — Thumbnail dots row bottom-centre: 4 dots (active = white filled 8px, inactive = white 40% 6px)
+  — Left/right chevron arrows (white circles 36px) for navigation — subtle, near edges
+  — Wishlist heart top-right: white circle 40px, heart icon 20px (outline state shown)
+  — "4 images" JetBrains Mono 10px white bottom-right corner
+
+---
+
+CONTENT (white bg, radius-2xl top corners 20px, starts 32px overlap with gallery):
+24px horizontal padding.
+
+PRODUCT IDENTITY:
+Maker row: "BISI CERAMICS" DM Sans 9px bold uppercase mute + "📍 Lagos, Nigeria" JetBrains Mono 10px mute + "Vetted Maker ✓" success green DM Sans 10px bold right-aligned.
+"Terracotta Ritual Bowl" Fraunces 26px bold ink, 8px top margin.
+Short description: DM Sans 15px ink-soft: "Hand-thrown on a traditional kick wheel, fired using locally sourced terracotta clay. Each piece is unique — no two are identical." 12px top margin.
+
+PRICE BLOCK (16px top margin):
+Regular price: DM Sans 24px bold ink "£68.00"
+Pro member price (row below): ★ "Connect Pro price: £61.00" DM Sans 14px gold.
+  Non-Pro user: "★ Connect Pro members save 10%" + "Upgrade →" link 13px ochre.
+  Pro member: shows "£61.00" prominent gold price, "★ You're saving £7.00" 12px mute.
+Stock status: "In stock · 6 available" JetBrains Mono 10px success green, right-aligned.
+
+VARIANT SELECTORS (16px top margin):
+
+COLOUR SELECTOR:
+"Colour" DM Sans 12px bold ink + selected: "Terracotta" DM Sans 12px mute inline.
+4 colour swatches (36×36px each, radius-full, 8px gap, left-aligned):
+  Active: 2px ink border ring + 2px gap + filled swatch.
+  Inactive: no border.
+  Colours: Terracotta (warm orange), Clay (beige), Slate (grey-blue), Obsidian (near-black)
+
+SIZE SELECTOR:
+"Size" DM Sans 12px bold ink + selected: "Medium" inline.
+3 size pills (radius-lg, 40px height, 48px min-width, 8px gap):
+  Active: ink fill white DM Sans 13px bold.
+  Inactive: ghost border ink-soft 13px.
+  Sold-out: ghost border, strikethrough text, 50% opacity, "Sold out" tooltip.
+  Sizes: Small · Medium · Large (Medium active)
+
+ADD TO BAG SECTION (24px top margin):
+QUANTITY ROW: "Qty" label + stepper (− 1 +) row: 
+  Minus button (36×36px, ghost border circle) + "1" DM Sans 15px bold centred (48px wide) + Plus button.
+"Add to Bag" — full-width primary ochre button (56px height, pill, white DM Sans 15px bold), 12px top margin.
+  Loading state: ochre fill + spinner + "Adding..." text.
+  Success state (1s): success green fill + ✓ + "Added to bag!" then reverts.
+"Save for later" — ghost link with heart icon, DM Sans 13px mute centred, 8px below.
+
+DELIVERY STRIP (paper-deep bg, radius-lg, 12px padding, 3-column row, 16px top margin):
+3 equal columns, centred:
+  🚚 "Free delivery over £75" · ↩️ "Free returns in 14 days" · ✓ "Vetted maker"
+  Each: icon 16px ochre + DM Sans 10px mute below. Centred.
+
+ACCORDION TABS SECTION (24px top margin):
+5 collapsible rows (52px height each, ghost bottom border, 16px horizontal padding):
+Row: label DM Sans 14px bold ink + ▼ chevron right (rotates on expand)
+Rows: "Description" (expanded by default) · "Materials & Care" · "Delivery & Returns" · "About the Maker" · "As Seen In"
+
+DESCRIPTION EXPANDED CONTENT:
+DM Sans 14px ink-soft, line-height 1.6:
+"This ritual bowl is part of Bisi Ceramics' Earth Objects collection, inspired by traditional 
+Yoruba pottery forms. Hand-thrown using locally sourced red terracotta clay..."
+
+HOW IT'S MADE SECTION (24px top margin):
+"How It's Made" Fraunces 20px bold ink.
+3 process step cards (vertical stack, 12px gap):
+Each: white fill, radius-lg, 16px padding, row layout:
+  Step number circle: 32×32px ochre fill, white DM Sans 13px bold centred.
+  Text right: step title DM Sans 13px bold ink + description DM Sans 12px ink-soft below + 
+  duration: JetBrains Mono 10px mute italic right-aligned ("2–3 days")
+Steps:
+  1. "Sourcing the Clay" · "Red terracotta gathered from Ondo state riverbanks" · 1 day
+  2. "Throwing & Shaping" · "Hand-thrown on a kick wheel, no moulds used" · 2–3 days
+  3. "Firing & Finishing" · "Single fire in a wood-burning kiln, natural glaze only" · 1–2 days
+
+AS SEEN IN SECTION (paper-warm bg, radius-lg, 16px padding, 24px top margin, row):
+📖 icon (24px ochre) left + text right (12px gap):
+  "As seen in" DM Sans 11px mute + "The Craft Revival: Why Ceramics Are Having a Moment" DM Sans 14px bold ink, 2 lines
+  "Read the story →" DM Sans 13px ochre link
+
+MAKER PROFILE MINI-CARD (white fill, radius-xl, 16px padding, 24px top margin):
+Header row: "About the Maker" DM Sans 14px bold ink + "See full shop →" 13px ochre.
+Row below: Vendor avatar (56px, gold Pro border) + info stack right:
+  "Bisi Ceramics" DM Sans 15px bold ink
+  "📍 Lagos, Nigeria · Since 2019" JetBrains Mono 11px mute
+  "★★★★★ 4.9 · 12 products" DM Sans 12px mute
+Bio: "Adaeze Obi creates ceremonial objects inspired by West African ritual traditions..." DM Sans 13px ink-soft, 3 lines, 12px top.
+"View all their products →" DM Sans 13px ochre link.
+
+RELATED PRODUCTS (24px top margin):
+"From Bisi Ceramics" DM Sans 14px bold ink left + "See more →" 13px ochre right.
+Horizontal scroll of 3 product cards (160×200px, white fill, radius-xl, shadow-card, 12px gap):
+Image (160×110px) + name 12px bold + price 13px.
+
+STICKY BOTTOM BAR (fixed, white fill, top ghost border, 72px height + safe area, 16px padding):
+Row: Price "£68" DM Sans 20px bold ink left + "Add to Bag" ochre pill button right (160px wide, 48px height).
+Pro member view: "£61 ★" gold left instead.
+
+---
+
+PRO MEMBER VIEW DIFFERENCES:
+— Hero image: "EARLY ACCESS" removed (no gate)
+— Price block: "£61.00" in gold is the MAIN price (large, 24px gold)
+  "Regular price £68.00" shown in smaller ghost strikethrough above
+  "★ Connect Pro price · Saving £7.00" 12px success green
+— Add to bag: fully enabled, no upgrade prompt
+— Hero badge: if within early access window: "★ EARLY ACCESS — Available to Pro members" small gold banner above gallery
+
+Output 2 frames: Standard (non-Pro user, Pro price visible as incentive) + Pro Member (gold pricing active).
+```
+
+---
+
+### PROMPT 16D — Cart & Checkout Flow
+
+```
+Senior mobile UX/UI designer — Moveee Connect Lifestyle cart. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white fills, ochre #C5491F, gold #B38238, ink #14110D.
+
+Design 4 frames: Cart Screen, Cart Empty, Checkout Handoff, and Cart Drawer (slide-in overlay).
+
+FRAME 1 — CART SCREEN (full screen):
+Header (56px + status bar): back chevron + "Your Bag" Fraunces 18px bold ink centred + "Edit" DM Sans 14px ochre right.
+
+CART ITEMS LIST:
+3 items. Each cart item row (white fill, 16px horizontal padding, 8px vertical padding):
+
+CART ITEM CARD (white fill, radius-xl, shadow-card, 16px padding, 16px horizontal margin, 8px gap):
+Image: 80×80px square, radius-lg, object-fit cover. LEFT.
+CONTENT RIGHT (flex, vertical, 12px gap from image):
+  Maker: DM Sans 9px bold uppercase mute
+  Name: DM Sans 14px bold ink, 2 lines
+  Variant: "Terracotta · Medium" DM Sans 12px mute
+  BOTTOM ROW: stepper (− 1 +, each 28×28px, ghost border circle) left + "£68.00" DM Sans 15px bold ink right.
+  "Remove" DM Sans 12px mute ochre, below stepper, tap to remove with undo toast.
+
+Items:
+1. Terracotta Ritual Bowl · Bisi Ceramics · Terracotta / Medium · qty 1 · £68
+2. Indigo Throw · Adire Studio · Indigo Blue · qty 1 · £145
+3. Bound Journal · Paper Works · Blank / A5 · qty 2 · £56 (2 × £28)
+
+VOUCHER/PROMO ROW (white card, 16px padding, row):
+Gift card icon + "Add promo code" DM Sans 14px mute input (ghost border, 40px height) + "Apply" ochre text button.
+
+ORDER SUMMARY CARD (paper-deep bg, radius-xl, 16px padding, 16px horizontal margin):
+Row rows (space-between, 40px height each):
+  "Subtotal (4 items)" DM Sans 14px ink + "£269.00" DM Sans 14px bold ink right
+  "Delivery" DM Sans 14px ink + "Calculated at checkout" DM Sans 13px mute right
+  "Pro member discount" DM Sans 14px gold + "–£18.90" DM Sans 14px bold gold right (if Pro member)
+  Ghost divider
+  "Estimated total" DM Sans 15px bold ink + "£250.10" DM Sans 15px bold ink right
+  "Taxes included" JetBrains Mono 10px mute right-aligned
+
+CONNECT PRO SAVINGS STRIP (gold fill bg, radius-lg, 12px padding, row, if non-Pro user):
+★ icon (white) left + "Pro members save £18.90 on this order" DM Sans 13px bold white + "Upgrade →" white 10px link right.
+
+CHECKOUT BUTTON (sticky at bottom, above safe area, 16px padding):
+"Proceed to Checkout" — full-width ochre pill button, 56px height, DM Sans 15px bold white.
+Security note: "🔒 Secure checkout via Moveee" DM Sans 11px mute centred, 8px below button.
+
+---
+
+FRAME 2 — CART EMPTY:
+Header same. Background paper-warm.
+Centred content:
+Shopping bag outline icon (72px, ghost colour line art).
+"Your bag is empty." Fraunces 22px bold ink, centred, 20px top margin.
+"Find something beautiful in the Lifestyle shop." DM Sans 14px mute centred, max 260px.
+"Browse the shop →" primary ochre button (280px max, 52px height, pill), 24px below.
+"Or explore curated picks →" DM Sans 13px ochre link centred, 12px below button.
+
+---
+
+FRAME 3 — CHECKOUT HANDOFF SCREEN:
+This screen shows before redirecting to the WooCommerce checkout.
+Centred loading/transition state:
+Moveee logo (wordmark, centred top area).
+"Taking you to secure checkout..." Fraunces 20px bold ink centred.
+"You'll be redirected to our secure payment partner." DM Sans 14px mute centred, 280px max.
+Animated progress indicator: thin ochre line progress bar (full width, 4px, fills over 2s).
+Security badges row (centred, 8px gap):
+  🔒 "SSL Secure" · 💳 "Visa, Mastercard, PayPal" · ↩️ "Free Returns"
+  Each: icon 16px + DM Sans 10px mute. Ghost bordered pill chips.
+"Cancel" DM Sans 13px mute link, centred, bottom.
+
+---
+
+FRAME 4 — CART DRAWER (slide-in overlay from right, 340px width):
+Show behind drawer: dimmed feed screen (ink 45% overlay).
+Drawer: white fill, radius-2xl left corners (20px), shadow-modal.
+Drag handle: 4×32px ghost pill, 12px from top, centred.
+
+DRAWER HEADER (white, 56px, ghost bottom border):
+"Your Bag" DM Sans 15px bold ink left (16px padding) + count chip "2 items" ghost pill mute right + × close icon right.
+
+DRAWER ITEMS (scrollable area, max 3 items visible before scroll):
+2 compact item rows (no card — separator only, 64px height, 16px padding):
+  Image 52×52px radius-md + name 13px bold ink + variant 11px mute + price 14px bold right.
+  Quantity stepper inline below name (compact: − 1 + at 24px each).
+
+TOTALS (paper-deep bg, 16px padding, 12px top margin):
+"Subtotal" DM Sans 14px ink + "£213.00" DM Sans 14px bold right.
+"Free delivery on orders over £75" DM Sans 12px mute (if under threshold: "£12 away from free delivery").
+
+DRAWER FOOTER (fixed, 16px padding, white, top ghost border):
+"View Bag" — full-width secondary button (ink border, pill, 48px, DM Sans 14px bold ink), 8px gap.
+"Checkout →" — full-width primary ochre button (pill, 48px, DM Sans 14px bold white).
+
+Output 4 frames. Cart Screen and Cart Drawer should look most polished — these are the highest-traffic states.
+```
+
+---
+
+### PROMPT 16E — Maker / Brand Profile Page
+
+```
+Senior mobile UX/UI designer — Moveee Connect Lifestyle maker profile. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D.
+
+Design the Maker/Brand profile page. This shows a vetted independent maker's full profile,
+their story, and all their products. It bridges editorial content and e-commerce.
+
+HEADER (56px + status bar): back chevron + "Bisi Ceramics" DM Sans 15px bold ink centred + share icon right.
+
+MAKER HERO (full-bleed, 390×220px):
+Studio/workshop banner image (placeholder: warm terracotta tones, craft/making context).
+Dark gradient overlay bottom 60%.
+Bottom area:
+  Vendor avatar (80px circle, gold Pro border) left, 16px from left, 16px from bottom.
+  Right of avatar (16px gap):
+    "Bisi Ceramics" Fraunces 22px bold white
+    "📍 Lagos, Nigeria" DM Sans 13px white mute
+    "✓ Vetted Maker" success green pill badge (DM Sans 10px bold white, 4px 8px padding)
+
+MAKER STATS BAR (white fill, 64px height, row with 4 equal columns and ghost dividers):
+"12" DM Sans 20px bold ink + "PRODUCTS" 9px uppercase mute
+"4.9★" DM Sans 20px bold gold + "RATING" 9px mute
+"2019" DM Sans 20px bold ink + "EST." 9px mute
+"↩️" icon + "FREE RETURNS" 9px mute (or "SHIPS TO UK" if regional)
+
+ABOUT SECTION (white card, 16px padding, 16px horizontal margin, radius-xl):
+"About the Maker" DM Sans 14px bold ink.
+"Adaeze Obi started Bisi Ceramics in 2019 after a residency at the Lagos Art Foundation.
+She creates ceremonial objects and everyday wares inspired by Yoruba ritual traditions,
+using locally sourced terracotta clay from Ondo state." — DM Sans 14px ink-soft, line-height 1.6.
+Social links row (12px gap):
+  🌐 "bisiceramics.com" DM Sans 13px ochre underlined + 📷 Instagram icon (ghost link)
+
+ORIGINS BRIDGE (paper-warm bg, 64px, 16px padding, row):
+📖 icon ochre left + "Read the Maker's story in Origins Journal →" DM Sans 14px bold ink + chevron right.
+
+PRODUCTS SECTION:
+"All Products" DM Sans 14px bold ink left + "Sort ▼" 13px mute right.
+2-column product grid (12px gap, 16px horizontal padding):
+6 products from this maker (same product card style as shop listing):
+  Terracotta Ritual Bowl £68 NEW
+  Clay Water Carafe £95
+  Slate Meditation Bowl £78 SALE ~~£95~~
+  Obsidian Offering Plate £55
+  Small Tea Cup Set £48 NEW
+  Herb-drying Bowl £38 ONLY 2 LEFT
+
+CONTACT MAKER ROW (white card, 16px padding, 16px horizontal margin, radius-xl):
+"Questions about a product?" DM Sans 14px bold ink.
+"Message the maker through our community directory." DM Sans 13px mute.
+"View in Directory →" DM Sans 13px ochre link with person icon left.
+
+Bottom navigation: Lifestyle tab active.
+
+Output 1 full-length frame showing all sections.
+```
+
+---
+
+### PROMPT 16F — The Moveee Edit (Curated Picks)
+
+```
+Senior mobile UX/UI designer — Moveee Connect Lifestyle "The Edit" curated page. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D.
+This page feels like a curated fashion/lifestyle editorial — think Ssense, System Magazine, or
+a high-end editorial supplement. Not a standard shop grid.
+
+HEADER (56px + status bar): back chevron + "The Edit" Fraunces 20px bold ink centred + cart icon right.
+
+HERO EDITORIAL SECTION (full-bleed, 390×240px):
+Warm editorial image (ochre/terracotta/cream tones, artisanal objects laid out flat-lay style).
+Gradient overlay bottom 40%.
+"THE MOVEEE EDIT" DM Sans 9px bold uppercase gold, letter-spacing 3px, centred.
+"Objects. Stories. Makers." Fraunces 26px bold white centred.
+"Curated pieces featured in The Moveee Magazine." DM Sans 14px white mute, centred, max 280px.
+
+SECTION 1 — AS SEEN IN (editorial pick with article link):
+"AS SEEN IN THE MAGAZINE" DM Sans 9px bold uppercase mute, 16px left padding.
+LARGE EDITORIAL CARD (full-width minus 32px, white fill, radius-xl, shadow-card):
+  Image: 16:9 editorial product image (full width, radius-xl top)
+  Content (24px padding):
+    Article reference: 📖 "Story: The Craft Revival" DM Sans 12px mute italic
+    Product name: Fraunces 22px bold ink: "Terracotta Ritual Bowl"
+    Maker: "Bisi Ceramics · Lagos" DM Sans 13px mute
+    Excerpt: DM Sans 14px ink-soft italic: "This vessel entered our office on a Tuesday. 
+    By Friday we'd ordered three more. It's that kind of object." — Fraunces 14px italic mute
+    Price row + "Add to Bag" button (ochre, full width, 44px height)
+
+SECTION 2 — CURATED PICKS GRID:
+"THIS SEASON'S PICKS" DM Sans 9px bold uppercase mute, 16px padding.
+Horizontal scroll of 3 featured picks (200×280px each, 12px gap, 16px start padding):
+  Tall portrait card (white fill, radius-xl, shadow-card):
+    Image tall (200×160px, radius-xl top)
+    Maker 9px mute eyebrow
+    Name 14px bold ink 2 lines
+    Price 14px bold + Pro price 12px gold if different
+    "Add to Bag" ochre pill, full width, 36px
+
+SECTION 3 — EDITORIAL STORIES featuring products:
+"STORIES FEATURING THESE OBJECTS" DM Sans 9px bold uppercase mute.
+2 editorial story cards (full-width minus 32px, white fill, radius-xl, shadow-card, 12px gap):
+  Horizontal layout: image left (120×100px, radius-lg) + text right:
+    "CULTURE · CRAFT" 9px uppercase ochre
+    Article title: DM Sans 14px bold ink 2 lines
+    "12 min read" 11px mono mute
+    Chevron right
+
+SECTION 4 — FULL EDIT GRID:
+"ALL EDIT PICKS" DM Sans 9px bold uppercase mute.
+2-column standard product grid (same product card style), 6 more products.
+
+SIGN-OFF BAND (paper-warm bg, 100px, centred, light ochre left/right decorative lines):
+"Hand-picked by the Moveee editorial team." Fraunces 18px italic ink centred.
+"Every object in The Edit has been featured in our magazine." DM Sans 13px mute centred.
+
+Output 1 full-length frame showing all sections.
+```
+
+---
+
+### PROMPT 16G — Shop Search & Pro Early Access States
+
+```
+Senior mobile UX/UI designer — Moveee Connect shop utility screens. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white, ochre #C5491F, gold #B38238, ink #14110D, DM Sans + Fraunces.
+
+Create 4 utility frames:
+
+FRAME 1 — PRODUCT SEARCH SCREEN:
+Header: back chevron + search input (full-width, 44px height, radius-full, ghost border, 
+  🔍 icon left, "Search products and makers..." placeholder DM Sans 14px ghost, × clear right when active).
+
+SEARCH ACTIVE STATE (keyboard visible, showing results):
+Results label: "18 results for 'ceramics'" JetBrains Mono 10px mute, 8px padding.
+
+Results list (mixed product + maker results):
+PRODUCT RESULT ROW (white bg, 64px height, 16px padding, ghost bottom border):
+  Image: 48×48px square, radius-md, left
+  Content: maker eyebrow 9px mute + name 14px bold ink + price 13px mute right
+  "PRODUCT" type pill: DM Sans 9px bold ink-soft, ghost border, radius-full, right side
+
+MAKER RESULT ROW:
+  Avatar: 48×48px circle, gold border if Pro maker
+  Store name 14px bold ink + city 12px mute + product count JetBrains Mono 10px mute right
+  "MAKER" type pill: DM Sans 9px bold, same style
+
+RECENT SEARCHES (shown before typing):
+"Recent" DM Sans 13px bold mute, 16px padding.
+3 rows: 🕐 clock icon + search term DM Sans 14px ink + × remove right. 48px height, ghost border.
+
+POPULAR SEARCHES:
+"Popular" DM Sans 13px bold mute.
+Horizontal wrap chips: Ceramics · Lagos makers · Textiles · Under £50 · Jewellery · NEW arrivals
+Ghost border pills, DM Sans 13px ink-soft, radius-full, 32px height.
+
+---
+
+FRAME 2 — FILTER SHEET (bottom sheet, 500px height):
+White fill, radius-2xl top corners, drag handle.
+"Filter Products" DM Sans 16px bold ink, 20px padding + "Reset" ochre text right.
+
+CATEGORY SECTION:
+"Category" DM Sans 13px bold mute uppercase.
+2-column chip grid (32px height, ghost border, radius-full, 12px padding, DM Sans 12px):
+All (active ink fill) · Ceramics · Textiles · Leather · Jewellery · Objects · Paper
+Selected: ink fill white.
+
+PRICE RANGE:
+"Price" DM Sans 13px bold mute uppercase.
+Range slider: full width, 8px height, radius-full. Ghost track, ochre fill between handles.
+Two handles: ochre circles 20px. Labels: "£0" left + "£200+" right.
+Current range: "£25 – £150" DM Sans 14px bold ink centred above slider.
+
+SORT BY:
+"Sort by" DM Sans 13px bold mute uppercase.
+4 radio rows (44px height, ghost border-bottom):
+  ○ Featured (selected, ochre) · ○ Newest · ○ Price: Low to High · ○ Price: High to Low
+Radio: 20px circle. Selected = ochre fill. Text DM Sans 14px ink.
+
+AVAILABILITY:
+"Availability" DM Sans 13px bold mute uppercase.
+2 toggle rows: "In stock only" + "On sale" — toggle switches (ochre when on).
+
+BOTTOM: "Show 14 products" primary ochre button, full width, 52px. Pill.
+
+---
+
+FRAME 3 — PRO EARLY ACCESS GATE (product detail, non-Pro user):
+Show the product detail layout (image + content) but with the Add to Cart section GATED.
+
+GATE OVERLAY (replaces Add to Bag section):
+Gold border card (radius-xl, 2px gold border, 20px padding, paper-warm bg):
+  ★ icon (28px gold) centred
+  "Early Access — Pro Members Only" Fraunces 20px bold ink, centred
+  "This product is currently available exclusively for Connect Pro members.
+  It will open to everyone on 20 June 2026." DM Sans 14px mute centred, max 280px
+  Countdown: "Opens in 7d 14h 32m" JetBrains Mono 16px bold gold, centred, 12px top margin
+  "Upgrade to Connect Pro" primary gold fill button (full width, 52px, pill, white DM Sans 14px bold), 16px top
+  "Learn more about Connect Pro →" DM Sans 12px ochre link, centred, 8px below
+
+Variant selectors (colour/size) are visible but dimmed (50% opacity, non-interactive).
+"Add to Bag" button: replaced by gate card above.
+
+---
+
+FRAME 4 — ORDER CONFIRMATION / CHECKOUT SUCCESS:
+(This screen shows when user returns to app after completing WooCommerce checkout.)
+Full paper-warm background.
+Success animation area: 
+  Large ochre circle (96px) with white ✓ checkmark (40px, 3px stroke), centred.
+"Order confirmed! 🎉" Fraunces 26px bold ink, centred, 24px top margin.
+"Your order has been placed." DM Sans 16px mute centred.
+Order number: "#MV-7291" JetBrains Mono 16px bold ink, centred, 8px below.
+"A confirmation email has been sent." DM Sans 13px mute centred.
+
+ORDER SUMMARY CARD (white fill, radius-xl, 16px padding, 32px horizontal margin, 20px top margin):
+Product thumbnails: 3 stacked image circles (52×52px, radius-full, overlapping by 12px).
+"3 items" DM Sans 14px bold ink + total "£269.00" DM Sans 14px bold right.
+Delivery estimate: "📦 Estimated delivery: 15–18 Jun" DM Sans 13px mute, centred below.
+
+2 buttons (12px gap, 16px horizontal margin):
+"Track order" secondary button (ink border, pill, 52px height, full width).
+"Continue shopping" ghost link DM Sans 14px ochre centred.
+
+Output 4 frames.
+```
+
+---
+
 ## APPENDIX — SCREEN INVENTORY
 
 Complete list of screens to design:
@@ -1814,8 +2475,15 @@ Complete list of screens to design:
 | 46-50 | Overlay components (9 types) | Overlays | P1 |
 | 51-54 | Dark mode (4 screens) | Dark Mode | P2 |
 | 55-59 | Skeleton/loading states (5 types) | Loading | P2 |
+| 60 | Lifestyle Shop Home | Shop | P1 |
+| 61-63 | Product Listing (Grid, List, Empty) | Shop | P1 |
+| 64-65 | Product Detail (Standard + Pro member) | Shop | P0 |
+| 66-69 | Cart Screen, Cart Empty, Checkout Handoff, Cart Drawer | Shop | P0 |
+| 70 | Maker/Brand Profile | Shop | P1 |
+| 71 | The Moveee Edit (curated picks) | Shop | P2 |
+| 72-75 | Search, Filter Sheet, Early Access Gate, Order Confirmation | Shop | P1 |
 
-**Total: ~59 screens / states**
+**Total: ~75 screens / states**
 
 ---
 
