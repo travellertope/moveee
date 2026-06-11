@@ -440,25 +440,39 @@ class Culture_Gamification {
      * if the daily cap is nearly reached).
      */
     public static function award_credits( $user_id, $amount, $source = '', $source_id = 0 ) {
+        global $wpdb;
         if ( $amount <= 0 ) return 0;
 
-        // Reset daily counter if it's a new day.
-        $reset_date = get_user_meta( $user_id, '_culture_credits_reset_date', true );
-        $today      = gmdate( 'Y-m-d' );
-        if ( $reset_date !== $today ) {
-            update_user_meta( $user_id, '_culture_credits_earned_today', 0 );
-            update_user_meta( $user_id, '_culture_credits_reset_date', $today );
+        // Advisory mutex prevents concurrent award_credits calls for the same user
+        // from racing past the daily-cap check (TOCTOU). Timeout: 3 seconds.
+        $lock_name = 'culture_credits_' . (int) $user_id;
+        $locked    = $wpdb->get_var( $wpdb->prepare( "SELECT GET_LOCK(%s, 3)", $lock_name ) );
+        if ( ! $locked ) return 0; // Could not acquire lock — skip rather than double-award.
+
+        try {
+            // Reset daily counter if it's a new day.
+            $reset_date = get_user_meta( $user_id, '_culture_credits_reset_date', true );
+            $today      = gmdate( 'Y-m-d' );
+            if ( $reset_date !== $today ) {
+                update_user_meta( $user_id, '_culture_credits_earned_today', 0 );
+                update_user_meta( $user_id, '_culture_credits_reset_date', $today );
+            }
+
+            $earned_today = (int) get_user_meta( $user_id, '_culture_credits_earned_today', true );
+            $remaining    = self::DAILY_CREDIT_CAP - $earned_today;
+            if ( $remaining <= 0 ) {
+                $wpdb->get_var( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
+                return 0;
+            }
+
+            $actual    = min( $amount, $remaining );
+            $current   = self::get_credits( $user_id );
+            $new_total = $current + $actual;
+            update_user_meta( $user_id, '_culture_credits', $new_total );
+            update_user_meta( $user_id, '_culture_credits_earned_today', $earned_today + $actual );
+        } finally {
+            $wpdb->get_var( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
         }
-
-        $earned_today = (int) get_user_meta( $user_id, '_culture_credits_earned_today', true );
-        $remaining    = self::DAILY_CREDIT_CAP - $earned_today;
-        if ( $remaining <= 0 ) return 0;
-
-        $actual = min( $amount, $remaining );
-        $current   = self::get_credits( $user_id );
-        $new_total = $current + $actual;
-        update_user_meta( $user_id, '_culture_credits', $new_total );
-        update_user_meta( $user_id, '_culture_credits_earned_today', $earned_today + $actual );
 
         self::ledger_add( $user_id, 'credit', $actual, $source, $source_id );
         do_action( 'culture_credits_awarded', $user_id, $source, $actual, $new_total );
@@ -468,10 +482,21 @@ class Culture_Gamification {
 
     /** Deduct credits (for redemption). Returns new balance or false if insufficient. */
     public static function deduct_credits( $user_id, $amount, $source = '', $source_id = 0 ) {
-        $current = self::get_credits( $user_id );
-        if ( $current < $amount ) return false;
-        $new_total = $current - $amount;
-        update_user_meta( $user_id, '_culture_credits', $new_total );
+        global $wpdb;
+
+        $lock_name = 'culture_credits_' . (int) $user_id;
+        $locked    = $wpdb->get_var( $wpdb->prepare( "SELECT GET_LOCK(%s, 3)", $lock_name ) );
+        if ( ! $locked ) return false;
+
+        try {
+            $current = self::get_credits( $user_id );
+            if ( $current < $amount ) return false;
+            $new_total = $current - $amount;
+            update_user_meta( $user_id, '_culture_credits', $new_total );
+        } finally {
+            $wpdb->get_var( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
+        }
+
         self::ledger_add( $user_id, 'credit', -$amount, $source, $source_id );
         return $new_total;
     }
