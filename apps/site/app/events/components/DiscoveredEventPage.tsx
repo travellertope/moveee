@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface RelatedEvent {
   slug: string;
@@ -128,7 +129,7 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
           </div>
 
           {/* title */}
-          <h1 className="luma-title" dangerouslySetInnerHTML={{ __html: event.title }} />
+          <h1 className="luma-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
 
           {/* date row */}
           <div className="luma-meta-rows">
@@ -206,7 +207,7 @@ export default function DiscoveredEventPage({ event, relatedEvents = [] }: Props
               {event.content ? (
                 <div
                   className="luma-content"
-                  dangerouslySetInnerHTML={{ __html: event.content }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.content) }}
                 />
               ) : (
                 <p className="luma-excerpt">{excerpt}</p>

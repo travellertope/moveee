@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { sanitizeHtml } from "@/lib/sanitize";
 import "@/app/origins.css";
 
 export const revalidate = 3600;
@@ -98,7 +99,7 @@ export default async function JourneyPage({ params }: { params: Promise<{ slug: 
             <span className="sep">·</span>
             <span>Curated Cultural Journey</span>
           </div>
-          <h1 className="journey-hero-title" dangerouslySetInnerHTML={{ __html: journey.title }} />
+          <h1 className="journey-hero-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(journey.title) }} />
           <p className="journey-hero-sub">{journey.excerpt?.replace(/<[^>]*>/g, "") || "A culturally anchored journey through Africa and the diaspora."}</p>
           <div className="journey-hero-row">
             <Link href="/journeys" className="btn-ghost-paper">← Back to Origins</Link>
@@ -140,7 +141,7 @@ export default async function JourneyPage({ params }: { params: Promise<{ slug: 
                   {day.dayLocation && <div className="journey-day-name">{day.dayLocation}</div>}
                 </div>
                 <div className="journey-day-content">
-                  <h4 className="journey-day-title" dangerouslySetInnerHTML={{ __html: day.dayTitle || `Day ${day.dayNumber || idx + 1}` }} />
+                  <h4 className="journey-day-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(day.dayTitle || `Day ${day.dayNumber || idx + 1}`) }} />
                   {day.dayLocation && <div className="journey-day-location">{day.dayLocation}</div>}
                   {day.dayDescription && <p className="journey-day-desc">{day.dayDescription}</p>}
                   {day.activities && day.activities.length > 0 && (

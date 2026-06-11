@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import "../makers.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 3600;
 
@@ -198,7 +199,7 @@ export default async function SingleMakerPage({ params }: { params: Promise<{ sl
                 <div className="maker-product-body">
                   <div className="maker-product-name">{p.name}</div>
                   {p.price && (
-                    <div className="maker-product-price" dangerouslySetInnerHTML={{ __html: p.price }} />
+                    <div className="maker-product-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
                   )}
                 </div>
               </Link>

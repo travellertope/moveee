@@ -1,4 +1,5 @@
 "use client";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -283,7 +284,7 @@ export default function OrderDetailPage() {
               <div className="vdo-notes-list">
                 {order.notes.map((n) => (
                   <div key={n.id} className={`vdo-note${n.customerNote ? " vdo-note--customer" : ""}`}>
-                    <div className="vdo-note-text" dangerouslySetInnerHTML={{ __html: n.note }} />
+                    <div className="vdo-note-text" dangerouslySetInnerHTML={{ __html: sanitizeHtml(n.note) }} />
                     <div className="vdo-note-meta">
                       {fmtDate(n.dateCreated)}
                       {n.customerNote && <span className="vdo-note-tag">Sent to customer</span>}

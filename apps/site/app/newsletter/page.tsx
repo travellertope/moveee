@@ -5,6 +5,7 @@ import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import GmlCTAForm from "@/components/GmlCTAForm";
 import GmlWaitlistForm from "@/components/GmlWaitlistForm";
 import "../newsletter.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 3600;
 
@@ -226,13 +227,13 @@ export default async function NewsletterArchive({
                 </div>
                 <h4
                   className="gml-issue-headline"
-                  dangerouslySetInnerHTML={{ __html: issue.title }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(issue.title) }}
                 />
                 {issue.excerpt && (
                   <p
                     className="gml-issue-sub"
                     dangerouslySetInnerHTML={{
-                      __html: issue.excerpt
+                      __html: sanitizeHtml(issue.excerpt)
                         .replace(/<[^>]*>/g, "")
                         .slice(0, 160),
                     }}
@@ -391,7 +392,7 @@ export default async function NewsletterArchive({
                   </span>
                   <span
                     className="digest-archive-title"
-                    dangerouslySetInnerHTML={{ __html: issue.title }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(issue.title) }}
                   />
                   <div className="digest-archive-tags">
                     {list && (

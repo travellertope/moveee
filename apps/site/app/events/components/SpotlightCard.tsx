@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface SpotlightCardProps {
   slug: string;
@@ -58,7 +59,7 @@ const SpotlightCard: React.FC<SpotlightCardProps> = ({
             <span className="month-year">{monthYear}<br />{dayName}</span>
           </div>
           
-          <h3 className="spot-title" dangerouslySetInnerHTML={{ __html: title }} />
+          <h3 className="spot-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(title) }} />
           {subtitle && <p className="spot-sub">{subtitle}</p>}
           
           <div className="spot-meta">

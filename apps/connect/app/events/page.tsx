@@ -4,6 +4,7 @@ import { getEventsWithFallback } from "@/lib/wp";
 import EventHero from "./components/EventHero";
 import EventTimeline from "./components/EventTimeline";
 import "@/app/events.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -119,7 +120,7 @@ export default async function EventsPage() {
                       {dateStr && <span className="ev-feat-date">{dateStr}</span>}
                     </div>
                     <div className="ev-feat-body">
-                      <h3 className="ev-feat-title" dangerouslySetInnerHTML={{ __html: event.title }} />
+                      <h3 className="ev-feat-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
                       {(event.city || event.location) && (
                         <span className="ev-feat-place">◍ {event.city || event.location}</span>
                       )}

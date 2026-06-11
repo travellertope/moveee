@@ -8,6 +8,7 @@ import ProductGallery from "./ProductGallery";
 import ProductSelectors from "./ProductSelectors";
 import ProductAccordion from "./ProductAccordion";
 import "../shop.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 300;
 
@@ -109,7 +110,7 @@ export default async function ProductPage({
       content: (
         <div
           dangerouslySetInnerHTML={{
-            __html: product.description || product.shortDescription || "<p>No description available.</p>",
+            __html: sanitizeHtml(product.description || product.shortDescription || "<p>No description available.</p>"),
           }}
         />
       ),
@@ -122,7 +123,7 @@ export default async function ProductPage({
     // Delivery & Returns — only shown when the field is filled in WordPress
     ...(deliveryInfo ? [{
       title: "Delivery & Returns",
-      content: <div dangerouslySetInnerHTML={{ __html: deliveryInfo }} />,
+      content: <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(deliveryInfo) }} />,
     }] : []),
     // About the Maker — only shown when vendor has a name or bio in WCFM
     ...(vname || vendorDesc ? [{
@@ -182,7 +183,7 @@ export default async function ProductPage({
           {product.shortDescription && (
             <div
               className="sp-product-lede"
-              dangerouslySetInnerHTML={{ __html: product.shortDescription }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.shortDescription) }}
             />
           )}
 
@@ -271,7 +272,7 @@ export default async function ProductPage({
             )}
             <div className="sp-story-text">
               {makerStory ? (
-                <div dangerouslySetInnerHTML={{ __html: makerStory }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(makerStory) }} />
               ) : (
                 <p>
                   {vname} is a vetted Moveee partner — personally reviewed for craft

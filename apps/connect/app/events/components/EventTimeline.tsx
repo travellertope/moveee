@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface TimelineEvent {
   id: string | number;
@@ -111,7 +112,7 @@ function EventRow({ event }: { event: TimelineEvent }) {
         )}
       </div>
       <div className="etl-body">
-        <h4 className="etl-title" dangerouslySetInnerHTML={{ __html: event.title }} />
+        <h4 className="etl-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
         <div className="etl-meta">
           {place && <span className="etl-place">◍ {place}</span>}
           {cat && <span className="etl-cat">{cat}</span>}

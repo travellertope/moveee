@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface EventCardProps {
   slug: string;
@@ -39,7 +40,7 @@ const EventCard: React.FC<EventCardProps> = ({
           <span className="ec-date-str">{date}</span>
           {time && <span className="ec-time">{time}</span>}
         </div>
-        <h4 className="ec-title" dangerouslySetInnerHTML={{ __html: title }} />
+        <h4 className="ec-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(title) }} />
         <div className="ec-meta-bottom">
           {location && <span className="ec-location">{location}</span>}
           {category && <span className="ec-category">{category}</span>}

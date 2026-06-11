@@ -1,4 +1,5 @@
 "use client";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -60,7 +61,7 @@ export default function ProductSelectors({
                 )}
                 <span
                   className="sp-price"
-                  dangerouslySetInnerHTML={{ __html: memberPrice }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(memberPrice) }}
                 />
               </div>
             </>

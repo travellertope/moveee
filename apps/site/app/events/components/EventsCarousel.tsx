@@ -1,4 +1,5 @@
 "use client";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -94,7 +95,7 @@ export default function EventsCarousel({ events }: EventsCarouselProps) {
               </div>
               <div className="evc-body">
                 {cat && <span className="evc-cat">{cat}</span>}
-                <h4 className="evc-title" dangerouslySetInnerHTML={{ __html: event.title }} />
+                <h4 className="evc-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.title) }} />
               </div>
             </Link>
           );

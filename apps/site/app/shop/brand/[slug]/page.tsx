@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import "../../shop.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 3600;
 
@@ -142,7 +143,7 @@ export default async function ShopBrandPage({ params }: { params: Promise<{ slug
                 <div className="brand-product-body">
                   <div className="brand-product-name">{p.name}</div>
                   {p.price && (
-                    <div className="brand-product-price" dangerouslySetInnerHTML={{ __html: p.price }} />
+                    <div className="brand-product-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
                   )}
                 </div>
               </Link>
