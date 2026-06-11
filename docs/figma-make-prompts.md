@@ -1,0 +1,1824 @@
+# Figma Make Prompts — Moveee Connect Mobile App
+## Complete UI/UX Design System & Screen Prompts for iOS & Android
+
+> **Important — Read First:**
+> Figma Make generates **interactive React/TypeScript prototypes** (running code), not static Figma frames.
+> It is a prompt-to-prototype tool — ideal for click-through testing and stakeholder demos.
+>
+> If your goal is **editable Figma design files** with native components (for design handoff),
+> use **Figma First Draft / Figma Agent** instead and paste these same prompts there.
+> Both tools live inside Figma — First Draft is in the Plugins/AI menu; Make is a separate canvas.
+>
+> This guide covers both workflows. The prompts work for either tool.
+
+---
+
+## TOOL CHOICE GUIDE
+
+| Goal | Tool |
+|------|------|
+| Click-through prototype, stakeholder demo, code export | **Figma Make** |
+| Editable design file, component library, design system | **Figma First Draft / Figma Agent** |
+| Best of both | Generate with First Draft → link frames into a Make prototype |
+
+**For this guide, all prompts are optimised for Figma Make (interactive prototypes).**
+They follow Figma's recommended TC-EBC framework: **Task · Context · Elements · Behaviour · Constraints.**
+
+---
+
+## HOW TO USE THIS GUIDE
+
+1. Open Figma → Click **"Make"** in the left sidebar (or Plugins → Figma AI → First Draft for editable frames)
+2. **Start with the Design System prompt (Section 0).** Run it first, review, then move forward.
+3. Work through screens **one section at a time** — paste each prompt block as a new Make session.
+4. After generation, use **short targeted follow-up prompts** to refine (see Section 14).
+5. The **point-and-edit tool** in Make lets you adjust individual elements without spending a prompt.
+
+**Credit efficiency:** Each prompt costs Make credits. Detailed first prompts = fewer corrections needed.
+Target: 1–3 screens per prompt, never 10+ at once.
+
+---
+
+## QUICK REFERENCE — MOVEEE CONNECT BRAND TOKENS
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| paper-warm | `#F3ECE0` | App background |
+| paper | `#FFFFFF` | Card surfaces |
+| paper-deep | `#F5F5F5` | Subtle card backgrounds |
+| ink | `#14110D` | Primary text, icons |
+| ink-soft | `#3A342B` | Body text |
+| mute | `#7A6F5C` | Secondary text |
+| ghost | `#C8BFB0` | Placeholders, borders |
+| ochre | `#C5491F` | Primary CTA, actions |
+| gold | `#B38238` | Pro tier only |
+| success | `#2D6A4F` | Success states |
+| error | `#C62828` | Error states |
+| Headline font | Fraunces (serif) | Titles, display text |
+| Body font | DM Sans | UI labels, body |
+| Mono font | JetBrains Mono | Timestamps, codes, data |
+| Base spacing | 4px | Grid unit |
+| Card radius | 12px | Standard cards |
+| Pill radius | 9999px | Tags, buttons, badges |
+| Min touch target | 44×44px | All interactive elements |
+| Horizontal margin | 16px | Content padding |
+| Frame width | 390px | iPhone 14 Pro |
+
+---
+
+## 0. DESIGN SYSTEM FOUNDATION
+
+*Run this prompt first. It establishes the token system referenced by all subsequent prompts.*
+
+---
+
+### PROMPT 0 — Global Design System
+
+```
+You are a senior mobile UX designer working on "Moveee Connect" — a premium cultural
+community app for Black and African diaspora audiences worldwide. It combines a social
+feed, cultural magazine, events, games, and a member dashboard with a points/perks economy.
+
+Create a complete mobile design system foundation for this app. Platform: iOS and Android.
+Base frame: 390px wide (iPhone 14 Pro). Design language: editorial, sophisticated, warm —
+think a high-quality print magazine on mobile. Not corporate, not playful — culturally rich
+and contemporary.
+
+COLOR TOKENS (exact hex values — do not invent new colours):
+Primary background: #F3ECE0 (paper-warm — warm off-white)
+Card surface: #FFFFFF (paper — white cards on warm background)
+Elevated surface: #F5F5F5 (paper-deep)
+Community card bg: #EDF7ED (light green, for community posts only)
+Primary text: #14110D (ink — near-black with warm undertone)
+Body text: #3A342B (ink-soft)
+Secondary text: #7A6F5C (mute)
+Disabled/hint text: #C8BFB0 (ghost)
+Primary action: #C5491F (ochre — warm terracotta-orange, NOT a generic red or orange)
+Pro tier accent: #B38238 (gold — used ONLY for Connect Pro member UI)
+Success: #2D6A4F
+Error: #C62828
+Warning: #E65100
+
+TYPOGRAPHY:
+Display/hero: Fraunces 36px, weight 700, line-height 1.15, tracking -0.5px
+Display/title: Fraunces 28px, weight 700, line-height 1.2
+Display/subtitle: Fraunces 22px, weight 400, line-height 1.3
+Body/large: DM Sans 17px, weight 400, line-height 1.5
+Body/medium: DM Sans 15px, weight 400, line-height 1.5
+Body/small: DM Sans 13px, weight 400, line-height 1.4
+Body/medium-bold: DM Sans 15px, weight 700
+Body/small-bold: DM Sans 13px, weight 700
+Label/eyebrow: DM Sans 9px, weight 700, letter-spacing 1.5px, ALL CAPS
+Label/mono: JetBrains Mono 11px, weight 400
+Label/mono-bold: JetBrains Mono 11px, weight 700
+
+SPACING (4px base grid):
+4, 8, 12, 16, 20, 24, 32, 40, 48, 64px
+
+BORDER RADIUS:
+2px (sm), 4px (md), 6px (lg), 12px (xl — standard cards), 20px (2xl — modals), 9999px (full — pills)
+
+SHADOWS:
+Card shadow: 0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)
+Modal shadow: 0px 20px 60px rgba(20,17,13,0.18)
+FAB shadow: 0px 4px 12px rgba(197,73,31,0.35)
+
+MEMBERSHIP TIERS:
+Connect Pro (patron): gold (#B38238) accent, star ★ icon, "CONNECT PRO" label
+Connect Citizen (citizen): ghost (#C8BFB0) accent, "CONNECT CITIZEN" label
+
+BADGE COLOURS (community post template types):
+Hidden Gem: bg #FEF3C7, text #92400E
+Cultural Take: bg #E0F2FE, text #075985
+Food Review: bg #FCE7F3, text #9D174D
+Creative Showcase: bg #F3E8FF, text #6B21A8
+Itinerary: bg #D1FAE5, text #065F46
+Poll: bg #EDE9FE, text #4C1D95
+Event post: bg #FEE2E2, text #991B1B
+Quote: bg #FEF3C7, text #78350F
+
+FEED ITEM TYPE BADGES:
+Pulse: bg #14110D, text #FFFFFF
+Editorial: bg #F3ECE0, text #14110D
+Happening: bg #EDE9FE, text #4C1D95
+Directory: bg #EDF7ED, text #065F46
+Quote: bg #FEF3C7, text #78350F
+
+Generate a design system showcase screen at 390×844px showing:
+1. All colour swatches labelled with name and hex value
+2. Typography specimen with all styles applied to sample text
+3. Spacing reference strip (4px to 64px labelled)
+4. All badge types (template + feed type) as pill components
+5. Shadow reference showing card, modal, and FAB elevation
+
+The showcase should use the paper-warm background (#F3ECE0).
+Do not invent any additional colours or type styles beyond those listed above.
+```
+
+---
+
+## 1. CORE UI COMPONENTS
+
+*Generate these before any screens — they will be reused throughout.*
+
+---
+
+### PROMPT 1A — Buttons, Inputs & Avatars
+
+```
+You are a senior mobile UX designer for Moveee Connect (cultural community app).
+Brand: paper-warm bg #F3ECE0, ochre primary #C5491F, gold Pro tier #B38238,
+ink text #14110D, DM Sans UI font, Fraunces display font.
+
+Create a component showcase at 390×1600px showing all core UI components with their states.
+Use paper-warm (#F3ECE0) background. Label every component and state clearly.
+
+BUTTONS — show all 4 types × all states in a grid:
+Type A — Primary: ochre fill (#C5491F), white DM Sans 15px bold text,
+  52px height, radius-full (pill), 24px horizontal padding.
+  States: Default | Loading (spinner replaces text, same bg) | Disabled (40% opacity) | Destructive (error #C62828 fill)
+Type B — Secondary: white fill, ink 1px border, ink text. Same dimensions.
+Type C — Ghost: no border, no fill, ochre text only. Same dimensions.
+Type D — Icon Button: 40×40px circle, paper-deep fill, icon centred.
+
+INPUTS — show 5 states:
+Standard field: 52px height, radius-lg (6px), ghost border 1px, white fill.
+DM Sans 15px ink text. Left icon area (16px icon, ghost colour). 16px horizontal padding.
+States: Empty (placeholder visible, DM Sans 15px ghost) | Focused (ink border 1.5px) |
+Filled (ink text) | Error (error border + 12px DM Sans error text below) | Disabled (50% opacity)
+Also show: Textarea variant (120px min-height) + character counter (JetBrains Mono 11px mute, right-aligned below)
+
+AVATARS — show 4 sizes × 3 variants:
+Sizes: XS 24px, SM 32px, MD 44px, LG 64px, XL 96px
+Variants: Default (photo placeholder), Initials fallback (ghost bg, ink 2-letter initials),
+  Citizen (ghost 2px border ring), Pro (gold #B38238 2px border ring with subtle outer glow)
+
+TIER BADGES — 2 variants:
+CONNECT PRO: gold fill (#B38238), white DM Sans 9px bold uppercase, ★ star icon before text,
+  4px vertical / 8px horizontal padding, radius-full
+CONNECT CITIZEN: ghost fill, ink-soft text, same sizing
+
+NOTIFICATION BELL — 2 states:
+Clean: 24×24px bell outline icon, ink colour
+Unread: ochre (#C5491F) circle badge top-right corner, 8px diameter, white "3" in 8px JetBrains Mono
+
+REACTION BAR — show full component (horizontal, 44px height):
+Left cluster: ❤️ Love (emoji + count 13px DM Sans mute) · 🔥 Fire · 👏 Clap (same style, 16px gaps)
+Right: share icon (arrow-up-right, ghost colour)
+Active/tapped state: Love count increments + turns error red, Fire → warning orange, Clap → success green
+
+BOTTOM NAVIGATION BAR — full width, 2 platform variants:
+iOS: 83px height (includes 34px home indicator padding), white fill, top ghost 1px border
+Android: 64px height, white fill, top ghost 1px border
+5 tabs: Connect (people icon) · Magazine (book icon) · Games (puzzle icon) · Events (calendar icon) · Me (person icon)
+Active tab: icon + label in ochre. Inactive: icon + label in mute (DM Sans 11px labels).
+Pro member variant: "Me" tab shows gold star-person icon.
+
+All components should use exact hex values from the Moveee Connect design system.
+No generic greys or blues — this brand has very specific warm neutral tones.
+```
+
+---
+
+### PROMPT 1B — Feed Cards & Badge System
+
+```
+You are a senior mobile UX designer for Moveee Connect. Brand tokens as established:
+ochre #C5491F, gold #B38238, paper-warm #F3ECE0, ink #14110D, DM Sans + Fraunces.
+
+Create a feed card component showcase at 390×2000px. Show all feed card variants
+that appear in the Connect Feed. Background: paper-warm. All cards at 390px width.
+
+CARD TYPE 1 — EDITORIAL / PULSE card (full-width, bottom-border only, no drop shadow):
+Top row: type badge "PULSE" (dark pill, bg #14110D white text) + "· 2h ago" DM Sans 11px JetBrains Mono mute, right-aligned
+Headline: DM Sans 16px bold ink, 2 lines, 16px horizontal padding
+Excerpt: DM Sans 13px ink-soft, 2 lines
+Image: full-width minus 32px, 16:9 ratio, radius-md (4px)
+Source: 🌐 globe icon + "The Guardian" JetBrains Mono 11px mute
+Reaction bar: love count · fire count · clap count + share icon right
+Bottom border: 1px ghost. NO card shadow.
+
+CARD TYPE 2 — COMMUNITY post card (white fill, shadow-card, radius-xl 12px, 16px margin horizontal):
+AUTHOR ROW: Avatar MD (44px, citizen border) + name DM Sans 14px bold ink + @handle 13px mute + CONNECT CITIZEN badge + "· 5h" mono mute right
+TEMPLATE BADGE row: "HIDDEN GEM" pill (bg #FEF3C7, text #92400E)
+LOCATION: 📍 pin icon + "Peckham, London" JetBrains Mono 11px mute
+CONTENT: "Finally found the dopest vinyl shop in South London. If you know, you know." DM Sans 15px ink-soft, 16px padding
+MEDIA GRID: 2 equal-width square images in a row, radius-md, 4px gap
+STAR RATING: 4 filled ochre ★ stars + 1 empty outline star + "4/5" JetBrains Mono 11px gold, inline row
+FOOTER ROW: reaction bar left + "12 comments" 13px mute right
+
+CARD TYPE 3 — FOOD REVIEW card:
+Author row with Pro avatar (gold border) + CONNECT PRO badge
+Template badge: "FOOD REVIEW" (bg #FCE7F3, text #9D174D)
+Dish name: "Suya Platter for Two" Fraunces 16px bold ink
+Gallery strip: 3 images horizontal scroll (200×150px each, radius-md, 8px gap), third has "+2" overlay
+Ratings row (3 lines): Taste ★★★★★ 5.0 · Value ★★★★☆ 4.0 · Vibe ★★★★★ 5.0
+(each: label DM Sans 13px ink-soft + stars + number JetBrains Mono 11px gold, right-aligned)
+Reaction bar
+
+CARD TYPE 4 — HAPPENING / EVENT card:
+Type badge "HAPPENING" (bg #EDE9FE, text #4C1D95 — purple)
+Event image (16:9) — if Pro event, "⭐ PRO ONLY" gold badge overlay top-right
+Event title: DM Sans 16px bold ink
+📅 date + 📍 venue DM Sans 13px mute (2 rows)
+Admission: DM Sans 13px ink-soft
+RSVP button: small secondary pill button, ink border, right-aligned
+
+CARD TYPE 5 — QUOTE card:
+Background: paper-warm (#F3ECE0) card fill (distinct from white cards)
+Large decorative quotation mark: Fraunces 80px, gold #B38238 at 15% opacity, absolute positioned top-left
+Quote text: Fraunces 20px italic ink, 3 lines max, 24px padding, on top of decorative mark
+Author: "— James Baldwin" DM Sans 13px mute, below quote
+Source: "Notes of a Native Son" JetBrains Mono 11px ghost
+Reaction bar at bottom
+
+CARD TYPE 6 — POLL card (community type):
+Template badge "POLL" (bg #EDE9FE, text #4C1D95)
+Poll question: DM Sans 15px bold ink
+4 poll option bars (each 48px height, white fill, ghost border, radius-lg, full width):
+  Option text DM Sans 14px ink + percentage right ("42%") + filled progress bar overlay
+  (ochre fill for winning option, paper-deep for others, percentage determines width)
+  Voting closed state: bars filled, "42 votes · Poll closed" below
+Author row above question
+
+Show each card in its own contained section with a clear label above.
+All cards must use exact brand token values — no approximations.
+```
+
+---
+
+## 2. AUTHENTICATION FLOW
+
+---
+
+### PROMPT 2A — Splash & Onboarding (3 screens)
+
+```
+You are a senior mobile UX/UI designer. Create 4 sequential screens for the
+Moveee Connect app onboarding flow. Platform: iOS mobile, 390×844px frames.
+
+Brand: Fraunces serif for headlines, DM Sans for body, background paper-warm #F3ECE0,
+primary ochre #C5491F, gold accent #B38238, ink #14110D. Editorial, sophisticated aesthetic.
+No gradients except where specified. Warm off-white is the dominant tone.
+
+SCREEN 1 — SPLASH SCREEN:
+Full paper-warm (#F3ECE0) background, nothing else.
+Centred vertically and horizontally:
+— Wordmark: "moveee" in Fraunces 36px bold ink (#14110D), letter-spacing -1px
+— Below wordmark 4px gap: "connect" in DM Sans 10px bold gold (#B38238) uppercase, 2px letter-spacing
+— Below both: thin ochre (#C5491F) line, 40px wide, 2px height, centred
+— 40px below line: ochre circular spinner animation ring (32px diameter, 2px stroke, 270° arc)
+— "Loading" in JetBrains Mono 10px mute, centred, 8px below spinner
+
+SCREEN 2 — ONBOARDING: "Your cultural home."
+Top 55%: editorial collage image area (full-width, richly coloured — suggest a warm mosaic
+  of terracotta, deep brown, and ochre geometric patterns, African textile-inspired)
+Bottom 45%: white card with radius-2xl top-only corners (20px), padding 32px:
+— "Your cultural home." — Fraunces 30px bold ink (#14110D), left-aligned
+— "Discover, connect and create with people who share your cultural vision." — 
+  DM Sans 15px ink-soft, left-aligned, max-width 300px, 8px top margin
+— Progress dots row (24px top margin): 3 dots, 
+  active = ochre filled 8px circle, inactive = ghost 6px circle. Radius-full each.
+— "Get started" — primary button, full width, ochre fill, pill, 52px height (24px top margin)
+— "Already a member? Sign in" — DM Sans 13px mute, centred, "Sign in" underlined, 16px top margin
+
+SCREEN 3 — ONBOARDING: "Built for your world."
+Top 52%: 2-column grid of 6 mini feed card thumbnails with colourful placeholder images,
+  each showing a type badge label (EDITORIAL, HAPPENING, HIDDEN GEM, PULSE, QUOTE, POLL)
+  Cards: white fill, radius-lg, shadow-card. 4px gap between cards. Edge-to-edge layout.
+Bottom 48%: same white card structure as screen 2:
+— "Built for your world." — Fraunces 30px bold ink
+— "Magazine stories, community posts, events, games — all in one place." — DM Sans 15px ink-soft
+— Progress dots (dot 2 active)
+— "Continue" primary ochre button
+— "Skip" ghost button (no fill, no border, ochre text) below with 12px gap
+
+SCREEN 4 — ONBOARDING: "Earn as you create."
+Top 48%: paper-warm background with floating UI illustration:
+  — Central circle 80px: ink fill, white "C" Fraunces 36px bold centred
+  — Surrounding it: 4 floating badge chips at 12/3/6/9 o'clock positions:
+    "+10 CR" "+30 CR" "🏆 Badge" "+50 CR" — each: gold fill pill chip, white DM Sans 12px bold
+  — Connecting lines (ochre dashed, 1px) from badges to central circle
+  — Background: subtle concentric circle rings (ghost, 1px, paper-warm)
+Bottom 52%: white card:
+— "Earn as you create." — Fraunces 30px bold ink
+— "Post, engage, and earn Culture Points™ redeemable for real-world perks and cash." — DM Sans 15px ink-soft
+— Progress dots (dot 3 active)
+— "Create my account" primary button (ochre)
+— "Sign in instead" ghost button
+
+Output all 4 frames in a horizontal row, 32px gap between them. Label each frame.
+Do not use stock photo placeholders — use coloured shapes and patterns.
+Strictly use only the brand colours specified above.
+```
+
+---
+
+### PROMPT 2B — Login & Register Screens
+
+```
+Senior mobile UX/UI designer — Moveee Connect app. iOS, 390×844px.
+Brand: paper-warm bg #F3ECE0, ochre #C5491F, ink #14110D, DM Sans UI font, Fraunces display font.
+Ghost border colour: #C8BFB0. Card bg: white #FFFFFF. Mute text: #7A6F5C.
+
+Create 5 frames: Login Default, Login Error, Login Loading, Register Default, Verify Email.
+
+FRAME 1 — LOGIN DEFAULT:
+Background: paper-warm (#F3ECE0)
+Status bar: standard iOS, 59px, ink icons
+
+TOP HEADER AREA (centred, 120px from top):
+"moveee" Fraunces 22px bold ink + 3px below "connect" DM Sans 9px bold gold uppercase letter-spacing 2px
+Ochre line decoration: 32px wide, 2px height, centred, 8px below text
+
+FORM AREA (starts 40px below header, 32px horizontal padding):
+"Welcome back." — Fraunces 26px bold ink, left-aligned
+"Sign in to your Moveee account." — DM Sans 14px mute, 4px below, left-aligned
+
+24px gap, then input fields:
+Email input: 52px height, white fill, ghost 1px border, radius-lg (6px), 16px padding.
+  Left: mail icon 16px mute. Placeholder: "you@example.com" DM Sans 14px ghost.
+  Label above: "Email address" DM Sans 11px mute, 4px gap.
+Password input: same style. Left: lock icon. Right: eye icon (toggle).
+  Label: "Password".
+"Forgot password?" — right-aligned DM Sans 12px ochre link, 8px below password field.
+
+24px gap:
+"Sign in" — primary button, full width, ochre fill (#C5491F), pill (radius-full), 52px height,
+  white DM Sans 15px bold text.
+
+OR divider: thin ghost line + "or" centred label DM Sans 12px mute, 20px vertical margin.
+
+"Continue with passkey" — 52px height, white fill, ink 1px border, radius-full, 16px padding.
+  Left: fingerprint icon 20px ink. DM Sans 14px ink text centred.
+
+Bottom (fixed to safe area): "Don't have an account? Create one" DM Sans 13px mute centred,
+  "Create one" in ochre, underlined.
+
+FRAME 2 — LOGIN ERROR STATE:
+Same as default. Changes:
+— Email field: error border (#C62828, 1.5px), red fill tint (very subtle #FEF2F2)
+— Below email field: "Incorrect email or password. Please try again." DM Sans 12px error red, left-aligned, 4px gap
+— Sign in button: remains active state
+
+FRAME 3 — LOGIN LOADING STATE:
+Same as default. Changes:
+— Sign in button: ochre fill, shows white circular spinner (20px, 2px stroke) centred instead of text
+— Email and password inputs: ghost border maintained, no disabled state on inputs
+— "Forgot password?" and passkey button: 50% opacity
+
+FRAME 4 — REGISTER DEFAULT:
+Background: paper-warm. Same header as Login.
+Back chevron left of header (ink, 44×44px tap target).
+"Create your account." — Fraunces 26px bold ink
+"Just three fields to get started." — DM Sans 14px mute
+
+Inputs (24px gap):
+Email: same style as login
+Username: left: "@" character DM Sans 14px ink-soft (not an icon, actual @ sign).
+  Below field (4px gap): "Letters, numbers and underscores only" JetBrains Mono 10px ghost, left-aligned.
+Password:
+  Below field: password strength bar (full width, 8px height, radius-full, 4-segment):
+  Strength 0: all segments ghost. Strength 1: 1 segment error red. Strength 2: 2 segments warning. 
+  Strength 3: 3 segments gold. Strength 4: all 4 segments success green.
+  Label right: "Weak" / "Fair" / "Strong" / "Very strong" — DM Sans 11px matching segment colour.
+
+Requirements checklist (shows once user starts typing password):
+4 items with dot icons (✓ green when met, ○ ghost when not):
+"At least 8 characters" · "One uppercase letter" · "One number" · "One special character"
+DM Sans 12px, 4px line gap, 12px top margin below strength bar.
+
+"Create account" primary ochre button (52px height, full width, pill).
+Disabled state: 40% opacity when fields not valid.
+
+Terms line (centred, below button): "By creating an account you agree to our Terms & Privacy Policy"
+DM Sans 10px mute. "Terms" and "Privacy Policy" in ochre.
+"Already have an account? Sign in" centred, bottom safe area.
+
+FRAME 5 — VERIFY EMAIL:
+Background: paper-warm. No back button.
+Content centred vertically:
+Large envelope icon (72×72px area): ochre outline stroke style envelope illustration,
+  small ochre star badge (+4px) overlapping top-right corner.
+"Check your inbox." — Fraunces 26px bold ink, centred, 24px top margin.
+"We've sent a verification link to:" DM Sans 14px mute, centred, 8px below.
+Email chip: "you@example.com" DM Sans 14px bold ink, ghost border 1px pill, centred, 12px padding.
+"Click the link to continue setting up your profile. The link expires in 24 hours."
+DM Sans 13px mute, centred, max-width 280px, 20px top margin.
+"Resend email" — secondary button (ink border, pill, 48px height, full width 280px max), 24px below text.
+"Sign in with a different account" — ghost link DM Sans 12px mute centred, bottom area.
+
+Output all 5 frames in a 2-3 grid layout. Label each clearly.
+```
+
+---
+
+## 3. CONNECT FEED (Main Home Screen)
+
+---
+
+### PROMPT 3 — Connect Feed Screen
+
+```
+Senior mobile UX/UI designer — Moveee Connect. Platform iOS, 390×844px.
+Brand: paper-warm bg #F3ECE0, cards white #FFFFFF, ochre #C5491F, ink #14110D,
+DM Sans 15px body, Fraunces display, JetBrains Mono data/timestamps.
+
+Design the Connect Feed — the main social screen showing a unified feed of cultural
+content: news articles, community posts, events, quotes, and directory items.
+
+Generate 2 frames: Default State and "For You" State (personalised ranking active).
+
+HEADER (white bg, shadow-card, 64px including status bar):
+Left: "moveee" Fraunces 16px bold ink + "connect" DM Sans 8px bold gold uppercase, 3px below
+Right: notification bell icon (24px ink) with ochre unread badge "3" + 
+  ochre filled circle (32px, white + icon) for new post
+
+FILTER ROW (white bg, 52px height, horizontally scrollable):
+First pill: "✦ For You" — when active: ochre fill #C5491F white DM Sans 13px bold pill.
+  When inactive: ghost border ink-soft text.
+Then category filter pills (inactive state): All · Music · Film · Art · Fashion · Food · Tech · Sport · Travel · Design · Literature
+Pills: 32px height, radius-full, 10px horizontal padding, 8px gap. DM Sans 13px bold.
+
+FRAME 1 — DEFAULT STATE (newest-first feed, For You pill = inactive):
+Show 4 different card types in the feed:
+
+CARD 1 (Editorial): bottom-border separator card, no shadow, 16px horizontal padding:
+Badge "EDITORIAL" (bg #F3ECE0 border ink) + "· 4h ago" JetBrains Mono 11px mute right
+Headline: "The New Wave of Lagos Street Style Taking Over Global Fashion" DM Sans 16px bold ink 2 lines
+Excerpt: "From Tejuosho to Tokyo, a generation of Lagos designers is rewriting..." DM Sans 13px ink-soft 2 lines
+Image: full-width 16:9, radius-md
+Source: "📰 Vogue Africa" JetBrains Mono 11px mute
+Reaction bar: ❤️ 234 · 🔥 89 · 👏 145 + share icon
+
+CARD 2 (Community — Hidden Gem): white card, shadow-card, radius-xl 12px, 16px margin:
+Author: Avatar MD (44px, citizen border) + "Kemi Adeyemi" bold + "@kemiad" mute + CONNECT CITIZEN badge + "· 5h" mono
+Template badge: "💎 HIDDEN GEM" (bg #FEF3C7 text #92400E)
+Location: "📍 Peckham, London" JetBrains Mono 11px mute
+Content: "Finally found the dopest vinyl shop in South London. If you know you know 🎵"
+2-image grid (equal width, square, radius-md, 4px gap)
+Star rating: 4 ochre stars + 1 empty + "4/5" JetBrains Mono 11px gold
+Reaction bar + "12 💬"
+
+CARD 3 (Happening): same full-width separator style:
+Badge "HAPPENING" (bg #EDE9FE text #4C1D95) + "· Tonight"
+Event image 16:9, top-right overlay: "⭐ PRO" gold small badge
+"Amapiano Night at Jazz Cafe" DM Sans 16px bold ink
+"📅 Fri 13 Jun · 9PM · 📍 Camden, London" DM Sans 13px mute (on 2 lines)
+"Free · Limited spots" + "RSVP →" small ochre ghost pill button right
+
+CARD 4 (Quote): paper-warm fill card, no shadow:
+Large decorative " (double quote mark): Fraunces 72px gold #B38238 15% opacity background element
+Quote: Fraunces 20px italic ink: "The world doesn't need another copycat. It needs you, 
+fully and specifically yourself." — centred on top of decorative mark
+"— Chimamanda Ngozi Adichie" DM Sans 13px mute
+"We Do This 'Til We Free Us" JetBrains Mono 10px ghost
+Reaction bar
+
+Floating pencil FAB: 56×56px ochre circle (shadow-fab), white ✏️ pencil 24px icon.
+Position: bottom-right, 16px from edge, 16px above bottom nav.
+
+Bottom navigation: Connect tab active (ochre). iOS variant with 83px height.
+
+FRAME 2 — "FOR YOU" STATE (For You pill = active, ochre fill):
+Add TRENDING STRIP between filter row and feed:
+Row header: "Trending now" DM Sans 9px bold uppercase ochre, 16px padding
+Horizontal scroll of 3 trending mini-cards (160×80px each):
+  Image fill with gradient (bottom 50% ink to transparent)
+  Type badge top-left (small pill, 9px DM Sans)
+  Title 2 lines DM Sans 12px bold white, bottom-left
+4px gap between mini-cards, 16px start padding
+
+Feed is same content but with "✦ For You" label on matching-interest cards:
+Community card gains a small "✦ For You" badge: ochre bg, white DM Sans 9px bold, top-right of card.
+
+Add PULL TO REFRESH STATE annotation on Frame 1:
+Show ochre spinner at top of feed area + "Refreshing..." JetBrains Mono 10px mute below.
+```
+
+---
+
+## 4. POST COMPOSER
+
+---
+
+### PROMPT 4 — New Post Screen (4 Template States)
+
+```
+Senior mobile UX/UI designer — Moveee Connect. iOS, 390×844px.
+Brand: white bg, ochre #C5491F, ink #14110D, DM Sans + Fraunces.
+
+Design the New Post composer screen. This screen lets users pick from 9 post templates
+and compose content. Generate 4 frames showing 4 different template states.
+
+HEADER (all frames — white bg, top ghost border bottom):
+"Cancel" — DM Sans 14px ochre, left, 44px tap target
+"New Post" — DM Sans 15px bold ink, centred
+"Post" — DM Sans 14px bold ochre, right (greyed out = disabled until content entered)
+
+TEMPLATE SELECTOR (horizontal scroll strip, 48px height, bottom ghost border):
+9 pills with emoji + label, DM Sans 12px bold, 36px height, radius-full, 10px horizontal padding, 8px gap.
+Active: ochre fill white text. Inactive: paper-deep fill ink-soft text.
+Options: ✏️ Post · 💎 Hidden Gem · 💬 Cultural Take · 🍽️ Food Review · 
+🎨 Creative Showcase · 📊 Poll · 🗺️ Itinerary · 📅 Event · 💬 Quote
+
+FRAME A — POST TEMPLATE (active):
+SECTION TAGS (horizontal scroll, 40px height, 8px gap, 16px padding):
+Small pills: Music · Film · Art · Fashion · Food · Tech · Sport · Travel · Design · Literature
+Active: ink fill white 11px DM Sans bold. Inactive: ghost border ink-soft 11px.
+
+GUIDE CHIPS row (3 horizontally, 8px gap):
+"🎵 What I'm listening to" · "🎬 Film reaction" · "✨ Discovery"
+Style: paper-deep bg, radius-full, DM Sans 12px ink-soft, 8px vertical 12px horizontal padding.
+Tap to insert as a starter.
+
+MAIN TEXTAREA (no border, 16px padding, min 160px height):
+Placeholder (DM Sans 15px ghost italic): "What's on your mind? Share a cultural moment, thought, or discovery..."
+Character counter bottom-right: "0 / 1000" JetBrains Mono 11px mute.
+
+MEDIA/ACTION TOOLBAR (row above keyboard area, 48px height, ghost top border):
+Left icons row: 📷 · 📎 · 📍 · 😊 · @
+Each icon: 24px, mute colour, 20px gap, 16px left padding.
+Right: "954 remaining" JetBrains Mono 11px mute.
+
+FRAME B — FOOD REVIEW TEMPLATE (active, partially filled):
+All same header/selector, food review pill = active.
+
+DISH NAME INPUT: "Dish name" label DM Sans 11px mute above, full-width input 48px height, ghost border.
+  Filled: "Suya Platter for Two" DM Sans 15px ink.
+
+RATINGS BLOCK (3 rows, 12px gap):
+Each row: label (DM Sans 13px ink-soft, 64px wide) + 5 star icons (24px each, 8px gap) + rating JetBrains Mono 11px gold right
+  Taste: ★★★★★ 5.0 (all filled ochre)
+  Value: ★★★★☆ 4.0 (4 ochre, 1 outline)
+  Vibe: ★★★★★ 5.0 (all filled)
+Stars: filled = ochre #C5491F. Empty = outline ghost. Tap any star to set rating.
+
+DIRECTORY LINK: "Link a restaurant or venue" DM Sans 13px mute, left.
+Search input (40px height, ghost border, search icon left): "Buka Lagos" filled.
+Below (dropdown result): 1 result chip — venue icon + "Buka Lagos · Surulere" DM Sans 13px ink.
+Selected state: chip with venue name + ✕ remove.
+
+TEXTAREA: shorter (80px min), 16px padding, placeholder "Describe your experience..."
+MEDIA TOOLBAR: same as Frame A.
+
+FRAME C — POLL TEMPLATE (active):
+Poll question input (80px height, ghost border 1px, radius-lg, 16px padding):
+  "What's the best era of Afrobeats?" DM Sans 15px ink. (filled)
+
+POLL OPTIONS (auto-layout vertical, 12px gap):
+Each option row: drag handle ⠿ (16px ghost, left) + text input (DM Sans 14px, flex) + × delete (16px ghost, right)
+  Row height 48px, ghost border, radius-lg, 16px horizontal padding.
+Option 1: "90s Fela era" (filled)
+Option 2: "Burna Boy 2020s" (filled)
+Option 3: empty (placeholder "Option 3...")
+"+ Add option" — DM Sans 13px ochre link, left-aligned row below options. Disabled when 4 options added.
+
+DURATION: "Poll duration" DM Sans 13px mute + segmented control inline right: "1d · 3d · 7d"
+  Active segment: ink fill white text. Inactive: ghost border. radius-lg each. 32px height.
+
+DESCRIPTION TEXTAREA: "Add a description (optional)" placeholder, 80px min height.
+
+FRAME D — EVENT TEMPLATE (active):
+Title input: large, DM Sans 17px bold ink. "Amapiano Night at Jazz Cafe" filled.
+
+DATE/TIME ROW (row, space-between):
+  📅 "Start date" | date picker input "Fri 13 Jun 2026" | 🕐 "Start time" | "9:00 PM"
+  Second row: "End date" + "End time"
+  Each: 48px height, ghost border, radius-lg, left icon, DM Sans 14px ink.
+
+VENUE input: 📍 left + "Jazz Cafe, Camden, London" filled
+CITY input: "London" filled
+ADMISSION input: currency prefix "£" + "Free / £15 adv" placeholder
+TICKET URL: 🔗 icon + "https://..." placeholder
+CATEGORY: horizontal chip row: Music · Art · Food · Sport · Culture · Tech
+  Active: ink fill. Inactive: ghost border. Radius-full, 32px height.
+ORGANISER: "Link an organiser" search with DirectorySearch result showing 
+  avatar (24px) + "Moveee Events" name + ✕ remove.
+
+Output 4 frames in a 2×2 grid. Each frame clearly labelled with the template name.
+```
+
+---
+
+## 5. ARTICLE DETAIL (Magazine)
+
+---
+
+### PROMPT 5 — Magazine Home & Article
+
+```
+Senior mobile UX/UI designer — Moveee Connect magazine section. iOS, 390×844px.
+Brand: paper-warm #F3ECE0 bg, white cards, ochre #C5491F, ink #14110D, 
+Fraunces for editorial headlines, DM Sans for UI, JetBrains Mono for metadata.
+
+FRAME 1 — MAGAZINE HOME:
+Header (white, 64px including status bar):
+"Magazine" Fraunces 20px bold ink, left (16px padding) + search icon right.
+
+FEATURED HERO (full-bleed, 390×260px):
+Editorial image (use a warm, colourful placeholder with ochre/terracotta tones).
+Bottom gradient overlay (40% height, ink to transparent):
+  Category: "FASHION" DM Sans 9px bold uppercase ochre, 8px above title
+  Title: "The New Wave of Lagos Street Style" Fraunces 24px bold white, 2 lines
+  "8 min read" DM Sans 12px white mute + author "By Funmi Osei" + avatar SM (24px) inline, bottom-left
+
+SECTIONS (3 horizontal scroll sections):
+Section header: "From the Editors" DM Sans 15px bold ink left + "See all →" 13px ochre right. 16px padding.
+Article cards (horizontal scroll, 200×240px each, 12px gap, 16px start padding):
+  White fill, radius-xl, shadow-card.
+  Image top: 200×110px, radius-xl top corners, object-fit cover.
+  Category badge (bottom-left of image): 9px DM Sans bold uppercase pill.
+  Title: DM Sans 14px bold ink, 2 lines, 12px padding.
+  "6 min" JetBrains Mono 10px mute + "Fola Olawale" DM Sans 12px mute.
+
+Show 3 sections: "From the Editors" · "Interviews" · "Visuals"
+
+Bottom nav (Magazine tab active).
+
+FRAME 2 — ARTICLE DETAIL:
+HERO IMAGE: 390×280px, full-bleed, edge-to-edge.
+Status bar icons: white.
+Floating back button: white circle 40px, ink chevron, top-left, 16px padding.
+Floating share/bookmark: white circle 40px each, top-right row, 8px gap.
+
+CONTENT (white bg, radius-2xl top corners 20px, overlaps hero by 32px, starts at ~248px from top):
+32px horizontal padding.
+
+Category: "CULTURE · INTERVIEW" DM Sans 9px bold uppercase ochre + ochre rule (48px wide, 2px) right of text
+Title: Fraunces 28px bold ink, leading 1.2: "Afrobeats at the Crossroads: A Conversation with Adekunle Gold"
+Standfirst: DM Sans 15px ink-soft italic: "On globalisation, authenticity, and what it means to make music that travels." 8px below title.
+Divider: 32px vertical margin, ochre line 48px wide 2px height centred.
+
+AUTHOR ROW: Avatar MD (44px, Pro gold border) + "Fola Olawale" DM Sans 14px bold ink + 
+"Culture Editor · Published June 9, 2026" 11px JetBrains Mono mute (below name) +
+"12 min read" 11px mono ochre + bookmark icon (ribbon, 24px, ink) right-aligned.
+
+ARTICLE BODY (DM Sans 16px ink-soft, line-height 1.65, 16px top margin):
+Paragraph 1: "There's a particular brand of artistic confidence that Adekunle Gold carries into every room. At 34, the Yoruba pop architect has stopped explaining himself to anyone..."
+
+PULL QUOTE mid-article:
+Left accent bar: 3px ochre, full height of quote.
+Quote text: Fraunces 20px italic ink (#14110D): "The world wants Afrobeats but sometimes I wonder if it knows what Afrobeats actually is." — 12px right indent from bar.
+Attribution: "— Adekunle Gold" DM Sans 12px mute.
+20px vertical margin above and below.
+
+Paragraph 2: "He's speaking to me from his Lagos studio, and I can hear the city in the background — motorcycle engines, hawkers..."
+
+Inline editorial image (full-width, radius-md): ochre/warm-toned placeholder image.
+Caption: DM Sans 11px mute italic: "Adekunle Gold photographed in Lagos, 2026."
+
+Paragraph 3: "When I ask about the label deal..."
+
+BOTTOM FIXED BAR (white fill, top ghost border, 64px height + safe area):
+Reaction row: ❤️ 847 DM Sans 13px + 🔥 234 + spacer + "Share article" secondary button pill (ink border, 14px DM Sans, 40px height)
+
+Output 2 frames labelled Magazine Home and Article Detail.
+```
+
+---
+
+## 6. EVENTS SCREENS
+
+---
+
+### PROMPT 6 — Events List & Event Detail
+
+```
+Senior mobile UX/UI designer — Moveee Connect events section. iOS, 390×844px.
+Brand: paper-warm #F3ECE0 bg, white cards, ochre #C5491F, gold #B38238, ink #14110D,
+DM Sans + Fraunces + JetBrains Mono.
+
+FRAME 1 — EVENTS LIST:
+Header (white, 64px): "Events" Fraunces 20px bold ink, 16px left + filter icon right.
+
+FILTER TABS (horizontal scroll, 44px height, white bg, ghost bottom border):
+Pills: All · Upcoming · Online · Pro Only
+Active: ink fill white DM Sans 13px bold. Inactive: ghost border ink-soft. Radius-full, 32px height.
+
+EVENT CARDS (vertical list, 16px gap, 16px horizontal padding, 16px top padding):
+
+CARD 1 (Free live event, white fill, radius-xl, shadow-card):
+Image (390-32px wide × 180px, radius-xl top corners):
+  Overlay badges: "🟢 UPCOMING" small success green pill top-left + "MUSIC" grey pill below it.
+Content (16px padding):
+"Amapiano Night at Jazz Cafe" DM Sans 17px bold ink
+"📅 Fri 13 Jun · 9:00 PM" + "📍 Jazz Cafe, Camden, London" DM Sans 13px mute (2 rows)
+"Free entry · Limited spots" DM Sans 13px ink-soft
+Footer row: "👥 47 attending" DM Sans 13px mute left + "RSVP" small ochre pill button right.
+
+CARD 2 (Pro-only paid event):
+Image with "⭐ PRO ONLY" gold fill overlay badge top-right.
+"Exclusive Industry Mixer — Spring Edition" DM Sans 17px bold
+"📅 Sat 14 Jun · 7:00 PM · 📍 Shoreditch, London" 2 rows
+"£25 advance / £35 door"
+Footer: avatar stack (3 overlapping 24px circles) + "Zara +24 others" mute + "Get Tickets →" ink border button.
+
+CARD 3 (Online event):
+Image with "🔗 ONLINE" blue pill overlay.
+"Diasporic Futures: An Open Conversation" 
+"📅 Sun 15 Jun · 3:00 PM · 🔗 Zoom Webinar"
+"Free · 200 spots available"
+Capacity bar: full width, 8px height, radius-full. paper-deep bg, ochre fill at 67%.
+"134 attending" below bar.
+
+Bottom nav: Events tab active.
+
+FRAME 2 — EVENT DETAIL:
+HERO IMAGE (390×260px, full-bleed):
+Floating back button: white 40px circle, ink chevron, top-left, 16px.
+Category badge bottom-left: "MUSIC" pill with blurred backdrop.
+
+WHITE CONTENT AREA (radius-2xl top corners, starts 40px overlap with hero):
+24px horizontal padding.
+
+"Amapiano Night at Jazz Cafe" Fraunces 24px bold ink.
+"👥 Kemi, Zara, Michael +24 attending" DM Sans 13px mute, avatar stack inline, 12px top margin.
+
+META CARD (paper-deep bg #F5F5F5, radius-lg, 16px padding, 20px vertical margin):
+4 rows, 12px gap:
+📅 "Friday, 13 June 2026 · 9:00 PM – Late" DM Sans 14px ink-soft
+📍 "Jazz Cafe · 5 Parkway, Camden, London NW1 7PG" 14px ink-soft
+💳 "Free entry / £15 advance" 14px ink-soft
+👤 "Organised by: Moveee Events" 14px ochre underlined (link)
+Each: 20px left padding for text, icon 16px ochre left.
+
+DESCRIPTION (DM Sans 15px ink-soft, line-height 1.6):
+"Join us for a legendary night of Amapiano and Afro house at one of London's most iconic live music venues..."
+
+"Get Tickets / Find Out More" primary button: full width, ochre, pill, 52px height, 20px top margin.
+
+DIVIDER ghost line, 24px margin.
+
+RSVP SECTION (free events):
+"RSVP to secure your spot" DM Sans 15px bold ink
+"Name" input + "Email" input (same standard style)
+"Confirm RSVP" primary ochre button, full width.
+
+FRAME 3 — RSVP SUCCESS:
+Full paper-warm bg. Centred content.
+Success circle: 72px, success green fill (#2D6A4F), white ✓ checkmark (32px, 3px stroke).
+"You're on the list! 🎉" Fraunces 24px bold ink, centred, 20px top margin.
+"A confirmation will be sent to kemi@example.com" DM Sans 14px mute, centred.
+"Add to Calendar" secondary button (ink border, 48px, full width max 280px), 24px below.
+"Back to Events" DM Sans 13px ochre link, centred.
+
+Output 3 frames in a row. Label each.
+```
+
+---
+
+## 7. GAMES SCREENS
+
+---
+
+### PROMPT 7 — Games Hub & Trivia Gameplay
+
+```
+Senior mobile UX/UI designer — Moveee Connect games section. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D, DM Sans + Fraunces + JetBrains Mono.
+
+FRAME 1 — GAMES HUB:
+Header (white, 64px): "Games" Fraunces 20px bold ink + small gold ★ icon.
+Subheader: "Daily challenges · Earn culture points" DM Sans 13px mute right.
+
+STREAK BANNER (paper-warm bg with ochre left accent border 3px, 64px height, 16px horizontal padding, row):
+Left: 🔥 emoji 24px + "4 day streak!" DM Sans 14px bold ink
+Right: "Keep it up" DM Sans 12px mute
+
+GAMES GRID (2×2, 16px gap, 16px horizontal padding, 16px top margin):
+All cards: white fill, radius-xl, shadow-card.
+
+CARD 1 — Daily Trivia (available, not yet played today):
+Top half (120px): ochre warm patterned background. Large "?" in Fraunces 48px bold white, centred.
+Bottom (16px padding):
+  "Daily Trivia" DM Sans 15px bold ink
+  "10 questions · cultural knowledge" JetBrains Mono 10px mute
+  "Earn up to 50 CR" DM Sans 12px ochre
+  "Play now →" DM Sans 13px bold ochre link, bottom-left.
+
+CARD 2 — Who Said It (available):
+Top half: ink (#14110D) background. Large " " Fraunces 48px gold, centred.
+"Who Said It?" DM Sans 15px bold ink
+"Match quotes to their authors" JetBrains Mono 10px mute
+"Earn up to 30 CR" DM Sans 12px ochre
+"Play now →"
+
+CARD 3 — Crossword (coming soon):
+Top half: paper-deep bg. Crossword grid illustration (4×4 letter boxes, ghost outlines).
+"Crossword" DM Sans 15px mute
+"Coming soon" ghost pill badge (paper-deep, ghost border, DM Sans 11px mute)
+Overall card opacity: 60%
+
+CARD 4 — Sudoku (coming soon):
+Top half: paper-deep bg. 9×9 sudoku grid illustration (mini numbers in grid cells, ghost).
+"Sudoku" DM Sans 15px mute
+"Coming soon" ghost pill
+Card opacity: 60%
+
+Bottom nav: Games tab active.
+
+FRAME 2 — TRIVIA QUESTION IN PROGRESS:
+White background.
+Header (64px, white, bottom ghost border):
+  "Daily Trivia" DM Sans 15px bold ink centred
+  "Exit" DM Sans 14px ghost right (44px tap target)
+
+PROGRESS BAR (full width, 8px height, radius-full, 16px horizontal padding, 12px top margin):
+Background: ghost (#C8BFB0). Fill: ochre (#C5491F), width = 30% (question 3 of 10).
+"Question 3 of 10" JetBrains Mono 11px mute centred, 8px below bar.
+"Score: 2" DM Sans 14px bold ink, right-aligned, same row as "Q 3 of 10"
+
+QUESTION CARD (white fill, radius-xl, shadow-card, 24px padding, 20px horizontal margin, 20px top margin):
+Category: "MUSIC HISTORY" DM Sans 9px bold uppercase ochre, 4px below = thin ochre line 32px.
+Question: "Which Nigerian artist was the first African to headline Coachella's main stage?"
+Fraunces 22px bold ink, leading 1.3, centred. (Allow 3 lines)
+
+ANSWER OPTIONS (4 buttons, 12px gap, 20px horizontal margin, 16px top margin):
+Each: full width, 52px height, white fill, ghost 1px border, radius-lg (6px), row layout.
+Left: letter chip (DM Sans 11px bold ink, 24×24px, paper-deep bg, radius-full).
+Text: DM Sans 15px ink. 12px gap between chip and text.
+A: "Burna Boy" · B: "Wizkid" · C: "Fela Kuti" · D: "Davido"
+
+"Next Question →" primary ochre button (full width, 52px, radius-full, 20px horizontal margin, disabled = 40% opacity)
+Show as disabled (no option selected yet).
+
+FRAME 3 — ANSWER REVEALED:
+Same as Frame 2 but with option states:
+A "Burna Boy" — CORRECT: success green border (#2D6A4F, 2px), success green bg tint (#EDF7ED).
+  Green ✓ checkmark (16px) right side of row.
+C "Fela Kuti" — WRONG: error red border (#C62828, 2px), error red bg tint (#FEF2F2).
+  Red × (16px) right side.
+B, D: ghost/unselected unchanged.
+
+EXPLANATION BOX (below answer options, 16px margin):
+paper-deep bg, radius-lg, 16px padding.
+"💡 Burna Boy headlined Coachella's main stage in April 2023, making history as the 
+first African artist to perform at the festival's main stage." DM Sans 13px ink-soft.
+
+"Next Question →" button: now active (ochre fill, white text).
+
+FRAME 4 — GAME COMPLETE / SCORE SCREEN:
+Paper-warm background, centred content.
+Score display: "7 / 10" Fraunces 56px bold ink, centred, large.
+"70% correct" DM Sans 16px mute, centred.
+Message: "Solid knowledge! Keep exploring." Fraunces 20px italic gold, centred.
+"+35 CR earned" gold fill pill (DM Sans 14px bold white), centred, 12px top margin.
+
+Divider: ghost line, 24px vertical margin.
+"Question Review" DM Sans 14px bold ink centred.
+10-dot row (5px gap each): 7 ochre filled circles (correct) + 3 error red filled circles (wrong).
+
+"Share result" secondary button (ink border, 48px height, max 200px width, centred).
+"Back to Games" DM Sans 13px ochre link, centred, 16px below.
+
+FRAME 5 — ALREADY PLAYED TODAY:
+Paper-warm background.
+Completion circle: 72px diameter, ochre fill, white ✓ checkmark 32px centred.
+"Already played today!" Fraunces 22px bold ink, centred.
+"You scored 7/10 · +35 CR earned" DM Sans 14px mute, centred.
+Countdown: "Next game available in" DM Sans 13px mute + "14:32:07" JetBrains Mono 28px bold ink (large, centred).
+"Browse the feed while you wait →" DM Sans 13px ochre link.
+
+Output 5 frames. Layout: Frame 1 alone top row, Frames 2-3-4 bottom row, Frame 5 small below.
+```
+
+---
+
+## 8. MEMBER DASHBOARD
+
+---
+
+### PROMPT 8 — Member Dashboard (Pro & Citizen Variants)
+
+```
+Senior mobile UX/UI designer — Moveee Connect member dashboard. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D,
+DM Sans + Fraunces + JetBrains Mono. CONNECT PRO = patron tier (gold).
+
+Generate 2 frames: Connect Pro dashboard and Connect Citizen dashboard.
+
+SHARED LAYOUT STRUCTURE:
+
+HEADER (white, 64px):
+"moveee connect" wordmark centred (Fraunces 16px bold ink + DM Sans 8px bold gold "connect")
+"Sign out" DM Sans 13px ochre, right-aligned.
+
+CONTENT SCROLL (paper-warm bg, 16px horizontal padding, 16px gap between cards):
+
+CARD 1 — HERO PROFILE (white fill, radius-xl, shadow-card, 24px padding):
+Row layout: Avatar XL (96px) left + text stack right (16px gap between).
+Avatar LEFT: circular crop, Pro = 3px gold border ring (#B38238), Citizen = 2px ghost ring.
+Text RIGHT (vertical stack, 8px gap):
+  Display name: Fraunces 22px bold ink
+  Tier badge: CONNECT PRO (gold, ★ icon) or CONNECT CITIZEN (ghost)
+  "📍 Lagos, Nigeria" DM Sans 13px mute
+  "Member since Jan 2024" JetBrains Mono 10px ghost
+
+CARD 2 — PASSKEY BANNER (paper-deep bg, ochre left border 3px, radius-lg, 12px padding):
+Row: fingerprint icon 20px ochre left + text middle + arrow right.
+Text: "Set up passkey login" DM Sans 14px bold ink + "Log in faster with biometrics" 12px mute below.
+Arrow: chevron right 16px ink.
+(Only show if user doesn't have passkey. Annotate: "hidden once passkey set up")
+
+CARD 3 — STATS BAR (white fill, radius-xl, 16px padding, 4-column row with ghost dividers):
+Each stat centred:
+  Number: DM Sans 20px bold (credits in ochre, reputation in gold, others in ink)
+  Label: DM Sans 9px bold uppercase mute, 4px below number
+Stats Pro: 1,240 CREDITS · 385 REPUTATION · 6 BADGES · 48 DAILY LEFT
+Stats Citizen: 340 CREDITS · 120 REPUTATION · 2 BADGES · 38 DAILY LEFT
+
+CARD 4 — UPGRADE BANNER (CITIZEN VERSION ONLY):
+Ochre fill (#C5491F), radius-lg, 16px padding. Row layout.
+"Upgrade to Connect Pro" Fraunces 16px bold white left + 
+"Unlock perks, earn more" DM Sans 12px white below title.
+"Upgrade →" white outline pill button (DM Sans 12px bold white, 36px height, ink border white) right.
+
+CARD 5 — BADGES (white fill, radius-xl, 16px padding):
+"My Badges" DM Sans 14px bold ink left + "See all →" 13px ochre right.
+Badge chips (horizontal wrap, 2 rows max, 8px gap):
+Each chip: white fill, ghost border 1px, radius-full, 6px vertical 10px horizontal padding.
+  Emoji 14px + label DM Sans 12px bold ink.
+Pro badges: 🎨 Taste Maker · 💎 Gem Hunter · ✍️ Contributor · 🔥 Hot Take · 📸 Visual · ⭐ Featured
+Citizen badges: 💎 Gem Hunter · ✍️ Contributor
+
+CARD 6 — REFERRAL (white fill, radius-xl, 12px 16px padding, row):
+🔗 icon 20px ochre left + "moveee.com/r/zaramensah" JetBrains Mono 12px ink-soft + copy icon 20px right.
+
+CARD 7 — QUICK LINKS MENU (white fill, radius-xl, NO extra padding — list style):
+8 menu rows. Each: 52px height, 16px horizontal padding, ghost bottom border.
+Row: icon 20px ochre left (16px gap) + label DM Sans 15px ink + chevron right 12px ghost.
+Items: 💰 Wallet · 🎁 Perks · 🎟️ Coupons · 📊 Analytics · 📖 Magazine · ⚙️ Settings · 📧 Newsletters · 💎 Membership
+
+CARD 8 — HOW TO EARN (white fill, radius-xl, 16px padding, collapsible):
+Header row: "How to Earn Points" DM Sans 14px bold ink + collapse ▲ arrow right.
+Table (3 columns, DM Sans 12px):
+  Action | CR | REP
+  Publish a post | +10 | +5
+  Get 5 reactions | +5 | +2
+  Leave a comment | +2 | +1
+  Win daily game | +30 | 0
+  Refer a friend | +50 | +10
+Column headers: JetBrains Mono 10px bold mute. Rows: alternating paper-deep/white rows.
+
+Bottom nav: Me tab active (Pro = gold star-person icon, Citizen = standard person icon).
+
+Differences between Pro and Citizen frames:
+Pro: gold avatar border, CONNECT PRO badge, no upgrade banner, 6 badges, ochre credits number.
+Citizen: ghost avatar border, CONNECT CITIZEN badge, upgrade banner visible, 2 badges, no gold credits.
+
+Output 2 frames side by side.
+```
+
+---
+
+## 9. MEMBER SETTINGS (5 Tabs)
+
+---
+
+### PROMPT 9 — Member Settings All 5 Tabs
+
+```
+Senior mobile UX/UI designer — Moveee Connect member settings. iOS, 390×844px.
+White background for settings screens. Brand tokens as per design system.
+
+Design 5 frames — one per settings tab content.
+ALL 5 frames share the same header + tab selector at top.
+
+SHARED HEADER (56px + status bar):
+Back chevron (ink, 44px target) left + "Settings" DM Sans 15px bold ink centred.
+
+SHARED TAB SELECTOR (horizontal scroll, 44px height, white bg, ghost bottom border):
+5 tabs: Profile · Directory · Interests · Newsletters · Security
+Active: ochre 2px underline full tab width, ink DM Sans 14px bold.
+Inactive: no underline, mute DM Sans 14px.
+
+FRAME 1 — PROFILE TAB:
+AVATAR ROW (centred, 24px top, 24px bottom):
+Avatar XL 96px (Pro gold border) + camera icon overlay bottom-right (20px, white bg circle, ink icon)
+"Edit photo" DM Sans 12px ochre centred below.
+
+FORM SECTIONS (16px horizontal padding, 24px between sections):
+All inputs: 52px height, ghost 1px border, radius-lg 6px, white fill, DM Sans 15px ink, 16px padding.
+Label above each: DM Sans 11px mute, 4px gap.
+
+Identity: Display Name ("Zara Mensah" filled) · Email ("zara@example.com" read-only, lock icon, ghost text) · Phone (+44 prefix select + number)
+About: WhatsApp · Gender (segmented: Woman | Man | Non-binary | Prefer not to say — active = ink fill white) · Date of Birth (date input "Jan 15, 1994")
+Location: Nationality (flag emoji + "Nigerian" dropdown) · Country of Residence · City ("Lagos") · Occupation ("Creative Director")
+
+"Save changes" primary ochre button, full width, 52px, sticky bottom, 16px margin.
+
+FRAME 2 — DIRECTORY TAB:
+TOGGLE ROW (52px height, 16px padding, ghost bottom border):
+"Show in member directory" DM Sans 15px ink left + toggle switch (ochre when ON) right.
+"Let other members find and connect with you." DM Sans 12px mute, below label.
+
+BIO TEXTAREA (5-line min, 280 char limit):
+"Bio" label above. Below field: "127 / 280" JetBrains Mono 11px mute right-aligned.
+Placeholder: "Tell the community about yourself, your work, and your cultural interests..."
+
+DISCIPLINES GRID (3-column chip grid, 8px gap, 16px horizontal padding):
+"Select up to 5 disciplines" DM Sans 11px mute above grid.
+12 discipline chips (radius-full, 32px height, 10px horizontal padding, DM Sans 13px bold):
+Selected (3 of them): ink fill white text.
+Unselected: ghost border, ink-soft text.
+Chips: Music Production · Visual Art · Fashion · Film · Architecture · Photography · Literature · Visual Design · Tech · Food Culture · Sport · Travel
+
+SOCIAL LINKS SECTION:
+"Social Links" DM Sans 14px bold ink.
+Instagram: input with "@" prefix left (grey, DM Sans 14px ink-soft). Placeholder: "yourhandle"
+LinkedIn: "linkedin.com/" prefix label + input.
+Website: 🌐 icon + input placeholder "https://yoursite.com"
+
+FRAME 3 — INTERESTS TAB:
+"What are you into?" Fraunces 20px bold ink, 16px top padding.
+"Select at least 3 to personalise your Connect feed." DM Sans 14px mute, 4px below.
+
+INTERESTS GRID (2 columns, 12px gap, 16px horizontal padding, 16px top margin):
+16 interest cards (each: white fill, radius-xl, shadow-card, 72px height):
+Row layout: emoji 22px left (16px padding) + label DM Sans 14px bold ink middle + checkmark right.
+SELECTED state (6 of 16): ochre left border 3px, paper-deep bg #F5F5F5, ochre ✓ right.
+UNSELECTED: white bg, no left border, ghost ○ right.
+
+Interests: 🎵 Music · 🎬 Film · 👗 Fashion · 🏗️ Architecture · 📸 Photography · 
+✍️ Literature · 🍽️ Food & Drink · 🌍 Travel · 🎨 Visual Art · 🖥️ Tech Culture · 
+⚽ Sport · 🏙️ Visual Design · 🎪 Live Music · 🔊 Music Production · 🌙 Nightlife · 💡 Ideas
+
+"Save interests" primary ochre button, sticky bottom.
+
+FRAME 4 — NEWSLETTERS TAB:
+"Your Newsletters" Fraunces 20px bold ink.
+"Manage which newsletters you receive." DM Sans 14px mute, 4px below.
+
+2 newsletter cards (white fill, radius-xl, shadow-card, 16px padding, 16px gap):
+
+CARD 1 — GetMeLit (subscribed ON):
+Top-right: "SUBSCRIBED" DM Sans 9px bold uppercase success green pill.
+"GetMeLit" DM Sans 16px bold ink.
+"Weekly cultural digest — African arts, diaspora news, and cultural moments." DM Sans 13px ink-soft, 8px below.
+Toggle switch right: ON = ochre. (On 2nd row, space-between)
+"✉️ Next issue: Monday" JetBrains Mono 10px mute below toggle row.
+
+CARD 2 — Culture Drop (subscribed OFF):
+No "SUBSCRIBED" badge.
+"Culture Drop" DM Sans 16px bold ink.
+"Monthly curated drops from across the cultural landscape." DM Sans 13px ink-soft.
+Toggle: OFF = ghost.
+"✉️ Monthly · First Monday" JetBrains Mono 10px mute.
+
+FRAME 5 — SECURITY TAB:
+"Security" Fraunces 20px bold ink.
+
+SECTION — PASSWORD (white card, radius-xl):
+"Change Password" row: 52px height, lock icon 20px ochre left + "Change Password" DM Sans 15px ink + chevron right.
+"We'll send a reset link to your email" DM Sans 12px mute, 12px left indent, 8px below row.
+Ghost bottom border below row.
+
+SECTION — PASSKEYS (white card, radius-xl, 16px padding):
+Section header: "Passkeys" DM Sans 15px bold ink + "Log in faster with biometrics" DM Sans 12px mute below.
+16px gap.
+
+PASSKEY LIST (2 existing passkeys):
+Each row: fingerprint icon 24px ochre left + device name DM Sans 14px bold ink + 
+  "Added Jun 9, 2026" JetBrains Mono 11px mute below device name + 
+  trash delete icon 16px ghost right.
+Row 1: "iPhone 15 Pro"
+Row 2: "MacBook Pro"
+8px ghost bottom border between rows.
+
+"+ Add a new passkey" — ghost button, ink border 1px, full width, 44px height, radius-lg.
+Left: fingerprint icon 16px. DM Sans 14px ink. Centred.
+16px top margin.
+
+Output 5 frames in a horizontal row. All share the same top header and tab bar.
+```
+
+---
+
+## 10. WALLET, PERKS & COUPONS
+
+---
+
+### PROMPT 10A — Wallet Screen
+
+```
+Senior mobile UX/UI designer — Moveee Connect Wallet. iOS, 390×844px.
+Brand tokens: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D.
+
+FRAME 1 — WALLET HISTORY:
+Header (white, 56px + status bar): back chevron + "Wallet" centred.
+
+BALANCE HERO (white card, 24px padding, centred):
+"CULTURE POINTS" DM Sans 9px bold uppercase mute, 2px letter-spacing.
+"1,240" Fraunces 48px bold ink (large).
+"≈ £30.25 GBP" DM Sans 14px gold, 4px below balance.
+Stats row: "385 REP" · ghost divider · "48 CR today" — JetBrains Mono 12px mute each, 24px top margin.
+
+TABS (44px, white bg, ghost bottom border):
+"History" (active, ochre underline) · "Cash Out"
+
+SECTION HEADER "June 2026" — JetBrains Mono 10px bold uppercase mute, paper-warm bg, 32px height, 16px padding. Sticky.
+
+LEDGER ROWS (white bg, 64px height, 16px padding, ghost bottom border):
+Left circle icon (32×32px): 
+  Earn = ochre fill, white ↑ arrow 16px.
+  Spend = paper-deep fill, ink ↓ arrow 16px.
+Middle text: source label DM Sans 14px bold ink + date JetBrains Mono 11px mute below.
+Right: amount DM Sans 16px bold (positive = ochre "+20 CR", negative = error red "–50 CR").
+
+Show 6 entries:
++50 CR · Referral bonus · Jun 9
++10 CR · Post published · Jun 8
+–50 CR · Perk redeemed · Jun 7
++20 CR · Post validated · Jun 7
++30 CR · Daily trivia · Jun 6
++10 CR · Post published · Jun 5
+
+FRAME 2 — WALLET CASH OUT (GBP):
+Same header + balance hero + tabs (Cash Out tab active).
+
+White card, 24px padding:
+"Credits to cash out" DM Sans 12px mute label.
+Large credit input: Fraunces 32px bold ink centred. "500" shown.
+Slider below: full width, 8px height radius-full. Ghost track, ochre fill (40%), ochre circle thumb 20px.
+"Min 100 · Max 1,240" JetBrains Mono 10px mute centred.
+
+FEE CARD (paper-deep bg, radius-lg, 16px padding, 16px margin top):
+"30% processing fee" DM Sans 13px mute.
+"You receive: 350 CR equivalent" DM Sans 15px bold ink, 8px below.
+"≈ £8.55 GBP" DM Sans 14px gold.
+
+CURRENCY SEGMENTED CONTROL: "GBP · USD · NGN" — active GBP: ink fill white. Others: ghost border. Radius-lg each, 40px height.
+
+BANK FORM (24px top margin, inputs with labels as per standard style):
+Account Name (text input) · Account Number (8 digits) · Sort Code (XX-XX-XX format)
+
+"Request Cash Out" primary ochre button, full width, 52px.
+"Processed within 5 business days. 30% fee applies." DM Sans 11px mute centred, 12px margin.
+
+Output 2 frames side by side.
+```
+
+---
+
+### PROMPT 10B — Perks & Coupons
+
+```
+Senior mobile UX/UI designer — Moveee Connect Perks and Coupons. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D.
+
+FRAME 1 — PERKS BROWSE:
+Header: back chevron + "Partner Perks" centred.
+Balance banner (paper-warm bg, 64px, 16px padding): "1,240 CR available" DM Sans 15px bold ink + ★ ochre icon. Right: "Earn more →" DM Sans 12px ochre.
+
+SUCCESS BANNER (white card, radius-lg, success green left border 3px, 16px padding):
+"✅ Perk redeemed!" DM Sans 14px bold ink + "You spent 150 CR. Balance: 1,090 CR" 13px mute.
+"View in Coupons →" DM Sans 13px ochre right-aligned.
+
+PERK GRID (2 columns, 12px gap, 16px horizontal padding):
+6 perk cards:
+
+PERK CARD (white fill, radius-xl, shadow-card, 16px padding):
+Partner logo area: 50×30px placeholder (grey rect) centred.
+Partner name: DM Sans 10px bold uppercase mute, centred.
+Perk title: DM Sans 14px bold ink, 2 lines, centred, 8px top margin.
+Cost badge: ochre fill pill (#C5491F), "150 CR" DM Sans 11px bold white, centred, 8px top margin.
+Redeem button: "Redeem" ochre fill, full width, 36px height, radius-full, DM Sans 13px bold white. 8px top.
+
+SOLD OUT CARD variant: same but button replaced by "Sold Out" chip (ghost border, ghost text, 36px). Card slightly muted.
+
+6 cards: 
+- Bisi Ceramics — "10% off any purchase" — 150 CR — Available
+- Aké Books — "Free delivery on first order" — 80 CR — Available
+- The Tuck Shop — "Free snack with purchase" — 50 CR — Sold Out
+- Lagos Creative Hub — "Day pass for coworking" — 200 CR — Available
+- House of Zuri — "15% off fashion items" — 120 CR — Available
+- Afrofutures Mag — "1 year digital subscription" — 300 CR — Available
+
+FRAME 2 — COUPONS (active coupon):
+Header: back chevron + "My Coupons" centred.
+
+COUPON CARD (white fill, radius-xl, shadow-card, 24px padding, 16px horizontal margin):
+TOP SECTION (24px padding):
+"BISI CERAMICS" DM Sans 9px bold uppercase mute.
+"10% off any purchase" DM Sans 18px bold ink, 8px top margin.
+"ACTIVE" success green pill badge, right-aligned in same row as title.
+"Expires in 3 days · 14 Jun 2026" DM Sans 12px warning orange (#E65100), 8px below.
+
+QR CODE AREA (centred, 200×200px):
+Large QR code pattern (detailed checkered vector QR placeholder).
+"Show this code in-store" JetBrains Mono 10px mute, 8px below QR.
+"BISI-X7K29M" JetBrains Mono 16px bold ink, 2px letter-spacing, centred.
+
+TICKET PERFORATION LINE: dashed ghost line full width (segment: 4px dash, 4px gap), 20px vertical margin.
+
+FOOTER SECTION (16px padding):
+"Present this QR code to the partner at point of sale to receive your discount." DM Sans 12px mute.
+
+EXPIRED COUPON CARD (below active card):
+Same structure. QR in greyscale. "EXPIRED" error red pill badge. "Expired Jun 5, 2026" mute text.
+QR code area: 50% opacity, diagonal "EXPIRED" watermark text in ghost colour across QR area.
+
+FRAME 3 — COUPONS EMPTY STATE:
+Header same. Full paper-warm bg.
+Centred content:
+QR code outline icon (64px, ghost colour, outline only).
+"No coupons yet" Fraunces 22px bold ink, 20px top margin.
+"Redeem partner perks to get your coupons here." DM Sans 14px mute, centred, max 260px wide.
+"Browse Perks →" primary ochre button (280px max width, 52px height, pill), 24px top margin.
+
+Output 3 frames.
+```
+
+---
+
+## 11. MEMBER DIRECTORY & PUBLIC PROFILES
+
+---
+
+### PROMPT 11 — Directory & Profile Screens
+
+```
+Senior mobile UX/UI designer — Moveee Connect member directory. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D.
+
+FRAME 1 — MEMBER DIRECTORY:
+Header: back chevron + "Member Directory" centred.
+
+SEARCH BAR (white bg, 48px, 16px padding, ghost bottom border):
+🔍 icon 16px mute left + "Search by name, discipline or city" DM Sans 14px ghost + filter icon right.
+
+FILTER CHIPS (horizontal scroll, 44px):
+"All Disciplines ▼" ghost border pill + "All Locations ▼" ghost border pill.
+Active filter example (third pill): "🎵 Music Production ✕" ochre fill white text.
+
+"128 members" JetBrains Mono 10px mute, 16px padding, 8px top margin.
+
+MEMBER GRID (2 columns, 12px gap, 16px horizontal padding):
+8 member cards showing variety:
+
+MEMBER CARD (white fill, radius-xl, shadow-card, 12px padding, centred layout):
+Avatar MD (44px) centred: Pro = gold border, Citizen = ghost border.
+Display name: DM Sans 13px bold ink, centred, 1 line max.
+Handle: "@handle" JetBrains Mono 10px mute, centred.
+Location: "📍 Lagos, NG" DM Sans 11px mute, centred.
+Disciplines: max 2 chips (ghost border, radius-full, 9px DM Sans bold, 4px ver 8px hor padding, 4px gap).
+  Third replaced by "+2 more" ghost chip.
+Social icons: row centred (IG, LinkedIn, Globe — 28px each, ghost colour, 8px gap).
+
+Show 8 varied cards:
+1. "Adaeze Obi" @adaeze.obi · Lagos NG · Pro (gold border) · Photography + Visual Art
+2. "Kemi Adeyemi" @kemiad · London UK · Citizen · Music Production + Fashion
+3. "Seun Falowo" @seunf · Accra GH · Pro · Film + Literature + Architecture (show +1)
+4. "Nkechi Eze" @nkechieze · New York US · Citizen · Visual Design + Tech
+5. "Kofi Mensah" @kofi.m · Toronto CA · Pro · Architecture + Photography
+6. "Yewande Olao" @yewande · Nairobi KE · Citizen · Literature + Food Culture
+7. "Marcus T." @marcust · London UK · Citizen · Music Production + Live Music
+8. "Zara Mensah" @zaramensah · Lagos NG · Pro · Fashion + Creative Direction +2
+
+FRAME 2 — PUBLIC PROFILE:
+HERO AREA (full bleed, 200px): paper-warm + ochre gradient pattern (warm abstract).
+Floating back button: white 40px circle, ink chevron, top-left.
+
+PROFILE CARD (white bg, radius-2xl top corners, starts 40px overlap with hero):
+AVATAR: XL 96px, centred, Pro gold border, overlapping hero.
+Share button: ghost circle 36px, top-right corner of card, share icon.
+
+IDENTITY (centred, 16px horizontal padding):
+CONNECT PRO badge (gold pill, ★, centred), 12px top margin.
+"Adaeze Obi" Fraunces 24px bold ink, centred, 8px below.
+"@adaeze.obi" DM Sans 13px mute centred.
+"Creative Director + Photographer" DM Sans 14px ink-soft centred, 4px below.
+"📍 Lagos, Nigeria" DM Sans 12px mute centred.
+"Member since March 2024" JetBrains Mono 10px ghost centred.
+
+BADGES SHELF (horizontal scroll, 16px top margin):
+Chips (ghost border, radius-full, 6px ver 10px hor padding, 8px gap):
+🎨 Taste Maker · 💎 Gem Hunter · ✍️ Culture Contributor · 🔥 Hot Take · 📸 Visual
+
+SOCIAL LINKS (centred row, 24px gap, 16px top margin):
+3 icon circles (36×36px, paper-deep bg, radius-full): 📷 · 💼 · 🌐 (ghost icons, tappable)
+
+TABS (44px, ghost bottom border, 16px top margin):
+"Community" (active, ochre underline) · "Portfolio"
+
+COMMUNITY POSTS LIST (3 mini-cards, 16px horizontal padding, 8px gap):
+Each: white fill, radius-lg, 16px padding.
+Template badge + "3 days ago" JetBrains Mono 10px mute right.
+Content: DM Sans 13px ink-soft, 2 lines.
+Reaction counts: ❤️ 12 · 🔥 5 · 👏 8 — JetBrains Mono 10px mute.
+
+"Load more posts" ghost link, centred, 12px mute, 16px margin.
+
+Output 2 frames side by side.
+```
+
+---
+
+## 12. NOTIFICATIONS & ANALYTICS
+
+---
+
+### PROMPT 12A — Notifications Screen
+
+```
+Senior mobile UX/UI designer — Moveee Connect notifications. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white bg, ochre #C5491F, gold #B38238, ink #14110D.
+
+FRAME 1 — NOTIFICATIONS LIST:
+Header: back chevron + "Notifications" centred + "Mark all read" DM Sans 13px ochre right.
+
+SECTION HEADER "Today" — JetBrains Mono 9px bold uppercase mute, paper-warm bg sticky header, 32px height.
+
+NOTIFICATION ROWS (white bg, 72px min height, 16px padding, ghost bottom border):
+Row layout: icon circle 40px left + text block middle + time right + optional left border accent.
+
+5 rows — today section:
+
+1. CREDIT EARNED:
+  Circle: ochre fill, white coin/star icon 18px.
+  Left border: 3px ochre.
+  "💰 +20 Culture Points!" DM Sans 14px bold ink.
+  "Your post was validated by the editorial team." DM Sans 13px mute, 4px below.
+  "2h ago" JetBrains Mono 10px mute, right-aligned.
+  Unread indicator: none (already read).
+
+2. BADGE UNLOCKED (UNREAD):
+  Circle: gold fill (#B38238), white trophy icon.
+  Left border: 3px gold.
+  "🏆 New badge unlocked!" DM Sans 14px bold ink.
+  "You earned the 'Taste Maker' badge 🎨" DM Sans 13px mute.
+  "5h ago" mono mute right.
+  Unread dot: ochre 8px circle right side, above time.
+
+3. COMMENT RECEIVED (UNREAD):
+  Circle: success green fill, white speech bubble icon.
+  No left border (different type).
+  "💬 New comment on your post" DM Sans 14px bold ink.
+  "Kemi replied: 'This is the spot I needed! 🔥'" DM Sans 13px mute, 1 line truncated.
+  "Yesterday" mono mute right.
+  Unread dot: ochre 8px.
+
+4. PERK EXPIRING:
+  Circle: warning orange fill (#E65100), white clock icon.
+  Left border: 3px warning orange.
+  "⏰ Perk expiring soon" DM Sans 14px bold ink.
+  "Your Bisi Ceramics coupon expires in 2 days." DM Sans 13px mute.
+  "Yesterday" mono mute.
+
+5. SYSTEM:
+  Circle: ghost fill, ink bell icon.
+  "📢 3 new events in your city" DM Sans 14px bold ink.
+  "Upcoming events in Lagos this week." DM Sans 13px mute.
+  "2 days ago" mono mute.
+
+SECTION HEADER "Earlier" — same style.
+
+3 older rows (all read, standard styling, no left borders, slightly less contrast):
+  — cashout_approved: "✅ Cash out approved" · "Your 500 CR request was approved." · "Jun 8"
+  — post_validated: "📝 Post earned +10 CR" · "Your Hidden Gem post was featured." · "Jun 7"
+  — badge_unlocked: "💎 Badge unlocked: Gem Hunter" · "You've found 5 hidden gems!" · "Jun 6"
+
+FRAME 2 — EMPTY STATE:
+Header same. Paper-warm background.
+Centred: bell outline icon 64px ghost + "You're all caught up" Fraunces 22px bold ink + 
+"New activity will appear here." DM Sans 14px mute.
+
+Output 2 frames.
+```
+
+---
+
+### PROMPT 12B — Analytics Dashboard
+
+```
+Senior mobile UX/UI designer — Moveee Connect member analytics. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D.
+
+Header: back chevron + "My Analytics" centred.
+
+SUMMARY STATS (white card, 4-column row, 16px padding, dividers between cols):
+Credits: "1,240" DM Sans 22px bold ochre + "CREDITS" 9px uppercase mute below
+Reputation: "385" DM Sans 22px bold gold + "REPUTATION" label
+Posts: "12" DM Sans 22px bold ink + "POSTS" label
+Badges: "6" DM Sans 22px bold ink + "BADGES" label
+
+SECTION 1 — Credits chart:
+Section label row: "Credits · Last 30 Days" DM Sans 14px bold ink left + "June 2026" DM Sans 12px mute right.
+White card, 16px padding, radius-xl.
+
+BAR CHART (SVG, full width, 160px height inside card):
+X-axis: date labels every ~7 days (JetBrains Mono 10px mute): Jun 1 · Jun 8 · Jun 15 · Jun 22 · Jun 30
+Y-axis: 0 · 20 · 40 · 60 (JetBrains Mono 10px mute, left side)
+Grouped bars: ~30 day columns, each day = 2 bars side by side:
+  Left bar (earned): ochre #C5491F fill — varying heights (0 to max)
+  Right bar (spent): rust red #9B3C2A fill — shorter heights on redemption days
+  Bar width: 6px each, 2px gap between pair, 8px gap between day groups
+Show realistic data variation — some days 0, some days 50+ earned.
+Legend: ochre square "Earned" · rust square "Spent" — DM Sans 11px mute, 8px gap, centred below chart.
+
+SECTION 2 — Reputation chart:
+"Reputation · Last 6 Months" label row.
+White card, 16px padding, radius-xl.
+
+LINE CHART (SVG, full width, 140px height):
+Area fill below line: gold (#B38238) at 12% opacity.
+Line stroke: gold #B38238, 2px.
+Data points: Jan 80, Feb 120, Mar 165, Apr 220, May 310, Jun 385.
+Dots: gold filled circles 5px radius at each data point.
+X-axis: month labels Jan · Feb · Mar · Apr · May · Jun (JetBrains Mono 10px mute).
+Y-axis: 0 · 100 · 200 · 300 · 400 (JetBrains Mono 10px mute, left).
+Tooltip on "Jun" data point: vertical dashed line + gold pill tooltip "385 REP" above.
+
+SECTION 3 — Top Posts:
+"Top Posts · Last 90 days" label row.
+White card, 16px padding, radius-xl.
+
+Ranked list (3 items, 12px gap, ghost bottom border between):
+Each: row layout —
+  Rank: DM Sans 14px bold ochre "1." (24px wide)
+  Content: post preview DM Sans 13px ink-soft 2 lines truncated
+  Engagement: JetBrains Mono 10px mute right "❤️42 · 💬12"
+
+#1: "Finally found the dopest vinyl shop in South London. If you know, you know..."
+#2: "Thread on the rise of Afro-Indigenous fashion movements in 2026..."
+#3: "This underground suya spot changed my life. Full review 🔥"
+
+Output 1 full-length scrollable screen frame.
+```
+
+---
+
+## 13. OVERLAYS & MICRO-INTERACTIONS
+
+---
+
+### PROMPT 13 — Modals, Sheets & Toast Notifications
+
+```
+Senior mobile UX/UI designer — Moveee Connect overlay components. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white fills, ochre #C5491F, ink #14110D, DM Sans + Fraunces.
+Show all components on a large canvas with a dimmed background (ink #14110D at 45% opacity).
+
+Create 9 overlay components, labelled clearly:
+
+1. BOTTOM SHEET — New Post Template Picker (450px height):
+White fill, radius-2xl (20px) top corners only, shadow-modal.
+Drag handle: 32×4px ghost pill, 12px from top, centred.
+"Choose a post type" DM Sans 15px bold ink, 20px padding top.
+3×3 grid of template cards (72×72px each, 12px gap, 16px horizontal padding):
+  Each: white fill, radius-xl, shadow-card, centred:
+    Emoji 24px + label DM Sans 12px bold ink below (8px gap)
+    Active state: ochre 2px border
+  Row 1: ✏️ Post · 💎 Hidden Gem · 💬 Cultural Take
+  Row 2: 🍽️ Food Review · 🎨 Creative Showcase · 📊 Poll
+  Row 3: 🗺️ Itinerary · 📅 Event · 💬 Quote
+"Cancel" ghost link DM Sans 14px mute centred, 20px below grid.
+Safe area padding at bottom.
+
+2. BOTTOM SHEET — Report Post (280px height):
+"Report this post" DM Sans 16px bold ink, 24px padding.
+3 radio rows (52px height, 16px padding, ghost bottom border):
+  Radio circle left (24px, ghost border — selected = ochre fill) + label DM Sans 15px ink.
+  Options: "Spam or misleading" · "Harassment or hate speech" · "Inappropriate content"
+"Submit report" primary ochre button, full width, 48px, 20px padding.
+
+3. CONFIRM REDEEM DIALOG (centred, 320×230px):
+White fill, radius-2xl, shadow-modal.
+Centred content, 24px padding:
+"Redeem this perk?" DM Sans 16px bold ink.
+"10% off at Bisi Ceramics" Fraunces 18px ink, 8px below.
+"This will spend 150 CR. Balance: 1,240 → 1,090 CR" DM Sans 13px mute, 8px below.
+Button row (2 equal columns, 12px gap, 16px top margin):
+  "Cancel" white fill, ink border, radius-full. "Confirm" ochre fill, white text, radius-full. Both 48px height.
+
+4. SIGN OUT CONFIRM DIALOG:
+"Sign out?" DM Sans 16px bold ink centred.
+"You'll need to sign in again to access your account." DM Sans 14px mute centred.
+Button row: "Cancel" secondary · "Sign out" destructive (#C62828 fill, white text).
+
+5. PASSKEY PROMPT SHEET (280px height):
+White fill, radius-2xl top corners, drag handle.
+Fingerprint icon (iOS-style): 48×48px, face ID / fingerprint outline in system blue (#007AFF), centred.
+"Moveee Connect" DM Sans 12px mute centred.
+"Sign in with Face ID" DM Sans 16px bold ink centred, 12px below icon.
+"Use your biometric to log in securely." DM Sans 14px mute centred, 8px below.
+"Cancel" ghost link DM Sans 14px mute centred, 16px below.
+System blue "Use Face ID" is NOT shown — this is the Moveee-branded wrapper, Apple UI handles the biometric trigger.
+
+6. IMAGE LIGHTBOX OVERLAY (full screen, black bg):
+Full black fill, 390×844px.
+Floating top bar: × close white circle (40px) top-left + "2 / 5" white JetBrains Mono 13px top-right.
+Centred image: 390×340px approx, object-fit contain.
+Bottom dots: 5 dots row, centred — active = white 8px circle, inactive = white 30% opacity 6px circle. 20px from bottom.
+
+7. TOAST NOTIFICATIONS — 4 variants (horizontal row, 343px wide each):
+White fill, radius-lg, shadow-modal, 16px padding, row layout.
+Progress bar at bottom (full width, 4px height, radius-full): fills left-to-right as auto-dismiss timer counts.
+
+  SUCCESS: success green left border 4px, green circle ✓ icon 20px left + "Post published! You earned +10 CR" DM Sans 14px bold ink. Progress bar: success green.
+  ERROR: error red left border, red × icon + "Something went wrong. Please try again." Progress bar: error red.
+  INFO: ochre left border, ℹ️ icon + "Copied to clipboard" DM Sans 14px. Progress bar: ochre.
+  WARNING: warning orange left border, ⚠️ icon + "Your Bisi Ceramics perk expires in 2 days!" DM Sans 14px. Progress bar: warning orange.
+
+8. "FOR YOU" EXPLAINER SHEET (first-time, 240px height):
+White fill, radius-2xl top corners, drag handle.
+"✦" ochre symbol, DM Sans 24px bold, centred.
+"For You feed" Fraunces 20px bold ink, centred, 8px below.
+"We rank your feed based on your interests and engagement. The more you post and react, the better it gets." DM Sans 14px mute centred, max 280px, 12px below title.
+"Set up your interests →" primary ochre button, max 280px, 48px height, 20px top margin.
+"Maybe later" DM Sans 13px ghost link centred, 12px below button.
+
+9. COMMUNITY POST CONTEXT MENU (appears on long-press, inline sheet 200px width):
+Appears near tapped card, white fill, radius-xl, shadow-modal. 4 rows:
+  📋 Copy link · DM Sans 14px ink · 44px height
+  🔖 Save post · 14px ink · 44px
+  📤 Share · 14px ink · 44px
+  ⚑ Report · 14px error red · 44px (destructive action)
+Ghost divider before Report row.
+
+Arrange all 9 components on a large canvas with the dimmed app background behind them. 4-column layout.
+```
+
+---
+
+## 14. DARK MODE & SKELETON STATES
+
+---
+
+### PROMPT 14A — Dark Mode Core Screens
+
+```
+Senior mobile UX/UI designer — Moveee Connect dark mode. iOS, 390×844px.
+Redesign 3 key screens in dark mode. Maintain all layout and spacing — only change colours.
+
+DARK MODE PALETTE (use these exact values — do not use generic greys):
+Background: #1A1612 (warm near-black with brown undertone — NOT pure black)
+Card surface: #242018 (slightly lighter)
+Elevated surface: #2D2820 (modals, sheets)
+Border: #3D3530 (subtle separators)
+Text primary: #F3ECE0 (paper-warm — same warm tone as light mode background, inverted)
+Text secondary: #9E9288 (warm muted)
+Text ghost/disabled: #5C5349 (very muted)
+Ochre (dark mode): #D4603A (slightly brighter for visibility on dark bg)
+Gold (dark mode): #C9963F (slightly brighter)
+Success: #4ADE80
+Error: #F87171
+Warning: #FB923C
+
+FRAME 1 — CONNECT FEED (dark mode):
+Background: #1A1612
+Header: #242018 fill, border #3D3530
+"moveee connect" wordmark: "moveee" text #F3ECE0, "connect" gold #C9963F
+Notification bell: #F3ECE0 icon, ochre (#D4603A) badge
+Feed cards (editorial): no shadow, border-bottom #3D3530
+Feed cards (community): #242018 fill, shadow removed, border #3D3530
+All text → #F3ECE0 (primary) / #9E9288 (secondary) / #5C5349 (ghost)
+Type badges: adjust to dark-friendly — add slight opacity to bg or darken bg, keep text same or whiten
+Ochre fills (active pills, FAB): use #D4603A
+Bottom nav: #242018 fill, active tab #D4603A, inactive #5C5349
+
+FRAME 2 — ARTICLE DETAIL (dark mode):
+Content area: #1A1612
+White bg → #242018 (card surface)
+Body text: #F3ECE0 (paper-warm) for readability
+Pull quote border: #D4603A (ochre dark mode)
+Author row card: #242018
+Bottom bar: #242018 fill, border #3D3530
+
+FRAME 3 — MEMBER DASHBOARD (dark mode):
+Background: #1A1612
+All white cards → #242018
+Stats bar dividers: #3D3530
+Badge chips: #2D2820 fill, #3D3530 border
+Quick links rows: #242018 bg, #3D3530 separators
+Passkey banner: #242018 with #D4603A left border
+Balance/credits number: #D4603A (ochre)
+Reputation number: #C9963F (gold)
+Tier badge CONNECT PRO: gold #C9963F fill (unchanged, slightly brighter)
+Avatar Pro border: #C9963F
+
+Also create FRAME 4 — DARK MODE SETTINGS TOGGLE:
+Show the "Appearance" section in Member Settings:
+"Appearance" DM Sans 14px bold #F3ECE0, 16px padding.
+3 option rows (52px height, 16px padding, #3D3530 bottom border):
+  ○ Light · ● Dark (active — ochre radio fill, "Dark" bold) · ○ System default
+Radio: 20px circle, selected = #D4603A fill, unselected = #3D3530 border only.
+Text: #F3ECE0 primary, #9E9288 secondary.
+Background for this section: #242018.
+
+Output 4 frames in a row.
+```
+
+---
+
+### PROMPT 14B — Loading & Skeleton States
+
+```
+Senior mobile UX/UI designer — Moveee Connect loading states. iOS, 390×844px.
+Background: paper-warm #F3ECE0. Use ghost colour #C8BFB0 for skeleton shapes.
+
+Skeleton elements use: 
+Base colour #EBE5DC (slightly darker than paper-warm)
+Shimmer highlight #F3ECE0 (same as background — creates a subtle sweep effect)
+All skeleton shapes: rounded rectangles, radius-lg (6px) or radius-full for avatars/pills.
+
+Generate 5 frames:
+
+FRAME 1 — CONNECT FEED SKELETON:
+Header: white bar with 2 grey rects (wordmark placeholder 80px wide, 2 icon placeholders right)
+Filter row: 4 ghost pill shapes horizontal (radius-full, 32px height, varying widths)
+3 card skeletons (no box — separator style):
+  Card A: full-width image rect (16:9, ghost, radius-md) + below: 3 text lines (80%, 60%, 40% width)
+  Card B (community): avatar circle (44px ghost) + 2 text rects beside it (name+handle) + 
+    3 text body lines + 2-image grid placeholder
+  Card A again with slight variation
+
+FRAME 2 — ARTICLE SKELETON:
+Hero image rect: full width × 280px, ghost, radius-2xl top corners.
+Below: eyebrow rect (40×8px) + title rects 2 lines (90%, 70%) + 
+  author row (24px circle + 2 rects) + 6 body text lines (95%, 85%, 90%, 70%, 95%, 60%)
+
+FRAME 3 — MEMBER DASHBOARD SKELETON:
+Hero card: large circle (96px ghost) + 3 text rects stacked right.
+Stats bar: 4 equal-width rect blocks in a row (ghost, radius-md).
+Badges row: 6 pill shapes (ghost, radius-full, varying widths 80-120px).
+Menu list: 7 rows of 16px-height ghost rects + small chevron rect right.
+
+FRAME 4 — GAMES HUB SKELETON:
+2×2 grid of card placeholders:
+Each: full rect top half (ghost, radius-xl) + 2 text lines bottom half.
+
+FRAME 5 — FULL PAGE LOADING SCREEN:
+Paper-warm full background.
+Centred:
+"moveee" Fraunces 20px bold ink + "connect" DM Sans 9px gold below.
+Ochre animated ring spinner (32px diameter, 2px stroke, 270° arc visible at this frame state)
+"Loading..." JetBrains Mono 10px mute, 12px below spinner.
+
+ANNOTATION on all skeleton frames:
+Add a banner note: "Shimmer animation: gradient sweeps left → right, 1.4s duration, ease-in-out.
+Colours: #EBE5DC base → #F5F0E8 highlight → #EBE5DC base."
+
+Output 5 frames. Stack vertically for easier reading.
+```
+
+---
+
+## 15. FOLLOW-UP REFINEMENT PROMPTS
+
+*Use these short prompts after generation to refine specific elements without spending full prompt credits.*
+
+---
+
+### After generating any screen — standard refinements:
+
+```
+Adjust the horizontal padding on all content to 16px (currently looks wider).
+```
+```
+The card border radius should be 12px on all white cards — increase from current value.
+```
+```
+Change all placeholder grey colours to use #C8BFB0 (ghost) for borders and #7A6F5C (mute) for secondary text — 
+they should have a warm brown undertone, not pure neutral grey.
+```
+```
+The app background between cards should be #F3ECE0 (paper-warm) — change from white to this warm off-white.
+```
+```
+The primary CTA button colour should be #C5491F (warm terracotta-orange) — it should NOT look like a generic red or orange.
+Make it feel like a warm, earthy terracotta. Desaturate slightly if needed.
+```
+```
+All interactive elements (buttons, nav items, filter pills) must have a minimum height of 44px for iOS touch targets.
+Increase any that are shorter.
+```
+```
+The Fraunces font for all headlines should feel editorial — increase letter-spacing to -0.5px on sizes 24px and above.
+```
+```
+Add a safe area inset of 34px at the bottom of the screen for the iOS home indicator.
+The bottom navigation bar should sit above this safe area.
+```
+```
+The muted text colour should be #7A6F5C — it should look like a warm olive-brown, not grey.
+Update all secondary text to this value.
+```
+```
+The gold colour (#B38238) should ONLY appear on Connect Pro tier elements: Pro badge, avatar border, Pro member icons.
+Remove it from any other UI elements.
+```
+
+### Screen-specific refinements:
+
+**Feed:**
+```
+Make the "For You" toggle pill use ochre fill (#C5491F) when active with white text. 
+When inactive: transparent fill, 1px #C8BFB0 border, #3A342B ink-soft text.
+```
+
+**Post cards:**
+```
+Community post cards should have a white (#FFFFFF) background with a 
+0px 1px 3px rgba(20,17,13,0.08) shadow — not paper-warm. They float above the paper-warm feed background.
+```
+
+**Games:**
+```
+The trivia correct answer state should use a full-width background colour #EDF7ED (light success green)
+and a 2px #2D6A4F border on the option row — NOT just a colour change on the text.
+```
+
+**Member dashboard:**
+```
+The stats bar should show credits in #C5491F (ochre), reputation in #B38238 (gold), 
+and the other stats (badges, daily) in #14110D (ink). Only credits and reputation get colour.
+```
+
+---
+
+## APPENDIX — SCREEN INVENTORY
+
+Complete list of screens to design:
+
+| # | Screen | Section | Priority |
+|---|--------|---------|----------|
+| 1 | Splash | Auth | P0 |
+| 2-4 | Onboarding (3 steps) | Auth | P0 |
+| 5 | Login | Auth | P0 |
+| 6 | Register | Auth | P0 |
+| 7 | Verify Email | Auth | P0 |
+| 8-9 | Connect Feed (default + For You) | Feed | P0 |
+| 10-12 | Post Detail + Comments + Keyboard | Feed | P1 |
+| 13-16 | New Post Composer (4 templates) | Feed | P1 |
+| 17 | Magazine Home | Magazine | P1 |
+| 18 | Article Detail | Magazine | P1 |
+| 19 | Events List | Events | P1 |
+| 20 | Event Detail | Events | P1 |
+| 21 | RSVP Success | Events | P2 |
+| 22 | Games Hub | Games | P1 |
+| 23 | Trivia Question | Games | P1 |
+| 24 | Trivia Answer Revealed | Games | P1 |
+| 25 | Trivia Complete | Games | P1 |
+| 26 | Already Played | Games | P2 |
+| 27-28 | Member Dashboard (Pro + Citizen) | Member | P0 |
+| 29-33 | Settings (5 tabs) | Member | P1 |
+| 34-35 | Wallet (History + Cash Out) | Member | P1 |
+| 36 | Perks Browse | Member | P1 |
+| 37-39 | Coupons (Active + Expired + Empty) | Member | P1 |
+| 40 | Member Directory | Directory | P1 |
+| 41-42 | Public Profile (Community + Portfolio tab) | Directory | P2 |
+| 43-44 | Notifications (List + Empty) | Notifications | P1 |
+| 45 | Analytics Dashboard | Analytics | P2 |
+| 46-50 | Overlay components (9 types) | Overlays | P1 |
+| 51-54 | Dark mode (4 screens) | Dark Mode | P2 |
+| 55-59 | Skeleton/loading states (5 types) | Loading | P2 |
+
+**Total: ~59 screens / states**
+
+---
+
+*Generated for travellertope/moveee — Moveee Connect mobile app (apps/mobile/)*
+*Codebase reference date: June 2026*
+*Brand system: Fraunces + DM Sans + JetBrains Mono · Ochre #C5491F · Gold #B38238 · Paper-warm #F3ECE0*
