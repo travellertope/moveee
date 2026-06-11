@@ -6,7 +6,7 @@
  *  - Engagement        (0–20, reactions + comments)
  */
 
-import type { FeedItem } from "./unified-feed";
+import type { FeedItem } from "@/lib/unified-feed";
 
 /** Return a 0–100 relevance score for a single item. */
 export function scoreItem(item: FeedItem, interestTagSet: Set<string>): number {

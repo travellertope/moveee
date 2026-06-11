@@ -22,6 +22,11 @@
       }
     ],
     "paths": {
+      "@/lib/*": [
+        "../../packages/shared/lib/*",
+        "../../packages/utils/*",
+        "./lib/*"
+      ],
       "@/*": [
         "../../packages/shared/*",
         "../../packages/utils/*",
