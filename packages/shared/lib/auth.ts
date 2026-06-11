@@ -3,6 +3,10 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET environment variable is not set. Authentication cannot start.");
+}
+
 export interface CultureUser {
   id: string;
   username: string;
@@ -250,4 +254,18 @@ export const authOptions: NextAuthOptions = {
     error: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === "production"
+        ? "__Secure-next-auth.session-token"
+        : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax" as const,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        domain: process.env.NODE_ENV === "production" ? ".themoveee.com" : undefined,
+      },
+    },
+  },
 };

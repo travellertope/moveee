@@ -57,10 +57,9 @@ export async function POST(req: NextRequest) {
   try {
     const res = await fetch(`${WP_URL}/wp-json/culture/v1/register`, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${API_SECRET}`,
-        "X-Culture-API-Secret": API_SECRET || "",
       },
       body: JSON.stringify(body),
       cache: "no-store",
