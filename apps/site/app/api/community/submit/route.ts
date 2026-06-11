@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const {
-    text, imageUrl, tag, region, authorTier, authorAvatar, linkUrl, ogTitle, ogDescription, ogImage,
+    text, imageUrl, tag, region, authorAvatar, linkUrl, ogTitle, ogDescription, ogImage,
     template_type, linked_directory_id, star_rating, location_name, location_lat, location_lng,
     poll_options, poll_expires_at, itinerary_stops, gallery_images, video_url,
     food_dish_name, food_rating_taste, food_rating_value, food_rating_vibe,
@@ -31,7 +31,6 @@ export async function POST(req: NextRequest) {
     imageUrl?: string;
     tag?: string;
     region?: string;
-    authorTier?: string;
     authorAvatar?: string;
     linkUrl?: string;
     ogTitle?: string;
@@ -127,7 +126,7 @@ export async function POST(req: NextRequest) {
         community_image_url:     imageUrl?.trim() || "",
         community_tag:          validTag ?? "",
         community_region:       region?.trim() || "",
-        community_author_tier:  (authorTier?.trim() || sessionTier) || "",
+        community_author_tier:  sessionTier,
         community_link_url:     linkUrl?.trim() || "",
         community_og_title:     ogTitle?.trim() || "",
         community_og_description: ogDescription?.trim() || "",
