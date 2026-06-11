@@ -35,16 +35,46 @@ fallback. Members have two tiers: **Connect Citizen** (free, `citizen` in DB)
 and **Connect Pro** (paid, `patron` in DB — the DB value is `patron` but all
 user-visible copy says "Connect Pro" or "Pro").
 
+This is a **Turborepo monorepo** (as of June 2026).
+
 Key paths:
-- `app/` — Next.js pages and route handlers
-- `components/` — shared React components
-- `lib/wp.ts` — all GraphQL queries, REST mappers, and data-fetch helpers
+- `apps/site/` — Site A: Next.js app for themoveee.com (Editorial + Shop, no auth)
+  - `app/` — pages and route handlers
+  - `components/` — Site A-only components (Header, CartDrawer, HomepageContent…)
+  - `lib/fetchHomepageData.ts` — Site A-only homepage fetch
+  - `proxy.ts` — edge routing (Next.js 16 replacement for middleware.ts)
+- `apps/connect/` — Site B: Next.js app for connect.themoveee.com (Community + Auth)
+  - `app/` — auth, member, community, events, games, directory pages
+  - No local lib/ or components/ — all resolved from packages/shared
+- `apps/mobile/` — React Native app (Expo) for iOS + Android
+  - `src/` — screens, components, api client, auth store, navigation
+  - Self-contained; does NOT import from packages/shared (RN vs DOM)
+- `packages/shared/` — Single source of truth for shared code
+  - `lib/` — wp.ts, auth.ts, editions.ts, access.ts + 15 more
+  - `components/` — pulse/*, games/*, composer/*, connect/*, Footer, SessionProvider…
+  - `context/` — CurrencyContext, LanguageContext
+  - `types/` — next-auth.d.ts
 - `culture-community/` — WordPress plugin (PHP)
   - `includes/core/` — CPT registration, queue, analytics, gamification
   - `includes/admin/` — all WP Admin screens
   - `includes/api/` — REST API handlers (`class-culture-rest-api.php`)
   - `templates/` — WP template overrides
   - `assets/` — plugin CSS and JS
+
+**Vercel setup:**
+- Site A project: Root Directory = `apps/site` → deploys to themoveee.com
+- Site B project: Root Directory = `apps/connect` → deploys to connect.themoveee.com
+- Both share the same GitHub repo (travellertope/moveee)
+
+**Shared code resolution:** Both Next.js apps resolve `@/*` via tsconfig paths array:
+`["../../packages/shared/*", "./*"]` — packages/shared is checked first, then the
+app-local directory. This means zero import changes: `@/lib/wp` just works in both apps,
+resolving to `packages/shared/lib/wp`. App-specific files stay local as the fallback.
+
+**When editing shared files:** Change only `packages/shared/`. Do NOT edit copies in
+apps/site or apps/connect (they don't exist anymore). The mobile app (`apps/mobile`) 
+duplicates some shared TypeScript logic (feed-recommendations, interest-mappings) because 
+React Native can't use the DOM-dependent shared package — edit both when those change.
 
 ---
 
@@ -340,19 +370,29 @@ Always commit and push to this branch.
 
 ---
 
-## Site architecture — planned split (in progress)
+## Site architecture — split complete
 
-The site is being split into two Vercel projects in a monorepo:
+Two Vercel projects, one monorepo:
 
 - **Site A (`themoveee.com`)** — Editorial + Shop. No auth. Fully cacheable.
-  - `/magazine`, `/newsletter`, `/journeys`, `/shop`, `/`
-  - Homepage is editorial-only (no events, community, pulse, directory, quotes)
-- **Site B (`connect.themoveee.com`)** — Community + Social. Auth required.
-  - `/connect`, `/member`, `/pulse`, `/community`, `/events`, `/directory`, `/quotes`
-  - All auth (`/login`, `/register`) lives here
-  - NextAuth cookie set with `domain: .themoveee.com` for cross-subdomain sharing
+  - `/magazine`, `/newsletter`, `/journeys`, `/shop`, `/`, `/makers`, `/visuals`
+  - proxy.ts 308-redirects all auth/community/vendor paths → connect.themoveee.com
+- **Site B (`connect.themoveee.com`)** — Community + Auth + Vendor.
+  - `/login`, `/register`, `/forgot-password`, `/reset-password`
+  - `/vendor/*` — vendor dashboard (moved from Site A)
+  - `/member/*`, `/connect`, `/events`, `/community`, `/directory`, `/games`, `/pulse`, `/quotes`
+  - `apps/connect/components/Header.tsx` — Site B header (logo + Connect badge + nav + user menu)
+  - NextAuth cookie should use `domain: .themoveee.com` for cross-subdomain sharing
 
 Both share `cms.themoveee.com` (WordPress) as the backend.
+
+## Connect App build phases
+
+| Phase | Status | Scope |
+|-------|--------|-------|
+| 1. Auth + Vendor | In progress | Login, register, forgot/reset password, vendor dashboard |
+| 2. Member | Pending | Dashboard, wallet, notifications, settings, analytics |
+| 3. Community | Pending | Feed, directory, events, games, quotes, pulse |
 
 ### Homepage queries (Site A) — current state
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):

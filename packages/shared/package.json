@@ -1,0 +1,11 @@
+{
+  "name": "@moveee/shared",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./lib/*": "./lib/*",
+    "./components/*": "./components/*",
+    "./context/*": "./context/*",
+    "./types/*": "./types/*"
+  }
+}
