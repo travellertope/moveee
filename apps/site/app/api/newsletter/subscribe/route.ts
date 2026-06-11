@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
-const WP_SUBSCRIBE_URL = "https://cms.themoveee.com/wp-json/culture/v1/newsletter-subscribe";
+const WP_SUBSCRIBE_URL = process.env.NEXT_PUBLIC_WP_URL
+  ? `${process.env.NEXT_PUBLIC_WP_URL}/wp-json/culture/v1/newsletter-subscribe`
+  : "https://cms.themoveee.com/wp-json/culture/v1/newsletter-subscribe";
+
+const VALID_LISTS    = ["getmelit", "culture-drop", "culture-narratives-digest", "vendor-letter", "origins-field-notes"];
+const VALID_SEGMENTS = ["us", "uk", "ng", "gh", "ca", "au", ""];
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  const { allowed } = await checkRateLimit("nl-subscribe", ip, 3, "1h");
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+  }
+
   let email: string;
   let name = "";
   let list = "culture-drop";
@@ -20,6 +32,13 @@ export async function POST(req: NextRequest) {
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
+  }
+
+  if (!VALID_LISTS.includes(list)) {
+    return NextResponse.json({ error: "Invalid list." }, { status: 400 });
+  }
+  if (!VALID_SEGMENTS.includes(segment)) {
+    return NextResponse.json({ error: "Invalid segment." }, { status: 400 });
   }
 
   try {

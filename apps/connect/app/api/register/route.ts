@@ -1,3 +1,6 @@
+import { NextRequest } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
+
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
 interface RegisterBody {
@@ -15,7 +18,13 @@ interface RegisterBody {
   next?: string;
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  const { allowed } = await checkRateLimit("register", ip, 5, "1h");
+  if (!allowed) {
+    return Response.json({ success: false, message: "Too many requests. Please try again later." }, { status: 429 });
+  }
+
   let body: RegisterBody;
 
   try {
