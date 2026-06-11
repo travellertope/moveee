@@ -1,0 +1,173 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import MemberReferralCopy from "@/components/MemberReferralCopy";
+import MemberDashboard from "@/components/MemberDashboard";
+import MemberBadges from "@/components/MemberBadges";
+import PasskeyBanner from "@/components/PasskeyBanner";
+import MemberNavSelect from "@/components/MemberNavSelect";
+import "../member.css";
+
+export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: { absolute: "My Account | The Moveee" },
+};
+
+export default async function MemberPage() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) redirect("/login?callbackUrl=/member");
+
+  const user = session.user as any;
+  const isPatron = user.tier === "patron";
+  const displayName = user.displayName || user.name || user.username || "Member";
+  const initial = displayName.charAt(0).toUpperCase();
+  const referralUrl = user.referralCode
+    ? `https://themoveee.com/register?ref=${user.referralCode}`
+    : null;
+
+  return (
+    <>
+      {/* ── PROFILE HERO ── */}
+      <div className="mem-hero">
+        <div className="mem-hero-inner">
+          <div className="mem-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+            ) : initial}
+          </div>
+          <div className="mem-hero-body">
+            <div className="mem-eyebrow">The Moveee &mdash; Culture Community</div>
+            <h1 className="mem-name">{displayName}</h1>
+            <div className="mem-meta">
+              <span className={`mem-tier-badge ${isPatron ? "patron" : "citizen"}`}>
+                {isPatron ? "Connect Pro" : "Connect Citizen"}
+              </span>
+              {user.city && (
+                <>
+                  <span className="mem-sep">·</span>
+                  <span>{user.city}</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mem-body">
+        {!user.hasPasskey && <PasskeyBanner creditsEscrowed={user.creditsEscrowed ?? 0} />}
+        {/* ── STATS (live data) ── */}
+        <MemberDashboard
+          initialPoints={user.points ?? 0}
+          initialBadges={user.badges ?? []}
+          referralCount={user.referralCount ?? 0}
+          membership={isPatron ? "Connect Pro" : "Connect Citizen"}
+          initialCredits={user.credits ?? 0}
+          initialReputation={user.reputation ?? user.points ?? 0}
+          reputationTier={user.reputationTier ?? "member"}
+          dailyCreditsRemaining={user.dailyCreditsRemaining ?? 50}
+        />
+
+        <div className="mem-grid">
+          {/* ── MAIN COLUMN ── */}
+          <div className="mem-col-main">
+
+            {/* Badges (live data) */}
+            <MemberBadges initialBadges={user.badges ?? []} />
+
+            {/* How to earn */}
+            <section className="mem-card">
+              <div className="mem-card-label">How to Earn</div>
+              <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 12px", lineHeight: 1.5 }}>
+                Credits are spendable (capped at 50/day). Reputation is permanent and unlocks status.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0 12px", fontSize: "0.75rem", fontWeight: 700, color: "var(--mute)", marginBottom: 6, paddingBottom: 6, borderBottom: "1px solid var(--rule)" }}>
+                <span>Action</span><span>Credits</span><span>Rep</span>
+              </div>
+              <div className="mem-points-list">
+                {[
+                  ["Post validated (5 reactions or 3 comments)", "+10 cr", "+5"],
+                  ["Hidden Gem or Food Review validated",         "+15 cr", "+10"],
+                  ["Event RSVP",                                  "+1 cr",  "+5"],
+                  ["Event check-in",                              "+2 cr",  "+15"],
+                  ["Refer a member",                              "+3 cr",  "+25"],
+                  ["Newsletter comment",                          "+1 cr",  "+10"],
+                  ["Share a quote",              "+1 cr",  "+10"],
+                  ["Quote liked by others",       "—",      "+1"],
+                  ["Read a magazine article",     "+1 cr",  "+5"],
+                  ["Share a magazine article",    "+1 cr",  "+5"],
+                  ["Directory entry submitted",   "+2 cr",  "+15"],
+                  ["Game completed",              "+1 cr",  "+5"],
+                ].map(([action, cr, rep]) => (
+                  <div key={action} className="mem-points-row" style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0 12px" }}>
+                    <span>{action}</span>
+                    <span className="mem-points-val" style={{ color: "var(--ochre)" }}>{cr}</span>
+                    <span className="mem-points-val">{rep}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* ── SIDE COLUMN ── */}
+          <div className="mem-col-side">
+
+            {/* Upgrade CTA — Citizens only */}
+            {!isPatron && (
+              <section className="mem-card mem-card--dark">
+                <div className="mem-card-label" style={{ color: "var(--ochre)" }}>
+                  Upgrade to Connect Pro
+                </div>
+                <h3 className="mem-upgrade-title">
+                  Unlock the full experience.
+                </h3>
+                <ul className="mem-upgrade-perks">
+                  <li>Connect Pro badge on your Pulse posts</li>
+                  <li>Exclusive gated content &amp; editorials</li>
+                  <li>10% Moveee Shop discount</li>
+                  <li>Early access to new features</li>
+                </ul>
+                <Link href="/connect/membership" className="mem-upgrade-btn">
+                  Become a Connect Pro →
+                </Link>
+              </section>
+            )}
+
+            {/* Referral */}
+            {referralUrl && (
+              <section className="mem-card">
+                <div className="mem-card-label">Invite a Friend</div>
+                <p className="mem-card-desc">
+                  Share your link. Earn 25 points for every member who joins.
+                </p>
+                <MemberReferralCopy url={referralUrl} />
+                <div className="mem-referral-count">
+                  {user.referralCount ?? 0} successful referral
+                  {(user.referralCount ?? 0) !== 1 ? "s" : ""}
+                </div>
+              </section>
+            )}
+
+            {/* Quick links */}
+            <MemberNavSelect items={[
+              { label: "My Wallet",        href: "/member/wallet" },
+              { label: "My Coupons",       href: "/member/coupons" },
+              { label: "Notifications",    href: "/member/notifications" },
+              { label: "My Analytics",     href: "/member/analytics" },
+              { label: "Browse Perks",     href: "/connect/perks" },
+              { label: "My Collection",    href: "/member/collection" },
+              { label: "Account Settings", href: "/member/settings" },
+              { label: "Newsletters",      href: "/newsletter" },
+              { label: "Upcoming Events",  href: "/events" },
+              { label: "Magazine",         href: "/magazine" },
+              { label: "Culture Directory",href: "/directory" },
+              { label: "Quotes Archive",   href: "/quotes" },
+              { label: "Sign out",         href: "/api/auth/signout", muted: true },
+            ]} />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

@@ -1548,6 +1548,20 @@ class Culture_REST_API {
         );
         update_option( 'culture_newsletter_subscribers', $subscribers, false );
 
+        // Award reputation to the matching WP user on their first newsletter subscription.
+        // Deferred to WP-Cron so the public subscribe endpoint doesn't block on
+        // the full badge evaluation chain (up to 35 DB queries via award_points).
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            $wp_user = get_user_by( 'email', $email );
+            if ( $wp_user ) {
+                $already = get_user_meta( $wp_user->ID, '_culture_newsletter_subscribed_badge', true );
+                if ( ! $already ) {
+                    update_user_meta( $wp_user->ID, '_culture_newsletter_subscribed_badge', '1' );
+                    wp_schedule_single_event( time() + 5, 'culture_award_newsletter_points', array( $wp_user->ID ) );
+                }
+            }
+        }
+
         return rest_ensure_response( array(
             'success' => true,
             'message' => __( 'Subscribed successfully.', 'culture-community' ),
