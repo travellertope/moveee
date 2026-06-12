@@ -27,7 +27,7 @@ function getRedis() {
       return kv;
     }
   } catch {}
-  return Ratelimit.ephemeralCache();
+  return new Map();
 }
 
 /**
