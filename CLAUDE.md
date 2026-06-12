@@ -737,7 +737,18 @@ All checks run server-side in `lib/spam-protection.ts` before posts reach WordPr
 
 ## moveee-connect React Native app — current state
 
-The app lives in `moveee-connect/` using Expo + React Navigation + Zustand + MMKV.
+The app lives in `apps/mobile/` using Expo + React Navigation + Zustand + MMKV.
+
+### ⚠️ Production build checklist — items removed for preview builds
+
+These were stripped to unblock preview APK builds and **must be restored before production**:
+
+| Item | Where | Why removed | How to restore |
+|------|-------|-------------|----------------|
+| `react-native-iap` | `apps/mobile/package.json` dependencies | Has Amazon/Play store flavors — Gradle can't resolve without the store flavor plugin | Add back: `"react-native-iap": "^12.15.4"` |
+| `./plugins/withAndroidIapStoreFlavor` | `apps/mobile/app.json` plugins array | Required by react-native-iap to select Play vs Amazon flavor | Add back to plugins array |
+
+Before production build, also run `npm install` after restoring `react-native-iap`.
 
 ### Architecture
 - `src/api/client.ts` — `api.get/post/put/delete/upload()` with Bearer token injection
