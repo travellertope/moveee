@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import {
   getPulseStoryBySlug,
   getAllPulseSlugs,
@@ -91,14 +89,11 @@ export default async function PulseStoryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [story, session] = await Promise.all([
-    getPulseStoryBySlug(slug),
-    getServerSession(authOptions),
-  ]);
+  const story = await getPulseStoryBySlug(slug);
   if (!story) notFound();
 
   const comments = await getPulseComments(story.id);
-  const loggedIn = !!session?.user;
+  const loggedIn = false; // resolved client-side in the CTA link below
 
   const title = decodeHtml(story.title.rendered);
   const source = story.meta.pulse_source ?? "";

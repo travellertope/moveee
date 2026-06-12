@@ -1,17 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { sanitizeHtml } from "@/lib/sanitize";
 
 interface Props {
   entry: any;
-  user: any;
+  user?: any;
 }
 
-export default function VisualsSingleClient({ entry, user }: Props) {
-  const [downloadCount, setDownloadCount] = useState(user?.visual_downloads_today ?? 0);
+export default function VisualsSingleClient({ entry }: Props) {
+  const { data: session } = useSession();
+  const user = (session?.user as any) ?? null;
+  const [downloadCount, setDownloadCount] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
