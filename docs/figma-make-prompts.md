@@ -1350,7 +1350,52 @@ Reaction counts: ❤️ 12 · 🔥 5 · 👏 8 — JetBrains Mono 10px mute.
 
 "Load more posts" ghost link, centred, 12px mute, 16px margin.
 
-Output 2 frames side by side.
+---
+
+FRAME 3 — PUBLIC PROFILE (PORTFOLIO TAB):
+Identical hero, profile card, identity block, badge shelf, social links, and tabs row as Frame 2.
+TABS: "Community" (ghost, no underline) · "Portfolio" (active, ochre underline, bold).
+
+PORTFOLIO GRID (2-column masonry, 16px horizontal padding, 8px column gap, 12px row gap):
+
+Row 1:
+LEFT ITEM — "Zaria Music Visuals" series:
+  Image: 160×120px, radius-md, warm-toned photo placeholder (concert/stage lighting).
+  Title: "Zaria Music Visuals" DM Sans 13px bold ink, 6px top margin, 1-line.
+  Year: "2024" JetBrains Mono 11px mute, 2px below.
+
+RIGHT ITEM — "Lagos Street Portraits":
+  Image: 160×120px, radius-md, street photography placeholder.
+  Title: "Lagos Street Portraits" DM Sans 13px bold ink, 6px top.
+  Year: "2023" JetBrains Mono 11px mute.
+
+Row 2:
+LEFT ITEM — "Afrofusion Lookbook":
+  Image: 160×120px, radius-md, fashion editorial placeholder.
+  Title: "Afrofusion Lookbook" DM Sans 13px bold ink.
+  Year: "2024" JetBrains Mono 11px mute.
+
+RIGHT ITEM — "Eko Creative Studio":
+  Image: 160×120px, radius-md, studio/workspace placeholder.
+  Title: "Eko Creative Studio" DM Sans 13px bold ink.
+  Year: "2022" JetBrains Mono 11px mute.
+
+Row 3:
+LEFT ITEM — "Festival Grounds":
+  Image: 160×120px, radius-md, festival crowd placeholder.
+  Title: "Festival Grounds" DM Sans 13px bold ink.
+  Year: "2023" JetBrains Mono 11px mute.
+
+RIGHT ITEM — "+ Add work" CTA tile:
+  Border: 1.5px dashed #C8BFB0, radius-md, 160×120px, paper-warm bg.
+  Centred vertically: + icon 20px ghost colour, "Add portfolio item" DM Sans 12px mute 6px below.
+  (Shown only when viewing own profile — include it in the design to illustrate the owner state.)
+
+"6 items" JetBrains Mono 10px mute centred caption below the grid, 12px top margin.
+
+---
+
+Output 3 frames side by side.
 ```
 
 ---
