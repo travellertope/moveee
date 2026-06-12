@@ -58,8 +58,8 @@ function TemplateBadge({ item }: { item: FeedItem }) {
   );
 }
 const tbStyles = StyleSheet.create({
-  badge: { borderRadius: radius.sm, paddingHorizontal: 6, paddingVertical: 2, alignSelf: "flex-start", marginBottom: space[1] },
-  text:  { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, letterSpacing: 1.5 },
+  badge: { borderRadius: 9999, paddingHorizontal: 8, paddingVertical: 3, alignSelf: "flex-start", marginBottom: space[1] },
+  text:  { fontFamily: fonts.sansBold, fontSize: 9, letterSpacing: 1 },
 });
 
 // ── Gallery ───────────────────────────────────────────────────────────────────
@@ -140,17 +140,16 @@ function PollBlock({ item, postId }: { item: FeedItem; postId: string }) {
             {(voted || expired) && (
               <View
                 style={[
-                  pollStyles.fill,
+                  isWinner ? pollStyles.fillWinner : pollStyles.fill,
                   { width: `${pct}%` as any },
-                  isWinner && { backgroundColor: "rgba(46,125,50,0.15)" },
                 ]}
               />
             )}
-            <Text style={[pollStyles.optText, isWinner && (voted || expired) && { color: colors.pollWinner }]}>
+            <Text style={pollStyles.optText}>
               {opt.text}
             </Text>
             {(voted || expired) && (
-              <Text style={[pollStyles.pct, isWinner && { color: colors.pollWinner }]}>{pct}%</Text>
+              <Text style={isWinner ? pollStyles.pctWinner : pollStyles.pct}>{pct}%</Text>
             )}
           </TouchableOpacity>
         );
@@ -167,17 +166,23 @@ function PollBlock({ item, postId }: { item: FeedItem; postId: string }) {
 const pollStyles = StyleSheet.create({
   wrap:    { marginTop: space[2], marginBottom: space[1], gap: space[1] + 2 },
   option: {
-    borderWidth: 1, borderColor: colors.pollBorder, borderRadius: radius.md,
-    paddingHorizontal: space[3], paddingVertical: space[2],
+    borderWidth: 1, borderColor: colors.rule, borderRadius: radius.md,
+    paddingHorizontal: space[3],
+    height: 48,
     flexDirection: "row", alignItems: "center", overflow: "hidden",
     position: "relative",
   },
   fill:    {
     position: "absolute", left: 0, top: 0, bottom: 0,
-    backgroundColor: colors.pollVoteBg,
+    backgroundColor: colors.paperDeep,
+  },
+  fillWinner: {
+    position: "absolute", left: 0, top: 0, bottom: 0,
+    backgroundColor: "rgba(197,73,31,0.10)",
   },
   optText: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.ink },
   pct:     { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute, marginLeft: space[2] },
+  pctWinner: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.ochre, marginLeft: space[2] },
   meta:    { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute, marginTop: 2 },
 });
 
@@ -188,10 +193,13 @@ function ItineraryBlock({ item }: { item: FeedItem }) {
     <View style={itinStyles.wrap}>
       {stops.map((stop, i) => (
         <View key={i} style={itinStyles.row}>
-          <View style={itinStyles.circle}>
-            <Text style={itinStyles.circleText}>{i + 1}</Text>
+          <View style={itinStyles.leftCol}>
+            <View style={itinStyles.circle}>
+              <Text style={itinStyles.circleText}>{i + 1}</Text>
+            </View>
+            {i < stops.length - 1 && <View style={itinStyles.connector} />}
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={itinStyles.content}>
             <Text style={itinStyles.name}>{stop.name}</Text>
             {stop.note ? <Text style={itinStyles.note}>{stop.note}</Text> : null}
           </View>
@@ -201,14 +209,21 @@ function ItineraryBlock({ item }: { item: FeedItem }) {
   );
 }
 const itinStyles = StyleSheet.create({
-  wrap: { marginTop: space[2], gap: space[2] },
+  wrap: { marginTop: space[2], gap: 0 },
   row:  { flexDirection: "row", gap: space[2], alignItems: "flex-start" },
-  circle: {
-    width: 22, height: 22, borderRadius: 11,
-    backgroundColor: colors.gold, justifyContent: "center", alignItems: "center",
-    flexShrink: 0, marginTop: 1,
+  leftCol: { alignItems: "center", width: 24 },
+  connector: {
+    width: 0, flex: 1, minHeight: space[2],
+    borderLeftWidth: 1.5, borderStyle: "dashed", borderColor: colors.gold,
+    marginTop: 2,
   },
-  circleText: { fontFamily: fonts.monoBold, fontSize: fontSize.tiny, color: "#fff" },
+  circle: {
+    width: 24, height: 24, borderRadius: 12,
+    backgroundColor: colors.gold, justifyContent: "center", alignItems: "center",
+    flexShrink: 0,
+  },
+  circleText: { fontFamily: fonts.monoBold, fontSize: 11, color: "#fff" },
+  content: { flex: 1, paddingBottom: space[2] },
   name:       { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.ink },
   note:       { fontFamily: fonts.sans, fontSize: fontSize.xs, color: colors.mute, marginTop: 1 },
 });
@@ -337,45 +352,60 @@ function CommunityCard({ item, onPress, onAuthorPress, forYouBadge }: Props) {
       <TouchableOpacity style={[styles.card, styles.communityCard]} onPress={onPress} activeOpacity={0.95}>
         <View style={styles.communityRow}>
           <TouchableOpacity onPress={onAuthorPress} disabled={!onAuthorPress}>
-            <Avatar
-              uri={item.communityAuthorAvatar}
-              name={item.communityAuthor ?? "?"}
-              size={34}
-              tier={item.communityTier as any}
-            />
+            <View style={[
+              styles.avatarWrap,
+              item.communityTier === "patron"
+                ? styles.avatarWrapPro
+                : styles.avatarWrapCitizen,
+            ]}>
+              <Avatar
+                uri={item.communityAuthorAvatar}
+                name={item.communityAuthor ?? "?"}
+                size={40}
+                tier={item.communityTier as any}
+              />
+            </View>
           </TouchableOpacity>
 
           <View style={{ flex: 1, minWidth: 0 }}>
             {/* Author row */}
             <View style={styles.communityHeaderRow}>
-              <TouchableOpacity onPress={onAuthorPress} disabled={!onAuthorPress}>
-                <Text style={styles.authorName}>{item.communityAuthor ?? "Community Member"}</Text>
-              </TouchableOpacity>
-              {item.communityTier === "patron" && (
-                <View style={styles.proBadge}>
-                  <Text style={styles.proBadgeText}>PRO</Text>
-                </View>
-              )}
-              <Text style={styles.dotSep}>·</Text>
-              <Text style={styles.dateText}>{formatDate(item.date)}</Text>
-              {item.communityTag && (
-                <View style={styles.tagPill}>
-                  <Text style={styles.tagText}>{item.communityTag}</Text>
-                </View>
-              )}
-            </View>
-
-            {/* For You badge */}
-            {forYouBadge && (
-              <View style={fyStyles.badge}>
-                <Text style={fyStyles.text}>✦ For You</Text>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <TouchableOpacity onPress={onAuthorPress} disabled={!onAuthorPress}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Text style={styles.authorName}>{item.communityAuthor ?? "Community Member"}</Text>
+                    {item.communityTier === "patron" && (
+                      <View style={styles.proBadge}>
+                        <Text style={styles.proBadgeText}>PRO</Text>
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+                {item.communityAuthorUsername ? (
+                  <Text style={styles.authorHandle}>@{item.communityAuthorUsername}</Text>
+                ) : null}
+                {/* For You badge */}
+                {forYouBadge && (
+                  <View style={fyStyles.badge}>
+                    <Text style={fyStyles.text}>✦ For You</Text>
+                  </View>
+                )}
               </View>
-            )}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={styles.dateText}>{formatDate(item.date)}</Text>
+                {item.communityTag && (
+                  <View style={styles.tagPill}>
+                    <Text style={styles.tagText}>{item.communityTag}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
 
             {/* Template badge */}
             <TemplateBadge item={item} />
 
             {/* Location line */}
+
             {item.locationName ? (
               <Text style={styles.locationLine}>📍 {item.locationName}</Text>
             ) : null}
@@ -455,14 +485,18 @@ function QuoteCard({ item }: Props) {
   return (
     <>
       <TouchableOpacity style={[styles.card]} onPress={() => setDrawerOpen(true)} activeOpacity={0.95}>
-        <View style={styles.quoteRow}>
-          <Text style={styles.quoteMark}>"</Text>
-          <View style={{ flex: 1 }}>
+        <View style={styles.quoteContainer}>
+          <Text style={styles.quoteDecorMark}>"</Text>
+          <View style={styles.quoteInner}>
             <Text style={styles.quoteText}>{item.title}</Text>
-            <View style={styles.quoteFooter}>
+            {item.quoteAuthor ? (
+              <Text style={styles.quoteAuthor}>{item.quoteAuthor}</Text>
+            ) : null}
+            {item.quoteSource ? (
+              <Text style={styles.quoteSrc}>{item.quoteSource}</Text>
+            ) : null}
+            <View style={[styles.quoteFooter, { marginTop: space[2] }]}>
               <TypeBadge type="quote" />
-              {item.quoteAuthor ? <Text style={styles.quoteAuthor}>{item.quoteAuthor}</Text> : null}
-              {item.quoteSource ? <Text style={styles.quoteSrc}>· {item.quoteSource}</Text> : null}
               <View style={{ flex: 1 }} />
               <Text style={styles.dateText}>{formatDate(item.date)}</Text>
             </View>
@@ -615,44 +649,63 @@ export default function FeedItemCard({ item, onPress, onAuthorPress, onReact, fo
 
 const fyStyles = StyleSheet.create({
   badge: {
-    backgroundColor: colors.badgePulseBg, borderRadius: radius.sm,
-    paddingHorizontal: 6, paddingVertical: 2, alignSelf: "flex-start",
-    marginBottom: space[1],
+    borderColor: colors.goldBorder, borderWidth: 1, borderRadius: 9999,
+    paddingHorizontal: 8, paddingVertical: 2, alignSelf: "flex-start",
+    marginTop: 3,
   },
-  text: { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, letterSpacing: 1.4, color: colors.badgePulseText },
+  text: { fontFamily: fonts.sansBold, fontSize: 8, letterSpacing: 1, color: colors.gold, textTransform: "uppercase" },
 });
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.paper,
-    borderBottomWidth: 1, borderBottomColor: colors.rule,
-    paddingHorizontal: space[4] + 2, paddingVertical: space[4],
+    marginHorizontal: 16,
+    borderRadius: 12,
+    paddingHorizontal: space[4], paddingVertical: space[4],
+    shadowColor: "#14110D",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 1,
   },
   communityCard: {
     borderLeftWidth: 3, borderLeftColor: colors.communityBorder,
   },
 
+  // Avatar with tier border
+  avatarWrap: {
+    borderRadius: 9999, overflow: "hidden",
+  },
+  avatarWrapPro: {
+    borderColor: colors.gold, borderWidth: 2.5,
+    shadowColor: colors.gold, shadowOpacity: 0.18, shadowRadius: 8, elevation: 2,
+  },
+  avatarWrapCitizen: {
+    borderColor: colors.ghost, borderWidth: 1.5,
+  },
+
   // community header
   communityRow:       { flexDirection: "row", gap: space[2] + 2 },
-  communityHeaderRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6, flexWrap: "wrap" },
+  communityHeaderRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 6, marginBottom: 6 },
   authorName: { fontFamily: fonts.sansBold, fontSize: fontSize.sm + 1, color: colors.ink },
+  authorHandle: { fontFamily: fonts.sans, fontSize: 12, color: colors.ghost, marginTop: 1 },
   proBadge: {
     backgroundColor: colors.goldLight, borderWidth: 1, borderColor: colors.goldBorder,
-    borderRadius: radius.sm, paddingHorizontal: 5, paddingVertical: 1,
+    borderRadius: 9999, paddingHorizontal: 6, paddingVertical: 2,
   },
   proBadgeText: {
-    fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
-    letterSpacing: 1.4, color: colors.gold,
+    fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
+    letterSpacing: 1, color: colors.gold,
   },
   dotSep:   { fontSize: 12, color: colors.ghost },
   dateText: { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: colors.mute },
   tagPill: {
-    marginLeft: "auto", backgroundColor: colors.communityBg,
-    borderRadius: radius.sm, paddingHorizontal: 6, paddingVertical: 2,
+    backgroundColor: colors.communityBg,
+    borderRadius: 9999, paddingHorizontal: 6, paddingVertical: 2,
   },
   tagText: {
-    fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
+    fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
     letterSpacing: 1, color: colors.communityText,
   },
   locationLine: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: colors.mute, marginBottom: space[1] },
