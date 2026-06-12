@@ -36,7 +36,6 @@
           "photosPermission": "Allow Moveee to access your photos so you can share images in Connect posts."
         }
       ],
-      "./plugins/withAndroidIapStoreFlavor"
     ],
     "extra": {
       "eas": {
