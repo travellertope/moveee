@@ -1,63 +1,73 @@
 import { Platform } from 'react-native';
 
 export const colors = {
-  // Backgrounds
-  paper:       '#ffffff',
-  paperDeep:   '#f5f5f5',
-  paperWarm:   '#f3ece0',
+  // Backgrounds & surfaces
+  paperWarm:   '#F3ECE0',   // Primary background
+  paper:       '#FFFFFF',   // Card surface
+  paperDeep:   '#F5F5F5',   // Elevated surface
+  community:   '#EDF7ED',   // Community card bg
 
   // Text
-  ink:         '#14110d',
-  inkSoft:     '#3a342b',
-  mute:        '#7a6f5c',
-  ghost:       '#c8bfb0',
+  ink:         '#14110D',   // Primary text
+  inkSoft:     '#3A342B',   // Body text
+  mute:        '#7A6F5C',   // Secondary text
+  ghost:       '#C8BFB0',   // Disabled / hint
 
   // Borders / rules
-  rule:        '#e8e2d8',
-  ruleDark:    'rgba(42,36,28,0.15)',
+  rule:        'rgba(20,17,13,0.10)',
+  ruleDark:    'rgba(20,17,13,0.15)',
 
-  // Accent — primary actions
-  ochre:       '#c5491f',
-  ochreDark:   '#8a2d10',
+  // Actions & accents
+  ochre:       '#C5491F',   // Primary action
+  ochreDark:   '#8A2D10',   // Primary action pressed
 
-  // Accent — patron / gold
-  gold:        '#b38238',
+  // Pro tier accent
+  gold:        '#B38238',
   goldLight:   'rgba(179,130,56,0.10)',
   goldBorder:  'rgba(179,130,56,0.40)',
 
+  // Semantic
+  success:     '#2D6A4F',
+  error:       '#C62828',
+  warning:     '#E65100',
+
   // Community (green)
-  communityBorder: '#81c784',
-  communityBg:     '#edf7ed',
-  communityText:   '#2e7d32',
+  communityBorder: '#81C784',
+  communityBg:     '#EDF7ED',
+  communityText:   '#2E7D32',
 
-  // Type badge backgrounds
-  badgePulseBg:      '#fef3e2',
-  badgePulseText:    '#b38238',
-  badgeEditorialBg:  '#fff0eb',
-  badgeEditorialText:'#c5491f',
-  badgeHappeningBg:  '#eeedfe',
-  badgeHappeningText:'#3c3489',
-  badgeDirectoryBg:  '#e8f5ee',
+  // Feed type badge colours (from Figma Design System)
+  badgePulseBg:      '#FEF3E2',
+  badgePulseText:    '#B38238',   // colors.gold
+  badgeEditorialBg:  '#FFF0EB',
+  badgeEditorialText:'#C5491F',   // colors.ochre
+  badgeHappeningBg:  '#EDE9FE',
+  badgeHappeningText:'#4C1D95',
+  badgeDirectoryBg:  '#E8F5EE',
   badgeDirectoryText:'#085041',
-  badgeQuoteBg:      '#f3eef8',
-  badgeQuoteText:    '#7a4da0',
+  badgeQuoteBg:      '#FEF3C7',
+  badgeQuoteText:    '#78350F',
 
-  // Template badge colours
-  templateGemBg:       'rgba(179,130,56,0.10)',
-  templateGemText:     '#b38238',
-  templateTakeBg:      'rgba(107,72,168,0.08)',
-  templateTakeText:    '#6b48a8',
-  templateFoodBg:      'rgba(197,73,31,0.08)',
-  templateFoodText:    '#c5491f',
-  templateShowcaseBg:  'rgba(25,118,210,0.08)',
-  templateShowcaseText:'#1976d2',
-  templateRouteBg:     'rgba(46,125,50,0.08)',
-  templateRouteText:   '#2e7d32',
+  // Community post template badge colours (from Figma Design System)
+  templateGemBg:       '#FEF3C7',
+  templateGemText:     '#92400E',
+  templateTakeBg:      '#E0F2FE',
+  templateTakeText:    '#075985',
+  templateFoodBg:      '#FCE7F3',
+  templateFoodText:    '#9D174D',
+  templateShowcaseBg:  '#F3E8FF',
+  templateShowcaseText:'#6B21A8',
+  templateRouteBg:     '#D1FAE5',
+  templateRouteText:   '#065F46',
+  templatePollBg:      '#EDE9FE',
+  templatePollText:    '#4C1D95',
+  templateEventBg:     '#FEE2E2',
+  templateEventText:   '#991B1B',
 
   // Poll
   pollVoteBg:  'rgba(46,125,50,0.10)',
-  pollBorder:  '#e0d8ce',
-  pollWinner:  '#2e7d32',
+  pollBorder:  '#E0D8CE',
+  pollWinner:  '#2E7D32',
 } as const;
 
 export const fonts = {
@@ -70,23 +80,31 @@ export const fonts = {
   monoBold:   'JetBrainsMono_700Bold',
 } as const;
 
+// Type scale from Figma Design System
 export const fontSize = {
-  eyebrow: 9,
-  tiny:   10,
-  xs:     11,
-  sm:     12,
-  base:   14,
-  md:     16,
-  lg:     18,
-  xl:     22,
-  '2xl':  28,
-  '3xl':  36,
+  eyebrow:  9,   // Label/Eyebrow — tracked uppercase
+  tiny:    10,
+  xs:      11,   // Label/Mono
+  sm:      13,   // Body/Small
+  base:    15,   // Body/Medium
+  md:      17,   // Body/Large
+  lg:      22,   // Display/Subtitle
+  xl:      28,   // Display/Title
+  '2xl':   36,   // Display/Hero
+} as const;
+
+export const lineHeight = {
+  tight:   1.15,  // Display/Hero
+  snug:    1.2,   // Display/Title
+  normal:  1.3,   // Display/Subtitle
+  relaxed: 1.4,   // Body/Small
+  loose:   1.5,   // Body/Medium + Large
 } as const;
 
 export const letterSpacing = {
-  tracked: 1.2,
-  normal:  0,
-  tight:  -0.3,
+  tracked:  1.5,   // Eyebrow labels (uppercase)
+  normal:   0,
+  tight:   -0.5,   // Display/Hero
 } as const;
 
 export const space = {
@@ -96,12 +114,9 @@ export const space = {
    4: 16,
    5: 20,
    6: 24,
-   7: 28,
    8: 32,
-   9: 36,
   10: 40,
   12: 48,
-  14: 56,
   16: 64,
 } as const;
 
@@ -109,5 +124,32 @@ export const radius = {
   sm:   2,
   md:   4,
   lg:   6,
+  xl:  12,
+  '2xl':20,
   full: 9999,
+} as const;
+
+// Elevation shadows (from Figma Design System)
+export const shadows = {
+  card: {
+    shadowColor: '#14110D',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  modal: {
+    shadowColor: '#14110D',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.18,
+    shadowRadius: 60,
+    elevation: 8,
+  },
+  fab: {
+    shadowColor: '#C5491F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 3,
+  },
 } as const;

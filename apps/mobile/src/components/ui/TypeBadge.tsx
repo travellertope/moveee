@@ -26,6 +26,6 @@ export default function TypeBadge({ type }: Props) {
 }
 
 const styles = StyleSheet.create({
-  badge: { borderRadius: radius.sm, paddingHorizontal: 6, paddingVertical: 3 },
-  text:  { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, letterSpacing: 1.4 },
+  badge: { borderRadius: 9999, paddingHorizontal: 8, paddingVertical: 3 },
+  text:  { fontFamily: fonts.sansBold, fontSize: 9, letterSpacing: 1 },
 });
