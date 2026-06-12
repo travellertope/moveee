@@ -21,6 +21,72 @@ class Culture_Community {
 
     public static function init() {
         add_action( 'init', [ __CLASS__, 'register_meta' ] );
+        add_action( 'save_post', [ __CLASS__, 'flush_vercel_kv_cache' ], 10, 2 );
+        add_action( 'transition_post_status', [ __CLASS__, 'flush_on_publish' ], 10, 3 );
+    }
+
+    /**
+     * Flush the Vercel KV GraphQL cache when a post is published or updated.
+     * Only fires for public-facing post types (not drafts, not community posts).
+     */
+    public static function flush_on_publish( $new_status, $old_status, $post ) {
+        if ( $new_status !== 'publish' ) {
+            return;
+        }
+        $cacheable_types = [ 'post', 'page', 'culture_newsletter', 'culture_journey', 'culture_directory', 'culture_quote', 'culture_event', 'culture_post', 'product' ];
+        if ( ! in_array( $post->post_type, $cacheable_types, true ) ) {
+            return;
+        }
+        self::flush_vercel_kv_cache( $post->ID, $post );
+    }
+
+    public static function flush_vercel_kv_cache( $post_id, $post ) {
+        if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+            return;
+        }
+
+        $secret   = defined( 'VERCEL_REVALIDATE_SECRET' ) ? VERCEL_REVALIDATE_SECRET : get_option( 'culture_vercel_revalidate_secret' );
+        $base_url = defined( 'VERCEL_SITE_URL' ) ? VERCEL_SITE_URL : get_option( 'culture_vercel_site_url' );
+        $kv_endpoint = $base_url . '/api/revalidate-kv';
+        $tag_endpoint = $base_url . '/api/revalidate';
+
+        if ( ! $secret || ! $base_url ) {
+            return;
+        }
+
+        // Flush Vercel KV GraphQL cache (existing behaviour)
+        wp_remote_post( $kv_endpoint, [
+            'timeout'  => 5,
+            'blocking' => false,
+            'headers'  => [
+                'Content-Type'        => 'application/json',
+                'x-revalidate-secret' => $secret,
+            ],
+            'body' => wp_json_encode( [ 'post_id' => $post_id, 'post_type' => $post->post_type ] ),
+        ] );
+
+        // Invalidate unstable_cache data layer tags
+        $type_to_tags = [
+            'post'                => [ 'stories' ],
+            'culture_newsletter'  => [ 'newsletters' ],
+            'culture_journey'     => [ 'stories' ],
+            'culture_directory'   => [ 'directory' ],
+            'culture_quote'       => [ 'quotes' ],
+            'culture_event'       => [ 'events' ],
+            'culture_post'        => [ 'pulse', 'community' ],
+            'product'             => [ 'wp-content' ],
+        ];
+        $tags = $type_to_tags[ $post->post_type ] ?? [ 'wp-content' ];
+
+        wp_remote_post( $tag_endpoint, [
+            'timeout'  => 5,
+            'blocking' => false,
+            'headers'  => [
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $secret,
+            ],
+            'body' => wp_json_encode( [ 'tags' => $tags ] ),
+        ] );
     }
 
     public static function register_meta() {
@@ -30,6 +96,7 @@ class Culture_Community {
         $string_fields = [
             'community_author_name',
             'community_author_id',
+            'community_author_username',
             'community_author_avatar',
             'community_tag',
             'community_region',

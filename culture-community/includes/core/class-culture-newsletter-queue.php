@@ -394,7 +394,7 @@ class Culture_Newsletter_Queue {
             $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
             return strtolower( trim( $sub_email ) ) !== strtolower( $email );
         } ) );
-        update_option( 'culture_newsletter_subscribers', $updated );
+        update_option( 'culture_newsletter_subscribers', $updated, false );
 
         Culture_NL_Analytics::log_unsub( $email, $campaign_id );
 

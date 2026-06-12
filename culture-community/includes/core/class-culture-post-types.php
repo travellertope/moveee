@@ -16,9 +16,11 @@ class Culture_Post_Types {
         self::register_rest_meta_fields();
         add_action( 'add_meta_boxes', array( __CLASS__, 'register_meta_boxes' ) );
         add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
+        add_action( 'acf/save_post', array( __CLASS__, 'cache_event_showcase_urls' ), 20 );
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
         add_action( 'init', array( __CLASS__, 'register_as_told_to_meta' ) );
         add_action( 'rest_after_insert_post', array( __CLASS__, 'save_as_told_to_rest' ), 10, 2 );
+        add_filter( 'rest_culture_event_query', array( __CLASS__, 'exclude_expired_events' ), 10, 2 );
 
         // Issue taxonomy admin form fields
         add_action( 'issue_add_form_fields',  array( __CLASS__, 'issue_add_form_fields' ) );
@@ -33,15 +35,19 @@ class Culture_Post_Types {
      */
     public static function register_rest_meta_fields() {
         $event_meta = array(
-            '_culture_ai_generated'  => array( 'type' => 'string' ),
-            '_culture_event_date'    => array( 'type' => 'string' ),
-            '_culture_end_date'      => array( 'type' => 'string' ),
-            '_culture_location'      => array( 'type' => 'string' ),
-            '_culture_event_city'    => array( 'type' => 'string' ),
-            '_culture_admission'     => array( 'type' => 'string' ),
-            '_culture_ticketing_url' => array( 'type' => 'string' ),
-            '_culture_tagline'       => array( 'type' => 'string' ),
-            '_culture_is_featured'   => array( 'type' => 'string' ),
+            '_culture_ai_generated'       => array( 'type' => 'string' ),
+            '_culture_event_date'         => array( 'type' => 'string' ),
+            '_culture_event_end_date'     => array( 'type' => 'string' ),
+            '_culture_location'           => array( 'type' => 'string' ),
+            '_culture_event_city'         => array( 'type' => 'string' ),
+            '_culture_admission'          => array( 'type' => 'string' ),
+            '_culture_ticketing_url'      => array( 'type' => 'string' ),
+            '_culture_tagline'            => array( 'type' => 'string' ),
+            '_culture_is_featured'        => array( 'type' => 'string' ),
+            '_culture_event_image_url'    => array( 'type' => 'string' ),
+            '_culture_opening_hours'      => array( 'type' => 'string' ),
+            '_culture_event_organiser_id'  => array( 'type' => 'integer' ),
+            '_culture_event_showcase_urls' => array( 'type' => 'string' ),
         );
         // Expose AIOSEO meta on standard posts so REST-based fetches can read them
         foreach ( array( '_aioseo_title', '_aioseo_description' ) as $aioseo_key ) {
@@ -58,6 +64,98 @@ class Culture_Post_Types {
                 'type'         => $args['type'],
                 'single'       => true,
                 'show_in_rest' => true,
+                'auth_callback' => '__return_true',
+            ) );
+        }
+
+        // Expose culture_interest taxonomy terms as objects on the culture_event REST response
+        // so the Next.js REST fallback mapper can read category name/slug directly.
+        register_rest_field( 'culture_event', 'culture_interests', array(
+            'get_callback' => function ( $post_arr ) {
+                $terms = get_the_terms( $post_arr['id'], 'culture_interest' );
+                if ( ! $terms || is_wp_error( $terms ) ) {
+                    return array();
+                }
+                return array_map( function ( $t ) {
+                    return array( 'id' => $t->term_id, 'name' => $t->name, 'slug' => $t->slug );
+                }, array_values( $terms ) );
+            },
+            'schema' => null,
+        ) );
+
+        // Expose all core event meta as a single REST field so the Next.js
+        // frontend can reliably read these fields even when GraphQL returns nulls.
+        register_rest_field( 'culture_event', 'culture_event_meta', array(
+            'get_callback' => function ( $post_arr ) {
+                $id = $post_arr['id'];
+                return array(
+                    'event_date'    => get_post_meta( $id, '_culture_event_date',    true ),
+                    'end_date'      => get_post_meta( $id, '_culture_event_end_date', true ),
+                    'location'      => get_post_meta( $id, '_culture_location',      true ),
+                    'city'          => get_post_meta( $id, '_culture_event_city',    true ),
+                    'admission'     => get_post_meta( $id, '_culture_admission',     true ),
+                    'ticketing_url' => get_post_meta( $id, '_culture_ticketing_url', true ),
+                    'image_url'     => get_post_meta( $id, '_culture_event_image_url', true ),
+                    'opening_hours' => get_post_meta( $id, '_culture_opening_hours', true ),
+                    'tagline'       => get_post_meta( $id, '_culture_tagline',       true ),
+                    'attribution'   => get_post_meta( $id, '_culture_attribution',   true ),
+                    'ai_generated'  => get_post_meta( $id, '_culture_ai_generated',  true ),
+                    'organiser_id'  => (int) get_post_meta( $id, '_culture_event_organiser_id', true ) ?: null,
+                    'organiser_name' => ( function() use ( $id ) {
+                        $oid = (int) get_post_meta( $id, '_culture_event_organiser_id', true );
+                        return $oid ? get_the_title( $oid ) : null;
+                    } )(),
+                    'organiser_slug' => ( function() use ( $id ) {
+                        $oid = (int) get_post_meta( $id, '_culture_event_organiser_id', true );
+                        return $oid ? get_post_field( 'post_name', $oid ) : null;
+                    } )(),
+                );
+            },
+            'schema' => null,
+        ) );
+
+        // community post meta (Phase 3 + Phase 4)
+        $community_post_meta = array(
+            '_template_type'       => 'string',
+            '_linked_directory_id' => 'integer',
+            '_star_rating'         => 'integer',
+            '_location_name'       => 'string',
+            '_location_lat'        => 'number',
+            '_location_lng'        => 'number',
+            '_poll_options'        => 'string',
+            '_poll_expires_at'     => 'string',
+            '_poll_voters'         => 'string',
+            '_itinerary_stops'     => 'string',
+            '_gallery_images'      => 'string',
+            '_video_url'           => 'string',
+            '_food_dish_name'      => 'string',
+            '_food_rating_taste'   => 'integer',
+            '_food_rating_value'   => 'integer',
+            '_food_rating_vibe'    => 'integer',
+        );
+        foreach ( $community_post_meta as $meta_key => $type ) {
+            register_post_meta( 'culture_post', $meta_key, array(
+                'type'          => $type,
+                'single'        => true,
+                'show_in_rest'  => true,
+                'auth_callback' => '__return_true',
+            ) );
+        }
+
+        // directory entry meta (Phase 3)
+        $directory_meta = array(
+            '_community_review_count' => 'integer',
+            '_average_rating'         => 'number',
+            '_is_partner'             => 'boolean',
+            '_partner_status'         => 'string',
+            '_partner_perk_template'  => 'string',
+            '_entry_city'             => 'string',
+        );
+        foreach ( $directory_meta as $meta_key => $type ) {
+            register_post_meta( 'culture_directory', $meta_key, array(
+                'type'          => $type,
+                'single'        => true,
+                'show_in_rest'  => true,
                 'auth_callback' => '__return_true',
             ) );
         }
@@ -126,7 +224,6 @@ class Culture_Post_Types {
             'isFeatured'    => array( 'type' => 'Boolean', 'meta_key' => 'is_featured' ),
             'admission'     => array( 'type' => 'String',  'meta_key' => 'admission' ),
             'isPhysical'    => array( 'type' => 'Boolean', 'meta_key' => '_culture_is_physical' ),
-            'chapterId'     => array( 'type' => 'Int',     'meta_key' => '_culture_chapter_id' ),
             'capacity'      => array( 'type' => 'Int',     'meta_key' => '_culture_capacity' ),
             'openingHours'  => array( 'type' => 'String',  'meta_key' => 'opening_hours' ),
         );
@@ -161,62 +258,6 @@ class Culture_Post_Types {
                 },
             ) );
         }
-
-        // 3. Chapters
-        $chapter_fields = array(
-            'latitude'  => array( 'type' => 'String', 'meta_key' => '_culture_location_lat' ),
-            'longitude' => array( 'type' => 'String', 'meta_key' => '_culture_location_lng' ),
-            'lat'       => array( 'type' => 'String', 'meta_key' => '_culture_location_lat' ), // alias
-            'lng'       => array( 'type' => 'String', 'meta_key' => '_culture_location_lng' ), // alias
-            'leaderId'  => array( 'type' => 'Int',    'meta_key' => '_culture_chapter_leader_id' ),
-        );
-
-        foreach ( $chapter_fields as $field_name => $config ) {
-            $meta_key = $config['meta_key'];
-            $type     = $config['type'];
-            register_graphql_field( 'CultureChapter', $field_name, array(
-                'type'    => $type,
-                'resolve' => function( $post ) use ( $meta_key, $type ) {
-                    $value = get_post_meta( $post->databaseId, $meta_key, true );
-                    if ( $type === 'Int' ) return (int) $value;
-                    return (string) $value;
-                },
-            ) );
-        }
-
-        register_graphql_field( 'CultureChapter', 'leaderName', array(
-            'type'    => 'String',
-            'resolve' => function( $post ) {
-                $leader_id = get_post_meta( $post->databaseId, '_culture_chapter_leader_id', true );
-                if ( ! $leader_id ) return null;
-                $leader = get_userdata( $leader_id );
-                return $leader ? $leader->display_name : null;
-            },
-        ) );
-
-        register_graphql_field( 'CultureChapter', 'memberCount', array(
-            'type'    => 'Int',
-            'resolve' => function( $post ) {
-                $p_count = count( get_users( array('meta_key' => '_culture_primary_chapter_id', 'meta_value' => $post->databaseId, 'fields' => 'ID') ) );
-                $s_count = count( get_users( array('meta_key' => '_culture_secondary_chapter_id', 'meta_value' => $post->databaseId, 'fields' => 'ID') ) );
-                return $p_count + $s_count;
-            },
-        ) );
-
-        register_graphql_field( 'CultureChapter', 'relatedEvents', array(
-            'type'    => array( 'list_of' => 'Post' ),
-            'resolve' => function( $post ) {
-                return get_posts( array(
-                    'post_type'      => 'culture_event',
-                    'posts_per_page' => 10,
-                    'meta_query'     => array(
-                        array('key' => '_culture_chapter_id', 'value' => $post->databaseId),
-                        array('key' => '_culture_event_date', 'value' => current_time( 'Y-m-d\TH:i' ), 'compare' => '>=', 'type' => 'DATETIME'),
-                    ),
-                    'meta_key' => '_culture_event_date', 'orderby' => 'meta_value', 'order' => 'ASC',
-                ) );
-            },
-        ) );
 
         // 4. Object Types (Register first)
 
@@ -435,7 +476,7 @@ class Culture_Post_Types {
         // 6. Core Event Fields (Hybrid: Priority on ACF, fallback to Native Meta)
         $event_meta_fields = array(
             'eventDate'    => array( 'type' => 'String',  'acf_key' => 'event_date',  'meta_key' => '_culture_event_date' ),
-            'endDate'      => array( 'type' => 'String',  'acf_key' => 'end_date',    'meta_key' => '_culture_end_date' ),
+            'endDate'      => array( 'type' => 'String',  'acf_key' => 'end_date',    'meta_key' => '_culture_event_end_date' ),
             'location'     => array( 'type' => 'String',  'acf_key' => 'location',    'meta_key' => '_culture_location' ),
             'admission'    => array( 'type' => 'String',  'acf_key' => 'admission',   'meta_key' => '_culture_admission' ),
             'isFeatured'     => array( 'type' => 'Boolean', 'acf_key' => 'is_featured',    'meta_key' => '_culture_is_featured' ),
@@ -444,6 +485,7 @@ class Culture_Post_Types {
             'attribution'  => array( 'type' => 'String',  'acf_key' => 'attribution', 'meta_key' => '_culture_attribution' ),
             'openingHours' => array( 'type' => 'String',  'acf_key' => 'opening_hours', 'meta_key' => '_culture_opening_hours' ),
             'ticketingUrl' => array( 'type' => 'String',  'acf_key' => 'ticketing_url', 'meta_key' => '_culture_ticketing_url' ),
+            'eventImageUrl'=> array( 'type' => 'String',  'acf_key' => 'event_image_url', 'meta_key' => '_culture_event_image_url' ),
         );
 
         foreach ( array( 'Post', 'CultureEvent' ) as $type_name ) {
@@ -685,6 +727,39 @@ class Culture_Post_Types {
             },
         ) );
 
+        // 9b. Directory entry Phase 3 fields (partner, community aggregates)
+        register_graphql_field( 'CultureDirectory', 'isPartner', array(
+            'type'    => 'Boolean',
+            'resolve' => function( $post ) {
+                return get_post_meta( $post->databaseId, '_is_partner', true ) === '1';
+            },
+        ) );
+        register_graphql_field( 'CultureDirectory', 'partnerStatus', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                return (string) get_post_meta( $post->databaseId, '_partner_status', true );
+            },
+        ) );
+        register_graphql_field( 'CultureDirectory', 'partnerPerk', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                return (string) get_post_meta( $post->databaseId, '_partner_perk_template', true );
+            },
+        ) );
+        register_graphql_field( 'CultureDirectory', 'communityReviewCount', array(
+            'type'    => 'Int',
+            'resolve' => function( $post ) {
+                return (int) get_post_meta( $post->databaseId, '_community_review_count', true );
+            },
+        ) );
+        register_graphql_field( 'CultureDirectory', 'averageRating', array(
+            'type'    => 'Float',
+            'resolve' => function( $post ) {
+                $val = get_post_meta( $post->databaseId, '_average_rating', true );
+                return $val ? (float) $val : null;
+            },
+        ) );
+
         // 10. Global Membership Settings
         register_graphql_object_type( 'CultureMembershipSettings', array(
             'description' => __( 'Global membership pricing and tier labels', 'culture-community' ),
@@ -760,33 +835,6 @@ class Culture_Post_Types {
      * Register all custom post types.
      */
     public static function register_post_types() {
-        // Chapter CPT – nested under Culture Community menu.
-        register_post_type( 'culture_chapter', array(
-            'labels' => array(
-                'name'               => __( 'Chapters', 'culture-community' ),
-                'singular_name'      => __( 'Chapter', 'culture-community' ),
-                'add_new'            => __( 'Add New', 'culture-community' ),
-                'add_new_item'       => __( 'Add New Chapter', 'culture-community' ),
-                'edit_item'          => __( 'Edit Chapter', 'culture-community' ),
-                'view_item'          => __( 'View Chapter', 'culture-community' ),
-                'all_items'          => __( 'Chapters', 'culture-community' ),
-                'search_items'       => __( 'Search Chapters', 'culture-community' ),
-                'not_found'          => __( 'No chapters found', 'culture-community' ),
-            ),
-            'public'              => true,
-            'has_archive'         => true,
-            'show_in_menu'        => 'culture-community',
-            'menu_icon'           => 'dashicons-location-alt',
-            'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
-            'rewrite'             => array( 'slug' => 'chapters' ),
-            'show_in_rest'        => true,
-            'capability_type'     => 'post',
-            // WPGraphQL support.
-            'show_in_graphql'     => true,
-            'graphql_single_name' => 'cultureChapter',
-            'graphql_plural_name' => 'cultureChapters',
-        ) );
-
         // Event CPT – nested under Culture Community menu.
         register_post_type( 'culture_event', array(
             'labels' => array(
@@ -1007,7 +1055,7 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'quoteAuthors',
         ) );
 
-        register_taxonomy( 'culture_interest', array( 'culture_event', 'culture_newsletter', 'culture_chapter', 'culture_directory' ), array(
+        register_taxonomy( 'culture_interest', array( 'culture_event', 'culture_newsletter', 'culture_directory' ), array(
             'labels' => array(
                 'name'          => __( 'Interests', 'culture-community' ),
                 'singular_name' => __( 'Interest', 'culture-community' ),
@@ -1112,9 +1160,9 @@ class Culture_Post_Types {
      * Register meta boxes for custom post types.
      */
     public static function register_meta_boxes() {
-        add_meta_box( 'culture_chapter_meta', __( 'Chapter Details', 'culture-community' ), array( __CLASS__, 'render_chapter_meta_box' ), 'culture_chapter', 'normal', 'high' );
         add_meta_box( 'culture_event_meta', __( 'Event Details', 'culture-community' ), array( __CLASS__, 'render_event_meta_box' ), 'culture_event', 'normal', 'high' );
         add_meta_box( 'culture_directory_meta', __( 'Directory Entry Details', 'culture-community' ), array( __CLASS__, 'render_directory_meta_box' ), 'culture_directory', 'side', 'high' );
+        add_meta_box( 'culture_partner_meta', __( 'Partner Programme', 'culture-community' ), array( __CLASS__, 'render_partner_meta_box' ), 'culture_directory', 'side', 'default' );
         add_meta_box( 'culture_quote_meta', __( 'Quote Details', 'culture-community' ), array( __CLASS__, 'render_quote_meta_box' ), 'culture_quote', 'normal', 'high' );
         add_meta_box( 'culture_as_told_to', __( 'As-Told-To', 'culture-community' ), array( __CLASS__, 'render_as_told_to_meta_box' ), 'post', 'side', 'high' );
     }
@@ -1161,44 +1209,28 @@ class Culture_Post_Types {
         <?php
     }
 
-    public static function render_chapter_meta_box( $post ) {
-        wp_nonce_field( 'culture_chapter_meta', 'culture_chapter_meta_nonce' );
-        $lat       = get_post_meta( $post->ID, '_culture_location_lat', true );
-        $lng       = get_post_meta( $post->ID, '_culture_location_lng', true );
-        $leader_id = get_post_meta( $post->ID, '_culture_chapter_leader_id', true );
-        ?>
-        <table class="form-table">
-            <tr><th><label for="culture_location_lat">Latitude</label></th><td><input type="text" id="culture_location_lat" name="culture_location_lat" value="<?php echo esc_attr( $lat ); ?>" /></td></tr>
-            <tr><th><label for="culture_location_lng">Longitude</label></th><td><input type="text" id="culture_location_lng" name="culture_location_lng" value="<?php echo esc_attr( $lng ); ?>" /></td></tr>
-            <tr><th><label for="culture_chapter_leader_id">Chapter Leader</label></th><td>
-                <?php $leaders = get_users( array( 'role__in' => array( 'chapter_leader', 'administrator' ) ) ); ?>
-                <select id="culture_chapter_leader_id" name="culture_chapter_leader_id">
-                    <option value="">-- Select --</option>
-                    <?php foreach ( $leaders as $leader ) : ?><option value="<?php echo esc_attr( $leader->ID ); ?>" <?php selected( $leader_id, $leader->ID ); ?>><?php echo esc_html( $leader->display_name ); ?></option><?php endforeach; ?>
-                </select>
-            </td></tr>
-        </table>
-        <?php
-    }
-
     public static function render_event_meta_box( $post ) {
         wp_nonce_field( 'culture_event_meta', 'culture_event_meta_nonce' );
-        $event_date  = get_post_meta( $post->ID, '_culture_event_date', true );
-        $chapter_id  = get_post_meta( $post->ID, '_culture_chapter_id', true );
-        $is_physical = get_post_meta( $post->ID, '_culture_is_physical', true );
-        $capacity    = get_post_meta( $post->ID, '_culture_capacity', true );
+        $event_date   = get_post_meta( $post->ID, '_culture_event_date', true );
+        $is_physical  = get_post_meta( $post->ID, '_culture_is_physical', true );
+        $capacity     = get_post_meta( $post->ID, '_culture_capacity', true );
+        $organiser_id = (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true );
+        $organiser_title = $organiser_id ? get_the_title( $organiser_id ) : '';
         ?>
         <table class="form-table">
             <tr><th><label for="culture_event_date">Event Date</label></th><td><input type="datetime-local" id="culture_event_date" name="culture_event_date" value="<?php echo esc_attr( $event_date ); ?>" /></td></tr>
-            <tr><th><label for="culture_chapter_id">Chapter</label></th><td>
-                <?php $chapters = get_posts( array( 'post_type' => 'culture_chapter', 'numberposts' => -1 ) ); ?>
-                <select id="culture_chapter_id" name="culture_chapter_id">
-                    <option value="">-- Select --</option>
-                    <?php foreach ( $chapters as $chapter ) : ?><option value="<?php echo esc_attr( $chapter->ID ); ?>" <?php selected( $chapter_id, $chapter->ID ); ?>><?php echo esc_html( $chapter->post_title ); ?></option><?php endforeach; ?>
-                </select>
-            </td></tr>
             <tr><th><label for="culture_is_physical">Physical Event</label></th><td><input type="checkbox" id="culture_is_physical" name="culture_is_physical" value="1" <?php checked( $is_physical, '1' ); ?> /></td></tr>
             <tr><th><label for="culture_capacity">Capacity</label></th><td><input type="number" id="culture_capacity" name="culture_capacity" value="<?php echo esc_attr( $capacity ); ?>" min="0" /></td></tr>
+            <tr>
+                <th><label for="culture_event_organiser_id">Organiser (Directory ID)</label></th>
+                <td>
+                    <input type="number" id="culture_event_organiser_id" name="culture_event_organiser_id" value="<?php echo esc_attr( $organiser_id ?: '' ); ?>" min="1" style="width:100px;" />
+                    <?php if ( $organiser_title ) : ?>
+                        <span style="margin-left:8px;color:#2e7d32;font-weight:600;"><?php echo esc_html( $organiser_title ); ?></span>
+                    <?php endif; ?>
+                    <p class="description">Enter the post ID of a Culture Directory entry. Leave blank for none.</p>
+                </td>
+            </tr>
         </table>
         <?php
     }
@@ -1208,10 +1240,49 @@ class Culture_Post_Types {
         $ai_generated  = get_post_meta( $post->ID, '_culture_dir_ai_generated', true );
         $submitted_by  = get_post_meta( $post->ID, '_culture_dir_submitted_by', true );
         $submitter     = $submitted_by ? get_userdata( (int) $submitted_by ) : null;
+        $city          = get_post_meta( $post->ID, '_entry_city', true );
         ?>
         <table class="form-table">
+            <tr><th><label for="culture_dir_city">City / Location</label></th><td><input type="text" id="culture_dir_city" name="culture_dir_city" value="<?php echo esc_attr( $city ); ?>" class="regular-text" placeholder="e.g. London, Lagos, New York" /></td></tr>
             <tr><th><label for="culture_dir_ai_generated">AI Generated</label></th><td><input type="checkbox" id="culture_dir_ai_generated" name="culture_dir_ai_generated" value="1" <?php checked( $ai_generated, '1' ); ?> /></td></tr>
             <?php if ( $submitter ) : ?><tr><th>Submitted By</th><td><a href="<?php echo esc_url( get_edit_user_link( $submitter->ID ) ); ?>"><?php echo esc_html( $submitter->display_name ); ?></a></td></tr><?php endif; ?>
+        </table>
+        <?php
+    }
+
+    public static function render_partner_meta_box( $post ) {
+        wp_nonce_field( 'culture_partner_meta', 'culture_partner_meta_nonce' );
+        $is_partner   = get_post_meta( $post->ID, '_is_partner', true );
+        $status       = get_post_meta( $post->ID, '_partner_status', true ) ?: 'pending';
+        $perk         = get_post_meta( $post->ID, '_partner_perk_template', true );
+        $review_count = (int) get_post_meta( $post->ID, '_community_review_count', true );
+        $avg_rating   = (float) get_post_meta( $post->ID, '_average_rating', true );
+        ?>
+        <table class="form-table">
+            <tr>
+                <th><label for="culture_is_partner">Is Partner</label></th>
+                <td><input type="checkbox" id="culture_is_partner" name="culture_is_partner" value="1" <?php checked( $is_partner, '1' ); ?> /></td>
+            </tr>
+            <tr>
+                <th><label for="culture_partner_status">Status</label></th>
+                <td>
+                    <select id="culture_partner_status" name="culture_partner_status">
+                        <option value="pending"  <?php selected( $status, 'pending' ); ?>>Pending</option>
+                        <option value="active"   <?php selected( $status, 'active' ); ?>>Active</option>
+                        <option value="paused"   <?php selected( $status, 'paused' ); ?>>Paused</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th><label for="culture_partner_perk">Default Perk</label></th>
+                <td><input type="text" id="culture_partner_perk" name="culture_partner_perk" value="<?php echo esc_attr( $perk ); ?>" class="regular-text" placeholder="e.g. £5 off a £20 spend" /></td>
+            </tr>
+            <?php if ( $review_count || $avg_rating ) : ?>
+            <tr>
+                <th>Community</th>
+                <td><?php echo absint( $review_count ); ?> review<?php echo $review_count !== 1 ? 's' : ''; ?><?php if ( $avg_rating ) echo ' · ' . number_format( $avg_rating, 1 ) . '★'; ?></td>
+            </tr>
+            <?php endif; ?>
         </table>
         <?php
     }
@@ -1232,19 +1303,35 @@ class Culture_Post_Types {
     }
 
     public static function save_meta_boxes( $post_id ) {
-        if ( isset( $_POST['culture_chapter_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_chapter_meta_nonce'], 'culture_chapter_meta' ) ) {
-            if ( isset( $_POST['culture_location_lat'] ) ) update_post_meta( $post_id, '_culture_location_lat', sanitize_text_field( $_POST['culture_location_lat'] ) );
-            if ( isset( $_POST['culture_location_lng'] ) ) update_post_meta( $post_id, '_culture_location_lng', sanitize_text_field( $_POST['culture_location_lng'] ) );
-            if ( isset( $_POST['culture_chapter_leader_id'] ) ) update_post_meta( $post_id, '_culture_chapter_leader_id', absint( $_POST['culture_chapter_leader_id'] ) );
-        }
         if ( isset( $_POST['culture_directory_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_directory_meta_nonce'], 'culture_directory_meta' ) ) {
             update_post_meta( $post_id, '_culture_dir_ai_generated', isset( $_POST['culture_dir_ai_generated'] ) ? '1' : '0' );
+            if ( isset( $_POST['culture_dir_city'] ) ) {
+                update_post_meta( $post_id, '_entry_city', sanitize_text_field( $_POST['culture_dir_city'] ) );
+            }
+        }
+        if ( isset( $_POST['culture_partner_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_partner_meta_nonce'], 'culture_partner_meta' ) ) {
+            update_post_meta( $post_id, '_is_partner', isset( $_POST['culture_is_partner'] ) ? '1' : '0' );
+            if ( isset( $_POST['culture_partner_status'] ) ) {
+                $allowed_statuses = array( 'pending', 'active', 'paused' );
+                $status = sanitize_key( $_POST['culture_partner_status'] );
+                update_post_meta( $post_id, '_partner_status', in_array( $status, $allowed_statuses, true ) ? $status : 'pending' );
+            }
+            if ( isset( $_POST['culture_partner_perk'] ) ) {
+                update_post_meta( $post_id, '_partner_perk_template', sanitize_text_field( $_POST['culture_partner_perk'] ) );
+            }
         }
         if ( isset( $_POST['culture_event_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_event_meta_nonce'], 'culture_event_meta' ) ) {
             if ( isset( $_POST['culture_event_date'] ) ) update_post_meta( $post_id, '_culture_event_date', sanitize_text_field( $_POST['culture_event_date'] ) );
-            if ( isset( $_POST['culture_chapter_id'] ) ) update_post_meta( $post_id, '_culture_chapter_id', absint( $_POST['culture_chapter_id'] ) );
             update_post_meta( $post_id, '_culture_is_physical', isset( $_POST['culture_is_physical'] ) ? '1' : '0' );
             if ( isset( $_POST['culture_capacity'] ) ) update_post_meta( $post_id, '_culture_capacity', absint( $_POST['culture_capacity'] ) );
+            if ( isset( $_POST['culture_event_organiser_id'] ) ) {
+                $oid = absint( $_POST['culture_event_organiser_id'] );
+                if ( $oid > 0 ) {
+                    update_post_meta( $post_id, '_culture_event_organiser_id', $oid );
+                } else {
+                    delete_post_meta( $post_id, '_culture_event_organiser_id' );
+                }
+            }
         }
         if ( isset( $_POST['culture_quote_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_quote_meta_nonce'], 'culture_quote_meta' ) ) {
             if ( isset( $_POST['quote_source'] ) ) update_post_meta( $post_id, '_quote_source', sanitize_text_field( $_POST['quote_source'] ) );
@@ -1259,6 +1346,40 @@ class Culture_Post_Types {
         if ( ! isset( $_POST['culture_as_told_to_nonce'] ) && isset( $_POST['as_told_to'] ) && current_user_can( 'edit_post', $post_id ) ) {
             update_post_meta( $post_id, 'as_told_to', sanitize_text_field( $_POST['as_told_to'] ) );
         }
+    }
+
+    /**
+     * After ACF saves a culture_event, resolve showcase image attachment IDs to
+     * URLs and store them in _culture_event_showcase_urls (JSON). The Next.js
+     * frontend reads this field to avoid batching media API calls at render time.
+     * Runs at acf/save_post priority 20 (after ACF writes its fields at priority 5).
+     */
+    public static function cache_event_showcase_urls( $post_id ) {
+        if ( get_post_type( $post_id ) !== 'culture_event' ) {
+            return;
+        }
+        if ( ! function_exists( 'get_field' ) ) {
+            return;
+        }
+        $showcase = get_field( 'showcase', $post_id );
+        if ( ! is_array( $showcase ) || empty( $showcase ) ) {
+            return;
+        }
+        $urls = array();
+        foreach ( $showcase as $item ) {
+            $img = $item['image'] ?? null;
+            $url = '';
+            if ( is_array( $img ) ) {
+                $url = $img['url'] ?? $img['sizes']['large'] ?? $img['sizes']['full'] ?? '';
+            } elseif ( is_numeric( $img ) ) {
+                $src = wp_get_attachment_image_url( (int) $img, 'large' );
+                $url = $src ?: wp_get_attachment_url( (int) $img ) ?: '';
+            } elseif ( is_string( $img ) ) {
+                $url = $img;
+            }
+            $urls[] = esc_url_raw( $url );
+        }
+        update_post_meta( $post_id, '_culture_event_showcase_urls', wp_json_encode( $urls ) );
     }
 
     // ── Issue taxonomy admin UI ──────────────────────────────────────────
@@ -1338,5 +1459,66 @@ class Culture_Post_Types {
         if ( isset( $_POST['issue_cover_image_url'] ) ) {
             update_term_meta( $term_id, 'issue_cover_image_url', esc_url_raw( $_POST['issue_cover_image_url'] ) );
         }
+    }
+
+    /**
+     * Exclude expired culture_event posts from the WP REST API.
+     * An event is expired when today is past its end_date, or past its
+     * event_date if no end_date is set.
+     */
+    public static function exclude_expired_events( $args, $request ) {
+        $today = gmdate( 'Y-m-d' );
+
+        $expiry_clause = array(
+            'relation' => 'OR',
+            // Has an end_date that is today or in the future
+            array(
+                'key'     => '_culture_event_end_date',
+                'value'   => $today,
+                'compare' => '>=',
+                'type'    => 'DATE',
+            ),
+            // No end_date set — fall back to event_date being today or future
+            array(
+                'relation' => 'AND',
+                array(
+                    'key'     => '_culture_event_end_date',
+                    'value'   => '',
+                    'compare' => 'IN',
+                ),
+                array(
+                    'key'     => '_culture_event_date',
+                    'value'   => $today,
+                    'compare' => '>=',
+                    'type'    => 'DATE',
+                ),
+            ),
+            // end_date meta doesn't exist at all — use event_date
+            array(
+                'relation' => 'AND',
+                array(
+                    'key'     => '_culture_event_end_date',
+                    'compare' => 'NOT EXISTS',
+                ),
+                array(
+                    'key'     => '_culture_event_date',
+                    'value'   => $today,
+                    'compare' => '>=',
+                    'type'    => 'DATE',
+                ),
+            ),
+        );
+
+        if ( empty( $args['meta_query'] ) ) {
+            $args['meta_query'] = array( $expiry_clause );
+        } else {
+            $args['meta_query'] = array(
+                'relation' => 'AND',
+                $args['meta_query'],
+                $expiry_clause,
+            );
+        }
+
+        return $args;
     }
 }

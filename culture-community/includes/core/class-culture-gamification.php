@@ -36,16 +36,16 @@ class Culture_Gamification {
         ),
         'explorer' => array(
             'name'        => 'Explorer',
-            'description' => 'Attended events in 3 different chapters.',
+            'description' => 'Attended events in 3 different cities.',
             'icon'        => 'dashicons-admin-site',
-            'trigger'     => 'chapter_count',
+            'trigger'     => 'city_count',
             'threshold'   => 3,
         ),
         'globetrotter' => array(
             'name'        => 'Globetrotter',
-            'description' => 'Attended events in 10 different chapters.',
+            'description' => 'Attended events in 10 different cities.',
             'icon'        => 'dashicons-admin-site-alt3',
-            'trigger'     => 'chapter_count',
+            'trigger'     => 'city_count',
             'threshold'   => 10,
         ),
         'commentator' => array(
@@ -141,21 +141,210 @@ class Culture_Gamification {
             'trigger'     => 'magazine_share_count',
             'threshold'   => 10,
         ),
+        // ── Community contribution badges ────────────────────────────────
+        'first_post' => array(
+            'name'        => 'First Post',
+            'description' => 'Made your first community post.',
+            'icon'        => 'dashicons-edit',
+            'trigger'     => 'community_post_count',
+            'threshold'   => 1,
+        ),
+        'prolific_poster' => array(
+            'name'        => 'Prolific Poster',
+            'description' => 'Created 10 community posts.',
+            'icon'        => 'dashicons-edit-large',
+            'trigger'     => 'community_post_count',
+            'threshold'   => 10,
+        ),
+        'century_scribe' => array(
+            'name'        => 'Century Scribe',
+            'description' => 'Created 50 community posts.',
+            'icon'        => 'dashicons-superhero-alt',
+            'trigger'     => 'community_post_count',
+            'threshold'   => 50,
+        ),
+        'conversationalist' => array(
+            'name'        => 'Conversationalist',
+            'description' => 'Left 25 comments in the community.',
+            'icon'        => 'dashicons-format-chat',
+            'trigger'     => 'community_comment_count',
+            'threshold'   => 25,
+        ),
+        // ── Template specialist badges ────────────────────────────────────
+        'food_critic' => array(
+            'name'        => 'Food Critic',
+            'description' => 'Posted 10 food reviews.',
+            'icon'        => 'dashicons-carrot',
+            'trigger'     => 'food_review_count',
+            'threshold'   => 10,
+        ),
+        'culture_guide' => array(
+            'name'        => 'Culture Guide',
+            'description' => 'Posted 5 cultural takes.',
+            'icon'        => 'dashicons-lightbulb',
+            'trigger'     => 'cultural_take_count',
+            'threshold'   => 5,
+        ),
+        'itinerary_master' => array(
+            'name'        => 'Itinerary Master',
+            'description' => 'Created 3 travel itineraries.',
+            'icon'        => 'dashicons-location-alt',
+            'trigger'     => 'itinerary_count',
+            'threshold'   => 3,
+        ),
+        'poll_champion' => array(
+            'name'        => 'Poll Champion',
+            'description' => 'Created 5 community polls.',
+            'icon'        => 'dashicons-chart-bar',
+            'trigger'     => 'poll_count',
+            'threshold'   => 5,
+        ),
+        'gem_hunter' => array(
+            'name'        => 'Gem Hunter',
+            'description' => 'Shared 5 hidden gems.',
+            'icon'        => 'dashicons-star-filled',
+            'trigger'     => 'hidden_gem_count',
+            'threshold'   => 5,
+        ),
+        // ── Social & referral badges ──────────────────────────────────────
+        'connector' => array(
+            'name'        => 'Connector',
+            'description' => 'Successfully referred 3 new members.',
+            'icon'        => 'dashicons-groups',
+            'trigger'     => 'referral_count',
+            'threshold'   => 3,
+        ),
+        'super_connector' => array(
+            'name'        => 'Super Connector',
+            'description' => 'Successfully referred 10 new members.',
+            'icon'        => 'dashicons-networking',
+            'trigger'     => 'referral_count',
+            'threshold'   => 10,
+        ),
+        // ── Profile & onboarding badges ───────────────────────────────────
+        'profile_complete' => array(
+            'name'        => 'Profile Complete',
+            'description' => 'Completed your Moveee Connect profile.',
+            'icon'        => 'dashicons-id',
+            'trigger'     => 'profile_completed',
+            'threshold'   => 1,
+        ),
+        'directory_member' => array(
+            'name'        => 'In the Directory',
+            'description' => 'Opted into the Moveee Connect member directory.',
+            'icon'        => 'dashicons-businessperson',
+            'trigger'     => 'directory_opted_in',
+            'threshold'   => 1,
+        ),
+        'newsletter_subscriber' => array(
+            'name'        => 'Newsletter Subscriber',
+            'description' => 'Subscribed to a Moveee newsletter.',
+            'icon'        => 'dashicons-email-alt',
+            'trigger'     => 'newsletter_subscribed',
+            'threshold'   => 1,
+        ),
+        // ── Loyalty & tenure badges ───────────────────────────────────────
+        'monthly_member' => array(
+            'name'        => 'Monthly Member',
+            'description' => 'Been a Moveee Connect member for 30 days.',
+            'icon'        => 'dashicons-calendar-alt',
+            'trigger'     => 'account_age_days',
+            'threshold'   => 30,
+        ),
+        'veteran' => array(
+            'name'        => 'Veteran',
+            'description' => 'Been a Moveee Connect member for 180 days.',
+            'icon'        => 'dashicons-awards',
+            'trigger'     => 'account_age_days',
+            'threshold'   => 180,
+        ),
+        'annual_advocate' => array(
+            'name'        => 'Annual Advocate',
+            'description' => 'Been a Moveee Connect member for a full year.',
+            'icon'        => 'dashicons-star-half',
+            'trigger'     => 'account_age_days',
+            'threshold'   => 365,
+        ),
+        // ── Reputation milestone badges ───────────────────────────────────
+        'rising_star' => array(
+            'name'        => 'Rising Star',
+            'description' => 'Earned 250 reputation.',
+            'icon'        => 'dashicons-star-empty',
+            'trigger'     => 'points',
+            'threshold'   => 250,
+        ),
+        'taste_maker_badge' => array(
+            'name'        => 'Taste Maker',
+            'description' => 'Earned 500 reputation.',
+            'icon'        => 'dashicons-star-filled',
+            'trigger'     => 'points',
+            'threshold'   => 500,
+        ),
+        'culture_authority_badge' => array(
+            'name'        => 'Culture Authority',
+            'description' => 'Earned 1500 reputation.',
+            'icon'        => 'dashicons-superhero',
+            'trigger'     => 'points',
+            'threshold'   => 1500,
+        ),
     );
 
     /**
-     * Default point values for actions (used as fallback if options not set).
+     * Default reputation values per action. These replace the old points system
+     * — reputation is permanent and never spent.
      */
     const POINTS = array(
-        'event_rsvp'          => 5,
-        'event_checkin'       => 15,
-        'newsletter_comment'  => 10,
-        'newsletter_reaction' => 2,
-        'referral'            => 25,
-        'quote_submission'    => 10,
-        'quote_like'          => 1,
-        'magazine_read'       => 5,
-        'magazine_share'      => 5,
+        'event_rsvp'             => 5,
+        'event_checkin'          => 15,
+        'newsletter_comment'     => 10,
+        'newsletter_reaction'    => 2,
+        'referral'               => 25,
+        'quote_submission'       => 10,
+        'quote_like'             => 1,
+        'magazine_read'          => 5,
+        'magazine_share'         => 5,
+        'community_comment'      => 5,
+        'community_like'         => 2,
+        'directory_entry'        => 15,
+        'game_completed'         => 5,
+        // New actions (Phase 5+)
+        'community_post'         => 5,   // initial post submission
+        'profile_completed'      => 10,  // all KYC fields filled
+        'email_verified'         => 5,   // email verification step
+        'directory_opt_in'       => 5,   // opted into member directory
+        'newsletter_subscribed'  => 3,   // first newsletter subscription
+        'poll_vote'              => 2,   // voting on a community poll
+    );
+
+    /**
+     * Small credit bonuses for non-post actions.
+     * Post credits are earned only via validation threshold (see check_post_threshold).
+     */
+    const CREDIT_BONUSES = array(
+        'event_rsvp'            => 1,
+        'event_checkin'         => 2,
+        'referral'              => 3,
+        'newsletter_comment'    => 1,
+        'quote_submission'      => 1,
+        'magazine_read'         => 1,
+        'magazine_share'        => 1,
+        'directory_entry'       => 2,
+        'game_completed'        => 1,
+        // New actions
+        'community_post'        => 2,
+        'profile_completed'     => 5,
+        'email_verified'        => 2,
+        'directory_opt_in'      => 2,
+        'newsletter_subscribed' => 1,
+    );
+
+    const DAILY_CREDIT_CAP = 50;
+
+    const REPUTATION_TIERS = array(
+        1500 => 'culture-authority',
+        500  => 'taste-maker',
+        100  => 'culture-contributor',
+        0    => 'member',
     );
 
     /**
@@ -198,41 +387,252 @@ class Culture_Gamification {
         // No hooks needed at init - methods are called directly by other components.
     }
 
+    // ── Reputation ────────────────────────────────────────────────────────────
+
     /**
-     * Award points to a user for an action.
-     *
-     * @param int    $user_id The user ID.
-     * @param string $action  The action key from self::POINTS.
-     * @param int    $custom_points Optional override for point value.
-     * @return int New total points.
+     * Award reputation to a user. Reputation never decreases or gets capped.
+     * Also updates legacy _culture_points for backwards compatibility.
      */
-    public static function award_points( $user_id, $action, $custom_points = 0 ) {
-        $points_to_add = $custom_points > 0 ? $custom_points : self::get_point_value( $action );
+    public static function award_reputation( $user_id, $amount, $source = '', $source_id = 0 ) {
+        if ( $amount <= 0 ) return self::get_reputation( $user_id );
 
-        if ( $points_to_add <= 0 ) {
-            return self::get_points( $user_id );
-        }
-
-        $current = self::get_points( $user_id );
-        $new_total = $current + $points_to_add;
+        $current  = self::get_reputation( $user_id );
+        $new_total = $current + $amount;
+        update_user_meta( $user_id, '_culture_reputation', $new_total );
+        // Keep legacy field in sync so older code still works.
         update_user_meta( $user_id, '_culture_points', $new_total );
 
-        // Check for point-based badges after awarding.
+        self::ledger_add( $user_id, 'reputation', $amount, $source, $source_id );
         self::evaluate_badges( $user_id );
-
-        do_action( 'culture_points_awarded', $user_id, $action, $points_to_add, $new_total );
+        do_action( 'culture_reputation_awarded', $user_id, $source, $amount, $new_total );
 
         return $new_total;
     }
 
     /**
-     * Get a user's total points.
+     * Get a user's reputation score.
+     * Falls back to _culture_points for users who existed before Phase 2.
+     */
+    public static function get_reputation( $user_id ) {
+        $rep = get_user_meta( $user_id, '_culture_reputation', true );
+        if ( $rep !== '' && $rep !== false ) return (int) $rep;
+        // Migration: seed from legacy points on first access.
+        $legacy = (int) get_user_meta( $user_id, '_culture_points', true );
+        if ( $legacy > 0 ) {
+            update_user_meta( $user_id, '_culture_reputation', $legacy );
+        }
+        return $legacy;
+    }
+
+    /** Get the reputation tier string for a given reputation score. */
+    public static function get_reputation_tier( $reputation ) {
+        foreach ( self::REPUTATION_TIERS as $threshold => $tier ) {
+            if ( $reputation >= $threshold ) return $tier;
+        }
+        return 'member';
+    }
+
+    // ── Credits ───────────────────────────────────────────────────────────────
+
+    /**
+     * Award spendable credits to a user, respecting the daily cap.
+     * Returns the number of credits actually awarded (may be less than requested
+     * if the daily cap is nearly reached).
+     */
+    public static function award_credits( $user_id, $amount, $source = '', $source_id = 0 ) {
+        global $wpdb;
+        if ( $amount <= 0 ) return 0;
+
+        // Advisory mutex prevents concurrent award_credits calls for the same user
+        // from racing past the daily-cap check (TOCTOU). Timeout: 3 seconds.
+        $lock_name = 'culture_credits_' . (int) $user_id;
+        $locked    = $wpdb->get_var( $wpdb->prepare( "SELECT GET_LOCK(%s, 3)", $lock_name ) );
+        if ( ! $locked ) return 0; // Could not acquire lock — skip rather than double-award.
+
+        try {
+            // Reset daily counter if it's a new day.
+            $reset_date = get_user_meta( $user_id, '_culture_credits_reset_date', true );
+            $today      = gmdate( 'Y-m-d' );
+            if ( $reset_date !== $today ) {
+                update_user_meta( $user_id, '_culture_credits_earned_today', 0 );
+                update_user_meta( $user_id, '_culture_credits_reset_date', $today );
+            }
+
+            $earned_today = (int) get_user_meta( $user_id, '_culture_credits_earned_today', true );
+            $remaining    = self::DAILY_CREDIT_CAP - $earned_today;
+            if ( $remaining <= 0 ) {
+                $wpdb->get_var( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
+                return 0;
+            }
+
+            $actual    = min( $amount, $remaining );
+            $current   = self::get_credits( $user_id );
+            $new_total = $current + $actual;
+            update_user_meta( $user_id, '_culture_credits', $new_total );
+            update_user_meta( $user_id, '_culture_credits_earned_today', $earned_today + $actual );
+        } finally {
+            $wpdb->get_var( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
+        }
+
+        self::ledger_add( $user_id, 'credit', $actual, $source, $source_id );
+        do_action( 'culture_credits_awarded', $user_id, $source, $actual, $new_total );
+
+        return $actual;
+    }
+
+    /** Deduct credits (for redemption). Returns new balance or false if insufficient. */
+    public static function deduct_credits( $user_id, $amount, $source = '', $source_id = 0 ) {
+        global $wpdb;
+
+        $lock_name = 'culture_credits_' . (int) $user_id;
+        $locked    = $wpdb->get_var( $wpdb->prepare( "SELECT GET_LOCK(%s, 3)", $lock_name ) );
+        if ( ! $locked ) return false;
+
+        try {
+            $current = self::get_credits( $user_id );
+            if ( $current < $amount ) return false;
+            $new_total = $current - $amount;
+            update_user_meta( $user_id, '_culture_credits', $new_total );
+        } finally {
+            $wpdb->get_var( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
+        }
+
+        self::ledger_add( $user_id, 'credit', -$amount, $source, $source_id );
+        return $new_total;
+    }
+
+    /** Get a user's spendable credit balance. */
+    public static function get_credits( $user_id ) {
+        return (int) get_user_meta( $user_id, '_culture_credits', true );
+    }
+
+    /** Get how many credits the user can still earn today. */
+    public static function get_daily_credits_remaining( $user_id ) {
+        $reset_date = get_user_meta( $user_id, '_culture_credits_reset_date', true );
+        if ( $reset_date !== gmdate( 'Y-m-d' ) ) return self::DAILY_CREDIT_CAP;
+        $earned = (int) get_user_meta( $user_id, '_culture_credits_earned_today', true );
+        return max( 0, self::DAILY_CREDIT_CAP - $earned );
+    }
+
+    // ── Threshold (upvote-to-earn) ────────────────────────────────────────────
+
+    /**
+     * Check if a community post has crossed the validation threshold and award
+     * credits + reputation to its author if so. Safe to call multiple times —
+     * checks the ledger to avoid double-awarding.
      *
-     * @param int $user_id
-     * @return int
+     * Threshold: 5+ total reactions OR 3+ unique commenters.
+     *
+     * Credit amounts vary by template type (stored as _template_type post meta).
+     */
+    public static function check_post_threshold( $post_id ) {
+        $post = get_post( $post_id );
+        if ( ! $post || 'culture_post' !== $post->post_type ) return;
+
+        $author_id = (int) get_post_meta( $post_id, 'community_author_id', true );
+        if ( ! $author_id ) {
+            // Fall back to WP post author.
+            $author_id = (int) $post->post_author;
+        }
+        if ( ! $author_id ) return;
+
+        // Already paid out for this post?
+        if ( self::ledger_has_entry( $author_id, 'post_validated', $post_id ) ) return;
+
+        // Check reactions.
+        $love  = (int) get_post_meta( $post_id, 'reaction_love', true );
+        $fire  = (int) get_post_meta( $post_id, 'reaction_fire', true );
+        $clap  = (int) get_post_meta( $post_id, 'reaction_clap', true );
+        $total_reactions = $love + $fire + $clap;
+
+        // Check unique commenters.
+        global $wpdb;
+        $unique_commenters = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(DISTINCT user_id) FROM {$wpdb->comments}
+             WHERE comment_post_ID = %d AND user_id > 0 AND comment_approved = '1'",
+            $post_id
+        ) );
+
+        if ( $total_reactions < 5 && $unique_commenters < 3 ) return;
+
+        // Determine credit/reputation amount by template type.
+        $template = get_post_meta( $post_id, '_template_type', true ) ?: 'post';
+        $credit_amounts = array(
+            'post'              => array( 'credits' => 10, 'reputation' => 5 ),
+            'hidden-gem'        => array( 'credits' => 15, 'reputation' => 10 ),
+            'cultural-take'     => array( 'credits' => 12, 'reputation' => 8 ),
+            'food-review'       => array( 'credits' => 15, 'reputation' => 10 ),
+            'creative-showcase' => array( 'credits' => 12, 'reputation' => 8 ),
+            'poll'              => array( 'credits' => 8,  'reputation' => 5 ),
+            'itinerary'         => array( 'credits' => 20, 'reputation' => 15 ),
+        );
+        $amounts = $credit_amounts[ $template ] ?? $credit_amounts['post'];
+
+        self::award_credits( $author_id, $amounts['credits'], 'post_validated', $post_id );
+        self::award_reputation( $author_id, $amounts['reputation'], 'post_validated', $post_id );
+        do_action( 'culture_post_validated', $post_id, $author_id );
+    }
+
+    // ── Ledger ────────────────────────────────────────────────────────────────
+
+    /** Add a row to the credit ledger. */
+    public static function ledger_add( $user_id, $type, $amount, $source, $source_id = 0 ) {
+        global $wpdb;
+        $wpdb->insert(
+            $wpdb->prefix . 'culture_credit_ledger',
+            array(
+                'user_id'   => (int) $user_id,
+                'type'      => sanitize_key( $type ),
+                'amount'    => (int) $amount,
+                'source'    => sanitize_key( $source ),
+                'source_id' => (int) $source_id,
+            ),
+            array( '%d', '%s', '%d', '%s', '%d' )
+        );
+    }
+
+    /** Check if an exact (user, source, source_id) entry already exists. */
+    public static function ledger_has_entry( $user_id, $source, $source_id ) {
+        global $wpdb;
+        return (bool) $wpdb->get_var( $wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}culture_credit_ledger
+             WHERE user_id = %d AND source = %s AND source_id = %d LIMIT 1",
+            (int) $user_id,
+            sanitize_key( $source ),
+            (int) $source_id
+        ) );
+    }
+
+    // ── Legacy bridge ─────────────────────────────────────────────────────────
+
+    /**
+     * Award points to a user for an action.
+     * Now maps to award_reputation() + a small credit bonus for eligible actions.
+     * Kept for backwards compatibility — all existing callers continue to work.
+     */
+    public static function award_points( $user_id, $action, $custom_points = 0 ) {
+        $rep_to_add = $custom_points > 0 ? $custom_points : self::get_point_value( $action );
+
+        if ( $rep_to_add <= 0 ) {
+            return self::get_reputation( $user_id );
+        }
+
+        $new_rep = self::award_reputation( $user_id, $rep_to_add, $action );
+
+        // Award small credit bonus for eligible actions.
+        $credit_bonus = self::CREDIT_BONUSES[ $action ] ?? 0;
+        if ( $credit_bonus > 0 ) {
+            self::award_credits( $user_id, $credit_bonus, $action );
+        }
+
+        return $new_rep;
+    }
+
+    /**
+     * Get a user's total points (now returns reputation for backwards compat).
      */
     public static function get_points( $user_id ) {
-        return (int) get_user_meta( $user_id, '_culture_points', true );
+        return self::get_reputation( $user_id );
     }
 
     /**
@@ -277,6 +677,15 @@ class Culture_Gamification {
      * @param int $user_id
      */
     public static function evaluate_badges( $user_id ) {
+        // Rate-limit badge evaluation to once every 5 minutes per user.
+        // Each points/reputation award previously triggered up to 35 DB queries here;
+        // the transient gate collapses rapid-fire awards into a single evaluation window.
+        $transient_key = 'culture_badge_eval_' . (int) $user_id;
+        if ( get_transient( $transient_key ) ) {
+            return;
+        }
+        set_transient( $transient_key, 1, 5 * MINUTE_IN_SECONDS );
+
         foreach ( self::BADGES as $slug => $badge ) {
             // Always start with the hard-coded const threshold.
             // Only use the admin setting if it has been explicitly saved above 0 —
@@ -313,12 +722,12 @@ class Culture_Gamification {
                     $user_id
                 ) );
 
-            case 'chapter_count':
+            case 'city_count':
                 return (int) $wpdb->get_var( $wpdb->prepare(
                     "SELECT COUNT(DISTINCT pm.meta_value)
                      FROM {$table} a
-                     INNER JOIN {$wpdb->postmeta} pm ON a.event_id = pm.post_id AND pm.meta_key = '_culture_chapter_id'
-                     WHERE a.user_id = %d AND a.status = 'checked_in'",
+                     INNER JOIN {$wpdb->postmeta} pm ON a.event_id = pm.post_id AND pm.meta_key = '_culture_event_city'
+                     WHERE a.user_id = %d AND a.status = 'checked_in' AND pm.meta_value != ''",
                     $user_id
                 ) );
 
@@ -332,7 +741,7 @@ class Culture_Gamification {
                 ) );
 
             case 'points':
-                return self::get_points( $user_id );
+                return self::get_reputation( $user_id );
             
             case 'quote_count':
                 return (int) $wpdb->get_var( $wpdb->prepare(
@@ -373,6 +782,103 @@ class Culture_Gamification {
 
             case 'magazine_share_count':
                 return (int) get_user_meta( $user_id, '_magazine_share_count', true );
+
+            // Community post counts — queries culture_post by community_author_id meta
+            case 'community_post_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} pm
+                     INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+                     WHERE pm.meta_key = 'community_author_id' AND pm.meta_value = %d
+                       AND p.post_type = 'culture_post' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            case 'community_comment_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->comments} c
+                     INNER JOIN {$wpdb->posts} p ON c.comment_post_ID = p.ID
+                     WHERE c.user_id = %d AND p.post_type = 'culture_post' AND c.comment_approved = '1'",
+                    $user_id
+                ) );
+
+            // Template-specific community post counts
+            case 'food_review_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} pm1
+                     INNER JOIN {$wpdb->postmeta} pm2 ON pm1.post_id = pm2.post_id
+                     INNER JOIN {$wpdb->posts} p ON pm1.post_id = p.ID
+                     WHERE pm1.meta_key = 'community_author_id' AND pm1.meta_value = %d
+                       AND pm2.meta_key = '_template_type' AND pm2.meta_value = 'food-review'
+                       AND p.post_type = 'culture_post' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            case 'cultural_take_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} pm1
+                     INNER JOIN {$wpdb->postmeta} pm2 ON pm1.post_id = pm2.post_id
+                     INNER JOIN {$wpdb->posts} p ON pm1.post_id = p.ID
+                     WHERE pm1.meta_key = 'community_author_id' AND pm1.meta_value = %d
+                       AND pm2.meta_key = '_template_type' AND pm2.meta_value = 'cultural-take'
+                       AND p.post_type = 'culture_post' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            case 'itinerary_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} pm1
+                     INNER JOIN {$wpdb->postmeta} pm2 ON pm1.post_id = pm2.post_id
+                     INNER JOIN {$wpdb->posts} p ON pm1.post_id = p.ID
+                     WHERE pm1.meta_key = 'community_author_id' AND pm1.meta_value = %d
+                       AND pm2.meta_key = '_template_type' AND pm2.meta_value = 'itinerary'
+                       AND p.post_type = 'culture_post' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            case 'poll_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} pm1
+                     INNER JOIN {$wpdb->postmeta} pm2 ON pm1.post_id = pm2.post_id
+                     INNER JOIN {$wpdb->posts} p ON pm1.post_id = p.ID
+                     WHERE pm1.meta_key = 'community_author_id' AND pm1.meta_value = %d
+                       AND pm2.meta_key = '_template_type' AND pm2.meta_value = 'poll'
+                       AND p.post_type = 'culture_post' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            case 'hidden_gem_count':
+                return (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->postmeta} pm1
+                     INNER JOIN {$wpdb->postmeta} pm2 ON pm1.post_id = pm2.post_id
+                     INNER JOIN {$wpdb->posts} p ON pm1.post_id = p.ID
+                     WHERE pm1.meta_key = 'community_author_id' AND pm1.meta_value = %d
+                       AND pm2.meta_key = '_template_type' AND pm2.meta_value = 'hidden-gem'
+                       AND p.post_type = 'culture_post' AND p.post_status = 'publish'",
+                    $user_id
+                ) );
+
+            // Referral count
+            case 'referral_count':
+                return class_exists( 'Culture_Referrals' )
+                    ? (int) Culture_Referrals::get_referral_count( $user_id )
+                    : 0;
+
+            // One-time flags stored as user meta (0 or 1)
+            case 'profile_completed':
+                return (int) get_user_meta( $user_id, '_culture_profile_completed', true );
+
+            case 'directory_opted_in':
+                return (int) get_user_meta( $user_id, '_culture_directory_opt_in', true );
+
+            case 'newsletter_subscribed':
+                return (int) get_user_meta( $user_id, '_culture_newsletter_subscribed_badge', true );
+
+            // Account age in full days since registration
+            case 'account_age_days':
+                $user = get_userdata( $user_id );
+                if ( ! $user ) return 0;
+                $registered = strtotime( $user->user_registered );
+                return (int) floor( ( time() - $registered ) / DAY_IN_SECONDS );
 
             default:
                 return 0;

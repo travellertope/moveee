@@ -181,7 +181,7 @@ class Culture_CLI {
         }
 
         if ( $added > 0 ) {
-            update_option( 'culture_newsletter_subscribers', $subscribers );
+            update_option( 'culture_newsletter_subscribers', $subscribers, false );
         }
 
         return $added;

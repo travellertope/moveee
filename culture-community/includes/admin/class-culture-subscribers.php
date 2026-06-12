@@ -68,7 +68,7 @@ class Culture_Subscribers {
                     'date'     => $now,
                 );
             }
-            update_option( 'culture_newsletter_subscribers', $migrated );
+            update_option( 'culture_newsletter_subscribers', $migrated, false );
         }
     }
 
@@ -462,7 +462,7 @@ class Culture_Subscribers {
         unset( $sub );
 
         if ( $found ) {
-            update_option( 'culture_newsletter_subscribers', $subscribers );
+            update_option( 'culture_newsletter_subscribers', $subscribers, false );
         }
 
         wp_safe_redirect( add_query_arg( array(
@@ -490,7 +490,7 @@ class Culture_Subscribers {
                 $sub_email = is_array( $s ) ? ( $s['email'] ?? '' ) : $s;
                 return strtolower( trim( $sub_email ) ) !== strtolower( $email );
             } ) );
-            update_option( 'culture_newsletter_subscribers', $updated );
+            update_option( 'culture_newsletter_subscribers', $updated, false );
         }
 
         wp_safe_redirect( add_query_arg( array(
@@ -760,7 +760,7 @@ class Culture_Subscribers {
         }
 
         if ( $added > 0 ) {
-            update_option( 'culture_newsletter_subscribers', $subscribers );
+            update_option( 'culture_newsletter_subscribers', $subscribers, false );
         }
 
         return $added;

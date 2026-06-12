@@ -102,6 +102,7 @@ class Culture_Pulse {
             'pulse_region_label',
             'pulse_arm_label',
             'pulse_external_url',
+            'pulse_image_url',
             'pulse_gemini_refreshed_at',
             'pulse_og_title',
             'pulse_og_description',

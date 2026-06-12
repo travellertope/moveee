@@ -43,10 +43,19 @@ class Culture_Cron {
         add_action( self::HOOK_SEED_QUOTES,    array( __CLASS__, 'seed_quotes' ) );
         add_action( self::HOOK_TWEET_PULSE,    array( __CLASS__, 'tweet_pulse' ) );
 
+        // Deferred gamification: newsletter subscribe fires this instead of calling
+        // award_points() synchronously inside the public unauthenticated endpoint.
+        add_action( 'culture_award_newsletter_points', function( $user_id ) {
+            if ( class_exists( 'Culture_Gamification' ) ) {
+                Culture_Gamification::award_points( (int) $user_id, 'newsletter_subscribed' );
+            }
+        } );
+
         // Self-heal: schedule any jobs that are missing without requiring re-activation.
-        // Runs on every init so newly added hooks (like tweet_pulse) get registered
-        // even if the plugin was already active when they were introduced.
-        add_action( 'init', array( __CLASS__, 'schedule' ), 99 );
+        // Runs on admin_init (not init) so REST/GraphQL requests are not affected,
+        // and only once per hour via transient to avoid 7 wp_next_scheduled() calls
+        // on every admin page load.
+        add_action( 'admin_init', array( __CLASS__, 'maybe_schedule' ), 99 );
     }
 
     /**
@@ -71,16 +80,28 @@ class Culture_Cron {
     // ── Schedule / Unschedule ─────────────────────────────────────────────
 
     /**
-     * Register all recurring events. Called on plugin activation.
+     * Self-heal wrapper: only runs the schedule check once per hour.
+     */
+    public static function maybe_schedule() {
+        if ( get_transient( 'culture_cron_scheduled' ) ) {
+            return;
+        }
+        set_transient( 'culture_cron_scheduled', 1, HOUR_IN_SECONDS );
+        self::schedule();
+    }
+
+    /**
+     * Register all recurring events. Called on plugin activation and by maybe_schedule().
      */
     public static function schedule() {
         $jobs = array(
-            self::HOOK_GRACE_CHECK    => 'daily',
-            self::HOOK_SEED_DIRECTORY => 'weekly',
-            self::HOOK_REFRESH_PULSE  => 'daily',
-            self::HOOK_SEED_EVENTS    => 'daily',
-            self::HOOK_SEED_QUOTES    => 'weekly',
-            self::HOOK_TWEET_PULSE    => 'thirtyminutes',
+            self::HOOK_GRACE_CHECK      => 'daily',
+            self::HOOK_SEED_DIRECTORY   => 'weekly',
+            self::HOOK_REFRESH_PULSE    => 'daily',
+            self::HOOK_SEED_EVENTS      => 'daily',
+            self::HOOK_SEED_QUOTES      => 'weekly',
+            self::HOOK_TWEET_PULSE      => 'thirtyminutes',
+            'culture_check_perk_expiry' => 'hourly',
         );
 
         foreach ( $jobs as $hook => $recurrence ) {
@@ -101,6 +122,7 @@ class Culture_Cron {
             self::HOOK_SEED_EVENTS,
             self::HOOK_SEED_QUOTES,
             self::HOOK_TWEET_PULSE,
+            'culture_check_perk_expiry',
         );
 
         foreach ( $hooks as $hook ) {
@@ -145,7 +167,6 @@ class Culture_Cron {
         foreach ( $grace_users as $user_id ) {
             update_user_meta( $user_id, '_culture_membership_tier',     'citizen' );
             update_user_meta( $user_id, '_culture_subscription_status', 'expired' );
-            delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
             delete_user_meta( $user_id, '_culture_grace_period_start' );
             do_action( 'culture_grace_period_expired', $user_id );
         }
@@ -184,7 +205,6 @@ class Culture_Cron {
         foreach ( $manual_users as $user_id ) {
             update_user_meta( $user_id, '_culture_membership_tier',     'citizen' );
             update_user_meta( $user_id, '_culture_subscription_status', 'expired' );
-            delete_user_meta( $user_id, '_culture_secondary_chapter_id' );
             do_action( 'culture_manual_subscription_expired', $user_id );
         }
     }

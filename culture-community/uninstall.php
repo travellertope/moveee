@@ -22,8 +22,6 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}culture_attendance" );
 
 // ── Remove user meta fields ──
 $user_meta_keys = array(
-    '_culture_primary_chapter_id',
-    '_culture_secondary_chapter_id',
     '_culture_membership_tier',
     '_culture_points',
     '_culture_badges',
@@ -48,11 +46,7 @@ foreach ( $user_meta_keys as $key ) {
 
 // ── Remove post meta fields ──
 $post_meta_keys = array(
-    '_culture_location_lat',
-    '_culture_location_lng',
-    '_culture_chapter_leader_id',
     '_culture_event_date',
-    '_culture_chapter_id',
     '_culture_is_physical',
     '_culture_capacity',
 );
@@ -87,15 +81,11 @@ foreach ( $options as $option ) {
     delete_option( $option );
 }
 
-// ── Remove custom role ──
-remove_role( 'chapter_leader' );
-
 // Remove culture capabilities from admin role.
 $admin_role = get_role( 'administrator' );
 if ( $admin_role ) {
     $admin_role->remove_cap( 'culture_manage_events' );
     $admin_role->remove_cap( 'culture_scan_qr' );
-    $admin_role->remove_cap( 'culture_manage_chapter' );
     $admin_role->remove_cap( 'culture_view_attendance' );
 }
 
