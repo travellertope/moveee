@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,40 +11,12 @@ import {
   Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
-import Svg, { Path, Circle, Rect, Line, Polyline } from "react-native-svg";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import Svg, { Circle, Path, Rect, Polyline } from "react-native-svg";
 import { api, CULTURE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
-function MailIcon({ color = colors.ghost }: { color?: string }) {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Rect x="2" y="4" width="20" height="16" rx="2" stroke={color} strokeWidth="1.8" />
-      <Path d="M2 7l10 7 10-7" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function UserIcon({ color = colors.ghost }: { color?: string }) {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Circle cx="12" cy="8" r="4" stroke={color} strokeWidth="1.8" />
-      <Path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function LockIcon({ color = colors.ghost }: { color?: string }) {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Rect x="5" y="11" width="14" height="10" rx="2" stroke={color} strokeWidth="1.8" />
-      <Path d="M8 11V7a4 4 0 118 0v4" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Circle cx="12" cy="16" r="1.5" fill={color} />
-    </Svg>
-  );
-}
-
 function EyeIcon({ visible, color = colors.ghost }: { visible: boolean; color?: string }) {
   if (visible) {
     return (
@@ -64,7 +36,7 @@ function EyeIcon({ visible, color = colors.ghost }: { visible: boolean; color?: 
         d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"
         stroke={color} strokeWidth="1.8" strokeLinecap="round"
       />
-      <Line x1="1" y1="1" x2="23" y2="23" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Path d="M1 1l22 22" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
     </Svg>
   );
 }
@@ -85,6 +57,36 @@ function CircleIcon({ color }: { color: string }) {
   );
 }
 
+// ── Key illustration ──────────────────────────────────────────────────────────
+function KeyIllustration() {
+  return (
+    <View style={keyS.wrap}>
+      <Svg width={52} height={52} viewBox="0 0 52 52" fill="none">
+        {/* Key ring */}
+        <Circle cx="18" cy="18" r="14" stroke={colors.ochre} strokeWidth="3" fill="none" />
+        <Circle cx="18" cy="18" r="8" stroke={colors.ochre} strokeWidth="2" fill="none" />
+        {/* Shaft */}
+        <Path
+          d="M28 28l16 16"
+          stroke={colors.ink}
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        {/* Notches */}
+        <Path
+          d="M36 36l4-4M40 40l4-4"
+          stroke={colors.ink}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+      </Svg>
+    </View>
+  );
+}
+const keyS = StyleSheet.create({
+  wrap: { alignItems: "center", marginBottom: space[5] },
+});
+
 // ── Wordmark ──────────────────────────────────────────────────────────────────
 function Wordmark() {
   return (
@@ -96,13 +98,8 @@ function Wordmark() {
   );
 }
 const wmS = StyleSheet.create({
-  wrap: { alignItems: "center" },
-  moveee: {
-    fontFamily: fonts.serifBold,
-    fontSize: 22,
-    color: colors.ink,
-    letterSpacing: -0.5,
-  },
+  wrap: { alignItems: "center", marginBottom: space[6] },
+  moveee: { fontFamily: fonts.serifBold, fontSize: 22, color: colors.ink, letterSpacing: -0.5 },
   connect: {
     fontFamily: fonts.sansBold,
     fontSize: 9,
@@ -130,9 +127,7 @@ function getStrength(pw: string): { score: number; label: string; color: string 
   return { score, ...(levels[score - 1] ?? { label: "", color: colors.ghost }) };
 }
 
-type Req = { met: boolean; label: string };
-
-function getRequirements(pw: string): Req[] {
+function getRequirements(pw: string) {
   return [
     { met: pw.length >= 8, label: "At least 8 characters" },
     { met: /[A-Z]/.test(pw), label: "One uppercase letter" },
@@ -145,20 +140,13 @@ function PasswordStrength({ password }: { password: string }) {
   if (!password) return null;
   const { score, label, color } = getStrength(password);
   const reqs = getRequirements(password);
-  const segW = (reqs.length > 0 ? 1 : 0);
-  void segW;
-
   return (
     <View style={pwS.wrap}>
-      {/* 4-segment bar */}
       <View style={pwS.bar}>
         {[1, 2, 3, 4].map((n) => (
           <View
             key={n}
-            style={[
-              pwS.segment,
-              { backgroundColor: n <= score ? color : colors.ghost },
-            ]}
+            style={[pwS.segment, { backgroundColor: n <= score ? color : colors.ghost }]}
           />
         ))}
       </View>
@@ -178,59 +166,83 @@ const pwS = StyleSheet.create({
   wrap: { marginBottom: space[4] },
   bar: { flexDirection: "row", gap: 4, marginBottom: space[1] },
   segment: { flex: 1, height: 4, borderRadius: 9999 },
-  label: {
-    fontFamily: fonts.sansMedium,
-    fontSize: fontSize.xs,
-    marginBottom: space[2],
-  },
+  label: { fontFamily: fonts.sansMedium, fontSize: fontSize.xs, marginBottom: space[2] },
   reqs: { gap: 4 },
   reqRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  reqText: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.xs,
-    color: colors.mute,
-  },
+  reqText: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: colors.mute },
   reqMet: { color: colors.success },
 });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
-export default function RegisterScreen() {
+export default function ResetPasswordScreen() {
   const nav = useNavigation<any>();
+  const { params } = useRoute<any>();
+  const token: string = params?.token ?? "";
 
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [usernameFocused, setUsernameFocused] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [confirmFocused, setConfirmFocused] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const usernameRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
+  const [success, setSuccess] = useState(false);
 
   const { score } = getStrength(password);
-  const isValid =
-    email.trim().length > 0 &&
-    username.trim().length > 0 &&
-    password.length >= 8 &&
-    score >= 2;
+  const passwordsMatch = confirm.length > 0 && password === confirm;
+  const isValid = score >= 2 && passwordsMatch;
 
-  async function handleRegister() {
+  async function handleSubmit() {
     setError("");
     if (!isValid) return;
     setLoading(true);
     try {
-      await api.post(`${CULTURE_API}/mobile/register`, { email, username, password }, false);
-      nav.replace("VerifyEmail", { email });
+      await api.post(`${CULTURE_API}/mobile/reset-password`, { token, password }, false);
+      setSuccess(true);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Registration failed. Please try again.");
+      setError(e instanceof Error ? e.message : "Failed to reset password. The link may have expired.");
     } finally {
       setLoading(false);
     }
   }
 
+  // ── Success view ────────────────────────────────────────────────────────────
+  if (success) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.successInner}>
+          <View style={styles.successCircle}>
+            <Svg width={36} height={36} viewBox="0 0 36 36" fill="none">
+              <Polyline
+                points="8 18 15 25 28 12"
+                stroke="#fff"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </View>
+          <Text style={styles.heading}>Password updated.</Text>
+          <Text style={styles.subheading}>
+            Your password has been changed successfully. You can now sign in with your new password.
+          </Text>
+          <Pressable
+            style={styles.primaryBtn}
+            onPress={() => nav.navigate("Login")}
+          >
+            {({ pressed }) => (
+              <Text style={[styles.primaryLabel, pressed && { opacity: 0.85 }]}>
+                Sign in
+              </Text>
+            )}
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Form view ───────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
@@ -242,23 +254,13 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <Pressable
-              style={styles.backBtn}
-              onPress={() => nav.goBack()}
-              hitSlop={8}
-            >
-              <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-                <Path d="M15 18l-6-6 6-6" stroke={colors.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-            </Pressable>
-            <Wordmark />
-            <View style={{ width: 44 }} />
-          </View>
+          <Wordmark />
+          <KeyIllustration />
 
-          <Text style={styles.heading}>Create your account.</Text>
-          <Text style={styles.subheading}>Just three fields to get started.</Text>
+          <Text style={styles.heading}>Set a new password.</Text>
+          <Text style={styles.subheading}>
+            Choose something strong — you won't be able to reuse your last password.
+          </Text>
 
           {!!error && (
             <View style={styles.errorBanner}>
@@ -266,73 +268,19 @@ export default function RegisterScreen() {
             </View>
           )}
 
-          {/* Email */}
-          <View style={[styles.inputWrap, emailFocused && styles.inputWrapFocused]}>
-            <View style={styles.inputIcon}>
-              <MailIcon color={emailFocused ? colors.ink : colors.ghost} />
-            </View>
+          {/* New password */}
+          <View style={[styles.inputWrap, passwordFocused && styles.inputWrapFocused]}>
             <TextInput
               style={styles.input}
-              placeholder="Email address"
-              placeholderTextColor={colors.ghost}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoComplete="email"
-              returnKeyType="next"
-              value={email}
-              onChangeText={setEmail}
-              onFocus={() => setEmailFocused(true)}
-              onBlur={() => setEmailFocused(false)}
-              onSubmitEditing={() => usernameRef.current?.focus()}
-            />
-          </View>
-
-          {/* Username */}
-          <View style={[styles.inputWrap, usernameFocused && styles.inputWrapFocused]}>
-            <View style={styles.inputIcon}>
-              <UserIcon color={usernameFocused ? colors.ink : colors.ghost} />
-            </View>
-            <TextInput
-              ref={usernameRef}
-              style={styles.input}
-              placeholder="Username"
-              placeholderTextColor={colors.ghost}
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="next"
-              value={username}
-              onChangeText={(t) => setUsername(t.replace(/[^a-zA-Z0-9_]/g, ""))}
-              onFocus={() => setUsernameFocused(true)}
-              onBlur={() => setUsernameFocused(false)}
-              onSubmitEditing={() => passwordRef.current?.focus()}
-            />
-          </View>
-          <Text style={styles.inputHint}>Letters, numbers, and underscores only</Text>
-
-          {/* Password */}
-          <View
-            style={[
-              styles.inputWrap,
-              passwordFocused && styles.inputWrapFocused,
-              { marginBottom: space[2] },
-            ]}
-          >
-            <View style={styles.inputIcon}>
-              <LockIcon color={passwordFocused ? colors.ink : colors.ghost} />
-            </View>
-            <TextInput
-              ref={passwordRef}
-              style={styles.input}
-              placeholder="Password"
+              placeholder="New password"
               placeholderTextColor={colors.ghost}
               secureTextEntry={!showPassword}
               autoComplete="new-password"
-              returnKeyType="done"
+              returnKeyType="next"
               value={password}
               onChangeText={setPassword}
               onFocus={() => setPasswordFocused(true)}
               onBlur={() => setPasswordFocused(false)}
-              onSubmitEditing={handleRegister}
             />
             <Pressable
               style={styles.inputAction}
@@ -345,10 +293,43 @@ export default function RegisterScreen() {
 
           <PasswordStrength password={password} />
 
+          {/* Confirm password */}
+          <View style={[styles.inputWrap, confirmFocused && styles.inputWrapFocused]}>
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm new password"
+              placeholderTextColor={colors.ghost}
+              secureTextEntry={!showConfirm}
+              autoComplete="new-password"
+              returnKeyType="done"
+              value={confirm}
+              onChangeText={setConfirm}
+              onFocus={() => setConfirmFocused(true)}
+              onBlur={() => setConfirmFocused(false)}
+              onSubmitEditing={handleSubmit}
+            />
+            <View style={styles.inputAction}>
+              {confirm.length > 0 ? (
+                passwordsMatch ? (
+                  <CheckIcon color={colors.success} />
+                ) : (
+                  <CircleIcon color={colors.error} />
+                )
+              ) : (
+                <Pressable onPress={() => setShowConfirm((v) => !v)} hitSlop={8}>
+                  <EyeIcon visible={showConfirm} />
+                </Pressable>
+              )}
+            </View>
+          </View>
+          {confirm.length > 0 && !passwordsMatch && (
+            <Text style={styles.matchError}>Passwords do not match</Text>
+          )}
+
           {/* Submit */}
           <Pressable
             style={[styles.primaryBtn, !isValid && styles.primaryBtnDisabled]}
-            onPress={handleRegister}
+            onPress={handleSubmit}
             disabled={loading || !isValid}
           >
             {({ pressed }) =>
@@ -356,28 +337,11 @@ export default function RegisterScreen() {
                 <ActivityIndicator color={colors.paper} />
               ) : (
                 <Text style={[styles.primaryLabel, pressed && { opacity: 0.85 }]}>
-                  Create account
+                  Update password
                 </Text>
               )
             }
           </Pressable>
-
-          {/* Terms */}
-          <Text style={styles.terms}>
-            By creating an account you agree to our{" "}
-            <Text style={styles.termsLink}>Terms</Text> and{" "}
-            <Text style={styles.termsLink}>Privacy Policy</Text>
-          </Text>
-
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Already have an account?{" "}
-              <Text style={styles.footerLink} onPress={() => nav.navigate("Login")}>
-                Sign in
-              </Text>
-            </Text>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -388,32 +352,21 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.paperWarm },
   scroll: {
     flexGrow: 1,
-    paddingHorizontal: space[6],
-    paddingTop: space[5],
-    paddingBottom: space[8],
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: space[6],
-  },
-  backBtn: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: space[6],
+    paddingVertical: space[8],
   },
   heading: {
     fontFamily: fonts.serifBold,
     fontSize: 26,
     color: colors.ink,
-    marginBottom: space[1],
+    marginBottom: space[2],
   },
   subheading: {
     fontFamily: fonts.sans,
     fontSize: fontSize.base - 1,
     color: colors.mute,
+    lineHeight: 22,
     marginBottom: space[6],
   },
   errorBanner: {
@@ -438,11 +391,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.ghost,
     height: 52,
-    marginBottom: space[3],
+    marginBottom: space[2],
     paddingHorizontal: space[4],
   },
   inputWrapFocused: { borderColor: colors.ink },
-  inputIcon: { marginRight: space[2] },
   input: {
     flex: 1,
     fontFamily: fonts.sans,
@@ -450,11 +402,10 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   inputAction: { paddingLeft: space[2], paddingVertical: space[2] },
-  inputHint: {
-    fontFamily: fonts.mono,
+  matchError: {
+    fontFamily: fonts.sans,
     fontSize: fontSize.xs,
-    color: colors.mute,
-    marginTop: -space[2],
+    color: colors.error,
     marginBottom: space[3],
     marginLeft: 2,
   },
@@ -464,7 +415,7 @@ const styles = StyleSheet.create({
     height: 52,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: space[4],
+    marginTop: space[4],
   },
   primaryBtnDisabled: { opacity: 0.45 },
   primaryLabel: {
@@ -472,23 +423,21 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     color: colors.paper,
   },
-  terms: {
-    fontFamily: fonts.sans,
-    fontSize: 10,
-    color: colors.mute,
-    textAlign: "center",
-    lineHeight: 16,
-    marginBottom: space[4],
+  // Success view
+  successInner: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: space[6],
+    paddingVertical: space[8],
   },
-  termsLink: { color: colors.ochre },
-  footer: { alignItems: "center" },
-  footerText: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.sm,
-    color: colors.mute,
-  },
-  footerLink: {
-    fontFamily: fonts.sansMedium,
-    color: colors.ochre,
+  successCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.ochre,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: space[5],
   },
 });

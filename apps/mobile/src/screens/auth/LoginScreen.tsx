@@ -16,7 +16,7 @@ import Svg, { Path, Circle, Rect, Line } from "react-native-svg";
 import { useAuthStore } from "../../auth/authStore";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 
-// ── Icon components ───────────────────────────────────────────────────────────
+// ── Icons ─────────────────────────────────────────────────────────────────────
 function MailIcon({ color = colors.ghost }: { color?: string }) {
   return (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
@@ -40,16 +40,38 @@ function EyeIcon({ visible, color = colors.ghost }: { visible: boolean; color?: 
   if (visible) {
     return (
       <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-        <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke={color} strokeWidth="1.8" />
+        <Path
+          d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"
+          stroke={color}
+          strokeWidth="1.8"
+        />
         <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth="1.8" />
       </Svg>
     );
   }
   return (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Line x1="1" y1="1" x2="23" y2="23" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Path
+        d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Line
+        x1="1"
+        y1="1"
+        x2="23"
+        y2="23"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </Svg>
   );
 }
@@ -57,9 +79,24 @@ function EyeIcon({ visible, color = colors.ghost }: { visible: boolean; color?: 
 function FingerprintIcon({ color = colors.ink }: { color?: string }) {
   return (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 10a2 2 0 00-2 2c0 1.02-.1 2.51-.26 4" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Path d="M14 13.12c0 2.38 .19 4.86.62 6.88M8 14c0 2.5-.49 4.96-.78 6.18M12 8a4 4 0 014 4c0 1.5-.15 3.14-.29 4.47" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Path d="M4.67 12.57A8 8 0 0112 4a8 8 0 018 8c0 1.88-.18 3.7-.5 5.48" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Path
+        d="M12 10a2 2 0 00-2 2c0 1.02-.1 2.51-.26 4"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M14 13.12c0 2.38.19 4.86.62 6.88M8 14c0 2.5-.49 4.96-.78 6.18M12 8a4 4 0 014 4c0 1.5-.15 3.14-.29 4.47"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M4.67 12.57A8 8 0 0112 4a8 8 0 018 8c0 1.88-.18 3.7-.5 5.48"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </Svg>
   );
 }
@@ -67,19 +104,18 @@ function FingerprintIcon({ color = colors.ink }: { color?: string }) {
 // ── Wordmark ──────────────────────────────────────────────────────────────────
 function Wordmark() {
   return (
-    <View style={wmStyles.wrap}>
-      <Text style={wmStyles.moveee}>moveee</Text>
-      <Text style={wmStyles.connect}>connect</Text>
-      <View style={wmStyles.line} />
+    <View style={wmS.wrap}>
+      <Text style={wmS.moveee}>moveee</Text>
+      <Text style={wmS.connect}>connect</Text>
+      <View style={wmS.line} />
     </View>
   );
 }
-
-const wmStyles = StyleSheet.create({
+const wmS = StyleSheet.create({
   wrap: { alignItems: "center", marginBottom: space[6] },
   moveee: {
     fontFamily: fonts.serifBold,
-    fontSize: fontSize.lg,
+    fontSize: 22,
     color: colors.ink,
     letterSpacing: -0.5,
   },
@@ -94,7 +130,7 @@ const wmStyles = StyleSheet.create({
   line: { width: 32, height: 2, backgroundColor: colors.ochre, marginTop: 10 },
 });
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
+// ── Screen ────────────────────────────────────────────────────────────────────
 export default function LoginScreen() {
   const nav = useNavigation<any>();
   const { login, isLoading, error: authError } = useAuthStore();
@@ -117,7 +153,9 @@ export default function LoginScreen() {
     try {
       await login(email.trim(), password);
     } catch (e: unknown) {
-      setLocalError(e instanceof Error ? e.message : "Sign in failed. Please try again.");
+      setLocalError(
+        e instanceof Error ? e.message : "Sign in failed. Please try again."
+      );
     }
   }
 
@@ -140,14 +178,13 @@ export default function LoginScreen() {
           <Text style={styles.heading}>Welcome back.</Text>
           <Text style={styles.subheading}>Sign in to your Moveee account.</Text>
 
-          {/* Error banner */}
           {!!displayError && (
             <View style={styles.errorBanner}>
               <Text style={styles.errorText}>{displayError}</Text>
             </View>
           )}
 
-          {/* Email field */}
+          {/* Email */}
           <View style={[styles.inputWrap, emailFocused && styles.inputWrapFocused]}>
             <View style={styles.inputIcon}>
               <MailIcon color={emailFocused ? colors.ink : colors.ghost} />
@@ -168,7 +205,7 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Password field */}
+          {/* Password */}
           <View style={[styles.inputWrap, passwordFocused && styles.inputWrapFocused]}>
             <View style={styles.inputIcon}>
               <LockIcon color={passwordFocused ? colors.ink : colors.ghost} />
@@ -228,13 +265,8 @@ export default function LoginScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Passkey button */}
-          <Pressable
-            style={styles.outlineBtn}
-            onPress={() => {
-              /* passkey flow — handled externally */
-            }}
-          >
+          {/* Passkey */}
+          <Pressable style={styles.outlineBtn} onPress={() => {}}>
             {({ pressed }) => (
               <View style={[styles.outlineBtnInner, pressed && { opacity: 0.7 }]}>
                 <FingerprintIcon />
@@ -247,10 +279,7 @@ export default function LoginScreen() {
           <View style={styles.footer}>
             <Text style={styles.footerText}>
               Don't have an account?{" "}
-              <Text
-                style={styles.footerLink}
-                onPress={() => nav.navigate("Register")}
-              >
+              <Text style={styles.footerLink} onPress={() => nav.navigate("Register")}>
                 Create one
               </Text>
             </Text>
@@ -262,10 +291,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.paperWarm,
-  },
+  safe: { flex: 1, backgroundColor: colors.paperWarm },
   scroll: {
     flexGrow: 1,
     justifyContent: "center",
@@ -309,27 +335,16 @@ const styles = StyleSheet.create({
     marginBottom: space[3],
     paddingHorizontal: space[4],
   },
-  inputWrapFocused: {
-    borderColor: colors.ink,
-  },
-  inputIcon: {
-    marginRight: space[2],
-  },
+  inputWrapFocused: { borderColor: colors.ink },
+  inputIcon: { marginRight: space[2] },
   input: {
     flex: 1,
     fontFamily: fonts.sans,
     fontSize: fontSize.base,
     color: colors.ink,
   },
-  inputAction: {
-    paddingLeft: space[2],
-    paddingVertical: space[2],
-  },
-  forgotWrap: {
-    alignSelf: "flex-end",
-    marginBottom: space[5],
-    paddingVertical: 4,
-  },
+  inputAction: { paddingLeft: space[2], paddingVertical: space[2] },
+  forgotWrap: { alignSelf: "flex-end", marginBottom: space[5], paddingVertical: 4 },
   forgotText: {
     fontFamily: fonts.sansMedium,
     fontSize: fontSize.sm,
@@ -342,9 +357,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  primaryBtnDisabled: {
-    opacity: 0.45,
-  },
+  primaryBtnDisabled: { opacity: 0.45 },
   primaryLabel: {
     fontFamily: fonts.sansBold,
     fontSize: fontSize.base,
@@ -356,11 +369,7 @@ const styles = StyleSheet.create({
     marginVertical: space[5],
     gap: space[3],
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.rule,
-  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.rule },
   dividerText: {
     fontFamily: fonts.sans,
     fontSize: fontSize.sm,
@@ -384,10 +393,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     color: colors.ink,
   },
-  footer: {
-    alignItems: "center",
-    marginTop: space[6],
-  },
+  footer: { alignItems: "center", marginTop: space[6] },
   footerText: {
     fontFamily: fonts.sans,
     fontSize: fontSize.sm,

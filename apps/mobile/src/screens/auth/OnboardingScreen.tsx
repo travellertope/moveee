@@ -4,9 +4,9 @@ import {
   Text,
   StyleSheet,
   Animated,
+  Easing,
   Dimensions,
   Pressable,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -20,16 +20,13 @@ import Svg, {
   Path,
 } from "react-native-svg";
 import { storage } from "../../store/storage";
-import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { colors, fonts, fontSize, space, shadows } from "../../theme";
 
 const { width: W, height: H } = Dimensions.get("window");
-
 const ONBOARDING_KEY = "onboarding_complete";
 
-// ── Textile SVG for Slide 1 ───────────────────────────────────────────────────
+// ── Textile SVG (Slide 1 top) ─────────────────────────────────────────────────
 function TextileIllustration({ height }: { height: number }) {
-  const cols = [0, W / 3, (W * 2) / 3];
-  const rows = [0, height / 3, (height * 2) / 3];
   const blockW = W / 3;
   const blockH = height / 3;
   const palette = [
@@ -37,7 +34,7 @@ function TextileIllustration({ height }: { height: number }) {
     "#5C2A0E", "#C5491F", "#B38238",
     "#B38238", "#4A1A06", "#C5491F",
   ];
-  const circleXs = [65, W / 2, W - 65];
+  const circleXs = [blockW / 2, blockW + blockW / 2, blockW * 2 + blockW / 2];
 
   return (
     <Svg width={W} height={height}>
@@ -47,24 +44,17 @@ function TextileIllustration({ height }: { height: number }) {
           <Stop offset="1" stopColor={colors.ink} stopOpacity="0.6" />
         </LinearGradient>
       </Defs>
-      {/* Base */}
       <Rect x="0" y="0" width={W} height={height} fill="#7A3010" />
-      {/* Color blocks */}
-      {palette.map((fill, i) => {
-        const col = i % 3;
-        const row = Math.floor(i / 3);
-        return (
-          <Rect
-            key={i}
-            x={cols[col]}
-            y={rows[row]}
-            width={blockW}
-            height={blockH}
-            fill={fill}
-          />
-        );
-      })}
-      {/* Diagonal line overlays */}
+      {palette.map((fill, i) => (
+        <Rect
+          key={i}
+          x={(i % 3) * blockW}
+          y={Math.floor(i / 3) * blockH}
+          width={blockW}
+          height={blockH}
+          fill={fill}
+        />
+      ))}
       {Array.from({ length: 20 }).map((_, i) => (
         <Line
           key={`d${i}`}
@@ -76,24 +66,21 @@ function TextileIllustration({ height }: { height: number }) {
           strokeWidth={1}
         />
       ))}
-      {/* Horizontal separators */}
       <Rect x="0" y={blockH - 4} width={W} height={8} fill="rgba(243,236,224,0.14)" />
       <Rect x="0" y={blockH * 2 - 4} width={W} height={8} fill="rgba(243,236,224,0.14)" />
-      {/* Concentric circles */}
       {circleXs.map((cx, i) => (
-        <React.Fragment key={`c${i}`}>
-          <Circle cx={cx} cy={blockH * 0.7} r={28} fill="rgba(255,255,255,0.09)" />
-          <Circle cx={cx} cy={blockH * 0.7} r={19} fill="rgba(255,255,255,0.09)" />
-          <Circle cx={cx} cy={blockH * 0.7} r={11} fill="rgba(255,255,255,0.09)" />
+        <React.Fragment key={`cc${i}`}>
+          <Circle cx={cx} cy={blockH * 0.75} r={28} fill="rgba(255,255,255,0.09)" />
+          <Circle cx={cx} cy={blockH * 0.75} r={19} fill="rgba(255,255,255,0.09)" />
+          <Circle cx={cx} cy={blockH * 0.75} r={11} fill="rgba(255,255,255,0.09)" />
         </React.Fragment>
       ))}
-      {/* Bottom vignette */}
       <Rect x="0" y="0" width={W} height={height} fill="url(#vignette)" />
     </Svg>
   );
 }
 
-// ── Grid cards SVG for Slide 2 ────────────────────────────────────────────────
+// ── Grid cards SVG (Slide 2 top) ──────────────────────────────────────────────
 function GridIllustration({ height }: { height: number }) {
   const colW = W / 2;
   const rowH = height / 3;
@@ -105,7 +92,6 @@ function GridIllustration({ height }: { height: number }) {
     { fill: "#065F46", label: "Quote" },
     { fill: "#1E3A5F", label: "Poll" },
   ];
-
   return (
     <Svg width={W} height={height}>
       {cards.map((card, i) => {
@@ -113,17 +99,17 @@ function GridIllustration({ height }: { height: number }) {
         const row = Math.floor(i / 2);
         const x = col * colW;
         const y = row * rowH;
+        const pillW = card.label.length * 7 + 18;
         return (
           <React.Fragment key={i}>
             <Rect x={x} y={y} width={colW} height={rowH} fill={card.fill} />
-            {/* Label pill */}
             <Rect
               x={x + 10}
               y={y + rowH - 30}
-              width={card.label.length * 7 + 16}
+              width={pillW}
               height={22}
               rx={11}
-              fill="rgba(255,255,255,0.92)"
+              fill="rgba(255,255,255,0.90)"
             />
           </React.Fragment>
         );
@@ -132,18 +118,17 @@ function GridIllustration({ height }: { height: number }) {
   );
 }
 
-// ── Credits illustration for Slide 3 ─────────────────────────────────────────
+// ── Credits illustration (Slide 3 top) ───────────────────────────────────────
 function CreditsIllustration({ height }: { height: number }) {
   const cx = W / 2;
   const cy = height / 2;
+  const orbitR = 90;
   const badges = [
     { label: "+10 CR", angle: -90 },
     { label: "+30 CR", angle: 0 },
     { label: "+50 CR", angle: 90 },
-    { label: "🏆 Badge", angle: 180 },
+    { label: "Badge", angle: 180 },
   ];
-  const orbitR = 90;
-
   return (
     <Svg width={W} height={height}>
       <Defs>
@@ -153,14 +138,18 @@ function CreditsIllustration({ height }: { height: number }) {
         </LinearGradient>
       </Defs>
       <Rect x="0" y="0" width={W} height={height} fill="url(#bgGrad)" />
-      {/* Concentric circles */}
       <Circle cx={cx} cy={cy} r={130} stroke={colors.rule} strokeWidth={1} fill="none" />
       <Circle cx={cx} cy={cy} r={100} stroke={colors.rule} strokeWidth={1} fill="none" />
-      <Circle cx={cx} cy={cy} r={70} stroke={colors.gold} strokeWidth={1.5} strokeDasharray="4 4" fill="none" />
-      {/* Center circle */}
+      <Circle
+        cx={cx}
+        cy={cy}
+        r={70}
+        stroke={colors.gold}
+        strokeWidth={1.5}
+        strokeDasharray="4 4"
+        fill="none"
+      />
       <Circle cx={cx} cy={cy} r={34} fill={colors.ink} />
-      {/* "C" in center */}
-      {/* Badge pills */}
       {badges.map((b, i) => {
         const rad = (b.angle * Math.PI) / 180;
         const bx = cx + orbitR * Math.cos(rad);
@@ -169,12 +158,11 @@ function CreditsIllustration({ height }: { height: number }) {
         const ph = 26;
         return (
           <React.Fragment key={i}>
-            {/* Dashed line from center */}
             <Line
-              x1={cx + 34 * Math.cos(rad)}
-              y1={cy + 34 * Math.sin(rad)}
-              x2={bx - (pw / 2) * Math.cos(rad)}
-              y2={by - (ph / 2) * Math.sin(rad)}
+              x1={cx + 36 * Math.cos(rad)}
+              y1={cy + 36 * Math.sin(rad)}
+              x2={bx - (pw / 2 + 2) * Math.cos(rad)}
+              y2={by - (ph / 2 + 2) * Math.sin(rad)}
               stroke={colors.ochre}
               strokeWidth={1}
               strokeDasharray="3 3"
@@ -185,7 +173,7 @@ function CreditsIllustration({ height }: { height: number }) {
               width={pw}
               height={ph}
               rx={ph / 2}
-              fill={colors.gold}
+              fill={i === 3 ? colors.ink : colors.gold}
             />
           </React.Fragment>
         );
@@ -194,48 +182,39 @@ function CreditsIllustration({ height }: { height: number }) {
   );
 }
 
-// ── Dots indicator ────────────────────────────────────────────────────────────
+// ── Dots ──────────────────────────────────────────────────────────────────────
 function Dots({ active, total }: { active: number; total: number }) {
   return (
-    <View style={dotsStyles.row}>
+    <View style={dotsS.row}>
       {Array.from({ length: total }).map((_, i) => (
         <View
           key={i}
-          style={[
-            dotsStyles.dot,
-            i === active ? dotsStyles.dotActive : dotsStyles.dotInactive,
-          ]}
+          style={[dotsS.dot, i === active ? dotsS.active : dotsS.inactive]}
         />
       ))}
     </View>
   );
 }
-
-const dotsStyles = StyleSheet.create({
+const dotsS = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 6 },
   dot: { borderRadius: 9999 },
-  dotActive: { width: 20, height: 6, backgroundColor: colors.ochre },
-  dotInactive: { width: 6, height: 6, backgroundColor: colors.ghost },
+  active: { width: 20, height: 6, backgroundColor: colors.ochre },
+  inactive: { width: 6, height: 6, backgroundColor: colors.ghost },
 });
 
 // ── Wordmark ──────────────────────────────────────────────────────────────────
 function Wordmark({ size = 22 }: { size?: number }) {
   return (
-    <View style={wordmarkStyles.wrap}>
-      <Text style={[wordmarkStyles.moveee, { fontSize: size }]}>moveee</Text>
-      <Text style={wordmarkStyles.connect}>connect</Text>
-      <View style={wordmarkStyles.line} />
+    <View style={wmS.wrap}>
+      <Text style={[wmS.moveee, { fontSize: size }]}>moveee</Text>
+      <Text style={wmS.connect}>connect</Text>
+      <View style={wmS.line} />
     </View>
   );
 }
-
-const wordmarkStyles = StyleSheet.create({
+const wmS = StyleSheet.create({
   wrap: { alignItems: "center" },
-  moveee: {
-    fontFamily: fonts.serifBold,
-    color: colors.ink,
-    letterSpacing: -1,
-  },
+  moveee: { fontFamily: fonts.serifBold, color: colors.ink, letterSpacing: -1 },
   connect: {
     fontFamily: fonts.sansBold,
     fontSize: fontSize.eyebrow,
@@ -244,12 +223,7 @@ const wordmarkStyles = StyleSheet.create({
     textTransform: "uppercase",
     marginTop: 4,
   },
-  line: {
-    width: 40,
-    height: 2,
-    backgroundColor: colors.ochre,
-    marginTop: 16,
-  },
+  line: { width: 40, height: 2, backgroundColor: colors.ochre, marginTop: 16 },
 });
 
 // ── Splash ────────────────────────────────────────────────────────────────────
@@ -260,7 +234,8 @@ function Splash({ onDone }: { onDone: () => void }) {
     Animated.loop(
       Animated.timing(spinAnim, {
         toValue: 1,
-        duration: 1200,
+        duration: 1000,
+        easing: Easing.linear,
         useNativeDriver: true,
       })
     ).start();
@@ -274,11 +249,11 @@ function Splash({ onDone }: { onDone: () => void }) {
   });
 
   return (
-    <Pressable style={splashStyles.container} onPress={onDone}>
+    <Pressable style={splashS.container} onPress={onDone}>
       <Wordmark size={36} />
       <Animated.View style={{ marginTop: 32, transform: [{ rotate: spin }] }}>
         <Svg width={40} height={40}>
-          <Circle cx={20} cy={20} r={18} stroke={colors.ghost} strokeWidth={2} fill="none" />
+          <Circle cx={20} cy={20} r={18} stroke={colors.ghost} strokeWidth={2.5} fill="none" />
           <Path
             d="M20 2 A18 18 0 1 1 2 20"
             stroke={colors.ochre}
@@ -288,12 +263,11 @@ function Splash({ onDone }: { onDone: () => void }) {
           />
         </Svg>
       </Animated.View>
-      <Text style={splashStyles.loading}>Loading</Text>
+      <Text style={splashS.loading}>Loading</Text>
     </Pressable>
   );
 }
-
-const splashStyles = StyleSheet.create({
+const splashS = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.paperWarm,
@@ -309,7 +283,7 @@ const splashStyles = StyleSheet.create({
   },
 });
 
-// ── Bottom card ───────────────────────────────────────────────────────────────
+// ── Slide card ────────────────────────────────────────────────────────────────
 type SlideCardProps = {
   title: string;
   body: string;
@@ -334,31 +308,30 @@ function SlideCard({
   secondaryIsGhost = false,
 }: SlideCardProps) {
   return (
-    <View style={cardStyles.card}>
-      <Text style={cardStyles.title}>{title}</Text>
-      <Text style={cardStyles.body}>{body}</Text>
+    <View style={cardS.card}>
+      <Text style={cardS.title}>{title}</Text>
+      <Text style={cardS.body}>{body}</Text>
       <Dots active={activeIndex} total={total} />
-      <Pressable style={cardStyles.primaryBtn} onPress={onPrimary}>
+      <Pressable style={cardS.primaryBtn} onPress={onPrimary}>
         {({ pressed }) => (
-          <Text style={[cardStyles.primaryLabel, pressed && { opacity: 0.8 }]}>
+          <Text style={[cardS.primaryLabel, pressed && { opacity: 0.85 }]}>
             {primaryLabel}
           </Text>
         )}
       </Pressable>
       {secondaryIsGhost ? (
-        <Pressable onPress={onSecondary} style={cardStyles.ghostBtn}>
-          <Text style={cardStyles.ghostLabel}>{secondaryLabel}</Text>
+        <Pressable onPress={onSecondary} style={cardS.ghostBtn}>
+          <Text style={cardS.ghostLabel}>{secondaryLabel}</Text>
         </Pressable>
       ) : (
-        <Pressable onPress={onSecondary} style={cardStyles.footerLink}>
-          <Text style={cardStyles.footerText}>{secondaryLabel}</Text>
+        <Pressable onPress={onSecondary} style={cardS.footerBtn}>
+          <Text style={cardS.footerText}>{secondaryLabel}</Text>
         </Pressable>
       )}
     </View>
   );
 }
-
-const cardStyles = StyleSheet.create({
+const cardS = StyleSheet.create({
   card: {
     backgroundColor: colors.paper,
     borderTopLeftRadius: 20,
@@ -366,8 +339,8 @@ const cardStyles = StyleSheet.create({
     paddingHorizontal: space[8],
     paddingTop: space[8],
     paddingBottom: space[6],
-    ...shadows.modal,
     gap: 12,
+    ...shadows.modal,
   },
   title: {
     fontFamily: fonts.serifBold,
@@ -404,7 +377,7 @@ const cardStyles = StyleSheet.create({
     fontSize: fontSize.base,
     color: colors.ochre,
   },
-  footerLink: {
+  footerBtn: {
     alignItems: "center",
     paddingVertical: 8,
   },
@@ -417,31 +390,31 @@ const cardStyles = StyleSheet.create({
 });
 
 // ── Slide wrapper ─────────────────────────────────────────────────────────────
-type SlideProps = {
+function Slide({
+  index,
+  translateX,
+  topHeight,
+  illustration,
+  children,
+}: {
   index: number;
   translateX: Animated.Value;
   topHeight: number;
-  children: React.ReactNode;
   illustration: React.ReactNode;
-};
-
-function Slide({ index, translateX, topHeight, children, illustration }: SlideProps) {
+  children: React.ReactNode;
+}) {
   const x = translateX.interpolate({
     inputRange: [index - 1, index, index + 1],
     outputRange: [W, 0, -W],
   });
-
   return (
-    <Animated.View
-      style={[slideStyles.slide, { transform: [{ translateX: x }] }]}
-    >
+    <Animated.View style={[slideS.slide, { transform: [{ translateX: x }] }]}>
       <View style={{ height: topHeight, overflow: "hidden" }}>{illustration}</View>
       {children}
     </Animated.View>
   );
 }
-
-const slideStyles = StyleSheet.create({
+const slideS = StyleSheet.create({
   slide: {
     position: "absolute",
     top: 0,
@@ -452,7 +425,7 @@ const slideStyles = StyleSheet.create({
   },
 });
 
-// ── Main OnboardingScreen ─────────────────────────────────────────────────────
+// ── Main screen ───────────────────────────────────────────────────────────────
 export default function OnboardingScreen() {
   const nav = useNavigation<any>();
   const [phase, setPhase] = useState<"splash" | "slides">("splash");
@@ -469,6 +442,7 @@ export default function OnboardingScreen() {
     Animated.timing(slideAnim, {
       toValue: index,
       duration: 350,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
       useNativeDriver: true,
     }).start();
   }
@@ -492,7 +466,7 @@ export default function OnboardingScreen() {
   }
 
   const topH1 = H * 0.56;
-  const topH2 = H * 0.5;
+  const topH2 = H * 0.50;
   const topH3 = H * 0.46;
 
   return (

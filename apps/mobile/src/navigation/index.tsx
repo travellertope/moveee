@@ -9,9 +9,12 @@ import { colors } from "../theme";
 import type { FeedItem } from "../types";
 
 // Auth
+import OnboardingScreen from "../screens/auth/OnboardingScreen";
 import LoginScreen from "../screens/auth/LoginScreen";
 import RegisterScreen from "../screens/auth/RegisterScreen";
 import VerifyEmailScreen from "../screens/auth/VerifyEmailScreen";
+import ForgotPasswordScreen from "../screens/auth/ForgotPasswordScreen";
+import ResetPasswordScreen from "../screens/auth/ResetPasswordScreen";
 
 // Feed / Community
 import ConnectFeedScreen from "../screens/community/ConnectFeedScreen";
@@ -170,9 +173,12 @@ function MainTabs() {
 function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Login"       component={LoginScreen} />
-      <Stack.Screen name="Register"    component={RegisterScreen} />
-      <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
+      <Stack.Screen name="Onboarding"     component={OnboardingScreen} />
+      <Stack.Screen name="Login"          component={LoginScreen} />
+      <Stack.Screen name="Register"       component={RegisterScreen} />
+      <Stack.Screen name="VerifyEmail"    component={VerifyEmailScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ResetPassword"  component={ResetPasswordScreen} />
     </Stack.Navigator>
   );
 }
