@@ -20,7 +20,7 @@ import {
   matchesInterests,
 } from "../../features/community/useFeedRecommendations";
 import { useAuthStore } from "../../auth/authStore";
-import FeedCard from "../../components/community/FeedCard";
+import FeedCard from "../../components/community/FeedItemCard";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { FeedItem } from "../../types";
 

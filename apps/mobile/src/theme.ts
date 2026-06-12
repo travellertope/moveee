@@ -37,14 +37,14 @@ export const colors = {
   communityText:   '#2E7D32',
 
   // Feed type badge colours (from Figma Design System)
-  badgePulseBg:      '#14110D',
-  badgePulseText:    '#FFFFFF',
-  badgeEditorialBg:  '#F3ECE0',
-  badgeEditorialText:'#14110D',
+  badgePulseBg:      '#FEF3E2',
+  badgePulseText:    '#B38238',   // colors.gold
+  badgeEditorialBg:  '#FFF0EB',
+  badgeEditorialText:'#C5491F',   // colors.ochre
   badgeHappeningBg:  '#EDE9FE',
   badgeHappeningText:'#4C1D95',
-  badgeDirectoryBg:  '#EDF7ED',
-  badgeDirectoryText:'#065F46',
+  badgeDirectoryBg:  '#E8F5EE',
+  badgeDirectoryText:'#085041',
   badgeQuoteBg:      '#FEF3C7',
   badgeQuoteText:    '#78350F',
 

@@ -554,21 +554,62 @@ function GenericCard({ item, onPress }: Props) {
     onPress();
   };
 
+  // Happening cards: full-bleed hero image layout
+  if (item.type === "happening") {
+    return (
+      <>
+        <TouchableOpacity style={[styles.card, styles.happeningCard]} onPress={handlePress} activeOpacity={0.95}>
+          {item.image ? (
+            <TouchableOpacity onPress={() => setLightboxIdx(0)} activeOpacity={0.92}>
+              <Image source={{ uri: item.image }} style={styles.happeningHero} resizeMode="cover" />
+            </TouchableOpacity>
+          ) : null}
+          <View style={styles.happeningContent}>
+            <View style={styles.metaRow}>
+              <TypeBadge type="happening" />
+              {item.eventDate ? (
+                <Text style={[styles.metaTag, { color: READ_MORE_COLOR.happening, fontFamily: fonts.sansBold }]}>
+                  {fmtHappeningDate(item.eventDate, item.endDate)}
+                </Text>
+              ) : null}
+              {(item.location || item.city) ? (
+                <Text style={styles.metaTagMuted} numberOfLines={1}>
+                  · {[item.location, item.city].filter(Boolean).join(", ")}
+                </Text>
+              ) : null}
+              <View style={{ flex: 1 }} />
+              <Text style={styles.dateText}>{formatDate(item.date)}</Text>
+            </View>
+            <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+            {displayExcerpt ? <Text style={styles.excerpt}>{displayExcerpt}</Text> : null}
+            {item.admission && (
+              <View style={styles.admissionPill}>
+                <Ionicons name="ticket-outline" size={11} color={colors.badgeHappeningText} />
+                <Text style={styles.admissionText}>{item.admission}</Text>
+              </View>
+            )}
+            <TouchableOpacity style={styles.rsvpButton} onPress={handlePress}>
+              <Text style={styles.rsvpButtonText}>See details →</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+        {item.image && (
+          <ImageLightbox
+            visible={lightboxIdx !== null}
+            images={[item.image]}
+            onClose={() => setLightboxIdx(null)}
+          />
+        )}
+        <HappeningDetailModal visible={happeningOpen} item={item} onClose={() => setHappeningOpen(false)} />
+      </>
+    );
+  }
+
   return (
     <>
       <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.95}>
         <View style={styles.metaRow}>
           <TypeBadge type={item.type} />
-          {item.type === "happening" && item.eventDate ? (
-            <Text style={[styles.metaTag, { color: READ_MORE_COLOR.happening, fontFamily: fonts.sansBold }]}>
-              {fmtHappeningDate(item.eventDate, item.endDate)}
-            </Text>
-          ) : null}
-          {item.type === "happening" && (item.location || item.city) ? (
-            <Text style={styles.metaTagMuted} numberOfLines={1}>
-              · {[item.location, item.city].filter(Boolean).join(", ")}
-            </Text>
-          ) : null}
           {item.type === "directory" && item.entryType ? (
             <Text style={styles.metaTagMuted}>{item.entryType}</Text>
           ) : null}
@@ -586,20 +627,12 @@ function GenericCard({ item, onPress }: Props) {
         {displayExcerpt ? <Text style={styles.excerpt}>{displayExcerpt}</Text> : null}
         {isLong ? (
           <Text style={[styles.readMore, { color: READ_MORE_COLOR[item.type] ?? colors.gold }]}>
-            {item.type === "happening" || item.type === "directory" ? "See details →" : "Read more →"}
+            {item.type === "directory" ? "See details →" : "Read more →"}
           </Text>
         ) : (
-          (item.type === "happening" || item.type === "directory") ? (
+          item.type === "directory" ? (
             <Text style={[styles.readMore, { color: READ_MORE_COLOR[item.type] }]}>See details →</Text>
           ) : null
-        )}
-
-        {/* Happening: admission pill */}
-        {item.type === "happening" && item.admission && (
-          <View style={styles.admissionPill}>
-            <Ionicons name="ticket-outline" size={11} color={colors.badgeHappeningText} />
-            <Text style={styles.admissionText}>{item.admission}</Text>
-          </View>
         )}
 
         <View style={styles.internalLinkCard}>
@@ -630,7 +663,6 @@ function GenericCard({ item, onPress }: Props) {
         />
       )}
 
-      <HappeningDetailModal visible={happeningOpen} item={item} onClose={() => setHappeningOpen(false)} />
       <DirectoryDetailModal visible={directoryOpen} item={item} onClose={() => setDirectoryOpen(false)} />
     </>
   );
@@ -752,6 +784,24 @@ const styles = StyleSheet.create({
   },
   admissionText: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow, color: colors.badgeHappeningText, letterSpacing: 0.8 },
 
+  // Happening full-bleed layout
+  happeningCard: {
+    paddingHorizontal: 0, paddingVertical: 0, overflow: "hidden",
+  },
+  happeningHero: {
+    width: "100%", height: 200,
+  },
+  happeningContent: {
+    paddingTop: 14, paddingHorizontal: 16, paddingBottom: 16,
+  },
+  rsvpButton: {
+    height: 36, borderRadius: 9999, borderColor: colors.ink, borderWidth: 1,
+    justifyContent: "center", alignItems: "center", marginTop: space[2],
+  },
+  rsvpButtonText: {
+    fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.ink,
+  },
+
   internalLinkCard: {
     flexDirection: "row", alignItems: "stretch",
     borderWidth: 1, borderColor: colors.rule, borderRadius: radius.lg,
@@ -764,10 +814,17 @@ const styles = StyleSheet.create({
   internalLinkDesc:  { fontFamily: fonts.sans, fontSize: fontSize.xs, color: colors.mute, lineHeight: 15 },
 
   // quote
+  quoteContainer: { position: "relative", minHeight: 60 },
+  quoteInner:     { paddingTop: 8 },
+  quoteDecorMark: {
+    position: "absolute", top: 14, left: 14,
+    fontFamily: fonts.serif, fontSize: 52, color: colors.ghost,
+    lineHeight: 52, zIndex: 0,
+  },
   quoteRow:   { flexDirection: "row", gap: space[2] + 2 },
   quoteMark:  { fontFamily: fonts.serif, fontSize: 32, lineHeight: 30, color: colors.ghost },
-  quoteText:  { fontFamily: fonts.serif, fontSize: fontSize.base + 1, fontStyle: "italic", color: colors.ink, lineHeight: 23, marginBottom: space[2] },
+  quoteText:  { fontFamily: fonts.serifBold, fontSize: 19, fontStyle: "italic", color: colors.ink, lineHeight: 27, marginBottom: space[2] },
   quoteFooter:{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
-  quoteAuthor:{ fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.ochre },
-  quoteSrc:   { fontFamily: fonts.sans, fontSize: fontSize.xs, color: colors.mute },
+  quoteAuthor:{ fontFamily: fonts.sans, fontSize: 13, color: colors.inkSoft, marginBottom: 2 },
+  quoteSrc:   { fontFamily: fonts.mono, fontSize: 11, color: colors.ghost },
 });
