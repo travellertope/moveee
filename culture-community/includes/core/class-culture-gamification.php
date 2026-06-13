@@ -688,7 +688,7 @@ class Culture_Gamification {
         $new_rep = self::award_reputation( $user_id, $rep_to_add, $action );
 
         // Award small credit bonus for eligible actions.
-        $credit_bonus = self::CREDIT_BONUSES[ $action ] ?? 0;
+        $credit_bonus = self::get_credit_bonus( $action );
         if ( $credit_bonus > 0 ) {
             self::award_credits( $user_id, $credit_bonus, $action );
         }

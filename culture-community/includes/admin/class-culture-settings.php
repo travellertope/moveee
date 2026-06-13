@@ -334,14 +334,6 @@ class Culture_Settings {
         register_setting( 'culture_settings_general', 'culture_analytics_limit_top_members', $int );
         register_setting( 'culture_settings_general', 'culture_analytics_limit_events', $int );
 
-        // Automation — Twitter.
-        $bool = array( 'sanitize_callback' => 'absint' );
-        register_setting( 'culture_settings_automation', 'culture_twitter_enabled',             $bool );
-        register_setting( 'culture_settings_automation', 'culture_twitter_api_key',             $text );
-        register_setting( 'culture_settings_automation', 'culture_twitter_api_secret',          $text );
-        register_setting( 'culture_settings_automation', 'culture_twitter_access_token',        $text );
-        register_setting( 'culture_settings_automation', 'culture_twitter_access_token_secret', $text );
-        register_setting( 'culture_settings_automation', 'culture_twitter_interval',            $text );
 
         // Advertising.
         register_setting( 'culture_settings_moderation', 'culture_community_blocklist', array(
@@ -373,7 +365,6 @@ class Culture_Settings {
             'membership'   => __( 'Membership', 'culture-community' ),
             'general'      => __( 'General', 'culture-community' ),
             'moderation'   => __( 'Moderation', 'culture-community' ),
-            'automation'   => __( 'Automation', 'culture-community' ),
             'advertising'  => __( 'Advertising', 'culture-community' ),
         );
         ?>
@@ -417,9 +408,6 @@ class Culture_Settings {
                         break;
                     case 'moderation':
                         self::render_moderation_tab();
-                        break;
-                    case 'automation':
-                        self::render_automation_tab();
                         break;
                     case 'advertising':
                         self::render_advertising_tab();
@@ -1027,126 +1015,6 @@ class Culture_Settings {
         <?php
     }
 
-    private static function render_automation_tab() {
-        $next_dir    = wp_next_scheduled( 'culture_seed_directory' );
-        $next_pulse  = wp_next_scheduled( 'culture_refresh_pulse' );
-        $next_events = wp_next_scheduled( 'culture_seed_events' );
-        $next_quotes = wp_next_scheduled( 'culture_seed_quotes' );
-        $next_tweet  = wp_next_scheduled( 'culture_tweet_pulse' );
-        ?>
-        <h2><?php esc_html_e( 'Scheduled Jobs', 'culture-community' ); ?></h2>
-        <p class="description">
-            <?php esc_html_e( 'All automation is handled by WordPress Cron, triggered by a real server cron on Lightsail every 30 minutes. Make sure DISABLE_WP_CRON is set to true in wp-config.php.', 'culture-community' ); ?>
-        </p>
-        <table class="widefat fixed striped" style="max-width:700px;margin-bottom:2em;">
-            <thead>
-                <tr>
-                    <th><?php esc_html_e( 'Job', 'culture-community' ); ?></th>
-                    <th><?php esc_html_e( 'Frequency', 'culture-community' ); ?></th>
-                    <th><?php esc_html_e( 'Next Run', 'culture-community' ); ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                $jobs = array(
-                    array( __( 'Directory Seed', 'culture-community' ),  __( 'Weekly', 'culture-community' ),       $next_dir ),
-                    array( __( 'Pulse Refresh', 'culture-community' ),   __( 'Daily', 'culture-community' ),        $next_pulse ),
-                    array( __( 'Events Seed', 'culture-community' ),     __( 'Daily', 'culture-community' ),        $next_events ),
-                    array( __( 'Quotes Seed', 'culture-community' ),     __( 'Weekly', 'culture-community' ),       $next_quotes ),
-                    array( __( 'Tweet Pulse', 'culture-community' ),     __( 'Every 30 min', 'culture-community' ), $next_tweet ),
-                );
-                foreach ( $jobs as $job ) :
-                    $ts  = $job[2];
-                    $due = $ts ? esc_html( get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $ts ), 'Y-m-d H:i:s' ) ) : '<span style="color:#d63638">' . esc_html__( 'Not scheduled', 'culture-community' ) . '</span>';
-                ?>
-                <tr>
-                    <td><?php echo esc_html( $job[0] ); ?></td>
-                    <td><?php echo esc_html( $job[1] ); ?></td>
-                    <td><?php echo wp_kses_post( $due ); ?></td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-
-        <h2><?php esc_html_e( 'Twitter / X Auto-Posting', 'culture-community' ); ?></h2>
-        <p class="description">
-            <?php esc_html_e( 'When enabled, the latest unposted Pulse story is tweeted every 30 minutes. Requires a Twitter Developer App with Read & Write permissions and an Access Token generated for your posting account.', 'culture-community' ); ?>
-        </p>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><?php esc_html_e( 'Enable Auto-Posting', 'culture-community' ); ?></th>
-                <td>
-                    <label>
-                        <input type="checkbox" name="culture_twitter_enabled" value="1"
-                               <?php checked( '1', Culture_Settings::get( 'culture_twitter_enabled' ) ); ?> />
-                        <?php esc_html_e( 'Post new Pulse stories to X / Twitter automatically', 'culture-community' ); ?>
-                    </label>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_twitter_api_key"><?php esc_html_e( 'API Key (Consumer Key)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="password" id="culture_twitter_api_key" name="culture_twitter_api_key"
-                           value="<?php echo esc_attr( Culture_Settings::get( 'culture_twitter_api_key' ) ); ?>"
-                           class="regular-text" autocomplete="new-password" />
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_twitter_api_secret"><?php esc_html_e( 'API Secret (Consumer Secret)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="password" id="culture_twitter_api_secret" name="culture_twitter_api_secret"
-                           value="<?php echo esc_attr( Culture_Settings::get( 'culture_twitter_api_secret' ) ); ?>"
-                           class="regular-text" autocomplete="new-password" />
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_twitter_access_token"><?php esc_html_e( 'Access Token', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="password" id="culture_twitter_access_token" name="culture_twitter_access_token"
-                           value="<?php echo esc_attr( Culture_Settings::get( 'culture_twitter_access_token' ) ); ?>"
-                           class="regular-text" autocomplete="new-password" />
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_twitter_access_token_secret"><?php esc_html_e( 'Access Token Secret', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="password" id="culture_twitter_access_token_secret" name="culture_twitter_access_token_secret"
-                           value="<?php echo esc_attr( Culture_Settings::get( 'culture_twitter_access_token_secret' ) ); ?>"
-                           class="regular-text" autocomplete="new-password" />
-                    <p class="description">
-                        <?php esc_html_e( 'Get these from developer.twitter.com → Your App → Keys and Tokens. Generate an Access Token for your @Moveee account under "Authentication Tokens".', 'culture-community' ); ?>
-                    </p>
-                </td>
-            </tr>
-        </table>
-
-        <hr />
-        <h3><?php esc_html_e( 'Test Connection', 'culture-community' ); ?></h3>
-        <p class="description"><?php esc_html_e( 'Send a test tweet immediately. The result shows the exact API error from Twitter.', 'culture-community' ); ?></p>
-        <?php if ( ! self::is_twitter_configured() ) : ?>
-            <p style="color:#d63638;"><strong><?php esc_html_e( 'Save credentials and enable auto-posting first.', 'culture-community' ); ?></strong></p>
-        <?php else : ?>
-        <button type="button" class="button button-secondary" id="culture-test-tweet"><?php esc_html_e( 'Send Test Tweet Now', 'culture-community' ); ?></button>
-        <span id="culture-test-tweet-result" style="margin-left:12px;font-weight:600;"></span>
-        <script>
-        document.getElementById('culture-test-tweet').addEventListener('click', function() {
-            var btn = this, res = document.getElementById('culture-test-tweet-result');
-            btn.disabled = true; res.textContent = 'Sending…'; res.style.color = '#888';
-            var d = new URLSearchParams();
-            d.append('action', 'culture_test_tweet');
-            d.append('_wpnonce', '<?php echo esc_js( wp_create_nonce( "culture_test_tweet" ) ); ?>');
-            fetch(ajaxurl, { method: 'POST', body: d }).then(function(r){ return r.json(); })
-            .then(function(j) {
-                btn.disabled = false;
-                res.textContent = (j.success ? '✓ ' : '✗ ') + j.data;
-                res.style.color = j.success ? '#0a7227' : '#d63638';
-            }).catch(function(e){ btn.disabled = false; res.textContent = '✗ ' + e.message; res.style.color = '#d63638'; });
-        });
-        </script>
-        <?php endif; ?>
-
-        <?php
-    }
 
     private static function render_advertising_tab() {
         ?>
