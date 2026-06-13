@@ -754,11 +754,12 @@ const nlStyles = StyleSheet.create({
 // ── Security Tab ──────────────────────────────────────────────────────────────
 function SecurityTab() {
   const { user, updateUser } = useAuthStore();
-  const [passkeys,   setPasskeys]   = useState<Passkey[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [adding,     setAdding]     = useState(false);
-  const [supported,  setSupported]  = useState(true);
-  const [trashHover, setTrashHover] = useState<string | null>(null);
+  const [passkeys,        setPasskeys]        = useState<Passkey[]>([]);
+  const [loading,         setLoading]         = useState(true);
+  const [adding,          setAdding]          = useState(false);
+  const [changingPw,      setChangingPw]      = useState(false);
+  const [supported,       setSupported]       = useState(true);
+  const [trashHover,      setTrashHover]      = useState<string | null>(null);
 
   useEffect(() => {
     setSupported(Passkeys.isSupported());
@@ -851,18 +852,24 @@ function SecurityTab() {
         <TouchableOpacity
           style={secStyles.passwordRow}
           activeOpacity={0.7}
+          disabled={changingPw}
           onPress={async () => {
+            setChangingPw(true);
             try {
               await api.post(`${MOBILE_API}/user/reset-password`, {});
               Alert.alert("Email sent", "Check your inbox for a password reset link.");
             } catch {
               Alert.alert("Error", "Could not send reset email.");
+            } finally {
+              setChangingPw(false);
             }
           }}
         >
           <Ionicons name="lock-closed-outline" size={20} color={colors.ochre} />
           <Text style={secStyles.passwordLabel}>Change Password</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.ghost} />
+          {changingPw
+            ? <ActivityIndicator size="small" color={colors.ghost} />
+            : <Ionicons name="chevron-forward" size={18} color={colors.ghost} />}
         </TouchableOpacity>
         <Text style={secStyles.passwordSub}>We'll send a reset link to your email</Text>
       </View>

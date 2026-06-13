@@ -146,6 +146,7 @@ export default function LoginScreen() {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [localError, setLocalError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
 
   const passwordRef = useRef<TextInput>(null);
@@ -156,12 +157,15 @@ export default function LoginScreen() {
       setLocalError("Please enter your email and password.");
       return;
     }
+    setSubmitting(true);
     try {
       await login(email.trim(), password);
     } catch (e: unknown) {
       setLocalError(
         e instanceof Error ? e.message : "Sign in failed. Please try again."
       );
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -294,10 +298,10 @@ export default function LoginScreen() {
           <Pressable
             style={[styles.primaryBtn, !canSubmit && styles.primaryBtnDisabled]}
             onPress={handleSubmit}
-            disabled={isLoading || !canSubmit}
+            disabled={submitting || !canSubmit}
           >
             {({ pressed }) =>
-              isLoading ? (
+              submitting ? (
                 <ActivityIndicator color={colors.paper} />
               ) : (
                 <Text style={[styles.primaryLabel, pressed && { opacity: 0.85 }]}>
