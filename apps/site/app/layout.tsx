@@ -88,8 +88,27 @@ export default async function RootLayout({
     slotHeroSidebar:         rawAds?.slotHeroSidebar         ?? null,
   };
 
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Moveee Magazine",
+    url: "https://themoveee.com",
+    logo: "https://themoveee.com/logo.png",
+    sameAs: [
+      "https://twitter.com/moveeemedia",
+      "https://instagram.com/moveeemedia",
+    ],
+    description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
+  };
+
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
+      </head>
       <body
         className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}
       >

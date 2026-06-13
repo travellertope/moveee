@@ -176,9 +176,42 @@ export default async function ProductPage({
   ];
 
   const firstCat = product.productCategories?.nodes?.[0];
+  const productUrl = `https://themoveee.com/shop/${slug}`;
+  const productPrice = product.price?.replace(/<[^>]*>/g, "").replace(/[^0-9.]/g, "") || "";
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.shortDescription?.replace(/<[^>]*>/g, "").trim() || product.name,
+    image: product.image?.sourceUrl || "https://themoveee.com/og-fallback.png",
+    url: productUrl,
+    brand: { "@type": "Brand", name: vname || "Moveee Magazine" },
+    ...(productPrice ? {
+      offers: {
+        "@type": "Offer",
+        price: productPrice,
+        priceCurrency: "GBP",
+        availability: "https://schema.org/InStock",
+        url: productUrl,
+        seller: { "@type": "Organization", name: "Moveee Magazine" },
+      },
+    } : {}),
+  };
+  const productBreadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://themoveee.com" },
+      { "@type": "ListItem", position: 2, name: "Shop", item: "https://themoveee.com/shop" },
+      ...(firstCat ? [{ "@type": "ListItem", position: 3, name: firstCat.name, item: `https://themoveee.com/shop/category/${firstCat.slug}` }] : []),
+      { "@type": "ListItem", position: firstCat ? 4 : 3, name: product.name, item: productUrl },
+    ],
+  };
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productBreadcrumbJsonLd) }} />
       {/* ── BREADCRUMB ── */}
       <nav className="sp-breadcrumb" aria-label="Breadcrumb">
         <div>
