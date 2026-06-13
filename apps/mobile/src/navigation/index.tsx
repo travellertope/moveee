@@ -45,6 +45,7 @@ import WalletScreen from "../screens/member/WalletScreen";
 import CouponsScreen from "../screens/member/CouponsScreen";
 import NotificationsScreen from "../screens/member/NotificationsScreen";
 import AnalyticsScreen from "../screens/member/AnalyticsScreen";
+import { AppLoadingScreen } from "../components/ui/Skeleton";
 
 // ── Stack param types ──────────────────────────────────────────────────────────
 type FeedStackParams = {
@@ -186,7 +187,7 @@ function AuthStack() {
 export default function Navigation() {
   const { isAuthenticated, isLoading } = useAuthStore();
 
-  if (isLoading) return null;
+  if (isLoading) return <AppLoadingScreen />;
 
   return (
     <NavigationContainer>

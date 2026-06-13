@@ -30,9 +30,15 @@ export default function ImageLightbox({ images, initialIndex = 0, visible, onClo
     >
       <StatusBar hidden />
       <View style={styles.backdrop}>
-        <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-          <Ionicons name="close" size={28} color={colors.paper} />
-        </TouchableOpacity>
+        {/* Top bar: close left, counter right */}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.85}>
+            <Ionicons name="close" size={20} color={colors.ink} />
+          </TouchableOpacity>
+          {images.length > 1 && (
+            <Text style={styles.counter}>{current + 1} / {images.length}</Text>
+          )}
+        </View>
 
         <FlatList
           data={images}
@@ -56,13 +62,15 @@ export default function ImageLightbox({ images, initialIndex = 0, visible, onClo
         {images.length > 1 && (
           <View style={styles.dotsRow}>
             {images.map((_, i) => (
-              <View key={i} style={[styles.dot, i === current && styles.dotActive]} />
+              <View
+                key={i}
+                style={[
+                  styles.dot,
+                  i === current ? styles.dotActive : styles.dotInactive,
+                ]}
+              />
             ))}
           </View>
-        )}
-
-        {images.length > 1 && (
-          <Text style={styles.counter}>{current + 1} / {images.length}</Text>
         )}
       </View>
     </Modal>
@@ -70,21 +78,30 @@ export default function ImageLightbox({ images, initialIndex = 0, visible, onClo
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.95)", justifyContent: "center" },
-  closeBtn: {
-    position: "absolute", top: 48, right: 20, zIndex: 10,
-    padding: 8, backgroundColor: "rgba(0,0,0,0.5)", borderRadius: 20,
+  backdrop: { flex: 1, backgroundColor: "#000000" },
+
+  topBar: {
+    position: "absolute", top: 0, left: 0, right: 0,
+    zIndex: 20, paddingTop: 56, paddingHorizontal: 16,
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
   },
+  closeBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: colors.paper,
+    justifyContent: "center", alignItems: "center",
+  },
+  counter: {
+    fontFamily: fonts.monoBold, fontSize: 13, color: "#FFFFFF",
+  },
+
   slide: { width: SCREEN_W, height: SCREEN_H, justifyContent: "center" },
   image: { width: SCREEN_W, height: SCREEN_H },
+
   dotsRow: {
-    position: "absolute", bottom: 32, left: 0, right: 0,
-    flexDirection: "row", justifyContent: "center", gap: 6,
+    position: "absolute", bottom: 40, left: 0, right: 0,
+    flexDirection: "row", justifyContent: "center", gap: 8,
   },
-  dot:       { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.4)" },
-  dotActive: { backgroundColor: colors.paper },
-  counter: {
-    position: "absolute", bottom: 20, left: 0, right: 0,
-    textAlign: "center", fontFamily: fonts.mono, fontSize: fontSize.xs, color: "rgba(255,255,255,0.6)",
-  },
+  dot:         { borderRadius: 99 },
+  dotActive:   { width: 8, height: 8, backgroundColor: "#FFFFFF" },
+  dotInactive: { width: 6, height: 6, backgroundColor: "rgba(255,255,255,0.3)" },
 });

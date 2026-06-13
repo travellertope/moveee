@@ -13,7 +13,7 @@ import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { Passkey } from "../../types";
 
-const PROXY = "https://themoveee.com/api";
+
 
 type Tab = "profile" | "directory" | "interests" | "newsletters" | "security";
 
@@ -768,7 +768,7 @@ function SecurityTab() {
   const loadPasskeys = async () => {
     setLoading(true);
     try {
-      const data = await api.get<Passkey[]>(`${PROXY}/auth/passkey/list`);
+      const data = await api.get<Passkey[]>(`${MOBILE_API}/passkey/list`);
       setPasskeys(Array.isArray(data) ? data : []);
     } catch {
       setPasskeys([]);
@@ -787,11 +787,11 @@ function SecurityTab() {
     }
     setAdding(true);
     try {
-      const optData = await api.get<{ options: any }>(`${PROXY}/auth/passkey/register-options`);
+      const optData = await api.get<{ options: any }>(`${MOBILE_API}/passkey/register-options`);
       const credential = await Passkeys.create(optData.options);
       if (!credential) return; // user cancelled
 
-      await api.post(`${PROXY}/auth/passkey/register-verify`, {
+      await api.post(`${MOBILE_API}/passkey/register-verify`, {
         id:                credential.id,
         rawId:             credential.rawId,
         type:              credential.type,
@@ -832,7 +832,7 @@ function SecurityTab() {
 
   const doDelete = async (credential_id: string) => {
     try {
-      await api.delete(`${PROXY}/auth/passkey/delete`, { credential_id });
+      await api.delete(`${MOBILE_API}/passkey/delete`, { credential_id });
       const remaining = passkeys.filter((p) => p.credential_id !== credential_id);
       setPasskeys(remaining);
       if (remaining.length === 0) updateUser({ hasPasskey: false, passkeyCount: 0 });

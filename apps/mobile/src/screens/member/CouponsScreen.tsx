@@ -6,11 +6,11 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import QRCode from "react-native-qrcode-svg";
-import { api } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { Redemption } from "../../types";
 
-const PROXY   = "https://themoveee.com/api";
+
 const QR_BASE = "https://themoveee.com/api/perks/verify?token=";
 
 function daysUntil(dateStr: string | null): number {
@@ -110,7 +110,7 @@ export default function CouponsScreen() {
   const [loading,     setLoading]     = useState(true);
 
   useEffect(() => {
-    api.get<Redemption[]>(`${PROXY}/perks/redemptions`)
+    api.get<Redemption[]>(`${MOBILE_API}/perks/redemptions`)
       .then(setRedemptions)
       .catch(() => {})
       .finally(() => setLoading(false));

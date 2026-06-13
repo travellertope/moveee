@@ -6,11 +6,11 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
-import { api } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { LedgerEntry } from "../../types";
 
-const PROXY = "https://themoveee.com/api";
+
 
 type Currency = "GBP" | "USD" | "NGN";
 type WalletTab = "history" | "cashout";
@@ -73,14 +73,14 @@ export default function WalletScreen() {
     async function load() {
       try {
         const balRes = await api.get<{ credits: number; credits_per_gbp: number; user_id: string }>(
-          `${PROXY}/wallet/balance`
+          `${MOBILE_API}/wallet/balance`
         );
         setBalance(balRes.credits);
         setCreditsPerGbp(balRes.credits_per_gbp ?? 10);
         if (updateUser) updateUser({ credits: balRes.credits });
       } catch {}
       try {
-        const histRes = await api.get<{ entries: LedgerEntry[] }>(`${PROXY}/wallet/history`);
+        const histRes = await api.get<{ entries: LedgerEntry[] }>(`${MOBILE_API}/wallet/history`);
         setEntries(histRes.entries ?? []);
       } catch {} finally {
         setLoadingHistory(false);
@@ -120,11 +120,11 @@ export default function WalletScreen() {
               if (currency === "USD") { body.routing_number = routingNumber; body.bank_name = bankName; }
               if (currency === "NGN") body.bank_name = bankName;
 
-              await api.post(`${PROXY}/wallet/cashout`, body);
+              await api.post(`${MOBILE_API}/wallet/cashout`, body);
               Alert.alert("Requested", "Your cashout request has been submitted for review.");
               setCashoutCredits("");
               const balRes = await api.get<{ credits: number; credits_per_gbp: number; user_id: string }>(
-                `${PROXY}/wallet/balance`
+                `${MOBILE_API}/wallet/balance`
               );
               setBalance(balRes.credits);
               if (updateUser) updateUser({ credits: balRes.credits });

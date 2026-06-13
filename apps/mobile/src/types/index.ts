@@ -287,5 +287,5 @@ export interface AnalyticsData {
   posts_pending: number;
   badge_count: number;
   top_posts: { ID: number; post_title: string; reactions: number; comment_count: number }[];
-  rep_months: { month: string; reputation: number }[];
+  rep_months: { month: string; rep_earned: number }[];
 }
