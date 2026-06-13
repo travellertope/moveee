@@ -60,8 +60,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    site: "@themoveee",
-    creator: "@themoveee",
+    site: "@moveeemedia",
+    creator: "@moveeemedia",
     title: "Moveee Magazine — Best in Culture",
     description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
     images: ["/og-fallback.png"],
