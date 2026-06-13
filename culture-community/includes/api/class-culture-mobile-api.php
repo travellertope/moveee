@@ -433,6 +433,46 @@ class Culture_Mobile_API {
                 'per_page' => array( 'default' => 10, 'sanitize_callback' => 'absint' ),
             ),
         ) );
+
+        // ── Shop endpoints (public — no auth required) ────────────────────────
+        register_rest_route( 'culture/v1', '/mobile/shop/products', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_shop_products' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'category' => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
+                'page'     => array( 'default' => 1,  'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'default' => 20, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/shop/categories', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_shop_categories' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/shop/vendors', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_shop_vendors' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cart', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_cart' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cart', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_add_to_cart' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'product_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+                'quantity'   => array( 'default' => 1,    'sanitize_callback' => 'absint' ),
+            ),
+        ) );
     }
 
     // -------------------------------------------------------------------------
@@ -1879,5 +1919,195 @@ class Culture_Mobile_API {
             'food_rating_value'   => (int) get_post_meta( $post->ID, '_food_rating_value', true ),
             'food_rating_vibe'    => (int) get_post_meta( $post->ID, '_food_rating_vibe', true ),
         );
+    }
+
+    // ── Shop handlers ─────────────────────────────────────────────────────────
+
+    public static function handle_shop_products( $request ) {
+        global $wpdb;
+
+        if ( ! function_exists( 'wc_get_product' ) ) {
+            return rest_ensure_response( array( 'products' => array(), 'total' => 0, 'pages' => 0, 'page' => 1 ) );
+        }
+
+        $category = sanitize_text_field( $request->get_param( 'category' ) );
+        $page     = max( 1, (int) $request->get_param( 'page' ) );
+        $per_page = min( 50, max( 1, (int) $request->get_param( 'per_page' ) ) );
+
+        $user   = wp_get_current_user();
+        $is_pro = $user->ID && in_array( 'patron', (array) $user->roles, true );
+
+        $query_args = array(
+            'post_type'      => 'product',
+            'post_status'    => 'publish',
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        );
+
+        if ( $category ) {
+            $query_args['tax_query'] = array( array(
+                'taxonomy' => 'product_cat',
+                'field'    => 'slug',
+                'terms'    => $category,
+            ) );
+        }
+
+        $q        = new WP_Query( $query_args );
+        $products = array();
+        $currency_symbol = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol() ) : '£';
+        $currency        = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
+
+        foreach ( $q->posts as $post ) {
+            $wc = wc_get_product( $post->ID );
+            if ( ! $wc ) continue;
+
+            $price   = $wc->get_price();
+            $regular = $wc->get_regular_price();
+            $sale    = $wc->get_sale_price();
+
+            $pro_price     = ( $is_pro && $price ) ? (string) round( (float) $price * 0.9, 2 ) : null;
+            $created_days  = ( time() - strtotime( $post->post_date ) ) / DAY_IN_SECONDS;
+            $stock_qty     = $wc->get_stock_quantity();
+            $pro_early     = get_post_meta( $post->ID, '_pro_early_access', true );
+
+            if ( $pro_early )                            $badge = 'pro_early_access';
+            elseif ( $created_days < 14 )                $badge = 'new';
+            elseif ( $sale )                             $badge = 'sale';
+            elseif ( $stock_qty && $stock_qty <= 3 )     $badge = 'low_stock';
+            else                                         $badge = null;
+
+            $image_id  = $wc->get_image_id();
+            $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : '';
+
+            $cat_terms  = get_the_terms( $post->ID, 'product_cat' );
+            $categories = $cat_terms ? array_map( fn( $t ) => $t->slug, $cat_terms ) : array();
+
+            $products[] = array(
+                'id'             => $post->ID,
+                'name'           => $post->post_title,
+                'slug'           => $post->post_name,
+                'price'          => $price ?: '',
+                'regularPrice'   => $regular ?: '',
+                'salePrice'      => $sale ?: '',
+                'proPrice'       => $pro_price,
+                'currency'       => $currency,
+                'currencySymbol' => $currency_symbol,
+                'imageUrl'       => $image_url ?: null,
+                'makerName'      => get_post_meta( $post->ID, '_maker_name', true ) ?: '',
+                'makerCity'      => get_post_meta( $post->ID, '_maker_city', true ) ?: '',
+                'badge'          => $badge,
+                'stockStatus'    => $wc->get_stock_status(),
+                'stockQuantity'  => $stock_qty,
+                'categories'     => $categories,
+            );
+        }
+
+        return rest_ensure_response( array(
+            'products' => $products,
+            'total'    => (int) $q->found_posts,
+            'pages'    => (int) $q->max_num_pages,
+            'page'     => $page,
+        ) );
+    }
+
+    public static function handle_shop_categories( $request ) {
+        $terms = get_terms( array(
+            'taxonomy'   => 'product_cat',
+            'hide_empty' => true,
+            'orderby'    => 'count',
+            'order'      => 'DESC',
+            'number'     => 20,
+        ) );
+
+        if ( is_wp_error( $terms ) ) {
+            return rest_ensure_response( array() );
+        }
+
+        $categories = array_map( function( $term ) {
+            return array(
+                'id'    => $term->term_id,
+                'name'  => $term->name,
+                'slug'  => $term->slug,
+                'count' => $term->count,
+            );
+        }, $terms );
+
+        return rest_ensure_response( $categories );
+    }
+
+    public static function handle_shop_vendors( $request ) {
+        global $wpdb;
+
+        if ( ! function_exists( 'wc_get_product' ) ) {
+            return rest_ensure_response( array() );
+        }
+
+        // Aggregate vendor data from product meta
+        $rows = $wpdb->get_results(
+            "SELECT pm.meta_value AS maker_name,
+                    pm2.meta_value AS maker_city,
+                    COUNT(p.ID) AS product_count,
+                    MIN(p.ID) AS sample_id
+             FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm  ON pm.post_id  = p.ID AND pm.meta_key  = '_maker_name'
+             LEFT  JOIN {$wpdb->postmeta} pm2 ON pm2.post_id = p.ID AND pm2.meta_key = '_maker_city'
+             WHERE p.post_type   = 'product'
+               AND p.post_status = 'publish'
+               AND pm.meta_value != ''
+             GROUP BY pm.meta_value
+             ORDER BY product_count DESC
+             LIMIT 20",
+            ARRAY_A
+        );
+
+        $vendors = array();
+        foreach ( (array) $rows as $row ) {
+            $logo_url = '';
+            $wc       = wc_get_product( (int) $row['sample_id'] );
+            if ( $wc ) {
+                $img_id   = $wc->get_image_id();
+                $logo_url = $img_id ? wp_get_attachment_image_url( $img_id, 'thumbnail' ) : '';
+            }
+
+            $vendors[] = array(
+                'name'         => $row['maker_name'],
+                'city'         => $row['maker_city'] ?: '',
+                'productCount' => (int) $row['product_count'],
+                'logoUrl'      => $logo_url ?: null,
+            );
+        }
+
+        return rest_ensure_response( $vendors );
+    }
+
+    public static function handle_get_cart( $request ) {
+        // Stub: WooCommerce session-based cart does not translate to REST easily.
+        // Return an empty cart structure; real cart management is handled by
+        // WooCommerce Store API (wc/store/v1/cart) in native checkout.
+        return rest_ensure_response( array( 'items' => array(), 'total' => '0', 'item_count' => 0 ) );
+    }
+
+    public static function handle_add_to_cart( $request ) {
+        if ( ! function_exists( 'WC' ) ) {
+            return new WP_Error( 'wc_missing', 'Shop not available.', array( 'status' => 503 ) );
+        }
+        $product_id = (int) $request->get_param( 'product_id' );
+        $quantity   = max( 1, (int) $request->get_param( 'quantity' ) );
+        $product    = wc_get_product( $product_id );
+
+        if ( ! $product ) {
+            return new WP_Error( 'not_found', 'Product not found.', array( 'status' => 404 ) );
+        }
+
+        // Use WooCommerce Store API redirect URL as the checkout URL
+        $checkout_url = wc_get_checkout_url() . '?add-to-cart=' . $product_id . '&quantity=' . $quantity;
+
+        return rest_ensure_response( array(
+            'checkout_url' => $checkout_url,
+            'product_id'   => $product_id,
+            'quantity'     => $quantity,
+        ) );
     }
 }

@@ -289,3 +289,39 @@ export interface AnalyticsData {
   top_posts: { ID: number; post_title: string; reactions: number; comment_count: number }[];
   rep_months: { month: string; rep_earned: number }[];
 }
+
+// ── Shop ─────────────────────────────────────────────────────────────────────
+export type ProductBadge = "new" | "pro_early_access" | "low_stock" | "sale";
+
+export interface ShopProduct {
+  id: number;
+  name: string;
+  slug: string;
+  price: string;
+  regularPrice: string;
+  salePrice: string;
+  proPrice?: string | null;
+  currency: string;
+  currencySymbol: string;
+  imageUrl?: string | null;
+  makerName: string;
+  makerCity: string;
+  badge?: ProductBadge | null;
+  stockStatus: "instock" | "outofstock" | "onbackorder";
+  stockQuantity?: number | null;
+  categories: string[];
+}
+
+export interface ShopCategory {
+  id: number;
+  name: string;
+  slug: string;
+  count: number;
+}
+
+export interface ShopVendor {
+  name: string;
+  city: string;
+  productCount: number;
+  logoUrl?: string | null;
+}

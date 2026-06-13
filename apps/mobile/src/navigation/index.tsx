@@ -36,6 +36,9 @@ import WhoSaidItGameScreen from "../screens/games/WhoSaidItGameScreen";
 import EventsScreen from "../screens/events/EventsScreen";
 import EventDetailScreen from "../screens/events/EventDetailScreen";
 
+// Shop
+import ShopScreen from "../screens/shop/ShopScreen";
+
 // Member
 import MemberDashboardScreen from "../screens/member/MemberDashboardScreen";
 import MemberSettingsScreen from "../screens/member/MemberSettingsScreen";
@@ -105,6 +108,14 @@ function EventsStack() {
   );
 }
 
+function ShopStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ShopHome" component={ShopScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function GamesStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -156,6 +167,7 @@ function MainTabs() {
             Magazine: ["newspaper",       "newspaper-outline"],
             Games:    ["game-controller", "game-controller-outline"],
             Events:   ["calendar",        "calendar-outline"],
+            Shop:     ["bag",             "bag-outline"],
           };
           const [active, inactive] = icons[route.name] ?? ["ellipse", "ellipse-outline"];
           return <Ionicons name={(focused ? active : inactive) as never} size={size} color={color} />;
@@ -165,6 +177,7 @@ function MainTabs() {
       <Tab.Screen name="Connect"  component={ConnectStack} />
       <Tab.Screen name="Magazine" component={MagazineStack} />
       <Tab.Screen name="Games"    component={GamesStack} />
+      <Tab.Screen name="Shop"     component={ShopStack} />
       <Tab.Screen name="Events"   component={EventsStack} />
       <Tab.Screen name="Me"       component={MemberStack} />
     </Tab.Navigator>
