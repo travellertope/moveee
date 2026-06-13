@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-export const colors = {
+export const lightColors = {
   // Backgrounds & surfaces
   paperWarm:   '#F3ECE0',   // Primary background
   paper:       '#FFFFFF',   // Card surface
@@ -69,6 +69,81 @@ export const colors = {
   pollBorder:  '#E0D8CE',
   pollWinner:  '#2E7D32',
 } as const;
+
+// Alias kept for backwards-compat with existing static imports
+export const colors = lightColors;
+
+export const darkColors = {
+  // Backgrounds & surfaces
+  paperWarm:   '#1A1612',
+  paper:       '#242018',
+  paperDeep:   '#2D2820',
+  community:   '#1A2A1A',
+
+  // Text
+  ink:         '#F3ECE0',
+  inkSoft:     '#D4C9B8',
+  mute:        '#9E9288',
+  ghost:       '#5C5349',
+
+  // Borders / rules
+  rule:        'rgba(61,53,48,0.6)',
+  ruleDark:    '#3D3530',
+
+  // Actions & accents
+  ochre:       '#D4603A',
+  ochreDark:   '#A83F20',
+
+  // Pro tier accent
+  gold:        '#C9963F',
+  goldLight:   'rgba(201,150,63,0.12)',
+  goldBorder:  'rgba(201,150,63,0.35)',
+
+  // Semantic
+  success:     '#4ADE80',
+  error:       '#F87171',
+  warning:     '#FB923C',
+
+  // Community
+  communityBorder: '#4ADE80',
+  communityBg:     '#0F1F0F',
+  communityText:   '#4ADE80',
+
+  // Feed type badge colours
+  badgePulseBg:      '#2A2210',
+  badgePulseText:    '#C9963F',
+  badgeEditorialBg:  '#2A1810',
+  badgeEditorialText:'#D4603A',
+  badgeHappeningBg:  '#1A1530',
+  badgeHappeningText:'#A78BFA',
+  badgeDirectoryBg:  '#0F1F15',
+  badgeDirectoryText:'#34D399',
+  badgeQuoteBg:      '#261E0A',
+  badgeQuoteText:    '#FCD34D',
+
+  // Community post template badge colours
+  templateGemBg:       '#2A1E08',
+  templateGemText:     '#FCD34D',
+  templateTakeBg:      '#0A1A2A',
+  templateTakeText:    '#60A5FA',
+  templateFoodBg:      '#2A0D1E',
+  templateFoodText:    '#F472B6',
+  templateShowcaseBg:  '#1E0A38',
+  templateShowcaseText:'#C084FC',
+  templateRouteBg:     '#051A10',
+  templateRouteText:   '#34D399',
+  templatePollBg:      '#120D38',
+  templatePollText:    '#A78BFA',
+  templateEventBg:     '#2A0A0A',
+  templateEventText:   '#FCA5A5',
+
+  // Poll
+  pollVoteBg:  'rgba(74,222,128,0.10)',
+  pollBorder:  '#3D3530',
+  pollWinner:  '#4ADE80',
+} as const;
+
+export type ColorPalette = typeof lightColors;
 
 export const fonts = {
   serif:      'Fraunces_400Regular',

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity,
   ScrollView, Share,
@@ -6,7 +6,8 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
-import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 import { SignOutDialog } from "../../components/ui/Overlays";
 
 const BADGE_LABELS: Record<string, string> = {
@@ -71,6 +72,8 @@ export default function MemberDashboardScreen() {
   const { user, logout } = useAuthStore();
   const [earnExpanded, setEarnExpanded] = useState(true);
   const [signOutVisible, setSignOutVisible] = useState(false);
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   if (!user) return null;
 
@@ -145,7 +148,7 @@ export default function MemberDashboardScreen() {
             style={styles.passKeyBanner}
             onPress={() => nav.navigate("MemberSettings", { tab: "security" })}
           >
-            <Ionicons name="finger-print-outline" size={20} color={colors.ochre} />
+            <Ionicons name="finger-print-outline" size={20} color={c.ochre} />
             <View style={styles.passKeyBannerBody}>
               <Text style={styles.passKeyBannerTitle}>Set up passkey login</Text>
               <Text style={styles.passKeyBannerSub}>
@@ -154,17 +157,17 @@ export default function MemberDashboardScreen() {
                   : "Log in faster with biometrics"}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.ink} />
+            <Ionicons name="chevron-forward" size={16} color={c.ink} />
           </TouchableOpacity>
         )}
 
         {/* Card 3: Stats Bar */}
         <View style={[styles.card, styles.statsCard]}>
           {[
-            { label: "Credits",    value: user.credits ?? 0,                  accent: isPro ? colors.ochre : colors.ink },
-            { label: "Reputation", value: user.reputation ?? 0,               accent: isPro ? colors.gold  : colors.ink },
-            { label: "Badges",     value: (user.badges || []).length,          accent: colors.ink },
-            { label: "Daily Left", value: user.dailyCreditsRemaining ?? 0,    accent: colors.ink },
+            { label: "Credits",    value: user.credits ?? 0,                  accent: isPro ? c.ochre : c.ink },
+            { label: "Reputation", value: user.reputation ?? 0,               accent: isPro ? c.gold  : c.ink },
+            { label: "Badges",     value: (user.badges || []).length,          accent: c.ink },
+            { label: "Daily Left", value: user.dailyCreditsRemaining ?? 0,    accent: c.ink },
           ].map((stat, i) => (
             <View key={stat.label} style={[styles.statItem, i > 0 && styles.statItemBorder]}>
               <Text style={[styles.statValue, { color: stat.accent }]}>{stat.value}</Text>
@@ -206,11 +209,11 @@ export default function MemberDashboardScreen() {
 
         {/* Card 6: Referral Link */}
         <TouchableOpacity style={[styles.card, styles.referralCard]} onPress={handleCopyReferral}>
-          <Ionicons name="link-outline" size={20} color={colors.ochre} />
+          <Ionicons name="link-outline" size={20} color={c.ochre} />
           <Text style={styles.referralText} numberOfLines={1}>
             moveee.com/r/{user.username}
           </Text>
-          <Ionicons name="copy-outline" size={20} color={colors.mute} />
+          <Ionicons name="copy-outline" size={20} color={c.mute} />
         </TouchableOpacity>
 
         {/* Card 7: Quick Links Menu */}
@@ -223,7 +226,7 @@ export default function MemberDashboardScreen() {
             >
               <Text style={styles.menuEmoji}>{item.emoji}</Text>
               <Text style={styles.menuLabel}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={12} color={colors.ghost} />
+              <Ionicons name="chevron-forward" size={12} color={c.ghost} />
             </TouchableOpacity>
           ))}
         </View>
@@ -238,7 +241,7 @@ export default function MemberDashboardScreen() {
             <Ionicons
               name={earnExpanded ? "chevron-up" : "chevron-down"}
               size={16}
-              color={colors.ghost}
+              color={c.ghost}
             />
           </TouchableOpacity>
           {earnExpanded && (
@@ -254,13 +257,13 @@ export default function MemberDashboardScreen() {
                   style={[styles.earnRow, i % 2 === 0 ? styles.earnRowEven : styles.earnRowOdd]}
                 >
                   <Text style={[styles.earnCell, { flex: 1 }]}>{row.action}</Text>
-                  <Text style={[styles.earnAmountCell, styles.earnAmountCol, { color: colors.ochre }]}>
+                  <Text style={[styles.earnAmountCell, styles.earnAmountCol, { color: c.ochre }]}>
                     {row.cr}
                   </Text>
                   <Text style={[
                     styles.earnAmountCell,
                     styles.earnAmountCol,
-                    { color: row.rep === "0" ? colors.mute : colors.gold },
+                    { color: row.rep === "0" ? c.mute : c.gold },
                   ]}>
                     {row.rep}
                   </Text>
@@ -279,10 +282,10 @@ export default function MemberDashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(c: ColorPalette) { return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.paperWarm,
+    backgroundColor: c.paperWarm,
   },
 
   /* ── Header ── */
@@ -290,9 +293,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     height: 56,
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     borderBottomWidth: 1,
-    borderBottomColor: colors.rule + "50",
+    borderBottomColor: c.rule + "50",
     paddingHorizontal: 16,
   },
   headerSpacer: { width: 60 },
@@ -305,13 +308,13 @@ const styles = StyleSheet.create({
   headerWordmark: {
     fontFamily: fonts.serifBold,
     fontSize: 16,
-    color: colors.ink,
+    color: c.ink,
     lineHeight: 20,
   },
   headerSub: {
     fontFamily: fonts.sansBold,
     fontSize: 8,
-    color: colors.gold,
+    color: c.gold,
     textTransform: "uppercase",
     letterSpacing: 1,
     marginLeft: 2,
@@ -321,7 +324,7 @@ const styles = StyleSheet.create({
   headerSignOut: {
     fontFamily: fonts.sans,
     fontSize: 13,
-    color: colors.ochre,
+    color: c.ochre,
   },
 
   /* ── ScrollView ── */
@@ -333,7 +336,7 @@ const styles = StyleSheet.create({
 
   /* ── Generic card ── */
   card: {
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     borderRadius: 12,
     marginHorizontal: 16,
     ...shadows.card,
@@ -349,16 +352,16 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: colors.rule,
+    backgroundColor: c.rule,
   },
   avatarPro: {
     borderWidth: 3,
-    borderColor: colors.gold,
+    borderColor: c.gold,
     padding: 2,
   },
   avatarCitizen: {
     borderWidth: 2,
-    borderColor: colors.ghost,
+    borderColor: c.ghost,
     padding: 2,
   },
   avatarFallback: {
@@ -372,7 +375,7 @@ const styles = StyleSheet.create({
   avatarFallbackText: {
     fontFamily: fonts.serifBold,
     fontSize: fontSize.lg,
-    color: colors.paper,
+    color: c.paper,
   },
   heroInfo: {
     marginLeft: 16,
@@ -382,13 +385,13 @@ const styles = StyleSheet.create({
   heroName: {
     fontFamily: fonts.serifBold,
     fontSize: 22,
-    color: colors.ink,
+    color: c.ink,
     lineHeight: 22,
   },
   tierBadgePro: {
-    backgroundColor: colors.goldLight,
+    backgroundColor: c.goldLight,
     borderWidth: 1,
-    borderColor: colors.goldBorder,
+    borderColor: c.goldBorder,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 9999,
@@ -397,14 +400,14 @@ const styles = StyleSheet.create({
   tierTextPro: {
     fontFamily: fonts.sansBold,
     fontSize: 9,
-    color: colors.gold,
+    color: c.gold,
     textTransform: "uppercase",
     letterSpacing: 1,
   },
   tierBadgeCitizen: {
-    backgroundColor: colors.paperDeep,
+    backgroundColor: c.paperDeep,
     borderWidth: 1,
-    borderColor: colors.ghost,
+    borderColor: c.ghost,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 9999,
@@ -413,27 +416,27 @@ const styles = StyleSheet.create({
   tierTextCitizen: {
     fontFamily: fonts.sansBold,
     fontSize: 9,
-    color: colors.mute,
+    color: c.mute,
     textTransform: "uppercase",
     letterSpacing: 1,
   },
   heroCity: {
     fontFamily: fonts.sans,
     fontSize: 13,
-    color: colors.mute,
+    color: c.mute,
   },
   heroMemberSince: {
     fontFamily: fonts.mono,
     fontSize: 10,
-    color: colors.ghost,
+    color: c.ghost,
   },
 
   /* ── Card 2: Passkey Banner ── */
   passKeyBanner: {
-    backgroundColor: colors.paperDeep,
+    backgroundColor: c.paperDeep,
     borderRadius: 8,
     borderLeftWidth: 3,
-    borderLeftColor: colors.ochre,
+    borderLeftColor: c.ochre,
     padding: 12,
     flexDirection: "row",
     alignItems: "center",
@@ -448,12 +451,12 @@ const styles = StyleSheet.create({
   passKeyBannerTitle: {
     fontFamily: fonts.sansBold,
     fontSize: 14,
-    color: colors.ink,
+    color: c.ink,
   },
   passKeyBannerSub: {
     fontFamily: fonts.sans,
     fontSize: 12,
-    color: colors.mute,
+    color: c.mute,
   },
 
   /* ── Card 3: Stats Bar ── */
@@ -468,18 +471,18 @@ const styles = StyleSheet.create({
   },
   statItemBorder: {
     borderLeftWidth: 1,
-    borderLeftColor: colors.ghost,
+    borderLeftColor: c.ghost,
   },
   statValue: {
     fontFamily: fonts.sansBold,
     fontSize: 20,
-    color: colors.ink,
+    color: c.ink,
   },
   statLabel: {
     fontFamily: fonts.sansBold,
     fontSize: 9,
     textTransform: "uppercase",
-    color: colors.mute,
+    color: c.mute,
     letterSpacing: 1,
     marginTop: 4,
     textAlign: "center",
@@ -487,7 +490,7 @@ const styles = StyleSheet.create({
 
   /* ── Card 4: Upgrade Banner ── */
   upgradeBanner: {
-    backgroundColor: colors.ochre,
+    backgroundColor: c.ochre,
     borderRadius: 8,
     padding: 16,
     flexDirection: "row",
@@ -500,7 +503,7 @@ const styles = StyleSheet.create({
   upgradeBannerTitle: {
     fontFamily: fonts.serifBold,
     fontSize: 16,
-    color: colors.paper,
+    color: c.paper,
   },
   upgradeBannerSub: {
     fontFamily: fonts.sans,
@@ -520,7 +523,7 @@ const styles = StyleSheet.create({
   upgradeBtnText: {
     fontFamily: fonts.sansBold,
     fontSize: 12,
-    color: colors.paper,
+    color: c.paper,
   },
 
   /* ── Card header row (shared by Badges + Earn) ── */
@@ -534,12 +537,12 @@ const styles = StyleSheet.create({
   cardHeaderLabel: {
     fontFamily: fonts.sansBold,
     fontSize: 14,
-    color: colors.ink,
+    color: c.ink,
   },
   cardHeaderAction: {
     fontFamily: fonts.sans,
     fontSize: 13,
-    color: colors.ochre,
+    color: c.ochre,
   },
 
   /* ── Card 5: Badges ── */
@@ -551,9 +554,9 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   badgePill: {
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     borderWidth: 1,
-    borderColor: colors.ghost,
+    borderColor: c.ghost,
     borderRadius: 9999,
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -565,7 +568,7 @@ const styles = StyleSheet.create({
   badgePillLabel: {
     fontFamily: fonts.sansBold,
     fontSize: 12,
-    color: colors.ink,
+    color: c.ink,
   },
 
   /* ── Card 6: Referral ── */
@@ -581,7 +584,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.mono,
     fontSize: 12,
-    color: colors.inkSoft,
+    color: c.inkSoft,
   },
 
   /* ── Card 7: Quick Links ── */
@@ -596,14 +599,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: colors.ghost,
+    borderBottomColor: c.ghost,
   },
   menuItemLast: { borderBottomWidth: 0 },
   menuEmoji: { fontSize: 20, width: 20, textAlign: "center" },
   menuLabel: {
     fontFamily: fonts.sans,
     fontSize: 15,
-    color: colors.ink,
+    color: c.ink,
     marginLeft: 16,
     flex: 1,
   },
@@ -628,7 +631,7 @@ const styles = StyleSheet.create({
   earnColHeader: {
     fontFamily: fonts.monoBold,
     fontSize: 10,
-    color: colors.mute,
+    color: c.mute,
     textTransform: "uppercase",
     letterSpacing: 1,
   },
@@ -643,16 +646,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderRadius: 4,
   },
-  earnRowEven: { backgroundColor: colors.paperDeep },
-  earnRowOdd:  { backgroundColor: colors.paper },
+  earnRowEven: { backgroundColor: c.paperDeep },
+  earnRowOdd:  { backgroundColor: c.paper },
   earnCell: {
     fontFamily: fonts.sans,
     fontSize: 12,
-    color: colors.ink,
+    color: c.ink,
   },
   earnAmountCell: {
     fontFamily: fonts.sansBold,
     fontSize: 12,
     textAlign: "right",
   },
-});
+}); }

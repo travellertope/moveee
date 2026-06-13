@@ -790,6 +790,7 @@ Before production build, also run `npm install` after restoring `react-native-ia
 | WhoSaidItGameScreen | `screens/games/WhoSaidItGameScreen.tsx` (fully native, tap-author options, review, MMKV gate) |
 | GamesScreen (updated) | `screens/games/GamesScreen.tsx` (navigates to TriviaGame + WhoSaidIt; Crossword/Sudoku dimmed) |
 | PasskeyManager | `screens/member/MemberSettingsScreen.tsx` SecurityTab (full register/delete WebAuthn flow via `react-native-passkeys`) |
+| Dark mode | `src/theme.ts` (`lightColors`, `darkColors`, `ColorPalette`), `src/store/themeStore.ts` (Zustand+MMKV, `ThemeMode`), `src/hooks/useColors.ts` (`useColors()` hook), Appearance tab in MemberSettingsScreen |
 
 ### What is missing (priority order)
 1. MembershipScreen IAP wiring (Google Play Billing + App Store IAP) — low priority; current behaviour directs users to the web to upgrade
@@ -834,3 +835,4 @@ All other post templates submit to `${CULTURE_API}/community/submit` (WordPress 
 - Cashout fee is flat 30% (not tiered); `credits_per_gbp` comes from the wallet balance API response — never hardcode
 - Phase 8b "For You" scoring is pure client-side TypeScript — `scoreItem()` from `lib/feed-recommendations.ts` on the web; replicate the same algorithm in `src/features/community/useFeedRecommendations.ts`
 - Full spec at `docs/moveee-connect-rn-spec.md` — that file is the single source of truth for RN implementation details
+- **Dark mode pattern**: screens use `const c = useColors(); const styles = useMemo(() => createStyles(c), [c]);` where `createStyles(c: ColorPalette)` is defined at module level. Static `colors` import still works for non-themed screens. Only screens converted so far: ConnectFeedScreen, ArticleScreen, MemberDashboardScreen.

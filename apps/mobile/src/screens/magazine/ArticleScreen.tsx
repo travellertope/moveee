@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -18,23 +18,27 @@ import RenderHtml from "react-native-render-html";
 import { useArticle } from "../../features/magazine/useMagazine";
 import { WP_URL } from "../../api/client";
 import type { Article } from "../../types";
-import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { fonts, fontSize, space, radius, type ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 import { ArticleSkeleton } from "../../components/ui/Skeleton";
 
-const HTML_TAG_STYLES = {
-  p:          { fontSize: 16, lineHeight: 26, color: colors.inkSoft, marginBottom: 14 },
-  a:          { color: colors.gold, textDecorationLine: "underline" as const },
-  h2:         { fontSize: 20, fontWeight: "700" as const, color: colors.ink, marginTop: 8, marginBottom: 10 },
-  h3:         { fontSize: 18, fontWeight: "700" as const, color: colors.ink, marginTop: 6, marginBottom: 8 },
-  blockquote: { borderLeftWidth: 3, borderLeftColor: colors.ochre, paddingLeft: 12, fontStyle: "italic" as const, color: colors.mute },
-  img:        { borderRadius: 6 },
-  figcaption: { fontSize: 11, color: colors.mute, textAlign: "center" as const, marginTop: 4 },
-};
+function makeHtmlTagStyles(c: ColorPalette) {
+  return {
+    p:          { fontSize: 16, lineHeight: 26, color: c.inkSoft, marginBottom: 14 },
+    a:          { color: c.gold, textDecorationLine: "underline" as const },
+    h2:         { fontSize: 20, fontWeight: "700" as const, color: c.ink, marginTop: 8, marginBottom: 10 },
+    h3:         { fontSize: 18, fontWeight: "700" as const, color: c.ink, marginTop: 6, marginBottom: 8 },
+    blockquote: { borderLeftWidth: 3, borderLeftColor: c.ochre, paddingLeft: 12, fontStyle: "italic" as const, color: c.mute },
+    img:        { borderRadius: 6 },
+    figcaption: { fontSize: 11, color: c.mute, textAlign: "center" as const, marginTop: 4 },
+  };
+}
 
-function ArticleBody({ article }: { article: Article }) {
+function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPalette }) {
   const nav = useNavigation<any>();
   const { width } = useWindowDimensions();
   const contentWidth = width - 64;
+  const HTML_TAG_STYLES = useMemo(() => makeHtmlTagStyles(c), [c]);
 
   const handleLinkPress = (_event: unknown, href: string) => {
     const m = href.match(
@@ -60,6 +64,8 @@ function ArticleBody({ article }: { article: Article }) {
 export default function ArticleScreen() {
   const nav   = useNavigation<any>();
   const route = useRoute<any>();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const { slug, article: passedArticle } = route.params ?? {};
   const { article: fetched, loading, error } = useArticle(slug);
   const article: Article | undefined = fetched ?? passedArticle;
@@ -97,14 +103,14 @@ export default function ArticleScreen() {
       {/* ── Floating controls ── */}
       <View style={styles.floatingControls} pointerEvents="box-none">
         <TouchableOpacity onPress={() => nav.goBack()} style={styles.floatBtn}>
-          <Ionicons name="chevron-back" size={20} color={colors.ink} />
+          <Ionicons name="chevron-back" size={20} color={c.ink} />
         </TouchableOpacity>
         <View style={styles.floatRight}>
           <TouchableOpacity style={styles.floatBtn} onPress={handleShare}>
-            <Ionicons name="share-outline" size={18} color={colors.ink} />
+            <Ionicons name="share-outline" size={18} color={c.ink} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.floatBtn}>
-            <Ionicons name="bookmark-outline" size={18} color={colors.ink} />
+            <Ionicons name="bookmark-outline" size={18} color={c.ink} />
           </TouchableOpacity>
         </View>
       </View>
@@ -161,13 +167,13 @@ export default function ArticleScreen() {
                   </View>
                 </View>
                 <View style={styles.authorRight}>
-                  <Ionicons name="bookmark-outline" size={20} color={colors.ink} />
+                  <Ionicons name="bookmark-outline" size={20} color={c.ink} />
                   <Text style={styles.readingTime}>{article.readingTime ?? "?"} min read</Text>
                 </View>
               </View>
 
               {/* Article body */}
-              <ArticleBody article={article} />
+              <ArticleBody article={article} colors={c} />
             </View>
           </ScrollView>
 
@@ -193,14 +199,14 @@ export default function ArticleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paper },
+function createStyles(c: ColorPalette) { return StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.paper },
 
   heroWrap: {
     position: "absolute", top: 0, left: 0, right: 0,
-    height: 280, backgroundColor: colors.paperDeep,
+    height: 280, backgroundColor: c.paperDeep,
   },
-  heroPlaceholder: { backgroundColor: colors.paperDeep },
+  heroPlaceholder: { backgroundColor: c.paperDeep },
 
   floatingControls: {
     position: "absolute", top: 52, left: 16, right: 16,
@@ -209,17 +215,16 @@ const styles = StyleSheet.create({
   floatRight: { flexDirection: "row", gap: 8 },
   floatBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: colors.paper, alignItems: "center", justifyContent: "center",
-    shadowColor: colors.ink, shadowOffset: { width: 0, height: 2 },
+    backgroundColor: c.paper, alignItems: "center", justifyContent: "center",
+    shadowColor: c.ink, shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15, shadowRadius: 6, elevation: 4,
   },
 
   center: { flex: 1, justifyContent: "center", alignItems: "center", padding: space[8] },
-  errorText: { fontFamily: fonts.sans, color: colors.ochre, textAlign: "center" },
+  errorText: { fontFamily: fonts.sans, color: c.ochre, textAlign: "center" },
 
-  // White sheet
   sheet: {
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     borderTopLeftRadius: 20, borderTopRightRadius: 20,
     paddingHorizontal: 32, paddingTop: 32, paddingBottom: 40,
     shadowColor: "#000", shadowOffset: { width: 0, height: -8 },
@@ -230,21 +235,21 @@ const styles = StyleSheet.create({
   categoryRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: space[3] },
   category: {
     fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
-    color: colors.ochre, letterSpacing: 1.5, textTransform: "uppercase",
+    color: c.ochre, letterSpacing: 1.5, textTransform: "uppercase",
   },
-  categoryRule: { width: 48, height: 2, backgroundColor: colors.ochre },
+  categoryRule: { width: 48, height: 2, backgroundColor: c.ochre },
 
   title: {
-    fontFamily: fonts.serifBold, fontSize: 28, color: colors.ink,
+    fontFamily: fonts.serifBold, fontSize: 28, color: c.ink,
     lineHeight: 34, marginBottom: space[2],
   },
   standfirst: {
     fontFamily: fonts.sans, fontSize: fontSize.base,
-    fontStyle: "italic", color: colors.inkSoft, lineHeight: 22,
+    fontStyle: "italic", color: c.inkSoft, lineHeight: 22,
   },
 
   divider: {
-    width: 48, height: 2, backgroundColor: colors.ochre,
+    width: 48, height: 2, backgroundColor: c.ochre,
     alignSelf: "center", marginVertical: 32,
   },
 
@@ -257,37 +262,36 @@ const styles = StyleSheet.create({
 
   avatar: {
     width: 44, height: 44, borderRadius: 22,
-    borderWidth: 2, borderColor: colors.gold,
+    borderWidth: 2, borderColor: c.gold,
   },
   avatarPlaceholder: {
     width: 44, height: 44, borderRadius: 22,
-    borderWidth: 2, borderColor: colors.gold,
-    backgroundColor: colors.goldLight, alignItems: "center", justifyContent: "center",
+    borderWidth: 2, borderColor: c.gold,
+    backgroundColor: c.goldLight, alignItems: "center", justifyContent: "center",
   },
-  avatarInitials: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.gold },
+  avatarInitials: { fontFamily: fonts.sansBold, fontSize: 14, color: c.gold },
 
   authorInfo:   { flex: 1 },
-  authorName:   { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink },
-  authorMeta:   { fontFamily: fonts.mono, fontSize: 11, color: colors.mute, marginTop: 4 },
-  readingTime:  { fontFamily: fonts.mono, fontSize: 11, color: colors.ochre },
+  authorName:   { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+  authorMeta:   { fontFamily: fonts.mono, fontSize: 11, color: c.mute, marginTop: 4 },
+  readingTime:  { fontFamily: fonts.mono, fontSize: 11, color: c.ochre },
 
-  // Bottom bar
   bottomBar: {
     position: "absolute", bottom: 0, left: 0, right: 0,
-    backgroundColor: colors.paper,
-    borderTopWidth: 1, borderTopColor: colors.ghost,
+    backgroundColor: c.paper,
+    borderTopWidth: 1, borderTopColor: c.ghost,
     paddingHorizontal: 24, paddingTop: 16, paddingBottom: 34,
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
   },
   reactions:     { flexDirection: "row", alignItems: "center", gap: 16 },
   reactionBtn:   { flexDirection: "row", alignItems: "center", gap: 6 },
   reactionEmoji: { fontSize: 18 },
-  reactionCount: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.inkSoft },
+  reactionCount: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.inkSoft },
 
   shareBtn: {
     height: 40, paddingHorizontal: 20,
-    borderRadius: radius.full, borderWidth: 1, borderColor: colors.ink,
+    borderRadius: radius.full, borderWidth: 1, borderColor: c.ink,
     alignItems: "center", justifyContent: "center",
   },
-  shareBtnText: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink },
-});
+  shareBtnText: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+}); }
