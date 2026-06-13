@@ -47,6 +47,9 @@ import ShopListingScreen from "../screens/shop/ShopListingScreen";
 import ProductDetailScreen from "../screens/shop/ProductDetailScreen";
 import CartScreen from "../screens/shop/CartScreen";
 import TheEditScreen from "../screens/shop/TheEditScreen";
+import ShopSearchScreen from "../screens/shop/ShopSearchScreen";
+import MakerProfileScreen from "../screens/shop/MakerProfileScreen";
+import OrderConfirmationScreen from "../screens/shop/OrderConfirmationScreen";
 
 // Member
 import MemberDashboardScreen from "../screens/member/MemberDashboardScreen";
@@ -139,8 +142,11 @@ function ShopStack() {
       <Stack.Screen name="ShopHome"      component={ShopScreen} />
       <Stack.Screen name="ShopListing"   component={ShopListingScreen} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
-      <Stack.Screen name="Cart"          component={CartScreen} />
-      <Stack.Screen name="TheEdit"       component={TheEditScreen} />
+      <Stack.Screen name="Cart"              component={CartScreen} />
+      <Stack.Screen name="TheEdit"           component={TheEditScreen} />
+      <Stack.Screen name="ShopSearch"        component={ShopSearchScreen} />
+      <Stack.Screen name="MakerProfile"      component={MakerProfileScreen} />
+      <Stack.Screen name="OrderConfirmation" component={OrderConfirmationScreen} />
     </Stack.Navigator>
   );
 }
