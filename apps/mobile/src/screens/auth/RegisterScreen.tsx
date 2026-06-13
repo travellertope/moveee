@@ -222,8 +222,12 @@ export default function RegisterScreen() {
     if (!isValid) return;
     setLoading(true);
     try {
-      await api.post(`${CULTURE_API}/mobile/register`, { email, username, password }, false);
-      nav.replace("VerifyEmail", { email });
+      await api.post(
+        `${CULTURE_API}/mobile/register`,
+        { email: email.trim(), username: username.trim(), password },
+        false
+      );
+      nav.navigate("VerifyEmail", { email: email.trim(), password });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Registration failed. Please try again.");
     } finally {

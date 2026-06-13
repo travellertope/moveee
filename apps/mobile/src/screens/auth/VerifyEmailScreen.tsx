@@ -10,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import Svg, { Rect, Path, Circle, Polyline } from "react-native-svg";
 import { api, CULTURE_API } from "../../api/client";
+import { useAuthStore } from "../../auth/authStore";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 
 const RESEND_COOLDOWN = 30;
@@ -47,11 +48,16 @@ export default function VerifyEmailScreen() {
   const nav = useNavigation<any>();
   const { params } = useRoute<any>();
   const email: string = params?.email ?? "";
+  const password: string = params?.password ?? "";
+
+  const { login, setProfileSetupRequired } = useAuthStore();
 
   const [countdown, setCountdown] = useState(0);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [resentError, setResentError] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
+  const [signInError, setSignInError] = useState("");
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -72,6 +78,30 @@ export default function VerifyEmailScreen() {
       setResentError(e instanceof Error ? e.message : "Failed to resend. Please try again.");
     } finally {
       setResending(false);
+    }
+  }
+
+  async function handleContinue() {
+    if (!password) {
+      nav.navigate("Login");
+      return;
+    }
+    setSignInError("");
+    setSigningIn(true);
+    try {
+      await login(email, password);
+      setProfileSetupRequired(true);
+      // Navigation auto-switches to CompleteProfile via profileSetupRequired flag
+    } catch (e: unknown) {
+      setSignInError(
+        e instanceof Error && e.message.toLowerCase().includes("verif")
+          ? "Your email hasn't been verified yet. Please click the link in your inbox first."
+          : e instanceof Error
+          ? e.message
+          : "Sign in failed. Please try again."
+      );
+    } finally {
+      setSigningIn(false);
     }
   }
 
@@ -110,6 +140,26 @@ export default function VerifyEmailScreen() {
             <Text style={styles.errorText}>{resentError}</Text>
           </View>
         )}
+
+        {/* Sign in error */}
+        {!!signInError && (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorText}>{signInError}</Text>
+          </View>
+        )}
+
+        {/* I've verified — primary CTA */}
+        <Pressable
+          style={[styles.primaryBtn, signingIn && { opacity: 0.6 }]}
+          onPress={handleContinue}
+          disabled={signingIn}
+        >
+          {signingIn ? (
+            <ActivityIndicator color={colors.paper} />
+          ) : (
+            <Text style={styles.primaryLabel}>I've verified my email →</Text>
+          )}
+        </Pressable>
 
         {/* Resend button */}
         <Pressable
@@ -213,6 +263,20 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.error,
     textAlign: "center",
+  },
+  primaryBtn: {
+    backgroundColor: colors.ink,
+    borderRadius: 9999,
+    height: 52,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: space[3],
+  },
+  primaryLabel: {
+    fontFamily: fonts.sansBold,
+    fontSize: fontSize.base,
+    color: colors.paper,
   },
   outlineBtn: {
     borderWidth: 1,

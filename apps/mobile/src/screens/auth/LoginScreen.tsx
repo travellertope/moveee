@@ -13,8 +13,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import Svg, { Path, Circle, Rect, Line } from "react-native-svg";
+import * as Passkeys from "react-native-passkeys";
 import { useAuthStore } from "../../auth/authStore";
+import { api } from "../../api/client";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import type { User } from "../../types";
+
+const PROXY = "https://themoveee.com/api";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 function MailIcon({ color = colors.ghost }: { color?: string }) {
@@ -133,7 +138,7 @@ const wmS = StyleSheet.create({
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function LoginScreen() {
   const nav = useNavigation<any>();
-  const { login, isLoading, error: authError } = useAuthStore();
+  const { login, loginWithToken, isLoading, error: authError } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -141,6 +146,8 @@ export default function LoginScreen() {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [localError, setLocalError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
 
   const passwordRef = useRef<TextInput>(null);
 
@@ -150,12 +157,58 @@ export default function LoginScreen() {
       setLocalError("Please enter your email and password.");
       return;
     }
+    setSubmitting(true);
     try {
       await login(email.trim(), password);
     } catch (e: unknown) {
       setLocalError(
         e instanceof Error ? e.message : "Sign in failed. Please try again."
       );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handlePasskeyLogin() {
+    if (passkeyLoading) return;
+    if (!Passkeys.isSupported()) {
+      setLocalError("Passkeys are not supported on this device.");
+      return;
+    }
+    setLocalError("");
+    setPasskeyLoading(true);
+    try {
+      const optData = await api.post<any>(
+        `${PROXY}/auth/passkey/login-options`,
+        {},
+        false
+      );
+      const credential = await Passkeys.get(optData);
+      if (!credential) return;
+
+      const result = await api.post<{ token: string; user: User }>(
+        `${PROXY}/auth/passkey/login-verify`,
+        {
+          id: credential.id,
+          rawId: credential.rawId,
+          type: credential.type,
+          response: {
+            clientDataJSON: credential.response.clientDataJSON,
+            authenticatorData: (credential.response as any).authenticatorData,
+            signature: (credential.response as any).signature,
+            userHandle: (credential.response as any).userHandle,
+          },
+          _challenge_key: optData._challenge_key,
+        },
+        false
+      );
+      await loginWithToken(result.token, result.user);
+    } catch (e: any) {
+      if (!e?.message?.toLowerCase().includes("cancel")) {
+        setLocalError("Passkey sign-in failed. Please use your password instead.");
+      }
+    } finally {
+      setPasskeyLoading(false);
     }
   }
 
@@ -245,10 +298,10 @@ export default function LoginScreen() {
           <Pressable
             style={[styles.primaryBtn, !canSubmit && styles.primaryBtnDisabled]}
             onPress={handleSubmit}
-            disabled={isLoading || !canSubmit}
+            disabled={submitting || !canSubmit}
           >
             {({ pressed }) =>
-              isLoading ? (
+              submitting ? (
                 <ActivityIndicator color={colors.paper} />
               ) : (
                 <Text style={[styles.primaryLabel, pressed && { opacity: 0.85 }]}>
@@ -266,11 +319,21 @@ export default function LoginScreen() {
           </View>
 
           {/* Passkey */}
-          <Pressable style={styles.outlineBtn} onPress={() => {}}>
+          <Pressable
+            style={[styles.outlineBtn, passkeyLoading && { opacity: 0.6 }]}
+            onPress={handlePasskeyLogin}
+            disabled={passkeyLoading}
+          >
             {({ pressed }) => (
               <View style={[styles.outlineBtnInner, pressed && { opacity: 0.7 }]}>
-                <FingerprintIcon />
-                <Text style={styles.outlineLabel}>Continue with passkey</Text>
+                {passkeyLoading ? (
+                  <ActivityIndicator color={colors.ink} size="small" />
+                ) : (
+                  <>
+                    <FingerprintIcon />
+                    <Text style={styles.outlineLabel}>Continue with passkey</Text>
+                  </>
+                )}
               </View>
             )}
           </Pressable>

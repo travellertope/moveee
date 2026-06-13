@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import {
   View, Text, Image, FlatList, TextInput, TouchableOpacity,
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
-  ActivityIndicator, Linking,
+  ActivityIndicator, Linking, Share,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -146,10 +146,17 @@ export default function PostDetailScreen() {
           {item.slug ? (
             <TouchableOpacity
               style={styles.openFullBtn}
-              onPress={() => Linking.openURL(`https://themoveee.com/community/${item.slug}`).catch(() => {})}
+              onPress={() => {
+                const url = `https://connect.themoveee.com/community/${item.slug}`;
+                Share.share(
+                  Platform.OS === "ios"
+                    ? { url, message: `${item.communityAuthor ?? "Someone"}'s post on Moveee` }
+                    : { message: `${item.communityAuthor ?? "Someone"}'s post on Moveee\n${url}`, title: "Share post" }
+                ).catch(() => {});
+              }}
             >
-              <Text style={styles.openFullBtnText}>Open full page</Text>
-              <Ionicons name="open-outline" size={12} color={c.mute} />
+              <Text style={styles.openFullBtnText}>Share</Text>
+              <Ionicons name="share-outline" size={12} color={c.mute} />
             </TouchableOpacity>
           ) : null}
           <TouchableOpacity onPress={() => nav.goBack()} style={styles.closeBtn}>

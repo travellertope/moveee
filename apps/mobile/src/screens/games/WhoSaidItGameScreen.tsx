@@ -7,7 +7,8 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { storage } from "../../store/storage";
 import { api } from "../../api/client";
-import { fonts, fontSize, space, radius } from "../../theme";
+import { recordPlayedToday } from "../../features/games/useGameStreak";
+import { colors, fonts, fontSize, space, radius } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
 
@@ -82,6 +83,7 @@ export default function WhoSaidItGameScreen() {
       setQIndex((i) => i + 1);
     } else {
       storage.set(KEY_DATE, todayStr);
+      recordPlayedToday();
       setPhase("done");
     }
   };

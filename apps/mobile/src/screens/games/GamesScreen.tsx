@@ -4,6 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
+import { useGameStreak } from "../../features/games/useGameStreak";
 
 // ── Crossword mini-grid illustration ─────────────────────────────────────────
 function CrosswordIllustration({ styles }: { styles: ReturnType<typeof createStyles> }) {
@@ -59,9 +60,10 @@ function SudokuIllustration({ styles }: { styles: ReturnType<typeof createStyles
 }
 
 export default function GamesScreen() {
-  const nav = useNavigation<any>();
-  const c = useColors();
+  const nav    = useNavigation<any>();
+  const c      = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const streak = useGameStreak();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -76,13 +78,15 @@ export default function GamesScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
         {/* Streak banner */}
-        <View style={styles.streakBanner}>
-          <View style={styles.streakLeft}>
-            <Text style={styles.streakEmoji}>🔥</Text>
-            <Text style={styles.streakText}>4 day streak!</Text>
+        {streak > 0 && (
+          <View style={styles.streakBanner}>
+            <View style={styles.streakLeft}>
+              <Text style={styles.streakEmoji}>🔥</Text>
+              <Text style={styles.streakText}>{streak} day{streak !== 1 ? "s" : ""} streak!</Text>
+            </View>
+            <Text style={styles.streakSub}>Keep it up</Text>
           </View>
-          <Text style={styles.streakSub}>Keep it up</Text>
-        </View>
+        )}
 
         {/* Games grid */}
         <View style={styles.grid}>
@@ -124,33 +128,41 @@ export default function GamesScreen() {
             </View>
           </TouchableOpacity>
 
-          {/* Card 3 — Crossword (coming soon) */}
-          <View style={[styles.card, styles.cardDim]}>
+          {/* Card 3 — Crossword */}
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => nav.navigate("Crossword")}
+            activeOpacity={0.85}
+          >
             <View style={[styles.cardTop, { backgroundColor: c.paperDeep }]}>
-              <CrosswordIllustration styles={styles} />
+              <CrosswordIllustration />
             </View>
             <View style={styles.cardBody}>
               <Text style={styles.cardName}>Crossword</Text>
-              <Text style={styles.cardDesc}>Weekly themed puzzles</Text>
-              <View style={styles.comingSoonPill}>
-                <Text style={styles.comingSoonText}>COMING SOON</Text>
+              <Text style={styles.cardDesc}>Mini 7×7 · African & diaspora culture</Text>
+              <View style={styles.playBtn}>
+                <Text style={styles.playBtnText}>Play now →</Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
 
-          {/* Card 4 — Sudoku (coming soon) */}
-          <View style={[styles.card, styles.cardDim]}>
+          {/* Card 4 — Sudoku */}
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => nav.navigate("Sudoku")}
+            activeOpacity={0.85}
+          >
             <View style={[styles.cardTop, { backgroundColor: c.paperDeep }]}>
-              <SudokuIllustration styles={styles} />
+              <SudokuIllustration />
             </View>
             <View style={styles.cardBody}>
               <Text style={styles.cardName}>Sudoku</Text>
-              <Text style={styles.cardDesc}>Daily numbers challenge</Text>
-              <View style={styles.comingSoonPill}>
-                <Text style={styles.comingSoonText}>COMING SOON</Text>
+              <Text style={styles.cardDesc}>Daily 9×9 · same grid for everyone</Text>
+              <View style={styles.playBtn}>
+                <Text style={styles.playBtnText}>Play now →</Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { INTERESTS } from "@moveee/utils/interest-mappings";
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView,
+  View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Pressable,
   StyleSheet, SafeAreaView, Alert, ActivityIndicator, Platform,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -130,6 +131,22 @@ function ProfileTab() {
     occupation:         user?.occupation ?? "",
   });
   const [saving, setSaving] = useState(false);
+  const [showDobPicker, setShowDobPicker] = useState(false);
+
+  // Parse stored "YYYY-MM-DD" string to a Date for the picker
+  const dobDate = form.dateOfBirth
+    ? new Date(form.dateOfBirth + "T12:00:00")
+    : new Date(new Date().getFullYear() - 25, 0, 1);
+
+  function onDobChange(_: unknown, selected?: Date) {
+    if (Platform.OS === "android") setShowDobPicker(false);
+    if (selected) {
+      const y = selected.getFullYear();
+      const m = String(selected.getMonth() + 1).padStart(2, "0");
+      const d = String(selected.getDate()).padStart(2, "0");
+      setForm((f) => ({ ...f, dateOfBirth: `${y}-${m}-${d}` }));
+    }
+  }
 
   const save = async () => {
     setSaving(true);
@@ -278,13 +295,45 @@ function ProfileTab() {
         {/* DOB */}
         <View style={pf.wrap}>
           <Text style={pf.label}>Date of Birth</Text>
-          <TextInput
-            style={pf.input}
-            value={form.dateOfBirth}
-            onChangeText={(v) => setForm((f) => ({ ...f, dateOfBirth: v }))}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={c.ghost}
-          />
+          <TouchableOpacity style={pf.selectRow} activeOpacity={0.7} onPress={() => setShowDobPicker(true)}>
+            <Text style={form.dateOfBirth ? pf.selectText : pf.selectPlaceholder}>
+              {form.dateOfBirth || "Select date"}
+            </Text>
+            <Ionicons name="calendar-outline" size={16} color={c.ghost} />
+          </TouchableOpacity>
+
+          {/* Android: inline picker */}
+          {showDobPicker && Platform.OS === "android" && (
+            <DateTimePicker
+              value={dobDate}
+              mode="date"
+              display="default"
+              maximumDate={new Date()}
+              onChange={onDobChange}
+            />
+          )}
+
+          {/* iOS: modal picker */}
+          {Platform.OS === "ios" && (
+            <Modal visible={showDobPicker} transparent animationType="slide">
+              <Pressable style={pf.modalOverlay} onPress={() => setShowDobPicker(false)}>
+                <Pressable style={pf.modalSheet} onPress={(e) => e.stopPropagation()}>
+                  <View style={pf.modalHeader}>
+                    <Text style={pf.modalCancel} onPress={() => setShowDobPicker(false)}>Cancel</Text>
+                    <Text style={pf.modalDone} onPress={() => setShowDobPicker(false)}>Done</Text>
+                  </View>
+                  <DateTimePicker
+                    value={dobDate}
+                    mode="date"
+                    display="spinner"
+                    maximumDate={new Date()}
+                    onChange={onDobChange}
+                    style={{ width: "100%" }}
+                  />
+                </Pressable>
+              </Pressable>
+            </Modal>
+          )}
         </View>
 
         {/* Nationality */}
@@ -408,6 +457,20 @@ function createPfStyles(c: ColorPalette) {
     },
     selectText:        { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink },
     selectPlaceholder: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ghost },
+    modalOverlay: {
+      flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end",
+    },
+    modalSheet: {
+      backgroundColor: c.paper, borderTopLeftRadius: 16, borderTopRightRadius: 16,
+      paddingBottom: 24,
+    },
+    modalHeader: {
+      flexDirection: "row", justifyContent: "space-between",
+      paddingHorizontal: space[5], paddingVertical: space[3],
+      borderBottomWidth: 1, borderBottomColor: c.rule,
+    },
+    modalCancel: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute },
+    modalDone:   { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ochre },
   });
 }
 
@@ -876,6 +939,7 @@ function SecurityTab() {
   const [passkeys,   setPasskeys]   = useState<Passkey[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [adding,     setAdding]     = useState(false);
+  const [changingPw, setChangingPw] = useState(false);
   const [supported,  setSupported]  = useState(true);
   const [trashHover, setTrashHover] = useState<string | null>(null);
 
@@ -906,8 +970,8 @@ function SecurityTab() {
     }
     setAdding(true);
     try {
-      const optData = await api.get<{ options: any }>(`${MOBILE_API}/passkey/register-options`);
-      const credential = await Passkeys.create(optData.options);
+      const optData = await api.post<any>(`${PROXY}/auth/passkey/register-options`, {}, true);
+      const credential = await Passkeys.create(optData);
       if (!credential) return; // user cancelled
 
       await api.post(`${MOBILE_API}/passkey/register-verify`, {
@@ -970,18 +1034,24 @@ function SecurityTab() {
         <TouchableOpacity
           style={secStyles.passwordRow}
           activeOpacity={0.7}
+          disabled={changingPw}
           onPress={async () => {
+            setChangingPw(true);
             try {
               await api.post(`${MOBILE_API}/user/reset-password`, {});
               Alert.alert("Email sent", "Check your inbox for a password reset link.");
             } catch {
               Alert.alert("Error", "Could not send reset email.");
+            } finally {
+              setChangingPw(false);
             }
           }}
         >
           <Ionicons name="lock-closed-outline" size={20} color={c.ochre} />
           <Text style={secStyles.passwordLabel}>Change Password</Text>
-          <Ionicons name="chevron-forward" size={18} color={c.ghost} />
+          {changingPw
+            ? <ActivityIndicator size="small" color={c.ghost} />
+            : <Ionicons name="chevron-forward" size={18} color={c.ghost} />}
         </TouchableOpacity>
         <Text style={secStyles.passwordSub}>We'll send a reset link to your email</Text>
       </View>
