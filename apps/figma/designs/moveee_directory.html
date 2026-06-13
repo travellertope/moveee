@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Member Directory</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ochre: '#C5491F',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        ghost: '#C8BFB0',
+                        'paper-deep': '#F5F5F5',
+                        gold: '#B38238',
+                        mute: '#7A6F5C',
+                        'paper-warm': '#F3ECE0',
+                        'success-green': '#2D6A4F',
+                        'error-red': '#C62828'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.05)',
+                    },
+                    backgroundImage: {
+                        'hero-pattern': 'linear-gradient(135deg, #F3ECE0 0%, #E8D3BA 50%, #C5491F 100%)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="flex justify-center flex-wrap xl:flex-nowrap gap-8 text-ink font-sans mx-auto max-w-[1300px]">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: MEMBER DIRECTORY                      -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3">
+        <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Member Directory</span>
+        <div class="ios-screen bg-paper-warm shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+            
+            <!-- Status Bar Mock -->
+            <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0">
+                <span>9:41</span>
+                <div class="flex gap-1 items-center pb-0.5">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <header class="h-[56px] flex items-center justify-between px-4 bg-white z-20 shrink-0">
+                <button class="text-ink min-w-[44px] min-h-[44px] flex items-center justify-start">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h1 class="text-ink font-bold text-[15px]">Member Directory</h1>
+                <div class="min-w-[44px]"></div>
+            </header>
+
+            <!-- Search & Filters -->
+            <div class="bg-white border-b border-ghost pb-2 shrink-0">
+                <!-- Search Bar -->
+                <div class="h-[48px] px-[16px] flex items-center justify-between border-b border-ghost">
+                    <div class="flex items-center gap-3 w-full">
+                        <svg class="w-4 h-4 text-mute" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <span class="text-ghost text-[14px] flex-1">Search by name, discipline or city</span>
+                    </div>
+                    <svg class="w-5 h-5 text-ink ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                </div>
+
+                <!-- Filter Chips -->
+                <div class="h-[44px] px-[16px] flex items-center gap-[8px] overflow-x-auto hide-scrollbar whitespace-nowrap mt-2">
+                    <button class="h-[32px] px-3 rounded-full border border-ghost text-ink-soft text-[13px] font-medium flex items-center gap-1">
+                        All Disciplines <span class="text-[10px]">▼</span>
+                    </button>
+                    <button class="h-[32px] px-3 rounded-full border border-ghost text-ink-soft text-[13px] font-medium flex items-center gap-1">
+                        All Locations <span class="text-[10px]">▼</span>
+                    </button>
+                    <button class="h-[32px] px-3 rounded-full bg-ochre text-white text-[13px] font-medium flex items-center gap-2">
+                        🎵 Music Production <span class="text-[10px]">✕</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Scroll -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-8">
+                
+                <!-- Count -->
+                <div class="px-[16px] pt-[8px] pb-[12px]">
+                    <span class="text-mute font-mono text-[10px]">128 members</span>
+                </div>
+
+                <!-- Grid -->
+                <div class="px-[16px] grid grid-cols-2 gap-[12px]">
+                    
+                    <!-- Card 1: Adaeze (Pro) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex flex-col items-center text-center">
+                        <div class="w-[44px] h-[44px] rounded-full border-[2px] border-gold p-[2px] mb-[8px]">
+                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        </div>
+                        <span class="text-ink font-bold text-[13px] line-clamp-1 w-full">Adaeze Obi</span>
+                        <span class="text-mute font-mono text-[10px] mt-[2px]">@adaeze.obi</span>
+                        <span class="text-mute text-[11px] mt-[4px]">📍 Lagos, NG</span>
+                        
+                        <div class="flex flex-wrap justify-center gap-[4px] mt-[8px]">
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Photography</span>
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Visual Art</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-center gap-[8px] mt-[12px] text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Kemi (Citizen) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex flex-col items-center text-center">
+                        <div class="w-[44px] h-[44px] rounded-full border-[2px] border-ghost p-[2px] mb-[8px]">
+                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#2F80ED] to-[#56CCF2]"></div>
+                        </div>
+                        <span class="text-ink font-bold text-[13px] line-clamp-1 w-full">Kemi Adeyemi</span>
+                        <span class="text-mute font-mono text-[10px] mt-[2px]">@kemiad</span>
+                        <span class="text-mute text-[11px] mt-[4px]">📍 London, UK</span>
+                        
+                        <div class="flex flex-wrap justify-center gap-[4px] mt-[8px]">
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Music Prod.</span>
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Fashion</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-center gap-[8px] mt-[12px] text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Seun (Pro) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex flex-col items-center text-center">
+                        <div class="w-[44px] h-[44px] rounded-full border-[2px] border-gold p-[2px] mb-[8px]">
+                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#C5491F] to-[#27AE60]"></div>
+                        </div>
+                        <span class="text-ink font-bold text-[13px] line-clamp-1 w-full">Seun Falowo</span>
+                        <span class="text-mute font-mono text-[10px] mt-[2px]">@seunf</span>
+                        <span class="text-mute text-[11px] mt-[4px]">📍 Accra, GH</span>
+                        
+                        <div class="flex flex-wrap justify-center gap-[4px] mt-[8px]">
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Film</span>
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Literature</span>
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ghost">+1 more</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-center gap-[8px] mt-[12px] text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Nkechi (Citizen) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex flex-col items-center text-center">
+                        <div class="w-[44px] h-[44px] rounded-full border-[2px] border-ghost p-[2px] mb-[8px]">
+                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#2D9CDB] to-[#9b51e0]"></div>
+                        </div>
+                        <span class="text-ink font-bold text-[13px] line-clamp-1 w-full">Nkechi Eze</span>
+                        <span class="text-mute font-mono text-[10px] mt-[2px]">@nkechieze</span>
+                        <span class="text-mute text-[11px] mt-[4px]">📍 New York, US</span>
+                        
+                        <div class="flex flex-wrap justify-center gap-[4px] mt-[8px]">
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Vis. Design</span>
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Tech</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-center gap-[8px] mt-[12px] text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                        </div>
+                    </div>
+
+                    <!-- Card 5: Kofi (Pro) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex flex-col items-center text-center">
+                        <div class="w-[44px] h-[44px] rounded-full border-[2px] border-gold p-[2px] mb-[8px]">
+                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#EB5757] to-[#F2C94C]"></div>
+                        </div>
+                        <span class="text-ink font-bold text-[13px] line-clamp-1 w-full">Kofi Mensah</span>
+                        <span class="text-mute font-mono text-[10px] mt-[2px]">@kofi.m</span>
+                        <span class="text-mute text-[11px] mt-[4px]">📍 Toronto, CA</span>
+                        
+                        <div class="flex flex-wrap justify-center gap-[4px] mt-[8px]">
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Architecture</span>
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Photography</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-center gap-[8px] mt-[12px] text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        </div>
+                    </div>
+
+                    <!-- Card 6: Yewande (Citizen) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex flex-col items-center text-center">
+                        <div class="w-[44px] h-[44px] rounded-full border-[2px] border-ghost p-[2px] mb-[8px]">
+                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#BB6BD9] to-[#2D9CDB]"></div>
+                        </div>
+                        <span class="text-ink font-bold text-[13px] line-clamp-1 w-full">Yewande Olao</span>
+                        <span class="text-mute font-mono text-[10px] mt-[2px]">@yewande</span>
+                        <span class="text-mute text-[11px] mt-[4px]">📍 Nairobi, KE</span>
+                        
+                        <div class="flex flex-wrap justify-center gap-[4px] mt-[8px]">
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Literature</span>
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Food Culture</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-center gap-[8px] mt-[12px] text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                        </div>
+                    </div>
+
+                    <!-- Card 7: Marcus (Citizen) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex flex-col items-center text-center">
+                        <div class="w-[44px] h-[44px] rounded-full border-[2px] border-ghost p-[2px] mb-[8px]">
+                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#27AE60] to-[#2D9CDB]"></div>
+                        </div>
+                        <span class="text-ink font-bold text-[13px] line-clamp-1 w-full">Marcus T.</span>
+                        <span class="text-mute font-mono text-[10px] mt-[2px]">@marcust</span>
+                        <span class="text-mute text-[11px] mt-[4px]">📍 London, UK</span>
+                        
+                        <div class="flex flex-wrap justify-center gap-[4px] mt-[8px]">
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Music Prod.</span>
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Live Music</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-center gap-[8px] mt-[12px] text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                        </div>
+                    </div>
+
+                    <!-- Card 8: Zara (Pro) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex flex-col items-center text-center">
+                        <div class="w-[44px] h-[44px] rounded-full border-[2px] border-gold p-[2px] mb-[8px]">
+                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#F2994A] to-[#EB5757]"></div>
+                        </div>
+                        <span class="text-ink font-bold text-[13px] line-clamp-1 w-full">Zara Mensah</span>
+                        <span class="text-mute font-mono text-[10px] mt-[2px]">@zaramensah</span>
+                        <span class="text-mute text-[11px] mt-[4px]">📍 Lagos, NG</span>
+                        
+                        <div class="flex flex-wrap justify-center gap-[4px] mt-[8px]">
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Fashion</span>
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ink-soft">Creative Dir.</span>
+                            <span class="border border-ghost rounded-full px-[8px] py-[4px] text-[9px] font-bold text-ghost">+2 more</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-center gap-[8px] mt-[12px] text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: PUBLIC PROFILE                        -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3">
+        <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Public Profile</span>
+        <div class="ios-screen bg-white shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+            
+            <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-white z-20 shrink-0 absolute top-0 left-0">
+                <span>9:41</span>
+                <div class="flex gap-1 items-center pb-0.5">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                </div>
+            </div>
+
+            <!-- Content Scroll Wrapper -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar bg-paper-deep pb-8">
+                
+                <!-- Hero Area -->
+                <div class="h-[200px] w-full bg-hero-pattern relative shrink-0 pt-12">
+                    <button class="w-[40px] h-[40px] bg-white rounded-full flex items-center justify-center ml-[16px] shadow-sm">
+                        <svg class="w-6 h-6 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Profile Card (Overlapping) -->
+                <div class="bg-white rounded-t-[20px] -mt-[40px] relative z-10 flex flex-col pb-6 min-h-[500px]">
+                    
+                    <!-- Share Button -->
+                    <button class="absolute top-[16px] right-[16px] w-[36px] h-[36px] border border-ghost text-ink rounded-full flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                    </button>
+
+                    <!-- Avatar XL -->
+                    <div class="self-center -mt-[48px] relative">
+                        <div class="w-[96px] h-[96px] rounded-full border-[3px] border-gold p-[3px] bg-white">
+                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        </div>
+                    </div>
+
+                    <!-- Identity -->
+                    <div class="flex flex-col items-center px-[16px] mt-[12px]">
+                        <div class="bg-gold px-2 py-0.5 rounded-full flex items-center gap-1 mb-[8px]">
+                            <span class="text-white text-[10px] pb-[1px]">★</span>
+                            <span class="text-white text-[9px] font-bold uppercase tracking-widest">Connect Pro</span>
+                        </div>
+                        <h2 class="font-serif text-[24px] font-bold text-ink">Adaeze Obi</h2>
+                        <span class="text-mute font-mono text-[13px] mt-[2px]">@adaeze.obi</span>
+                        <span class="text-ink-soft text-[14px] mt-[4px]">Creative Director + Photographer</span>
+                        <span class="text-mute text-[12px] mt-[4px]">📍 Lagos, Nigeria</span>
+                        <span class="text-ghost font-mono text-[10px] mt-[8px]">Member since March 2024</span>
+                    </div>
+
+                    <!-- Badges Shelf -->
+                    <div class="mt-[16px] w-full overflow-x-auto hide-scrollbar">
+                        <div class="flex gap-[8px] px-[16px] whitespace-nowrap pb-2">
+                            <span class="border border-ghost rounded-full px-[10px] py-[6px] text-ink text-[12px] font-bold flex items-center gap-1">🎨 Taste Maker</span>
+                            <span class="border border-ghost rounded-full px-[10px] py-[6px] text-ink text-[12px] font-bold flex items-center gap-1">💎 Gem Hunter</span>
+                            <span class="border border-ghost rounded-full px-[10px] py-[6px] text-ink text-[12px] font-bold flex items-center gap-1">✍️ Culture Contributor</span>
+                            <span class="border border-ghost rounded-full px-[10px] py-[6px] text-ink text-[12px] font-bold flex items-center gap-1">🔥 Hot Take</span>
+                            <span class="border border-ghost rounded-full px-[10px] py-[6px] text-ink text-[12px] font-bold flex items-center gap-1">📸 Visual</span>
+                        </div>
+                    </div>
+
+                    <!-- Social Links -->
+                    <div class="flex justify-center gap-[24px] mt-[16px]">
+                        <button class="w-[36px] h-[36px] bg-paper-deep rounded-full flex items-center justify-center text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                        </button>
+                        <button class="w-[36px] h-[36px] bg-paper-deep rounded-full flex items-center justify-center text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                        </button>
+                        <button class="w-[36px] h-[36px] bg-paper-deep rounded-full flex items-center justify-center text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="h-[44px] flex items-end border-b border-ghost mt-[16px] px-[16px] gap-6">
+                        <div class="h-full flex items-center border-b-2 border-ochre pb-1">
+                            <span class="text-ink font-bold text-[14px]">Community</span>
+                        </div>
+                        <div class="h-full flex items-center pb-[6px]">
+                            <span class="text-mute text-[14px]">Portfolio</span>
+                        </div>
+                    </div>
+
+                    <!-- Community Posts List -->
+                    <div class="bg-paper-deep flex-1 w-full pt-[16px] pb-[24px] flex flex-col gap-[8px] px-[16px]">
+                        
+                        <!-- Mini Post 1 -->
+                        <div class="bg-white rounded-lg p-[16px] shadow-sm">
+                            <div class="flex justify-between items-center mb-[8px]">
+                                <div class="bg-paper-deep rounded-full px-[8px] py-[4px] flex items-center gap-1">
+                                    <span class="text-[10px]">💎</span><span class="text-ink text-[10px] font-bold">Hidden Gem</span>
+                                </div>
+                                <span class="font-mono text-[10px] text-mute">3 days ago</span>
+                            </div>
+                            <p class="text-ink-soft text-[13px] line-clamp-2 leading-relaxed">Just discovered the most amazing vinyl shop tucked away in Yaba. They have rare 70s highlife records I've been trying to track down for years.</p>
+                            <div class="flex gap-[16px] mt-[12px] font-mono text-[10px] text-mute">
+                                <span>❤️ 12</span>
+                                <span>🔥 5</span>
+                                <span>👏 8</span>
+                            </div>
+                        </div>
+
+                        <!-- Mini Post 2 -->
+                        <div class="bg-white rounded-lg p-[16px] shadow-sm">
+                            <div class="flex justify-between items-center mb-[8px]">
+                                <div class="bg-paper-deep rounded-full px-[8px] py-[4px] flex items-center gap-1">
+                                    <span class="text-[10px]">🎨</span><span class="text-ink text-[10px] font-bold">Creative Showcase</span>
+                                </div>
+                                <span class="font-mono text-[10px] text-mute">1 week ago</span>
+                            </div>
+                            <p class="text-ink-soft text-[13px] line-clamp-2 leading-relaxed">Some outtakes from last weekend's editorial shoot in Balogun market. The contrast between the structured garments and the chaotic backdrop was exactly what we needed.</p>
+                            <div class="flex gap-[16px] mt-[12px] font-mono text-[10px] text-mute">
+                                <span>❤️ 45</span>
+                                <span>🔥 12</span>
+                                <span>👏 24</span>
+                            </div>
+                        </div>
+
+                        <!-- Mini Post 3 -->
+                        <div class="bg-white rounded-lg p-[16px] shadow-sm">
+                            <div class="flex justify-between items-center mb-[8px]">
+                                <div class="bg-paper-deep rounded-full px-[8px] py-[4px] flex items-center gap-1">
+                                    <span class="text-[10px]">💬</span><span class="text-ink text-[10px] font-bold">Cultural Take</span>
+                                </div>
+                                <span class="font-mono text-[10px] text-mute">2 weeks ago</span>
+                            </div>
+                            <p class="text-ink-soft text-[13px] line-clamp-2 leading-relaxed">Hot take: the 'diversity' programming at major galleries has actually made things worse. It's tokenism dressed up as progress, entirely missing the nuance of actual diaspora art.</p>
+                            <div class="flex gap-[16px] mt-[12px] font-mono text-[10px] text-mute">
+                                <span>❤️ 89</span>
+                                <span>🔥 45</span>
+                                <span>👏 12</span>
+                            </div>
+                        </div>
+
+                        <button class="mt-[16px] text-mute text-[12px] font-sans hover:text-ink transition-colors">Load more posts</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: PUBLIC PROFILE (PORTFOLIO TAB)        -->
+    <!-- ============================================== -->
+    <div class="flex flex-col items-center gap-3">
+        <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Public Profile (Portfolio)</span>
+        <div class="ios-screen bg-white shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+            
+            <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-white z-20 shrink-0 absolute top-0 left-0">
+                <span>9:41</span>
+                <div class="flex gap-1 items-center pb-0.5">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                </div>
+            </div>
+
+            <!-- Content Scroll Wrapper -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar bg-white pb-8">
+                
+                <!-- Hero Area -->
+                <div class="h-[200px] w-full bg-hero-pattern relative shrink-0 pt-12">
+                    <button class="w-[40px] h-[40px] bg-white rounded-full flex items-center justify-center ml-[16px] shadow-sm">
+                        <svg class="w-6 h-6 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Profile Card (Overlapping) -->
+                <div class="bg-white rounded-t-[20px] -mt-[40px] relative z-10 flex flex-col pb-6 min-h-[500px]">
+                    
+                    <!-- Share Button -->
+                    <button class="absolute top-[16px] right-[16px] w-[36px] h-[36px] border border-ghost text-ink rounded-full flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                    </button>
+
+                    <!-- Avatar XL -->
+                    <div class="self-center -mt-[48px] relative">
+                        <div class="w-[96px] h-[96px] rounded-full border-[3px] border-gold p-[3px] bg-white">
+                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a]"></div>
+                        </div>
+                    </div>
+
+                    <!-- Identity -->
+                    <div class="flex flex-col items-center px-[16px] mt-[12px]">
+                        <div class="bg-gold px-2 py-0.5 rounded-full flex items-center gap-1 mb-[8px]">
+                            <span class="text-white text-[10px] pb-[1px]">★</span>
+                            <span class="text-white text-[9px] font-bold uppercase tracking-widest">Connect Pro</span>
+                        </div>
+                        <h2 class="font-serif text-[24px] font-bold text-ink">Adaeze Obi</h2>
+                        <span class="text-mute font-mono text-[13px] mt-[2px]">@adaeze.obi</span>
+                        <span class="text-ink-soft text-[14px] mt-[4px]">Creative Director + Photographer</span>
+                        <span class="text-mute text-[12px] mt-[4px]">📍 Lagos, Nigeria</span>
+                        <span class="text-ghost font-mono text-[10px] mt-[8px]">Member since March 2024</span>
+                    </div>
+
+                    <!-- Badges Shelf -->
+                    <div class="mt-[16px] w-full overflow-x-auto hide-scrollbar">
+                        <div class="flex gap-[8px] px-[16px] whitespace-nowrap pb-2">
+                            <span class="border border-ghost rounded-full px-[10px] py-[6px] text-ink text-[12px] font-bold flex items-center gap-1">🎨 Taste Maker</span>
+                            <span class="border border-ghost rounded-full px-[10px] py-[6px] text-ink text-[12px] font-bold flex items-center gap-1">💎 Gem Hunter</span>
+                            <span class="border border-ghost rounded-full px-[10px] py-[6px] text-ink text-[12px] font-bold flex items-center gap-1">✍️ Culture Contributor</span>
+                            <span class="border border-ghost rounded-full px-[10px] py-[6px] text-ink text-[12px] font-bold flex items-center gap-1">🔥 Hot Take</span>
+                            <span class="border border-ghost rounded-full px-[10px] py-[6px] text-ink text-[12px] font-bold flex items-center gap-1">📸 Visual</span>
+                        </div>
+                    </div>
+
+                    <!-- Social Links -->
+                    <div class="flex justify-center gap-[24px] mt-[16px]">
+                        <button class="w-[36px] h-[36px] bg-paper-deep rounded-full flex items-center justify-center text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                        </button>
+                        <button class="w-[36px] h-[36px] bg-paper-deep rounded-full flex items-center justify-center text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                        </button>
+                        <button class="w-[36px] h-[36px] bg-paper-deep rounded-full flex items-center justify-center text-ghost">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Tabs (Updated for Portfolio) -->
+                    <div class="h-[44px] flex items-end border-b border-ghost mt-[16px] px-[16px] gap-6">
+                        <div class="h-full flex items-center pb-[6px]">
+                            <span class="text-mute text-[14px]">Community</span>
+                        </div>
+                        <div class="h-full flex items-center border-b-2 border-ochre pb-1">
+                            <span class="text-ink font-bold text-[14px]">Portfolio</span>
+                        </div>
+                    </div>
+
+                    <!-- Portfolio Grid -->
+                    <div class="pt-[16px] pb-[24px] px-[16px]">
+                        <div class="grid grid-cols-2 gap-x-[8px] gap-y-[12px]">
+                            
+                            <!-- Row 1 Left -->
+                            <div class="flex flex-col">
+                                <div class="h-[120px] w-full rounded-md bg-gradient-to-br from-[#FF9A9E] to-[#FECFEF]"></div>
+                                <span class="text-ink text-[13px] font-bold mt-[6px] line-clamp-1">Zaria Music Visuals</span>
+                                <span class="text-mute font-mono text-[11px] mt-[2px]">2024</span>
+                            </div>
+                            
+                            <!-- Row 1 Right -->
+                            <div class="flex flex-col">
+                                <div class="h-[120px] w-full rounded-md bg-gradient-to-bl from-[#F6D365] to-[#FDA085]"></div>
+                                <span class="text-ink text-[13px] font-bold mt-[6px] line-clamp-1">Lagos Street Portraits</span>
+                                <span class="text-mute font-mono text-[11px] mt-[2px]">2023</span>
+                            </div>
+
+                            <!-- Row 2 Left -->
+                            <div class="flex flex-col">
+                                <div class="h-[120px] w-full rounded-md bg-gradient-to-tr from-[#84FAB0] to-[#8FD3F4]"></div>
+                                <span class="text-ink text-[13px] font-bold mt-[6px] line-clamp-1">Afrofusion Lookbook</span>
+                                <span class="text-mute font-mono text-[11px] mt-[2px]">2024</span>
+                            </div>
+
+                            <!-- Row 2 Right -->
+                            <div class="flex flex-col">
+                                <div class="h-[120px] w-full rounded-md bg-gradient-to-br from-[#A18CD1] to-[#FBC2EB]"></div>
+                                <span class="text-ink text-[13px] font-bold mt-[6px] line-clamp-1">Eko Creative Studio</span>
+                                <span class="text-mute font-mono text-[11px] mt-[2px]">2022</span>
+                            </div>
+
+                            <!-- Row 3 Left -->
+                            <div class="flex flex-col">
+                                <div class="h-[120px] w-full rounded-md bg-gradient-to-tl from-[#FBC2EB] to-[#A6C1EE]"></div>
+                                <span class="text-ink text-[13px] font-bold mt-[6px] line-clamp-1">Festival Grounds</span>
+                                <span class="text-mute font-mono text-[11px] mt-[2px]">2023</span>
+                            </div>
+
+                            <!-- Row 3 Right (Add Work CTA) -->
+                            <div class="flex flex-col">
+                                <div class="h-[120px] w-full rounded-md border-[1.5px] border-dashed border-ghost bg-paper-warm flex flex-col items-center justify-center cursor-pointer hover:bg-[#eae0d2] transition-colors">
+                                    <svg class="w-5 h-5 text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                                    <span class="text-mute text-[12px] mt-[6px] font-sans">Add portfolio item</span>
+                                </div>
+                            </div>
+
+                        </div>
+                        
+                        <span class="block w-full text-center text-mute font-mono text-[10px] mt-[12px]">6 items</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
