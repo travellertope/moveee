@@ -7,6 +7,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { SignOutDialog } from "../../components/ui/Overlays";
 
 const BADGE_LABELS: Record<string, string> = {
   "first_post":        "First Post",
@@ -69,6 +70,7 @@ export default function MemberDashboardScreen() {
   const nav = useNavigation<any>();
   const { user, logout } = useAuthStore();
   const [earnExpanded, setEarnExpanded] = useState(true);
+  const [signOutVisible, setSignOutVisible] = useState(false);
 
   if (!user) return null;
 
@@ -94,7 +96,7 @@ export default function MemberDashboardScreen() {
           <Text style={styles.headerWordmark}>moveee</Text>
           <Text style={styles.headerSub}>connect</Text>
         </View>
-        <TouchableOpacity style={styles.headerRight} onPress={logout}>
+        <TouchableOpacity style={styles.headerRight} onPress={() => setSignOutVisible(true)}>
           <Text style={styles.headerSignOut}>Sign out</Text>
         </TouchableOpacity>
       </View>
@@ -268,6 +270,11 @@ export default function MemberDashboardScreen() {
           )}
         </View>
       </ScrollView>
+      <SignOutDialog
+        visible={signOutVisible}
+        onCancel={() => setSignOutVisible(false)}
+        onConfirm={() => { setSignOutVisible(false); logout(); }}
+      />
     </SafeAreaView>
   );
 }

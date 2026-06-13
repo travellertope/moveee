@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
 import { api, CULTURE_API, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { ConfirmRedeemDialog } from "../../components/ui/Overlays";
 import type { Perk } from "../../types";
 
 
@@ -72,8 +73,9 @@ export default function PerksScreen() {
   const { user, updateUser } = useAuthStore() as any;
   const [perks,     setPerks]     = useState<Perk[]>([]);
   const [loading,   setLoading]   = useState(true);
-  const [redeeming, setRedeeming] = useState(false);
-  const [success,   setSuccess]   = useState<{ perk: Perk; result: RedeemResult } | null>(null);
+  const [redeeming,     setRedeeming]     = useState(false);
+  const [success,       setSuccess]       = useState<{ perk: Perk; result: RedeemResult } | null>(null);
+  const [confirmPerk,   setConfirmPerk]   = useState<Perk | null>(null);
 
   const credits    = user?.credits ?? 0;
   const hasPasskey = user?.hasPasskey ?? false;
@@ -85,35 +87,30 @@ export default function PerksScreen() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleRedeem = async (perk: Perk) => {
+  const handleRedeem = (perk: Perk) => {
     if (!hasPasskey) return;
-    Alert.alert(
-      `Redeem "${perk.title}"`,
-      `This will deduct ${perk.credit_cost} credits from your balance.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Confirm",
-          onPress: async () => {
-            setRedeeming(true);
-            try {
-              const result = await api.post<RedeemResult>(
-                `${MOBILE_API}/perks/redeem`,
-                { perk_id: perk.id }
-              );
-              setSuccess({ perk, result });
-              if (updateUser && result.new_balance !== undefined) {
-                updateUser({ credits: result.new_balance });
-              }
-            } catch (err: any) {
-              Alert.alert("Error", err?.message ?? "Could not redeem perk.");
-            } finally {
-              setRedeeming(false);
-            }
-          },
-        },
-      ]
-    );
+    setConfirmPerk(perk);
+  };
+
+  const doRedeem = async () => {
+    if (!confirmPerk) return;
+    const perk = confirmPerk;
+    setConfirmPerk(null);
+    setRedeeming(true);
+    try {
+      const result = await api.post<RedeemResult>(
+        `${MOBILE_API}/perks/redeem`,
+        { perk_id: perk.id }
+      );
+      setSuccess({ perk, result });
+      if (updateUser && result.new_balance !== undefined) {
+        updateUser({ credits: result.new_balance });
+      }
+    } catch (err: any) {
+      Alert.alert("Error", err?.message ?? "Could not redeem perk.");
+    } finally {
+      setRedeeming(false);
+    }
   };
 
   return (
@@ -194,6 +191,15 @@ export default function PerksScreen() {
           <ActivityIndicator color={colors.paper} size="large" />
         </View>
       )}
+
+      <ConfirmRedeemDialog
+        visible={confirmPerk !== null}
+        perkName={confirmPerk?.title ?? ""}
+        cost={confirmPerk?.credit_cost ?? 0}
+        balance={credits}
+        onCancel={() => setConfirmPerk(null)}
+        onConfirm={doRedeem}
+      />
     </SafeAreaView>
   );
 }
