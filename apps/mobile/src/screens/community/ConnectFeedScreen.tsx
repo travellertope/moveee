@@ -141,6 +141,7 @@ export default function ConnectFeedScreen() {
             ? () =>
                 nav.navigate("MemberProfile", {
                   userId: (item as any).communityAuthorId,
+                  username: (item as any).communityAuthorUsername ?? "",
                 })
             : undefined
         }
@@ -431,14 +432,14 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     borderRadius: 17,
   },
   avatarFallback: {
-    backgroundColor: colors.goldLight,
+    backgroundColor: c.goldLight,
     justifyContent: "center",
     alignItems: "center",
   },
   avatarInitial: {
     fontFamily: fonts.sansBold,
     fontSize: fontSize.sm,
-    color: colors.gold,
+    color: c.gold,
   },
 
   // Filter Row

@@ -208,7 +208,7 @@ function createProductCardStyles(c: ColorPalette) {
       width: PRODUCT_CARD_W,
       backgroundColor: c.paper,
       borderRadius: radius.md,
-      ...shadows.sm,
+      ...shadows.card,
       overflow: "hidden",
     },
     imageWrap: {
@@ -334,7 +334,7 @@ export default function MakerProfileScreen() {
 
   const handleOrigins = useCallback(() => {
     if (maker.storySlug) {
-      navigation.navigate("Article", { slug: maker.storySlug });
+      navigation.navigate("Magazine", { screen: "Article", params: { slug: maker.storySlug } } as any);
     }
   }, [maker.storySlug, navigation]);
 
@@ -647,7 +647,7 @@ function createStyles(c: ColorPalette) {
       backgroundColor: c.paper,
       borderBottomWidth: 1,
       borderBottomColor: c.rule,
-      ...shadows.sm,
+      ...shadows.card,
     },
     statCell: {
       flex: 1,
@@ -680,7 +680,7 @@ function createStyles(c: ColorPalette) {
       backgroundColor: c.paper,
       borderRadius: 12,
       padding: 16,
-      ...shadows.sm,
+      ...shadows.card,
     },
     cardTitle: {
       fontFamily: fonts.sansBold,

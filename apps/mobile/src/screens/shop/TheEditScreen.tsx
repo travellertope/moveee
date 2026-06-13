@@ -249,7 +249,7 @@ export default function TheEditScreen() {
             <TouchableOpacity
               key={story.slug}
               style={styles.storyCard}
-              onPress={() => nav.navigate("Article", { slug: story.slug })}
+              onPress={() => nav.navigate("Magazine", { screen: "Article", params: { slug: story.slug } } as any)}
             >
               <LinearGradient
                 colors={["#E27D60", "#E8A87C"]}

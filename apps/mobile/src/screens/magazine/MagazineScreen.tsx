@@ -257,7 +257,7 @@ function SeriesStrip({ styles }: { styles: ReturnType<typeof createStyles> }) {
 export default function MagazineScreen() {
   const nav = useNavigation<any>();
   const { featured, sections, loading, error, refresh } = useMagazine();
-  const { unreadCount } = useNotificationCount();
+  const { unread: unreadCount } = useNotificationCount();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 

@@ -18,7 +18,7 @@ import { useAuthStore } from "../../auth/authStore";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 
-const PRO_DISCOUNT_RATE = 0.07; // 7% Pro member discount
+const PRO_DISCOUNT_RATE = 0.10; // 10% Pro member discount
 
 export default function CartScreen() {
   const nav = useNavigation<any>();

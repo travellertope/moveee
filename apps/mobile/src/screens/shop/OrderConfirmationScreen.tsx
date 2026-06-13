@@ -132,7 +132,7 @@ export default function OrderConfirmationScreen() {
   const previewImages = items.slice(0, 3);
 
   const goShop = () => {
-    nav.navigate("Shop");
+    nav.navigate("ShopHome");
   };
 
   return (

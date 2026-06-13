@@ -436,7 +436,7 @@ export default function ArticleScreen() {
           )}
 
           {/* ── TOC Bottom Sheet ── */}
-          <BottomSheet isVisible={tocOpen} onClose={() => setTocOpen(false)}>
+          <BottomSheet visible={tocOpen} onClose={() => setTocOpen(false)}>
             <View style={styles.tocHeader}>
               <Text style={styles.tocHeaderTitle}>Contents</Text>
               <Text style={styles.tocArticleTitle} numberOfLines={2}>{article.title}</Text>
