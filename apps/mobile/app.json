@@ -19,7 +19,7 @@
       "package": "com.moveee.connect",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#f3ece0"
+        "backgroundColor": "#b54a24"
       },
       "permissions": [
         "NOTIFICATIONS",
