@@ -2911,6 +2911,728 @@ Output 4 frames.
 
 ---
 
+## 17. BOTTOM SHEET DETAIL DRAWERS
+
+> **Design rationale:** The web app opens community posts, pulse stories, quotes, happenings, and
+> directory entries in a right-side off-canvas drawer. On mobile the native equivalent is a
+> **bottom sheet** that slides up from the bottom edge. It shares the same role — reveal detail
+> without a full navigation push — but feels native on iOS and Android. The Moveee shell is always
+> identical; only the content inside changes per card type. Design the shell once, then show five
+> content variants.
+
+---
+
+### PROMPT 17A — Bottom Sheet Shell & Anatomy
+
+```
+Senior mobile UX/UI designer — Moveee Connect bottom sheet system. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white #FFFFFF, ochre #C5491F, gold #B38238, ink #14110D.
+DM Sans (body) + Fraunces (display) + JetBrains Mono (meta/labels).
+
+Design 3 frames showing the three states of a single bottom sheet.
+The underlying feed screen is partially visible behind the sheet.
+
+════════════════════════════════════════════
+SHARED SHELL (identical across all three states)
+════════════════════════════════════════════
+BACKDROP: full-screen overlay, ink #14110D at 40% opacity.
+(The feed cards behind the backdrop are visible but dimmed.)
+
+SHEET SURFACE: white #FFFFFF fill, radius-2xl top-left + top-right corners (24px).
+No border — rely on drop shadow: 0 -4px 32px rgba(20,17,13,0.18).
+
+TOP CHROME (always visible, 52px, white, not scrollable):
+  Drag handle: 4×28px, radius-full, ghost #C8BFB0, centred horizontally, 10px from top.
+  Close button (×): 36×36px circle, paper-warm #F3ECE0 fill, ink × icon 16px, 14px from top, 16px from right.
+  (No title text in the top chrome — content starts immediately below.)
+
+═══════════
+FRAME 1 — PEEK STATE (content-hugging height, NOT fixed %):
+Sheet height wraps its content — no fixed floor. The sheet grows only as tall as its
+content requires, plus 32px bottom padding. This eliminates whitespace gaps entirely.
+═══════════
+Feed screen visible above sheet, dimmed by backdrop.
+Sheet bottom edge stops wherever content ends — it does NOT stretch to fill the screen.
+
+IMPORTANT: do NOT pin any element to the bottom of the sheet. All elements stack
+naturally top-to-bottom with no spacer between content and bottom actions.
+
+Content area (below top chrome — flows naturally, no fixed height):
+Show a Community Post peek:
+  — Type badge pill ("COMMUNITY" green) + "Just now" JetBrains Mono 10px ghost, right-aligned. 12px top.
+  — Author row (12px top): 40px circle avatar + "Kemi Adeyemi" DM Sans 14px bold ink + "@kemi.a" 12px mute.
+  — Post body (12px top): DM Sans 14px ink-soft, line-height 1.6.
+      "Just visited the new exhibition at Rele Gallery. The way they curated the lighting
+      around the portrait series was absolutely incredible. Definitely…"
+      The final word fades out with a 32px white-to-transparent gradient overlay on the last line
+      to signal truncation — do NOT add a separate CTA label.
+  — Ghost rule 1px #EEE8DF (12px top, no extra spacing).
+  — Reaction bar (12px top, 16px horizontal padding): ❤️ 14  🔥 7  👏 9 — outline icons, JetBrains Mono 10px mute, 16px gaps.
+  — SWIPE HINT (8px top, centred): "↑ Swipe up for full post" JetBrains Mono 9px ghost #C8BFB0.
+  — 32px bottom padding (home indicator zone — white fill, no content).
+
+RESULT: total sheet height ≈ 52px chrome + 12+40+12+80+1+12+24+8+16+32 ≈ ~290px.
+The sheet floats at the bottom of the screen and looks intentionally compact, not stretched.
+
+═══════════
+FRAME 2 — FULL STATE (92% viewport height = ~776px sheet height):
+Sheet snaps here on a hard swipe up from peek state.
+═══════════
+Top chrome still visible (drag handle + close button).
+Content below is scrollable (scroll indicator on right edge).
+
+Show the same Community Post, expanded:
+  — Type badge pill + timestamp. 8px top inside content area.
+  — Author row: 40px avatar + name + handle + "Follow" ghost pill button right (DM Sans 12px bold, 24px height).
+  — Full post body: 6 lines of DM Sans 14px ink-soft.
+  — 2-image grid (if present): two image placeholders side-by-side, 170px height, radius-md, #F3ECE0 bg. 8px gap.
+  — Hashtags: "#LagosNights #AfroCulture" DM Sans 13px ochre, 8px top.
+  — Ghost rule + REACTION BAR (same as peek but full width reactions):
+      ❤️ 14  🔥 7  👏 9  💬 3 — icon button, JetBrains Mono 10px mute.
+  — Ghost rule.
+  — COMMENTS SECTION HEADER "Comments (3)" DM Sans 13px bold ink left + "Add comment" text link ochre right.
+  — 2 comment rows (each 64px min, ghost bottom border):
+      Avatar 36px circle + "Seun B." DM Sans 13px bold ink + "Loved this 🔥" 13px mute below + "2h" mono 10px ghost right.
+  — "View all 3 comments →" DM Sans 13px mute centred link.
+  — REPORT LINK: ⚑ "Report this post" DM Sans 12px ghost, centred, 24px bottom padding.
+
+Bottom safe area: 34px white (home indicator zone).
+
+═══════════
+FRAME 3 — CLOSING / DISMISSED STATE:
+═══════════
+Sheet has been swiped 40% of the way down (mid-dismiss).
+Sheet top edge is at ~35% of screen height (moved downward).
+Backdrop opacity reduced to ~20% (shows bleed-through effect).
+Content inside sheet is visible but cropped.
+Drag handle: slightly bolder (user is actively dragging).
+Show a subtle velocity-arrow annotation: "↓ swipe down to dismiss" in JetBrains Mono 10px ghost on the drag handle.
+
+Output 3 frames side by side.
+```
+
+---
+
+### PROMPT 17B — Community Post Template Sheets (All 9 Types)
+
+```
+Senior mobile UX/UI designer — Moveee Connect community post bottom sheets. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white #FFFFFF, ochre #C5491F, gold #B38238, ink #14110D.
+DM Sans (body/UI) + Fraunces (display/headings) + JetBrains Mono (meta/counts/labels).
+
+Design 9 frames — one per community post template — all in FULL STATE (92% viewport height).
+
+════════════════════════════════════════════
+SHARED SHELL (identical on all 9 frames — do not repeat in each frame description):
+  White #FFFFFF surface. radius-2xl top-left + top-right (24px). Shadow: 0 -4px 32px rgba(20,17,13,0.18).
+  Warm backdrop: ink #14110D at 40% opacity, feed visible behind.
+  Drag handle: 4×28px, radius-full, #C8BFB0, centred, 10px from top.
+  × Close button: 36×36px circle, #F3ECE0 fill, ink ×, 14px from top, 16px from right.
+  SHARED FOOTER on every frame (below scrollable content):
+    Ghost rule 1px #EEE8DF.
+    ⚑ "Report this post" DM Sans 12px ghost, centred, 12px top, 24px bottom padding.
+
+SHARED AUTHOR ROW layout (appears near top of each sheet, 16px horizontal padding):
+  44px circle avatar (warm placeholder) + display name DM Sans 14px bold ink +
+  @handle DM Sans 12px mute below name.
+  "Follow" pill (ghost border, radius-full, DM Sans 12px bold ink, 24px height) pinned right.
+
+SHARED REACTION + COMMENTS block (appears near bottom of each sheet before footer):
+  Ghost rule 1px #EEE8DF.
+  REACTION BAR (16px padding, 12px vertical): outline icons, JetBrains Mono 10px mute counts, 20px gaps.
+    All frames show: ❤️ · 🔥 · 👏 · 💬 — vary the counts per frame.
+  Ghost rule.
+  COMMENTS HEADER "Comments (N)" DM Sans 13px bold ink left + "Add comment" DM Sans 13px ochre right.
+  2 comment rows (56px min, ghost bottom border):
+    32px avatar + commenter name 13px bold + comment text 13px mute + time mono 10px ghost right.
+  "View all N comments" DM Sans 13px mute centred link, 12px bottom.
+
+All badge pills: radius-full, DM Sans 9px bold uppercase, 4px vertical 10px horizontal padding.
+All timestamps: JetBrains Mono 10px ghost, right-aligned on same row as template badge.
+Content padding: 16px horizontal throughout.
+════════════════════════════════════════════
+
+════════════════════════════════════════════
+FRAME 1 — STANDARD POST
+════════════════════════════════════════════
+TEMPLATE BADGE + TIMESTAMP ROW (8px from top of scrollable area):
+  "✏️ POST" pill — bg rgba(129,199,132,0.15), text #2E7D32.
+  "Just now" right.
+
+SECTION TAG (horizontal chips row, 8px top):
+  Active chip: "Music" — ink fill, white DM Sans 11px bold, radius-full, 28px height.
+  3 more inactive: "Culture" · "Lagos" · "Discovery" — ghost border, ink-soft text.
+
+AUTHOR ROW (12px top). [Use shared layout above.]
+
+BODY TEXT (DM Sans 15px ink-soft, 16px padding, 12px top, line-height 1.65):
+  "Saw Tems perform at an intimate venue last night and I'm still not over it. She didn't say
+  a word between songs — just let the music breathe. The crowd was completely silent. That's
+  what real artistry looks like. Lagos has become the centre of the world and we don't even
+  realise it yet. The energy in that room was something I'll carry for a long time."
+
+HASHTAGS (12px top): "#Lagos #Tems #Afrobeats #LiveMusic" — DM Sans 13px #C5491F.
+
+IMAGE (optional, shown): full-width image placeholder (warm concert photo tone), 200px height,
+  radius-md, 12px top.
+
+[SHARED REACTION + COMMENTS BLOCK]
+  Reaction counts: ❤️ 34  🔥 19  👏 12  💬 8
+  Comments: "Seun B." — "The silence was the loudest part 🖤" · "Kemi A." — "I was there too!!"
+
+[SHARED FOOTER]
+
+════════════════════════════════════════════
+FRAME 2 — HIDDEN GEM
+════════════════════════════════════════════
+TEMPLATE BADGE + TIMESTAMP ROW:
+  "💎 HIDDEN GEM" pill — bg rgba(179,130,56,0.10), text #B38238.
+  "3 days ago" right.
+
+AUTHOR ROW (12px top). [Shared layout.]
+
+PLACE NAME (Fraunces 22px bold ink, 12px top):
+  "Bisi Ceramics Studio"
+
+LOCATION ROW (8px top):
+  📍 "Balogun Market area · Lagos Island" — DM Sans 13px mute, inline icon 16px ghost.
+
+BODY TEXT (DM Sans 14px ink-soft, 12px top, line-height 1.65):
+  "Tucked behind the market chaos — this studio is one of those places Lagos keeps hidden for those
+  who look. Adaeze sources her clay from Ondo state, fires it in a traditional kiln out back,
+  and sells directly from the studio. Afternoon workshop slots (₦8,000, 3hrs) sell out weeks in
+  advance but are completely worth it. The terracotta ritual bowls start at ₦12,000."
+
+DIRECTORY LINK ROW (12px top, paper-warm bg strip, 40px height, 12px horizontal padding, radius-md):
+  🗂 icon (16px ghost) + "Linked to Bisi Ceramics in the Directory" DM Sans 13px ink-soft.
+  "View entry →" DM Sans 13px #C5491F right.
+
+HASHTAGS (8px top): "#LagosHiddenGem #Ceramics #MadeInAfrica #SupportLocal" — DM Sans 13px #C5491F.
+
+[SHARED REACTION + COMMENTS BLOCK]
+  Reaction counts: ❤️ 22  🔥 8  👏 15  💬 5
+  Comments: "Kola M." — "Need this address! 😭" · "Zara W." — "The workshops are 🔥"
+
+[SHARED FOOTER]
+
+════════════════════════════════════════════
+FRAME 3 — CULTURAL TAKE
+════════════════════════════════════════════
+TEMPLATE BADGE + TIMESTAMP ROW:
+  "🔥 CULTURAL TAKE" pill — bg rgba(107,72,168,0.08), text #6B48A8.
+  "5 hours ago" right.
+
+AUTHOR ROW (12px top). [Shared layout — "Funmi Osei" @funmiosei]
+
+THE TAKE (Fraunces 21px bold ink, 16px padding, 16px top, line-height 1.3):
+  "Streaming killed the album as an art form. And African artists are the ones paying the price."
+
+ARGUMENT (DM Sans 14px ink-soft, 16px padding, 12px top, line-height 1.65):
+  "We've spent the last decade celebrating the globalisation of Afrobeats. But look at what's
+  actually been released: endless singles, loosely stitched 'albums' designed to hit Spotify
+  playlists, not tell a cohesive story. Fela never needed a playlist. Neither did Lagbaja.
+  The economics of streaming have replaced the album with the single, and the narrative with
+  the hook. We're losing something and calling it progress."
+
+DISAGREE PROMPT (paper-warm bg strip, 40px height, radius-md, 12px top):
+  💬 "Do you agree? Reply with your take →" — DM Sans 13px ink-soft + #C5491F arrow right.
+
+HASHTAGS (8px top): "#AfrobeatsDebate #MusicCulture #HotTake #CulturalTake" — DM Sans 13px #C5491F.
+
+[SHARED REACTION + COMMENTS BLOCK]
+  Reaction counts: ❤️ 91  🔥 67  👏 14  💬 43
+  (High counts — takes generate debate.)
+  Comments: "Lekan D." — "You're not wrong but Burna's 'Love Damini' was an album 👀"
+             "Amaka S." — "Playlist culture ruined everything after 2018"
+
+[SHARED FOOTER]
+
+════════════════════════════════════════════
+FRAME 4 — FOOD REVIEW
+════════════════════════════════════════════
+TEMPLATE BADGE + TIMESTAMP ROW:
+  "🍽️ FOOD REVIEW" pill — bg rgba(197,73,31,0.08), text #C5491F.
+  "1 week ago" right.
+
+AUTHOR ROW (12px top). [Shared layout — "Chidi Eze" @chidi.eats]
+
+RESTAURANT NAME + LINK (12px top):
+  "Nok by Alara" Fraunces 20px bold ink.
+  🗂 "View in Directory →" DM Sans 12px ochre, 4px below name. Inline small link icon.
+
+LOCATION + PRICE (8px top, same row space-between):
+  📍 "Victoria Island, Lagos" DM Sans 13px mute.
+  💰 "₦₦₦" JetBrains Mono 12px gold (price tier, 3 of 4 symbols filled).
+
+RATINGS BLOCK (16px top, 16px padding):
+  Section label: "Ratings" DM Sans 11px bold mute uppercase, 8px bottom.
+  3 rating rows (44px height each, ghost bottom border, 0 padding horizontal):
+  ┌─────────────────────────────────────────────┐
+  │ Taste    ★★★★★  [5 filled ochre stars]  5.0 │  (DM Sans 13px ink-soft label · stars 20px · JetBrains Mono 12px gold score right)
+  │ Value    ★★★★☆  [4 filled, 1 outline]   4.0 │
+  │ Vibe     ★★★★★  [5 filled ochre stars]  5.0 │
+  └─────────────────────────────────────────────┘
+  Overall score: "4.7" Fraunces 28px bold ink, right-aligned. "/ 5.0" DM Sans 13px mute below.
+
+FOOD PHOTO (12px top): full-width 200px, radius-md, warm food photography placeholder.
+  Caption: "Suya Platter for Two — ₦14,500" JetBrains Mono 10px mute, centred, 4px below.
+
+REVIEW TEXT (DM Sans 14px ink-soft, 12px top, line-height 1.65):
+  "The pan-African menu at Nok changes monthly and this month's Suya platter is a love letter
+  to Northern Nigeria. The suya spice rub is fresh — you can taste the yaji — and the grilled
+  plantain sides are the best I've had anywhere in Lagos. Service is attentive without being
+  intrusive. Worth every naira for a special occasion."
+
+DISH TAG (8px top): Dish / food type tag chip — "Suya · Pan-African · Nigerian" ghost pills, 28px.
+
+HASHTAGS: "#NokByAlara #LagosFood #FoodReview #Suya" — DM Sans 13px #C5491F.
+
+[SHARED REACTION + COMMENTS BLOCK]
+  Reaction counts: ❤️ 41  🔥 18  👏 29  💬 12
+  Comments: "Bisi A." — "The suya here changed my life 😭🔥" · "Tunde K." — "Is the jollof still on the menu?"
+
+[SHARED FOOTER]
+
+════════════════════════════════════════════
+FRAME 5 — CREATIVE SHOWCASE
+════════════════════════════════════════════
+TEMPLATE BADGE + TIMESTAMP ROW:
+  "🎨 CREATIVE SHOWCASE" pill — bg rgba(25,118,210,0.08), text #1976D2.
+  "2 weeks ago" right.
+
+AUTHOR ROW (12px top). [Shared layout — "Zara Mensah" @zaramensah · "Fashion Photography"]
+
+WORK TITLE (Fraunces 22px bold ink, 12px top):
+  "Zaria Music Visuals — Vol. 2"
+
+MEDIUM TAG (8px top):
+  "Photography · Music Portraits" — ghost border pill chips, DM Sans 11px bold, radius-full.
+
+IMAGE GALLERY (12px top):
+  PRIMARY IMAGE: full width × 240px, radius-md, warm editorial portrait placeholder.
+  SECONDARY ROW: two equal images side by side, 150px height, radius-md, 8px gap.
+    (Total 3 images — primary + 2 thumbnails. Tap to expand into lightbox.)
+  "3 of 12 photos" JetBrains Mono 10px mute, centred below gallery, 4px top.
+
+ARTIST STATEMENT (DM Sans 14px ink-soft, 12px top, line-height 1.65):
+  "This series explores the space between performance and stillness — the moment after the last
+  note when an artist is still inside the sound. Shot over two months following Zaria across
+  Lagos, Accra, and London. All film, no digital corrections."
+
+COLLABORATION TAG (paper-warm bg strip, 40px height, 12px horizontal padding, radius-md, 12px top):
+  🤝 icon + "Collaboration with @zaria.official" DM Sans 13px ink-soft + "View profile →" ochre right.
+
+HASHTAGS: "#Photography #MusicPortraits #FilmPhotography #AfricanCreatives" DM Sans 13px #C5491F.
+
+[SHARED REACTION + COMMENTS BLOCK]
+  Reaction counts: ❤️ 118  🔥 52  👏 86  💬 31
+  Comments: "Ade F." — "The film grain on the second shot 👌👌" · "Kemi O." — "This needs to be exhibited"
+
+[SHARED FOOTER]
+
+════════════════════════════════════════════
+FRAME 6 — POLL
+════════════════════════════════════════════
+TEMPLATE BADGE + TIMESTAMP ROW:
+  "📊 POLL" pill — bg rgba(107,72,168,0.08), text #6B48A8.
+  "Closes in 1 day" JetBrains Mono 10px ghost right. (Instead of posted-time — shows remaining.)
+
+AUTHOR ROW (12px top). [Shared layout — "Moveee Community" @community]
+
+POLL QUESTION (Fraunces 20px bold ink, 12px top, line-height 1.3):
+  "What's the greatest era of Afrobeats?"
+
+POLL OPTIONS (12px top, 12px gap between options):
+  Each option row (radius-lg, white fill, ghost border, 56px height, 16px padding, overflow hidden):
+    Layout: option text DM Sans 14px bold ink left + percentage JetBrains Mono 12px gold right.
+    Behind text: filled bar from left edge, ochre #C5491F at 15% opacity, height 100%, radius-lg.
+    Bar widths correspond to vote percentages.
+
+  OPTION A — "90s Fela Era" — 12% filled bar — "12%" right.
+  OPTION B — "Wizkid / Davido 2010s" — 38% filled bar — "38%" bold (leading) — ochre border 1.5px + "👑" icon right of text.
+  OPTION C — "Burna Boy / Tems era" — 35% filled bar — "35%".
+  OPTION D — "Right now — it's still evolving" — 15% filled bar — "15%".
+
+  (OPTION B is the leader — slightly stronger ochre border and crown emoji to indicate.)
+
+VOTE COUNT + STATUS ROW (12px top, 16px padding):
+  "342 votes" JetBrains Mono 12px mute left.
+  "· Closes 14 Jun 2026" JetBrains Mono 12px mute.
+  "You voted: 2010s ✓" DM Sans 12px gold right. (Shows user's choice.)
+
+POLL DESCRIPTION (DM Sans 14px ink-soft, 12px top, line-height 1.6) — optional:
+  "Inspired by the debate at last week's community event. Drop your take in the comments."
+
+[SHARED REACTION + COMMENTS BLOCK]
+  Reaction counts: ❤️ 58  🔥 31  👏 9  💬 47
+  Comments: "Tolu P." — "You can't count out Fela, the foundation of everything 💯"
+             "Mide A." — "2010s gave us the template but 2020s perfected it"
+
+[SHARED FOOTER]
+
+════════════════════════════════════════════
+FRAME 7 — ITINERARY
+════════════════════════════════════════════
+TEMPLATE BADGE + TIMESTAMP ROW:
+  "🗺️ ITINERARY" pill — bg rgba(46,125,50,0.08), text #2E7D32.
+  "4 days ago" right.
+
+AUTHOR ROW (12px top). [Shared layout — "Lekan Dada" @lekandada]
+
+ITINERARY TITLE (Fraunces 22px bold ink, 12px top):
+  "48 Hours in Lagos: The Culture Route"
+
+META ROW (8px top):
+  🗂 "6 stops" · ⏱ "Est. 2 days" · 📍 "Lagos, Nigeria"
+  Each: JetBrains Mono 11px ghost, 16px gap between items, inline icons 14px ghost.
+
+STOPS LIST (12px top, 16px padding):
+  Section label: "The Route" DM Sans 11px bold mute uppercase.
+
+  STOP ROWS (each 72px min, ghost bottom border 1px #EEE8DF):
+  Layout per stop: number bubble left (24px circle, ghost #F3ECE0 fill, ghost border, DM Sans 12px bold mute) +
+    content centre + connector dot right if directory-linked.
+
+  STOP 1:
+    Bubble: "1"
+    Name: "Nike Art Gallery" DM Sans 14px bold ink.
+    🗂 "Ikoyi · View in Directory →" DM Sans 12px ochre, 2px below name.
+    Note: "Arrive early — the rooftop has the best light before 10am." DM Sans 12px mute, 2px below.
+    Duration: "⏱ 2–3 hours" JetBrains Mono 10px ghost, 2px below.
+
+  STOP 2:
+    Bubble: "2"
+    Name: "Nok by Alara" DM Sans 14px bold ink.
+    🗂 "Victoria Island · View in Directory →" DM Sans 12px ochre.
+    Note: "Lunch — pan-African menu, book in advance." DM Sans 12px mute.
+    Duration: "⏱ 1.5 hours" JetBrains Mono 10px ghost.
+
+  STOP 3:
+    Bubble: "3"
+    Name: "Terra Kulture" DM Sans 14px bold ink.
+    🗂 "Victoria Island · View in Directory →" DM Sans 12px ochre.
+    Note: "Afternoon gallery + bookshop. Don't miss the Nigeria in Photographs section." DM Sans 12px mute.
+    Duration: "⏱ 1–2 hours" JetBrains Mono 10px ghost.
+
+  STOP 4:
+    Bubble: "4"
+    Name: "Café Beside the Point" DM Sans 14px bold ink.
+    No directory link.
+    Note: "Hidden coffee spot on Akin Adesola. Good vibes, no WiFi password needed." DM Sans 12px mute.
+    Duration: "⏱ 45 min" JetBrains Mono 10px ghost.
+
+  [Collapsed] "2 more stops ↓" DM Sans 13px ochre centred link. (Stops 5–6 hidden behind expand.)
+
+HASHTAGS (8px top): "#Lagos48Hours #CultureRoute #LagosGuide #VisitLagos" DM Sans 13px #C5491F.
+
+[SHARED REACTION + COMMENTS BLOCK]
+  Reaction counts: ❤️ 76  🔥 28  👏 55  💬 19
+  Comments: "Fatima R." — "Done this route twice now, it's perfect" · "Olu B." — "Add Bisi Ceramics to stop 5!"
+
+[SHARED FOOTER]
+
+════════════════════════════════════════════
+FRAME 8 — COMMUNITY EVENT
+════════════════════════════════════════════
+TEMPLATE BADGE + TIMESTAMP ROW:
+  "📅 EVENT" pill — bg rgba(0,137,123,0.08), text #00695C.
+  "Posted 2 days ago" right.
+
+AUTHOR ROW (12px top). [Shared layout — "Moveee Lagos" @moveee.lagos · "Event Organiser"]
+
+EVENT NAME (Fraunces 22px bold ink, 12px top, line-height 1.2):
+  "Amapiano Night at The Jazz Cafe"
+
+EVENT IMAGE (12px top): full-width × 200px, radius-md, warm concert/nightlife photo placeholder.
+
+METADATA GRID (12px top, 8px row gap):
+  Each row: 20px icon (ghost colour, 16px) + text DM Sans 14px ink-soft. Left-aligned.
+  📅 "Friday, 20 June 2026 · 9:00 PM – 3:00 AM"
+  📍 "The Jazz Cafe · Chalk Farm Road, London"
+  🏙️ "London, UK"
+  💰 "£15 advance · £20 door"
+  🏷️ Category: "Music" — ghost pill chip.
+  👤 Organiser: "Moveee Events" — DM Sans 13px ochre tappable link → (links to directory).
+
+DESCRIPTION (DM Sans 14px ink-soft, 12px top, line-height 1.6):
+  "An intimate Amapiano takeover at one of London's most iconic jazz rooms. Two rooms, three DJs,
+  late licence until 3am. Connect members get priority entry — show your app at the door."
+
+PRO MEMBER PERK ROW (paper-warm bg strip, 44px, radius-md, 12px top, 16px padding):
+  ★ icon gold + "Pro Members: Early entry from 8:30 PM + free drink token." DM Sans 13px ink-soft.
+
+RSVP BUTTON (12px top):
+  "RSVP Now →" — ochre fill, white DM Sans 14px bold, radius-full, 52px height, full width (16px margin).
+
+"Add to calendar" ghost link DM Sans 13px mute centred, 8px below.
+
+[SHARED REACTION + COMMENTS BLOCK]
+  Reaction counts: ❤️ 103  🔥 78  👏 41  💬 22
+  Comments: "Tayo B." — "Already got my ticket 🕺" · "Sade O." — "Is this 18+?"
+
+[SHARED FOOTER]
+
+════════════════════════════════════════════
+FRAME 9 — QUOTE (shared by community member)
+════════════════════════════════════════════
+TEMPLATE BADGE + TIMESTAMP ROW:
+  "❝ QUOTE" pill — bg rgba(185,140,55,0.10), text #92400E.
+  "6 hours ago" right.
+
+AUTHOR ROW (12px top). [Shared layout — "Adaeze Obi" @adaeze.obi · posted this quote]
+
+QUOTE DISPLAY BLOCK (24px top, 16px padding):
+  Decorative " — Fraunces 80px, #C8BFB0 (ghost warm), position absolute top-left,
+    -4px from content block top, aligned to text left edge.
+  QUOTE TEXT (Fraunces 22px bold ink, line-height 1.35, 3 lines, indented 8px from " mark):
+    "African culture doesn't need validation from the West. It needs infrastructure,
+    documentation, and distribution. The rest will follow."
+  Rule: 1px #EEE8DF, 12px top.
+  ATTRIBUTION (12px top):
+    Author: "Ngozi Adichie" DM Sans 14px bold ink.
+    Source: "Lions on the Move, Lagos Book & Art Festival · 2024" DM Sans 12px mute, 4px below.
+    (If source is a book/film: small book/film icon 14px ghost inline left of source text.)
+
+POSTER'S NOTE (paper-warm bg strip, radius-md, 12px top, 12px padding):
+  "💬 Adaeze's note:" DM Sans 11px bold mute uppercase, 0px bottom.
+  "Been sitting with this all week. The infrastructure piece is what we need to be building."
+  DM Sans 14px ink-soft, 4px top, line-height 1.6.
+
+SHARE PROMPT (12px top):
+  "Know someone who needs to see this?" DM Sans 13px mute centred.
+  "Share quote →" DM Sans 13px ochre centred, 4px below.
+
+[SHARED REACTION + COMMENTS BLOCK]
+  Reaction counts: ❤️ 64  🔥 29  👏 47  💬 18
+  Comments: "Kola M." — "The distribution problem is real" · "Seun A." — "This deserves a thread 🧵"
+
+[SHARED FOOTER]
+
+════════════════════════════════════════════
+Output 9 frames in a 3-column grid (3 rows × 3 columns).
+Label each frame below in JetBrains Mono 11px mute:
+  Row 1: "Standard Post" · "Hidden Gem" · "Cultural Take"
+  Row 2: "Food Review" · "Creative Showcase" · "Poll"
+  Row 3: "Itinerary" · "Community Event" · "Quote"
+All frames at full 92%-height open state. Warm backdrop visible behind each.
+```
+
+---
+
+### PROMPT 17C — Other Feed Card Detail Sheets
+
+```
+Senior mobile UX/UI designer — Moveee Connect non-community card bottom sheets. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white, ochre #C5491F, gold #B38238, ink #14110D.
+DM Sans + Fraunces + JetBrains Mono.
+
+Design 4 frames — one per non-community feed card type — all in FULL STATE (92% height).
+Shell: identical to all other sheets (white surface, radius-2xl top corners, shadow,
+drag handle, × close, warm ink backdrop 40%). No navigation header inside.
+
+════════════════════════════════════════════
+FRAME 1 — EDITORIAL / PULSE STORY
+════════════════════════════════════════════
+Sheet interior:
+TYPE BADGE ROW (8px top, 16px padding):
+  "EDITORIAL" pill — bg #fff0eb, text #c5491f, radius-full, 9px bold uppercase.
+  Category: "MUSIC" JetBrains Mono 10px ghost right.
+
+STORY IMAGE: full sheet width × 220px, radius-none (edge to edge inside sheet), warm editorial photo
+  placeholder. Subtle gradient overlay bottom 40%: white fade-out.
+
+BELOW IMAGE (16px padding):
+  EYEBROW: "THE CULTURE BRIEF" JetBrains Mono 9px bold ochre uppercase, letter-spacing 0.12em.
+  HEADLINE (Fraunces 22px bold ink, line-height 1.2, 8px top):
+    "Why Afrobeats Is the Most Important Music Movement of the Decade"
+  EXCERPT (DM Sans 14px ink-soft, line-height 1.6, 8px top):
+    "The numbers don't lie: Afrobeats has achieved what no African genre has before.
+    But the real story is what's happening at the grassroots level — in Lagos basements,
+    Accra studios, and London warehouses."
+  AUTHOR ROW (12px top): 32px avatar + "Funmi Lawson" DM Sans 13px bold + "Jun 12 · 4 min read" mono 10px ghost.
+
+Ghost rule.
+
+CTA BUTTON (12px top): "Read full article →" — ochre fill, white DM Sans 14px bold, radius-full, 52px, full width (16px margin).
+"Save for later" ghost link DM Sans 13px mute centred, 8px below.
+
+Ghost rule.
+
+MORE FROM SERIES: "From The Culture Brief" DM Sans 13px bold ink left + "See all →" ochre right.
+  2 mini rows (48px, ghost border-bottom): thumbnail 44×44px radius-md + headline 13px ink 2-line + "3 min" mono ghost right.
+
+⚑ "Report" ghost centred 24px bottom.
+
+════════════════════════════════════════════
+FRAME 2 — QUOTE FEED CARD (curated/editorial quote)
+════════════════════════════════════════════
+(Note: this is a curated Quote feed card — distinct from the community Quote template in 17B Frame 9.)
+Sheet interior:
+  Decorative " — Fraunces 80px, #C8BFB0, top-left, -8px from edge.
+
+  QUOTE TEXT (Fraunces 24px bold ink, 16px padding, line-height 1.4, 16px top, 3 lines):
+    "African culture doesn't need validation from the West. It needs infrastructure,
+    documentation, and distribution. The rest will follow."
+
+  ATTRIBUTION (16px padding, 16px top):
+    Author: "Ngozi Adichie" DM Sans 14px bold ink.
+    Source: "Lions on the Move, Lagos Book & Art Festival · 2024" DM Sans 13px mute, 4px below.
+
+  Ghost rule (24px top).
+
+  REACTION BAR: ❤️ 48  🔖 22  🔗 Share — outline icons, JetBrains Mono 10px mute. Centred, 28px gaps.
+
+  Ghost rule.
+
+  RELATED QUOTES: "More in this series" DM Sans 13px bold ink.
+  2 mini quote rows (56px, ghost border): small " mark + excerpt 13px ink-soft 1-line + date mono ghost right.
+
+  ⚑ "Report" ghost centred 24px bottom.
+
+════════════════════════════════════════════
+FRAME 3 — HAPPENING (Curated Event)
+════════════════════════════════════════════
+Sheet interior:
+TYPE BADGE ROW (8px top, 16px padding):
+  "HAPPENING" pill — bg #eeedfe, text #3c3489, 9px bold.
+  PRO ONLY pill — bg #B38238, text white, 9px bold, 8px left.
+
+EVENT IMAGE: full sheet width × 200px, radius-none, warm concert photo placeholder.
+  PRO ONLY overlay: #B38238 at 70% — lock icon 24px white + "Connect Pro members only" 13px white bold centred.
+
+EVENT NAME (Fraunces 22px bold ink, 16px padding, 12px top):
+  "Afro Nation Lagos 2026"
+
+METADATA GRID (16px padding, 12px top, 8px row gap):
+  📅 "Saturday, 28 June 2026 · 4:00 PM – 2:00 AM"
+  📍 "Eko Atlantic City · Victoria Island, Lagos"
+  🏛 "Landmark Event Centre" DM Sans 13px mute
+  💰 "₦25,000 – ₦80,000 (General · VIP)"
+  👤 Organiser: "Afro Nation Global" — DM Sans 13px ochre tappable link.
+  Each row: 20px ghost icon + DM Sans 14px ink-soft.
+
+DESCRIPTION (DM Sans 14px ink-soft, line-height 1.6, 16px padding, 12px top):
+  "The continent's biggest Afrobeats festival returns to Lagos for its third edition,
+  headlined by Burna Boy, Wizkid, and Tems across 4 stages."
+
+Ghost rule.
+
+RSVP BUTTON:
+  "Get Tickets →" ochre fill, white 14px bold, radius-full, 52px, full width (16px margin).
+  OR if non-Pro: "Upgrade to Pro for Access" gold fill, ink text, same size.
+  "Opens in external browser" JetBrains Mono 10px ghost centred 4px below.
+"Add to calendar" ghost link DM Sans 13px mute centred 8px below.
+
+⚑ "Report" ghost centred 24px bottom.
+
+════════════════════════════════════════════
+FRAME 4 — DIRECTORY ENTRY
+════════════════════════════════════════════
+Sheet interior:
+TYPE BADGE ROW (8px top, 16px padding):
+  "DIRECTORY" pill — bg #e8f5ee, text #085041, 9px bold.
+  Entry type: "STUDIO" JetBrains Mono 9px ghost right.
+
+ENTRY HEADER (16px padding, 12px top):
+  Name: "Bisi Ceramics" Fraunces 22px bold ink.
+  "📍 Lagos, Nigeria" DM Sans 13px mute, 6px below.
+  "✓ Vetted by Moveee" — success green pill, DM Sans 10px bold white, 24px height, 8px top.
+
+EXCERPT (DM Sans 14px ink-soft, line-height 1.6, 12px top):
+  "Award-winning ceramics studio in Lagos making ritual objects and everyday wares inspired
+  by Yoruba tradition. Workshops available monthly."
+
+Ghost rule.
+
+QUICK LINKS (16px padding, 8px gap):
+  🌐 "Visit website" DM Sans 13px ochre. 📷 "View on Instagram" DM Sans 13px ochre.
+
+Ghost rule.
+
+COMMUNITY MENTIONS: "Community posts about this place" DM Sans 13px bold ink.
+  2 mini-rows (56px, ghost border):
+    Template badge chip + excerpt 13px mute 1-line + "4 days ago" mono ghost right.
+
+CTA: "View full entry →" ghost border, ink text, 52px, full width, radius-full. 12px top.
+
+⚑ "Report" ghost centred 24px bottom.
+
+════════════════════════════════════════════
+Output 4 frames side by side.
+Label each below: "Editorial" · "Quote" · "Happening" · "Directory" — JetBrains Mono 11px mute.
+```
+
+---
+
+### PROMPT 17D — Bottom Sheet Micro-interaction & Edge Cases
+
+```
+Senior mobile UX/UI designer — Moveee Connect bottom sheet states and edge cases. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white, ochre #C5491F, gold #B38238, ink #14110D.
+
+Design 4 edge-case frames that complete the bottom sheet system:
+
+════════════════════════════════════════════
+FRAME 1 — SHARE SHEET STACKED ON TOP
+════════════════════════════════════════════
+Show the community post bottom sheet (full state, 92% height) with the iOS native share sheet
+appearing on top of it (stacked modal pattern).
+
+Native iOS share sheet (system UI, shown at bottom):
+  White surface, radius-xl top corners, standard share grid:
+  Row 1: app icons (Messages · WhatsApp · Instagram · Copy Link · More)
+  Row 2: "Copy Link" · "Save Image" · "Markup" action rows
+  Cancel: full-width 52px white button, DM Sans 17px blue, 8px below.
+The Moveee sheet is dimmed slightly further behind the share sheet.
+Annotation: "Native iOS share sheet stacks above Moveee sheet — both dismiss on cancel."
+
+════════════════════════════════════════════
+FRAME 2 — COMMENT COMPOSE STATE
+════════════════════════════════════════════
+Bottom sheet (full state) with the keyboard raised (keyboard height ~336px on iPhone 14).
+Sheet content scrolled up, comment compose bar pinned above keyboard:
+
+COMMENT COMPOSE BAR (64px, white fill, top border ghost, above keyboard):
+  Left: 36px avatar circle (current user).
+  Centre: text input field (radius-full, paper-warm fill, DM Sans 14px, "Add a comment…" placeholder).
+  Right: "Post" DM Sans 14px bold ochre (enabled only when text present).
+  Below input (inside bar): "Posting as Adaeze Obi" JetBrains Mono 9px ghost.
+
+Above compose bar: last 2 visible comments (partial, 48px rows, truncated).
+Sheet content above the compose bar is dimmed subtly (scroll-to-bottom happened).
+Annotation: "Sheet resizes its scroll area when keyboard raises — compose bar stays pinned."
+
+════════════════════════════════════════════
+FRAME 3 — HAPTIC RESISTANCE / OVER-SCROLL TOP
+════════════════════════════════════════════
+User has swiped the sheet UPWARD past the 92% snap point.
+The sheet has stretched 24px beyond its max height — elastic overscroll.
+The drag handle is now 34px from the very top edge of screen.
+Backdrop at 45% (slightly darker — resisting the over-pull).
+A subtle annotation arrow: "↑ Elastic overscroll — snaps back to 92% on release."
+Top safe area shows through behind the handle (status bar visible).
+
+════════════════════════════════════════════
+FRAME 4 — EMPTY / ERROR STATE
+════════════════════════════════════════════
+Sheet at 55% peek height. Content failed to load.
+
+Sheet interior:
+  Drag handle + close button (standard).
+  
+  Centred content area (full height of sheet minus chrome):
+    Illustration: 72×72px warm circle (#F3ECE0 fill, #EBE5DC stroke), 
+      centred icon: wifi-off or broken link, ghost #C8BFB0, 28px.
+    "Couldn't load this post" Fraunces 18px bold ink, centred, 16px top.
+    "Check your connection and try again." DM Sans 14px mute centred, 8px below, max 260px.
+    "Try again" ochre fill button, 140px wide, 44px height, radius-full, white DM Sans 14px bold, 20px top.
+    "Dismiss" ghost text link DM Sans 13px mute centred, 8px below.
+
+Output 4 frames side by side.
+```
+
+---
+
 ## APPENDIX — SCREEN INVENTORY
 
 Complete list of screens to design:
@@ -2945,17 +3667,20 @@ Complete list of screens to design:
 | 43-44 | Notifications (List + Empty) | Notifications | P1 |
 | 45 | Analytics Dashboard | Analytics | P2 |
 | 46-50 | Overlay components (9 types) | Overlays | P1 |
-| 51-54 | Dark mode (4 screens) | Dark Mode | P2 |
-| 55-59 | Skeleton/loading states (5 types) | Loading | P2 |
-| 60 | Lifestyle Shop Home | Shop | P1 |
-| 61-63 | Product Listing (Grid, List, Empty) | Shop | P1 |
-| 64-65 | Product Detail (Standard + Pro member) | Shop | P0 |
-| 66-69 | Cart Screen, Cart Empty, Checkout Handoff, Cart Drawer | Shop | P0 |
-| 70 | Maker/Brand Profile | Shop | P1 |
-| 71 | The Moveee Edit (curated picks) | Shop | P2 |
-| 72-75 | Search, Filter Sheet, Early Access Gate, Order Confirmation | Shop | P1 |
+| 51-58 | Dark mode (8 screens) | Dark Mode | P2 |
+| 59-67 | Skeleton/loading states (9 types) | Loading | P2 |
+| 68 | Lifestyle Shop Home | Shop | P1 |
+| 69-71 | Product Listing (Grid, List, Empty) | Shop | P1 |
+| 72-73 | Product Detail (Standard + Pro member) | Shop | P0 |
+| 74-77 | Cart Screen, Cart Empty, Checkout Handoff, Cart Drawer | Shop | P0 |
+| 78 | Maker/Brand Profile | Shop | P1 |
+| 79 | The Moveee Edit (curated picks) | Shop | P2 |
+| 80-83 | Search, Filter Sheet, Early Access Gate, Order Confirmation | Shop | P1 |
+| 84-86 | Bottom sheet shell (3 states: peek, full, dismiss) | Drawers | P1 |
+| 87-91 | Bottom sheet variants (Community, Editorial, Quote, Happening, Directory) | Drawers | P1 |
+| 92-95 | Bottom sheet edge cases (share, compose, overscroll, error) | Drawers | P2 |
 
-**Total: ~75 screens / states**
+**Total: ~95 screens / states**
 
 ---
 
