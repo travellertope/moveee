@@ -909,11 +909,11 @@ Label each frame below in JetBrains Mono 11px mute:
 
 ---
 
-### PROMPT 5 — Magazine Home & Article
+### PROMPT 5A — Magazine Home
 
 ```
 Senior mobile UX/UI designer — Moveee Connect magazine section. iOS, 390×844px.
-Brand: paper-warm #F3ECE0 bg, white cards, ochre #C5491F, ink #14110D, 
+Brand: paper-warm #F3ECE0 bg, white cards, ochre #C5491F, ink #14110D,
 Fraunces for editorial headlines, DM Sans for UI, JetBrains Mono for metadata.
 
 FRAME 1 — MAGAZINE HOME:
@@ -940,44 +940,260 @@ Show 3 sections: "From the Editors" · "Interviews" · "Visuals"
 
 Bottom nav (Magazine tab active).
 
-FRAME 2 — ARTICLE DETAIL:
-HERO IMAGE: 390×280px, full-bleed, edge-to-edge.
-Status bar icons: white.
-Floating back button: white circle 40px, ink chevron, top-left, 16px padding.
-Floating share/bookmark: white circle 40px each, top-right row, 8px gap.
+Output 1 frame.
+```
 
-CONTENT (white bg, radius-2xl top corners 20px, overlaps hero by 32px, starts at ~248px from top):
-32px horizontal padding.
+---
 
-Category: "CULTURE · INTERVIEW" DM Sans 9px bold uppercase ochre + ochre rule (48px wide, 2px) right of text
-Title: Fraunces 28px bold ink, leading 1.2: "Afrobeats at the Crossroads: A Conversation with Adekunle Gold"
-Standfirst: DM Sans 15px ink-soft italic: "On globalisation, authenticity, and what it means to make music that travels." 8px below title.
-Divider: 32px vertical margin, ochre line 48px wide 2px height centred.
+### PROMPT 5B — Article Detail (Full Scroll States)
 
-AUTHOR ROW: Avatar MD (44px, Pro gold border) + "Fola Olawale" DM Sans 14px bold ink + 
-"Culture Editor · Published June 9, 2026" 11px JetBrains Mono mute (below name) +
-"12 min read" 11px mono ochre + bookmark icon (ribbon, 24px, ink) right-aligned.
+```
+Senior mobile UX/UI designer — Moveee Connect article detail page. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white content card, ochre #C5491F, gold #B38238, ink #14110D.
+Fraunces (headlines/pull quotes) + DM Sans (body/UI) + JetBrains Mono (meta/labels).
 
-ARTICLE BODY (DM Sans 16px ink-soft, line-height 1.65, 16px top margin):
-Paragraph 1: "There's a particular brand of artistic confidence that Adekunle Gold carries into every room. At 34, the Yoruba pop architect has stopped explaining himself to anyone..."
+Article subject: "Afrobeats at the Crossroads: A Conversation with Adekunle Gold"
+Category: INTERVIEW · MUSIC. Country: Nigeria. Author: Fola Olawale. 12 min read.
+Series: "Culture Economy" (part 3 of 5). Issue: Issue #7 "The Maker Edition".
+This is a member-only article (patron tier required for full access).
 
-PULL QUOTE mid-article:
-Left accent bar: 3px ochre, full height of quote.
-Quote text: Fraunces 20px italic ink (#14110D): "The world wants Afrobeats but sometimes I wonder if it knows what Afrobeats actually is." — 12px right indent from bar.
-Attribution: "— Adekunle Gold" DM Sans 12px mute.
-20px vertical margin above and below.
+Design 5 frames showing the complete scroll journey and key UI states.
 
-Paragraph 2: "He's speaking to me from his Lagos studio, and I can hear the city in the background — motorcycle engines, hawkers..."
+════════════════════════════════════════════
+SHARED ELEMENTS (present in all frames where applicable):
+  SCROLL PROGRESS BAR: 3px height, full width, pinned at very top of screen (above status bar).
+    Ochre #C5491F fill from left. Shows % read. Frame 1: 5% filled. Frame 2: 45%. Frame 3: 80%.
+    Frame 4: 100% (complete). Frame 5: 45% (mid-article state, TOC open).
+  FLOATING TOC BUTTON: 44×44px circle, white fill, shadow-card, ink list icon.
+    Pinned bottom-right, 20px from right, 100px from bottom. Visible in Frames 1–4.
+════════════════════════════════════════════
 
-Inline editorial image (full-width, radius-md): ochre/warm-toned placeholder image.
-Caption: DM Sans 11px mute italic: "Adekunle Gold photographed in Lagos, 2026."
+════════════════════════════════════════════
+FRAME 1 — ARTICLE TOP (above the fold / initial load)
+════════════════════════════════════════════
+HERO IMAGE (full bleed, 390×260px):
+  Warm editorial photo placeholder (ochre/terracotta tones, portrait photography feel).
+  Dark gradient overlay bottom 50%: ink to transparent.
+  FLOATING BACK BUTTON (top-left, 56px from top): 40px white circle, ink chevron.
+  FLOATING ACTIONS (top-right, 56px from top): two 40px white circles — 🔖 bookmark (outline) + 🔗 share. 8px gap.
+  Status bar: white icons.
 
-Paragraph 3: "When I ask about the label deal..."
+CONTENT CARD (white #FFFFFF, radius-2xl top corners 24px, starts 32px overlap with hero):
+  Starts at ~228px from top. 20px horizontal padding.
 
-BOTTOM FIXED BAR (white fill, top ghost border, 64px height + safe area):
-Reaction row: ❤️ 847 DM Sans 13px + 🔥 234 + spacer + "Share article" secondary button pill (ink border, 14px DM Sans, 40px height)
+  BREADCRUMB (8px top):
+    "Magazine" JetBrains Mono 10px ghost → "›" → "Interview" JetBrains Mono 10px ochre.
 
-Output 2 frames labelled Magazine Home and Article Detail.
+  CATEGORY EYEBROW (10px top):
+    "★ INTERVIEW" DM Sans 9px bold #C5491F uppercase, letter-spacing 0.12em.
+    "· NIGERIA" JetBrains Mono 9px ghost, 4px left gap.
+
+  ARTICLE TITLE (Fraunces 26px bold ink, line-height 1.15, 8px top):
+    "Afrobeats at the Crossroads: A Conversation with Adekunle Gold"
+
+  STANDFIRST (DM Sans 15px ink-soft italic, 8px top, line-height 1.5):
+    "On globalisation, authenticity, and what it means to make music that travels."
+
+  OCHRE DIVIDER: 48px wide, 2px height, ochre #C5491F, 16px top.
+
+  BYLINE BLOCK (16px top, 56px height):
+    Left: 44px avatar circle (Pro gold border) + name + meta block:
+      "Words by Fola Olawale" DM Sans 13px bold ink.
+      "Jun 9, 2026  ·  12 min read" JetBrains Mono 10px ghost, 2px below.
+    Right: SERIES badge — "Culture Economy Pt. 3" DM Sans 9px bold, ghost border pill.
+
+  ARTICLE ACTIONS BAR (40px, ghost top+bottom border, 12px top):
+    ❤️ "847" DM Sans 13px mute · 🔥 "234" · (divider) · 🔖 Bookmark · 🔗 Share
+    Icons: outline, 20px. JetBrains Mono 10px counts. 16px gap between groups.
+
+  ARTICLE BODY (DM Sans 16px ink-soft, line-height 1.7, 20px top):
+    Paragraph 1 (full):
+    "There's a particular brand of artistic confidence that Adekunle Gold carries into every
+    room. At 34, the Yoruba pop architect has stopped explaining himself to anyone — and the
+    music is louder for it."
+
+    Paragraph 2 (partial, continues below fold):
+    "He's speaking to me from his Lagos studio, and I can hear the city in the background —
+    motorcycle engines, the distant singsong of market hawkers..."
+
+════════════════════════════════════════════
+FRAME 2 — MID-ARTICLE (scrolled, body content + access gate)
+════════════════════════════════════════════
+STICKY HEADER (appears on scroll, 52px, white fill, ghost bottom border):
+  Back chevron #14110D left (44px tap) + "Adekunle Gold Interview" DM Sans 13px bold ink centred (truncated) + 🔖 outline right.
+
+ARTICLE BODY (continuing from Frame 1):
+  Paragraph 3:
+  "When I ask about the international label deal that fell through in 2023, he doesn't flinch.
+  'They wanted to erase the Lagos in my voice. I said no. Some deals aren't worth making.'"
+
+  PULL QUOTE BLOCK (24px vertical margin):
+    Left accent bar: 3px solid #C5491F, full height of block.
+    12px left gap from bar.
+    Quote text (Fraunces 20px italic ink, line-height 1.35):
+      "The world wants Afrobeats but sometimes I wonder if it knows what Afrobeats actually is."
+    Attribution: "— Adekunle Gold" DM Sans 12px mute, 6px top.
+
+  Paragraph 4 (DM Sans 16px):
+  "The question of authenticity in a globalised music economy is not academic — it is the
+  defining creative tension of his generation. Burna Boy wrestled with it. Tems navigated it
+  with instinct. Gold approaches it philosophically."
+
+  INLINE IMAGE (full card width, 200px, radius-md, warm portrait placeholder):
+    Caption: "Adekunle Gold photographed in Lagos, 2026." DM Sans 11px mute italic, centred, 4px below.
+
+  Paragraph 5 (fading out — ACCESS GATE):
+  "He pulls out a tattered notebook filled with lyrics from his upcoming record. He reads one
+  aloud — and it is unlike anything I've heard from him. Quieter. More interior..."
+    → Last 40px of this paragraph has white-to-transparent gradient overlay (fade to gate).
+
+  CONTENT GATE CARD (white fill, gold border 1.5px #B38238, radius-xl, 20px padding, centred):
+    🔒 icon 28px gold, centred top.
+    "Members-only article" Fraunces 18px bold ink, centred, 8px below.
+    "This article is available to Connect Pro members. Upgrade to read the full interview,
+    including exclusive quotes and unreleased track details." DM Sans 14px mute centred, 8px below, max 280px.
+    "Upgrade to Connect Pro" gold fill button, radius-full, 52px, full width. White DM Sans 14px bold. 16px top.
+    "Sign in if you're already a member →" DM Sans 12px ochre centred, 8px below.
+
+════════════════════════════════════════════
+FRAME 3 — ARTICLE END (post-body, member-unlocked view)
+════════════════════════════════════════════
+(This frame shows the view AFTER a member/Pro user has read the full article.)
+Sticky header same as Frame 2.
+
+FINISH READING BANNER (ochre #C5491F fill, full width, 72px, 20px horizontal padding):
+  ✓ checkmark circle (white, 24px) left.
+  "Article complete!" DM Sans 14px bold white.
+  "+ 15 Culture Points earned" JetBrains Mono 11px white, 2px below.
+  "Collect Points" white fill, ochre text, radius-full, 36px height, right-aligned button.
+
+GHOST RULE.
+
+SERIES CONTEXT STRIP (paper-warm bg, 56px, 20px horizontal padding):
+  📖 icon 16px ochre left.
+  "Part of the 'Culture Economy' series" DM Sans 14px bold ink, inline.
+  "Explore the series (5 articles) →" DM Sans 13px ochre, 4px below.
+
+GHOST RULE.
+
+FROM THIS ISSUE CARD (white fill, radius-xl, shadow-card, 16px margin, 12px padding):
+  Layout: issue cover thumbnail (64×80px, radius-md, warm editorial cover placeholder) LEFT +
+  content RIGHT (12px left gap):
+    "Issue #7" JetBrains Mono 10px bold ochre uppercase.
+    "The Maker Edition" Fraunces 17px bold ink, 4px below.
+    "9 articles in this issue" DM Sans 12px mute, 4px below.
+    "Browse issue →" DM Sans 13px ochre, 4px below.
+
+AUTHOR BIO CARD (white fill, radius-xl, shadow-card, 16px margin, 20px padding):
+  AUTHOR HEADER ROW:
+    64px avatar circle + column right:
+    "Fola Olawale" Fraunces 18px bold ink.
+    "Culture Editor" DM Sans 13px mute, 2px below.
+  BIO (DM Sans 14px ink-soft, line-height 1.6, 12px top):
+    "Fola covers music, fashion, and cultural politics for Moveee. Her interviews
+    have appeared in The Guardian, i-D, and Essence. Based in Lagos and London."
+  "More articles by Fola →" DM Sans 13px ochre, 12px top.
+
+════════════════════════════════════════════
+FRAME 4 — SHOP THE EDIT + NEWSLETTER + KEEP READING
+════════════════════════════════════════════
+Sticky header same as Frame 2.
+
+NEWSLETTER CTA CARD (paper-warm #F3ECE0 fill, full width, 20px padding, ghost top+bottom border):
+  ✉️ icon 20px ochre left row.
+  "Culture in your inbox, every Friday." DM Sans 14px bold ink.
+  "Subscribe to GetMeLit — our weekly cultural briefing." DM Sans 13px mute, 4px below.
+  EMAIL INPUT ROW (ghost border, radius-full, 44px):
+    "Your email address" DM Sans 14px ghost placeholder.
+    "Subscribe" ochre pill (inset right, 80px, white DM Sans 13px bold).
+
+GHOST RULE (16px vertical margin).
+
+SHOP THE EDIT SECTION (16px horizontal padding):
+  SECTION HEADER ROW:
+    "SHOP THE EDIT" DM Sans 11px bold ink uppercase letter-spacing 0.1em left.
+    "As seen in this article" DM Sans 11px mute right.
+
+  PRODUCT GRID (2 columns, 8px gap, 12px top):
+  Show 4 product cards (2×2):
+
+  PRODUCT CARD (white fill, radius-xl, shadow-card):
+    Product image: full card width × 120px, radius-xl top corners, warm product photo placeholder.
+    AS SEEN IN badge (optional, top-left of image): "★ FEATURED" — ochre pill, DM Sans 8px bold white.
+    Below image (10px padding):
+      Maker name: "Bisi Ceramics" DM Sans 10px bold mute uppercase. 4px top.
+      Product name: "Terracotta Ritual Bowl" DM Sans 13px bold ink, 2 lines. 2px top.
+      Price row: "£68.00" DM Sans 13px bold ink. If Pro pricing: "Pro: £54" DM Sans 11px gold right.
+      "View product →" DM Sans 12px ochre, 4px top.
+
+  Products shown:
+    1. Bisi Ceramics — Terracotta Ritual Bowl — £68.00
+    2. Bisi Ceramics — Clay Water Carafe — £95.00 / Pro: £76
+    3. Loom Lagos — Kente Cap — £42.00
+    4. Zara Mensah Studio — Lagos Print Tote — £55.00
+
+  "Browse all products featured in Moveee →" ghost border button, full width (16px margin), radius-full, 44px, ink text DM Sans 14px. 12px top.
+
+GHOST RULE (20px vertical margin).
+
+KEEP READING SECTION (16px horizontal padding):
+  "Keep reading" Fraunces 20px bold ink left + "See all →" DM Sans 13px ochre right. 0px top.
+  3 article cards (vertical stack, 12px gap, 12px top):
+    Each: white fill, radius-xl, shadow-card.
+    Image: full card width × 140px, radius-xl top, editorial photo placeholder.
+    Below (16px padding):
+      Category badge pill (ochre, DM Sans 9px bold). 8px top.
+      Title: DM Sans 14px bold ink, 2 lines. 4px top.
+      Author + read time: "Funmi Osei · 6 min" JetBrains Mono 10px ghost. 4px top.
+
+  Article titles:
+    1. "Why Nigerian Fashion Is Rewriting the Rules of Luxury"
+    2. "The Economics of Cool: How African Creatives Are Building on Their Own Terms"
+    3. "Music, Markets, and Meaning: A Year in African Sound"
+
+════════════════════════════════════════════
+FRAME 5 — TABLE OF CONTENTS BOTTOM SHEET (overlay state)
+════════════════════════════════════════════
+Show the article at Frame 2 scroll position (body content visible behind) with the TOC
+bottom sheet open on top. Backdrop: ink at 25% opacity (lighter than main modal backdrop —
+reader can still see the article behind).
+
+BOTTOM SHEET (white fill, radius-2xl top corners 24px, height ~70% of screen, ~590px):
+  Drag handle: 4×28px, radius-full, #C8BFB0, centred, 10px top.
+  × close: 36×36px circle, paper-warm fill, ink ×, 14px top, 16px right.
+
+  SHEET HEADER (16px padding, 16px top):
+    "Contents" DM Sans 16px bold ink left.
+    Article title truncated: "Adekunle Gold Interview" JetBrains Mono 10px ghost, 4px below.
+
+  METADATA SIDEBAR (paper-warm bg strip, full width, 20px padding, 12px top, 8px gap between rows):
+    4 meta rows (32px each, ghost bottom border):
+      Row: label (DM Sans 10px bold mute uppercase, 80px wide) + value (DM Sans 13px ink).
+      WRITER:    "Fola Olawale"
+      LOCATION:  "Lagos, Nigeria"
+      SECTION:   "Interviews"
+      INDUSTRY:  "Music & Entertainment"
+
+  GHOST RULE (12px top).
+
+  "In this article" DM Sans 13px bold ink, 16px padding, 12px top.
+
+  TOC HEADING LIST (16px padding, 8px gap):
+    Each row (44px, ghost bottom border):
+      h2 items: DM Sans 14px bold ink, tap to scroll to section.
+      h3 items: DM Sans 13px ink-soft, 12px left indent.
+      Active/current section: ochre left dot 6px + #C5491F text.
+
+    Items:
+      ● "On the Label Deal That Fell Through" — ochre (current)
+        "The Authenticity Question"
+      "What Globalisation Takes From You"
+        "The Language of the Record"
+      "What Comes Next"
+
+    Scroll indicator on right edge (the list is scrollable).
+
+Output 5 frames. Layout: Frame 1 alone, Frames 2–3 side by side, Frames 4–5 side by side.
 ```
 
 ---
