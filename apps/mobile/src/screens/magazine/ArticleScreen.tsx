@@ -19,6 +19,7 @@ import { useArticle } from "../../features/magazine/useMagazine";
 import { WP_URL } from "../../api/client";
 import type { Article } from "../../types";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { ArticleSkeleton } from "../../components/ui/Skeleton";
 
 const HTML_TAG_STYLES = {
   p:          { fontSize: 16, lineHeight: 26, color: colors.inkSoft, marginBottom: 14 },
@@ -110,9 +111,7 @@ export default function ArticleScreen() {
 
       {/* ── Scrollable content ── */}
       {!article && loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.gold} size="large" />
-        </View>
+        <ArticleSkeleton />
       ) : !article && error ? (
         <View style={styles.center}>
           <Text style={styles.errorText}>{error}</Text>

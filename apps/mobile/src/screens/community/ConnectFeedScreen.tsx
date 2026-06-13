@@ -22,6 +22,7 @@ import {
 import { useAuthStore } from "../../auth/authStore";
 import FeedCard from "../../components/community/FeedItemCard";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { FeedSkeleton } from "../../components/ui/Skeleton";
 import type { FeedItem } from "../../types";
 
 function feedItemToPostId(item: FeedItem): string {
@@ -291,9 +292,7 @@ export default function ConnectFeedScreen() {
             </TouchableOpacity>
           </View>
         ) : visibleItems.length === 0 && loading ? (
-          <View style={styles.center}>
-            <ActivityIndicator color={colors.gold} />
-          </View>
+          <FeedSkeleton />
         ) : (
           <FlatList
             data={visibleItems}
