@@ -358,10 +358,10 @@ class Culture_Perks {
      * Calculate the fee percentage for a cashout amount.
      *
      * @param int $credits  Gross credits before fee.
-     * @return int  Percentage: 20, 25, or 30.
+     * @return int  Flat fee percentage applied to all cashouts.
      */
     public static function cashout_fee_percent( $credits ) {
-        return 30;
+        return 40;
     }
 
     /**

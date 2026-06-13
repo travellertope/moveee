@@ -348,6 +348,74 @@ class Culture_Gamification {
     );
 
     /**
+     * Get the credit bonus for an action, reading from DB with CREDIT_BONUSES as fallback.
+     *
+     * @param string $action Action slug.
+     * @return int
+     */
+    public static function get_credit_bonus( $action ) {
+        $defaults = self::CREDIT_BONUSES;
+        $key      = 'culture_credits_' . $action;
+        $saved    = get_option( $key, null );
+        return $saved !== null ? (int) $saved : ( $defaults[ $action ] ?? 0 );
+    }
+
+    /**
+     * Get the reputation value for an action, reading from DB with POINTS as fallback.
+     *
+     * @param string $action Action slug.
+     * @return int
+     */
+    public static function get_reputation_value( $action ) {
+        $defaults = self::POINTS;
+        $key      = 'culture_rep_' . $action;
+        $saved    = get_option( $key, null );
+        return $saved !== null ? (int) $saved : ( $defaults[ $action ] ?? 0 );
+    }
+
+    /**
+     * Get the configured daily credit cap, falling back to DAILY_CREDIT_CAP.
+     *
+     * @return int
+     */
+    public static function get_daily_cap() {
+        $saved = get_option( 'culture_daily_credit_cap', null );
+        return $saved !== null ? (int) $saved : self::DAILY_CREDIT_CAP;
+    }
+
+    /**
+     * Get the reputation threshold for a tier, reading from DB with hard-coded defaults.
+     *
+     * @param string $tier  One of: 'contributor', 'taste-maker', 'authority'.
+     * @return int
+     */
+    public static function get_rep_tier_threshold( $tier ) {
+        $defaults = array(
+            'contributor' => 100,
+            'taste-maker' => 500,
+            'authority'   => 1500,
+        );
+        $key   = 'culture_rep_tier_' . $tier;
+        $saved = get_option( $key, null );
+        return $saved !== null ? (int) $saved : ( $defaults[ $tier ] ?? 0 );
+    }
+
+    /**
+     * Get reputation tier thresholds with values overridden by DB settings at runtime.
+     * Use this instead of self::REPUTATION_TIERS wherever a live value is needed.
+     *
+     * @return array  Keyed by threshold (int) => tier slug (string), descending.
+     */
+    public static function get_reputation_tiers() {
+        return array(
+            self::get_rep_tier_threshold( 'authority' )    => 'culture-authority',
+            self::get_rep_tier_threshold( 'taste-maker' )  => 'taste-maker',
+            self::get_rep_tier_threshold( 'contributor' )  => 'culture-contributor',
+            0 => 'member',
+        );
+    }
+
+    /**
      * Get point values, reading from options with const defaults as fallback.
      *
      * @return array
@@ -426,7 +494,7 @@ class Culture_Gamification {
 
     /** Get the reputation tier string for a given reputation score. */
     public static function get_reputation_tier( $reputation ) {
-        foreach ( self::REPUTATION_TIERS as $threshold => $tier ) {
+        foreach ( self::get_reputation_tiers() as $threshold => $tier ) {
             if ( $reputation >= $threshold ) return $tier;
         }
         return 'member';
@@ -459,7 +527,7 @@ class Culture_Gamification {
             }
 
             $earned_today = (int) get_user_meta( $user_id, '_culture_credits_earned_today', true );
-            $remaining    = self::DAILY_CREDIT_CAP - $earned_today;
+            $remaining    = self::get_daily_cap() - $earned_today;
             if ( $remaining <= 0 ) {
                 $wpdb->get_var( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
                 return 0;
@@ -509,9 +577,9 @@ class Culture_Gamification {
     /** Get how many credits the user can still earn today. */
     public static function get_daily_credits_remaining( $user_id ) {
         $reset_date = get_user_meta( $user_id, '_culture_credits_reset_date', true );
-        if ( $reset_date !== gmdate( 'Y-m-d' ) ) return self::DAILY_CREDIT_CAP;
+        if ( $reset_date !== gmdate( 'Y-m-d' ) ) return self::get_daily_cap();
         $earned = (int) get_user_meta( $user_id, '_culture_credits_earned_today', true );
-        return max( 0, self::DAILY_CREDIT_CAP - $earned );
+        return max( 0, self::get_daily_cap() - $earned );
     }
 
     // ── Threshold (upvote-to-earn) ────────────────────────────────────────────
@@ -620,7 +688,7 @@ class Culture_Gamification {
         $new_rep = self::award_reputation( $user_id, $rep_to_add, $action );
 
         // Award small credit bonus for eligible actions.
-        $credit_bonus = self::CREDIT_BONUSES[ $action ] ?? 0;
+        $credit_bonus = self::get_credit_bonus( $action );
         if ( $credit_bonus > 0 ) {
             self::award_credits( $user_id, $credit_bonus, $action );
         }

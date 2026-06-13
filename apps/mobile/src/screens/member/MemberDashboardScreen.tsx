@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import {
   View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, Share,
+  ScrollView, Share, Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -163,17 +163,43 @@ export default function MemberDashboardScreen() {
 
         {/* Card 3: Stats Bar */}
         <View style={[styles.card, styles.statsCard]}>
-          {[
-            { label: "Credits",    value: user.credits ?? 0,                  accent: isPro ? c.ochre : c.ink },
-            { label: "Reputation", value: user.reputation ?? 0,               accent: isPro ? c.gold  : c.ink },
-            { label: "Badges",     value: (user.badges || []).length,          accent: c.ink },
-            { label: "Daily Left", value: user.dailyCreditsRemaining ?? 0,    accent: c.ink },
-          ].map((stat, i) => (
-            <View key={stat.label} style={[styles.statItem, i > 0 && styles.statItemBorder]}>
-              <Text style={[styles.statValue, { color: stat.accent }]}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-            </View>
-          ))}
+          {/* Credits — with info tooltip */}
+          <TouchableOpacity
+            style={styles.statItem}
+            onPress={() => Alert.alert(
+              "Moveee Credits",
+              "Credits are your spendable currency. Earn them by posting, engaging, and participating in the community. Redeem for partner perks or cash out (Connect Pro only, 40% fee). Daily cap: 50 credits.",
+              [{ text: "Got it" }]
+            )}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.statValue, { color: isPro ? c.ochre : c.ink }]}>{user.credits ?? 0}</Text>
+            <Text style={styles.statLabel}>Credits ⓘ</Text>
+          </TouchableOpacity>
+
+          {/* Reputation — with info tooltip */}
+          <TouchableOpacity
+            style={[styles.statItem, styles.statItemBorder]}
+            onPress={() => Alert.alert(
+              "Reputation",
+              "Reputation is your permanent standing in the community — it never decreases. It unlocks status tiers: Culture Contributor (100), Taste Maker (500), Culture Authority (1,500). Unlike credits, reputation cannot be spent.",
+              [{ text: "Got it" }]
+            )}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.statValue, { color: isPro ? c.gold : c.ink }]}>{user.reputation ?? 0}</Text>
+            <Text style={styles.statLabel}>Reputation ⓘ</Text>
+          </TouchableOpacity>
+
+          <View style={[styles.statItem, styles.statItemBorder]}>
+            <Text style={[styles.statValue, { color: c.ink }]}>{(user.badges || []).length}</Text>
+            <Text style={styles.statLabel}>Badges</Text>
+          </View>
+
+          <View style={[styles.statItem, styles.statItemBorder]}>
+            <Text style={[styles.statValue, { color: c.ink }]}>{user.dailyCreditsRemaining ?? 0}</Text>
+            <Text style={styles.statLabel}>Daily Left</Text>
+          </View>
         </View>
 
         {/* Card 4: Upgrade Banner (Citizen only) */}

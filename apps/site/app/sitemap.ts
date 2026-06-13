@@ -25,14 +25,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   const staticPages: MetadataRoute.Sitemap = [
-    { url: BASE,                   changeFrequency: "daily",   priority: 1.0 },
-    { url: `${BASE}/magazine`,     changeFrequency: "daily",   priority: 0.9 },
-    { url: `${BASE}/newsletter`,   changeFrequency: "weekly",  priority: 0.8 },
-    { url: `${BASE}/shop`,         changeFrequency: "daily",   priority: 0.8 },
-    { url: `${BASE}/journeys`,     changeFrequency: "weekly",  priority: 0.7 },
-    { url: `${BASE}/makers`,       changeFrequency: "weekly",  priority: 0.6 },
-    { url: `${BASE}/visuals`,      changeFrequency: "monthly", priority: 0.5 },
-  ].map((p) => ({ ...p, lastModified: new Date() }));
+    { url: BASE,                   changeFrequency: "daily"   as const, priority: 1.0, lastModified: new Date() },
+    { url: `${BASE}/magazine`,     changeFrequency: "daily"   as const, priority: 0.9, lastModified: new Date() },
+    { url: `${BASE}/newsletter`,   changeFrequency: "weekly"  as const, priority: 0.8, lastModified: new Date() },
+    { url: `${BASE}/shop`,         changeFrequency: "daily"   as const, priority: 0.8, lastModified: new Date() },
+    { url: `${BASE}/journeys`,     changeFrequency: "weekly"  as const, priority: 0.7, lastModified: new Date() },
+    { url: `${BASE}/makers`,       changeFrequency: "weekly"  as const, priority: 0.6, lastModified: new Date() },
+    { url: `${BASE}/visuals`,      changeFrequency: "monthly" as const, priority: 0.5, lastModified: new Date() },
+  ];
 
   const articleUrls: MetadataRoute.Sitemap = articles.map((a) => ({
     url: `${BASE}/magazine/${a.slug}`,
