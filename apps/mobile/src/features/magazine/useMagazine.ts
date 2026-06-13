@@ -177,4 +177,65 @@ export function useArticle(slug: string) {
   return { article, loading, error };
 }
 
+// ── Issues ────────────────────────────────────────────────────────────────────
+
+export interface MagazineIssue {
+  id: string;
+  number: number;
+  title: string;
+  description?: string;
+  coverImage?: string;
+  articleCount: number;
+  date: string;
+}
+
+const ISSUES_CACHE_KEY = "magazine_issues";
+
+// WordPress REST: custom endpoint at /wp-json/culture/v1/mobile/magazine/issues
+// Falls back to placeholder data if the endpoint isn't available yet.
+const ISSUES_URL = `${WP_URL}/wp-json/culture/v1/mobile/magazine/issues`;
+
+const PLACEHOLDER_ISSUES: MagazineIssue[] = [
+  { id: "7", number: 7, title: "The Maker Edition", description: "9 articles exploring African makers, craft culture, and the economics of creation.", articleCount: 9, date: "June 2026" },
+  { id: "6", number: 6, title: "The Sound Issue", articleCount: 12, date: "May 2026" },
+  { id: "5", number: 5, title: "Cities & Culture", articleCount: 8, date: "Apr 2026" },
+  { id: "4", number: 4, title: "Fashion Forward", articleCount: 10, date: "Mar 2026" },
+  { id: "3", number: 3, title: "The Film Edit", articleCount: 7, date: "Feb 2026" },
+  { id: "2", number: 2, title: "Food & Identity", articleCount: 9, date: "Jan 2026" },
+  { id: "1", number: 1, title: "Origins", articleCount: 11, date: "Dec 2025" },
+];
+
+export function useIssues() {
+  const [issues, setIssues] = useState<MagazineIssue[]>(() => cache.get<MagazineIssue[]>(ISSUES_CACHE_KEY) ?? PLACEHOLDER_ISSUES);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await api.get<MagazineIssue[]>(ISSUES_URL, false);
+      setIssues(data);
+      cache.set(ISSUES_CACHE_KEY, data, TTL.MEDIUM);
+    } catch {
+      // Endpoint may not exist yet — silently fall back to placeholder data
+      if (issues.length === 0) {
+        setIssues(PLACEHOLDER_ISSUES);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [issues.length]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const refresh = useCallback(async () => {
+    await load();
+  }, [load]);
+
+  return { issues, loading, error, refresh };
+}
+
 export { stripTags, decodeEntities };

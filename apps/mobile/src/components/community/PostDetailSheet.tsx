@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomSheet from "../ui/BottomSheet";
+import SheetErrorState from "../ui/SheetErrorState";
 import { useColors } from "../../hooks/useColors";
 import { useAuthStore } from "../../auth/authStore";
 import { useComments } from "../../features/community/useComments";
@@ -551,7 +552,15 @@ export default function PostDetailSheet({ item, visible, onClose }: PostDetailSh
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
-  if (!item) return null;
+  if (!item) {
+    return (
+      <SheetErrorState
+        visible={visible}
+        onClose={onClose}
+        message="Couldn't load this post"
+      />
+    );
+  }
 
   const badge = TEMPLATE_BADGES[item.templateType ?? "post"] ?? TEMPLATE_BADGES["post"];
   const postId = item.wpId ?? item.id ?? "";
