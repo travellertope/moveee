@@ -2947,24 +2947,36 @@ TOP CHROME (always visible, 52px, white, not scrollable):
   (No title text in the top chrome — content starts immediately below.)
 
 ═══════════
-FRAME 1 — PEEK STATE (55% viewport height = ~464px sheet height):
-Sheet snaps at this height on first open / after a light drag up from closed.
+FRAME 1 — PEEK STATE (content-hugging height, NOT fixed %):
+Sheet height wraps its content — no fixed floor. The sheet grows only as tall as its
+content requires, plus 32px bottom padding. This eliminates whitespace gaps entirely.
 ═══════════
 Feed screen visible above sheet, dimmed by backdrop.
-Sheet bottom edge flush with screen bottom (no safe-area gap — content handles it).
+Sheet bottom edge stops wherever content ends — it does NOT stretch to fill the screen.
 
-Content area (below top chrome, 412px available, not scrollable at this snap point):
+IMPORTANT: do NOT pin any element to the bottom of the sheet. All elements stack
+naturally top-to-bottom with no spacer between content and bottom actions.
+
+Content area (below top chrome — flows naturally, no fixed height):
 Show a Community Post peek:
-  — Type badge pill + timestamp JetBrains Mono 10px mute (right-aligned, same row). 8px top.
-  — Author row: 40px circle avatar + "Kemi Adeyemi" DM Sans 14px bold ink + "@kemi.a" 12px mute, 8px below.
-  — Post body: DM Sans 14px ink-soft, 3 lines, line-height 1.6. 12px below author.
-  — "See full post ↓" DM Sans 13px ochre centred link at bottom of peek area (indicates more below).
-  — Ghost rule: 1px #EEE8DF, full width, 16px from bottom of peek area.
-  — Reaction bar below rule: ❤️ 14  🔥 7  👏 9 — outline icons, JetBrains Mono 10px mute, 16px gaps.
+  — Type badge pill ("COMMUNITY" green) + "Just now" JetBrains Mono 10px ghost, right-aligned. 12px top.
+  — Author row (12px top): 40px circle avatar + "Kemi Adeyemi" DM Sans 14px bold ink + "@kemi.a" 12px mute.
+  — Post body (12px top): DM Sans 14px ink-soft, line-height 1.6.
+      "Just visited the new exhibition at Rele Gallery. The way they curated the lighting
+      around the portrait series was absolutely incredible. Definitely…"
+      The final word fades out with a 32px white-to-transparent gradient overlay on the last line
+      to signal truncation — do NOT add a separate CTA label.
+  — Ghost rule 1px #EEE8DF (12px top, no extra spacing).
+  — Reaction bar (12px top, 16px horizontal padding): ❤️ 14  🔥 7  👏 9 — outline icons, JetBrains Mono 10px mute, 16px gaps.
+  — SWIPE HINT (8px top, centred): "↑ Swipe up for full post" JetBrains Mono 9px ghost #C8BFB0.
+  — 32px bottom padding (home indicator zone — white fill, no content).
+
+RESULT: total sheet height ≈ 52px chrome + 12+40+12+80+1+12+24+8+16+32 ≈ ~290px.
+The sheet floats at the bottom of the screen and looks intentionally compact, not stretched.
 
 ═══════════
 FRAME 2 — FULL STATE (92% viewport height = ~776px sheet height):
-Sheet snaps here on a hard swipe up or when user taps "See full post ↓".
+Sheet snaps here on a hard swipe up from peek state.
 ═══════════
 Top chrome still visible (drag handle + close button).
 Content below is scrollable (scroll indicator on right edge).
