@@ -15,12 +15,22 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, 'node_modules'),
 ];
 
-// Force a single React instance — npm workspaces hoists react/react-native to the
-// monorepo root. Without this pin Metro can resolve them from two different paths
-// and bundle duplicates, causing the ReactCurrentDispatcher crash on launch.
-config.resolver.extraNodeModules = {
-  react: path.resolve(monorepoRoot, 'node_modules/react'),
-  'react-native': path.resolve(monorepoRoot, 'node_modules/react-native'),
+// Custom resolver: intercept every require() of react and react-native —
+// including those inside third-party packages — and force them all to the
+// same single copy in the monorepo root. Without this, zustand, react-navigation
+// and other deps can resolve react from a different path, producing duplicate
+// instances that crash on launch with "ReactCurrentDispatcher of undefined".
+const reactPath = path.resolve(monorepoRoot, 'node_modules/react');
+const reactNativePath = path.resolve(monorepoRoot, 'node_modules/react-native');
+
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === 'react') {
+    return { filePath: require.resolve(reactPath), type: 'sourceFile' };
+  }
+  if (moduleName === 'react-native') {
+    return { filePath: require.resolve(reactNativePath), type: 'sourceFile' };
+  }
+  return context.resolveRequest(context, moduleName, platform);
 };
 
 module.exports = config;
