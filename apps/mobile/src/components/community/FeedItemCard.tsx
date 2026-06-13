@@ -541,12 +541,12 @@ function PulseCard({ item, onPress }: FeedCardProps) {
             <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
           </View>
 
-          <Text style={[cardStyles.titleSerif, { marginTop: 10 }]} numberOfLines={2}>
+          <Text style={[cardStyles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>
             {item.title}
           </Text>
 
           {item.excerpt ? (
-            <Text style={[cardStyles.bodySmall, { marginTop: 6 }]} numberOfLines={2}>
+            <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={2}>
               {item.excerpt}
             </Text>
           ) : null}
@@ -587,12 +587,12 @@ function EditorialCard({ item, onPress }: FeedCardProps) {
           <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
         </View>
 
-        <Text style={[cardStyles.titleSerifXl, { marginTop: 10 }]} numberOfLines={2}>
+        <Text style={[cardStyles.cardTitleXl, { marginTop: 10 }]} numberOfLines={2}>
           {item.title}
         </Text>
 
         {item.excerpt ? (
-          <Text style={[cardStyles.bodySmall, { marginTop: 6 }]} numberOfLines={3}>
+          <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={3}>
             {item.excerpt}
           </Text>
         ) : null}
@@ -704,7 +704,7 @@ const happeningStyles = StyleSheet.create({
     paddingBottom: 14,
   },
   title: {
-    fontFamily: fonts.sansBold,
+    fontFamily: fonts.serifBold,
     fontSize: fontSize.lg,
     color: colors.ink,
     lineHeight: 26,
@@ -767,12 +767,12 @@ function DirectoryCard({ item }: FeedCardProps) {
             <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
           </View>
 
-          <Text style={[cardStyles.titleSansBold, { marginTop: 10 }]} numberOfLines={2}>
+          <Text style={[cardStyles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>
             {item.title}
           </Text>
 
           {item.excerpt ? (
-            <Text style={[cardStyles.bodySmall, { marginTop: 6 }]} numberOfLines={3}>
+            <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={3}>
               {item.excerpt}
             </Text>
           ) : null}
@@ -809,7 +809,7 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
       <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <HashtagText text={displayBody} style={cardStyles.bodyMd} />
+          <HashtagText text={displayBody} style={cardStyles.cardBody} />
         </View>
         {item.image ? (
           <View style={{ marginTop: 10 }}>
@@ -859,7 +859,7 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
             <HashtagText
               text={item.body ?? item.excerpt ?? item.title ?? ""}
               numberOfLines={2}
-              style={cardStyles.bodyMd}
+              style={cardStyles.cardBody}
             />
           </View>
         </View>
@@ -897,7 +897,7 @@ function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCar
           <View style={{ marginTop: 8 }}>
             <HashtagText
               text={item.body ?? item.excerpt ?? item.title ?? ""}
-              style={cardStyles.bodyMd}
+              style={cardStyles.cardBody}
             />
           </View>
           <View style={{ marginTop: 10 }}>
@@ -938,7 +938,7 @@ function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
           {item.locationName ? (
             <Text style={[cardStyles.locationText, { marginTop: 6 }]}>📍 {item.locationName}</Text>
           ) : null}
-          <Text style={[cardStyles.bodyMd, { marginTop: 8 }]} numberOfLines={3}>
+          <Text style={[cardStyles.cardBody, { marginTop: 8 }]} numberOfLines={3}>
             {item.body ?? item.excerpt ?? ""}
           </Text>
 
@@ -1016,7 +1016,7 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
         </View>
         {item.body || item.excerpt ? (
           <View style={{ paddingHorizontal: 14, marginTop: 8 }}>
-            <HashtagText text={item.body ?? item.excerpt ?? ""} style={cardStyles.bodyMd} />
+            <HashtagText text={item.body ?? item.excerpt ?? ""} style={cardStyles.cardBody} />
           </View>
         ) : null}
 
@@ -1164,9 +1164,10 @@ function PollCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) 
 
 const pollStyles = StyleSheet.create({
   question: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.md,
+    fontFamily: fonts.serifBold,
+    fontSize: fontSize.lg,
     color: colors.ink,
+    lineHeight: 26,
     marginBottom: 10,
   },
   optionWrap: {
@@ -1232,7 +1233,7 @@ function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
           <Text style={[cardStyles.locationText, { marginTop: 6 }]}>📍 {item.city}</Text>
         ) : null}
         {item.body || item.excerpt ? (
-          <Text style={[cardStyles.bodyMd, { marginTop: 8 }]} numberOfLines={2}>
+          <Text style={[cardStyles.cardBody, { marginTop: 8 }]} numberOfLines={2}>
             {item.body ?? item.excerpt}
           </Text>
         ) : null}
@@ -1276,11 +1277,11 @@ const itinStyles = StyleSheet.create({
   },
   stopNumText: {
     fontFamily: fonts.monoBold,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     color: colors.paper,
   },
   stopName: {
-    fontFamily: fonts.sansBold,
+    fontFamily: fonts.sans,
     fontSize: fontSize.sm,
     color: colors.ink,
   },
@@ -1334,9 +1335,9 @@ const quoteStyles = StyleSheet.create({
   quoteText: {
     fontFamily: fonts.serif,
     fontStyle: "italic",
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     color: colors.ink,
-    lineHeight: 30,
+    lineHeight: 26,
     marginLeft: 8,
     marginTop: 8,
   },
@@ -1385,35 +1386,17 @@ const cardStyles = StyleSheet.create({
     color: colors.ghost,
     marginLeft: "auto",
   },
-  titleSerif: {
+  cardTitle: {
     fontFamily: fonts.serifBold,
     fontSize: fontSize.lg,
     color: colors.ink,
-    lineHeight: 28,
+    lineHeight: 26,
   },
-  titleSerifXl: {
-    fontFamily: fonts.serifBold,
-    fontSize: fontSize.lg,
-    color: colors.ink,
-    lineHeight: 28,
-  },
-  titleSansBold: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.base,
-    color: colors.ink,
-    lineHeight: 22,
-  },
-  bodySmall: {
+  cardBody: {
     fontFamily: fonts.sans,
     fontSize: fontSize.sm,
     color: colors.inkSoft,
     lineHeight: 20,
-  },
-  bodyMd: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.md,
-    color: colors.inkSoft,
-    lineHeight: 24,
   },
   readMore: {
     fontFamily: fonts.sansBold,
