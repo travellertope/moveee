@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View, Text, StyleSheet, SafeAreaView,
   TouchableOpacity, ActivityIndicator, ScrollView,
@@ -7,7 +7,9 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { storage } from "../../store/storage";
 import { recordPlayedToday } from "../../features/games/useGameStreak";
-import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { fonts, fontSize, space, radius } from "../../theme";
+import type { ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 
 const PROXY    = "https://themoveee.com/api";
 const KEY_DATE = "sudoku_last_played_date";
@@ -45,6 +47,8 @@ function isConflict(board: number[], idx: number, val: number): boolean {
 
 export default function SudokuGameScreen() {
   const nav = useNavigation<any>();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   const [phase,    setPhase]    = useState<Phase>("loading");
   const [puzzle,   setPuzzle]   = useState<number[]>([]);
@@ -116,7 +120,7 @@ export default function SudokuGameScreen() {
   const headerRow = (
     <View style={styles.header}>
       <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn}>
-        <Ionicons name="arrow-back" size={22} color={colors.ink} />
+        <Ionicons name="arrow-back" size={22} color={c.ink} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Sudoku</Text>
       <Text style={styles.timer}>{timerDisplay}</Text>
@@ -126,7 +130,7 @@ export default function SudokuGameScreen() {
   if (phase === "loading") return (
     <SafeAreaView style={styles.container}>
       {headerRow}
-      <View style={styles.center}><ActivityIndicator color={colors.gold} size="large" /></View>
+      <View style={styles.center}><ActivityIndicator color={c.gold} size="large" /></View>
     </SafeAreaView>
   );
 
@@ -186,20 +190,20 @@ export default function SudokuGameScreen() {
         {/* Grid */}
         <View style={styles.grid}>
           {board.map((val, idx) => {
-            const r = Math.floor(idx / 9), c = idx % 9;
+            const r = Math.floor(idx / 9), col = idx % 9;
             const isSelected  = selected === idx;
             const isSameVal   = selected !== null && val !== 0 && board[selected] === val;
             const isHighlight = selected !== null && (
               Math.floor(selected / 9) === r ||
-              selected % 9 === c ||
+              selected % 9 === col ||
               (Math.floor(selected / 27) === Math.floor(r / 3) &&
-               Math.floor((selected % 9) / 3) === Math.floor(c / 3))
+               Math.floor((selected % 9) / 3) === Math.floor(col / 3))
             );
             const isGiven   = given[idx];
             const isError   = !isGiven && val !== 0 && val !== solution[idx];
             const conflict  = !isGiven && val !== 0 && isConflict(board, idx, val);
 
-            const borderRight  = c === 2 || c === 5 ? styles.thickRight  : styles.thinRight;
+            const borderRight  = col === 2 || col === 5 ? styles.thickRight  : styles.thinRight;
             const borderBottom = r === 2 || r === 5 ? styles.thickBottom : styles.thinBottom;
 
             return (
@@ -209,7 +213,7 @@ export default function SudokuGameScreen() {
                   styles.cell,
                   borderRight,
                   borderBottom,
-                  c === 0 && styles.leftEdge,
+                  col === 0 && styles.leftEdge,
                   r === 0 && styles.topEdge,
                   isSelected  && styles.cellSelected,
                   isHighlight && !isSelected && styles.cellHighlight,
@@ -245,7 +249,7 @@ export default function SudokuGameScreen() {
           ))}
         </View>
         <TouchableOpacity style={styles.eraseBtn} onPress={handleErase}>
-          <Ionicons name="backspace-outline" size={20} color={colors.mute} />
+          <Ionicons name="backspace-outline" size={20} color={c.mute} />
           <Text style={styles.eraseBtnText}>Erase</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -255,53 +259,54 @@ export default function SudokuGameScreen() {
 
 const CELL_SIZE = 38;
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paperWarm },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.paperWarm },
   scroll:    { paddingBottom: 40, alignItems: "center" },
   center:    { flex: 1, justifyContent: "center", alignItems: "center", padding: space[6], gap: space[4] },
 
   header: {
     flexDirection: "row", alignItems: "center",
     paddingHorizontal: space[4], paddingVertical: space[3],
-    backgroundColor: colors.paper, borderBottomWidth: 1, borderBottomColor: colors.rule,
+    backgroundColor: c.paper, borderBottomWidth: 1, borderBottomColor: c.rule,
   },
   backBtn:     { padding: 4, marginRight: space[3] },
-  headerTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: colors.ink, flex: 1 },
-  timer:       { fontFamily: fonts.mono, fontSize: fontSize.sm, color: colors.mute },
+  headerTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink, flex: 1 },
+  timer:       { fontFamily: fonts.mono, fontSize: fontSize.sm, color: c.mute },
 
   metaBar: {
     flexDirection: "row", justifyContent: "space-between",
     paddingHorizontal: space[4], paddingVertical: space[2],
     width: "100%",
   },
-  metaText: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute },
+  metaText: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute },
 
   grid: {
     flexDirection: "row", flexWrap: "wrap",
     width: CELL_SIZE * 9 + 4,
-    borderWidth: 2, borderColor: colors.ink,
+    borderWidth: 2, borderColor: c.ink,
     marginVertical: space[3],
   },
   cell: {
     width: CELL_SIZE, height: CELL_SIZE,
     justifyContent: "center", alignItems: "center",
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
   },
   leftEdge:   { borderLeftWidth: 0 },
   topEdge:    { borderTopWidth: 0 },
-  thinRight:  { borderRightWidth: 1, borderRightColor: "#ccc4b4" },
-  thickRight: { borderRightWidth: 2, borderRightColor: colors.ink },
-  thinBottom: { borderBottomWidth: 1, borderBottomColor: "#ccc4b4" },
-  thickBottom:{ borderBottomWidth: 2, borderBottomColor: colors.ink },
+  thinRight:  { borderRightWidth: 1, borderRightColor: c.ruleDark },
+  thickRight: { borderRightWidth: 2, borderRightColor: c.ink },
+  thinBottom: { borderBottomWidth: 1, borderBottomColor: c.ruleDark },
+  thickBottom:{ borderBottomWidth: 2, borderBottomColor: c.ink },
 
-  cellSelected:  { backgroundColor: colors.goldLight },
-  cellHighlight: { backgroundColor: "#f0ece4" },
-  cellSameVal:   { backgroundColor: "#e8e0d4" },
+  cellSelected:  { backgroundColor: c.goldLight },
+  cellHighlight: { backgroundColor: c.paperDeep },
+  cellSameVal:   { backgroundColor: c.paperDeep },
 
-  cellText:         { fontFamily: fonts.mono, fontSize: 17, color: colors.mute },
-  cellTextGiven:    { fontFamily: fonts.monoBold, color: colors.ink },
-  cellTextError:    { color: "#c5491f" },
-  cellTextSelected: { color: colors.gold },
+  cellText:         { fontFamily: fonts.mono, fontSize: 17, color: c.mute },
+  cellTextGiven:    { fontFamily: fonts.monoBold, color: c.ink },
+  cellTextError:    { color: c.ochre },
+  cellTextSelected: { color: c.gold },
 
   numPad: {
     flexDirection: "row", gap: space[2],
@@ -310,25 +315,26 @@ const styles = StyleSheet.create({
   },
   numBtn: {
     width: 52, height: 52, borderRadius: radius.lg,
-    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.rule,
+    backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule,
     justifyContent: "center", alignItems: "center",
     ...({ shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 } as any),
   },
-  numBtnText: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: colors.ink },
+  numBtnText: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink },
 
   eraseBtn: {
     flexDirection: "row", alignItems: "center", gap: 6,
     marginTop: space[3], paddingHorizontal: space[4], paddingVertical: space[2],
   },
-  eraseBtnText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute },
+  eraseBtnText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
 
-  errorText: { fontFamily: fonts.sans, color: colors.ochre, textAlign: "center" },
-  retryBtn:  { backgroundColor: colors.ink, borderRadius: radius.md, paddingHorizontal: space[5], paddingVertical: space[3] },
-  retryText: { fontFamily: fonts.sansBold, color: colors.paper, fontSize: fontSize.sm },
+  errorText: { fontFamily: fonts.sans, color: c.ochre, textAlign: "center" },
+  retryBtn:  { backgroundColor: c.ink, borderRadius: radius.md, paddingHorizontal: space[5], paddingVertical: space[3] },
+  retryText: { fontFamily: fonts.sansBold, color: c.paper, fontSize: fontSize.sm },
 
   doneEmoji: { fontSize: 48 },
-  doneTitle: { fontFamily: fonts.serifBold, fontSize: fontSize["2xl"], color: colors.ink },
-  doneSub:   { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute, textAlign: "center" },
-  doneBtn:   { backgroundColor: colors.ink, borderRadius: radius.md, paddingHorizontal: space[6], paddingVertical: space[3], marginTop: space[2] },
-  doneBtnText: { fontFamily: fonts.sansBold, color: colors.paper, fontSize: fontSize.sm },
-});
+  doneTitle: { fontFamily: fonts.serifBold, fontSize: fontSize["2xl"], color: c.ink },
+  doneSub:   { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute, textAlign: "center" },
+  doneBtn:   { backgroundColor: c.ink, borderRadius: radius.md, paddingHorizontal: space[6], paddingVertical: space[3], marginTop: space[2] },
+  doneBtnText: { fontFamily: fonts.sansBold, color: c.paper, fontSize: fontSize.sm },
+  });
+}

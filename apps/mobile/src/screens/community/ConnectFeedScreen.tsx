@@ -22,6 +22,7 @@ import {
 } from "../../features/community/useFeedRecommendations";
 import { useAuthStore } from "../../auth/authStore";
 import FeedCard from "../../components/community/FeedItemCard";
+import PostDetailSheet from "../../components/community/PostDetailSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { FeedSkeleton } from "../../components/ui/Skeleton";
@@ -76,6 +77,7 @@ export default function ConnectFeedScreen() {
 
   const [activeCategory, setActiveCategory] = useState("");
   const [forYou, setForYou] = useState(false);
+  const [sheetItem, setSheetItem] = useState<FeedItem | null>(null);
 
   const interestTagSet = useMemo(
     () => new Set((user?.interests ?? []).map((s) => s.toLowerCase())),
@@ -113,7 +115,7 @@ export default function ConnectFeedScreen() {
 
   const openItem = (item: FeedItem) => {
     if (item.type === "community") {
-      nav.navigate("PostDetail", { postId: feedItemToPostId(item), item });
+      setSheetItem(item);
       return;
     }
     if (item.type === "pulse") {
@@ -355,6 +357,12 @@ export default function ConnectFeedScreen() {
           <Ionicons name="create-outline" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
+
+      <PostDetailSheet
+        item={sheetItem}
+        visible={sheetItem !== null}
+        onClose={() => setSheetItem(null)}
+      />
     </SafeAreaView>
   );
 }

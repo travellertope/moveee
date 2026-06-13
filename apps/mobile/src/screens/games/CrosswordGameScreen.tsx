@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
   ScrollView, TextInput, ActivityIndicator, Platform,
@@ -7,7 +7,9 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { storage } from "../../store/storage";
 import { recordPlayedToday } from "../../features/games/useGameStreak";
-import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { fonts, fontSize, space, radius } from "../../theme";
+import type { ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 
 const PROXY    = "https://themoveee.com/api";
 const KEY_DATE = "crossword_last_played_date";
@@ -21,6 +23,8 @@ type Dir   = "across" | "down";
 
 export default function CrosswordGameScreen() {
   const nav = useNavigation<any>();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const inputRef = useRef<TextInput>(null);
 
   const [phase,      setPhase]      = useState<Phase>("loading");
@@ -168,14 +172,14 @@ export default function CrosswordGameScreen() {
 
   if (!puzzle || phase === "loading") return (
     <SafeAreaView style={styles.container}>
-      <Header nav={nav} title="Crossword" />
-      <View style={styles.center}><ActivityIndicator color={colors.gold} size="large" /></View>
+      <Header nav={nav} title="Crossword" c={c} styles={styles} />
+      <View style={styles.center}><ActivityIndicator color={c.gold} size="large" /></View>
     </SafeAreaView>
   );
 
   if (phase === "error") return (
     <SafeAreaView style={styles.container}>
-      <Header nav={nav} title="Crossword" />
+      <Header nav={nav} title="Crossword" c={c} styles={styles} />
       <View style={styles.center}>
         <Text style={styles.errorText}>{errorMsg}</Text>
         <TouchableOpacity onPress={init} style={styles.actionBtn}>
@@ -187,7 +191,7 @@ export default function CrosswordGameScreen() {
 
   if (phase === "played") return (
     <SafeAreaView style={styles.container}>
-      <Header nav={nav} title="Crossword" />
+      <Header nav={nav} title="Crossword" c={c} styles={styles} />
       <View style={styles.center}>
         <Text style={styles.doneEmoji}>✓</Text>
         <Text style={styles.doneTitle}>Already solved today!</Text>
@@ -201,7 +205,7 @@ export default function CrosswordGameScreen() {
 
   if (phase === "done") return (
     <SafeAreaView style={styles.container}>
-      <Header nav={nav} title="Crossword" />
+      <Header nav={nav} title="Crossword" c={c} styles={styles} />
       <View style={styles.center}>
         <Text style={styles.doneEmoji}>🎉</Text>
         <Text style={styles.doneTitle}>Solved!</Text>
@@ -231,7 +235,7 @@ export default function CrosswordGameScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header nav={nav} title="Crossword" extra={
+      <Header nav={nav} title="Crossword" c={c} styles={styles} extra={
         <TouchableOpacity onPress={handleCheck} style={styles.checkBtn}>
           <Text style={styles.checkBtnText}>Check</Text>
         </TouchableOpacity>
@@ -266,7 +270,7 @@ export default function CrosswordGameScreen() {
           >
             <Text style={styles.clueBannerNum}>{activeClue.number} {activeClue.direction.toUpperCase()}</Text>
             <Text style={styles.clueBannerText} numberOfLines={2}>{activeClue.clue}</Text>
-            <Ionicons name="swap-horizontal-outline" size={16} color={colors.gold} />
+            <Ionicons name="swap-horizontal-outline" size={16} color={c.gold} />
           </TouchableOpacity>
         )}
 
@@ -275,7 +279,7 @@ export default function CrosswordGameScreen() {
           {puzzle.cells.map((row, r) =>
             row.map((cell, c) => {
               if (cell.black) return (
-                <View key={`${r},${c}`} style={[styles.cellBase, { width: CELL, height: CELL, backgroundColor: colors.ink }]} />
+                <View key={`${r},${c}`} style={[styles.cellBase, { width: CELL, height: CELL, backgroundColor: styles.cellBlackBg.backgroundColor }]} />
               );
               const isSelected  = r === selR && c === selC;
               const isInClue    = clueIndices.has(`${r},${c}`);
@@ -345,11 +349,11 @@ export default function CrosswordGameScreen() {
   );
 }
 
-function Header({ nav, title, extra }: { nav: any; title: string; extra?: React.ReactNode }) {
+function Header({ nav, title, extra, c, styles }: { nav: any; title: string; extra?: React.ReactNode; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
   return (
     <View style={styles.header}>
       <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn}>
-        <Ionicons name="arrow-back" size={22} color={colors.ink} />
+        <Ionicons name="arrow-back" size={22} color={c.ink} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>{title}</Text>
       {extra ?? <View style={{ width: 60 }} />}
@@ -357,60 +361,63 @@ function Header({ nav, title, extra }: { nav: any; title: string; extra?: React.
   );
 }
 
-const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: colors.paperWarm },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+  container:   { flex: 1, backgroundColor: c.paperWarm },
   scroll:      { paddingBottom: 60, alignItems: "center" },
   center:      { flex: 1, justifyContent: "center", alignItems: "center", padding: space[6], gap: space[4] },
 
   header: {
     flexDirection: "row", alignItems: "center",
     paddingHorizontal: space[4], paddingVertical: space[3],
-    backgroundColor: colors.paper, borderBottomWidth: 1, borderBottomColor: colors.rule,
+    backgroundColor: c.paper, borderBottomWidth: 1, borderBottomColor: c.rule,
   },
   backBtn:     { padding: 4, marginRight: space[3] },
-  headerTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: colors.ink, flex: 1 },
+  headerTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink, flex: 1 },
 
-  checkBtn:     { backgroundColor: colors.ink, borderRadius: radius.md, paddingHorizontal: space[3], paddingVertical: 6 },
-  checkBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.xs, color: colors.paper },
+  checkBtn:     { backgroundColor: c.ink, borderRadius: radius.md, paddingHorizontal: space[3], paddingVertical: 6 },
+  checkBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.xs, color: c.paper },
 
   hiddenInput: { position: "absolute", opacity: 0, width: 1, height: 1, top: -100 },
 
   clueBanner: {
     flexDirection: "row", alignItems: "center",
-    backgroundColor: colors.paper, borderBottomWidth: 1, borderBottomColor: colors.rule,
+    backgroundColor: c.paper, borderBottomWidth: 1, borderBottomColor: c.rule,
     paddingHorizontal: space[4], paddingVertical: space[2], gap: 8, width: "100%",
     minHeight: 48,
   },
-  clueBannerNum:  { fontFamily: fonts.monoBold, fontSize: fontSize.xs, color: colors.gold, width: 60 },
-  clueBannerText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.ink, flex: 1, lineHeight: 18 },
+  clueBannerNum:  { fontFamily: fonts.monoBold, fontSize: fontSize.xs, color: c.gold, width: 60 },
+  clueBannerText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ink, flex: 1, lineHeight: 18 },
 
   grid: {
     flexDirection: "row", flexWrap: "wrap",
-    borderWidth: 1, borderColor: colors.ink,
+    borderWidth: 1, borderColor: c.ink,
     marginVertical: space[3], alignSelf: "center",
   },
-  cellBase:  { borderWidth: 0.5, borderColor: "#ccc4b4" },
-  cellWhite: { backgroundColor: colors.paper, position: "relative", justifyContent: "center", alignItems: "center" },
-  cellInClue:   { backgroundColor: "#e8e4d8" },
-  cellSelected: { backgroundColor: colors.goldLight },
+  cellBase:  { borderWidth: 0.5, borderColor: c.ruleDark },
+  cellBlackBg: { backgroundColor: c.ink },
+  cellWhite: { backgroundColor: c.paper, position: "relative", justifyContent: "center", alignItems: "center" },
+  cellInClue:   { backgroundColor: c.paperDeep },
+  cellSelected: { backgroundColor: c.goldLight },
 
-  cellNum:    { position: "absolute", top: 1, left: 2, fontFamily: fonts.mono, color: colors.ink },
-  cellLetter: { fontFamily: fonts.monoBold, color: colors.ink },
-  cellLetterError:    { color: "#c5491f" },
-  cellLetterSelected: { color: colors.ochre },
+  cellNum:    { position: "absolute", top: 1, left: 2, fontFamily: fonts.mono, color: c.ink },
+  cellLetter: { fontFamily: fonts.monoBold, color: c.ink },
+  cellLetterError:    { color: c.ochre },
+  cellLetterSelected: { color: c.gold },
 
   clueSection:      { width: "100%", paddingHorizontal: space[4], marginTop: space[3] },
-  clueSectionTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: colors.ink, marginBottom: space[2], borderBottomWidth: 1, borderBottomColor: colors.rule, paddingBottom: space[1] },
-  clueRow:          { flexDirection: "row", paddingVertical: 6, gap: 6, borderBottomWidth: 1, borderBottomColor: colors.rule + "40" },
-  clueRowActive:    { backgroundColor: colors.goldLight + "60", marginHorizontal: -space[4], paddingHorizontal: space[4] },
-  clueNum:          { fontFamily: fonts.monoBold, fontSize: fontSize.xs, color: colors.gold, width: 28, paddingTop: 1 },
-  clueText:         { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.inkSoft, flex: 1, lineHeight: 20 },
+  clueSectionTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: c.ink, marginBottom: space[2], borderBottomWidth: 1, borderBottomColor: c.rule, paddingBottom: space[1] },
+  clueRow:          { flexDirection: "row", paddingVertical: 6, gap: 6, borderBottomWidth: 1, borderBottomColor: c.rule + "40" },
+  clueRowActive:    { backgroundColor: c.goldLight + "60", marginHorizontal: -space[4], paddingHorizontal: space[4] },
+  clueNum:          { fontFamily: fonts.monoBold, fontSize: fontSize.xs, color: c.gold, width: 28, paddingTop: 1 },
+  clueText:         { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft, flex: 1, lineHeight: 20 },
 
-  errorText:   { fontFamily: fonts.sans, color: colors.ochre, textAlign: "center" },
-  actionBtn:   { backgroundColor: colors.ink, borderRadius: radius.md, paddingHorizontal: space[6], paddingVertical: space[3] },
-  actionBtnText: { fontFamily: fonts.sansBold, color: colors.paper, fontSize: fontSize.sm },
+  errorText:   { fontFamily: fonts.sans, color: c.ochre, textAlign: "center" },
+  actionBtn:   { backgroundColor: c.ink, borderRadius: radius.md, paddingHorizontal: space[6], paddingVertical: space[3] },
+  actionBtnText: { fontFamily: fonts.sansBold, color: c.paper, fontSize: fontSize.sm },
 
   doneEmoji: { fontSize: 48 },
-  doneTitle: { fontFamily: fonts.serifBold, fontSize: fontSize["2xl"], color: colors.ink },
-  doneSub:   { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute, textAlign: "center" },
-});
+  doneTitle: { fontFamily: fonts.serifBold, fontSize: fontSize["2xl"], color: c.ink },
+  doneSub:   { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute, textAlign: "center" },
+  });
+}
