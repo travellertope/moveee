@@ -16,6 +16,7 @@ import ImageLightbox from "../ui/ImageLightbox";
 import HappeningDetailModal from "./HappeningDetailModal";
 import DirectoryDetailModal from "./DirectoryDetailModal";
 import QuoteDetailModal from "./QuoteDetailModal";
+import EditorialSheet from "./EditorialSheet";
 import { ReportSheet } from "../ui/Overlays";
 import type { FeedItem, PollOption } from "../../types";
 
@@ -555,39 +556,43 @@ function PulseCard({ item, onPress }: FeedCardProps) {
 
 // EditorialCard (A2)
 function EditorialCard({ item, onPress }: FeedCardProps) {
+  const [sheetOpen, setSheetOpen] = useState(false);
   return (
-    <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
-      <View style={{ padding: 14 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <BadgePill label="Editorial" bg={colors.ochre} color={colors.paper} />
-          {item.category ? <Text style={cardStyles.eyebrow}>{item.category}</Text> : null}
-          <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
-        </View>
-
-        <Text style={[cardStyles.cardTitleXl, { marginTop: 10 }]} numberOfLines={2}>
-          {item.title}
-        </Text>
-
-        {item.excerpt ? (
-          <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={3}>
-            {item.excerpt}
-          </Text>
-        ) : null}
-
-        <Text style={[cardStyles.readMore, { marginTop: 8 }]}>Read more →</Text>
-
-        {item.source || item.ogTitle ? (
-          <View style={{ marginTop: 8, marginHorizontal: -14 }}>
-            <LinkPreview
-              source={item.source}
-              title={item.ogTitle ?? item.title}
-              domain={item.sourceUrl ?? undefined}
-              image={item.ogImage}
-            />
+    <>
+      <TouchableOpacity style={cardStyles.card} onPress={() => setSheetOpen(true)} activeOpacity={0.92}>
+        <View style={{ padding: 14 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <BadgePill label="Editorial" bg={colors.ochre} color={colors.paper} />
+            {item.category ? <Text style={cardStyles.eyebrow}>{item.category}</Text> : null}
+            <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
           </View>
-        ) : null}
-      </View>
-    </TouchableOpacity>
+
+          <Text style={[cardStyles.cardTitleXl, { marginTop: 10 }]} numberOfLines={2}>
+            {item.title}
+          </Text>
+
+          {item.excerpt ? (
+            <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={3}>
+              {item.excerpt}
+            </Text>
+          ) : null}
+
+          <Text style={[cardStyles.readMore, { marginTop: 8 }]}>Read more →</Text>
+
+          {item.source || item.ogTitle ? (
+            <View style={{ marginTop: 8, marginHorizontal: -14 }}>
+              <LinkPreview
+                source={item.source}
+                title={item.ogTitle ?? item.title}
+                domain={item.sourceUrl ?? undefined}
+                image={item.ogImage}
+              />
+            </View>
+          ) : null}
+        </View>
+      </TouchableOpacity>
+      <EditorialSheet visible={sheetOpen} item={item} onClose={() => setSheetOpen(false)} />
+    </>
   );
 }
 
