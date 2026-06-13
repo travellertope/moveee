@@ -909,38 +909,136 @@ Label each frame below in JetBrains Mono 11px mute:
 
 ---
 
-### PROMPT 5A — Magazine Home
+### PROMPT 5A — Magazine Home & Browse
 
 ```
 Senior mobile UX/UI designer — Moveee Connect magazine section. iOS, 390×844px.
-Brand: paper-warm #F3ECE0 bg, white cards, ochre #C5491F, ink #14110D,
-Fraunces for editorial headlines, DM Sans for UI, JetBrains Mono for metadata.
+Brand: paper-warm #F3ECE0 bg, white cards, ochre #C5491F, gold #B38238, ink #14110D.
+Fraunces (editorial headlines) + DM Sans (UI) + JetBrains Mono (metadata/labels).
 
-FRAME 1 — MAGAZINE HOME:
-Header (white, 64px including status bar):
-"Magazine" Fraunces 20px bold ink, left (16px padding) + search icon right.
+Design 3 frames covering the full magazine browsing experience.
+
+════════════════════════════════════════════
+FRAME 1 — MAGAZINE HOME (full-scroll layout)
+════════════════════════════════════════════
+HEADER (white, 56px, ghost bottom border):
+  "Magazine" Fraunces 20px bold ink, left 16px.
+  🔍 search icon + 🔔 bell (ochre unread dot), right 16px.
 
 FEATURED HERO (full-bleed, 390×260px):
-Editorial image (use a warm, colourful placeholder with ochre/terracotta tones).
-Bottom gradient overlay (40% height, ink to transparent):
-  Category: "FASHION" DM Sans 9px bold uppercase ochre, 8px above title
-  Title: "The New Wave of Lagos Street Style" Fraunces 24px bold white, 2 lines
-  "8 min read" DM Sans 12px white mute + author "By Funmi Osei" + avatar SM (24px) inline, bottom-left
+  Warm editorial photo placeholder (terracotta/ochre tones, portrait editorial feel).
+  Gradient overlay bottom 50%: ink to transparent.
+  Bottom-left (16px padding):
+    "FASHION · NIGERIA" DM Sans 9px bold uppercase #C5491F, letter-spacing 0.1em. 8px above title.
+    "The New Wave of Lagos Street Style" Fraunces 24px bold white, 2 lines.
+    "By Funmi Osei · 8 min read" DM Sans 12px white mute, 6px below title.
+  Top-right: "★ PRO EARLY ACCESS" gold pill, DM Sans 9px bold white — Pro-gated article badge.
 
-SECTIONS (3 horizontal scroll sections):
-Section header: "From the Editors" DM Sans 15px bold ink left + "See all →" 13px ochre right. 16px padding.
-Article cards (horizontal scroll, 200×240px each, 12px gap, 16px start padding):
-  White fill, radius-xl, shadow-card.
-  Image top: 200×110px, radius-xl top corners, object-fit cover.
-  Category badge (bottom-left of image): 9px DM Sans bold uppercase pill.
-  Title: DM Sans 14px bold ink, 2 lines, 12px padding.
-  "6 min" JetBrains Mono 10px mute + "Fola Olawale" DM Sans 12px mute.
+CATEGORY FILTER STRIP (horizontal scroll, 40px, paper-warm bg):
+  Active "All": ochre fill, white DM Sans 12px bold, radius-full.
+  Inactive: "Fashion" · "Music" · "Film" · "Food" · "Interview" · "Visuals" · "Ideas" — ghost border.
 
-Show 3 sections: "From the Editors" · "Interviews" · "Visuals"
+SECTION 1 — "FROM THE EDITORS" (16px horizontal padding, 16px top):
+  Header: "From the Editors" DM Sans 15px bold ink left + "See all →" DM Sans 13px ochre right.
+  Horizontal scroll cards (200×250px, 12px gap, 16px start):
+    3 cards (white fill, radius-xl, shadow-card):
+      Image: 200×120px, radius-xl top, editorial placeholder.
+      Category badge overlaid bottom-left: #fff0eb bg, #c5491f text, DM Sans 9px bold pill.
+      Below (12px padding): title DM Sans 14px bold ink 2 lines + "Funmi Osei · 6 min" mono 10px ghost.
+    Titles: "The New Wave of Lagos Street Style" · "What Afrobeats Owes to Jazz" · "The Architecture of Cool"
 
-Bottom nav (Magazine tab active).
+SECTION 2 — "INTERVIEWS" (16px padding, 20px top):
+  Header + same 3-card horizontal scroll.
+  Titles: "Adekunle Gold: A Conversation" · "Tems on Freedom" · "The Makers Behind the Movement"
 
-Output 1 frame.
+SECTION 3 — CURRENT ISSUE CARD (16px margin, 20px top):
+  White fill, radius-xl, shadow-card, 16px padding.
+  Row: issue cover thumbnail (80×100px, radius-md) LEFT + content RIGHT (12px gap):
+    "LATEST ISSUE" JetBrains Mono 9px bold #C5491F uppercase.
+    "Issue #7: The Maker Edition" Fraunces 18px bold ink, 4px below.
+    "9 articles · June 2026" DM Sans 13px mute, 4px below.
+    "Explore this issue →" DM Sans 13px ochre, 8px below.
+
+SECTION 4 — "SERIES" (16px padding, 20px top):
+  Header: "Series" DM Sans 15px bold ink left + "Browse all →" ochre right.
+  Horizontal scroll — series chips (160×80px, 12px gap, white fill, radius-xl, shadow-card, 12px padding):
+    Series name DM Sans 13px bold ink + "N articles" mono 10px ghost.
+    Series: "Culture Economy · 5" · "Visuals from the Continent · 8" · "The Maker Files · 6" · "Sound & City · 4"
+
+SECTION 5 — "VISUALS" (16px padding, 20px top):
+  Header: "Visuals" DM Sans 15px bold ink left + "See all →" ochre right.
+  Full-width stacked cards (white fill, radius-xl, shadow-card, 12px gap):
+    Image 200px height, radius-xl top. Below: "VISUALS" badge + Fraunces 16px bold title + author + read time.
+    2 cards visible.
+
+Bottom nav (Magazine tab active, book icon ochre).
+
+════════════════════════════════════════════
+FRAME 2 — ISSUES ARCHIVE
+════════════════════════════════════════════
+HEADER (white, 56px, ghost border):
+  Back chevron + "Issues" Fraunces 18px bold ink centred.
+
+LATEST ISSUE HERO CARD (16px margin, radius-xl, shadow-card):
+  Cover image: full card width × 200px, radius-xl top, warm editorial cover placeholder.
+  "LATEST" ochre pill badge, DM Sans 9px bold white, top-left over image.
+  Below (16px padding):
+    "Issue #7" JetBrains Mono 11px bold #C5491F uppercase.
+    "The Maker Edition" Fraunces 22px bold ink, 4px below.
+    "9 articles exploring African makers, craft culture, and the economics of creation."
+    DM Sans 13px mute, 4px below.
+    "Explore this issue →" DM Sans 14px bold ochre, 8px below.
+
+"Past Issues" DM Sans 14px bold ink, 16px padding, 20px top.
+
+2-COLUMN ISSUE GRID (8px gap, 16px margin, 12px top):
+  6 past issue cards (3 rows × 2 cols), each white fill, radius-xl, shadow-card:
+    Cover: full card width × 130px, radius-xl top, editorial cover placeholder.
+    Below (10px padding):
+      "Issue #N" JetBrains Mono 10px bold #C5491F.
+      Issue name DM Sans 13px bold ink 2 lines. 2px top.
+      "N articles · Month Year" DM Sans 11px mute. 2px top.
+      "Read →" DM Sans 12px ochre. 4px top.
+  Issues: #6 "The Sound Issue" May · #5 "Cities & Culture" Apr · #4 "Fashion Forward" Mar
+          #3 "The Film Edit" Feb · #2 "Food & Identity" Jan · #1 "Origins" Dec 2025
+
+════════════════════════════════════════════
+FRAME 3 — CATEGORY BROWSE & SEARCH
+════════════════════════════════════════════
+HEADER (white, 56px):
+  Back chevron + "Magazine" Fraunces 18px bold ink centred + 🔍 right.
+
+SEARCH BAR (active, 44px, radius-full, ghost border, 16px margin):
+  🔍 ghost left + "Interviews" DM Sans 14px ink (typed query) + × clear right.
+
+CATEGORY STRIP (same pills, "Interview" active — ochre fill).
+
+RESULTS LABEL (16px padding, 12px top):
+  "14 results in Interviews" DM Sans 13px bold ink left.
+  "Latest ▾" DM Sans 12px mute right.
+
+RESULTS LIST (vertical stack, 12px gap, 12px top, 16px margin):
+  Each result card (white fill, radius-xl, shadow-card, 16px padding):
+    Thumbnail LEFT (80×80px, radius-md) + content RIGHT (12px gap):
+      "INTERVIEW · NIGERIA" DM Sans 9px bold #C5491F uppercase.
+      Article title DM Sans 14px bold ink, 2 lines. 4px top.
+      "Author · N min" JetBrains Mono 10px ghost. 4px top.
+      Series badge if applicable: "Culture Economy Pt. 3" ghost pill DM Sans 9px. 4px top.
+    PRO ONLY gold pill overlaid top-right of thumbnail if gated.
+
+  4 results:
+    1. "Afrobeats at the Crossroads: Adekunle Gold" · Fola Olawale · 12 min · PRO ONLY
+    2. "Tems on Freedom, Fame, and Finding Her Sound" · Amaka Osei · 9 min
+    3. "The Makers Behind the Movement" · Seun Adeleke · 7 min
+    4. "Lagos Fashion Week: Behind the Runway" · Kemi Adeyemi · 5 min
+
+RELATED SERIES (16px padding, 20px top):
+  "Related series" DM Sans 13px bold ink.
+  2 series rows (44px height, white fill, ghost border, radius-xl, 12px padding, 8px gap):
+    Series name DM Sans 13px bold ink + "N articles →" JetBrains Mono 10px ghost right.
+    "Culture Economy" · 5 articles  ·  "Sound & City" · 4 articles
+
+Output 3 frames: Frame 1 alone top, Frames 2–3 side by side below.
 ```
 
 ---
