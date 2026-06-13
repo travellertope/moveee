@@ -37,7 +37,8 @@ stale history.
 - `apps/site` is always called **Moveee Magazine** in user-facing copy, metadata, and JSON-LD.
 - `apps/connect` and `apps/mobile` are both just **Moveee** — no sub-brand qualifier.
 - Never use "Moveee Connect" as a product name.
-- Site tagline: **"Connect to Culture"**
+- Site tagline (Moveee Magazine): **"Best in Culture"**
+- App tagline (Moveee): **"Connect to Culture"**
 - Brand description framing: universal/global — do not describe the brand as specifically
   African or Nigerian in metadata or SEO copy. The content and community speak for themselves.
   Use language like: *"an independent magazine and community for people who live for culture."*

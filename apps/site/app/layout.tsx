@@ -37,7 +37,7 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://themoveee.com"),
   title: {
-    default: "Moveee Magazine — Connect to Culture",
+    default: "Moveee Magazine — Best in Culture",
     template: "%s | Moveee Magazine",
   },
   description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
         url: "/og-fallback.png",
         width: 1200,
         height: 630,
-        alt: "Moveee Magazine — Connect to Culture",
+        alt: "Moveee Magazine — Best in Culture",
       },
     ],
   },
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@themoveee",
     creator: "@themoveee",
-    title: "Moveee Magazine — Connect to Culture",
+    title: "Moveee Magazine — Best in Culture",
     description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
     images: ["/og-fallback.png"],
   },

@@ -6,7 +6,7 @@ import "@/app/homepage.css";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Moveee Magazine — Connect to Culture",
+  title: "Moveee Magazine — Best in Culture",
   description:
     "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
   alternates: {
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Moveee Magazine — Connect to Culture",
+    title: "Moveee Magazine — Best in Culture",
     description:
       "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
     url: "https://themoveee.com/",
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@themoveee",
     creator: "@themoveee",
-    title: "Moveee Magazine — Connect to Culture",
+    title: "Moveee Magazine — Best in Culture",
     description:
       "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
   },
