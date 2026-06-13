@@ -220,15 +220,11 @@ export default function RegisterScreen() {
   async function handleRegister() {
     setError("");
     if (!isValid) return;
-    setLoading(true);
-    try {
-      await api.post(`${CULTURE_API}/mobile/register`, { email, username, password }, false);
-      nav.replace("VerifyEmail", { email });
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Registration failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    nav.navigate("RegisterComplete", {
+      email: email.trim(),
+      username: username.trim(),
+      password,
+    });
   }
 
   return (

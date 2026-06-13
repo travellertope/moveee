@@ -13,6 +13,7 @@ import OnboardingScreen from "../screens/auth/OnboardingScreen";
 import LoginScreen from "../screens/auth/LoginScreen";
 import RegisterScreen from "../screens/auth/RegisterScreen";
 import VerifyEmailScreen from "../screens/auth/VerifyEmailScreen";
+import RegisterCompleteScreen from "../screens/auth/RegisterCompleteScreen";
 import ForgotPasswordScreen from "../screens/auth/ForgotPasswordScreen";
 import ResetPasswordScreen from "../screens/auth/ResetPasswordScreen";
 
@@ -175,8 +176,9 @@ function AuthStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Onboarding"     component={OnboardingScreen} />
       <Stack.Screen name="Login"          component={LoginScreen} />
-      <Stack.Screen name="Register"       component={RegisterScreen} />
-      <Stack.Screen name="VerifyEmail"    component={VerifyEmailScreen} />
+      <Stack.Screen name="Register"          component={RegisterScreen} />
+      <Stack.Screen name="RegisterComplete"  component={RegisterCompleteScreen} />
+      <Stack.Screen name="VerifyEmail"       component={VerifyEmailScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword"  component={ResetPasswordScreen} />
     </Stack.Navigator>
