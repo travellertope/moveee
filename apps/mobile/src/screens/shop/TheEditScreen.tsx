@@ -17,7 +17,6 @@ import { useCartStore } from "../../store/cartStore";
 import { useAuthStore } from "../../auth/authStore";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
-import { MOBILE_API } from "../../api/client";
 
 interface EditProduct {
   id: string;

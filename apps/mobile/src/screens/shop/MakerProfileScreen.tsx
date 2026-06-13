@@ -310,9 +310,7 @@ export default function MakerProfileScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await api.get(`${MOBILE_API}/shop/maker/${makerId}`, {
-          auth: false,
-        });
+        const data = await api.get(`${MOBILE_API}/shop/maker/${makerId}`, false);
         if (!cancelled) setMaker(data as MakerProfile);
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? "Failed to load maker");

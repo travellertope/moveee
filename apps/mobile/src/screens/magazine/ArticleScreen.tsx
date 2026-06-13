@@ -318,7 +318,7 @@ export default function ArticleScreen() {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={{ marginTop: 12 }}
-                      onPress={() => nav.navigate("Login")}
+                      onPress={() => nav.navigate("Membership")}
                     >
                       <Text style={styles.signInLink}>Sign in →</Text>
                     </TouchableOpacity>

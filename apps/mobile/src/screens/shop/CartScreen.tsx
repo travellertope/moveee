@@ -238,7 +238,7 @@ export default function CartScreen() {
         {!isPatron && subtotal > 0 && (
           <TouchableOpacity
             style={styles.proStrip}
-            onPress={() => nav.navigate("Membership")}
+            onPress={() => nav.navigate("Connect", { screen: "Membership" } as any)}
           >
             <Text style={styles.proStripText}>
               ★ Pro members save £{(subtotal * PRO_DISCOUNT_RATE).toFixed(2)} on this order
