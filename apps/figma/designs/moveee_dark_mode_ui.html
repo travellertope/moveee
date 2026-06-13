@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Dark Mode Full App</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Strict Dark Mode Palette
+                        'dm-bg': '#1A1612',          
+                        'dm-card': '#242018',        
+                        'dm-elev': '#2D2820',    
+                        'dm-subtle': '#201C15',
+                        'dm-border': '#3D3530',      
+                        'dm-pri': '#F3ECE0',     
+                        'dm-sec': '#9E9288',   
+                        'dm-ghost': '#5C5349',       
+                        'dm-ochre': '#D4603A',       
+                        'dm-gold': '#C9963F',        
+                        'dm-success': '#4ADE80',
+                        'dm-error': '#F87171',
+                        'dm-warn': '#FB923C',
+                        
+                        // Badge specific
+                        'bdg-edit-bg': '#3B2820', 'bdg-edit-txt': '#E8836A',
+                        'bdg-comm-bg': '#1F2F1F', 'bdg-comm-txt': '#6FCF8A', 'bdg-comm-brd': '#4A9F4A',
+                        'bdg-happ-bg': '#1F1E38', 'bdg-happ-txt': '#8E88E8',
+                        'bdg-dir-bg': '#162920',  'bdg-dir-txt': '#3A9E7E',
+                        'bdg-quote-bg': '#29203A', 'bdg-quote-txt': '#B585D0',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'dm-soft': '0 4px 20px -2px rgba(0, 0, 0, 0.4)',
+                        'dm-top': '0 -4px 20px -2px rgba(0, 0, 0, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            background-color: #0D0B09; 
+            margin: 0; 
+            padding: 40px; 
+            display: flex;
+            justify-content: center;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="font-sans text-dm-pri min-h-screen">
+
+    <!-- 2-Column Grid (4 Rows) -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-x-16 gap-y-16 max-w-[900px] mx-auto pb-12">
+
+        <!-- ============================================== -->
+        <!-- FRAME 1: CONNECT FEED                          -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-dm-bg rounded-[40px] border-[8px] border-black overflow-hidden relative flex flex-col shadow-2xl">
+                <!-- Header -->
+                <div class="bg-dm-subtle z-40 shrink-0 border-b border-dm-border">
+                    <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-dm-pri">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center pb-0.5">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    <header class="flex items-center justify-between px-4 h-[44px]">
+                        <div class="flex items-center">
+                            <span class="font-serif text-[18px] font-bold text-dm-pri tracking-tight">moveee</span>
+                            <span class="font-sans text-[9px] font-bold text-dm-gold uppercase tracking-widest ml-1 mt-1">connect</span>
+                        </div>
+                        <div class="flex items-center gap-[16px]">
+                            <div class="relative">
+                                <svg class="w-[24px] h-[24px] text-dm-sec" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                <div class="absolute top-0 right-[2px] w-[8px] h-[8px] bg-dm-ochre rounded-full border-[1.5px] border-dm-subtle"></div>
+                            </div>
+                            <div class="w-[32px] h-[32px] rounded-full bg-dm-elev border border-dm-border"></div>
+                        </div>
+                    </header>
+                </div>
+
+                <!-- Feed Scroll -->
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[96px]">
+                    <!-- Filters -->
+                    <div class="px-[16px] py-[12px] flex gap-[8px] overflow-x-auto hide-scrollbar bg-dm-bg">
+                        <button class="bg-dm-ochre text-dm-pri text-[13px] font-bold px-[16px] h-[32px] rounded-full shrink-0">For You</button>
+                        <button class="bg-dm-elev border border-dm-border text-dm-sec text-[13px] px-[16px] h-[32px] rounded-full shrink-0">Following</button>
+                        <button class="bg-dm-elev border border-dm-border text-dm-sec text-[13px] px-[16px] h-[32px] rounded-full shrink-0">Local</button>
+                    </div>
+
+                    <!-- Card A: Editorial -->
+                    <div class="bg-dm-card border-b border-dm-border p-[16px]">
+                        <div class="w-full aspect-[16/9] bg-dm-elev rounded-md mb-[12px]"></div>
+                        <span class="font-mono text-[9px] text-dm-ghost uppercase tracking-widest mb-[4px] block">Magazine · Feature</span>
+                        <h3 class="font-serif text-[17px] font-bold text-dm-pri leading-tight mb-[4px]">The Evolution of Lagos Streetwear</h3>
+                        <p class="font-sans text-[13px] text-dm-sec mb-[8px]">Exploring the alté scene and its global influence.</p>
+                        <span class="font-mono text-[10px] text-dm-ghost">Fola Olawale · Jun 10</span>
+                    </div>
+
+                    <!-- Card B: Community -->
+                    <div class="bg-dm-card border-b border-dm-border p-[16px] border-l-[3px] border-l-bdg-comm-brd">
+                        <div class="flex items-center gap-[12px] mb-[12px]">
+                            <div class="w-[40px] h-[40px] bg-dm-elev rounded-full shrink-0 border border-dm-border"></div>
+                            <div class="flex flex-col">
+                                <span class="font-sans text-[14px] font-bold text-dm-pri leading-tight">Kemi Adeyemi</span>
+                                <span class="font-mono text-[11px] text-dm-sec">@kemi · 2h</span>
+                            </div>
+                        </div>
+                        <div class="bg-bdg-comm-bg text-bdg-comm-txt px-[8px] py-[4px] rounded-full inline-flex items-center text-[9px] font-bold tracking-wider mb-[12px]">
+                            COMMUNITY
+                        </div>
+                        <p class="font-sans text-[13px] text-dm-sec leading-relaxed line-clamp-3 mb-[16px]">
+                            Just visited the new exhibition at Rele Gallery. The way they curated the lighting around the portrait series was incredible. Definitely recommend going before it closes next week!
+                        </p>
+                        <div class="flex justify-between items-center text-dm-ghost">
+                            <div class="flex items-center gap-[24px]">
+                                <button class="flex items-center gap-[6px] text-[13px]"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg> 24</button>
+                                <button class="flex items-center gap-[6px] text-[13px]"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> 5</button>
+                            </div>
+                            <button><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg></button>
+                        </div>
+                    </div>
+
+                    <!-- Card C: Happening -->
+                    <div class="bg-dm-card border-b border-dm-border p-[16px]">
+                        <div class="w-full h-[180px] bg-dm-elev rounded-md relative mb-[12px]">
+                            <div class="absolute top-[12px] left-[12px] bg-bdg-happ-bg text-bdg-happ-txt px-[8px] py-[4px] rounded-full inline-flex items-center text-[9px] font-bold tracking-wider">
+                                HAPPENING
+                            </div>
+                            <div class="absolute top-[12px] right-[12px] bg-dm-gold/20 backdrop-blur px-[8px] py-[4px] rounded-full inline-flex items-center gap-1 border border-dm-gold/30">
+                                <span class="text-dm-gold text-[10px]">🔒</span>
+                                <span class="text-dm-gold text-[9px] font-bold tracking-wider">PRO ONLY</span>
+                            </div>
+                        </div>
+                        <h3 class="font-serif text-[15px] font-bold text-dm-pri mb-[8px]">Live Session: Cavemen at Jazz Cafe</h3>
+                        <div class="flex items-center gap-[8px] mb-[4px]">
+                            <svg class="w-3 h-3 text-dm-ghost" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/></svg>
+                            <span class="font-sans text-[13px] text-dm-sec">Fri 15 Jun · 9:00 PM</span>
+                        </div>
+                        <div class="flex items-center gap-[8px] mb-[12px]">
+                            <svg class="w-3 h-3 text-dm-ghost" fill="currentColor" viewBox="0 0 20 20"><path d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"/></svg>
+                            <span class="font-sans text-[13px] text-dm-sec">Jazz Cafe, Camden</span>
+                        </div>
+                        <button class="bg-dm-ochre text-dm-pri px-[16px] h-[32px] rounded-full text-[13px] font-bold">RSVP</button>
+                    </div>
+
+                    <!-- Card D: Quote -->
+                    <div class="bg-dm-card border-b border-dm-border p-[24px]">
+                        <span class="text-[#4A403A] font-serif text-[40px] leading-none absolute -mt-4 opacity-50">"</span>
+                        <p class="font-serif text-[16px] italic text-dm-pri leading-[1.5] relative z-10 pl-2">
+                            Not everything that is faced can be changed, but nothing can be changed until it is faced.
+                        </p>
+                        <span class="font-sans text-[13px] text-dm-sec block mt-[12px] pl-2">— James Baldwin</span>
+                        <div class="flex items-center gap-[24px] text-dm-ghost mt-[16px] pl-2">
+                            <button class="flex items-center gap-[6px] text-[13px]"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg> 112</button>
+                            <button class="flex items-center gap-[6px] text-[13px]"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> 8</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAB -->
+                <button class="absolute bottom-[96px] right-[16px] w-[56px] h-[56px] bg-dm-ochre rounded-full flex items-center justify-center text-white shadow-dm-soft z-40">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                </button>
+
+                <!-- Bottom Nav -->
+                <nav class="absolute bottom-0 w-full h-[84px] bg-dm-subtle border-t border-dm-border flex justify-around items-start pt-[12px] z-50 pb-safe">
+                    <button class="text-dm-ochre flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                        <span class="text-[10px] font-bold">Home</span>
+                    </button>
+                    <button class="text-dm-ghost flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <span class="text-[10px]">Discover</span>
+                    </button>
+                    <button class="w-[48px] h-[40px] bg-dm-elev rounded-[12px] text-dm-ghost flex items-center justify-center -mt-[4px] border border-dm-border">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+                    </button>
+                    <button class="text-dm-ghost flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                        <span class="text-[10px]">Shop</span>
+                    </button>
+                    <button class="text-dm-ghost flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <span class="text-[10px]">Me</span>
+                    </button>
+                </nav>
+            </div>
+            <span class="font-mono text-[11px] text-gray-500 text-center uppercase tracking-widest mt-2">Frame 1: Connect Feed</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: ARTICLE DETAIL                        -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-dm-bg rounded-[40px] border-[8px] border-black overflow-hidden relative flex flex-col shadow-2xl">
+                <!-- Hero Image Background -->
+                <div class="absolute top-0 w-full h-[280px] bg-dm-elev z-0"></div>
+
+                <!-- Status Bar Mock -->
+                <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-white z-50">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <div class="absolute top-[52px] left-[16px] z-50">
+                    <button class="w-[40px] h-[40px] bg-dm-elev rounded-full flex items-center justify-center text-dm-pri shadow-md">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar z-10 pt-[256px]">
+                    <div class="bg-dm-card rounded-t-[20px] min-h-screen px-[24px] pt-[32px] pb-[100px] shadow-dm-top">
+                        
+                        <span class="text-dm-ochre font-mono text-[9px] font-bold uppercase tracking-widest mb-[8px] block">Culture · Interview</span>
+                        
+                        <h1 class="font-serif text-[24px] font-bold text-dm-pri leading-tight mb-[8px]">
+                            Afrobeats at the Crossroads: A Conversation with Adekunle Gold
+                        </h1>
+                        <p class="font-sans text-[14px] text-dm-sec leading-relaxed mb-[24px]">
+                            On globalisation, authenticity, and what it means to make music that travels.
+                        </p>
+
+                        <!-- Author -->
+                        <div class="flex items-center gap-[12px] mb-[24px]">
+                            <div class="w-[36px] h-[36px] bg-dm-elev rounded-full border border-dm-border shrink-0"></div>
+                            <div class="flex flex-col">
+                                <span class="font-sans text-[14px] font-bold text-dm-pri">Fola Olawale</span>
+                                <span class="font-mono text-[10px] text-dm-ghost">June 9, 2026</span>
+                            </div>
+                        </div>
+
+                        <div class="w-full h-[1px] bg-dm-border mb-[24px]"></div>
+
+                        <!-- Body -->
+                        <p class="font-sans text-[16px] text-dm-sec leading-[1.7] mb-[24px]">
+                            There's a particular brand of artistic confidence that Adekunle Gold carries into every room. At 34, the Yoruba pop architect has stopped explaining himself to anyone. His evolution from highlife-infused sweetheart to an unapologetic rockstar is a masterclass in sonic pivoting.
+                        </p>
+
+                        <!-- Pull Quote -->
+                        <div class="border-l-[3px] border-dm-ochre bg-dm-subtle p-[16px] my-[24px]">
+                            <p class="font-serif text-[17px] italic text-dm-pri leading-snug">
+                                "The world wants Afrobeats but sometimes I wonder if it knows what Afrobeats actually is."
+                            </p>
+                        </div>
+
+                        <p class="font-sans text-[16px] text-dm-sec leading-[1.7] mb-[24px]">
+                            He's speaking to me from his Lagos studio, and I can hear the city in the background — motorcycle engines, hawkers, the faint hum of a generator. It's an auditory tapestry that anchors his latest project.
+                        </p>
+
+                        <!-- Inline Image -->
+                        <div class="w-full h-[200px] bg-dm-elev rounded-md mb-[24px]"></div>
+                    </div>
+                </div>
+
+                <!-- Bottom Action Bar -->
+                <div class="absolute bottom-0 w-full h-[84px] bg-dm-elev border-t border-dm-border flex items-center justify-around z-50 pb-safe">
+                    <button class="flex flex-col items-center text-dm-sec hover:text-dm-ochre transition-colors gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                        <span class="font-sans text-[10px]">Save</span>
+                    </button>
+                    <button class="flex flex-col items-center text-dm-sec hover:text-dm-pri transition-colors gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                        <span class="font-sans text-[10px]">Share</span>
+                    </button>
+                    <button class="flex flex-col items-center text-dm-sec hover:text-dm-pri transition-colors gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                        <span class="font-sans text-[10px]">Bookmark</span>
+                    </button>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-gray-500 text-center uppercase tracking-widest mt-2">Frame 2: Article Detail</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 3: MEMBER DASHBOARD                      -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-dm-bg rounded-[40px] border-[8px] border-black overflow-hidden relative flex flex-col shadow-2xl">
+                <!-- Header -->
+                <div class="bg-dm-subtle z-40 shrink-0 border-b border-dm-border">
+                    <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-dm-pri">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center pb-0.5">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    <header class="flex items-center justify-between px-4 h-[44px]">
+                        <div class="w-[60px]"></div>
+                        <div class="flex items-center">
+                            <span class="font-serif text-[18px] font-bold text-dm-pri tracking-tight">moveee</span>
+                            <span class="font-sans text-[9px] font-bold text-dm-gold uppercase tracking-widest ml-1 mt-1">connect</span>
+                        </div>
+                        <div class="w-[60px] text-right font-sans text-[13px] text-dm-ochre font-medium">Sign out</div>
+                    </header>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar p-[16px] pb-[100px] flex flex-col gap-[16px]">
+                    <!-- Hero Card -->
+                    <div class="bg-dm-card rounded-xl p-[24px] flex items-center shadow-dm-soft">
+                        <div class="w-[80px] h-[80px] rounded-full border-[2px] border-dm-gold shrink-0 bg-dm-elev p-[2px]">
+                            <div class="w-full h-full rounded-full bg-dm-elev border border-dm-border"></div>
+                        </div>
+                        <div class="ml-[16px] flex flex-col items-start gap-[6px]">
+                            <div class="bg-dm-gold text-dm-bg px-[8px] py-[2px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">★ Connect Pro</div>
+                            <h2 class="font-serif text-[20px] font-bold text-dm-pri leading-none">Adaeze Obi</h2>
+                            <span class="font-sans text-[13px] text-dm-sec">@adaeze.obi</span>
+                            
+                            <div class="mt-[8px] bg-dm-elev border-l-[3px] border-dm-ochre rounded-md p-[8px] w-full flex items-center justify-between">
+                                <span class="font-sans text-[12px] text-dm-sec">Passkey login</span>
+                                <span class="font-sans text-[12px] text-dm-ochre font-bold">Set up</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Bar -->
+                    <div class="bg-dm-card rounded-xl p-[16px] grid grid-cols-4 divide-x divide-dm-border shadow-dm-soft">
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="font-sans text-[18px] font-bold text-dm-ochre">450 CR</span>
+                            <span class="font-mono text-[10px] text-dm-ghost mt-[4px]">Balance</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="font-sans text-[18px] font-bold text-dm-gold">280</span>
+                            <span class="font-mono text-[10px] text-dm-ghost mt-[4px]">Rep</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="font-sans text-[14px] font-bold text-dm-pri text-center px-1">Taste Maker</span>
+                            <span class="font-mono text-[10px] text-dm-ghost mt-[4px]">Rank</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="font-sans text-[14px] font-bold text-dm-pri">7🔥</span>
+                            <span class="font-mono text-[10px] text-dm-ghost mt-[4px] text-center">Day streak</span>
+                        </div>
+                    </div>
+
+                    <!-- Badges -->
+                    <div class="bg-dm-card rounded-xl p-[16px] shadow-dm-soft">
+                        <h3 class="font-sans text-[14px] font-bold text-dm-pri mb-[12px]">My Badges</h3>
+                        <div class="flex flex-wrap gap-[8px]">
+                            <div class="bg-dm-elev border border-dm-border rounded-full py-[6px] px-[10px] flex items-center gap-[6px]">
+                                <span>🎨</span> <span class="font-sans text-[12px] text-dm-sec">Taste Maker</span>
+                            </div>
+                            <div class="bg-dm-elev border border-dm-border rounded-full py-[6px] px-[10px] flex items-center gap-[6px]">
+                                <span>💎</span> <span class="font-sans text-[12px] text-dm-sec">Gem Hunter</span>
+                            </div>
+                            <div class="bg-dm-elev border border-dm-border rounded-full py-[6px] px-[10px] flex items-center gap-[6px]">
+                                <span>📸</span> <span class="font-sans text-[12px] text-dm-sec">Visual</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Links -->
+                    <div class="bg-dm-card rounded-xl shadow-dm-soft overflow-hidden">
+                        <div class="h-[52px] px-[16px] border-b border-dm-border flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[28px] h-[28px] rounded-full bg-dm-elev flex items-center justify-center text-dm-sec">🔔</div>
+                                <span class="font-sans text-[14px] text-dm-pri">Notifications</span>
+                            </div>
+                            <div class="bg-dm-ochre text-white font-mono text-[10px] font-bold w-[18px] h-[18px] rounded-full flex items-center justify-center">3</div>
+                        </div>
+                        <div class="h-[52px] px-[16px] border-b border-dm-border flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[28px] h-[28px] rounded-full bg-dm-elev flex items-center justify-center text-dm-sec">🛍</div>
+                                <span class="font-sans text-[14px] text-dm-pri">My Perks</span>
+                            </div>
+                            <svg class="w-4 h-4 text-dm-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="h-[52px] px-[16px] border-b border-dm-border flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[28px] h-[28px] rounded-full bg-dm-elev flex items-center justify-center text-dm-sec">💳</div>
+                                <span class="font-sans text-[14px] text-dm-pri">Wallet</span>
+                            </div>
+                            <svg class="w-4 h-4 text-dm-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="h-[52px] px-[16px] border-b border-dm-border flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[28px] h-[28px] rounded-full bg-dm-elev flex items-center justify-center text-dm-sec">📊</div>
+                                <span class="font-sans text-[14px] text-dm-pri">Analytics</span>
+                            </div>
+                            <svg class="w-4 h-4 text-dm-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="h-[52px] px-[16px] border-b border-dm-border flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[28px] h-[28px] rounded-full bg-dm-elev flex items-center justify-center text-dm-sec">⚙️</div>
+                                <span class="font-sans text-[14px] text-dm-pri">Settings</span>
+                            </div>
+                            <svg class="w-4 h-4 text-dm-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="h-[52px] px-[16px] flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[28px] h-[28px] rounded-full bg-dm-elev flex items-center justify-center text-dm-sec">🌙</div>
+                                <span class="font-sans text-[14px] text-dm-pri">Appearance</span>
+                            </div>
+                            <span class="font-sans text-[12px] text-dm-sec">Dark</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Nav -->
+                <nav class="absolute bottom-0 w-full h-[84px] bg-dm-subtle border-t border-dm-border flex justify-around items-start pt-[12px] z-50 pb-safe">
+                    <button class="text-dm-ghost flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    </button>
+                    <button class="text-dm-ghost flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </button>
+                    <button class="w-[48px] h-[40px] bg-dm-elev rounded-[12px] text-dm-ghost flex items-center justify-center -mt-[4px] border border-dm-border">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+                    </button>
+                    <button class="text-dm-ghost flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                    </button>
+                    <button class="text-dm-ochre flex flex-col items-center gap-1">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </button>
+                </nav>
+            </div>
+            <span class="font-mono text-[11px] text-gray-500 text-center uppercase tracking-widest mt-2">Frame 3: Member Dashboard</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 4: NOTIFICATIONS                         -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-dm-bg rounded-[40px] border-[8px] border-black overflow-hidden relative flex flex-col shadow-2xl">
+                <!-- Header -->
+                <div class="bg-dm-subtle z-40 shrink-0 border-b border-dm-border">
+                    <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-dm-pri">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center pb-0.5">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    <header class="flex items-center justify-between px-4 h-[44px]">
+                        <button class="text-dm-pri w-[44px] h-[44px] flex items-center justify-start">
+                            <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h1 class="font-sans text-[15px] font-bold text-dm-pri text-center flex-1">Notifications</h1>
+                        <button class="text-dm-ochre w-[80px] h-[44px] flex items-center justify-end font-sans text-[13px]">Mark all read</button>
+                    </header>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar bg-dm-bg">
+                    <!-- Today -->
+                    <div class="sticky top-0 z-10 bg-dm-subtle h-[32px] px-[16px] flex items-center border-b border-dm-border">
+                        <span class="font-mono text-[9px] font-bold uppercase text-dm-ghost">Today</span>
+                    </div>
+
+                    <!-- Row 1 (Earned) -->
+                    <div class="relative min-h-[72px] bg-dm-card p-[16px] flex items-start gap-[12px] border-b border-dm-border">
+                        <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-dm-ochre"></div>
+                        <div class="w-[40px] h-[40px] rounded-full bg-dm-ochre flex items-center justify-center shrink-0">
+                            <svg class="w-[18px] h-[18px] text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center">
+                            <div class="flex justify-between items-start gap-2">
+                                <span class="text-[14px] font-bold text-dm-pri leading-tight">💰 +20 Culture Points!</span>
+                                <span class="text-dm-ghost font-mono text-[10px] mt-0.5">2h ago</span>
+                            </div>
+                            <span class="text-[13px] text-dm-sec mt-[4px]">Your post was validated.</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 2 (Badge) -->
+                    <div class="relative min-h-[72px] bg-dm-card p-[16px] flex items-start gap-[12px] border-b border-dm-border">
+                        <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-dm-gold"></div>
+                        <div class="w-[40px] h-[40px] rounded-full bg-dm-gold flex items-center justify-center shrink-0">
+                            <svg class="w-[20px] h-[20px] text-dm-bg" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center">
+                            <div class="flex justify-between items-start gap-2">
+                                <span class="text-[14px] font-bold text-dm-pri leading-tight">🏆 New badge unlocked!</span>
+                                <div class="w-[8px] h-[8px] bg-dm-ochre rounded-full mt-1"></div>
+                            </div>
+                            <span class="text-[13px] text-dm-sec mt-[4px]">You earned 'Taste Maker'</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 3 (Comment) -->
+                    <div class="relative min-h-[72px] bg-dm-card p-[16px] flex items-start gap-[12px] border-b border-dm-border">
+                        <div class="w-[40px] h-[40px] rounded-full bg-dm-success flex items-center justify-center shrink-0">
+                            <svg class="w-[20px] h-[20px] text-dm-bg" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center">
+                            <div class="flex justify-between items-start gap-2">
+                                <span class="text-[14px] font-bold text-dm-pri leading-tight">💬 New comment on your post</span>
+                                <div class="w-[8px] h-[8px] bg-dm-ochre rounded-full mt-1"></div>
+                            </div>
+                            <span class="text-[13px] text-dm-sec mt-[4px] line-clamp-1">Kemi: 'This is the spot! 🔥'</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 4 (Perk) -->
+                    <div class="relative min-h-[72px] bg-dm-card p-[16px] flex items-start gap-[12px] border-b border-dm-border">
+                        <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-dm-warn"></div>
+                        <div class="w-[40px] h-[40px] rounded-full bg-dm-warn flex items-center justify-center shrink-0">
+                            <svg class="w-[20px] h-[20px] text-dm-bg" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center">
+                            <div class="flex justify-between items-start gap-2">
+                                <span class="text-[14px] font-bold text-dm-pri leading-tight">⏰ Perk expiring soon</span>
+                            </div>
+                            <span class="text-[13px] text-dm-sec mt-[4px]">Your Bisi Ceramics coupon expires in 2 days.</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 5 (System) -->
+                    <div class="relative min-h-[72px] bg-dm-card p-[16px] flex items-start gap-[12px] border-b border-dm-border">
+                        <div class="w-[40px] h-[40px] rounded-full bg-dm-elev flex items-center justify-center shrink-0">
+                            <svg class="w-[20px] h-[20px] text-dm-sec" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center">
+                            <span class="text-[14px] font-bold text-dm-pri leading-tight">📢 3 new events in your city</span>
+                            <span class="text-[13px] text-dm-sec mt-[4px]">Upcoming events in Lagos this week.</span>
+                        </div>
+                    </div>
+
+                    <!-- Earlier -->
+                    <div class="sticky top-0 z-10 bg-dm-subtle h-[32px] px-[16px] flex items-center border-y border-dm-border">
+                        <span class="font-mono text-[9px] font-bold uppercase text-dm-ghost">Earlier</span>
+                    </div>
+
+                    <div class="relative min-h-[72px] bg-dm-card p-[16px] flex items-start gap-[12px] border-b border-dm-border">
+                        <div class="w-[40px] h-[40px] rounded-full bg-dm-elev flex items-center justify-center shrink-0 text-[18px] opacity-70">✅</div>
+                        <div class="flex-1 flex flex-col justify-center">
+                            <span class="text-[14px] font-bold text-dm-ghost leading-tight">Cash out approved</span>
+                            <span class="text-[13px] text-dm-ghost mt-[4px]">Your 500 CR request was approved.</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <span class="font-mono text-[11px] text-gray-500 text-center uppercase tracking-widest mt-2">Frame 4: Notifications</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 5: EVENTS / HAPPENINGS                   -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-dm-bg rounded-[40px] border-[8px] border-black overflow-hidden relative flex flex-col shadow-2xl">
+                <!-- Header -->
+                <div class="bg-dm-subtle z-40 shrink-0 border-b border-dm-border">
+                    <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-dm-pri">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center pb-0.5">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    <header class="flex items-center justify-between px-4 h-[44px]">
+                        <div class="w-[44px]"></div>
+                        <h1 class="font-serif text-[20px] font-bold text-dm-pri text-center flex-1">Events</h1>
+                        <button class="text-dm-sec w-[44px] h-[44px] flex items-center justify-end">
+                            <svg class="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                        </button>
+                    </header>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar bg-dm-bg">
+                    <!-- Filters -->
+                    <div class="px-[16px] py-[12px] flex gap-[8px] overflow-x-auto hide-scrollbar">
+                        <button class="bg-dm-ochre text-dm-pri text-[13px] font-bold px-[16px] h-[36px] rounded-full shrink-0">All</button>
+                        <button class="bg-dm-elev border border-dm-border text-dm-sec text-[13px] px-[16px] h-[36px] rounded-full shrink-0">Music</button>
+                        <button class="bg-dm-elev border border-dm-border text-dm-sec text-[13px] px-[16px] h-[36px] rounded-full shrink-0">Food</button>
+                        <button class="bg-dm-elev border border-dm-border text-dm-sec text-[13px] px-[16px] h-[36px] rounded-full shrink-0">Art</button>
+                        <button class="bg-dm-elev border border-dm-border text-dm-sec text-[13px] px-[16px] h-[36px] rounded-full shrink-0">Film</button>
+                    </div>
+
+                    <div class="px-[16px] flex flex-col gap-[12px] pb-[40px]">
+                        
+                        <!-- Event 1 (Pro) -->
+                        <div class="bg-dm-card rounded-xl shadow-dm-soft w-full flex flex-col overflow-hidden">
+                            <div class="w-full h-[200px] relative bg-dm-elev border-b border-dm-border">
+                                <div class="absolute top-[12px] left-[12px] bg-bdg-happ-bg text-bdg-happ-txt px-[8px] py-[4px] rounded-full inline-flex items-center text-[9px] font-bold tracking-wider">
+                                    HAPPENING
+                                </div>
+                                <div class="absolute bottom-[12px] right-[12px] bg-dm-gold text-dm-bg px-[10px] py-[4px] rounded-full shadow-md flex items-center gap-1">
+                                    <span class="text-[12px]">🔒</span>
+                                    <span class="font-sans text-[10px] font-bold uppercase tracking-wider">PRO ONLY</span>
+                                </div>
+                            </div>
+                            <div class="p-[16px]">
+                                <h2 class="font-serif text-[17px] font-bold text-dm-pri mb-2">Afro Nation Lagos</h2>
+                                <div class="flex flex-col gap-1 mb-3">
+                                    <div class="flex items-center text-dm-sec font-sans text-[13px]">
+                                        <span class="w-[20px] text-center mr-1 text-dm-ghost">📅</span> Fri 28 Jun · 12:00 PM
+                                    </div>
+                                    <div class="flex items-center text-dm-sec font-sans text-[13px]">
+                                        <span class="w-[20px] text-center mr-1 text-dm-ghost">📍</span> Eko Atlantic · Victoria Island
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-end">
+                                    <span class="text-dm-sec font-mono text-[12px]">₦25,000 – ₦80,000</span>
+                                    <button class="bg-dm-ochre text-dm-pri font-sans font-bold text-[13px] px-5 py-2 rounded-full shadow-sm">RSVP</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Event 2 (Free) -->
+                        <div class="bg-dm-card rounded-xl shadow-dm-soft w-full flex flex-col overflow-hidden">
+                            <div class="w-full h-[160px] relative bg-dm-elev border-b border-dm-border">
+                                <!-- placeholder -->
+                            </div>
+                            <div class="p-[16px]">
+                                <h2 class="font-serif text-[17px] font-bold text-dm-pri mb-2">Afrocentric Art Pop-Up</h2>
+                                <div class="flex flex-col gap-1 mb-3">
+                                    <div class="flex items-center text-dm-sec font-sans text-[13px]">
+                                        <span class="w-[20px] text-center mr-1 text-dm-ghost">📅</span> Sat 29 Jun · 10:00 AM
+                                    </div>
+                                    <div class="flex items-center text-dm-sec font-sans text-[13px]">
+                                        <span class="w-[20px] text-center mr-1 text-dm-ghost">📍</span> Rele Gallery · Ikoyi
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-end">
+                                    <span class="text-dm-success font-mono text-[12px] font-bold">FREE</span>
+                                    <button class="bg-dm-ochre text-dm-pri font-sans font-bold text-[13px] px-5 py-2 rounded-full shadow-sm">RSVP</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-gray-500 text-center uppercase tracking-widest mt-2">Frame 5: Events</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 6: SHOP PRODUCT LISTING                  -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-dm-bg rounded-[40px] border-[8px] border-black overflow-hidden relative flex flex-col shadow-2xl">
+                <!-- Header -->
+                <div class="bg-dm-subtle z-40 shrink-0 border-b border-dm-border pb-[8px]">
+                    <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-dm-pri">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center pb-0.5">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    <header class="flex items-center justify-between px-4 h-[44px]">
+                        <div class="w-[44px]"></div>
+                        <h1 class="font-serif text-[20px] font-bold text-dm-pri text-center flex-1">Shop</h1>
+                        <button class="relative text-dm-pri w-[44px] h-[44px] flex items-center justify-end">
+                            <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                            <span class="absolute top-1.5 right-[2px] w-[14px] h-[14px] bg-dm-ochre rounded-full flex items-center justify-center text-dm-pri font-mono text-[8px] border-[1.5px] border-dm-subtle">2</span>
+                        </button>
+                    </header>
+                    <div class="px-[16px] mt-[4px]">
+                        <div class="relative flex-1">
+                            <svg class="w-4 h-4 text-dm-ghost absolute left-[16px] top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" class="w-full h-[40px] bg-dm-card border border-dm-border rounded-full pl-[40px] pr-[16px] text-[14px] font-sans text-dm-ghost outline-none placeholder:text-dm-ghost" placeholder="Search products...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar bg-dm-bg">
+                    <!-- Filters -->
+                    <div class="px-[16px] py-[12px] flex gap-[8px] overflow-x-auto hide-scrollbar">
+                        <button class="bg-dm-ochre text-dm-pri text-[13px] font-bold px-[16px] h-[36px] rounded-full shrink-0">All</button>
+                        <button class="bg-dm-elev border border-dm-border text-dm-sec text-[13px] px-[16px] h-[36px] rounded-full shrink-0">Apparel</button>
+                        <button class="bg-dm-elev border border-dm-border text-dm-sec text-[13px] px-[16px] h-[36px] rounded-full shrink-0">Accessories</button>
+                        <button class="bg-dm-elev border border-dm-border text-dm-sec text-[13px] px-[16px] h-[36px] rounded-full shrink-0">Objects</button>
+                    </div>
+
+                    <div class="px-[16px] grid grid-cols-2 gap-x-[8px] gap-y-[16px] pb-[40px]">
+                        
+                        <!-- Product 1 (Pro) -->
+                        <div class="flex flex-col">
+                            <div class="w-full aspect-square bg-dm-elev rounded-xl relative mb-[8px]">
+                                <div class="absolute top-2 right-2 bg-dm-gold text-dm-bg font-sans font-bold text-[9px] px-[8px] py-[4px] rounded-full shadow-sm">PRO</div>
+                            </div>
+                            <h4 class="font-sans text-[13px] font-bold text-dm-pri line-clamp-2 min-h-[36px]">Ankara Print Tote Bag</h4>
+                            <div class="flex flex-col mb-[8px]">
+                                <span class="font-sans text-[13px] text-dm-ghost line-through">₦12,000</span>
+                                <span class="font-sans text-[14px] font-bold text-dm-gold">₦8,500</span>
+                            </div>
+                            <button class="w-full h-[36px] bg-dm-ochre rounded-full text-dm-pri font-sans text-[13px] font-bold">Add to cart</button>
+                        </div>
+
+                        <!-- Product 2 (Regular) -->
+                        <div class="flex flex-col">
+                            <div class="w-full aspect-square bg-dm-elev rounded-xl relative mb-[8px]"></div>
+                            <h4 class="font-sans text-[13px] font-bold text-dm-pri line-clamp-2 min-h-[36px]">Move Culture Sweat</h4>
+                            <div class="flex flex-col justify-end min-h-[40px] mb-[8px]">
+                                <span class="font-sans text-[14px] font-bold text-dm-pri">₦18,000</span>
+                            </div>
+                            <button class="w-full h-[36px] bg-dm-ochre rounded-full text-dm-pri font-sans text-[13px] font-bold">Add to cart</button>
+                        </div>
+
+                        <!-- Product 3 (Early Access) -->
+                        <div class="flex flex-col">
+                            <div class="w-full aspect-square bg-dm-elev rounded-xl relative mb-[8px]">
+                                <div class="absolute top-2 left-2 bg-dm-gold text-dm-bg font-sans font-bold text-[9px] px-[8px] py-[4px] rounded-full shadow-sm">EARLY ACCESS</div>
+                            </div>
+                            <h4 class="font-sans text-[13px] font-bold text-dm-pri line-clamp-2 min-h-[36px]">Silver Cowrie Cuffs</h4>
+                            <div class="flex flex-col justify-end min-h-[40px] mb-[8px]">
+                                <span class="font-sans text-[14px] font-bold text-dm-pri">₦24,500</span>
+                            </div>
+                            <button class="w-full h-[36px] bg-dm-ochre rounded-full text-dm-pri font-sans text-[13px] font-bold">Add to cart</button>
+                        </div>
+
+                        <!-- Product 4 (Out of stock) -->
+                        <div class="flex flex-col">
+                            <div class="w-full aspect-square bg-dm-elev rounded-xl relative mb-[8px] opacity-50"></div>
+                            <h4 class="font-sans text-[13px] font-bold text-dm-pri line-clamp-2">Kente Cap</h4>
+                            <span class="font-sans text-[12px] italic text-dm-ghost min-h-[18px]">Out of stock</span>
+                            <div class="flex flex-col justify-end min-h-[22px] mb-[8px]">
+                                <span class="font-sans text-[14px] font-bold text-dm-pri">₦9,000</span>
+                            </div>
+                            <button class="w-full h-[36px] bg-dm-elev rounded-full text-dm-ghost font-sans text-[13px] font-bold border border-dm-border" disabled>Add to cart</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-gray-500 text-center uppercase tracking-widest mt-2">Frame 6: Shop Listing</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 7: PUBLIC PROFILE                        -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-dm-bg rounded-[40px] border-[8px] border-black overflow-hidden relative flex flex-col shadow-2xl">
+                <!-- Status Bar Mock over hero -->
+                <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-dm-pri z-50">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[40px] bg-dm-bg relative z-10">
+                    <!-- Hero Area -->
+                    <div class="h-[200px] w-full bg-gradient-to-b from-dm-subtle to-dm-card relative shrink-0 pt-12 z-0">
+                        <button class="w-[40px] h-[40px] bg-dm-card rounded-full flex items-center justify-center ml-[16px] shadow-sm border border-dm-border">
+                            <svg class="w-6 h-6 text-dm-pri" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Profile Card -->
+                    <div class="bg-dm-card rounded-t-[20px] -mt-[40px] relative z-10 flex flex-col pb-6 min-h-[500px]">
+                        
+                        <button class="absolute top-[16px] right-[16px] w-[36px] h-[36px] bg-dm-elev border border-dm-border text-dm-sec rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                        </button>
+
+                        <div class="self-center -mt-[48px] relative">
+                            <div class="w-[96px] h-[96px] rounded-full border-[3px] border-dm-gold p-[3px] bg-dm-bg">
+                                <div class="w-full h-full rounded-full bg-dm-elev"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-center px-[16px] mt-[12px]">
+                            <div class="bg-dm-gold px-2 py-0.5 rounded-full flex items-center gap-1 mb-[8px]">
+                                <span class="text-dm-bg text-[10px] pb-[1px]">★</span>
+                                <span class="text-dm-bg text-[9px] font-bold uppercase tracking-widest">Connect Pro</span>
+                            </div>
+                            <h2 class="font-serif text-[24px] font-bold text-dm-pri">Adaeze Obi</h2>
+                            <span class="text-dm-sec font-mono text-[13px] mt-[2px]">@adaeze.obi</span>
+                            <span class="text-dm-pri text-[14px] mt-[4px]">Creative Director + Photographer</span>
+                            <span class="text-dm-sec text-[12px] mt-[4px]">📍 Lagos, Nigeria</span>
+                            <span class="text-dm-ghost font-mono text-[10px] mt-[8px]">Member since March 2024</span>
+                        </div>
+
+                        <!-- Badges Shelf -->
+                        <div class="mt-[16px] w-full overflow-x-auto hide-scrollbar">
+                            <div class="flex gap-[8px] px-[16px] whitespace-nowrap pb-2">
+                                <span class="bg-dm-elev border border-dm-border rounded-full px-[10px] py-[6px] text-dm-sec text-[12px] font-bold flex items-center gap-1">🎨 Taste Maker</span>
+                                <span class="bg-dm-elev border border-dm-border rounded-full px-[10px] py-[6px] text-dm-sec text-[12px] font-bold flex items-center gap-1">💎 Gem Hunter</span>
+                                <span class="bg-dm-elev border border-dm-border rounded-full px-[10px] py-[6px] text-dm-sec text-[12px] font-bold flex items-center gap-1">📸 Visual</span>
+                            </div>
+                        </div>
+
+                        <!-- Social Links -->
+                        <div class="flex justify-center gap-[24px] mt-[12px]">
+                            <button class="w-[36px] h-[36px] bg-dm-elev rounded-full flex items-center justify-center text-dm-sec border border-dm-border"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></button>
+                            <button class="w-[36px] h-[36px] bg-dm-elev rounded-full flex items-center justify-center text-dm-sec border border-dm-border"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></button>
+                            <button class="w-[36px] h-[36px] bg-dm-elev rounded-full flex items-center justify-center text-dm-sec border border-dm-border"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></button>
+                        </div>
+
+                        <!-- Tabs -->
+                        <div class="h-[44px] flex items-end border-b border-dm-border mt-[16px] px-[16px] gap-6">
+                            <div class="h-full flex items-center border-b-2 border-dm-ochre pb-1">
+                                <span class="text-dm-pri font-bold text-[14px]">Community</span>
+                            </div>
+                            <div class="h-full flex items-center pb-[6px]">
+                                <span class="text-dm-ghost text-[14px]">Portfolio</span>
+                            </div>
+                        </div>
+
+                        <!-- Post List -->
+                        <div class="pt-[16px] flex flex-col gap-[12px] px-[16px]">
+                            <!-- Post 1 -->
+                            <div class="bg-dm-elev border border-dm-border rounded-lg p-[16px]">
+                                <div class="flex justify-between items-center mb-[8px]">
+                                    <div class="bg-bdg-happ-bg text-bdg-happ-txt px-[8px] py-[4px] rounded-full inline-flex items-center text-[9px] font-bold tracking-wider">HAPPENING</div>
+                                    <span class="font-mono text-[10px] text-dm-ghost">3 days ago</span>
+                                </div>
+                                <p class="text-dm-sec text-[13px] line-clamp-2 leading-relaxed mb-3">Just discovered the most amazing vinyl shop tucked away in Yaba...</p>
+                                <div class="flex gap-[16px] font-mono text-[10px] text-dm-ghost">
+                                    <span>❤️ 12</span><span>🔥 5</span><span>👏 8</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-gray-500 text-center uppercase tracking-widest mt-2">Frame 7: Public Profile</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 8: GAMES HUB + TRIVIA (VERTICAL STACK)   -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-dm-bg rounded-[40px] border-[8px] border-black overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <!-- Status Bar Mock -->
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-dm-pri shrink-0 bg-dm-bg">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <!-- SPLIT VIEW: Top = Games Hub, Bottom = Trivia active -->
+                
+                <!-- TOP HALF: Games Hub -->
+                <div class="h-1/2 flex flex-col border-b-[4px] border-black">
+                    <header class="h-[44px] flex flex-col items-center justify-center bg-dm-bg">
+                        <h1 class="font-serif text-[20px] font-bold text-dm-pri text-center leading-none">Games</h1>
+                        <span class="font-mono text-[10px] text-dm-sec mt-1">Daily streak: 7 🔥</span>
+                    </header>
+                    <div class="flex-1 px-[16px] pt-[12px] pb-[16px] overflow-hidden">
+                        <div class="grid grid-cols-2 gap-[12px] h-full">
+                            <!-- Game 1 -->
+                            <div class="bg-dm-card rounded-xl flex flex-col h-full border border-dm-border">
+                                <div class="flex-1 bg-dm-elev rounded-t-xl flex items-center justify-center relative">
+                                    <div class="absolute top-2 right-2 bg-dm-success text-dm-bg font-sans font-bold text-[9px] px-2 py-0.5 rounded-full">✓</div>
+                                    <span class="text-[32px]">?</span>
+                                </div>
+                                <div class="p-[12px] h-[56px] flex flex-col justify-center">
+                                    <h4 class="font-sans text-[13px] font-bold text-dm-pri">Daily Trivia</h4>
+                                </div>
+                            </div>
+                            <!-- Game 2 -->
+                            <div class="bg-dm-card rounded-xl flex flex-col h-full border border-dm-border">
+                                <div class="flex-1 bg-dm-elev rounded-t-xl flex items-center justify-center"><span class="text-[32px] font-serif font-bold text-dm-gold">"</span></div>
+                                <div class="p-[12px] h-[56px] flex flex-col justify-center">
+                                    <h4 class="font-sans text-[13px] font-bold text-dm-pri leading-tight">Who Said It</h4>
+                                    <span class="font-sans text-[11px] text-dm-sec">Play today</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTTOM HALF: Trivia Active -->
+                <div class="h-1/2 flex flex-col bg-dm-bg relative">
+                    <header class="h-[44px] flex items-center justify-between px-[16px]">
+                        <svg class="w-[20px] h-[20px] text-dm-pri" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                        <h1 class="font-serif text-[18px] font-bold text-dm-pri text-center flex-1">Daily Trivia</h1>
+                        <span class="font-mono text-[10px] text-dm-ochre font-bold bg-dm-ochre/20 px-2 py-0.5 rounded">7🔥</span>
+                    </header>
+                    
+                    <!-- Progress Bar -->
+                    <div class="w-full h-[3px] bg-dm-border">
+                        <div class="h-full bg-dm-ochre w-[30%]"></div>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto px-[16px] pt-[16px] pb-[16px]">
+                        <div class="flex justify-center mb-3">
+                            <span class="bg-dm-elev text-dm-sec px-[10px] py-[4px] rounded-full text-[10px] font-bold uppercase tracking-wider border border-dm-border">Music & Culture</span>
+                        </div>
+
+                        <div class="bg-dm-card rounded-xl p-[20px] shadow-dm-soft mb-[12px] border border-dm-border">
+                            <h2 class="font-serif text-[20px] font-bold text-dm-pri text-center leading-tight mb-[20px]">Which decade saw Afrobeats go global?</h2>
+                            
+                            <div class="flex flex-col gap-[12px]">
+                                <!-- Unselected -->
+                                <button class="h-[48px] rounded-lg border border-dm-border bg-dm-elev flex items-center px-[16px]">
+                                    <span class="font-mono font-bold text-dm-ghost w-[24px] text-left">A</span>
+                                    <span class="font-sans text-[14px] text-dm-pri flex-1 text-left">The 1990s</span>
+                                </button>
+                                <!-- Selected Correct -->
+                                <button class="h-[48px] rounded-lg border border-dm-success bg-[#1F2F1F] flex items-center px-[16px]">
+                                    <span class="font-mono font-bold text-dm-success w-[24px] text-left">C</span>
+                                    <span class="font-sans text-[14px] font-bold text-dm-success flex-1 text-left">The 2010s</span>
+                                    <svg class="w-5 h-5 text-dm-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Explanation -->
+                        <div class="bg-dm-card rounded-lg border-l-[3px] border-dm-ochre p-[12px] mb-[12px]">
+                            <p class="font-sans text-[13px] text-dm-sec leading-relaxed">Afrobeats reached global charts primarily in the 2010s with artists like Wizkid, Davido, and Burna Boy crossing over into international markets.</p>
+                        </div>
+
+                        <button class="w-full h-[48px] bg-dm-ochre text-dm-pri font-sans font-bold text-[14px] rounded-full shadow-sm active:scale-[0.98]">
+                            Next question &rarr;
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+            <span class="font-mono text-[11px] text-gray-500 text-center uppercase tracking-widest mt-2">Frame 8: Games & Trivia Split</span>
+        </div>
+
+    </div>
+</body>
+</html>
