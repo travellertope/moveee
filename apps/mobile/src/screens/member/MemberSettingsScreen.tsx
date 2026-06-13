@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { INTERESTS } from "@moveee/utils/interest-mappings";
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView,
+  View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Pressable,
   StyleSheet, SafeAreaView, Alert, ActivityIndicator, Platform,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -115,6 +116,22 @@ function ProfileTab() {
     occupation:         user?.occupation ?? "",
   });
   const [saving, setSaving] = useState(false);
+  const [showDobPicker, setShowDobPicker] = useState(false);
+
+  // Parse stored "YYYY-MM-DD" string to a Date for the picker
+  const dobDate = form.dateOfBirth
+    ? new Date(form.dateOfBirth + "T12:00:00")
+    : new Date(new Date().getFullYear() - 25, 0, 1);
+
+  function onDobChange(_: unknown, selected?: Date) {
+    if (Platform.OS === "android") setShowDobPicker(false);
+    if (selected) {
+      const y = selected.getFullYear();
+      const m = String(selected.getMonth() + 1).padStart(2, "0");
+      const d = String(selected.getDate()).padStart(2, "0");
+      setForm((f) => ({ ...f, dateOfBirth: `${y}-${m}-${d}` }));
+    }
+  }
 
   const save = async () => {
     setSaving(true);
@@ -263,13 +280,45 @@ function ProfileTab() {
         {/* DOB */}
         <View style={pf.wrap}>
           <Text style={pf.label}>Date of Birth</Text>
-          <TextInput
-            style={pf.input}
-            value={form.dateOfBirth}
-            onChangeText={(v) => setForm((f) => ({ ...f, dateOfBirth: v }))}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={colors.ghost}
-          />
+          <TouchableOpacity style={pf.selectRow} activeOpacity={0.7} onPress={() => setShowDobPicker(true)}>
+            <Text style={form.dateOfBirth ? pf.selectText : pf.selectPlaceholder}>
+              {form.dateOfBirth || "Select date"}
+            </Text>
+            <Ionicons name="calendar-outline" size={16} color={colors.ghost} />
+          </TouchableOpacity>
+
+          {/* Android: inline picker */}
+          {showDobPicker && Platform.OS === "android" && (
+            <DateTimePicker
+              value={dobDate}
+              mode="date"
+              display="default"
+              maximumDate={new Date()}
+              onChange={onDobChange}
+            />
+          )}
+
+          {/* iOS: modal picker */}
+          {Platform.OS === "ios" && (
+            <Modal visible={showDobPicker} transparent animationType="slide">
+              <Pressable style={pf.modalOverlay} onPress={() => setShowDobPicker(false)}>
+                <Pressable style={pf.modalSheet} onPress={(e) => e.stopPropagation()}>
+                  <View style={pf.modalHeader}>
+                    <Text style={pf.modalCancel} onPress={() => setShowDobPicker(false)}>Cancel</Text>
+                    <Text style={pf.modalDone} onPress={() => setShowDobPicker(false)}>Done</Text>
+                  </View>
+                  <DateTimePicker
+                    value={dobDate}
+                    mode="date"
+                    display="spinner"
+                    maximumDate={new Date()}
+                    onChange={onDobChange}
+                    style={{ width: "100%" }}
+                  />
+                </Pressable>
+              </Pressable>
+            </Modal>
+          )}
         </View>
 
         {/* Nationality */}
@@ -390,6 +439,20 @@ const pf = StyleSheet.create({
   },
   selectText:        { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.ink },
   selectPlaceholder: { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.ghost },
+  modalOverlay: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end",
+  },
+  modalSheet: {
+    backgroundColor: colors.paper, borderTopLeftRadius: 16, borderTopRightRadius: 16,
+    paddingBottom: 24,
+  },
+  modalHeader: {
+    flexDirection: "row", justifyContent: "space-between",
+    paddingHorizontal: space[5], paddingVertical: space[3],
+    borderBottomWidth: 1, borderBottomColor: colors.rule,
+  },
+  modalCancel: { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute },
+  modalDone:   { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.ochre },
 });
 
 // ── Directory Tab ─────────────────────────────────────────────────────────────

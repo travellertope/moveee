@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
   postBtnText:     { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.paper },
 
   templateStrip:        { flexGrow: 0, borderBottomWidth: 1, borderBottomColor: colors.rule },
-  templateStripContent: { paddingHorizontal: space[3], paddingVertical: space[2], gap: space[2] },
+  templateStripContent: { paddingHorizontal: space[3], paddingVertical: space[3], gap: space[2] },
   templatePill: {
     borderWidth: 1, borderColor: colors.rule, borderRadius: radius.full,
     paddingHorizontal: space[3], paddingVertical: space[1] + 2,
