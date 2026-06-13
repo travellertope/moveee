@@ -36,6 +36,9 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://themoveee.com"),
+  verification: {
+    google: "-PWVNI7d4eBu_a-Qo35KOTlAknn2MiciJ4c_ycsiqdc",
+  },
   title: {
     default: "Moveee Magazine — Best in Culture",
     template: "%s | Moveee Magazine",
