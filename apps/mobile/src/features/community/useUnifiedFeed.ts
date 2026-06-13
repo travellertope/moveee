@@ -11,6 +11,39 @@ interface FeedResponse {
   hasMore: boolean;
 }
 
+// Decode common HTML entities that WordPress includes in API text fields.
+function decodeHtml(str: string | undefined | null): string {
+  if (!str) return str as string;
+  return str
+    .replace(/&#8217;/g, "’")  // right single quote / apostrophe
+    .replace(/&#8216;/g, "‘")  // left single quote
+    .replace(/&#8220;/g, "“")  // left double quote
+    .replace(/&#8221;/g, "”")  // right double quote
+    .replace(/&#8211;/g, "–")  // en dash
+    .replace(/&#8212;/g, "—")  // em dash
+    .replace(/&#8230;/g, "…")  // ellipsis
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&amp;/g,  "&")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g,   "<")
+    .replace(/&gt;/g,   ">")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'");
+}
+
+function decodeItem(item: FeedItem): FeedItem {
+  return {
+    ...item,
+    title:         decodeHtml(item.title),
+    excerpt:       decodeHtml(item.excerpt),
+    body:          decodeHtml(item.body),
+    source:        decodeHtml(item.source),
+    ogTitle:       decodeHtml(item.ogTitle),
+    ogDescription: decodeHtml(item.ogDescription),
+  };
+}
+
 export function useUnifiedFeed() {
   const [items, setItems] = useState<FeedItem[]>(() => {
     return cache.get<FeedItem[]>(CACHE_KEY) ?? [];
@@ -28,8 +61,9 @@ export function useUnifiedFeed() {
       const data = await api.get<FeedResponse>(
         `${MOBILE_API}/feed?page=${pageNum}&per_page=${PAGE_SIZE}`
       );
+      const decoded = data.items.map(decodeItem);
       setItems((prev) => {
-        const next = replace ? data.items : [...prev, ...data.items];
+        const next = replace ? decoded : [...prev, ...decoded];
         if (replace) cache.set(CACHE_KEY, next, TTL.SHORT);
         return next;
       });
