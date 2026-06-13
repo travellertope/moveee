@@ -6,18 +6,21 @@ const monorepoRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
-// Watch the monorepo root so shared packages resolve correctly
+// Watch the full monorepo so Metro can resolve packages across workspaces
 config.watchFolders = [monorepoRoot];
 
-// Force React and React Native to resolve from apps/mobile only — prevents
-// duplicate React instances when the monorepo root also has node_modules
+// Resolution order: app-local first, then monorepo root (where npm workspaces hoists to)
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
+  path.resolve(monorepoRoot, 'node_modules'),
 ];
 
+// Force a single React instance — npm workspaces hoists react/react-native to the
+// monorepo root. Without this pin Metro can resolve them from two different paths
+// and bundle duplicates, causing the ReactCurrentDispatcher crash on launch.
 config.resolver.extraNodeModules = {
-  react: path.resolve(projectRoot, 'node_modules/react'),
-  'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
+  react: path.resolve(monorepoRoot, 'node_modules/react'),
+  'react-native': path.resolve(monorepoRoot, 'node_modules/react-native'),
 };
 
 module.exports = config;
