@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { useColors } from "../../hooks/useColors";
+import type { ColorPalette } from "../../theme";
 
 // ── Crossword mini-grid illustration ─────────────────────────────────────────
-function CrosswordIllustration() {
+function CrosswordIllustration({ styles }: { styles: ReturnType<typeof createStyles> }) {
+  const c = useColors();
   // 4×4 grid — black cells at known positions
   const cells = [
     [false, false, true,  false],
@@ -16,13 +19,13 @@ function CrosswordIllustration() {
     <View style={{ gap: 2 }}>
       {cells.map((row, r) => (
         <View key={r} style={{ flexDirection: "row", gap: 2 }}>
-          {row.map((black, c) => (
+          {row.map((black, c2) => (
             <View
-              key={c}
+              key={c2}
               style={{
                 width: 12, height: 12,
-                backgroundColor: black ? colors.ink : colors.paper,
-                borderWidth: 1, borderColor: colors.ghost,
+                backgroundColor: black ? c.ink : c.paper,
+                borderWidth: 1, borderColor: c.ghost,
               }}
             />
           ))}
@@ -33,7 +36,8 @@ function CrosswordIllustration() {
 }
 
 // ── Sudoku mini-grid illustration ─────────────────────────────────────────────
-function SudokuIllustration() {
+function SudokuIllustration({ styles }: { styles: ReturnType<typeof createStyles> }) {
+  const c = useColors();
   return (
     <View style={{ borderWidth: 2, borderColor: "rgba(200,191,176,0.6)", padding: 2, gap: 2 }}>
       {[0, 1, 2].map((row) => (
@@ -43,8 +47,8 @@ function SudokuIllustration() {
               key={col}
               style={{
                 width: 14, height: 14,
-                backgroundColor: (row + col) % 2 === 0 ? "rgba(200,191,176,0.2)" : colors.paper,
-                borderWidth: 1, borderColor: colors.ghost,
+                backgroundColor: (row + col) % 2 === 0 ? "rgba(200,191,176,0.2)" : c.paper,
+                borderWidth: 1, borderColor: c.ghost,
               }}
             />
           ))}
@@ -56,6 +60,8 @@ function SudokuIllustration() {
 
 export default function GamesScreen() {
   const nav = useNavigation<any>();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -86,7 +92,7 @@ export default function GamesScreen() {
             onPress={() => nav.navigate("TriviaGame")}
             activeOpacity={0.85}
           >
-            <View style={[styles.cardTop, { backgroundColor: colors.ochre }]}>
+            <View style={[styles.cardTop, { backgroundColor: c.ochre }]}>
               <Text style={styles.triviaQuestion}>?</Text>
             </View>
             <View style={styles.cardBody}>
@@ -105,7 +111,7 @@ export default function GamesScreen() {
             onPress={() => nav.navigate("WhoSaidIt")}
             activeOpacity={0.85}
           >
-            <View style={[styles.cardTop, { backgroundColor: colors.ink }]}>
+            <View style={[styles.cardTop, { backgroundColor: c.ink }]}>
               <Text style={styles.quoteChar}>"</Text>
             </View>
             <View style={styles.cardBody}>
@@ -120,8 +126,8 @@ export default function GamesScreen() {
 
           {/* Card 3 — Crossword (coming soon) */}
           <View style={[styles.card, styles.cardDim]}>
-            <View style={[styles.cardTop, { backgroundColor: colors.paperDeep }]}>
-              <CrosswordIllustration />
+            <View style={[styles.cardTop, { backgroundColor: c.paperDeep }]}>
+              <CrosswordIllustration styles={styles} />
             </View>
             <View style={styles.cardBody}>
               <Text style={styles.cardName}>Crossword</Text>
@@ -134,8 +140,8 @@ export default function GamesScreen() {
 
           {/* Card 4 — Sudoku (coming soon) */}
           <View style={[styles.card, styles.cardDim]}>
-            <View style={[styles.cardTop, { backgroundColor: colors.paperDeep }]}>
-              <SudokuIllustration />
+            <View style={[styles.cardTop, { backgroundColor: c.paperDeep }]}>
+              <SudokuIllustration styles={styles} />
             </View>
             <View style={styles.cardBody}>
               <Text style={styles.cardName}>Sudoku</Text>
@@ -151,76 +157,78 @@ export default function GamesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paperWarm },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.paperWarm },
 
-  header: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: colors.paper, paddingHorizontal: space[4],
-    paddingTop: space[2], paddingBottom: space[2],
-    borderBottomWidth: 1, borderBottomColor: colors.ghost,
-  },
-  headerLeft:  { flexDirection: "row", alignItems: "center", gap: 6 },
-  headerTitle: { fontFamily: fonts.serifBold, fontSize: 20, color: colors.ink },
-  headerStar:  { fontFamily: fonts.sans, fontSize: 14, color: colors.gold, marginTop: 2 },
-  headerSub:   { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute },
+    header: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      backgroundColor: c.paper, paddingHorizontal: space[4],
+      paddingTop: space[2], paddingBottom: space[2],
+      borderBottomWidth: 1, borderBottomColor: c.ghost,
+    },
+    headerLeft:  { flexDirection: "row", alignItems: "center", gap: 6 },
+    headerTitle: { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink },
+    headerStar:  { fontFamily: fonts.sans, fontSize: 14, color: c.gold, marginTop: 2 },
+    headerSub:   { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
 
-  // Streak banner
-  streakBanner: {
-    height: 64, backgroundColor: "rgba(255,255,255,0.5)",
-    borderLeftWidth: 3, borderLeftColor: colors.ochre,
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 16, marginBottom: space[3],
-    shadowColor: colors.ink, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1,
-  },
-  streakLeft:  { flexDirection: "row", alignItems: "center", gap: 8 },
-  streakEmoji: { fontSize: 24 },
-  streakText:  { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink },
-  streakSub:   { fontFamily: fonts.sans, fontSize: 12, color: colors.mute },
+    // Streak banner
+    streakBanner: {
+      height: 64, backgroundColor: "rgba(255,255,255,0.5)",
+      borderLeftWidth: 3, borderLeftColor: c.ochre,
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: 16, marginBottom: space[3],
+      shadowColor: c.ink, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1,
+    },
+    streakLeft:  { flexDirection: "row", alignItems: "center", gap: 8 },
+    streakEmoji: { fontSize: 24 },
+    streakText:  { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+    streakSub:   { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
 
-  // Grid
-  grid: {
-    flexDirection: "row", flexWrap: "wrap", paddingHorizontal: space[4], gap: space[4],
-  },
+    // Grid
+    grid: {
+      flexDirection: "row", flexWrap: "wrap", paddingHorizontal: space[4], gap: space[4],
+    },
 
-  card: {
-    width: "47%", backgroundColor: colors.paper, borderRadius: radius.xl,
-    overflow: "hidden", minHeight: 250, ...shadows.card,
-  },
-  cardDim: { opacity: 0.6 },
+    card: {
+      width: "47%", backgroundColor: c.paper, borderRadius: radius.xl,
+      overflow: "hidden", minHeight: 250, ...shadows.card,
+    },
+    cardDim: { opacity: 0.6 },
 
-  cardTop: {
-    height: 100, alignItems: "center", justifyContent: "center",
-  },
+    cardTop: {
+      height: 100, alignItems: "center", justifyContent: "center",
+    },
 
-  triviaQuestion: {
-    fontFamily: fonts.serifBold, fontSize: 48, color: colors.paper, lineHeight: 56,
-  },
-  quoteChar: {
-    fontFamily: fonts.serifBold, fontSize: 48, color: colors.gold, lineHeight: 56, paddingBottom: 16,
-  },
+    triviaQuestion: {
+      fontFamily: fonts.serifBold, fontSize: 48, color: c.paper, lineHeight: 56,
+    },
+    quoteChar: {
+      fontFamily: fonts.serifBold, fontSize: 48, color: c.gold, lineHeight: 56, paddingBottom: 16,
+    },
 
-  cardBody: { padding: 16, flex: 1, justifyContent: "space-between" },
-  cardName: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.ink, marginBottom: 4 },
-  cardDesc: {
-    fontFamily: fonts.mono, fontSize: fontSize.eyebrow, color: colors.mute,
-    lineHeight: 14, marginBottom: 8,
-  },
-  cardCredits: {
-    fontFamily: fonts.sansBold, fontSize: 12, color: colors.ochre, marginBottom: 8,
-  },
-  playBtn: {
-    height: 32, backgroundColor: "rgba(197,73,31,0.1)", borderRadius: radius.full,
-    alignItems: "center", justifyContent: "center",
-  },
-  playBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.ochre },
+    cardBody: { padding: 16, flex: 1, justifyContent: "space-between" },
+    cardName: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink, marginBottom: 4 },
+    cardDesc: {
+      fontFamily: fonts.mono, fontSize: fontSize.eyebrow, color: c.mute,
+      lineHeight: 14, marginBottom: 8,
+    },
+    cardCredits: {
+      fontFamily: fonts.sansBold, fontSize: 12, color: c.ochre, marginBottom: 8,
+    },
+    playBtn: {
+      height: 32, backgroundColor: "rgba(197,73,31,0.1)", borderRadius: radius.full,
+      alignItems: "center", justifyContent: "center",
+    },
+    playBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre },
 
-  comingSoonPill: {
-    borderWidth: 1, borderColor: colors.ghost, borderRadius: radius.full,
-    paddingVertical: 4, alignItems: "center", backgroundColor: colors.paperDeep,
-  },
-  comingSoonText: {
-    fontFamily: fonts.sansBold, fontSize: 11, color: colors.mute,
-    letterSpacing: 1, textTransform: "uppercase",
-  },
-});
+    comingSoonPill: {
+      borderWidth: 1, borderColor: c.ghost, borderRadius: radius.full,
+      paddingVertical: 4, alignItems: "center", backgroundColor: c.paperDeep,
+    },
+    comingSoonText: {
+      fontFamily: fonts.sansBold, fontSize: 11, color: c.mute,
+      letterSpacing: 1, textTransform: "uppercase",
+    },
+  });
+}

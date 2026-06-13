@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, Dimensions, FlatList,
@@ -8,7 +8,9 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { api, MOBILE_API } from "../../api/client";
-import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { fonts, fontSize, space, radius, shadows } from "../../theme";
+import type { ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 import type { Member } from "../../types";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -76,7 +78,13 @@ const PORTFOLIO_GRADIENTS: Array<[string, string]> = [
 
 // ── Sub-components ───────────────────────────────────────────────────────────
 
-function BadgeShelf({ badges }: { badges: Array<{ slug: string; name: string; emoji: string }> }) {
+function BadgeShelf({
+  badges,
+  styles,
+}: {
+  badges: Array<{ slug: string; name: string; emoji: string }>;
+  styles: ReturnType<typeof createStyles>;
+}) {
   if (!badges.length) return null;
   return (
     <ScrollView
@@ -94,7 +102,13 @@ function BadgeShelf({ badges }: { badges: Array<{ slug: string; name: string; em
   );
 }
 
-function MiniPostCard({ post }: { post: CommunityPost }) {
+function MiniPostCard({
+  post,
+  styles,
+}: {
+  post: CommunityPost;
+  styles: ReturnType<typeof createStyles>;
+}) {
   const meta = TEMPLATE_META[post.templateType] ?? { emoji: "📝", label: "Post" };
   return (
     <View style={styles.postCard}>
@@ -117,9 +131,13 @@ function MiniPostCard({ post }: { post: CommunityPost }) {
 function PortfolioGrid({
   items,
   isOwnProfile,
+  styles,
+  c,
 }: {
   items: PortfolioItem[];
   isOwnProfile: boolean;
+  styles: ReturnType<typeof createStyles>;
+  c: ColorPalette;
 }) {
   const colW = (SCREEN_W - 32 - 8) / 2;
 
@@ -140,11 +158,10 @@ function PortfolioGrid({
       ))}
       {isOwnProfile && (
         <TouchableOpacity style={[styles.portfolioAddBtn, { width: colW }]}>
-          <Ionicons name="add" size={20} color={colors.ghost} />
+          <Ionicons name="add" size={20} color={c.ghost} />
           <Text style={styles.portfolioAddText}>Add portfolio item</Text>
         </TouchableOpacity>
       )}
-      {/* Footer count */}
       {items.length > 0 && (
         <Text style={[styles.portfolioCount, { width: SCREEN_W - 32 }]}>
           {items.length + (isOwnProfile ? 0 : 0)} items
@@ -159,6 +176,8 @@ function PortfolioGrid({
 export default function MemberProfileScreen() {
   const { params } = useRoute<any>();
   const nav = useNavigation<any>();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   const [profile,   setProfile]   = useState<PublicProfile | null>(null);
   const [posts,     setPosts]     = useState<CommunityPost[]>([]);
@@ -200,7 +219,7 @@ export default function MemberProfileScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <ActivityIndicator color={colors.gold} />
+          <ActivityIndicator color={c.gold} />
         </View>
       </SafeAreaView>
     );
@@ -238,7 +257,7 @@ export default function MemberProfileScreen() {
         <View style={styles.profileCard}>
           {/* Share button */}
           <TouchableOpacity style={styles.shareBtn}>
-            <Ionicons name="share-outline" size={18} color={colors.ink} />
+            <Ionicons name="share-outline" size={18} color={c.ink} />
           </TouchableOpacity>
 
           {/* Avatar */}
@@ -275,24 +294,24 @@ export default function MemberProfileScreen() {
           </View>
 
           {/* Badge shelf */}
-          {badges.length > 0 && <BadgeShelf badges={badges} />}
+          {badges.length > 0 && <BadgeShelf badges={badges} styles={styles} />}
 
           {/* Social links */}
           {hasSocial && (
             <View style={styles.socialRow}>
               {profile.instagram ? (
                 <TouchableOpacity style={styles.socialBtn}>
-                  <Ionicons name="logo-instagram" size={18} color={colors.ghost} />
+                  <Ionicons name="logo-instagram" size={18} color={c.ghost} />
                 </TouchableOpacity>
               ) : null}
               {profile.linkedin ? (
                 <TouchableOpacity style={styles.socialBtn}>
-                  <Ionicons name="logo-linkedin" size={18} color={colors.ghost} />
+                  <Ionicons name="logo-linkedin" size={18} color={c.ghost} />
                 </TouchableOpacity>
               ) : null}
               {profile.website ? (
                 <TouchableOpacity style={styles.socialBtn}>
-                  <Ionicons name="globe-outline" size={18} color={colors.ghost} />
+                  <Ionicons name="globe-outline" size={18} color={c.ghost} />
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -322,7 +341,7 @@ export default function MemberProfileScreen() {
           <View style={styles.tabContent}>
             {activeTab === "community" ? (
               <>
-                {posts.map((p) => <MiniPostCard key={p.id} post={p} />)}
+                {posts.map((p) => <MiniPostCard key={p.id} post={p} styles={styles} />)}
                 {posts.length > 0 && (
                   <TouchableOpacity
                     style={styles.loadMore}
@@ -336,7 +355,7 @@ export default function MemberProfileScreen() {
                 )}
               </>
             ) : (
-              <PortfolioGrid items={portfolio} isOwnProfile={false} />
+              <PortfolioGrid items={portfolio} isOwnProfile={false} styles={styles} c={c} />
             )}
           </View>
         </View>
@@ -344,7 +363,7 @@ export default function MemberProfileScreen() {
 
       {/* Floating back button — above scroll */}
       <TouchableOpacity style={styles.backBtn} onPress={() => nav.goBack()}>
-        <Ionicons name="chevron-back" size={20} color={colors.ink} />
+        <Ionicons name="chevron-back" size={20} color={c.ink} />
       </TouchableOpacity>
     </View>
   );
@@ -352,156 +371,158 @@ export default function MemberProfileScreen() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  outerContainer: { flex: 1, backgroundColor: colors.paper },
-  container:      { flex: 1, backgroundColor: colors.paper },
-  scroll:         { flex: 1 },
-  center:         { flex: 1, justifyContent: "center", alignItems: "center" },
-  errorText:      { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    outerContainer: { flex: 1, backgroundColor: c.paper },
+    container:      { flex: 1, backgroundColor: c.paper },
+    scroll:         { flex: 1 },
+    center:         { flex: 1, justifyContent: "center", alignItems: "center" },
+    errorText:      { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute },
 
-  // Hero
-  hero: { width: "100%", height: 200 },
+    // Hero
+    hero: { width: "100%", height: 200 },
 
-  // Floating back button
-  backBtn: {
-    position: "absolute", top: 56, left: 16,
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: colors.paper,
-    justifyContent: "center", alignItems: "center",
-    ...shadows.card,
-  },
+    // Floating back button
+    backBtn: {
+      position: "absolute", top: 56, left: 16,
+      width: 40, height: 40, borderRadius: 20,
+      backgroundColor: c.paper,
+      justifyContent: "center", alignItems: "center",
+      ...shadows.card,
+    },
 
-  // Profile card
-  profileCard: {
-    backgroundColor: colors.paper,
-    borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    marginTop: -40, zIndex: 10,
-    paddingBottom: 24, alignItems: "center",
-  },
+    // Profile card
+    profileCard: {
+      backgroundColor: c.paper,
+      borderTopLeftRadius: 20, borderTopRightRadius: 20,
+      marginTop: -40, zIndex: 10,
+      paddingBottom: 24, alignItems: "center",
+    },
 
-  // Share button
-  shareBtn: {
-    position: "absolute", top: 16, right: 16,
-    width: 36, height: 36, borderRadius: 18,
-    borderWidth: 1, borderColor: colors.ghost,
-    justifyContent: "center", alignItems: "center",
-  },
+    // Share button
+    shareBtn: {
+      position: "absolute", top: 16, right: 16,
+      width: 36, height: 36, borderRadius: 18,
+      borderWidth: 1, borderColor: c.ghost,
+      justifyContent: "center", alignItems: "center",
+    },
 
-  // Avatar
-  avatarRing: {
-    width: 96, height: 96, borderRadius: 48,
-    borderWidth: 3, padding: 3,
-    marginTop: -48, backgroundColor: colors.paper,
-  },
-  avatarRingPro:     { borderColor: colors.gold },
-  avatarRingCitizen: { borderColor: colors.ghost },
-  avatarInner: {
-    flex: 1, borderRadius: 44, backgroundColor: colors.paperDeep,
-    justifyContent: "center", alignItems: "center",
-  },
-  avatarInitials: { fontFamily: fonts.monoBold, fontSize: 18, color: colors.inkSoft },
+    // Avatar
+    avatarRing: {
+      width: 96, height: 96, borderRadius: 48,
+      borderWidth: 3, padding: 3,
+      marginTop: -48, backgroundColor: c.paper,
+    },
+    avatarRingPro:     { borderColor: c.gold },
+    avatarRingCitizen: { borderColor: c.ghost },
+    avatarInner: {
+      flex: 1, borderRadius: 44, backgroundColor: c.paperDeep,
+      justifyContent: "center", alignItems: "center",
+    },
+    avatarInitials: { fontFamily: fonts.monoBold, fontSize: 18, color: c.inkSoft },
 
-  // Tier badge
-  tierBadge: {
-    marginTop: 8, marginBottom: 8,
-    backgroundColor: colors.gold,
-    paddingHorizontal: 10, paddingVertical: 3,
-    borderRadius: radius.full,
-  },
-  tierBadgeText: {
-    fontFamily: fonts.sansBold, fontSize: 9, color: colors.paper,
-    letterSpacing: 1.4, textTransform: "uppercase",
-  },
+    // Tier badge
+    tierBadge: {
+      marginTop: 8, marginBottom: 8,
+      backgroundColor: c.gold,
+      paddingHorizontal: 10, paddingVertical: 3,
+      borderRadius: radius.full,
+    },
+    tierBadgeText: {
+      fontFamily: fonts.sansBold, fontSize: 9, color: c.paper,
+      letterSpacing: 1.4, textTransform: "uppercase",
+    },
 
-  // Identity
-  identity:          { alignItems: "center", paddingHorizontal: 16, marginTop: 12, gap: 2 },
-  profileName:       { fontFamily: fonts.serifBold, fontSize: 24, color: colors.ink },
-  profileHandle:     { fontFamily: fonts.mono, fontSize: 13, color: colors.mute, marginTop: 2 },
-  profileOccupation: { fontFamily: fonts.sans, fontSize: 14, color: colors.inkSoft, marginTop: 4, textAlign: "center" },
-  profileCity:       { fontFamily: fonts.sans, fontSize: 12, color: colors.mute, marginTop: 4 },
-  profileSince:      { fontFamily: fonts.mono, fontSize: 10, color: colors.ghost, marginTop: 8 },
+    // Identity
+    identity:          { alignItems: "center", paddingHorizontal: 16, marginTop: 12, gap: 2 },
+    profileName:       { fontFamily: fonts.serifBold, fontSize: 24, color: c.ink },
+    profileHandle:     { fontFamily: fonts.mono, fontSize: 13, color: c.mute, marginTop: 2 },
+    profileOccupation: { fontFamily: fonts.sans, fontSize: 14, color: c.inkSoft, marginTop: 4, textAlign: "center" },
+    profileCity:       { fontFamily: fonts.sans, fontSize: 12, color: c.mute, marginTop: 4 },
+    profileSince:      { fontFamily: fonts.mono, fontSize: 10, color: c.ghost, marginTop: 8 },
 
-  // Badge shelf
-  badgeShelfWrap: { marginTop: 16, width: "100%" },
-  badgeShelf:     { paddingHorizontal: 16, gap: 8 },
-  badge: {
-    borderWidth: 1, borderColor: colors.ghost, borderRadius: radius.full,
-    paddingHorizontal: 10, paddingVertical: 6,
-  },
-  badgeText: { fontFamily: fonts.sansBold, fontSize: 12, color: colors.ink, whiteSpace: "nowrap" as any },
+    // Badge shelf
+    badgeShelfWrap: { marginTop: 16, width: "100%" },
+    badgeShelf:     { paddingHorizontal: 16, gap: 8 },
+    badge: {
+      borderWidth: 1, borderColor: c.ghost, borderRadius: radius.full,
+      paddingHorizontal: 10, paddingVertical: 6,
+    },
+    badgeText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ink, whiteSpace: "nowrap" as any },
 
-  // Social links
-  socialRow: { flexDirection: "row", gap: 24, marginTop: 16 },
-  socialBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: colors.paperDeep,
-    justifyContent: "center", alignItems: "center",
-  },
+    // Social links
+    socialRow: { flexDirection: "row", gap: 24, marginTop: 16 },
+    socialBtn: {
+      width: 36, height: 36, borderRadius: 18,
+      backgroundColor: c.paperDeep,
+      justifyContent: "center", alignItems: "center",
+    },
 
-  // Tab bar
-  tabBar: {
-    flexDirection: "row", alignItems: "flex-end",
-    height: 44, width: "100%",
-    borderBottomWidth: 1, borderBottomColor: colors.ghost,
-    marginTop: 16, paddingHorizontal: 16, gap: 24,
-  },
-  tab: { paddingBottom: 6 },
-  tabActive: {
-    borderBottomWidth: 2, borderBottomColor: colors.ochre,
-    paddingBottom: 1,
-  },
-  tabText:       { fontFamily: fonts.sans, fontSize: 14, color: colors.mute },
-  tabTextActive: { fontFamily: fonts.sansBold, color: colors.ink },
+    // Tab bar
+    tabBar: {
+      flexDirection: "row", alignItems: "flex-end",
+      height: 44, width: "100%",
+      borderBottomWidth: 1, borderBottomColor: c.ghost,
+      marginTop: 16, paddingHorizontal: 16, gap: 24,
+    },
+    tab: { paddingBottom: 6 },
+    tabActive: {
+      borderBottomWidth: 2, borderBottomColor: c.ochre,
+      paddingBottom: 1,
+    },
+    tabText:       { fontFamily: fonts.sans, fontSize: 14, color: c.mute },
+    tabTextActive: { fontFamily: fonts.sansBold, color: c.ink },
 
-  // Tab content area
-  tabContent: {
-    width: "100%", backgroundColor: colors.paperDeep,
-    paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24, gap: 8,
-  },
+    // Tab content area
+    tabContent: {
+      width: "100%", backgroundColor: c.paperDeep,
+      paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24, gap: 8,
+    },
 
-  // Community mini-post card
-  postCard: {
-    backgroundColor: colors.paper, borderRadius: 8,
-    padding: 16, marginBottom: 8, ...shadows.card,
-  },
-  postCardHeader: {
-    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-    marginBottom: 8,
-  },
-  templateBadge: {
-    backgroundColor: colors.paperDeep, borderRadius: radius.full,
-    paddingHorizontal: 8, paddingVertical: 4,
-  },
-  templateBadgeText: { fontFamily: fonts.sansBold, fontSize: 10, color: colors.ink },
-  postTimeAgo:       { fontFamily: fonts.mono, fontSize: 10, color: colors.mute },
-  postExcerpt: {
-    fontFamily: fonts.sans, fontSize: 13, color: colors.inkSoft,
-    lineHeight: 20,
-  },
-  postMetaRow: { flexDirection: "row", gap: 16, marginTop: 12 },
-  postMeta:    { fontFamily: fonts.mono, fontSize: 10, color: colors.mute },
+    // Community mini-post card
+    postCard: {
+      backgroundColor: c.paper, borderRadius: 8,
+      padding: 16, marginBottom: 8, ...shadows.card,
+    },
+    postCardHeader: {
+      flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+      marginBottom: 8,
+    },
+    templateBadge: {
+      backgroundColor: c.paperDeep, borderRadius: radius.full,
+      paddingHorizontal: 8, paddingVertical: 4,
+    },
+    templateBadgeText: { fontFamily: fonts.sansBold, fontSize: 10, color: c.ink },
+    postTimeAgo:       { fontFamily: fonts.mono, fontSize: 10, color: c.mute },
+    postExcerpt: {
+      fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft,
+      lineHeight: 20,
+    },
+    postMetaRow: { flexDirection: "row", gap: 16, marginTop: 12 },
+    postMeta:    { fontFamily: fonts.mono, fontSize: 10, color: c.mute },
 
-  loadMore:     { marginTop: 8, alignItems: "center", paddingVertical: 8 },
-  loadMoreText: { fontFamily: fonts.sans, fontSize: 12, color: colors.mute },
-  emptyTabText: { fontFamily: fonts.sans, fontSize: 14, color: colors.ghost, textAlign: "center", paddingVertical: 32 },
+    loadMore:     { marginTop: 8, alignItems: "center", paddingVertical: 8 },
+    loadMoreText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
+    emptyTabText: { fontFamily: fonts.sans, fontSize: 14, color: c.ghost, textAlign: "center", paddingVertical: 32 },
 
-  // Portfolio grid
-  portfolioGrid: {
-    flexDirection: "row", flexWrap: "wrap", gap: 8,
-  },
-  portfolioItem: { marginBottom: 4 },
-  portfolioImage: {
-    width: "100%", height: 120, borderRadius: 8,
-  },
-  portfolioTitle: { fontFamily: fonts.sansBold, fontSize: 13, color: colors.ink, marginTop: 6 },
-  portfolioYear:  { fontFamily: fonts.mono, fontSize: 11, color: colors.mute, marginTop: 2 },
+    // Portfolio grid
+    portfolioGrid: {
+      flexDirection: "row", flexWrap: "wrap", gap: 8,
+    },
+    portfolioItem: { marginBottom: 4 },
+    portfolioImage: {
+      width: "100%", height: 120, borderRadius: 8,
+    },
+    portfolioTitle: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ink, marginTop: 6 },
+    portfolioYear:  { fontFamily: fonts.mono, fontSize: 11, color: c.mute, marginTop: 2 },
 
-  portfolioAddBtn: {
-    height: 120, borderWidth: 1.5, borderStyle: "dashed",
-    borderColor: colors.ghost, borderRadius: 8,
-    backgroundColor: colors.paperWarm,
-    justifyContent: "center", alignItems: "center", gap: 6,
-  },
-  portfolioAddText: { fontFamily: fonts.sans, fontSize: 12, color: colors.mute },
-  portfolioCount:   { fontFamily: fonts.mono, fontSize: 10, color: colors.mute, textAlign: "center", marginTop: 12 },
-});
+    portfolioAddBtn: {
+      height: 120, borderWidth: 1.5, borderStyle: "dashed",
+      borderColor: c.ghost, borderRadius: 8,
+      backgroundColor: c.paperWarm,
+      justifyContent: "center", alignItems: "center", gap: 6,
+    },
+    portfolioAddText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
+    portfolioCount:   { fontFamily: fonts.mono, fontSize: 10, color: c.mute, textAlign: "center", marginTop: 12 },
+  });
+}

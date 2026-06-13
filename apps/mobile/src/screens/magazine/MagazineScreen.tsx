@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -13,10 +13,12 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useMagazine, type MagazineSection } from "../../features/magazine/useMagazine";
 import type { Article } from "../../types";
-import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { fonts, fontSize, space, radius, shadows } from "../../theme";
+import type { ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 
 // ── Article card (horizontal scroll) ─────────────────────────────────────────
-function ArticleCard({ article, onPress }: { article: Article; onPress: () => void }) {
+function ArticleCard({ article, onPress, styles }: { article: Article; onPress: () => void; styles: ReturnType<typeof createStyles> }) {
   const initials = (article.author?.name ?? "?")
     .split(" ")
     .slice(0, 2)
@@ -54,9 +56,11 @@ function ArticleCard({ article, onPress }: { article: Article; onPress: () => vo
 function SectionRow({
   section,
   onPressArticle,
+  styles,
 }: {
   section: MagazineSection;
   onPressArticle: (a: Article) => void;
+  styles: ReturnType<typeof createStyles>;
 }) {
   return (
     <View style={styles.section}>
@@ -73,7 +77,7 @@ function SectionRow({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.sectionRow}
         renderItem={({ item }) => (
-          <ArticleCard article={item} onPress={() => onPressArticle(item)} />
+          <ArticleCard article={item} onPress={() => onPressArticle(item)} styles={styles} />
         )}
       />
     </View>
@@ -84,6 +88,8 @@ function SectionRow({
 export default function MagazineScreen() {
   const nav = useNavigation<any>();
   const { featured, sections, loading, error, refresh } = useMagazine();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   const openArticle = (article: Article) => {
     nav.navigate("Article", { slug: article.slug, article });
@@ -106,7 +112,7 @@ export default function MagazineScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <ActivityIndicator color={colors.gold} />
+          <ActivityIndicator color={c.gold} />
         </View>
       </SafeAreaView>
     );
@@ -165,95 +171,97 @@ export default function MagazineScreen() {
 
         {/* Sections */}
         {sections.map((section) => (
-          <SectionRow key={section.id} section={section} onPressArticle={openArticle} />
+          <SectionRow key={section.id} section={section} onPressArticle={openArticle} styles={styles} />
         ))}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container:  { flex: 1, backgroundColor: colors.paperWarm },
-  center:     { flex: 1, justifyContent: "center", alignItems: "center", padding: space[8], gap: space[2] },
-  errorText:  { fontFamily: fonts.sans, color: colors.ochre, textAlign: "center" },
-  retryText:  { fontFamily: fonts.sansBold, color: colors.gold },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    container:  { flex: 1, backgroundColor: c.paperWarm },
+    center:     { flex: 1, justifyContent: "center", alignItems: "center", padding: space[8], gap: space[2] },
+    errorText:  { fontFamily: fonts.sans, color: c.ochre, textAlign: "center" },
+    retryText:  { fontFamily: fonts.sansBold, color: c.gold },
 
-  // Header
-  header: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: colors.paper,
-    paddingHorizontal: space[4], paddingBottom: space[2], paddingTop: space[2],
-    borderBottomWidth: 1, borderBottomColor: "rgba(200,191,176,0.3)",
-  },
-  headerTitle: { fontFamily: fonts.serifBold, fontSize: 20, color: colors.ink },
-  searchBtn:   { width: 32, height: 32, alignItems: "flex-end", justifyContent: "center" },
-  searchIcon:  { fontSize: 20, color: colors.ink },
+    // Header
+    header: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      backgroundColor: c.paper,
+      paddingHorizontal: space[4], paddingBottom: space[2], paddingTop: space[2],
+      borderBottomWidth: 1, borderBottomColor: "rgba(200,191,176,0.3)",
+    },
+    headerTitle: { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink },
+    searchBtn:   { width: 32, height: 32, alignItems: "flex-end", justifyContent: "center" },
+    searchIcon:  { fontSize: 20, color: c.ink },
 
-  // Hero
-  hero:    { width: "100%", height: 260, position: "relative" },
-  heroImage: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.paperDeep },
-  heroPlaceholder: { backgroundColor: colors.paperDeep },
-  heroOverlay: {
-    position: "absolute", bottom: 0, left: 0, right: 0,
-    height: "40%",
-    backgroundColor: "rgba(20,17,13,0.70)",
-    paddingHorizontal: space[4], paddingBottom: space[3],
-    justifyContent: "flex-end",
-  },
-  heroCategory: {
-    fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
-    color: colors.ochre, letterSpacing: 1.5, textTransform: "uppercase",
-    marginBottom: 8,
-  },
-  heroTitle: {
-    fontFamily: fonts.serifBold, fontSize: 24, color: colors.paper,
-    lineHeight: 30, maxWidth: "90%",
-  },
-  heroMeta: { flexDirection: "row", alignItems: "center", gap: space[2], marginTop: space[1] },
-  heroMetaText: { fontFamily: fonts.sans, fontSize: 12, color: "rgba(255,255,255,0.8)" },
-  heroMetaDot:  { color: "rgba(255,255,255,0.4)", fontSize: 10 },
-  heroAvatar: { width: 24, height: 24, borderRadius: 12, marginLeft: 2 },
-  heroAvatarPlaceholder: {
-    width: 24, height: 24, borderRadius: 12, marginLeft: 2,
-    backgroundColor: colors.ochre, alignItems: "center", justifyContent: "center",
-  },
-  heroAvatarInitials: { fontFamily: fonts.sansBold, fontSize: 9, color: colors.paper },
+    // Hero
+    hero:    { width: "100%", height: 260, position: "relative" },
+    heroImage: { ...StyleSheet.absoluteFillObject, backgroundColor: c.paperDeep },
+    heroPlaceholder: { backgroundColor: c.paperDeep },
+    heroOverlay: {
+      position: "absolute", bottom: 0, left: 0, right: 0,
+      height: "40%",
+      backgroundColor: "rgba(20,17,13,0.70)",
+      paddingHorizontal: space[4], paddingBottom: space[3],
+      justifyContent: "flex-end",
+    },
+    heroCategory: {
+      fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
+      color: c.ochre, letterSpacing: 1.5, textTransform: "uppercase",
+      marginBottom: 8,
+    },
+    heroTitle: {
+      fontFamily: fonts.serifBold, fontSize: 24, color: c.paper,
+      lineHeight: 30, maxWidth: "90%",
+    },
+    heroMeta: { flexDirection: "row", alignItems: "center", gap: space[2], marginTop: space[1] },
+    heroMetaText: { fontFamily: fonts.sans, fontSize: 12, color: "rgba(255,255,255,0.8)" },
+    heroMetaDot:  { color: "rgba(255,255,255,0.4)", fontSize: 10 },
+    heroAvatar: { width: 24, height: 24, borderRadius: 12, marginLeft: 2 },
+    heroAvatarPlaceholder: {
+      width: 24, height: 24, borderRadius: 12, marginLeft: 2,
+      backgroundColor: c.ochre, alignItems: "center", justifyContent: "center",
+    },
+    heroAvatarInitials: { fontFamily: fonts.sansBold, fontSize: 9, color: c.paper },
 
-  // Sections
-  section:       { marginTop: space[5] },
-  sectionHeader: {
-    flexDirection: "row", alignItems: "baseline", justifyContent: "space-between",
-    paddingHorizontal: space[4], marginBottom: space[3],
-  },
-  sectionTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.ink },
-  seeAll:       { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.ochre },
-  sectionRow:   { paddingHorizontal: space[4], gap: 12, paddingBottom: space[3] },
+    // Sections
+    section:       { marginTop: space[5] },
+    sectionHeader: {
+      flexDirection: "row", alignItems: "baseline", justifyContent: "space-between",
+      paddingHorizontal: space[4], marginBottom: space[3],
+    },
+    sectionTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
+    seeAll:       { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ochre },
+    sectionRow:   { paddingHorizontal: space[4], gap: 12, paddingBottom: space[3] },
 
-  // Article card
-  card: {
-    width: 200, height: 240,
-    backgroundColor: colors.paper, borderRadius: radius.xl, overflow: "hidden",
-    ...shadows.card,
-  },
-  cardImageWrap: { position: "relative", height: 110, width: "100%" },
-  cardImage:     { width: "100%", height: 110 },
-  cardImagePlaceholder: { backgroundColor: colors.paperDeep },
-  cardCatBadge: {
-    position: "absolute", bottom: 8, left: 8,
-    backgroundColor: colors.paper, borderRadius: radius.full,
-    paddingHorizontal: 8, paddingVertical: 4,
-    shadowColor: colors.ink, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1,
-  },
-  cardCatBadgeText: {
-    fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
-    color: colors.ink, letterSpacing: 1, textTransform: "uppercase",
-  },
-  cardBody: {
-    padding: 12, flex: 1, justifyContent: "space-between",
-  },
-  cardTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink, lineHeight: 18 },
-  cardMeta:  { flexDirection: "row", alignItems: "center", gap: space[2], marginTop: "auto" },
-  cardMetaTime:   { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: colors.mute },
-  cardMetaDot:    { color: colors.ghost, fontSize: fontSize.tiny },
-  cardMetaAuthor: { fontFamily: fonts.sans, fontSize: 12, color: colors.mute, flex: 1 },
-});
+    // Article card
+    card: {
+      width: 200, height: 240,
+      backgroundColor: c.paper, borderRadius: radius.xl, overflow: "hidden",
+      ...shadows.card,
+    },
+    cardImageWrap: { position: "relative", height: 110, width: "100%" },
+    cardImage:     { width: "100%", height: 110 },
+    cardImagePlaceholder: { backgroundColor: c.paperDeep },
+    cardCatBadge: {
+      position: "absolute", bottom: 8, left: 8,
+      backgroundColor: c.paper, borderRadius: radius.full,
+      paddingHorizontal: 8, paddingVertical: 4,
+      shadowColor: c.ink, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1,
+    },
+    cardCatBadgeText: {
+      fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
+      color: c.ink, letterSpacing: 1, textTransform: "uppercase",
+    },
+    cardBody: {
+      padding: 12, flex: 1, justifyContent: "space-between",
+    },
+    cardTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink, lineHeight: 18 },
+    cardMeta:  { flexDirection: "row", alignItems: "center", gap: space[2], marginTop: "auto" },
+    cardMetaTime:   { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: c.mute },
+    cardMetaDot:    { color: c.ghost, fontSize: fontSize.tiny },
+    cardMetaAuthor: { fontFamily: fonts.sans, fontSize: 12, color: c.mute, flex: 1 },
+  });
+}

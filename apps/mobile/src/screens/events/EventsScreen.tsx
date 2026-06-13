@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
   TouchableOpacity, Image, ActivityIndicator, RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { fonts, fontSize, space, radius, shadows } from "../../theme";
+import { useColors } from "../../hooks/useColors";
+import type { ColorPalette } from "../../theme";
 
 const WP_EVENTS_URL =
   "https://cms.themoveee.com/wp-json/wp/v2/culture_event" +
@@ -88,7 +90,7 @@ const FILTERS: { id: EventFilter; label: string }[] = [
   { id: "pro",      label: "Pro Only" },
 ];
 
-function EventCard({ event, onPress }: { event: EventItem; onPress: () => void }) {
+function EventCard({ event, onPress, styles, c }: { event: EventItem; onPress: () => void; styles: ReturnType<typeof createStyles>; c: ColorPalette }) {
   const isFree = !event.admission || event.admission.toLowerCase().includes("free");
   const isPaid = !isFree;
 
@@ -191,6 +193,8 @@ function EventCard({ event, onPress }: { event: EventItem; onPress: () => void }
 
 export default function EventsScreen() {
   const nav = useNavigation<any>();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [events, setEvents]         = useState<EventItem[]>([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -256,7 +260,7 @@ export default function EventsScreen() {
 
       {/* Content */}
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 60 }} color={colors.gold} size="large" />
+        <ActivityIndicator style={{ marginTop: 60 }} color={c.gold} size="large" />
       ) : error ? (
         <View style={styles.centred}>
           <Text style={styles.errorText}>{error}</Text>
@@ -268,7 +272,7 @@ export default function EventsScreen() {
         <ScrollView
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => fetchEvents(true)} tintColor={colors.gold} />
+            <RefreshControl refreshing={refreshing} onRefresh={() => fetchEvents(true)} tintColor={c.gold} />
           }
         >
           {filtered.length === 0 ? (
@@ -279,6 +283,8 @@ export default function EventsScreen() {
                 key={event.id}
                 event={event}
                 onPress={() => nav.navigate("EventDetail", { event })}
+                styles={styles}
+                c={c}
               />
             ))
           )}
@@ -288,90 +294,92 @@ export default function EventsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paperWarm },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.paperWarm },
 
-  header: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: colors.paper, paddingHorizontal: space[4],
-    paddingTop: space[2], paddingBottom: space[2],
-    borderBottomWidth: 1, borderBottomColor: "rgba(200,191,176,0.3)",
-  },
-  headerTitle:   { fontFamily: fonts.serifBold, fontSize: 20, color: colors.ink, paddingLeft: space[2] },
-  filterIconBtn: { width: 32, height: 32, alignItems: "flex-end", justifyContent: "center" },
-  filterIcon:    { fontSize: 18, color: colors.ink },
+    header: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      backgroundColor: c.paper, paddingHorizontal: space[4],
+      paddingTop: space[2], paddingBottom: space[2],
+      borderBottomWidth: 1, borderBottomColor: "rgba(200,191,176,0.3)",
+    },
+    headerTitle:   { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink, paddingLeft: space[2] },
+    filterIconBtn: { width: 32, height: 32, alignItems: "flex-end", justifyContent: "center" },
+    filterIcon:    { fontSize: 18, color: c.ink },
 
-  filterBar:        { flexGrow: 0, backgroundColor: colors.paper, borderBottomWidth: 1, borderBottomColor: colors.ghost },
-  filterBarContent: { paddingHorizontal: space[4], gap: 8, paddingVertical: 6 },
-  filterChip: {
-    height: 32, paddingHorizontal: 16, borderRadius: radius.full,
-    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.ghost,
-    alignItems: "center", justifyContent: "center",
-  },
-  filterChipActive:     { backgroundColor: colors.ink, borderColor: colors.ink },
-  filterChipText:       { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.inkSoft },
-  filterChipTextActive: { fontFamily: fonts.sansBold, color: colors.paper },
+    filterBar:        { flexGrow: 0, backgroundColor: c.paper, borderBottomWidth: 1, borderBottomColor: c.ghost },
+    filterBarContent: { paddingHorizontal: space[4], gap: 8, paddingVertical: 6 },
+    filterChip: {
+      height: 32, paddingHorizontal: 16, borderRadius: radius.full,
+      backgroundColor: c.paper, borderWidth: 1, borderColor: c.ghost,
+      alignItems: "center", justifyContent: "center",
+    },
+    filterChipActive:     { backgroundColor: c.ink, borderColor: c.ink },
+    filterChipText:       { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
+    filterChipTextActive: { fontFamily: fonts.sansBold, color: c.paper },
 
-  list: { padding: space[4], gap: 16, paddingBottom: 90 },
+    list: { padding: space[4], gap: 16, paddingBottom: 90 },
 
-  // Event card
-  card: {
-    backgroundColor: colors.paper, borderRadius: radius.xl, overflow: "hidden",
-    ...shadows.card,
-  },
-  cardImageWrap:      { height: 180, position: "relative" },
-  cardImage:          { width: "100%", height: 180 },
-  cardImagePlaceholder: { backgroundColor: colors.paperDeep },
+    // Event card
+    card: {
+      backgroundColor: c.paper, borderRadius: radius.xl, overflow: "hidden",
+      ...shadows.card,
+    },
+    cardImageWrap:      { height: 180, position: "relative" },
+    cardImage:          { width: "100%", height: 180 },
+    cardImagePlaceholder: { backgroundColor: c.paperDeep },
 
-  imageBadgesLeft: { position: "absolute", top: 12, left: 12, gap: 6 },
-  imageBadge: {
-    flexDirection: "row", alignItems: "center", gap: 4,
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.full,
-  },
-  imageBadgeWhite:   { backgroundColor: "rgba(255,255,255,0.95)" },
-  imageBadgePro:     { backgroundColor: colors.gold },
-  imageBadgeText:    { fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow, color: colors.ink, letterSpacing: 1 },
-  imageBadgeOnlineText: { fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow, color: "#2563eb", letterSpacing: 1 },
-  imageBadgeProText: { fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow, color: colors.paper, letterSpacing: 1 },
-  greenDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success },
+    imageBadgesLeft: { position: "absolute", top: 12, left: 12, gap: 6 },
+    imageBadge: {
+      flexDirection: "row", alignItems: "center", gap: 4,
+      paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.full,
+    },
+    imageBadgeWhite:   { backgroundColor: "rgba(255,255,255,0.95)" },
+    imageBadgePro:     { backgroundColor: c.gold },
+    imageBadgeText:    { fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow, color: c.ink, letterSpacing: 1 },
+    imageBadgeOnlineText: { fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow, color: "#2563eb", letterSpacing: 1 },
+    imageBadgeProText: { fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow, color: c.paper, letterSpacing: 1 },
+    greenDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.success },
 
-  cardBody:  { padding: 16 },
-  cardTitle: { fontFamily: fonts.sansBold, fontSize: 17, color: colors.ink, marginBottom: 8, lineHeight: 22 },
+    cardBody:  { padding: 16 },
+    cardTitle: { fontFamily: fonts.sansBold, fontSize: 17, color: c.ink, marginBottom: 8, lineHeight: 22 },
 
-  metaRows: { gap: 4, marginBottom: 8 },
-  metaRow:  { flexDirection: "row", alignItems: "center" },
-  metaEmoji: { width: 20, textAlign: "center", fontSize: 13, marginRight: 4 },
-  metaText:  { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute, flex: 1 },
+    metaRows: { gap: 4, marginBottom: 8 },
+    metaRow:  { flexDirection: "row", alignItems: "center" },
+    metaEmoji: { width: 20, textAlign: "center", fontSize: 13, marginRight: 4 },
+    metaText:  { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, flex: 1 },
 
-  admission: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.inkSoft, marginBottom: 16 },
+    admission: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.inkSoft, marginBottom: 16 },
 
-  capacityWrap: { marginBottom: 12 },
-  capacityBar:  { height: 8, backgroundColor: colors.paperDeep, borderRadius: radius.full, overflow: "hidden", marginBottom: 4 },
-  capacityFill: { height: 8, backgroundColor: colors.ochre, borderRadius: radius.full },
-  capacityText: { fontFamily: fonts.sans, fontSize: 12, color: colors.mute },
+    capacityWrap: { marginBottom: 12 },
+    capacityBar:  { height: 8, backgroundColor: c.paperDeep, borderRadius: radius.full, overflow: "hidden", marginBottom: 4 },
+    capacityFill: { height: 8, backgroundColor: c.ochre, borderRadius: radius.full },
+    capacityText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
 
-  cardFooter: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    borderTopWidth: 1, borderTopColor: "rgba(200,191,176,0.4)", paddingTop: 12,
-  },
-  attendingText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute },
+    cardFooter: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      borderTopWidth: 1, borderTopColor: "rgba(200,191,176,0.4)", paddingTop: 12,
+    },
+    attendingText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
 
-  rsvpBtn: {
-    backgroundColor: colors.ochre, borderRadius: radius.full,
-    paddingHorizontal: space[4], paddingVertical: 6,
-  },
-  rsvpBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.paper },
+    rsvpBtn: {
+      backgroundColor: c.ochre, borderRadius: radius.full,
+      paddingHorizontal: space[4], paddingVertical: 6,
+    },
+    rsvpBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
 
-  ticketBtn: {
-    borderWidth: 1, borderColor: colors.ink, borderRadius: radius.full,
-    paddingHorizontal: space[4], paddingVertical: 6,
-    backgroundColor: colors.paper,
-  },
-  ticketBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.ink },
+    ticketBtn: {
+      borderWidth: 1, borderColor: c.ink, borderRadius: radius.full,
+      paddingHorizontal: space[4], paddingVertical: 6,
+      backgroundColor: c.paper,
+    },
+    ticketBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ink },
 
-  centred:      { flex: 1, alignItems: "center", justifyContent: "center", padding: space[6] },
-  errorText:    { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute, textAlign: "center", marginBottom: space[3] },
-  retryBtn:     { backgroundColor: colors.ink, borderRadius: radius.xl, paddingHorizontal: space[5], paddingVertical: space[2] },
-  retryBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.paper },
-  emptyText:    { fontFamily: fonts.mono, fontSize: fontSize.sm, color: colors.ghost, textAlign: "center", marginTop: space[8] },
-});
+    centred:      { flex: 1, alignItems: "center", justifyContent: "center", padding: space[6] },
+    errorText:    { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute, textAlign: "center", marginBottom: space[3] },
+    retryBtn:     { backgroundColor: c.ink, borderRadius: radius.xl, paddingHorizontal: space[5], paddingVertical: space[2] },
+    retryBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
+    emptyText:    { fontFamily: fonts.mono, fontSize: fontSize.sm, color: c.ghost, textAlign: "center", marginTop: space[8] },
+  });
+}

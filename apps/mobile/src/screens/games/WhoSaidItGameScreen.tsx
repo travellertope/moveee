@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
   TouchableOpacity, ActivityIndicator,
@@ -7,7 +7,9 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { storage } from "../../store/storage";
 import { api } from "../../api/client";
-import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { fonts, fontSize, space, radius } from "../../theme";
+import { useColors } from "../../hooks/useColors";
+import type { ColorPalette } from "../../theme";
 
 const PROXY    = "https://themoveee.com/api";
 const KEY_DATE = "wsi_last_played_date";
@@ -24,6 +26,8 @@ type Phase = "loading" | "error" | "played" | "game" | "done";
 
 export default function WhoSaidItGameScreen() {
   const nav = useNavigation<any>();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   const [phase,     setPhase]     = useState<Phase>("loading");
   const [questions, setQuestions] = useState<WsiQuestion[]>([]);
@@ -88,8 +92,8 @@ export default function WhoSaidItGameScreen() {
   if (phase === "loading") {
     return (
       <SafeAreaView style={styles.container}>
-        <Header nav={nav} />
-        <ActivityIndicator style={{ marginTop: 60 }} color={colors.gold} size="large" />
+        <Header nav={nav} styles={styles} c={c} />
+        <ActivityIndicator style={{ marginTop: 60 }} color={c.gold} size="large" />
       </SafeAreaView>
     );
   }
@@ -98,7 +102,7 @@ export default function WhoSaidItGameScreen() {
   if (phase === "error") {
     return (
       <SafeAreaView style={styles.container}>
-        <Header nav={nav} />
+        <Header nav={nav} styles={styles} c={c} />
         <View style={styles.centred}>
           <Text style={styles.centredText}>{errorMsg}</Text>
           <TouchableOpacity style={styles.primaryBtn} onPress={init}>
@@ -113,7 +117,7 @@ export default function WhoSaidItGameScreen() {
   if (phase === "played") {
     return (
       <SafeAreaView style={styles.container}>
-        <Header nav={nav} />
+        <Header nav={nav} styles={styles} c={c} />
         <View style={styles.centred}>
           <Text style={styles.doneEmoji}>✍️</Text>
           <Text style={styles.doneTitle}>Already played today!</Text>
@@ -132,7 +136,7 @@ export default function WhoSaidItGameScreen() {
     const msg = pct >= 80 ? "You know your quotes! 🎉" : pct >= 50 ? "Not bad! 👍" : "Better luck tomorrow! 💪";
     return (
       <SafeAreaView style={styles.container}>
-        <Header nav={nav} />
+        <Header nav={nav} styles={styles} c={c} />
         <ScrollView contentContainerStyle={styles.doneBody}>
           <Text style={styles.doneEmoji}>✍️</Text>
           <Text style={styles.doneTitle}>{msg}</Text>
@@ -171,7 +175,7 @@ export default function WhoSaidItGameScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header nav={nav} progress={`${qIndex + 1} / ${questions.length}`} />
+      <Header nav={nav} progress={`${qIndex + 1} / ${questions.length}`} styles={styles} c={c} />
 
       <View style={styles.progressBar}>
         <View style={[styles.progressFill, { width: `${((qIndex + 1) / questions.length) * 100}%` as any }]} />
@@ -208,10 +212,10 @@ export default function WhoSaidItGameScreen() {
               >
                 <Text style={[styles.optionText, textStyle]}>{author}</Text>
                 {selected !== null && author === currentQ.correct_author && (
-                  <Ionicons name="checkmark-circle" size={18} color={colors.communityText} />
+                  <Ionicons name="checkmark-circle" size={18} color={c.communityText} />
                 )}
                 {selected === author && selected !== currentQ.correct_author && (
-                  <Ionicons name="close-circle" size={18} color={colors.ochre} />
+                  <Ionicons name="close-circle" size={18} color={c.ochre} />
                 )}
               </TouchableOpacity>
             );
@@ -236,11 +240,11 @@ export default function WhoSaidItGameScreen() {
   );
 }
 
-function Header({ nav, progress }: { nav: any; progress?: string }) {
+function Header({ nav, progress, styles, c }: { nav: any; progress?: string; styles: ReturnType<typeof createStyles>; c: ColorPalette }) {
   return (
     <View style={styles.header}>
       <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn}>
-        <Ionicons name="arrow-back" size={22} color={colors.ink} />
+        <Ionicons name="arrow-back" size={22} color={c.ink} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Who Said It?</Text>
       {progress && <Text style={styles.headerProgress}>{progress}</Text>}
@@ -248,81 +252,83 @@ function Header({ nav, progress }: { nav: any; progress?: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paperWarm },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.paperWarm },
 
-  header: {
-    flexDirection: "row", alignItems: "center",
-    paddingHorizontal: space[4], paddingVertical: space[3],
-    borderBottomWidth: 1, borderBottomColor: colors.rule,
-    backgroundColor: colors.paperWarm,
-  },
-  backBtn:        { padding: 4, marginRight: space[2] },
-  headerTitle:    { flex: 1, fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: colors.ink },
-  headerProgress: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute },
+    header: {
+      flexDirection: "row", alignItems: "center",
+      paddingHorizontal: space[4], paddingVertical: space[3],
+      borderBottomWidth: 1, borderBottomColor: c.rule,
+      backgroundColor: c.paperWarm,
+    },
+    backBtn:        { padding: 4, marginRight: space[2] },
+    headerTitle:    { flex: 1, fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: c.ink },
+    headerProgress: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute },
 
-  progressBar:  { height: 3, backgroundColor: colors.rule },
-  progressFill: { height: 3, backgroundColor: colors.gold },
+    progressBar:  { height: 3, backgroundColor: c.rule },
+    progressFill: { height: 3, backgroundColor: c.gold },
 
-  gameBody: { padding: space[4], gap: space[4], paddingBottom: space[10] },
+    gameBody: { padding: space[4], gap: space[4], paddingBottom: space[10] },
 
-  quoteCard: {
-    backgroundColor: colors.paper, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.rule,
-    padding: space[5], gap: space[2],
-  },
-  quoteMarks:  { fontFamily: fonts.serifBold, fontSize: 48, color: colors.gold, lineHeight: 40, marginTop: -8 },
-  quoteText:   { fontFamily: fonts.serif, fontSize: fontSize.lg, color: colors.ink, lineHeight: 26, fontStyle: "italic" },
-  quoteSource: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute, marginTop: space[1] },
+    quoteCard: {
+      backgroundColor: c.paper, borderRadius: radius.lg,
+      borderWidth: 1, borderColor: c.rule,
+      padding: space[5], gap: space[2],
+    },
+    quoteMarks:  { fontFamily: fonts.serifBold, fontSize: 48, color: c.gold, lineHeight: 40, marginTop: -8 },
+    quoteText:   { fontFamily: fonts.serif, fontSize: fontSize.lg, color: c.ink, lineHeight: 26, fontStyle: "italic" },
+    quoteSource: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, marginTop: space[1] },
 
-  promptText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.ink },
+    promptText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
 
-  options: { gap: space[2] },
-  option: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.rule,
-    borderRadius: radius.lg, paddingHorizontal: space[4], paddingVertical: space[3] + 2,
-  },
-  optionCorrect: { backgroundColor: colors.communityBg, borderColor: colors.communityBorder },
-  optionWrong:   { backgroundColor: "#fef2f2", borderColor: "#fca5a5" },
-  optionDim:     { opacity: 0.45 },
+    options: { gap: space[2] },
+    option: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule,
+      borderRadius: radius.lg, paddingHorizontal: space[4], paddingVertical: space[3] + 2,
+    },
+    optionCorrect: { backgroundColor: c.communityBg, borderColor: c.communityBorder },
+    optionWrong:   { backgroundColor: "#fef2f2", borderColor: "#fca5a5" },
+    optionDim:     { opacity: 0.45 },
 
-  optionText:        { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.inkSoft },
-  optionTextCorrect: { color: colors.communityText, fontFamily: fonts.sansBold },
-  optionTextWrong:   { color: colors.ochre },
+    optionText:        { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base, color: c.inkSoft },
+    optionTextCorrect: { color: c.communityText, fontFamily: fonts.sansBold },
+    optionTextWrong:   { color: c.ochre },
 
-  bottomRow: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-  },
-  liveScoreLabel: { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, color: colors.mute, letterSpacing: 1.2 },
-  liveScoreValue: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: colors.ink },
-  nextBtn: {
-    backgroundColor: colors.ink, borderRadius: radius.md,
-    paddingVertical: space[3], paddingHorizontal: space[5],
-  },
-  nextBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.paper },
+    bottomRow: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    },
+    liveScoreLabel: { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, color: c.mute, letterSpacing: 1.2 },
+    liveScoreValue: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink },
+    nextBtn: {
+      backgroundColor: c.ink, borderRadius: radius.md,
+      paddingVertical: space[3], paddingHorizontal: space[5],
+    },
+    nextBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.paper },
 
-  centred:     { flex: 1, alignItems: "center", justifyContent: "center", padding: space[6], gap: space[3] },
-  centredText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute, textAlign: "center" },
+    centred:     { flex: 1, alignItems: "center", justifyContent: "center", padding: space[6], gap: space[3] },
+    centredText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute, textAlign: "center" },
 
-  doneBody:  { padding: space[4], gap: space[4], paddingBottom: space[10], alignItems: "center" },
-  doneEmoji: { fontSize: 56 },
-  doneTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: colors.ink, textAlign: "center" },
-  doneScore: { fontFamily: fonts.serifBold, fontSize: fontSize["3xl"], color: colors.gold },
-  doneSub:   { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute, letterSpacing: 0.8, textAlign: "center" },
+    doneBody:  { padding: space[4], gap: space[4], paddingBottom: space[10], alignItems: "center" },
+    doneEmoji: { fontSize: 56 },
+    doneTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink, textAlign: "center" },
+    doneScore: { fontFamily: fonts.serifBold, fontSize: fontSize["3xl"], color: c.gold },
+    doneSub:   { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, letterSpacing: 0.8, textAlign: "center" },
 
-  reviewCard:      { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.rule, borderRadius: radius.lg, overflow: "hidden", width: "100%" },
-  reviewTitle:     { fontFamily: fonts.serifBold, fontSize: fontSize.base, color: colors.ink, padding: space[3], borderBottomWidth: 1, borderBottomColor: colors.rule },
-  reviewRow:       { flexDirection: "row", alignItems: "flex-start", gap: space[2], padding: space[3] },
-  reviewRowBorder: { borderTopWidth: 1, borderTopColor: colors.rule },
-  reviewDot:        { width: 8, height: 8, borderRadius: 4, marginTop: 5 },
-  reviewDotCorrect: { backgroundColor: colors.communityText },
-  reviewDotWrong:   { backgroundColor: colors.ochre },
-  reviewQuote:      { fontFamily: fonts.serif, fontSize: fontSize.xs, color: colors.mute, marginBottom: 4, fontStyle: "italic" },
-  reviewA:          { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.communityText },
-  reviewAWrong:     { color: colors.ochre },
-  reviewYours:      { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.ghost, marginTop: 2 },
+    reviewCard:      { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule, borderRadius: radius.lg, overflow: "hidden", width: "100%" },
+    reviewTitle:     { fontFamily: fonts.serifBold, fontSize: fontSize.base, color: c.ink, padding: space[3], borderBottomWidth: 1, borderBottomColor: c.rule },
+    reviewRow:       { flexDirection: "row", alignItems: "flex-start", gap: space[2], padding: space[3] },
+    reviewRowBorder: { borderTopWidth: 1, borderTopColor: c.rule },
+    reviewDot:        { width: 8, height: 8, borderRadius: 4, marginTop: 5 },
+    reviewDotCorrect: { backgroundColor: c.communityText },
+    reviewDotWrong:   { backgroundColor: c.ochre },
+    reviewQuote:      { fontFamily: fonts.serif, fontSize: fontSize.xs, color: c.mute, marginBottom: 4, fontStyle: "italic" },
+    reviewA:          { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.communityText },
+    reviewAWrong:     { color: c.ochre },
+    reviewYours:      { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.ghost, marginTop: 2 },
 
-  primaryBtn:     { backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: space[3], paddingHorizontal: space[6] },
-  primaryBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.paper },
-});
+    primaryBtn:     { backgroundColor: c.ink, borderRadius: radius.md, paddingVertical: space[3], paddingHorizontal: space[6] },
+    primaryBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.paper },
+  });
+}

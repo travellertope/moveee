@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, FlatList, TextInput, TouchableOpacity,
   StyleSheet, SafeAreaView, ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { fonts, fontSize, space, radius, shadows } from "../../theme";
+import type { ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 import { api, MOBILE_API } from "../../api/client";
 import type { Member } from "../../types";
 
@@ -23,7 +25,17 @@ function initials(name: string) {
   return (name || "?").split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
 }
 
-function MemberCard({ member, onPress }: { member: Member; onPress: () => void }) {
+function MemberCard({
+  member,
+  onPress,
+  styles,
+  c,
+}: {
+  member: Member;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+  c: ColorPalette;
+}) {
   const isPro = member.tier === "patron";
   const interests = member.interests ?? member.disciplines ?? [];
   const shown  = interests.slice(0, 2);
@@ -60,7 +72,7 @@ function MemberCard({ member, onPress }: { member: Member; onPress: () => void }
           ))}
           {extra > 0 && (
             <View style={styles.tag}>
-              <Text style={[styles.tagText, { color: colors.ghost }]}>+{extra} more</Text>
+              <Text style={[styles.tagText, { color: c.ghost }]}>+{extra} more</Text>
             </View>
           )}
         </View>
@@ -69,13 +81,13 @@ function MemberCard({ member, onPress }: { member: Member; onPress: () => void }
       {/* Social icon links */}
       <View style={styles.socialRow}>
         {member.instagram ? (
-          <Ionicons name="logo-instagram" size={16} color={colors.ghost} />
+          <Ionicons name="logo-instagram" size={16} color={c.ghost} />
         ) : null}
         {member.linkedin ? (
-          <Ionicons name="logo-linkedin" size={16} color={colors.ghost} />
+          <Ionicons name="logo-linkedin" size={16} color={c.ghost} />
         ) : null}
         {member.website ? (
-          <Ionicons name="globe-outline" size={16} color={colors.ghost} />
+          <Ionicons name="globe-outline" size={16} color={c.ghost} />
         ) : null}
       </View>
     </TouchableOpacity>
@@ -84,6 +96,8 @@ function MemberCard({ member, onPress }: { member: Member; onPress: () => void }
 
 export default function MemberDirectoryScreen() {
   const nav = useNavigation<any>();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [members,    setMembers]    = useState<Member[]>([]);
   const [filtered,   setFiltered]   = useState<Member[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -129,7 +143,7 @@ export default function MemberDirectoryScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
-          <Ionicons name="chevron-back" size={22} color={colors.ink} />
+          <Ionicons name="chevron-back" size={22} color={c.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Member Directory</Text>
         <View style={styles.headerSideBtn} />
@@ -138,16 +152,16 @@ export default function MemberDirectoryScreen() {
       {/* Search + filter icon row */}
       <View style={styles.searchSection}>
         <View style={styles.searchRow}>
-          <Ionicons name="search-outline" size={16} color={colors.mute} style={{ marginRight: 8 }} />
+          <Ionicons name="search-outline" size={16} color={c.mute} style={{ marginRight: 8 }} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search by name, discipline or city"
-            placeholderTextColor={colors.ghost}
+            placeholderTextColor={c.ghost}
             value={search}
             onChangeText={setSearch}
           />
           <TouchableOpacity onPress={() => { setDiscOpen(!discOpen); setLocOpen(false); }}>
-            <Ionicons name="options-outline" size={20} color={colors.ink} />
+            <Ionicons name="options-outline" size={20} color={c.ink} />
           </TouchableOpacity>
         </View>
 
@@ -182,7 +196,7 @@ export default function MemberDirectoryScreen() {
           <View style={styles.dropdown}>
             {DISCIPLINES.map((d) => (
               <TouchableOpacity key={d} style={styles.dropdownItem} onPress={() => { setDiscipline(d); setDiscOpen(false); }}>
-                <Text style={[styles.dropdownItemText, discipline === d && { color: colors.ochre, fontFamily: fonts.sansBold }]}>{d}</Text>
+                <Text style={[styles.dropdownItemText, discipline === d && { color: c.ochre, fontFamily: fonts.sansBold }]}>{d}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -192,7 +206,7 @@ export default function MemberDirectoryScreen() {
           <View style={styles.dropdown}>
             {LOCATIONS.map((l) => (
               <TouchableOpacity key={l} style={styles.dropdownItem} onPress={() => { setLocation(l); setLocOpen(false); }}>
-                <Text style={[styles.dropdownItemText, location === l && { color: colors.ochre, fontFamily: fonts.sansBold }]}>{l}</Text>
+                <Text style={[styles.dropdownItemText, location === l && { color: c.ochre, fontFamily: fonts.sansBold }]}>{l}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -200,7 +214,7 @@ export default function MemberDirectoryScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color={colors.gold} />
+        <ActivityIndicator style={{ marginTop: 40 }} color={c.gold} />
       ) : (
         <FlatList
           data={filtered}
@@ -222,6 +236,8 @@ export default function MemberDirectoryScreen() {
               <MemberCard
                 member={item}
                 onPress={() => nav.navigate("MemberProfile", { userId: item.id, username: item.username })}
+                styles={styles}
+                c={c}
               />
             </View>
           )}
@@ -232,95 +248,92 @@ export default function MemberDirectoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paperWarm },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.paperWarm },
 
-  header: {
-    height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: space[4], backgroundColor: colors.paper,
-  },
-  headerSideBtn:  { minWidth: 44, minHeight: 44, justifyContent: "center" },
-  headerTitle:    { fontFamily: fonts.sansBold, fontSize: 15, color: colors.ink },
+    header: {
+      height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], backgroundColor: c.paper,
+    },
+    headerSideBtn:  { minWidth: 44, minHeight: 44, justifyContent: "center" },
+    headerTitle:    { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
 
-  // Search section
-  searchSection: {
-    backgroundColor: colors.paper, borderBottomWidth: 1, borderBottomColor: colors.ghost,
-    paddingBottom: 8,
-  },
-  searchRow: {
-    height: 48, flexDirection: "row", alignItems: "center",
-    paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.ghost,
-  },
-  searchInput: {
-    flex: 1, fontFamily: fonts.sans, fontSize: 14, color: colors.ink,
-  },
-  chipsRow: {
-    height: 44, flexDirection: "row", alignItems: "center",
-    paddingHorizontal: 16, gap: 8, marginTop: 8,
-  },
-  filterChip: {
-    height: 32, paddingHorizontal: 12, borderRadius: radius.full,
-    borderWidth: 1, borderColor: colors.ghost, justifyContent: "center",
-  },
-  filterChipActive:     { backgroundColor: colors.ochre, borderColor: colors.ochre },
-  filterChipText:       { fontFamily: fonts.sans, fontSize: 13, color: colors.inkSoft },
-  filterChipTextActive: { color: colors.paper, fontFamily: fonts.sansBold },
-  activeChip: {
-    height: 32, paddingHorizontal: 10, borderRadius: radius.full,
-    backgroundColor: colors.ochre, flexDirection: "row", alignItems: "center",
-  },
-  activeChipText: { fontFamily: fonts.sansBold, fontSize: 13, color: colors.paper },
-  activeChipX:    { fontFamily: fonts.sans, fontSize: 11, color: colors.paper },
+    searchSection: {
+      backgroundColor: c.paper, borderBottomWidth: 1, borderBottomColor: c.ghost,
+      paddingBottom: 8,
+    },
+    searchRow: {
+      height: 48, flexDirection: "row", alignItems: "center",
+      paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: c.ghost,
+    },
+    searchInput: {
+      flex: 1, fontFamily: fonts.sans, fontSize: 14, color: c.ink,
+    },
+    chipsRow: {
+      height: 44, flexDirection: "row", alignItems: "center",
+      paddingHorizontal: 16, gap: 8, marginTop: 8,
+    },
+    filterChip: {
+      height: 32, paddingHorizontal: 12, borderRadius: radius.full,
+      borderWidth: 1, borderColor: c.ghost, justifyContent: "center",
+    },
+    filterChipActive:     { backgroundColor: c.ochre, borderColor: c.ochre },
+    filterChipText:       { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft },
+    filterChipTextActive: { color: c.paper, fontFamily: fonts.sansBold },
+    activeChip: {
+      height: 32, paddingHorizontal: 10, borderRadius: radius.full,
+      backgroundColor: c.ochre, flexDirection: "row", alignItems: "center",
+    },
+    activeChipText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
+    activeChipX:    { fontFamily: fonts.sans, fontSize: 11, color: c.paper },
 
-  // Dropdowns
-  dropdown: {
-    position: "absolute", top: 52, left: 16, right: 16, zIndex: 100,
-    backgroundColor: colors.paper, borderRadius: 8, ...shadows.card,
-    borderWidth: 1, borderColor: colors.ghost,
-  },
-  dropdownItem:     { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.ghost + "50" },
-  dropdownItemText: { fontFamily: fonts.sans, fontSize: 14, color: colors.ink },
+    dropdown: {
+      position: "absolute", top: 52, left: 16, right: 16, zIndex: 100,
+      backgroundColor: c.paper, borderRadius: 8, ...shadows.card,
+      borderWidth: 1, borderColor: c.ghost,
+    },
+    dropdownItem:     { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.ghost + "50" },
+    dropdownItemText: { fontFamily: fonts.sans, fontSize: 14, color: c.ink },
 
-  // Grid
-  countText: {
-    fontFamily: fonts.mono, fontSize: 10, color: colors.mute,
-    paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12,
-  },
-  grid: { paddingHorizontal: 16, paddingBottom: 40 },
-  row:  { gap: 12, marginBottom: 12 },
+    countText: {
+      fontFamily: fonts.mono, fontSize: 10, color: c.mute,
+      paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12,
+    },
+    grid: { paddingHorizontal: 16, paddingBottom: 40 },
+    row:  { gap: 12, marginBottom: 12 },
 
-  // Card
-  card: {
-    flex: 1, backgroundColor: colors.paper, borderRadius: 12,
-    padding: 12, alignItems: "center", gap: 0, ...shadows.card,
-  },
-  avatarRing: {
-    width: 44, height: 44, borderRadius: 22,
-    borderWidth: 2, padding: 2, marginBottom: 8,
-  },
-  avatarRingPro:     { borderColor: colors.gold },
-  avatarRingCitizen: { borderColor: colors.ghost },
-  avatarInner: {
-    flex: 1, borderRadius: 20, backgroundColor: colors.paperDeep,
-    justifyContent: "center", alignItems: "center",
-  },
-  avatarText: { fontFamily: fonts.monoBold, fontSize: 12, color: colors.inkSoft },
+    card: {
+      flex: 1, backgroundColor: c.paper, borderRadius: 12,
+      padding: 12, alignItems: "center", gap: 0, ...shadows.card,
+    },
+    avatarRing: {
+      width: 44, height: 44, borderRadius: 22,
+      borderWidth: 2, padding: 2, marginBottom: 8,
+    },
+    avatarRingPro:     { borderColor: c.gold },
+    avatarRingCitizen: { borderColor: c.ghost },
+    avatarInner: {
+      flex: 1, borderRadius: 20, backgroundColor: c.paperDeep,
+      justifyContent: "center", alignItems: "center",
+    },
+    avatarText: { fontFamily: fonts.monoBold, fontSize: 12, color: c.inkSoft },
 
-  cardName:   { fontFamily: fonts.sansBold, fontSize: 13, color: colors.ink, textAlign: "center" },
-  cardHandle: { fontFamily: fonts.mono, fontSize: 10, color: colors.mute, marginTop: 2 },
-  cardCity:   { fontFamily: fonts.sans, fontSize: 11, color: colors.mute, marginTop: 4 },
+    cardName:   { fontFamily: fonts.sansBold, fontSize: 13, color: c.ink, textAlign: "center" },
+    cardHandle: { fontFamily: fonts.mono, fontSize: 10, color: c.mute, marginTop: 2 },
+    cardCity:   { fontFamily: fonts.sans, fontSize: 11, color: c.mute, marginTop: 4 },
 
-  tagsRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 4, marginTop: 8 },
-  tag: {
-    borderWidth: 1, borderColor: colors.ghost, borderRadius: radius.full,
-    paddingHorizontal: 8, paddingVertical: 4,
-  },
-  tagText: { fontFamily: fonts.sansBold, fontSize: 9, color: colors.inkSoft },
+    tagsRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 4, marginTop: 8 },
+    tag: {
+      borderWidth: 1, borderColor: c.ghost, borderRadius: radius.full,
+      paddingHorizontal: 8, paddingVertical: 4,
+    },
+    tagText: { fontFamily: fonts.sansBold, fontSize: 9, color: c.inkSoft },
 
-  socialRow: { flexDirection: "row", gap: 8, marginTop: 12, justifyContent: "center" },
+    socialRow: { flexDirection: "row", gap: 8, marginTop: 12, justifyContent: "center" },
 
-  // Empty state
-  empty:     { alignItems: "center", paddingTop: 40, gap: 8 },
-  emptyTitle:{ fontFamily: fonts.serifBold, fontSize: 18, color: colors.ink },
-  emptyDesc: { fontFamily: fonts.sans, fontSize: 14, color: colors.mute },
-});
+    empty:     { alignItems: "center", paddingTop: 40, gap: 8 },
+    emptyTitle:{ fontFamily: fonts.serifBold, fontSize: 18, color: c.ink },
+    emptyDesc: { fontFamily: fonts.sans, fontSize: 14, color: c.mute },
+  });
+}
