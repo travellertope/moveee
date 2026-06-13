@@ -9,7 +9,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { api, MOBILE_API } from "../../api/client";
-import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import StarRating from "../../components/composer/StarRating";
@@ -704,16 +704,6 @@ function createStyles(c: ColorPalette) {
   templateChipActive:     { backgroundColor: c.ochre },
   templateChipText:       { fontFamily: fonts.sansBold, fontSize: 12, color: c.inkSoft },
   templateChipTextActive: { color: c.paper },
-
-  templateStrip:        { flexGrow: 0, borderTopWidth: 1, borderTopColor: colors.rule, borderBottomWidth: 1, borderBottomColor: colors.rule },
-  templateStripContent: { paddingHorizontal: space[3], paddingVertical: space[4], gap: space[2] },
-  templatePill: {
-    borderWidth: 1, borderColor: colors.rule, borderRadius: radius.full,
-    paddingHorizontal: space[3], paddingVertical: space[1] + 2,
-  },
-  templatePillActive:     { backgroundColor: colors.ink, borderColor: colors.ink },
-  templatePillText:       { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute },
-  templatePillTextActive: { color: colors.paper },
 
   body: { padding: space[4], paddingBottom: 100 },
 
