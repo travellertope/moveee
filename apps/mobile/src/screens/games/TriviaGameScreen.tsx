@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
   TouchableOpacity, ActivityIndicator, Share,
@@ -8,6 +8,8 @@ import { storage } from "../../store/storage";
 import { api } from "../../api/client";
 import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { useColors } from "../../hooks/useColors";
+import type { ColorPalette } from "../../theme";
 
 const PROXY     = "https://themoveee.com/api";
 const KEY_DATE  = "trivia_last_played_date";
@@ -26,7 +28,7 @@ type Phase = "loading" | "error" | "played" | "game" | "done";
 const OPTION_LABELS = ["A", "B", "C", "D"] as const;
 
 // ── Shared header ─────────────────────────────────────────────────────────────
-function Header({ nav }: { nav: any }) {
+function Header({ nav, styles }: { nav: any; styles: ReturnType<typeof createStyles> }) {
   return (
     <View style={styles.header}>
       <View style={{ width: 44 }} />
@@ -40,6 +42,8 @@ function Header({ nav }: { nav: any }) {
 
 export default function TriviaGameScreen() {
   const nav = useNavigation<any>();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   const [phase,     setPhase]     = useState<Phase>("loading");
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
@@ -116,8 +120,8 @@ export default function TriviaGameScreen() {
   if (phase === "loading") {
     return (
       <SafeAreaView style={styles.container}>
-        <Header nav={nav} />
-        <ActivityIndicator style={{ marginTop: 60 }} color={colors.gold} size="large" />
+        <Header nav={nav} styles={styles} />
+        <ActivityIndicator style={{ marginTop: 60 }} color={c.gold} size="large" />
       </SafeAreaView>
     );
   }
@@ -126,7 +130,7 @@ export default function TriviaGameScreen() {
   if (phase === "error") {
     return (
       <SafeAreaView style={styles.container}>
-        <Header nav={nav} />
+        <Header nav={nav} styles={styles} />
         <View style={styles.centred}>
           <Text style={styles.centredText}>{errorMsg}</Text>
           <TouchableOpacity style={styles.primaryBtn} onPress={init}>
@@ -141,7 +145,7 @@ export default function TriviaGameScreen() {
   if (phase === "played") {
     const cr = lastScore !== null ? Math.round((lastScore / 10) * 50) : 0;
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.paperWarm }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: c.paperWarm }]}>
         <View style={styles.centred}>
           <View style={styles.playedCircle}>
             <Text style={styles.playedCheck}>✓</Text>
@@ -170,7 +174,7 @@ export default function TriviaGameScreen() {
     const msg   = pct >= 80 ? "Excellent knowledge!" : pct >= 50 ? "Solid knowledge! Keep exploring." : "Keep learning and come back!";
 
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.paperWarm }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: c.paperWarm }]}>
         <ScrollView contentContainerStyle={styles.scoreBody}>
           <Text style={styles.scoreLarge}>{final} / {questions.length}</Text>
           <Text style={styles.scorePct}>{pct}% correct</Text>
@@ -188,7 +192,7 @@ export default function TriviaGameScreen() {
                 key={i}
                 style={[
                   styles.reviewDot,
-                  { backgroundColor: answers[i] === q.correct ? colors.ochre : colors.error },
+                  { backgroundColor: answers[i] === q.correct ? c.ochre : c.error },
                 ]}
               />
             ))}
@@ -214,8 +218,8 @@ export default function TriviaGameScreen() {
   const progress = ((qIndex + 1) / questions.length) * 100;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.paper }]}>
-      <Header nav={nav} />
+    <SafeAreaView style={[styles.container, { backgroundColor: c.paper }]}>
+      <Header nav={nav} styles={styles} />
 
       {/* Progress bar */}
       <View style={styles.progressWrap}>
@@ -268,8 +272,8 @@ export default function TriviaGameScreen() {
                 ]}>
                   <Text style={[
                     styles.optionLabelText,
-                    isRevealed && isCorrect  && { color: colors.success },
-                    isRevealed && isSelected && !isCorrect && { color: colors.error },
+                    isRevealed && isCorrect  && { color: c.success },
+                    isRevealed && isSelected && !isCorrect && { color: c.error },
                   ]}>
                     {OPTION_LABELS[idx]}
                   </Text>
@@ -282,10 +286,10 @@ export default function TriviaGameScreen() {
                   {opt}
                 </Text>
                 {isRevealed && isCorrect ? (
-                  <Text style={{ fontSize: 16, color: colors.success }}>✓</Text>
+                  <Text style={{ fontSize: 16, color: c.success }}>✓</Text>
                 ) : null}
                 {isRevealed && isSelected && !isCorrect ? (
-                  <Text style={{ fontSize: 16, color: colors.error }}>✗</Text>
+                  <Text style={{ fontSize: 16, color: c.error }}>✗</Text>
                 ) : null}
               </TouchableOpacity>
             );
@@ -319,129 +323,131 @@ export default function TriviaGameScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    container: { flex: 1 },
 
-  // Header
-  header: {
-    height: 64, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: space[4], borderBottomWidth: 1, borderBottomColor: colors.ghost,
-    backgroundColor: colors.paper,
-  },
-  headerTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.ink },
-  exitText:    { fontFamily: fonts.sans, fontSize: 14, color: colors.ghost },
+    // Header
+    header: {
+      height: 64, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], borderBottomWidth: 1, borderBottomColor: c.ghost,
+      backgroundColor: c.paper,
+    },
+    headerTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
+    exitText:    { fontFamily: fonts.sans, fontSize: 14, color: c.ghost },
 
-  // Progress
-  progressWrap: { paddingHorizontal: space[4], marginTop: 12 },
-  progressBg:   { height: 8, backgroundColor: colors.ghost, borderRadius: radius.full, overflow: "hidden" },
-  progressFill: { height: 8, backgroundColor: colors.ochre, borderRadius: radius.full },
-  progressRow:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
-  progressLabel: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute },
-  scoreLabel:   { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink, width: 60, textAlign: "right" },
+    // Progress
+    progressWrap: { paddingHorizontal: space[4], marginTop: 12 },
+    progressBg:   { height: 8, backgroundColor: c.ghost, borderRadius: radius.full, overflow: "hidden" },
+    progressFill: { height: 8, backgroundColor: c.ochre, borderRadius: radius.full },
+    progressRow:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
+    progressLabel: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute },
+    scoreLabel:   { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink, width: 60, textAlign: "right" },
 
-  gameBody: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20 },
+    gameBody: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20 },
 
-  // Question card
-  questionCard: {
-    backgroundColor: colors.paper, borderRadius: radius.xl, padding: 24,
-    alignItems: "center", marginBottom: 16, ...shadows.card,
-  },
-  questionCategory: {
-    fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
-    color: colors.ochre, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4,
-  },
-  questionRule: { width: 32, height: 1.5, backgroundColor: colors.ochre, marginBottom: 20 },
-  questionText: {
-    fontFamily: fonts.serifBold, fontSize: 22, color: colors.ink,
-    lineHeight: 30, textAlign: "center",
-  },
+    // Question card
+    questionCard: {
+      backgroundColor: c.paper, borderRadius: radius.xl, padding: 24,
+      alignItems: "center", marginBottom: 16, ...shadows.card,
+    },
+    questionCategory: {
+      fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
+      color: c.ochre, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4,
+    },
+    questionRule: { width: 32, height: 1.5, backgroundColor: c.ochre, marginBottom: 20 },
+    questionText: {
+      fontFamily: fonts.serifBold, fontSize: 22, color: c.ink,
+      lineHeight: 30, textAlign: "center",
+    },
 
-  // Options
-  options: { gap: 12, marginBottom: 16 },
-  option: {
-    height: 52, flexDirection: "row", alignItems: "center", gap: 12,
-    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.ghost,
-    borderRadius: 8, paddingHorizontal: space[4],
-  },
-  optionCorrect: { backgroundColor: "#edf7ed", borderWidth: 2, borderColor: colors.success },
-  optionWrong:   { backgroundColor: "#fef2f2", borderWidth: 2, borderColor: colors.error },
-  optionDim:     { opacity: 0.5 },
+    // Options
+    options: { gap: 12, marginBottom: 16 },
+    option: {
+      height: 52, flexDirection: "row", alignItems: "center", gap: 12,
+      backgroundColor: c.paper, borderWidth: 1, borderColor: c.ghost,
+      borderRadius: 8, paddingHorizontal: space[4],
+    },
+    optionCorrect: { backgroundColor: "#edf7ed", borderWidth: 2, borderColor: c.success },
+    optionWrong:   { backgroundColor: "#fef2f2", borderWidth: 2, borderColor: c.error },
+    optionDim:     { opacity: 0.5 },
 
-  optionLabelCircle: {
-    width: 24, height: 24, borderRadius: 12,
-    backgroundColor: colors.paperDeep, alignItems: "center", justifyContent: "center",
-    borderWidth: 1, borderColor: "rgba(200,191,176,0.5)",
-  },
-  optionLabelCorrect: { backgroundColor: colors.paper, borderColor: "rgba(45,106,79,0.3)" },
-  optionLabelWrong:   { backgroundColor: colors.paper, borderColor: "rgba(198,40,40,0.3)" },
-  optionLabelText:    { fontFamily: fonts.sansBold, fontSize: 11, color: colors.ink },
+    optionLabelCircle: {
+      width: 24, height: 24, borderRadius: 12,
+      backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center",
+      borderWidth: 1, borderColor: "rgba(200,191,176,0.5)",
+    },
+    optionLabelCorrect: { backgroundColor: c.paper, borderColor: "rgba(45,106,79,0.3)" },
+    optionLabelWrong:   { backgroundColor: c.paper, borderColor: "rgba(198,40,40,0.3)" },
+    optionLabelText:    { fontFamily: fonts.sansBold, fontSize: 11, color: c.ink },
 
-  optionText:        { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.ink },
-  optionTextCorrect: { fontFamily: fonts.sansBold, color: colors.ink },
-  optionTextWrong:   { color: colors.inkSoft },
+    optionText:        { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink },
+    optionTextCorrect: { fontFamily: fonts.sansBold, color: c.ink },
+    optionTextWrong:   { color: c.inkSoft },
 
-  // Explanation
-  explanation: { backgroundColor: colors.paperDeep, borderRadius: 8, padding: 16 },
-  explanationText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.inkSoft, lineHeight: 20 },
+    // Explanation
+    explanation: { backgroundColor: c.paperDeep, borderRadius: 8, padding: 16 },
+    explanationText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft, lineHeight: 20 },
 
-  // Footer
-  footer: {
-    position: "absolute", bottom: 0, left: 0, right: 0,
-    backgroundColor: colors.paper, borderTopWidth: 1, borderTopColor: colors.ghost,
-    paddingBottom: 34, paddingTop: 16, paddingHorizontal: 20,
-  },
-  nextBtn: {
-    height: 52, backgroundColor: colors.ochre, borderRadius: radius.full,
-    alignItems: "center", justifyContent: "center",
-    shadowColor: colors.ochre, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 3,
-  },
-  nextBtnDisabled: { opacity: 0.4 },
-  nextBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.paper },
+    // Footer
+    footer: {
+      position: "absolute", bottom: 0, left: 0, right: 0,
+      backgroundColor: c.paper, borderTopWidth: 1, borderTopColor: c.ghost,
+      paddingBottom: 34, paddingTop: 16, paddingHorizontal: 20,
+    },
+    nextBtn: {
+      height: 52, backgroundColor: c.ochre, borderRadius: radius.full,
+      alignItems: "center", justifyContent: "center",
+      shadowColor: c.ochre, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 3,
+    },
+    nextBtnDisabled: { opacity: 0.4 },
+    nextBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.paper },
 
-  // Centred layout (error + already played)
-  centred:     { flex: 1, alignItems: "center", justifyContent: "center", padding: space[8], gap: space[3] },
-  centredText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute, textAlign: "center" },
+    // Centred layout (error + already played)
+    centred:     { flex: 1, alignItems: "center", justifyContent: "center", padding: space[8], gap: space[3] },
+    centredText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute, textAlign: "center" },
 
-  // Already played
-  playedCircle: {
-    width: 72, height: 72, borderRadius: 36,
-    backgroundColor: colors.ochre, alignItems: "center", justifyContent: "center",
-    marginBottom: 8,
-    shadowColor: colors.ochre, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 3,
-  },
-  playedCheck:   { fontSize: 32, color: colors.paper, fontWeight: "bold" },
-  playedTitle:   { fontFamily: fonts.serifBold, fontSize: 22, color: colors.ink },
-  playedSub:     { fontFamily: fonts.sans, fontSize: 14, color: colors.mute },
-  countdownWrap: { alignItems: "center", gap: 4, marginVertical: 8 },
-  countdownLabel: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute },
-  countdownValue: { fontFamily: fonts.monoBold, fontSize: 28, color: colors.ink, letterSpacing: -0.5 },
-  browseFeedLink: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.ochre },
+    // Already played
+    playedCircle: {
+      width: 72, height: 72, borderRadius: 36,
+      backgroundColor: c.ochre, alignItems: "center", justifyContent: "center",
+      marginBottom: 8,
+      shadowColor: c.ochre, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 3,
+    },
+    playedCheck:   { fontSize: 32, color: c.paper, fontWeight: "bold" },
+    playedTitle:   { fontFamily: fonts.serifBold, fontSize: 22, color: c.ink },
+    playedSub:     { fontFamily: fonts.sans, fontSize: 14, color: c.mute },
+    countdownWrap: { alignItems: "center", gap: 4, marginVertical: 8 },
+    countdownLabel: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
+    countdownValue: { fontFamily: fonts.monoBold, fontSize: 28, color: c.ink, letterSpacing: -0.5 },
+    browseFeedLink: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre },
 
-  // Score screen
-  scoreBody: { padding: space[8], alignItems: "center", gap: space[3], paddingTop: 60 },
-  scoreLarge: { fontFamily: fonts.serifBold, fontSize: 56, color: colors.ink, lineHeight: 60 },
-  scorePct:   { fontFamily: fonts.sans, fontSize: 16, color: colors.mute },
-  scoreMsg:   { fontFamily: fonts.serifBold, fontSize: 20, fontStyle: "italic" as any, color: colors.gold, textAlign: "center" },
-  crPill: {
-    backgroundColor: colors.gold, borderRadius: radius.full,
-    paddingHorizontal: space[4], paddingVertical: 8,
-    shadowColor: colors.gold, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 2,
-  },
-  crPillText: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.paper },
+    // Score screen
+    scoreBody: { padding: space[8], alignItems: "center", gap: space[3], paddingTop: 60 },
+    scoreLarge: { fontFamily: fonts.serifBold, fontSize: 56, color: c.ink, lineHeight: 60 },
+    scorePct:   { fontFamily: fonts.sans, fontSize: 16, color: c.mute },
+    scoreMsg:   { fontFamily: fonts.serifBold, fontSize: 20, fontStyle: "italic" as any, color: c.gold, textAlign: "center" },
+    crPill: {
+      backgroundColor: c.gold, borderRadius: radius.full,
+      paddingHorizontal: space[4], paddingVertical: 8,
+      shadowColor: c.gold, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 2,
+    },
+    crPillText: { fontFamily: fonts.sansBold, fontSize: 14, color: c.paper },
 
-  scoreDivider: { width: "100%", height: 1, backgroundColor: colors.ghost },
-  reviewTitle:  { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink },
-  reviewDots:   { flexDirection: "row", flexWrap: "wrap", gap: 5, justifyContent: "center" },
-  reviewDot:    { width: 12, height: 12, borderRadius: 6 },
+    scoreDivider: { width: "100%", height: 1, backgroundColor: c.ghost },
+    reviewTitle:  { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+    reviewDots:   { flexDirection: "row", flexWrap: "wrap", gap: 5, justifyContent: "center" },
+    reviewDot:    { width: 12, height: 12, borderRadius: 6 },
 
-  shareBtn: {
-    width: "100%", maxWidth: 200, height: 48,
-    borderWidth: 1.5, borderColor: colors.ink, borderRadius: radius.full,
-    alignItems: "center", justifyContent: "center",
-  },
-  shareBtnText:  { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.ink },
-  backGamesLink: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.ochre },
+    shareBtn: {
+      width: "100%", maxWidth: 200, height: 48,
+      borderWidth: 1.5, borderColor: c.ink, borderRadius: radius.full,
+      alignItems: "center", justifyContent: "center",
+    },
+    shareBtnText:  { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
+    backGamesLink: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre },
 
-  primaryBtn:     { backgroundColor: colors.ink, borderRadius: radius.xl, paddingVertical: space[3], paddingHorizontal: space[6] },
-  primaryBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.paper },
-});
+    primaryBtn:     { backgroundColor: c.ink, borderRadius: radius.xl, paddingVertical: space[3], paddingHorizontal: space[6] },
+    primaryBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.paper },
+  });
+}

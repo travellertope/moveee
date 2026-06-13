@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, Alert,
@@ -7,7 +7,9 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
 import { api, CULTURE_API, MOBILE_API } from "../../api/client";
-import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { fonts, fontSize, space, radius, shadows } from "../../theme";
+import { useColors } from "../../hooks/useColors";
+import type { ColorPalette } from "../../theme";
 import { ConfirmRedeemDialog } from "../../components/ui/Overlays";
 import type { Perk } from "../../types";
 
@@ -24,22 +26,24 @@ function PerkCard({
   perk,
   credits,
   onRedeem,
+  styles,
+  c,
 }: {
   perk: Perk;
   credits: number;
   onRedeem: (perk: Perk) => void;
+  styles: ReturnType<typeof createStyles>;
+  c: ColorPalette;
 }) {
   const canAfford = credits >= perk.credit_cost;
   const soldOut   = perk.max_total > 0 && perk.redeemed_count >= perk.max_total;
 
-  // Derive a short partner name from title if no dedicated field
   const partnerName = (perk as any).partner_name ?? perk.title.split(" ").slice(-2).join(" ");
 
   return (
     <View style={[styles.card, soldOut && styles.cardSoldOut]}>
-      {/* Partner logo placeholder */}
       <View style={styles.partnerLogo}>
-        <Ionicons name="image-outline" size={16} color={colors.mute} />
+        <Ionicons name="image-outline" size={16} color={c.mute} />
       </View>
 
       <Text style={styles.partnerName} numberOfLines={1}>
@@ -76,6 +80,9 @@ export default function PerksScreen() {
   const [redeeming,     setRedeeming]     = useState(false);
   const [success,       setSuccess]       = useState<{ perk: Perk; result: RedeemResult } | null>(null);
   const [confirmPerk,   setConfirmPerk]   = useState<Perk | null>(null);
+
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   const credits    = user?.credits ?? 0;
   const hasPasskey = user?.hasPasskey ?? false;
@@ -115,16 +122,14 @@ export default function PerksScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => nav.goBack()}>
-          <Ionicons name="chevron-back" size={22} color={colors.ink} />
+          <Ionicons name="chevron-back" size={22} color={c.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Partner Perks</Text>
         <View style={{ width: 44 }} />
       </View>
 
-      {/* Balance banner */}
       <View style={styles.balanceBanner}>
         <View style={styles.balanceLeft}>
           <Text style={styles.balanceStar}>★</Text>
@@ -135,21 +140,19 @@ export default function PerksScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Passkey gate banner */}
       {!hasPasskey && (
         <TouchableOpacity
           style={styles.passKeyBanner}
           onPress={() => nav.navigate("MemberSettings", { tab: "security" })}
         >
-          <Ionicons name="finger-print-outline" size={16} color={colors.gold} />
+          <Ionicons name="finger-print-outline" size={16} color={c.gold} />
           <Text style={styles.passKeyBannerText}>
             Passkey required to redeem. Set up in Settings → Security
           </Text>
-          <Ionicons name="chevron-forward" size={14} color={colors.gold} />
+          <Ionicons name="chevron-forward" size={14} color={c.gold} />
         </TouchableOpacity>
       )}
 
-      {/* Success banner */}
       {success && (
         <View style={styles.successBanner}>
           <View style={styles.successBannerInner}>
@@ -167,7 +170,7 @@ export default function PerksScreen() {
       )}
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color={colors.gold} />
+        <ActivityIndicator style={{ marginTop: 40 }} color={c.gold} />
       ) : (
         <FlatList
           data={perks}
@@ -177,7 +180,7 @@ export default function PerksScreen() {
           columnWrapperStyle={styles.row}
           renderItem={({ item }) => (
             <View style={{ flex: 1 }}>
-              <PerkCard perk={item} credits={credits} onRedeem={handleRedeem} />
+              <PerkCard perk={item} credits={credits} onRedeem={handleRedeem} styles={styles} c={c} />
             </View>
           )}
           ListEmptyComponent={
@@ -188,7 +191,7 @@ export default function PerksScreen() {
 
       {redeeming && (
         <View style={styles.overlay}>
-          <ActivityIndicator color={colors.paper} size="large" />
+          <ActivityIndicator color={c.paper} size="large" />
         </View>
       )}
 
@@ -204,97 +207,95 @@ export default function PerksScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paperDeep },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.paperDeep },
 
-  header: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: colors.paper, paddingHorizontal: space[4], paddingVertical: space[3],
-    borderBottomWidth: 1, borderBottomColor: colors.ghost,
-  },
-  backBtn:     { width: 44, height: 44, alignItems: "flex-start", justifyContent: "center" },
-  headerTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.ink },
+    header: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      backgroundColor: c.paper, paddingHorizontal: space[4], paddingVertical: space[3],
+      borderBottomWidth: 1, borderBottomColor: c.ghost,
+    },
+    backBtn:     { width: 44, height: 44, alignItems: "flex-start", justifyContent: "center" },
+    headerTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
 
-  // Balance banner
-  balanceBanner: {
-    height: 64, backgroundColor: colors.paperWarm,
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.ghost,
-  },
-  balanceLeft: { flexDirection: "row", alignItems: "center", gap: 6 },
-  balanceStar: { fontFamily: fonts.sans, fontSize: 16, color: colors.ochre, marginBottom: 2 },
-  balanceText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.ink },
-  earnMore:    { fontFamily: fonts.sans, fontSize: 12, color: colors.ochre },
+    balanceBanner: {
+      height: 64, backgroundColor: c.paperWarm,
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: c.ghost,
+    },
+    balanceLeft: { flexDirection: "row", alignItems: "center", gap: 6 },
+    balanceStar: { fontFamily: fonts.sans, fontSize: 16, color: c.ochre, marginBottom: 2 },
+    balanceText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
+    earnMore:    { fontFamily: fonts.sans, fontSize: 12, color: c.ochre },
 
-  // Passkey banner
-  passKeyBanner: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    marginHorizontal: 16, marginTop: 12, marginBottom: 4,
-    backgroundColor: colors.goldLight, borderRadius: radius.xl,
-    paddingHorizontal: 12, paddingVertical: 10,
-    borderWidth: 1, borderColor: colors.goldBorder,
-  },
-  passKeyBannerText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.gold, flex: 1 },
+    passKeyBanner: {
+      flexDirection: "row", alignItems: "center", gap: 8,
+      marginHorizontal: 16, marginTop: 12, marginBottom: 4,
+      backgroundColor: c.goldLight, borderRadius: radius.xl,
+      paddingHorizontal: 12, paddingVertical: 10,
+      borderWidth: 1, borderColor: c.goldBorder,
+    },
+    passKeyBannerText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.gold, flex: 1 },
 
-  // Success banner
-  successBanner: {
-    marginHorizontal: 16, marginTop: 12,
-    backgroundColor: colors.paper, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: colors.success,
-    padding: 16, ...shadows.card,
-  },
-  successBannerInner: { gap: 4, marginBottom: 8 },
-  successTitle:       { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink },
-  successSub:         { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute },
-  successLink:        { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.ochre, textAlign: "right" },
+    successBanner: {
+      marginHorizontal: 16, marginTop: 12,
+      backgroundColor: c.paper, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: c.success,
+      padding: 16, ...shadows.card,
+    },
+    successBannerInner: { gap: 4, marginBottom: 8 },
+    successTitle:       { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+    successSub:         { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
+    successLink:        { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ochre, textAlign: "right" },
 
-  // Grid
-  grid: { paddingHorizontal: 16, paddingVertical: 16, paddingBottom: space[8] },
-  row:  { gap: 12, marginBottom: 12 },
+    grid: { paddingHorizontal: 16, paddingVertical: 16, paddingBottom: space[8] },
+    row:  { gap: 12, marginBottom: 12 },
 
-  card: {
-    flex: 1, backgroundColor: colors.paper, borderRadius: radius.xl,
-    padding: 16, alignItems: "center", gap: 4, ...shadows.card,
-  },
-  cardSoldOut: { opacity: 0.65 },
+    card: {
+      flex: 1, backgroundColor: c.paper, borderRadius: radius.xl,
+      padding: 16, alignItems: "center", gap: 4, ...shadows.card,
+    },
+    cardSoldOut: { opacity: 0.65 },
 
-  partnerLogo: {
-    width: 50, height: 30, backgroundColor: colors.ghost,
-    borderRadius: 4, alignItems: "center", justifyContent: "center",
-    opacity: 0.3, marginBottom: 8,
-  },
+    partnerLogo: {
+      width: 50, height: 30, backgroundColor: c.ghost,
+      borderRadius: 4, alignItems: "center", justifyContent: "center",
+      opacity: 0.3, marginBottom: 8,
+    },
 
-  partnerName: {
-    fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
-    color: colors.mute, letterSpacing: 1.5, textTransform: "uppercase",
-  },
-  cardTitle: {
-    fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink,
-    textAlign: "center", lineHeight: 18, height: 40, marginTop: 4,
-  },
-  crPill: {
-    backgroundColor: colors.ochre, borderRadius: radius.full,
-    paddingHorizontal: 12, paddingVertical: 4, marginTop: 4,
-  },
-  crPillText: { fontFamily: fonts.sansBold, fontSize: 11, color: colors.paper },
+    partnerName: {
+      fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
+      color: c.mute, letterSpacing: 1.5, textTransform: "uppercase",
+    },
+    cardTitle: {
+      fontFamily: fonts.sansBold, fontSize: 14, color: c.ink,
+      textAlign: "center", lineHeight: 18, height: 40, marginTop: 4,
+    },
+    crPill: {
+      backgroundColor: c.ochre, borderRadius: radius.full,
+      paddingHorizontal: 12, paddingVertical: 4, marginTop: 4,
+    },
+    crPillText: { fontFamily: fonts.sansBold, fontSize: 11, color: c.paper },
 
-  redeemBtn: {
-    width: "100%", height: 36, backgroundColor: colors.ochre,
-    borderRadius: radius.full, alignItems: "center", justifyContent: "center", marginTop: 8,
-  },
-  redeemBtnDisabled: { opacity: 0.4 },
-  redeemBtnText:     { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.paper },
+    redeemBtn: {
+      width: "100%", height: 36, backgroundColor: c.ochre,
+      borderRadius: radius.full, alignItems: "center", justifyContent: "center", marginTop: 8,
+    },
+    redeemBtnDisabled: { opacity: 0.4 },
+    redeemBtnText:     { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
 
-  soldOutBtn: {
-    width: "100%", height: 36, borderWidth: 1, borderColor: colors.ghost,
-    borderRadius: radius.full, alignItems: "center", justifyContent: "center", marginTop: 8,
-  },
-  soldOutBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.ghost },
+    soldOutBtn: {
+      width: "100%", height: 36, borderWidth: 1, borderColor: c.ghost,
+      borderRadius: radius.full, alignItems: "center", justifyContent: "center", marginTop: 8,
+    },
+    soldOutBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ghost },
 
-  empty: { textAlign: "center", fontFamily: fonts.sans, color: colors.mute, marginTop: 40 },
+    empty: { textAlign: "center", fontFamily: fonts.sans, color: c.mute, marginTop: 40 },
 
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "center", alignItems: "center",
-  },
-});
+    overlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(0,0,0,0.45)",
+      justifyContent: "center", alignItems: "center",
+    },
+  });
+}

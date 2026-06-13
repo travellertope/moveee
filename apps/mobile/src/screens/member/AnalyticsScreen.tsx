@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
   ActivityIndicator, TouchableOpacity,
@@ -10,14 +10,16 @@ import Svg, {
   Text as SvgText, Defs, LinearGradient, Stop,
 } from "react-native-svg";
 import { api, MOBILE_API } from "../../api/client";
-import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { fonts, fontSize, space, radius, shadows } from "../../theme";
+import { useColors } from "../../hooks/useColors";
+import type { ColorPalette } from "../../theme";
 import type { AnalyticsData } from "../../types";
 
 const RUST = "#9B3C2A";
 
 // ── Bar chart (credits earned vs spent) ──────────────────────────────────────
 
-function BarChart({ days }: { days: AnalyticsData["credit_days"] }) {
+function BarChart({ days, c }: { days: AnalyticsData["credit_days"]; c: ColorPalette }) {
   const W = 300, H = 160;
   const PAD = { l: 20, r: 4, t: 8, b: 20 };
   const chartW = W - PAD.l - PAD.r;
@@ -27,27 +29,24 @@ function BarChart({ days }: { days: AnalyticsData["credit_days"] }) {
   const groupW = chartW / (recent.length || 1);
   const barW   = Math.max(4, groupW * 0.38);
 
-  // Y-axis guide values
   const yLabels = [0, Math.round(maxVal / 3), Math.round((maxVal * 2) / 3), maxVal];
 
   return (
     <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-      {/* Y gridlines + labels */}
       {yLabels.map((val) => {
         const y = PAD.t + chartH - (val / maxVal) * chartH;
         return (
           <React.Fragment key={val}>
             <Line x1={PAD.l} y1={y} x2={W - PAD.r} y2={y}
-              stroke={y === PAD.t + chartH ? colors.ghost : colors.ghost}
+              stroke={y === PAD.t + chartH ? c.ghost : c.ghost}
               strokeWidth={y === PAD.t + chartH ? 1 : 0.5}
               strokeDasharray={y === PAD.t + chartH ? undefined : "2,4"} />
-            <SvgText x={PAD.l - 2} y={y + 4} fontSize={9} fill={colors.mute}
+            <SvgText x={PAD.l - 2} y={y + 4} fontSize={9} fill={c.mute}
               textAnchor="end" fontFamily={fonts.mono}>{val}</SvgText>
           </React.Fragment>
         );
       })}
 
-      {/* Bars */}
       {recent.map((d, i) => {
         const cx = PAD.l + (i + 0.5) * groupW;
         const earnH = (d.earned / maxVal) * chartH;
@@ -56,14 +55,13 @@ function BarChart({ days }: { days: AnalyticsData["credit_days"] }) {
         return (
           <React.Fragment key={d.day}>
             <Rect x={cx - barW - 1} y={baseY - earnH} width={barW} height={Math.max(1, earnH)}
-              fill={colors.ochre} rx={2} />
+              fill={c.ochre} rx={2} />
             <Rect x={cx + 1} y={baseY - spentH} width={barW} height={Math.max(0, spentH)}
               fill={RUST} rx={2} />
           </React.Fragment>
         );
       })}
 
-      {/* X-axis labels (start, mid, end) */}
       {recent.length > 0 && (() => {
         const labelIdx = [0, Math.floor(recent.length / 2), recent.length - 1];
         return labelIdx.map((i) => {
@@ -71,7 +69,7 @@ function BarChart({ days }: { days: AnalyticsData["credit_days"] }) {
           const cx = PAD.l + (i + 0.5) * groupW;
           const label = d.day.slice(5).replace("-", "/");
           return (
-            <SvgText key={i} x={cx} y={H - 4} fontSize={9} fill={colors.mute}
+            <SvgText key={i} x={cx} y={H - 4} fontSize={9} fill={c.mute}
               textAnchor="middle" fontFamily={fonts.mono}>{label}</SvgText>
           );
         });
@@ -82,7 +80,7 @@ function BarChart({ days }: { days: AnalyticsData["credit_days"] }) {
 
 // ── Line chart (reputation per month) ────────────────────────────────────────
 
-function LineChart({ months }: { months: AnalyticsData["rep_months"] }) {
+function LineChart({ months, c }: { months: AnalyticsData["rep_months"]; c: ColorPalette }) {
   const W = 300, H = 140;
   const PAD = { l: 22, r: 4, t: 20, b: 20 };
   const chartW = W - PAD.l - PAD.r;
@@ -106,50 +104,46 @@ function LineChart({ months }: { months: AnalyticsData["rep_months"] }) {
     <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
       <Defs>
         <LinearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={colors.gold} stopOpacity="0.18" />
-          <Stop offset="1" stopColor={colors.gold} stopOpacity="0.02" />
+          <Stop offset="0" stopColor={c.gold} stopOpacity="0.18" />
+          <Stop offset="1" stopColor={c.gold} stopOpacity="0.02" />
         </LinearGradient>
       </Defs>
 
-      {/* Y gridlines + labels */}
       {yLabels.map((val) => {
         const y = PAD.t + chartH - (val / maxVal) * chartH;
         return (
           <React.Fragment key={val}>
             <Line x1={PAD.l} y1={y} x2={W - PAD.r} y2={y}
-              stroke={colors.ghost}
+              stroke={c.ghost}
               strokeWidth={y === PAD.t + chartH ? 1 : 0.5}
               strokeDasharray={y === PAD.t + chartH ? undefined : "2,4"} />
-            <SvgText x={PAD.l - 2} y={y + 4} fontSize={9} fill={colors.mute}
+            <SvgText x={PAD.l - 2} y={y + 4} fontSize={9} fill={c.mute}
               textAnchor="end" fontFamily={fonts.mono}>{val}</SvgText>
           </React.Fragment>
         );
       })}
 
-      {/* Area fill */}
       {areaPath ? <Path d={areaPath} fill="url(#areaGrad)" /> : null}
 
-      {/* Line */}
       {pts.length > 1 && (
         <Polyline points={pts.map((p) => `${p.x},${p.y}`).join(" ")}
-          fill="none" stroke={colors.gold} strokeWidth={2}
+          fill="none" stroke={c.gold} strokeWidth={2}
           strokeLinecap="round" strokeLinejoin="round" />
       )}
 
-      {/* Dots */}
       {pts.map((p, i) => {
         const isLast = i === pts.length - 1;
         return (
           <React.Fragment key={i}>
             {isLast && (
               <Line x1={p.x} y1={p.y} x2={p.x} y2={PAD.t + chartH}
-                stroke={colors.gold} strokeWidth={1.5} strokeDasharray="3,3" />
+                stroke={c.gold} strokeWidth={1.5} strokeDasharray="3,3" />
             )}
             <Circle cx={p.x} cy={p.y} r={isLast ? 5 : 4}
-              fill={colors.gold} stroke="#FFFFFF" strokeWidth={isLast ? 2 : 1.5} />
+              fill={c.gold} stroke="#FFFFFF" strokeWidth={isLast ? 2 : 1.5} />
             {isLast && (
               <>
-                <Rect x={p.x - 28} y={p.y - 22} width={56} height={20} rx={10} fill={colors.gold} />
+                <Rect x={p.x - 28} y={p.y - 22} width={56} height={20} rx={10} fill={c.gold} />
                 <SvgText x={p.x} y={p.y - 8} fontSize={9} fill="#FFFFFF"
                   textAnchor="middle" fontFamily={fonts.mono} fontWeight="bold">
                   {p.m.rep_earned} REP
@@ -160,9 +154,8 @@ function LineChart({ months }: { months: AnalyticsData["rep_months"] }) {
         );
       })}
 
-      {/* X labels */}
       {pts.map((p, i) => (
-        <SvgText key={i} x={p.x} y={H - 4} fontSize={9} fill={colors.mute}
+        <SvgText key={i} x={p.x} y={H - 4} fontSize={9} fill={c.mute}
           textAnchor="middle" fontFamily={fonts.mono}>
           {p.m.month.slice(5)}
         </SvgText>
@@ -179,6 +172,9 @@ export default function AnalyticsScreen() {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState("");
 
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   useEffect(() => {
     api.get<AnalyticsData>(`${MOBILE_API}/analytics`)
       .then(setData)
@@ -186,22 +182,20 @@ export default function AnalyticsScreen() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Get current month label for the credits chart
   const monthLabel = new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
-          <Ionicons name="chevron-back" size={22} color={colors.ink} />
+          <Ionicons name="chevron-back" size={22} color={c.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Analytics</Text>
         <View style={styles.headerSideBtn} />
       </View>
 
       {loading ? (
-        <View style={styles.center}><ActivityIndicator color={colors.gold} /></View>
+        <View style={styles.center}><ActivityIndicator color={c.gold} /></View>
       ) : error ? (
         <View style={styles.center}><Text style={styles.errorText}>{error}</Text></View>
       ) : data ? (
@@ -209,35 +203,33 @@ export default function AnalyticsScreen() {
           contentContainerStyle={styles.body}
           showsVerticalScrollIndicator={false}
         >
-          {/* Summary stats — single row card with 4 columns */}
           <View style={styles.statsCard}>
             <View style={[styles.statCol, styles.statColBorder]}>
-              <Text style={[styles.statValue, { color: colors.ochre }]}>
+              <Text style={[styles.statValue, { color: c.ochre }]}>
                 {data.balance.toLocaleString()}
               </Text>
               <Text style={styles.statLabel}>Credits</Text>
             </View>
             <View style={[styles.statCol, styles.statColBorder]}>
-              <Text style={[styles.statValue, { color: colors.gold }]}>
+              <Text style={[styles.statValue, { color: c.gold }]}>
                 {data.reputation.toLocaleString()}
               </Text>
               <Text style={styles.statLabel}>Reputation</Text>
             </View>
             <View style={[styles.statCol, styles.statColBorder]}>
-              <Text style={[styles.statValue, { color: colors.ink }]}>
+              <Text style={[styles.statValue, { color: c.ink }]}>
                 {data.posts_published}
               </Text>
               <Text style={styles.statLabel}>Posts</Text>
             </View>
             <View style={styles.statCol}>
-              <Text style={[styles.statValue, { color: colors.ink }]}>
+              <Text style={[styles.statValue, { color: c.ink }]}>
                 {data.badge_count}
               </Text>
               <Text style={styles.statLabel}>Badges</Text>
             </View>
           </View>
 
-          {/* Credits chart */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Credits · Last 30 Days</Text>
@@ -245,13 +237,12 @@ export default function AnalyticsScreen() {
             </View>
             <View style={styles.chartCard}>
               {data.credit_days.length > 0 ? (
-                <BarChart days={data.credit_days} />
+                <BarChart days={data.credit_days} c={c} />
               ) : (
                 <Text style={styles.noData}>No credit activity yet</Text>
               )}
-              {/* Legend */}
               <View style={styles.legend}>
-                <View style={[styles.legendSwatch, { backgroundColor: colors.ochre }]} />
+                <View style={[styles.legendSwatch, { backgroundColor: c.ochre }]} />
                 <Text style={styles.legendText}>Earned</Text>
                 <View style={[styles.legendSwatch, { backgroundColor: RUST }]} />
                 <Text style={styles.legendText}>Spent</Text>
@@ -259,21 +250,19 @@ export default function AnalyticsScreen() {
             </View>
           </View>
 
-          {/* Reputation chart */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Reputation · Last 6 Months</Text>
             </View>
             <View style={styles.chartCard}>
               {data.rep_months.length > 0 ? (
-                <LineChart months={data.rep_months} />
+                <LineChart months={data.rep_months} c={c} />
               ) : (
                 <Text style={styles.noData}>No reputation data yet</Text>
               )}
             </View>
           </View>
 
-          {/* Top posts */}
           {data.top_posts.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
@@ -304,56 +293,54 @@ export default function AnalyticsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paperWarm },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.paperWarm },
 
-  header: {
-    height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: space[4], backgroundColor: colors.paper,
-    borderBottomWidth: 1, borderBottomColor: colors.ghost,
-  },
-  headerSideBtn:  { minWidth: 44, minHeight: 44, justifyContent: "center" },
-  headerTitle:    { fontFamily: fonts.sansBold, fontSize: 15, color: colors.ink },
+    header: {
+      height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], backgroundColor: c.paper,
+      borderBottomWidth: 1, borderBottomColor: c.ghost,
+    },
+    headerSideBtn:  { minWidth: 44, minHeight: 44, justifyContent: "center" },
+    headerTitle:    { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
 
-  center:    { flex: 1, justifyContent: "center", alignItems: "center" },
-  errorText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.ochre },
+    center:    { flex: 1, justifyContent: "center", alignItems: "center" },
+    errorText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ochre },
 
-  body: { padding: 16, gap: 24, paddingBottom: 48 },
+    body: { padding: 16, gap: 24, paddingBottom: 48 },
 
-  // Summary stats card
-  statsCard: {
-    backgroundColor: colors.paper, borderRadius: 12, ...shadows.card,
-    flexDirection: "row", padding: 16,
-  },
-  statCol: { flex: 1, alignItems: "center" },
-  statColBorder: { borderRightWidth: 1, borderRightColor: colors.ghost + "80" },
-  statValue: { fontFamily: fonts.sansBold, fontSize: 22, lineHeight: 26, marginBottom: 4 },
-  statLabel: {
-    fontFamily: fonts.sansBold, fontSize: 9, color: colors.mute,
-    textTransform: "uppercase", letterSpacing: 1.2,
-  },
+    statsCard: {
+      backgroundColor: c.paper, borderRadius: 12, ...shadows.card,
+      flexDirection: "row", padding: 16,
+    },
+    statCol: { flex: 1, alignItems: "center" },
+    statColBorder: { borderRightWidth: 1, borderRightColor: c.ghost + "80" },
+    statValue: { fontFamily: fonts.sansBold, fontSize: 22, lineHeight: 26, marginBottom: 4 },
+    statLabel: {
+      fontFamily: fonts.sansBold, fontSize: 9, color: c.mute,
+      textTransform: "uppercase", letterSpacing: 1.2,
+    },
 
-  // Sections
-  section:      { gap: 8 },
-  sectionHeader:{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 2 },
-  sectionTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink },
-  sectionSub:   { fontFamily: fonts.sans, fontSize: 12, color: colors.mute },
+    section:      { gap: 8 },
+    sectionHeader:{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 2 },
+    sectionTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+    sectionSub:   { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
 
-  chartCard: { backgroundColor: colors.paper, borderRadius: 12, padding: 16, ...shadows.card },
+    chartCard: { backgroundColor: c.paper, borderRadius: 12, padding: 16, ...shadows.card },
 
-  // Chart legend
-  legend: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 8 },
-  legendSwatch: { width: 12, height: 12, borderRadius: 2 },
-  legendText:   { fontFamily: fonts.sans, fontSize: 11, color: colors.mute },
+    legend: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 8 },
+    legendSwatch: { width: 12, height: 12, borderRadius: 2 },
+    legendText:   { fontFamily: fonts.sans, fontSize: 11, color: c.mute },
 
-  noData: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.ghost, textAlign: "center", paddingVertical: 24 },
+    noData: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ghost, textAlign: "center", paddingVertical: 24 },
 
-  // Top posts
-  postRow:       { flexDirection: "row", gap: 8, alignItems: "flex-start", paddingVertical: 12 },
-  postRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.ghost },
-  postRank:      { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ochre, width: 24, flexShrink: 0 },
-  postBody:      { flex: 1, gap: 6 },
-  postTitle:     { fontFamily: fonts.sans, fontSize: 13, color: colors.inkSoft, lineHeight: 18 },
-  postMetaRow:   { alignItems: "flex-end" },
-  postMeta:      { fontFamily: fonts.mono, fontSize: 10, color: colors.mute },
-});
+    postRow:       { flexDirection: "row", gap: 8, alignItems: "flex-start", paddingVertical: 12 },
+    postRowBorder: { borderBottomWidth: 1, borderBottomColor: c.ghost },
+    postRank:      { fontFamily: fonts.sansBold, fontSize: 14, color: c.ochre, width: 24, flexShrink: 0 },
+    postBody:      { flex: 1, gap: 6 },
+    postTitle:     { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, lineHeight: 18 },
+    postMetaRow:   { alignItems: "flex-end" },
+    postMeta:      { fontFamily: fonts.mono, fontSize: 10, color: c.mute },
+  });
+}

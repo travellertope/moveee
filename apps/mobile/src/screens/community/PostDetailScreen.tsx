@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View, Text, Image, FlatList, TextInput, TouchableOpacity,
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
@@ -10,6 +10,8 @@ import { useComments } from "../../features/community/useComments";
 import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
 import type { FeedItem } from "../../types";
+import type { ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 
 const PLACEHOLDER_AVATAR = "https://cms.themoveee.com/wp-content/uploads/placeholder-avatar.png";
 const SERIF = Platform.select({ ios: "Georgia", android: "serif", default: "serif" });
@@ -29,7 +31,7 @@ const REACTION_ENTRIES: Array<{ key: "love" | "fire" | "clap"; emoji: string }> 
   { key: "clap", emoji: "👏" },
 ];
 
-function ReactionRow({ item }: { item: FeedItem }) {
+function ReactionRow({ item, styles, c }: { item: FeedItem; styles: ReturnType<typeof createStyles>; c: ColorPalette }) {
   const [counts, setCounts] = useState(item.reactions ?? { love: 0, fire: 0, clap: 0 });
   const [mine, setMine] = useState<"love" | "fire" | "clap" | null>(null);
   const [pending, setPending] = useState(false);
@@ -82,14 +84,14 @@ function ReactionRow({ item }: { item: FeedItem }) {
       <View style={{ flex: 1 }} />
       {item.slug ? (
         <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
-          <Ionicons name="share-outline" size={16} color="#7a6f5c" />
+          <Ionicons name="share-outline" size={16} color={c.mute} />
         </TouchableOpacity>
       ) : null}
     </View>
   );
 }
 
-function SourcePreview({ item }: { item: FeedItem }) {
+function SourcePreview({ item, styles }: { item: FeedItem; styles: ReturnType<typeof createStyles> }) {
   if (!item.sourceUrl) return null;
   const open = () => Linking.openURL(item.sourceUrl!).catch(() => {});
   return (
@@ -113,6 +115,8 @@ export default function PostDetailScreen() {
   const { comments, loading, addComment } = useComments(postId);
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   const submit = async () => {
     if (!text.trim()) return;
@@ -152,11 +156,11 @@ export default function PostDetailScreen() {
               }}
             >
               <Text style={styles.openFullBtnText}>Share</Text>
-              <Ionicons name="share-outline" size={12} color="#7a6f5c" />
+              <Ionicons name="share-outline" size={12} color={c.mute} />
             </TouchableOpacity>
           ) : null}
           <TouchableOpacity onPress={() => nav.goBack()} style={styles.closeBtn}>
-            <Ionicons name="close" size={20} color="#7a6f5c" />
+            <Ionicons name="close" size={20} color={c.mute} />
           </TouchableOpacity>
         </View>
       </View>
@@ -193,10 +197,10 @@ export default function PostDetailScreen() {
             {item.image ? (
               <Image source={{ uri: item.image }} style={styles.postImage} resizeMode="cover" />
             ) : (
-              <SourcePreview item={item} />
+              <SourcePreview item={item} styles={styles} />
             )}
 
-            <ReactionRow item={item} />
+            <ReactionRow item={item} styles={styles} c={c} />
 
             <Text style={styles.commentsLabel}>
               {comments.length > 0 ? `${comments.length} Comment${comments.length === 1 ? "" : "s"}` : "Start the conversation"}
@@ -215,7 +219,7 @@ export default function PostDetailScreen() {
             </View>
           </View>
         )}
-        ListFooterComponent={loading ? <ActivityIndicator style={{ marginTop: 12 }} color="#b38238" /> : null}
+        ListFooterComponent={loading ? <ActivityIndicator style={{ marginTop: 12 }} color={c.gold} /> : null}
       />
 
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -226,16 +230,16 @@ export default function PostDetailScreen() {
           <TextInput
             style={styles.input}
             placeholder="Comment *"
-            placeholderTextColor="#9e9e9e"
+            placeholderTextColor={c.ghost}
             value={text}
             onChangeText={setText}
             multiline
           />
           <TouchableOpacity onPress={submit} disabled={submitting || !text.trim()}>
             {submitting ? (
-              <ActivityIndicator size="small" color="#b38238" />
+              <ActivityIndicator size="small" color={c.gold} />
             ) : (
-              <Ionicons name="send" size={22} color={text.trim() ? "#b38238" : "#ccc"} />
+              <Ionicons name="send" size={22} color={text.trim() ? c.gold : c.ghost} />
             )}
           </TouchableOpacity>
         </View>
@@ -244,89 +248,91 @@ export default function PostDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  header: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 18, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: "#e8e2d8",
-  },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
-  headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
-  badge: { backgroundColor: "#edf7ed", borderRadius: 2, paddingHorizontal: 6, paddingVertical: 3 },
-  badgeText: { fontSize: 10, fontWeight: "700", letterSpacing: 1.4, textTransform: "uppercase", color: "#2e7d32" },
-  tag: { fontSize: 11, color: "#7a6f5c", letterSpacing: 0.6, textTransform: "uppercase" },
-  openFullBtn: {
-    flexDirection: "row", alignItems: "center", gap: 4,
-    borderWidth: 1, borderColor: "#d8d0c6", borderRadius: 2,
-    paddingHorizontal: 8, paddingVertical: 4,
-  },
-  openFullBtnText: { fontSize: 10, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", color: "#7a6f5c" },
-  closeBtn: { padding: 2 },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.paper },
+    header: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: 18, paddingVertical: 14,
+      borderBottomWidth: 1, borderBottomColor: c.ruleDark,
+    },
+    headerLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
+    headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
+    badge: { backgroundColor: c.communityBg, borderRadius: 2, paddingHorizontal: 6, paddingVertical: 3 },
+    badgeText: { fontSize: 10, fontWeight: "700", letterSpacing: 1.4, textTransform: "uppercase", color: c.communityText },
+    tag: { fontSize: 11, color: c.mute, letterSpacing: 0.6, textTransform: "uppercase" },
+    openFullBtn: {
+      flexDirection: "row", alignItems: "center", gap: 4,
+      borderWidth: 1, borderColor: c.ruleDark, borderRadius: 2,
+      paddingHorizontal: 8, paddingVertical: 4,
+    },
+    openFullBtnText: { fontSize: 10, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", color: c.mute },
+    closeBtn: { padding: 2 },
 
-  listContent: { padding: 18, paddingBottom: 8 },
+    listContent: { padding: 18, paddingBottom: 8 },
 
-  authorRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 14 },
-  avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#edf7ed" },
-  avatarFallback: {
-    width: 38, height: 38, borderRadius: 19, backgroundColor: "#edf7ed",
-    borderWidth: 1, borderColor: "#c8e6c9", justifyContent: "center", alignItems: "center",
-  },
-  avatarFallbackText: { fontSize: 12, fontWeight: "700", color: "#2e7d32" },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  authorName: { fontWeight: "600", fontSize: 14, color: "#14110d" },
-  proBadge: {
-    backgroundColor: "rgba(179,130,56,0.1)", borderWidth: 1, borderColor: "rgba(179,130,56,0.25)",
-    borderRadius: 2, paddingHorizontal: 5, paddingVertical: 1,
-  },
-  proBadgeText: { fontSize: 9, fontWeight: "700", letterSpacing: 1.4, textTransform: "uppercase", color: "#b38238" },
-  metaDate: { fontSize: 12, color: "#999", marginTop: 2 },
+    authorRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 14 },
+    avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.communityBg },
+    avatarFallback: {
+      width: 38, height: 38, borderRadius: 19, backgroundColor: c.communityBg,
+      borderWidth: 1, borderColor: c.communityBorder, justifyContent: "center", alignItems: "center",
+    },
+    avatarFallbackText: { fontSize: 12, fontWeight: "700", color: c.communityText },
+    nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+    authorName: { fontWeight: "600", fontSize: 14, color: c.ink },
+    proBadge: {
+      backgroundColor: c.goldLight, borderWidth: 1, borderColor: c.goldBorder,
+      borderRadius: 2, paddingHorizontal: 5, paddingVertical: 1,
+    },
+    proBadgeText: { fontSize: 9, fontWeight: "700", letterSpacing: 1.4, textTransform: "uppercase", color: c.gold },
+    metaDate: { fontSize: 12, color: c.ghost, marginTop: 2 },
 
-  content: { fontSize: 15, lineHeight: 25, color: "#3a342b", fontFamily: SERIF, marginBottom: 14 },
-  postImage: { width: "100%", height: 240, borderRadius: 6, marginBottom: 14, borderWidth: 1, borderColor: "#e8e2d8", backgroundColor: "#e0d8cc" },
+    content: { fontSize: 15, lineHeight: 25, color: c.inkSoft, fontFamily: SERIF, marginBottom: 14 },
+    postImage: { width: "100%", height: 240, borderRadius: 6, marginBottom: 14, borderWidth: 1, borderColor: c.ruleDark, backgroundColor: c.paperDeep },
 
-  sourceCard: {
-    flexDirection: "row", borderWidth: 1, borderColor: "#e8e2d8", borderRadius: 6,
-    overflow: "hidden", marginBottom: 14, backgroundColor: "#faf8f4",
-  },
-  sourceImage: { width: 96, backgroundColor: "#e0d8cc" },
-  sourceBody: { flex: 1, padding: 10, justifyContent: "center", gap: 3 },
-  sourceName: { fontSize: 10, fontWeight: "700", color: "#b38238", letterSpacing: 1, textTransform: "uppercase" },
-  sourceTitle: { fontSize: 13, fontWeight: "600", color: "#14110d", lineHeight: 18 },
-  sourceDesc: { fontSize: 11, color: "#7a6f5c", lineHeight: 15 },
+    sourceCard: {
+      flexDirection: "row", borderWidth: 1, borderColor: c.ruleDark, borderRadius: 6,
+      overflow: "hidden", marginBottom: 14, backgroundColor: c.paperWarm,
+    },
+    sourceImage: { width: 96, backgroundColor: c.paperDeep },
+    sourceBody: { flex: 1, padding: 10, justifyContent: "center", gap: 3 },
+    sourceName: { fontSize: 10, fontWeight: "700", color: c.gold, letterSpacing: 1, textTransform: "uppercase" },
+    sourceTitle: { fontSize: 13, fontWeight: "600", color: c.ink, lineHeight: 18 },
+    sourceDesc: { fontSize: 11, color: c.mute, lineHeight: 15 },
 
-  reactionRow: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    paddingBottom: 16, marginBottom: 16, borderBottomWidth: 1, borderBottomColor: "#e8e2d8",
-  },
-  reactionBtn: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    borderWidth: 1, borderColor: "transparent", borderRadius: 20,
-    paddingHorizontal: 10, paddingVertical: 4,
-  },
-  reactionBtnActive: { backgroundColor: "#f0ece4", borderColor: "#d8cfc4" },
-  reactionEmoji: { fontSize: 15 },
-  reactionCount: { fontSize: 12, color: "#7a6f5c" },
-  shareBtn: { padding: 4 },
+    reactionRow: {
+      flexDirection: "row", alignItems: "center", gap: 6,
+      paddingBottom: 16, marginBottom: 16, borderBottomWidth: 1, borderBottomColor: c.ruleDark,
+    },
+    reactionBtn: {
+      flexDirection: "row", alignItems: "center", gap: 5,
+      borderWidth: 1, borderColor: "transparent", borderRadius: 20,
+      paddingHorizontal: 10, paddingVertical: 4,
+    },
+    reactionBtnActive: { backgroundColor: c.paperDeep, borderColor: c.ruleDark },
+    reactionEmoji: { fontSize: 15 },
+    reactionCount: { fontSize: 12, color: c.mute },
+    shareBtn: { padding: 4 },
 
-  commentsLabel: { fontSize: 17, fontWeight: "700", fontFamily: SERIF, color: "#14110d", marginBottom: 14 },
-  emptyText: { color: "#9e9e9e", fontSize: 13, marginBottom: 12 },
+    commentsLabel: { fontSize: 17, fontWeight: "700", fontFamily: SERIF, color: c.ink, marginBottom: 14 },
+    emptyText: { color: c.ghost, fontSize: 13, marginBottom: 12 },
 
-  comment: { flexDirection: "row", gap: 10, marginBottom: 16 },
-  commentAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#e0d8cc" },
-  commentBody: { flex: 1 },
-  commentAuthor: { fontWeight: "600", fontSize: 13, color: "#14110d", marginBottom: 2 },
-  commentContent: { fontSize: 14, color: "#333", lineHeight: 20 },
+    comment: { flexDirection: "row", gap: 10, marginBottom: 16 },
+    commentAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: c.paperDeep },
+    commentBody: { flex: 1 },
+    commentAuthor: { fontWeight: "600", fontSize: 13, color: c.ink, marginBottom: 2 },
+    commentContent: { fontSize: 14, color: c.inkSoft, lineHeight: 20 },
 
-  inputRow: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    paddingHorizontal: 16, paddingTop: 6, paddingBottom: 6,
-    borderTopWidth: 1, borderTopColor: "#e8e2d8", backgroundColor: "#fff",
-  },
-  commentingAs: { fontSize: 12, color: "#9e9e9e" },
-  commentingAsName: { color: "#b38238", fontWeight: "600" },
-  input: {
-    flex: 1, backgroundColor: "#faf8f4", borderRadius: 20, borderWidth: 1, borderColor: "#e8e2d8",
-    paddingHorizontal: 14, paddingVertical: 8, fontSize: 14, maxHeight: 100,
-  },
-});
+    inputRow: {
+      flexDirection: "row", alignItems: "center", gap: 12,
+      paddingHorizontal: 16, paddingTop: 6, paddingBottom: 6,
+      borderTopWidth: 1, borderTopColor: c.ruleDark, backgroundColor: c.paper,
+    },
+    commentingAs: { fontSize: 12, color: c.ghost },
+    commentingAsName: { color: c.gold, fontWeight: "600" },
+    input: {
+      flex: 1, backgroundColor: c.paperWarm, borderRadius: 20, borderWidth: 1, borderColor: c.ruleDark,
+      paddingHorizontal: 14, paddingVertical: 8, fontSize: 14, maxHeight: 100,
+    },
+  });
+}
