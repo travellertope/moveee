@@ -285,7 +285,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         {/* LEFT — TOC */}
         <aside className="toc">
           <div className="toc-heading">In this piece</div>
-          <details className="toc-details">
+          <details className="toc-details" open>
           <summary className="toc-summary">
             <span className="toc-toggle-label">In this piece</span>
             <span className="toc-chevron" aria-hidden>▾</span>
@@ -434,6 +434,31 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             </Link>
           ))}
 
+          {/* Shop the Edit — desktop sidebar widget */}
+          {(post.featuredProducts ?? []).length > 0 && (
+            <div className="ste-sidebar-card">
+              <div className="ste-sb-label">Shop the Edit</div>
+              <div className="ste-sb-list">
+                {(post.featuredProducts as any[]).map((p: any) => (
+                  <Link key={p.id} href={`/shop/${p.slug}`} className="ste-sb-item">
+                    <div className="ste-sb-img">
+                      {p.imageUrl ? (
+                        <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="56px" />
+                      ) : (
+                        <div className="ste-sb-img-placeholder" />
+                      )}
+                    </div>
+                    <div className="ste-sb-info">
+                      <div className="ste-sb-name">{p.name}</div>
+                      <div className="ste-sb-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link href="/shop" className="ste-sb-browse">Browse all products →</Link>
+            </div>
+          )}
+
           <div className="s-card-dark">
             <div className="s-label">From the archive</div>
             <h4>Explore the full magazine</h4>
@@ -521,9 +546,9 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         )}
       </div>
 
-      {/* ── SHOP THE EDIT ── only when the editor has tagged products ── */}
+      {/* ── SHOP THE EDIT — mobile/tablet full-width strip (hidden on desktop where sidebar widget shows) ── */}
       {(post.featuredProducts ?? []).length > 0 && (
-        <section className="ste-section">
+        <section className="ste-section ste-section--mobile">
           <div className="ste-inner">
             <div className="ste-header">
               <div className="ste-eyebrow">Shop the Edit</div>
