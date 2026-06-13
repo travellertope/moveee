@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Member Dashboard</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.08)'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+        
+        /* Utility to remove border from last child in quick links */
+        .quick-links-menu > div:last-child { border-bottom: none; }
+    </style>
+</head>
+<body class="flex justify-center text-ink font-sans min-h-screen">
+
+    <!-- Grid Container -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-12 max-w-[900px] mx-auto">
+
+        <!-- ============================================== -->
+        <!-- FRAME 1: CONNECT PRO DASHBOARD                 -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">CONNECT PRO DASHBOARD</span>
+            
+            <div class="ios-screen bg-paper-warm shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+                
+                <!-- Header (64px including status bar) -->
+                <header class="h-[64px] bg-white relative shrink-0 z-40 border-b border-ghost/30">
+                    <!-- Status Bar Mock -->
+                    <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-ink z-50">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    <!-- Nav Bar -->
+                    <div class="absolute bottom-0 w-full px-[16px] pb-[10px] flex items-center justify-between">
+                        <div class="w-[60px]"></div> <!-- Spacer for centering -->
+                        <div class="flex items-start justify-center pt-1">
+                            <span class="font-serif text-[16px] font-bold text-ink tracking-tight">moveee</span>
+                            <span class="font-sans text-[8px] font-bold text-gold uppercase ml-0.5 mt-0.5 tracking-wider">connect</span>
+                        </div>
+                        <button class="w-[60px] text-right font-sans text-[13px] text-ochre font-medium">Sign out</button>
+                    </div>
+                </header>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] px-[16px] pt-[16px] flex flex-col gap-[16px]">
+                    
+                    <!-- Card 1: Hero Profile -->
+                    <div class="bg-white rounded-xl shadow-card p-[24px] flex items-center">
+                        <div class="w-[96px] h-[96px] rounded-full border-[3px] border-gold p-[2px] shrink-0">
+                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-pink-500 to-orange-400 overflow-hidden shadow-inner border border-ghost/20"></div>
+                        </div>
+                        <div class="ml-[16px] flex flex-col gap-[8px]">
+                            <h2 class="font-serif text-[22px] font-bold text-ink leading-none">Zara Mensah</h2>
+                            
+                            <div class="inline-flex items-center px-2.5 py-1 rounded-full bg-gold/10 border border-gold/20 self-start">
+                                <span class="text-gold text-[10px] mr-1">★</span>
+                                <span class="font-sans text-[9px] font-bold uppercase text-gold tracking-wider">Connect Pro</span>
+                            </div>
+
+                            <div class="flex items-center text-mute mt-1">
+                                <span class="text-[14px] mr-1">📍</span>
+                                <span class="font-sans text-[13px]">Lagos, Nigeria</span>
+                            </div>
+                            
+                            <span class="font-mono text-[10px] text-ghost">Member since Jan 2024</span>
+                        </div>
+                    </div>
+
+                    <!-- Passkey Banner Annotation -->
+                    <div class="text-center -mb-2 mt-2">
+                        <span class="font-mono text-[10px] text-mute/60 italic">↑ hidden once passkey set up</span>
+                    </div>
+
+                    <!-- Card 2: Passkey Banner -->
+                    <div class="bg-paper-deep rounded-lg border-l-[3px] border-ochre p-[12px] flex items-center cursor-pointer hover:bg-gray-200 transition-colors">
+                        <svg class="w-[20px] h-[20px] text-ochre shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path></svg>
+                        <div class="ml-[12px] flex-1 flex flex-col">
+                            <span class="font-sans text-[14px] font-bold text-ink">Set up passkey login</span>
+                            <span class="font-sans text-[12px] text-mute">Log in faster with biometrics</span>
+                        </div>
+                        <svg class="w-[16px] h-[16px] text-ink shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+
+                    <!-- Card 3: Stats Bar -->
+                    <div class="bg-white rounded-xl shadow-card p-[16px]">
+                        <div class="grid grid-cols-4 divide-x divide-ghost w-full">
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="font-sans text-[20px] font-bold text-ochre">1,240</span>
+                                <span class="font-sans text-[9px] font-bold uppercase text-mute tracking-wider mt-[4px]">Credits</span>
+                            </div>
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="font-sans text-[20px] font-bold text-gold">385</span>
+                                <span class="font-sans text-[9px] font-bold uppercase text-mute tracking-wider mt-[4px]">Reputation</span>
+                            </div>
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="font-sans text-[20px] font-bold text-ink">6</span>
+                                <span class="font-sans text-[9px] font-bold uppercase text-mute tracking-wider mt-[4px]">Badges</span>
+                            </div>
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="font-sans text-[20px] font-bold text-ink">48</span>
+                                <span class="font-sans text-[9px] font-bold uppercase text-mute tracking-wider mt-[4px] text-center px-1">Daily Left</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 5: Badges -->
+                    <div class="bg-white rounded-xl shadow-card p-[16px]">
+                        <div class="flex justify-between items-center mb-[12px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink">My Badges</h3>
+                            <button class="font-sans text-[13px] text-ochre hover:opacity-80">See all &rarr;</button>
+                        </div>
+                        <div class="flex flex-wrap gap-[8px]">
+                            <div class="bg-white border border-ghost rounded-full py-[6px] px-[10px] flex items-center gap-1.5 shadow-sm">
+                                <span class="text-[14px]">🎨</span>
+                                <span class="font-sans text-[12px] font-bold text-ink">Taste Maker</span>
+                            </div>
+                            <div class="bg-white border border-ghost rounded-full py-[6px] px-[10px] flex items-center gap-1.5 shadow-sm">
+                                <span class="text-[14px]">💎</span>
+                                <span class="font-sans text-[12px] font-bold text-ink">Gem Hunter</span>
+                            </div>
+                            <div class="bg-white border border-ghost rounded-full py-[6px] px-[10px] flex items-center gap-1.5 shadow-sm">
+                                <span class="text-[14px]">✍️</span>
+                                <span class="font-sans text-[12px] font-bold text-ink">Contributor</span>
+                            </div>
+                            <div class="bg-white border border-ghost rounded-full py-[6px] px-[10px] flex items-center gap-1.5 shadow-sm">
+                                <span class="text-[14px]">🔥</span>
+                                <span class="font-sans text-[12px] font-bold text-ink">Hot Take</span>
+                            </div>
+                            <div class="bg-white border border-ghost rounded-full py-[6px] px-[10px] flex items-center gap-1.5 shadow-sm">
+                                <span class="text-[14px]">📸</span>
+                                <span class="font-sans text-[12px] font-bold text-ink">Visual</span>
+                            </div>
+                            <div class="bg-white border border-ghost rounded-full py-[6px] px-[10px] flex items-center gap-1.5 shadow-sm">
+                                <span class="text-[14px]">⭐</span>
+                                <span class="font-sans text-[12px] font-bold text-ink">Featured</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 6: Referral -->
+                    <div class="bg-white rounded-xl shadow-card py-[12px] px-[16px] flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center gap-[12px]">
+                            <svg class="w-[20px] h-[20px] text-ochre" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                            <span class="font-mono text-[12px] text-ink-soft">moveee.com/r/zaramensah</span>
+                        </div>
+                        <svg class="w-[20px] h-[20px] text-mute" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    </div>
+
+                    <!-- Card 7: Quick Links Menu -->
+                    <div class="bg-white rounded-xl shadow-card quick-links-menu">
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">💰</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Wallet</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">🎁</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Perks</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">🎟️</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Coupons</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">📊</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Analytics</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">📖</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Magazine</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">⚙️</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Settings</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">📧</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Newsletters</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">💎</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Membership</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                    </div>
+
+                    <!-- Card 8: How to Earn -->
+                    <div class="bg-white rounded-xl shadow-card p-[16px]">
+                        <div class="flex justify-between items-center mb-[16px] cursor-pointer">
+                            <h3 class="font-sans text-[14px] font-bold text-ink">How to Earn Points</h3>
+                            <svg class="w-[16px] h-[16px] text-ghost" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z"/></svg>
+                        </div>
+                        
+                        <div class="w-full">
+                            <!-- Header -->
+                            <div class="grid grid-cols-[1fr_50px_50px] px-[8px] pb-[8px] font-mono text-[10px] font-bold text-mute uppercase">
+                                <div>Action</div>
+                                <div class="text-right">CR</div>
+                                <div class="text-right">REP</div>
+                            </div>
+                            <!-- Rows -->
+                            <div class="grid grid-cols-[1fr_50px_50px] px-[8px] py-[10px] bg-paper-deep rounded-t-md font-sans text-[12px] text-ink">
+                                <div>Publish a post</div>
+                                <div class="text-right text-ochre font-medium">+10</div>
+                                <div class="text-right text-gold font-medium">+5</div>
+                            </div>
+                            <div class="grid grid-cols-[1fr_50px_50px] px-[8px] py-[10px] bg-white font-sans text-[12px] text-ink">
+                                <div>Get 5 reactions</div>
+                                <div class="text-right text-ochre font-medium">+5</div>
+                                <div class="text-right text-gold font-medium">+2</div>
+                            </div>
+                            <div class="grid grid-cols-[1fr_50px_50px] px-[8px] py-[10px] bg-paper-deep font-sans text-[12px] text-ink">
+                                <div>Leave a comment</div>
+                                <div class="text-right text-ochre font-medium">+2</div>
+                                <div class="text-right text-gold font-medium">+1</div>
+                            </div>
+                            <div class="grid grid-cols-[1fr_50px_50px] px-[8px] py-[10px] bg-white font-sans text-[12px] text-ink">
+                                <div>Win daily game</div>
+                                <div class="text-right text-ochre font-medium">+30</div>
+                                <div class="text-right text-mute font-medium">0</div>
+                            </div>
+                            <div class="grid grid-cols-[1fr_50px_50px] px-[8px] py-[10px] bg-paper-deep rounded-b-md font-sans text-[12px] text-ink">
+                                <div>Refer a friend</div>
+                                <div class="text-right text-ochre font-medium">+50</div>
+                                <div class="text-right text-gold font-medium">+10</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bottom Navigation (Pro) -->
+                <div class="absolute bottom-0 w-full h-[84px] bg-white border-t border-ghost/50 flex justify-around items-start pt-3 px-2 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+                    <button class="flex flex-col items-center gap-1 text-mute">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        <span class="text-[10px] font-sans">Home</span>
+                    </button>
+                    <button class="flex flex-col items-center gap-1 text-mute">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <span class="text-[10px] font-sans">Discover</span>
+                    </button>
+                    <button class="flex flex-col items-center justify-center -mt-1 w-10 h-10 bg-ink text-white rounded-full shadow-md">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                    <button class="flex flex-col items-center gap-1 text-mute">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+                        <span class="text-[10px] font-sans">Events</span>
+                    </button>
+                    <!-- Active Pro Profile Tab -->
+                    <button class="flex flex-col items-center gap-1 text-ochre relative">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <!-- Basic solid person shape with a star overlapping -->
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            <path fill="#B38238" d="M18.5 7.5L20 8l-1.5.5L18 10l-.5-1.5L16 8l1.5-.5L18 6l.5 1.5z" /> <!-- little star -->
+                        </svg>
+                        <span class="text-[10px] font-sans font-bold">Me</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: CONNECT CITIZEN DASHBOARD             -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">CONNECT CITIZEN DASHBOARD</span>
+            
+            <div class="ios-screen bg-paper-warm shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+                
+                <!-- Header -->
+                <header class="h-[64px] bg-white relative shrink-0 z-40 border-b border-ghost/30">
+                    <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-ink z-50">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-0 w-full px-[16px] pb-[10px] flex items-center justify-between">
+                        <div class="w-[60px]"></div>
+                        <div class="flex items-start justify-center pt-1">
+                            <span class="font-serif text-[16px] font-bold text-ink tracking-tight">moveee</span>
+                            <span class="font-sans text-[8px] font-bold text-gold uppercase ml-0.5 mt-0.5 tracking-wider">connect</span>
+                        </div>
+                        <button class="w-[60px] text-right font-sans text-[13px] text-ochre font-medium">Sign out</button>
+                    </div>
+                </header>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] px-[16px] pt-[16px] flex flex-col gap-[16px]">
+                    
+                    <!-- Card 1: Hero Profile (CITIZEN) -->
+                    <div class="bg-white rounded-xl shadow-card p-[24px] flex items-center">
+                        <div class="w-[96px] h-[96px] rounded-full border-[2px] border-ghost p-[2px] shrink-0">
+                            <!-- Citizen Avatar -->
+                            <div class="w-full h-full rounded-full bg-gradient-to-bl from-teal-400 to-blue-500 overflow-hidden shadow-inner border border-ghost/20"></div>
+                        </div>
+                        <div class="ml-[16px] flex flex-col gap-[8px]">
+                            <h2 class="font-serif text-[22px] font-bold text-ink leading-none">Ade Cole</h2>
+                            
+                            <!-- Ghost Badge -->
+                            <div class="inline-flex items-center px-2.5 py-1 rounded-full bg-paper-deep border border-ghost self-start">
+                                <span class="font-sans text-[9px] font-bold uppercase text-mute tracking-wider">Connect Citizen</span>
+                            </div>
+
+                            <div class="flex items-center text-mute mt-1">
+                                <span class="text-[14px] mr-1">📍</span>
+                                <span class="font-sans text-[13px]">Lagos, Nigeria</span>
+                            </div>
+                            
+                            <span class="font-mono text-[10px] text-ghost">Member since Jan 2024</span>
+                        </div>
+                    </div>
+
+                    <!-- Passkey Banner Annotation -->
+                    <div class="text-center -mb-2 mt-2">
+                        <span class="font-mono text-[10px] text-mute/60 italic">↑ hidden once passkey set up</span>
+                    </div>
+
+                    <!-- Card 2: Passkey Banner -->
+                    <div class="bg-paper-deep rounded-lg border-l-[3px] border-ochre p-[12px] flex items-center cursor-pointer hover:bg-gray-200 transition-colors">
+                        <svg class="w-[20px] h-[20px] text-ochre shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path></svg>
+                        <div class="ml-[12px] flex-1 flex flex-col">
+                            <span class="font-sans text-[14px] font-bold text-ink">Set up passkey login</span>
+                            <span class="font-sans text-[12px] text-mute">Log in faster with biometrics</span>
+                        </div>
+                        <svg class="w-[16px] h-[16px] text-ink shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+
+                    <!-- Card 3: Stats Bar (CITIZEN - NO OCHRE/GOLD NUMBERS) -->
+                    <div class="bg-white rounded-xl shadow-card p-[16px]">
+                        <div class="grid grid-cols-4 divide-x divide-ghost w-full">
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="font-sans text-[20px] font-bold text-ink">340</span>
+                                <span class="font-sans text-[9px] font-bold uppercase text-mute tracking-wider mt-[4px]">Credits</span>
+                            </div>
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="font-sans text-[20px] font-bold text-ink">120</span>
+                                <span class="font-sans text-[9px] font-bold uppercase text-mute tracking-wider mt-[4px]">Reputation</span>
+                            </div>
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="font-sans text-[20px] font-bold text-ink">2</span>
+                                <span class="font-sans text-[9px] font-bold uppercase text-mute tracking-wider mt-[4px]">Badges</span>
+                            </div>
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="font-sans text-[20px] font-bold text-ink">38</span>
+                                <span class="font-sans text-[9px] font-bold uppercase text-mute tracking-wider mt-[4px] text-center px-1">Daily Left</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Upgrade Banner (CITIZEN ONLY) -->
+                    <div class="bg-ochre rounded-lg p-[16px] flex items-center justify-between shadow-md cursor-pointer hover:bg-[#A93C15] transition-colors">
+                        <div class="flex flex-col">
+                            <h3 class="font-serif text-[16px] font-bold text-white leading-tight">Upgrade to Connect Pro</h3>
+                            <span class="font-sans text-[12px] text-white/90 mt-1">Unlock perks, earn more</span>
+                        </div>
+                        <button class="h-[36px] px-[16px] rounded-full border border-white bg-transparent flex items-center justify-center hover:bg-white hover:text-ochre transition-colors group">
+                            <span class="font-sans text-[12px] font-bold text-white group-hover:text-ochre">Upgrade &rarr;</span>
+                        </button>
+                    </div>
+
+                    <!-- Card 5: Badges (CITIZEN - FEWER) -->
+                    <div class="bg-white rounded-xl shadow-card p-[16px]">
+                        <div class="flex justify-between items-center mb-[12px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink">My Badges</h3>
+                            <button class="font-sans text-[13px] text-ochre hover:opacity-80">See all &rarr;</button>
+                        </div>
+                        <div class="flex flex-wrap gap-[8px]">
+                            <div class="bg-white border border-ghost rounded-full py-[6px] px-[10px] flex items-center gap-1.5 shadow-sm">
+                                <span class="text-[14px]">💎</span>
+                                <span class="font-sans text-[12px] font-bold text-ink">Gem Hunter</span>
+                            </div>
+                            <div class="bg-white border border-ghost rounded-full py-[6px] px-[10px] flex items-center gap-1.5 shadow-sm">
+                                <span class="text-[14px]">✍️</span>
+                                <span class="font-sans text-[12px] font-bold text-ink">Contributor</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 6: Referral -->
+                    <div class="bg-white rounded-xl shadow-card py-[12px] px-[16px] flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center gap-[12px]">
+                            <svg class="w-[20px] h-[20px] text-ochre" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                            <span class="font-mono text-[12px] text-ink-soft">moveee.com/r/adecole</span>
+                        </div>
+                        <svg class="w-[20px] h-[20px] text-mute" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    </div>
+
+                    <!-- Card 7: Quick Links Menu -->
+                    <div class="bg-white rounded-xl shadow-card quick-links-menu">
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">💰</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Wallet</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">🎁</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Perks</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">🎟️</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Coupons</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">📊</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Analytics</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">📖</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Magazine</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">⚙️</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Settings</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">📧</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Newsletters</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div class="flex items-center h-[52px] px-[16px] border-b border-ghost cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span class="w-[20px] text-[20px] text-ochre flex justify-center items-center">💎</span>
+                            <span class="font-sans text-[15px] text-ink ml-[16px] flex-1">Membership</span>
+                            <svg class="w-[12px] h-[12px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                    </div>
+
+                    <!-- Card 8: How to Earn -->
+                    <div class="bg-white rounded-xl shadow-card p-[16px]">
+                        <div class="flex justify-between items-center mb-[16px] cursor-pointer">
+                            <h3 class="font-sans text-[14px] font-bold text-ink">How to Earn Points</h3>
+                            <svg class="w-[16px] h-[16px] text-ghost" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z"/></svg>
+                        </div>
+                        
+                        <div class="w-full">
+                            <!-- Header -->
+                            <div class="grid grid-cols-[1fr_50px_50px] px-[8px] pb-[8px] font-mono text-[10px] font-bold text-mute uppercase">
+                                <div>Action</div>
+                                <div class="text-right">CR</div>
+                                <div class="text-right">REP</div>
+                            </div>
+                            <!-- Rows -->
+                            <div class="grid grid-cols-[1fr_50px_50px] px-[8px] py-[10px] bg-paper-deep rounded-t-md font-sans text-[12px] text-ink">
+                                <div>Publish a post</div>
+                                <div class="text-right text-ochre font-medium">+10</div>
+                                <div class="text-right text-gold font-medium">+5</div>
+                            </div>
+                            <div class="grid grid-cols-[1fr_50px_50px] px-[8px] py-[10px] bg-white font-sans text-[12px] text-ink">
+                                <div>Get 5 reactions</div>
+                                <div class="text-right text-ochre font-medium">+5</div>
+                                <div class="text-right text-gold font-medium">+2</div>
+                            </div>
+                            <div class="grid grid-cols-[1fr_50px_50px] px-[8px] py-[10px] bg-paper-deep font-sans text-[12px] text-ink">
+                                <div>Leave a comment</div>
+                                <div class="text-right text-ochre font-medium">+2</div>
+                                <div class="text-right text-gold font-medium">+1</div>
+                            </div>
+                            <div class="grid grid-cols-[1fr_50px_50px] px-[8px] py-[10px] bg-white font-sans text-[12px] text-ink">
+                                <div>Win daily game</div>
+                                <div class="text-right text-ochre font-medium">+30</div>
+                                <div class="text-right text-mute font-medium">0</div>
+                            </div>
+                            <div class="grid grid-cols-[1fr_50px_50px] px-[8px] py-[10px] bg-paper-deep rounded-b-md font-sans text-[12px] text-ink">
+                                <div>Refer a friend</div>
+                                <div class="text-right text-ochre font-medium">+50</div>
+                                <div class="text-right text-gold font-medium">+10</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bottom Navigation (Citizen) -->
+                <div class="absolute bottom-0 w-full h-[84px] bg-white border-t border-ghost/50 flex justify-around items-start pt-3 px-2 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+                    <button class="flex flex-col items-center gap-1 text-mute">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        <span class="text-[10px] font-sans">Home</span>
+                    </button>
+                    <button class="flex flex-col items-center gap-1 text-mute">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <span class="text-[10px] font-sans">Discover</span>
+                    </button>
+                    <button class="flex flex-col items-center justify-center -mt-1 w-10 h-10 bg-ink text-white rounded-full shadow-md">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                    <button class="flex flex-col items-center gap-1 text-mute">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+                        <span class="text-[10px] font-sans">Events</span>
+                    </button>
+                    <!-- Active Citizen Profile Tab -->
+                    <button class="flex flex-col items-center gap-1 text-ochre">
+                        <!-- Standard person icon, solid -->
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                        <span class="text-[10px] font-sans font-bold">Me</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
