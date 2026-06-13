@@ -312,6 +312,41 @@ export interface ShopProduct {
   categories: string[];
 }
 
+export interface ProductVariantColour {
+  name: string;
+  hex: string;
+  available: boolean;
+}
+
+export interface ProductVariantSize {
+  name: string;
+  available: boolean;
+}
+
+export interface HowItsMadeStep {
+  step: number;
+  title: string;
+  duration: string;
+  description: string;
+}
+
+export interface ShopProductDetail extends ShopProduct {
+  images: string[];
+  description: string;
+  shortDescription: string;
+  colours: ProductVariantColour[];
+  sizes: ProductVariantSize[];
+  makerBio: string;
+  makerSince: string;
+  makerRating: number;
+  makerProductCount: number;
+  makerAvatarUrl?: string | null;
+  howItsMade: HowItsMadeStep[];
+  asSeenIn?: { title: string; slug: string } | null;
+  relatedProducts: ShopProduct[];
+  vetted: boolean;
+}
+
 export interface ShopCategory {
   id: number;
   name: string;

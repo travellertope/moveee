@@ -446,6 +446,12 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        register_rest_route( 'culture/v1', '/mobile/shop/products/(?P<id>\d+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_shop_product_detail' ),
+            'permission_callback' => '__return_true',
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/shop/categories', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_shop_categories' ),
@@ -2009,6 +2015,173 @@ class Culture_Mobile_API {
             'total'    => (int) $q->found_posts,
             'pages'    => (int) $q->max_num_pages,
             'page'     => $page,
+        ) );
+    }
+
+    public static function handle_shop_product_detail( $request ) {
+        if ( ! function_exists( 'wc_get_product' ) ) {
+            return new WP_Error( 'woocommerce_missing', 'WooCommerce not active', array( 'status' => 503 ) );
+        }
+
+        $id  = (int) $request['id'];
+        $wc  = wc_get_product( $id );
+        if ( ! $wc ) {
+            return new WP_Error( 'not_found', 'Product not found', array( 'status' => 404 ) );
+        }
+
+        $user   = wp_get_current_user();
+        $is_pro = $user->ID && in_array( 'patron', (array) $user->roles, true );
+
+        $currency_symbol = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol() ) : '£';
+        $currency        = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
+
+        $price   = $wc->get_price();
+        $regular = $wc->get_regular_price();
+        $sale    = $wc->get_sale_price();
+        $pro_price = ( $is_pro && $price ) ? (string) round( (float) $price * 0.9, 2 ) : null;
+
+        // Gallery images (main + gallery)
+        $image_ids   = array_merge(
+            array( $wc->get_image_id() ),
+            $wc->get_gallery_image_ids()
+        );
+        $images = array();
+        foreach ( $image_ids as $img_id ) {
+            if ( $img_id ) {
+                $url = wp_get_attachment_image_url( $img_id, 'large' );
+                if ( $url ) $images[] = $url;
+            }
+        }
+
+        // Badge
+        $post         = get_post( $id );
+        $created_days = ( time() - strtotime( $post->post_date ) ) / DAY_IN_SECONDS;
+        $stock_qty    = $wc->get_stock_quantity();
+        $pro_early    = get_post_meta( $id, '_pro_early_access', true );
+        if ( $pro_early )                            $badge = 'pro_early_access';
+        elseif ( $created_days < 14 )                $badge = 'new';
+        elseif ( $sale )                             $badge = 'sale';
+        elseif ( $stock_qty && $stock_qty <= 3 )     $badge = 'low_stock';
+        else                                         $badge = null;
+
+        // Categories
+        $cat_terms  = get_the_terms( $id, 'product_cat' );
+        $categories = $cat_terms ? array_map( fn( $t ) => $t->slug, $cat_terms ) : array();
+
+        // Colour variants (from pa_colour attribute if it exists)
+        $colours = array();
+        $sizes   = array();
+        if ( $wc->is_type( 'variable' ) ) {
+            /** @var WC_Product_Variable $wc */
+            $available_variations = $wc->get_available_variations();
+            foreach ( $wc->get_variation_attributes() as $attr => $values ) {
+                $label = wc_attribute_label( $attr );
+                foreach ( $values as $val ) {
+                    $in_stock = false;
+                    foreach ( $available_variations as $var ) {
+                        $attr_key = 'attribute_' . $attr;
+                        if ( isset( $var['attributes'][ $attr_key ] ) && ( $var['attributes'][ $attr_key ] === $val || $var['attributes'][ $attr_key ] === '' ) ) {
+                            if ( $var['is_in_stock'] ) { $in_stock = true; break; }
+                        }
+                    }
+                    if ( strpos( strtolower( $label ), 'colour' ) !== false || strpos( strtolower( $label ), 'color' ) !== false ) {
+                        $colours[] = array( 'name' => $val, 'hex' => '', 'available' => $in_stock );
+                    } else {
+                        $sizes[] = array( 'name' => $val, 'available' => $in_stock );
+                    }
+                }
+            }
+        }
+
+        // Maker fields
+        $maker_name      = get_post_meta( $id, '_maker_name', true ) ?: '';
+        $maker_city      = get_post_meta( $id, '_maker_city', true ) ?: '';
+        $maker_bio       = get_post_meta( $id, '_maker_bio', true ) ?: '';
+        $maker_since     = get_post_meta( $id, '_maker_since', true ) ?: '';
+        $maker_rating    = (float) ( get_post_meta( $id, '_maker_rating', true ) ?: 0 );
+        $maker_avatar_id = (int) ( get_post_meta( $id, '_maker_avatar_id', true ) ?: 0 );
+        $maker_avatar    = $maker_avatar_id ? wp_get_attachment_image_url( $maker_avatar_id, 'thumbnail' ) : null;
+
+        // Count other products by same maker
+        $maker_product_count = 0;
+        if ( $maker_name ) {
+            global $wpdb;
+            $maker_product_count = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT COUNT(p.ID) FROM {$wpdb->posts} p
+                 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+                 WHERE p.post_type = 'product' AND p.post_status = 'publish'
+                 AND pm.meta_key = '_maker_name' AND pm.meta_value = %s",
+                $maker_name
+            ) );
+        }
+
+        // How It's Made (stored as JSON in post meta)
+        $how_raw     = get_post_meta( $id, '_how_its_made', true );
+        $how_its_made = $how_raw ? json_decode( $how_raw, true ) : array();
+        if ( ! is_array( $how_its_made ) ) $how_its_made = array();
+
+        // As Seen In (stored as JSON: {title, slug})
+        $seen_raw  = get_post_meta( $id, '_as_seen_in', true );
+        $as_seen_in = $seen_raw ? json_decode( $seen_raw, true ) : null;
+
+        // Related products (WooCommerce related + fallback to same maker)
+        $related_ids  = wc_get_related_products( $id, 4 );
+        $related_products = array();
+        foreach ( $related_ids as $rel_id ) {
+            $rel_wc = wc_get_product( $rel_id );
+            if ( ! $rel_wc ) continue;
+            $rel_img_id = $rel_wc->get_image_id();
+            $related_products[] = array(
+                'id'             => $rel_id,
+                'name'           => get_the_title( $rel_id ),
+                'slug'           => get_post_field( 'post_name', $rel_id ),
+                'price'          => $rel_wc->get_price() ?: '',
+                'regularPrice'   => $rel_wc->get_regular_price() ?: '',
+                'salePrice'      => $rel_wc->get_sale_price() ?: '',
+                'proPrice'       => null,
+                'currency'       => $currency,
+                'currencySymbol' => $currency_symbol,
+                'imageUrl'       => $rel_img_id ? wp_get_attachment_image_url( $rel_img_id, 'medium' ) : null,
+                'makerName'      => get_post_meta( $rel_id, '_maker_name', true ) ?: '',
+                'makerCity'      => get_post_meta( $rel_id, '_maker_city', true ) ?: '',
+                'badge'          => null,
+                'stockStatus'    => $rel_wc->get_stock_status(),
+                'stockQuantity'  => $rel_wc->get_stock_quantity(),
+                'categories'     => array(),
+            );
+        }
+
+        return rest_ensure_response( array(
+            'id'               => $id,
+            'name'             => $post->post_title,
+            'slug'             => $post->post_name,
+            'price'            => $price ?: '',
+            'regularPrice'     => $regular ?: '',
+            'salePrice'        => $sale ?: '',
+            'proPrice'         => $pro_price,
+            'currency'         => $currency,
+            'currencySymbol'   => $currency_symbol,
+            'imageUrl'         => $images[0] ?? null,
+            'images'           => $images,
+            'badge'            => $badge,
+            'stockStatus'      => $wc->get_stock_status(),
+            'stockQuantity'    => $stock_qty,
+            'categories'       => $categories,
+            'makerName'        => $maker_name,
+            'makerCity'        => $maker_city,
+            'makerBio'         => $maker_bio,
+            'makerSince'       => $maker_since,
+            'makerRating'      => $maker_rating,
+            'makerProductCount'=> $maker_product_count,
+            'makerAvatarUrl'   => $maker_avatar,
+            'description'      => $wc->get_description(),
+            'shortDescription' => $wc->get_short_description(),
+            'colours'          => $colours,
+            'sizes'            => $sizes,
+            'howItsMade'       => $how_its_made,
+            'asSeenIn'         => $as_seen_in,
+            'relatedProducts'  => $related_products,
+            'vetted'           => (bool) get_post_meta( $id, '_maker_vetted', true ),
         ) );
     }
 

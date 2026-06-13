@@ -39,6 +39,7 @@ import EventDetailScreen from "../screens/events/EventDetailScreen";
 // Shop
 import ShopScreen from "../screens/shop/ShopScreen";
 import ShopListingScreen from "../screens/shop/ShopListingScreen";
+import ProductDetailScreen from "../screens/shop/ProductDetailScreen";
 
 // Member
 import MemberDashboardScreen from "../screens/member/MemberDashboardScreen";
@@ -112,8 +113,9 @@ function EventsStack() {
 function ShopStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="ShopHome"    component={ShopScreen} />
-      <Stack.Screen name="ShopListing" component={ShopListingScreen} />
+      <Stack.Screen name="ShopHome"      component={ShopScreen} />
+      <Stack.Screen name="ShopListing"  component={ShopListingScreen} />
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
     </Stack.Navigator>
   );
 }
