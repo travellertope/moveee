@@ -22,17 +22,17 @@ const GAMES = [
   },
   {
     name: "Crossword",
-    desc: "Coming soon",
+    desc: "Mini 7×7 crossword. African & diaspora culture.",
     icon: "grid-outline" as const,
-    screen: null,
-    available: false,
+    screen: "Crossword",
+    available: true,
   },
   {
     name: "Sudoku",
-    desc: "Coming soon",
+    desc: "Daily 9×9 puzzle. Same grid for everyone.",
     icon: "calculator-outline" as const,
-    screen: null,
-    available: false,
+    screen: "Sudoku",
+    available: true,
   },
 ];
 

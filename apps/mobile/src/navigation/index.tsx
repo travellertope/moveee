@@ -34,6 +34,8 @@ import ArticleScreen from "../screens/magazine/ArticleScreen";
 import GamesScreen from "../screens/games/GamesScreen";
 import TriviaGameScreen from "../screens/games/TriviaGameScreen";
 import WhoSaidItGameScreen from "../screens/games/WhoSaidItGameScreen";
+import SudokuGameScreen from "../screens/games/SudokuGameScreen";
+import CrosswordGameScreen from "../screens/games/CrosswordGameScreen";
 import EventsScreen from "../screens/events/EventsScreen";
 import EventDetailScreen from "../screens/events/EventDetailScreen";
 
@@ -114,9 +116,11 @@ function EventsStack() {
 function GamesStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="GamesList"  component={GamesScreen} />
-      <Stack.Screen name="TriviaGame" component={TriviaGameScreen} />
-      <Stack.Screen name="WhoSaidIt"  component={WhoSaidItGameScreen} />
+      <Stack.Screen name="GamesList"   component={GamesScreen} />
+      <Stack.Screen name="TriviaGame"  component={TriviaGameScreen} />
+      <Stack.Screen name="WhoSaidIt"   component={WhoSaidItGameScreen} />
+      <Stack.Screen name="Sudoku"      component={SudokuGameScreen} />
+      <Stack.Screen name="Crossword"   component={CrosswordGameScreen} />
     </Stack.Navigator>
   );
 }
