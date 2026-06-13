@@ -90,6 +90,14 @@ function ConnectStack() {
       <Stack.Screen name="Notifications"   component={NotificationsScreen} />
       {/* Articles opened from the feed stay within this stack — back → feed */}
       <Stack.Screen name="Article"         component={ArticleScreen} />
+      {/* Member screens — accessible via avatar tap in header */}
+      <Stack.Screen name="MemberDashboard" component={MemberDashboardScreen} />
+      <Stack.Screen name="MemberSettings"  component={MemberSettingsScreen} />
+      <Stack.Screen name="Wallet"          component={WalletScreen} />
+      <Stack.Screen name="Coupons"         component={CouponsScreen} />
+      <Stack.Screen name="Perks"           component={PerksScreen} />
+      <Stack.Screen name="Membership"      component={MembershipScreen} />
+      <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
     </Stack.Navigator>
   );
 }
@@ -140,8 +148,6 @@ function MemberStack() {
 }
 
 function MainTabs() {
-  const { user } = useAuthStore();
-  const isPro = user?.tier === "patron";
 
   return (
     <Tab.Navigator
@@ -154,13 +160,6 @@ function MainTabs() {
           borderTopColor: "#e0d8cc",
         },
         tabBarIcon: ({ focused, color, size }) => {
-          // Me tab uses a gold person-sharp when Pro
-          if (route.name === "Me") {
-            const iconName = focused
-              ? (isPro ? "person-sharp" : "person")
-              : "person-outline";
-            return <Ionicons name={iconName as never} size={size} color={color} />;
-          }
           const icons: Record<string, [string, string]> = {
             Connect:  ["people",          "people-outline"],
             Magazine: ["newspaper",       "newspaper-outline"],
@@ -176,7 +175,6 @@ function MainTabs() {
       <Tab.Screen name="Magazine" component={MagazineStack} />
       <Tab.Screen name="Games"    component={GamesStack} />
       <Tab.Screen name="Events"   component={EventsStack} />
-      <Tab.Screen name="Me"       component={MemberStack} />
     </Tab.Navigator>
   );
 }

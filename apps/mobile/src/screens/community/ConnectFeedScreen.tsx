@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   ScrollView,
   RefreshControl,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -192,12 +193,21 @@ export default function ConnectFeedScreen() {
               )}
             </TouchableOpacity>
 
-            {/* + new post */}
+            {/* Avatar → member dashboard */}
             <TouchableOpacity
-              style={styles.addBtn}
-              onPress={() => nav.navigate("NewPost")}
+              style={styles.avatarBtn}
+              onPress={() => nav.navigate("MemberDashboard")}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
             >
-              <Ionicons name="add" size={22} color={colors.paper} />
+              {user?.avatarUrl ? (
+                <Image source={{ uri: user.avatarUrl }} style={styles.avatarImg} />
+              ) : (
+                <View style={[styles.avatarImg, styles.avatarFallback]}>
+                  <Text style={styles.avatarInitial}>
+                    {(user?.displayName ?? user?.name ?? "?")[0]?.toUpperCase()}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -369,7 +379,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontFamily: fonts.sansBold,
-    fontSize: 8,
+    fontSize: fontSize.tiny,
     color: colors.gold,
     textTransform: "uppercase",
     letterSpacing: 1.5,
@@ -399,16 +409,26 @@ const styles = StyleSheet.create({
   },
   bellBadgeText: {
     fontFamily: fonts.monoBold,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     color: "#fff",
   },
-  addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: colors.ochre,
+  avatarBtn: {
+    marginLeft: 4,
+  },
+  avatarImg: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+  },
+  avatarFallback: {
+    backgroundColor: colors.goldLight,
     justifyContent: "center",
     alignItems: "center",
+  },
+  avatarInitial: {
+    fontFamily: fonts.sansBold,
+    fontSize: fontSize.sm,
+    color: colors.gold,
   },
 
   // Filter Row
@@ -462,7 +482,7 @@ const styles = StyleSheet.create({
   },
   trendingNowLabel: {
     fontFamily: fonts.mono,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     color: colors.ochre,
     textTransform: "uppercase",
     letterSpacing: 1.5,

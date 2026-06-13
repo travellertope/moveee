@@ -100,7 +100,7 @@ const badgeStyles = StyleSheet.create({
   },
   text: {
     fontFamily: fonts.monoBold,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     textTransform: "uppercase",
     letterSpacing: 1.2,
   },
@@ -348,7 +348,7 @@ const authorStyles = StyleSheet.create({
   },
   tagText: {
     fontFamily: fonts.mono,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     color: colors.inkSoft,
   },
   topRight: {
@@ -439,7 +439,7 @@ const linkStyles = StyleSheet.create({
   right: { flex: 1 },
   source: {
     fontFamily: fonts.mono,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     textTransform: "uppercase",
     color: colors.mute,
     marginBottom: 2,
@@ -452,7 +452,7 @@ const linkStyles = StyleSheet.create({
   },
   domain: {
     fontFamily: fonts.mono,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     color: colors.ghost,
     marginTop: 2,
   },
@@ -705,9 +705,9 @@ const happeningStyles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.sansBold,
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     color: colors.ink,
-    lineHeight: 32,
+    lineHeight: 26,
   },
   metaRow: {
     flexDirection: "row",
@@ -1393,15 +1393,15 @@ const cardStyles = StyleSheet.create({
   },
   titleSerifXl: {
     fontFamily: fonts.serifBold,
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     color: colors.ink,
-    lineHeight: 34,
+    lineHeight: 28,
   },
   titleSansBold: {
     fontFamily: fonts.sansBold,
-    fontSize: fontSize.md,
+    fontSize: fontSize.base,
     color: colors.ink,
-    lineHeight: 24,
+    lineHeight: 22,
   },
   bodySmall: {
     fontFamily: fonts.sans,
@@ -1427,7 +1427,7 @@ const cardStyles = StyleSheet.create({
   },
   sourceText: {
     fontFamily: fonts.mono,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     color: colors.ghost,
   },
   locationText: {
