@@ -9,12 +9,14 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  profileSetupRequired: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginWithToken: (token: string, user: User) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   hydrate: () => Promise<void>;
   updateUser: (patch: Partial<User>) => void;
+  setProfileSetupRequired: (val: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -22,6 +24,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   isLoading: true,
   isAuthenticated: false,
+  profileSetupRequired: false,
 
   hydrate: async () => {
     try {
@@ -68,4 +71,5 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   updateUser: (patch) => set((s) => ({ user: s.user ? { ...s.user, ...patch } : null })),
+  setProfileSetupRequired: (val) => set({ profileSetupRequired: val }),
 }));

@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import Svg, { Rect, Path, Circle, Polyline } from "react-native-svg";
-import { api, CULTURE_API, MOBILE_API } from "../../api/client";
+import { api, CULTURE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 
@@ -49,9 +49,8 @@ export default function VerifyEmailScreen() {
   const { params } = useRoute<any>();
   const email: string = params?.email ?? "";
   const password: string = params?.password ?? "";
-  const pendingInterests: string[] = params?.pendingInterests ?? [];
 
-  const { login, refreshProfile } = useAuthStore();
+  const { login, setProfileSetupRequired } = useAuthStore();
 
   const [countdown, setCountdown] = useState(0);
   const [resending, setResending] = useState(false);
@@ -91,11 +90,8 @@ export default function VerifyEmailScreen() {
     setSigningIn(true);
     try {
       await login(email, password);
-      if (pendingInterests.length > 0) {
-        await api.post(`${MOBILE_API}/me`, { interests: pendingInterests }).catch(() => null);
-        await refreshProfile().catch(() => null);
-      }
-      // Navigation auto-switches to MainTabs via authStore isAuthenticated
+      setProfileSetupRequired(true);
+      // Navigation auto-switches to CompleteProfile via profileSetupRequired flag
     } catch (e: unknown) {
       setSignInError(
         e instanceof Error && e.message.toLowerCase().includes("verif")

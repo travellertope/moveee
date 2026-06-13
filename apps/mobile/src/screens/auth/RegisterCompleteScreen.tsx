@@ -1,4 +1,3 @@
-"use client";
 import React, { useState } from "react";
 import {
   View,
@@ -13,20 +12,37 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import Svg, { Path, Circle, Polyline } from "react-native-svg";
-import { api, CULTURE_API, MOBILE_API } from "../../api/client";
+import Svg, { Path, Polyline } from "react-native-svg";
+import { api, MOBILE_API } from "../../api/client";
+import { useAuthStore } from "../../auth/authStore";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
-import { INTERESTS } from "@moveee/utils/interest-mappings";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function BackIcon() {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-      <Path d="M19 12H5M12 5l-7 7 7 7" stroke={colors.ink} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
+const INTERESTS = [
+  { slug: "fashion-streetwear", label: "Fashion & Streetwear",      emoji: "👗" },
+  { slug: "food-drink",         label: "Specialty Coffee & Dining", emoji: "☕" },
+  { slug: "live-music",         label: "Live Music",                emoji: "🎵" },
+  { slug: "music-production",   label: "Music Production",          emoji: "🎧" },
+  { slug: "independent-film",   label: "Independent Film",          emoji: "🎬" },
+  { slug: "visual-art",         label: "Visual Art",                emoji: "🎨" },
+  { slug: "architecture",       label: "Architecture",              emoji: "🏛️" },
+  { slug: "photography",        label: "Photography",               emoji: "📷" },
+  { slug: "literature",         label: "Literature & Poetry",       emoji: "📚" },
+  { slug: "visual-design",      label: "Visual Design",             emoji: "✏️" },
+  { slug: "tech-culture",       label: "Tech & Digital Culture",    emoji: "💻" },
+  { slug: "sport-wellness",     label: "Sport & Wellness",          emoji: "⚽" },
+  { slug: "travel",             label: "Travel & Exploration",      emoji: "✈️" },
+  { slug: "ideas",              label: "Ideas & Culture Theory",    emoji: "💡" },
+  { slug: "street-food",        label: "Street Food & Markets",     emoji: "🍜" },
+  { slug: "nightlife",          label: "Nightlife & Bars",          emoji: "🍸" },
+];
+
+const COUNTRIES = [
+  "Nigeria", "United Kingdom", "United States", "Ghana", "Kenya", "South Africa",
+  "Canada", "Australia", "Germany", "France", "Netherlands", "Sweden",
+  "UAE", "Jamaica", "Trinidad & Tobago", "Other",
+];
+
+// ── Icons ─────────────────────────────────────────────────────────────────────
 function CheckIcon({ size = 14, color = "#fff" }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -34,12 +50,6 @@ function CheckIcon({ size = 14, color = "#fff" }: { size?: number; color?: strin
     </Svg>
   );
 }
-
-const COUNTRIES = [
-  "Nigeria", "United Kingdom", "United States", "Ghana", "Kenya", "South Africa",
-  "Canada", "Australia", "Germany", "France", "Netherlands", "Sweden",
-  "UAE", "Jamaica", "Trinidad & Tobago", "Other",
-];
 
 // ── Step indicator ────────────────────────────────────────────────────────────
 function StepDots({ step, total }: { step: number; total: number }) {
@@ -64,17 +74,11 @@ const stepS = StyleSheet.create({
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function RegisterCompleteScreen() {
-  const nav = useNavigation<any>();
-  const { params } = useRoute<any>();
-  const { email, username, password } = params as {
-    email: string;
-    username: string;
-    password: string;
-  };
+  const { refreshProfile, setProfileSetupRequired } = useAuthStore();
 
-  const [step, setStep] = useState(0); // 0=profile, 1=interests, 2=tier
+  const [step, setStep] = useState(0); // 0=about, 1=interests, 2=tier
 
-  // Step 0 — profile
+  // Step 0 — about
   const [dob, setDob] = useState("");
   const [country, setCountry] = useState("");
   const [showCountryPicker, setShowCountryPicker] = useState(false);
@@ -90,12 +94,8 @@ export default function RegisterCompleteScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ── Validation ──────────────────────────────────────────────────────────────
   function step0Valid() {
-    if (!dob.trim()) return false;
-    if (!country) return false;
-    if (!city.trim()) return false;
-    return true;
+    return dob.trim().length > 0 && country.length > 0 && city.trim().length > 0;
   }
 
   function toggleInterest(slug: string) {
@@ -104,38 +104,30 @@ export default function RegisterCompleteScreen() {
     );
   }
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
-  async function handleSubmit() {
+  async function handleFinish() {
     setError("");
     setLoading(true);
     try {
-      await api.post(
-        `${CULTURE_API}/mobile/register`,
-        {
-          email,
-          username,
-          password,
-          date_of_birth: dob.trim(),
-          country_of_residence: country,
-          city: city.trim(),
-          occupation: occupation.trim(),
-          tier,
-        },
-        false
-      );
-      nav.replace("VerifyEmail", {
-        email,
-        password,
-        pendingInterests: selectedInterests,
+      await api.post(`${MOBILE_API}/me`, {
+        date_of_birth:        dob.trim(),
+        country_of_residence: country,
+        city:                 city.trim(),
+        occupation:           occupation.trim(),
+        interests:            selectedInterests,
       });
+      await refreshProfile();
+      setProfileSetupRequired(false);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Registration failed. Please try again.");
+      setError(e instanceof Error ? e.message : "Could not save profile. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  function handleSkip() {
+    setProfileSetupRequired(false);
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
@@ -144,13 +136,21 @@ export default function RegisterCompleteScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Pressable onPress={() => (step > 0 ? setStep(step - 1) : nav.goBack())} hitSlop={8}>
-            <BackIcon />
-          </Pressable>
+          {step > 0 ? (
+            <Pressable onPress={() => setStep(step - 1)} hitSlop={8}>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                <Path d="M19 12H5M12 5l-7 7 7 7" stroke={colors.ink} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            </Pressable>
+          ) : (
+            <View style={{ width: 20 }} />
+          )}
           <Text style={styles.headerTitle}>
             {step === 0 ? "Your profile" : step === 1 ? "Your interests" : "Choose your plan"}
           </Text>
-          <View style={{ width: 20 }} />
+          <Pressable onPress={handleSkip} hitSlop={8}>
+            <Text style={styles.skipHeaderText}>Skip</Text>
+          </Pressable>
         </View>
 
         <ScrollView
@@ -166,10 +166,10 @@ export default function RegisterCompleteScreen() {
             </View>
           )}
 
-          {/* ── Step 0: Profile ──────────────────────────────────────────── */}
+          {/* ── Step 0: About ──────────────────────────────────────────── */}
           {step === 0 && (
             <View style={styles.stepWrap}>
-              <Text style={styles.stepHeading}>Tell us a bit about you.</Text>
+              <Text style={styles.stepHeading}>Tell us about you.</Text>
               <Text style={styles.stepSub}>This helps personalise your experience.</Text>
 
               <Text style={styles.label}>Date of birth <Text style={styles.required}>*</Text></Text>
@@ -275,7 +275,7 @@ export default function RegisterCompleteScreen() {
               </Pressable>
 
               <Pressable onPress={() => setStep(2)} style={styles.skipBtn}>
-                <Text style={styles.skipText}>Skip for now</Text>
+                <Text style={styles.skipText}>Skip interests for now</Text>
               </Pressable>
             </View>
           )}
@@ -286,7 +286,6 @@ export default function RegisterCompleteScreen() {
               <Text style={styles.stepHeading}>Choose your plan.</Text>
               <Text style={styles.stepSub}>You can always upgrade later.</Text>
 
-              {/* Citizen card */}
               <Pressable
                 style={[styles.tierCard, tier === "citizen" && styles.tierCardActive]}
                 onPress={() => setTier("citizen")}
@@ -305,7 +304,6 @@ export default function RegisterCompleteScreen() {
                 </Text>
               </Pressable>
 
-              {/* Pro card */}
               <Pressable
                 style={[styles.tierCard, styles.tierCardPro, tier === "patron" && styles.tierCardProActive]}
                 onPress={() => setTier("patron")}
@@ -327,14 +325,14 @@ export default function RegisterCompleteScreen() {
 
               <Pressable
                 style={[styles.primaryBtn, loading && styles.primaryBtnDisabled]}
-                onPress={handleSubmit}
+                onPress={handleFinish}
                 disabled={loading}
               >
                 {loading ? (
                   <ActivityIndicator color={colors.paper} />
                 ) : (
                   <Text style={styles.primaryBtnText}>
-                    {tier === "patron" ? "Create account & upgrade →" : "Create account →"}
+                    {tier === "patron" ? "Finish & upgrade on web →" : "Complete setup →"}
                   </Text>
                 )}
               </Pressable>
@@ -368,6 +366,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.serifBold,
     fontSize: fontSize.lg,
     color: colors.ink,
+  },
+  skipHeaderText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSize.sm,
+    color: colors.mute,
   },
 
   scroll: {
@@ -482,7 +485,6 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
   },
 
-  // Interests
   interestGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -526,7 +528,6 @@ const styles = StyleSheet.create({
   countGood: { color: colors.ochre, fontFamily: fonts.sansBold ?? fonts.sans },
   countBad: { color: colors.ghost },
 
-  // Tier cards
   tierCard: {
     borderWidth: 1,
     borderColor: colors.rule,
@@ -536,10 +537,7 @@ const styles = StyleSheet.create({
     marginBottom: space[3],
     gap: space[2],
   },
-  tierCardActive: {
-    borderColor: colors.ink,
-    borderWidth: 2,
-  },
+  tierCardActive: { borderColor: colors.ink, borderWidth: 2 },
   tierCardPro: { borderColor: colors.goldBorder },
   tierCardProActive: { borderColor: colors.gold, borderWidth: 2 },
   tierCardHeader: {

@@ -787,8 +787,8 @@ function SecurityTab() {
     }
     setAdding(true);
     try {
-      const optData = await api.get<{ options: any }>(`${PROXY}/auth/passkey/register-options`);
-      const credential = await Passkeys.create(optData.options);
+      const optData = await api.post<any>(`${PROXY}/auth/passkey/register-options`, {}, true);
+      const credential = await Passkeys.create(optData);
       if (!credential) return; // user cancelled
 
       await api.post(`${PROXY}/auth/passkey/register-verify`, {

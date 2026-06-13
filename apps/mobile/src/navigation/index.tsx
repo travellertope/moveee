@@ -174,25 +174,38 @@ function MainTabs() {
 function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Onboarding"     component={OnboardingScreen} />
-      <Stack.Screen name="Login"          component={LoginScreen} />
-      <Stack.Screen name="Register"          component={RegisterScreen} />
-      <Stack.Screen name="RegisterComplete"  component={RegisterCompleteScreen} />
-      <Stack.Screen name="VerifyEmail"       component={VerifyEmailScreen} />
+      <Stack.Screen name="Onboarding"    component={OnboardingScreen} />
+      <Stack.Screen name="Login"         component={LoginScreen} />
+      <Stack.Screen name="Register"      component={RegisterScreen} />
+      <Stack.Screen name="VerifyEmail"   component={VerifyEmailScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword"  component={ResetPasswordScreen} />
     </Stack.Navigator>
   );
 }
 
+function ProfileCompleteStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="CompleteProfile" component={RegisterCompleteScreen} />
+    </Stack.Navigator>
+  );
+}
+
 export default function Navigation() {
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated, isLoading, profileSetupRequired } = useAuthStore();
 
   if (isLoading) return null;
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <MainTabs /> : <AuthStack />}
+      {!isAuthenticated ? (
+        <AuthStack />
+      ) : profileSetupRequired ? (
+        <ProfileCompleteStack />
+      ) : (
+        <MainTabs />
+      )}
     </NavigationContainer>
   );
 }
