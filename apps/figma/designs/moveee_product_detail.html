@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Product Detail</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ochre: '#C5491F',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        ghost: '#C8BFB0',
+                        'paper-deep': '#F5F5F5',
+                        gold: '#B38238',
+                        mute: '#7A6F5C',
+                        'paper-warm': '#F3ECE0',
+                        'success-green': '#2D6A4F'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.05)',
+                        'top': '0 -4px 20px -2px rgba(20, 17, 13, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            background-color: #E5E5E5; 
+            margin: 0; 
+            padding: 40px; 
+            display: flex;
+            justify-content: center;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="flex flex-wrap xl:flex-nowrap justify-center gap-10 font-sans text-ink">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: STANDARD VIEW (NON-PRO)               -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">1. Standard View (Non-Pro)</span>
+        <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <!-- Header (Fixed at top) -->
+            <div class="bg-white z-40 shrink-0 border-b border-ghost">
+                <!-- Status Bar Mock -->
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <!-- Nav Bar -->
+                <header class="flex items-center justify-between px-4 h-[44px]">
+                    <button class="text-ink w-[44px] h-[44px] flex items-center justify-start">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h1 class="font-sans text-[14px] text-mute text-center flex-1">Lifestyle</h1>
+                    <div class="flex items-center gap-[12px] min-w-[44px] justify-end">
+                        <button class="text-ink">
+                            <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                        </button>
+                        <button class="relative text-ink">
+                            <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                            <span class="absolute -top-1 -right-1 w-[14px] h-[14px] bg-ochre rounded-full flex items-center justify-center text-white font-mono text-[8px]">2</span>
+                        </button>
+                    </div>
+                </header>
+            </div>
+
+            <!-- Content Scroll Area -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] bg-white">
+                
+                <!-- Product Gallery -->
+                <div class="w-full h-[360px] relative bg-gradient-to-tr from-[#A66C52] via-[#D18E70] to-[#E2A684]">
+                    <!-- Linen texture placeholder -->
+                    <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, #14110D 0, transparent 1px, transparent 2px, #14110D 3px), repeating-linear-gradient(-45deg, #14110D 0, transparent 1px, transparent 2px, #14110D 3px); background-size: 8px 8px;"></div>
+                    
+                    <!-- Left/Right Arrows -->
+                    <button class="absolute left-2 top-1/2 -translate-y-1/2 w-[36px] h-[36px] bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <button class="absolute right-2 top-1/2 -translate-y-1/2 w-[36px] h-[36px] bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+
+                    <!-- Top Right Wishlist -->
+                    <button class="absolute top-[16px] right-[16px] w-[40px] h-[40px] bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-ink shadow-sm z-20">
+                        <svg class="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                    </button>
+
+                    <!-- Bottom Controls -->
+                    <div class="absolute bottom-[44px] w-full flex justify-between items-center px-[16px]">
+                        <div class="w-[60px]"></div> <!-- spacer -->
+                        
+                        <!-- Dots -->
+                        <div class="flex gap-[6px] items-center">
+                            <div class="w-[8px] h-[8px] rounded-full bg-white"></div>
+                            <div class="w-[6px] h-[6px] rounded-full bg-white/40"></div>
+                            <div class="w-[6px] h-[6px] rounded-full bg-white/40"></div>
+                            <div class="w-[6px] h-[6px] rounded-full bg-white/40"></div>
+                        </div>
+
+                        <!-- Image Count -->
+                        <div class="w-[60px] text-right">
+                            <span class="font-mono text-[10px] text-white">4 images</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overlapping Content Area -->
+                <div class="bg-white rounded-t-[20px] -mt-[32px] relative z-20 px-[24px] pt-[24px] pb-[40px]">
+                    
+                    <!-- Product Identity -->
+                    <div class="flex justify-between items-center mb-[8px]">
+                        <div class="flex items-center gap-[8px]">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider">Bisi Ceramics</span>
+                            <span class="font-mono text-[10px] text-mute">📍 Lagos, Nigeria</span>
+                        </div>
+                        <span class="font-sans text-[10px] font-bold text-success-green">Vetted Maker ✓</span>
+                    </div>
+
+                    <h1 class="font-serif text-[26px] font-bold text-ink leading-tight">Terracotta Ritual Bowl</h1>
+                    
+                    <p class="font-sans text-[15px] text-ink-soft leading-relaxed mt-[12px]">
+                        Hand-thrown on a traditional kick wheel, fired using locally sourced terracotta clay. Each piece is unique — no two are identical.
+                    </p>
+
+                    <!-- Price Block (Standard View) -->
+                    <div class="mt-[16px] flex flex-col gap-1 relative">
+                        <span class="font-sans text-[24px] font-bold text-ink">£68.00</span>
+                        
+                        <div class="bg-paper-warm/50 border border-gold/20 rounded-lg p-[10px] mt-[4px]">
+                            <span class="font-sans text-[14px] text-gold font-medium block">★ Connect Pro price: £61.00</span>
+                            <span class="font-sans text-[13px] text-mute mt-[2px] block">★ Connect Pro members save 10% · <a href="#" class="text-ochre">Upgrade →</a></span>
+                        </div>
+
+                        <span class="absolute top-[8px] right-0 font-mono text-[10px] text-success-green">In stock · 6 available</span>
+                    </div>
+
+                    <!-- Colour Selector -->
+                    <div class="mt-[24px]">
+                        <div class="flex items-center gap-1 mb-[8px]">
+                            <span class="font-sans text-[12px] font-bold text-ink">Colour</span>
+                            <span class="font-sans text-[12px] text-mute ml-1">Terracotta</span>
+                        </div>
+                        <div class="flex items-center gap-[8px]">
+                            <!-- Active (Terracotta) -->
+                            <div class="w-[44px] h-[44px] rounded-full border-[2px] border-ink flex items-center justify-center cursor-pointer">
+                                <div class="w-[36px] h-[36px] rounded-full bg-[#C5491F]"></div>
+                            </div>
+                            <!-- Inactive (Clay) -->
+                            <div class="w-[36px] h-[36px] rounded-full bg-[#D2B48C] cursor-pointer mx-1"></div>
+                            <!-- Inactive (Slate) -->
+                            <div class="w-[36px] h-[36px] rounded-full bg-[#708090] cursor-pointer mx-1"></div>
+                            <!-- Inactive (Obsidian) -->
+                            <div class="w-[36px] h-[36px] rounded-full bg-[#23201D] cursor-pointer mx-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- Size Selector -->
+                    <div class="mt-[24px]">
+                        <div class="flex items-center gap-1 mb-[8px]">
+                            <span class="font-sans text-[12px] font-bold text-ink">Size</span>
+                            <span class="font-sans text-[12px] text-mute ml-1">Medium</span>
+                        </div>
+                        <div class="flex items-center gap-[8px]">
+                            <button class="min-w-[48px] h-[40px] px-4 rounded-lg border border-ghost text-ink-soft text-[13px]">Small</button>
+                            <button class="min-w-[48px] h-[40px] px-4 rounded-lg bg-ink text-white font-bold text-[13px]">Medium</button>
+                            <!-- Sold out -->
+                            <button class="min-w-[48px] h-[40px] px-4 rounded-lg border border-ghost text-ghost text-[13px] line-through opacity-50 cursor-not-allowed relative group">
+                                Large
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add to Bag Section -->
+                    <div class="mt-[24px] pt-[24px] border-t border-ghost/50">
+                        <div class="flex items-center gap-4 mb-[12px]">
+                            <span class="font-sans text-[13px] text-ink-soft">Qty</span>
+                            <div class="flex items-center">
+                                <button class="w-[36px] h-[36px] rounded-full border border-ghost flex items-center justify-center text-ink hover:bg-paper-deep">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                </button>
+                                <span class="w-[48px] text-center font-sans text-[15px] font-bold text-ink">1</span>
+                                <button class="w-[36px] h-[36px] rounded-full border border-ghost flex items-center justify-center text-ink hover:bg-paper-deep">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button class="w-full h-[56px] bg-ochre rounded-full text-white font-sans text-[15px] font-bold">Add to Bag</button>
+                        
+                        <button class="w-full mt-[12px] flex justify-center items-center gap-[6px] text-mute font-sans text-[13px]">
+                            <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            Save for later
+                        </button>
+                    </div>
+
+                    <!-- Delivery Strip -->
+                    <div class="mt-[24px] bg-paper-deep rounded-lg p-[12px] grid grid-cols-3 divide-x divide-ghost/50">
+                        <div class="flex flex-col items-center justify-center px-1 text-center">
+                            <svg class="w-[16px] h-[16px] text-ochre mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                            <span class="font-sans text-[10px] text-mute leading-tight">Free delivery<br>over £75</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center px-1 text-center">
+                            <svg class="w-[16px] h-[16px] text-ochre mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                            <span class="font-sans text-[10px] text-mute leading-tight">Free returns<br>in 14 days</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center px-1 text-center">
+                            <svg class="w-[16px] h-[16px] text-ochre mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="font-sans text-[10px] text-mute leading-tight">Vetted<br>maker</span>
+                        </div>
+                    </div>
+
+                    <!-- Accordion Tabs Section -->
+                    <div class="mt-[24px] border-t border-ghost/50">
+                        
+                        <!-- Description (Expanded) -->
+                        <div class="border-b border-ghost/50">
+                            <button class="w-full h-[52px] flex items-center justify-between px-[4px]">
+                                <span class="font-sans text-[14px] font-bold text-ink">Description</span>
+                                <svg class="w-4 h-4 text-ink-soft transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div class="px-[4px] pb-[16px]">
+                                <p class="font-sans text-[14px] text-ink-soft leading-[1.6]">
+                                    This ritual bowl is part of Bisi Ceramics' Earth Objects collection, inspired by traditional Yoruba pottery forms. Hand-thrown using locally sourced red terracotta clay, it serves beautifully as a centerpiece or practical vessel.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Materials & Care -->
+                        <button class="w-full h-[52px] flex items-center justify-between px-[4px] border-b border-ghost/50">
+                            <span class="font-sans text-[14px] font-bold text-ink">Materials & Care</span>
+                            <svg class="w-4 h-4 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+
+                        <!-- Delivery & Returns -->
+                        <button class="w-full h-[52px] flex items-center justify-between px-[4px] border-b border-ghost/50">
+                            <span class="font-sans text-[14px] font-bold text-ink">Delivery & Returns</span>
+                            <svg class="w-4 h-4 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+
+                        <!-- About the Maker -->
+                        <button class="w-full h-[52px] flex items-center justify-between px-[4px] border-b border-ghost/50">
+                            <span class="font-sans text-[14px] font-bold text-ink">About the Maker</span>
+                            <svg class="w-4 h-4 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+
+                        <!-- As Seen In -->
+                        <button class="w-full h-[52px] flex items-center justify-between px-[4px] border-b border-ghost/50">
+                            <span class="font-sans text-[14px] font-bold text-ink">As Seen In</span>
+                            <svg class="w-4 h-4 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- How It's Made -->
+                    <div class="mt-[32px] bg-paper-deep -mx-[24px] px-[24px] py-[32px]">
+                        <h2 class="font-serif text-[20px] font-bold text-ink mb-[24px]">How It's Made</h2>
+                        
+                        <div class="flex flex-col gap-[12px]">
+                            <!-- Step 1 -->
+                            <div class="bg-white rounded-lg p-[16px] flex gap-[12px] shadow-sm">
+                                <div class="w-[32px] h-[32px] rounded-full bg-ochre flex items-center justify-center text-white font-sans text-[13px] font-bold shrink-0">1</div>
+                                <div class="flex flex-col flex-1">
+                                    <div class="flex justify-between items-start">
+                                        <h3 class="font-sans text-[13px] font-bold text-ink">Sourcing the Clay</h3>
+                                        <span class="font-mono text-[10px] text-mute italic whitespace-nowrap ml-2 mt-0.5">1 day</span>
+                                    </div>
+                                    <p class="font-sans text-[12px] text-ink-soft mt-1 leading-snug">Red terracotta gathered from Ondo state riverbanks.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Step 2 -->
+                            <div class="bg-white rounded-lg p-[16px] flex gap-[12px] shadow-sm">
+                                <div class="w-[32px] h-[32px] rounded-full bg-ochre flex items-center justify-center text-white font-sans text-[13px] font-bold shrink-0">2</div>
+                                <div class="flex flex-col flex-1">
+                                    <div class="flex justify-between items-start">
+                                        <h3 class="font-sans text-[13px] font-bold text-ink">Throwing & Shaping</h3>
+                                        <span class="font-mono text-[10px] text-mute italic whitespace-nowrap ml-2 mt-0.5">2–3 days</span>
+                                    </div>
+                                    <p class="font-sans text-[12px] text-ink-soft mt-1 leading-snug">Hand-thrown on a kick wheel, no moulds used.</p>
+                                </div>
+                            </div>
+
+                            <!-- Step 3 -->
+                            <div class="bg-white rounded-lg p-[16px] flex gap-[12px] shadow-sm">
+                                <div class="w-[32px] h-[32px] rounded-full bg-ochre flex items-center justify-center text-white font-sans text-[13px] font-bold shrink-0">3</div>
+                                <div class="flex flex-col flex-1">
+                                    <div class="flex justify-between items-start">
+                                        <h3 class="font-sans text-[13px] font-bold text-ink">Firing & Finishing</h3>
+                                        <span class="font-mono text-[10px] text-mute italic whitespace-nowrap ml-2 mt-0.5">1–2 days</span>
+                                    </div>
+                                    <p class="font-sans text-[12px] text-ink-soft mt-1 leading-snug">Single fire in a wood-burning kiln, natural glaze only.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- As Seen In Box -->
+                    <div class="mt-[32px] bg-paper-warm rounded-lg p-[16px] flex gap-[12px] items-center border border-ghost/30">
+                        <svg class="w-[24px] h-[24px] text-ochre shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        <div class="flex flex-col">
+                            <span class="font-sans text-[11px] text-mute">As seen in</span>
+                            <h4 class="font-sans text-[14px] font-bold text-ink line-clamp-2 leading-snug mt-0.5">The Craft Revival: Why Ceramics Are Having a Moment</h4>
+                            <a href="#" class="font-sans text-[13px] text-ochre mt-[4px]">Read the story →</a>
+                        </div>
+                    </div>
+
+                    <!-- Maker Profile Mini-card -->
+                    <div class="mt-[24px] bg-white rounded-xl shadow-card border border-ghost/30 p-[16px]">
+                        <div class="flex justify-between items-center mb-[16px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink">About the Maker</h3>
+                            <a href="#" class="font-sans text-[13px] text-ochre">See full shop →</a>
+                        </div>
+                        
+                        <div class="flex items-center gap-[12px]">
+                            <div class="w-[56px] h-[56px] rounded-full border-[2px] border-gold p-[2px] shrink-0">
+                                <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#E2B19B] to-[#C5491F]"></div>
+                            </div>
+                            <div class="flex flex-col">
+                                <h4 class="font-sans text-[15px] font-bold text-ink">Bisi Ceramics</h4>
+                                <span class="font-mono text-[11px] text-mute mt-[2px]">📍 Lagos, Nigeria · Since 2019</span>
+                                <span class="font-sans text-[12px] text-mute mt-[4px]">★★★★★ 4.9 · 12 products</span>
+                            </div>
+                        </div>
+
+                        <p class="font-sans text-[13px] text-ink-soft leading-relaxed line-clamp-3 mt-[12px]">
+                            Adaeze Obi creates ceremonial objects inspired by West African ritual traditions, marrying ancient forms with modern functionality in her Lagos studio.
+                        </p>
+                        <a href="#" class="font-sans text-[13px] text-ochre mt-[8px] inline-block">View all their products →</a>
+                    </div>
+
+                    <!-- Related Products -->
+                    <div class="mt-[32px]">
+                        <div class="flex justify-between items-center mb-[16px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink">From Bisi Ceramics</h3>
+                            <button class="font-sans text-[13px] text-ochre">See more →</button>
+                        </div>
+                        
+                        <div class="flex gap-[12px] overflow-x-auto hide-scrollbar -mx-[24px] px-[24px] pb-4">
+                            <!-- Related 1 -->
+                            <div class="w-[160px] bg-white rounded-xl shadow-card overflow-hidden shrink-0 flex flex-col pb-3">
+                                <div class="w-full h-[110px] bg-gradient-to-tr from-[#D18E70] to-[#E2A684]"></div>
+                                <div class="px-[12px] pt-[12px] flex flex-col">
+                                    <h4 class="font-sans text-[12px] font-bold text-ink line-clamp-1 mb-1">Tall Pitcher Jug</h4>
+                                    <span class="font-mono text-[13px] font-bold text-ink">£95</span>
+                                </div>
+                            </div>
+                            <!-- Related 2 -->
+                            <div class="w-[160px] bg-white rounded-xl shadow-card overflow-hidden shrink-0 flex flex-col pb-3">
+                                <div class="w-full h-[110px] bg-gradient-to-bl from-[#C5491F] to-[#E2A684]"></div>
+                                <div class="px-[12px] pt-[12px] flex flex-col">
+                                    <h4 class="font-sans text-[12px] font-bold text-ink line-clamp-1 mb-1">Incense Plate</h4>
+                                    <span class="font-mono text-[13px] font-bold text-ink">£35</span>
+                                </div>
+                            </div>
+                            <!-- Related 3 -->
+                            <div class="w-[160px] bg-white rounded-xl shadow-card overflow-hidden shrink-0 flex flex-col pb-3">
+                                <div class="w-full h-[110px] bg-gradient-to-t from-[#A66C52] to-[#D18E70]"></div>
+                                <div class="px-[12px] pt-[12px] flex flex-col">
+                                    <h4 class="font-sans text-[12px] font-bold text-ink line-clamp-1 mb-1">Matcha Cup Set</h4>
+                                    <span class="font-mono text-[13px] font-bold text-ink">£48</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Sticky Bottom Bar -->
+            <div class="absolute bottom-0 w-full h-[96px] bg-white border-t border-ghost shadow-top flex items-center justify-between px-[16px] z-50 pb-[24px] pt-[12px]">
+                <div class="flex flex-col justify-center">
+                    <span class="font-sans text-[20px] font-bold text-ink leading-none">£68.00</span>
+                </div>
+                <button class="w-[160px] h-[48px] bg-ochre rounded-full text-white font-sans text-[15px] font-bold shadow-md">Add to Bag</button>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: PRO MEMBER VIEW                       -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">2. Pro Member View (Early Access Unlocked)</span>
+        <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <!-- Header (Fixed at top) -->
+            <div class="bg-white z-40 shrink-0 border-b border-ghost">
+                <!-- Status Bar Mock -->
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <!-- Nav Bar -->
+                <header class="flex items-center justify-between px-4 h-[44px]">
+                    <button class="text-ink w-[44px] h-[44px] flex items-center justify-start">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h1 class="font-sans text-[14px] text-mute text-center flex-1">Lifestyle</h1>
+                    <div class="flex items-center gap-[12px] min-w-[44px] justify-end">
+                        <button class="text-ink">
+                            <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                        </button>
+                        <button class="relative text-ink">
+                            <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                            <span class="absolute -top-1 -right-1 w-[14px] h-[14px] bg-ochre rounded-full flex items-center justify-center text-white font-mono text-[8px]">2</span>
+                        </button>
+                    </div>
+                </header>
+            </div>
+
+            <!-- Content Scroll Area -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] bg-white">
+                
+                <!-- Product Gallery -->
+                <div class="w-full h-[360px] relative bg-gradient-to-tr from-[#A66C52] via-[#D18E70] to-[#E2A684]">
+                    <!-- Linen texture placeholder -->
+                    <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, #14110D 0, transparent 1px, transparent 2px, #14110D 3px), repeating-linear-gradient(-45deg, #14110D 0, transparent 1px, transparent 2px, #14110D 3px); background-size: 8px 8px;"></div>
+                    
+                    <!-- PRO EARLY ACCESS BANNER -->
+                    <div class="absolute top-0 w-full bg-gold/90 backdrop-blur text-white text-center py-1.5 flex justify-center items-center gap-1.5 z-20 shadow-sm">
+                        <span class="text-[10px] pb-0.5">★</span>
+                        <span class="font-sans text-[10px] font-bold uppercase tracking-widest">EARLY ACCESS — Available to Pro members</span>
+                    </div>
+
+                    <!-- Left/Right Arrows -->
+                    <button class="absolute left-2 top-1/2 -translate-y-1/2 w-[36px] h-[36px] bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white mt-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <button class="absolute right-2 top-1/2 -translate-y-1/2 w-[36px] h-[36px] bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white mt-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+
+                    <!-- Top Right Wishlist -->
+                    <button class="absolute top-[36px] right-[16px] w-[40px] h-[40px] bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-ink shadow-sm z-20">
+                        <svg class="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                    </button>
+
+                    <!-- Bottom Controls -->
+                    <div class="absolute bottom-[44px] w-full flex justify-between items-center px-[16px]">
+                        <div class="w-[60px]"></div> <!-- spacer -->
+                        
+                        <!-- Dots -->
+                        <div class="flex gap-[6px] items-center">
+                            <div class="w-[8px] h-[8px] rounded-full bg-white"></div>
+                            <div class="w-[6px] h-[6px] rounded-full bg-white/40"></div>
+                            <div class="w-[6px] h-[6px] rounded-full bg-white/40"></div>
+                            <div class="w-[6px] h-[6px] rounded-full bg-white/40"></div>
+                        </div>
+
+                        <!-- Image Count -->
+                        <div class="w-[60px] text-right">
+                            <span class="font-mono text-[10px] text-white">4 images</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overlapping Content Area -->
+                <div class="bg-white rounded-t-[20px] -mt-[32px] relative z-20 px-[24px] pt-[24px] pb-[40px]">
+                    
+                    <!-- Product Identity -->
+                    <div class="flex justify-between items-center mb-[8px]">
+                        <div class="flex items-center gap-[8px]">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider">Bisi Ceramics</span>
+                            <span class="font-mono text-[10px] text-mute">📍 Lagos, Nigeria</span>
+                        </div>
+                        <span class="font-sans text-[10px] font-bold text-success-green">Vetted Maker ✓</span>
+                    </div>
+
+                    <h1 class="font-serif text-[26px] font-bold text-ink leading-tight">Terracotta Ritual Bowl</h1>
+                    
+                    <p class="font-sans text-[15px] text-ink-soft leading-relaxed mt-[12px]">
+                        Hand-thrown on a traditional kick wheel, fired using locally sourced terracotta clay. Each piece is unique — no two are identical.
+                    </p>
+
+                    <!-- Price Block (PRO View) -->
+                    <div class="mt-[16px] flex flex-col relative">
+                        <span class="font-sans text-[14px] text-ghost line-through">Regular price £68.00</span>
+                        
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="font-sans text-[24px] font-bold text-gold">£61.00</span>
+                            <div class="bg-paper-warm/50 border border-gold/20 rounded px-[8px] py-[2px]">
+                                <span class="font-sans text-[12px] text-success-green font-medium">★ Connect Pro price · Saving £7.00</span>
+                            </div>
+                        </div>
+
+                        <span class="absolute top-[8px] right-0 font-mono text-[10px] text-success-green">In stock · 6 available</span>
+                    </div>
+
+                    <!-- Colour Selector -->
+                    <div class="mt-[24px]">
+                        <div class="flex items-center gap-1 mb-[8px]">
+                            <span class="font-sans text-[12px] font-bold text-ink">Colour</span>
+                            <span class="font-sans text-[12px] text-mute ml-1">Terracotta</span>
+                        </div>
+                        <div class="flex items-center gap-[8px]">
+                            <!-- Active (Terracotta) -->
+                            <div class="w-[44px] h-[44px] rounded-full border-[2px] border-ink flex items-center justify-center cursor-pointer">
+                                <div class="w-[36px] h-[36px] rounded-full bg-[#C5491F]"></div>
+                            </div>
+                            <!-- Inactive (Clay) -->
+                            <div class="w-[36px] h-[36px] rounded-full bg-[#D2B48C] cursor-pointer mx-1"></div>
+                            <!-- Inactive (Slate) -->
+                            <div class="w-[36px] h-[36px] rounded-full bg-[#708090] cursor-pointer mx-1"></div>
+                            <!-- Inactive (Obsidian) -->
+                            <div class="w-[36px] h-[36px] rounded-full bg-[#23201D] cursor-pointer mx-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- Size Selector -->
+                    <div class="mt-[24px]">
+                        <div class="flex items-center gap-1 mb-[8px]">
+                            <span class="font-sans text-[12px] font-bold text-ink">Size</span>
+                            <span class="font-sans text-[12px] text-mute ml-1">Medium</span>
+                        </div>
+                        <div class="flex items-center gap-[8px]">
+                            <button class="min-w-[48px] h-[40px] px-4 rounded-lg border border-ghost text-ink-soft text-[13px]">Small</button>
+                            <button class="min-w-[48px] h-[40px] px-4 rounded-lg bg-ink text-white font-bold text-[13px]">Medium</button>
+                            <!-- Sold out -->
+                            <button class="min-w-[48px] h-[40px] px-4 rounded-lg border border-ghost text-ghost text-[13px] line-through opacity-50 cursor-not-allowed relative group">
+                                Large
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add to Bag Section -->
+                    <div class="mt-[24px] pt-[24px] border-t border-ghost/50">
+                        <div class="flex items-center gap-4 mb-[12px]">
+                            <span class="font-sans text-[13px] text-ink-soft">Qty</span>
+                            <div class="flex items-center">
+                                <button class="w-[36px] h-[36px] rounded-full border border-ghost flex items-center justify-center text-ink hover:bg-paper-deep">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                </button>
+                                <span class="w-[48px] text-center font-sans text-[15px] font-bold text-ink">1</span>
+                                <button class="w-[36px] h-[36px] rounded-full border border-ghost flex items-center justify-center text-ink hover:bg-paper-deep">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Success state preview for Pro -->
+                        <button class="w-full h-[56px] bg-ochre rounded-full text-white font-sans text-[15px] font-bold hover:bg-[#b0401a] transition-colors">Add to Bag</button>
+                        
+                        <button class="w-full mt-[12px] flex justify-center items-center gap-[6px] text-mute font-sans text-[13px]">
+                            <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            Save for later
+                        </button>
+                    </div>
+
+                    <!-- Delivery Strip -->
+                    <div class="mt-[24px] bg-paper-deep rounded-lg p-[12px] grid grid-cols-3 divide-x divide-ghost/50">
+                        <div class="flex flex-col items-center justify-center px-1 text-center">
+                            <svg class="w-[16px] h-[16px] text-ochre mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                            <span class="font-sans text-[10px] text-mute leading-tight">Free delivery<br>over £75</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center px-1 text-center">
+                            <svg class="w-[16px] h-[16px] text-ochre mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                            <span class="font-sans text-[10px] text-mute leading-tight">Free returns<br>in 14 days</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center px-1 text-center">
+                            <svg class="w-[16px] h-[16px] text-ochre mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="font-sans text-[10px] text-mute leading-tight">Vetted<br>maker</span>
+                        </div>
+                    </div>
+
+                    <!-- Accordion Tabs Section -->
+                    <div class="mt-[24px] border-t border-ghost/50">
+                        <!-- Description (Expanded) -->
+                        <div class="border-b border-ghost/50">
+                            <button class="w-full h-[52px] flex items-center justify-between px-[4px]">
+                                <span class="font-sans text-[14px] font-bold text-ink">Description</span>
+                                <svg class="w-4 h-4 text-ink-soft transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div class="px-[4px] pb-[16px]">
+                                <p class="font-sans text-[14px] text-ink-soft leading-[1.6]">
+                                    This ritual bowl is part of Bisi Ceramics' Earth Objects collection, inspired by traditional Yoruba pottery forms. Hand-thrown using locally sourced red terracotta clay, it serves beautifully as a centerpiece or practical vessel.
+                                </p>
+                            </div>
+                        </div>
+                        <!-- Materials & Care -->
+                        <button class="w-full h-[52px] flex items-center justify-between px-[4px] border-b border-ghost/50">
+                            <span class="font-sans text-[14px] font-bold text-ink">Materials & Care</span>
+                            <svg class="w-4 h-4 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <!-- Delivery & Returns -->
+                        <button class="w-full h-[52px] flex items-center justify-between px-[4px] border-b border-ghost/50">
+                            <span class="font-sans text-[14px] font-bold text-ink">Delivery & Returns</span>
+                            <svg class="w-4 h-4 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <!-- About the Maker -->
+                        <button class="w-full h-[52px] flex items-center justify-between px-[4px] border-b border-ghost/50">
+                            <span class="font-sans text-[14px] font-bold text-ink">About the Maker</span>
+                            <svg class="w-4 h-4 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <!-- As Seen In -->
+                        <button class="w-full h-[52px] flex items-center justify-between px-[4px] border-b border-ghost/50">
+                            <span class="font-sans text-[14px] font-bold text-ink">As Seen In</span>
+                            <svg class="w-4 h-4 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- How It's Made -->
+                    <div class="mt-[32px] bg-paper-deep -mx-[24px] px-[24px] py-[32px]">
+                        <h2 class="font-serif text-[20px] font-bold text-ink mb-[24px]">How It's Made</h2>
+                        <div class="flex flex-col gap-[12px]">
+                            <!-- Step 1 -->
+                            <div class="bg-white rounded-lg p-[16px] flex gap-[12px] shadow-sm">
+                                <div class="w-[32px] h-[32px] rounded-full bg-ochre flex items-center justify-center text-white font-sans text-[13px] font-bold shrink-0">1</div>
+                                <div class="flex flex-col flex-1">
+                                    <div class="flex justify-between items-start">
+                                        <h3 class="font-sans text-[13px] font-bold text-ink">Sourcing the Clay</h3>
+                                        <span class="font-mono text-[10px] text-mute italic whitespace-nowrap ml-2 mt-0.5">1 day</span>
+                                    </div>
+                                    <p class="font-sans text-[12px] text-ink-soft mt-1 leading-snug">Red terracotta gathered from Ondo state riverbanks.</p>
+                                </div>
+                            </div>
+                            <!-- Step 2 -->
+                            <div class="bg-white rounded-lg p-[16px] flex gap-[12px] shadow-sm">
+                                <div class="w-[32px] h-[32px] rounded-full bg-ochre flex items-center justify-center text-white font-sans text-[13px] font-bold shrink-0">2</div>
+                                <div class="flex flex-col flex-1">
+                                    <div class="flex justify-between items-start">
+                                        <h3 class="font-sans text-[13px] font-bold text-ink">Throwing & Shaping</h3>
+                                        <span class="font-mono text-[10px] text-mute italic whitespace-nowrap ml-2 mt-0.5">2–3 days</span>
+                                    </div>
+                                    <p class="font-sans text-[12px] text-ink-soft mt-1 leading-snug">Hand-thrown on a kick wheel, no moulds used.</p>
+                                </div>
+                            </div>
+                            <!-- Step 3 -->
+                            <div class="bg-white rounded-lg p-[16px] flex gap-[12px] shadow-sm">
+                                <div class="w-[32px] h-[32px] rounded-full bg-ochre flex items-center justify-center text-white font-sans text-[13px] font-bold shrink-0">3</div>
+                                <div class="flex flex-col flex-1">
+                                    <div class="flex justify-between items-start">
+                                        <h3 class="font-sans text-[13px] font-bold text-ink">Firing & Finishing</h3>
+                                        <span class="font-mono text-[10px] text-mute italic whitespace-nowrap ml-2 mt-0.5">1–2 days</span>
+                                    </div>
+                                    <p class="font-sans text-[12px] text-ink-soft mt-1 leading-snug">Single fire in a wood-burning kiln, natural glaze only.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- As Seen In Box -->
+                    <div class="mt-[32px] bg-paper-warm rounded-lg p-[16px] flex gap-[12px] items-center border border-ghost/30">
+                        <svg class="w-[24px] h-[24px] text-ochre shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        <div class="flex flex-col">
+                            <span class="font-sans text-[11px] text-mute">As seen in</span>
+                            <h4 class="font-sans text-[14px] font-bold text-ink line-clamp-2 leading-snug mt-0.5">The Craft Revival: Why Ceramics Are Having a Moment</h4>
+                            <a href="#" class="font-sans text-[13px] text-ochre mt-[4px]">Read the story →</a>
+                        </div>
+                    </div>
+
+                    <!-- Maker Profile Mini-card -->
+                    <div class="mt-[24px] bg-white rounded-xl shadow-card border border-ghost/30 p-[16px]">
+                        <div class="flex justify-between items-center mb-[16px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink">About the Maker</h3>
+                            <a href="#" class="font-sans text-[13px] text-ochre">See full shop →</a>
+                        </div>
+                        
+                        <div class="flex items-center gap-[12px]">
+                            <div class="w-[56px] h-[56px] rounded-full border-[2px] border-gold p-[2px] shrink-0">
+                                <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#E2B19B] to-[#C5491F]"></div>
+                            </div>
+                            <div class="flex flex-col">
+                                <h4 class="font-sans text-[15px] font-bold text-ink">Bisi Ceramics</h4>
+                                <span class="font-mono text-[11px] text-mute mt-[2px]">📍 Lagos, Nigeria · Since 2019</span>
+                                <span class="font-sans text-[12px] text-mute mt-[4px]">★★★★★ 4.9 · 12 products</span>
+                            </div>
+                        </div>
+
+                        <p class="font-sans text-[13px] text-ink-soft leading-relaxed line-clamp-3 mt-[12px]">
+                            Adaeze Obi creates ceremonial objects inspired by West African ritual traditions, marrying ancient forms with modern functionality in her Lagos studio.
+                        </p>
+                        <a href="#" class="font-sans text-[13px] text-ochre mt-[8px] inline-block">View all their products →</a>
+                    </div>
+
+                    <!-- Related Products -->
+                    <div class="mt-[32px]">
+                        <div class="flex justify-between items-center mb-[16px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink">From Bisi Ceramics</h3>
+                            <button class="font-sans text-[13px] text-ochre">See more →</button>
+                        </div>
+                        
+                        <div class="flex gap-[12px] overflow-x-auto hide-scrollbar -mx-[24px] px-[24px] pb-4">
+                            <!-- Related 1 -->
+                            <div class="w-[160px] bg-white rounded-xl shadow-card overflow-hidden shrink-0 flex flex-col pb-3">
+                                <div class="w-full h-[110px] bg-gradient-to-tr from-[#D18E70] to-[#E2A684]"></div>
+                                <div class="px-[12px] pt-[12px] flex flex-col">
+                                    <h4 class="font-sans text-[12px] font-bold text-ink line-clamp-1 mb-1">Tall Pitcher Jug</h4>
+                                    <span class="font-mono text-[13px] font-bold text-ink">£95</span>
+                                </div>
+                            </div>
+                            <!-- Related 2 -->
+                            <div class="w-[160px] bg-white rounded-xl shadow-card overflow-hidden shrink-0 flex flex-col pb-3">
+                                <div class="w-full h-[110px] bg-gradient-to-bl from-[#C5491F] to-[#E2A684]"></div>
+                                <div class="px-[12px] pt-[12px] flex flex-col">
+                                    <h4 class="font-sans text-[12px] font-bold text-ink line-clamp-1 mb-1">Incense Plate</h4>
+                                    <span class="font-mono text-[13px] font-bold text-ink">£35</span>
+                                </div>
+                            </div>
+                            <!-- Related 3 -->
+                            <div class="w-[160px] bg-white rounded-xl shadow-card overflow-hidden shrink-0 flex flex-col pb-3">
+                                <div class="w-full h-[110px] bg-gradient-to-t from-[#A66C52] to-[#D18E70]"></div>
+                                <div class="px-[12px] pt-[12px] flex flex-col">
+                                    <h4 class="font-sans text-[12px] font-bold text-ink line-clamp-1 mb-1">Matcha Cup Set</h4>
+                                    <span class="font-mono text-[13px] font-bold text-ink">£48</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Sticky Bottom Bar (PRO VIEW) -->
+            <div class="absolute bottom-0 w-full h-[96px] bg-white border-t border-ghost shadow-top flex items-center justify-between px-[16px] z-50 pb-[24px] pt-[12px]">
+                <div class="flex flex-col justify-center">
+                    <span class="font-sans text-[20px] font-bold text-gold leading-none">£61.00 <span class="text-[14px]">★</span></span>
+                </div>
+                <button class="w-[160px] h-[48px] bg-ochre rounded-full text-white font-sans text-[15px] font-bold shadow-md hover:bg-[#b0401a] transition-colors">Add to Bag</button>
+            </div>
+            
+        </div>
+    </div>
+
+</body>
+</html>

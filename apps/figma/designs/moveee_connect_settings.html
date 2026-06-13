@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Member Settings</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        success: '#2D6A4F'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.08)'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+        input:focus, textarea:focus { outline: none; border-color: #14110D; }
+        ::placeholder { color: #C8BFB0; }
+        
+        /* Toggle Switch styling */
+        .toggle-checkbox:checked { right: 0; border-color: #C5491F; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #C5491F; }
+        .toggle-checkbox { right: 4px; z-index: 1; border-color: #C8BFB0; transition: all 0.3s; }
+        .toggle-label { width: 44px; height: 24px; background-color: #C8BFB0; border-radius: 9999px; transition: all 0.3s; }
+        .toggle-knob { width: 20px; height: 20px; background-color: white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: absolute; top: 2px; left: 2px; transition: transform 0.3s ease; }
+        .toggle-checkbox:checked ~ .toggle-knob { transform: translateX(20px); }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center text-ink font-sans min-h-screen">
+
+    <!-- Horizontal Scroll Container for the 5 Frames -->
+    <div class="flex flex-row gap-8 max-w-[1950px] mx-auto overflow-x-auto pb-8 hide-scrollbar snap-x snap-mandatory px-8">
+
+        <!-- ============================================== -->
+        <!-- FRAME 1: PROFILE TAB                           -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0 snap-center">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Profile</span>
+            
+            <div class="ios-screen bg-white shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+                
+                <header class="h-[56px] mt-12 bg-white relative shrink-0 z-40 flex items-center px-4">
+                    <!-- Status Bar Mock (absolute top) -->
+                    <div class="absolute -top-12 left-0 w-full h-12 flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink z-50">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center pb-0.5">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    
+                    <button class="w-[44px] h-[44px] flex items-center justify-start text-ink">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h1 class="flex-1 text-center font-sans text-[15px] font-bold text-ink mr-[44px]">Settings</h1>
+                </header>
+
+                <div class="h-[44px] bg-white border-b border-ghost/50 flex items-end px-[16px] gap-[24px] overflow-x-auto hide-scrollbar shrink-0 z-30">
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] font-bold text-ink">Profile</span>
+                        <div class="absolute bottom-0 left-0 w-full h-[2px] bg-ochre"></div>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Directory</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Interests</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Newsletters</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Security</span>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] relative">
+                    
+                    <!-- Avatar Row -->
+                    <div class="mt-[24px] mb-[24px] flex flex-col items-center">
+                        <div class="relative">
+                            <div class="w-[96px] h-[96px] rounded-full border-[3px] border-gold p-[2px] shrink-0">
+                                <div class="w-full h-full rounded-full bg-gradient-to-tr from-pink-500 to-orange-400 overflow-hidden shadow-inner"></div>
+                            </div>
+                            <button class="absolute bottom-0 right-0 w-[28px] h-[28px] bg-white rounded-full flex items-center justify-center shadow-sm border border-ghost/30">
+                                <svg class="w-4 h-4 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </button>
+                        </div>
+                        <button class="font-sans text-[12px] text-ochre mt-[12px]">Edit photo</button>
+                    </div>
+
+                    <!-- Form Sections -->
+                    <div class="px-[16px] flex flex-col gap-[24px]">
+                        
+                        <!-- Identity -->
+                        <div class="flex flex-col gap-[12px]">
+                            <div>
+                                <label class="block font-sans text-[11px] text-mute mb-[4px]">Display Name</label>
+                                <input type="text" class="w-full h-[52px] border border-ghost rounded-[6px] px-[16px] bg-white text-[15px] font-sans text-ink" value="Zara Mensah">
+                            </div>
+                            <div>
+                                <label class="block font-sans text-[11px] text-mute mb-[4px]">Email</label>
+                                <div class="relative flex items-center">
+                                    <input type="email" class="w-full h-[52px] border border-ghost rounded-[6px] pl-[16px] pr-[40px] bg-paper-deep text-[15px] font-sans text-ghost cursor-not-allowed" value="zara@example.com" disabled>
+                                    <svg class="w-5 h-5 text-ghost absolute right-[12px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block font-sans text-[11px] text-mute mb-[4px]">Phone Number</label>
+                                <div class="flex h-[52px] border border-ghost rounded-[6px] overflow-hidden bg-white">
+                                    <div class="flex items-center px-[12px] bg-paper-deep border-r border-ghost shrink-0">
+                                        <span class="font-sans text-[15px] text-ink-soft">🇬🇧 +44</span>
+                                        <svg class="w-4 h-4 ml-1 text-mute" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                    <input type="tel" class="w-full h-full px-[12px] text-[15px] font-sans text-ink outline-none" value="7911 123456">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- About -->
+                        <div class="flex flex-col gap-[12px]">
+                            <div>
+                                <label class="block font-sans text-[11px] text-mute mb-[4px]">WhatsApp (Optional)</label>
+                                <div class="flex h-[52px] border border-ghost rounded-[6px] overflow-hidden bg-white">
+                                    <div class="flex items-center px-[12px] bg-paper-deep border-r border-ghost shrink-0">
+                                        <span class="font-sans text-[15px] text-ink-soft">🇬🇧 +44</span>
+                                        <svg class="w-4 h-4 ml-1 text-mute" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                    <input type="tel" class="w-full h-full px-[12px] text-[15px] font-sans text-ink outline-none" value="7911 123456">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block font-sans text-[11px] text-mute mb-[4px]">Gender</label>
+                                <div class="grid grid-cols-2 gap-[8px]">
+                                    <button class="h-[44px] rounded-[6px] bg-ink text-white font-sans text-[14px] font-medium border border-ink">Woman</button>
+                                    <button class="h-[44px] rounded-[6px] bg-white text-ink-soft font-sans text-[14px] font-medium border border-ghost">Man</button>
+                                    <button class="h-[44px] rounded-[6px] bg-white text-ink-soft font-sans text-[14px] font-medium border border-ghost">Non-binary</button>
+                                    <button class="h-[44px] rounded-[6px] bg-white text-ink-soft font-sans text-[14px] font-medium border border-ghost whitespace-nowrap px-2">Prefer not to say</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block font-sans text-[11px] text-mute mb-[4px]">Date of Birth</label>
+                                <input type="text" class="w-full h-[52px] border border-ghost rounded-[6px] px-[16px] bg-white text-[15px] font-sans text-ink" value="Jan 15, 1994">
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="flex flex-col gap-[12px]">
+                            <div>
+                                <label class="block font-sans text-[11px] text-mute mb-[4px]">Nationality</label>
+                                <div class="relative flex items-center h-[52px] border border-ghost rounded-[6px] bg-white px-[16px]">
+                                    <span class="mr-2 text-[16px]">🇳🇬</span>
+                                    <span class="font-sans text-[15px] text-ink flex-1">Nigerian</span>
+                                    <svg class="w-4 h-4 text-mute" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block font-sans text-[11px] text-mute mb-[4px]">Country of Residence</label>
+                                <div class="relative flex items-center h-[52px] border border-ghost rounded-[6px] bg-white px-[16px]">
+                                    <span class="mr-2 text-[16px]">🇬🇧</span>
+                                    <span class="font-sans text-[15px] text-ink flex-1">United Kingdom</span>
+                                    <svg class="w-4 h-4 text-mute" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block font-sans text-[11px] text-mute mb-[4px]">City</label>
+                                <input type="text" class="w-full h-[52px] border border-ghost rounded-[6px] px-[16px] bg-white text-[15px] font-sans text-ink" value="London">
+                            </div>
+                            <div>
+                                <label class="block font-sans text-[11px] text-mute mb-[4px]">Occupation</label>
+                                <input type="text" class="w-full h-[52px] border border-ghost rounded-[6px] px-[16px] bg-white text-[15px] font-sans text-ink" value="Creative Director">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sticky Bottom Button -->
+                <div class="absolute bottom-0 w-full bg-white px-[16px] pb-[34px] pt-[16px] z-50">
+                    <button class="w-full h-[52px] bg-ochre text-white rounded-full font-sans font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform">
+                        Save changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: DIRECTORY TAB                         -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0 snap-center">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Directory</span>
+            
+            <div class="ios-screen bg-white shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+                
+                <header class="h-[56px] mt-12 bg-white relative shrink-0 z-40 flex items-center px-4">
+                    <div class="absolute -top-12 left-0 w-full h-12 flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink z-50">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center pb-0.5">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    <button class="w-[44px] h-[44px] flex items-center justify-start text-ink">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h1 class="flex-1 text-center font-sans text-[15px] font-bold text-ink mr-[44px]">Settings</h1>
+                </header>
+
+                <div class="h-[44px] bg-white border-b border-ghost/50 flex items-end px-[16px] gap-[24px] overflow-x-auto hide-scrollbar shrink-0 z-30">
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Profile</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] font-bold text-ink">Directory</span>
+                        <div class="absolute bottom-0 left-0 w-full h-[2px] bg-ochre"></div>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Interests</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Newsletters</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Security</span>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] relative">
+                    
+                    <!-- Toggle Row -->
+                    <div class="h-[80px] px-[16px] border-b border-ghost flex items-center justify-between">
+                        <div class="flex flex-col">
+                            <span class="font-sans text-[15px] text-ink">Show in member directory</span>
+                            <span class="font-sans text-[12px] text-mute mt-1">Let other members find and connect with you.</span>
+                        </div>
+                        <div class="relative w-[44px] h-[24px] shrink-0">
+                            <input type="checkbox" id="toggle-directory" class="opacity-0 absolute w-0 h-0 toggle-checkbox" checked>
+                            <label for="toggle-directory" class="block toggle-label cursor-pointer absolute top-0 left-0"></label>
+                            <div class="toggle-knob pointer-events-none"></div>
+                        </div>
+                    </div>
+
+                    <!-- Bio -->
+                    <div class="px-[16px] mt-[24px] mb-[24px]">
+                        <label class="block font-sans text-[11px] text-mute mb-[4px]">Bio</label>
+                        <textarea class="w-full min-h-[140px] border border-ghost rounded-[6px] p-[16px] bg-white text-[15px] font-sans text-ink resize-none leading-relaxed" placeholder="Tell the community about yourself, your work, and your cultural interests...">London based Creative Director specialising in visual identities for fashion and music. Always exploring the intersection of diaspora cultures.</textarea>
+                        <div class="text-right mt-2">
+                            <span class="font-mono text-[11px] text-mute">127 / 280</span>
+                        </div>
+                    </div>
+
+                    <!-- Disciplines Grid -->
+                    <div class="px-[16px] mb-[32px]">
+                        <label class="block font-sans text-[11px] text-mute mb-[8px]">Select up to 5 disciplines</label>
+                        <div class="flex flex-wrap gap-[8px]">
+                            <button class="h-[32px] px-[10px] rounded-full border border-ink bg-ink text-white font-sans text-[13px] font-bold">Music Production</button>
+                            <button class="h-[32px] px-[10px] rounded-full border border-ink bg-ink text-white font-sans text-[13px] font-bold">Visual Art</button>
+                            <button class="h-[32px] px-[10px] rounded-full border border-ink bg-ink text-white font-sans text-[13px] font-bold">Fashion</button>
+                            <button class="h-[32px] px-[10px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[13px] font-bold">Film</button>
+                            <button class="h-[32px] px-[10px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[13px] font-bold">Architecture</button>
+                            <button class="h-[32px] px-[10px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[13px] font-bold">Photography</button>
+                            <button class="h-[32px] px-[10px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[13px] font-bold">Literature</button>
+                            <button class="h-[32px] px-[10px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[13px] font-bold">Visual Design</button>
+                            <button class="h-[32px] px-[10px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[13px] font-bold">Tech</button>
+                            <button class="h-[32px] px-[10px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[13px] font-bold">Food Culture</button>
+                            <button class="h-[32px] px-[10px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[13px] font-bold">Sport</button>
+                            <button class="h-[32px] px-[10px] rounded-full border border-ghost bg-white text-ink-soft font-sans text-[13px] font-bold">Travel</button>
+                        </div>
+                    </div>
+
+                    <!-- Social Links -->
+                    <div class="px-[16px] flex flex-col gap-[12px]">
+                        <h3 class="font-sans text-[14px] font-bold text-ink mb-[4px]">Social Links</h3>
+                        
+                        <!-- Instagram -->
+                        <div class="flex h-[52px] border border-ghost rounded-[6px] overflow-hidden bg-white">
+                            <div class="flex items-center px-[16px] bg-paper-deep border-r border-ghost shrink-0">
+                                <span class="font-sans text-[14px] text-ink-soft">@</span>
+                            </div>
+                            <input type="text" class="w-full h-full px-[16px] text-[15px] font-sans text-ink outline-none" placeholder="yourhandle" value="zara.mensah">
+                        </div>
+
+                        <!-- LinkedIn -->
+                        <div class="flex h-[52px] border border-ghost rounded-[6px] overflow-hidden bg-white">
+                            <div class="flex items-center px-[16px] bg-paper-deep border-r border-ghost shrink-0">
+                                <span class="font-sans text-[14px] text-ink-soft">linkedin.com/</span>
+                            </div>
+                            <input type="text" class="w-full h-full px-[16px] text-[15px] font-sans text-ink outline-none" placeholder="in/yourhandle" value="in/zaramensah">
+                        </div>
+
+                        <!-- Website -->
+                        <div class="flex h-[52px] border border-ghost rounded-[6px] overflow-hidden bg-white">
+                            <div class="flex items-center px-[16px] bg-paper-deep border-r border-ghost shrink-0">
+                                <span class="text-[16px]">🌐</span>
+                            </div>
+                            <input type="url" class="w-full h-full px-[16px] text-[15px] font-sans text-ink outline-none placeholder-ghost" placeholder="https://yoursite.com" value="https://zaramensah.studio">
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Sticky Bottom Button -->
+                <div class="absolute bottom-0 w-full bg-white px-[16px] pb-[34px] pt-[16px] z-50 border-t border-ghost/30">
+                    <button class="w-full h-[52px] bg-ochre text-white rounded-full font-sans font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform">
+                        Save changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 3: INTERESTS TAB                         -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0 snap-center">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Interests</span>
+            
+            <div class="ios-screen bg-white shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+                
+                <header class="h-[56px] mt-12 bg-white relative shrink-0 z-40 flex items-center px-4">
+                    <div class="absolute -top-12 left-0 w-full h-12 flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink z-50">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center pb-0.5">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    <button class="w-[44px] h-[44px] flex items-center justify-start text-ink">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h1 class="flex-1 text-center font-sans text-[15px] font-bold text-ink mr-[44px]">Settings</h1>
+                </header>
+
+                <div class="h-[44px] bg-white border-b border-ghost/50 flex items-end px-[16px] gap-[24px] overflow-x-auto hide-scrollbar shrink-0 z-30">
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Profile</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Directory</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] font-bold text-ink">Interests</span>
+                        <div class="absolute bottom-0 left-0 w-full h-[2px] bg-ochre"></div>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Newsletters</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Security</span>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] relative">
+                    
+                    <div class="px-[16px] pt-[16px]">
+                        <h2 class="font-serif text-[20px] font-bold text-ink">What are you into?</h2>
+                        <p class="font-sans text-[14px] text-mute mt-[4px]">Select at least 3 to personalise your Connect feed.</p>
+                    </div>
+
+                    <!-- Interests Grid -->
+                    <div class="grid grid-cols-2 gap-[12px] px-[16px] mt-[16px]">
+                        <!-- Selected: Music -->
+                        <div class="h-[72px] bg-paper-deep border-l-[3px] border-ochre rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] px-[16px]">🎵</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1">Music</span>
+                            <svg class="w-5 h-5 text-ochre shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        
+                        <!-- Selected: Film -->
+                        <div class="h-[72px] bg-paper-deep border-l-[3px] border-ochre rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] px-[16px]">🎬</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1">Film</span>
+                            <svg class="w-5 h-5 text-ochre shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+
+                        <!-- Selected: Fashion -->
+                        <div class="h-[72px] bg-paper-deep border-l-[3px] border-ochre rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] px-[16px]">👗</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1">Fashion</span>
+                            <svg class="w-5 h-5 text-ochre shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+
+                        <!-- Unselected: Architecture -->
+                        <div class="h-[72px] bg-white rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] pl-[16px] pr-[13px]">🏗️</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1">Architecture</span>
+                            <div class="w-5 h-5 rounded-full border border-ghost shrink-0"></div>
+                        </div>
+
+                        <!-- Selected: Photography -->
+                        <div class="h-[72px] bg-paper-deep border-l-[3px] border-ochre rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] px-[16px]">📸</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1">Photography</span>
+                            <svg class="w-5 h-5 text-ochre shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+
+                        <!-- Unselected: Literature -->
+                        <div class="h-[72px] bg-white rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] pl-[16px] pr-[13px]">✍️</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1">Literature</span>
+                            <div class="w-5 h-5 rounded-full border border-ghost shrink-0"></div>
+                        </div>
+
+                        <!-- Selected: Food & Drink -->
+                        <div class="h-[72px] bg-paper-deep border-l-[3px] border-ochre rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] px-[16px]">🍽️</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1 leading-tight">Food &<br>Drink</span>
+                            <svg class="w-5 h-5 text-ochre shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+
+                        <!-- Unselected: Travel -->
+                        <div class="h-[72px] bg-white rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] pl-[16px] pr-[13px]">🌍</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1">Travel</span>
+                            <div class="w-5 h-5 rounded-full border border-ghost shrink-0"></div>
+                        </div>
+
+                        <!-- Unselected: Visual Art -->
+                        <div class="h-[72px] bg-white rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] pl-[16px] pr-[13px]">🎨</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1">Visual Art</span>
+                            <div class="w-5 h-5 rounded-full border border-ghost shrink-0"></div>
+                        </div>
+
+                        <!-- Unselected: Tech Culture -->
+                        <div class="h-[72px] bg-white rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] pl-[16px] pr-[13px]">🖥️</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1 leading-tight">Tech<br>Culture</span>
+                            <div class="w-5 h-5 rounded-full border border-ghost shrink-0"></div>
+                        </div>
+
+                        <!-- Unselected: Sport -->
+                        <div class="h-[72px] bg-white rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] pl-[16px] pr-[13px]">⚽</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1">Sport</span>
+                            <div class="w-5 h-5 rounded-full border border-ghost shrink-0"></div>
+                        </div>
+
+                        <!-- Unselected: Visual Design -->
+                        <div class="h-[72px] bg-white rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] pl-[16px] pr-[13px]">🏙️</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1 leading-tight">Visual<br>Design</span>
+                            <div class="w-5 h-5 rounded-full border border-ghost shrink-0"></div>
+                        </div>
+
+                        <!-- Unselected: Live Music -->
+                        <div class="h-[72px] bg-white rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] pl-[16px] pr-[13px]">🎪</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1">Live Music</span>
+                            <div class="w-5 h-5 rounded-full border border-ghost shrink-0"></div>
+                        </div>
+
+                        <!-- Selected: Music Production -->
+                        <div class="h-[72px] bg-paper-deep border-l-[3px] border-ochre rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] px-[16px]">🔊</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1 leading-tight">Music<br>Production</span>
+                            <svg class="w-5 h-5 text-ochre shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+
+                        <!-- Unselected: Nightlife -->
+                        <div class="h-[72px] bg-white rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] pl-[16px] pr-[13px]">🌙</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1">Nightlife</span>
+                            <div class="w-5 h-5 rounded-full border border-ghost shrink-0"></div>
+                        </div>
+
+                        <!-- Unselected: Ideas -->
+                        <div class="h-[72px] bg-white rounded-xl shadow-card flex items-center pr-[16px]">
+                            <span class="text-[22px] pl-[16px] pr-[13px]">💡</span>
+                            <span class="font-sans text-[14px] font-bold text-ink flex-1">Ideas</span>
+                            <div class="w-5 h-5 rounded-full border border-ghost shrink-0"></div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Sticky Bottom Button -->
+                <div class="absolute bottom-0 w-full bg-white px-[16px] pb-[34px] pt-[16px] z-50 border-t border-ghost/30">
+                    <button class="w-full h-[52px] bg-ochre text-white rounded-full font-sans font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform">
+                        Save interests
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 4: NEWSLETTERS TAB                       -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0 snap-center">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Newsletters</span>
+            
+            <div class="ios-screen bg-white shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+                
+                <header class="h-[56px] mt-12 bg-white relative shrink-0 z-40 flex items-center px-4">
+                    <div class="absolute -top-12 left-0 w-full h-12 flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink z-50">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center pb-0.5">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    <button class="w-[44px] h-[44px] flex items-center justify-start text-ink">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h1 class="flex-1 text-center font-sans text-[15px] font-bold text-ink mr-[44px]">Settings</h1>
+                </header>
+
+                <div class="h-[44px] bg-white border-b border-ghost/50 flex items-end px-[16px] gap-[24px] overflow-x-auto hide-scrollbar shrink-0 z-30">
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Profile</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Directory</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Interests</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] font-bold text-ink">Newsletters</span>
+                        <div class="absolute bottom-0 left-0 w-full h-[2px] bg-ochre"></div>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Security</span>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] relative">
+                    
+                    <div class="px-[16px] pt-[16px]">
+                        <h2 class="font-serif text-[20px] font-bold text-ink">Your Newsletters</h2>
+                        <p class="font-sans text-[14px] text-mute mt-[4px]">Manage which newsletters you receive.</p>
+                    </div>
+
+                    <div class="px-[16px] mt-[24px] flex flex-col gap-[16px]">
+                        
+                        <!-- Card 1: Subscribed -->
+                        <div class="bg-white rounded-xl shadow-card p-[16px] relative">
+                            <div class="absolute top-[16px] right-[16px]">
+                                <span class="bg-success/10 text-success font-sans text-[9px] font-bold uppercase px-2 py-1 rounded-full tracking-wider border border-success/20">Subscribed</span>
+                            </div>
+                            
+                            <h3 class="font-sans text-[16px] font-bold text-ink pr-[80px]">GetMeLit</h3>
+                            
+                            <div class="flex justify-between items-start mt-[8px]">
+                                <p class="font-sans text-[13px] text-ink-soft pr-[20px]">Weekly cultural digest — African arts, diaspora news, and cultural moments.</p>
+                                
+                                <div class="relative w-[44px] h-[24px] shrink-0 mt-1">
+                                    <input type="checkbox" id="toggle-getmelit" class="opacity-0 absolute w-0 h-0 toggle-checkbox" checked>
+                                    <label for="toggle-directory" class="block toggle-label cursor-pointer absolute top-0 left-0" style="background-color: #C5491F"></label>
+                                    <div class="toggle-knob pointer-events-none" style="transform: translateX(20px);"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-[12px]">
+                                <span class="font-mono text-[10px] text-mute">✉️ Next issue: Monday</span>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Unsubscribed -->
+                        <div class="bg-white rounded-xl shadow-card p-[16px] relative">
+                            <h3 class="font-sans text-[16px] font-bold text-ink">Culture Drop</h3>
+                            
+                            <div class="flex justify-between items-start mt-[8px]">
+                                <p class="font-sans text-[13px] text-ink-soft pr-[20px]">Monthly curated drops from across the cultural landscape.</p>
+                                
+                                <div class="relative w-[44px] h-[24px] shrink-0 mt-1">
+                                    <input type="checkbox" id="toggle-culture" class="opacity-0 absolute w-0 h-0 toggle-checkbox">
+                                    <label for="toggle-directory" class="block toggle-label cursor-pointer absolute top-0 left-0" style="background-color: #C8BFB0"></label>
+                                    <div class="toggle-knob pointer-events-none" style="transform: translateX(0);"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-[12px]">
+                                <span class="font-mono text-[10px] text-mute">✉️ Monthly · First Monday</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 5: SECURITY TAB                          -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0 snap-center pr-8">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Security</span>
+            
+            <div class="ios-screen bg-white shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+                
+                <header class="h-[56px] mt-12 bg-white relative shrink-0 z-40 flex items-center px-4">
+                    <div class="absolute -top-12 left-0 w-full h-12 flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink z-50">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center pb-0.5">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    <button class="w-[44px] h-[44px] flex items-center justify-start text-ink">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h1 class="flex-1 text-center font-sans text-[15px] font-bold text-ink mr-[44px]">Settings</h1>
+                </header>
+
+                <div class="h-[44px] bg-white border-b border-ghost/50 flex items-end px-[16px] gap-[24px] overflow-x-auto hide-scrollbar shrink-0 z-30">
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Profile</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Directory</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Interests</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] text-mute">Newsletters</span>
+                    </button>
+                    <button class="relative pb-[12px] whitespace-nowrap">
+                        <span class="font-sans text-[14px] font-bold text-ink">Security</span>
+                        <div class="absolute bottom-0 left-0 w-full h-[2px] bg-ochre"></div>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] relative">
+                    
+                    <div class="px-[16px] pt-[16px]">
+                        <h2 class="font-serif text-[20px] font-bold text-ink">Security</h2>
+                    </div>
+
+                    <!-- Password Section -->
+                    <div class="px-[16px] mt-[16px]">
+                        <div class="bg-white shadow-card rounded-xl overflow-hidden pb-[16px]">
+                            <div class="h-[52px] px-[16px] flex items-center justify-between border-b border-ghost/30 cursor-pointer hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center gap-[12px]">
+                                    <svg class="w-[20px] h-[20px] text-ochre" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                    <span class="font-sans text-[15px] text-ink">Change Password</span>
+                                </div>
+                                <svg class="w-5 h-5 text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </div>
+                            <p class="font-sans text-[12px] text-mute ml-[44px] mt-[8px]">We'll send a reset link to your email</p>
+                        </div>
+                    </div>
+
+                    <!-- Passkeys Section -->
+                    <div class="px-[16px] mt-[24px]">
+                        <div class="bg-white shadow-card rounded-xl p-[16px]">
+                            <h3 class="font-sans text-[15px] font-bold text-ink">Passkeys</h3>
+                            <p class="font-sans text-[12px] text-mute mt-[2px]">Log in faster with biometrics</p>
+                            
+                            <div class="mt-[16px] flex flex-col">
+                                <!-- Passkey 1 -->
+                                <div class="flex items-center justify-between py-[12px] border-b border-ghost/30">
+                                    <div class="flex items-center gap-[12px]">
+                                        <svg class="w-[24px] h-[24px] text-ochre" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path></svg>
+                                        <div class="flex flex-col">
+                                            <span class="font-sans text-[14px] font-bold text-ink leading-tight">iPhone 15 Pro</span>
+                                            <span class="font-mono text-[11px] text-mute mt-[2px]">Added Jun 9, 2026</span>
+                                        </div>
+                                    </div>
+                                    <button class="p-2 -mr-2">
+                                        <svg class="w-4 h-4 text-ghost hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                                
+                                <!-- Passkey 2 -->
+                                <div class="flex items-center justify-between py-[12px] border-b border-ghost/30">
+                                    <div class="flex items-center gap-[12px]">
+                                        <svg class="w-[24px] h-[24px] text-ochre" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path></svg>
+                                        <div class="flex flex-col">
+                                            <span class="font-sans text-[14px] font-bold text-ink leading-tight">MacBook Pro</span>
+                                            <span class="font-mono text-[11px] text-mute mt-[2px]">Added Jun 9, 2026</span>
+                                        </div>
+                                    </div>
+                                    <button class="p-2 -mr-2">
+                                        <svg class="w-4 h-4 text-ghost hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button class="w-full h-[44px] mt-[16px] flex items-center justify-center gap-[8px] rounded-lg border border-ink bg-transparent hover:bg-gray-50 transition-colors">
+                                <svg class="w-4 h-4 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path></svg>
+                                <span class="font-sans text-[14px] text-ink">Add a new passkey</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
