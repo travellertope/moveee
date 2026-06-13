@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from "react-na
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { useGameStreak } from "../../features/games/useGameStreak";
 
 const GAMES = [
   {
@@ -36,13 +37,25 @@ const GAMES = [
 ];
 
 export default function GamesScreen() {
-  const nav = useNavigation<any>();
+  const nav    = useNavigation<any>();
+  const streak = useGameStreak();
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Games</Text>
-        <Text style={styles.headerSub}>Play daily — earn culture credits.</Text>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.headerTitle}>Games</Text>
+            <Text style={styles.headerSub}>Play daily — earn culture credits.</Text>
+          </View>
+          {streak > 0 && (
+            <View style={styles.streakBadge}>
+              <Text style={styles.streakFlame}>🔥</Text>
+              <Text style={styles.streakCount}>{streak}</Text>
+              <Text style={styles.streakLabel}>day{streak !== 1 ? "s" : ""}</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       <View style={styles.grid}>
@@ -79,11 +92,25 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.paperWarm },
 
   header: { paddingHorizontal: space[4], paddingTop: space[5], paddingBottom: space[3] },
+  headerTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   headerTitle: { fontFamily: fonts.serifBold, fontSize: fontSize["2xl"], color: colors.ink },
   headerSub: {
     fontFamily: fonts.mono, fontSize: fontSize.xs,
     color: colors.mute, marginTop: 4, letterSpacing: 0.8,
   },
+  streakBadge: {
+    alignItems: "center",
+    backgroundColor: colors.goldLight,
+    borderRadius: radius.lg,
+    paddingHorizontal: space[3],
+    paddingVertical: space[2],
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    minWidth: 64,
+  },
+  streakFlame:  { fontSize: 20 },
+  streakCount:  { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: colors.ink, lineHeight: 26 },
+  streakLabel:  { fontFamily: fonts.mono, fontSize: 9, color: colors.gold, textTransform: "uppercase", letterSpacing: 0.8 },
 
   grid: { flexDirection: "row", flexWrap: "wrap", padding: space[4], gap: space[3] },
 

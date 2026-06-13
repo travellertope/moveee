@@ -116,10 +116,8 @@ export default function ConnectFeedScreen() {
       return;
     }
     if (item.type === "editorial") {
-      nav.navigate("Magazine", {
-        screen: "Article",
-        params: { slug: item.slug },
-      });
+      // Stay within ConnectStack so back → feed and Magazine tab is never polluted.
+      nav.navigate("Article", { slug: item.slug });
       return;
     }
   };

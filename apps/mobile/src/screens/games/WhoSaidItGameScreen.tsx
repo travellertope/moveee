@@ -7,6 +7,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { storage } from "../../store/storage";
 import { api } from "../../api/client";
+import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 
 const PROXY    = "https://themoveee.com/api";
@@ -78,6 +79,7 @@ export default function WhoSaidItGameScreen() {
       setQIndex((i) => i + 1);
     } else {
       storage.set(KEY_DATE, todayStr);
+      recordPlayedToday();
       setPhase("done");
     }
   };
