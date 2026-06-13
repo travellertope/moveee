@@ -10,6 +10,49 @@ import { sanitizeHtml } from "@/lib/sanitize";
 
 export const revalidate = 300;
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  let product: any = null;
+  try {
+    const data = await getWPData(GET_PRODUCT_BY_SLUG, { slug });
+    product = data?.product ?? null;
+  } catch { /* CMS unreachable */ }
+
+  if (!product) return {};
+
+  const title = `${product.name} — Moveee Magazine Shop`;
+  const description = product.shortDescription
+    ? product.shortDescription.replace(/<[^>]*>/g, "").trim().slice(0, 155)
+    : `${product.name} — curated by Moveee Magazine.`;
+  const image = product.image?.sourceUrl ?? "/og-fallback.png";
+
+  return {
+    title: { absolute: title },
+    description,
+    alternates: { canonical: `https://themoveee.com/shop/${slug}` },
+    openGraph: {
+      title,
+      description,
+      url: `https://themoveee.com/shop/${slug}`,
+      siteName: "Moveee Magazine",
+      type: "website",
+      images: [{ url: image, width: 1200, height: 630, alt: product.name }],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      site: "@moveeemedia",
+      creator: "@moveeemedia",
+      title,
+      description,
+      images: [image],
+    },
+  };
+}
+
 export default async function ProductPage({
   params,
 }: {
