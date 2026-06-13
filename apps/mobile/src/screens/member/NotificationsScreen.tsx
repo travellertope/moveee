@@ -5,11 +5,10 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { api } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import type { Notification } from "../../types";
 
-const PROXY = "https://themoveee.com/api";
 const PAGE_SIZE = 20;
 
 // Left border color + icon circle background per notification type
@@ -119,7 +118,7 @@ export default function NotificationsScreen() {
     reset ? setRefreshing(true) : setLoadingMore(true);
     try {
       const data = await api.get<Notification[]>(
-        `${PROXY}/notifications?limit=${PAGE_SIZE}&offset=${nextOffset}`
+        `${MOBILE_API}/notifications?limit=${PAGE_SIZE}&offset=${nextOffset}`
       );
       const items = data ?? [];
       setNotifications((prev) => reset ? items : [...prev, ...items]);
@@ -137,14 +136,14 @@ export default function NotificationsScreen() {
 
   const markAllRead = async () => {
     try {
-      await api.post(`${PROXY}/notifications`, {} as Record<string, unknown>);
+      await api.post(`${MOBILE_API}/notifications`, {} as Record<string, unknown>);
       setNotifications((prev) => prev.map((n) => ({ ...n, read_at: new Date().toISOString() })));
     } catch { /* silent */ }
   };
 
   const markRead = async (id: number) => {
     try {
-      await api.post(`${PROXY}/notifications`, { notification_id: id } as Record<string, unknown>);
+      await api.post(`${MOBILE_API}/notifications`, { notification_id: id } as Record<string, unknown>);
       setNotifications((prev) =>
         prev.map((n) => n.id === id ? { ...n, read_at: new Date().toISOString() } : n)
       );

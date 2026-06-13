@@ -6,11 +6,11 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
-import { api, CULTURE_API } from "../../api/client";
+import { api, CULTURE_API, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { Perk } from "../../types";
 
-const PROXY = "https://themoveee.com/api";
+
 
 interface RedeemResult {
   redemption_id: number;
@@ -98,7 +98,7 @@ export default function PerksScreen() {
             setRedeeming(true);
             try {
               const result = await api.post<RedeemResult>(
-                `${PROXY}/perks/redeem`,
+                `${MOBILE_API}/perks/redeem`,
                 { perk_id: perk.id }
               );
               setSuccess({ perk, result });

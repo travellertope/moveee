@@ -9,12 +9,11 @@ import Svg, {
   Rect, Line, Polyline, Path, Circle,
   Text as SvgText, Defs, LinearGradient, Stop,
 } from "react-native-svg";
-import { api } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { AnalyticsData } from "../../types";
 
-const PROXY = "https://themoveee.com/api";
-const RUST  = "#9B3C2A";
+const RUST = "#9B3C2A";
 
 // ── Bar chart (credits earned vs spent) ──────────────────────────────────────
 
@@ -88,11 +87,11 @@ function LineChart({ months }: { months: AnalyticsData["rep_months"] }) {
   const PAD = { l: 22, r: 4, t: 20, b: 20 };
   const chartW = W - PAD.l - PAD.r;
   const chartH = H - PAD.t - PAD.b;
-  const maxVal = Math.max(100, ...months.map((m) => m.reputation));
+  const maxVal = Math.max(100, ...months.map((m) => m.rep_earned));
 
   const pts = months.map((m, i) => {
     const x = PAD.l + (months.length > 1 ? (i / (months.length - 1)) : 0.5) * chartW;
-    const y = PAD.t + chartH - (m.reputation / maxVal) * chartH;
+    const y = PAD.t + chartH - (m.rep_earned / maxVal) * chartH;
     return { x, y, m };
   });
 
@@ -153,7 +152,7 @@ function LineChart({ months }: { months: AnalyticsData["rep_months"] }) {
                 <Rect x={p.x - 28} y={p.y - 22} width={56} height={20} rx={10} fill={colors.gold} />
                 <SvgText x={p.x} y={p.y - 8} fontSize={9} fill="#FFFFFF"
                   textAnchor="middle" fontFamily={fonts.mono} fontWeight="bold">
-                  {p.m.reputation} REP
+                  {p.m.rep_earned} REP
                 </SvgText>
               </>
             )}
@@ -181,7 +180,7 @@ export default function AnalyticsScreen() {
   const [error,   setError]   = useState("");
 
   useEffect(() => {
-    api.get<AnalyticsData>(`${PROXY}/member/analytics`)
+    api.get<AnalyticsData>(`${MOBILE_API}/analytics`)
       .then(setData)
       .catch(() => setError("Could not load analytics."))
       .finally(() => setLoading(false));

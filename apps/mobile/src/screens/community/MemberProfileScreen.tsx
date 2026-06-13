@@ -167,26 +167,29 @@ export default function MemberProfileScreen() {
   const [activeTab, setActiveTab] = useState<"community" | "portfolio">("community");
 
   useEffect(() => {
-    const uid = params.userId ?? params.username;
+    const uid = params.userId;
+    if (!uid) { setLoading(false); return; }
     api.get<PublicProfile>(`${MOBILE_API}/member/${uid}`)
       .then(setProfile)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [params.userId, params.username]);
+  }, [params.userId]);
 
   useEffect(() => {
     if (!profile) return;
-    const uid = params.userId ?? profile.id;
-    api.get<CommunityPost[]>(`${MOBILE_API}/community/posts?author_id=${uid}&page=${postPage}&per_page=10`)
-      .then((data) => setPosts((prev) => postPage === 1 ? (data ?? []) : [...prev, ...(data ?? [])]))
+    const uid = profile.id;
+    api.get<{ posts: CommunityPost[]; hasMore: boolean }>(
+      `${MOBILE_API}/member/${uid}/posts?page=${postPage}&per_page=10`
+    )
+      .then((data) => setPosts((prev) => postPage === 1 ? (data?.posts ?? []) : [...prev, ...(data?.posts ?? [])]))
       .catch(() => {});
   }, [profile, postPage]);
 
   useEffect(() => {
     if (!profile || activeTab !== "portfolio") return;
-    const uid = params.userId ?? profile.id;
-    api.get<PortfolioItem[]>(`${MOBILE_API}/user/portfolio?user_id=${uid}`)
-      .then((data) => setPortfolio(data ?? []))
+    const uid = profile.id;
+    api.get<{ items: PortfolioItem[] }>(`${MOBILE_API}/portfolio?user_id=${uid}`)
+      .then((data) => setPortfolio(data?.items ?? []))
       .catch(() => {});
   }, [profile, activeTab]);
 

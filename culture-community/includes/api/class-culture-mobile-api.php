@@ -303,6 +303,136 @@ class Culture_Mobile_API {
             'callback'            => array( __CLASS__, 'handle_request_password_reset' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
+
+        // Notifications
+        register_rest_route( 'culture/v1', '/mobile/notifications', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_notifications' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+                'args'                => array(
+                    'limit'  => array( 'default' => 20, 'sanitize_callback' => 'absint' ),
+                    'offset' => array( 'default' => 0,  'sanitize_callback' => 'absint' ),
+                ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_mark_notifications_read' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/notifications/count', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_notification_count' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Analytics
+        register_rest_route( 'culture/v1', '/mobile/analytics', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_analytics' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Wallet
+        register_rest_route( 'culture/v1', '/mobile/wallet/balance', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_wallet_balance' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/wallet/history', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_wallet_history' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'page'     => array( 'default' => 1,  'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'default' => 20, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/wallet/cashout', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_wallet_cashout' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Perks & redemptions
+        register_rest_route( 'culture/v1', '/mobile/perks', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_list_perks' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/perks/redeem', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_redeem_perk' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/perks/redemptions', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_user_redemptions' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'status' => array( 'default' => '', 'sanitize_callback' => 'sanitize_key' ),
+            ),
+        ) );
+
+        // Passkeys
+        register_rest_route( 'culture/v1', '/mobile/passkey/list', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_passkey_list' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/passkey/register-options', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_register_options' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/passkey/register-verify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_register_verify' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/passkey/delete', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_passkey_delete' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Avatar upload
+        register_rest_route( 'culture/v1', '/mobile/me/avatar', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_upload_avatar' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Portfolio
+        register_rest_route( 'culture/v1', '/mobile/portfolio', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_portfolio' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'user_id' => array( 'default' => 0, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Member community posts (with author filter for profile screen)
+        register_rest_route( 'culture/v1', '/mobile/member/(?P<id>\d+)/posts', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_member_posts' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'id'       => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'page'     => array( 'default' => 1,  'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'default' => 10, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
     }
 
     // -------------------------------------------------------------------------
@@ -1531,17 +1661,187 @@ class Culture_Mobile_API {
             ? 'patron'
             : $stored_tier;
 
+        $interests = json_decode( get_user_meta( $user->ID, '_culture_interests', true ) ?: '[]', true ) ?: array();
+
         return array(
             'id'                 => (string) $user->ID,
+            'username'           => $user->user_login,
             'displayName'        => $user->display_name,
             'avatarUrl'          => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
             'tier'               => $tier,
             'city'               => get_user_meta( $user->ID, '_culture_city', true ) ?: '',
             'countryOfResidence' => get_user_meta( $user->ID, '_culture_country_of_residence', true ) ?: '',
             'occupation'         => get_user_meta( $user->ID, '_culture_occupation', true ) ?: '',
+            'bio'                => get_user_meta( $user->ID, '_culture_directory_bio', true ) ?: '',
+            'interests'          => $interests,
+            'instagram'          => get_user_meta( $user->ID, '_culture_directory_instagram', true ) ?: '',
+            'linkedin'           => get_user_meta( $user->ID, '_culture_directory_linkedin', true ) ?: '',
+            'website'            => get_user_meta( $user->ID, '_culture_directory_website', true ) ?: '',
+            'registeredAt'       => strtotime( $user->user_registered ),
             'points'             => (int) get_user_meta( $user->ID, '_culture_points', true ),
             'badges'             => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_badges( $user->ID ) : array(),
         );
+    }
+
+    // -------------------------------------------------------------------------
+    // Mobile-proxied handlers (delegate to existing REST API logic)
+    // -------------------------------------------------------------------------
+
+    public static function handle_get_notifications( $request ) {
+        $user_id = get_current_user_id();
+        $limit   = min( 50, max( 1, (int) $request->get_param( 'limit' ) ) );
+        $offset  = max( 0, (int) $request->get_param( 'offset' ) );
+        $rows    = Culture_Notifications::get_for_user( $user_id, $limit, $offset );
+        foreach ( $rows as &$row ) {
+            $row['meta'] = json_decode( $row['meta'] ?? '{}', true ) ?: array();
+        }
+        return rest_ensure_response( $rows );
+    }
+
+    public static function handle_notification_count( $request ) {
+        $user_id = get_current_user_id();
+        return rest_ensure_response( array( 'unread' => Culture_Notifications::count_unread( $user_id ) ) );
+    }
+
+    public static function handle_mark_notifications_read( $request ) {
+        $user_id         = get_current_user_id();
+        $notification_id = $request->get_param( 'notification_id' );
+        if ( $notification_id ) {
+            Culture_Notifications::mark_read( $user_id, (int) $notification_id );
+        } else {
+            Culture_Notifications::mark_all_read( $user_id );
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_analytics( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_member_analytics( $request );
+    }
+
+    public static function handle_wallet_balance( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_wallet_balance( $request );
+    }
+
+    public static function handle_wallet_history( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_wallet_history( $request );
+    }
+
+    public static function handle_wallet_cashout( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_wallet_cashout( $request );
+    }
+
+    public static function handle_list_perks( $request ) {
+        return Culture_REST_API::handle_list_perks( $request );
+    }
+
+    public static function handle_redeem_perk( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_redeem_perk( $request );
+    }
+
+    public static function handle_user_redemptions( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_user_redemptions( $request );
+    }
+
+    public static function handle_passkey_list( $request ) {
+        return Culture_REST_API::handle_passkey_list( $request );
+    }
+
+    public static function handle_passkey_register_options( $request ) {
+        return Culture_REST_API::handle_passkey_register_options( $request );
+    }
+
+    public static function handle_passkey_register_verify( $request ) {
+        return Culture_REST_API::handle_passkey_register_verify( $request );
+    }
+
+    public static function handle_passkey_delete( $request ) {
+        return Culture_REST_API::handle_passkey_delete( $request );
+    }
+
+    public static function handle_upload_avatar( $request ) {
+        $user_id = get_current_user_id();
+        $files   = $request->get_file_params();
+        $file    = $files['file'] ?? null;
+
+        if ( empty( $file ) || empty( $file['tmp_name'] ) ) {
+            return new WP_Error( 'no_file', 'No file provided.', array( 'status' => 400 ) );
+        }
+
+        if ( ! in_array( $file['type'], self::UPLOAD_ALLOWED_TYPES, true ) ) {
+            return new WP_Error( 'invalid_type', 'Only JPEG, PNG, WebP, or GIF allowed.', array( 'status' => 400 ) );
+        }
+
+        if ( $file['size'] > self::UPLOAD_MAX_BYTES ) {
+            return new WP_Error( 'too_large', 'Image must be under 8 MB.', array( 'status' => 400 ) );
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+
+        $_FILES['file']['name'] = 'avatar-' . $user_id . '-' . time() . '-' . sanitize_file_name( $file['name'] );
+        $attachment_id = media_handle_upload( 'file', 0, array(), array( 'test_form' => false ) );
+
+        if ( is_wp_error( $attachment_id ) ) {
+            return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), array( 'status' => 500 ) );
+        }
+
+        $url = wp_get_attachment_url( $attachment_id );
+        update_user_meta( $user_id, '_culture_avatar_url', $url );
+
+        return rest_ensure_response( array( 'url' => $url ) );
+    }
+
+    public static function handle_get_portfolio( $request ) {
+        $requested_user = (int) $request->get_param( 'user_id' );
+        $user_id        = $requested_user ?: get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_get_portfolio( $request );
+    }
+
+    public static function handle_get_member_posts( $request ) {
+        $author_id = (int) $request->get_param( 'id' );
+        $page      = max( 1, (int) $request->get_param( 'page' ) );
+        $per_page  = min( 20, max( 1, (int) $request->get_param( 'per_page' ) ) );
+
+        $user    = get_userdata( $author_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
+        }
+
+        $viewer_id = get_current_user_id();
+        $liked_ids = (array) get_user_meta( $viewer_id, '_culture_liked_posts', true );
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_post',
+            'post_status'    => 'publish',
+            'author'         => $author_id,
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ) );
+
+        $posts = array_map( function( $post ) use ( $liked_ids ) {
+            return self::format_community_post( $post, $liked_ids );
+        }, $query->posts );
+
+        return rest_ensure_response( array(
+            'posts'   => $posts,
+            'hasMore' => $query->found_posts > ( $page * $per_page ),
+        ) );
     }
 
     private static function format_community_post( WP_Post $post, array $liked_ids ): array {
