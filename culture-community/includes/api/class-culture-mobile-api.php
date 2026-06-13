@@ -1475,6 +1475,12 @@ class Culture_Mobile_API {
             if ( $link_url ) {
                 $host   = wp_parse_url( $link_url, PHP_URL_HOST );
                 $source = $host ? preg_replace( '/^www\./', '', $host ) : '';
+                // Strip the link URL from body — it's shown as the OG snippet, not inline text.
+                if ( $body_text ) {
+                    $body_text = trim( str_replace( $link_url, '', $body_text ) );
+                    // Also strip any residual bare URL at the end (in case the URL was slightly different).
+                    $body_text = rtrim( preg_replace( '/\s*https?:\/\/\S+\s*$/', '', $body_text ) );
+                }
             }
 
             $template = get_post_meta( $post->ID, '_template_type', true ) ?: 'post';

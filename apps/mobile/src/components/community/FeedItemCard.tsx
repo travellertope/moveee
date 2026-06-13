@@ -52,7 +52,20 @@ function starsText(n?: number): string {
 }
 
 function shareUrlFor(item: FeedItem): string | undefined {
-  return item.slug ? `https://themoveee.com/community/${item.slug}` : undefined;
+  if (!item.slug) return undefined;
+  if (item.type === "pulse") return `https://connect.themoveee.com/pulse/${item.slug}`;
+  if (item.type === "editorial") return `https://themoveee.com/magazine/${item.slug}`;
+  return `https://connect.themoveee.com/community/${item.slug}`;
+}
+
+// Strip a URL from body text so it isn't duplicated when an OG snippet is shown.
+function stripLinkFromBody(body?: string | null, sourceUrl?: string | null): string | undefined {
+  if (!body) return body ?? undefined;
+  if (!sourceUrl) return body;
+  let result = body.replace(sourceUrl, "").trim();
+  // Also strip any residual bare URL at the very end.
+  result = result.replace(/\s*https?:\/\/\S+\s*$/, "").trim();
+  return result || undefined;
 }
 
 // ── BadgePill ─────────────────────────────────────────────────────────────────
@@ -462,6 +475,7 @@ function FeedReactionBar({ item, marginTop }: { item: FeedItem; marginTop?: numb
         postId={item.wpId}
         initialCounts={item.reactions}
         shareUrl={shareUrlFor(item)}
+        shareTitle={item.title || item.communityAuthor ? `${item.communityAuthor ?? "Someone"}'s post on Moveee` : undefined}
       />
     </View>
   );
@@ -787,12 +801,15 @@ function DirectoryCard({ item }: FeedCardProps) {
 function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const hasLink = !!(item.ogTitle || item.ogImage || item.source);
+  const rawBody = item.body ?? item.excerpt ?? item.title ?? "";
+  // Strip the link URL from body text when an OG snippet is shown below.
+  const displayBody = hasLink ? (stripLinkFromBody(rawBody, item.sourceUrl) ?? rawBody) : rawBody;
   return (
     <>
       <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <HashtagText text={item.body ?? item.excerpt ?? item.title ?? ""} style={cardStyles.bodyMd} />
+          <HashtagText text={displayBody} style={cardStyles.bodyMd} />
         </View>
         {item.image ? (
           <View style={{ marginTop: 10 }}>
