@@ -182,8 +182,42 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   };
   const processedContent = cleanContent(contentWithIds);
 
+  const articleUrl = `https://themoveee.com/magazine/${resolvedParams.slug}`;
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.excerpt?.replace(/<[^>]*>/g, "").slice(0, 155) || "",
+    image: post.featuredImage?.node?.sourceUrl || "https://themoveee.com/og-fallback.png",
+    datePublished: post.date,
+    dateModified: post.modified || post.date,
+    author: {
+      "@type": "Person",
+      name: post.author?.node?.name || "Moveee Magazine",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Moveee Magazine",
+      logo: { "@type": "ImageObject", url: "https://themoveee.com/logo.png" },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
+    url: articleUrl,
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://themoveee.com" },
+      { "@type": "ListItem", position: 2, name: "Magazine", item: "https://themoveee.com/magazine" },
+      ...(categoryName && categorySlug ? [{ "@type": "ListItem", position: 3, name: categoryName, item: `https://themoveee.com/magazine/category/${categorySlug}` }] : []),
+      { "@type": "ListItem", position: categoryName ? 4 : 3, name: post.title, item: articleUrl },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <ProgressBar />
 
       {/* ── HERO ── */}
@@ -515,7 +549,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <>
               <h4>{post.asToldTo}</h4>
               <p className="a-told-to">as told to <strong>{post.author?.node?.name || "The Moveee"}</strong></p>
-              <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and the diaspora."}</p>
+              <p>{post.author?.node?.description || "Culture, lifestyle, and ideas — stories that document the things that matter."}</p>
             </>
           ) : (
             <>
@@ -532,7 +566,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                   <>The <em>Moveee</em></>
                 )}
               </h4>
-              <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and the diaspora. Long-form essays and visual stories that document the things that matter."}</p>
+              <p>{post.author?.node?.description || "Culture, lifestyle, and ideas — stories that document the things that matter. Long-form essays and visual stories that document the things that matter."}</p>
             </>
           )}
         </div>

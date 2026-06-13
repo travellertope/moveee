@@ -4,6 +4,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function ResetPasswordLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

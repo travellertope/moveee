@@ -4,9 +4,25 @@ import Link from "next/link";
 import "./makers.css";
 
 export const metadata = {
-  title: { absolute: "Meet the Makers | The Moveee" },
+  title: { absolute: "Meet the Makers — Moveee Magazine" },
   description:
-    "Discover the vetted craftspeople behind every piece in the Moveee shop — personally reviewed for craft integrity, fair production, and lasting quality.",
+    "The independent makers behind every piece in the Moveee shop — personally reviewed for craft integrity, fair production, and lasting quality.",
+  alternates: { canonical: "https://themoveee.com/makers" },
+  openGraph: {
+    title: "Meet the Makers — Moveee Magazine",
+    description: "The independent makers behind every piece in the Moveee shop — personally reviewed for craft integrity, fair production, and lasting quality.",
+    url: "https://themoveee.com/makers",
+    siteName: "Moveee Magazine",
+    type: "website",
+    images: [{ url: "/og-fallback.png", width: 1200, height: 630, alt: "Moveee Magazine — Meet the Makers" }],
+  },
+  twitter: {
+    card: "summary_large_image" as const,
+    site: "@moveeemedia",
+    creator: "@moveeemedia",
+    title: "Meet the Makers — Moveee Magazine",
+    description: "The independent makers behind every piece in the Moveee shop — personally reviewed for craft integrity, fair production, and lasting quality.",
+  },
 };
 
 export const revalidate = 3600;

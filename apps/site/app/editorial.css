@@ -701,7 +701,7 @@
 
 /* ── Prose content (for WP body injection) ── */
 .prose-content p {
-  font-family: 'Fraunces', serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 16px;
   line-height: 1.65;
   margin-bottom: 24px;

@@ -26,6 +26,25 @@ stale history.
 
 ---
 
+## Brand naming convention (canonical — do not deviate)
+
+| Surface | Brand name | Domain |
+|---|---|---|
+| `apps/site` | **Moveee Magazine** | `themoveee.com` |
+| `apps/connect` | **Moveee** | `connect.themoveee.com` |
+| `apps/mobile` | **Moveee** | iOS / Android |
+
+- `apps/site` is always called **Moveee Magazine** in user-facing copy, metadata, and JSON-LD.
+- `apps/connect` and `apps/mobile` are both just **Moveee** — no sub-brand qualifier.
+- Never use "Moveee Connect" as a product name.
+- Site tagline (Moveee Magazine): **"Best in Culture"**
+- App tagline (Moveee): **"Connect to Culture"**
+- Brand description framing: universal/global — do not describe the brand as specifically
+  African or Nigerian in metadata or SEO copy. The content and community speak for themselves.
+  Use language like: *"an independent magazine and community for people who live for culture."*
+
+---
+
 ## Project overview
 
 Next.js 15 (App Router) frontend + WordPress headless CMS backend.
@@ -38,12 +57,12 @@ user-visible copy says "Connect Pro" or "Pro").
 This is a **Turborepo monorepo** (as of June 2026).
 
 Key paths:
-- `apps/site/` — Site A: Next.js app for themoveee.com (Editorial + Shop, no auth)
+- `apps/site/` — Site A: Moveee Magazine at themoveee.com (Editorial + Shop, no auth)
   - `app/` — pages and route handlers
   - `components/` — Site A-only components (Header, CartDrawer, HomepageContent…)
   - `lib/fetchHomepageData.ts` — Site A-only homepage fetch
   - `proxy.ts` — edge routing (Next.js 16 replacement for middleware.ts)
-- `apps/connect/` — Site B: Next.js app for connect.themoveee.com (Community + Auth)
+- `apps/connect/` — Site B: Moveee at connect.themoveee.com (Community + Auth)
   - `app/` — auth, member, community, events, games, directory pages
   - No local lib/ or components/ — all resolved from packages/shared
 - `apps/mobile/` — React Native app (Expo) for iOS + Android
