@@ -16,6 +16,7 @@ import ImageLightbox from "../ui/ImageLightbox";
 import HappeningDetailModal from "./HappeningDetailModal";
 import DirectoryDetailModal from "./DirectoryDetailModal";
 import QuoteDetailModal from "./QuoteDetailModal";
+import { ReportSheet } from "../ui/Overlays";
 import type { FeedItem, PollOption } from "../../types";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -95,63 +96,39 @@ const badgeStyles = StyleSheet.create({
 
 // ── Report control ────────────────────────────────────────────────────────────
 
-type ReportState = "idle" | "confirm" | "sent" | "error";
-
 function ReportControl({ item }: { item: FeedItem }) {
-  const [state, setState] = useState<ReportState>("idle");
+  const [open, setOpen] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const submit = async (reason: "spam" | "harassment" | "inappropriate") => {
+    setOpen(false);
     if (!item.wpId) return;
     try {
       await api.post(`${MOBILE_API}/community/report`, { post_id: Number(item.wpId), reason });
-      setState("sent");
+      setSent(true);
     } catch {
-      setState("error");
+      // silent fail — sheet already dismissed
     }
   };
 
-  if (state === "idle") {
-    return (
+  if (sent) return <Text style={reportSentText}>Reported</Text>;
+
+  return (
+    <>
       <TouchableOpacity
-        onPress={() => setState("confirm")}
+        onPress={() => setOpen(true)}
         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
       >
         <Ionicons name="flag-outline" size={14} color={colors.ghost} />
       </TouchableOpacity>
-    );
-  }
-  if (state === "confirm") {
-    return (
-      <View style={reportStyles.row}>
-        {(["spam", "harassment", "inappropriate"] as const).map((r) => (
-          <TouchableOpacity key={r} style={reportStyles.btn} onPress={() => submit(r)}>
-            <Text style={reportStyles.btnText}>{r}</Text>
-          </TouchableOpacity>
-        ))}
-        <TouchableOpacity onPress={() => setState("idle")}>
-          <Text style={reportStyles.cancel}>✕</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-  if (state === "sent") return <Text style={reportStyles.status}>Reported — thank you.</Text>;
-  return <Text style={[reportStyles.status, { color: colors.ochre }]}>Couldn't send report.</Text>;
+      <ReportSheet visible={open} onClose={() => setOpen(false)} onSubmit={submit} />
+    </>
+  );
 }
 
-const reportStyles = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", gap: 5, flexShrink: 1, flexWrap: "wrap" },
-  btn: {
-    backgroundColor: "#fef2f2",
-    borderWidth: 1,
-    borderColor: "rgba(192,57,43,0.2)",
-    borderRadius: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-  },
-  btnText: { fontFamily: fonts.sans, fontSize: fontSize.tiny, color: colors.ochre },
-  cancel: { fontSize: 12, color: colors.ghost },
-  status: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: colors.mute },
-});
+const reportSentText: import("react-native").TextStyle = {
+  fontFamily: fonts.sans, fontSize: fontSize.xs, color: colors.mute,
+};
 
 // ── AuthorRow ─────────────────────────────────────────────────────────────────
 
