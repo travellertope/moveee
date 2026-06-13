@@ -5,7 +5,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig = {
   transpilePackages: ["@moveee/shared", "@moveee/utils"],
-  serverExternalPackages: ["isomorphic-dompurify", "jsdom"],
   outputFileTracingRoot: path.join(__dirname, "../../"),
   images: {
     // NOTE: unoptimized=true delegates optimisation to the Optimole CDN.

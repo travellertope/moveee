@@ -8,7 +8,6 @@ const tempRedirects = JSON.parse(readFileSync("./redirects.json", "utf-8"));
 
 const nextConfig = {
   transpilePackages: ["@moveee/shared", "@moveee/utils"],
-  serverExternalPackages: ["isomorphic-dompurify", "jsdom"],
   outputFileTracingRoot: path.join(__dirname, "../../"),
   images: {
     // NOTE: unoptimized=true delegates optimisation to the Optimole CDN.
