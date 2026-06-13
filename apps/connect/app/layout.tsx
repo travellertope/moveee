@@ -50,8 +50,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    site: "@themoveee",
-    creator: "@themoveee",
+    site: "@moveeeapp",
+    creator: "@moveeeapp",
     title: "Moveee — Connect to Culture",
     description: "Discover events, creative people, and cultural experiences. The Moveee community — open to everyone.",
     images: ["https://themoveee.com/og-fallback.png"],
