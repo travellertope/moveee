@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, Dimensions, FlatList,
-  Animated,
+  Animated, Image,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -127,12 +127,13 @@ function PortfolioGrid({
     <View style={styles.portfolioGrid}>
       {items.map((item, i) => (
         <View key={item.id} style={[styles.portfolioItem, { width: colW }]}>
-          <LinearGradient
-            colors={PORTFOLIO_GRADIENTS[i % PORTFOLIO_GRADIENTS.length]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.portfolioImage}
-          />
+          <View style={styles.portfolioImage}>
+            {item.imageUrl ? (
+              <Image source={{ uri: item.imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            ) : (
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: PORTFOLIO_GRADIENTS[i % PORTFOLIO_GRADIENTS.length][0] }]} />
+            )}
+          </View>
           <Text style={styles.portfolioTitle} numberOfLines={1}>{item.title}</Text>
           <Text style={styles.portfolioYear}>{item.year}</Text>
         </View>

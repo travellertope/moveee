@@ -352,7 +352,13 @@ export default function ShopScreen() {
               <TouchableOpacity
                 key={label}
                 style={[styles.categoryPill, isActive && styles.categoryPillActive]}
-                onPress={() => setActiveCategory(slug)}
+                onPress={() => {
+                  if (label === "All") {
+                    setActiveCategory("");
+                  } else {
+                    nav.navigate("ShopListing", { categoryName: label, categorySlug: slug });
+                  }
+                }}
               >
                 <Text style={[styles.categoryPillText, isActive && styles.categoryPillTextActive]}>
                   {label}
