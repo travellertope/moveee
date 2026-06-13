@@ -37,31 +37,33 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://themoveee.com"),
   title: {
-    default: "The Moveee — Best in Culture",
-    template: "%s | The Moveee",
+    default: "Moveee Magazine — Connect to Culture",
+    template: "%s | Moveee Magazine",
   },
-  description: "The Moveee is an independent magazine and community celebrating the best of African and diaspora culture — editorials, music, film, travel, lifestyle, and more.",
+  description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
   alternates: {
-    canonical: "/",
+    canonical: "https://themoveee.com/",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://themoveee.com",
-    siteName: "The Moveee",
+    siteName: "Moveee Magazine",
     images: [
       {
         url: "/og-fallback.png",
         width: 1200,
         height: 630,
-        alt: "The Moveee — Best in African Culture",
+        alt: "Moveee Magazine — Connect to Culture",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Moveee — Best in African Culture",
-    description: "The Moveee is an independent magazine and community celebrating the best of African and diaspora culture — editorials, music, film, travel, lifestyle, and more.",
+    site: "@themoveee",
+    creator: "@themoveee",
+    title: "Moveee Magazine — Connect to Culture",
+    description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
     images: ["/og-fallback.png"],
   },
 };
