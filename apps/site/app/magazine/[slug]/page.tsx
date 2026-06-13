@@ -438,6 +438,31 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             </Link>
           )}
 
+          {/* Shop the Edit — desktop sidebar widget */}
+          {(post.featuredProducts ?? []).length > 0 && (
+            <div className="ste-sidebar-card">
+              <div className="ste-sb-label">Shop the Edit</div>
+              <div className="ste-sb-list">
+                {(post.featuredProducts as any[]).map((p: any) => (
+                  <Link key={p.id} href={`/shop/${p.slug}`} className="ste-sb-item">
+                    <div className="ste-sb-img">
+                      {p.imageUrl ? (
+                        <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="56px" />
+                      ) : (
+                        <div className="ste-sb-img-placeholder" />
+                      )}
+                    </div>
+                    <div className="ste-sb-info">
+                      <div className="ste-sb-name">{p.name}</div>
+                      <div className="ste-sb-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link href="/shop" className="ste-sb-browse">Browse all products →</Link>
+            </div>
+          )}
+
           <div className="newsletter-card">
             <div className="s-label">★ The Moveee Weekly</div>
             <h4>Culture in your inbox, every Friday.</h4>
@@ -467,31 +492,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
               </div>
             </Link>
           ))}
-
-          {/* Shop the Edit — desktop sidebar widget */}
-          {(post.featuredProducts ?? []).length > 0 && (
-            <div className="ste-sidebar-card">
-              <div className="ste-sb-label">Shop the Edit</div>
-              <div className="ste-sb-list">
-                {(post.featuredProducts as any[]).map((p: any) => (
-                  <Link key={p.id} href={`/shop/${p.slug}`} className="ste-sb-item">
-                    <div className="ste-sb-img">
-                      {p.imageUrl ? (
-                        <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="56px" />
-                      ) : (
-                        <div className="ste-sb-img-placeholder" />
-                      )}
-                    </div>
-                    <div className="ste-sb-info">
-                      <div className="ste-sb-name">{p.name}</div>
-                      <div className="ste-sb-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              <Link href="/shop" className="ste-sb-browse">Browse all products →</Link>
-            </div>
-          )}
 
           <div className="s-card-dark">
             <div className="s-label">From the archive</div>
