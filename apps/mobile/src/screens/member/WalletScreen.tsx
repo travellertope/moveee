@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, ActivityIndicator, Alert,
@@ -8,6 +8,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import type { ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 import type { LedgerEntry } from "../../types";
 
 
@@ -53,6 +55,8 @@ function groupByMonth(entries: LedgerEntry[]): { month: string; items: LedgerEnt
 export default function WalletScreen() {
   const nav = useNavigation<any>();
   const { user, updateUser } = useAuthStore() as any;
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [tab, setTab] = useState<WalletTab>("history");
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -149,7 +153,7 @@ export default function WalletScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={24} color={colors.ink} />
+            <Ionicons name="chevron-back" size={24} color={c.ink} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Wallet</Text>
         </View>
@@ -190,7 +194,7 @@ export default function WalletScreen() {
       {tab === "history" ? (
         loadingHistory ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color={colors.gold} />
+            <ActivityIndicator color={c.gold} />
           </View>
         ) : (
           <ScrollView
@@ -230,7 +234,7 @@ export default function WalletScreen() {
                               <Ionicons
                                 name={isPositive ? "arrow-up" : "arrow-down"}
                                 size={16}
-                                color={isPositive ? colors.paper : colors.ink}
+                                color={isPositive ? c.paper : c.ink}
                               />
                             </View>
                             <View>
@@ -291,7 +295,7 @@ export default function WalletScreen() {
               onChangeText={setCashoutCredits}
               keyboardType="number-pad"
               placeholder="Enter credits"
-              placeholderTextColor={colors.ghost}
+              placeholderTextColor={c.ghost}
             />
 
             {/* Fee card */}
@@ -305,20 +309,20 @@ export default function WalletScreen() {
 
             {/* Currency segmented control */}
             <View style={styles.currencyControl}>
-              {(["GBP", "USD", "NGN"] as Currency[]).map((c) => (
+              {(["GBP", "USD", "NGN"] as Currency[]).map((cur) => (
                 <TouchableOpacity
-                  key={c}
-                  style={[styles.currencyOption, currency === c && styles.currencyOptionActive]}
-                  onPress={() => setCurrency(c)}
+                  key={cur}
+                  style={[styles.currencyOption, currency === cur && styles.currencyOptionActive]}
+                  onPress={() => setCurrency(cur)}
                   activeOpacity={0.8}
                 >
                   <Text
                     style={[
                       styles.currencyOptionText,
-                      currency === c && styles.currencyOptionTextActive,
+                      currency === cur && styles.currencyOptionTextActive,
                     ]}
                   >
-                    {c}
+                    {cur}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -332,7 +336,7 @@ export default function WalletScreen() {
                   style={styles.fieldInput}
                   value={accountName}
                   onChangeText={setAccountName}
-                  placeholderTextColor={colors.ghost}
+                  placeholderTextColor={c.ghost}
                 />
               </View>
 
@@ -345,7 +349,7 @@ export default function WalletScreen() {
                     onChangeText={setSortCode}
                     keyboardType="number-pad"
                     placeholder="00-00-00"
-                    placeholderTextColor={colors.ghost}
+                    placeholderTextColor={c.ghost}
                   />
                 </View>
               )}
@@ -358,7 +362,7 @@ export default function WalletScreen() {
                       style={styles.fieldInput}
                       value={bankName}
                       onChangeText={setBankName}
-                      placeholderTextColor={colors.ghost}
+                      placeholderTextColor={c.ghost}
                     />
                   </View>
                   <View>
@@ -368,7 +372,7 @@ export default function WalletScreen() {
                       value={routingNumber}
                       onChangeText={setRoutingNumber}
                       keyboardType="number-pad"
-                      placeholderTextColor={colors.ghost}
+                      placeholderTextColor={c.ghost}
                     />
                   </View>
                 </>
@@ -406,7 +410,7 @@ export default function WalletScreen() {
                   value={accountNumber}
                   onChangeText={setAccountNumber}
                   keyboardType="number-pad"
-                  placeholderTextColor={colors.ghost}
+                  placeholderTextColor={c.ghost}
                 />
               </View>
             </View>
@@ -419,7 +423,7 @@ export default function WalletScreen() {
               activeOpacity={0.85}
             >
               {submitting ? (
-                <ActivityIndicator color={colors.paper} />
+                <ActivityIndicator color={c.paper} />
               ) : (
                 <Text style={styles.submitBtnText}>Request Cash Out</Text>
               )}
@@ -435,19 +439,20 @@ export default function WalletScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.paperWarm,
+    backgroundColor: c.paperWarm,
   },
 
   // White top block
   whiteBlock: {
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     elevation: 2,
-    shadowColor: colors.ink,
+    shadowColor: c.ink,
     shadowOpacity: 0.03,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 2 },
@@ -470,7 +475,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: fonts.sansBold,
     fontSize: 15,
-    color: colors.ink,
+    color: c.ink,
     alignSelf: "flex-end",
     paddingBottom: 12,
   },
@@ -485,7 +490,7 @@ const styles = StyleSheet.create({
   balanceEyebrow: {
     fontFamily: fonts.sansBold,
     fontSize: 9,
-    color: colors.mute,
+    color: c.mute,
     letterSpacing: 2,
     textTransform: "uppercase",
     marginBottom: 4,
@@ -493,13 +498,13 @@ const styles = StyleSheet.create({
   balanceValue: {
     fontFamily: fonts.serifBold,
     fontSize: 48,
-    color: colors.ink,
+    color: c.ink,
     lineHeight: 48,
   },
   balanceGbp: {
     fontFamily: fonts.sans,
     fontSize: fontSize.sm,
-    color: colors.gold,
+    color: c.gold,
     marginTop: 4,
   },
   statsRow: {
@@ -511,20 +516,20 @@ const styles = StyleSheet.create({
   statText: {
     fontFamily: fonts.mono,
     fontSize: 12,
-    color: colors.mute,
+    color: c.mute,
   },
   statDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.ghost,
+    backgroundColor: c.ghost,
   },
 
   // Tabs
   tabs: {
     height: 44,
     borderTopWidth: 1,
-    borderTopColor: colors.ghost + "40",
+    borderTopColor: c.ghost + "40",
     flexDirection: "row",
     paddingHorizontal: 16,
     gap: 24,
@@ -543,24 +548,24 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: colors.ochre,
+    backgroundColor: c.ochre,
     borderBottomLeftRadius: 4,
     borderBottomRightRadius: 4,
   },
   tabText: {
     fontFamily: fonts.sans,
     fontSize: fontSize.sm,
-    color: colors.mute,
+    color: c.mute,
   },
   tabTextActive: {
     fontFamily: fonts.sansBold,
-    color: colors.ink,
+    color: c.ink,
   },
 
   // Shared scroll area
   scrollArea: {
     flex: 1,
-    backgroundColor: colors.paperWarm,
+    backgroundColor: c.paperWarm,
   },
   loadingContainer: {
     flex: 1,
@@ -574,12 +579,12 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   historyCard: {
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     borderRadius: 12,
     overflow: "hidden",
   },
   monthHeader: {
-    backgroundColor: colors.paperDeep,
+    backgroundColor: c.paperDeep,
     height: 32,
     paddingHorizontal: 16,
     justifyContent: "center",
@@ -587,7 +592,7 @@ const styles = StyleSheet.create({
   monthLabel: {
     fontFamily: fonts.monoBold,
     fontSize: 10,
-    color: colors.mute,
+    color: c.mute,
     textTransform: "uppercase",
     letterSpacing: 1,
   },
@@ -595,7 +600,7 @@ const styles = StyleSheet.create({
     height: 64,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.ghost + "80",
+    borderBottomColor: c.ghost + "80",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -616,23 +621,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconCirclePos: {
-    backgroundColor: colors.ochre,
+    backgroundColor: c.ochre,
   },
   iconCircleNeg: {
-    backgroundColor: colors.paperDeep,
+    backgroundColor: c.paperDeep,
     borderWidth: 1,
-    borderColor: colors.ghost + "80",
+    borderColor: c.ghost + "80",
   },
   ledgerSource: {
     fontFamily: fonts.sansBold,
     fontSize: fontSize.sm,
-    color: colors.ink,
+    color: c.ink,
     lineHeight: 18,
   },
   ledgerDate: {
     fontFamily: fonts.mono,
     fontSize: 11,
-    color: colors.mute,
+    color: c.mute,
     marginTop: 2,
   },
   ledgerAmount: {
@@ -640,15 +645,15 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
   },
   amountPos: {
-    color: colors.ochre,
+    color: c.ochre,
   },
   amountNeg: {
-    color: colors.error,
+    color: c.error,
   },
   emptyText: {
     fontFamily: fonts.mono,
     fontSize: 12,
-    color: colors.mute,
+    color: c.mute,
     textAlign: "center",
     marginTop: 40,
   },
@@ -659,7 +664,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   cashoutCard: {
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     borderRadius: 12,
     padding: 24,
     alignItems: "center",
@@ -667,20 +672,20 @@ const styles = StyleSheet.create({
   cashoutLabel: {
     fontFamily: fonts.sans,
     fontSize: 12,
-    color: colors.mute,
+    color: c.mute,
     marginBottom: 8,
   },
   cashoutAmount: {
     fontFamily: fonts.serifBold,
     fontSize: 32,
-    color: colors.ink,
+    color: c.ink,
     marginBottom: 16,
   },
 
   // Slider visual
   sliderTrack: {
     height: 8,
-    backgroundColor: colors.ghost,
+    backgroundColor: c.ghost,
     borderRadius: 4,
     width: "100%",
     marginBottom: 12,
@@ -691,7 +696,7 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     height: 8,
-    backgroundColor: colors.ochre,
+    backgroundColor: c.ochre,
     borderRadius: 4,
   },
   sliderThumb: {
@@ -699,15 +704,15 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: colors.ochre,
+    backgroundColor: c.ochre,
     borderWidth: 2,
-    borderColor: colors.paper,
+    borderColor: c.paper,
     top: -6,
   },
   sliderHint: {
     fontFamily: fonts.mono,
     fontSize: 10,
-    color: colors.mute,
+    color: c.mute,
     marginBottom: 12,
     alignSelf: "flex-start",
   },
@@ -717,41 +722,41 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 48,
     borderWidth: 1,
-    borderColor: colors.ghost,
+    borderColor: c.ghost,
     borderRadius: 8,
     paddingHorizontal: 16,
     fontFamily: fonts.sans,
     fontSize: 15,
-    color: colors.ink,
-    backgroundColor: colors.paper,
+    color: c.ink,
+    backgroundColor: c.paper,
   },
 
   // Fee card
   feeCard: {
     width: "100%",
-    backgroundColor: colors.paperDeep,
+    backgroundColor: c.paperDeep,
     borderRadius: 8,
     padding: 16,
     marginTop: 16,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: colors.ghost + "30",
+    borderColor: c.ghost + "30",
   },
   feeTitle: {
     fontFamily: fonts.sans,
     fontSize: 13,
-    color: colors.mute,
+    color: c.mute,
   },
   feeReceive: {
     fontFamily: fonts.sansBold,
     fontSize: 15,
-    color: colors.ink,
+    color: c.ink,
     marginTop: 8,
   },
   feePayout: {
     fontFamily: fonts.sans,
     fontSize: fontSize.sm,
-    color: colors.gold,
+    color: c.gold,
     marginTop: 2,
   },
 
@@ -760,11 +765,11 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     marginTop: 24,
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     borderRadius: 8,
     padding: 4,
     borderWidth: 1,
-    borderColor: colors.ghost,
+    borderColor: c.ghost,
   },
   currencyOption: {
     flex: 1,
@@ -774,16 +779,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   currencyOptionActive: {
-    backgroundColor: colors.ink,
+    backgroundColor: c.ink,
   },
   currencyOptionText: {
     fontFamily: fonts.sans,
     fontSize: 13,
-    color: colors.inkSoft,
+    color: c.inkSoft,
   },
   currencyOptionTextActive: {
     fontFamily: fonts.sansBold,
-    color: colors.paper,
+    color: c.paper,
   },
 
   // Form fields
@@ -795,20 +800,20 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontFamily: fonts.sans,
     fontSize: 12,
-    color: colors.mute,
+    color: c.mute,
     marginBottom: 4,
     marginLeft: 4,
   },
   fieldInput: {
     height: 48,
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     borderWidth: 1,
-    borderColor: colors.ghost,
+    borderColor: c.ghost,
     borderRadius: 8,
     paddingHorizontal: 16,
     fontSize: 15,
     fontFamily: fonts.sans,
-    color: colors.ink,
+    color: c.ink,
   },
   fieldInputMono: {
     fontFamily: fonts.mono,
@@ -823,28 +828,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: colors.ghost,
+    borderColor: c.ghost,
     borderRadius: 8,
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
   },
   bankOptionActive: {
-    backgroundColor: colors.ink,
-    borderColor: colors.ink,
+    backgroundColor: c.ink,
+    borderColor: c.ink,
   },
   bankOptionText: {
     fontFamily: fonts.sans,
     fontSize: fontSize.sm,
-    color: colors.inkSoft,
+    color: c.inkSoft,
   },
   bankOptionTextActive: {
-    color: colors.paper,
+    color: c.paper,
   },
 
   // Submit button
   submitBtn: {
     width: "100%",
     height: 52,
-    backgroundColor: colors.ochre,
+    backgroundColor: c.ochre,
     borderRadius: 9999,
     alignItems: "center",
     justifyContent: "center",
@@ -856,15 +861,16 @@ const styles = StyleSheet.create({
   submitBtnText: {
     fontFamily: fonts.sansBold,
     fontSize: 16,
-    color: colors.paper,
+    color: c.paper,
   },
 
   // Footer note
   footerNote: {
     fontFamily: fonts.sans,
     fontSize: 11,
-    color: colors.mute,
+    color: c.mute,
     textAlign: "center",
     marginTop: 12,
   },
-});
+  });
+}

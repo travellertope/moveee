@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Bottom Sheet Edge Cases</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        success: '#2D6A4F',
+                        'sys-blue': '#007AFF',
+                        'keyboard-bg': '#D1D1D6',
+                        'keyboard-key': '#FFFFFF'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'sheet': '0 -4px 32px rgba(20, 17, 13, 0.18)',
+                        'modal': '0 20px 40px -10px rgba(0,0,0,0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+        
+        /* Keyboard Key Shadow */
+        .key-shadow { box-shadow: 0 1px 0 rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body class="flex justify-center text-ink font-sans min-h-screen pt-4 pb-12">
+
+    <!-- Horizontal Scroll Container -->
+    <div class="flex flex-row gap-10 max-w-[1700px] mx-auto overflow-x-auto pb-8 hide-scrollbar snap-x snap-mandatory px-8 items-start">
+
+        <!-- ============================================== -->
+        <!-- FRAME 1: SHARE SHEET STACKED                   -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0 snap-center">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Frame 1: Stacked Share Sheet</span>
+            
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <!-- BACKGROUND: Simulated Feed -->
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-ghost rounded-full"></div><div class="w-[120px] h-3 bg-ghost rounded-full"></div></div><div class="w-full h-4 bg-ghost rounded-full mb-2"></div></div>
+                </div>
+                <!-- 40% Ink Overlay -->
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <!-- BOTTOM SHEET: FULL (92% = 776px) -->
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col">
+                    <!-- Top Chrome -->
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <div class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Content (Dimmed to show it's behind another modal) -->
+                    <div class="flex-1 px-[16px] flex flex-col relative opacity-40">
+                        <div class="flex justify-between items-center mt-[8px]">
+                            <span style="background: rgba(129,199,132,0.15); color: #2E7D32" class="rounded-full font-sans text-[9px] font-bold uppercase px-[10px] py-[4px]">✏️ POST</span>
+                            <span class="font-mono text-[10px] text-ghost">2 hours ago</span>
+                        </div>
+                        <div class="flex items-center gap-[12px] mt-[12px]">
+                            <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0"></div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">Kemi Adeyemi</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@kemi.a</span>
+                            </div>
+                        </div>
+                        <p class="font-sans text-[15px] text-ink-soft leading-[1.65] mt-[12px]">
+                            Saw Tems perform at an intimate venue last night and I'm still not over it...
+                        </p>
+                        <div class="w-full h-[200px] mt-[12px] rounded-md bg-[#D8D1C6]"></div>
+                    </div>
+                </div>
+
+                <!-- OVERLAY BACKDROP 2 (Dimming the first sheet) -->
+                <div class="absolute inset-0 bg-ink/30 z-30"></div>
+
+                <!-- NATIVE iOS SHARE SHEET (Stacked on top) -->
+                <div class="absolute bottom-0 w-full px-[8px] pb-safe flex flex-col gap-2 z-40 mb-[16px]">
+                    
+                    <!-- Main Share Block -->
+                    <div class="w-full bg-white/90 backdrop-blur-xl rounded-[14px] flex flex-col overflow-hidden">
+                        
+                        <!-- App Row (Horizontal Scroll) -->
+                        <div class="flex gap-4 px-[16px] py-[20px] border-b border-ghost/30 overflow-x-auto hide-scrollbar">
+                            <div class="flex flex-col items-center gap-1.5 shrink-0">
+                                <div class="w-[60px] h-[60px] rounded-[14px] bg-[#34C759] flex items-center justify-center text-white">
+                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                                </div>
+                                <span class="font-sans text-[11px] text-ink-soft">Messages</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1.5 shrink-0">
+                                <div class="w-[60px] h-[60px] rounded-[14px] bg-[#25D366] flex items-center justify-center text-white text-[28px]">
+                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 2.17.68 4.19 1.83 5.86L2.5 22l4.28-1.12C8.36 21.6 10.12 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/></svg>
+                                </div>
+                                <span class="font-sans text-[11px] text-ink-soft">WhatsApp</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1.5 shrink-0">
+                                <div class="w-[60px] h-[60px] rounded-[14px] bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888] flex items-center justify-center text-white">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                </div>
+                                <span class="font-sans text-[11px] text-ink-soft">Instagram</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1.5 shrink-0">
+                                <div class="w-[60px] h-[60px] rounded-[14px] bg-gray-200 flex items-center justify-center text-ink">
+                                    <span class="text-[20px] font-bold pb-2">...</span>
+                                </div>
+                                <span class="font-sans text-[11px] text-ink-soft">More</span>
+                            </div>
+                        </div>
+
+                        <!-- Action List -->
+                        <div class="flex flex-col">
+                            <button class="h-[52px] px-[16px] flex items-center justify-between border-b border-ghost/30 hover:bg-gray-100/50">
+                                <span class="font-sans text-[16px] text-ink">Copy Link</span>
+                                <svg class="w-5 h-5 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                            </button>
+                            <button class="h-[52px] px-[16px] flex items-center justify-between border-b border-ghost/30 hover:bg-gray-100/50">
+                                <span class="font-sans text-[16px] text-ink">Save Image</span>
+                                <svg class="w-5 h-5 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            </button>
+                            <button class="h-[52px] px-[16px] flex items-center justify-between hover:bg-gray-100/50">
+                                <span class="font-sans text-[16px] text-ink">Markup</span>
+                                <svg class="w-5 h-5 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cancel Button -->
+                    <button class="w-full h-[56px] bg-white rounded-[14px] font-sans font-bold text-[17px] text-sys-blue flex items-center justify-center">
+                        Cancel
+                    </button>
+
+                </div>
+
+                <!-- Annotation Box -->
+                <div class="absolute top-[40%] left-[24px] right-[24px] bg-ink/80 backdrop-blur-md rounded-lg p-3 z-50 shadow-modal pointer-events-none">
+                    <p class="font-mono text-[10px] text-paper-warm text-center leading-relaxed">
+                        Native iOS share sheet stacks above Moveee sheet — both dismiss on cancel.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: COMMENT COMPOSE STATE                 -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0 snap-center">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Frame 2: Comment Compose</span>
+            
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <!-- BOTTOM SHEET: FULL (92%) -->
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[336px]">
+                    <!-- Top Chrome -->
+                    <div class="h-[52px] w-full relative shrink-0 opacity-40">
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                    </div>
+
+                    <!-- Scrolled Content (Dimmed to indicate focus on compose) -->
+                    <div class="flex-1 overflow-hidden px-[16px] flex flex-col justify-end opacity-40 relative pb-[24px]">
+                        
+                        <!-- Ghost Rule before comments -->
+                        <div class="w-full h-[1px] bg-ghost-light my-[12px] shrink-0"></div>
+                        <div class="flex justify-between items-center mb-[12px] shrink-0">
+                            <span class="font-sans text-[13px] font-bold text-ink">Comments (8)</span>
+                        </div>
+                        
+                        <!-- Comment 1 -->
+                        <div class="flex gap-[12px] min-h-[48px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-ghost shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Seun B.</span>
+                                    <span class="font-mono text-[10px] text-ghost">1h</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">The silence was the loudest part 🖤</span>
+                            </div>
+                        </div>
+                        <!-- Comment 2 -->
+                        <div class="flex gap-[12px] min-h-[48px] py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-ghost shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Kemi A.</span>
+                                    <span class="font-mono text-[10px] text-ghost">45m</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">I was there too!! Can't believe it.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COMMENT COMPOSE BAR (Pinned above keyboard) -->
+                    <div class="absolute bottom-[336px] w-full bg-white border-t border-ghost/30 px-[16px] pt-[12px] pb-[12px] z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+                        <div class="flex items-center gap-[12px]">
+                            <!-- Current User Avatar -->
+                            <div class="w-[36px] h-[36px] rounded-full bg-gradient-to-tr from-pink-500 to-orange-400 shrink-0 border border-white shadow-sm"></div>
+                            
+                            <!-- Input Box -->
+                            <div class="flex-1 bg-paper-warm rounded-full h-[40px] flex items-center px-[16px]">
+                                <span class="font-sans text-[14px] text-ink">That lighting was wild 🔥|</span>
+                            </div>
+
+                            <!-- Post CTA -->
+                            <button class="font-sans text-[14px] font-bold text-ochre shrink-0 active:scale-95 transition-transform">Post</button>
+                        </div>
+                        <!-- Posting As label -->
+                        <div class="pl-[48px] mt-[6px]">
+                            <span class="font-mono text-[9px] text-ghost">Posting as Adaeze Obi</span>
+                        </div>
+                    </div>
+
+                    <!-- MOCK iOS KEYBOARD -->
+                    <div class="absolute bottom-0 w-full h-[336px] bg-keyboard-bg z-40 pb-[34px]">
+                        <!-- Quick mock of keyboard layout for visual reference -->
+                        <div class="flex flex-col gap-2 p-2 mt-1">
+                            <!-- Number row -->
+                            <div class="flex justify-center gap-1.5 px-1">
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">q</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">w</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">e</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">r</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">t</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">y</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">u</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">i</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">o</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">p</div>
+                            </div>
+                            <div class="flex justify-center gap-1.5 px-5">
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">a</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">s</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">d</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">f</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">g</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">h</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">j</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">k</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">l</div>
+                            </div>
+                            <div class="flex justify-center gap-1.5 px-1">
+                                <div class="w-[42px] h-[42px] bg-[#BCC0C6] rounded-[5px] key-shadow flex items-center justify-center"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg></div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">z</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">x</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">c</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">v</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">b</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">n</div>
+                                <div class="w-[32px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[22px]">m</div>
+                                <div class="w-[42px] h-[42px] bg-[#BCC0C6] rounded-[5px] key-shadow flex items-center justify-center"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path></svg></div>
+                            </div>
+                            <div class="flex justify-center gap-1.5 px-1 mt-1">
+                                <div class="w-[85px] h-[42px] bg-[#BCC0C6] rounded-[5px] key-shadow flex items-center justify-center text-[15px]">123</div>
+                                <div class="w-[180px] h-[42px] bg-keyboard-key rounded-[5px] key-shadow flex items-center justify-center text-[15px] font-sans">space</div>
+                                <div class="w-[85px] h-[42px] bg-[#BCC0C6] rounded-[5px] key-shadow flex items-center justify-center text-[15px]">return</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Annotation Box -->
+                <div class="absolute top-[32%] left-[24px] right-[24px] bg-ink/80 backdrop-blur-md rounded-lg p-3 z-50 shadow-modal pointer-events-none">
+                    <p class="font-mono text-[10px] text-paper-warm text-center leading-relaxed">
+                        Sheet resizes its scroll area when keyboard raises — compose bar stays pinned.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 3: HAPTIC RESISTANCE / OVERSCROLL        -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0 snap-center">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Frame 3: Overscroll (Elastic)</span>
+            
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <!-- Status Bar (Visible in overscroll) -->
+                <div class="absolute top-0 w-full h-12 flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink z-0">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4 opacity-50">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"></div>
+                </div>
+
+                <!-- OVERLAY BACKDROP (45% opacity - darker resisting) -->
+                <div class="absolute inset-0 bg-ink/45 z-10"></div>
+
+                <!-- BOTTOM SHEET: OVERSCROLLED (Top edge at 34px) -->
+                <!-- 844 - 34 = 810px height -->
+                <div class="absolute bottom-0 w-full h-[810px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col transition-transform">
+                    
+                    <!-- Annotation attached to handle -->
+                    <div class="absolute -top-[24px] w-full text-center z-50 pointer-events-none">
+                        <span class="font-mono text-[10px] text-white/90 bg-ink/50 px-2 py-1 rounded">↑ Elastic overscroll — snaps back to 92%</span>
+                    </div>
+
+                    <!-- TOP CHROME -->
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <!-- Drag Handle -->
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <!-- Close Button -->
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Content Area -->
+                    <div class="flex-1 px-[16px] flex flex-col relative">
+                        <!-- Badge & Timestamp -->
+                        <div class="flex justify-between items-center mt-[8px]">
+                            <div class="bg-[#E6F4EA] px-[8px] py-[4px] rounded-full inline-flex items-center">
+                                <span class="font-sans text-[10px] font-bold text-success uppercase tracking-wider">Community</span>
+                            </div>
+                            <span class="font-mono text-[10px] text-mute">2h ago</span>
+                        </div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center justify-between mt-[12px]">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[40px] h-[40px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0"></div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink leading-tight">Kemi Adeyemi</span>
+                                    <span class="font-sans text-[12px] text-mute mt-[2px]">@kemi.a</span>
+                                </div>
+                            </div>
+                            <button class="h-[24px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-bold text-ink">
+                                Follow
+                            </button>
+                        </div>
+
+                        <div class="mt-[16px]">
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.6]">
+                                Just visited the new exhibition at Rele Gallery. The way they curated the lighting around the portrait series was absolutely incredible. Definitely recommend going before it closes next week!<br><br>
+                                I've been following this artist's journey since 2022 and to see this scale of work produced locally is deeply inspiring. 
+                            </p>
+                        </div>
+
+                        <div class="mt-[16px] grid grid-cols-2 gap-[8px]">
+                            <div class="h-[170px] bg-paper-warm rounded-md w-full bg-gradient-to-tr from-[#A66C52] to-[#E2B19B]"></div>
+                            <div class="h-[170px] bg-paper-warm rounded-md w-full bg-gradient-to-bl from-[#708090] to-[#A0AEBD]"></div>
+                        </div>
+
+                        <div class="w-full h-[1px] bg-ghost-light mt-[24px] mb-[16px]"></div>
+                        
+                        <div class="flex items-center gap-[16px]">
+                            <button class="flex items-center gap-[6px] font-mono text-[10px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg> 14</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 4: EMPTY / ERROR STATE (55% Peek)        -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0 snap-center">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">Frame 4: Error State (55%)</span>
+            
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-ghost rounded-full"></div></div><div class="w-full h-4 bg-ghost rounded-full mb-2"></div></div>
+                </div>
+
+                <!-- OVERLAY BACKDROP (40% opacity) -->
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <!-- BOTTOM SHEET: PEEK ERROR STATE (55% = ~464px) -->
+                <div class="absolute bottom-0 w-full h-[464px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[34px]">
+                    
+                    <!-- TOP CHROME -->
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <!-- Drag Handle -->
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <!-- Close Button -->
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink hover:bg-gray-200 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- ERROR CONTENT (Centered) -->
+                    <div class="flex-1 px-[16px] flex flex-col items-center justify-center pb-8">
+                        
+                        <!-- Illustration -->
+                        <div class="w-[72px] h-[72px] bg-paper-warm border-[2px] border-[#EBE5DC] rounded-full flex items-center justify-center shadow-sm">
+                            <svg class="w-[28px] h-[28px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                                <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                                <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+                                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                                <line x1="12" y1="20" x2="12.01" y2="20"></line>
+                            </svg>
+                        </div>
+
+                        <!-- Text -->
+                        <h2 class="font-serif text-[18px] font-bold text-ink mt-[16px] text-center">Couldn't load this post</h2>
+                        <p class="font-sans text-[14px] text-mute text-center mt-[8px] max-w-[260px] leading-relaxed">
+                            Check your connection and try again.
+                        </p>
+
+                        <!-- Actions -->
+                        <button class="w-[140px] h-[44px] bg-ochre text-white font-sans font-bold text-[14px] rounded-full mt-[20px] shadow-sm hover:bg-[#A93C15] transition-colors">
+                            Try again
+                        </button>
+                        <button class="font-sans text-[13px] text-mute mt-[16px] hover:text-ink transition-colors">
+                            Dismiss
+                        </button>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
