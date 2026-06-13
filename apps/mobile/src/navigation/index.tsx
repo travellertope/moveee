@@ -39,6 +39,11 @@ import CrosswordGameScreen from "../screens/games/CrosswordGameScreen";
 import EventsScreen from "../screens/events/EventsScreen";
 import EventDetailScreen from "../screens/events/EventDetailScreen";
 
+// Shop
+import ShopScreen from "../screens/shop/ShopScreen";
+import ShopListingScreen from "../screens/shop/ShopListingScreen";
+import ProductDetailScreen from "../screens/shop/ProductDetailScreen";
+
 // Member
 import MemberDashboardScreen from "../screens/member/MemberDashboardScreen";
 import MemberSettingsScreen from "../screens/member/MemberSettingsScreen";
@@ -48,6 +53,7 @@ import WalletScreen from "../screens/member/WalletScreen";
 import CouponsScreen from "../screens/member/CouponsScreen";
 import NotificationsScreen from "../screens/member/NotificationsScreen";
 import AnalyticsScreen from "../screens/member/AnalyticsScreen";
+import { AppLoadingScreen } from "../components/ui/Skeleton";
 
 // ── Stack param types ──────────────────────────────────────────────────────────
 type FeedStackParams = {
@@ -121,6 +127,16 @@ function EventsStack() {
   );
 }
 
+function ShopStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ShopHome"      component={ShopScreen} />
+      <Stack.Screen name="ShopListing"  component={ShopListingScreen} />
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function GamesStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -165,6 +181,7 @@ function MainTabs() {
             Magazine: ["newspaper",       "newspaper-outline"],
             Games:    ["game-controller", "game-controller-outline"],
             Events:   ["calendar",        "calendar-outline"],
+            Shop:     ["bag",             "bag-outline"],
           };
           const [active, inactive] = icons[route.name] ?? ["ellipse", "ellipse-outline"];
           return <Ionicons name={(focused ? active : inactive) as never} size={size} color={color} />;
@@ -174,6 +191,7 @@ function MainTabs() {
       <Tab.Screen name="Connect"  component={ConnectStack} />
       <Tab.Screen name="Magazine" component={MagazineStack} />
       <Tab.Screen name="Games"    component={GamesStack} />
+      <Tab.Screen name="Shop"     component={ShopStack} />
       <Tab.Screen name="Events"   component={EventsStack} />
     </Tab.Navigator>
   );
@@ -203,7 +221,7 @@ function ProfileCompleteStack() {
 export default function Navigation() {
   const { isAuthenticated, isLoading, profileSetupRequired } = useAuthStore();
 
-  if (isLoading) return null;
+  if (isLoading) return <AppLoadingScreen />;
 
   return (
     <NavigationContainer>

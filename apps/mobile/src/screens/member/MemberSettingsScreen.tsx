@@ -12,11 +12,12 @@ import * as Passkeys from "react-native-passkeys";
 import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { useThemeStore, type ThemeMode } from "../../store/themeStore";
 import type { Passkey } from "../../types";
 
-const PROXY = "https://themoveee.com/api";
 
-type Tab = "profile" | "directory" | "interests" | "newsletters" | "security";
+
+type Tab = "profile" | "directory" | "interests" | "newsletters" | "security" | "appearance";
 
 const TAB_LABELS: { id: Tab; label: string }[] = [
   { id: "profile",     label: "Profile" },
@@ -24,6 +25,7 @@ const TAB_LABELS: { id: Tab; label: string }[] = [
   { id: "interests",   label: "Interests" },
   { id: "newsletters", label: "Newsletters" },
   { id: "security",    label: "Security" },
+  { id: "appearance",  label: "Appearance" },
 ];
 
 // Derived from canonical INTERESTS in packages/utils — single source of truth
@@ -814,6 +816,87 @@ const nlStyles = StyleSheet.create({
   cadence:    { fontFamily: fonts.mono, fontSize: 10, color: colors.mute },
 });
 
+// ── Appearance Tab ────────────────────────────────────────────────────────────
+const THEME_OPTIONS: { id: ThemeMode; label: string; desc: string }[] = [
+  { id: "light",  label: "Light",          desc: "Always use the light theme." },
+  { id: "dark",   label: "Dark",           desc: "Always use the dark theme." },
+  { id: "system", label: "System default", desc: "Match your device's appearance settings automatically." },
+];
+
+function AppearanceTab() {
+  const { mode, setMode } = useThemeStore();
+
+  return (
+    <ScrollView contentContainerStyle={apStyles.content}>
+      <Text style={apStyles.sectionHeader}>Appearance</Text>
+
+      <View style={apStyles.optionsBlock}>
+        {THEME_OPTIONS.map((opt, i) => {
+          const isActive = mode === opt.id;
+          const isLast = i === THEME_OPTIONS.length - 1;
+          return (
+            <TouchableOpacity
+              key={opt.id}
+              style={[apStyles.optionRow, !isLast && apStyles.optionRowBorder]}
+              onPress={() => setMode(opt.id)}
+              activeOpacity={0.7}
+            >
+              <View style={[apStyles.radio, isActive && apStyles.radioActive]}>
+                {isActive && <View style={apStyles.radioDot} />}
+              </View>
+              <View style={apStyles.optionText}>
+                <Text style={[apStyles.optionLabel, isActive && apStyles.optionLabelActive]}>
+                  {opt.label}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <Text style={apStyles.hint}>
+        System default will match your device's appearance settings automatically.
+      </Text>
+    </ScrollView>
+  );
+}
+
+const apStyles = StyleSheet.create({
+  content: { paddingTop: 24, paddingBottom: 40 },
+  sectionHeader: {
+    fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink,
+    paddingHorizontal: 16, marginBottom: 8,
+  },
+  optionsBlock: {
+    backgroundColor: colors.paper,
+    borderTopWidth: 1, borderBottomWidth: 1,
+    borderColor: colors.ghost,
+  },
+  optionRow: {
+    height: 52, paddingHorizontal: 16,
+    flexDirection: "row", alignItems: "center", gap: 12,
+  },
+  optionRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.ghost },
+  radio: {
+    width: 20, height: 20, borderRadius: 10,
+    borderWidth: 1, borderColor: colors.ghost,
+    alignItems: "center", justifyContent: "center",
+  },
+  radioActive: { borderColor: colors.ochre },
+  radioDot: {
+    width: 10, height: 10, borderRadius: 5,
+    backgroundColor: colors.ochre,
+  },
+  optionText: { flex: 1 },
+  optionLabel: { fontFamily: fonts.sans, fontSize: 15, color: colors.ink },
+  optionLabelActive: { fontFamily: fonts.sansBold },
+  hint: {
+    paddingHorizontal: 16, paddingTop: 12,
+    fontFamily: fonts.sans, fontSize: 13,
+    color: colors.mute, lineHeight: 18,
+  },
+});
+
 // ── Security Tab ──────────────────────────────────────────────────────────────
 function SecurityTab() {
   const { user, updateUser } = useAuthStore();
@@ -832,7 +915,7 @@ function SecurityTab() {
   const loadPasskeys = async () => {
     setLoading(true);
     try {
-      const data = await api.get<Passkey[]>(`${PROXY}/auth/passkey/list`);
+      const data = await api.get<Passkey[]>(`${MOBILE_API}/passkey/list`);
       setPasskeys(Array.isArray(data) ? data : []);
     } catch {
       setPasskeys([]);
@@ -855,7 +938,7 @@ function SecurityTab() {
       const credential = await Passkeys.create(optData);
       if (!credential) return; // user cancelled
 
-      await api.post(`${PROXY}/auth/passkey/register-verify`, {
+      await api.post(`${MOBILE_API}/passkey/register-verify`, {
         id:                credential.id,
         rawId:             credential.rawId,
         type:              credential.type,
@@ -896,7 +979,7 @@ function SecurityTab() {
 
   const doDelete = async (credential_id: string) => {
     try {
-      await api.delete(`${PROXY}/auth/passkey/delete`, { credential_id });
+      await api.delete(`${MOBILE_API}/passkey/delete`, { credential_id });
       const remaining = passkeys.filter((p) => p.credential_id !== credential_id);
       setPasskeys(remaining);
       if (remaining.length === 0) updateUser({ hasPasskey: false, passkeyCount: 0 });
@@ -1101,6 +1184,7 @@ export default function MemberSettingsScreen() {
       {activeTab === "interests"   && <InterestsTab />}
       {activeTab === "newsletters" && <NewslettersTab />}
       {activeTab === "security"    && <SecurityTab />}
+      {activeTab === "appearance"  && <AppearanceTab />}
     </SafeAreaView>
   );
 }

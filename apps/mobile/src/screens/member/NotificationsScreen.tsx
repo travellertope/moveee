@@ -1,46 +1,116 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet,
+  View, Text, SectionList, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { api } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import type { Notification } from "../../types";
 
-const PROXY = "https://themoveee.com/api";
 const PAGE_SIZE = 20;
 
-const TYPE_META: Record<string, { emoji: string; color: string }> = {
-  credit_earned:     { emoji: "✦",  color: colors.gold },
-  badge_unlocked:    { emoji: "🏅", color: "#9c6aff" },
-  perk_expiring:     { emoji: "⏳", color: colors.ochre },
-  perk_redeemed:     { emoji: "🎁", color: colors.communityText },
-  cashout_approved:  { emoji: "💸", color: colors.communityText },
-  cashout_rejected:  { emoji: "⚠️", color: colors.ochre },
-  escrow_released:   { emoji: "🔓", color: colors.communityText },
-  comment_received:  { emoji: "💬", color: colors.gold },
-  post_validated:    { emoji: "✅", color: colors.communityText },
-  system:            { emoji: "📢", color: colors.mute },
+// Left border color + icon circle background per notification type
+const TYPE_META: Record<string, { emoji: string; accent: string; border: boolean }> = {
+  credit_earned:    { emoji: "★",  accent: colors.ochre,   border: true  },
+  post_validated:   { emoji: "★",  accent: colors.ochre,   border: true  },
+  badge_unlocked:   { emoji: "✦",  accent: colors.gold,    border: true  },
+  perk_expiring:    { emoji: "⏰", accent: colors.warning,  border: true  },
+  perk_redeemed:    { emoji: "🎁", accent: colors.success,  border: false },
+  cashout_approved: { emoji: "✅", accent: colors.ghost,    border: false },
+  cashout_rejected: { emoji: "⚠️", accent: colors.error,   border: true  },
+  escrow_released:  { emoji: "🔓", accent: colors.success,  border: false },
+  comment_received: { emoji: "💬", accent: colors.success,  border: false },
+  system:           { emoji: "📢", accent: colors.ghost,    border: false },
 };
 
 function timeAgo(dateStr: string): string {
   const secs = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (secs < 60) return "Just now";
-  if (secs < 3600) return `${Math.floor(secs / 60)}m ago`;
+  if (secs < 60)    return "Just now";
+  if (secs < 3600)  return `${Math.floor(secs / 60)}m ago`;
   if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`;
-  return `${Math.floor(secs / 86400)}d ago`;
+  if (secs < 172800) return "Yesterday";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+function isToday(dateStr: string): boolean {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+}
+
+function groupNotifications(notifications: Notification[]) {
+  const today: Notification[] = [];
+  const earlier: Notification[] = [];
+  for (const n of notifications) {
+    (isToday(n.created_at) ? today : earlier).push(n);
+  }
+  const sections = [];
+  if (today.length)   sections.push({ title: "Today",   data: today });
+  if (earlier.length) sections.push({ title: "Earlier", data: earlier });
+  return sections;
+}
+
+function NotifRow({ item, onPress }: { item: Notification; onPress: () => void }) {
+  const meta = TYPE_META[item.type] ?? TYPE_META.system;
+  const isUnread = !item.read_at;
+  const isOld = !isToday(item.created_at);
+
+  return (
+    <TouchableOpacity
+      style={[styles.row, isOld && styles.rowOld]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      {/* Left accent border for priority types */}
+      {meta.border && (
+        <View style={[styles.accentBorder, { backgroundColor: meta.accent }]} />
+      )}
+
+      {/* Icon circle */}
+      <View style={[
+        styles.iconCircle,
+        isOld
+          ? { backgroundColor: colors.ghost + "40" }
+          : { backgroundColor: meta.accent },
+      ]}>
+        <Text style={styles.iconEmoji}>{meta.emoji}</Text>
+      </View>
+
+      {/* Content */}
+      <View style={styles.rowBody}>
+        <View style={styles.rowTop}>
+          <Text
+            style={[styles.rowTitle, isOld && styles.rowTitleOld]}
+            numberOfLines={1}
+          >
+            {item.title}
+          </Text>
+          <View style={styles.rowMeta}>
+            {isUnread && <View style={[styles.unreadDot, { backgroundColor: colors.ochre }]} />}
+            <Text style={[styles.rowTime, isOld && { color: colors.ghost }]}>
+              {timeAgo(item.created_at)}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.rowDesc} numberOfLines={2}>{item.body}</Text>
+      </View>
+    </TouchableOpacity>
+  );
 }
 
 export default function NotificationsScreen() {
   const nav = useNavigation<any>();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [offset, setOffset]     = useState(0);
-  const [hasMore, setHasMore]   = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [loading,      setLoading]      = useState(true);
+  const [refreshing,   setRefreshing]   = useState(false);
+  const [offset,       setOffset]       = useState(0);
+  const [hasMore,      setHasMore]      = useState(true);
+  const [loadingMore,  setLoadingMore]  = useState(false);
 
   const load = useCallback(async (reset = false) => {
     const nextOffset = reset ? 0 : offset;
@@ -48,7 +118,7 @@ export default function NotificationsScreen() {
     reset ? setRefreshing(true) : setLoadingMore(true);
     try {
       const data = await api.get<Notification[]>(
-        `${PROXY}/notifications?limit=${PAGE_SIZE}&offset=${nextOffset}`
+        `${MOBILE_API}/notifications?limit=${PAGE_SIZE}&offset=${nextOffset}`
       );
       const items = data ?? [];
       setNotifications((prev) => reset ? items : [...prev, ...items]);
@@ -66,14 +136,14 @@ export default function NotificationsScreen() {
 
   const markAllRead = async () => {
     try {
-      await api.post(`${PROXY}/notifications`, {} as Record<string, unknown>);
+      await api.post(`${MOBILE_API}/notifications`, {} as Record<string, unknown>);
       setNotifications((prev) => prev.map((n) => ({ ...n, read_at: new Date().toISOString() })));
     } catch { /* silent */ }
   };
 
   const markRead = async (id: number) => {
     try {
-      await api.post(`${PROXY}/notifications`, { notification_id: id } as Record<string, unknown>);
+      await api.post(`${MOBILE_API}/notifications`, { notification_id: id } as Record<string, unknown>);
       setNotifications((prev) =>
         prev.map((n) => n.id === id ? { ...n, read_at: new Date().toISOString() } : n)
       );
@@ -81,59 +151,65 @@ export default function NotificationsScreen() {
   };
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
+  const sections = groupNotifications(notifications);
 
-  const renderItem = ({ item }: { item: Notification }) => {
-    const meta = TYPE_META[item.type] ?? TYPE_META.system;
-    const isUnread = !item.read_at;
-
+  if (loading) {
     return (
-      <TouchableOpacity
-        style={[styles.row, isUnread && styles.rowUnread]}
-        onPress={() => {
-          if (isUnread) markRead(item.id);
-        }}
-        activeOpacity={0.7}
-      >
-        <View style={[styles.emojiWrap, { borderColor: meta.color + "33" }]}>
-          <Text style={styles.emoji}>{meta.emoji}</Text>
-        </View>
-        <View style={styles.rowBody}>
-          <View style={styles.rowTop}>
-            <Text style={[styles.rowTitle, isUnread && styles.rowTitleUnread]} numberOfLines={1}>
-              {item.title}
-            </Text>
-            <Text style={styles.rowTime}>{timeAgo(item.created_at)}</Text>
-          </View>
-          <Text style={styles.rowDesc} numberOfLines={2}>{item.body}</Text>
-        </View>
-        {isUnread && <View style={[styles.unreadDot, { backgroundColor: meta.color }]} />}
-      </TouchableOpacity>
-    );
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={colors.ink} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
-        {unreadCount > 0 && (
-          <TouchableOpacity onPress={markAllRead} style={styles.markAllBtn}>
-            <Text style={styles.markAllText}>Mark all read</Text>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
+            <Ionicons name="chevron-back" size={22} color={colors.ink} />
           </TouchableOpacity>
-        )}
-      </View>
-
-      {loading ? (
+          <Text style={styles.headerTitle}>Notifications</Text>
+          <View style={styles.headerSideBtn} />
+        </View>
         <View style={styles.center}>
           <ActivityIndicator color={colors.gold} />
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
+          <Ionicons name="chevron-back" size={22} color={colors.ink} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Notifications</Text>
+        <TouchableOpacity
+          onPress={unreadCount > 0 ? markAllRead : undefined}
+          style={styles.headerSideBtn}
+        >
+          {unreadCount > 0 && (
+            <Text style={styles.markAllText}>Mark all read</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {notifications.length === 0 ? (
+        /* Empty state */
+        <View style={styles.empty}>
+          <Ionicons name="notifications-outline" size={64} color={colors.ghost} style={{ marginBottom: 20 }} />
+          <Text style={styles.emptyTitle}>You're all caught up</Text>
+          <Text style={styles.emptyDesc}>New activity will appear here.</Text>
+        </View>
       ) : (
-        <FlatList
-          data={notifications}
+        <SectionList
+          sections={sections}
           keyExtractor={(n) => String(n.id)}
-          renderItem={renderItem}
+          renderItem={({ item }) => (
+            <NotifRow
+              item={item}
+              onPress={() => !item.read_at && markRead(item.id)}
+            />
+          )}
+          renderSectionHeader={({ section }) => (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionHeaderText}>{section.title}</Text>
+            </View>
+          )}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -143,15 +219,14 @@ export default function NotificationsScreen() {
           }
           onEndReached={() => hasMore && load()}
           onEndReachedThreshold={0.4}
-          ListEmptyComponent={
-            <View style={styles.center}>
-              <Ionicons name="notifications-outline" size={40} color={colors.ghost} />
-              <Text style={styles.emptyText}>No notifications yet</Text>
-            </View>
+          ListFooterComponent={
+            loadingMore
+              ? <ActivityIndicator style={{ padding: space[4] }} color={colors.gold} />
+              : null
           }
-          ListFooterComponent={loadingMore ? <ActivityIndicator style={{ padding: space[4] }} color={colors.gold} /> : null}
-          contentContainerStyle={notifications.length === 0 ? styles.listEmpty : undefined}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          stickySectionHeadersEnabled
         />
       )}
     </SafeAreaView>
@@ -159,46 +234,69 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paper },
+  container: { flex: 1, backgroundColor: colors.paperDeep },
 
   header: {
-    flexDirection: "row", alignItems: "center",
-    paddingHorizontal: space[4], paddingVertical: space[3],
-    borderBottomWidth: 1, borderBottomColor: colors.rule,
+    height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: space[4], backgroundColor: colors.paper,
+    borderBottomWidth: 0,
   },
-  backBtn:      { padding: 4, marginRight: space[2] },
-  headerTitle:  { fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: colors.ink, flex: 1 },
-  markAllBtn:   { paddingHorizontal: space[2], paddingVertical: 4 },
-  markAllText:  { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.gold },
+  headerSideBtn:  { minWidth: 44, minHeight: 44, justifyContent: "center" },
+  headerTitle:    { fontFamily: fonts.sansBold, fontSize: 15, color: colors.ink },
+  markAllText:    { fontFamily: fonts.sans, fontSize: 13, color: colors.ochre, textAlign: "right" },
 
+  // Section header
+  sectionHeader: {
+    height: 32, backgroundColor: colors.paperWarm,
+    justifyContent: "center", paddingHorizontal: 16,
+    borderBottomWidth: 1, borderBottomColor: colors.ghost + "80",
+  },
+  sectionHeaderText: {
+    fontFamily: fonts.mono, fontSize: 9, color: colors.mute,
+    textTransform: "uppercase", letterSpacing: 1.2,
+  },
+
+  // Row
   row: {
-    flexDirection: "row", alignItems: "flex-start",
-    paddingHorizontal: space[4], paddingVertical: space[3],
-    borderBottomWidth: 1, borderBottomColor: colors.rule,
-    gap: space[3],
+    minHeight: 72, flexDirection: "row", alignItems: "flex-start",
+    backgroundColor: colors.paper, paddingHorizontal: 16, paddingVertical: 16,
+    borderBottomWidth: 1, borderBottomColor: colors.ghost,
+    gap: 12, position: "relative",
   },
-  rowUnread: { backgroundColor: colors.goldLight },
+  rowOld: { opacity: 0.9 },
+  accentBorder: {
+    position: "absolute", left: 0, top: 0, bottom: 0, width: 3,
+  },
 
-  emojiWrap: {
+  iconCircle: {
     width: 40, height: 40, borderRadius: 20,
-    borderWidth: 1, justifyContent: "center", alignItems: "center",
-    backgroundColor: colors.paperDeep,
+    justifyContent: "center", alignItems: "center", flexShrink: 0,
   },
-  emoji: { fontSize: 18 },
+  iconEmoji: { fontSize: 16 },
 
-  rowBody: { flex: 1, gap: 3 },
-  rowTop:  { flexDirection: "row", alignItems: "center", gap: space[2] },
+  rowBody: { flex: 1 },
+  rowTop:  { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
   rowTitle: {
-    fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute,
-    flex: 1,
+    fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink,
+    lineHeight: 18, flex: 1,
   },
-  rowTitleUnread: { fontFamily: fonts.sansBold, color: colors.ink },
-  rowTime:  { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.ghost },
-  rowDesc:  { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute, lineHeight: 18 },
+  rowTitleOld: { color: colors.inkSoft },
+  rowMeta: { flexDirection: "column", alignItems: "flex-end", gap: 4 },
+  rowTime: { fontFamily: fonts.mono, fontSize: 10, color: colors.mute },
+  unreadDot: { width: 8, height: 8, borderRadius: 4 },
+  rowDesc: {
+    fontFamily: fonts.sans, fontSize: 13, color: colors.mute,
+    marginTop: 4, lineHeight: 18,
+  },
 
-  unreadDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
+  // Empty state
+  empty: {
+    flex: 1, backgroundColor: colors.paperWarm,
+    alignItems: "center", justifyContent: "center",
+    padding: 24, paddingBottom: 80,
+  },
+  emptyTitle: { fontFamily: fonts.serifBold, fontSize: 22, color: colors.ink, marginBottom: 12 },
+  emptyDesc:  { fontFamily: fonts.sans, fontSize: 14, color: colors.mute, textAlign: "center" },
 
-  center:    { flex: 1, justifyContent: "center", alignItems: "center", padding: space[8], gap: space[3] },
-  listEmpty: { flexGrow: 1 },
-  emptyText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.ghost, textAlign: "center" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
 });

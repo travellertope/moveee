@@ -34,30 +34,30 @@ interface TemplateMeta {
 }
 
 const TEMPLATES: TemplateMeta[] = [
-  { id: "post",              label: "Update",   emoji: "📝", minText: 1,   maxText: 3000, description: "Share news, a link, or a quick thought from your cultural world.", chips: ["Hot take:", "Just saw that", "Anyone else noticed"] },
-  { id: "hidden-gem",        label: "Gem",      emoji: "💎", minText: 50,  maxText: 500,  description: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues.", chips: ["Hidden gem alert:", "Not enough people know about", "If you haven't been to"] },
-  { id: "cultural-take",     label: "Take",     emoji: "💬", minText: 100, maxText: 1000, description: "Share a cultural opinion on a book, film, event, or idea worth discussing.", chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"] },
-  { id: "food-review",       label: "Food",     emoji: "🍽️",  minText: 50,  maxText: 500,  description: "Review a dish or restaurant. Rate the taste, value, and vibe.", chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"] },
-  { id: "creative-showcase", label: "Showcase", emoji: "🎨", minText: 0,   maxText: 500,  description: "Share your creative work — art, photography, design, or music.", chips: ["Working on something:", "New piece:", "Behind the work:"] },
-  { id: "poll",              label: "Poll",     emoji: "📊", minText: 10,  maxText: 280,  description: "Ask the community something. Great for settling debates or gathering opinions.", chips: ["Which is better:", "Settle this for me:", "Genuine question:"] },
-  { id: "itinerary",         label: "Route",    emoji: "🗺️", minText: 0,   maxText: 300,  description: "Share a travel itinerary or a local route worth following.", chips: ["A perfect day in", "My go-to route:", "For first-timers in"] },
-  { id: "event",             label: "Event",    emoji: "📅", minText: 0,   maxText: 1000, description: "Submit an event to the Moveee calendar — exhibitions, gigs, screenings, markets, and more.", chips: ["Opening night:", "One night only:", "Catch it before it closes:"] },
-  { id: "quote",             label: "Quote",    emoji: "✦",  minText: 10,  maxText: 600,  description: "Share a quote that moved you. Add the author and source below.", chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"] },
+  { id: "post",              label: "Post",             emoji: "✏️",  minText: 1,   maxText: 3000, description: "Share news, a link, or a quick thought from your cultural world.", chips: ["Hot take:", "Just saw that", "Anyone else noticed"] },
+  { id: "hidden-gem",        label: "Hidden Gem",       emoji: "💎",  minText: 50,  maxText: 500,  description: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues.", chips: ["Hidden gem alert:", "Not enough people know about", "If you haven't been to"] },
+  { id: "cultural-take",     label: "Cultural Take",    emoji: "💬",  minText: 100, maxText: 1000, description: "Share a cultural opinion on a book, film, event, or idea worth discussing.", chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"] },
+  { id: "food-review",       label: "Food Review",      emoji: "🍽️",  minText: 50,  maxText: 500,  description: "Review a dish or restaurant. Rate the taste, value, and vibe.", chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"] },
+  { id: "creative-showcase", label: "Creative Showcase",emoji: "🎨",  minText: 0,   maxText: 500,  description: "Share your creative work — art, photography, design, or music.", chips: ["Working on something:", "New piece:", "Behind the work:"] },
+  { id: "poll",              label: "Poll",             emoji: "📊",  minText: 10,  maxText: 280,  description: "Ask the community something. Great for settling debates or gathering opinions.", chips: ["Which is better:", "Settle this for me:", "Genuine question:"] },
+  { id: "itinerary",         label: "Itinerary",        emoji: "🗺️",  minText: 0,   maxText: 300,  description: "Share a travel itinerary or a local route worth following.", chips: ["A perfect day in", "My go-to route:", "For first-timers in"] },
+  { id: "event",             label: "Event",            emoji: "📅",  minText: 0,   maxText: 1000, description: "Submit an event to the Moveee calendar — exhibitions, gigs, screenings, markets, and more.", chips: ["Opening night:", "One night only:", "Catch it before it closes:"] },
+  { id: "quote",             label: "Quote",            emoji: "✦",   minText: 10,  maxText: 600,  description: "Share a quote that moved you. Add the author and source below.", chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"] },
 ];
 
 const SECTION_TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"];
 
 const EVENT_CATEGORIES: { id: string; label: string }[] = [
-  { id: "live-music",         label: "Live Music" },
+  { id: "live-music",         label: "Music" },
+  { id: "visual-art",         label: "Art" },
+  { id: "food-drink",         label: "Food" },
+  { id: "event-performance",  label: "Sport" },
+  { id: "event-community",    label: "Culture" },
+  { id: "tech-culture",       label: "Tech" },
   { id: "independent-film",   label: "Film" },
-  { id: "visual-art",         label: "Visual Art" },
   { id: "fashion-streetwear", label: "Fashion" },
-  { id: "food-drink",         label: "Food & Drink" },
   { id: "literature",         label: "Literature" },
   { id: "visual-design",      label: "Design" },
-  { id: "event-performance",  label: "Performance" },
-  { id: "event-community",    label: "Community" },
-  { id: "tech-culture",       label: "Tech & Culture" },
 ];
 
 interface DirectoryEntry { id: number; title: string; entry_type: string; city?: string }
@@ -198,7 +198,6 @@ export default function NewPostScreen() {
 
     setSubmitting(true);
     try {
-      // Event: different upload + submit endpoints (Next.js proxy)
       if (template === "event") {
         let imageUrl: string | undefined;
         if (images.length > 0) {
@@ -292,31 +291,36 @@ export default function NewPostScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => nav.goBack()} style={styles.cancelBtn}>
+          <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>New post</Text>
+          <Text style={styles.headerTitle}>New Post</Text>
           <TouchableOpacity
-            style={[styles.postBtn, isSubmitDisabled && styles.postBtnDisabled]}
+            style={styles.headerSideBtn}
             onPress={validateAndSubmit}
             disabled={isSubmitDisabled}
           >
             {submitting
-              ? <ActivityIndicator color={colors.paper} size="small" />
-              : <Text style={styles.postBtnText}>Post</Text>
+              ? <ActivityIndicator color={colors.ochre} size="small" />
+              : <Text style={[styles.postText, isSubmitDisabled && styles.postTextDisabled]}>Post</Text>
             }
           </TouchableOpacity>
         </View>
 
-        {/* Template selector */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templateStrip} contentContainerStyle={styles.templateStripContent}>
+        {/* Template selector strip */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.templateStrip}
+          contentContainerStyle={styles.templateStripContent}
+        >
           {TEMPLATES.map((t) => (
             <TouchableOpacity
               key={t.id}
-              style={[styles.templatePill, template === t.id && styles.templatePillActive]}
+              style={[styles.templateChip, template === t.id && styles.templateChipActive]}
               onPress={() => { setTemplate(t.id); setText(""); setTagLocked(false); setShowPicker(false); }}
             >
-              <Text style={[styles.templatePillText, template === t.id && styles.templatePillTextActive]}>
+              <Text style={[styles.templateChipText, template === t.id && styles.templateChipTextActive]}>
                 {t.emoji} {t.label}
               </Text>
             </TouchableOpacity>
@@ -325,7 +329,7 @@ export default function NewPostScreen() {
 
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
 
-          {/* Guide chips (not shown for event template) */}
+          {/* Guide chips */}
           {showGuide && (
             <View style={styles.guide}>
               <Text style={styles.guideDesc}>{tmpl.description}</Text>
@@ -339,47 +343,82 @@ export default function NewPostScreen() {
             </View>
           )}
 
-          {/* Event title — above the description textarea */}
+          {/* Event title */}
           {template === "event" && (
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Event title *</Text>
+            <>
+              {/* Calendar info banner */}
+              <View style={styles.eventBanner}>
+                <Text style={styles.eventBannerText}>📅 This will be added to the Moveee events calendar.</Text>
+              </View>
               <TextInput
-                style={styles.input}
+                style={styles.eventTitleInput}
                 value={eventTitle}
                 onChangeText={setEventTitle}
                 placeholder="Event title"
                 placeholderTextColor={colors.ghost}
                 autoFocus
               />
-            </View>
+            </>
           )}
 
-          {/* Main textarea */}
-          <TextInput
-            ref={textRef}
-            style={[styles.textarea, template === "quote" && styles.textareaQuote]}
-            value={text}
-            onChangeText={handleTextChange}
-            multiline
-            placeholder={
-              template === "quote"  ? "The quote text…"               :
-              template === "event"  ? "Event description (optional)…" :
-              "What's on your cultural mind?"
-            }
-            placeholderTextColor={colors.ghost}
-            maxLength={tmpl.maxText + 50}
-          />
+          {/* Quote textarea with decorative wrapper */}
+          {template === "quote" ? (
+            <View style={styles.quoteArea}>
+              <Text style={styles.quoteDecoration}>"</Text>
+              <TextInput
+                ref={textRef}
+                style={styles.quoteTextarea}
+                value={text}
+                onChangeText={handleTextChange}
+                multiline
+                placeholder="The quote text…"
+                placeholderTextColor={colors.ghost}
+                maxLength={tmpl.maxText + 50}
+              />
+              <Text style={styles.charCountInline}>{remaining} remaining</Text>
+            </View>
+          ) : (
+            /* Main textarea for all other templates */
+            template !== "event" || true ? (
+              <TextInput
+                ref={textRef}
+                style={styles.textarea}
+                value={text}
+                onChangeText={handleTextChange}
+                multiline
+                placeholder={
+                  template === "event"     ? "Event description (optional)…" :
+                  template === "itinerary" ? "Describe this route… where, when, who for?" :
+                  "What's on your cultural mind?"
+                }
+                placeholderTextColor={colors.ghost}
+                maxLength={tmpl.maxText + 50}
+              />
+            ) : null
+          )}
 
-          {/* Char counter */}
-          <Text style={[styles.charCount, remaining < 50 && { color: colors.gold }, remaining < 0 && { color: colors.ochre }]}>
-            {remaining}
-          </Text>
+          {/* Char counter (not for quote — shown inline) */}
+          {template !== "quote" && (
+            <Text style={[styles.charCount, remaining < 50 && { color: colors.gold }, remaining < 0 && { color: colors.ochre }]}>
+              {remaining}
+            </Text>
+          )}
 
-          {/* Quote fields */}
+          {/* Quote author + source fields */}
           {template === "quote" && (
             <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Author</Text>
               <TextInput style={styles.input} value={quoteAuthor} onChangeText={setQuoteAuthor} placeholder="Author *" placeholderTextColor={colors.ghost} />
+              <Text style={[styles.fieldLabel, { marginTop: 8 }]}>Source (optional)</Text>
               <TextInput style={styles.input} value={quoteSource} onChangeText={setQuoteSource} placeholder="Source (optional)" placeholderTextColor={colors.ghost} />
+              {/* Quote category chips */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionTags}>
+                {["📚 Book", "🎙️ Speech", "🎬 Film"].map((cat) => (
+                  <TouchableOpacity key={cat} style={styles.sectionTag}>
+                    <Text style={styles.sectionTagText}>{cat}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           )}
 
@@ -421,50 +460,59 @@ export default function NewPostScreen() {
             </View>
           )}
 
-          {/* ── Event fields ──────────────────────────────────────────── */}
+          {/* Event fields */}
           {template === "event" && (
             <View style={styles.fieldGroup}>
 
-              {/* Start date & time */}
-              <Text style={styles.fieldLabel}>Start date & time *</Text>
-              <View style={styles.dateRow}>
-                <TouchableOpacity style={[styles.dateBtn, { flex: 2 }]} onPress={() => openPicker("start", "date")}>
-                  <Ionicons name="calendar-outline" size={14} color={colors.mute} />
-                  <Text style={[styles.dateBtnText, !!eventDate && styles.dateBtnTextSet]}>
-                    {eventDate ? fmtDate(eventDate) : "Set date"}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.dateBtn, { flex: 1 }]} onPress={() => openPicker("start", "time")}>
-                  <Ionicons name="time-outline" size={14} color={colors.mute} />
-                  <Text style={[styles.dateBtnText, !!eventDate && styles.dateBtnTextSet]}>
-                    {eventDate ? fmtTime(eventDate) : "Time"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* End date & time */}
-              <Text style={styles.fieldLabel}>End date & time (optional)</Text>
-              <View style={styles.dateRow}>
-                <TouchableOpacity style={[styles.dateBtn, { flex: 2 }]} onPress={() => openPicker("end", "date")}>
-                  <Ionicons name="calendar-outline" size={14} color={colors.mute} />
-                  <Text style={[styles.dateBtnText, !!eventEndDate && styles.dateBtnTextSet]}>
-                    {eventEndDate ? fmtDate(eventEndDate) : "Set date"}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.dateBtn, { flex: 1 }]} onPress={() => openPicker("end", "time")}>
-                  <Ionicons name="time-outline" size={14} color={colors.mute} />
-                  <Text style={[styles.dateBtnText, !!eventEndDate && styles.dateBtnTextSet]}>
-                    {eventEndDate ? fmtTime(eventEndDate) : "Time"}
-                  </Text>
-                </TouchableOpacity>
-                {eventEndDate && (
-                  <TouchableOpacity onPress={() => setEventEndDate(null)} style={styles.clearEndDate}>
-                    <Ionicons name="close" size={16} color={colors.mute} />
+              {/* Date rows */}
+              <View style={styles.eventDateBlock}>
+                {/* Start date */}
+                <View style={styles.eventDateRow}>
+                  <Text style={styles.eventDateEmoji}>📅</Text>
+                  <Text style={styles.eventDateLabel}>Start date</Text>
+                  <TouchableOpacity style={styles.eventDateInput} onPress={() => openPicker("start", "date")}>
+                    <Text style={[styles.eventDateInputText, !!eventDate && styles.eventDateInputTextSet]}>
+                      {eventDate ? fmtDate(eventDate) : "Set date"}
+                    </Text>
                   </TouchableOpacity>
-                )}
+                </View>
+                {/* Start time */}
+                <View style={styles.eventDateRow}>
+                  <Text style={styles.eventDateEmoji}>🕐</Text>
+                  <Text style={styles.eventDateLabel}>Start time</Text>
+                  <TouchableOpacity style={styles.eventDateInput} onPress={() => openPicker("start", "time")}>
+                    <Text style={[styles.eventDateInputText, !!eventDate && styles.eventDateInputTextSet]}>
+                      {eventDate ? fmtTime(eventDate) : "Time"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {/* End date */}
+                <View style={styles.eventDateRow}>
+                  <Text style={[styles.eventDateEmoji, { opacity: 0.4 }]}>📅</Text>
+                  <Text style={styles.eventDateLabel}>End date</Text>
+                  <TouchableOpacity style={styles.eventDateInput} onPress={() => openPicker("end", "date")}>
+                    <Text style={[styles.eventDateInputText, !!eventEndDate && styles.eventDateInputTextSet]}>
+                      {eventEndDate ? fmtDate(eventEndDate) : "Optional"}
+                    </Text>
+                  </TouchableOpacity>
+                  {eventEndDate && (
+                    <TouchableOpacity onPress={() => setEventEndDate(null)} style={{ paddingLeft: 4 }}>
+                      <Ionicons name="close" size={16} color={colors.mute} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+                {/* End time */}
+                <View style={styles.eventDateRow}>
+                  <Text style={[styles.eventDateEmoji, { opacity: 0.4 }]}>🕐</Text>
+                  <Text style={styles.eventDateLabel}>End time</Text>
+                  <TouchableOpacity style={styles.eventDateInput} onPress={() => openPicker("end", "time")}>
+                    <Text style={[styles.eventDateInputText, !!eventEndDate && styles.eventDateInputTextSet]}>
+                      {eventEndDate ? fmtTime(eventEndDate) : "Optional"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
-              {/* Date/time picker (inline on iOS, modal dialog on Android) */}
               {showPicker && (
                 <View style={styles.pickerWrap}>
                   {Platform.OS === "ios" && (
@@ -481,32 +529,52 @@ export default function NewPostScreen() {
                 </View>
               )}
 
-              {/* Venue + City side by side */}
-              <View style={styles.rowFields}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>Venue</Text>
+              {/* Location meta */}
+              <View style={styles.eventMetaBlock}>
+                <View style={styles.eventMetaRow}>
+                  <Text style={styles.eventMetaIcon}>📍</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { flex: 1 }]}
                     value={eventVenue}
                     onChangeText={setEventVenue}
-                    placeholder="Venue name"
+                    placeholder="Venue, address"
                     placeholderTextColor={colors.ghost}
                   />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>City</Text>
+                <TextInput
+                  style={styles.input}
+                  value={eventCity}
+                  onChangeText={setEventCity}
+                  placeholder="City"
+                  placeholderTextColor={colors.ghost}
+                />
+                <View style={styles.eventMetaRow}>
+                  <View style={styles.currencyPrefix}>
+                    <Text style={styles.currencyText}>£</Text>
+                  </View>
                   <TextInput
-                    style={styles.input}
-                    value={eventCity}
-                    onChangeText={setEventCity}
-                    placeholder="City"
+                    style={[styles.input, { flex: 1 }]}
+                    value={eventAdmission}
+                    onChangeText={setEventAdmission}
+                    placeholder="Admission (e.g. Free / £15 adv)"
                     placeholderTextColor={colors.ghost}
+                  />
+                </View>
+                <View style={styles.eventMetaRow}>
+                  <Text style={styles.eventMetaIcon}>🔗</Text>
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    value={eventTicketUrl}
+                    onChangeText={setEventTicketUrl}
+                    placeholder="https://..."
+                    placeholderTextColor={colors.ghost}
+                    autoCapitalize="none"
+                    keyboardType="url"
                   />
                 </View>
               </View>
 
-              {/* Category */}
-              <Text style={styles.fieldLabel}>Category</Text>
+              {/* Category chips */}
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionTags}>
                 {EVENT_CATEGORIES.map((cat) => (
                   <TouchableOpacity
@@ -520,24 +588,6 @@ export default function NewPostScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-
-              {/* Admission + Ticketing URL */}
-              <TextInput
-                style={styles.input}
-                value={eventAdmission}
-                onChangeText={setEventAdmission}
-                placeholder="Admission (e.g. Free, £10)"
-                placeholderTextColor={colors.ghost}
-              />
-              <TextInput
-                style={styles.input}
-                value={eventTicketUrl}
-                onChangeText={setEventTicketUrl}
-                placeholder="Ticketing URL (optional)"
-                placeholderTextColor={colors.ghost}
-                autoCapitalize="none"
-                keyboardType="url"
-              />
 
               {/* Organiser */}
               <DirectorySearch selected={eventOrganiser} onSelect={setEventOrganiser} label="Organiser (optional)" />
@@ -565,15 +615,21 @@ export default function NewPostScreen() {
           {/* Image picker */}
           {template !== "poll" && template !== "quote" && (
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>
-                {template === "creative-showcase" ? "Media (required)" : "Image (optional)"}
-              </Text>
-              <TouchableOpacity style={styles.imagePicker} onPress={() => pickImages(multi)}>
-                <Ionicons name="image-outline" size={20} color={colors.mute} />
-                <Text style={styles.imagePickerText}>
-                  {images.length > 0 ? `${images.length} image${images.length > 1 ? "s" : ""} selected` : "Add image"}
-                </Text>
-              </TouchableOpacity>
+              {template === "creative-showcase" ? (
+                /* Showcase: large upload area */
+                <TouchableOpacity style={styles.showcaseUpload} onPress={() => pickImages(true)}>
+                  <Ionicons name="camera-outline" size={28} color={colors.ochre} />
+                  <Text style={styles.showcaseUploadText}>Add your work</Text>
+                  <Text style={styles.showcaseUploadSub}>photos, screenshots, renders</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity style={styles.imagePicker} onPress={() => pickImages(multi)}>
+                  <Ionicons name="image-outline" size={20} color={colors.mute} />
+                  <Text style={styles.imagePickerText}>
+                    {images.length > 0 ? `${images.length} image${images.length > 1 ? "s" : ""} selected` : "Add image (optional)"}
+                  </Text>
+                </TouchableOpacity>
+              )}
               {images.length > 0 && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.previewStrip}>
                   {images.map((uri, i) => (
@@ -590,6 +646,29 @@ export default function NewPostScreen() {
           )}
 
         </ScrollView>
+
+        {/* Bottom media toolbar */}
+        <View style={styles.toolbar}>
+          <View style={styles.toolbarIcons}>
+            <TouchableOpacity onPress={() => pickImages(multi)}>
+              <Ionicons name="camera-outline" size={24} color={template === "creative-showcase" ? colors.ochre : colors.mute} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Ionicons name="attach-outline" size={24} color={colors.mute} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Ionicons name="location-outline" size={24} color={colors.mute} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Ionicons name="happy-outline" size={24} color={colors.mute} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Text style={styles.toolbarAt}>@</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.toolbarCount}>{remaining} remaining</Text>
+        </View>
+
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -598,21 +677,28 @@ export default function NewPostScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.paper },
 
+  // Header
   header: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: space[4], paddingVertical: space[3],
-    borderBottomWidth: 1, borderBottomColor: colors.rule,
+    height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: space[4], borderBottomWidth: 1, borderBottomColor: colors.ghost,
+    backgroundColor: colors.paper,
   },
-  cancelBtn:   { padding: 4 },
-  cancelText:  { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute },
-  headerTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: colors.ink },
-  postBtn: {
-    backgroundColor: colors.ink, borderRadius: radius.full,
-    paddingHorizontal: space[4], paddingVertical: space[1] + 2,
-    minWidth: 60, alignItems: "center",
+  headerSideBtn:   { minWidth: 44, minHeight: 44, justifyContent: "center" },
+  headerTitle:     { fontFamily: fonts.sansBold, fontSize: 15, color: colors.ink },
+  cancelText:      { fontFamily: fonts.sans, fontSize: 14, color: colors.ochre },
+  postText:        { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ochre, textAlign: "right" },
+  postTextDisabled:{ opacity: 0.35 },
+
+  // Template strip
+  templateStrip:        { flexGrow: 0, maxHeight: 48, borderBottomWidth: 1, borderBottomColor: colors.ghost, backgroundColor: colors.paper },
+  templateStripContent: { paddingHorizontal: space[4], alignItems: "center", gap: 8 },
+  templateChip: {
+    height: 36, paddingHorizontal: 10, borderRadius: radius.full,
+    backgroundColor: colors.paperDeep, justifyContent: "center",
   },
-  postBtnDisabled: { opacity: 0.4 },
-  postBtnText:     { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: colors.paper },
+  templateChipActive:     { backgroundColor: colors.ochre },
+  templateChipText:       { fontFamily: fonts.sansBold, fontSize: 12, color: colors.inkSoft },
+  templateChipTextActive: { color: colors.paper },
 
   templateStrip:        { flexGrow: 0, borderTopWidth: 1, borderTopColor: colors.rule, borderBottomWidth: 1, borderBottomColor: colors.rule },
   templateStripContent: { paddingHorizontal: space[3], paddingVertical: space[4], gap: space[2] },
@@ -624,79 +710,144 @@ const styles = StyleSheet.create({
   templatePillText:       { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute },
   templatePillTextActive: { color: colors.paper },
 
-  body: { padding: space[4], paddingBottom: space[10] },
+  body: { padding: space[4], paddingBottom: 100 },
 
+  // Guide
   guide:     { marginBottom: space[3] },
   guideDesc: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute, marginBottom: space[2] },
   chips:     { flexDirection: "row", flexWrap: "wrap", gap: space[2] },
   chip: {
-    backgroundColor: colors.paperDeep, borderWidth: 1, borderColor: colors.rule,
-    borderRadius: radius.full, paddingHorizontal: space[3], paddingVertical: space[1],
+    backgroundColor: colors.paperDeep, borderRadius: radius.full,
+    paddingHorizontal: 12, paddingVertical: 6,
   },
   chipText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.inkSoft },
 
+  // Textarea
   textarea: {
-    fontFamily: fonts.sans, fontSize: fontSize.base + 1, color: colors.ink,
-    lineHeight: 24, minHeight: 120, textAlignVertical: "top",
+    fontFamily: fonts.sans, fontSize: 15, color: colors.ink,
+    lineHeight: 24, minHeight: 100, textAlignVertical: "top",
   },
-  textareaQuote: { fontFamily: fonts.serif, fontStyle: "italic", fontSize: fontSize.lg },
-  charCount: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.ghost, textAlign: "right", marginBottom: space[2] },
+  charCount: {
+    fontFamily: fonts.mono, fontSize: 11, color: colors.mute,
+    textAlign: "right", marginBottom: space[2],
+  },
 
-  fieldGroup: { marginTop: space[3], gap: space[2] },
+  // Quote area
+  quoteArea: {
+    backgroundColor: colors.paperWarm, padding: 16,
+    borderRadius: radius.md, minHeight: 140, marginBottom: space[3], position: "relative",
+  },
+  quoteDecoration: {
+    position: "absolute", top: 4, left: 12,
+    fontFamily: fonts.serif, fontSize: 40, color: colors.ghost, opacity: 0.4, lineHeight: 44,
+  },
+  quoteTextarea: {
+    fontFamily: fonts.serif, fontSize: 16, fontStyle: "italic", color: colors.ink,
+    lineHeight: 26, minHeight: 100, textAlignVertical: "top", marginTop: 16,
+    backgroundColor: "transparent",
+  },
+  charCountInline: {
+    fontFamily: fonts.mono, fontSize: 11, color: colors.mute, textAlign: "right", marginTop: 4,
+  },
+
+  // Fields
+  fieldGroup: { marginTop: 12, gap: 8 },
   fieldLabel: {
-    fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute,
-    letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4,
+    fontFamily: fonts.mono, fontSize: 12, color: colors.mute,
+    letterSpacing: 0.8, textTransform: "uppercase",
   },
   input: {
-    fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.ink,
-    borderWidth: 1, borderColor: colors.rule, borderRadius: radius.md,
-    paddingHorizontal: space[3], paddingVertical: space[2], backgroundColor: colors.paperDeep,
+    height: 44, fontFamily: fonts.sans, fontSize: 14, color: colors.ink,
+    borderWidth: 1, borderColor: colors.ghost, borderRadius: 8,
+    paddingHorizontal: 16, backgroundColor: colors.paper,
   },
 
-  sectionTags: { gap: space[2], paddingVertical: 2 },
+  // Section tags
+  sectionTags: { gap: 8, paddingVertical: 2 },
   sectionTag: {
-    borderWidth: 1, borderColor: colors.rule, borderRadius: radius.full,
-    paddingHorizontal: space[3], paddingVertical: space[1],
+    height: 32, paddingHorizontal: 16, borderRadius: radius.full,
+    borderWidth: 1, borderColor: colors.ghost, backgroundColor: colors.paper,
+    justifyContent: "center",
   },
-  sectionTagActive:    { backgroundColor: colors.ink, borderColor: colors.ink },
-  sectionTagText:      { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.mute },
-  sectionTagTextActive:{ color: colors.paper },
+  sectionTagActive:     { backgroundColor: colors.ink, borderColor: colors.ink },
+  sectionTagText:       { fontFamily: fonts.sans, fontSize: 12, color: colors.inkSoft },
+  sectionTagTextActive: { color: colors.paper, fontFamily: fonts.sansBold },
 
+  // Event styles
+  eventBanner: {
+    backgroundColor: colors.paperDeep, borderRadius: 8,
+    padding: 10, marginBottom: 12,
+  },
+  eventBannerText: { fontFamily: fonts.sans, fontSize: 12, color: colors.mute },
+  eventTitleInput: {
+    height: 52, fontFamily: fonts.sansBold, fontSize: 17, color: colors.ink,
+    borderWidth: 1, borderColor: colors.ghost, borderRadius: 8,
+    paddingHorizontal: 16, backgroundColor: colors.paper, marginBottom: 12,
+  },
+  eventDateBlock:   { gap: 10, marginBottom: 12 },
+  eventDateRow:     { flexDirection: "row", alignItems: "center", gap: 8 },
+  eventDateEmoji:   { fontSize: 16, width: 20, textAlign: "center" },
+  eventDateLabel:   { fontFamily: fonts.sans, fontSize: 12, color: colors.mute, width: 72 },
+  eventDateInput: {
+    flex: 1, height: 48, borderWidth: 1, borderColor: colors.ghost,
+    borderRadius: 8, paddingHorizontal: 12, backgroundColor: colors.paper,
+    justifyContent: "center",
+  },
+  eventDateInputText:    { fontFamily: fonts.sans, fontSize: 14, color: colors.ghost },
+  eventDateInputTextSet: { color: colors.ink },
+  eventMetaBlock:  { gap: 10, marginBottom: 12 },
+  eventMetaRow:    { flexDirection: "row", alignItems: "center", gap: 8 },
+  eventMetaIcon:   { fontSize: 16, width: 24, textAlign: "center" },
+  currencyPrefix: {
+    backgroundColor: colors.paperDeep, borderRadius: 4,
+    paddingHorizontal: 8, paddingVertical: 4,
+  },
+  currencyText: { fontFamily: fonts.sansBold, fontSize: 12, color: colors.inkSoft },
+
+  // Image pickers
   imagePicker: {
-    flexDirection: "row", alignItems: "center", gap: space[2],
-    borderWidth: 1, borderColor: colors.rule, borderRadius: radius.md,
-    paddingHorizontal: space[3], paddingVertical: space[3],
-    backgroundColor: colors.paperDeep,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    height: 48, borderWidth: 1, borderColor: colors.ghost, borderRadius: 8,
+    paddingHorizontal: 16, backgroundColor: colors.paper,
   },
   imagePickerText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute },
-  previewStrip: { marginTop: space[2] },
-  previewWrap: { position: "relative", marginRight: space[2] },
-  previewThumb: { width: 72, height: 72, borderRadius: radius.md },
+  showcaseUpload: {
+    height: 140, borderWidth: 1, borderColor: colors.ghost, borderRadius: 12,
+    borderStyle: "dashed", backgroundColor: colors.paperDeep,
+    alignItems: "center", justifyContent: "center", gap: 6,
+  },
+  showcaseUploadText: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.inkSoft },
+  showcaseUploadSub:  { fontFamily: fonts.mono, fontSize: 11, color: colors.mute },
+  previewStrip: { marginTop: 8 },
+  previewWrap:  { position: "relative", marginRight: 8 },
+  previewThumb: { width: 72, height: 72, borderRadius: 8 },
   removeThumb: {
     position: "absolute", top: 4, right: 4,
     backgroundColor: "rgba(0,0,0,0.55)", borderRadius: 8, padding: 2,
   },
 
-  // Event-specific styles
-  dateRow:        { flexDirection: "row", gap: space[2] },
-  dateBtn: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    borderWidth: 1, borderColor: colors.rule, borderRadius: radius.md,
-    paddingHorizontal: space[3], paddingVertical: space[2],
-    backgroundColor: colors.paperDeep,
-  },
-  dateBtnText:    { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.ghost },
-  dateBtnTextSet: { color: colors.ink },
-  clearEndDate:   { padding: 4, justifyContent: "center" },
-  rowFields:      { flexDirection: "row", gap: space[2] },
+  // Date picker
   pickerWrap: {
-    borderWidth: 1, borderColor: colors.rule, borderRadius: radius.md,
+    borderWidth: 1, borderColor: colors.ghost, borderRadius: 8,
     overflow: "hidden", backgroundColor: colors.paperDeep,
   },
   iosDoneBtn: {
-    alignSelf: "flex-end", margin: space[2],
-    backgroundColor: colors.ink, borderRadius: radius.md,
-    paddingHorizontal: space[3], paddingVertical: space[1],
+    alignSelf: "flex-end", margin: 8,
+    backgroundColor: colors.ink, borderRadius: 6,
+    paddingHorizontal: 12, paddingVertical: 4,
   },
-  iosDoneBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: colors.paper },
+  iosDoneBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: colors.paper },
+
+  // Bottom toolbar
+  toolbar: {
+    height: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    backgroundColor: colors.paper, borderTopWidth: 1, borderTopColor: colors.ghost,
+    paddingHorizontal: 16,
+  },
+  toolbarIcons: { flexDirection: "row", alignItems: "center", gap: 20 },
+  toolbarAt: {
+    fontFamily: fonts.sans, fontSize: 20, color: colors.mute,
+    lineHeight: 24, includeFontPadding: false,
+  },
+  toolbarCount: { fontFamily: fonts.mono, fontSize: 11, color: colors.mute },
 });

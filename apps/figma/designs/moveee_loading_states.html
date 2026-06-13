@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Loading States & Skeletons</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ochre: '#C5491F',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        ghost: '#C8BFB0',
+                        'paper-deep': '#F5F5F5',
+                        gold: '#B38238',
+                        mute: '#7A6F5C',
+                        'paper-warm': '#F3ECE0',
+                        // Skeleton specifics
+                        'skel-base': '#EBE5DC',
+                        'skel-hl': '#F5F0E8'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            background-color: #E5E5E5; 
+            margin: 0; 
+            padding: 60px 40px; 
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+        
+        /* Shimmer Animation Mechanics */
+        .shimmer {
+            background: linear-gradient(90deg, #EBE5DC 25%, #F5F0E8 50%, #EBE5DC 75%);
+            background-size: 400% 100%;
+            animation: shimmer-sweep 1.4s ease-in-out infinite;
+        }
+
+        @keyframes shimmer-sweep {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0 50%; }
+        }
+
+        /* Spinner Animation */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-custom {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-16 font-sans text-ink">
+
+    <!-- Global Annotation Banner -->
+    <div class="w-full max-w-[600px] bg-white rounded-xl shadow-card border-l-[4px] border-l-ochre p-[20px] text-center sticky top-[20px] z-50">
+        <h3 class="font-bold text-[14px] text-ink mb-2">✦ Skeleton Animation Specs</h3>
+        <p class="text-mute text-[13px] leading-relaxed">
+            <strong>Type:</strong> Shimmer gradient sweep (left → right)<br>
+            <strong>Duration:</strong> 1.4s (ease-in-out loop)<br>
+            <strong>Colours:</strong> Base <code class="bg-paper-deep px-1 rounded">#EBE5DC</code> → Highlight <code class="bg-paper-deep px-1 rounded">#F5F0E8</code> → Base <code class="bg-paper-deep px-1 rounded">#EBE5DC</code>
+        </p>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: CONNECT FEED SKELETON                 -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">1. Connect Feed Skeleton</span>
+        <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <!-- Status Bar Mock -->
+            <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0">
+                <span>9:41</span>
+                <div class="flex gap-1 items-center pb-0.5">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <header class="h-[56px] flex items-center justify-between px-4 bg-white border-b border-ghost z-20 shrink-0">
+                <!-- Wordmark Placeholder -->
+                <div class="w-[80px] h-[20px] rounded-[6px] shimmer"></div>
+                <div class="flex gap-4">
+                    <!-- Icon Placeholders -->
+                    <div class="w-[24px] h-[24px] rounded-full shimmer"></div>
+                    <div class="w-[24px] h-[24px] rounded-full shimmer"></div>
+                </div>
+            </header>
+
+            <!-- Filter Row -->
+            <div class="h-[56px] px-[16px] flex items-center gap-[12px] border-b border-ghost overflow-hidden shrink-0">
+                <div class="w-[70px] h-[32px] rounded-full shimmer shrink-0"></div>
+                <div class="w-[90px] h-[32px] rounded-full shimmer shrink-0"></div>
+                <div class="w-[60px] h-[32px] rounded-full shimmer shrink-0"></div>
+                <div class="w-[80px] h-[32px] rounded-full shimmer shrink-0"></div>
+            </div>
+
+            <!-- Feed Content -->
+            <div class="flex-1 bg-paper-warm overflow-hidden flex flex-col">
+                
+                <!-- Card A -->
+                <div class="bg-white p-[16px] border-b border-ghost flex flex-col gap-3">
+                    <div class="w-full aspect-video rounded-md shimmer"></div>
+                    <div class="flex flex-col gap-[8px] mt-2">
+                        <div class="h-[14px] w-[80%] rounded-[6px] shimmer"></div>
+                        <div class="h-[14px] w-[60%] rounded-[6px] shimmer"></div>
+                        <div class="h-[14px] w-[40%] rounded-[6px] shimmer"></div>
+                    </div>
+                </div>
+
+                <!-- Card B (Community) -->
+                <div class="bg-white p-[16px] border-b border-ghost flex flex-col gap-4">
+                    <!-- Avatar Row -->
+                    <div class="flex items-center gap-[12px]">
+                        <div class="w-[44px] h-[44px] rounded-full shimmer shrink-0"></div>
+                        <div class="flex flex-col gap-[6px]">
+                            <div class="w-[100px] h-[14px] rounded-[6px] shimmer"></div>
+                            <div class="w-[60px] h-[10px] rounded-[6px] shimmer"></div>
+                        </div>
+                    </div>
+                    <!-- Body Text -->
+                    <div class="flex flex-col gap-[8px]">
+                        <div class="h-[14px] w-full rounded-[6px] shimmer"></div>
+                        <div class="h-[14px] w-[90%] rounded-[6px] shimmer"></div>
+                        <div class="h-[14px] w-[75%] rounded-[6px] shimmer"></div>
+                    </div>
+                    <!-- 2-Image Grid -->
+                    <div class="flex gap-[8px]">
+                        <div class="flex-1 aspect-square rounded-md shimmer"></div>
+                        <div class="flex-1 aspect-square rounded-md shimmer"></div>
+                    </div>
+                </div>
+
+                <!-- Card A (Variation) -->
+                <div class="bg-white p-[16px] border-b border-ghost flex flex-col gap-3">
+                    <div class="w-full aspect-video rounded-md shimmer"></div>
+                    <div class="flex flex-col gap-[8px] mt-2">
+                        <div class="h-[14px] w-[90%] rounded-[6px] shimmer"></div>
+                        <div class="h-[14px] w-[70%] rounded-[6px] shimmer"></div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- Bottom Nav Skeleton Area -->
+            <div class="h-[80px] bg-white border-t border-ghost shrink-0"></div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: ARTICLE SKELETON                      -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">2. Article Skeleton</span>
+        <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            <!-- Hero Image Rect -->
+            <div class="w-full h-[280px] rounded-t-[20px] shimmer absolute top-0 left-0 z-0"></div>
+            
+            <!-- Status Bar Mock over image -->
+            <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-white z-20 shrink-0">
+                <span>9:41</span>
+                <div class="flex gap-1 items-center pb-0.5">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-hidden mt-[248px] z-10">
+                <!-- Content Area -->
+                <div class="bg-white rounded-t-[20px] h-full px-[32px] pt-[32px]">
+                    <!-- Eyebrow -->
+                    <div class="w-[40px] h-[8px] rounded-[6px] shimmer mb-[16px]"></div>
+                    
+                    <!-- Title -->
+                    <div class="flex flex-col gap-[10px] mb-[32px]">
+                        <div class="h-[24px] w-[90%] rounded-[6px] shimmer"></div>
+                        <div class="h-[24px] w-[70%] rounded-[6px] shimmer"></div>
+                    </div>
+
+                    <!-- Author Row -->
+                    <div class="flex items-center gap-[12px] mb-[32px] p-[16px] bg-paper-deep rounded-xl border border-ghost/50">
+                        <div class="w-[24px] h-[24px] rounded-full shimmer shrink-0"></div>
+                        <div class="flex flex-col gap-[6px]">
+                            <div class="w-[80px] h-[12px] rounded-[6px] shimmer"></div>
+                            <div class="w-[60px] h-[10px] rounded-[6px] shimmer"></div>
+                        </div>
+                    </div>
+
+                    <!-- Body Text -->
+                    <div class="flex flex-col gap-[12px]">
+                        <div class="h-[14px] w-[95%] rounded-[6px] shimmer"></div>
+                        <div class="h-[14px] w-[85%] rounded-[6px] shimmer"></div>
+                        <div class="h-[14px] w-[90%] rounded-[6px] shimmer"></div>
+                        <div class="h-[14px] w-[70%] rounded-[6px] shimmer"></div>
+                        <div class="h-[14px] w-[95%] rounded-[6px] shimmer"></div>
+                        <div class="h-[14px] w-[60%] rounded-[6px] shimmer"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="h-[80px] bg-white border-t border-ghost shrink-0"></div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: MEMBER DASHBOARD SKELETON             -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">3. Member Dashboard Skeleton</span>
+        <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0">
+                <span>9:41</span>
+                <!-- icons placeholder -->
+                <div class="flex gap-1 items-center pb-0.5 opacity-50">...</div>
+            </div>
+
+            <!-- Header -->
+            <header class="h-[56px] flex items-center justify-center px-4 bg-white border-b border-ghost z-20 shrink-0">
+                <div class="w-[120px] h-[20px] rounded-[6px] shimmer"></div>
+            </header>
+
+            <div class="flex-1 p-[16px] flex flex-col gap-[16px] overflow-hidden">
+                
+                <!-- Hero Card -->
+                <div class="bg-white rounded-xl p-[24px] flex items-center gap-[16px] shadow-sm">
+                    <div class="w-[96px] h-[96px] rounded-full shimmer shrink-0"></div>
+                    <div class="flex flex-col gap-[10px]">
+                        <div class="w-[120px] h-[24px] rounded-[6px] shimmer"></div>
+                        <div class="w-[80px] h-[16px] rounded-[6px] shimmer"></div>
+                        <div class="w-[100px] h-[12px] rounded-[6px] shimmer"></div>
+                    </div>
+                </div>
+
+                <!-- Stats Bar -->
+                <div class="bg-white rounded-xl p-[16px] flex items-center shadow-sm">
+                    <div class="flex-1 flex flex-col items-center gap-[8px]">
+                        <div class="w-[40px] h-[20px] rounded-[6px] shimmer"></div>
+                        <div class="w-[30px] h-[10px] rounded-[6px] shimmer"></div>
+                    </div>
+                    <div class="w-[1px] h-[30px] bg-ghost/50"></div>
+                    <div class="flex-1 flex flex-col items-center gap-[8px]">
+                        <div class="w-[40px] h-[20px] rounded-[6px] shimmer"></div>
+                        <div class="w-[30px] h-[10px] rounded-[6px] shimmer"></div>
+                    </div>
+                    <div class="w-[1px] h-[30px] bg-ghost/50"></div>
+                    <div class="flex-1 flex flex-col items-center gap-[8px]">
+                        <div class="w-[40px] h-[20px] rounded-[6px] shimmer"></div>
+                        <div class="w-[30px] h-[10px] rounded-[6px] shimmer"></div>
+                    </div>
+                    <div class="w-[1px] h-[30px] bg-ghost/50"></div>
+                    <div class="flex-1 flex flex-col items-center gap-[8px]">
+                        <div class="w-[40px] h-[20px] rounded-[6px] shimmer"></div>
+                        <div class="w-[30px] h-[10px] rounded-[6px] shimmer"></div>
+                    </div>
+                </div>
+
+                <!-- Badges Row -->
+                <div class="bg-white rounded-xl p-[16px] shadow-sm">
+                    <div class="w-[80px] h-[14px] rounded-[6px] shimmer mb-[16px]"></div>
+                    <div class="flex flex-wrap gap-[8px]">
+                        <div class="w-[90px] h-[24px] rounded-full shimmer"></div>
+                        <div class="w-[110px] h-[24px] rounded-full shimmer"></div>
+                        <div class="w-[80px] h-[24px] rounded-full shimmer"></div>
+                        <div class="w-[120px] h-[24px] rounded-full shimmer"></div>
+                        <div class="w-[100px] h-[24px] rounded-full shimmer"></div>
+                        <div class="w-[80px] h-[24px] rounded-full shimmer"></div>
+                    </div>
+                </div>
+
+                <!-- Menu List -->
+                <div class="bg-white rounded-xl flex flex-col shadow-sm">
+                    <!-- Row 1 -->
+                    <div class="h-[52px] px-[16px] flex items-center justify-between border-b border-ghost/50">
+                        <div class="w-[100px] h-[16px] rounded-[6px] shimmer"></div>
+                        <div class="w-[12px] h-[12px] rounded-[6px] shimmer"></div>
+                    </div>
+                    <!-- Row 2 -->
+                    <div class="h-[52px] px-[16px] flex items-center justify-between border-b border-ghost/50">
+                        <div class="w-[80px] h-[16px] rounded-[6px] shimmer"></div>
+                        <div class="w-[12px] h-[12px] rounded-[6px] shimmer"></div>
+                    </div>
+                    <!-- Row 3 -->
+                    <div class="h-[52px] px-[16px] flex items-center justify-between border-b border-ghost/50">
+                        <div class="w-[120px] h-[16px] rounded-[6px] shimmer"></div>
+                        <div class="w-[12px] h-[12px] rounded-[6px] shimmer"></div>
+                    </div>
+                    <!-- Row 4 -->
+                    <div class="h-[52px] px-[16px] flex items-center justify-between border-b border-ghost/50">
+                        <div class="w-[90px] h-[16px] rounded-[6px] shimmer"></div>
+                        <div class="w-[12px] h-[12px] rounded-[6px] shimmer"></div>
+                    </div>
+                    <!-- Row 5 -->
+                    <div class="h-[52px] px-[16px] flex items-center justify-between border-b border-ghost/50">
+                        <div class="w-[110px] h-[16px] rounded-[6px] shimmer"></div>
+                        <div class="w-[12px] h-[12px] rounded-[6px] shimmer"></div>
+                    </div>
+                    <!-- Row 6 -->
+                    <div class="h-[52px] px-[16px] flex items-center justify-between border-b border-ghost/50">
+                        <div class="w-[80px] h-[16px] rounded-[6px] shimmer"></div>
+                        <div class="w-[12px] h-[12px] rounded-[6px] shimmer"></div>
+                    </div>
+                    <!-- Row 7 -->
+                    <div class="h-[52px] px-[16px] flex items-center justify-between">
+                        <div class="w-[100px] h-[16px] rounded-[6px] shimmer"></div>
+                        <div class="w-[12px] h-[12px] rounded-[6px] shimmer"></div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 4: GAMES HUB SKELETON                    -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">4. Games Hub Skeleton</span>
+        <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0">
+                <span>9:41</span>
+                <div class="flex gap-1 items-center pb-0.5 opacity-50">...</div>
+            </div>
+
+            <!-- Header -->
+            <header class="h-[64px] flex items-center px-4 bg-white border-b border-ghost z-20 shrink-0">
+                <div class="w-[100px] h-[24px] rounded-[6px] shimmer"></div>
+            </header>
+
+            <div class="flex-1 p-[16px] flex flex-col gap-[16px]">
+                
+                <!-- 2x2 Grid -->
+                <div class="grid grid-cols-2 gap-[16px]">
+                    
+                    <!-- Card 1 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+                        <div class="w-full h-[120px] rounded-t-xl shimmer"></div>
+                        <div class="p-[16px] flex flex-col gap-[8px]">
+                            <div class="w-[100px] h-[16px] rounded-[6px] shimmer"></div>
+                            <div class="w-[80px] h-[12px] rounded-[6px] shimmer"></div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+                        <div class="w-full h-[120px] rounded-t-xl shimmer"></div>
+                        <div class="p-[16px] flex flex-col gap-[8px]">
+                            <div class="w-[90px] h-[16px] rounded-[6px] shimmer"></div>
+                            <div class="w-[70px] h-[12px] rounded-[6px] shimmer"></div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+                        <div class="w-full h-[120px] rounded-t-xl shimmer"></div>
+                        <div class="p-[16px] flex flex-col gap-[8px]">
+                            <div class="w-[110px] h-[16px] rounded-[6px] shimmer"></div>
+                            <div class="w-[80px] h-[12px] rounded-[6px] shimmer"></div>
+                        </div>
+                    </div>
+
+                    <!-- Card 4 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+                        <div class="w-full h-[120px] rounded-t-xl shimmer"></div>
+                        <div class="p-[16px] flex flex-col gap-[8px]">
+                            <div class="w-[80px] h-[16px] rounded-[6px] shimmer"></div>
+                            <div class="w-[60px] h-[12px] rounded-[6px] shimmer"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <!-- Bottom Nav Skeleton Area -->
+            <div class="h-[80px] bg-white border-t border-ghost shrink-0"></div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 5: FULL PAGE LOADING SCREEN              -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3 pb-12">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">5. Full Page Loading Screen</span>
+        <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl items-center justify-center">
+            
+            <div class="flex flex-col items-center">
+                <!-- Branding -->
+                <div class="flex flex-col items-center mb-[40px]">
+                    <span class="font-serif text-[20px] font-bold text-ink tracking-tight">moveee</span>
+                    <span class="font-sans text-[9px] font-bold text-gold uppercase tracking-widest mt-0.5">connect</span>
+                </div>
+
+                <!-- Animated Ring Spinner -->
+                <div class="relative w-[32px] h-[32px] mb-[12px]">
+                    <svg class="w-[32px] h-[32px] animate-spin-custom" viewBox="0 0 32 32">
+                        <!-- 270 degree arc: Circumference of r=14 is ~88. 75% of 88 is ~66 -->
+                        <circle 
+                            cx="16" cy="16" r="14" 
+                            fill="none" 
+                            stroke="#C5491F" 
+                            stroke-width="2" 
+                            stroke-linecap="round"
+                            stroke-dasharray="66 88" 
+                            stroke-dashoffset="0"
+                        ></circle>
+                    </svg>
+                </div>
+
+                <!-- Text -->
+                <span class="font-mono text-[10px] text-mute">Loading...</span>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1635,64 +1635,308 @@ Arrange all 9 components on a large canvas with the dimmed app background behind
 
 ```
 Senior mobile UX/UI designer — Moveee Connect dark mode. iOS, 390×844px.
-Redesign 3 key screens in dark mode. Maintain all layout and spacing — only change colours.
+Produce 8 frames showing the full app in dark mode. All layouts, spacing, and typography
+are IDENTICAL to light mode — only colours change. Do not redesign any layout.
 
-DARK MODE PALETTE (use these exact values — do not use generic greys):
-Background: #1A1612 (warm near-black with brown undertone — NOT pure black)
-Card surface: #242018 (slightly lighter)
-Elevated surface: #2D2820 (modals, sheets)
-Border: #3D3530 (subtle separators)
-Text primary: #F3ECE0 (paper-warm — same warm tone as light mode background, inverted)
-Text secondary: #9E9288 (warm muted)
-Text ghost/disabled: #5C5349 (very muted)
-Ochre (dark mode): #D4603A (slightly brighter for visibility on dark bg)
-Gold (dark mode): #C9963F (slightly brighter)
-Success: #4ADE80
-Error: #F87171
-Warning: #FB923C
+════════════════════════════════════════════
+DARK MODE COLOUR SYSTEM (use exact values — no generic greys)
+════════════════════════════════════════════
+Page background:   #1A1612  (warm near-black, brown undertone — NOT pure black)
+Card surface:      #242018  (primary card/row fill)
+Elevated surface:  #2D2820  (modals, bottom sheets, toasts)
+Subtle surface:    #201C15  (section headers, sticky bars)
+Border:            #3D3530  (all separators, card outlines)
+Text primary:      #F3ECE0  (inverted paper-warm)
+Text secondary:    #9E9288  (warm muted)
+Text ghost:        #5C5349  (timestamps, placeholders)
+Ochre accent:      #D4603A  (active states, FAB, CTAs — slightly brighter than light mode)
+Gold accent:       #C9963F  (Pro badge, reputation — slightly brighter)
+Success:           #4ADE80
+Error:             #F87171
+Warning:           #FB923C
 
-FRAME 1 — CONNECT FEED (dark mode):
+TYPE BADGE DARK ADJUSTMENTS (keep pill shape, adjust bg for dark surface):
+  Editorial:   bg #3B2820  text #E8836A
+  Community:   bg #1F2F1F  text #6FCF8A  left border #4A9F4A
+  Happening:   bg #1F1E38  text #8E88E8
+  Directory:   bg #162920  text #3A9E7E
+  Quote:       bg #29203A  text #B585D0
+  For You:     outline #C9963F, text #C9963F (no fill)
+
+════════════════════════════════════════════
+FRAME 1 — CONNECT FEED (dark mode)
+════════════════════════════════════════════
 Background: #1A1612
-Header: #242018 fill, border #3D3530
-"moveee connect" wordmark: "moveee" text #F3ECE0, "connect" gold #C9963F
-Notification bell: #F3ECE0 icon, ochre (#D4603A) badge
-Feed cards (editorial): no shadow, border-bottom #3D3530
-Feed cards (community): #242018 fill, shadow removed, border #3D3530
-All text → #F3ECE0 (primary) / #9E9288 (secondary) / #5C5349 (ghost)
-Type badges: adjust to dark-friendly — add slight opacity to bg or darken bg, keep text same or whiten
-Ochre fills (active pills, FAB): use #D4603A
-Bottom nav: #242018 fill, active tab #D4603A, inactive #5C5349
+Header (56px, #201C15 fill, bottom border #3D3530):
+  "moveee" Fraunces 18px bold #F3ECE0 + "connect" DM Sans 9px #C9963F below.
+  Right: bell icon #9E9288 (unread dot #D4603A), avatar 32px circle.
 
-FRAME 2 — ARTICLE DETAIL (dark mode):
-Content area: #1A1612
-White bg → #242018 (card surface)
-Body text: #F3ECE0 (paper-warm) for readability
-Pull quote border: #D4603A (ochre dark mode)
-Author row card: #242018
-Bottom bar: #242018 fill, border #3D3530
+Filter pill row (horizontal scroll, #1A1612 bg):
+  Active pill: #D4603A fill, #F3ECE0 text.
+  Inactive pill: #2D2820 fill, #3D3530 border, #9E9288 text.
 
-FRAME 3 — MEMBER DASHBOARD (dark mode):
-Background: #1A1612
-All white cards → #242018
-Stats bar dividers: #3D3530
-Badge chips: #2D2820 fill, #3D3530 border
-Quick links rows: #242018 bg, #3D3530 separators
-Passkey banner: #242018 with #D4603A left border
-Balance/credits number: #D4603A (ochre)
-Reputation number: #C9963F (gold)
-Tier badge CONNECT PRO: gold #C9963F fill (unchanged, slightly brighter)
-Avatar Pro border: #C9963F
+Show 4 feed cards (all white cards → #242018 fill, very subtle shadow on dark):
 
-Also create FRAME 4 — DARK MODE SETTINGS TOGGLE:
-Show the "Appearance" section in Member Settings:
-"Appearance" DM Sans 14px bold #F3ECE0, 16px padding.
-3 option rows (52px height, 16px padding, #3D3530 bottom border):
-  ○ Light · ● Dark (active — ochre radio fill, "Dark" bold) · ○ System default
-Radio: 20px circle, selected = #D4603A fill, unselected = #3D3530 border only.
-Text: #F3ECE0 primary, #9E9288 secondary.
-Background for this section: #242018.
+CARD A — EDITORIAL (no type badge visible, pure separator treatment):
+  Image placeholder: 16:9, radius-md, dark warm grey #2D2820.
+  Section label: #5C5349 mono 9px.
+  Headline: #F3ECE0 Fraunces 17px bold, 2 lines.
+  Subhead/excerpt: #9E9288 DM Sans 13px.
+  Author + date row: #5C5349 mono 10px.
+  Separator bottom: #3D3530.
 
-Output 4 frames in a row.
+CARD B — COMMUNITY POST (full white card → #242018):
+  Left border: 3px solid #4A9F4A (community green dark mode).
+  Header: 40px circle ghost avatar (#2D2820) + "Kemi Adeyemi" #F3ECE0 14px bold + "@kemi" #9E9288.
+  COMMUNITY badge: bg #1F2F1F text #6FCF8A.
+  Body text: #9E9288 13px 3 lines.
+  Reaction row: outline icons, counts #5C5349.
+  Report ⚑: #5C5349.
+
+CARD C — HAPPENING (event card):
+  Image: full-width, 180px, dark placeholder, radius-md.
+  HAPPENING badge: bg #1F1E38 text #8E88E8.
+  PRO ONLY overlay (if applicable): #C9963F semi-transparent.
+  Event name: #F3ECE0 15px bold.
+  Meta row: calendar + location icons #5C5349, text #9E9288.
+  RSVP pill: #D4603A fill, #F3ECE0 text.
+
+CARD D — QUOTE card:
+  " decorative mark: #4A403A (muted gold-brown).
+  Quote text: #F3ECE0 Fraunces 16px italic, 3 lines.
+  Author: #9E9288 13px.
+  Reaction bar: outline icons, #5C5349 counts.
+
+FAB: #D4603A fill, white + icon.
+Bottom nav: #201C15 fill, top border #3D3530.
+  Active tab: #D4603A icon + label.
+  Inactive tabs: #5C5349.
+
+════════════════════════════════════════════
+FRAME 2 — ARTICLE DETAIL (dark mode)
+════════════════════════════════════════════
+Full background: #1A1612.
+
+Hero image: full width × 280px, dark warm-toned placeholder, radius-2xl top corners.
+Back button: #2D2820 circle, #F3ECE0 chevron.
+
+Content card (#242018 fill, radius-2xl top corners, -24px overlap on image):
+  Eyebrow: #D4603A mono 9px uppercase.
+  Headline: #F3ECE0 Fraunces 24px bold, 2 lines.
+  Subheading: #9E9288 DM Sans 14px, 1 line.
+  Author row: 36px ghost circle (#2D2820) + name #F3ECE0 + date #5C5349.
+  Rule: #3D3530.
+  Body copy (4 paragraphs): #9E9288 DM Sans 16px, line-height 1.7.
+  Pull quote block: left border #D4603A 3px, bg #201C15, text #F3ECE0 Fraunces italic 17px.
+  Second body paragraph.
+  In-line image: full width, 200px, dark placeholder, radius-md.
+
+Bottom action bar (64px, #2D2820 fill, top border #3D3530):
+  ❤️ Save · 🔗 Share · 🔖 Bookmark — icon buttons #9E9288, active = #D4603A.
+
+════════════════════════════════════════════
+FRAME 3 — MEMBER DASHBOARD (dark mode)
+════════════════════════════════════════════
+Background: #1A1612.
+
+HERO CARD (#242018, radius-xl, 16px margin):
+  Avatar: 80px circle, #C9963F border (Pro gold), dark placeholder inside.
+  CONNECT PRO badge: #C9963F fill, #1A1612 text.
+  Display name: #F3ECE0 Fraunces 20px bold.
+  @username: #9E9288 13px.
+  Passkey banner: #2D2820 fill, left border #D4603A 3px, text #9E9288, "Set up now" #D4603A.
+
+STATS BAR (4 columns, #242018 card, radius-lg, dividers #3D3530):
+  Balance: "450 CR" #D4603A 18px bold + "Balance" #5C5349 10px mono.
+  Reputation: "280" #C9963F 18px bold + "Rep" #5C5349.
+  Tier: "Taste Maker" #F3ECE0 14px bold + "Rank" #5C5349.
+  Streak: "7🔥" #F3ECE0 14px bold + "Day streak" #5C5349.
+
+BADGES SHELF:
+  Chips: #2D2820 fill, #3D3530 border, emoji + #9E9288 label text.
+
+QUICK LINKS LIST (#242018 card):
+  6 rows (52px, #3D3530 separator):
+  Icon circle (#2D2820 fill, #9E9288 icon) + label #F3ECE0 14px + #D4603A count badge or #5C5349 chevron.
+  Example rows: 🔔 Notifications (3 unread badge) · 🛍 My Perks · 💳 Wallet · 📊 Analytics · ⚙️ Settings · 🌙 Appearance.
+
+════════════════════════════════════════════
+FRAME 4 — NOTIFICATIONS (dark mode)
+════════════════════════════════════════════
+Background: #1A1612.
+Header (56px, #201C15, border #3D3530): back chevron #F3ECE0 + "Notifications" centred #F3ECE0 + "Mark all read" #D4603A right.
+
+Section header "Today" — #5C5349 mono 9px bold uppercase, #201C15 bg, 32px sticky.
+
+5 notification rows (#242018 fill, 72px min-height, #3D3530 bottom border):
+
+Row 1 — CREDIT EARNED (read):
+  Icon circle: #D4603A fill, white coin icon.
+  Left accent border: 3px #D4603A.
+  Title: "💰 +20 Culture Points!" #F3ECE0 14px bold.
+  Body: "Your post was validated." #9E9288 13px.
+  Time: "2h ago" #5C5349 mono 10px.
+
+Row 2 — BADGE UNLOCKED (unread):
+  Icon circle: #C9963F fill, white trophy icon.
+  Left border: 3px #C9963F.
+  Title: "🏆 New badge unlocked!" #F3ECE0 14px bold.
+  Body: "You earned 'Taste Maker'" #9E9288.
+  Time + unread dot: 8px #D4603A circle right.
+
+Row 3 — COMMENT RECEIVED (unread):
+  Icon circle: #4ADE80 fill, white speech bubble icon.
+  Title: "💬 New comment on your post" #F3ECE0 14px bold.
+  Body: "Kemi: 'This is the spot! 🔥'" #9E9288, truncated.
+  Unread dot: #D4603A.
+
+Row 4 — PERK EXPIRING:
+  Icon circle: #FB923C fill, white clock icon.
+  Left border: 3px #FB923C.
+  Title: "⏰ Perk expiring soon" #F3ECE0 14px bold.
+  Body: "Your Bisi Ceramics coupon expires in 2 days." #9E9288.
+
+Row 5 — SYSTEM:
+  Icon circle: #2D2820 fill, #9E9288 bell icon.
+  Title: "📢 3 new events in your city" #F3ECE0 14px bold.
+  Body: "Upcoming events in Lagos this week." #9E9288.
+
+Section header "Earlier" + 2 more read rows in lower contrast (#5C5349 text, no left borders).
+
+════════════════════════════════════════════
+FRAME 5 — EVENTS / HAPPENINGS SCREEN (dark mode)
+════════════════════════════════════════════
+Background: #1A1612.
+Header (56px, #201C15, border #3D3530): "Events" #F3ECE0 Fraunces 20px bold centred + filter icon right #9E9288.
+
+Category filter strip (horizontal scroll, 36px pills):
+  Active: #D4603A fill, #F3ECE0 text.
+  Inactive: #2D2820 fill, #3D3530 border, #9E9288 text.
+  Pills: All · Music · Food · Art · Film · Sport
+
+3 event cards (full-width, #242018 fill, radius-xl, 12px vertical gap):
+
+CARD 1 — Featured (Pro gated):
+  Image: full-width 200px, dark warm-toned concert photo placeholder, radius-xl top.
+  PRO ONLY pill: #C9963F fill, #1A1612 text, lock icon, bottom-right of image.
+  HAPPENING badge: bg #1F1E38 text #8E88E8 — top-left over image.
+  Name: "Afro Nation Lagos" #F3ECE0 Fraunces 17px bold, 16px top padding.
+  Date/time: 📅 #9E9288 13px.
+  Location: 📍 "Eko Atlantic · Victoria Island" #9E9288 13px.
+  Admission: "₦25,000 – ₦80,000" #9E9288 12px mono.
+  RSVP pill: #D4603A fill, #F3ECE0 "RSVP" 13px bold.
+
+CARD 2 — Free event (open to all):
+  Image: 160px, dark gallery opening placeholder.
+  Name: "Afrocentric Art Pop-Up" #F3ECE0 17px bold.
+  Date, location, admission (FREE): same pattern.
+  RSVP pill: #D4603A.
+
+CARD 3 — Citizen tier event:
+  Similar structure.
+
+════════════════════════════════════════════
+FRAME 6 — SHOP PRODUCT LISTING (dark mode)
+════════════════════════════════════════════
+Background: #1A1612.
+Header: "Shop" #F3ECE0 Fraunces 20px bold centred + cart icon + count badge #D4603A.
+
+Search bar: #242018 fill, #3D3530 border, radius-full, 🔍 #5C5349 + "Search products…" #5C5349.
+
+Category scroll: same pill pattern as events.
+
+2-column product grid (8px gap, 16px horizontal padding):
+
+CARD — "Ankara Print Tote Bag":
+  Image: 160×160px, #2D2820 fill, radius-xl.
+  PRO badge (if Pro price active): gold pill top-right.
+  Product name: #F3ECE0 DM Sans 13px bold, 2 lines.
+  Price block:
+    Pro price: "₦8,500" #C9963F 14px bold.
+    Regular: "₦12,000" #5C5349 13px strikethrough.
+  "Add to cart" pill: #D4603A fill, #F3ECE0 13px bold.
+
+CARD — "Move Culture Sweat" (regular pricing, no Pro badge):
+  Same structure, single price #F3ECE0 14px bold, no strikethrough.
+
+CARD — "Silver Cowrie Cuffs" (EARLY ACCESS label):
+  EARLY ACCESS badge: #C9963F bg, #1A1612 text, top-left of image.
+  Rest same structure.
+
+CARD — "Kente Cap" (out of stock):
+  Image: same, add opacity 0.5 to image.
+  "Out of stock" label: #5C5349 italic 12px below name.
+  Add to cart pill: #2D2820 fill, #5C5349 text (disabled).
+
+════════════════════════════════════════════
+FRAME 7 — PUBLIC PROFILE (dark mode)
+════════════════════════════════════════════
+Background: #1A1612.
+
+HERO AREA (200px): warm abstract gradient on dark — #1A1612 to #242018 with subtle ochre glow.
+Back button: #242018 circle, #F3ECE0 chevron.
+
+PROFILE CARD (#242018 fill, radius-2xl top corners, overlapping hero):
+  Avatar: 96px, #C9963F border (Pro).
+  Share button: #2D2820 ghost circle, #9E9288 icon.
+  CONNECT PRO badge: #C9963F fill, #1A1612 text, ★.
+  Name: "Adaeze Obi" #F3ECE0 Fraunces 24px bold.
+  @handle, occupation, city: #9E9288 and #5C5349.
+  Member since: #5C5349 mono 10px.
+
+BADGES SHELF (horizontal scroll):
+  Chips: #2D2820 fill, #3D3530 border, emoji + #9E9288 label.
+
+SOCIAL LINKS: 3 icon circles (#2D2820 fill, #9E9288 icons).
+
+TABS (44px, bottom border #3D3530):
+  "Community" active: #D4603A underline, #F3ECE0 bold.
+  "Portfolio": #5C5349.
+
+3 community post mini-cards (#2D2820 fill, radius-lg, 16px padding):
+  Template badge (dark-adjusted) + time #5C5349 + content #9E9288 + reaction counts #5C5349.
+
+════════════════════════════════════════════
+FRAME 8 — GAMES HUB + TRIVIA QUESTION (dark mode)
+════════════════════════════════════════════
+Split view — show two side-by-side phone frames at 50% width each, or stack vertically.
+
+FRAME 8A — GAMES HUB:
+Background: #1A1612.
+Header: "Games" #F3ECE0 Fraunces 20px bold centred.
+"Daily streak: 7 🔥" JetBrains Mono 10px #9E9288 centred.
+
+2×2 game card grid (12px gap):
+Each card (#242018 fill, radius-xl):
+  Top half: icon illustration area (#2D2820 warm placeholder, radius-xl).
+  Bottom half (16px padding): game name #F3ECE0 14px bold + "Play today" #9E9288 12px.
+  PRO lock: #C9963F badge top-right if gated.
+  "Completed ✓": #4ADE80 badge if already played.
+Cards: Trivia · Who Said It · Crossword (dimmed if Pro-only) · Sudoku (dimmed).
+
+FRAME 8B — TRIVIA QUESTION (active state):
+Background: #1A1612.
+Header: back chevron #F3ECE0 + "Daily Trivia" #F3ECE0 Fraunces 18px + streak badge.
+Progress bar: 3px, #3D3530 track, #D4603A fill, question 3/10 shown.
+Category chip: #2D2820 fill, #9E9288 "Music & Culture".
+
+Question card (#242018 fill, radius-xl, 24px padding):
+  "Which decade saw Afrobeats go global?" #F3ECE0 Fraunces 20px bold.
+
+4 answer options (#2D2820 fill, radius-lg, border #3D3530, 56px height, 12px padding):
+  Option A: unselected — #3D3530 border, "A  The 1990s" #F3ECE0.
+  Option B: unselected.
+  Option C: selected CORRECT — #4ADE80 border, #1F2F1F bg, "C  The 2010s" #4ADE80 bold, ✓ icon right.
+  Option D: unselected, greyed #5C5349.
+
+Explanation card (#242018 fill, radius-lg, #D4603A left border 3px):
+  "Afrobeats reached global charts primarily in the 2010s with artists…" #9E9288 13px.
+
+"Next question →" pill: #D4603A fill, #F3ECE0.
+
+════════════════════════════════════════════
+Output 8 frames in a 2-column grid (4 rows × 2 columns).
+Label each frame with its name in JetBrains Mono 11px below the phone.
 ```
 
 ---
@@ -1700,52 +1944,235 @@ Output 4 frames in a row.
 ### PROMPT 14B — Loading & Skeleton States
 
 ```
-Senior mobile UX/UI designer — Moveee Connect loading states. iOS, 390×844px.
-Background: paper-warm #F3ECE0. Use ghost colour #C8BFB0 for skeleton shapes.
+Senior mobile UX/UI designer — Moveee Connect skeleton loading states. iOS, 390×844px.
+Light mode. Background: paper-warm #F3ECE0.
 
-Skeleton elements use: 
-Base colour #EBE5DC (slightly darker than paper-warm)
-Shimmer highlight #F3ECE0 (same as background — creates a subtle sweep effect)
-All skeleton shapes: rounded rectangles, radius-lg (6px) or radius-full for avatars/pills.
+════════════════════════════════════════════
+SKELETON COLOUR SYSTEM
+════════════════════════════════════════════
+Skeleton base:      #E0D9CE  (warm grey — slightly darker than paper-warm bg)
+Skeleton highlight: #EDE7DC  (used for shimmer sweep animation peak)
+Skeleton avatar:    #D8D1C6  (slightly darker, for circular placeholders)
+Card background:    #FFFFFF  (white, same as real cards)
+All skeleton shapes: rounded rectangles. Use radius-md (8px) for content blocks,
+radius-full for avatars, avatar badges, and pill-shaped elements.
+Skeleton image placeholders: radius-md (8px), slightly darker #D8D1C6.
 
-Generate 5 frames:
+SHIMMER ANNOTATION (place once on the frame, not per card):
+Banner label in JetBrains Mono 10px mute at top of frame:
+"Shimmer: gradient sweeps L→R over base colour, 1.4s ease-in-out loop.
+ Base #E0D9CE → Highlight #EDE7DC → Base #E0D9CE."
 
-FRAME 1 — CONNECT FEED SKELETON:
-Header: white bar with 2 grey rects (wordmark placeholder 80px wide, 2 icon placeholders right)
-Filter row: 4 ghost pill shapes horizontal (radius-full, 32px height, varying widths)
-3 card skeletons (no box — separator style):
-  Card A: full-width image rect (16:9, ghost, radius-md) + below: 3 text lines (80%, 60%, 40% width)
-  Card B (community): avatar circle (44px ghost) + 2 text rects beside it (name+handle) + 
-    3 text body lines + 2-image grid placeholder
-  Card A again with slight variation
+════════════════════════════════════════════
+FRAME 1 — CONNECT FEED SKELETON
+════════════════════════════════════════════
+Header bar (56px, white fill): 
+  Left: rect 80×14px (wordmark placeholder).
+  Right: two circles radius-full 32px (bell + avatar placeholders).
 
-FRAME 2 — ARTICLE SKELETON:
-Hero image rect: full width × 280px, ghost, radius-2xl top corners.
-Below: eyebrow rect (40×8px) + title rects 2 lines (90%, 70%) + 
-  author row (24px circle + 2 rects) + 6 body text lines (95%, 85%, 90%, 70%, 95%, 60%)
+Filter pill row (horizontal scroll, 44px height):
+  5 pill shapes radius-full, widths: 52px, 64px, 44px, 72px, 56px. 8px gap.
 
-FRAME 3 — MEMBER DASHBOARD SKELETON:
-Hero card: large circle (96px ghost) + 3 text rects stacked right.
-Stats bar: 4 equal-width rect blocks in a row (ghost, radius-md).
-Badges row: 6 pill shapes (ghost, radius-full, varying widths 80-120px).
-Menu list: 7 rows of 16px-height ghost rects + small chevron rect right.
+CARD 1 — Editorial skeleton (white card, radius-xl, 16px margin horiz, shadow-card):
+  Image rect: full card width, 180px, radius-md, #D8D1C6.
+  Below image (16px padding):
+    Eyebrow: rect 40×8px.
+    Title line 1: rect 90% width × 14px, 8px top margin.
+    Title line 2: rect 70% width × 14px, 4px top.
+    Author row: circle 24px radius-full + rect 80px×10px + gap + rect 48px×10px.
 
-FRAME 4 — GAMES HUB SKELETON:
-2×2 grid of card placeholders:
-Each: full rect top half (ghost, radius-xl) + 2 text lines bottom half.
+CARD 2 — Community skeleton (white card, radius-xl, 16px margin horiz, shadow-card):
+  Header row (16px padding): circle 40px radius-full (avatar) + right:
+    Name rect: 100px × 12px.
+    Handle rect: 60px × 10px, 4px below.
+  Badge + time row: pill 60×20px + right-aligned rect 48×10px.
+  Body text block (16px padding):
+    Line 1: 95% width × 12px.
+    Line 2: 85% width × 12px, 4px below.
+    Line 3: 60% width × 12px, 4px below.
+  Image grid: two equal rects side by side, 140px height, radius-md, #D8D1C6, 4px gap.
+  Reaction row: 3 pairs of (circle 16px + rect 24×10px), 16px gap between pairs.
 
-FRAME 5 — FULL PAGE LOADING SCREEN:
-Paper-warm full background.
-Centred:
-"moveee" Fraunces 20px bold ink + "connect" DM Sans 9px gold below.
-Ochre animated ring spinner (32px diameter, 2px stroke, 270° arc visible at this frame state)
-"Loading..." JetBrains Mono 10px mute, 12px below spinner.
+CARD 3 — Happening (Event) skeleton (white card, radius-xl):
+  Hero image rect: full width × 180px, #D8D1C6, radius-xl top corners.
+  Below (16px padding):
+    Badge pill: radius-full 70×20px.
+    Name rect: 80% × 16px, 8px top.
+    Meta row 1 (date): circle 16px + rect 120px×10px.
+    Meta row 2 (location): circle 16px + rect 140px×10px.
+    RSVP pill: radius-full 100×36px, right-aligned.
 
-ANNOTATION on all skeleton frames:
-Add a banner note: "Shimmer animation: gradient sweeps left → right, 1.4s duration, ease-in-out.
-Colours: #EBE5DC base → #F5F0E8 highlight → #EBE5DC base."
+CARD 4 — Quote skeleton (white card, radius-xl):
+  Decorative mark rect: 40×32px, radius-sm, top-left.
+  Quote body: 3 text rects (90%, 80%, 55% widths, 14px height, 4px gap).
+  Author row: rect 100px×10px.
+  Reaction row: 3 pairs (same as community).
 
-Output 5 frames. Stack vertically for easier reading.
+════════════════════════════════════════════
+FRAME 2 — ARTICLE DETAIL SKELETON
+════════════════════════════════════════════
+Hero image: full width × 280px, #D8D1C6, radius-2xl top corners.
+Back button circle: 40px radius-full, white, #D8D1C6 icon placeholder.
+
+Content card (white fill, radius-2xl top corners, -24px overlap):
+  Eyebrow: rect 60×8px, #E0D9CE.
+  Title line 1: rect 88% × 18px, 12px top.
+  Title line 2: rect 72% × 18px, 4px below.
+  Subhead: rect 65% × 13px, 8px below, lighter.
+  Author row: circle 36px radius-full + two rects (name 100px + date 60px).
+  Rule: 1px line full width.
+  Body paragraph 1 (5 lines): rects at 95%, 90%, 85%, 92%, 60% widths, 12px height, 4px gap.
+  Image placeholder: full card width × 200px, #D8D1C6, radius-md. 16px vertical margin.
+  Body paragraph 2 (4 lines): same pattern, widths 95%, 88%, 75%, 40%.
+  Pull quote block: 4px left border + rect 90% × 14px + rect 70% × 14px (indented).
+  Body paragraph 3 (3 lines).
+
+Bottom action bar (64px, white, top border):
+  3 icon circles 36px radius-full + rect 60px pill right (share CTA).
+
+════════════════════════════════════════════
+FRAME 3 — MEMBER DASHBOARD SKELETON
+════════════════════════════════════════════
+Header (56px, white): rect 60×14px centred (page title placeholder).
+
+HERO CARD (white, radius-xl, 16px margin, shadow-card):
+  Circle 80px radius-full (avatar) — centred or left depending on dashboard layout.
+  Below avatar:
+    Name rect: 140×16px centred.
+    Handle rect: 80×10px centred, 4px below.
+  Passkey banner: full-width rect 52px height, radius-md, lighter.
+
+STATS BAR (white card, radius-lg, 4 equal columns, dividers):
+  Each column: rect 40×18px (number) + rect 56×10px below (label).
+
+BADGES SHELF:
+  5 pill shapes radius-full, widths varying 80–130px, height 32px. 8px gap. Horizontal scroll hint.
+
+QUICK LINKS (white card):
+  7 rows × 52px:
+    Each row: circle 40px radius-full (icon) + rect 120px×12px (label) + circle 20px right (chevron).
+    Bottom border between rows.
+
+════════════════════════════════════════════
+FRAME 4 — EVENTS SCREEN SKELETON
+════════════════════════════════════════════
+Header (56px, white): rect 80×16px centred + filter circle right 32px.
+
+Category filter strip: 6 pills radius-full (same as Feed skeleton), widths 40–80px.
+
+3 event card skeletons (white card, radius-xl, 12px vertical gap):
+
+EVENT CARD SKELETON:
+  Hero image: full width × 200px, #D8D1C6, radius-xl top.
+  Below (16px padding):
+    Badge pill: 80×20px radius-full.
+    Name rect: 75% × 16px, 8px top.
+    Meta row 1 (date icon + text): circle 16px + rect 130px×10px.
+    Meta row 2 (location): circle 16px + rect 150px×10px.
+    Meta row 3 (admission): circle 16px + rect 100px×10px.
+    RSVP pill: radius-full 100×36px, right-aligned, lighter.
+
+════════════════════════════════════════════
+FRAME 5 — SHOP PRODUCT LISTING SKELETON
+════════════════════════════════════════════
+Header (56px, white): rect 60×16px centred + cart circle right.
+
+Search bar: full-width rect 44px height, radius-full, #E0D9CE fill.
+
+Category filter strip: 5 pills (same pattern).
+
+2-column product grid (8px gap):
+8 product card skeletons (4 rows × 2 columns):
+
+PRODUCT CARD SKELETON (white, radius-xl, shadow-card):
+  Image rect: full card width × 160px, #D8D1C6, radius-xl top.
+  Below (12px padding):
+    Product name: rect 80% × 12px.
+    Second name line: rect 55% × 12px, 4px below.
+    Price rect: rect 60px×14px bold-weight.
+    Strikethrough price rect: rect 48px×10px, 4px below (lighter, for Pro price state).
+    Add to cart: rect 100% × 36px, radius-full.
+
+════════════════════════════════════════════
+FRAME 6 — PUBLIC PROFILE SKELETON
+════════════════════════════════════════════
+Hero area (200px): #E0D9CE gradient block, rounded top none.
+Back button: circle 40px white.
+
+Profile card (white, radius-2xl top, -24px overlap with hero):
+  Avatar circle: 96px radius-full, #D8D1C6, centred, overlapping hero.
+  Tier badge pill: 80×24px radius-full, centred, 12px below avatar.
+  Name rect: 160×18px centred.
+  Handle rect: 80×10px centred, 4px below.
+  Occupation rect: 140×12px centred.
+  City rect: 80×10px centred, 4px below.
+  Since rect: 100×8px centred.
+
+Badges shelf: 5 pills radius-full, widths 80–120px, 32px height.
+Social links: 3 circles 36px radius-full, centred.
+
+Tabs row (44px): 2 rect blocks equal width.
+
+Community posts (3 mini-card skeletons):
+  Each (white, radius-lg):
+    Badge + time row: pill 60×16px + rect 48×10px right.
+    Body: 2 text rects (90%, 65% widths).
+    Reaction row: 3 small pairs.
+
+════════════════════════════════════════════
+FRAME 7 — NOTIFICATIONS SKELETON
+════════════════════════════════════════════
+Header (56px, white): back circle + rect 100px centred + rect 80px right (mark-read CTA).
+
+Section header "Today" — rect 60×8px, 32px height block.
+
+5 notification row skeletons (72px min-height, bottom border):
+  Left: circle 40px radius-full (type icon).
+  Middle: 
+    Title rect: 200px×14px.
+    Body rect: 240px×12px, 4px below. (Slightly narrower on some rows for variation.)
+  Right: rect 32px×10px (time) + optional circle 8px (unread dot) below.
+
+Section header "Earlier" + 2 more shorter rows.
+
+════════════════════════════════════════════
+FRAME 8 — GAMES HUB SKELETON
+════════════════════════════════════════════
+Header (56px, white): rect 80×16px centred.
+Streak rect: 120×10px centred, 4px below (mono).
+
+2×2 game card grid (12px gap):
+Each card (white, radius-xl):
+  Top half rect: full width × 140px, #D8D1C6, radius-xl top.
+  Bottom half (16px padding):
+    Game name rect: 80% × 14px.
+    Subtitle rect: 60% × 10px, 4px below.
+    Play button: rect 90%×36px, radius-full.
+
+════════════════════════════════════════════
+FRAME 9 — FULL-APP SPLASH / INITIAL LOADING SCREEN
+════════════════════════════════════════════
+Full background: paper-warm #F3ECE0.
+Centred vertically and horizontally:
+
+Logo lockup:
+  "moveee" Fraunces 28px bold #14110D.
+  "connect" DM Sans 10px letter-spacing 0.2em #B38238 (gold), 6px below.
+
+32px below logo lockup:
+  Animated ring spinner: 40px diameter, 2.5px stroke.
+  Stroke: ochre #C5491F arc 270° visible, remaining 90° transparent.
+  (Show spinner paused at the 270° state to represent mid-animation.)
+
+16px below spinner:
+  "Loading your culture…" JetBrains Mono 11px #9E9288.
+
+Bottom of screen:
+  "Moveee Connect" DM Sans 10px #C8BFB0, centred, 32px from bottom.
+
+════════════════════════════════════════════
+Output 9 frames in a 3-column grid (3 rows × 3 columns).
+Label each frame below in JetBrains Mono 11px mute.
 ```
 
 ---

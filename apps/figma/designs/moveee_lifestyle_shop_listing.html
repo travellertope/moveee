@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Lifestyle Shop Listing</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ochre: '#C5491F',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        ghost: '#C8BFB0',
+                        'paper-deep': '#F5F5F5',
+                        gold: '#B38238',
+                        mute: '#7A6F5C',
+                        'paper-warm': '#F3ECE0',
+                        'error-red': '#C62828',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            background-color: #E5E5E5; 
+            margin: 0; 
+            padding: 40px; 
+            display: flex;
+            justify-content: center;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="flex flex-wrap xl:flex-nowrap justify-center gap-10 font-sans text-ink">
+
+    <!-- ============================================== -->
+    <!-- FRAME 1: GRID VIEW                             -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">1. Grid View</span>
+        <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <!-- Header (Fixed at top) -->
+            <div class="bg-white z-30 shrink-0 border-b border-ghost pb-2">
+                <!-- Status Bar Mock -->
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <!-- Nav Bar -->
+                <header class="flex items-center justify-between px-4 h-[44px]">
+                    <button class="text-ink w-[24px] h-[24px] flex items-center justify-center">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h1 class="font-serif text-[18px] font-bold text-ink text-center flex-1">Ceramics</h1>
+                    <button class="relative text-ink w-[24px] h-[24px] flex items-center justify-center">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                        <span class="absolute -top-1 -right-1 w-[14px] h-[14px] bg-ochre rounded-full flex items-center justify-center text-white font-mono text-[8px]">2</span>
+                    </button>
+                </header>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="bg-white z-20 shrink-0 border-b border-ghost pb-2">
+                <!-- Row 1: Categories -->
+                <div class="px-[16px] py-[10px] flex items-center gap-[8px] overflow-x-auto hide-scrollbar whitespace-nowrap">
+                    <button class="h-[36px] px-[12px] rounded-full bg-ochre text-white text-[13px] font-bold">Ceramics</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Textiles</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Leather</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Jewellery</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Objects</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Paper</button>
+                </div>
+                <!-- Row 2: Sort/Filter & View Toggle -->
+                <div class="px-[16px] h-[44px] flex items-center justify-between">
+                    <div class="flex gap-2">
+                        <button class="h-[32px] px-[12px] rounded-full border border-ghost text-ink-soft text-[12px] flex items-center gap-1">Sort: Featured <span class="text-[8px] mt-0.5">▼</span></button>
+                        <button class="h-[32px] px-[12px] rounded-full border border-ghost text-ink-soft text-[12px] flex items-center gap-1">Filter <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg></button>
+                    </div>
+                    <!-- View Toggles -->
+                    <div class="flex gap-1 bg-paper-deep p-1 rounded-lg">
+                        <button class="w-[28px] h-[28px] bg-ink rounded flex items-center justify-center text-white shadow-sm">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/></svg>
+                        </button>
+                        <button class="w-[28px] h-[28px] rounded flex items-center justify-center text-ink hover:bg-white hover:shadow-sm">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Scroll Area -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-[40px]">
+                
+                <!-- Results Count -->
+                <div class="px-[16px] py-[12px]">
+                    <span class="font-mono text-[10px] text-mute">14 products</span>
+                </div>
+
+                <!-- Product Grid -->
+                <div class="px-[16px] grid grid-cols-2 gap-x-[12px] gap-y-[16px]">
+                    
+                    <!-- Item 1 (Terracotta) -->
+                    <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#E2B19B] to-[#C5491F] relative">
+                            <div class="absolute top-2 left-2 bg-ochre text-white font-sans font-bold text-[9px] px-[8px] py-[4px] rounded-full leading-none z-10">NEW</div>
+                            <button class="absolute top-2 right-2 w-[28px] h-[28px] bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm z-10">
+                                <svg class="w-[14px] h-[14px] text-ink" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            </button>
+                        </div>
+                        <div class="px-[16px] pt-[16px] flex flex-col flex-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Bisi Ceramics</span>
+                            <h4 class="font-sans text-[13px] font-bold text-ink mb-[12px] line-clamp-2 min-h-[36px]">Terracotta Ritual Bowl</h4>
+                            <div class="mt-auto flex justify-between items-end">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">£68</span>
+                                </div>
+                                <button class="w-[28px] h-[28px] bg-paper-deep rounded-full flex items-center justify-center text-ink shrink-0 hover:bg-ochre hover:text-white transition-colors">
+                                    <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 2 (Indigo) -->
+                    <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#4B6CB7] to-[#182848] relative">
+                            <div class="absolute top-2 left-2 bg-gold text-white font-sans font-bold text-[9px] px-[8px] py-[4px] rounded-full leading-none z-10 shadow-sm">PRO EARLY ACCESS</div>
+                            <button class="absolute top-2 right-2 w-[28px] h-[28px] bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm z-10">
+                                <svg class="w-[14px] h-[14px] text-error-red" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            </button>
+                        </div>
+                        <div class="px-[16px] pt-[16px] flex flex-col flex-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Adire Studio</span>
+                            <h4 class="font-sans text-[13px] font-bold text-ink mb-[12px] line-clamp-2 min-h-[36px]">Indigo Resist-Dye Throw</h4>
+                            <div class="mt-auto flex justify-between items-end">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">£145</span>
+                                </div>
+                                <button class="w-[28px] h-[28px] bg-paper-deep rounded-full flex items-center justify-center text-ink shrink-0 hover:bg-ochre hover:text-white transition-colors">
+                                    <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 3 (Leather) -->
+                    <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#8E54E9] to-[#4776E6] relative">
+                            <div class="absolute bottom-2 left-2 bg-ink/70 backdrop-blur-sm text-white font-sans font-bold text-[9px] px-[8px] py-[4px] rounded-full leading-none z-10">ONLY 3 LEFT</div>
+                            <button class="absolute top-2 right-2 w-[28px] h-[28px] bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm z-10">
+                                <svg class="w-[14px] h-[14px] text-ink" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            </button>
+                        </div>
+                        <div class="px-[16px] pt-[16px] flex flex-col flex-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Craft Co</span>
+                            <h4 class="font-sans text-[13px] font-bold text-ink mb-[12px] line-clamp-2 min-h-[36px]">Leather Card Holder</h4>
+                            <div class="mt-auto flex justify-between items-end">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">£42</span>
+                                </div>
+                                <button class="w-[28px] h-[28px] bg-paper-deep rounded-full flex items-center justify-center text-ink shrink-0 hover:bg-ochre hover:text-white transition-colors">
+                                    <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 4 (Silver - SALE) -->
+                    <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#bdc3c7] to-[#2c3e50] relative">
+                            <div class="absolute top-2 left-2 bg-error-red text-white font-sans font-bold text-[9px] px-[8px] py-[4px] rounded-full leading-none z-10">SALE</div>
+                            <button class="absolute top-2 right-2 w-[28px] h-[28px] bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm z-10">
+                                <svg class="w-[14px] h-[14px] text-ink" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            </button>
+                        </div>
+                        <div class="px-[16px] pt-[16px] flex flex-col flex-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Atelier Nne</span>
+                            <h4 class="font-sans text-[13px] font-bold text-ink mb-[12px] line-clamp-2 min-h-[36px]">Oxidised Silver Cuff</h4>
+                            <div class="mt-auto flex justify-between items-end">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[13px] text-ghost line-through">£150</span>
+                                    <span class="font-sans text-[14px] font-bold text-ochre">£112</span>
+                                </div>
+                                <button class="w-[28px] h-[28px] bg-paper-deep rounded-full flex items-center justify-center text-ink shrink-0 hover:bg-ochre hover:text-white transition-colors">
+                                    <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 5 (Paper) -->
+                    <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#EAECC6] to-[#2BC0E4] relative">
+                            <div class="absolute top-2 left-2 bg-ochre text-white font-sans font-bold text-[9px] px-[8px] py-[4px] rounded-full leading-none z-10">NEW</div>
+                            <button class="absolute top-2 right-2 w-[28px] h-[28px] bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm z-10">
+                                <svg class="w-[14px] h-[14px] text-ink" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            </button>
+                        </div>
+                        <div class="px-[16px] pt-[16px] flex flex-col flex-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Paper Works Lagos</span>
+                            <h4 class="font-sans text-[13px] font-bold text-ink mb-[12px] line-clamp-2 min-h-[36px]">Hand-Bound Journal</h4>
+                            <div class="mt-auto flex justify-between items-end">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">£28</span>
+                                </div>
+                                <button class="w-[28px] h-[28px] bg-paper-deep rounded-full flex items-center justify-center text-ink shrink-0 hover:bg-ochre hover:text-white transition-colors">
+                                    <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 6 (Brass) -->
+                    <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#F2C94C] to-[#F2994A] relative">
+                            <button class="absolute top-2 right-2 w-[28px] h-[28px] bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm z-10">
+                                <svg class="w-[14px] h-[14px] text-ink" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            </button>
+                        </div>
+                        <div class="px-[16px] pt-[16px] flex flex-col flex-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Objects Lagos</span>
+                            <h4 class="font-sans text-[13px] font-bold text-ink mb-[12px] line-clamp-2 min-h-[36px]">Brass Incense Holder</h4>
+                            <div class="mt-auto flex justify-between items-end">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">£55</span>
+                                </div>
+                                <button class="w-[28px] h-[28px] bg-paper-deep rounded-full flex items-center justify-center text-ink shrink-0 hover:bg-ochre hover:text-white transition-colors">
+                                    <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 7 (Batik) -->
+                    <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#FF9A9E] to-[#FECFEF] relative">
+                            <button class="absolute top-2 right-2 w-[28px] h-[28px] bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm z-10">
+                                <svg class="w-[14px] h-[14px] text-ink" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            </button>
+                        </div>
+                        <div class="px-[16px] pt-[16px] flex flex-col flex-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Adire Studio</span>
+                            <h4 class="font-sans text-[13px] font-bold text-ink mb-[12px] line-clamp-2 min-h-[36px]">Batik Throw Cushion</h4>
+                            <div class="mt-auto flex justify-between items-end">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">£89</span>
+                                </div>
+                                <button class="w-[28px] h-[28px] bg-paper-deep rounded-full flex items-center justify-center text-ink shrink-0 hover:bg-ochre hover:text-white transition-colors">
+                                    <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 8 (Basket - PRO PRICE) -->
+                    <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col relative pb-[16px]">
+                        <div class="w-full aspect-square bg-gradient-to-tr from-[#A66C52] to-[#E2A684] relative">
+                            <button class="absolute top-2 right-2 w-[28px] h-[28px] bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm z-10">
+                                <svg class="w-[14px] h-[14px] text-ink" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            </button>
+                        </div>
+                        <div class="px-[16px] pt-[16px] flex flex-col flex-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[4px] line-clamp-1">Craft Co</span>
+                            <h4 class="font-sans text-[13px] font-bold text-ink mb-[12px] line-clamp-2 min-h-[36px]">Woven Hand Basket</h4>
+                            <div class="mt-auto flex justify-between items-end">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink">£65</span>
+                                    <span class="font-sans text-[12px] text-gold mt-[2px]">£58 ★</span>
+                                </div>
+                                <button class="w-[28px] h-[28px] bg-paper-deep rounded-full flex items-center justify-center text-ink shrink-0 hover:bg-ochre hover:text-white transition-colors">
+                                    <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 2: LIST VIEW                             -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">2. List View</span>
+        <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <!-- Header (Fixed at top) -->
+            <div class="bg-white z-30 shrink-0 border-b border-ghost pb-2">
+                <!-- Status Bar Mock -->
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <!-- Nav Bar -->
+                <header class="flex items-center justify-between px-4 h-[44px]">
+                    <button class="text-ink w-[24px] h-[24px] flex items-center justify-center">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h1 class="font-serif text-[18px] font-bold text-ink text-center flex-1">Ceramics</h1>
+                    <button class="relative text-ink w-[24px] h-[24px] flex items-center justify-center">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                        <span class="absolute -top-1 -right-1 w-[14px] h-[14px] bg-ochre rounded-full flex items-center justify-center text-white font-mono text-[8px]">2</span>
+                    </button>
+                </header>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="bg-white z-20 shrink-0 border-b border-ghost pb-2">
+                <!-- Row 1: Categories -->
+                <div class="px-[16px] py-[10px] flex items-center gap-[8px] overflow-x-auto hide-scrollbar whitespace-nowrap">
+                    <button class="h-[36px] px-[12px] rounded-full bg-ochre text-white text-[13px] font-bold">Ceramics</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Textiles</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Leather</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Jewellery</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Objects</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Paper</button>
+                </div>
+                <!-- Row 2: Sort/Filter & View Toggle -->
+                <div class="px-[16px] h-[44px] flex items-center justify-between">
+                    <div class="flex gap-2">
+                        <button class="h-[32px] px-[12px] rounded-full border border-ghost text-ink-soft text-[12px] flex items-center gap-1">Sort: Featured <span class="text-[8px] mt-0.5">▼</span></button>
+                        <button class="h-[32px] px-[12px] rounded-full border border-ghost text-ink-soft text-[12px] flex items-center gap-1">Filter <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg></button>
+                    </div>
+                    <!-- View Toggles (List Active) -->
+                    <div class="flex gap-1 bg-paper-deep p-1 rounded-lg">
+                        <button class="w-[28px] h-[28px] rounded flex items-center justify-center text-ink hover:bg-white hover:shadow-sm">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/></svg>
+                        </button>
+                        <button class="w-[28px] h-[28px] bg-ink rounded flex items-center justify-center text-white shadow-sm">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Scroll Area -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-[40px]">
+                
+                <!-- Results Count -->
+                <div class="px-[16px] py-[12px]">
+                    <span class="font-mono text-[10px] text-mute">14 products</span>
+                </div>
+
+                <!-- Product List -->
+                <div class="px-[16px] flex flex-col gap-[8px]">
+                    
+                    <!-- Item 1 (Terracotta) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex items-stretch gap-[12px]">
+                        <div class="w-[100px] h-[100px] rounded-lg bg-gradient-to-tr from-[#E2B19B] to-[#C5491F] shrink-0 relative">
+                             <div class="absolute top-1 left-1 bg-ochre text-white font-sans font-bold text-[8px] px-1.5 py-0.5 rounded-sm leading-none">NEW</div>
+                        </div>
+                        <div class="flex flex-col flex-1 py-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[2px] line-clamp-1">Bisi Ceramics</span>
+                            <h4 class="font-sans text-[14px] font-bold text-ink line-clamp-2 leading-snug">Terracotta Ritual Bowl</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-1 mt-[2px]">Hand-thrown clay bowl with natural finish.</p>
+                            
+                            <div class="mt-auto flex justify-between items-end pt-2">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[15px] font-bold text-ink">£68</span>
+                                </div>
+                                <button class="px-[16px] h-[32px] bg-ochre rounded-full text-white font-sans text-[11px] font-bold shrink-0">Add to bag</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 2 (Indigo) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex items-stretch gap-[12px]">
+                        <div class="w-[100px] h-[100px] rounded-lg bg-gradient-to-tr from-[#4B6CB7] to-[#182848] shrink-0 relative"></div>
+                        <div class="flex flex-col flex-1 py-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[2px] line-clamp-1">Adire Studio</span>
+                            <h4 class="font-sans text-[14px] font-bold text-ink line-clamp-2 leading-snug">Indigo Resist-Dye Throw</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-1 mt-[2px]">Traditional Yoruba dyeing technique.</p>
+                            
+                            <div class="mt-auto flex justify-between items-end pt-2">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[15px] font-bold text-ink">£145</span>
+                                    <span class="font-sans text-[11px] text-gold mt-[1px]">£130 for Pro ★</span>
+                                </div>
+                                <button class="px-[16px] h-[32px] bg-ochre rounded-full text-white font-sans text-[11px] font-bold shrink-0">Add to bag</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 3 (Leather) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex items-stretch gap-[12px]">
+                        <div class="w-[100px] h-[100px] rounded-lg bg-gradient-to-tr from-[#8E54E9] to-[#4776E6] shrink-0 relative">
+                            <div class="absolute bottom-1 left-1 bg-ink/70 backdrop-blur-sm text-white font-sans font-bold text-[8px] px-1.5 py-0.5 rounded-sm leading-none">3 LEFT</div>
+                        </div>
+                        <div class="flex flex-col flex-1 py-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[2px] line-clamp-1">Craft Co</span>
+                            <h4 class="font-sans text-[14px] font-bold text-ink line-clamp-2 leading-snug">Leather Card Holder</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-1 mt-[2px]">Vegetable-tanned leather, hand stitched.</p>
+                            
+                            <div class="mt-auto flex justify-between items-end pt-2">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[15px] font-bold text-ink">£42</span>
+                                </div>
+                                <button class="px-[16px] h-[32px] bg-ochre rounded-full text-white font-sans text-[11px] font-bold shrink-0">Add to bag</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 4 (Silver) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex items-stretch gap-[12px]">
+                        <div class="w-[100px] h-[100px] rounded-lg bg-gradient-to-tr from-[#bdc3c7] to-[#2c3e50] shrink-0 relative">
+                             <div class="absolute top-1 left-1 bg-error-red text-white font-sans font-bold text-[8px] px-1.5 py-0.5 rounded-sm leading-none">SALE</div>
+                        </div>
+                        <div class="flex flex-col flex-1 py-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[2px] line-clamp-1">Atelier Nne</span>
+                            <h4 class="font-sans text-[14px] font-bold text-ink line-clamp-2 leading-snug">Oxidised Silver Cuff</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-1 mt-[2px]">Minimalist hammered texture.</p>
+                            
+                            <div class="mt-auto flex justify-between items-end pt-2">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[15px] font-bold text-ochre">£112</span>
+                                </div>
+                                <button class="px-[16px] h-[32px] bg-ochre rounded-full text-white font-sans text-[11px] font-bold shrink-0">Add to bag</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 5 (Paper) -->
+                    <div class="bg-white rounded-xl shadow-card p-[12px] flex items-stretch gap-[12px]">
+                        <div class="w-[100px] h-[100px] rounded-lg bg-gradient-to-tr from-[#EAECC6] to-[#2BC0E4] shrink-0 relative"></div>
+                        <div class="flex flex-col flex-1 py-1">
+                            <span class="font-sans text-[9px] font-bold text-mute uppercase tracking-wider mb-[2px] line-clamp-1">Paper Works Lagos</span>
+                            <h4 class="font-sans text-[14px] font-bold text-ink line-clamp-2 leading-snug">Hand-Bound Journal</h4>
+                            <p class="font-sans text-[12px] text-ink-soft line-clamp-1 mt-[2px]">Recycled cotton paper, lay-flat bind.</p>
+                            
+                            <div class="mt-auto flex justify-between items-end pt-2">
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[15px] font-bold text-ink">£28</span>
+                                </div>
+                                <button class="px-[16px] h-[32px] bg-ochre rounded-full text-white font-sans text-[11px] font-bold shrink-0">Add to bag</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- FRAME 3: EMPTY / NO RESULTS                    -->
+    <!-- ============================================== -->
+    <div class="flex flex-col gap-3">
+        <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">3. Empty State</span>
+        <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+            
+            <!-- Header (Fixed at top) -->
+            <div class="bg-white z-30 shrink-0 border-b border-ghost pb-2">
+                <!-- Status Bar Mock -->
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <!-- Nav Bar -->
+                <header class="flex items-center justify-between px-4 h-[44px]">
+                    <button class="text-ink w-[24px] h-[24px] flex items-center justify-center">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h1 class="font-serif text-[18px] font-bold text-ink text-center flex-1">Leather</h1>
+                    <button class="relative text-ink w-[24px] h-[24px] flex items-center justify-center">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                        <span class="absolute -top-1 -right-1 w-[14px] h-[14px] bg-ochre rounded-full flex items-center justify-center text-white font-mono text-[8px]">2</span>
+                    </button>
+                </header>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="bg-white z-20 shrink-0 border-b border-ghost pb-2">
+                <!-- Row 1: Categories -->
+                <div class="px-[16px] py-[10px] flex items-center gap-[8px] overflow-x-auto hide-scrollbar whitespace-nowrap">
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Ceramics</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Textiles</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-ochre text-white text-[13px] font-bold">Leather</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Jewellery</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Objects</button>
+                    <button class="h-[36px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[13px]">Paper</button>
+                </div>
+                <!-- Row 2: Sort/Filter & View Toggle -->
+                <div class="px-[16px] h-[44px] flex items-center justify-between">
+                    <div class="flex gap-2">
+                        <button class="h-[32px] px-[12px] rounded-full border border-ghost text-ink-soft text-[12px] flex items-center gap-1">Sort: Featured <span class="text-[8px] mt-0.5">▼</span></button>
+                        <button class="h-[32px] px-[12px] rounded-full bg-paper-deep border-ink text-ink font-bold text-[12px] flex items-center gap-1">Filter (1) <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg></button>
+                    </div>
+                    <!-- View Toggles (Grid Active) -->
+                    <div class="flex gap-1 bg-paper-deep p-1 rounded-lg">
+                        <button class="w-[28px] h-[28px] bg-ink rounded flex items-center justify-center text-white shadow-sm">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/></svg>
+                        </button>
+                        <button class="w-[28px] h-[28px] rounded flex items-center justify-center text-ink hover:bg-white hover:shadow-sm">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area (Empty State) -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col">
+                
+                <!-- Results Count -->
+                <div class="px-[16px] py-[12px]">
+                    <span class="font-mono text-[10px] text-mute">0 products</span>
+                </div>
+
+                <!-- Empty State Center -->
+                <div class="flex-1 flex flex-col items-center justify-center p-[24px] text-center pb-[100px]">
+                    <svg class="w-[64px] h-[64px] text-ghost mb-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
+
+                    <h2 class="text-ink text-[20px] font-bold font-serif mt-[20px]">No products found.</h2>
+                    
+                    <p class="text-mute text-[14px] mt-[8px] max-w-[260px] leading-relaxed">
+                        Try a different category or clear your filters.
+                    </p>
+
+                    <button class="h-[48px] w-[200px] border border-ink rounded-full text-ink font-sans text-[14px] font-bold mt-[16px] hover:bg-white transition-colors">
+                        Clear filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

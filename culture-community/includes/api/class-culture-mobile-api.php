@@ -303,6 +303,182 @@ class Culture_Mobile_API {
             'callback'            => array( __CLASS__, 'handle_request_password_reset' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
+
+        // Notifications
+        register_rest_route( 'culture/v1', '/mobile/notifications', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_notifications' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+                'args'                => array(
+                    'limit'  => array( 'default' => 20, 'sanitize_callback' => 'absint' ),
+                    'offset' => array( 'default' => 0,  'sanitize_callback' => 'absint' ),
+                ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_mark_notifications_read' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/notifications/count', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_notification_count' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Analytics
+        register_rest_route( 'culture/v1', '/mobile/analytics', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_analytics' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Wallet
+        register_rest_route( 'culture/v1', '/mobile/wallet/balance', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_wallet_balance' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/wallet/history', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_wallet_history' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'page'     => array( 'default' => 1,  'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'default' => 20, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/wallet/cashout', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_wallet_cashout' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Perks & redemptions
+        register_rest_route( 'culture/v1', '/mobile/perks', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_list_perks' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/perks/redeem', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_redeem_perk' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/perks/redemptions', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_user_redemptions' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'status' => array( 'default' => '', 'sanitize_callback' => 'sanitize_key' ),
+            ),
+        ) );
+
+        // Passkeys
+        register_rest_route( 'culture/v1', '/mobile/passkey/list', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_passkey_list' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/passkey/register-options', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_register_options' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/passkey/register-verify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_passkey_register_verify' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/passkey/delete', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_passkey_delete' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Avatar upload
+        register_rest_route( 'culture/v1', '/mobile/me/avatar', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_upload_avatar' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Portfolio
+        register_rest_route( 'culture/v1', '/mobile/portfolio', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_portfolio' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'user_id' => array( 'default' => 0, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Member community posts (with author filter for profile screen)
+        register_rest_route( 'culture/v1', '/mobile/member/(?P<id>\d+)/posts', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_member_posts' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'id'       => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'page'     => array( 'default' => 1,  'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'default' => 10, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // ── Shop endpoints (public — no auth required) ────────────────────────
+        register_rest_route( 'culture/v1', '/mobile/shop/products', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_shop_products' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'category' => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
+                'page'     => array( 'default' => 1,  'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'default' => 20, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/shop/products/(?P<id>\d+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_shop_product_detail' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/shop/categories', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_shop_categories' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/shop/vendors', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_shop_vendors' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cart', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_cart' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/cart', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_add_to_cart' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'product_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+                'quantity'   => array( 'default' => 1,    'sanitize_callback' => 'absint' ),
+            ),
+        ) );
     }
 
     // -------------------------------------------------------------------------
@@ -1537,17 +1713,187 @@ class Culture_Mobile_API {
             ? 'patron'
             : $stored_tier;
 
+        $interests = json_decode( get_user_meta( $user->ID, '_culture_interests', true ) ?: '[]', true ) ?: array();
+
         return array(
             'id'                 => (string) $user->ID,
+            'username'           => $user->user_login,
             'displayName'        => $user->display_name,
             'avatarUrl'          => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
             'tier'               => $tier,
             'city'               => get_user_meta( $user->ID, '_culture_city', true ) ?: '',
             'countryOfResidence' => get_user_meta( $user->ID, '_culture_country_of_residence', true ) ?: '',
             'occupation'         => get_user_meta( $user->ID, '_culture_occupation', true ) ?: '',
+            'bio'                => get_user_meta( $user->ID, '_culture_directory_bio', true ) ?: '',
+            'interests'          => $interests,
+            'instagram'          => get_user_meta( $user->ID, '_culture_directory_instagram', true ) ?: '',
+            'linkedin'           => get_user_meta( $user->ID, '_culture_directory_linkedin', true ) ?: '',
+            'website'            => get_user_meta( $user->ID, '_culture_directory_website', true ) ?: '',
+            'registeredAt'       => strtotime( $user->user_registered ),
             'points'             => (int) get_user_meta( $user->ID, '_culture_points', true ),
             'badges'             => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_badges( $user->ID ) : array(),
         );
+    }
+
+    // -------------------------------------------------------------------------
+    // Mobile-proxied handlers (delegate to existing REST API logic)
+    // -------------------------------------------------------------------------
+
+    public static function handle_get_notifications( $request ) {
+        $user_id = get_current_user_id();
+        $limit   = min( 50, max( 1, (int) $request->get_param( 'limit' ) ) );
+        $offset  = max( 0, (int) $request->get_param( 'offset' ) );
+        $rows    = Culture_Notifications::get_for_user( $user_id, $limit, $offset );
+        foreach ( $rows as &$row ) {
+            $row['meta'] = json_decode( $row['meta'] ?? '{}', true ) ?: array();
+        }
+        return rest_ensure_response( $rows );
+    }
+
+    public static function handle_notification_count( $request ) {
+        $user_id = get_current_user_id();
+        return rest_ensure_response( array( 'unread' => Culture_Notifications::count_unread( $user_id ) ) );
+    }
+
+    public static function handle_mark_notifications_read( $request ) {
+        $user_id         = get_current_user_id();
+        $notification_id = $request->get_param( 'notification_id' );
+        if ( $notification_id ) {
+            Culture_Notifications::mark_read( $user_id, (int) $notification_id );
+        } else {
+            Culture_Notifications::mark_all_read( $user_id );
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_analytics( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_member_analytics( $request );
+    }
+
+    public static function handle_wallet_balance( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_wallet_balance( $request );
+    }
+
+    public static function handle_wallet_history( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_wallet_history( $request );
+    }
+
+    public static function handle_wallet_cashout( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_wallet_cashout( $request );
+    }
+
+    public static function handle_list_perks( $request ) {
+        return Culture_REST_API::handle_list_perks( $request );
+    }
+
+    public static function handle_redeem_perk( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_redeem_perk( $request );
+    }
+
+    public static function handle_user_redemptions( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_user_redemptions( $request );
+    }
+
+    public static function handle_passkey_list( $request ) {
+        return Culture_REST_API::handle_passkey_list( $request );
+    }
+
+    public static function handle_passkey_register_options( $request ) {
+        return Culture_REST_API::handle_passkey_register_options( $request );
+    }
+
+    public static function handle_passkey_register_verify( $request ) {
+        return Culture_REST_API::handle_passkey_register_verify( $request );
+    }
+
+    public static function handle_passkey_delete( $request ) {
+        return Culture_REST_API::handle_passkey_delete( $request );
+    }
+
+    public static function handle_upload_avatar( $request ) {
+        $user_id = get_current_user_id();
+        $files   = $request->get_file_params();
+        $file    = $files['file'] ?? null;
+
+        if ( empty( $file ) || empty( $file['tmp_name'] ) ) {
+            return new WP_Error( 'no_file', 'No file provided.', array( 'status' => 400 ) );
+        }
+
+        if ( ! in_array( $file['type'], self::UPLOAD_ALLOWED_TYPES, true ) ) {
+            return new WP_Error( 'invalid_type', 'Only JPEG, PNG, WebP, or GIF allowed.', array( 'status' => 400 ) );
+        }
+
+        if ( $file['size'] > self::UPLOAD_MAX_BYTES ) {
+            return new WP_Error( 'too_large', 'Image must be under 8 MB.', array( 'status' => 400 ) );
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+
+        $_FILES['file']['name'] = 'avatar-' . $user_id . '-' . time() . '-' . sanitize_file_name( $file['name'] );
+        $attachment_id = media_handle_upload( 'file', 0, array(), array( 'test_form' => false ) );
+
+        if ( is_wp_error( $attachment_id ) ) {
+            return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), array( 'status' => 500 ) );
+        }
+
+        $url = wp_get_attachment_url( $attachment_id );
+        update_user_meta( $user_id, '_culture_avatar_url', $url );
+
+        return rest_ensure_response( array( 'url' => $url ) );
+    }
+
+    public static function handle_get_portfolio( $request ) {
+        $requested_user = (int) $request->get_param( 'user_id' );
+        $user_id        = $requested_user ?: get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_get_portfolio( $request );
+    }
+
+    public static function handle_get_member_posts( $request ) {
+        $author_id = (int) $request->get_param( 'id' );
+        $page      = max( 1, (int) $request->get_param( 'page' ) );
+        $per_page  = min( 20, max( 1, (int) $request->get_param( 'per_page' ) ) );
+
+        $user    = get_userdata( $author_id );
+        if ( ! $user ) {
+            return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
+        }
+
+        $viewer_id = get_current_user_id();
+        $liked_ids = (array) get_user_meta( $viewer_id, '_culture_liked_posts', true );
+
+        $query = new WP_Query( array(
+            'post_type'      => 'culture_post',
+            'post_status'    => 'publish',
+            'author'         => $author_id,
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ) );
+
+        $posts = array_map( function( $post ) use ( $liked_ids ) {
+            return self::format_community_post( $post, $liked_ids );
+        }, $query->posts );
+
+        return rest_ensure_response( array(
+            'posts'   => $posts,
+            'hasMore' => $query->found_posts > ( $page * $per_page ),
+        ) );
     }
 
     private static function format_community_post( WP_Post $post, array $liked_ids ): array {
@@ -1585,5 +1931,362 @@ class Culture_Mobile_API {
             'food_rating_value'   => (int) get_post_meta( $post->ID, '_food_rating_value', true ),
             'food_rating_vibe'    => (int) get_post_meta( $post->ID, '_food_rating_vibe', true ),
         );
+    }
+
+    // ── Shop handlers ─────────────────────────────────────────────────────────
+
+    public static function handle_shop_products( $request ) {
+        global $wpdb;
+
+        if ( ! function_exists( 'wc_get_product' ) ) {
+            return rest_ensure_response( array( 'products' => array(), 'total' => 0, 'pages' => 0, 'page' => 1 ) );
+        }
+
+        $category = sanitize_text_field( $request->get_param( 'category' ) );
+        $page     = max( 1, (int) $request->get_param( 'page' ) );
+        $per_page = min( 50, max( 1, (int) $request->get_param( 'per_page' ) ) );
+
+        $user   = wp_get_current_user();
+        $is_pro = $user->ID && in_array( 'patron', (array) $user->roles, true );
+
+        $query_args = array(
+            'post_type'      => 'product',
+            'post_status'    => 'publish',
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        );
+
+        if ( $category ) {
+            $query_args['tax_query'] = array( array(
+                'taxonomy' => 'product_cat',
+                'field'    => 'slug',
+                'terms'    => $category,
+            ) );
+        }
+
+        $q        = new WP_Query( $query_args );
+        $products = array();
+        $currency_symbol = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol() ) : '£';
+        $currency        = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
+
+        foreach ( $q->posts as $post ) {
+            $wc = wc_get_product( $post->ID );
+            if ( ! $wc ) continue;
+
+            $price   = $wc->get_price();
+            $regular = $wc->get_regular_price();
+            $sale    = $wc->get_sale_price();
+
+            $pro_price     = ( $is_pro && $price ) ? (string) round( (float) $price * 0.9, 2 ) : null;
+            $created_days  = ( time() - strtotime( $post->post_date ) ) / DAY_IN_SECONDS;
+            $stock_qty     = $wc->get_stock_quantity();
+            $pro_early     = get_post_meta( $post->ID, '_pro_early_access', true );
+
+            if ( $pro_early )                            $badge = 'pro_early_access';
+            elseif ( $created_days < 14 )                $badge = 'new';
+            elseif ( $sale )                             $badge = 'sale';
+            elseif ( $stock_qty && $stock_qty <= 3 )     $badge = 'low_stock';
+            else                                         $badge = null;
+
+            $image_id  = $wc->get_image_id();
+            $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : '';
+
+            $cat_terms  = get_the_terms( $post->ID, 'product_cat' );
+            $categories = $cat_terms ? array_map( fn( $t ) => $t->slug, $cat_terms ) : array();
+
+            $products[] = array(
+                'id'             => $post->ID,
+                'name'           => $post->post_title,
+                'slug'           => $post->post_name,
+                'price'          => $price ?: '',
+                'regularPrice'   => $regular ?: '',
+                'salePrice'      => $sale ?: '',
+                'proPrice'       => $pro_price,
+                'currency'       => $currency,
+                'currencySymbol' => $currency_symbol,
+                'imageUrl'       => $image_url ?: null,
+                'makerName'      => get_post_meta( $post->ID, '_maker_name', true ) ?: '',
+                'makerCity'      => get_post_meta( $post->ID, '_maker_city', true ) ?: '',
+                'badge'          => $badge,
+                'stockStatus'    => $wc->get_stock_status(),
+                'stockQuantity'  => $stock_qty,
+                'categories'     => $categories,
+            );
+        }
+
+        return rest_ensure_response( array(
+            'products' => $products,
+            'total'    => (int) $q->found_posts,
+            'pages'    => (int) $q->max_num_pages,
+            'page'     => $page,
+        ) );
+    }
+
+    public static function handle_shop_product_detail( $request ) {
+        if ( ! function_exists( 'wc_get_product' ) ) {
+            return new WP_Error( 'woocommerce_missing', 'WooCommerce not active', array( 'status' => 503 ) );
+        }
+
+        $id  = (int) $request['id'];
+        $wc  = wc_get_product( $id );
+        if ( ! $wc ) {
+            return new WP_Error( 'not_found', 'Product not found', array( 'status' => 404 ) );
+        }
+
+        $user   = wp_get_current_user();
+        $is_pro = $user->ID && in_array( 'patron', (array) $user->roles, true );
+
+        $currency_symbol = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol() ) : '£';
+        $currency        = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
+
+        $price   = $wc->get_price();
+        $regular = $wc->get_regular_price();
+        $sale    = $wc->get_sale_price();
+        $pro_price = ( $is_pro && $price ) ? (string) round( (float) $price * 0.9, 2 ) : null;
+
+        // Gallery images (main + gallery)
+        $image_ids   = array_merge(
+            array( $wc->get_image_id() ),
+            $wc->get_gallery_image_ids()
+        );
+        $images = array();
+        foreach ( $image_ids as $img_id ) {
+            if ( $img_id ) {
+                $url = wp_get_attachment_image_url( $img_id, 'large' );
+                if ( $url ) $images[] = $url;
+            }
+        }
+
+        // Badge
+        $post         = get_post( $id );
+        $created_days = ( time() - strtotime( $post->post_date ) ) / DAY_IN_SECONDS;
+        $stock_qty    = $wc->get_stock_quantity();
+        $pro_early    = get_post_meta( $id, '_pro_early_access', true );
+        if ( $pro_early )                            $badge = 'pro_early_access';
+        elseif ( $created_days < 14 )                $badge = 'new';
+        elseif ( $sale )                             $badge = 'sale';
+        elseif ( $stock_qty && $stock_qty <= 3 )     $badge = 'low_stock';
+        else                                         $badge = null;
+
+        // Categories
+        $cat_terms  = get_the_terms( $id, 'product_cat' );
+        $categories = $cat_terms ? array_map( fn( $t ) => $t->slug, $cat_terms ) : array();
+
+        // Colour variants (from pa_colour attribute if it exists)
+        $colours = array();
+        $sizes   = array();
+        if ( $wc->is_type( 'variable' ) ) {
+            /** @var WC_Product_Variable $wc */
+            $available_variations = $wc->get_available_variations();
+            foreach ( $wc->get_variation_attributes() as $attr => $values ) {
+                $label = wc_attribute_label( $attr );
+                foreach ( $values as $val ) {
+                    $in_stock = false;
+                    foreach ( $available_variations as $var ) {
+                        $attr_key = 'attribute_' . $attr;
+                        if ( isset( $var['attributes'][ $attr_key ] ) && ( $var['attributes'][ $attr_key ] === $val || $var['attributes'][ $attr_key ] === '' ) ) {
+                            if ( $var['is_in_stock'] ) { $in_stock = true; break; }
+                        }
+                    }
+                    if ( strpos( strtolower( $label ), 'colour' ) !== false || strpos( strtolower( $label ), 'color' ) !== false ) {
+                        $colours[] = array( 'name' => $val, 'hex' => '', 'available' => $in_stock );
+                    } else {
+                        $sizes[] = array( 'name' => $val, 'available' => $in_stock );
+                    }
+                }
+            }
+        }
+
+        // Maker fields
+        $maker_name      = get_post_meta( $id, '_maker_name', true ) ?: '';
+        $maker_city      = get_post_meta( $id, '_maker_city', true ) ?: '';
+        $maker_bio       = get_post_meta( $id, '_maker_bio', true ) ?: '';
+        $maker_since     = get_post_meta( $id, '_maker_since', true ) ?: '';
+        $maker_rating    = (float) ( get_post_meta( $id, '_maker_rating', true ) ?: 0 );
+        $maker_avatar_id = (int) ( get_post_meta( $id, '_maker_avatar_id', true ) ?: 0 );
+        $maker_avatar    = $maker_avatar_id ? wp_get_attachment_image_url( $maker_avatar_id, 'thumbnail' ) : null;
+
+        // Count other products by same maker
+        $maker_product_count = 0;
+        if ( $maker_name ) {
+            global $wpdb;
+            $maker_product_count = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT COUNT(p.ID) FROM {$wpdb->posts} p
+                 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+                 WHERE p.post_type = 'product' AND p.post_status = 'publish'
+                 AND pm.meta_key = '_maker_name' AND pm.meta_value = %s",
+                $maker_name
+            ) );
+        }
+
+        // How It's Made (stored as JSON in post meta)
+        $how_raw     = get_post_meta( $id, '_how_its_made', true );
+        $how_its_made = $how_raw ? json_decode( $how_raw, true ) : array();
+        if ( ! is_array( $how_its_made ) ) $how_its_made = array();
+
+        // As Seen In (stored as JSON: {title, slug})
+        $seen_raw  = get_post_meta( $id, '_as_seen_in', true );
+        $as_seen_in = $seen_raw ? json_decode( $seen_raw, true ) : null;
+
+        // Related products (WooCommerce related + fallback to same maker)
+        $related_ids  = wc_get_related_products( $id, 4 );
+        $related_products = array();
+        foreach ( $related_ids as $rel_id ) {
+            $rel_wc = wc_get_product( $rel_id );
+            if ( ! $rel_wc ) continue;
+            $rel_img_id = $rel_wc->get_image_id();
+            $related_products[] = array(
+                'id'             => $rel_id,
+                'name'           => get_the_title( $rel_id ),
+                'slug'           => get_post_field( 'post_name', $rel_id ),
+                'price'          => $rel_wc->get_price() ?: '',
+                'regularPrice'   => $rel_wc->get_regular_price() ?: '',
+                'salePrice'      => $rel_wc->get_sale_price() ?: '',
+                'proPrice'       => null,
+                'currency'       => $currency,
+                'currencySymbol' => $currency_symbol,
+                'imageUrl'       => $rel_img_id ? wp_get_attachment_image_url( $rel_img_id, 'medium' ) : null,
+                'makerName'      => get_post_meta( $rel_id, '_maker_name', true ) ?: '',
+                'makerCity'      => get_post_meta( $rel_id, '_maker_city', true ) ?: '',
+                'badge'          => null,
+                'stockStatus'    => $rel_wc->get_stock_status(),
+                'stockQuantity'  => $rel_wc->get_stock_quantity(),
+                'categories'     => array(),
+            );
+        }
+
+        return rest_ensure_response( array(
+            'id'               => $id,
+            'name'             => $post->post_title,
+            'slug'             => $post->post_name,
+            'price'            => $price ?: '',
+            'regularPrice'     => $regular ?: '',
+            'salePrice'        => $sale ?: '',
+            'proPrice'         => $pro_price,
+            'currency'         => $currency,
+            'currencySymbol'   => $currency_symbol,
+            'imageUrl'         => $images[0] ?? null,
+            'images'           => $images,
+            'badge'            => $badge,
+            'stockStatus'      => $wc->get_stock_status(),
+            'stockQuantity'    => $stock_qty,
+            'categories'       => $categories,
+            'makerName'        => $maker_name,
+            'makerCity'        => $maker_city,
+            'makerBio'         => $maker_bio,
+            'makerSince'       => $maker_since,
+            'makerRating'      => $maker_rating,
+            'makerProductCount'=> $maker_product_count,
+            'makerAvatarUrl'   => $maker_avatar,
+            'description'      => $wc->get_description(),
+            'shortDescription' => $wc->get_short_description(),
+            'colours'          => $colours,
+            'sizes'            => $sizes,
+            'howItsMade'       => $how_its_made,
+            'asSeenIn'         => $as_seen_in,
+            'relatedProducts'  => $related_products,
+            'vetted'           => (bool) get_post_meta( $id, '_maker_vetted', true ),
+        ) );
+    }
+
+    public static function handle_shop_categories( $request ) {
+        $terms = get_terms( array(
+            'taxonomy'   => 'product_cat',
+            'hide_empty' => true,
+            'orderby'    => 'count',
+            'order'      => 'DESC',
+            'number'     => 20,
+        ) );
+
+        if ( is_wp_error( $terms ) ) {
+            return rest_ensure_response( array() );
+        }
+
+        $categories = array_map( function( $term ) {
+            return array(
+                'id'    => $term->term_id,
+                'name'  => $term->name,
+                'slug'  => $term->slug,
+                'count' => $term->count,
+            );
+        }, $terms );
+
+        return rest_ensure_response( $categories );
+    }
+
+    public static function handle_shop_vendors( $request ) {
+        global $wpdb;
+
+        if ( ! function_exists( 'wc_get_product' ) ) {
+            return rest_ensure_response( array() );
+        }
+
+        // Aggregate vendor data from product meta
+        $rows = $wpdb->get_results(
+            "SELECT pm.meta_value AS maker_name,
+                    pm2.meta_value AS maker_city,
+                    COUNT(p.ID) AS product_count,
+                    MIN(p.ID) AS sample_id
+             FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm  ON pm.post_id  = p.ID AND pm.meta_key  = '_maker_name'
+             LEFT  JOIN {$wpdb->postmeta} pm2 ON pm2.post_id = p.ID AND pm2.meta_key = '_maker_city'
+             WHERE p.post_type   = 'product'
+               AND p.post_status = 'publish'
+               AND pm.meta_value != ''
+             GROUP BY pm.meta_value
+             ORDER BY product_count DESC
+             LIMIT 20",
+            ARRAY_A
+        );
+
+        $vendors = array();
+        foreach ( (array) $rows as $row ) {
+            $logo_url = '';
+            $wc       = wc_get_product( (int) $row['sample_id'] );
+            if ( $wc ) {
+                $img_id   = $wc->get_image_id();
+                $logo_url = $img_id ? wp_get_attachment_image_url( $img_id, 'thumbnail' ) : '';
+            }
+
+            $vendors[] = array(
+                'name'         => $row['maker_name'],
+                'city'         => $row['maker_city'] ?: '',
+                'productCount' => (int) $row['product_count'],
+                'logoUrl'      => $logo_url ?: null,
+            );
+        }
+
+        return rest_ensure_response( $vendors );
+    }
+
+    public static function handle_get_cart( $request ) {
+        // Stub: WooCommerce session-based cart does not translate to REST easily.
+        // Return an empty cart structure; real cart management is handled by
+        // WooCommerce Store API (wc/store/v1/cart) in native checkout.
+        return rest_ensure_response( array( 'items' => array(), 'total' => '0', 'item_count' => 0 ) );
+    }
+
+    public static function handle_add_to_cart( $request ) {
+        if ( ! function_exists( 'WC' ) ) {
+            return new WP_Error( 'wc_missing', 'Shop not available.', array( 'status' => 503 ) );
+        }
+        $product_id = (int) $request->get_param( 'product_id' );
+        $quantity   = max( 1, (int) $request->get_param( 'quantity' ) );
+        $product    = wc_get_product( $product_id );
+
+        if ( ! $product ) {
+            return new WP_Error( 'not_found', 'Product not found.', array( 'status' => 404 ) );
+        }
+
+        // Use WooCommerce Store API redirect URL as the checkout URL
+        $checkout_url = wc_get_checkout_url() . '?add-to-cart=' . $product_id . '&quantity=' . $quantity;
+
+        return rest_ensure_response( array(
+            'checkout_url' => $checkout_url,
+            'product_id'   => $product_id,
+            'quantity'     => $quantity,
+        ) );
     }
 }

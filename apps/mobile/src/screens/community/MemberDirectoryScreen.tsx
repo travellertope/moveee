@@ -1,91 +1,81 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View, Text, FlatList, TextInput, TouchableOpacity,
-  StyleSheet, SafeAreaView, ActivityIndicator, Linking,
+  StyleSheet, SafeAreaView, ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import { api, MOBILE_API } from "../../api/client";
 import type { Member } from "../../types";
 
 const DISCIPLINES = [
-  "All", "Creative", "Entrepreneur", "Artist", "Filmmaker",
-  "Writer", "Designer", "Musician", "Photographer", "Tech",
-  "Legal", "Finance", "Academic",
+  "All", "Photography", "Visual Art", "Music Production", "Fashion",
+  "Film", "Literature", "Architecture", "Design", "Tech",
 ];
 
 const LOCATIONS = [
-  "All", "Nigeria", "United Kingdom", "United States", "Ghana",
-  "South Africa", "Kenya", "France", "Canada", "Other",
+  "All", "Nigeria", "United Kingdom", "United States",
+  "Ghana", "Kenya", "Canada", "South Africa",
 ];
 
 function initials(name: string) {
   return (name || "?").split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
 }
 
-function Avatar({ member }: { member: Member }) {
-  return (
-    <View style={[styles.avatar, member.tier === "patron" && styles.avatarPro]}>
-      <Text style={styles.avatarText}>{initials(member.displayName)}</Text>
-    </View>
-  );
-}
-
 function MemberCard({ member, onPress }: { member: Member; onPress: () => void }) {
   const isPro = member.tier === "patron";
+  const interests = member.interests ?? member.disciplines ?? [];
+  const shown  = interests.slice(0, 2);
+  const extra  = interests.length - 2;
+
   return (
-    <TouchableOpacity
-      style={[styles.card, isPro ? styles.cardPro : styles.cardCitizen]}
-      onPress={onPress}
-      activeOpacity={0.85}
-    >
-      <View style={styles.cardHeader}>
-        <Avatar member={member} />
-        {isPro && (
-          <View style={styles.proBadge}>
-            <Text style={styles.proBadgeText}>PRO</Text>
-          </View>
-        )}
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
+      {/* Avatar */}
+      <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
+        <View style={styles.avatarInner}>
+          {/* Initials placeholder — swap for Image when avatarUrl exists */}
+          <Text style={styles.avatarText}>{initials(member.displayName)}</Text>
+        </View>
       </View>
 
-      <Text style={styles.name} numberOfLines={1}>{member.displayName}</Text>
+      {/* Identity */}
+      <Text style={styles.cardName} numberOfLines={1}>{member.displayName}</Text>
       {member.username ? (
-        <Text style={styles.handle}>@{member.username}</Text>
+        <Text style={styles.cardHandle}>@{member.username}</Text>
       ) : null}
-      {member.city ? (
-        <Text style={styles.location}>{member.city.toUpperCase()}</Text>
+      {(member.city || member.countryOfResidence) ? (
+        <Text style={styles.cardCity}>
+          📍 {[member.city, member.countryOfResidence].filter(Boolean).join(", ")}
+        </Text>
       ) : null}
 
-      {member.disciplines && member.disciplines.length > 0 && (
+      {/* Interest tags */}
+      {shown.length > 0 && (
         <View style={styles.tagsRow}>
-          {member.disciplines.slice(0, 3).map((d) => (
-            <View key={d} style={styles.tag}>
-              <Text style={styles.tagText}>{d}</Text>
+          {shown.map((t) => (
+            <View key={t} style={styles.tag}>
+              <Text style={styles.tagText}>{t}</Text>
             </View>
           ))}
+          {extra > 0 && (
+            <View style={styles.tag}>
+              <Text style={[styles.tagText, { color: colors.ghost }]}>+{extra} more</Text>
+            </View>
+          )}
         </View>
       )}
 
-      {member.bio ? (
-        <Text style={styles.bio} numberOfLines={2}>{member.bio}</Text>
-      ) : null}
-
-      <View style={styles.linksRow}>
+      {/* Social icon links */}
+      <View style={styles.socialRow}>
         {member.instagram ? (
-          <TouchableOpacity onPress={() => Linking.openURL(`https://instagram.com/${member.instagram}`)}>
-            <Text style={styles.linkText}>IG</Text>
-          </TouchableOpacity>
+          <Ionicons name="logo-instagram" size={16} color={colors.ghost} />
         ) : null}
         {member.linkedin ? (
-          <TouchableOpacity onPress={() => Linking.openURL(member.linkedin)}>
-            <Text style={styles.linkText}>LI</Text>
-          </TouchableOpacity>
+          <Ionicons name="logo-linkedin" size={16} color={colors.ghost} />
         ) : null}
         {member.website ? (
-          <TouchableOpacity onPress={() => Linking.openURL(member.website)}>
-            <Text style={styles.linkText}>WEB</Text>
-          </TouchableOpacity>
+          <Ionicons name="globe-outline" size={16} color={colors.ghost} />
         ) : null}
       </View>
     </TouchableOpacity>
@@ -94,26 +84,20 @@ function MemberCard({ member, onPress }: { member: Member; onPress: () => void }
 
 export default function MemberDirectoryScreen() {
   const nav = useNavigation<any>();
-  const [members, setMembers] = useState<Member[]>([]);
-  const [filtered, setFiltered] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [members,    setMembers]    = useState<Member[]>([]);
+  const [filtered,   setFiltered]   = useState<Member[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [search,     setSearch]     = useState("");
   const [discipline, setDiscipline] = useState("All");
-  const [location, setLocation] = useState("All");
+  const [location,   setLocation]   = useState("All");
+  const [discOpen,   setDiscOpen]   = useState(false);
+  const [locOpen,    setLocOpen]    = useState(false);
 
   useEffect(() => {
-    async function load() {
-      try {
-        const data = await api.get<Member[]>(`${MOBILE_API}/members?per_page=100`);
-        setMembers(data);
-        setFiltered(data);
-      } catch {
-        // silent
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+    api.get<Member[]>(`${MOBILE_API}/members?per_page=100`)
+      .then((data) => { setMembers(data ?? []); setFiltered(data ?? []); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -121,70 +105,102 @@ export default function MemberDirectoryScreen() {
     setFiltered(
       members.filter((m) => {
         const matchSearch = !q || (
-          m.displayName.toLowerCase().includes(q) ||
-          (m.occupation || "").toLowerCase().includes(q) ||
-          (m.city || "").toLowerCase().includes(q)
+          (m.displayName || "").toLowerCase().includes(q) ||
+          (m.occupation   || "").toLowerCase().includes(q) ||
+          (m.city         || "").toLowerCase().includes(q)
         );
-        const matchDisc = discipline === "All" || (m.disciplines || []).some(
-          (d) => d.toLowerCase() === discipline.toLowerCase()
-        );
-        const matchLoc = location === "All" || (
-          (m.countryOfResidence || "").toLowerCase().includes(location.toLowerCase())
-        );
+        const allInterests = [...(m.interests ?? []), ...(m.disciplines ?? [])];
+        const matchDisc = discipline === "All" ||
+          allInterests.some((d) => d.toLowerCase().includes(discipline.toLowerCase()));
+        const matchLoc = location === "All" ||
+          (m.countryOfResidence || "").toLowerCase().includes(location.toLowerCase());
         return matchSearch && matchDisc && matchLoc;
       })
     );
   }, [search, discipline, location, members]);
 
+  const activeFilters = [
+    discipline !== "All" && { label: discipline, clear: () => setDiscipline("All") },
+    location   !== "All" && { label: location,   clear: () => setLocation("All")   },
+  ].filter(Boolean) as { label: string; clear: () => void }[];
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={colors.ink} />
+        <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
+          <Ionicons name="chevron-back" size={22} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Member Directory</Text>
+        <View style={styles.headerSideBtn} />
       </View>
 
-      {/* Search */}
-      <View style={styles.searchWrap}>
-        <Ionicons name="search-outline" size={16} color={colors.mute} style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search members…"
-          placeholderTextColor={colors.ghost}
-          value={search}
-          onChangeText={setSearch}
-        />
-      </View>
+      {/* Search + filter icon row */}
+      <View style={styles.searchSection}>
+        <View style={styles.searchRow}>
+          <Ionicons name="search-outline" size={16} color={colors.mute} style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by name, discipline or city"
+            placeholderTextColor={colors.ghost}
+            value={search}
+            onChangeText={setSearch}
+          />
+          <TouchableOpacity onPress={() => { setDiscOpen(!discOpen); setLocOpen(false); }}>
+            <Ionicons name="options-outline" size={20} color={colors.ink} />
+          </TouchableOpacity>
+        </View>
 
-      {/* Filters */}
-      <View style={styles.filtersRow}>
-        <TouchableOpacity style={styles.filterBtn} onPress={() => {
-          const idx = DISCIPLINES.indexOf(discipline);
-          setDiscipline(DISCIPLINES[(idx + 1) % DISCIPLINES.length]);
-        }}>
-          <Text style={styles.filterBtnText}>
-            {discipline === "All" ? "Discipline ▾" : discipline + " ▾"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterBtn} onPress={() => {
-          const idx = LOCATIONS.indexOf(location);
-          setLocation(LOCATIONS[(idx + 1) % LOCATIONS.length]);
-        }}>
-          <Text style={styles.filterBtnText}>
-            {location === "All" ? "Location ▾" : location + " ▾"}
-          </Text>
-        </TouchableOpacity>
+        {/* Filter chips row */}
+        <View style={styles.chipsRow}>
+          <TouchableOpacity
+            style={[styles.filterChip, discipline !== "All" && styles.filterChipActive]}
+            onPress={() => { setDiscOpen(!discOpen); setLocOpen(false); }}
+          >
+            <Text style={[styles.filterChipText, discipline !== "All" && styles.filterChipTextActive]}>
+              {discipline === "All" ? "All Disciplines" : discipline} ▾
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterChip, location !== "All" && styles.filterChipActive]}
+            onPress={() => { setLocOpen(!locOpen); setDiscOpen(false); }}
+          >
+            <Text style={[styles.filterChipText, location !== "All" && styles.filterChipTextActive]}>
+              {location === "All" ? "All Locations" : location} ▾
+            </Text>
+          </TouchableOpacity>
+          {activeFilters.map((f) => (
+            <TouchableOpacity key={f.label} style={styles.activeChip} onPress={f.clear}>
+              <Text style={styles.activeChipText}>{f.label}</Text>
+              <Text style={styles.activeChipX}> ✕</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Dropdown — Disciplines */}
+        {discOpen && (
+          <View style={styles.dropdown}>
+            {DISCIPLINES.map((d) => (
+              <TouchableOpacity key={d} style={styles.dropdownItem} onPress={() => { setDiscipline(d); setDiscOpen(false); }}>
+                <Text style={[styles.dropdownItemText, discipline === d && { color: colors.ochre, fontFamily: fonts.sansBold }]}>{d}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        {/* Dropdown — Locations */}
+        {locOpen && (
+          <View style={styles.dropdown}>
+            {LOCATIONS.map((l) => (
+              <TouchableOpacity key={l} style={styles.dropdownItem} onPress={() => { setLocation(l); setLocOpen(false); }}>
+                <Text style={[styles.dropdownItemText, location === l && { color: colors.ochre, fontFamily: fonts.sansBold }]}>{l}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
       {loading ? (
         <ActivityIndicator style={{ marginTop: 40 }} color={colors.gold} />
-      ) : filtered.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>The directory is growing</Text>
-          <Text style={styles.emptyLink}>Join & get listed →</Text>
-        </View>
       ) : (
         <FlatList
           data={filtered}
@@ -192,12 +208,24 @@ export default function MemberDirectoryScreen() {
           numColumns={2}
           contentContainerStyle={styles.grid}
           columnWrapperStyle={styles.row}
+          ListHeaderComponent={
+            <Text style={styles.countText}>{filtered.length} members</Text>
+          }
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>No members found</Text>
+              <Text style={styles.emptyDesc}>Try adjusting your filters.</Text>
+            </View>
+          }
           renderItem={({ item }) => (
-            <MemberCard
-              member={item}
-              onPress={() => nav.navigate("MemberProfile", { userId: item.id, username: item.username })}
-            />
+            <View style={{ flex: 1 }}>
+              <MemberCard
+                member={item}
+                onPress={() => nav.navigate("MemberProfile", { userId: item.id, username: item.username })}
+              />
+            </View>
           )}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </SafeAreaView>
@@ -208,83 +236,91 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.paperWarm },
 
   header: {
-    flexDirection: "row", alignItems: "center", gap: space[3],
-    paddingHorizontal: space[4], paddingVertical: space[3],
-    borderBottomWidth: 1, borderBottomColor: colors.rule,
+    height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: space[4], backgroundColor: colors.paper,
   },
-  backBtn: { padding: 4 },
-  headerTitle: {
-    fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: colors.ink,
-  },
+  headerSideBtn:  { minWidth: 44, minHeight: 44, justifyContent: "center" },
+  headerTitle:    { fontFamily: fonts.sansBold, fontSize: 15, color: colors.ink },
 
-  searchWrap: {
-    flexDirection: "row", alignItems: "center",
-    marginHorizontal: space[4], marginTop: space[3], marginBottom: space[2],
-    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.rule,
-    borderRadius: radius.lg, paddingHorizontal: space[3], paddingVertical: space[2],
+  // Search section
+  searchSection: {
+    backgroundColor: colors.paper, borderBottomWidth: 1, borderBottomColor: colors.ghost,
+    paddingBottom: 8,
   },
-  searchIcon: { marginRight: space[2] },
+  searchRow: {
+    height: 48, flexDirection: "row", alignItems: "center",
+    paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.ghost,
+  },
   searchInput: {
-    flex: 1, fontSize: fontSize.base, fontFamily: fonts.sans, color: colors.ink,
+    flex: 1, fontFamily: fonts.sans, fontSize: 14, color: colors.ink,
   },
+  chipsRow: {
+    height: 44, flexDirection: "row", alignItems: "center",
+    paddingHorizontal: 16, gap: 8, marginTop: 8,
+  },
+  filterChip: {
+    height: 32, paddingHorizontal: 12, borderRadius: radius.full,
+    borderWidth: 1, borderColor: colors.ghost, justifyContent: "center",
+  },
+  filterChipActive:     { backgroundColor: colors.ochre, borderColor: colors.ochre },
+  filterChipText:       { fontFamily: fonts.sans, fontSize: 13, color: colors.inkSoft },
+  filterChipTextActive: { color: colors.paper, fontFamily: fonts.sansBold },
+  activeChip: {
+    height: 32, paddingHorizontal: 10, borderRadius: radius.full,
+    backgroundColor: colors.ochre, flexDirection: "row", alignItems: "center",
+  },
+  activeChipText: { fontFamily: fonts.sansBold, fontSize: 13, color: colors.paper },
+  activeChipX:    { fontFamily: fonts.sans, fontSize: 11, color: colors.paper },
 
-  filtersRow: {
-    flexDirection: "row", gap: space[2],
-    paddingHorizontal: space[4], marginBottom: space[3],
+  // Dropdowns
+  dropdown: {
+    position: "absolute", top: 52, left: 16, right: 16, zIndex: 100,
+    backgroundColor: colors.paper, borderRadius: 8, ...shadows.card,
+    borderWidth: 1, borderColor: colors.ghost,
   },
-  filterBtn: {
-    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.rule,
-    borderRadius: radius.full, paddingHorizontal: space[3], paddingVertical: space[1] + 2,
-  },
-  filterBtnText: {
-    fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.inkSoft,
-  },
+  dropdownItem:     { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.ghost + "50" },
+  dropdownItemText: { fontFamily: fonts.sans, fontSize: 14, color: colors.ink },
 
-  grid: { paddingHorizontal: space[3], paddingBottom: space[6] },
-  row: { gap: space[3], marginBottom: space[3] },
+  // Grid
+  countText: {
+    fontFamily: fonts.mono, fontSize: 10, color: colors.mute,
+    paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12,
+  },
+  grid: { paddingHorizontal: 16, paddingBottom: 40 },
+  row:  { gap: 12, marginBottom: 12 },
 
+  // Card
   card: {
-    flex: 1, backgroundColor: colors.paper,
-    borderWidth: 1, borderRadius: radius.lg, padding: space[3],
-    gap: space[1],
+    flex: 1, backgroundColor: colors.paper, borderRadius: 12,
+    padding: 12, alignItems: "center", gap: 0, ...shadows.card,
   },
-  cardPro:     { borderColor: colors.gold },
-  cardCitizen: { borderColor: colors.rule },
-
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: space[1] },
-  avatar: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: colors.ink, justifyContent: "center", alignItems: "center",
+  avatarRing: {
+    width: 44, height: 44, borderRadius: 22,
+    borderWidth: 2, padding: 2, marginBottom: 8,
   },
-  avatarPro: { borderWidth: 1, borderColor: colors.gold },
-  avatarText: { fontFamily: fonts.monoBold, fontSize: fontSize.sm, color: colors.paperWarm },
-
-  proBadge: {
-    backgroundColor: colors.goldLight, borderWidth: 1, borderColor: colors.goldBorder,
-    borderRadius: radius.sm, paddingHorizontal: 5, paddingVertical: 1, alignSelf: "flex-start",
+  avatarRingPro:     { borderColor: colors.gold },
+  avatarRingCitizen: { borderColor: colors.ghost },
+  avatarInner: {
+    flex: 1, borderRadius: 20, backgroundColor: colors.paperDeep,
+    justifyContent: "center", alignItems: "center",
   },
-  proBadgeText: {
-    fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
-    letterSpacing: 1.5, color: colors.gold,
-  },
+  avatarText: { fontFamily: fonts.monoBold, fontSize: 12, color: colors.inkSoft },
 
-  name: { fontFamily: fonts.serifBold, fontSize: fontSize.md - 1, color: colors.ink },
-  handle: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow, color: colors.mute, letterSpacing: 1 },
-  location: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow, color: colors.mute, letterSpacing: 1 },
+  cardName:   { fontFamily: fonts.sansBold, fontSize: 13, color: colors.ink, textAlign: "center" },
+  cardHandle: { fontFamily: fonts.mono, fontSize: 10, color: colors.mute, marginTop: 2 },
+  cardCity:   { fontFamily: fonts.sans, fontSize: 11, color: colors.mute, marginTop: 4 },
 
-  tagsRow: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 },
+  tagsRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 4, marginTop: 8 },
   tag: {
-    backgroundColor: colors.goldLight, borderRadius: radius.sm,
-    paddingHorizontal: 6, paddingVertical: 2,
+    borderWidth: 1, borderColor: colors.ghost, borderRadius: radius.full,
+    paddingHorizontal: 8, paddingVertical: 4,
   },
-  tagText: { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: colors.gold },
+  tagText: { fontFamily: fonts.sansBold, fontSize: 9, color: colors.inkSoft },
 
-  bio: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: colors.mute, lineHeight: 16 },
+  socialRow: { flexDirection: "row", gap: 8, marginTop: 12, justifyContent: "center" },
 
-  linksRow: { flexDirection: "row", gap: space[2], marginTop: 2 },
-  linkText: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow, color: colors.gold },
-
-  empty: { flex: 1, justifyContent: "center", alignItems: "center", gap: space[2] },
-  emptyTitle: { fontFamily: fonts.serif, fontSize: fontSize.lg, color: colors.inkSoft },
-  emptyLink: { fontFamily: fonts.mono, fontSize: fontSize.sm, color: colors.gold },
+  // Empty state
+  empty:     { alignItems: "center", paddingTop: 40, gap: 8 },
+  emptyTitle:{ fontFamily: fonts.serifBold, fontSize: 18, color: colors.ink },
+  emptyDesc: { fontFamily: fonts.sans, fontSize: 14, color: colors.mute },
 });
