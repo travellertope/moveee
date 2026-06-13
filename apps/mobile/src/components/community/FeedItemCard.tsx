@@ -1335,9 +1335,9 @@ const quoteStyles = StyleSheet.create({
   quoteText: {
     fontFamily: fonts.serif,
     fontStyle: "italic",
-    fontSize: fontSize.lg,
+    fontSize: fontSize.xl,
     color: colors.ink,
-    lineHeight: 26,
+    lineHeight: 30,
     marginLeft: 8,
     marginTop: 8,
   },
