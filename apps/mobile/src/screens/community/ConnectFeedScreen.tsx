@@ -21,7 +21,8 @@ import {
 } from "../../features/community/useFeedRecommendations";
 import { useAuthStore } from "../../auth/authStore";
 import FeedCard from "../../components/community/FeedItemCard";
-import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 import { FeedSkeleton } from "../../components/ui/Skeleton";
 import type { FeedItem } from "../../types";
 
@@ -58,6 +59,8 @@ const TRENDING_COLORS = ["#C5491F", "#7C3AED", "#065F46"];
 export default function ConnectFeedScreen() {
   const nav = useNavigation<any>();
   const { user } = useAuthStore();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const {
     items,
     refreshing,
@@ -171,7 +174,7 @@ export default function ConnectFeedScreen() {
               <Ionicons
                 name="refresh-outline"
                 size={20}
-                color={colors.ghost}
+                color={c.ghost}
               />
             </TouchableOpacity>
 
@@ -184,7 +187,7 @@ export default function ConnectFeedScreen() {
               <Ionicons
                 name="notifications-outline"
                 size={22}
-                color={colors.ink}
+                color={c.ink}
               />
               {unread > 0 && (
                 <View style={styles.bellBadge}>
@@ -200,7 +203,7 @@ export default function ConnectFeedScreen() {
               style={styles.addBtn}
               onPress={() => nav.navigate("NewPost")}
             >
-              <Ionicons name="add" size={22} color={colors.paper} />
+              <Ionicons name="add" size={22} color={c.paper} />
             </TouchableOpacity>
           </View>
         </View>
@@ -302,7 +305,7 @@ export default function ConnectFeedScreen() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={refresh}
-                tintColor={colors.gold}
+                tintColor={c.gold}
               />
             }
             onEndReached={loadMore}
@@ -312,7 +315,7 @@ export default function ConnectFeedScreen() {
                 <Ionicons
                   name="people-outline"
                   size={40}
-                  color={colors.ghost}
+                  color={c.ghost}
                 />
                 <Text style={styles.emptyText}>
                   No posts yet. Be the first to share something!
@@ -323,7 +326,7 @@ export default function ConnectFeedScreen() {
               loading && hasMore ? (
                 <ActivityIndicator
                   style={styles.loader}
-                  color={colors.gold}
+                  color={c.gold}
                 />
               ) : null
             }
@@ -348,9 +351,9 @@ export default function ConnectFeedScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.paperWarm },
-  container: { flex: 1, backgroundColor: colors.paperWarm },
+function createStyles(c: ColorPalette) { return StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: c.paperWarm },
+  container: { flex: 1, backgroundColor: c.paperWarm },
 
   // Header
   header: {
@@ -359,19 +362,19 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: space[4],
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     ...shadows.card,
   },
   headerLeft: { flexDirection: "row", alignItems: "flex-end" },
   headerLogo: {
     fontFamily: fonts.serifBold,
     fontSize: fontSize.lg,
-    color: colors.ink,
+    color: c.ink,
   },
   headerSubtitle: {
     fontFamily: fonts.sansBold,
     fontSize: 8,
-    color: colors.gold,
+    color: c.gold,
     textTransform: "uppercase",
     letterSpacing: 1.5,
     marginTop: 2,
@@ -390,7 +393,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 2,
     right: 2,
-    backgroundColor: colors.ochre,
+    backgroundColor: c.ochre,
     borderRadius: radius.full,
     minWidth: 16,
     height: 16,
@@ -407,7 +410,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: radius.full,
-    backgroundColor: colors.ochre,
+    backgroundColor: c.ochre,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -415,9 +418,9 @@ const styles = StyleSheet.create({
   // Filter Row
   filterRow: {
     height: 52,
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     borderBottomWidth: 1,
-    borderBottomColor: colors.rule,
+    borderBottomColor: c.rule,
   },
   filterContent: {
     paddingHorizontal: space[4],
@@ -430,19 +433,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: colors.ghost,
+    borderColor: c.ghost,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "transparent",
   },
   filterPillActive: {
-    backgroundColor: colors.ochre,
-    borderColor: colors.ochre,
+    backgroundColor: c.ochre,
+    borderColor: c.ochre,
   },
   filterPillText: {
     fontFamily: fonts.sans,
     fontSize: fontSize.xs,
-    color: colors.inkSoft,
+    color: c.inkSoft,
   },
   filterPillTextActive: {
     color: "#fff",
@@ -450,9 +453,9 @@ const styles = StyleSheet.create({
 
   // Trending Strip
   trendingStrip: {
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     borderBottomWidth: 1,
-    borderBottomColor: colors.rule,
+    borderBottomColor: c.rule,
     paddingVertical: 10,
   },
   trendingHeader: {
@@ -464,7 +467,7 @@ const styles = StyleSheet.create({
   trendingNowLabel: {
     fontFamily: fonts.mono,
     fontSize: 9,
-    color: colors.ochre,
+    color: c.ochre,
     textTransform: "uppercase",
     letterSpacing: 1.5,
     flex: 1,
@@ -472,7 +475,7 @@ const styles = StyleSheet.create({
   trendingSeeAll: {
     fontFamily: fonts.sans,
     fontSize: fontSize.xs,
-    color: colors.ghost,
+    color: c.ghost,
   },
   trendingScroll: {
     paddingHorizontal: space[4],
@@ -481,10 +484,10 @@ const styles = StyleSheet.create({
   trendingCard: {
     width: 160,
     height: 88,
-    backgroundColor: colors.paper,
+    backgroundColor: c.paper,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: colors.rule,
+    borderColor: c.rule,
     overflow: "hidden",
   },
   trendingCardTop: {
@@ -497,7 +500,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 8,
     left: 8,
-    backgroundColor: colors.paperDeep,
+    backgroundColor: c.paperDeep,
     borderRadius: radius.full,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -506,7 +509,7 @@ const styles = StyleSheet.create({
   trendingWordText: {
     fontFamily: fonts.mono,
     fontSize: 8,
-    color: colors.mute,
+    color: c.mute,
   },
   trendingCardBottom: {
     height: 44,
@@ -516,7 +519,7 @@ const styles = StyleSheet.create({
   trendingCardTitle: {
     fontFamily: fonts.sansBold,
     fontSize: fontSize.xs,
-    color: colors.ink,
+    color: c.ink,
   },
 
   // Feed
@@ -530,11 +533,11 @@ const styles = StyleSheet.create({
     padding: space[8],
     gap: space[3],
   },
-  errorText: { fontFamily: fonts.sans, color: colors.ochre, marginBottom: space[2] },
-  retryText: { fontFamily: fonts.sansBold, color: colors.gold },
+  errorText: { fontFamily: fonts.sans, color: c.ochre, marginBottom: space[2] },
+  retryText: { fontFamily: fonts.sansBold, color: c.gold },
   emptyText: {
     fontFamily: fonts.sans,
-    color: colors.ghost,
+    color: c.ghost,
     textAlign: "center",
     fontSize: fontSize.base,
     lineHeight: 22,
@@ -548,9 +551,9 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.ochre,
+    backgroundColor: c.ochre,
     justifyContent: "center",
     alignItems: "center",
     ...shadows.fab,
   },
-});
+}); }
