@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Bottom Sheet System</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        success: '#2D6A4F'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'sheet': '0 -4px 32px rgba(20, 17, 13, 0.18)',
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+    </style>
+</head>
+<body class="flex justify-center text-ink font-sans min-h-screen">
+
+    <div class="flex flex-row gap-10 max-w-[1500px] mx-auto overflow-x-auto pb-8 hide-scrollbar snap-x snap-mandatory px-8 items-start">
+
+        <!-- ============================================== -->
+        <!-- FRAME 1: PEEK STATE (Content Hugging)          -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0 snap-center">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">1. Peek State (Hugging)</span>
+            
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <!-- BACKGROUND: Simulated Feed Content -->
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-card p-4">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-ghost rounded-full"></div>
+                            <div class="w-[120px] h-3 bg-ghost rounded-full"></div>
+                        </div>
+                        <div class="w-full h-4 bg-ghost rounded-full mb-2"></div>
+                        <div class="w-[80%] h-4 bg-ghost rounded-full mb-2"></div>
+                        <div class="w-full h-[100px] bg-paper-deep rounded-md mt-4"></div>
+                    </div>
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-card p-4">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-ghost rounded-full"></div>
+                            <div class="w-[90px] h-3 bg-ghost rounded-full"></div>
+                        </div>
+                        <div class="w-full h-4 bg-ghost rounded-full mb-2"></div>
+                        <div class="w-[60%] h-4 bg-ghost rounded-full mb-2"></div>
+                    </div>
+                </div>
+
+                <!-- OVERLAY BACKDROP (40% opacity) -->
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <!-- BOTTOM SHEET: PEEK (Content Hugging Height) -->
+                <div class="absolute bottom-0 w-full bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[32px]">
+                    
+                    <!-- TOP CHROME -->
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <!-- Drag Handle -->
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <!-- Close Button -->
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink hover:bg-gray-200 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- CONTENT AREA (Flows naturally) -->
+                    <div class="flex flex-col relative">
+                        
+                        <!-- Badge & Timestamp -->
+                        <div class="flex justify-between items-center px-[16px] mt-[12px]">
+                            <div class="bg-[#E6F4EA] px-[8px] py-[4px] rounded-full inline-flex items-center">
+                                <span class="font-sans text-[10px] font-bold text-success uppercase tracking-wider">Community</span>
+                            </div>
+                            <span class="font-mono text-[10px] text-ghost">Just now</span>
+                        </div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center gap-[12px] px-[16px] mt-[12px]">
+                            <div class="w-[40px] h-[40px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0 border border-ghost/20"></div>
+                            <div class="flex flex-col">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">Kemi Adeyemi</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@kemi.a</span>
+                            </div>
+                        </div>
+
+                        <!-- Post Body with Fading Text -->
+                        <div class="px-[16px] mt-[12px] relative overflow-hidden h-[72px]">
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.6]">
+                                Just visited the new exhibition at Rele Gallery. The way they curated the lighting around the portrait series was absolutely incredible. Definitely...
+                            </p>
+                            <!-- Truncation Gradient Overlay -->
+                            <div class="absolute bottom-0 left-0 w-full h-[32px] bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                        </div>
+
+                        <!-- Ghost Rule -->
+                        <div class="w-full h-[1px] bg-ghost-light mt-[12px]"></div>
+
+                        <!-- Reaction Bar -->
+                        <div class="flex items-center gap-[16px] px-[16px] mt-[12px]">
+                            <button class="flex items-center gap-[6px] font-mono text-[10px] text-mute hover:text-ink">
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                14
+                            </button>
+                            <button class="flex items-center gap-[6px] font-mono text-[10px] text-mute hover:text-ink">
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg>
+                                7
+                            </button>
+                            <button class="flex items-center gap-[6px] font-mono text-[10px] text-mute hover:text-ink">
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg>
+                                9
+                            </button>
+                        </div>
+
+                        <!-- Swipe Hint -->
+                        <div class="mt-[8px] text-center w-full">
+                            <span class="font-mono text-[9px] text-ghost">&uarr; Swipe up for full post</span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: FULL STATE (92%)                      -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0 snap-center">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">2. Full State (92%)</span>
+            
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <!-- BACKGROUND: Simulated Feed Content -->
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-card p-4">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-ghost rounded-full"></div>
+                            <div class="w-[120px] h-3 bg-ghost rounded-full"></div>
+                        </div>
+                        <div class="w-full h-4 bg-ghost rounded-full mb-2"></div>
+                    </div>
+                </div>
+
+                <!-- OVERLAY BACKDROP (40% opacity) -->
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <!-- BOTTOM SHEET: FULL (92% = ~776px) -->
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col">
+                    
+                    <!-- TOP CHROME -->
+                    <div class="h-[52px] w-full relative shrink-0 bg-white rounded-t-[24px] z-30">
+                        <!-- Drag Handle -->
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <!-- Close Button -->
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink hover:bg-gray-200 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- CONTENT AREA (Scrollable) -->
+                    <div class="flex-1 overflow-y-auto px-[16px] flex flex-col relative pb-[34px]">
+                        
+                        <!-- Badge & Timestamp -->
+                        <div class="flex justify-between items-center mt-[8px]">
+                            <div class="bg-[#E6F4EA] px-[8px] py-[4px] rounded-full inline-flex items-center">
+                                <span class="font-sans text-[10px] font-bold text-success uppercase tracking-wider">Community</span>
+                            </div>
+                            <span class="font-mono text-[10px] text-mute">2h ago</span>
+                        </div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center justify-between mt-[12px]">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[40px] h-[40px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0 border border-ghost/20"></div>
+                                <div class="flex flex-col">
+                                    <span class="font-sans text-[14px] font-bold text-ink leading-tight">Kemi Adeyemi</span>
+                                    <span class="font-sans text-[12px] text-mute mt-[2px]">@kemi.a</span>
+                                </div>
+                            </div>
+                            <button class="h-[24px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-bold text-ink hover:bg-paper-deep transition-colors">
+                                Follow
+                            </button>
+                        </div>
+
+                        <!-- Full Post Body -->
+                        <div class="mt-[16px]">
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.6]">
+                                Just visited the new exhibition at Rele Gallery. The way they curated the lighting around the portrait series was absolutely incredible. Definitely recommend going before it closes next week!<br><br>
+                                I've been following this artist's journey since 2022 and to see this scale of work produced locally is deeply inspiring.
+                            </p>
+                            <!-- Hashtags -->
+                            <div class="mt-[8px]">
+                                <span class="font-sans text-[13px] text-ochre">#LagosNights #AfroCulture #ContemporaryArt</span>
+                            </div>
+                        </div>
+
+                        <!-- 2-Image Grid -->
+                        <div class="mt-[16px] grid grid-cols-2 gap-[8px]">
+                            <div class="h-[170px] bg-paper-warm rounded-md w-full bg-gradient-to-tr from-[#A66C52] to-[#E2B19B]"></div>
+                            <div class="h-[170px] bg-paper-warm rounded-md w-full bg-gradient-to-bl from-[#708090] to-[#A0AEBD]"></div>
+                        </div>
+
+                        <div class="w-full h-[1px] bg-ghost-light mt-[24px] mb-[16px]"></div>
+
+                        <!-- Reaction Bar (Full) -->
+                        <div class="flex items-center gap-[16px]">
+                            <button class="flex items-center gap-[6px] font-mono text-[10px] text-mute hover:text-ink">
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                14
+                            </button>
+                            <button class="flex items-center gap-[6px] font-mono text-[10px] text-mute hover:text-ink">
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg>
+                                7
+                            </button>
+                            <button class="flex items-center gap-[6px] font-mono text-[10px] text-mute hover:text-ink">
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg>
+                                9
+                            </button>
+                            <button class="flex items-center gap-[6px] font-mono text-[10px] text-mute hover:text-ink">
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                                3
+                            </button>
+                        </div>
+
+                        <div class="w-full h-[1px] bg-ghost-light my-[16px]"></div>
+
+                        <!-- Comments Header -->
+                        <div class="flex justify-between items-center mb-[16px]">
+                            <h3 class="font-sans text-[13px] font-bold text-ink">Comments (3)</h3>
+                            <button class="font-sans text-[13px] text-ochre hover:underline underline-offset-2">Add comment</button>
+                        </div>
+
+                        <!-- Comment Rows -->
+                        <div class="flex flex-col">
+                            
+                            <div class="flex gap-[12px] min-h-[64px] border-b border-ghost/40 py-[12px]">
+                                <div class="w-[36px] h-[36px] rounded-full bg-gradient-to-br from-[#4B6CB7] to-[#182848] shrink-0"></div>
+                                <div class="flex-1 flex flex-col pt-1">
+                                    <div class="flex justify-between items-start">
+                                        <span class="font-sans text-[13px] font-bold text-ink">Seun B.</span>
+                                        <span class="font-mono text-[10px] text-ghost">2h</span>
+                                    </div>
+                                    <span class="font-sans text-[13px] text-mute mt-[2px]">Loved this 🔥 that lighting setup was wild.</span>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-[12px] min-h-[64px] border-b border-ghost/40 py-[12px]">
+                                <div class="w-[36px] h-[36px] rounded-full bg-gradient-to-bl from-[#EAECC6] to-[#2BC0E4] shrink-0"></div>
+                                <div class="flex-1 flex flex-col pt-1">
+                                    <div class="flex justify-between items-start">
+                                        <span class="font-sans text-[13px] font-bold text-ink">Tayo</span>
+                                        <span class="font-mono text-[10px] text-ghost">1h</span>
+                                    </div>
+                                    <span class="font-sans text-[13px] text-mute mt-[2px]">Going this weekend! Thanks for the rec.</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- View All Comments -->
+                        <button class="w-full text-center font-sans text-[13px] text-mute py-[16px] hover:text-ink transition-colors">
+                            View all 3 comments &rarr;
+                        </button>
+
+                        <!-- Report Link -->
+                        <div class="mt-[16px] pb-[24px] flex justify-center">
+                            <button class="flex items-center gap-[6px] font-sans text-[12px] text-ghost hover:text-ink transition-colors">
+                                <span class="text-[14px]">⚑</span> Report this post
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 3: CLOSING / DISMISSED STATE (~35% top)  -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 shrink-0 snap-center pr-8">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">3. Mid-Dismiss</span>
+            
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <!-- BACKGROUND: Simulated Feed Content -->
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-card p-4">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-ghost rounded-full"></div>
+                            <div class="w-[120px] h-3 bg-ghost rounded-full"></div>
+                        </div>
+                        <div class="w-full h-4 bg-ghost rounded-full mb-2"></div>
+                        <div class="w-[80%] h-4 bg-ghost rounded-full mb-2"></div>
+                        <div class="w-full h-[100px] bg-paper-deep rounded-md mt-4"></div>
+                    </div>
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-card p-4">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-ghost rounded-full"></div>
+                            <div class="w-[90px] h-3 bg-ghost rounded-full"></div>
+                        </div>
+                        <div class="w-full h-4 bg-ghost rounded-full mb-2"></div>
+                    </div>
+                </div>
+
+                <!-- OVERLAY BACKDROP (20% opacity - bleed through) -->
+                <div class="absolute inset-0 bg-ink/20 z-10 transition-opacity"></div>
+
+                <!-- BOTTOM SHEET: MID-DISMISS (Top edge at 35% of 844 = ~295px from top) -->
+                <div class="absolute top-[35%] w-full h-[844px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col overflow-hidden transition-transform">
+                    
+                    <!-- TOP CHROME -->
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <!-- Drag Handle (Bolder for dragging state) -->
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[5px] bg-mute rounded-full"></div>
+                        
+                        <!-- Annotation -->
+                        <div class="absolute top-[22px] left-1/2 -translate-x-1/2 text-center">
+                            <span class="font-mono text-[10px] text-ghost uppercase tracking-wider">&darr; swipe down to dismiss</span>
+                        </div>
+
+                        <!-- Close Button -->
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- CONTENT AREA (Cropped) -->
+                    <div class="flex-1 px-[16px] flex flex-col relative opacity-90 pointer-events-none">
+                        <!-- Badge & Timestamp -->
+                        <div class="flex justify-between items-center mt-[8px]">
+                            <div class="bg-[#E6F4EA] px-[8px] py-[4px] rounded-full inline-flex items-center">
+                                <span class="font-sans text-[10px] font-bold text-success uppercase tracking-wider">Community</span>
+                            </div>
+                            <span class="font-mono text-[10px] text-mute">Just now</span>
+                        </div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center gap-[12px] mt-[12px]">
+                            <div class="w-[40px] h-[40px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0 border border-ghost/20"></div>
+                            <div class="flex flex-col">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">Kemi Adeyemi</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@kemi.a</span>
+                            </div>
+                        </div>
+
+                        <!-- Post Body -->
+                        <div class="mt-[12px]">
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.6]">
+                                Just visited the new exhibition at Rele Gallery. The way they curated the lighting around the portrait series was absolutely incredible. Definitely recommend going before it closes next week! #LagosNights #AfroCulture
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

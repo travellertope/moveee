@@ -1,0 +1,577 @@
+import React, { useMemo, useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useNavigation } from "@react-navigation/native";
+import { useCartStore } from "../../store/cartStore";
+import { useAuthStore } from "../../auth/authStore";
+import { useColors } from "../../hooks/useColors";
+import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
+
+interface EditProduct {
+  id: string;
+  productId: number;
+  title: string;
+  brand: string;
+  city?: string;
+  price: number;
+  proPrice?: number;
+  image?: string;
+  badge?: "new" | "low_stock" | "sale" | null;
+  badgeLabel?: string;
+  storySlug?: string;
+  storyTitle?: string;
+  editorialQuote?: string;
+  originalPrice?: number;
+}
+
+interface EditStory {
+  slug: string;
+  title: string;
+  category: string;
+  readTime: string;
+  image?: string;
+}
+
+const HERO_PICKS: EditProduct[] = [];
+const PLACEHOLDER_PICKS: EditProduct[] = [
+  { id: "p1", productId: 1, title: "Indigo Resist-Dye Throw", brand: "Adire Studio", city: "Lagos", price: 145 },
+  { id: "p2", productId: 2, title: "Leather Card Holder", brand: "Craft Co", city: "Accra", price: 48, badge: "low_stock", badgeLabel: "ONLY 3 LEFT" },
+  { id: "p3", productId: 3, title: "Oxidised Silver Cuff", brand: "Atelier Nne", city: "London", price: 95, originalPrice: 130, badge: "sale", badgeLabel: "SALE" },
+];
+const PLACEHOLDER_GRID: EditProduct[] = [
+  { id: "g1", productId: 11, title: "Hand-Bound Journal", brand: "Paper Works Lagos", price: 28, badge: "new", badgeLabel: "NEW" },
+  { id: "g2", productId: 12, title: "Brass Incense Holder", brand: "Objects Lagos", price: 55 },
+  { id: "g3", productId: 13, title: "Batik Throw Cushion", brand: "Adire Studio", price: 89 },
+  { id: "g4", productId: 14, title: "Woven Hand Basket", brand: "Craft Co", price: 65, proPrice: 58 },
+  { id: "g5", productId: 15, title: "Tall Pitcher Jug", brand: "Bisi Ceramics", price: 95, badge: "low_stock", badgeLabel: "ONLY 1 LEFT" },
+  { id: "g6", productId: 16, title: "Leather Tote Bag", brand: "Craft Co", price: 185 },
+];
+const PLACEHOLDER_STORIES: EditStory[] = [
+  { slug: "craft-revival", title: "The Resurgence of Traditional Hand-Dyeing in West Africa", category: "CULTURE · CRAFT", readTime: "12 min read" },
+  { slug: "atelier-nne", title: "Inside Atelier Nne's Minimalist Metalworks Space", category: "CULTURE · CRAFT", readTime: "8 min read" },
+];
+
+export default function TheEditScreen() {
+  const nav = useNavigation<any>();
+  const { user } = useAuthStore();
+  const { addItem, itemCount } = useCartStore();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
+
+  const [heroPick, setHeroPick] = useState<EditProduct | null>(null);
+  const [seasonPicks, setSeasonPicks] = useState<EditProduct[]>(PLACEHOLDER_PICKS);
+  const [gridPicks, setGridPicks] = useState<EditProduct[]>(PLACEHOLDER_GRID);
+  const [stories, setStories] = useState<EditStory[]>(PLACEHOLDER_STORIES);
+  const [loading, setLoading] = useState(false);
+
+  const isPatron = user?.tier === "patron";
+
+  const handleAdd = (item: EditProduct) => {
+    addItem({
+      id: String(item.productId),
+      productId: item.productId,
+      title: item.title,
+      brand: item.brand,
+      price: item.price,
+      image: item.image,
+    });
+  };
+
+  return (
+    <SafeAreaView style={[styles.safe, { backgroundColor: c.paperWarm }]} edges={["top"]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerBtn}>
+          <Ionicons name="chevron-back" size={22} color={c.ink} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>The Edit</Text>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={() => nav.navigate("Cart")}
+        >
+          <Ionicons name="bag-outline" size={22} color={c.ink} />
+          {itemCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{itemCount > 9 ? "9+" : itemCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Hero */}
+        <LinearGradient
+          colors={["#A66C52", "#C5491F", "#E2B19B"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          <LinearGradient
+            colors={["rgba(20,17,13,0.85)", "rgba(20,17,13,0.3)", "transparent"]}
+            style={styles.heroOverlay}
+          >
+            <Text style={styles.heroLabel}>THE MOVEEE EDIT</Text>
+            <Text style={styles.heroHeading}>Objects. Stories. Makers.</Text>
+            <Text style={styles.heroSub}>
+              Curated pieces featured in The Moveee Magazine.
+            </Text>
+          </LinearGradient>
+        </LinearGradient>
+
+        {/* As Seen in Magazine */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>AS SEEN IN THE MAGAZINE</Text>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureImageBox}>
+              <LinearGradient
+                colors={["#E27D60", "#C5491F"]}
+                style={styles.featureImage}
+              />
+              <View style={styles.storyTag}>
+                <Ionicons name="book-outline" size={10} color={c.inkSoft} />
+                <Text style={styles.storyTagText}>Read Story</Text>
+              </View>
+            </View>
+            <View style={styles.featureContent}>
+              <Text style={styles.featureStoryLabel}>
+                📖 Story: The Craft Revival
+              </Text>
+              <Text style={styles.featureTitle}>Terracotta Ritual Bowl</Text>
+              <Text style={styles.featureMaker}>Bisi Ceramics · Lagos</Text>
+              <View style={styles.quoteBlock}>
+                <Text style={styles.quoteText}>
+                  "A vessel that holds memory as much as water — the terracotta knows what hands have shaped it."
+                </Text>
+              </View>
+              <View style={styles.featurePriceRow}>
+                <Text style={styles.featurePrice}>£68.00</Text>
+                {isPatron && (
+                  <Text style={styles.featureProPrice}>£61.00 for Pro ★</Text>
+                )}
+              </View>
+              <TouchableOpacity
+                style={styles.addToBagBtn}
+                onPress={() =>
+                  handleAdd({
+                    id: "featured-bowl",
+                    productId: 100,
+                    title: "Terracotta Ritual Bowl",
+                    brand: "Bisi Ceramics",
+                    price: 68,
+                  })
+                }
+              >
+                <Text style={styles.addToBagText}>Add to Bag</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* This Season's Picks */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>THIS SEASON'S PICKS</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.picksScroll}
+          >
+            {seasonPicks.map((item) => (
+              <View key={item.id} style={styles.pickCard}>
+                <View style={styles.pickImageBox}>
+                  {item.image ? (
+                    <Image source={{ uri: item.image }} style={styles.pickImage} />
+                  ) : (
+                    <LinearGradient
+                      colors={["#d4a373", "#c8a27b"]}
+                      style={styles.pickImage}
+                    />
+                  )}
+                  {item.badge && item.badgeLabel && (
+                    <View
+                      style={[
+                        styles.pickBadge,
+                        item.badge === "sale"
+                          ? styles.pickBadgeSale
+                          : styles.pickBadgeDark,
+                      ]}
+                    >
+                      <Text style={styles.pickBadgeText}>{item.badgeLabel}</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.pickContent}>
+                  <Text style={styles.pickBrand} numberOfLines={1}>
+                    {item.brand}
+                  </Text>
+                  <Text style={styles.pickTitle} numberOfLines={2}>
+                    {item.title}
+                  </Text>
+                  <View style={styles.pickPriceRow}>
+                    <View>
+                      {item.originalPrice && (
+                        <Text style={styles.pickStrike}>£{item.originalPrice}</Text>
+                      )}
+                      <Text style={styles.pickPrice}>£{item.price}</Text>
+                      {item.proPrice && isPatron && (
+                        <Text style={styles.pickProPrice}>£{item.proPrice} Pro</Text>
+                      )}
+                    </View>
+                    <TouchableOpacity
+                      style={styles.pickAddBtn}
+                      onPress={() => handleAdd(item)}
+                    >
+                      <Text style={styles.pickAddText}>Add</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Editorial Stories */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>STORIES FEATURING THESE OBJECTS</Text>
+          {stories.map((story) => (
+            <TouchableOpacity
+              key={story.slug}
+              style={styles.storyCard}
+              onPress={() => nav.navigate("Magazine", { screen: "Article", params: { slug: story.slug } } as any)}
+            >
+              <LinearGradient
+                colors={["#E27D60", "#E8A87C"]}
+                style={styles.storyImage}
+              />
+              <View style={styles.storyContent}>
+                <Text style={styles.storyCat}>{story.category}</Text>
+                <Text style={styles.storyTitle} numberOfLines={2}>
+                  {story.title}
+                </Text>
+                <Text style={styles.storyTime}>{story.readTime}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={c.ghost} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* All Edit Picks Grid */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>ALL EDIT PICKS</Text>
+          <View style={styles.grid}>
+            {gridPicks.map((item) => (
+              <View key={item.id} style={styles.gridCard}>
+                <View style={styles.gridImageBox}>
+                  {item.image ? (
+                    <Image source={{ uri: item.image }} style={styles.gridImage} />
+                  ) : (
+                    <LinearGradient
+                      colors={["#c9b99a", "#d4a373"]}
+                      style={styles.gridImage}
+                    />
+                  )}
+                  {item.badge && item.badgeLabel && (
+                    <View
+                      style={[
+                        styles.gridBadge,
+                        item.badge === "new"
+                          ? styles.gridBadgeNew
+                          : item.badge === "low_stock"
+                          ? styles.gridBadgeLow
+                          : styles.gridBadgeSale,
+                      ]}
+                    >
+                      <Text style={styles.gridBadgeText}>{item.badgeLabel}</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.gridContent}>
+                  <Text style={styles.gridBrand} numberOfLines={1}>
+                    {item.brand}
+                  </Text>
+                  <Text style={styles.gridTitle} numberOfLines={2}>
+                    {item.title}
+                  </Text>
+                  <View style={styles.gridPriceRow}>
+                    <View>
+                      <Text style={styles.gridPrice}>£{item.price}</Text>
+                      {item.proPrice && isPatron && (
+                        <Text style={styles.gridProPrice}>£{item.proPrice} Pro</Text>
+                      )}
+                    </View>
+                    <TouchableOpacity
+                      style={styles.gridAddBtn}
+                      onPress={() => handleAdd(item)}
+                    >
+                      <Ionicons name="add" size={16} color={c.ink} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Sign-off band */}
+        <View style={styles.signOff}>
+          <View style={styles.signOffLine} />
+          <View style={styles.signOffContent}>
+            <Text style={styles.signOffHeading}>
+              Hand-picked by the Moveee editorial team.
+            </Text>
+            <Text style={styles.signOffSub}>
+              Every object in The Edit has been featured in our magazine.
+            </Text>
+          </View>
+          <View style={styles.signOffLine} />
+        </View>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    safe: { flex: 1 },
+
+    header: {
+      height: 52,
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.paper,
+      borderBottomWidth: 1,
+      borderBottomColor: c.rule,
+      paddingHorizontal: space[4],
+      ...shadows.card,
+    },
+    headerBtn: { width: 40, alignItems: "center", position: "relative" },
+    headerTitle: {
+      flex: 1,
+      textAlign: "center",
+      fontFamily: fonts.serifBold,
+      fontSize: 20,
+      color: c.ink,
+    },
+    cartBadge: {
+      position: "absolute",
+      top: -4,
+      right: -4,
+      backgroundColor: "#C5491F",
+      borderRadius: 8,
+      minWidth: 16,
+      height: 16,
+      paddingHorizontal: 2,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    cartBadgeText: { fontFamily: fonts.monoBold, fontSize: 9, color: "#fff" },
+
+    hero: { height: 240 },
+    heroOverlay: {
+      flex: 1,
+      justifyContent: "flex-end",
+      padding: 24,
+      paddingBottom: 28,
+    },
+    heroLabel: {
+      fontFamily: fonts.monoBold,
+      fontSize: 9,
+      color: "#B38238",
+      letterSpacing: 3,
+      marginBottom: 6,
+    },
+    heroHeading: {
+      fontFamily: fonts.serifBold,
+      fontSize: 26,
+      color: "#fff",
+      marginBottom: 4,
+    },
+    heroSub: { fontFamily: fonts.sans, fontSize: 14, color: "rgba(255,255,255,0.8)" },
+
+    section: { paddingHorizontal: space[4], marginTop: 24 },
+    sectionLabel: {
+      fontFamily: fonts.mono,
+      fontSize: 9,
+      color: c.mute,
+      textTransform: "uppercase",
+      letterSpacing: 1.5,
+      marginBottom: 12,
+    },
+
+    // Feature card
+    featureCard: {
+      backgroundColor: c.paper,
+      borderRadius: 12,
+      overflow: "hidden",
+      ...shadows.card,
+    },
+    featureImageBox: { position: "relative" },
+    featureImage: { width: "100%", aspectRatio: 16 / 9 },
+    storyTag: {
+      position: "absolute",
+      top: 10,
+      right: 10,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: "rgba(255,255,255,0.9)",
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: radius.full,
+    },
+    storyTagText: { fontFamily: fonts.sansBold, fontSize: 10, color: c.inkSoft },
+    featureContent: { padding: 20, gap: 8 },
+    featureStoryLabel: { fontFamily: fonts.sans, fontSize: 12, color: c.mute, fontStyle: "italic" },
+    featureTitle: { fontFamily: fonts.serifBold, fontSize: 22, color: c.ink },
+    featureMaker: { fontFamily: fonts.sans, fontSize: 13, color: c.mute },
+    quoteBlock: {
+      borderLeftWidth: 2,
+      borderLeftColor: "#C5491F",
+      backgroundColor: c.paperWarm,
+      padding: 12,
+      borderRadius: 4,
+    },
+    quoteText: { fontFamily: fonts.serif, fontSize: 14, color: c.inkSoft, lineHeight: 22, fontStyle: "italic" },
+    featurePriceRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    featurePrice: { fontFamily: fonts.sansBold, fontSize: 18, color: c.ink },
+    featureProPrice: { fontFamily: fonts.sansBold, fontSize: 12, color: c.gold },
+    addToBagBtn: {
+      height: 44,
+      backgroundColor: "#C5491F",
+      borderRadius: radius.full,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 4,
+    },
+    addToBagText: { fontFamily: fonts.sansBold, fontSize: 15, color: "#fff" },
+
+    // Season picks
+    picksScroll: { paddingRight: space[4], gap: 12 },
+    pickCard: {
+      width: 200,
+      backgroundColor: c.paper,
+      borderRadius: 12,
+      overflow: "hidden",
+      ...shadows.card,
+    },
+    pickImageBox: { position: "relative" },
+    pickImage: { width: "100%", height: 160 },
+    pickBadge: {
+      position: "absolute",
+      top: 8,
+      left: 8,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    pickBadgeSale: { backgroundColor: "#C62828" },
+    pickBadgeDark: { backgroundColor: "rgba(20,17,13,0.7)" },
+    pickBadgeText: { fontFamily: fonts.monoBold, fontSize: 9, color: "#fff" },
+    pickContent: { padding: 12, gap: 4 },
+    pickBrand: { fontFamily: fonts.mono, fontSize: 9, color: c.mute, textTransform: "uppercase" },
+    pickTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+    pickStrike: { fontFamily: fonts.sans, fontSize: 11, color: c.mute, textDecorationLine: "line-through" },
+    pickPrice: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+    pickProPrice: { fontFamily: fonts.sans, fontSize: 11, color: c.gold },
+    pickPriceRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginTop: 4 },
+    pickAddBtn: {
+      height: 32,
+      paddingHorizontal: 14,
+      backgroundColor: "#C5491F",
+      borderRadius: radius.full,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    pickAddText: { fontFamily: fonts.sansBold, fontSize: 12, color: "#fff" },
+
+    // Stories
+    storyCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.paper,
+      borderRadius: 12,
+      overflow: "hidden",
+      marginBottom: 10,
+      ...shadows.card,
+    },
+    storyImage: { width: 120, height: 100 },
+    storyContent: { flex: 1, padding: 12, gap: 4 },
+    storyCat: { fontFamily: fonts.monoBold, fontSize: 9, color: "#C5491F", textTransform: "uppercase", letterSpacing: 1 },
+    storyTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+    storyTime: { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
+
+    // Grid
+    grid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 12,
+    },
+    gridCard: {
+      width: "47%",
+      backgroundColor: c.paper,
+      borderRadius: 12,
+      overflow: "hidden",
+      ...shadows.card,
+    },
+    gridImageBox: { position: "relative" },
+    gridImage: { width: "100%", aspectRatio: 1 },
+    gridBadge: {
+      position: "absolute",
+      bottom: 8,
+      left: 8,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    gridBadgeNew: { backgroundColor: "#C5491F" },
+    gridBadgeLow: { backgroundColor: "rgba(20,17,13,0.7)" },
+    gridBadgeSale: { backgroundColor: "#C62828" },
+    gridBadgeText: { fontFamily: fonts.monoBold, fontSize: 9, color: "#fff" },
+    gridContent: { padding: 12, gap: 2 },
+    gridBrand: { fontFamily: fonts.mono, fontSize: 9, color: c.mute, textTransform: "uppercase" },
+    gridTitle: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ink, minHeight: 36 },
+    gridPriceRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4 },
+    gridPrice: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+    gridProPrice: { fontFamily: fonts.sans, fontSize: 11, color: c.gold },
+    gridAddBtn: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: c.paperWarm,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    // Sign-off
+    signOff: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginHorizontal: space[4],
+      marginTop: 32,
+      gap: 12,
+    },
+    signOffLine: { flex: 1, height: 1, backgroundColor: "rgba(179,130,56,0.2)" },
+    signOffContent: { alignItems: "center", gap: 4 },
+    signOffHeading: {
+      fontFamily: fonts.serif,
+      fontStyle: "italic",
+      fontSize: 18,
+      color: c.ink,
+      textAlign: "center",
+    },
+    signOffSub: { fontFamily: fonts.sans, fontSize: 13, color: c.mute, textAlign: "center" },
+  });
+}

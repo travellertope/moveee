@@ -13,6 +13,7 @@ import OnboardingScreen from "../screens/auth/OnboardingScreen";
 import LoginScreen from "../screens/auth/LoginScreen";
 import RegisterScreen from "../screens/auth/RegisterScreen";
 import VerifyEmailScreen from "../screens/auth/VerifyEmailScreen";
+import RegisterCompleteScreen from "../screens/auth/RegisterCompleteScreen";
 import ForgotPasswordScreen from "../screens/auth/ForgotPasswordScreen";
 import ResetPasswordScreen from "../screens/auth/ResetPasswordScreen";
 
@@ -28,11 +29,15 @@ import MemberDirectoryScreen from "../screens/community/MemberDirectoryScreen";
 // Magazine
 import MagazineScreen from "../screens/magazine/MagazineScreen";
 import ArticleScreen from "../screens/magazine/ArticleScreen";
+import IssuesArchiveScreen from "../screens/magazine/IssuesArchiveScreen";
+import MagazineSearchScreen from "../screens/magazine/MagazineSearchScreen";
 
 // Events / Games
 import GamesScreen from "../screens/games/GamesScreen";
 import TriviaGameScreen from "../screens/games/TriviaGameScreen";
 import WhoSaidItGameScreen from "../screens/games/WhoSaidItGameScreen";
+import SudokuGameScreen from "../screens/games/SudokuGameScreen";
+import CrosswordGameScreen from "../screens/games/CrosswordGameScreen";
 import EventsScreen from "../screens/events/EventsScreen";
 import EventDetailScreen from "../screens/events/EventDetailScreen";
 
@@ -40,6 +45,11 @@ import EventDetailScreen from "../screens/events/EventDetailScreen";
 import ShopScreen from "../screens/shop/ShopScreen";
 import ShopListingScreen from "../screens/shop/ShopListingScreen";
 import ProductDetailScreen from "../screens/shop/ProductDetailScreen";
+import CartScreen from "../screens/shop/CartScreen";
+import TheEditScreen from "../screens/shop/TheEditScreen";
+import ShopSearchScreen from "../screens/shop/ShopSearchScreen";
+import MakerProfileScreen from "../screens/shop/MakerProfileScreen";
+import OrderConfirmationScreen from "../screens/shop/OrderConfirmationScreen";
 
 // Member
 import MemberDashboardScreen from "../screens/member/MemberDashboardScreen";
@@ -62,6 +72,9 @@ type FeedStackParams = {
   MemberProfile:     { userId: string; username: string };
   MemberDirectory:   undefined;
   Notifications:     undefined;
+  // Editorial articles opened from the Connect feed stay in this stack
+  // so the Magazine tab is never polluted by cross-tab navigation.
+  Article:           { slug: string };
 };
 
 type MemberStackParams = {
@@ -87,7 +100,17 @@ function ConnectStack() {
       <Stack.Screen name="DirectorySubmit" component={DirectorySubmitScreen} />
       <Stack.Screen name="MemberProfile"   component={MemberProfileScreen} />
       <Stack.Screen name="MemberDirectory" component={MemberDirectoryScreen} />
-    <Stack.Screen name="Notifications"   component={NotificationsScreen} />
+      <Stack.Screen name="Notifications"   component={NotificationsScreen} />
+      {/* Articles opened from the feed stay within this stack — back → feed */}
+      <Stack.Screen name="Article"         component={ArticleScreen} />
+      {/* Member screens — accessible via avatar tap in header */}
+      <Stack.Screen name="MemberDashboard" component={MemberDashboardScreen} />
+      <Stack.Screen name="MemberSettings"  component={MemberSettingsScreen} />
+      <Stack.Screen name="Wallet"          component={WalletScreen} />
+      <Stack.Screen name="Coupons"         component={CouponsScreen} />
+      <Stack.Screen name="Perks"           component={PerksScreen} />
+      <Stack.Screen name="Membership"      component={MembershipScreen} />
+      <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
     </Stack.Navigator>
   );
 }
@@ -95,8 +118,11 @@ function ConnectStack() {
 function MagazineStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="MagazineList" component={MagazineScreen} />
-      <Stack.Screen name="Article"      component={ArticleScreen} />
+      <Stack.Screen name="MagazineList"    component={MagazineScreen} />
+      {/* popToTopOnBlur: leaving the Magazine tab resets the stack to MagazineList */}
+      <Stack.Screen name="Article"         component={ArticleScreen} options={{ popToTopOnBlur: true }} />
+      <Stack.Screen name="IssuesArchive"   component={IssuesArchiveScreen} />
+      <Stack.Screen name="MagazineSearch"  component={MagazineSearchScreen} />
     </Stack.Navigator>
   );
 }
@@ -114,8 +140,13 @@ function ShopStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ShopHome"      component={ShopScreen} />
-      <Stack.Screen name="ShopListing"  component={ShopListingScreen} />
+      <Stack.Screen name="ShopListing"   component={ShopListingScreen} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <Stack.Screen name="Cart"              component={CartScreen} />
+      <Stack.Screen name="TheEdit"           component={TheEditScreen} />
+      <Stack.Screen name="ShopSearch"        component={ShopSearchScreen} />
+      <Stack.Screen name="MakerProfile"      component={MakerProfileScreen} />
+      <Stack.Screen name="OrderConfirmation" component={OrderConfirmationScreen} />
     </Stack.Navigator>
   );
 }
@@ -123,9 +154,11 @@ function ShopStack() {
 function GamesStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="GamesList"  component={GamesScreen} />
-      <Stack.Screen name="TriviaGame" component={TriviaGameScreen} />
-      <Stack.Screen name="WhoSaidIt"  component={WhoSaidItGameScreen} />
+      <Stack.Screen name="GamesList"   component={GamesScreen} />
+      <Stack.Screen name="TriviaGame"  component={TriviaGameScreen} />
+      <Stack.Screen name="WhoSaidIt"   component={WhoSaidItGameScreen} />
+      <Stack.Screen name="Sudoku"      component={SudokuGameScreen} />
+      <Stack.Screen name="Crossword"   component={CrosswordGameScreen} />
     </Stack.Navigator>
   );
 }
@@ -145,8 +178,6 @@ function MemberStack() {
 }
 
 function MainTabs() {
-  const { user } = useAuthStore();
-  const isPro = user?.tier === "patron";
 
   return (
     <Tab.Navigator
@@ -159,13 +190,6 @@ function MainTabs() {
           borderTopColor: "#e0d8cc",
         },
         tabBarIcon: ({ focused, color, size }) => {
-          // Me tab uses a gold person-sharp when Pro
-          if (route.name === "Me") {
-            const iconName = focused
-              ? (isPro ? "person-sharp" : "person")
-              : "person-outline";
-            return <Ionicons name={iconName as never} size={size} color={color} />;
-          }
           const icons: Record<string, [string, string]> = {
             Connect:  ["people",          "people-outline"],
             Magazine: ["newspaper",       "newspaper-outline"],
@@ -183,7 +207,6 @@ function MainTabs() {
       <Tab.Screen name="Games"    component={GamesStack} />
       <Tab.Screen name="Shop"     component={ShopStack} />
       <Tab.Screen name="Events"   component={EventsStack} />
-      <Tab.Screen name="Me"       component={MemberStack} />
     </Tab.Navigator>
   );
 }
@@ -191,24 +214,38 @@ function MainTabs() {
 function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Onboarding"     component={OnboardingScreen} />
-      <Stack.Screen name="Login"          component={LoginScreen} />
-      <Stack.Screen name="Register"       component={RegisterScreen} />
-      <Stack.Screen name="VerifyEmail"    component={VerifyEmailScreen} />
+      <Stack.Screen name="Onboarding"    component={OnboardingScreen} />
+      <Stack.Screen name="Login"         component={LoginScreen} />
+      <Stack.Screen name="Register"      component={RegisterScreen} />
+      <Stack.Screen name="VerifyEmail"   component={VerifyEmailScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword"  component={ResetPasswordScreen} />
     </Stack.Navigator>
   );
 }
 
+function ProfileCompleteStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="CompleteProfile" component={RegisterCompleteScreen} />
+    </Stack.Navigator>
+  );
+}
+
 export default function Navigation() {
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated, isLoading, profileSetupRequired } = useAuthStore();
 
   if (isLoading) return <AppLoadingScreen />;
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <MainTabs /> : <AuthStack />}
+      {!isAuthenticated ? (
+        <AuthStack />
+      ) : profileSetupRequired ? (
+        <ProfileCompleteStack />
+      ) : (
+        <MainTabs />
+      )}
     </NavigationContainer>
   );
 }

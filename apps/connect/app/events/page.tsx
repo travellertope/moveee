@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getEventsWithFallback } from "@/lib/wp";
+import { getCategoryImage, getCategoryGradient } from "./utils/categoryImages";
 import EventHero from "./components/EventHero";
 import EventTimeline from "./components/EventTimeline";
 import "@/app/events.css";
@@ -111,10 +112,16 @@ export default async function EventsPage() {
                 const img = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
                 const cat = event.cultureInterests?.nodes?.[0]?.name || "";
                 const dateStr = fmtShort(event.eventDate || event.date);
+                const catSlug = event.cultureInterests?.nodes?.[0]?.slug || "";
                 return (
                   <Link key={event.slug} href={`/events/${event.slug}`} className="ev-feat-card">
-                    <div className="ev-feat-img">
-                      {img && <Image src={img} alt={event.title} fill style={{ objectFit: "cover" }} />}
+                    <div className="ev-feat-img" style={!img ? { background: getCategoryGradient(catSlug) } : undefined}>
+                      <Image
+                        src={img || getCategoryImage(catSlug)}
+                        alt={event.title}
+                        fill
+                        style={{ objectFit: "cover" }}
+                      />
                       <div className="ev-feat-overlay" />
                       {cat && <span className="ev-feat-cat">{cat}</span>}
                       {dateStr && <span className="ev-feat-date">{dateStr}</span>}

@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { sanitizeHtml } from "@/lib/sanitize";
+import { getCategoryImage, getCategoryGradient } from "../utils/categoryImages";
 
 interface EventCardProps {
   slug: string;
@@ -29,11 +30,22 @@ const EventCard: React.FC<EventCardProps> = ({
   return (
     <Link href={`/events/${slug}`} className="event-card">
       <div className="ec-thumb">
-        {image ? (
-          <Image src={image} alt={title} fill style={{ objectFit: "cover" }} />
-        ) : (
-          <div className="ec-thumb-placeholder" />
-        )}
+        <Image
+          src={image || getCategoryImage(category)}
+          alt={title}
+          fill
+          style={{ objectFit: "cover" }}
+          onError={(e) => {
+            const el = e.currentTarget as HTMLImageElement;
+            el.style.display = "none";
+            const ph = el.parentElement?.querySelector<HTMLElement>(".ec-thumb-placeholder");
+            if (ph) ph.style.display = "block";
+          }}
+        />
+        <div
+          className="ec-thumb-placeholder"
+          style={{ background: getCategoryGradient(category), display: "none" }}
+        />
       </div>
       <div className="ec-body">
         <div className="ec-meta-top">

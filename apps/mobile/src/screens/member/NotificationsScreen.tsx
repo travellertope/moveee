@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View, Text, SectionList, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, RefreshControl,
@@ -6,24 +6,27 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
-import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { fonts, fontSize, space, radius } from "../../theme";
+import { useColors } from "../../hooks/useColors";
+import type { ColorPalette } from "../../theme";
 import type { Notification } from "../../types";
 
 const PAGE_SIZE = 20;
 
-// Left border color + icon circle background per notification type
-const TYPE_META: Record<string, { emoji: string; accent: string; border: boolean }> = {
-  credit_earned:    { emoji: "★",  accent: colors.ochre,   border: true  },
-  post_validated:   { emoji: "★",  accent: colors.ochre,   border: true  },
-  badge_unlocked:   { emoji: "✦",  accent: colors.gold,    border: true  },
-  perk_expiring:    { emoji: "⏰", accent: colors.warning,  border: true  },
-  perk_redeemed:    { emoji: "🎁", accent: colors.success,  border: false },
-  cashout_approved: { emoji: "✅", accent: colors.ghost,    border: false },
-  cashout_rejected: { emoji: "⚠️", accent: colors.error,   border: true  },
-  escrow_released:  { emoji: "🔓", accent: colors.success,  border: false },
-  comment_received: { emoji: "💬", accent: colors.success,  border: false },
-  system:           { emoji: "📢", accent: colors.ghost,    border: false },
-};
+function getTypeMeta(c: ColorPalette) {
+  return {
+    credit_earned:    { emoji: "★",  accent: c.ochre,   border: true  },
+    post_validated:   { emoji: "★",  accent: c.ochre,   border: true  },
+    badge_unlocked:   { emoji: "✦",  accent: c.gold,    border: true  },
+    perk_expiring:    { emoji: "⏰", accent: c.warning,  border: true  },
+    perk_redeemed:    { emoji: "🎁", accent: c.success,  border: false },
+    cashout_approved: { emoji: "✅", accent: c.ghost,    border: false },
+    cashout_rejected: { emoji: "⚠️", accent: c.error,   border: true  },
+    escrow_released:  { emoji: "🔓", accent: c.success,  border: false },
+    comment_received: { emoji: "💬", accent: c.success,  border: false },
+    system:           { emoji: "📢", accent: c.ghost,    border: false },
+  } as Record<string, { emoji: string; accent: string; border: boolean }>;
+}
 
 function timeAgo(dateStr: string): string {
   const secs = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -55,8 +58,16 @@ function groupNotifications(notifications: Notification[]) {
   return sections;
 }
 
-function NotifRow({ item, onPress }: { item: Notification; onPress: () => void }) {
-  const meta = TYPE_META[item.type] ?? TYPE_META.system;
+function NotifRow({
+  item, onPress, styles, c,
+}: {
+  item: Notification;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+  c: ColorPalette;
+}) {
+  const typeMeta = getTypeMeta(c);
+  const meta = typeMeta[item.type] ?? typeMeta.system;
   const isUnread = !item.read_at;
   const isOld = !isToday(item.created_at);
 
@@ -66,22 +77,19 @@ function NotifRow({ item, onPress }: { item: Notification; onPress: () => void }
       onPress={onPress}
       activeOpacity={0.7}
     >
-      {/* Left accent border for priority types */}
       {meta.border && (
         <View style={[styles.accentBorder, { backgroundColor: meta.accent }]} />
       )}
 
-      {/* Icon circle */}
       <View style={[
         styles.iconCircle,
         isOld
-          ? { backgroundColor: colors.ghost + "40" }
+          ? { backgroundColor: c.ghost + "40" }
           : { backgroundColor: meta.accent },
       ]}>
         <Text style={styles.iconEmoji}>{meta.emoji}</Text>
       </View>
 
-      {/* Content */}
       <View style={styles.rowBody}>
         <View style={styles.rowTop}>
           <Text
@@ -91,8 +99,8 @@ function NotifRow({ item, onPress }: { item: Notification; onPress: () => void }
             {item.title}
           </Text>
           <View style={styles.rowMeta}>
-            {isUnread && <View style={[styles.unreadDot, { backgroundColor: colors.ochre }]} />}
-            <Text style={[styles.rowTime, isOld && { color: colors.ghost }]}>
+            {isUnread && <View style={[styles.unreadDot, { backgroundColor: c.ochre }]} />}
+            <Text style={[styles.rowTime, isOld && { color: c.ghost }]}>
               {timeAgo(item.created_at)}
             </Text>
           </View>
@@ -111,6 +119,9 @@ export default function NotificationsScreen() {
   const [offset,       setOffset]       = useState(0);
   const [hasMore,      setHasMore]      = useState(true);
   const [loadingMore,  setLoadingMore]  = useState(false);
+
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   const load = useCallback(async (reset = false) => {
     const nextOffset = reset ? 0 : offset;
@@ -158,13 +169,13 @@ export default function NotificationsScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
-            <Ionicons name="chevron-back" size={22} color={colors.ink} />
+            <Ionicons name="chevron-back" size={22} color={c.ink} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Notifications</Text>
           <View style={styles.headerSideBtn} />
         </View>
         <View style={styles.center}>
-          <ActivityIndicator color={colors.gold} />
+          <ActivityIndicator color={c.gold} />
         </View>
       </SafeAreaView>
     );
@@ -172,10 +183,9 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
-          <Ionicons name="chevron-back" size={22} color={colors.ink} />
+          <Ionicons name="chevron-back" size={22} color={c.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
         <TouchableOpacity
@@ -189,9 +199,8 @@ export default function NotificationsScreen() {
       </View>
 
       {notifications.length === 0 ? (
-        /* Empty state */
         <View style={styles.empty}>
-          <Ionicons name="notifications-outline" size={64} color={colors.ghost} style={{ marginBottom: 20 }} />
+          <Ionicons name="notifications-outline" size={64} color={c.ghost} style={{ marginBottom: 20 }} />
           <Text style={styles.emptyTitle}>You're all caught up</Text>
           <Text style={styles.emptyDesc}>New activity will appear here.</Text>
         </View>
@@ -203,6 +212,8 @@ export default function NotificationsScreen() {
             <NotifRow
               item={item}
               onPress={() => !item.read_at && markRead(item.id)}
+              styles={styles}
+              c={c}
             />
           )}
           renderSectionHeader={({ section }) => (
@@ -214,14 +225,14 @@ export default function NotificationsScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => { setOffset(0); load(true); }}
-              tintColor={colors.gold}
+              tintColor={c.gold}
             />
           }
           onEndReached={() => hasMore && load()}
           onEndReachedThreshold={0.4}
           ListFooterComponent={
             loadingMore
-              ? <ActivityIndicator style={{ padding: space[4] }} color={colors.gold} />
+              ? <ActivityIndicator style={{ padding: space[4] }} color={c.gold} />
               : null
           }
           showsVerticalScrollIndicator={false}
@@ -233,70 +244,69 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paperDeep },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.paperDeep },
 
-  header: {
-    height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: space[4], backgroundColor: colors.paper,
-    borderBottomWidth: 0,
-  },
-  headerSideBtn:  { minWidth: 44, minHeight: 44, justifyContent: "center" },
-  headerTitle:    { fontFamily: fonts.sansBold, fontSize: 15, color: colors.ink },
-  markAllText:    { fontFamily: fonts.sans, fontSize: 13, color: colors.ochre, textAlign: "right" },
+    header: {
+      height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], backgroundColor: c.paper,
+      borderBottomWidth: 0,
+    },
+    headerSideBtn:  { minWidth: 44, minHeight: 44, justifyContent: "center" },
+    headerTitle:    { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
+    markAllText:    { fontFamily: fonts.sans, fontSize: 13, color: c.ochre, textAlign: "right" },
 
-  // Section header
-  sectionHeader: {
-    height: 32, backgroundColor: colors.paperWarm,
-    justifyContent: "center", paddingHorizontal: 16,
-    borderBottomWidth: 1, borderBottomColor: colors.ghost + "80",
-  },
-  sectionHeaderText: {
-    fontFamily: fonts.mono, fontSize: 9, color: colors.mute,
-    textTransform: "uppercase", letterSpacing: 1.2,
-  },
+    sectionHeader: {
+      height: 32, backgroundColor: c.paperWarm,
+      justifyContent: "center", paddingHorizontal: 16,
+      borderBottomWidth: 1, borderBottomColor: c.ghost + "80",
+    },
+    sectionHeaderText: {
+      fontFamily: fonts.mono, fontSize: 9, color: c.mute,
+      textTransform: "uppercase", letterSpacing: 1.2,
+    },
 
-  // Row
-  row: {
-    minHeight: 72, flexDirection: "row", alignItems: "flex-start",
-    backgroundColor: colors.paper, paddingHorizontal: 16, paddingVertical: 16,
-    borderBottomWidth: 1, borderBottomColor: colors.ghost,
-    gap: 12, position: "relative",
-  },
-  rowOld: { opacity: 0.9 },
-  accentBorder: {
-    position: "absolute", left: 0, top: 0, bottom: 0, width: 3,
-  },
+    row: {
+      minHeight: 72, flexDirection: "row", alignItems: "flex-start",
+      backgroundColor: c.paper, paddingHorizontal: 16, paddingVertical: 16,
+      borderBottomWidth: 1, borderBottomColor: c.ghost,
+      gap: 12, position: "relative",
+    },
+    rowOld: { opacity: 0.9 },
+    accentBorder: {
+      position: "absolute", left: 0, top: 0, bottom: 0, width: 3,
+    },
 
-  iconCircle: {
-    width: 40, height: 40, borderRadius: 20,
-    justifyContent: "center", alignItems: "center", flexShrink: 0,
-  },
-  iconEmoji: { fontSize: 16 },
+    iconCircle: {
+      width: 40, height: 40, borderRadius: 20,
+      justifyContent: "center", alignItems: "center", flexShrink: 0,
+    },
+    iconEmoji: { fontSize: 16 },
 
-  rowBody: { flex: 1 },
-  rowTop:  { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
-  rowTitle: {
-    fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink,
-    lineHeight: 18, flex: 1,
-  },
-  rowTitleOld: { color: colors.inkSoft },
-  rowMeta: { flexDirection: "column", alignItems: "flex-end", gap: 4 },
-  rowTime: { fontFamily: fonts.mono, fontSize: 10, color: colors.mute },
-  unreadDot: { width: 8, height: 8, borderRadius: 4 },
-  rowDesc: {
-    fontFamily: fonts.sans, fontSize: 13, color: colors.mute,
-    marginTop: 4, lineHeight: 18,
-  },
+    rowBody: { flex: 1 },
+    rowTop:  { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
+    rowTitle: {
+      fontFamily: fonts.sansBold, fontSize: 14, color: c.ink,
+      lineHeight: 18, flex: 1,
+    },
+    rowTitleOld: { color: c.inkSoft },
+    rowMeta: { flexDirection: "column", alignItems: "flex-end", gap: 4 },
+    rowTime: { fontFamily: fonts.mono, fontSize: 10, color: c.mute },
+    unreadDot: { width: 8, height: 8, borderRadius: 4 },
+    rowDesc: {
+      fontFamily: fonts.sans, fontSize: 13, color: c.mute,
+      marginTop: 4, lineHeight: 18,
+    },
 
-  // Empty state
-  empty: {
-    flex: 1, backgroundColor: colors.paperWarm,
-    alignItems: "center", justifyContent: "center",
-    padding: 24, paddingBottom: 80,
-  },
-  emptyTitle: { fontFamily: fonts.serifBold, fontSize: 22, color: colors.ink, marginBottom: 12 },
-  emptyDesc:  { fontFamily: fonts.sans, fontSize: 14, color: colors.mute, textAlign: "center" },
+    empty: {
+      flex: 1, backgroundColor: c.paperWarm,
+      alignItems: "center", justifyContent: "center",
+      padding: 24, paddingBottom: 80,
+    },
+    emptyTitle: { fontFamily: fonts.serifBold, fontSize: 22, color: c.ink, marginBottom: 12 },
+    emptyDesc:  { fontFamily: fonts.sans, fontSize: 14, color: c.mute, textAlign: "center" },
 
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-});
+    center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  });
+}

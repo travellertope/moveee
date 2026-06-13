@@ -1,8 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: { absolute: "Join The Moveee" },
+  title: { absolute: "Join Moveee" },
   description: "Create your Moveee account — free membership for culture lovers, or Connect Pro for full access to the archive, events, and community.",
+  robots: { index: false, follow: false },
 };
 
 export default function RegisterLayout({ children }: { children: React.ReactNode }) {

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
@@ -9,7 +9,9 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { api, MOBILE_API } from "../../api/client";
-import { colors, fonts, fontSize, space, radius } from "../../theme";
+import { fonts, fontSize, space, radius } from "../../theme";
+import type { ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 import StarRating from "../../components/composer/StarRating";
 import MultiRating from "../../components/composer/MultiRating";
 import PollBuilder, { PollDraft } from "../../components/composer/PollBuilder";
@@ -69,6 +71,8 @@ const fmtTime = (d: Date) =>
 
 export default function NewPostScreen() {
   const nav = useNavigation<any>();
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   const [template, setTemplate] = useState<TemplateId>("post");
   const [text, setText] = useState("");
@@ -301,7 +305,7 @@ export default function NewPostScreen() {
             disabled={isSubmitDisabled}
           >
             {submitting
-              ? <ActivityIndicator color={colors.ochre} size="small" />
+              ? <ActivityIndicator color={c.ochre} size="small" />
               : <Text style={[styles.postText, isSubmitDisabled && styles.postTextDisabled]}>Post</Text>
             }
           </TouchableOpacity>
@@ -355,7 +359,7 @@ export default function NewPostScreen() {
                 value={eventTitle}
                 onChangeText={setEventTitle}
                 placeholder="Event title"
-                placeholderTextColor={colors.ghost}
+                placeholderTextColor={c.ghost}
                 autoFocus
               />
             </>
@@ -372,7 +376,7 @@ export default function NewPostScreen() {
                 onChangeText={handleTextChange}
                 multiline
                 placeholder="The quote text…"
-                placeholderTextColor={colors.ghost}
+                placeholderTextColor={c.ghost}
                 maxLength={tmpl.maxText + 50}
               />
               <Text style={styles.charCountInline}>{remaining} remaining</Text>
@@ -391,7 +395,7 @@ export default function NewPostScreen() {
                   template === "itinerary" ? "Describe this route… where, when, who for?" :
                   "What's on your cultural mind?"
                 }
-                placeholderTextColor={colors.ghost}
+                placeholderTextColor={c.ghost}
                 maxLength={tmpl.maxText + 50}
               />
             ) : null
@@ -399,7 +403,7 @@ export default function NewPostScreen() {
 
           {/* Char counter (not for quote — shown inline) */}
           {template !== "quote" && (
-            <Text style={[styles.charCount, remaining < 50 && { color: colors.gold }, remaining < 0 && { color: colors.ochre }]}>
+            <Text style={[styles.charCount, remaining < 50 && { color: c.gold }, remaining < 0 && { color: c.ochre }]}>
               {remaining}
             </Text>
           )}
@@ -408,9 +412,9 @@ export default function NewPostScreen() {
           {template === "quote" && (
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Author</Text>
-              <TextInput style={styles.input} value={quoteAuthor} onChangeText={setQuoteAuthor} placeholder="Author *" placeholderTextColor={colors.ghost} />
+              <TextInput style={styles.input} value={quoteAuthor} onChangeText={setQuoteAuthor} placeholder="Author *" placeholderTextColor={c.ghost} />
               <Text style={[styles.fieldLabel, { marginTop: 8 }]}>Source (optional)</Text>
-              <TextInput style={styles.input} value={quoteSource} onChangeText={setQuoteSource} placeholder="Source (optional)" placeholderTextColor={colors.ghost} />
+              <TextInput style={styles.input} value={quoteSource} onChangeText={setQuoteSource} placeholder="Source (optional)" placeholderTextColor={c.ghost} />
               {/* Quote category chips */}
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionTags}>
                 {["📚 Book", "🎙️ Speech", "🎬 Film"].map((cat) => (
@@ -440,7 +444,7 @@ export default function NewPostScreen() {
           {/* Food fields */}
           {template === "food-review" && (
             <View style={styles.fieldGroup}>
-              <TextInput style={styles.input} value={foodDishName} onChangeText={setFoodDishName} placeholder="Dish / item name *" placeholderTextColor={colors.ghost} />
+              <TextInput style={styles.input} value={foodDishName} onChangeText={setFoodDishName} placeholder="Dish / item name *" placeholderTextColor={c.ghost} />
               <Text style={styles.fieldLabel}>Ratings *</Text>
               <MultiRating ratings={foodRatings} onChange={setFoodRatings} />
             </View>
@@ -497,7 +501,7 @@ export default function NewPostScreen() {
                   </TouchableOpacity>
                   {eventEndDate && (
                     <TouchableOpacity onPress={() => setEventEndDate(null)} style={{ paddingLeft: 4 }}>
-                      <Ionicons name="close" size={16} color={colors.mute} />
+                      <Ionicons name="close" size={16} color={c.mute} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -538,7 +542,7 @@ export default function NewPostScreen() {
                     value={eventVenue}
                     onChangeText={setEventVenue}
                     placeholder="Venue, address"
-                    placeholderTextColor={colors.ghost}
+                    placeholderTextColor={c.ghost}
                   />
                 </View>
                 <TextInput
@@ -546,7 +550,7 @@ export default function NewPostScreen() {
                   value={eventCity}
                   onChangeText={setEventCity}
                   placeholder="City"
-                  placeholderTextColor={colors.ghost}
+                  placeholderTextColor={c.ghost}
                 />
                 <View style={styles.eventMetaRow}>
                   <View style={styles.currencyPrefix}>
@@ -557,7 +561,7 @@ export default function NewPostScreen() {
                     value={eventAdmission}
                     onChangeText={setEventAdmission}
                     placeholder="Admission (e.g. Free / £15 adv)"
-                    placeholderTextColor={colors.ghost}
+                    placeholderTextColor={c.ghost}
                   />
                 </View>
                 <View style={styles.eventMetaRow}>
@@ -567,7 +571,7 @@ export default function NewPostScreen() {
                     value={eventTicketUrl}
                     onChangeText={setEventTicketUrl}
                     placeholder="https://..."
-                    placeholderTextColor={colors.ghost}
+                    placeholderTextColor={c.ghost}
                     autoCapitalize="none"
                     keyboardType="url"
                   />
@@ -618,13 +622,13 @@ export default function NewPostScreen() {
               {template === "creative-showcase" ? (
                 /* Showcase: large upload area */
                 <TouchableOpacity style={styles.showcaseUpload} onPress={() => pickImages(true)}>
-                  <Ionicons name="camera-outline" size={28} color={colors.ochre} />
+                  <Ionicons name="camera-outline" size={28} color={c.ochre} />
                   <Text style={styles.showcaseUploadText}>Add your work</Text>
                   <Text style={styles.showcaseUploadSub}>photos, screenshots, renders</Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity style={styles.imagePicker} onPress={() => pickImages(multi)}>
-                  <Ionicons name="image-outline" size={20} color={colors.mute} />
+                  <Ionicons name="image-outline" size={20} color={c.mute} />
                   <Text style={styles.imagePickerText}>
                     {images.length > 0 ? `${images.length} image${images.length > 1 ? "s" : ""} selected` : "Add image (optional)"}
                   </Text>
@@ -651,16 +655,16 @@ export default function NewPostScreen() {
         <View style={styles.toolbar}>
           <View style={styles.toolbarIcons}>
             <TouchableOpacity onPress={() => pickImages(multi)}>
-              <Ionicons name="camera-outline" size={24} color={template === "creative-showcase" ? colors.ochre : colors.mute} />
+              <Ionicons name="camera-outline" size={24} color={template === "creative-showcase" ? c.ochre : c.mute} />
             </TouchableOpacity>
             <TouchableOpacity>
-              <Ionicons name="attach-outline" size={24} color={colors.mute} />
+              <Ionicons name="attach-outline" size={24} color={c.mute} />
             </TouchableOpacity>
             <TouchableOpacity>
-              <Ionicons name="location-outline" size={24} color={colors.mute} />
+              <Ionicons name="location-outline" size={24} color={c.mute} />
             </TouchableOpacity>
             <TouchableOpacity>
-              <Ionicons name="happy-outline" size={24} color={colors.mute} />
+              <Ionicons name="happy-outline" size={24} color={c.mute} />
             </TouchableOpacity>
             <TouchableOpacity>
               <Text style={styles.toolbarAt}>@</Text>
@@ -674,140 +678,141 @@ export default function NewPostScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paper },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.paper },
 
   // Header
   header: {
     height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: space[4], borderBottomWidth: 1, borderBottomColor: colors.ghost,
-    backgroundColor: colors.paper,
+    paddingHorizontal: space[4], borderBottomWidth: 1, borderBottomColor: c.ghost,
+    backgroundColor: c.paper,
   },
   headerSideBtn:   { minWidth: 44, minHeight: 44, justifyContent: "center" },
-  headerTitle:     { fontFamily: fonts.sansBold, fontSize: 15, color: colors.ink },
-  cancelText:      { fontFamily: fonts.sans, fontSize: 14, color: colors.ochre },
-  postText:        { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ochre, textAlign: "right" },
+  headerTitle:     { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
+  cancelText:      { fontFamily: fonts.sans, fontSize: 14, color: c.ochre },
+  postText:        { fontFamily: fonts.sansBold, fontSize: 14, color: c.ochre, textAlign: "right" },
   postTextDisabled:{ opacity: 0.35 },
 
   // Template strip
-  templateStrip:        { flexGrow: 0, maxHeight: 48, borderBottomWidth: 1, borderBottomColor: colors.ghost, backgroundColor: colors.paper },
+  templateStrip:        { flexGrow: 0, maxHeight: 48, borderBottomWidth: 1, borderBottomColor: c.ghost, backgroundColor: c.paper },
   templateStripContent: { paddingHorizontal: space[4], alignItems: "center", gap: 8 },
   templateChip: {
     height: 36, paddingHorizontal: 10, borderRadius: radius.full,
-    backgroundColor: colors.paperDeep, justifyContent: "center",
+    backgroundColor: c.paperDeep, justifyContent: "center",
   },
-  templateChipActive:     { backgroundColor: colors.ochre },
-  templateChipText:       { fontFamily: fonts.sansBold, fontSize: 12, color: colors.inkSoft },
-  templateChipTextActive: { color: colors.paper },
+  templateChipActive:     { backgroundColor: c.ochre },
+  templateChipText:       { fontFamily: fonts.sansBold, fontSize: 12, color: c.inkSoft },
+  templateChipTextActive: { color: c.paper },
 
   body: { padding: space[4], paddingBottom: 100 },
 
   // Guide
   guide:     { marginBottom: space[3] },
-  guideDesc: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.mute, marginBottom: space[2] },
+  guideDesc: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, marginBottom: space[2] },
   chips:     { flexDirection: "row", flexWrap: "wrap", gap: space[2] },
   chip: {
-    backgroundColor: colors.paperDeep, borderRadius: radius.full,
+    backgroundColor: c.paperDeep, borderRadius: radius.full,
     paddingHorizontal: 12, paddingVertical: 6,
   },
-  chipText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.inkSoft },
+  chipText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
 
   // Textarea
   textarea: {
-    fontFamily: fonts.sans, fontSize: 15, color: colors.ink,
+    fontFamily: fonts.sans, fontSize: 15, color: c.ink,
     lineHeight: 24, minHeight: 100, textAlignVertical: "top",
   },
   charCount: {
-    fontFamily: fonts.mono, fontSize: 11, color: colors.mute,
+    fontFamily: fonts.mono, fontSize: 11, color: c.mute,
     textAlign: "right", marginBottom: space[2],
   },
 
   // Quote area
   quoteArea: {
-    backgroundColor: colors.paperWarm, padding: 16,
+    backgroundColor: c.paperWarm, padding: 16,
     borderRadius: radius.md, minHeight: 140, marginBottom: space[3], position: "relative",
   },
   quoteDecoration: {
     position: "absolute", top: 4, left: 12,
-    fontFamily: fonts.serif, fontSize: 40, color: colors.ghost, opacity: 0.4, lineHeight: 44,
+    fontFamily: fonts.serif, fontSize: 40, color: c.ghost, opacity: 0.4, lineHeight: 44,
   },
   quoteTextarea: {
-    fontFamily: fonts.serif, fontSize: 16, fontStyle: "italic", color: colors.ink,
+    fontFamily: fonts.serif, fontSize: 16, fontStyle: "italic", color: c.ink,
     lineHeight: 26, minHeight: 100, textAlignVertical: "top", marginTop: 16,
     backgroundColor: "transparent",
   },
   charCountInline: {
-    fontFamily: fonts.mono, fontSize: 11, color: colors.mute, textAlign: "right", marginTop: 4,
+    fontFamily: fonts.mono, fontSize: 11, color: c.mute, textAlign: "right", marginTop: 4,
   },
 
   // Fields
   fieldGroup: { marginTop: 12, gap: 8 },
   fieldLabel: {
-    fontFamily: fonts.mono, fontSize: 12, color: colors.mute,
+    fontFamily: fonts.mono, fontSize: 12, color: c.mute,
     letterSpacing: 0.8, textTransform: "uppercase",
   },
   input: {
-    height: 44, fontFamily: fonts.sans, fontSize: 14, color: colors.ink,
-    borderWidth: 1, borderColor: colors.ghost, borderRadius: 8,
-    paddingHorizontal: 16, backgroundColor: colors.paper,
+    height: 44, fontFamily: fonts.sans, fontSize: 14, color: c.ink,
+    borderWidth: 1, borderColor: c.ghost, borderRadius: 8,
+    paddingHorizontal: 16, backgroundColor: c.paper,
   },
 
   // Section tags
   sectionTags: { gap: 8, paddingVertical: 2 },
   sectionTag: {
     height: 32, paddingHorizontal: 16, borderRadius: radius.full,
-    borderWidth: 1, borderColor: colors.ghost, backgroundColor: colors.paper,
+    borderWidth: 1, borderColor: c.ghost, backgroundColor: c.paper,
     justifyContent: "center",
   },
-  sectionTagActive:     { backgroundColor: colors.ink, borderColor: colors.ink },
-  sectionTagText:       { fontFamily: fonts.sans, fontSize: 12, color: colors.inkSoft },
-  sectionTagTextActive: { color: colors.paper, fontFamily: fonts.sansBold },
+  sectionTagActive:     { backgroundColor: c.ink, borderColor: c.ink },
+  sectionTagText:       { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
+  sectionTagTextActive: { color: c.paper, fontFamily: fonts.sansBold },
 
   // Event styles
   eventBanner: {
-    backgroundColor: colors.paperDeep, borderRadius: 8,
+    backgroundColor: c.paperDeep, borderRadius: 8,
     padding: 10, marginBottom: 12,
   },
-  eventBannerText: { fontFamily: fonts.sans, fontSize: 12, color: colors.mute },
+  eventBannerText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
   eventTitleInput: {
-    height: 52, fontFamily: fonts.sansBold, fontSize: 17, color: colors.ink,
-    borderWidth: 1, borderColor: colors.ghost, borderRadius: 8,
-    paddingHorizontal: 16, backgroundColor: colors.paper, marginBottom: 12,
+    height: 52, fontFamily: fonts.sansBold, fontSize: 17, color: c.ink,
+    borderWidth: 1, borderColor: c.ghost, borderRadius: 8,
+    paddingHorizontal: 16, backgroundColor: c.paper, marginBottom: 12,
   },
   eventDateBlock:   { gap: 10, marginBottom: 12 },
   eventDateRow:     { flexDirection: "row", alignItems: "center", gap: 8 },
   eventDateEmoji:   { fontSize: 16, width: 20, textAlign: "center" },
-  eventDateLabel:   { fontFamily: fonts.sans, fontSize: 12, color: colors.mute, width: 72 },
+  eventDateLabel:   { fontFamily: fonts.sans, fontSize: 12, color: c.mute, width: 72 },
   eventDateInput: {
-    flex: 1, height: 48, borderWidth: 1, borderColor: colors.ghost,
-    borderRadius: 8, paddingHorizontal: 12, backgroundColor: colors.paper,
+    flex: 1, height: 48, borderWidth: 1, borderColor: c.ghost,
+    borderRadius: 8, paddingHorizontal: 12, backgroundColor: c.paper,
     justifyContent: "center",
   },
-  eventDateInputText:    { fontFamily: fonts.sans, fontSize: 14, color: colors.ghost },
-  eventDateInputTextSet: { color: colors.ink },
+  eventDateInputText:    { fontFamily: fonts.sans, fontSize: 14, color: c.ghost },
+  eventDateInputTextSet: { color: c.ink },
   eventMetaBlock:  { gap: 10, marginBottom: 12 },
   eventMetaRow:    { flexDirection: "row", alignItems: "center", gap: 8 },
   eventMetaIcon:   { fontSize: 16, width: 24, textAlign: "center" },
   currencyPrefix: {
-    backgroundColor: colors.paperDeep, borderRadius: 4,
+    backgroundColor: c.paperDeep, borderRadius: 4,
     paddingHorizontal: 8, paddingVertical: 4,
   },
-  currencyText: { fontFamily: fonts.sansBold, fontSize: 12, color: colors.inkSoft },
+  currencyText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.inkSoft },
 
   // Image pickers
   imagePicker: {
     flexDirection: "row", alignItems: "center", gap: 8,
-    height: 48, borderWidth: 1, borderColor: colors.ghost, borderRadius: 8,
-    paddingHorizontal: 16, backgroundColor: colors.paper,
+    height: 48, borderWidth: 1, borderColor: c.ghost, borderRadius: 8,
+    paddingHorizontal: 16, backgroundColor: c.paper,
   },
-  imagePickerText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: colors.mute },
+  imagePickerText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute },
   showcaseUpload: {
-    height: 140, borderWidth: 1, borderColor: colors.ghost, borderRadius: 12,
-    borderStyle: "dashed", backgroundColor: colors.paperDeep,
+    height: 140, borderWidth: 1, borderColor: c.ghost, borderRadius: 12,
+    borderStyle: "dashed", backgroundColor: c.paperDeep,
     alignItems: "center", justifyContent: "center", gap: 6,
   },
-  showcaseUploadText: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.inkSoft },
-  showcaseUploadSub:  { fontFamily: fonts.mono, fontSize: 11, color: colors.mute },
+  showcaseUploadText: { fontFamily: fonts.sansBold, fontSize: 14, color: c.inkSoft },
+  showcaseUploadSub:  { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
   previewStrip: { marginTop: 8 },
   previewWrap:  { position: "relative", marginRight: 8 },
   previewThumb: { width: 72, height: 72, borderRadius: 8 },
@@ -818,26 +823,27 @@ const styles = StyleSheet.create({
 
   // Date picker
   pickerWrap: {
-    borderWidth: 1, borderColor: colors.ghost, borderRadius: 8,
-    overflow: "hidden", backgroundColor: colors.paperDeep,
+    borderWidth: 1, borderColor: c.ghost, borderRadius: 8,
+    overflow: "hidden", backgroundColor: c.paperDeep,
   },
   iosDoneBtn: {
     alignSelf: "flex-end", margin: 8,
-    backgroundColor: colors.ink, borderRadius: 6,
+    backgroundColor: c.ink, borderRadius: 6,
     paddingHorizontal: 12, paddingVertical: 4,
   },
-  iosDoneBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: colors.paper },
+  iosDoneBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
 
   // Bottom toolbar
   toolbar: {
     height: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: colors.paper, borderTopWidth: 1, borderTopColor: colors.ghost,
+    backgroundColor: c.paper, borderTopWidth: 1, borderTopColor: c.ghost,
     paddingHorizontal: 16,
   },
   toolbarIcons: { flexDirection: "row", alignItems: "center", gap: 20 },
   toolbarAt: {
-    fontFamily: fonts.sans, fontSize: 20, color: colors.mute,
+    fontFamily: fonts.sans, fontSize: 20, color: c.mute,
     lineHeight: 24, includeFontPadding: false,
   },
-  toolbarCount: { fontFamily: fonts.mono, fontSize: 11, color: colors.mute },
-});
+  toolbarCount: { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
+  });
+}

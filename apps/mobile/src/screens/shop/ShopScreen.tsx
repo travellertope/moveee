@@ -10,22 +10,26 @@ import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { useCartStore } from "../../store/cartStore";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import type { ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 import type { ShopProduct, ShopCategory, ShopVendor } from "../../types";
 
 // ── Badge helpers ─────────────────────────────────────────────────────────────
 
 function BadgeLabel({ badge, stockQuantity }: { badge?: string | null; stockQuantity?: number | null }) {
+  const c = useColors();
+  const badgeS = useMemo(() => createBadgeStyles(c), [c]);
   if (!badge) return null;
   let label = "";
-  let bg = colors.ochre;
-  let textColor = "#fff";
+  let bg = c.ochre;
+  let textColor = c.paper;
 
   if (badge === "new")               { label = "NEW"; }
-  else if (badge === "pro_early_access") { label = "PRO EARLY ACCESS"; bg = colors.gold; }
-  else if (badge === "sale")         { label = "SALE"; bg = colors.ochre; }
+  else if (badge === "pro_early_access") { label = "PRO EARLY ACCESS"; bg = c.gold; }
+  else if (badge === "sale")         { label = "SALE"; bg = c.ochre; }
   else if (badge === "low_stock")    {
     label = `ONLY ${stockQuantity ?? "FEW"} LEFT`;
-    bg = colors.ink;
+    bg = c.ink;
   }
 
   return (
@@ -34,13 +38,16 @@ function BadgeLabel({ badge, stockQuantity }: { badge?: string | null; stockQuan
     </View>
   );
 }
-const badgeS = StyleSheet.create({
-  pill: {
-    paddingHorizontal: 8, paddingVertical: 4,
-    borderRadius: radius.full,
-  },
-  text: { fontFamily: fonts.sansBold, fontSize: 9 },
-});
+
+function createBadgeStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    pill: {
+      paddingHorizontal: 8, paddingVertical: 4,
+      borderRadius: radius.full,
+    },
+    text: { fontFamily: fonts.sansBold, fontSize: 9 },
+  });
+}
 
 // ── PriceRow ──────────────────────────────────────────────────────────────────
 
@@ -51,6 +58,7 @@ function PriceRow({
   proPrice?: string | null; currencySymbol: string;
   isPro: boolean; small?: boolean;
 }) {
+  const c = useColors();
   const baseSize = small ? 14 : 16;
   const proSize  = small ? 11 : 13;
   const hasSale  = salePrice && salePrice !== regularPrice;
@@ -59,16 +67,16 @@ function PriceRow({
     <View style={{ gap: 2 }}>
       <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
         {hasSale && (
-          <Text style={{ fontFamily: fonts.mono, fontSize: proSize, color: colors.ghost, textDecorationLine: "line-through" }}>
+          <Text style={{ fontFamily: fonts.mono, fontSize: proSize, color: c.ghost, textDecorationLine: "line-through" }}>
             {currencySymbol}{regularPrice}
           </Text>
         )}
-        <Text style={{ fontFamily: fonts.monoBold, fontSize: baseSize, color: hasSale ? colors.ochre : colors.ink }}>
+        <Text style={{ fontFamily: fonts.monoBold, fontSize: baseSize, color: hasSale ? c.ochre : c.ink }}>
           {currencySymbol}{price}
         </Text>
       </View>
       {proPrice && (
-        <Text style={{ fontFamily: fonts.mono, fontSize: proSize, color: colors.gold }}>
+        <Text style={{ fontFamily: fonts.mono, fontSize: proSize, color: c.gold }}>
           {currencySymbol}{proPrice} for Pro ★
         </Text>
       )}
@@ -83,6 +91,8 @@ function ProductCardLarge({
 }: {
   product: ShopProduct; isPro: boolean; onAddToBag: (p: ShopProduct) => void;
 }) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={[styles.productCardLarge, shadows.card]}>
       <View style={styles.productCardLargeImage}>
@@ -121,6 +131,8 @@ function ProductCardSmall({
 }: {
   product: ShopProduct; isPro: boolean; onAddToBag: (p: ShopProduct) => void;
 }) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={[styles.productCardSmall, shadows.card]}>
       <View style={styles.productCardSmallImage}>
@@ -160,6 +172,8 @@ function ProductCardGrid({
 }: {
   product: ShopProduct; isPro: boolean; onPress: () => void;
 }) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const hasSale = product.salePrice && product.salePrice !== product.regularPrice;
   return (
     <TouchableOpacity style={[styles.gridCard, shadows.card]} onPress={onPress} activeOpacity={0.85}>
@@ -186,7 +200,7 @@ function ProductCardGrid({
           {hasSale && (
             <Text style={styles.gridPriceOriginal}>{product.currencySymbol}{product.regularPrice}</Text>
           )}
-          <Text style={[styles.gridPriceCurrent, hasSale && { color: colors.ochre }]}>
+          <Text style={[styles.gridPriceCurrent, hasSale && { color: c.ochre }]}>
             {product.currencySymbol}{product.price}
           </Text>
         </View>
@@ -198,7 +212,8 @@ function ProductCardGrid({
 // ── VendorCard ────────────────────────────────────────────────────────────────
 
 function VendorCard({ vendor }: { vendor: ShopVendor }) {
-  const isPro = false; // Vendor tier, not user — use gold border for featured
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={[styles.vendorCard, shadows.card]}>
       <View style={styles.vendorAvatar}>
@@ -228,6 +243,8 @@ export default function ShopScreen() {
   const { user } = useAuthStore();
   const { itemCount } = useCartStore();
   const isPro = user?.tier === "patron";
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   const [activeCategory, setActiveCategory] = useState("");
   const [products, setProducts]       = useState<ShopProduct[]>([]);
@@ -270,18 +287,15 @@ export default function ShopScreen() {
   };
 
   const handleAddToBag = (product: ShopProduct) => {
-    // Open WooCommerce checkout URL in browser
     const url = `https://themoveee.com/shop/${product.slug}`;
     Linking.openURL(url).catch(() => {});
   };
 
-  // Build category pill labels from fetched categories (fallback to static)
   const pillLabels = useMemo(() => {
     if (categories.length === 0) return CATEGORIES_STATIC;
     return ["All", ...categories.map((c) => c.name)];
   }, [categories]);
 
-  // Split products into featured (first 3) and grid (rest)
   const featured   = products.slice(0, 1);
   const featSmall  = products.slice(1, 3);
   const gridItems  = products.slice(3);
@@ -295,15 +309,16 @@ export default function ShopScreen() {
           <TouchableOpacity
             style={styles.iconBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => nav.navigate("ShopSearch")}
           >
-            <Ionicons name="search-outline" size={22} color={colors.ink} />
+            <Ionicons name="search-outline" size={22} color={c.ink} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconBtn}
             onPress={() => nav.navigate("Cart")}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="bag-outline" size={22} color={colors.ink} />
+            <Ionicons name="bag-outline" size={22} color={c.ink} />
             {itemCount > 0 && (
               <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{itemCount > 9 ? "9+" : itemCount}</Text>
@@ -369,7 +384,7 @@ export default function ShopScreen() {
         </ScrollView>
 
         {loading ? (
-          <ActivityIndicator style={{ marginTop: 60 }} color={colors.gold} />
+          <ActivityIndicator style={{ marginTop: 60 }} color={c.gold} />
         ) : (
           <>
             {/* ── Featured Picks ── */}
@@ -377,7 +392,7 @@ export default function ShopScreen() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Featured Picks</Text>
-                  <TouchableOpacity><Text style={styles.sectionAction}>The Edit →</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => nav.navigate("TheEdit")}><Text style={styles.sectionAction}>The Edit →</Text></TouchableOpacity>
                 </View>
 
                 <ProductCardLarge product={featured[0]} isPro={isPro} onAddToBag={handleAddToBag} />
@@ -399,14 +414,14 @@ export default function ShopScreen() {
               style={styles.editorialBridge}
               onPress={() => nav.navigate("Magazine")}
             >
-              <Ionicons name="book-outline" size={20} color={colors.ochre} />
+              <Ionicons name="book-outline" size={20} color={c.ochre} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.editorialTitle}>As seen in The Magazine →</Text>
                 <Text style={styles.editorialSub} numberOfLines={1}>
                   Explore the heritage of indigo dyeing techniques.
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.ink} />
+              <Ionicons name="chevron-forward" size={16} color={c.ink} />
             </TouchableOpacity>
 
             {/* ── All Products Grid ── */}
@@ -431,7 +446,7 @@ export default function ShopScreen() {
                   ))}
                 </View>
                 {loadingMore && (
-                  <ActivityIndicator style={{ paddingVertical: 20 }} color={colors.gold} />
+                  <ActivityIndicator style={{ paddingVertical: 20 }} color={c.gold} />
                 )}
               </View>
             )}
@@ -459,7 +474,7 @@ export default function ShopScreen() {
               <Text style={styles.proBandTitle}>Early access · Member pricing · Free returns</Text>
               <TouchableOpacity
                 style={styles.proBandBtn}
-                onPress={() => nav.navigate("Me", { screen: "Membership" })}
+                onPress={() => nav.navigate("Connect", { screen: "Membership" } as any)}
               >
                 <Text style={styles.proBandBtnText}>Upgrade →</Text>
               </TouchableOpacity>
@@ -471,199 +486,190 @@ export default function ShopScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.paperWarm },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.paperWarm },
 
-  // Header
-  header: {
-    height: 56, flexDirection: "row", alignItems: "center",
-    justifyContent: "space-between", paddingHorizontal: space[4],
-    backgroundColor: colors.paper, borderBottomWidth: 1, borderBottomColor: colors.ghost,
-  },
-  headerTitle: { fontFamily: fonts.serifBold, fontSize: 20, color: colors.ink },
-  headerActions: { flexDirection: "row", alignItems: "center", gap: 16 },
-  iconBtn: { position: "relative" },
-  cartBadge: {
-    position: "absolute", top: -4, right: -4,
-    width: 16, height: 16, borderRadius: 8,
-    backgroundColor: colors.ochre, borderWidth: 1.5, borderColor: colors.paper,
-    alignItems: "center", justifyContent: "center",
-  },
-  cartBadgeText: { fontFamily: fonts.monoBold, fontSize: 8, color: "#fff" },
+    header: {
+      height: 56, flexDirection: "row", alignItems: "center",
+      justifyContent: "space-between", paddingHorizontal: space[4],
+      backgroundColor: c.paper, borderBottomWidth: 1, borderBottomColor: c.ghost,
+    },
+    headerTitle: { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink },
+    headerActions: { flexDirection: "row", alignItems: "center", gap: 16 },
+    iconBtn: { position: "relative" },
+    cartBadge: {
+      position: "absolute", top: -4, right: -4,
+      width: 16, height: 16, borderRadius: 8,
+      backgroundColor: c.ochre, borderWidth: 1.5, borderColor: c.paper,
+      alignItems: "center", justifyContent: "center",
+    },
+    cartBadgeText: { fontFamily: fonts.monoBold, fontSize: 8, color: c.paper },
 
-  scrollContent: { paddingBottom: 100 },
+    scrollContent: { paddingBottom: 100 },
 
-  // Hero
-  hero: { height: 200, width: "100%", overflow: "hidden", position: "relative" },
-  heroGradient: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#C5491F",
-  },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(20,17,13,0.55)",
-  },
-  heroContent: {
-    position: "absolute", bottom: 0, left: 0, right: 0,
-    padding: space[4],
-  },
-  heroEyebrow: {
-    fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
-    color: colors.gold, textTransform: "uppercase", letterSpacing: 2, marginBottom: 6,
-  },
-  heroTitle: {
-    fontFamily: fonts.serifBold, fontSize: 28,
-    color: "#fff", lineHeight: 32, marginBottom: 4,
-  },
-  heroSub: { fontFamily: fonts.sans, fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 12 },
-  heroBtn: {
-    height: 36, paddingHorizontal: 16,
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.4)",
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: radius.full, alignSelf: "flex-start",
-    alignItems: "center", justifyContent: "center",
-  },
-  heroBtnText: { fontFamily: fonts.sansBold, fontSize: 12, color: "#fff" },
+    hero: { height: 200, width: "100%", overflow: "hidden", position: "relative" },
+    heroGradient: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: c.ochre,
+    },
+    heroOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(20,17,13,0.55)",
+    },
+    heroContent: {
+      position: "absolute", bottom: 0, left: 0, right: 0,
+      padding: space[4],
+    },
+    heroEyebrow: {
+      fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
+      color: c.gold, textTransform: "uppercase", letterSpacing: 2, marginBottom: 6,
+    },
+    heroTitle: {
+      fontFamily: fonts.serifBold, fontSize: 28,
+      color: c.paper, lineHeight: 32, marginBottom: 4,
+    },
+    heroSub: { fontFamily: fonts.sans, fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 12 },
+    heroBtn: {
+      height: 36, paddingHorizontal: 16,
+      borderWidth: 1, borderColor: "rgba(255,255,255,0.4)",
+      backgroundColor: "rgba(255,255,255,0.1)",
+      borderRadius: radius.full, alignSelf: "flex-start",
+      alignItems: "center", justifyContent: "center",
+    },
+    heroBtnText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.paper },
 
-  // Category pills
-  categoryScrollWrap: { height: 56, marginTop: 8 },
-  categoryRow: { paddingHorizontal: space[4], gap: 8, alignItems: "center", height: 56 },
-  categoryPill: {
-    height: 40, paddingHorizontal: 12,
-    borderRadius: radius.full, backgroundColor: colors.paper,
-    borderWidth: 1, borderColor: colors.ghost,
-    alignItems: "center", justifyContent: "center",
-  },
-  categoryPillActive: { backgroundColor: colors.ochre, borderColor: colors.ochre },
-  categoryPillText: { fontFamily: fonts.sans, fontSize: 13, color: colors.inkSoft },
-  categoryPillTextActive: { color: "#fff", fontFamily: fonts.sansBold },
+    categoryScrollWrap: { height: 56, marginTop: 8 },
+    categoryRow: { paddingHorizontal: space[4], gap: 8, alignItems: "center", height: 56 },
+    categoryPill: {
+      height: 40, paddingHorizontal: 12,
+      borderRadius: radius.full, backgroundColor: c.paper,
+      borderWidth: 1, borderColor: c.ghost,
+      alignItems: "center", justifyContent: "center",
+    },
+    categoryPillActive: { backgroundColor: c.ochre, borderColor: c.ochre },
+    categoryPillText: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft },
+    categoryPillTextActive: { color: c.paper, fontFamily: fonts.sansBold },
 
-  // Section layout
-  section: { paddingTop: 24, paddingBottom: 8 },
-  sectionHeader: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: space[4], marginBottom: 12,
-  },
-  sectionTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink },
-  sectionAction: { fontFamily: fonts.sans, fontSize: 13, color: colors.ochre },
-  sectionActionMuted: { fontFamily: fonts.sans, fontSize: 13, color: colors.mute },
-  sortChevron: { fontSize: 10, color: colors.mute },
+    section: { paddingTop: 24, paddingBottom: 8 },
+    sectionHeader: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], marginBottom: 12,
+    },
+    sectionTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+    sectionAction: { fontFamily: fonts.sans, fontSize: 13, color: c.ochre },
+    sectionActionMuted: { fontFamily: fonts.sans, fontSize: 13, color: c.mute },
+    sortChevron: { fontSize: 10, color: c.mute },
 
-  // Large product card
-  productCardLarge: {
-    marginHorizontal: space[4], backgroundColor: colors.paper,
-    borderRadius: radius.xl, overflow: "hidden", marginBottom: 12,
-  },
-  productCardLargeImage: { width: "100%", height: 200, position: "relative" },
-  productCardBody: { padding: space[4] },
-  productNameLarge: {
-    fontFamily: fonts.serifBold, fontSize: 18, color: colors.ink, marginBottom: 6,
-  },
+    productCardLarge: {
+      marginHorizontal: space[4], backgroundColor: c.paper,
+      borderRadius: radius.xl, overflow: "hidden", marginBottom: 12,
+    },
+    productCardLargeImage: { width: "100%", height: 200, position: "relative" },
+    productCardBody: { padding: space[4] },
+    productNameLarge: {
+      fontFamily: fonts.serifBold, fontSize: 18, color: c.ink, marginBottom: 6,
+    },
 
-  // Small card
-  productCardSmall: {
-    backgroundColor: colors.paper, borderRadius: radius.xl, overflow: "hidden", flex: 1,
-  },
-  productCardSmallImage: { width: "100%", height: 140, position: "relative" },
-  productCardSmallBody: {
-    padding: 12, flex: 1, flexDirection: "column",
-  },
-  productNameSmall: {
-    fontFamily: fonts.sansBold, fontSize: 13, color: colors.ink,
-    marginBottom: 6, minHeight: 36,
-  },
+    productCardSmall: {
+      backgroundColor: c.paper, borderRadius: radius.xl, overflow: "hidden", flex: 1,
+    },
+    productCardSmallImage: { width: "100%", height: 140, position: "relative" },
+    productCardSmallBody: {
+      padding: 12, flex: 1, flexDirection: "column",
+    },
+    productNameSmall: {
+      fontFamily: fonts.sansBold, fontSize: 13, color: c.ink,
+      marginBottom: 6, minHeight: 36,
+    },
 
-  smallGrid: { flexDirection: "row", gap: 12, paddingHorizontal: space[4] },
+    smallGrid: { flexDirection: "row", gap: 12, paddingHorizontal: space[4] },
 
-  // Grid card
-  gridCard: {
-    backgroundColor: colors.paper, borderRadius: radius.xl,
-    overflow: "hidden", flex: 1,
-  },
-  gridCardImage: { width: "100%", aspectRatio: 1, position: "relative" },
-  gridCardBody: { paddingHorizontal: 12, paddingTop: 12, paddingBottom: 16 },
-  gridCardName: {
-    fontFamily: fonts.sansBold, fontSize: 13, color: colors.ink,
-    marginBottom: 8, minHeight: 36,
-  },
-  gridCardPrice: { flexDirection: "row", alignItems: "baseline", gap: 4, marginTop: "auto" },
-  gridPriceOriginal: {
-    fontFamily: fonts.mono, fontSize: 12, color: colors.ghost,
-    textDecorationLine: "line-through",
-  },
-  gridPriceCurrent: { fontFamily: fonts.monoBold, fontSize: 14, color: colors.ink },
+    gridCard: {
+      backgroundColor: c.paper, borderRadius: radius.xl,
+      overflow: "hidden", flex: 1,
+    },
+    gridCardImage: { width: "100%", aspectRatio: 1, position: "relative" },
+    gridCardBody: { paddingHorizontal: 12, paddingTop: 12, paddingBottom: 16 },
+    gridCardName: {
+      fontFamily: fonts.sansBold, fontSize: 13, color: c.ink,
+      marginBottom: 8, minHeight: 36,
+    },
+    gridCardPrice: { flexDirection: "row", alignItems: "baseline", gap: 4, marginTop: "auto" },
+    gridPriceOriginal: {
+      fontFamily: fonts.mono, fontSize: 12, color: c.ghost,
+      textDecorationLine: "line-through",
+    },
+    gridPriceCurrent: { fontFamily: fonts.monoBold, fontSize: 14, color: c.ink },
 
-  gridWrap: { flexDirection: "row", flexWrap: "wrap", gap: 12, paddingHorizontal: space[4] },
-  gridItem: { width: "47%" },
+    gridWrap: { flexDirection: "row", flexWrap: "wrap", gap: 12, paddingHorizontal: space[4] },
+    gridItem: { width: "47%" },
 
-  // Shared
-  makerLabel: {
-    fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
-    color: colors.mute, textTransform: "uppercase", letterSpacing: 1.5,
-    marginBottom: 4,
-  },
-  imagePlaceholder: { backgroundColor: colors.paperDeep },
-  badgeTopLeft:   { position: "absolute", top: 8, left: 8 },
-  badgeTopRight:  { position: "absolute", top: 12, right: 12 },
-  badgeBottomLeft: { position: "absolute", bottom: 8, left: 8 },
+    makerLabel: {
+      fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
+      color: c.mute, textTransform: "uppercase", letterSpacing: 1.5,
+      marginBottom: 4,
+    },
+    imagePlaceholder: { backgroundColor: c.paperDeep },
+    badgeTopLeft:   { position: "absolute", top: 8, left: 8 },
+    badgeTopRight:  { position: "absolute", top: 12, right: 12 },
+    badgeBottomLeft: { position: "absolute", bottom: 8, left: 8 },
 
-  addToBagBtn: {
-    width: "100%", height: 40, backgroundColor: colors.ochre,
-    borderRadius: radius.full, alignItems: "center", justifyContent: "center",
-  },
-  addToBagBtnSmall: {
-    width: "100%", height: 36, backgroundColor: colors.ochre,
-    borderRadius: radius.full, alignItems: "center", justifyContent: "center", marginTop: "auto",
-  },
-  addToBagBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: "#fff" },
+    addToBagBtn: {
+      width: "100%", height: 40, backgroundColor: c.ochre,
+      borderRadius: radius.full, alignItems: "center", justifyContent: "center",
+    },
+    addToBagBtnSmall: {
+      width: "100%", height: 36, backgroundColor: c.ochre,
+      borderRadius: radius.full, alignItems: "center", justifyContent: "center", marginTop: "auto",
+    },
+    addToBagBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
 
-  // Editorial bridge
-  editorialBridge: {
-    height: 64, paddingHorizontal: space[4],
-    flexDirection: "row", alignItems: "center", gap: 12,
-    backgroundColor: "#EDE6DA",
-    borderTopWidth: 1, borderBottomWidth: 1,
-    borderColor: "rgba(200,191,176,0.4)",
-    marginTop: 8,
-  },
-  editorialTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: colors.ink },
-  editorialSub: { fontFamily: fonts.sans, fontSize: 12, color: colors.mute },
+    editorialBridge: {
+      height: 64, paddingHorizontal: space[4],
+      flexDirection: "row", alignItems: "center", gap: 12,
+      backgroundColor: c.paperDeep,
+      borderTopWidth: 1, borderBottomWidth: 1,
+      borderColor: c.ruleDark,
+      marginTop: 8,
+    },
+    editorialTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+    editorialSub: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
 
-  // Vendors
-  vendorScroll: { paddingHorizontal: space[4], gap: 12 },
-  vendorCard: {
-    width: 170, height: 100, backgroundColor: colors.paper,
-    borderRadius: radius.xl, padding: 12,
-    flexDirection: "row", alignItems: "center",
-  },
-  vendorAvatar: {
-    width: 44, height: 44, borderRadius: 22,
-    borderWidth: 2, borderColor: colors.gold,
-    overflow: "hidden", marginRight: 12, flexShrink: 0,
-  },
-  vendorName: { fontFamily: fonts.sansBold, fontSize: 13, color: colors.ink },
-  vendorCity: { fontFamily: fonts.sans, fontSize: 11, color: colors.mute, marginBottom: 4 },
-  vendorCount: { fontFamily: fonts.mono, fontSize: 10, color: colors.mute },
+    vendorScroll: { paddingHorizontal: space[4], gap: 12 },
+    vendorCard: {
+      width: 170, height: 100, backgroundColor: c.paper,
+      borderRadius: radius.xl, padding: 12,
+      flexDirection: "row", alignItems: "center",
+    },
+    vendorAvatar: {
+      width: 44, height: 44, borderRadius: 22,
+      borderWidth: 2, borderColor: c.gold,
+      overflow: "hidden", marginRight: 12, flexShrink: 0,
+    },
+    vendorName: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ink },
+    vendorCity: { fontFamily: fonts.sans, fontSize: 11, color: c.mute, marginBottom: 4 },
+    vendorCount: { fontFamily: fonts.mono, fontSize: 10, color: c.mute },
 
-  // Pro band
-  proBand: {
-    backgroundColor: colors.ochre,
-    paddingVertical: 48, paddingHorizontal: space[4],
-    alignItems: "center",
-  },
-  proBandEyebrow: {
-    fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
-    color: colors.gold, textTransform: "uppercase",
-    letterSpacing: 2, marginBottom: 8,
-  },
-  proBandTitle: {
-    fontFamily: fonts.serifBold, fontSize: 18, color: "#fff",
-    textAlign: "center", marginBottom: 20,
-  },
-  proBandBtn: {
-    height: 40, paddingHorizontal: 20,
-    borderRadius: radius.full, borderWidth: 1, borderColor: "rgba(255,255,255,0.4)",
-    alignItems: "center", justifyContent: "center",
-  },
-  proBandBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: "#fff" },
-});
+    proBand: {
+      backgroundColor: c.ochre,
+      paddingVertical: 48, paddingHorizontal: space[4],
+      alignItems: "center",
+    },
+    proBandEyebrow: {
+      fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
+      color: c.gold, textTransform: "uppercase",
+      letterSpacing: 2, marginBottom: 8,
+    },
+    proBandTitle: {
+      fontFamily: fonts.serifBold, fontSize: 18, color: c.paper,
+      textAlign: "center", marginBottom: 20,
+    },
+    proBandBtn: {
+      height: 40, paddingHorizontal: 20,
+      borderRadius: radius.full, borderWidth: 1, borderColor: "rgba(255,255,255,0.4)",
+      alignItems: "center", justifyContent: "center",
+    },
+    proBandBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
+  });
+}

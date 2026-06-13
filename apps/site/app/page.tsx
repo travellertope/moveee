@@ -6,40 +6,41 @@ import "@/app/homepage.css";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "The Moveee — Best in African Culture",
+  title: "Moveee Magazine — Best in Culture",
   description:
-    "The Moveee is an independent magazine celebrating the best of African culture — editorials, happenings, travel, lifestyle, and community, worldwide.",
+    "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
   alternates: {
-    canonical: "https://www.themoveee.com",
+    canonical: "https://themoveee.com/",
     languages: {
-      "x-default": "https://www.themoveee.com",
-      "en-GB": "https://www.themoveee.com/uk",
-      "en-US": "https://www.themoveee.com/us",
-      "en": "https://www.themoveee.com/africa",
+      "x-default": "https://themoveee.com/",
+      "en-GB": "https://themoveee.com/uk",
+      "en-US": "https://themoveee.com/us",
     },
   },
   openGraph: {
-    title: "The Moveee — Best in African Culture",
+    title: "Moveee Magazine — Best in Culture",
     description:
-      "An independent magazine celebrating the best of African culture — editorials, happenings, travel, lifestyle, and community, worldwide.",
-    url: "https://www.themoveee.com",
-    siteName: "The Moveee",
+      "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
+    url: "https://themoveee.com/",
+    siteName: "Moveee Magazine",
     locale: "en_GB",
     type: "website",
     images: [
       {
-        url: "https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png",
-        width: 920,
-        height: 144,
-        alt: "The Moveee",
+        url: "/og-fallback.png",
+        width: 1200,
+        height: 630,
+        alt: "Moveee Magazine",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Moveee — Best in African Culture",
+    site: "@moveeemedia",
+    creator: "@moveeemedia",
+    title: "Moveee Magazine — Best in Culture",
     description:
-      "An independent magazine celebrating the best of African culture — editorials, happenings, travel, lifestyle, and community, worldwide.",
+      "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
   },
 };
 

@@ -8,6 +8,7 @@ interface Props {
   postId: string;
   initialCounts: { love: number; fire: number; clap: number };
   shareUrl?: string;
+  shareTitle?: string;
   noBorder?: boolean;
 }
 
@@ -18,7 +19,7 @@ const EMOJIS: Array<{ key: EmojiKey; emoji: string }> = [
   { key: "clap", emoji: "👏" },
 ];
 
-export default function ReactionBar({ postId, initialCounts, shareUrl, noBorder }: Props) {
+export default function ReactionBar({ postId, initialCounts, shareUrl, shareTitle, noBorder }: Props) {
   const [counts, setCounts] = useState(initialCounts);
   const [reacted, setReacted] = useState<Set<EmojiKey>>(new Set());
 
@@ -46,7 +47,12 @@ export default function ReactionBar({ postId, initialCounts, shareUrl, noBorder 
 
   const handleShare = () => {
     if (!shareUrl) return;
-    Share.share(Platform.OS === "ios" ? { url: shareUrl } : { message: shareUrl }).catch(() => {});
+    const label = shareTitle ? shareTitle : "Check this out on Moveee";
+    Share.share(
+      Platform.OS === "ios"
+        ? { url: shareUrl, message: label }
+        : { message: `${label}\n${shareUrl}`, title: label }
+    ).catch(() => {});
   };
 
   return (

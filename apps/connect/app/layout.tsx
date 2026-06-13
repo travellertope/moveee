@@ -30,10 +30,32 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://connect.themoveee.com"),
   title: {
-    default: "Moveee Connect — Community",
-    template: "%s | Moveee Connect",
+    default: "Moveee — Connect to Culture",
+    template: "%s | Moveee",
   },
-  description: "Moveee Connect — the community hub for culture, events, and creative networks.",
+  description: "Discover events, creative people, and cultural experiences. The Moveee community — open to everyone.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://connect.themoveee.com",
+    siteName: "Moveee",
+    images: [
+      {
+        url: "https://themoveee.com/og-fallback.png",
+        width: 1200,
+        height: 630,
+        alt: "Moveee — Connect to Culture",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@moveeeapp",
+    creator: "@moveeeapp",
+    title: "Moveee — Connect to Culture",
+    description: "Discover events, creative people, and cultural experiences. The Moveee community — open to everyone.",
+    images: ["https://themoveee.com/og-fallback.png"],
+  },
 };
 
 export default function RootLayout({

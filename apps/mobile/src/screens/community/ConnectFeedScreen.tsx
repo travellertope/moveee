@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   ScrollView,
   RefreshControl,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -21,6 +22,7 @@ import {
 } from "../../features/community/useFeedRecommendations";
 import { useAuthStore } from "../../auth/authStore";
 import FeedCard from "../../components/community/FeedItemCard";
+import PostDetailSheet from "../../components/community/PostDetailSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { FeedSkeleton } from "../../components/ui/Skeleton";
@@ -75,6 +77,7 @@ export default function ConnectFeedScreen() {
 
   const [activeCategory, setActiveCategory] = useState("");
   const [forYou, setForYou] = useState(false);
+  const [sheetItem, setSheetItem] = useState<FeedItem | null>(null);
 
   const interestTagSet = useMemo(
     () => new Set((user?.interests ?? []).map((s) => s.toLowerCase())),
@@ -112,7 +115,7 @@ export default function ConnectFeedScreen() {
 
   const openItem = (item: FeedItem) => {
     if (item.type === "community") {
-      nav.navigate("PostDetail", { postId: feedItemToPostId(item), item });
+      setSheetItem(item);
       return;
     }
     if (item.type === "pulse") {
@@ -120,10 +123,8 @@ export default function ConnectFeedScreen() {
       return;
     }
     if (item.type === "editorial") {
-      nav.navigate("Magazine", {
-        screen: "Article",
-        params: { slug: item.slug },
-      });
+      // Stay within ConnectStack so back → feed and Magazine tab is never polluted.
+      nav.navigate("Article", { slug: item.slug });
       return;
     }
   };
@@ -140,6 +141,7 @@ export default function ConnectFeedScreen() {
             ? () =>
                 nav.navigate("MemberProfile", {
                   userId: (item as any).communityAuthorId,
+                  username: (item as any).communityAuthorUsername ?? "",
                 })
             : undefined
         }
@@ -198,12 +200,21 @@ export default function ConnectFeedScreen() {
               )}
             </TouchableOpacity>
 
-            {/* + new post */}
+            {/* Avatar → member dashboard */}
             <TouchableOpacity
-              style={styles.addBtn}
-              onPress={() => nav.navigate("NewPost")}
+              style={styles.avatarBtn}
+              onPress={() => nav.navigate("MemberDashboard")}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
             >
-              <Ionicons name="add" size={22} color={c.paper} />
+              {user?.avatarUrl ? (
+                <Image source={{ uri: user.avatarUrl }} style={styles.avatarImg} />
+              ) : (
+                <View style={[styles.avatarImg, styles.avatarFallback]}>
+                  <Text style={styles.avatarInitial}>
+                    {(user?.displayName ?? user?.name ?? "?")[0]?.toUpperCase()}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -347,6 +358,12 @@ export default function ConnectFeedScreen() {
           <Ionicons name="create-outline" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
+
+      <PostDetailSheet
+        item={sheetItem}
+        visible={sheetItem !== null}
+        onClose={() => setSheetItem(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -373,7 +390,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   },
   headerSubtitle: {
     fontFamily: fonts.sansBold,
-    fontSize: 8,
+    fontSize: fontSize.tiny,
     color: c.gold,
     textTransform: "uppercase",
     letterSpacing: 1.5,
@@ -403,16 +420,26 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   },
   bellBadgeText: {
     fontFamily: fonts.monoBold,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     color: "#fff",
   },
-  addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: c.ochre,
+  avatarBtn: {
+    marginLeft: 4,
+  },
+  avatarImg: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+  },
+  avatarFallback: {
+    backgroundColor: c.goldLight,
     justifyContent: "center",
     alignItems: "center",
+  },
+  avatarInitial: {
+    fontFamily: fonts.sansBold,
+    fontSize: fontSize.sm,
+    color: c.gold,
   },
 
   // Filter Row
@@ -466,7 +493,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   },
   trendingNowLabel: {
     fontFamily: fonts.mono,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     color: c.ochre,
     textTransform: "uppercase",
     letterSpacing: 1.5,

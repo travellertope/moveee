@@ -10,9 +10,27 @@ import { sanitizeHtml } from "@/lib/sanitize";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: { absolute: "Newsletters — The Moveee" },
+  title: { absolute: "Newsletters — Moveee Magazine" },
   description:
-    "Two newsletters from The Moveee. Culture Drop — the weekly deep dive into African and diasporan culture. GetMeLit — weekly literature recommendations, stories, poems, and opportunities for writers.",
+    "Two newsletters from Moveee Magazine. Culture Drop — the weekly cultural deep-dive. GetMeLit — literature recommendations, stories, poems, and opportunities for writers.",
+  alternates: { canonical: "https://themoveee.com/newsletter" },
+  openGraph: {
+    title: "Newsletters — Moveee Magazine",
+    description:
+      "Two newsletters from Moveee Magazine. Culture Drop — the weekly cultural deep-dive. GetMeLit — literature recommendations, stories, poems, and opportunities for writers.",
+    url: "https://themoveee.com/newsletter",
+    siteName: "Moveee Magazine",
+    type: "website",
+    images: [{ url: "/og-fallback.png", width: 1200, height: 630, alt: "Moveee Magazine Newsletters" }],
+  },
+  twitter: {
+    card: "summary_large_image" as const,
+    site: "@moveeemedia",
+    creator: "@moveeemedia",
+    title: "Newsletters — Moveee Magazine",
+    description:
+      "Two newsletters from Moveee Magazine. Culture Drop — the weekly cultural deep-dive. GetMeLit — literature recommendations, stories, poems, and opportunities for writers.",
+  },
 };
 
 const NL_LABELS: Record<string, string> = {

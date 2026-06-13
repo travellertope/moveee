@@ -10,6 +10,8 @@ import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { useCartStore } from "../../store/cartStore";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import type { ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 import type { ShopProduct, ShopCategory } from "../../types";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -23,14 +25,16 @@ function BadgeLabel({
 }: {
   badge?: string | null; stockQuantity?: number | null; pos?: BadgePos;
 }) {
+  const c = useColors();
+  const badgeS = useMemo(() => createBadgeStyles(c), [c]);
   if (!badge) return null;
   let label = "";
-  let bg = colors.ochre;
+  let bg = c.ochre;
 
   if (badge === "new")               { label = "NEW"; }
-  else if (badge === "pro_early_access") { label = "PRO EARLY ACCESS"; bg = colors.gold; }
-  else if (badge === "sale")         { label = "SALE"; bg = colors.error; }
-  else if (badge === "low_stock")    { label = `${stockQuantity ?? "FEW"} LEFT`; bg = colors.ink; }
+  else if (badge === "pro_early_access") { label = "PRO EARLY ACCESS"; bg = c.gold; }
+  else if (badge === "sale")         { label = "SALE"; bg = c.error; }
+  else if (badge === "low_stock")    { label = `${stockQuantity ?? "FEW"} LEFT`; bg = c.ink; }
 
   const posStyle = pos === "topRight"
     ? { top: 8, right: 8 }
@@ -39,10 +43,22 @@ function BadgeLabel({
     : { top: 8, left: 8 };
 
   return (
-    <View style={[styles.badge, posStyle, { backgroundColor: bg }]}>
-      <Text style={styles.badgeText}>{label}</Text>
+    <View style={[badgeS.badge, posStyle, { backgroundColor: bg }]}>
+      <Text style={badgeS.badgeText}>{label}</Text>
     </View>
   );
+}
+
+function createBadgeStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    badge: {
+      position: "absolute",
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: radius.full,
+    },
+    badgeText: { fontFamily: fonts.sansBold, fontSize: 9, color: c.paper },
+  });
 }
 
 // ── PriceRow ──────────────────────────────────────────────────────────────────
@@ -52,6 +68,7 @@ function PriceRow({
 }: {
   product: ShopProduct; isPro: boolean; compact?: boolean;
 }) {
+  const c = useColors();
   const hasSale = product.salePrice && product.salePrice !== product.regularPrice;
   const sym = product.currencySymbol;
   const bigSize = compact ? 14 : 15;
@@ -61,16 +78,16 @@ function PriceRow({
     <View style={{ gap: 1 }}>
       <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
         {hasSale && (
-          <Text style={{ fontFamily: fonts.mono, fontSize: smSize, color: colors.ghost, textDecorationLine: "line-through" }}>
+          <Text style={{ fontFamily: fonts.mono, fontSize: smSize, color: c.ghost, textDecorationLine: "line-through" }}>
             {sym}{product.regularPrice}
           </Text>
         )}
-        <Text style={{ fontFamily: fonts.monoBold, fontSize: bigSize, color: hasSale ? colors.ochre : colors.ink }}>
+        <Text style={{ fontFamily: fonts.monoBold, fontSize: bigSize, color: hasSale ? c.ochre : c.ink }}>
           {sym}{product.price}
         </Text>
       </View>
       {product.proPrice && (
-        <Text style={{ fontFamily: fonts.mono, fontSize: smSize, color: colors.gold }}>
+        <Text style={{ fontFamily: fonts.mono, fontSize: smSize, color: c.gold }}>
           {sym}{product.proPrice} for Pro ★
         </Text>
       )}
@@ -86,6 +103,8 @@ function GridCard({
   product: ShopProduct; isPro: boolean; colW: number;
   onPress: () => void; onAddToBag: () => void;
 }) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [liked, setLiked] = useState(false);
 
   return (
@@ -94,7 +113,6 @@ function GridCard({
       onPress={onPress}
       activeOpacity={0.9}
     >
-      {/* Image */}
       <View style={[styles.gridCardImage, { width: colW }]}>
         {product.imageUrl ? (
           <Image
@@ -105,13 +123,11 @@ function GridCard({
         ) : (
           <View style={[StyleSheet.absoluteFill, styles.imagePlaceholder]} />
         )}
-        {/* Badge */}
         <BadgeLabel
           badge={product.badge}
           stockQuantity={product.stockQuantity}
           pos={product.badge === "low_stock" ? "bottomLeft" : "topLeft"}
         />
-        {/* Wishlist */}
         <TouchableOpacity
           style={styles.wishlistBtn}
           onPress={() => setLiked((v) => !v)}
@@ -120,12 +136,11 @@ function GridCard({
           <Ionicons
             name={liked ? "heart" : "heart-outline"}
             size={14}
-            color={liked ? colors.error : colors.ink}
+            color={liked ? c.error : c.ink}
           />
         </TouchableOpacity>
       </View>
 
-      {/* Body */}
       <View style={styles.gridCardBody}>
         <Text style={styles.makerLabel} numberOfLines={1}>
           {product.makerName.toUpperCase()}
@@ -140,7 +155,7 @@ function GridCard({
             onPress={onAddToBag}
             hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
           >
-            <Ionicons name="add" size={14} color={colors.ink} />
+            <Ionicons name="add" size={14} color={c.ink} />
           </TouchableOpacity>
         </View>
       </View>
@@ -156,13 +171,14 @@ function ListCard({
   product: ShopProduct; isPro: boolean;
   onPress: () => void; onAddToBag: () => void;
 }) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
     <TouchableOpacity
       style={[styles.listCard, shadows.card]}
       onPress={onPress}
       activeOpacity={0.9}
     >
-      {/* Square thumbnail */}
       <View style={styles.listCardImage}>
         {product.imageUrl ? (
           <Image
@@ -180,7 +196,6 @@ function ListCard({
         />
       </View>
 
-      {/* Info */}
       <View style={styles.listCardBody}>
         <Text style={styles.makerLabel} numberOfLines={1}>
           {product.makerName.toUpperCase()}
@@ -215,6 +230,8 @@ export default function ShopListingScreen() {
   const { user } = useAuthStore();
   const { itemCount } = useCartStore();
   const isPro = user?.tier === "patron";
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
 
   const categoryName: string = params?.categoryName ?? "All Products";
   const categorySlug: string = params?.categorySlug ?? "";
@@ -244,14 +261,12 @@ export default function ShopListingScreen() {
     } catch {}
   };
 
-  // Load categories once
   useEffect(() => {
     api.get<ShopCategory[]>(`${MOBILE_API}/shop/categories`, false)
       .then(setCategories)
       .catch(() => {});
   }, []);
 
-  // Re-fetch when category or sort changes
   useEffect(() => {
     setLoading(true);
     setPage(1);
@@ -272,10 +287,10 @@ export default function ShopListingScreen() {
     Linking.openURL(url).catch(() => {});
   };
 
-  const colW = (SCREEN_W - 32 - 12) / 2; // 16px padding each side, 12px gap
+  const colW = (SCREEN_W - 32 - 12) / 2;
 
   const pillLabels = useMemo(() => {
-    const cats = categories.map((c) => ({ name: c.name, slug: c.slug }));
+    const cats = categories.map((cat) => ({ name: cat.name, slug: cat.slug }));
     return [{ name: "All", slug: "" }, ...cats];
   }, [categories]);
 
@@ -283,14 +298,13 @@ export default function ShopListingScreen() {
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safe}>
-      {/* ── Header ─────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
           onPress={() => nav.goBack()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="chevron-back" size={24} color={colors.ink} />
+          <Ionicons name="chevron-back" size={24} color={c.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {activeName}
@@ -300,7 +314,7 @@ export default function ShopListingScreen() {
           onPress={() => nav.navigate("Cart")}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="bag-outline" size={24} color={colors.ink} />
+          <Ionicons name="bag-outline" size={24} color={c.ink} />
           {itemCount > 0 && (
             <View style={styles.cartBadge}>
               <Text style={styles.cartBadgeText}>{itemCount > 9 ? "9+" : itemCount}</Text>
@@ -309,9 +323,7 @@ export default function ShopListingScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* ── Filter bar ─────────────────────────────────────────────── */}
       <View style={styles.filterBar}>
-        {/* Category pills */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -334,7 +346,6 @@ export default function ShopListingScreen() {
           })}
         </ScrollView>
 
-        {/* Sort + Filter row */}
         <View style={styles.sortRow}>
           <View style={styles.sortLeft}>
             <TouchableOpacity style={styles.sortBtn}>
@@ -343,11 +354,10 @@ export default function ShopListingScreen() {
             </TouchableOpacity>
             <TouchableOpacity style={styles.sortBtn}>
               <Text style={styles.sortBtnText}>Filter</Text>
-              <Ionicons name="options-outline" size={14} color={colors.inkSoft} />
+              <Ionicons name="options-outline" size={14} color={c.inkSoft} />
             </TouchableOpacity>
           </View>
 
-          {/* View toggle */}
           <View style={styles.viewToggle}>
             <TouchableOpacity
               style={[styles.viewBtn, viewMode === "grid" && styles.viewBtnActive]}
@@ -356,7 +366,7 @@ export default function ShopListingScreen() {
               <Ionicons
                 name="grid"
                 size={16}
-                color={viewMode === "grid" ? "#fff" : colors.ink}
+                color={viewMode === "grid" ? c.paper : c.ink}
               />
             </TouchableOpacity>
             <TouchableOpacity
@@ -366,21 +376,20 @@ export default function ShopListingScreen() {
               <Ionicons
                 name="list"
                 size={16}
-                color={viewMode === "list" ? "#fff" : colors.ink}
+                color={viewMode === "list" ? c.paper : c.ink}
               />
             </TouchableOpacity>
           </View>
         </View>
       </View>
 
-      {/* ── Content ────────────────────────────────────────────────── */}
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={colors.gold} />
+          <ActivityIndicator color={c.gold} />
         </View>
       ) : products.length === 0 ? (
         <View style={styles.center}>
-          <Ionicons name="bag-outline" size={64} color={colors.ghost} />
+          <Ionicons name="bag-outline" size={64} color={c.ghost} />
           <Text style={styles.emptyTitle}>No products found.</Text>
           <Text style={styles.emptyBody}>
             Try a different category or clear your filters.
@@ -408,7 +417,7 @@ export default function ShopListingScreen() {
           }
           ListFooterComponent={
             loadingMore ? (
-              <ActivityIndicator style={{ paddingVertical: 24 }} color={colors.gold} />
+              <ActivityIndicator style={{ paddingVertical: 24 }} color={c.gold} />
             ) : null
           }
           renderItem={({ item }) =>
@@ -437,286 +446,271 @@ export default function ShopListingScreen() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.paperWarm },
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.paperWarm },
 
-  // Header
-  header: {
-    height: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: space[4],
-    backgroundColor: colors.paper,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.rule,
-    gap: 8,
-  },
-  backBtn: { width: 28, height: 28, justifyContent: "center", alignItems: "center" },
-  headerTitle: {
-    flex: 1,
-    fontFamily: fonts.serifBold,
-    fontSize: fontSize.lg,
-    color: colors.ink,
-    textAlign: "center",
-  },
-  cartBtn: { width: 28, height: 28, justifyContent: "center", alignItems: "center", position: "relative" },
-  cartBadge: {
-    position: "absolute",
-    top: -2, right: -2,
-    width: 14, height: 14,
-    borderRadius: 7,
-    backgroundColor: colors.ochre,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  cartBadgeText: { fontFamily: fonts.monoBold, fontSize: 8, color: "#fff" },
+    header: {
+      height: 52,
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: space[4],
+      backgroundColor: c.paper,
+      borderBottomWidth: 1,
+      borderBottomColor: c.rule,
+      gap: 8,
+    },
+    backBtn: { width: 28, height: 28, justifyContent: "center", alignItems: "center" },
+    headerTitle: {
+      flex: 1,
+      fontFamily: fonts.serifBold,
+      fontSize: fontSize.lg,
+      color: c.ink,
+      textAlign: "center",
+    },
+    cartBtn: { width: 28, height: 28, justifyContent: "center", alignItems: "center", position: "relative" },
+    cartBadge: {
+      position: "absolute",
+      top: -2, right: -2,
+      width: 14, height: 14,
+      borderRadius: 7,
+      backgroundColor: c.ochre,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    cartBadgeText: { fontFamily: fonts.monoBold, fontSize: 8, color: c.paper },
 
-  // Filter bar
-  filterBar: {
-    backgroundColor: colors.paper,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.rule,
-  },
-  pillScroll: { maxHeight: 56 },
-  pillRow: {
-    paddingHorizontal: space[4],
-    paddingVertical: 10,
-    gap: 8,
-    alignItems: "center",
-  },
-  pill: {
-    height: 36,
-    paddingHorizontal: 12,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.ghost,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.paper,
-  },
-  pillActive: {
-    backgroundColor: colors.ochre,
-    borderColor: colors.ochre,
-  },
-  pillText: {
-    fontFamily: fonts.sansBold,
-    fontSize: 13,
-    color: colors.inkSoft,
-  },
-  pillTextActive: { color: "#fff" },
+    filterBar: {
+      backgroundColor: c.paper,
+      borderBottomWidth: 1,
+      borderBottomColor: c.rule,
+    },
+    pillScroll: { maxHeight: 56 },
+    pillRow: {
+      paddingHorizontal: space[4],
+      paddingVertical: 10,
+      gap: 8,
+      alignItems: "center",
+    },
+    pill: {
+      height: 36,
+      paddingHorizontal: 12,
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: c.ghost,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: c.paper,
+    },
+    pillActive: {
+      backgroundColor: c.ochre,
+      borderColor: c.ochre,
+    },
+    pillText: {
+      fontFamily: fonts.sansBold,
+      fontSize: 13,
+      color: c.inkSoft,
+    },
+    pillTextActive: { color: c.paper },
 
-  sortRow: {
-    height: 44,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: space[4],
-  },
-  sortLeft: { flexDirection: "row", gap: 8 },
-  sortBtn: {
-    height: 32,
-    paddingHorizontal: 12,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.ghost,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  sortBtnText: { fontFamily: fonts.sans, fontSize: 12, color: colors.inkSoft },
-  sortChevron: { fontFamily: fonts.sans, fontSize: 8, color: colors.inkSoft, marginTop: 1 },
-  viewToggle: {
-    flexDirection: "row",
-    gap: 4,
-    backgroundColor: colors.paperDeep,
-    padding: 4,
-    borderRadius: 8,
-  },
-  viewBtn: {
-    width: 28, height: 28,
-    borderRadius: 6,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  viewBtnActive: {
-    backgroundColor: colors.ink,
-    shadowColor: colors.ink,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 2,
-    elevation: 1,
-  },
+    sortRow: {
+      height: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: space[4],
+    },
+    sortLeft: { flexDirection: "row", gap: 8 },
+    sortBtn: {
+      height: 32,
+      paddingHorizontal: 12,
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: c.ghost,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    sortBtnText: { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
+    sortChevron: { fontFamily: fonts.sans, fontSize: 8, color: c.inkSoft, marginTop: 1 },
+    viewToggle: {
+      flexDirection: "row",
+      gap: 4,
+      backgroundColor: c.paperDeep,
+      padding: 4,
+      borderRadius: 8,
+    },
+    viewBtn: {
+      width: 28, height: 28,
+      borderRadius: 6,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    viewBtnActive: {
+      backgroundColor: c.ink,
+      shadowColor: c.ink,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.12,
+      shadowRadius: 2,
+      elevation: 1,
+    },
 
-  // Results count
-  resultsCount: {
-    fontFamily: fonts.mono,
-    fontSize: 10,
-    color: colors.mute,
-    marginHorizontal: space[4],
-    marginTop: 12,
-    marginBottom: 4,
-  },
+    resultsCount: {
+      fontFamily: fonts.mono,
+      fontSize: 10,
+      color: c.mute,
+      marginHorizontal: space[4],
+      marginTop: 12,
+      marginBottom: 4,
+    },
 
-  // List content
-  listContent: { paddingHorizontal: 16, paddingBottom: 80 },
-  gridRow: { gap: 12, marginBottom: 16 },
+    listContent: { paddingHorizontal: 16, paddingBottom: 80 },
+    gridRow: { gap: 12, marginBottom: 16 },
 
-  // Badge
-  badge: {
-    position: "absolute",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: radius.full,
-  },
-  badgeText: { fontFamily: fonts.sansBold, fontSize: 9, color: "#fff" },
+    wishlistBtn: {
+      position: "absolute",
+      top: 8, right: 8,
+      width: 28, height: 28,
+      borderRadius: 14,
+      backgroundColor: "rgba(255,255,255,0.9)",
+      justifyContent: "center",
+      alignItems: "center",
+      ...shadows.card,
+    },
 
-  // Wishlist button
-  wishlistBtn: {
-    position: "absolute",
-    top: 8, right: 8,
-    width: 28, height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    justifyContent: "center",
-    alignItems: "center",
-    ...shadows.card,
-  },
+    gridCard: {
+      backgroundColor: c.paper,
+      borderRadius: 12,
+      overflow: "hidden",
+    },
+    gridCardImage: {
+      aspectRatio: 1,
+      overflow: "hidden",
+      position: "relative",
+    },
+    imagePlaceholder: { backgroundColor: c.paperDeep },
+    gridCardBody: {
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 16,
+      gap: 4,
+    },
+    makerLabel: {
+      fontFamily: fonts.sansBold,
+      fontSize: 9,
+      color: c.mute,
+      letterSpacing: 0.5,
+    },
+    productName: {
+      fontFamily: fonts.sansBold,
+      fontSize: 13,
+      color: c.ink,
+      lineHeight: 18,
+      minHeight: 36,
+      marginBottom: 8,
+    },
+    gridCardFooter: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      justifyContent: "space-between",
+      marginTop: "auto" as any,
+    },
+    addCircleBtn: {
+      width: 28, height: 28,
+      borderRadius: 14,
+      backgroundColor: c.paperDeep,
+      justifyContent: "center",
+      alignItems: "center",
+    },
 
-  // Grid card
-  gridCard: {
-    backgroundColor: colors.paper,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  gridCardImage: {
-    aspectRatio: 1,
-    overflow: "hidden",
-    position: "relative",
-  },
-  imagePlaceholder: { backgroundColor: colors.paperDeep },
-  gridCardBody: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 16,
-    gap: 4,
-  },
-  makerLabel: {
-    fontFamily: fonts.sansBold,
-    fontSize: 9,
-    color: colors.mute,
-    letterSpacing: 0.5,
-  },
-  productName: {
-    fontFamily: fonts.sansBold,
-    fontSize: 13,
-    color: colors.ink,
-    lineHeight: 18,
-    minHeight: 36,
-    marginBottom: 8,
-  },
-  gridCardFooter: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    marginTop: "auto" as any,
-  },
-  addCircleBtn: {
-    width: 28, height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.paperDeep,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+    listCard: {
+      backgroundColor: c.paper,
+      borderRadius: 12,
+      flexDirection: "row",
+      alignItems: "stretch",
+      gap: 12,
+      padding: 12,
+      marginBottom: 8,
+    },
+    listCardImage: {
+      width: 100, height: 100,
+      borderRadius: 8,
+      overflow: "hidden",
+      position: "relative",
+      flexShrink: 0,
+    },
+    listCardBody: {
+      flex: 1,
+      paddingVertical: 4,
+      gap: 2,
+    },
+    listProductName: {
+      fontFamily: fonts.sansBold,
+      fontSize: 14,
+      color: c.ink,
+      lineHeight: 19,
+    },
+    listExcerpt: {
+      fontFamily: fonts.sans,
+      fontSize: 12,
+      color: c.inkSoft,
+    },
+    listCardFooter: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      justifyContent: "space-between",
+      marginTop: "auto" as any,
+      paddingTop: 8,
+    },
+    addToBagBtn: {
+      height: 32,
+      paddingHorizontal: 16,
+      borderRadius: radius.full,
+      backgroundColor: c.ochre,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    addToBagBtnText: {
+      fontFamily: fonts.sansBold,
+      fontSize: 11,
+      color: c.paper,
+    },
 
-  // List card
-  listCard: {
-    backgroundColor: colors.paper,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "stretch",
-    gap: 12,
-    padding: 12,
-    marginBottom: 8,
-  },
-  listCardImage: {
-    width: 100, height: 100,
-    borderRadius: 8,
-    overflow: "hidden",
-    position: "relative",
-    flexShrink: 0,
-  },
-  listCardBody: {
-    flex: 1,
-    paddingVertical: 4,
-    gap: 2,
-  },
-  listProductName: {
-    fontFamily: fonts.sansBold,
-    fontSize: 14,
-    color: colors.ink,
-    lineHeight: 19,
-  },
-  listExcerpt: {
-    fontFamily: fonts.sans,
-    fontSize: 12,
-    color: colors.inkSoft,
-  },
-  listCardFooter: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    marginTop: "auto" as any,
-    paddingTop: 8,
-  },
-  addToBagBtn: {
-    height: 32,
-    paddingHorizontal: 16,
-    borderRadius: radius.full,
-    backgroundColor: colors.ochre,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  addToBagBtnText: {
-    fontFamily: fonts.sansBold,
-    fontSize: 11,
-    color: "#fff",
-  },
-
-  // Empty / center
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: space[8],
-    gap: 12,
-  },
-  emptyTitle: {
-    fontFamily: fonts.serifBold,
-    fontSize: 20,
-    color: colors.ink,
-    marginTop: 8,
-  },
-  emptyBody: {
-    fontFamily: fonts.sans,
-    fontSize: 14,
-    color: colors.mute,
-    textAlign: "center",
-    lineHeight: 21,
-    maxWidth: 260,
-  },
-  clearBtn: {
-    height: 48,
-    width: 200,
-    borderRadius: radius.full,
-    borderWidth: 1.5,
-    borderColor: colors.ink,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  clearBtnText: {
-    fontFamily: fonts.sansBold,
-    fontSize: 14,
-    color: colors.ink,
-  },
-});
+    center: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: space[8],
+      gap: 12,
+    },
+    emptyTitle: {
+      fontFamily: fonts.serifBold,
+      fontSize: 20,
+      color: c.ink,
+      marginTop: 8,
+    },
+    emptyBody: {
+      fontFamily: fonts.sans,
+      fontSize: 14,
+      color: c.mute,
+      textAlign: "center",
+      lineHeight: 21,
+      maxWidth: 260,
+    },
+    clearBtn: {
+      height: 48,
+      width: 200,
+      borderRadius: radius.full,
+      borderWidth: 1.5,
+      borderColor: c.ink,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 4,
+    },
+    clearBtnText: {
+      fontFamily: fonts.sansBold,
+      fontSize: 14,
+      color: c.ink,
+    },
+  });
+}

@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Skeleton Loading States</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        // Skeleton specifics
+                        'skel-base': '#E0D9CE',
+                        'skel-hl': '#EDE7DC',
+                        'skel-img': '#D8D1C6'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.05)',
+                        'top': '0 -4px 20px -2px rgba(20, 17, 13, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            background-color: #E5E5E5; 
+            margin: 0; 
+            padding: 40px; 
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+        
+        /* Shimmer Animation Mechanics */
+        .shimmer-base {
+            background: linear-gradient(90deg, #E0D9CE 25%, #EDE7DC 50%, #E0D9CE 75%);
+            background-size: 400% 100%;
+            animation: shimmer-sweep 1.4s ease-in-out infinite;
+        }
+
+        .shimmer-img {
+            background: linear-gradient(90deg, #D8D1C6 25%, #E5DFD4 50%, #D8D1C6 75%);
+            background-size: 400% 100%;
+            animation: shimmer-sweep 1.4s ease-in-out infinite;
+        }
+
+        @keyframes shimmer-sweep {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0 50%; }
+        }
+
+        /* Splash Spinner Animation */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-custom {
+            animation: spin 1.5s linear infinite;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center gap-12 font-sans text-ink">
+
+    <!-- Global Annotation Banner -->
+    <div class="w-full max-w-[800px] bg-white rounded-xl shadow-card border-l-[4px] border-l-ochre p-[20px] text-center sticky top-[20px] z-50">
+        <p class="font-mono text-[10px] text-mute leading-relaxed tracking-wide">
+            Shimmer: gradient sweeps L&rarr;R over base colour, 1.4s ease-in-out loop.<br>
+            Base #E0D9CE &rarr; Highlight #EDE7DC &rarr; Base #E0D9CE.
+        </p>
+    </div>
+
+    <!-- 3x3 Grid Container -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 max-w-[1300px]">
+
+        <!-- ============================================== -->
+        <!-- FRAME 1: CONNECT FEED SKELETON                 -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <!-- Header -->
+                <div class="bg-white shrink-0 z-40 border-b border-ghost/40 pt-12 pb-2 px-4 h-[56px] box-content flex items-center justify-between">
+                    <div class="w-[80px] h-[14px] rounded-[8px] shimmer-base"></div>
+                    <div class="flex gap-4">
+                        <div class="w-[32px] h-[32px] rounded-full shimmer-img"></div>
+                        <div class="w-[32px] h-[32px] rounded-full shimmer-img"></div>
+                    </div>
+                </div>
+
+                <!-- Scrollable Area -->
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[90px]">
+                    
+                    <!-- Filter Row -->
+                    <div class="h-[44px] flex items-center px-4 gap-[8px] overflow-x-hidden border-b border-ghost/40 bg-white">
+                        <div class="w-[52px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                        <div class="w-[64px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                        <div class="w-[44px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                        <div class="w-[72px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                        <div class="w-[56px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                    </div>
+
+                    <div class="py-4 flex flex-col gap-[16px]">
+                        <!-- Card 1: Editorial -->
+                        <div class="bg-white rounded-xl shadow-card mx-[16px] overflow-hidden flex flex-col pb-[16px]">
+                            <div class="w-full h-[180px] rounded-[8px] shimmer-img"></div>
+                            <div class="px-[16px] pt-[16px] flex flex-col">
+                                <div class="w-[40px] h-[8px] rounded-[8px] shimmer-base mb-[8px]"></div>
+                                <div class="w-[90%] h-[14px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[70%] h-[14px] rounded-[8px] shimmer-base mt-[4px]"></div>
+                                
+                                <div class="flex items-center gap-[8px] mt-[16px]">
+                                    <div class="w-[24px] h-[24px] rounded-full shimmer-img shrink-0"></div>
+                                    <div class="w-[80px] h-[10px] rounded-[8px] shimmer-base"></div>
+                                    <div class="w-[48px] h-[10px] rounded-[8px] shimmer-base ml-[4px]"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Community -->
+                        <div class="bg-white rounded-xl shadow-card mx-[16px] overflow-hidden flex flex-col p-[16px]">
+                            <!-- Header Row -->
+                            <div class="flex items-center gap-[12px] mb-[12px]">
+                                <div class="w-[40px] h-[40px] rounded-full shimmer-img shrink-0"></div>
+                                <div class="flex flex-col flex-1">
+                                    <div class="w-[100px] h-[12px] rounded-[8px] shimmer-base"></div>
+                                    <div class="w-[60px] h-[10px] rounded-[8px] shimmer-base mt-[4px]"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Badge + Time -->
+                            <div class="flex justify-between items-center mb-[12px]">
+                                <div class="w-[60px] h-[20px] rounded-full shimmer-base"></div>
+                                <div class="w-[48px] h-[10px] rounded-[8px] shimmer-base"></div>
+                            </div>
+
+                            <!-- Body -->
+                            <div class="flex flex-col gap-[4px] mb-[12px]">
+                                <div class="w-[95%] h-[12px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[85%] h-[12px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[60%] h-[12px] rounded-[8px] shimmer-base"></div>
+                            </div>
+
+                            <!-- Image Grid -->
+                            <div class="flex gap-[4px] mb-[16px]">
+                                <div class="flex-1 h-[140px] rounded-[8px] shimmer-img"></div>
+                                <div class="flex-1 h-[140px] rounded-[8px] shimmer-img"></div>
+                            </div>
+
+                            <!-- Reactions -->
+                            <div class="flex gap-[16px]">
+                                <div class="flex items-center gap-[6px]">
+                                    <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                    <div class="w-[24px] h-[10px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                                <div class="flex items-center gap-[6px]">
+                                    <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                    <div class="w-[24px] h-[10px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                                <div class="flex items-center gap-[6px]">
+                                    <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                    <div class="w-[24px] h-[10px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Event -->
+                        <div class="bg-white rounded-xl shadow-card mx-[16px] overflow-hidden flex flex-col pb-[16px]">
+                            <div class="w-full h-[180px] rounded-t-xl shimmer-img relative overflow-hidden"></div>
+                            <div class="px-[16px] pt-[16px] flex flex-col">
+                                <div class="w-[70px] h-[20px] rounded-full shimmer-base mb-[8px]"></div>
+                                <div class="w-[80%] h-[16px] rounded-[8px] shimmer-base mb-[12px]"></div>
+                                
+                                <div class="flex flex-col gap-[8px] mb-[16px]">
+                                    <div class="flex items-center gap-[8px]">
+                                        <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                        <div class="w-[120px] h-[10px] rounded-[8px] shimmer-base"></div>
+                                    </div>
+                                    <div class="flex items-center gap-[8px]">
+                                        <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                        <div class="w-[140px] h-[10px] rounded-[8px] shimmer-base"></div>
+                                    </div>
+                                </div>
+
+                                <div class="w-[100px] h-[36px] rounded-full shimmer-base self-end"></div>
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Quote -->
+                        <div class="bg-white rounded-xl shadow-card mx-[16px] p-[16px] flex flex-col">
+                            <div class="w-[40px] h-[32px] rounded-md shimmer-base mb-[8px]"></div>
+                            <div class="flex flex-col gap-[4px] mb-[12px]">
+                                <div class="w-[90%] h-[14px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[80%] h-[14px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[55%] h-[14px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="w-[100px] h-[10px] rounded-[8px] shimmer-base mb-[16px]"></div>
+                            <div class="flex gap-[16px]">
+                                <div class="flex items-center gap-[6px]">
+                                    <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                    <div class="w-[24px] h-[10px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                                <div class="flex items-center gap-[6px]">
+                                    <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                    <div class="w-[24px] h-[10px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                                <div class="flex items-center gap-[6px]">
+                                    <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                    <div class="w-[24px] h-[10px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Bottom Nav Mock -->
+                <div class="h-[84px] bg-white border-t border-ghost/50 absolute bottom-0 w-full z-40"></div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest text-center mt-2">FRAME 1 — CONNECT FEED SKELETON</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: ARTICLE DETAIL SKELETON               -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute top-0 w-full h-[280px] rounded-t-[32px] shimmer-img z-0"></div>
+                
+                <div class="absolute top-[52px] left-[16px] w-[40px] h-[40px] bg-white rounded-full flex items-center justify-center shadow-md z-50">
+                    <div class="w-[16px] h-[16px] rounded-full shimmer-img"></div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar z-10 pt-[256px]">
+                    <div class="bg-white rounded-t-[24px] min-h-screen px-[24px] pt-[32px] pb-[100px] shadow-top">
+                        
+                        <div class="w-[60px] h-[8px] rounded-[8px] bg-[#E0D9CE] shimmer-base mb-[12px]"></div>
+                        
+                        <div class="w-[88%] h-[18px] rounded-[8px] shimmer-base mb-[4px]"></div>
+                        <div class="w-[72%] h-[18px] rounded-[8px] shimmer-base mb-[8px]"></div>
+
+                        <div class="w-[65%] h-[13px] rounded-[8px] shimmer-base mb-[24px] opacity-80"></div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center gap-[12px] mb-[24px]">
+                            <div class="w-[36px] h-[36px] rounded-full shimmer-img shrink-0"></div>
+                            <div class="flex flex-col gap-[4px]">
+                                <div class="w-[100px] h-[12px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[60px] h-[10px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                        </div>
+
+                        <div class="w-full h-[1px] bg-ghost/30 mb-[24px]"></div>
+
+                        <!-- Body Paragraph 1 -->
+                        <div class="flex flex-col gap-[4px] mb-[16px]">
+                            <div class="w-[95%] h-[12px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[90%] h-[12px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[85%] h-[12px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[92%] h-[12px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[60%] h-[12px] rounded-[8px] shimmer-base"></div>
+                        </div>
+
+                        <!-- Inline Image -->
+                        <div class="w-full h-[200px] rounded-[8px] shimmer-img my-[16px]"></div>
+
+                        <!-- Body Paragraph 2 -->
+                        <div class="flex flex-col gap-[4px] mb-[24px]">
+                            <div class="w-[95%] h-[12px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[88%] h-[12px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[75%] h-[12px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[40%] h-[12px] rounded-[8px] shimmer-base"></div>
+                        </div>
+
+                        <!-- Pull Quote -->
+                        <div class="border-l-[4px] border-[#E0D9CE] pl-[12px] mb-[24px]">
+                            <div class="flex flex-col gap-[4px]">
+                                <div class="w-[90%] h-[14px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[70%] h-[14px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                        </div>
+
+                        <!-- Body Paragraph 3 -->
+                        <div class="flex flex-col gap-[4px] mb-[16px]">
+                            <div class="w-[95%] h-[12px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[88%] h-[12px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[65%] h-[12px] rounded-[8px] shimmer-base"></div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Bottom Action Bar -->
+                <div class="absolute bottom-0 w-full h-[84px] bg-white border-t border-ghost/40 flex items-center justify-between px-[24px] pb-safe z-50">
+                    <div class="flex gap-[16px]">
+                        <div class="w-[36px] h-[36px] rounded-full shimmer-base"></div>
+                        <div class="w-[36px] h-[36px] rounded-full shimmer-base"></div>
+                        <div class="w-[36px] h-[36px] rounded-full shimmer-base"></div>
+                    </div>
+                    <div class="w-[60px] h-[36px] rounded-full shimmer-base"></div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest text-center mt-2">FRAME 2 — ARTICLE DETAIL SKELETON</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 3: MEMBER DASHBOARD SKELETON             -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <header class="bg-white shrink-0 z-40 border-b border-ghost/40 pt-12 pb-2 px-4 h-[56px] box-content flex items-center justify-center">
+                    <div class="w-[60px] h-[14px] rounded-[8px] shimmer-base"></div>
+                </header>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar p-[16px] pb-[100px] flex flex-col gap-[16px]">
+                    
+                    <!-- Hero Card -->
+                    <div class="bg-white rounded-xl shadow-card p-[24px] flex flex-col items-center">
+                        <div class="w-[80px] h-[80px] rounded-full shimmer-img mb-[12px]"></div>
+                        <div class="w-[140px] h-[16px] rounded-[8px] shimmer-base mb-[4px]"></div>
+                        <div class="w-[80px] h-[10px] rounded-[8px] shimmer-base mb-[16px]"></div>
+                        
+                        <div class="w-full h-[52px] rounded-[8px] shimmer-base opacity-70"></div>
+                    </div>
+
+                    <!-- Stats Bar -->
+                    <div class="bg-white rounded-xl shadow-card p-[16px] grid grid-cols-4 divide-x divide-ghost/40">
+                        <div class="flex flex-col items-center justify-center gap-[4px]">
+                            <div class="w-[40px] h-[18px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[56px] h-[10px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                        <div class="flex flex-col items-center justify-center gap-[4px]">
+                            <div class="w-[40px] h-[18px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[56px] h-[10px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                        <div class="flex flex-col items-center justify-center gap-[4px]">
+                            <div class="w-[40px] h-[18px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[56px] h-[10px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                        <div class="flex flex-col items-center justify-center gap-[4px]">
+                            <div class="w-[40px] h-[18px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[56px] h-[10px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                    </div>
+
+                    <!-- Badges Shelf -->
+                    <div class="bg-white rounded-xl shadow-card p-[16px] flex gap-[8px] overflow-hidden">
+                        <div class="w-[90px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                        <div class="w-[110px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                        <div class="w-[80px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                        <div class="w-[130px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                        <div class="w-[100px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                    </div>
+
+                    <!-- Quick Links -->
+                    <div class="bg-white rounded-xl shadow-card flex flex-col overflow-hidden">
+                        <div class="h-[52px] px-[16px] border-b border-ghost/30 flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[40px] h-[40px] rounded-full shimmer-img"></div>
+                                <div class="w-[120px] h-[12px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="w-[20px] h-[20px] rounded-full shimmer-base"></div>
+                        </div>
+                        <div class="h-[52px] px-[16px] border-b border-ghost/30 flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[40px] h-[40px] rounded-full shimmer-img"></div>
+                                <div class="w-[120px] h-[12px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="w-[20px] h-[20px] rounded-full shimmer-base"></div>
+                        </div>
+                        <div class="h-[52px] px-[16px] border-b border-ghost/30 flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[40px] h-[40px] rounded-full shimmer-img"></div>
+                                <div class="w-[120px] h-[12px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="w-[20px] h-[20px] rounded-full shimmer-base"></div>
+                        </div>
+                        <div class="h-[52px] px-[16px] border-b border-ghost/30 flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[40px] h-[40px] rounded-full shimmer-img"></div>
+                                <div class="w-[120px] h-[12px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="w-[20px] h-[20px] rounded-full shimmer-base"></div>
+                        </div>
+                        <div class="h-[52px] px-[16px] border-b border-ghost/30 flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[40px] h-[40px] rounded-full shimmer-img"></div>
+                                <div class="w-[120px] h-[12px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="w-[20px] h-[20px] rounded-full shimmer-base"></div>
+                        </div>
+                        <div class="h-[52px] px-[16px] border-b border-ghost/30 flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[40px] h-[40px] rounded-full shimmer-img"></div>
+                                <div class="w-[120px] h-[12px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="w-[20px] h-[20px] rounded-full shimmer-base"></div>
+                        </div>
+                        <div class="h-[52px] px-[16px] flex items-center justify-between">
+                            <div class="flex items-center gap-[12px]">
+                                <div class="w-[40px] h-[40px] rounded-full shimmer-img"></div>
+                                <div class="w-[120px] h-[12px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="w-[20px] h-[20px] rounded-full shimmer-base"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-[84px] bg-white border-t border-ghost/50 absolute bottom-0 w-full z-40"></div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest text-center mt-2">FRAME 3 — MEMBER DASHBOARD SKELETON</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 4: EVENTS SCREEN SKELETON                -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <header class="bg-white shrink-0 z-40 border-b border-ghost/40 pt-12 pb-2 px-4 h-[56px] box-content flex items-center justify-between">
+                    <div class="w-[32px] h-[32px]"></div> <!-- spacer -->
+                    <div class="w-[80px] h-[16px] rounded-[8px] shimmer-base"></div>
+                    <div class="w-[32px] h-[32px] rounded-full shimmer-img"></div>
+                </header>
+
+                <div class="h-[44px] flex items-center px-4 gap-[8px] overflow-x-hidden border-b border-ghost/40 bg-white shrink-0">
+                    <div class="w-[40px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                    <div class="w-[70px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                    <div class="w-[60px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                    <div class="w-[50px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                    <div class="w-[80px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                    <div class="w-[50px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] px-[16px] pt-[16px] flex flex-col gap-[12px]">
+                    <!-- Event Card 1 -->
+                    <div class="bg-white rounded-xl shadow-card w-full flex flex-col pb-[16px]">
+                        <div class="w-full h-[200px] rounded-t-xl relative overflow-hidden shrink-0 shimmer-img"></div>
+                        <div class="px-[16px] pt-[16px] flex flex-col">
+                            <div class="w-[80px] h-[20px] rounded-full shimmer-base mb-[8px]"></div>
+                            <div class="w-[75%] h-[16px] rounded-[8px] shimmer-base mb-[12px]"></div>
+                            
+                            <div class="flex items-center gap-[8px] mb-[8px]">
+                                <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                <div class="w-[130px] h-[10px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="flex items-center gap-[8px] mb-[8px]">
+                                <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                <div class="w-[150px] h-[10px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="flex items-center gap-[8px] mb-[16px]">
+                                <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                <div class="w-[100px] h-[10px] rounded-[8px] shimmer-base"></div>
+                            </div>
+
+                            <div class="w-[100px] h-[36px] rounded-full bg-[#E0D9CE]/70 shimmer-base self-end"></div>
+                        </div>
+                    </div>
+
+                    <!-- Event Card 2 -->
+                    <div class="bg-white rounded-xl shadow-card w-full flex flex-col pb-[16px]">
+                        <div class="w-full h-[200px] rounded-t-xl relative overflow-hidden shrink-0 shimmer-img"></div>
+                        <div class="px-[16px] pt-[16px] flex flex-col">
+                            <div class="w-[80px] h-[20px] rounded-full shimmer-base mb-[8px]"></div>
+                            <div class="w-[75%] h-[16px] rounded-[8px] shimmer-base mb-[12px]"></div>
+                            
+                            <div class="flex items-center gap-[8px] mb-[8px]">
+                                <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                <div class="w-[130px] h-[10px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="flex items-center gap-[8px] mb-[8px]">
+                                <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                <div class="w-[150px] h-[10px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="flex items-center gap-[8px] mb-[16px]">
+                                <div class="w-[16px] h-[16px] rounded-full shimmer-base"></div>
+                                <div class="w-[100px] h-[10px] rounded-[8px] shimmer-base"></div>
+                            </div>
+
+                            <div class="w-[100px] h-[36px] rounded-full bg-[#E0D9CE]/70 shimmer-base self-end"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-[84px] bg-white border-t border-ghost/50 absolute bottom-0 w-full z-40"></div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest text-center mt-2">FRAME 4 — EVENTS SCREEN SKELETON</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 5: SHOP PRODUCT LISTING SKELETON         -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <header class="bg-white shrink-0 z-40 border-b border-ghost/40 pt-12 pb-2 px-4 h-[56px] box-content flex items-center justify-between">
+                    <div class="w-[32px] h-[32px]"></div>
+                    <div class="w-[60px] h-[16px] rounded-[8px] shimmer-base"></div>
+                    <div class="w-[32px] h-[32px] rounded-full shimmer-img"></div>
+                </header>
+
+                <div class="px-[16px] py-[8px] bg-white">
+                    <div class="w-full h-[44px] rounded-full shimmer-base"></div>
+                </div>
+
+                <div class="h-[44px] flex items-center px-4 gap-[8px] overflow-x-hidden border-b border-ghost/40 bg-white shrink-0">
+                    <div class="w-[52px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                    <div class="w-[70px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                    <div class="w-[64px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                    <div class="w-[80px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                    <div class="w-[60px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] px-[16px] pt-[16px]">
+                    <div class="grid grid-cols-2 gap-[8px]">
+                        
+                        <!-- Shop Item 1 -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col pb-[12px]">
+                            <div class="w-full h-[160px] rounded-t-xl shimmer-img"></div>
+                            <div class="px-[12px] pt-[12px] flex flex-col flex-1">
+                                <div class="w-[80%] h-[12px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[55%] h-[12px] rounded-[8px] shimmer-base mt-[4px] mb-[12px]"></div>
+                                
+                                <div class="flex flex-col mt-auto mb-[12px]">
+                                    <div class="w-[48px] h-[10px] rounded-[8px] shimmer-base opacity-70 mb-[4px]"></div>
+                                    <div class="w-[60px] h-[14px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                                <div class="w-full h-[36px] rounded-full shimmer-base"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Shop Item 2 -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col pb-[12px]">
+                            <div class="w-full h-[160px] rounded-t-xl shimmer-img"></div>
+                            <div class="px-[12px] pt-[12px] flex flex-col flex-1">
+                                <div class="w-[80%] h-[12px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[55%] h-[12px] rounded-[8px] shimmer-base mt-[4px] mb-[12px]"></div>
+                                
+                                <div class="flex flex-col mt-auto mb-[12px] justify-end min-h-[28px]">
+                                    <div class="w-[60px] h-[14px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                                <div class="w-full h-[36px] rounded-full shimmer-base"></div>
+                            </div>
+                        </div>
+
+                        <!-- Shop Item 3 -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col pb-[12px]">
+                            <div class="w-full h-[160px] rounded-t-xl shimmer-img"></div>
+                            <div class="px-[12px] pt-[12px] flex flex-col flex-1">
+                                <div class="w-[80%] h-[12px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[55%] h-[12px] rounded-[8px] shimmer-base mt-[4px] mb-[12px]"></div>
+                                
+                                <div class="flex flex-col mt-auto mb-[12px]">
+                                    <div class="w-[48px] h-[10px] rounded-[8px] shimmer-base opacity-70 mb-[4px]"></div>
+                                    <div class="w-[60px] h-[14px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                                <div class="w-full h-[36px] rounded-full shimmer-base"></div>
+                            </div>
+                        </div>
+
+                        <!-- Shop Item 4 -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col pb-[12px]">
+                            <div class="w-full h-[160px] rounded-t-xl shimmer-img"></div>
+                            <div class="px-[12px] pt-[12px] flex flex-col flex-1">
+                                <div class="w-[80%] h-[12px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[55%] h-[12px] rounded-[8px] shimmer-base mt-[4px] mb-[12px]"></div>
+                                
+                                <div class="flex flex-col mt-auto mb-[12px] justify-end min-h-[28px]">
+                                    <div class="w-[60px] h-[14px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                                <div class="w-full h-[36px] rounded-full shimmer-base"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="h-[84px] bg-white border-t border-ghost/50 absolute bottom-0 w-full z-40"></div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest text-center mt-2">FRAME 5 — SHOP PRODUCT LISTING SKELETON</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 6: PUBLIC PROFILE SKELETON               -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute top-0 w-full h-[200px] bg-[#E0D9CE] shimmer-base z-0"></div>
+                
+                <div class="absolute top-[52px] left-[16px] w-[40px] h-[40px] bg-white rounded-full flex items-center justify-center shadow-md z-50"></div>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar z-10 pt-[176px]">
+                    <div class="bg-white rounded-t-[32px] min-h-screen px-[16px] pb-[100px] shadow-top flex flex-col items-center relative">
+                        
+                        <div class="w-[96px] h-[96px] rounded-full shimmer-img border-[4px] border-white -mt-[48px]"></div>
+                        
+                        <div class="w-[80px] h-[24px] rounded-full shimmer-base mt-[12px]"></div>
+                        
+                        <div class="w-[160px] h-[18px] rounded-[8px] shimmer-base mt-[16px]"></div>
+                        <div class="w-[80px] h-[10px] rounded-[8px] shimmer-base mt-[4px]"></div>
+                        <div class="w-[140px] h-[12px] rounded-[8px] shimmer-base mt-[12px]"></div>
+                        <div class="w-[80px] h-[10px] rounded-[8px] shimmer-base mt-[4px]"></div>
+                        <div class="w-[100px] h-[8px] rounded-[8px] shimmer-base mt-[12px]"></div>
+
+                        <!-- Badges Shelf -->
+                        <div class="w-full flex gap-[8px] overflow-hidden mt-[24px]">
+                            <div class="w-[90px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                            <div class="w-[120px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                            <div class="w-[80px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                            <div class="w-[110px] h-[32px] rounded-full shimmer-base shrink-0"></div>
+                        </div>
+
+                        <!-- Social Links -->
+                        <div class="flex gap-[24px] justify-center mt-[16px] w-full">
+                            <div class="w-[36px] h-[36px] rounded-full shimmer-base"></div>
+                            <div class="w-[36px] h-[36px] rounded-full shimmer-base"></div>
+                            <div class="w-[36px] h-[36px] rounded-full shimmer-base"></div>
+                        </div>
+
+                        <!-- Tabs Row -->
+                        <div class="flex justify-around w-full h-[44px] mt-[16px] border-b border-ghost/40">
+                            <div class="flex-1 flex justify-center items-center pb-2 border-b-2 border-ochre/20">
+                                <div class="w-[80px] h-[14px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                            <div class="flex-1 flex justify-center items-center pb-2">
+                                <div class="w-[60px] h-[14px] rounded-[8px] shimmer-base"></div>
+                            </div>
+                        </div>
+
+                        <!-- Community Posts -->
+                        <div class="w-full flex flex-col gap-[12px] mt-[16px]">
+                            <div class="bg-white border border-ghost/40 rounded-lg p-[16px]">
+                                <div class="flex justify-between items-center mb-[12px]">
+                                    <div class="w-[60px] h-[16px] rounded-full shimmer-base"></div>
+                                    <div class="w-[48px] h-[10px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                                <div class="flex flex-col gap-[4px] mb-[12px]">
+                                    <div class="w-[90%] h-[12px] rounded-[8px] shimmer-base"></div>
+                                    <div class="w-[65%] h-[12px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                                <div class="flex gap-[16px]">
+                                    <div class="flex items-center gap-[4px]"><div class="w-[12px] h-[12px] rounded-full shimmer-base"></div><div class="w-[20px] h-[8px] rounded-[8px] shimmer-base"></div></div>
+                                    <div class="flex items-center gap-[4px]"><div class="w-[12px] h-[12px] rounded-full shimmer-base"></div><div class="w-[20px] h-[8px] rounded-[8px] shimmer-base"></div></div>
+                                    <div class="flex items-center gap-[4px]"><div class="w-[12px] h-[12px] rounded-full shimmer-base"></div><div class="w-[20px] h-[8px] rounded-[8px] shimmer-base"></div></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white border border-ghost/40 rounded-lg p-[16px]">
+                                <div class="flex justify-between items-center mb-[12px]">
+                                    <div class="w-[60px] h-[16px] rounded-full shimmer-base"></div>
+                                    <div class="w-[48px] h-[10px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                                <div class="flex flex-col gap-[4px] mb-[12px]">
+                                    <div class="w-[90%] h-[12px] rounded-[8px] shimmer-base"></div>
+                                    <div class="w-[65%] h-[12px] rounded-[8px] shimmer-base"></div>
+                                </div>
+                                <div class="flex gap-[16px]">
+                                    <div class="flex items-center gap-[4px]"><div class="w-[12px] h-[12px] rounded-full shimmer-base"></div><div class="w-[20px] h-[8px] rounded-[8px] shimmer-base"></div></div>
+                                    <div class="flex items-center gap-[4px]"><div class="w-[12px] h-[12px] rounded-full shimmer-base"></div><div class="w-[20px] h-[8px] rounded-[8px] shimmer-base"></div></div>
+                                    <div class="flex items-center gap-[4px]"><div class="w-[12px] h-[12px] rounded-full shimmer-base"></div><div class="w-[20px] h-[8px] rounded-[8px] shimmer-base"></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest text-center mt-2">FRAME 6 — PUBLIC PROFILE SKELETON</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 7: NOTIFICATIONS SKELETON                -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <header class="bg-white shrink-0 z-40 border-b border-ghost/40 pt-12 pb-2 px-4 h-[56px] box-content flex items-center justify-between">
+                    <div class="w-[24px] h-[24px] rounded-full bg-white border border-ghost/40"></div>
+                    <div class="w-[100px] h-[16px] rounded-[8px] shimmer-base"></div>
+                    <div class="w-[80px] h-[14px] rounded-[8px] shimmer-base"></div>
+                </header>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar bg-white">
+                    
+                    <div class="h-[32px] bg-paper-deep px-[16px] flex items-center border-b border-ghost/40">
+                        <div class="w-[60px] h-[8px] rounded-[8px] shimmer-base"></div>
+                    </div>
+
+                    <!-- Row 1 -->
+                    <div class="h-[72px] px-[16px] border-b border-ghost/40 flex items-center gap-[12px]">
+                        <div class="w-[40px] h-[40px] rounded-full shimmer-img shrink-0"></div>
+                        <div class="flex flex-col flex-1 gap-[4px]">
+                            <div class="w-[200px] h-[14px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[240px] h-[12px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                        <div class="flex flex-col items-end gap-[4px] shrink-0">
+                            <div class="w-[32px] h-[10px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[8px] h-[8px] rounded-full shimmer-base"></div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2 -->
+                    <div class="h-[72px] px-[16px] border-b border-ghost/40 flex items-center gap-[12px]">
+                        <div class="w-[40px] h-[40px] rounded-full shimmer-img shrink-0"></div>
+                        <div class="flex flex-col flex-1 gap-[4px]">
+                            <div class="w-[180px] h-[14px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[220px] h-[12px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                        <div class="flex flex-col items-end gap-[4px] shrink-0">
+                            <div class="w-[32px] h-[10px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[8px] h-[8px] rounded-full shimmer-base"></div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3 -->
+                    <div class="h-[72px] px-[16px] border-b border-ghost/40 flex items-center gap-[12px]">
+                        <div class="w-[40px] h-[40px] rounded-full shimmer-img shrink-0"></div>
+                        <div class="flex flex-col flex-1 gap-[4px]">
+                            <div class="w-[220px] h-[14px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[200px] h-[12px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                        <div class="flex flex-col items-end gap-[4px] shrink-0">
+                            <div class="w-[32px] h-[10px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4 -->
+                    <div class="h-[72px] px-[16px] border-b border-ghost/40 flex items-center gap-[12px]">
+                        <div class="w-[40px] h-[40px] rounded-full shimmer-img shrink-0"></div>
+                        <div class="flex flex-col flex-1 gap-[4px]">
+                            <div class="w-[190px] h-[14px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[250px] h-[12px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                        <div class="flex flex-col items-end gap-[4px] shrink-0">
+                            <div class="w-[32px] h-[10px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                    </div>
+
+                    <!-- Row 5 -->
+                    <div class="h-[72px] px-[16px] border-b border-ghost/40 flex items-center gap-[12px]">
+                        <div class="w-[40px] h-[40px] rounded-full shimmer-img shrink-0"></div>
+                        <div class="flex flex-col flex-1 gap-[4px]">
+                            <div class="w-[160px] h-[14px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[230px] h-[12px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                        <div class="flex flex-col items-end gap-[4px] shrink-0">
+                            <div class="w-[32px] h-[10px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                    </div>
+
+                    <div class="h-[32px] bg-paper-deep px-[16px] flex items-center border-y border-ghost/40">
+                        <div class="w-[70px] h-[8px] rounded-[8px] shimmer-base"></div>
+                    </div>
+
+                    <div class="h-[60px] px-[16px] border-b border-ghost/40 flex items-center gap-[12px] opacity-70">
+                        <div class="w-[40px] h-[40px] rounded-full shimmer-img shrink-0"></div>
+                        <div class="flex flex-col flex-1 gap-[4px]">
+                            <div class="w-[180px] h-[12px] rounded-[8px] shimmer-base"></div>
+                            <div class="w-[200px] h-[10px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                        <div class="flex flex-col items-end gap-[4px] shrink-0">
+                            <div class="w-[32px] h-[10px] rounded-[8px] shimmer-base"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest text-center mt-2">FRAME 7 — NOTIFICATIONS SKELETON</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 8: GAMES HUB SKELETON                    -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <header class="bg-white shrink-0 z-40 border-b border-ghost/40 pt-12 pb-4 h-[72px] box-content flex flex-col items-center justify-center gap-[4px]">
+                    <div class="w-[80px] h-[16px] rounded-[8px] shimmer-base"></div>
+                    <div class="w-[120px] h-[10px] rounded-[8px] shimmer-base opacity-80"></div>
+                </header>
+
+                <div class="flex-1 overflow-y-auto hide-scrollbar p-[16px]">
+                    <div class="grid grid-cols-2 gap-[12px]">
+                        
+                        <!-- Game 1 -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col">
+                            <div class="w-full h-[140px] shimmer-img rounded-t-xl"></div>
+                            <div class="p-[16px] flex flex-col gap-[4px]">
+                                <div class="w-[80%] h-[14px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[60%] h-[10px] rounded-[8px] shimmer-base mb-[12px]"></div>
+                                <div class="w-full h-[36px] rounded-full shimmer-base"></div>
+                            </div>
+                        </div>
+
+                        <!-- Game 2 -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col">
+                            <div class="w-full h-[140px] shimmer-img rounded-t-xl"></div>
+                            <div class="p-[16px] flex flex-col gap-[4px]">
+                                <div class="w-[80%] h-[14px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[60%] h-[10px] rounded-[8px] shimmer-base mb-[12px]"></div>
+                                <div class="w-full h-[36px] rounded-full shimmer-base"></div>
+                            </div>
+                        </div>
+
+                        <!-- Game 3 -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col">
+                            <div class="w-full h-[140px] shimmer-img rounded-t-xl"></div>
+                            <div class="p-[16px] flex flex-col gap-[4px]">
+                                <div class="w-[80%] h-[14px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[60%] h-[10px] rounded-[8px] shimmer-base mb-[12px]"></div>
+                                <div class="w-full h-[36px] rounded-full shimmer-base"></div>
+                            </div>
+                        </div>
+
+                        <!-- Game 4 -->
+                        <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col">
+                            <div class="w-full h-[140px] shimmer-img rounded-t-xl"></div>
+                            <div class="p-[16px] flex flex-col gap-[4px]">
+                                <div class="w-[80%] h-[14px] rounded-[8px] shimmer-base"></div>
+                                <div class="w-[60%] h-[10px] rounded-[8px] shimmer-base mb-[12px]"></div>
+                                <div class="w-full h-[36px] rounded-full shimmer-base"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="h-[84px] bg-white border-t border-ghost/50 absolute bottom-0 w-full z-40"></div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest text-center mt-2">FRAME 8 — GAMES HUB SKELETON</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 9: FULL-APP SPLASH / INITIAL LOADING     -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col items-center justify-center shadow-2xl">
+                
+                <div class="flex flex-col items-center -mt-12">
+                    <span class="font-serif text-[28px] font-bold text-ink tracking-tight">moveee</span>
+                    <span class="font-sans text-[10px] font-bold text-gold tracking-[0.2em] uppercase mt-[6px]">connect</span>
+                </div>
+
+                <div class="mt-[32px] flex flex-col items-center">
+                    <div class="relative w-[40px] h-[40px] mb-[16px]">
+                        <svg class="w-full h-full animate-spin-custom" viewBox="0 0 40 40">
+                            <!-- r=18, C = 113.1. 270deg = 75% = 84.8 -->
+                            <circle 
+                                cx="20" cy="20" r="18" 
+                                fill="none" 
+                                stroke="#C5491F" 
+                                stroke-width="2.5" 
+                                stroke-linecap="round"
+                                stroke-dasharray="84.8 113.1" 
+                                stroke-dashoffset="0"
+                            ></circle>
+                        </svg>
+                    </div>
+                    <span class="font-mono text-[11px] text-[#9E9288]">Loading your culture...</span>
+                </div>
+
+                <div class="absolute bottom-[32px] w-full text-center">
+                    <span class="font-sans text-[10px] text-ghost">Moveee Connect</span>
+                </div>
+
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest text-center mt-2">FRAME 9 — FULL-APP SPLASH</span>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -5,23 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Moveee Connect - Magazine</title>
     
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
                         ochre: '#C5491F',
+                        gold: '#B38238',
                         ink: '#14110D',
                         'ink-soft': '#3A342B',
-                        ghost: '#C8BFB0',
                         mute: '#7A6F5C',
-                        gold: '#B38238'
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        'editorial-bg': '#fff0eb',
                     },
                     fontFamily: {
                         sans: ['"DM Sans"', 'sans-serif'],
@@ -29,7 +34,7 @@
                         mono: ['"JetBrains Mono"', 'monospace']
                     },
                     boxShadow: {
-                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.08)'
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.05)',
                     }
                 }
             }
@@ -37,352 +42,552 @@
     </script>
     
     <style>
-        body { background-color: #E5E5E5; }
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .ios-screen { width: 390px; height: 844px; }
-        .scroll-snap-x { scroll-snap-type: x mandatory; }
-        .snap-start { scroll-snap-align: start; }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        input:focus { outline: none; border-color: #C5491F; }
     </style>
 </head>
-<body class="p-8 min-h-screen flex flex-col xl:flex-row justify-center items-center xl:items-start gap-12 text-ink font-sans">
+<body class="flex justify-center text-ink font-sans min-h-screen pt-4 pb-12">
 
-    <!-- ============================================== -->
-    <!-- FRAME 1: MAGAZINE HOME                         -->
-    <!-- ============================================== -->
-    <div class="flex flex-col items-center gap-3">
-        <span class="text-ink-soft font-bold font-mono text-sm tracking-wide">FRAME 1: MAGAZINE HOME</span>
-        
-        <div class="ios-screen bg-paper-warm shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
-            
-            <!-- Header (64px including status bar) -->
-            <header class="h-[64px] bg-white relative shrink-0 z-40 border-b border-ghost/30">
-                <!-- Status Bar Mock -->
-                <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-ink z-50">
-                    <span>9:41</span>
-                    <div class="flex gap-1 items-center">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
-                    </div>
-                </div>
-                <!-- Nav Bar -->
-                <div class="absolute bottom-0 w-full px-4 pb-2 flex items-center justify-between">
-                    <h1 class="font-serif text-[20px] font-bold text-ink">Magazine</h1>
-                    <button class="w-8 h-8 flex items-center justify-end text-ink">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </button>
-                </div>
-            </header>
+    <!-- Container for specific presentation layout -->
+    <div class="flex flex-col items-center gap-[48px] max-w-[1300px] mx-auto pb-12">
 
-            <!-- Scrollable Content -->
-            <div class="flex-1 overflow-y-auto hide-scrollbar pb-[90px]">
+        <!-- ============================================== -->
+        <!-- FRAME 1: MAGAZINE HOME                         -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3 w-full">
+            <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">Magazine Home (Full Scroll)</span>
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl mx-auto">
                 
-                <!-- Featured Hero (390x260) -->
-                <div class="w-full h-[260px] relative bg-ink">
-                    <!-- Gradient Editorial Placeholder -->
-                    <div class="w-full h-full bg-gradient-to-br from-ochre via-[#E27D60] to-[#E8A87C]"></div>
+                <!-- Header (Fixed at top) -->
+                <div class="bg-white z-40 shrink-0 border-b border-ghost">
+                    <!-- Status Bar Mock -->
+                    <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center pb-0.5">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- Nav Bar -->
+                    <header class="flex items-center justify-between px-4 h-[44px]">
+                        <h1 class="font-serif text-[20px] font-bold text-ink leading-none">Magazine</h1>
+                        <div class="flex items-center gap-[16px]">
+                            <button class="text-ink">
+                                <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </button>
+                            <button class="relative text-ink">
+                                <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                <span class="absolute top-[2px] right-[4px] w-[8px] h-[8px] bg-ochre rounded-full border-[1.5px] border-white"></span>
+                            </button>
+                        </div>
+                    </header>
+                </div>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto hide-scrollbar pb-[100px] bg-paper-warm">
                     
-                    <!-- Gradient Overlay -->
-                    <div class="absolute bottom-0 w-full h-[40%] bg-gradient-to-t from-ink to-transparent flex flex-col justify-end px-4 pb-4">
-                        <span class="text-ochre font-sans text-[9px] font-bold uppercase tracking-wider mb-[8px]">FASHION</span>
-                        <h2 class="font-serif text-[24px] font-bold text-white leading-tight mb-2 max-w-[90%]">The New Wave of Lagos Street Style</h2>
+                    <!-- Category Filter Strip -->
+                    <div class="h-[40px] px-[16px] flex items-center gap-[8px] overflow-x-auto hide-scrollbar whitespace-nowrap bg-paper-warm shrink-0 sticky top-0 z-30 shadow-sm border-b border-ghost/30">
+                        <button class="h-[28px] px-[12px] rounded-full bg-ochre text-white text-[12px] font-bold">All</button>
+                        <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Fashion</button>
+                        <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Music</button>
+                        <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Film</button>
+                        <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Food</button>
+                        <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Interview</button>
+                        <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Visuals</button>
+                        <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Ideas</button>
+                    </div>
+
+                    <!-- Featured Hero -->
+                    <div class="w-full h-[260px] relative bg-gradient-to-tr from-[#A66C52] via-[#C5491F] to-[#E2B19B] shrink-0 overflow-hidden">
+                        <!-- PRO Early Access Badge -->
+                        <div class="absolute top-[12px] right-[16px] bg-gold rounded-full px-[10px] py-[4px] shadow-sm z-20">
+                            <span class="font-sans text-[9px] font-bold text-white uppercase tracking-wider">★ PRO EARLY ACCESS</span>
+                        </div>
+
+                        <!-- Gradient Overlay -->
+                        <div class="absolute bottom-0 w-full h-[50%] bg-gradient-to-t from-ink to-transparent z-10 flex flex-col justify-end px-[16px] pb-[16px]">
+                            <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-[0.1em] mb-[8px]">FASHION · NIGERIA</span>
+                            <h2 class="font-serif text-[24px] font-bold text-white leading-tight line-clamp-2">The New Wave of Lagos Street Style</h2>
+                            <span class="font-sans text-[12px] text-white/70 mt-[6px]">By Funmi Osei · 8 min read</span>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 1: From the Editors -->
+                    <div class="pt-[16px]">
+                        <div class="flex justify-between items-baseline px-[16px] mb-[12px]">
+                            <h3 class="font-sans text-[15px] font-bold text-ink">From the Editors</h3>
+                            <button class="font-sans text-[13px] text-ochre hover:opacity-80">See all &rarr;</button>
+                        </div>
                         
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="font-sans text-[12px] text-white/80">8 min read</span>
-                            <span class="text-white/40 text-[10px]">·</span>
-                            <span class="font-sans text-[12px] text-white/80">By Funmi Osei</span>
-                            <div class="w-[24px] h-[24px] rounded-full ml-1 bg-gradient-to-tr from-pink-500 to-orange-400 text-white flex items-center justify-center font-bold text-[10px] shadow-sm">FO</div>
+                        <div class="flex overflow-x-auto hide-scrollbar pl-[16px] pr-[16px] gap-[12px] pb-[4px]">
+                            <!-- Card 1 -->
+                            <div class="w-[200px] h-[250px] bg-white rounded-xl shadow-card shrink-0 flex flex-col overflow-hidden relative">
+                                <div class="w-full h-[120px] bg-gradient-to-tr from-[#FF9A9E] to-[#FECFEF] relative shrink-0">
+                                    <div class="absolute bottom-[8px] left-[8px] bg-editorial-bg rounded-full px-[10px] py-[4px] shadow-sm">
+                                        <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-wider">FASHION</span>
+                                    </div>
+                                </div>
+                                <div class="p-[12px] flex-1 flex flex-col">
+                                    <h4 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">The New Wave of Lagos Street Style</h4>
+                                    <span class="font-mono text-[10px] text-ghost mt-auto">Funmi Osei · 6 min</span>
+                                </div>
+                            </div>
+
+                            <!-- Card 2 -->
+                            <div class="w-[200px] h-[250px] bg-white rounded-xl shadow-card shrink-0 flex flex-col overflow-hidden relative">
+                                <div class="w-full h-[120px] bg-gradient-to-tr from-[#4B6CB7] to-[#182848] relative shrink-0">
+                                    <div class="absolute bottom-[8px] left-[8px] bg-editorial-bg rounded-full px-[10px] py-[4px] shadow-sm">
+                                        <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-wider">MUSIC</span>
+                                    </div>
+                                </div>
+                                <div class="p-[12px] flex-1 flex flex-col">
+                                    <h4 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">What Afrobeats Owes to Jazz</h4>
+                                    <span class="font-mono text-[10px] text-ghost mt-auto">Fola Olawale · 8 min</span>
+                                </div>
+                            </div>
+
+                            <!-- Card 3 -->
+                            <div class="w-[200px] h-[250px] bg-white rounded-xl shadow-card shrink-0 flex flex-col overflow-hidden relative">
+                                <div class="w-full h-[120px] bg-gradient-to-tr from-[#bdc3c7] to-[#2c3e50] relative shrink-0">
+                                    <div class="absolute bottom-[8px] left-[8px] bg-editorial-bg rounded-full px-[10px] py-[4px] shadow-sm">
+                                        <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-wider">DESIGN</span>
+                                    </div>
+                                </div>
+                                <div class="p-[12px] flex-1 flex flex-col">
+                                    <h4 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">The Architecture of Cool</h4>
+                                    <span class="font-mono text-[10px] text-ghost mt-auto">Tayo B. · 5 min</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Section 1: From the Editors -->
-                <div class="mt-8">
-                    <div class="flex justify-between items-baseline px-[16px] mb-4">
-                        <h3 class="font-sans text-[15px] font-bold text-ink">From the Editors</h3>
-                        <button class="font-sans text-[13px] text-ochre hover:opacity-80">See all &rarr;</button>
-                    </div>
-                    <div class="flex overflow-x-auto hide-scrollbar scroll-snap-x pl-[16px] pr-[16px] gap-[12px] pb-4">
+                    <!-- SECTION 2: Interviews -->
+                    <div class="pt-[20px]">
+                        <div class="flex justify-between items-baseline px-[16px] mb-[12px]">
+                            <h3 class="font-sans text-[15px] font-bold text-ink">Interviews</h3>
+                            <button class="font-sans text-[13px] text-ochre hover:opacity-80">See all &rarr;</button>
+                        </div>
                         
-                        <!-- Card 1 -->
-                        <div class="w-[200px] h-[240px] bg-white rounded-xl shadow-card shrink-0 flex flex-col relative snap-start">
-                            <div class="relative h-[110px] w-full rounded-t-xl overflow-hidden shrink-0">
-                                <div class="w-full h-full bg-gradient-to-tr from-emerald-400 to-cyan-500"></div>
-                                <div class="absolute bottom-2 left-2 bg-white px-2 py-1 rounded-full shadow-sm">
-                                    <span class="text-ink font-sans text-[9px] font-bold uppercase tracking-wider">MUSIC</span>
+                        <div class="flex overflow-x-auto hide-scrollbar pl-[16px] pr-[16px] gap-[12px] pb-[4px]">
+                            <!-- Card 1 -->
+                            <div class="w-[200px] h-[250px] bg-white rounded-xl shadow-card shrink-0 flex flex-col overflow-hidden relative">
+                                <div class="w-full h-[120px] bg-gradient-to-tr from-[#F2C94C] to-[#F2994A] relative shrink-0">
+                                    <div class="absolute bottom-[8px] left-[8px] bg-editorial-bg rounded-full px-[10px] py-[4px] shadow-sm">
+                                        <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-wider">INTERVIEW</span>
+                                    </div>
+                                </div>
+                                <div class="p-[12px] flex-1 flex flex-col">
+                                    <h4 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">Adekunle Gold: A Conversation</h4>
+                                    <span class="font-mono text-[10px] text-ghost mt-auto">Fola Olawale · 12 min</span>
                                 </div>
                             </div>
-                            <div class="p-[12px] flex-1 flex flex-col justify-between">
-                                <h4 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">Inside the Next Generation of Alté Sounds</h4>
-                                <div class="flex items-center gap-2 mt-auto">
-                                    <span class="font-mono text-[10px] text-mute">6 min</span>
-                                    <span class="text-ghost text-[10px]">•</span>
-                                    <span class="font-sans text-[12px] text-mute line-clamp-1">Fola Olawale</span>
+
+                            <!-- Card 2 -->
+                            <div class="w-[200px] h-[250px] bg-white rounded-xl shadow-card shrink-0 flex flex-col overflow-hidden relative">
+                                <div class="w-full h-[120px] bg-gradient-to-tr from-[#8E54E9] to-[#4776E6] relative shrink-0">
+                                    <div class="absolute bottom-[8px] left-[8px] bg-editorial-bg rounded-full px-[10px] py-[4px] shadow-sm">
+                                        <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-wider">INTERVIEW</span>
+                                    </div>
+                                </div>
+                                <div class="p-[12px] flex-1 flex flex-col">
+                                    <h4 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">Tems on Freedom</h4>
+                                    <span class="font-mono text-[10px] text-ghost mt-auto">Amaka Osei · 9 min</span>
+                                </div>
+                            </div>
+
+                            <!-- Card 3 -->
+                            <div class="w-[200px] h-[250px] bg-white rounded-xl shadow-card shrink-0 flex flex-col overflow-hidden relative">
+                                <div class="w-full h-[120px] bg-gradient-to-tr from-[#84FAB0] to-[#8FD3F4] relative shrink-0">
+                                    <div class="absolute bottom-[8px] left-[8px] bg-editorial-bg rounded-full px-[10px] py-[4px] shadow-sm">
+                                        <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-wider">INTERVIEW</span>
+                                    </div>
+                                </div>
+                                <div class="p-[12px] flex-1 flex flex-col">
+                                    <h4 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">The Makers Behind the Movement</h4>
+                                    <span class="font-mono text-[10px] text-ghost mt-auto">Seun Adeleke · 7 min</span>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Card 2 -->
-                        <div class="w-[200px] h-[240px] bg-white rounded-xl shadow-card shrink-0 flex flex-col relative snap-start">
-                            <div class="relative h-[110px] w-full rounded-t-xl overflow-hidden shrink-0">
-                                <div class="w-full h-full bg-gradient-to-bl from-amber-400 to-rose-500"></div>
-                                <div class="absolute bottom-2 left-2 bg-white px-2 py-1 rounded-full shadow-sm">
-                                    <span class="text-ink font-sans text-[9px] font-bold uppercase tracking-wider">ART</span>
-                                </div>
-                            </div>
-                            <div class="p-[12px] flex-1 flex flex-col justify-between">
-                                <h4 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">Exhibition Review: The Colors of Independence</h4>
-                                <div class="flex items-center gap-2 mt-auto">
-                                    <span class="font-mono text-[10px] text-mute">4 min</span>
-                                    <span class="text-ghost text-[10px]">•</span>
-                                    <span class="font-sans text-[12px] text-mute line-clamp-1">Nneka Uzo</span>
-                                </div>
+                    <!-- SECTION 3: Current Issue Card -->
+                    <div class="mt-[20px] mx-[16px]">
+                        <div class="bg-white rounded-xl shadow-card p-[16px] flex items-center">
+                            <div class="w-[80px] h-[100px] rounded-md bg-gradient-to-br from-[#E2B19B] to-[#C5491F] shrink-0 shadow-inner border border-ghost/20"></div>
+                            <div class="flex flex-col ml-[12px] justify-center flex-1">
+                                <span class="font-mono text-[9px] font-bold text-ochre uppercase">LATEST ISSUE</span>
+                                <h3 class="font-serif text-[18px] font-bold text-ink mt-[4px] leading-tight">Issue #7: The Maker Edition</h3>
+                                <span class="font-sans text-[13px] text-mute mt-[4px]">9 articles · June 2026</span>
+                                <button class="font-sans text-[13px] text-ochre mt-[8px] text-left">Explore this issue &rarr;</button>
                             </div>
                         </div>
-
                     </div>
-                </div>
 
-                <!-- Section 2: Interviews -->
-                <div class="mt-4">
-                    <div class="flex justify-between items-baseline px-[16px] mb-4">
-                        <h3 class="font-sans text-[15px] font-bold text-ink">Interviews</h3>
-                        <button class="font-sans text-[13px] text-ochre hover:opacity-80">See all &rarr;</button>
-                    </div>
-                    <div class="flex overflow-x-auto hide-scrollbar scroll-snap-x pl-[16px] pr-[16px] gap-[12px] pb-4">
+                    <!-- SECTION 4: Series -->
+                    <div class="pt-[20px]">
+                        <div class="flex justify-between items-baseline px-[16px] mb-[12px]">
+                            <h3 class="font-sans text-[15px] font-bold text-ink">Series</h3>
+                            <button class="font-sans text-[13px] text-ochre hover:opacity-80">Browse all &rarr;</button>
+                        </div>
                         
-                        <!-- Card 1 -->
-                        <div class="w-[200px] h-[240px] bg-white rounded-xl shadow-card shrink-0 flex flex-col relative snap-start">
-                            <div class="relative h-[110px] w-full rounded-t-xl overflow-hidden shrink-0">
-                                <div class="w-full h-full bg-gradient-to-r from-violet-500 to-purple-500"></div>
-                                <div class="absolute bottom-2 left-2 bg-white px-2 py-1 rounded-full shadow-sm">
-                                    <span class="text-ink font-sans text-[9px] font-bold uppercase tracking-wider">CULTURE</span>
-                                </div>
+                        <div class="flex overflow-x-auto hide-scrollbar pl-[16px] pr-[16px] gap-[12px] pb-[4px]">
+                            <div class="w-[160px] h-[80px] bg-white rounded-xl shadow-card p-[12px] shrink-0 flex flex-col justify-center">
+                                <h4 class="font-sans text-[13px] font-bold text-ink line-clamp-2">Culture Economy</h4>
+                                <span class="font-mono text-[10px] text-ghost mt-1">5 articles</span>
                             </div>
-                            <div class="p-[12px] flex-1 flex flex-col justify-between">
-                                <h4 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">A Conversation with Adekunle Gold</h4>
-                                <div class="flex items-center gap-2 mt-auto">
-                                    <span class="font-mono text-[10px] text-mute">12 min</span>
-                                    <span class="text-ghost text-[10px]">•</span>
-                                    <span class="font-sans text-[12px] text-mute line-clamp-1">Fola Olawale</span>
-                                </div>
+                            <div class="w-[160px] h-[80px] bg-white rounded-xl shadow-card p-[12px] shrink-0 flex flex-col justify-center">
+                                <h4 class="font-sans text-[13px] font-bold text-ink line-clamp-2">Visuals from the Continent</h4>
+                                <span class="font-mono text-[10px] text-ghost mt-1">8 articles</span>
                             </div>
-                        </div>
-
-                        <!-- Card 2 -->
-                        <div class="w-[200px] h-[240px] bg-white rounded-xl shadow-card shrink-0 flex flex-col relative snap-start">
-                            <div class="relative h-[110px] w-full rounded-t-xl overflow-hidden shrink-0">
-                                <div class="w-full h-full bg-gradient-to-br from-blue-400 to-indigo-600"></div>
-                                <div class="absolute bottom-2 left-2 bg-white px-2 py-1 rounded-full shadow-sm">
-                                    <span class="text-ink font-sans text-[9px] font-bold uppercase tracking-wider">TECH</span>
-                                </div>
+                            <div class="w-[160px] h-[80px] bg-white rounded-xl shadow-card p-[12px] shrink-0 flex flex-col justify-center">
+                                <h4 class="font-sans text-[13px] font-bold text-ink line-clamp-2">The Maker Files</h4>
+                                <span class="font-mono text-[10px] text-ghost mt-1">6 articles</span>
                             </div>
-                            <div class="p-[12px] flex-1 flex flex-col justify-between">
-                                <h4 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">Building Communities in the Digital Age</h4>
-                                <div class="flex items-center gap-2 mt-auto">
-                                    <span class="font-mono text-[10px] text-mute">9 min</span>
-                                    <span class="text-ghost text-[10px]">•</span>
-                                    <span class="font-sans text-[12px] text-mute line-clamp-1">Tayo B.</span>
-                                </div>
+                            <div class="w-[160px] h-[80px] bg-white rounded-xl shadow-card p-[12px] shrink-0 flex flex-col justify-center">
+                                <h4 class="font-sans text-[13px] font-bold text-ink line-clamp-2">Sound & City</h4>
+                                <span class="font-mono text-[10px] text-ghost mt-1">4 articles</span>
                             </div>
                         </div>
-
                     </div>
+
+                    <!-- SECTION 5: Visuals -->
+                    <div class="pt-[20px] pb-[16px]">
+                        <div class="flex justify-between items-baseline px-[16px] mb-[12px]">
+                            <h3 class="font-sans text-[15px] font-bold text-ink">Visuals</h3>
+                            <button class="font-sans text-[13px] text-ochre hover:opacity-80">See all &rarr;</button>
+                        </div>
+                        
+                        <div class="flex flex-col px-[16px] gap-[12px]">
+                            
+                            <!-- Visual Card 1 -->
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col w-full">
+                                <div class="w-full h-[200px] bg-gradient-to-tr from-[#2c3e50] to-[#A0AEBD]"></div>
+                                <div class="p-[16px] flex flex-col items-start">
+                                    <div class="bg-editorial-bg rounded-full px-[10px] py-[4px] shadow-sm mb-[8px]">
+                                        <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-wider">VISUALS</span>
+                                    </div>
+                                    <h4 class="font-serif text-[16px] font-bold text-ink mb-[6px] leading-snug">Nights in Victoria Island: A Photo Essay</h4>
+                                    <span class="font-mono text-[10px] text-ghost">Kelechi O. · Gallery</span>
+                                </div>
+                            </div>
+
+                            <!-- Visual Card 2 -->
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col w-full">
+                                <div class="w-full h-[200px] bg-gradient-to-br from-[#F6D365] to-[#FDA085]"></div>
+                                <div class="p-[16px] flex flex-col items-start">
+                                    <div class="bg-editorial-bg rounded-full px-[10px] py-[4px] shadow-sm mb-[8px]">
+                                        <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-wider">VISUALS</span>
+                                    </div>
+                                    <h4 class="font-serif text-[16px] font-bold text-ink mb-[6px] leading-snug">Studio Visit: Inside Bisi Ceramics</h4>
+                                    <span class="font-mono text-[10px] text-ghost">Zara Mensah · Short Film</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
                 </div>
 
-                <!-- Section 3: Visuals -->
-                <div class="mt-4 pb-12">
-                    <div class="flex justify-between items-baseline px-[16px] mb-4">
-                        <h3 class="font-sans text-[15px] font-bold text-ink">Visuals</h3>
-                        <button class="font-sans text-[13px] text-ochre hover:opacity-80">See all &rarr;</button>
-                    </div>
-                    <div class="flex overflow-x-auto hide-scrollbar scroll-snap-x pl-[16px] pr-[16px] gap-[12px] pb-4">
-                        <!-- Card 1 -->
-                        <div class="w-[200px] h-[240px] bg-white rounded-xl shadow-card shrink-0 flex flex-col relative snap-start">
-                            <div class="relative h-[110px] w-full rounded-t-xl overflow-hidden shrink-0">
-                                <div class="w-full h-full bg-gradient-to-tl from-pink-500 to-orange-400"></div>
-                                <div class="absolute bottom-2 left-2 bg-white px-2 py-1 rounded-full shadow-sm">
-                                    <span class="text-ink font-sans text-[9px] font-bold uppercase tracking-wider">PHOTOGRAPHY</span>
-                                </div>
-                            </div>
-                            <div class="p-[12px] flex-1 flex flex-col justify-between">
-                                <h4 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">Nights in Victoria Island</h4>
-                                <div class="flex items-center gap-2 mt-auto">
-                                    <span class="font-mono text-[10px] text-mute">Gallery</span>
-                                    <span class="text-ghost text-[10px]">•</span>
-                                    <span class="font-sans text-[12px] text-mute line-clamp-1">Kelechi O.</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Bottom Navigation (Magazine Active) -->
+                <nav class="absolute bottom-0 w-full h-[84px] bg-white border-t border-ghost flex justify-around items-start pt-[12px] z-50 pb-safe">
+                    <button class="flex flex-col items-center gap-1 text-mute">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        <span class="text-[10px] font-sans">Home</span>
+                    </button>
+                    <button class="flex flex-col items-center gap-1 text-mute">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <span class="text-[10px] font-sans">Discover</span>
+                    </button>
+                    <button class="w-[48px] h-[40px] bg-paper-deep rounded-[12px] text-ink flex items-center justify-center -mt-[4px] border border-ghost/50">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                    <button class="flex flex-col items-center gap-1 text-ochre">
+                        <!-- Solid active icon for Magazine (Book) -->
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                        <span class="text-[10px] font-sans font-bold">Magazine</span>
+                    </button>
+                    <button class="flex flex-col items-center gap-1 text-mute">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <span class="text-[10px] font-sans">Profile</span>
+                    </button>
+                </nav>
 
-            </div>
-
-            <!-- Bottom Navigation -->
-            <div class="absolute bottom-0 w-full h-[84px] bg-white border-t border-ghost/50 flex justify-around items-start pt-3 px-2 z-50">
-                <button class="flex flex-col items-center gap-1 text-mute">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    <span class="text-[10px] font-sans">Home</span>
-                </button>
-                <button class="flex flex-col items-center gap-1 text-mute">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <span class="text-[10px] font-sans">Discover</span>
-                </button>
-                <button class="flex flex-col items-center justify-center -mt-1 w-10 h-10 bg-ink text-white rounded-full shadow-md">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                </button>
-                <button class="flex flex-col items-center gap-1 text-ochre">
-                    <!-- Solid icon for active state -->
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-                    <span class="text-[10px] font-sans font-bold">Magazine</span>
-                </button>
-                <button class="flex flex-col items-center gap-1 text-mute">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    <span class="text-[10px] font-sans">Profile</span>
-                </button>
             </div>
         </div>
-    </div>
 
+        <!-- LOWER ROW: FRAMES 2 & 3 SIDE-BY-SIDE -->
+        <div class="flex flex-wrap lg:flex-nowrap gap-[48px] justify-center w-full">
 
-    <!-- ============================================== -->
-    <!-- FRAME 2: ARTICLE DETAIL                        -->
-    <!-- ============================================== -->
-    <div class="flex flex-col items-center gap-3">
-        <span class="text-ink-soft font-bold font-mono text-sm tracking-wide">FRAME 2: ARTICLE DETAIL</span>
-        
-        <div class="ios-screen bg-paper-warm shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
-            
-            <!-- Hero Image Background (390x280) -->
-            <div class="absolute top-0 w-full h-[280px] bg-ink z-0">
-                <div class="w-full h-full bg-gradient-to-br from-violet-600 via-purple-500 to-indigo-600"></div>
-            </div>
-
-            <!-- Status Bar Mock (Overlaid, white text) -->
-            <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-white z-50 drop-shadow-md">
-                <span>9:41</span>
-                <div class="flex gap-1 items-center">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
-                </div>
-            </div>
-
-            <!-- Floating Controls (Top left/right) -->
-            <div class="absolute top-[52px] w-full px-[16px] flex justify-between z-50">
-                <button class="w-[40px] h-[40px] bg-white rounded-full flex items-center justify-center shadow-lg text-ink hover:bg-gray-50">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
-                </button>
-                <div class="flex gap-[8px]">
-                    <button class="w-[40px] h-[40px] bg-white rounded-full flex items-center justify-center shadow-lg text-ink hover:bg-gray-50">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    </button>
-                    <button class="w-[40px] h-[40px] bg-white rounded-full flex items-center justify-center shadow-lg text-ink hover:bg-gray-50">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Scrollable Content Area -->
-            <!-- 280px hero - 32px overlap = 248px padding top -->
-            <div class="flex-1 overflow-y-auto hide-scrollbar z-10 pt-[248px]">
-                
-                <!-- Content Box -->
-                <div class="bg-white rounded-t-[20px] min-h-screen px-[32px] pt-[32px] pb-[120px] relative shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
+            <!-- ============================================== -->
+            <!-- FRAME 2: ISSUES ARCHIVE                        -->
+            <!-- ============================================== -->
+            <div class="flex flex-col items-center gap-3 shrink-0">
+                <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">2. Issues Archive</span>
+                <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
                     
-                    <!-- Category & Rules -->
-                    <div class="flex items-center gap-[12px] mb-4">
-                        <span class="font-sans text-[9px] font-bold uppercase tracking-wider text-ochre">CULTURE · INTERVIEW</span>
-                        <div class="w-[48px] h-[2px] bg-ochre"></div>
+                    <!-- Header -->
+                    <div class="bg-white z-40 shrink-0 border-b border-ghost pb-2">
+                        <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink">
+                            <span>9:41</span>
+                            <div class="flex gap-1 items-center pb-0.5">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                            </div>
+                        </div>
+                        <header class="flex items-center justify-between px-4 h-[44px]">
+                            <button class="text-ink w-[44px] h-[44px] flex items-center justify-start">
+                                <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                            </button>
+                            <h1 class="font-serif text-[18px] font-bold text-ink text-center flex-1">Issues</h1>
+                            <div class="w-[44px]"></div>
+                        </header>
                     </div>
 
-                    <!-- Title -->
-                    <h1 class="font-serif text-[28px] font-bold text-ink leading-[1.2]">
-                        Afrobeats at the Crossroads: A Conversation with Adekunle Gold
-                    </h1>
-
-                    <!-- Standfirst -->
-                    <p class="font-sans text-[15px] italic text-ink-soft leading-relaxed mt-[8px]">
-                        On globalisation, authenticity, and what it means to make music that travels.
-                    </p>
-
-                    <!-- Divider -->
-                    <div class="w-[48px] h-[2px] bg-ochre mx-auto my-[32px]"></div>
-
-                    <!-- Author Row -->
-                    <div class="flex items-center mb-[16px]">
-                        <div class="w-[44px] h-[44px] rounded-full border-[2px] border-gold p-[2px] mr-3 shrink-0">
-                            <div class="w-full h-full rounded-full bg-gradient-to-tr from-pink-500 to-orange-400 text-white flex items-center justify-center font-bold text-[14px]">FO</div>
+                    <!-- Scrollable Content -->
+                    <div class="flex-1 overflow-y-auto hide-scrollbar pb-[40px]">
+                        
+                        <!-- Latest Issue Hero Card -->
+                        <div class="mx-[16px] mt-[16px] bg-white rounded-xl shadow-card overflow-hidden flex flex-col">
+                            <div class="w-full h-[200px] bg-gradient-to-br from-[#E2B19B] to-[#C5491F] relative shrink-0">
+                                <div class="absolute top-3 left-3 bg-ochre rounded-full px-[10px] py-[4px] shadow-sm">
+                                    <span class="font-sans text-[9px] font-bold text-white uppercase tracking-wider">LATEST</span>
+                                </div>
+                            </div>
+                            <div class="p-[16px] flex flex-col">
+                                <span class="font-mono text-[11px] font-bold text-ochre uppercase">Issue #7</span>
+                                <h2 class="font-serif text-[22px] font-bold text-ink mt-[4px] leading-tight">The Maker Edition</h2>
+                                <p class="font-sans text-[13px] text-mute mt-[4px] leading-relaxed">
+                                    9 articles exploring African makers, craft culture, and the economics of creation.
+                                </p>
+                                <button class="font-sans text-[14px] font-bold text-ochre mt-[8px] text-left hover:opacity-80 transition-opacity">
+                                    Explore this issue &rarr;
+                                </button>
+                            </div>
                         </div>
-                        <div class="flex flex-col flex-1 justify-center">
-                            <span class="font-sans text-[14px] font-bold text-ink leading-tight">Fola Olawale</span>
-                            <span class="font-mono text-[11px] text-mute leading-tight mt-[4px]">Culture Editor · Published June 9, 2026</span>
+
+                        <!-- Past Issues Header -->
+                        <div class="px-[16px] pt-[20px] pb-[12px]">
+                            <h3 class="font-sans text-[14px] font-bold text-ink">Past Issues</h3>
                         </div>
-                        <div class="flex flex-col items-end justify-center ml-2">
-                            <svg class="w-[24px] h-[24px] text-ink mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-                            <span class="font-mono text-[11px] text-ochre">12 min read</span>
+
+                        <!-- 2-Column Grid -->
+                        <div class="px-[16px] grid grid-cols-2 gap-[8px]">
+                            
+                            <!-- Issue 6 -->
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col pb-[10px]">
+                                <div class="w-full h-[130px] bg-gradient-to-tr from-[#FF9A9E] to-[#FECFEF] shrink-0"></div>
+                                <div class="px-[10px] pt-[10px] flex flex-col flex-1">
+                                    <span class="font-mono text-[10px] font-bold text-ochre uppercase">Issue #6</span>
+                                    <h4 class="font-sans text-[13px] font-bold text-ink mt-[2px] leading-tight line-clamp-2 min-h-[36px]">The Sound Issue</h4>
+                                    <span class="font-sans text-[11px] text-mute mt-[2px]">12 articles · May 2026</span>
+                                    <button class="font-sans text-[12px] text-ochre mt-[4px] text-left">Read &rarr;</button>
+                                </div>
+                            </div>
+
+                            <!-- Issue 5 -->
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col pb-[10px]">
+                                <div class="w-full h-[130px] bg-gradient-to-tr from-[#bdc3c7] to-[#2c3e50] shrink-0"></div>
+                                <div class="px-[10px] pt-[10px] flex flex-col flex-1">
+                                    <span class="font-mono text-[10px] font-bold text-ochre uppercase">Issue #5</span>
+                                    <h4 class="font-sans text-[13px] font-bold text-ink mt-[2px] leading-tight line-clamp-2 min-h-[36px]">Cities & Culture</h4>
+                                    <span class="font-sans text-[11px] text-mute mt-[2px]">8 articles · Apr 2026</span>
+                                    <button class="font-sans text-[12px] text-ochre mt-[4px] text-left">Read &rarr;</button>
+                                </div>
+                            </div>
+
+                            <!-- Issue 4 -->
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col pb-[10px]">
+                                <div class="w-full h-[130px] bg-gradient-to-tr from-[#8E54E9] to-[#4776E6] shrink-0"></div>
+                                <div class="px-[10px] pt-[10px] flex flex-col flex-1">
+                                    <span class="font-mono text-[10px] font-bold text-ochre uppercase">Issue #4</span>
+                                    <h4 class="font-sans text-[13px] font-bold text-ink mt-[2px] leading-tight line-clamp-2 min-h-[36px]">Fashion Forward</h4>
+                                    <span class="font-sans text-[11px] text-mute mt-[2px]">10 articles · Mar 2026</span>
+                                    <button class="font-sans text-[12px] text-ochre mt-[4px] text-left">Read &rarr;</button>
+                                </div>
+                            </div>
+
+                            <!-- Issue 3 -->
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col pb-[10px]">
+                                <div class="w-full h-[130px] bg-gradient-to-bl from-[#F6D365] to-[#FDA085] shrink-0"></div>
+                                <div class="px-[10px] pt-[10px] flex flex-col flex-1">
+                                    <span class="font-mono text-[10px] font-bold text-ochre uppercase">Issue #3</span>
+                                    <h4 class="font-sans text-[13px] font-bold text-ink mt-[2px] leading-tight line-clamp-2 min-h-[36px]">The Film Edit</h4>
+                                    <span class="font-sans text-[11px] text-mute mt-[2px]">7 articles · Feb 2026</span>
+                                    <button class="font-sans text-[12px] text-ochre mt-[4px] text-left">Read &rarr;</button>
+                                </div>
+                            </div>
+
+                            <!-- Issue 2 -->
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col pb-[10px]">
+                                <div class="w-full h-[130px] bg-gradient-to-tr from-[#4B6CB7] to-[#182848] shrink-0"></div>
+                                <div class="px-[10px] pt-[10px] flex flex-col flex-1">
+                                    <span class="font-mono text-[10px] font-bold text-ochre uppercase">Issue #2</span>
+                                    <h4 class="font-sans text-[13px] font-bold text-ink mt-[2px] leading-tight line-clamp-2 min-h-[36px]">Food & Identity</h4>
+                                    <span class="font-sans text-[11px] text-mute mt-[2px]">9 articles · Jan 2026</span>
+                                    <button class="font-sans text-[12px] text-ochre mt-[4px] text-left">Read &rarr;</button>
+                                </div>
+                            </div>
+
+                            <!-- Issue 1 -->
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden flex flex-col pb-[10px]">
+                                <div class="w-full h-[130px] bg-gradient-to-tl from-[#E2B19B] to-[#F3ECE0] shrink-0"></div>
+                                <div class="px-[10px] pt-[10px] flex flex-col flex-1">
+                                    <span class="font-mono text-[10px] font-bold text-ochre uppercase">Issue #1</span>
+                                    <h4 class="font-sans text-[13px] font-bold text-ink mt-[2px] leading-tight line-clamp-2 min-h-[36px]">Origins</h4>
+                                    <span class="font-sans text-[11px] text-mute mt-[2px]">11 articles · Dec 2025</span>
+                                    <button class="font-sans text-[12px] text-ochre mt-[4px] text-left">Read &rarr;</button>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
-
-                    <!-- Article Body -->
-                    <div class="font-sans text-[16px] text-ink-soft leading-[1.65]">
-                        <p class="mt-[16px]">
-                            There's a particular brand of artistic confidence that Adekunle Gold carries into every room. At 34, the Yoruba pop architect has stopped explaining himself to anyone. His evolution from highlife-infused sweetheart to an unapologetic rockstar is a masterclass in sonic pivoting.
-                        </p>
-
-                        <!-- Pull Quote -->
-                        <div class="my-[20px] pl-[12px] border-l-[3px] border-ochre py-1">
-                            <p class="font-serif text-[20px] italic text-ink leading-snug mb-[8px]">
-                                "The world wants Afrobeats but sometimes I wonder if it knows what Afrobeats actually is."
-                            </p>
-                            <p class="font-sans text-[12px] text-mute">— Adekunle Gold</p>
-                        </div>
-
-                        <p class="mb-[20px]">
-                            He's speaking to me from his Lagos studio, and I can hear the city in the background — motorcycle engines, hawkers, the faint hum of a generator. It's an auditory tapestry that anchors his latest project, even as the melodies soar towards global arenas.
-                        </p>
-
-                        <!-- Inline Image Placeholder (Gradient) -->
-                        <div class="my-[24px]">
-                            <div class="w-full h-[220px] rounded-md bg-gradient-to-br from-ochre via-[#E27D60] to-amber-500 shadow-inner"></div>
-                            <p class="font-sans text-[11px] text-mute italic mt-[8px] text-center">Adekunle Gold photographed in Lagos, 2026.</p>
-                        </div>
-
-                        <p class="mb-[20px]">
-                            When I ask about the label deal and the pressures of catering to a Western audience, he leans back. "I make music for me first. If it resonates in London or Los Angeles, that's a blessing. But the heartbeat? The heartbeat is always home."
-                        </p>
-                    </div>
-
                 </div>
             </div>
 
-            <!-- Bottom Fixed Bar (64px + safe area pb) -->
-            <div class="absolute bottom-0 w-full bg-white border-t border-ghost px-[24px] pt-[16px] pb-[34px] flex items-center justify-between z-50">
-                
-                <!-- Reactions -->
-                <div class="flex items-center gap-[16px]">
-                    <button class="flex items-center gap-[6px] font-sans text-[13px] font-medium text-ink-soft hover:text-ink transition-colors">
-                        <span class="text-[18px]">❤️</span> 847
-                    </button>
-                    <button class="flex items-center gap-[6px] font-sans text-[13px] font-medium text-ink-soft hover:text-ink transition-colors">
-                        <span class="text-[18px]">🔥</span> 234
-                    </button>
+            <!-- ============================================== -->
+            <!-- FRAME 3: CATEGORY BROWSE & SEARCH              -->
+            <!-- ============================================== -->
+            <div class="flex flex-col items-center gap-3 shrink-0">
+                <span class="text-mute font-mono text-[11px] uppercase tracking-wider font-bold">3. Browse & Search</span>
+                <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                    
+                    <!-- Header -->
+                    <div class="bg-white z-40 shrink-0 border-b border-ghost pb-2">
+                        <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium text-ink">
+                            <span>9:41</span>
+                            <div class="flex gap-1 items-center pb-0.5">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                            </div>
+                        </div>
+                        <header class="flex items-center justify-between px-4 h-[44px]">
+                            <button class="text-ink w-[44px] h-[44px] flex items-center justify-start">
+                                <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                            </button>
+                            <h1 class="font-serif text-[18px] font-bold text-ink text-center flex-1">Magazine</h1>
+                            <button class="text-ink w-[44px] h-[44px] flex items-center justify-end">
+                                <svg class="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </button>
+                        </header>
+                        
+                        <!-- Search Bar -->
+                        <div class="mx-[16px] mt-[8px] h-[44px] rounded-full border border-ghost bg-white flex items-center px-[16px] justify-between">
+                            <div class="flex items-center gap-2 flex-1">
+                                <svg class="w-[18px] h-[18px] text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                <input type="text" class="font-sans text-[14px] text-ink w-full bg-transparent border-none outline-none" value="Interviews">
+                            </div>
+                            <button class="text-ghost flex items-center justify-center w-[20px] h-[20px] rounded-full bg-paper-deep ml-2">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+
+                        <!-- Category Strip -->
+                        <div class="h-[40px] px-[16px] flex items-center gap-[8px] overflow-x-auto hide-scrollbar whitespace-nowrap mt-[12px]">
+                            <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">All</button>
+                            <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Fashion</button>
+                            <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Music</button>
+                            <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Film</button>
+                            <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Food</button>
+                            <button class="h-[28px] px-[12px] rounded-full bg-ochre text-white text-[12px] font-bold">Interview</button>
+                            <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Visuals</button>
+                            <button class="h-[28px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft text-[12px]">Ideas</button>
+                        </div>
+                    </div>
+
+                    <!-- Content Area -->
+                    <div class="flex-1 overflow-y-auto hide-scrollbar pb-[40px]">
+                        
+                        <!-- Results Label -->
+                        <div class="px-[16px] pt-[16px] pb-[4px] flex justify-between items-center">
+                            <span class="font-sans text-[13px] font-bold text-ink">14 results in Interviews</span>
+                            <button class="font-sans text-[12px] text-mute flex items-center gap-1">Latest ▾</button>
+                        </div>
+
+                        <!-- Results List -->
+                        <div class="px-[16px] flex flex-col gap-[12px] mt-[12px]">
+                            
+                            <!-- Result 1 (Pro) -->
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-center gap-[12px] cursor-pointer">
+                                <div class="w-[80px] h-[80px] rounded-md bg-gradient-to-tr from-[#F2C94C] to-[#F2994A] shrink-0 relative">
+                                    <div class="absolute -top-[6px] -right-[6px] bg-gold text-white font-sans font-bold text-[8px] px-[6px] py-[3px] rounded-full shadow-sm">PRO ONLY</div>
+                                </div>
+                                <div class="flex flex-col flex-1">
+                                    <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-wider mb-[4px]">INTERVIEW · NIGERIA</span>
+                                    <h3 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">Afrobeats at the Crossroads: Adekunle Gold</h3>
+                                    <span class="font-mono text-[10px] text-ghost mt-[4px]">Fola Olawale · 12 min</span>
+                                    <div class="mt-[4px]">
+                                        <span class="inline-flex border border-ghost rounded-full px-[8px] py-[2px] font-sans text-[9px] text-ink-soft">Culture Economy Pt. 3</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Result 2 -->
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-center gap-[12px] cursor-pointer">
+                                <div class="w-[80px] h-[80px] rounded-md bg-gradient-to-tr from-[#8E54E9] to-[#4776E6] shrink-0 relative"></div>
+                                <div class="flex flex-col flex-1">
+                                    <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-wider mb-[4px]">INTERVIEW · GLOBAL</span>
+                                    <h3 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">Tems on Freedom, Fame, and Finding Her Sound</h3>
+                                    <span class="font-mono text-[10px] text-ghost mt-[4px]">Amaka Osei · 9 min</span>
+                                </div>
+                            </div>
+
+                            <!-- Result 3 -->
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-center gap-[12px] cursor-pointer">
+                                <div class="w-[80px] h-[80px] rounded-md bg-gradient-to-tr from-[#84FAB0] to-[#8FD3F4] shrink-0 relative"></div>
+                                <div class="flex flex-col flex-1">
+                                    <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-wider mb-[4px]">INTERVIEW · DIASPORA</span>
+                                    <h3 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">The Makers Behind the Movement</h3>
+                                    <span class="font-mono text-[10px] text-ghost mt-[4px]">Seun Adeleke · 7 min</span>
+                                    <div class="mt-[4px]">
+                                        <span class="inline-flex border border-ghost rounded-full px-[8px] py-[2px] font-sans text-[9px] text-ink-soft">The Maker Files Pt. 1</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Result 4 -->
+                            <div class="bg-white rounded-xl shadow-card p-[16px] flex items-center gap-[12px] cursor-pointer">
+                                <div class="w-[80px] h-[80px] rounded-md bg-gradient-to-tr from-[#FF9A9E] to-[#FECFEF] shrink-0 relative"></div>
+                                <div class="flex flex-col flex-1">
+                                    <span class="font-sans text-[9px] font-bold text-ochre uppercase tracking-wider mb-[4px]">INTERVIEW · FASHION</span>
+                                    <h3 class="font-sans text-[14px] font-bold text-ink leading-snug line-clamp-2">Lagos Fashion Week: Behind the Runway</h3>
+                                    <span class="font-mono text-[10px] text-ghost mt-[4px]">Kemi Adeyemi · 5 min</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Related Series -->
+                        <div class="px-[16px] pt-[20px] pb-[20px]">
+                            <h3 class="font-sans text-[13px] font-bold text-ink mb-[8px]">Related series</h3>
+                            
+                            <div class="flex flex-col gap-[8px]">
+                                <div class="h-[44px] bg-white rounded-xl border border-ghost px-[12px] flex items-center justify-between cursor-pointer hover:bg-gray-50">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Culture Economy</span>
+                                    <span class="font-mono text-[10px] text-ghost">5 articles &rarr;</span>
+                                </div>
+                                <div class="h-[44px] bg-white rounded-xl border border-ghost px-[12px] flex items-center justify-between cursor-pointer hover:bg-gray-50">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Sound & City</span>
+                                    <span class="font-mono text-[10px] text-ghost">4 articles &rarr;</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
-
-                <!-- Spacer -->
-                <div class="flex-1"></div>
-
-                <!-- Share Button -->
-                <button class="h-[40px] px-[20px] rounded-full border border-ink text-ink font-sans text-[14px] font-medium flex items-center justify-center hover:bg-paper-warm transition-colors">
-                    Share article
-                </button>
             </div>
-
         </div>
+
     </div>
 
 </body>
