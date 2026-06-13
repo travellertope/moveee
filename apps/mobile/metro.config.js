@@ -1,26 +1,60 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
+const fs = require('fs');
 
 const projectRoot = __dirname;
 const monorepoRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
-// Watch the full monorepo so Metro can resolve packages across workspaces
 config.watchFolders = [monorepoRoot];
 
-// Resolution order: app-local first, then monorepo root (where npm workspaces hoists to)
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(monorepoRoot, 'node_modules'),
 ];
 
-// Force a single React instance — npm workspaces hoists react/react-native to the
-// monorepo root. Without this pin Metro can resolve them from two different paths
-// and bundle duplicates, causing the ReactCurrentDispatcher crash on launch.
+// Find where react actually lives (could be app-local or hoisted to root)
+function findPkg(name) {
+  const local = path.resolve(projectRoot, 'node_modules', name);
+  if (fs.existsSync(local)) return local;
+  return path.resolve(monorepoRoot, 'node_modules', name);
+}
+
+const reactDir = findPkg('react');
+const rnDir = findPkg('react-native');
+
+// Pin react and react-native to a single copy so third-party packages
+// cannot accidentally resolve a different instance from their own node_modules.
 config.resolver.extraNodeModules = {
-  react: path.resolve(monorepoRoot, 'node_modules/react'),
-  'react-native': path.resolve(monorepoRoot, 'node_modules/react-native'),
+  react: reactDir,
+  'react-native': rnDir,
 };
+
+// Block any OTHER copy of react/react-native that Metro might discover
+// while crawling the monorepo. This is the nuclear option — if a second
+// copy exists anywhere, Metro will ignore it completely.
+const escapedRoot = monorepoRoot.replace(/[/\\]/g, '[/\\\\]');
+const blockPatterns = [];
+
+if (reactDir === path.resolve(monorepoRoot, 'node_modules/react')) {
+  // React is hoisted — block any app-local copy
+  blockPatterns.push(
+    new RegExp(`${escapedRoot}[/\\\\]apps[/\\\\]mobile[/\\\\]node_modules[/\\\\]react[/\\\\].*`)
+  );
+} else {
+  // React is local — block the root copy
+  blockPatterns.push(
+    new RegExp(`${escapedRoot}[/\\\\]node_modules[/\\\\]react[/\\\\].*`)
+  );
+}
+
+if (blockPatterns.length > 0) {
+  const existing = config.resolver.blockList;
+  const allPatterns = existing
+    ? [].concat(existing instanceof RegExp ? [existing] : Array.from(existing), blockPatterns)
+    : blockPatterns;
+  config.resolver.blockList = allPatterns;
+}
 
 module.exports = config;
