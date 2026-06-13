@@ -53,7 +53,20 @@ function starsText(n?: number): string {
 }
 
 function shareUrlFor(item: FeedItem): string | undefined {
-  return item.slug ? `https://themoveee.com/community/${item.slug}` : undefined;
+  if (!item.slug) return undefined;
+  if (item.type === "pulse") return `https://connect.themoveee.com/pulse/${item.slug}`;
+  if (item.type === "editorial") return `https://themoveee.com/magazine/${item.slug}`;
+  return `https://connect.themoveee.com/community/${item.slug}`;
+}
+
+// Strip a URL from body text so it isn't duplicated when an OG snippet is shown.
+function stripLinkFromBody(body?: string | null, sourceUrl?: string | null): string | undefined {
+  if (!body) return body ?? undefined;
+  if (!sourceUrl) return body;
+  let result = body.replace(sourceUrl, "").trim();
+  // Also strip any residual bare URL at the very end.
+  result = result.replace(/\s*https?:\/\/\S+\s*$/, "").trim();
+  return result || undefined;
 }
 
 // ── BadgePill ─────────────────────────────────────────────────────────────────
@@ -88,7 +101,7 @@ const badgeStyles = StyleSheet.create({
   },
   text: {
     fontFamily: fonts.monoBold,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     textTransform: "uppercase",
     letterSpacing: 1.2,
   },
@@ -312,7 +325,7 @@ const authorStyles = StyleSheet.create({
   },
   tagText: {
     fontFamily: fonts.mono,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     color: colors.inkSoft,
   },
   topRight: {
@@ -403,7 +416,7 @@ const linkStyles = StyleSheet.create({
   right: { flex: 1 },
   source: {
     fontFamily: fonts.mono,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     textTransform: "uppercase",
     color: colors.mute,
     marginBottom: 2,
@@ -416,7 +429,7 @@ const linkStyles = StyleSheet.create({
   },
   domain: {
     fontFamily: fonts.mono,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     color: colors.ghost,
     marginTop: 2,
   },
@@ -439,6 +452,7 @@ function FeedReactionBar({ item, marginTop }: { item: FeedItem; marginTop?: numb
         postId={item.wpId}
         initialCounts={item.reactions}
         shareUrl={shareUrlFor(item)}
+        shareTitle={item.title || item.communityAuthor ? `${item.communityAuthor ?? "Someone"}'s post on Moveee` : undefined}
       />
     </View>
   );
@@ -504,12 +518,12 @@ function PulseCard({ item, onPress }: FeedCardProps) {
             <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
           </View>
 
-          <Text style={[cardStyles.titleSerif, { marginTop: 10 }]} numberOfLines={2}>
+          <Text style={[cardStyles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>
             {item.title}
           </Text>
 
           {item.excerpt ? (
-            <Text style={[cardStyles.bodySmall, { marginTop: 6 }]} numberOfLines={2}>
+            <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={2}>
               {item.excerpt}
             </Text>
           ) : null}
@@ -550,12 +564,12 @@ function EditorialCard({ item, onPress }: FeedCardProps) {
           <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
         </View>
 
-        <Text style={[cardStyles.titleSerifXl, { marginTop: 10 }]} numberOfLines={2}>
+        <Text style={[cardStyles.cardTitleXl, { marginTop: 10 }]} numberOfLines={2}>
           {item.title}
         </Text>
 
         {item.excerpt ? (
-          <Text style={[cardStyles.bodySmall, { marginTop: 6 }]} numberOfLines={3}>
+          <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={3}>
             {item.excerpt}
           </Text>
         ) : null}
@@ -667,10 +681,10 @@ const happeningStyles = StyleSheet.create({
     paddingBottom: 14,
   },
   title: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.xl,
+    fontFamily: fonts.serifBold,
+    fontSize: fontSize.lg,
     color: colors.ink,
-    lineHeight: 32,
+    lineHeight: 26,
   },
   metaRow: {
     flexDirection: "row",
@@ -730,12 +744,12 @@ function DirectoryCard({ item }: FeedCardProps) {
             <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
           </View>
 
-          <Text style={[cardStyles.titleSansBold, { marginTop: 10 }]} numberOfLines={2}>
+          <Text style={[cardStyles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>
             {item.title}
           </Text>
 
           {item.excerpt ? (
-            <Text style={[cardStyles.bodySmall, { marginTop: 6 }]} numberOfLines={3}>
+            <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={3}>
               {item.excerpt}
             </Text>
           ) : null}
@@ -764,12 +778,15 @@ function DirectoryCard({ item }: FeedCardProps) {
 function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const hasLink = !!(item.ogTitle || item.ogImage || item.source);
+  const rawBody = item.body ?? item.excerpt ?? item.title ?? "";
+  // Strip the link URL from body text when an OG snippet is shown below.
+  const displayBody = hasLink ? (stripLinkFromBody(rawBody, item.sourceUrl) ?? rawBody) : rawBody;
   return (
     <>
       <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <HashtagText text={item.body ?? item.excerpt ?? item.title ?? ""} style={cardStyles.bodyMd} />
+          <HashtagText text={displayBody} style={cardStyles.cardBody} />
         </View>
         {item.image ? (
           <View style={{ marginTop: 10 }}>
@@ -819,7 +836,7 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
             <HashtagText
               text={item.body ?? item.excerpt ?? item.title ?? ""}
               numberOfLines={2}
-              style={cardStyles.bodyMd}
+              style={cardStyles.cardBody}
             />
           </View>
         </View>
@@ -857,7 +874,7 @@ function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCar
           <View style={{ marginTop: 8 }}>
             <HashtagText
               text={item.body ?? item.excerpt ?? item.title ?? ""}
-              style={cardStyles.bodyMd}
+              style={cardStyles.cardBody}
             />
           </View>
           <View style={{ marginTop: 10 }}>
@@ -898,7 +915,7 @@ function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
           {item.locationName ? (
             <Text style={[cardStyles.locationText, { marginTop: 6 }]}>📍 {item.locationName}</Text>
           ) : null}
-          <Text style={[cardStyles.bodyMd, { marginTop: 8 }]} numberOfLines={3}>
+          <Text style={[cardStyles.cardBody, { marginTop: 8 }]} numberOfLines={3}>
             {item.body ?? item.excerpt ?? ""}
           </Text>
 
@@ -976,7 +993,7 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
         </View>
         {item.body || item.excerpt ? (
           <View style={{ paddingHorizontal: 14, marginTop: 8 }}>
-            <HashtagText text={item.body ?? item.excerpt ?? ""} style={cardStyles.bodyMd} />
+            <HashtagText text={item.body ?? item.excerpt ?? ""} style={cardStyles.cardBody} />
           </View>
         ) : null}
 
@@ -1124,9 +1141,10 @@ function PollCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) 
 
 const pollStyles = StyleSheet.create({
   question: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.md,
+    fontFamily: fonts.serifBold,
+    fontSize: fontSize.lg,
     color: colors.ink,
+    lineHeight: 26,
     marginBottom: 10,
   },
   optionWrap: {
@@ -1192,7 +1210,7 @@ function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
           <Text style={[cardStyles.locationText, { marginTop: 6 }]}>📍 {item.city}</Text>
         ) : null}
         {item.body || item.excerpt ? (
-          <Text style={[cardStyles.bodyMd, { marginTop: 8 }]} numberOfLines={2}>
+          <Text style={[cardStyles.cardBody, { marginTop: 8 }]} numberOfLines={2}>
             {item.body ?? item.excerpt}
           </Text>
         ) : null}
@@ -1236,11 +1254,11 @@ const itinStyles = StyleSheet.create({
   },
   stopNumText: {
     fontFamily: fonts.monoBold,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     color: colors.paper,
   },
   stopName: {
-    fontFamily: fonts.sansBold,
+    fontFamily: fonts.sans,
     fontSize: fontSize.sm,
     color: colors.ink,
   },
@@ -1345,35 +1363,17 @@ const cardStyles = StyleSheet.create({
     color: colors.ghost,
     marginLeft: "auto",
   },
-  titleSerif: {
+  cardTitle: {
     fontFamily: fonts.serifBold,
     fontSize: fontSize.lg,
     color: colors.ink,
-    lineHeight: 28,
+    lineHeight: 26,
   },
-  titleSerifXl: {
-    fontFamily: fonts.serifBold,
-    fontSize: fontSize.xl,
-    color: colors.ink,
-    lineHeight: 34,
-  },
-  titleSansBold: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.md,
-    color: colors.ink,
-    lineHeight: 24,
-  },
-  bodySmall: {
+  cardBody: {
     fontFamily: fonts.sans,
     fontSize: fontSize.sm,
     color: colors.inkSoft,
     lineHeight: 20,
-  },
-  bodyMd: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.md,
-    color: colors.inkSoft,
-    lineHeight: 24,
   },
   readMore: {
     fontFamily: fonts.sansBold,
@@ -1387,7 +1387,7 @@ const cardStyles = StyleSheet.create({
   },
   sourceText: {
     fontFamily: fonts.mono,
-    fontSize: 9,
+    fontSize: fontSize.tiny,
     color: colors.ghost,
   },
   locationText: {

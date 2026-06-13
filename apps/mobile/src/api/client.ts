@@ -1,4 +1,5 @@
 import { storage } from "../store/storage";
+import * as SecureStore from "expo-secure-store";
 
 const WP_URL = "https://cms.themoveee.com";
 const WP_REST = `${WP_URL}/wp-json`;
@@ -13,6 +14,12 @@ interface RequestOptions {
   method?: Method;
   body?: Record<string, unknown>;
   auth?: boolean;
+}
+
+// Called when any authenticated request returns 401 — wired up in authStore.
+let _onUnauthorized: (() => void) | null = null;
+export function setUnauthorizedHandler(fn: () => void) {
+  _onUnauthorized = fn;
 }
 
 async function request<T>(url: string, options: RequestOptions = {}): Promise<T> {
@@ -34,6 +41,10 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
   });
 
   if (!res.ok) {
+    // Auto-logout on 401 so the user is sent back to login with a fresh token.
+    if (res.status === 401 && auth && _onUnauthorized) {
+      _onUnauthorized();
+    }
     const err = await res.json().catch(() => ({ message: res.statusText }));
     throw new ApiError(res.status, err?.message ?? res.statusText);
   }
@@ -41,10 +52,6 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
   return res.json() as Promise<T>;
 }
 
-/**
- * Uploads a local file URI as multipart/form-data. `name`/`type` describe the
- * file as React Native's fetch expects for FormData entries.
- */
 async function upload<T>(url: string, uri: string, name: string, type: string): Promise<T> {
   const form = new FormData();
   form.append("file", { uri, name, type } as unknown as Blob);
@@ -56,6 +63,9 @@ async function upload<T>(url: string, uri: string, name: string, type: string): 
   const res = await fetch(url, { method: "POST", headers, body: form });
 
   if (!res.ok) {
+    if (res.status === 401 && _onUnauthorized) {
+      _onUnauthorized();
+    }
     const err = await res.json().catch(() => ({ message: res.statusText }));
     throw new ApiError(res.status, err?.message ?? res.statusText);
   }

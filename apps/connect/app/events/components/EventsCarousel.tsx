@@ -1,6 +1,6 @@
 "use client";
 import { sanitizeHtml } from "@/lib/sanitize";
-
+import { getCategoryImage, getCategoryGradient } from "../utils/categoryImages";
 import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -76,18 +76,28 @@ export default function EventsCarousel({ events }: EventsCarouselProps) {
       <div className="evc-track" ref={trackRef}>
         {events.map((event) => {
           const dateStr = fmtDate(event.eventDate || event.date);
-          const cat = event.cultureInterests?.nodes?.[0]?.name || "";
+          const catNode = event.cultureInterests?.nodes?.[0];
+          const cat = catNode?.name || "";
+          const catSlug = catNode?.slug || "";
           const img = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
           const place = event.city || event.location || "";
 
           return (
             <Link key={event.slug} href={`/events/${event.slug}`} className="evc-card">
               <div className="evc-image">
-                {img ? (
-                  <Image src={img} alt={event.title} fill style={{ objectFit: "cover" }} />
-                ) : (
-                  <div className="evc-placeholder" />
-                )}
+                <Image
+                  src={img || getCategoryImage(catSlug)}
+                  alt={event.title}
+                  fill
+                  style={{ objectFit: "cover" }}
+                  onError={(e) => {
+                    const el = e.currentTarget as HTMLImageElement;
+                    el.style.display = "none";
+                    const ph = el.parentElement?.querySelector<HTMLElement>(".evc-placeholder");
+                    if (ph) { ph.style.display = "block"; ph.style.background = getCategoryGradient(catSlug); }
+                  }}
+                />
+                <div className="evc-placeholder" style={{ display: "none", background: getCategoryGradient(catSlug) }} />
                 <div className="evc-image-overlay">
                   <span className="evc-overlay-date">{dateStr}</span>
                   {place && <span className="evc-overlay-place">{place}</span>}

@@ -14,7 +14,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import Svg, { Rect, Path, Circle, Polyline } from "react-native-svg";
-import { api, CULTURE_API } from "../../api/client";
+import { api } from "../../api/client";
+
+const PROXY = "https://themoveee.com/api";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -114,7 +116,7 @@ export default function ForgotPasswordScreen() {
     }
     setLoading(true);
     try {
-      await api.post(`${CULTURE_API}/mobile/forgot-password`, { email: email.trim() }, false);
+      await api.post(`${PROXY}/forgot-password`, { email: email.trim() }, false);
       setSent(true);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");

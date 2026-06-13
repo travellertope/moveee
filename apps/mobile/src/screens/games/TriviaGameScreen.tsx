@@ -6,6 +6,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { storage } from "../../store/storage";
 import { api } from "../../api/client";
+import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 
 const PROXY     = "https://themoveee.com/api";
@@ -101,6 +102,7 @@ export default function TriviaGameScreen() {
       }).length;
       storage.set(KEY_DATE, todayStr);
       storage.set(KEY_SCORE, String(finalScore));
+      recordPlayedToday();
       setPhase("done");
     }
   };
