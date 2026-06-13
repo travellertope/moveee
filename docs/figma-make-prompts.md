@@ -223,66 +223,170 @@ No generic greys or blues — this brand has very specific warm neutral tones.
 ### PROMPT 1B — Feed Cards & Badge System
 
 ```
-You are a senior mobile UX designer for Moveee Connect. Brand tokens as established:
-ochre #C5491F, gold #B38238, paper-warm #F3ECE0, ink #14110D, DM Sans + Fraunces.
+Senior mobile UX designer for Moveee Connect. Brand tokens:
+ochre #C5491F, gold #B38238, paper-warm #F3ECE0, ink #14110D,
+DM Sans (UI) + Fraunces (display) + JetBrains Mono (meta).
 
-Create a feed card component showcase at 390×2000px. Show all feed card variants
-that appear in the Connect Feed. Background: paper-warm. All cards at 390px width.
+Create a feed card component showcase at 390×3200px.
+Background: paper-warm #F3ECE0. All cards at 358px width (390 − 16px × 2 margins).
 
-CARD TYPE 1 — EDITORIAL / PULSE card (full-width, bottom-border only, no drop shadow):
-Top row: type badge "PULSE" (dark pill, bg #14110D white text) + "· 2h ago" DM Sans 11px JetBrains Mono mute, right-aligned
-Headline: DM Sans 16px bold ink, 2 lines, 16px horizontal padding
-Excerpt: DM Sans 13px ink-soft, 2 lines
-Image: full-width minus 32px, 16:9 ratio, radius-md (4px)
-Source: 🌐 globe icon + "The Guardian" JetBrains Mono 11px mute
-Reaction bar: love count · fire count · clap count + share icon right
-Bottom border: 1px ghost. NO card shadow.
+UNIVERSAL CARD RULE: every card — community, editorial, happening, quote, directory —
+uses white #FFFFFF fill, radius-xl (12px), shadow-card
+(0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)),
+16px horizontal margin. No separator-style cards anywhere. No bottom-border-only treatment.
 
-CARD TYPE 2 — COMMUNITY post card (white fill, shadow-card, radius-xl 12px, 16px margin horizontal):
-AUTHOR ROW: Avatar MD (44px, citizen border) + name DM Sans 14px bold ink + @handle 13px mute + CONNECT CITIZEN badge + "· 5h" mono mute right
-TEMPLATE BADGE row: "HIDDEN GEM" pill (bg #FEF3C7, text #92400E)
-LOCATION: 📍 pin icon + "Peckham, London" JetBrains Mono 11px mute
-CONTENT: "Finally found the dopest vinyl shop in South London. If you know, you know." DM Sans 15px ink-soft, 16px padding
-MEDIA GRID: 2 equal-width square images in a row, radius-md, 4px gap
-STAR RATING: 4 filled ochre ★ stars + 1 empty outline star + "4/5" JetBrains Mono 11px gold, inline row
-FOOTER ROW: reaction bar left + "12 comments" 13px mute right
+Template badge pills: radius-full, DM Sans 9px bold uppercase, 4px vertical 10px horizontal padding.
+Feed type badges: same pill style.
+Reaction icons: outline only (not filled). Counts in JetBrains Mono 10px mute.
 
-CARD TYPE 3 — FOOD REVIEW card:
-Author row with Pro avatar (gold border) + CONNECT PRO badge
-Template badge: "FOOD REVIEW" (bg #FCE7F3, text #9D174D)
-Dish name: "Suya Platter for Two" Fraunces 16px bold ink
-Gallery strip: 3 images horizontal scroll (200×150px each, radius-md, 8px gap), third has "+2" overlay
-Ratings row (3 lines): Taste ★★★★★ 5.0 · Value ★★★★☆ 4.0 · Vibe ★★★★★ 5.0
-(each: label DM Sans 13px ink-soft + stars + number JetBrains Mono 11px gold, right-aligned)
-Reaction bar
+════════════════════════════════════════════
+SECTION A — EDITORIAL & PULSE CARDS
+════════════════════════════════════════════
 
-CARD TYPE 4 — HAPPENING / EVENT card:
-Type badge "HAPPENING" (bg #EDE9FE, text #4C1D95 — purple)
-Event image (16:9) — if Pro event, "⭐ PRO ONLY" gold badge overlay top-right
-Event title: DM Sans 16px bold ink
-📅 date + 📍 venue DM Sans 13px mute (2 rows)
-Admission: DM Sans 13px ink-soft
-RSVP button: small secondary pill button, ink border, right-aligned
+CARD A1 — EDITORIAL (with hero image):
+White card, shadow-card, radius-xl, 16px margin.
+Top: full card-width image, 180px height, radius-xl top corners, object-fit cover.
+Category badge overlaid bottom-left of image: "FASHION" — bg #fff0eb, text #c5491f, radius-full pill.
+Below image (16px padding):
+  Section label: "THE CULTURE BRIEF" JetBrains Mono 9px bold #C5491F uppercase, letter-spacing 0.1em.
+  Headline: Fraunces 17px bold ink, 2 lines, line-height 1.2. 4px top.
+  Excerpt: DM Sans 13px ink-soft, 2 lines. 4px top.
+  Author row: 24px avatar circle + "Funmi Osei" DM Sans 12px bold + "· 6 min read" JetBrains Mono 10px ghost right.
+  Reaction bar (12px top): outline icons ❤️ 24  🔥 9  👏 16  🔗 share icon right — JetBrains Mono 10px mute.
 
-CARD TYPE 5 — QUOTE card:
-Background: paper-warm (#F3ECE0) card fill (distinct from white cards)
-Large decorative quotation mark: Fraunces 80px, gold #B38238 at 15% opacity, absolute positioned top-left
-Quote text: Fraunces 20px italic ink, 3 lines max, 24px padding, on top of decorative mark
-Author: "— James Baldwin" DM Sans 13px mute, below quote
-Source: "Notes of a Native Son" JetBrains Mono 11px ghost
-Reaction bar at bottom
+CARD A2 — EDITORIAL (text-only, no image):
+White card, shadow-card, radius-xl.
+16px padding all sides.
+  Section label: "FROM THE EDITORS" JetBrains Mono 9px bold #C5491F, letter-spacing 0.1em.
+  Headline: Fraunces 20px bold ink, 3 lines. 4px top.
+  Excerpt: DM Sans 14px ink-soft, 2 lines. 6px top.
+  Author row: 24px avatar + author name + read time. 8px top.
+  Reaction bar: same as A1.
 
-CARD TYPE 6 — POLL card (community type):
-Template badge "POLL" (bg #EDE9FE, text #4C1D95)
-Poll question: DM Sans 15px bold ink
-4 poll option bars (each 48px height, white fill, ghost border, radius-lg, full width):
-  Option text DM Sans 14px ink + percentage right ("42%") + filled progress bar overlay
-  (ochre fill for winning option, paper-deep for others, percentage determines width)
-  Voting closed state: bars filled, "42 votes · Poll closed" below
-Author row above question
+CARD A3 — PULSE / BREAKING (inline story with icon):
+White card, shadow-card, radius-xl.
+16px padding all sides.
+  Left: "⚡" icon 20px in #C5491F, top-aligned.
+  Right (12px left gap): all content.
+  Type badge: "PULSE" — bg #14110D, text #FFFFFF, radius-full. + "· 30m ago" mono 10px ghost.
+  Headline: DM Sans 16px bold ink, 2 lines. 4px top.
+  Source: 🌐 "The Guardian" JetBrains Mono 11px ghost. 4px top.
+  Reaction bar. 8px top.
 
-Show each card in its own contained section with a clear label above.
-All cards must use exact brand token values — no approximations.
+════════════════════════════════════════════
+SECTION B — COMMUNITY TEMPLATE CARDS
+(All: white card, shadow-card, radius-xl, 16px margin, 16px padding)
+════════════════════════════════════════════
+
+CARD B1 — STANDARD POST:
+AUTHOR ROW: 44px avatar (Citizen ghost border) + "Kemi Adeyemi" DM Sans 14px bold ink + "@kemi.a" 12px mute + "· 2h" mono right.
+Section tag chip: "Music" — ink fill, white 11px DM Sans, radius-full, 28px height. 8px top.
+Body: DM Sans 14px ink-soft, 3 lines. 8px top.
+Hashtags: "#Lagos #LiveMusic" DM Sans 13px #C5491F. 4px top.
+Reaction bar + comment count. 8px top.
+
+CARD B2 — HIDDEN GEM:
+AUTHOR ROW: 44px avatar (Pro gold border) + name + handle + CONNECT PRO badge + "· 3d" mono right.
+Template badge: "💎 HIDDEN GEM" — bg rgba(179,130,56,0.10), text #B38238, radius-full.
+Place name: Fraunces 16px bold ink. "Bisi Ceramics — Lagos Island" 4px top.
+Location: 📍 "Balogun Market area" JetBrains Mono 11px ghost. 2px top.
+Body: DM Sans 13px ink-soft, 2 lines. 6px top.
+2-image grid: two equal images, 140px height, radius-md, 4px gap. 8px top.
+Reaction bar + comment count.
+
+CARD B3 — CULTURAL TAKE:
+AUTHOR ROW: 44px avatar + name + handle + "· 5h" mono right.
+Template badge: "🔥 CULTURAL TAKE" — bg rgba(107,72,168,0.08), text #6B48A8, radius-full.
+Take statement: Fraunces 18px bold ink, 2 lines. "Streaming killed the African album format." 8px top.
+Body: DM Sans 13px ink-soft, 2 lines. 6px top.
+Reaction bar (prominent 🔥 count). ❤️ 91  🔥 67  👏 14  💬 43
+
+CARD B4 — FOOD REVIEW:
+AUTHOR ROW: 44px avatar (Pro) + name + CONNECT PRO badge + "· 1w" right.
+Template badge: "🍽️ FOOD REVIEW" — bg rgba(197,73,31,0.08), text #C5491F, radius-full.
+Restaurant: "Nok by Alara" Fraunces 16px bold ink + 📍 "Victoria Island" mono 11px ghost right. 6px top.
+Image gallery strip: 3 images horizontal, 110px height each, radius-md, 4px gap. 8px top.
+Ratings (3 rows, 8px gap):
+  Each: label DM Sans 12px ink-soft (56px wide) + 5 stars (16px each, filled ochre / outline) + score JetBrains Mono 11px gold right.
+  Taste ★★★★★ 5.0 · Value ★★★★☆ 4.0 · Vibe ★★★★★ 5.0
+Reaction bar.
+
+CARD B5 — CREATIVE SHOWCASE:
+AUTHOR ROW: 44px avatar (Pro) + name + CONNECT PRO badge + "· 2w" right.
+Template badge: "🎨 CREATIVE SHOWCASE" — bg rgba(25,118,210,0.08), text #1976D2, radius-full.
+Work title: "Zaria Music Visuals — Vol. 2" Fraunces 16px bold ink. 6px top.
+Medium chip: "Photography" ghost border pill, DM Sans 11px bold. 4px top.
+Primary image: full card width, 200px, radius-md. Below: two equal thumbnails, 100px height, 4px gap.
+"3 of 12 photos" JetBrains Mono 10px ghost centred. 4px top.
+Reaction bar.
+
+CARD B6 — POLL:
+AUTHOR ROW: 44px avatar + name + "· Closes in 1d" JetBrains Mono 10px ghost right.
+Template badge: "📊 POLL" — bg rgba(107,72,168,0.08), text #6B48A8, radius-full.
+Poll question: DM Sans 15px bold ink, 2 lines. "What's the greatest era of Afrobeats?" 8px top.
+4 option bars (each 44px, white fill, ghost border, radius-lg, 12px padding, 6px gap):
+  Option text DM Sans 13px ink left + percentage JetBrains Mono 11px gold right.
+  Filled bg: ochre 12% opacity from left edge (width = % of votes).
+  Option B leading: slightly darker bar + "👑" emoji appended.
+  A: 12%  B: 38% (leading)  C: 35%  D: 15%
+"342 votes" JetBrains Mono 10px ghost left. "You voted: 2010s ✓" DM Sans 11px gold right. 6px top.
+Reaction bar.
+
+CARD B7 — ITINERARY:
+AUTHOR ROW: 44px avatar + name + "· 4d" mono right.
+Template badge: "🗺️ ITINERARY" — bg rgba(46,125,50,0.08), text #2E7D32, radius-full.
+Trip title: Fraunces 16px bold ink. "48 Hours in Lagos: The Culture Route" 6px top.
+Meta row: 🗂 "6 stops" · ⏱ "2 days" — JetBrains Mono 10px ghost, 12px gap. 4px top.
+3 stop rows (40px height each, ghost bottom border, 0 outer padding):
+  Number bubble (20px circle, ghost border, mono 10px mute) + place name DM Sans 13px bold ink + "→ Directory" 12px ochre right.
+  Stops: "1 Nike Art Gallery" · "2 Nok by Alara" · "3 Terra Kulture"
+"+ 3 more stops" DM Sans 12px ochre link. 4px top.
+Reaction bar.
+
+CARD B8 — COMMUNITY EVENT:
+AUTHOR ROW: 44px avatar + "Moveee Lagos" + "@moveee.lagos" + "· 2d" right.
+Template badge: "📅 EVENT" — bg rgba(0,137,123,0.08), text #00695C, radius-full.
+Event image: full card width, 160px, radius-md. 6px top.
+Event name: Fraunces 16px bold ink. "Amapiano Night — The Jazz Cafe" 8px top.
+Meta (2 rows): 📅 "Fri 20 Jun · 9PM" · 📍 "London" — DM Sans 13px mute, 14px icon ghost.
+Pro perk strip: ★ "Pro members: early entry 8:30PM" DM Sans 12px gold. 4px top.
+RSVP button: "RSVP Now" — ochre fill, white DM Sans 13px bold, radius-full, 36px height, right-aligned. 8px top.
+
+════════════════════════════════════════════
+SECTION C — STANDALONE FEED CARDS
+════════════════════════════════════════════
+
+CARD C1 — QUOTE (curated feed card):
+White card, shadow-card, radius-xl, 16px padding.
+(No type badge — quote cards are visually self-evident.)
+Decorative " mark: Fraunces 52px, #C8BFB0 (ghost warm), absolute top-left of card, 16px inset.
+Quote text: Fraunces 18px bold ink, 3 lines, line-height 1.4, indented past " mark.
+  "African culture doesn't need validation from the West. It needs infrastructure,
+  documentation, and distribution. The rest will follow."
+Author: "— Ngozi Adichie" DM Sans 13px ink-soft, 12px top.
+Source: "Lagos Book & Art Festival · 2024" JetBrains Mono 10px ghost, 2px top.
+Reaction bar: ❤️ 48  🔖 22  🔗 share — outline icons, JetBrains Mono 10px mute. 12px top.
+(No reaction for 🔥 or 👏 — quote cards have Love, Bookmark, Share only.)
+
+CARD C2 — DIRECTORY ENTRY (appearing in feed):
+White card, shadow-card, radius-xl, 16px padding.
+Type badge: "DIRECTORY" — bg #e8f5ee, text #085041, radius-full, 9px bold.
+Entry image: full card width, 120px, radius-md. (Optional — some entries are text-only.) 8px top.
+Entry name: Fraunces 16px bold ink. "Bisi Ceramics" 8px top.
+Entry type chip: "STUDIO" JetBrains Mono 9px ghost border pill right of name.
+City: "📍 Lagos, Nigeria" DM Sans 12px mute. 2px top.
+Vetted badge (if partner): "✓ Vetted" — success green pill, DM Sans 9px bold white. 4px top.
+Excerpt: DM Sans 13px ink-soft, 2 lines. 6px top.
+"View entry →" DM Sans 13px ochre right-aligned. 8px top.
+
+════════════════════════════════════════════
+FOR YOU BADGE — show as a standalone component after the cards:
+"✦ FOR YOU" — outline style only: #B38238 border 1px, #B38238 text, NO fill background.
+radius-full, DM Sans 9px bold. Used on community cards when the For You feed mode is active.
+Show it overlaid top-right on a copy of Card B1 to demonstrate placement.
+
+Show each card in its own labelled section. All cards must use exact brand token values.
+Total canvas: 390×3200px. Paper-warm background.
 ```
 
 ---
@@ -542,101 +646,261 @@ Show ochre spinner at top of feed area + "Refreshing..." JetBrains Mono 10px mut
 
 ---
 
-### PROMPT 4 — New Post Screen (4 Template States)
+### PROMPT 4 — New Post Screen (All 9 Templates)
 
 ```
-Senior mobile UX/UI designer — Moveee Connect. iOS, 390×844px.
-Brand: white bg, ochre #C5491F, ink #14110D, DM Sans + Fraunces.
+Senior mobile UX/UI designer — Moveee Connect new post composer. iOS, 390×844px.
+Brand: white bg, paper-warm #F3ECE0 accents, ochre #C5491F, gold #B38238, ink #14110D.
+DM Sans (UI) + Fraunces (display) + JetBrains Mono (meta).
 
-Design the New Post composer screen. This screen lets users pick from 9 post templates
-and compose content. Generate 4 frames showing 4 different template states.
+Design 9 frames — one per post template. Each frame shows the composer in a partially-filled
+state for that template so all unique fields are visible.
 
-HEADER (all frames — white bg, top ghost border bottom):
-"Cancel" — DM Sans 14px ochre, left, 44px tap target
-"New Post" — DM Sans 15px bold ink, centred
-"Post" — DM Sans 14px bold ochre, right (greyed out = disabled until content entered)
+════════════════════════════════════════════
+SHARED HEADER (identical on all 9 frames):
+  White fill, 56px, ghost bottom border.
+  "Cancel" DM Sans 14px ochre left (44px tap target).
+  "New Post" DM Sans 15px bold ink centred.
+  "Post" DM Sans 14px bold ochre right (disabled/greyed until content filled).
 
-TEMPLATE SELECTOR (horizontal scroll strip, 48px height, bottom ghost border):
-9 pills with emoji + label, DM Sans 12px bold, 36px height, radius-full, 10px horizontal padding, 8px gap.
-Active: ochre fill white text. Inactive: paper-deep fill ink-soft text.
-Options: ✏️ Post · 💎 Hidden Gem · 💬 Cultural Take · 🍽️ Food Review · 
-🎨 Creative Showcase · 📊 Poll · 🗺️ Itinerary · 📅 Event · 💬 Quote
+TEMPLATE SELECTOR (horizontal scroll, 48px, ghost bottom border, white bg):
+  9 pills, DM Sans 12px bold, 36px height, radius-full, 10px horizontal padding, 8px gap.
+  Active: ochre fill, white text. Inactive: paper-warm fill, ink-soft text.
+  Pills: ✏️ Post · 💎 Hidden Gem · 🔥 Cultural Take · 🍽️ Food Review ·
+         🎨 Creative Showcase · 📊 Poll · 🗺️ Itinerary · 📅 Event · ❝ Quote
+  Each frame shows the matching pill as active (ochre fill).
 
-FRAME A — POST TEMPLATE (active):
-SECTION TAGS (horizontal scroll, 40px height, 8px gap, 16px padding):
-Small pills: Music · Film · Art · Fashion · Food · Tech · Sport · Travel · Design · Literature
-Active: ink fill white 11px DM Sans bold. Inactive: ghost border ink-soft 11px.
+SHARED MEDIA TOOLBAR (pinned above keyboard, 48px, ghost top border, white bg):
+  Left: 📷 · 📎 · 📍 · 😊 · @ — each 24px icon, ghost mute, 16px padding, 16px gap.
+  Right: character remaining count JetBrains Mono 11px mute.
 
-GUIDE CHIPS row (3 horizontally, 8px gap):
-"🎵 What I'm listening to" · "🎬 Film reaction" · "✨ Discovery"
-Style: paper-deep bg, radius-full, DM Sans 12px ink-soft, 8px vertical 12px horizontal padding.
-Tap to insert as a starter.
+All text inputs: white bg, ghost border 1px, radius-lg, DM Sans 14–15px ink, 16px horizontal padding.
+All field labels: DM Sans 11px bold mute, displayed above each input.
+All section dividers: ghost rule 1px #EEE8DF.
+════════════════════════════════════════════
 
-MAIN TEXTAREA (no border, 16px padding, min 160px height):
-Placeholder (DM Sans 15px ghost italic): "What's on your mind? Share a cultural moment, thought, or discovery..."
-Character counter bottom-right: "0 / 1000" JetBrains Mono 11px mute.
+════════════════════════════════════════════
+FRAME 1 — STANDARD POST (✏️ Post active)
+════════════════════════════════════════════
+SECTION TAGS (horizontal scroll, 40px height, 16px padding):
+  Active: "Music" — ink fill, white DM Sans 11px bold, radius-full, 28px.
+  Inactive: "Film" · "Art" · "Fashion" · "Food" — ghost border, ink-soft.
 
-MEDIA/ACTION TOOLBAR (row above keyboard area, 48px height, ghost top border):
-Left icons row: 📷 · 📎 · 📍 · 😊 · @
-Each icon: 24px, mute colour, 20px gap, 16px left padding.
-Right: "954 remaining" JetBrains Mono 11px mute.
+GUIDE CHIPS row (3 chips, 8px gap):
+  "🎵 What I'm listening to" · "🎬 Film reaction" · "✨ Discovery"
+  Paper-warm bg, radius-full, DM Sans 12px ink-soft, 8px vertical 12px horizontal padding.
 
-FRAME B — FOOD REVIEW TEMPLATE (active, partially filled):
-All same header/selector, food review pill = active.
+MAIN TEXTAREA (no border, 16px padding, 200px min height):
+  Filled text (DM Sans 15px ink):
+  "Saw Tems perform at an intimate venue last night and I'm still not over it. She didn't say a
+  word between songs — just let the music breathe. The crowd was completely silent."
+  Character counter: "184 / 1000" JetBrains Mono 11px mute, bottom-right of textarea.
 
-DISH NAME INPUT: "Dish name" label DM Sans 11px mute above, full-width input 48px height, ghost border.
-  Filled: "Suya Platter for Two" DM Sans 15px ink.
+MEDIA TOOLBAR. [Shared layout.]
 
-RATINGS BLOCK (3 rows, 12px gap):
-Each row: label (DM Sans 13px ink-soft, 64px wide) + 5 star icons (24px each, 8px gap) + rating JetBrains Mono 11px gold right
-  Taste: ★★★★★ 5.0 (all filled ochre)
-  Value: ★★★★☆ 4.0 (4 ochre, 1 outline)
-  Vibe: ★★★★★ 5.0 (all filled)
-Stars: filled = ochre #C5491F. Empty = outline ghost. Tap any star to set rating.
+════════════════════════════════════════════
+FRAME 2 — HIDDEN GEM (💎 Hidden Gem active)
+════════════════════════════════════════════
+PLACE NAME input (48px): Label "Place name *" · Filled: "Bisi Ceramics Studio"
 
-DIRECTORY LINK: "Link a restaurant or venue" DM Sans 13px mute, left.
-Search input (40px height, ghost border, search icon left): "Buka Lagos" filled.
-Below (dropdown result): 1 result chip — venue icon + "Buka Lagos · Surulere" DM Sans 13px ink.
-Selected state: chip with venue name + ✕ remove.
+LOCATION input (48px): Label "Location" · 📍 left icon · Filled: "Balogun Market area · Lagos Island"
 
-TEXTAREA: shorter (80px min), 16px padding, placeholder "Describe your experience..."
-MEDIA TOOLBAR: same as Frame A.
+DIRECTORY LINK (40px row):
+  "Link this place in the Directory" DM Sans 13px mute.
+  Search input (40px, ghost border, 🔍 left): "Bisi Ceramics" filled.
+  Matched chip below: 🗂 "Bisi Ceramics · Lagos" DM Sans 13px ink + ✕ remove right.
 
-FRAME C — POLL TEMPLATE (active):
-Poll question input (80px height, ghost border 1px, radius-lg, 16px padding):
-  "What's the best era of Afrobeats?" DM Sans 15px ink. (filled)
+DESCRIPTION TEXTAREA (120px min):
+  Label "Tell us about it *"
+  Filled: "Tucked behind Balogun Market — ceramics studio using Ondo-state clay. Afternoon workshops
+  (₦8,000, 3hrs) worth every minute."
 
-POLL OPTIONS (auto-layout vertical, 12px gap):
-Each option row: drag handle ⠿ (16px ghost, left) + text input (DM Sans 14px, flex) + × delete (16px ghost, right)
-  Row height 48px, ghost border, radius-lg, 16px horizontal padding.
-Option 1: "90s Fela era" (filled)
-Option 2: "Burna Boy 2020s" (filled)
-Option 3: empty (placeholder "Option 3...")
-"+ Add option" — DM Sans 13px ochre link, left-aligned row below options. Disabled when 4 options added.
+STAR RATING row (optional, 36px): 
+  Label "Rating (optional)" · 5 stars (20px, outline ghost) · "Tap to rate" DM Sans 12px ghost.
 
-DURATION: "Poll duration" DM Sans 13px mute + segmented control inline right: "1d · 3d · 7d"
-  Active segment: ink fill white text. Inactive: ghost border. radius-lg each. 32px height.
+MEDIA TOOLBAR. [Shared.]
 
-DESCRIPTION TEXTAREA: "Add a description (optional)" placeholder, 80px min height.
+════════════════════════════════════════════
+FRAME 3 — CULTURAL TAKE (🔥 Cultural Take active)
+════════════════════════════════════════════
+TAKE INPUT (80px min, no border, Fraunces 20px bold ink placeholder style):
+  Label "Your take *"
+  Filled (Fraunces 20px bold ink):
+  "Streaming killed the African album as an art form."
 
-FRAME D — EVENT TEMPLATE (active):
-Title input: large, DM Sans 17px bold ink. "Amapiano Night at Jazz Cafe" filled.
+ARGUMENT TEXTAREA (200px min):
+  Label "Explain your take *"
+  Filled (DM Sans 14px ink):
+  "We've spent a decade celebrating Afrobeats going global. But look at what's actually being
+  released: endless singles, loosely stitched 'albums' built for playlists. Fela never needed a
+  playlist algorithm. We're losing narrative depth and calling it progress."
 
-DATE/TIME ROW (row, space-between):
-  📅 "Start date" | date picker input "Fri 13 Jun 2026" | 🕐 "Start time" | "9:00 PM"
-  Second row: "End date" + "End time"
-  Each: 48px height, ghost border, radius-lg, left icon, DM Sans 14px ink.
+SECTION TAGS row (horizontal scroll, same as Standard Post):
+  Active: "Music" · Inactive: "Culture" · "Film" · "Ideas"
 
-VENUE input: 📍 left + "Jazz Cafe, Camden, London" filled
-CITY input: "London" filled
-ADMISSION input: currency prefix "£" + "Free / £15 adv" placeholder
-TICKET URL: 🔗 icon + "https://..." placeholder
-CATEGORY: horizontal chip row: Music · Art · Food · Sport · Culture · Tech
-  Active: ink fill. Inactive: ghost border. Radius-full, 32px height.
-ORGANISER: "Link an organiser" search with DirectorySearch result showing 
-  avatar (24px) + "Moveee Events" name + ✕ remove.
+MEDIA TOOLBAR. [Shared.]
 
-Output 4 frames in a 2×2 grid. Each frame clearly labelled with the template name.
+════════════════════════════════════════════
+FRAME 4 — FOOD REVIEW (🍽️ Food Review active)
+════════════════════════════════════════════
+DISH NAME input (48px): Label "Dish / Item *" · Filled: "Suya Platter for Two"
+
+RESTAURANT LINK:
+  Label "Restaurant or venue"
+  Search input (40px, 🔍): "Nok by Alara" filled.
+  Matched chip: 🗂 "Nok by Alara · Victoria Island" DM Sans 13px ink + ✕ right.
+
+RATINGS BLOCK (label "Ratings *"):
+  3 rows (44px each, ghost bottom border):
+  Layout: label DM Sans 13px ink-soft (72px wide) + 5 stars (20px, ochre filled / outline ghost) + score JetBrains Mono 12px gold right.
+  Taste  ★★★★★  5.0
+  Value  ★★★★☆  4.0
+  Vibe   ★★★★★  5.0
+  (Stars filled = ochre #C5491F. Empty = outline ghost.)
+
+REVIEW TEXTAREA (120px min):
+  Label "Your review *"
+  Filled: "The suya spice rub is fresh — you can taste the yaji. The grilled plantain sides
+  are the best in Lagos. Worth every naira."
+
+PRICE TIER (row, 36px):
+  Label "Price range (optional)"
+  4 chips: ₦ · ₦₦ · ₦₦₦ (active, ink fill white) · ₦₦₦₦ — radius-full, DM Sans 12px.
+
+MEDIA TOOLBAR. [Shared.]
+
+════════════════════════════════════════════
+FRAME 5 — CREATIVE SHOWCASE (🎨 Creative Showcase active)
+════════════════════════════════════════════
+WORK TITLE input (48px): Label "Title of your work *" · Filled: "Zaria Music Visuals — Vol. 2"
+
+MEDIUM CHIPS (horizontal scroll, 32px height, 8px gap):
+  Label "Medium"
+  Active: "Photography" — ink fill white, radius-full.
+  Inactive: "Film" · "Digital Art" · "Illustration" · "Music" · "Writing" — ghost border.
+
+DESCRIPTION TEXTAREA (160px min):
+  Label "About this work *"
+  Filled: "This series explores the space between performance and stillness — the moment after
+  the last note. Shot over two months on film, no digital corrections."
+
+COLLABORATION input (40px, optional):
+  Label "Collaborator (optional)" · @ icon left · Filled: "@zaria.official"
+
+IMAGE UPLOAD AREA (full width, 120px, dashed ghost border, radius-xl):
+  Centred: 📷 icon 24px ghost + "Add photos or video" DM Sans 13px mute.
+  Below: "1 photo added" chip — thumbnail 32px + filename JetBrains Mono 11px + ✕.
+
+MEDIA TOOLBAR. [Shared.]
+
+════════════════════════════════════════════
+FRAME 6 — POLL (📊 Poll active)
+════════════════════════════════════════════
+POLL QUESTION textarea (80px, ghost border, radius-lg):
+  Label "Poll question *"
+  Filled: "What's the greatest era of Afrobeats?"
+
+POLL OPTIONS (auto-layout vertical, 8px gap):
+  Label "Options *" (min 2, max 4)
+  Each option row (48px, ghost border, radius-lg, 16px padding):
+    ⠿ drag handle 16px ghost left + text input DM Sans 14px flex + × delete 16px ghost right.
+  Option 1: "90s Fela era" (filled)
+  Option 2: "Wizkid / Davido 2010s" (filled)
+  Option 3: "Burna Boy / Tems era" (filled)
+  Option 4: empty placeholder "Option 4..." (greyed)
+  "+ Add option" DM Sans 13px ochre link row below. Dimmed (already at 4).
+
+DURATION (row, space-between, 36px):
+  "Poll duration" DM Sans 13px mute left.
+  Segmented control right: "1d" · "3d" (active, ink fill white) · "7d" — radius-lg, 32px height, ghost border.
+
+DESCRIPTION TEXTAREA (80px, optional):
+  Label "Add a description (optional)"
+  Placeholder: "Give context for your poll..."
+
+MEDIA TOOLBAR. [Shared — character counter not shown for poll.]
+
+════════════════════════════════════════════
+FRAME 7 — ITINERARY (🗺️ Itinerary active)
+════════════════════════════════════════════
+TRIP TITLE input (48px): Label "Trip title *" · Filled: "48 Hours in Lagos: The Culture Route"
+
+CITY input (48px): Label "City / Region" · 📍 left · Filled: "Lagos, Nigeria"
+
+STOPS (label "Stops *" — min 2):
+  Each stop row (80px min, white fill, ghost border, radius-lg, 16px padding, 8px gap):
+    Left: number bubble (24px circle, ghost bg, mono 12px mute) + content right.
+    Content: place name input DM Sans 14px bold ink (filled).
+              🗂 "Link to Directory →" DM Sans 12px ochre, 2px below name.
+              notes input DM Sans 13px ink (optional, placeholder "Add a note...").
+    × remove button top-right of row.
+
+  STOP 1: "Nike Art Gallery" linked "Nike Art Gallery · Ikoyi" note: "Go early for the rooftop."
+  STOP 2: "Nok by Alara" linked "Nok by Alara · Victoria Island" note: "Book in advance."
+  STOP 3: empty — name placeholder "Place name..." + 🗂 "Search directory..." greyed.
+
+"+ Add stop" DM Sans 13px ochre link, centred, 8px top.
+
+DURATION input (48px, optional): Label "Estimated duration" · ⏱ left · Placeholder "e.g. 2 days"
+
+MEDIA TOOLBAR. [Shared.]
+
+════════════════════════════════════════════
+FRAME 8 — EVENT (📅 Event active)
+════════════════════════════════════════════
+EVENT TITLE input (48px): Label "Event name *" · Filled (DM Sans 17px bold ink): "Amapiano Night at The Jazz Cafe"
+
+DATE/TIME ROWS (ghost border, radius-lg, 48px each, 8px gap):
+  Row 1: 📅 "Start date" field "Fri 20 Jun 2026" | 🕐 "Start time" field "9:00 PM"
+  Row 2: "End date" field "Sat 21 Jun 2026" | "End time" field "3:00 AM"
+
+VENUE input (48px): Label "Venue name" · 🏛 left · Filled: "The Jazz Cafe"
+LOCATION input (48px): Label "Full address" · 📍 left · Filled: "Chalk Farm Road, Camden, London"
+CITY input (48px): Label "City *" · Filled: "London"
+
+ADMISSION input (48px): Label "Admission" · Currency prefix "£" · Filled: "15 adv / 20 door"
+TICKET URL input (48px): Label "Ticket link (optional)" · 🔗 left · Filled: "https://dice.fm/..."
+
+CATEGORY chips (horizontal, 32px height, radius-full):
+  Active: "Music" — ink fill white. Inactive: "Art" · "Food" · "Sport" · "Culture" — ghost border.
+
+ORGANISER LINK (row):
+  Label "Organiser (optional)"
+  DirectorySearch chip — avatar 24px + "Moveee Events" DM Sans 13px ink + ✕ right. (Already linked.)
+
+MEDIA TOOLBAR. [Shared.]
+
+════════════════════════════════════════════
+FRAME 9 — QUOTE (❝ Quote active)
+════════════════════════════════════════════
+QUOTE TEXT textarea (200px min, large):
+  Label "The quote *"
+  Filled (Fraunces 18px italic ink — use italic style in this field to preview the quote):
+  "African culture doesn't need validation from the West. It needs infrastructure,
+  documentation, and distribution. The rest will follow."
+  Character counter: "148 / 500" JetBrains Mono 11px mute, bottom-right.
+
+ATTRIBUTION (label "Who said it *"):
+  PERSON NAME input (48px): Filled: "Ngozi Adichie"
+  SOURCE input (48px): Label "Source (optional)" · Filled: "Lagos Book & Art Festival · 2024"
+
+POSTER'S NOTE textarea (80px, optional):
+  Label "Why are you sharing this? (optional)"
+  Filled: "Been sitting with this all week. The infrastructure piece is what we need to build."
+
+QUOTE TYPE chips (row, 32px, radius-full):
+  Label "Quote type"
+  Active: "Person" — ink fill white.
+  Inactive: "Book" · "Film" · "Speech" · "Song" — ghost border, DM Sans 12px ink-soft.
+
+MEDIA TOOLBAR. [Shared — no image upload for Quote template.]
+
+════════════════════════════════════════════
+Output 9 frames in a 3-column grid (3 rows × 3 columns).
+Label each frame below in JetBrains Mono 11px mute:
+  Row 1: "Standard Post" · "Hidden Gem" · "Cultural Take"
+  Row 2: "Food Review" · "Creative Showcase" · "Poll"
+  Row 3: "Itinerary" · "Event" · "Quote"
 ```
 
 ---
