@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,9 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
+import { fonts, fontSize, radius, shadows } from "../../theme";
+import type { ColorPalette } from "../../theme";
+import { useColors } from "../../hooks/useColors";
 import { api, MOBILE_API } from "../../api/client";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
@@ -59,57 +61,463 @@ function shareUrlFor(item: FeedItem): string | undefined {
   return `https://connect.themoveee.com/community/${item.slug}`;
 }
 
-// Strip a URL from body text so it isn't duplicated when an OG snippet is shown.
 function stripLinkFromBody(body?: string | null, sourceUrl?: string | null): string | undefined {
   if (!body) return body ?? undefined;
   if (!sourceUrl) return body;
   let result = body.replace(sourceUrl, "").trim();
-  // Also strip any residual bare URL at the very end.
   result = result.replace(/\s*https?:\/\/\S+\s*$/, "").trim();
   return result || undefined;
 }
 
-// ── BadgePill ─────────────────────────────────────────────────────────────────
+// ── Styles factory ────────────────────────────────────────────────────────────
 
-interface BadgePillProps {
-  label: string;
-  bg: string;
-  color: string;
-  borderColor?: string;
+function createStyles(c: ColorPalette) {
+  return StyleSheet.create({
+    // card shell
+    card: {
+      backgroundColor: c.paper,
+      borderRadius: 12,
+      marginHorizontal: 16,
+      overflow: "hidden",
+      ...shadows.card,
+    },
+    // shared text
+    eyebrow: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.xs,
+      color: c.mute,
+      flex: 1,
+    },
+    timeRight: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.xs,
+      color: c.ghost,
+      marginLeft: "auto" as any,
+    },
+    cardTitle: {
+      fontFamily: fonts.serifBold,
+      fontSize: fontSize.lg,
+      color: c.ink,
+      lineHeight: 26,
+    },
+    cardTitleXl: {
+      fontFamily: fonts.serifBold,
+      fontSize: fontSize.xl,
+      color: c.ink,
+      lineHeight: 30,
+    },
+    cardBody: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.inkSoft,
+      lineHeight: 20,
+    },
+    readMore: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.sm,
+      color: c.ochre,
+    },
+    successLink: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.sm,
+      color: c.success,
+    },
+    sourceText: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.tiny,
+      color: c.ghost,
+    },
+    locationText: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.xs,
+      color: c.mute,
+    },
+    // author row
+    authorRow: {
+      flexDirection: "row" as const,
+      paddingHorizontal: 14,
+      paddingTop: 14,
+      paddingBottom: 8,
+      gap: 10,
+      alignItems: "flex-start" as const,
+    },
+    avatarWrap: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      overflow: "visible" as const,
+      position: "relative" as const,
+    },
+    avatarWrapPro: {
+      borderWidth: 2,
+      borderColor: c.goldBorder,
+      borderRadius: 20,
+      shadowColor: c.gold,
+      shadowOpacity: 0.18,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    avatar: { width: 40, height: 40, borderRadius: 20 },
+    avatarFallback: {
+      backgroundColor: c.goldLight,
+      justifyContent: "center" as const,
+      alignItems: "center" as const,
+    },
+    avatarInitial: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.sm,
+      color: c.gold,
+    },
+    proStar: {
+      position: "absolute" as const,
+      bottom: -2,
+      right: -2,
+      backgroundColor: c.paper,
+      borderRadius: radius.full,
+      width: 14,
+      height: 14,
+      justifyContent: "center" as const,
+      alignItems: "center" as const,
+    },
+    authorMeta: { flex: 1 },
+    nameRow: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 4,
+      flexWrap: "wrap" as const,
+    },
+    authorName: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.base,
+      color: c.ink,
+      flexShrink: 1,
+    },
+    authorDot: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.mute,
+    },
+    authorTime: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.xs,
+      color: c.mute,
+    },
+    authorUsername: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.ghost,
+      marginTop: 1,
+    },
+    tagChip: {
+      marginTop: 4,
+      backgroundColor: c.paperDeep,
+      borderRadius: radius.sm,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      alignSelf: "flex-start" as const,
+    },
+    tagChipText: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.tiny,
+      color: c.inkSoft,
+    },
+    topRight: {
+      alignItems: "flex-end" as const,
+      gap: 2,
+      maxWidth: 160,
+    },
+    reportSent: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.xs,
+      color: c.mute,
+    },
+    // badge pill
+    badgePill: {
+      borderRadius: radius.full,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      alignSelf: "flex-start" as const,
+    },
+    badgePillText: {
+      fontFamily: fonts.monoBold,
+      fontSize: fontSize.tiny,
+      textTransform: "uppercase" as const,
+      letterSpacing: 1.2,
+    },
+    // link preview
+    linkContainer: {
+      flexDirection: "row" as const,
+      backgroundColor: c.paperDeep,
+      borderRadius: 6,
+      padding: 12,
+      marginHorizontal: 14,
+      gap: 10,
+      alignItems: "center" as const,
+    },
+    linkRight: { flex: 1 },
+    linkSource: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.tiny,
+      textTransform: "uppercase" as const,
+      color: c.mute,
+      marginBottom: 2,
+    },
+    linkTitle: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.sm,
+      color: c.ink,
+      lineHeight: 18,
+    },
+    linkDomain: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.tiny,
+      color: c.ghost,
+      marginTop: 2,
+    },
+    // reaction bar wrapper
+    reactionBarWrap: {
+      paddingHorizontal: 14,
+      paddingBottom: 8,
+    },
+    // happening
+    happeningHeader: {
+      height: 160,
+      backgroundColor: "#7C3AED",
+      padding: 12,
+    },
+    happeningHero: { width: "100%" as any, height: 200 },
+    happeningContent: {
+      paddingHorizontal: 14,
+      paddingTop: 12,
+      paddingBottom: 14,
+    },
+    happeningTitle: {
+      fontFamily: fonts.serifBold,
+      fontSize: fontSize.lg,
+      color: c.ink,
+      lineHeight: 26,
+    },
+    happeningMetaRow: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 6,
+      marginTop: 8,
+    },
+    happeningMetaText: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.mute,
+      flex: 1,
+    },
+    happeningFooter: {
+      flexDirection: "row" as const,
+      justifyContent: "space-between" as const,
+      alignItems: "center" as const,
+      marginTop: 12,
+    },
+    happeningAdmission: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.xs,
+      color: c.ghost,
+    },
+    happeningRsvpBtn: {
+      borderWidth: 1,
+      borderColor: c.ochre,
+      borderRadius: radius.full,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+    },
+    happeningRsvpText: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.xs,
+      color: c.ochre,
+    },
+    // food review
+    foodRatingsGrid: { marginTop: 10, gap: 4 },
+    foodRatingRow: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      height: 24,
+    },
+    foodRatingLabel: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.mute,
+      width: 60,
+    },
+    foodRatingStars: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.xs,
+      color: c.gold,
+      flex: 1,
+    },
+    foodRatingNum: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.xs,
+      color: c.gold,
+      marginLeft: "auto" as any,
+    },
+    // creative showcase
+    showcaseDots: {
+      flexDirection: "row" as const,
+      justifyContent: "center" as const,
+      alignItems: "center" as const,
+      gap: 5,
+      marginTop: 8,
+    },
+    showcaseDot: { width: 6, height: 6, borderRadius: 3 },
+    showcaseDotActive: { backgroundColor: c.ochre },
+    showcaseDotInactive: { backgroundColor: c.ghost },
+    // poll
+    pollQuestion: {
+      fontFamily: fonts.serifBold,
+      fontSize: fontSize.lg,
+      color: c.ink,
+      lineHeight: 26,
+      marginBottom: 10,
+    },
+    pollOptionWrap: {
+      height: 48,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: c.rule,
+      overflow: "hidden" as const,
+      position: "relative" as const,
+      marginBottom: 6,
+    },
+    pollFillBar: {
+      position: "absolute" as const,
+      top: 0,
+      left: 0,
+      height: "100%" as any,
+      minWidth: 4,
+    },
+    pollOptionInner: {
+      position: "absolute" as const,
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      paddingHorizontal: 16,
+    },
+    pollOptionLabel: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.ink,
+      flex: 1,
+    },
+    pollOptionPct: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.xs,
+      color: c.ghost,
+    },
+    pollOptionPctWinner: { color: c.ochre },
+    pollMeta: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.mute,
+      marginTop: 4,
+    },
+    // itinerary
+    itinStopRow: {
+      flexDirection: "row" as const,
+      gap: 10,
+      marginBottom: 8,
+      alignItems: "flex-start" as const,
+    },
+    itinStopNum: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: c.gold,
+      justifyContent: "center" as const,
+      alignItems: "center" as const,
+      flexShrink: 0,
+    },
+    itinStopNumText: {
+      fontFamily: fonts.monoBold,
+      fontSize: fontSize.tiny,
+      color: c.paper,
+    },
+    itinStopName: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.ink,
+    },
+    itinStopNote: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.xs,
+      color: c.mute,
+      marginTop: 1,
+    },
+    // quote
+    quoteContainer: {
+      padding: 20,
+      paddingTop: 24,
+      position: "relative" as const,
+    },
+    bigQuote: {
+      position: "absolute" as const,
+      top: 8,
+      left: 14,
+      fontFamily: fonts.serifBold,
+      fontSize: 52,
+      color: c.ghost,
+      lineHeight: 40,
+    },
+    quoteText: {
+      fontFamily: fonts.serif,
+      fontStyle: "italic" as const,
+      fontSize: fontSize.xl,
+      color: c.ink,
+      lineHeight: 30,
+      marginLeft: 8,
+      marginTop: 8,
+    },
+    quoteAttribution: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 6,
+      marginTop: 12,
+    },
+    quoteAuthor: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.inkSoft,
+    },
+    quoteDot: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.mute,
+    },
+    quoteSource: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.xs,
+      color: c.ghost,
+    },
+  });
 }
 
-function BadgePill({ label, bg, color, borderColor }: BadgePillProps) {
+// ── BadgePill ─────────────────────────────────────────────────────────────────
+
+function BadgePill({ label, bg, color, borderColor, styles }: {
+  label: string; bg: string; color: string; borderColor?: string;
+  styles: ReturnType<typeof createStyles>;
+}) {
   return (
-    <View
-      style={[
-        badgeStyles.pill,
-        { backgroundColor: bg },
-        borderColor ? { borderWidth: 1, borderColor } : undefined,
-      ]}
-    >
-      <Text style={[badgeStyles.text, { color }]}>{label}</Text>
+    <View style={[styles.badgePill, { backgroundColor: bg }, borderColor ? { borderWidth: 1, borderColor } : undefined]}>
+      <Text style={[styles.badgePillText, { color }]}>{label}</Text>
     </View>
   );
 }
 
-const badgeStyles = StyleSheet.create({
-  pill: {
-    borderRadius: radius.full,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    alignSelf: "flex-start",
-  },
-  text: {
-    fontFamily: fonts.monoBold,
-    fontSize: fontSize.tiny,
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
-  },
-});
-
-// ── Report control ────────────────────────────────────────────────────────────
+// ── ReportControl ─────────────────────────────────────────────────────────────
 
 function ReportControl({ item }: { item: FeedItem }) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [open, setOpen] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -119,335 +527,130 @@ function ReportControl({ item }: { item: FeedItem }) {
     try {
       await api.post(`${MOBILE_API}/community/report`, { post_id: Number(item.wpId), reason });
       setSent(true);
-    } catch {
-      // silent fail — sheet already dismissed
-    }
+    } catch { /* silent */ }
   };
 
-  if (sent) return <Text style={reportSentText}>Reported</Text>;
+  if (sent) return <Text style={styles.reportSent}>Reported</Text>;
 
   return (
     <>
-      <TouchableOpacity
-        onPress={() => setOpen(true)}
-        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-      >
-        <Ionicons name="flag-outline" size={14} color={colors.ghost} />
+      <TouchableOpacity onPress={() => setOpen(true)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+        <Ionicons name="flag-outline" size={14} color={c.ghost} />
       </TouchableOpacity>
       <ReportSheet visible={open} onClose={() => setOpen(false)} onSubmit={submit} />
     </>
   );
 }
 
-const reportSentText: import("react-native").TextStyle = {
-  fontFamily: fonts.sans, fontSize: fontSize.xs, color: colors.mute,
-};
-
 // ── AuthorRow ─────────────────────────────────────────────────────────────────
 
-interface AuthorRowProps {
-  item: FeedItem;
-  forYouBadge?: boolean;
-  onAuthorPress?: () => void;
-}
-
-function AuthorRow({ item, forYouBadge, onAuthorPress }: AuthorRowProps) {
+function AuthorRow({ item, forYouBadge, onAuthorPress }: {
+  item: FeedItem; forYouBadge?: boolean; onAuthorPress?: () => void;
+}) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const isPro = item.communityTier === "patron";
   return (
-    <View style={authorStyles.row}>
-      {/* Avatar */}
-      <TouchableOpacity
-        onPress={onAuthorPress}
-        activeOpacity={onAuthorPress ? 0.7 : 1}
-        disabled={!onAuthorPress}
-      >
-        <View
-          style={[
-            authorStyles.avatarWrap,
-            isPro ? authorStyles.avatarWrapPro : undefined,
-          ]}
-        >
+    <View style={styles.authorRow}>
+      <TouchableOpacity onPress={onAuthorPress} activeOpacity={onAuthorPress ? 0.7 : 1} disabled={!onAuthorPress}>
+        <View style={[styles.avatarWrap, isPro ? styles.avatarWrapPro : undefined]}>
           {item.communityAuthorAvatar ? (
-            <Image
-              source={{ uri: item.communityAuthorAvatar }}
-              style={authorStyles.avatar}
-            />
+            <Image source={{ uri: item.communityAuthorAvatar }} style={styles.avatar} />
           ) : (
-            <View style={[authorStyles.avatar, authorStyles.avatarFallback]}>
-              <Text style={authorStyles.avatarInitial}>
-                {(item.communityAuthor ?? "?")[0]?.toUpperCase()}
-              </Text>
+            <View style={[styles.avatar, styles.avatarFallback]}>
+              <Text style={styles.avatarInitial}>{(item.communityAuthor ?? "?")[0]?.toUpperCase()}</Text>
             </View>
           )}
           {isPro && (
-            <View style={authorStyles.proStar}>
-              <Text style={{ fontSize: 8, color: colors.gold }}>★</Text>
+            <View style={styles.proStar}>
+              <Text style={{ fontSize: 8, color: c.gold }}>★</Text>
             </View>
           )}
         </View>
       </TouchableOpacity>
 
-      {/* Name / meta */}
-      <View style={authorStyles.meta}>
-        <TouchableOpacity
-          onPress={onAuthorPress}
-          activeOpacity={onAuthorPress ? 0.7 : 1}
-          disabled={!onAuthorPress}
-        >
-          <View style={authorStyles.nameRow}>
-            <Text style={authorStyles.name} numberOfLines={1}>
-              {item.communityAuthor ?? "Anonymous"}
-            </Text>
-            {isPro && (
-              <BadgePill label="Connect Pro" bg={colors.gold} color={colors.paper} />
-            )}
-            <Text style={authorStyles.dot}>·</Text>
-            <Text style={authorStyles.time}>{timeAgo(item.date)}</Text>
+      <View style={styles.authorMeta}>
+        <TouchableOpacity onPress={onAuthorPress} activeOpacity={onAuthorPress ? 0.7 : 1} disabled={!onAuthorPress}>
+          <View style={styles.nameRow}>
+            <Text style={styles.authorName} numberOfLines={1}>{item.communityAuthor ?? "Anonymous"}</Text>
+            {isPro && <BadgePill label="Connect Pro" bg={c.gold} color={c.paper} styles={styles} />}
+            <Text style={styles.authorDot}>·</Text>
+            <Text style={styles.authorTime}>{timeAgo(item.date)}</Text>
           </View>
         </TouchableOpacity>
         {item.communityAuthorUsername ? (
-          <Text style={authorStyles.username}>
-            @{item.communityAuthorUsername}
-          </Text>
+          <Text style={styles.authorUsername}>@{item.communityAuthorUsername}</Text>
         ) : null}
         {forYouBadge && (
           <View style={{ marginTop: 4 }}>
-            <BadgePill
-              label="✦ For You"
-              bg="transparent"
-              color={colors.gold}
-              borderColor={colors.goldBorder}
-            />
+            <BadgePill label="✦ For You" bg="transparent" color={c.gold} borderColor={c.goldBorder} styles={styles} />
           </View>
         )}
         {item.communityTag ? (
-          <View style={authorStyles.tagChip}>
-            <Text style={authorStyles.tagText}>{item.communityTag}</Text>
+          <View style={styles.tagChip}>
+            <Text style={styles.tagChipText}>{item.communityTag}</Text>
           </View>
         ) : null}
       </View>
 
-      {/* Top-right: report flag */}
-      <View style={authorStyles.topRight}>
+      <View style={styles.topRight}>
         <ReportControl item={item} />
       </View>
     </View>
   );
 }
 
-const authorStyles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 8,
-    gap: 10,
-    alignItems: "flex-start",
-  },
-  avatarWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    overflow: "visible",
-    position: "relative",
-  },
-  avatarWrapPro: {
-    borderWidth: 2,
-    borderColor: colors.goldBorder,
-    borderRadius: 20,
-    shadowColor: colors.gold,
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  avatarFallback: {
-    backgroundColor: colors.goldLight,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarInitial: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.sm,
-    color: colors.gold,
-  },
-  proStar: {
-    position: "absolute",
-    bottom: -2,
-    right: -2,
-    backgroundColor: colors.paper,
-    borderRadius: radius.full,
-    width: 14,
-    height: 14,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  meta: { flex: 1 },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    flexWrap: "wrap",
-  },
-  name: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.base,
-    color: colors.ink,
-    flexShrink: 1,
-  },
-  dot: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.sm,
-    color: colors.mute,
-  },
-  time: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.xs,
-    color: colors.mute,
-  },
-  username: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.sm,
-    color: colors.ghost,
-    marginTop: 1,
-  },
-  tagChip: {
-    marginTop: 4,
-    backgroundColor: colors.paperDeep,
-    borderRadius: radius.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    alignSelf: "flex-start",
-  },
-  tagText: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.tiny,
-    color: colors.inkSoft,
-  },
-  topRight: {
-    alignItems: "flex-end",
-    gap: 2,
-    maxWidth: 160,
-  },
-});
+// ── ImgPlaceholder ────────────────────────────────────────────────────────────
 
-// ── ImgPlaceholder (real Image with gradient fallback) ──────────────────────────
-
-interface ImgPlaceholderProps {
-  height: number;
-  src?: string | null;
-  borderRadius?: number;
-  width?: number | string;
-  onPress?: () => void;
-}
-
-function ImgPlaceholder({ height, src, borderRadius = 0, width, onPress }: ImgPlaceholderProps) {
+function ImgPlaceholder({ height, src, borderRadius = 0, width, onPress }: {
+  height: number; src?: string | null; borderRadius?: number;
+  width?: number | string; onPress?: () => void;
+}) {
+  const c = useColors();
   const style: any = { height, borderRadius, overflow: "hidden" };
   if (width !== undefined) style.width = width;
 
   const content = src ? (
-    <Image
-      source={{ uri: src }}
-      style={[style, { backgroundColor: colors.ghost }]}
-      resizeMode="cover"
-    />
+    <Image source={{ uri: src }} style={[style, { backgroundColor: c.ghost }]} resizeMode="cover" />
   ) : (
     <View style={[style, { backgroundColor: "#C8BFB0", justifyContent: "center", alignItems: "center" }]}>
-      <Ionicons name="image-outline" size={24} color={colors.ghost} />
+      <Ionicons name="image-outline" size={24} color={c.ghost} />
     </View>
   );
 
   if (src && onPress) {
-    return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
-        {content}
-      </TouchableOpacity>
-    );
+    return <TouchableOpacity onPress={onPress} activeOpacity={0.9}>{content}</TouchableOpacity>;
   }
   return content;
 }
 
 // ── LinkPreview ───────────────────────────────────────────────────────────────
 
-interface LinkPreviewProps {
-  source?: string | null;
-  title: string;
-  domain?: string | null;
-  image?: string | null;
-}
-
-function LinkPreview({ source, title, domain, image }: LinkPreviewProps) {
+function LinkPreview({ source, title, domain, image }: {
+  source?: string | null; title: string; domain?: string | null; image?: string | null;
+}) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
-    <View style={linkStyles.container}>
+    <View style={styles.linkContainer}>
       <ImgPlaceholder height={60} src={image} borderRadius={6} width={60} />
-      <View style={linkStyles.right}>
-        {source ? (
-          <Text style={linkStyles.source} numberOfLines={1}>
-            {source}
-          </Text>
-        ) : null}
-        <Text style={linkStyles.title} numberOfLines={2}>
-          {title}
-        </Text>
-        {domain ? (
-          <Text style={linkStyles.domain} numberOfLines={1}>
-            {domain}
-          </Text>
-        ) : null}
+      <View style={styles.linkRight}>
+        {source ? <Text style={styles.linkSource} numberOfLines={1}>{source}</Text> : null}
+        <Text style={styles.linkTitle} numberOfLines={2}>{title}</Text>
+        {domain ? <Text style={styles.linkDomain} numberOfLines={1}>{domain}</Text> : null}
       </View>
     </View>
   );
 }
 
-const linkStyles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    backgroundColor: colors.paperDeep,
-    borderRadius: 6,
-    padding: 12,
-    marginHorizontal: 14,
-    gap: 10,
-    alignItems: "center",
-  },
-  right: { flex: 1 },
-  source: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.tiny,
-    textTransform: "uppercase",
-    color: colors.mute,
-    marginBottom: 2,
-  },
-  title: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-    lineHeight: 18,
-  },
-  domain: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.tiny,
-    color: colors.ghost,
-    marginTop: 2,
-  },
-});
-
-// ── FeedReactionBar — wraps the real ReactionBar in the InlineReactionBar slot ──
+// ── FeedReactionBar ───────────────────────────────────────────────────────────
 
 function FeedReactionBar({ item, marginTop }: { item: FeedItem; marginTop?: number }) {
-  if (!item.reactions || !item.wpId) {
-    return null;
-  }
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
+  if (!item.reactions || !item.wpId) return null;
   return (
-    <View
-      style={[
-        reactionStyles.barWrap,
-        marginTop !== undefined ? { marginTop } : undefined,
-      ]}
-    >
+    <View style={[styles.reactionBarWrap, marginTop !== undefined ? { marginTop } : undefined]}>
       <ReactionBar
         postId={item.wpId}
         initialCounts={item.reactions}
@@ -458,25 +661,10 @@ function FeedReactionBar({ item, marginTop }: { item: FeedItem; marginTop?: numb
   );
 }
 
-const reactionStyles = StyleSheet.create({
-  barWrap: {
-    paddingHorizontal: 14,
-    paddingBottom: 8,
-  },
-});
+// ── GalleryStrip ──────────────────────────────────────────────────────────────
 
-// ── Gallery (horizontal carousel with lightbox) ─────────────────────────────────
-
-function GalleryStrip({
-  images,
-  height,
-  width,
-  onTap,
-}: {
-  images: string[];
-  height: number;
-  width: number;
-  onTap: (idx: number) => void;
+function GalleryStrip({ images, height, width, onTap }: {
+  images: string[]; height: number; width: number; onTap: (idx: number) => void;
 }) {
   return (
     <ScrollView
@@ -486,14 +674,7 @@ function GalleryStrip({
       contentContainerStyle={{ gap: 8, paddingHorizontal: 14 }}
     >
       {images.map((src, i) => (
-        <ImgPlaceholder
-          key={i}
-          height={height}
-          src={src}
-          borderRadius={6}
-          width={width}
-          onPress={() => onTap(i)}
-        />
+        <ImgPlaceholder key={i} height={height} src={src} borderRadius={6} width={width} onPress={() => onTap(i)} />
       ))}
     </ScrollView>
   );
@@ -503,51 +684,31 @@ function GalleryStrip({
 
 // PulseCard (A1)
 function PulseCard({ item, onPress }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   return (
     <>
-      <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
+      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <View style={{ padding: 14 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <BadgePill
-              label={item.arm ?? "Pulse"}
-              bg={colors.badgePulseBg}
-              color={colors.badgePulseText}
-            />
-            {item.category ? <Text style={cardStyles.eyebrow}>{item.category}</Text> : null}
-            <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
+            <BadgePill label={item.arm ?? "Pulse"} bg={c.badgePulseBg} color={c.badgePulseText} styles={styles} />
+            {item.category ? <Text style={styles.eyebrow}>{item.category}</Text> : null}
+            <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
           </View>
-
-          <Text style={[cardStyles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>
-            {item.title}
-          </Text>
-
+          <Text style={[styles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>{item.title}</Text>
           {item.excerpt ? (
-            <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={2}>
-              {item.excerpt}
-            </Text>
+            <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={2}>{item.excerpt}</Text>
           ) : null}
-
           <View style={{ marginTop: 10 }}>
-            <ImgPlaceholder
-              height={172}
-              src={item.image}
-              onPress={item.image ? () => setLightboxOpen(true) : undefined}
-            />
+            <ImgPlaceholder height={172} src={item.image} onPress={item.image ? () => setLightboxOpen(true) : undefined} />
           </View>
-
-          {item.source ? (
-            <Text style={[cardStyles.sourceText, { marginTop: 8 }]}>📰 {item.source}</Text>
-          ) : null}
+          {item.source ? <Text style={[styles.sourceText, { marginTop: 8 }]}>📰 {item.source}</Text> : null}
         </View>
         <FeedReactionBar item={item} />
       </TouchableOpacity>
       {item.image && (
-        <ImageLightbox
-          visible={lightboxOpen}
-          images={[item.image]}
-          onClose={() => setLightboxOpen(false)}
-        />
+        <ImageLightbox visible={lightboxOpen} images={[item.image]} onClose={() => setLightboxOpen(false)} />
       )}
     </>
   );
@@ -555,35 +716,24 @@ function PulseCard({ item, onPress }: FeedCardProps) {
 
 // EditorialCard (A2)
 function EditorialCard({ item, onPress }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
-    <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <View style={{ padding: 14 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <BadgePill label="Editorial" bg={colors.ochre} color={colors.paper} />
-          {item.category ? <Text style={cardStyles.eyebrow}>{item.category}</Text> : null}
-          <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
+          <BadgePill label="Editorial" bg={c.ochre} color={c.paper} styles={styles} />
+          {item.category ? <Text style={styles.eyebrow}>{item.category}</Text> : null}
+          <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
         </View>
-
-        <Text style={[cardStyles.cardTitleXl, { marginTop: 10 }]} numberOfLines={2}>
-          {item.title}
-        </Text>
-
+        <Text style={[styles.cardTitleXl, { marginTop: 10 }]} numberOfLines={2}>{item.title}</Text>
         {item.excerpt ? (
-          <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={3}>
-            {item.excerpt}
-          </Text>
+          <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={3}>{item.excerpt}</Text>
         ) : null}
-
-        <Text style={[cardStyles.readMore, { marginTop: 8 }]}>Read more →</Text>
-
+        <Text style={[styles.readMore, { marginTop: 8 }]}>Read more →</Text>
         {item.source || item.ogTitle ? (
           <View style={{ marginTop: 8, marginHorizontal: -14 }}>
-            <LinkPreview
-              source={item.source}
-              title={item.ogTitle ?? item.title}
-              domain={item.sourceUrl ?? undefined}
-              image={item.ogImage}
-            />
+            <LinkPreview source={item.source} title={item.ogTitle ?? item.title} domain={item.sourceUrl ?? undefined} image={item.ogImage} />
           </View>
         ) : null}
       </View>
@@ -591,181 +741,83 @@ function EditorialCard({ item, onPress }: FeedCardProps) {
   );
 }
 
-// HappeningCard (A3) — full-bleed hero + detail modal on body tap
+// HappeningCard (A3)
 function HappeningCard({ item, onPress }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [modalOpen, setModalOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
     <>
-      <View style={cardStyles.card}>
-        {/* Colored header / hero */}
+      <View style={styles.card}>
         {item.image ? (
           <TouchableOpacity onPress={() => setLightboxOpen(true)} activeOpacity={0.92}>
-            <Image source={{ uri: item.image }} style={happeningStyles.hero} resizeMode="cover" />
+            <Image source={{ uri: item.image }} style={styles.happeningHero} resizeMode="cover" />
           </TouchableOpacity>
         ) : (
-          <View style={happeningStyles.header}>
-            <BadgePill
-              label="Happening"
-              bg={colors.badgeHappeningBg}
-              color={colors.badgeHappeningText}
-            />
+          <View style={styles.happeningHeader}>
+            <BadgePill label="Happening" bg={c.badgeHappeningBg} color={c.badgeHappeningText} styles={styles} />
           </View>
         )}
-
         <TouchableOpacity onPress={() => setModalOpen(true)} activeOpacity={0.92}>
-          <View style={happeningStyles.content}>
+          <View style={styles.happeningContent}>
             {item.image ? (
-              <BadgePill
-                label="Happening"
-                bg={colors.badgeHappeningBg}
-                color={colors.badgeHappeningText}
-              />
+              <BadgePill label="Happening" bg={c.badgeHappeningBg} color={c.badgeHappeningText} styles={styles} />
             ) : null}
-            <Text style={[happeningStyles.title, item.image ? { marginTop: 8 } : null]} numberOfLines={2}>
-              {item.title}
-            </Text>
-
+            <Text style={[styles.happeningTitle, item.image ? { marginTop: 8 } : null]} numberOfLines={2}>{item.title}</Text>
             {item.eventDate ? (
-              <View style={happeningStyles.metaRow}>
-                <Ionicons name="calendar-outline" size={14} color={colors.gold} />
-                <Text style={happeningStyles.metaText}>{item.eventDate}</Text>
+              <View style={styles.happeningMetaRow}>
+                <Ionicons name="calendar-outline" size={14} color={c.gold} />
+                <Text style={styles.happeningMetaText}>{item.eventDate}</Text>
               </View>
             ) : null}
-
             {item.location || item.city ? (
-              <View style={[happeningStyles.metaRow, { marginTop: 4 }]}>
-                <Ionicons name="location-outline" size={14} color={colors.gold} />
-                <Text style={happeningStyles.metaText} numberOfLines={1}>
+              <View style={[styles.happeningMetaRow, { marginTop: 4 }]}>
+                <Ionicons name="location-outline" size={14} color={c.gold} />
+                <Text style={styles.happeningMetaText} numberOfLines={1}>
                   {[item.location, item.city].filter(Boolean).join(", ")}
                 </Text>
               </View>
             ) : null}
-
-            <View style={happeningStyles.footer}>
-              <Text style={happeningStyles.admission}>{item.admission ?? "Free admission"}</Text>
-              <View style={happeningStyles.rsvpBtn}>
-                <Text style={happeningStyles.rsvpText}>See details</Text>
+            <View style={styles.happeningFooter}>
+              <Text style={styles.happeningAdmission}>{item.admission ?? "Free admission"}</Text>
+              <View style={styles.happeningRsvpBtn}>
+                <Text style={styles.happeningRsvpText}>See details</Text>
               </View>
             </View>
           </View>
         </TouchableOpacity>
       </View>
-
       {item.image && (
-        <ImageLightbox
-          visible={lightboxOpen}
-          images={[item.image]}
-          onClose={() => setLightboxOpen(false)}
-        />
+        <ImageLightbox visible={lightboxOpen} images={[item.image]} onClose={() => setLightboxOpen(false)} />
       )}
       <HappeningDetailModal visible={modalOpen} item={item} onClose={() => setModalOpen(false)} />
     </>
   );
 }
 
-const happeningStyles = StyleSheet.create({
-  header: {
-    height: 160,
-    backgroundColor: "#7C3AED",
-    padding: 12,
-  },
-  hero: {
-    width: "100%",
-    height: 200,
-  },
-  content: {
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 14,
-  },
-  title: {
-    fontFamily: fonts.serifBold,
-    fontSize: fontSize.lg,
-    color: colors.ink,
-    lineHeight: 26,
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 8,
-  },
-  metaText: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.sm,
-    color: colors.mute,
-    flex: 1,
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 12,
-  },
-  admission: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.xs,
-    color: colors.ghost,
-  },
-  rsvpBtn: {
-    borderWidth: 1,
-    borderColor: colors.ochre,
-    borderRadius: radius.full,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  rsvpText: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.xs,
-    color: colors.ochre,
-  },
-});
-
-// DirectoryCard (A4) — detail modal on body tap
+// DirectoryCard (A4)
 function DirectoryCard({ item }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [modalOpen, setModalOpen] = useState(false);
   return (
     <>
-      <TouchableOpacity style={cardStyles.card} onPress={() => setModalOpen(true)} activeOpacity={0.92}>
+      <TouchableOpacity style={styles.card} onPress={() => setModalOpen(true)} activeOpacity={0.92}>
         <View style={{ padding: 14 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <BadgePill
-              label="Directory"
-              bg={colors.badgeDirectoryBg}
-              color={colors.badgeDirectoryText}
-            />
+            <BadgePill label="Directory" bg={c.badgeDirectoryBg} color={c.badgeDirectoryText} styles={styles} />
             {item.entryType || item.city ? (
-              <Text style={cardStyles.eyebrow}>
-                {[item.entryType, item.city].filter(Boolean).join(" · ")}
-              </Text>
+              <Text style={styles.eyebrow}>{[item.entryType, item.city].filter(Boolean).join(" · ")}</Text>
             ) : null}
-            <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
+            <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
           </View>
-
-          <Text style={[cardStyles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>
-            {item.title}
-          </Text>
-
+          <Text style={[styles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>{item.title}</Text>
           {item.excerpt ? (
-            <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={3}>
-              {item.excerpt}
-            </Text>
+            <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={3}>{item.excerpt}</Text>
           ) : null}
-
-          <Text style={[cardStyles.successLink, { marginTop: 8 }]}>View entry →</Text>
-
-          {item.source || item.ogTitle ? (
-            <View style={{ marginTop: 8, marginHorizontal: -14 }}>
-              <LinkPreview
-                source={item.source}
-                title={item.ogTitle ?? item.title}
-                domain={item.sourceUrl ?? undefined}
-                image={item.ogImage}
-              />
-            </View>
-          ) : null}
+          <Text style={[styles.successLink, { marginTop: 8 }]}>View entry →</Text>
         </View>
         <FeedReactionBar item={item} />
       </TouchableOpacity>
@@ -774,19 +826,20 @@ function DirectoryCard({ item }: FeedCardProps) {
   );
 }
 
-// BasicPostCard (B1 / B2)
+// BasicPostCard (B1)
 function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const hasLink = !!(item.ogTitle || item.ogImage || item.source);
   const rawBody = item.body ?? item.excerpt ?? item.title ?? "";
-  // Strip the link URL from body text when an OG snippet is shown below.
   const displayBody = hasLink ? (stripLinkFromBody(rawBody, item.sourceUrl) ?? rawBody) : rawBody;
   return (
     <>
-      <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
+      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <HashtagText text={displayBody} style={cardStyles.cardBody} />
+          <HashtagText text={displayBody} style={styles.cardBody} />
         </View>
         {item.image ? (
           <View style={{ marginTop: 10 }}>
@@ -794,50 +847,35 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
           </View>
         ) : hasLink ? (
           <View style={{ marginTop: 10 }}>
-            <LinkPreview
-              source={item.source}
-              title={item.ogTitle ?? item.title}
-              domain={item.sourceUrl ?? undefined}
-              image={item.ogImage}
-            />
+            <LinkPreview source={item.source} title={item.ogTitle ?? item.title} domain={item.sourceUrl ?? undefined} image={item.ogImage} />
           </View>
         ) : null}
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
       {item.image && (
-        <ImageLightbox
-          visible={lightboxOpen}
-          images={[item.image]}
-          onClose={() => setLightboxOpen(false)}
-        />
+        <ImageLightbox visible={lightboxOpen} images={[item.image]} onClose={() => setLightboxOpen(false)} />
       )}
     </>
   );
 }
 
-// HiddenGemCard (B3)
+// HiddenGemCard (B2)
 function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const gallery = item.galleryImages ?? [];
   return (
     <>
-      <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
+      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <BadgePill
-            label={`Hidden Gem ${starsText(item.starRating)}`}
-            bg={colors.templateGemBg}
-            color={colors.templateGemText}
-          />
-          {item.locationName ? (
-            <Text style={[cardStyles.locationText, { marginTop: 6 }]}>📍 {item.locationName}</Text>
+          <BadgePill label={`Hidden Gem ${starsText(item.starRating)}`} bg={c.templateGemBg} color={c.templateGemText} styles={styles} />
+          {(item.placeLocation ?? item.locationName) ? (
+            <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.placeLocation ?? item.locationName}</Text>
           ) : null}
           <View style={{ marginTop: 8 }}>
-            <HashtagText
-              text={item.body ?? item.excerpt ?? item.title ?? ""}
-              numberOfLines={2}
-              style={cardStyles.cardBody}
-            />
+            <HashtagText text={item.body ?? item.excerpt ?? item.title ?? ""} numberOfLines={2} style={styles.cardBody} />
           </View>
         </View>
         {gallery.length > 0 ? (
@@ -845,136 +883,80 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
         ) : null}
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
-      <ImageLightbox
-        visible={lightboxIdx !== null}
-        images={gallery}
-        initialIndex={lightboxIdx ?? 0}
-        onClose={() => setLightboxIdx(null)}
-      />
+      <ImageLightbox visible={lightboxIdx !== null} images={gallery} initialIndex={lightboxIdx ?? 0} onClose={() => setLightboxIdx(null)} />
     </>
   );
 }
 
-// CulturalTakeCard (B4)
+// CulturalTakeCard (B3)
 function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
-  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
-    <>
-      <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
-        <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
-        <View style={{ paddingHorizontal: 14 }}>
-          <BadgePill
-            label="Cultural Take"
-            bg={colors.templateTakeBg}
-            color={colors.templateTakeText}
-          />
-          {item.locationName ? (
-            <Text style={[cardStyles.locationText, { marginTop: 6 }]}>📍 {item.locationName}</Text>
-          ) : null}
-          <View style={{ marginTop: 8 }}>
-            <HashtagText
-              text={item.body ?? item.excerpt ?? item.title ?? ""}
-              style={cardStyles.cardBody}
-            />
-          </View>
-          <View style={{ marginTop: 10 }}>
-            <ImgPlaceholder
-              height={180}
-              src={item.image}
-              onPress={item.image ? () => setLightboxOpen(true) : undefined}
-            />
-          </View>
-        </View>
-        <FeedReactionBar item={item} marginTop={10} />
-      </TouchableOpacity>
-      {item.image && (
-        <ImageLightbox
-          visible={lightboxOpen}
-          images={[item.image]}
-          onClose={() => setLightboxOpen(false)}
-        />
-      )}
-    </>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
+      <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
+      <View style={{ paddingHorizontal: 14 }}>
+        <BadgePill label="Cultural Take" bg={c.templateTakeBg} color={c.templateTakeText} styles={styles} />
+        {(item.culturalTakeHeadline ?? item.title) ? (
+          <Text style={[styles.cardTitle, { marginTop: 8, fontStyle: "italic" }]} numberOfLines={2}>
+            {item.culturalTakeHeadline ?? item.title}
+          </Text>
+        ) : null}
+        {(item.body ?? item.excerpt) ? (
+          <HashtagText text={item.body ?? item.excerpt ?? ""} numberOfLines={2} style={[styles.cardBody, { marginTop: 6 }]} />
+        ) : null}
+      </View>
+      <FeedReactionBar item={item} marginTop={10} />
+    </TouchableOpacity>
   );
 }
 
-// FoodReviewCard (B5)
+// FoodReviewCard (B4)
 function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const gallery = item.galleryImages ?? [];
   return (
     <>
-      <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
+      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <BadgePill
-            label={`Food Review${item.foodDishName ? " · " + item.foodDishName : ""}`}
-            bg={colors.templateFoodBg}
-            color={colors.templateFoodText}
-          />
-          {item.locationName ? (
-            <Text style={[cardStyles.locationText, { marginTop: 6 }]}>📍 {item.locationName}</Text>
+          <BadgePill label={`Food Review${item.foodDishName ? " · " + item.foodDishName : ""}`} bg={c.templateFoodBg} color={c.templateFoodText} styles={styles} />
+          {(item.placeLocation ?? item.locationName) ? (
+            <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.placeLocation ?? item.locationName}</Text>
           ) : null}
-          <Text style={[cardStyles.cardBody, { marginTop: 8 }]} numberOfLines={3}>
+          <Text style={[styles.cardBody, { marginTop: 8 }]} numberOfLines={3}>
             {item.body ?? item.excerpt ?? ""}
           </Text>
-
-          {/* Star ratings grid */}
-          <View style={foodStyles.ratingsGrid}>
+          <View style={styles.foodRatingsGrid}>
             {[
               { label: "Taste", value: item.foodRatingTaste },
               { label: "Value", value: item.foodRatingValue },
-              { label: "Vibe", value: item.foodRatingVibe },
+              { label: "Vibe",  value: item.foodRatingVibe },
             ].map(({ label, value }) => (
-              <View key={label} style={foodStyles.ratingRow}>
-                <Text style={foodStyles.ratingLabel}>{label}</Text>
-                <Text style={foodStyles.ratingStars}>{starsText(value)}</Text>
-                <Text style={foodStyles.ratingNum}>{value ?? "—"}</Text>
+              <View key={label} style={styles.foodRatingRow}>
+                <Text style={styles.foodRatingLabel}>{label}</Text>
+                <Text style={styles.foodRatingStars}>{starsText(value)}</Text>
+                <Text style={styles.foodRatingNum}>{value ?? "—"}</Text>
               </View>
             ))}
           </View>
         </View>
-
         {gallery.length > 0 ? (
           <GalleryStrip images={gallery} height={140} width={200} onTap={(i) => setLightboxIdx(i)} />
         ) : null}
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
-      <ImageLightbox
-        visible={lightboxIdx !== null}
-        images={gallery}
-        initialIndex={lightboxIdx ?? 0}
-        onClose={() => setLightboxIdx(null)}
-      />
+      <ImageLightbox visible={lightboxIdx !== null} images={gallery} initialIndex={lightboxIdx ?? 0} onClose={() => setLightboxIdx(null)} />
     </>
   );
 }
 
-const foodStyles = StyleSheet.create({
-  ratingsGrid: { marginTop: 10, gap: 4 },
-  ratingRow: { flexDirection: "row", alignItems: "center", height: 24 },
-  ratingLabel: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.sm,
-    color: colors.mute,
-    width: 60,
-  },
-  ratingStars: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.xs,
-    color: colors.gold,
-    flex: 1,
-  },
-  ratingNum: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.xs,
-    color: colors.gold,
-    marginLeft: "auto",
-  },
-});
-
-// CreativeShowcaseCard (B6)
+// CreativeShowcaseCard (B5)
 function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const gallery = item.galleryImages ?? [];
@@ -982,21 +964,21 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
 
   return (
     <>
-      <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
+      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <BadgePill
-            label="Creative Showcase"
-            bg={colors.templateShowcaseBg}
-            color={colors.templateShowcaseText}
-          />
+          <BadgePill label="Creative Showcase" bg={c.templateShowcaseBg} color={c.templateShowcaseText} styles={styles} />
+          {item.showcaseMedium ? (
+            <View style={{ marginTop: 4 }}>
+              <BadgePill label={item.showcaseMedium} bg={c.paperDeep} color={c.inkSoft} styles={styles} />
+            </View>
+          ) : null}
         </View>
         {item.body || item.excerpt ? (
           <View style={{ paddingHorizontal: 14, marginTop: 8 }}>
-            <HashtagText text={item.body ?? item.excerpt ?? ""} style={cardStyles.cardBody} />
+            <HashtagText text={item.body ?? item.excerpt ?? ""} style={styles.cardBody} />
           </View>
         ) : null}
-
         {count > 0 ? (
           <>
             <ScrollView
@@ -1010,64 +992,33 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
               }}
             >
               {gallery.map((src, i) => (
-                <ImgPlaceholder
-                  key={i}
-                  height={200}
-                  src={src}
-                  borderRadius={6}
-                  width={260}
-                  onPress={() => setLightboxIdx(i)}
-                />
+                <ImgPlaceholder key={i} height={200} src={src} borderRadius={6} width={260} onPress={() => setLightboxIdx(i)} />
               ))}
             </ScrollView>
             {count > 1 ? (
-              <View style={showcaseStyles.dots}>
+              <View style={styles.showcaseDots}>
                 {gallery.map((_, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      showcaseStyles.dot,
-                      i === activeIdx ? showcaseStyles.dotActive : showcaseStyles.dotInactive,
-                    ]}
-                  />
+                  <View key={i} style={[styles.showcaseDot, i === activeIdx ? styles.showcaseDotActive : styles.showcaseDotInactive]} />
                 ))}
               </View>
             ) : null}
           </>
         ) : null}
-
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
-      <ImageLightbox
-        visible={lightboxIdx !== null}
-        images={gallery}
-        initialIndex={lightboxIdx ?? 0}
-        onClose={() => setLightboxIdx(null)}
-      />
+      <ImageLightbox visible={lightboxIdx !== null} images={gallery} initialIndex={lightboxIdx ?? 0} onClose={() => setLightboxIdx(null)} />
     </>
   );
 }
 
-const showcaseStyles = StyleSheet.create({
-  dots: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 5,
-    marginTop: 8,
-  },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  dotActive: { backgroundColor: colors.ochre },
-  dotInactive: { backgroundColor: colors.ghost },
-});
-
-// PollCard (B7) — live voting via API
+// PollCard (B6)
 function PollCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const initialOptions = item.pollOptions ?? [];
   const [localOpts, setLocalOpts] = useState<PollOption[]>(initialOptions);
   const [voted, setVoted] = useState(false);
   const expired = item.pollExpiresAt ? new Date(item.pollExpiresAt) < new Date() : false;
-
   const total = localOpts.reduce((s, o) => s + o.votes, 0);
   const maxVotes = localOpts.reduce((m, o) => Math.max(m, o.votes), 0);
 
@@ -1076,10 +1027,7 @@ function PollCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) 
     setVoted(true);
     setLocalOpts((prev) => prev.map((o, i) => (i === idx ? { ...o, votes: o.votes + 1 } : o)));
     try {
-      await api.post(`${MOBILE_API}/community/poll-vote`, {
-        post_id: Number(item.wpId),
-        option_index: idx,
-      });
+      await api.post(`${MOBILE_API}/community/poll-vote`, { post_id: Number(item.wpId), option_index: idx });
     } catch {
       setVoted(false);
       setLocalOpts(initialOptions);
@@ -1087,51 +1035,30 @@ function PollCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) 
   };
 
   return (
-    <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
-        <Text style={pollStyles.question}>{item.title}</Text>
+        <Text style={styles.pollQuestion}>{item.title}</Text>
         {localOpts.map((opt, i) => {
           const pct = total > 0 ? Math.round((opt.votes / total) * 100) : 0;
           const isWinner = opt.votes === maxVotes && maxVotes > 0;
           const showResults = voted || expired;
           return (
-            <TouchableOpacity
-              key={i}
-              style={pollStyles.optionWrap}
-              onPress={() => vote(i)}
-              disabled={voted || expired}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity key={i} style={styles.pollOptionWrap} onPress={() => vote(i)} disabled={voted || expired} activeOpacity={0.8}>
               {showResults ? (
-                <View
-                  style={[
-                    pollStyles.fillBar,
-                    {
-                      width: `${pct}%`,
-                      backgroundColor: isWinner ? "rgba(197,73,31,0.10)" : colors.paperDeep,
-                    },
-                  ]}
-                />
+                <View style={[styles.pollFillBar, { width: `${pct}%`, backgroundColor: isWinner ? "rgba(197,73,31,0.10)" : c.paperDeep }]} />
               ) : null}
-              <View style={pollStyles.optionInner}>
-                <Text style={pollStyles.optionLabel} numberOfLines={1}>
-                  {opt.text}
-                </Text>
+              <View style={styles.pollOptionInner}>
+                <Text style={styles.pollOptionLabel} numberOfLines={1}>{opt.text}</Text>
                 {showResults ? (
-                  <Text
-                    style={[pollStyles.optionPct, isWinner ? pollStyles.optionPctWinner : undefined]}
-                  >
-                    {pct}%
-                  </Text>
+                  <Text style={[styles.pollOptionPct, isWinner ? styles.pollOptionPctWinner : undefined]}>{pct}%</Text>
                 ) : null}
               </View>
             </TouchableOpacity>
           );
         })}
-        <Text style={pollStyles.meta}>
-          {total} vote{total !== 1 ? "s" : ""}
-          {expired ? " · Poll closed" : voted ? " · You voted" : ""}
+        <Text style={styles.pollMeta}>
+          {total} vote{total !== 1 ? "s" : ""}{expired ? " · Poll closed" : voted ? " · You voted" : ""}
         </Text>
       </View>
       <FeedReactionBar item={item} marginTop={10} />
@@ -1139,92 +1066,31 @@ function PollCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) 
   );
 }
 
-const pollStyles = StyleSheet.create({
-  question: {
-    fontFamily: fonts.serifBold,
-    fontSize: fontSize.lg,
-    color: colors.ink,
-    lineHeight: 26,
-    marginBottom: 10,
-  },
-  optionWrap: {
-    height: 48,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: colors.rule,
-    overflow: "hidden",
-    position: "relative",
-    marginBottom: 6,
-  },
-  fillBar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    height: "100%",
-    minWidth: 4,
-  },
-  optionInner: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-  },
-  optionLabel: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-    flex: 1,
-  },
-  optionPct: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.xs,
-    color: colors.ghost,
-  },
-  optionPctWinner: {
-    color: colors.ochre,
-  },
-  meta: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.sm,
-    color: colors.mute,
-    marginTop: 4,
-  },
-});
-
-// ItineraryCard (B8)
+// ItineraryCard (B7)
 function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
-    <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
-        <BadgePill
-          label="Weekend Route"
-          bg={colors.templateRouteBg}
-          color={colors.templateRouteText}
-        />
-        {item.city ? (
-          <Text style={[cardStyles.locationText, { marginTop: 6 }]}>📍 {item.city}</Text>
+        <BadgePill label="Weekend Route" bg={c.templateRouteBg} color={c.templateRouteText} styles={styles} />
+        {(item.itineraryCity ?? item.city) ? (
+          <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.itineraryCity ?? item.city}</Text>
         ) : null}
         {item.body || item.excerpt ? (
-          <Text style={[cardStyles.cardBody, { marginTop: 8 }]} numberOfLines={2}>
-            {item.body ?? item.excerpt}
-          </Text>
+          <Text style={[styles.cardBody, { marginTop: 8 }]} numberOfLines={2}>{item.body ?? item.excerpt}</Text>
         ) : null}
-
         {item.itineraryStops && item.itineraryStops.length > 0 ? (
           <View style={{ marginTop: 10 }}>
             {item.itineraryStops.map((stop, i) => (
-              <View key={i} style={itinStyles.stopRow}>
-                <View style={itinStyles.stopNum}>
-                  <Text style={itinStyles.stopNumText}>{i + 1}</Text>
+              <View key={i} style={styles.itinStopRow}>
+                <View style={styles.itinStopNum}>
+                  <Text style={styles.itinStopNumText}>{i + 1}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={itinStyles.stopName}>{stop.name}</Text>
-                  {stop.note ? <Text style={itinStyles.stopNote}>{stop.note}</Text> : null}
+                  <Text style={styles.itinStopName}>{stop.name}</Text>
+                  {stop.note ? <Text style={styles.itinStopNote}>{stop.note}</Text> : null}
                 </View>
               </View>
             ))}
@@ -1236,55 +1102,21 @@ function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
   );
 }
 
-const itinStyles = StyleSheet.create({
-  stopRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 8,
-    alignItems: "flex-start",
-  },
-  stopNum: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.gold,
-    justifyContent: "center",
-    alignItems: "center",
-    flexShrink: 0,
-  },
-  stopNumText: {
-    fontFamily: fonts.monoBold,
-    fontSize: fontSize.tiny,
-    color: colors.paper,
-  },
-  stopName: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-  },
-  stopNote: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.xs,
-    color: colors.mute,
-    marginTop: 1,
-  },
-});
-
-// QuoteCard — detail modal on tap
+// QuoteCard (C1)
 function QuoteCard({ item }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [modalOpen, setModalOpen] = useState(false);
   return (
     <>
-      <TouchableOpacity style={cardStyles.card} onPress={() => setModalOpen(true)} activeOpacity={0.92}>
-        <View style={quoteStyles.container}>
-          <Text style={quoteStyles.bigQuote}>"</Text>
-          <Text style={quoteStyles.quoteText}>{item.title}</Text>
-          <View style={quoteStyles.attribution}>
-            {item.quoteAuthor ? <Text style={quoteStyles.author}>{item.quoteAuthor}</Text> : null}
-            {item.quoteAuthor && item.quoteSource ? (
-              <Text style={quoteStyles.dot}>·</Text>
-            ) : null}
-            {item.quoteSource ? <Text style={quoteStyles.source}>{item.quoteSource}</Text> : null}
+      <TouchableOpacity style={styles.card} onPress={() => setModalOpen(true)} activeOpacity={0.92}>
+        <View style={styles.quoteContainer}>
+          <Text style={styles.bigQuote}>"</Text>
+          <Text style={styles.quoteText}>{item.title}</Text>
+          <View style={styles.quoteAttribution}>
+            {item.quoteAuthor ? <Text style={styles.quoteAuthor}>{item.quoteAuthor}</Text> : null}
+            {item.quoteAuthor && item.quoteSource ? <Text style={styles.quoteDot}>·</Text> : null}
+            {item.quoteSource ? <Text style={styles.quoteSource}>{item.quoteSource}</Text> : null}
           </View>
         </View>
         <FeedReactionBar item={item} marginTop={4} />
@@ -1293,109 +1125,6 @@ function QuoteCard({ item }: FeedCardProps) {
     </>
   );
 }
-
-const quoteStyles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingTop: 24,
-    position: "relative",
-  },
-  bigQuote: {
-    position: "absolute",
-    top: 8,
-    left: 14,
-    fontFamily: fonts.serifBold,
-    fontSize: 52,
-    color: colors.ghost,
-    lineHeight: 40,
-  },
-  quoteText: {
-    fontFamily: fonts.serif,
-    fontStyle: "italic",
-    fontSize: fontSize.xl,
-    color: colors.ink,
-    lineHeight: 30,
-    marginLeft: 8,
-    marginTop: 8,
-  },
-  attribution: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 12,
-  },
-  author: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-  },
-  dot: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.sm,
-    color: colors.mute,
-  },
-  source: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.xs,
-    color: colors.ghost,
-  },
-});
-
-// ── Shared card styles ─────────────────────────────────────────────────────────
-
-const cardStyles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.paper,
-    borderRadius: 12,
-    marginHorizontal: 16,
-    overflow: "hidden",
-    ...shadows.card,
-  },
-  eyebrow: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.xs,
-    color: colors.mute,
-    flex: 1,
-  },
-  timeRight: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.xs,
-    color: colors.ghost,
-    marginLeft: "auto",
-  },
-  cardTitle: {
-    fontFamily: fonts.serifBold,
-    fontSize: fontSize.lg,
-    color: colors.ink,
-    lineHeight: 26,
-  },
-  cardBody: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    lineHeight: 20,
-  },
-  readMore: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.sm,
-    color: colors.ochre,
-  },
-  successLink: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.sm,
-    color: colors.success,
-  },
-  sourceText: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.tiny,
-    color: colors.ghost,
-  },
-  locationText: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.xs,
-    color: colors.mute,
-  },
-});
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
@@ -1410,20 +1139,13 @@ export default function FeedItemCard(props: FeedCardProps) {
 
   if (item.type === "community") {
     switch (item.templateType) {
-      case "hidden-gem":
-        return <HiddenGemCard {...props} />;
-      case "cultural-take":
-        return <CulturalTakeCard {...props} />;
-      case "food-review":
-        return <FoodReviewCard {...props} />;
-      case "creative-showcase":
-        return <CreativeShowcaseCard {...props} />;
-      case "poll":
-        return <PollCard {...props} />;
-      case "itinerary":
-        return <ItineraryCard {...props} />;
-      default:
-        return <BasicPostCard {...props} />;
+      case "hidden-gem":      return <HiddenGemCard {...props} />;
+      case "cultural-take":  return <CulturalTakeCard {...props} />;
+      case "food-review":    return <FoodReviewCard {...props} />;
+      case "creative-showcase": return <CreativeShowcaseCard {...props} />;
+      case "poll":           return <PollCard {...props} />;
+      case "itinerary":      return <ItineraryCard {...props} />;
+      default:               return <BasicPostCard {...props} />;
     }
   }
 
