@@ -4,7 +4,7 @@ import {
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert, Image,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -18,20 +18,16 @@ import PollBuilder, { PollDraft } from "../../components/composer/PollBuilder";
 import ItineraryBuilder, { StopDraft } from "../../components/composer/ItineraryBuilder";
 import DirectorySearch from "../../components/composer/DirectorySearch";
 
-const PROXY = "https://themoveee.com/api";
+import { TEMPLATE_DEFS } from "../../components/community/TemplatePickerSheet";
+import type { TemplateId } from "../../components/community/TemplatePickerSheet";
+import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
 
-// ── Template metadata ─────────────────────────────────────────────────────────
-type TemplateId =
-  | "post" | "hidden-gem" | "cultural-take" | "food-review"
-  | "creative-showcase" | "poll" | "itinerary" | "event" | "quote";
+const PROXY = "https://themoveee.com/api";
 
 interface TemplateMeta {
   id: TemplateId;
-  label: string;
-  emoji: string;
   minText: number;
   maxText: number;
-  description: string;
   chips: string[];
   placeholder: string;
   showPhoto: boolean;
@@ -42,64 +38,61 @@ interface TemplateMeta {
 
 const TEMPLATES: TemplateMeta[] = [
   {
-    id: "post", label: "Post", emoji: "✏️", minText: 1, maxText: 3000,
-    description: "Share news, a link, or a quick thought from your cultural world.",
+    id: "post", minText: 1, maxText: 3000,
     chips: ["Hot take:", "Just saw that", "Anyone else noticed"],
     placeholder: "What's on your cultural mind?",
     showPhoto: true, showAt: true, showLocation: false, multiPhoto: true,
   },
   {
-    id: "hidden-gem", label: "Hidden Gem", emoji: "💎", minText: 50, maxText: 500,
-    description: "Recommend a place worth discovering — hidden spots, local favourites, underrated venues.",
+    id: "hidden-gem", minText: 50, maxText: 500,
     chips: ["Hidden gem alert:", "Not enough people know about", "If you haven't been to"],
     placeholder: "Tell people why this place is special…",
     showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
   },
   {
-    id: "cultural-take", label: "Cultural Take", emoji: "💬", minText: 100, maxText: 1000,
-    description: "Share a cultural opinion — a book, film, event, or idea worth discussing.",
+    id: "cultural-take", minText: 100, maxText: 1000,
     chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"],
     placeholder: "Your take on the culture…",
-    showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
+    showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
   },
   {
-    id: "food-review", label: "Food Review", emoji: "🍽️", minText: 50, maxText: 500,
-    description: "Review a dish or restaurant. Rate the taste, value, and vibe.",
+    id: "food-review", minText: 50, maxText: 500,
     chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"],
     placeholder: "What did you eat and what did you think?",
     showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
   },
   {
-    id: "creative-showcase", label: "Creative Showcase", emoji: "🎨", minText: 0, maxText: 500,
-    description: "Share your creative work — art, photography, design, or music.",
+    id: "book-review", minText: 50, maxText: 800,
+    chips: ["Finished it and honestly:", "Had high hopes but", "The kind of book that"],
+    placeholder: "What did you think of the book? Who would love it?",
+    showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
+  },
+  {
+    id: "creative-showcase", minText: 0, maxText: 500,
     chips: ["Working on something:", "New piece:", "Behind the work:"],
     placeholder: "Tell us about the work, your process, or inspiration…",
     showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
   },
   {
-    id: "poll", label: "Poll", emoji: "📊", minText: 10, maxText: 280,
-    description: "Ask the community something. Great for settling debates or gathering opinions.",
+    id: "poll", minText: 10, maxText: 280,
     chips: ["Which is better:", "Settle this for me:", "Genuine question:"],
     placeholder: "Ask the community…",
     showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
   },
   {
-    id: "itinerary", label: "Itinerary", emoji: "🗺️", minText: 0, maxText: 300,
-    description: "Share a travel itinerary or a local route worth following.",
+    id: "itinerary", minText: 0, maxText: 300,
     chips: ["A perfect day in", "My go-to route:", "For first-timers in"],
     placeholder: "Set the scene — where is this route and who is it for?",
-    showPhoto: false, showAt: false, showLocation: true, multiPhoto: false,
+    showPhoto: true, showAt: false, showLocation: true, multiPhoto: true,
   },
   {
-    id: "event", label: "Event", emoji: "📅", minText: 0, maxText: 1000,
-    description: "Submit an event to the Moveee calendar — exhibitions, gigs, screenings, markets, and more.",
+    id: "event", minText: 0, maxText: 1000,
     chips: ["Opening night:", "One night only:", "Catch it before it closes:"],
     placeholder: "Describe the event — what makes it worth attending?",
-    showPhoto: true, showAt: false, showLocation: false, multiPhoto: false,
+    showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
   },
   {
-    id: "quote", label: "Quote", emoji: "✦", minText: 10, maxText: 600,
-    description: "Share a quote that moved you. Add the author and source.",
+    id: "quote", minText: 10, maxText: 600,
     chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"],
     placeholder: "The quote…",
     showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
@@ -130,10 +123,13 @@ const fmtTime = (d: Date) =>
 
 export default function NewPostScreen() {
   const nav = useNavigation<any>();
+  const route = useRoute<any>();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
-  const [template, setTemplate] = useState<TemplateId>("post");
+  // Initialise from route param set by TemplatePickerSheet
+  const [template, setTemplate] = useState<TemplateId>(route.params?.template ?? "post");
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [text, setText] = useState("");
   const [sectionTag, setSectionTag] = useState<string | null>(null);
   const [tagLocked, setTagLocked] = useState(false);
@@ -170,6 +166,7 @@ export default function NewPostScreen() {
 
   const textRef = useRef<TextInput>(null);
   const tmpl = TEMPLATES.find((t) => t.id === template)!;
+  const tmplDef = TEMPLATE_DEFS.find((t) => t.id === template)!;
 
   const handleTextChange = (v: string) => {
     setText(v);
@@ -189,7 +186,7 @@ export default function NewPostScreen() {
     setLocationVisible(false);
   }, []);
 
-  const MAX_IMAGES = 10;
+  const MAX_IMAGES = 4;
 
   const pickImages = useCallback(async (multi = false) => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -204,7 +201,7 @@ export default function NewPostScreen() {
           const newUris = result.assets.map((a) => a.uri);
           const combined = [...prev, ...newUris];
           if (combined.length > MAX_IMAGES) {
-            Alert.alert("Maximum 10 images", "You can add up to 10 images per post.");
+            Alert.alert("Maximum 4 images", "You can add up to 4 images per post.");
           }
           return combined.slice(0, MAX_IMAGES);
         });
@@ -448,7 +445,7 @@ export default function NewPostScreen() {
           <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>New Post</Text>
+          <Text style={styles.headerTitle}>New {tmplDef?.label ?? "Post"}</Text>
           <TouchableOpacity
             style={styles.headerSideBtn}
             onPress={validateAndSubmit}
@@ -461,25 +458,23 @@ export default function NewPostScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── Template selector strip ── */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.templateStrip}
-          contentContainerStyle={styles.templateStripContent}
-        >
-          {TEMPLATES.map((t) => (
-            <TouchableOpacity
-              key={t.id}
-              style={[styles.templateChip, template === t.id && styles.templateChipActive]}
-              onPress={() => switchTemplate(t.id)}
-            >
-              <Text style={[styles.templateChipText, template === t.id && styles.templateChipTextActive]}>
-                {t.emoji} {t.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {/* ── Compact template indicator bar ── */}
+        <View style={styles.templateBar}>
+          <View style={styles.templateBarLeft}>
+            <Text style={styles.templateBarEmoji}>{tmplDef?.emoji}</Text>
+            <Text style={[styles.templateBarLabel, { color: tmplDef?.color ?? c.ochre }]}>{tmplDef?.label}</Text>
+          </View>
+          <TouchableOpacity onPress={() => setPickerOpen(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Text style={styles.changeFormatText}>Change format</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Template picker sheet ── */}
+        <TemplatePickerSheet
+          visible={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(id) => { setPickerOpen(false); switchTemplate(id); }}
+        />
 
         {/* ── Scrollable body ── */}
         <ScrollView
@@ -548,7 +543,7 @@ export default function NewPostScreen() {
             <>
               {text.length === 0 && (
                 <View style={styles.guide}>
-                  <Text style={styles.guideDesc}>{tmpl.description}</Text>
+                  <Text style={styles.guideDesc}>{tmplDef?.desc ?? ""}</Text>
                   <View style={styles.chips}>
                     {tmpl.chips.map((chip) => (
                       <TouchableOpacity
@@ -915,16 +910,16 @@ function createStyles(c: ColorPalette) {
     postText:         { fontFamily: fonts.sansBold, fontSize: 14, color: c.ochre, textAlign: "right" },
     postTextDisabled: { opacity: 0.35 },
 
-    // Template strip
-    templateStrip:        { flexGrow: 0, maxHeight: 48, borderBottomWidth: 1, borderBottomColor: c.rule, backgroundColor: c.paper },
-    templateStripContent: { paddingHorizontal: space[3], alignItems: "center", gap: 6 },
-    templateChip: {
-      height: 34, paddingHorizontal: 12, borderRadius: radius.full,
-      backgroundColor: c.paperDeep, justifyContent: "center",
+    // Compact template indicator bar
+    templateBar: {
+      height: 36, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], borderBottomWidth: 1, borderBottomColor: c.rule,
+      backgroundColor: c.paperWarm,
     },
-    templateChipActive:     { backgroundColor: c.ochre },
-    templateChipText:       { fontFamily: fonts.sansBold, fontSize: 12, color: c.inkSoft },
-    templateChipTextActive: { color: "#fff" },
+    templateBarLeft:   { flexDirection: "row", alignItems: "center", gap: 6 },
+    templateBarEmoji:  { fontSize: 14, lineHeight: 18 },
+    templateBarLabel:  { fontFamily: fonts.sansBold, fontSize: 13 },
+    changeFormatText:  { fontFamily: fonts.sans, fontSize: 13, color: c.ochre },
 
     // Scroll body
     body: { padding: space[4], paddingBottom: 24 },
