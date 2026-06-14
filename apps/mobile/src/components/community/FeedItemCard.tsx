@@ -372,6 +372,86 @@ function ImgPlaceholder({ height, src, borderRadius = 0, width, onPress }: ImgPl
   return content;
 }
 
+// ── InternalLinkCard — editorial feature-image snippet (mirrors the web InternalLinkCard) ──
+
+interface InternalLinkCardProps {
+  title: string;
+  label?: string;
+  excerpt?: string;
+  image?: string | null;
+}
+
+function InternalLinkCard({ title, label = "Moveee Magazine", excerpt, image }: InternalLinkCardProps) {
+  return (
+    <View style={internalLinkStyles.container}>
+      {image ? (
+        <Image
+          source={{ uri: image }}
+          style={internalLinkStyles.image}
+          resizeMode="cover"
+        />
+      ) : null}
+      <View style={internalLinkStyles.right}>
+        <Text style={internalLinkStyles.label} numberOfLines={1}>
+          {label}
+        </Text>
+        <Text style={internalLinkStyles.title} numberOfLines={2}>
+          {title}
+        </Text>
+        {excerpt ? (
+          <Text style={internalLinkStyles.excerpt} numberOfLines={1}>
+            {excerpt}
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+const internalLinkStyles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    borderWidth: 1,
+    borderColor: colors.rule,
+    borderRadius: 8,
+    overflow: "hidden",
+    marginTop: 12,
+    backgroundColor: colors.paperWarm,
+    minHeight: 72,
+  },
+  image: {
+    width: 90,
+    flexShrink: 0,
+  },
+  right: {
+    flex: 1,
+    padding: 10,
+    justifyContent: "center",
+  },
+  label: {
+    fontFamily: fonts.monoBold,
+    fontSize: fontSize.tiny,
+    color: colors.gold,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 3,
+  },
+  title: {
+    fontFamily: fonts.sansBold,
+    fontSize: fontSize.sm,
+    color: colors.ink,
+    lineHeight: 18,
+  },
+  excerpt: {
+    fontFamily: fonts.sans,
+    fontSize: fontSize.xs,
+    color: colors.mute,
+    marginTop: 3,
+    lineHeight: 16,
+  },
+});
+
 // ── LinkPreview ───────────────────────────────────────────────────────────────
 
 interface LinkPreviewProps {
@@ -433,6 +513,58 @@ const linkStyles = StyleSheet.create({
     fontSize: fontSize.tiny,
     color: colors.ghost,
     marginTop: 2,
+  },
+});
+
+// ── PulseCard styles ──────────────────────────────────────────────────────────
+
+const pulseStyles = StyleSheet.create({
+  hero: {
+    width: "100%",
+    height: 200,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  body: {
+    padding: 14,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  regionPill: {
+    fontFamily: fonts.mono,
+    fontSize: fontSize.tiny,
+    color: colors.mute,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    borderWidth: 1,
+    borderColor: colors.rule,
+    borderRadius: radius.full,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  title: {
+    fontFamily: fonts.serifBold,
+    fontSize: 17,
+    color: colors.ink,
+    lineHeight: 24,
+    marginTop: 10,
+  },
+  excerpt: {
+    fontFamily: fonts.sans,
+    fontSize: fontSize.sm,
+    color: colors.inkSoft,
+    lineHeight: 20,
+    marginTop: 6,
+  },
+  sourceAttrib: {
+    fontFamily: fonts.mono,
+    fontSize: fontSize.tiny,
+    color: colors.mute,
+    marginTop: 8,
   },
 });
 
@@ -502,51 +634,83 @@ function GalleryStrip({
 
 // ── Card Implementations ──────────────────────────────────────────────────────
 
-// PulseCard (A1)
+// PulseCard (A1) — hero image at top, serif title, arm + category + region eyebrow row, OG preview for source links
 function PulseCard({ item, onPress }: FeedCardProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const hasHero = Boolean(item.image);
+  const hasSourcePreview = !hasHero && Boolean(item.sourceUrl || item.ogImage);
+
   return (
     <>
       <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
-        <View style={{ padding: 14 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        {/* Hero image — full-bleed at top when present */}
+        {hasHero && (
+          <TouchableOpacity
+            onPress={() => setLightboxOpen(true)}
+            activeOpacity={0.92}
+          >
+            <Image
+              source={{ uri: item.image! }}
+              style={pulseStyles.hero}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+        )}
+
+        <View style={pulseStyles.body}>
+          {/* Type badge + category/arm + region + timestamp */}
+          <View style={pulseStyles.metaRow}>
             <BadgePill
               label={item.arm ?? "Pulse"}
               bg={colors.badgePulseBg}
               color={colors.badgePulseText}
             />
-            {item.category ? <Text style={cardStyles.eyebrow}>{item.category}</Text> : null}
+            {item.category ? (
+              <Text style={cardStyles.eyebrow}>{item.category}</Text>
+            ) : null}
+            {item.region ? (
+              <Text style={pulseStyles.regionPill}>{item.region}</Text>
+            ) : null}
             <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
           </View>
 
-          <Text style={[cardStyles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>
+          {/* Title — larger serif, matches editorial weight */}
+          <Text style={pulseStyles.title} numberOfLines={3}>
             {item.title}
           </Text>
 
+          {/* Excerpt / standfirst */}
           {item.excerpt ? (
-            <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={2}>
+            <Text style={pulseStyles.excerpt} numberOfLines={hasHero ? 2 : 3}>
               {item.excerpt}
             </Text>
           ) : null}
 
-          <View style={{ marginTop: 10 }}>
-            <ImgPlaceholder
-              height={172}
-              src={item.image}
-              onPress={item.image ? () => setLightboxOpen(true) : undefined}
+          {/* Source link preview (OG snippet) — only when no hero image */}
+          {hasSourcePreview && (
+            <LinkPreview
+              source={item.source}
+              title={item.ogTitle ?? item.title}
+              domain={item.sourceUrl ?? undefined}
+              image={item.ogImage}
             />
-          </View>
+          )}
 
-          {item.source ? (
-            <Text style={[cardStyles.sourceText, { marginTop: 8 }]}>📰 {item.source}</Text>
+          {/* Source attribution line when there IS a hero but also a named source */}
+          {hasHero && item.source ? (
+            <Text style={pulseStyles.sourceAttrib} numberOfLines={1}>
+              📰 {item.source}
+            </Text>
           ) : null}
         </View>
+
         <FeedReactionBar item={item} />
       </TouchableOpacity>
-      {item.image && (
+
+      {hasHero && (
         <ImageLightbox
           visible={lightboxOpen}
-          images={[item.image]}
+          images={[item.image!]}
           onClose={() => setLightboxOpen(false)}
         />
       )}
@@ -554,41 +718,40 @@ function PulseCard({ item, onPress }: FeedCardProps) {
   );
 }
 
-// EditorialCard (A2)
+// EditorialCard (A2) — article title + excerpt + InternalLinkCard with feature image
 function EditorialCard({ item, onPress }: FeedCardProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   return (
     <>
       <TouchableOpacity style={cardStyles.card} onPress={() => setSheetOpen(true)} activeOpacity={0.92}>
         <View style={{ padding: 14 }}>
+          {/* Badges row */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             <BadgePill label="Editorial" bg={colors.ochre} color={colors.paper} />
             {item.category ? <Text style={cardStyles.eyebrow}>{item.category}</Text> : null}
             <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
           </View>
 
+          {/* Title */}
           <Text style={[cardStyles.cardTitleXl, { marginTop: 10 }]} numberOfLines={2}>
             {item.title}
           </Text>
 
+          {/* Standfirst/excerpt */}
           {item.excerpt ? (
             <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={3}>
               {item.excerpt}
             </Text>
           ) : null}
 
-          <Text style={[cardStyles.readMore, { marginTop: 8 }]}>Read more →</Text>
+          {/* Feature image snippet — mirrors InternalLinkCard on the web */}
+          <InternalLinkCard
+            title={item.title}
+            excerpt={item.excerpt}
+            image={item.image}
+          />
 
-          {item.source || item.ogTitle ? (
-            <View style={{ marginTop: 8, marginHorizontal: -14 }}>
-              <LinkPreview
-                source={item.source}
-                title={item.ogTitle ?? item.title}
-                domain={item.sourceUrl ?? undefined}
-                image={item.ogImage}
-              />
-            </View>
-          ) : null}
+          <Text style={[cardStyles.readMore, { marginTop: 10 }]}>Read article →</Text>
         </View>
       </TouchableOpacity>
       <EditorialSheet visible={sheetOpen} item={item} onClose={() => setSheetOpen(false)} />
