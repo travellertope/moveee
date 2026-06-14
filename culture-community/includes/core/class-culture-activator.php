@@ -96,6 +96,7 @@ class Culture_Activator {
             max_total int(11) NOT NULL DEFAULT 0,
             redeemed_count int(11) NOT NULL DEFAULT 0,
             status varchar(10) NOT NULL DEFAULT 'active',
+            min_rep_tier varchar(30) NOT NULL DEFAULT 'member',
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             KEY partner_dir (partner_directory_id),

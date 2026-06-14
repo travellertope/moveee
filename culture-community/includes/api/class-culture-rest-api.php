@@ -347,6 +347,17 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Nominate a member for Culture Icon (Culture Authority tier required).
+        register_rest_route( 'culture/v1', '/nominate-icon', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_nominate_icon' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'nominator_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'nominee_id'   => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Community blocklist — returns admin-configured blocked phrases for the Next.js layer.
         register_rest_route( 'culture/v1', '/community-blocklist', array(
             'methods'             => 'GET',
@@ -1732,6 +1743,44 @@ class Culture_REST_API {
             'user_id'               => $user_id,
             'username'              => get_userdata( $user_id )->user_login,
         ) );
+    }
+
+    /**
+     * POST /culture/v1/nominate-icon
+     * Allows Culture Authority (or higher) members to nominate someone for Culture Icon.
+     * Sets _culture_icon_nominated = 1 on the nominee. One nomination per nominator per day.
+     */
+    public static function handle_nominate_icon( $request ) {
+        $nominator_id = (int) $request->get_param( 'nominator_id' );
+        $nominee_id   = (int) $request->get_param( 'nominee_id' );
+
+        if ( ! get_userdata( $nominator_id ) || ! get_userdata( $nominee_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+        if ( $nominator_id === $nominee_id ) {
+            return new WP_Error( 'self_nominate', 'You cannot nominate yourself.', array( 'status' => 400 ) );
+        }
+
+        // Nominator must be Culture Authority or Culture Icon.
+        $rep       = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $nominator_id ) : 0;
+        $tier      = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation_tier( $rep, $nominator_id ) : 'member';
+        $auth_tiers = array( 'culture-authority', 'culture-icon' );
+        if ( ! in_array( $tier, $auth_tiers, true ) ) {
+            return new WP_Error( 'tier_required', 'Only Culture Authority members can nominate for Culture Icon.', array( 'status' => 403 ) );
+        }
+
+        // Rate-limit: one nomination per nominator per day.
+        $rate_key = 'culture_icon_nom_' . $nominator_id;
+        if ( get_transient( $rate_key ) ) {
+            return new WP_Error( 'rate_limited', 'You can only submit one nomination per day.', array( 'status' => 429 ) );
+        }
+        set_transient( $rate_key, 1, DAY_IN_SECONDS );
+
+        update_user_meta( $nominee_id, '_culture_icon_nominated', 1 );
+        update_user_meta( $nominee_id, '_culture_icon_nominated_by', $nominator_id );
+        update_user_meta( $nominee_id, '_culture_icon_nominated_at', current_time( 'mysql' ) );
+
+        return rest_ensure_response( array( 'success' => true, 'nominee_id' => $nominee_id ) );
     }
 
     /**
@@ -3970,8 +4019,10 @@ class Culture_REST_API {
                 'status'               => $status,
                 'partner_directory_id' => max( 0, (int) $request->get_param( 'partner_directory_id' ) ),
                 'partner_vendor_id'    => max( 0, (int) $request->get_param( 'partner_vendor_id' ) ),
+                'min_rep_tier'         => in_array( $request->get_param( 'min_rep_tier' ), array( 'member', 'culture-contributor', 'taste-maker', 'culture-authority', 'culture-icon' ), true )
+                                          ? $request->get_param( 'min_rep_tier' ) : 'member',
             ),
-            'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d' ),
+            'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d', '%s' ),
         );
     }
 }

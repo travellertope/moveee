@@ -157,6 +157,23 @@ class Culture_Perks {
         $user_id = (int) $user_id;
         $perk_id = (int) $perk_id;
 
+        // Rep tier gate.
+        $tier_order = array( 'member' => 0, 'culture-contributor' => 1, 'taste-maker' => 2, 'culture-authority' => 3, 'culture-icon' => 4 );
+        $min_tier   = $perk['min_rep_tier'] ?? 'member';
+        if ( isset( $tier_order[ $min_tier ] ) && $tier_order[ $min_tier ] > 0 ) {
+            $rep      = Culture_Gamification::get_reputation( $user_id );
+            $user_tier = Culture_Gamification::get_reputation_tier( $rep, $user_id );
+            if ( ( $tier_order[ $user_tier ] ?? 0 ) < $tier_order[ $min_tier ] ) {
+                $tier_labels = array(
+                    'culture-contributor' => 'Culture Contributor',
+                    'taste-maker'         => 'Taste Maker',
+                    'culture-authority'   => 'Culture Authority',
+                    'culture-icon'        => 'Culture Icon',
+                );
+                return new WP_Error( 'rep_tier_required', sprintf( 'This perk requires %s status.', $tier_labels[ $min_tier ] ?? $min_tier ), array( 'status' => 403 ) );
+            }
+        }
+
         // Balance check.
         $balance = Culture_Gamification::get_credits( $user_id );
         if ( $balance < $cost ) {

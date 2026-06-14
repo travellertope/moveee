@@ -51,6 +51,10 @@ export function scoreItem(
     if (item.region === userRegion) score += 15;
   }
 
+  // Reputation boost: high-rep authors signal proven quality (+10)
+  const HIGH_REP = new Set(['taste-maker', 'culture-authority', 'culture-icon']);
+  if (item.authorRepTier && HIGH_REP.has(item.authorRepTier)) score += 10;
+
   return Math.min(100, Math.max(0, score));
 }
 
