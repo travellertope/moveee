@@ -238,4 +238,117 @@ export function useIssues() {
   return { issues, loading, error, refresh };
 }
 
+// ── Author archive ────────────────────────────────────────────────────────────
+
+export interface WPUser {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  avatar_urls: Record<string, string>;
+  link: string;
+}
+
+export function useAuthorArchive(authorSlug: string) {
+  const [author, setAuthor] = useState<WPUser | null>(null);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const users = await api.get<WPUser[]>(`${WP_URL}/wp-json/wp/v2/users?slug=${encodeURIComponent(authorSlug)}`, false);
+        if (cancelled) return;
+        const user = users[0] ?? null;
+        setAuthor(user);
+        if (!user) return;
+        const posts = await api.get<WPPost[]>(`${WP_POSTS}?author=${user.id}&per_page=10&page=1&_embed=wp:featuredmedia,wp:term,author`, false);
+        if (cancelled) return;
+        setArticles(posts.map(mapPost));
+        setHasMore(posts.length === 10);
+        setPage(1);
+      } catch (e: unknown) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [authorSlug]);
+
+  const loadMore = useCallback(async () => {
+    if (!author || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const posts = await api.get<WPPost[]>(`${WP_POSTS}?author=${author.id}&per_page=10&page=${nextPage}&_embed=wp:featuredmedia,wp:term,author`, false);
+      setArticles((prev) => [...prev, ...posts.map(mapPost)]);
+      setHasMore(posts.length === 10);
+      setPage(nextPage);
+    } catch {} finally { setLoadingMore(false); }
+  }, [author, page, hasMore, loadingMore]);
+
+  return { author, articles, loading, loadingMore, hasMore, error, loadMore };
+}
+
+// ── Category archive ──────────────────────────────────────────────────────────
+
+export function useCategoryArchive(categorySlug: string) {
+  const [categoryName, setCategoryName] = useState(categorySlug);
+  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const cats = await api.get<Array<{ id: number; name: string; slug: string }>>(`${WP_URL}/wp-json/wp/v2/categories?slug=${encodeURIComponent(categorySlug)}`, false);
+        if (cancelled) return;
+        const cat = cats[0];
+        if (!cat) { setError("Category not found"); return; }
+        setCategoryId(cat.id);
+        setCategoryName(cat.name);
+        const posts = await api.get<WPPost[]>(`${WP_POSTS}?categories=${cat.id}&per_page=10&page=1&_embed=wp:featuredmedia,wp:term,author`, false);
+        if (cancelled) return;
+        setArticles(posts.map(mapPost));
+        setHasMore(posts.length === 10);
+        setPage(1);
+      } catch (e: unknown) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [categorySlug]);
+
+  const loadMore = useCallback(async () => {
+    if (!categoryId || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const posts = await api.get<WPPost[]>(`${WP_POSTS}?categories=${categoryId}&per_page=10&page=${nextPage}&_embed=wp:featuredmedia,wp:term,author`, false);
+      setArticles((prev) => [...prev, ...posts.map(mapPost)]);
+      setHasMore(posts.length === 10);
+      setPage(nextPage);
+    } catch {} finally { setLoadingMore(false); }
+  }, [categoryId, page, hasMore, loadingMore]);
+
+  return { categoryName, articles, loading, loadingMore, hasMore, error, loadMore };
+}
+
 export { stripTags, decodeEntities };

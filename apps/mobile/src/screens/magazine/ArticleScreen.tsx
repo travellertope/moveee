@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useCallback } from "react";
+import React, { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,13 +14,15 @@ import {
   Animated,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  TextInput,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import RenderHtml from "react-native-render-html";
 import { LinearGradient } from "expo-linear-gradient";
 import { useArticle } from "../../features/magazine/useMagazine";
-import { WP_URL } from "../../api/client";
+import { WP_URL, api, MOBILE_API, CULTURE_API } from "../../api/client";
 import type { Article } from "../../types";
 import { fonts, fontSize, space, radius, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -86,6 +88,145 @@ function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPa
   );
 }
 
+// ── Article Comments Section ──────────────────────────────────────────────────
+
+const PLACEHOLDER_AVATAR = "https://cms.themoveee.com/wp-content/uploads/placeholder-avatar.png";
+
+interface WpComment {
+  id: number;
+  content: { rendered: string };
+  author_name: string;
+  author_avatar_urls?: Record<string, string>;
+  date: string;
+}
+
+function timeAgoComment(dateStr: string): string {
+  try {
+    const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  } catch { return ""; }
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#8220;|&#8221;/g, '"').trim();
+}
+
+function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c: ColorPalette; styles: any }) {
+  const user = useAuthStore((s) => s.user);
+  const [comments, setComments] = useState<WpComment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    fetch(`https://cms.themoveee.com/wp-json/wp/v2/comments?post=${articleId}&per_page=20&order=asc`)
+      .then((r) => r.json())
+      .then((data) => setComments(Array.isArray(data) ? data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [articleId]);
+
+  const submitComment = async () => {
+    if (!text.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      await api.post(`${MOBILE_API}/community/comment`, { post_id: Number(articleId), content: text.trim() });
+      setSubmitted(true);
+      setText("");
+    } catch {} finally { setSubmitting(false); }
+  };
+
+  return (
+    <View style={acStyles.section}>
+      <View style={acStyles.header}>
+        <Text style={[acStyles.heading, { color: c.ink }]}>Discussion</Text>
+        <Text style={[acStyles.count, { color: c.mute }]}>{comments.length} comment{comments.length !== 1 ? "s" : ""}</Text>
+      </View>
+
+      {/* Comment list */}
+      {loading ? (
+        <ActivityIndicator color={c.gold} style={{ marginVertical: 16 }} />
+      ) : comments.length === 0 ? (
+        <Text style={[acStyles.empty, { color: c.ghost }]}>Be the first to leave a comment.</Text>
+      ) : (
+        comments.map((cm) => {
+          const avatar = cm.author_avatar_urls?.["48"] ?? PLACEHOLDER_AVATAR;
+          return (
+            <View key={cm.id} style={[acStyles.commentRow, { borderBottomColor: c.rule }]}>
+              <Image source={{ uri: avatar }} style={acStyles.avatar} />
+              <View style={acStyles.commentBody}>
+                <View style={acStyles.commentMeta}>
+                  <Text style={[acStyles.authorName, { color: c.ink }]}>{cm.author_name}</Text>
+                  <Text style={[acStyles.timestamp, { color: c.ghost }]}>{timeAgoComment(cm.date)}</Text>
+                </View>
+                <Text style={[acStyles.commentText, { color: c.inkSoft }]}>{stripHtml(cm.content.rendered)}</Text>
+              </View>
+            </View>
+          );
+        })
+      )}
+
+      {/* Compose */}
+      <View style={[acStyles.compose, { borderTopColor: c.rule, backgroundColor: c.paperDeep }]}>
+        {user?.avatarUrl ? (
+          <Image source={{ uri: user.avatarUrl }} style={acStyles.composeAvatar} />
+        ) : (
+          <View style={[acStyles.composeAvatar, { backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center" }]}>
+            <Ionicons name="person" size={14} color={c.mute} />
+          </View>
+        )}
+        {submitted ? (
+          <Text style={[acStyles.submittedNote, { color: c.mute }]}>Comment submitted for review ✓</Text>
+        ) : user ? (
+          <>
+            <TextInput
+              style={[acStyles.input, { color: c.ink, backgroundColor: c.paper, borderColor: c.rule }]}
+              placeholder="Add a comment…"
+              placeholderTextColor={c.ghost}
+              value={text}
+              onChangeText={setText}
+              multiline
+              maxLength={600}
+            />
+            <TouchableOpacity onPress={submitComment} disabled={submitting || !text.trim()} activeOpacity={0.7}>
+              {submitting
+                ? <ActivityIndicator size="small" color={c.gold} />
+                : <Ionicons name="send" size={18} color={text.trim() ? c.gold : c.ghost} />
+              }
+            </TouchableOpacity>
+          </>
+        ) : (
+          <Text style={[acStyles.signInNote, { color: c.mute }]}>Sign in to leave a comment</Text>
+        )}
+      </View>
+    </View>
+  );
+}
+
+const acStyles = StyleSheet.create({
+  section: { marginTop: 24, paddingBottom: 32 },
+  header: { flexDirection: "row", alignItems: "baseline", gap: 8, marginBottom: 16 },
+  heading: { fontFamily: "Fraunces_700Bold", fontSize: 20 },
+  count: { fontFamily: "JetBrainsMono_400Regular", fontSize: 11 },
+  empty: { fontFamily: "DMSans_400Regular", fontSize: 14, textAlign: "center", paddingVertical: 24 },
+  commentRow: { flexDirection: "row", paddingVertical: 14, borderBottomWidth: 1, gap: 10 },
+  avatar: { width: 36, height: 36, borderRadius: 18, flexShrink: 0 },
+  commentBody: { flex: 1 },
+  commentMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+  authorName: { fontFamily: "DMSans_700Bold", fontSize: 13 },
+  timestamp: { fontFamily: "JetBrainsMono_400Regular", fontSize: 10 },
+  commentText: { fontFamily: "DMSans_400Regular", fontSize: 14, lineHeight: 20 },
+  compose: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderTopWidth: 1, borderRadius: 8, marginTop: 16 },
+  composeAvatar: { width: 32, height: 32, borderRadius: 16, flexShrink: 0 },
+  input: { flex: 1, fontFamily: "DMSans_400Regular", fontSize: 14, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, maxHeight: 80 },
+  submittedNote: { flex: 1, fontFamily: "DMSans_400Regular", fontSize: 13, fontStyle: "italic" },
+  signInNote: { flex: 1, fontFamily: "DMSans_400Regular", fontSize: 13 },
+});
+
 export default function ArticleScreen() {
   const nav   = useNavigation<any>();
   const route = useRoute<any>();
@@ -117,6 +258,19 @@ export default function ArticleScreen() {
     }
     setShowStickyHeader(offsetY > HEADER_TRIGGER);
   }, []);
+
+  // Bookmark
+  const [bookmarked, setBookmarked] = useState(false);
+  const handleBookmark = useCallback(async () => {
+    if (!article) return;
+    const next = !bookmarked;
+    setBookmarked(next);
+    try {
+      await api.post(`${CULTURE_API}/content/bookmark`, { post_id: article.id, action: next ? "add" : "remove" });
+    } catch {
+      setBookmarked(!next); // revert on failure
+    }
+  }, [article, bookmarked]);
 
   // Article complete
   const [pointsCollected, setPointsCollected] = useState(false);
@@ -167,19 +321,6 @@ export default function ArticleScreen() {
         <View style={[styles.progressFill, { width: `${readProgress * 100}%` as any }]} />
       </View>
 
-      {/* ── Sticky header (shows after scroll past hero) ── */}
-      {showStickyHeader && article && (
-        <View style={styles.stickyHeader}>
-          <TouchableOpacity onPress={() => nav.goBack()} style={styles.stickyBackBtn}>
-            <Ionicons name="chevron-back" size={20} color={c.ink} />
-          </TouchableOpacity>
-          <Text style={styles.stickyTitle} numberOfLines={1}>{shortTitle}</Text>
-          <TouchableOpacity style={styles.stickyIconBtn}>
-            <Ionicons name="bookmark-outline" size={18} color={c.ink} />
-          </TouchableOpacity>
-        </View>
-      )}
-
       {/* ── Hero background (absolute, top 280px) ── */}
       <View style={styles.heroWrap}>
         {article?.featuredImage ? (
@@ -195,8 +336,8 @@ export default function ArticleScreen() {
           <Ionicons name="chevron-back" size={20} color={c.ink} />
         </TouchableOpacity>
         <View style={styles.floatRight}>
-          <TouchableOpacity style={styles.floatBtn}>
-            <Ionicons name="bookmark-outline" size={18} color={c.ink} />
+          <TouchableOpacity style={styles.floatBtn} onPress={handleBookmark}>
+            <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={18} color={bookmarked ? c.gold : c.ink} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.floatBtn} onPress={handleShare}>
             <Ionicons name="share-outline" size={18} color={c.ink} />
@@ -223,7 +364,15 @@ export default function ArticleScreen() {
             {/* ── White rounded card ── */}
             <View style={styles.sheet}>
               {/* Breadcrumb */}
-              <Text style={styles.breadcrumb}>Magazine › {article.category ?? "Article"}</Text>
+              <TouchableOpacity
+                onPress={() => article.category && nav.push("CategoryArchive", {
+                  categorySlug: article.category.toLowerCase().replace(/\s+/g, "-"),
+                  categoryName: article.category,
+                })}
+                disabled={!article.category}
+              >
+                <Text style={styles.breadcrumb}>Magazine › {article.category ?? "Article"}</Text>
+              </TouchableOpacity>
 
               {/* Eyebrow */}
               <Text style={styles.eyebrow}>
@@ -281,8 +430,8 @@ export default function ArticleScreen() {
                   </TouchableOpacity>
                 </View>
                 <View style={styles.actionsRight}>
-                  <TouchableOpacity style={styles.actionIconBtn}>
-                    <Ionicons name="bookmark-outline" size={18} color={c.ink} />
+                  <TouchableOpacity style={styles.actionIconBtn} onPress={handleBookmark}>
+                    <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={18} color={bookmarked ? c.gold : c.ink} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionIconBtn} onPress={handleShare}>
                     <Ionicons name="share-outline" size={18} color={c.ink} />
@@ -414,11 +563,20 @@ export default function ArticleScreen() {
                       {(article.author as any).bio ? (
                         <Text style={styles.authorBioBio}>{(article.author as any).bio}</Text>
                       ) : null}
-                      <TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => nav.push("AuthorArchive", {
+                          authorSlug: article.author.slug,
+                          authorName: article.author.name,
+                          authorAvatar: article.author.avatarUrl,
+                        })}
+                      >
                         <Text style={styles.authorBioMore}>More articles by {article.author.name} →</Text>
                       </TouchableOpacity>
                     </View>
                   ) : null}
+
+                  {/* ── Comments section ── */}
+                  <ArticleCommentsSection articleId={article.id} c={c} styles={styles} />
                 </>
               )}
             </View>
@@ -454,6 +612,7 @@ export default function ArticleScreen() {
               ))}
             </View>
             <Text style={styles.tocSectionLabel}>In this article</Text>
+            <View style={{ height: 1, backgroundColor: c.rule, marginHorizontal: space[5] }} />
             <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator={false}>
               {headings.map((h, i) => (
                 <TouchableOpacity
@@ -533,7 +692,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
 
   floatingControls: {
     position: "absolute", top: 56, left: 16, right: 16,
-    flexDirection: "row", justifyContent: "space-between", zIndex: 50,
+    flexDirection: "row", justifyContent: "space-between", zIndex: 150,
   },
   floatRight: { flexDirection: "row", gap: 8 },
   floatBtn: {
@@ -762,45 +921,51 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
 
   // TOC sheet
   tocHeader: {
-    paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: c.rule,
+    paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[4],
+    borderBottomWidth: 1, borderBottomColor: c.rule,
   },
   tocHeaderTitle: {
-    fontFamily: fonts.sansBold, fontSize: 16, color: c.ink, marginBottom: 4,
+    fontFamily: fonts.serifBold, fontSize: 22, color: c.ink, marginBottom: 6,
   },
   tocArticleTitle: {
-    fontFamily: fonts.mono, fontSize: 11, color: c.ghost,
+    fontFamily: fonts.mono, fontSize: 11, color: c.ghost, lineHeight: 16,
+    fontStyle: "italic" as const,
   },
   tocMeta: {
-    marginTop: 12, marginBottom: 4,
+    marginTop: 16, marginBottom: 0,
+    borderTopWidth: 1, borderTopColor: c.rule,
   },
   tocMetaRow: {
     flexDirection: "row", justifyContent: "space-between",
-    height: 32, alignItems: "center",
+    alignItems: "center", height: 38,
+    paddingHorizontal: space[5],
     borderBottomWidth: 1, borderBottomColor: c.rule,
-    backgroundColor: c.paperDeep, paddingHorizontal: 8,
   },
   tocMetaLabel: {
     fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
-    color: c.ghost, letterSpacing: 1, textTransform: "uppercase",
+    color: c.ghost, letterSpacing: 1.5, textTransform: "uppercase",
   },
   tocMetaVal: {
-    fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft,
+    fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft, fontWeight: "600" as const,
   },
   tocSectionLabel: {
-    fontFamily: fonts.sansBold, fontSize: 12, color: c.mute,
-    textTransform: "uppercase", letterSpacing: 1, marginTop: 16, marginBottom: 8,
+    fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
+    color: c.mute, textTransform: "uppercase", letterSpacing: 1.5,
+    marginTop: space[5], marginBottom: space[2],
+    paddingHorizontal: space[5],
   },
   tocItem: {
-    flexDirection: "row", alignItems: "center", minHeight: 44,
-    borderBottomWidth: 1, borderBottomColor: c.rule, gap: 10,
+    flexDirection: "row", alignItems: "center", minHeight: 48,
+    borderBottomWidth: 1, borderBottomColor: c.rule, gap: 14,
+    paddingHorizontal: space[5],
   },
-  tocItemNested: { paddingLeft: 12 },
+  tocItemNested: { paddingLeft: space[5] + 20 },
   tocActiveDot: {
-    width: 6, height: 6, borderRadius: 3, backgroundColor: c.ochre, flexShrink: 0,
+    width: 7, height: 7, borderRadius: 4, backgroundColor: c.ochre, flexShrink: 0,
   },
-  tocDotPlaceholder: { width: 6, height: 6, flexShrink: 0 },
+  tocDotPlaceholder: { width: 7, height: 7, flexShrink: 0 },
   tocItemText: {
-    flex: 1, fontFamily: fonts.sans, fontSize: 14, color: c.ink, lineHeight: 20,
+    flex: 1, fontFamily: fonts.sans, fontSize: 15, color: c.ink, lineHeight: 22,
   },
   tocItemTextActive: {
     fontFamily: fonts.sansBold, color: c.ochre,

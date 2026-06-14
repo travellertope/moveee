@@ -136,13 +136,45 @@ export interface FeedItem {
   locationName?: string;
   pollOptions?: PollOption[];
   pollExpiresAt?: string;
+  pollDescription?: string;
   galleryImages?: string[];
   videoUrl?: string;
-  itineraryStops?: ItineraryStop[];
+  // Hidden Gem
+  placeName?: string;
+  placeLocation?: string;
+  priceRange?: string;
+  openingHours?: string;
+  // Cultural Take
+  culturalTakeHeadline?: string;
+  // Food Review
   foodDishName?: string;
   foodRatingTaste?: number;
   foodRatingValue?: number;
   foodRatingVibe?: number;
+  cuisineTag?: string;
+  // Creative Showcase
+  showcaseTitle?: string;
+  showcaseMedium?: string;
+  showcaseCollaborator?: string;
+  // Book Review
+  bookTitle?: string;
+  bookAuthor?: string;
+  bookStatus?: string;
+  bookOverallRating?: number;
+  bookRatingWriting?: number;
+  bookRatingStory?: number;
+  bookRatingCharacters?: number;
+  bookRatingPacing?: number;
+  bookFavQuote?: string;
+  bookRecommend?: boolean;
+  bookGenres?: string[];
+  // Itinerary
+  itineraryStops?: ItineraryStop[];
+  itineraryTitle?: string;
+  itineraryCity?: string;
+  itineraryBudget?: string;
+  itineraryDuration?: string;
+  itineraryBestTime?: string;
 
   // Reactions
   reactions?: { love: number; fire: number; clap: number };
@@ -151,7 +183,7 @@ export interface FeedItem {
 
 // ── Community post templates ─────────────────────────────────────────────────
 export type TemplateType =
-  | 'post' | 'hidden-gem' | 'cultural-take' | 'food-review'
+  | 'post' | 'hidden-gem' | 'cultural-take' | 'food-review' | 'book-review'
   | 'creative-showcase' | 'poll' | 'itinerary' | 'event' | 'quote';
 
 export interface PollOption {
@@ -266,7 +298,8 @@ export interface Passkey {
 export type NotificationType =
   | 'credit_earned' | 'badge_unlocked' | 'perk_expiring' | 'perk_redeemed'
   | 'cashout_approved' | 'cashout_rejected' | 'escrow_released'
-  | 'comment_received' | 'post_validated' | 'system';
+  | 'comment_received' | 'post_validated' | 'system'
+  | 'referral_received';
 
 export interface Notification {
   id: number;

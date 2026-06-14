@@ -133,10 +133,12 @@ function VisualCard({
 function SectionRow({
   section,
   onPressArticle,
+  onPressSeeAll,
   styles,
 }: {
   section: MagazineSection;
   onPressArticle: (a: Article) => void;
+  onPressSeeAll: (section: MagazineSection) => void;
   styles: ReturnType<typeof createStyles>;
 }) {
   const isVisuals =
@@ -148,7 +150,7 @@ function SectionRow({
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{section.name}</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => onPressSeeAll(section)}>
             <Text style={styles.seeAll}>See all →</Text>
           </TouchableOpacity>
         </View>
@@ -362,7 +364,16 @@ export default function MagazineScreen() {
 
         {/* Dynamic sections from useMagazine */}
         {filteredSections.map((section) => (
-          <SectionRow key={section.id} section={section} onPressArticle={openArticle} styles={styles} />
+          <SectionRow
+            key={section.id}
+            section={section}
+            onPressArticle={openArticle}
+            onPressSeeAll={(s) => nav.navigate("CategoryArchive", {
+              categorySlug: s.name.toLowerCase().replace(/\s+/g, "-"),
+              categoryName: s.name,
+            })}
+            styles={styles}
+          />
         ))}
 
         {/* Latest Issue card */}

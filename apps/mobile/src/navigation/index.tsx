@@ -31,6 +31,8 @@ import MagazineScreen from "../screens/magazine/MagazineScreen";
 import ArticleScreen from "../screens/magazine/ArticleScreen";
 import IssuesArchiveScreen from "../screens/magazine/IssuesArchiveScreen";
 import MagazineSearchScreen from "../screens/magazine/MagazineSearchScreen";
+import AuthorArchiveScreen from "../screens/magazine/AuthorArchiveScreen";
+import CategoryArchiveScreen from "../screens/magazine/CategoryArchiveScreen";
 
 // Events / Games
 import GamesScreen from "../screens/games/GamesScreen";
@@ -60,6 +62,8 @@ import WalletScreen from "../screens/member/WalletScreen";
 import CouponsScreen from "../screens/member/CouponsScreen";
 import NotificationsScreen from "../screens/member/NotificationsScreen";
 import AnalyticsScreen from "../screens/member/AnalyticsScreen";
+import SavedArticlesScreen from "../screens/member/SavedArticlesScreen";
+import ReferralScreen from "../screens/member/ReferralScreen";
 import { AppLoadingScreen } from "../components/ui/Skeleton";
 
 // ── Stack param types ──────────────────────────────────────────────────────────
@@ -85,6 +89,7 @@ type MemberStackParams = {
   Perks:           undefined;
   Membership:      undefined;
   Analytics:       undefined;
+  Referral:        undefined;
 };
 
 const Tab   = createBottomTabNavigator();
@@ -103,6 +108,8 @@ function ConnectStack() {
       <Stack.Screen name="Notifications"   component={NotificationsScreen} />
       {/* Articles opened from the feed stay within this stack — back → feed */}
       <Stack.Screen name="Article"         component={ArticleScreen} />
+      <Stack.Screen name="AuthorArchive"   component={AuthorArchiveScreen} />
+      <Stack.Screen name="CategoryArchive" component={CategoryArchiveScreen} />
       {/* Member screens — accessible via avatar tap in header */}
       <Stack.Screen name="MemberDashboard" component={MemberDashboardScreen} />
       <Stack.Screen name="MemberSettings"  component={MemberSettingsScreen} />
@@ -111,6 +118,8 @@ function ConnectStack() {
       <Stack.Screen name="Perks"           component={PerksScreen} />
       <Stack.Screen name="Membership"      component={MembershipScreen} />
       <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
+      <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
+      <Stack.Screen name="Referral"        component={ReferralScreen} />
     </Stack.Navigator>
   );
 }
@@ -118,11 +127,12 @@ function ConnectStack() {
 function MagazineStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="MagazineList"    component={MagazineScreen} />
-      {/* popToTopOnBlur: leaving the Magazine tab resets the stack to MagazineList */}
-      <Stack.Screen name="Article"         component={ArticleScreen} options={{ popToTopOnBlur: true }} />
-      <Stack.Screen name="IssuesArchive"   component={IssuesArchiveScreen} />
-      <Stack.Screen name="MagazineSearch"  component={MagazineSearchScreen} />
+      <Stack.Screen name="MagazineList"      component={MagazineScreen} />
+      <Stack.Screen name="Article"           component={ArticleScreen} options={{ popToTopOnBlur: true }} />
+      <Stack.Screen name="IssuesArchive"     component={IssuesArchiveScreen} />
+      <Stack.Screen name="MagazineSearch"    component={MagazineSearchScreen} />
+      <Stack.Screen name="AuthorArchive"     component={AuthorArchiveScreen} />
+      <Stack.Screen name="CategoryArchive"   component={CategoryArchiveScreen} />
     </Stack.Navigator>
   );
 }
@@ -173,6 +183,8 @@ function MemberStack() {
       <Stack.Screen name="Perks"           component={PerksScreen} />
       <Stack.Screen name="Membership"      component={MembershipScreen} />
       <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
+      <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
+      <Stack.Screen name="Referral"        component={ReferralScreen} />
     </Stack.Navigator>
   );
 }

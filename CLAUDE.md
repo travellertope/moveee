@@ -587,6 +587,13 @@ All three are right-side slide-in drawer panels (`position: fixed, zIndex: 8000,
 
 FeedCard lazy-loads all three modals via `dynamic(() => import(...), { ssr: false })`.
 
+### RN FeedItemCard card designs (FeedItemCard.tsx)
+- **PulseCard**: full-bleed hero image (200px, tappable → ImageLightbox), serif bold title, arm/category/region eyebrow row with region pill, OG link preview (LinkPreview) only when no hero image, source attribution below hero if named. Upgraded from plain inline ImgPlaceholder.
+- **EditorialCard**: badge row, serif XL title, excerpt, then `InternalLinkCard` snippet (border pill, 90px feature image from `item.image`, gold "MOVEEE MAGAZINE" label, title, excerpt) — matches site's InternalLinkCard exactly. Opens `EditorialSheet` on tap.
+- `item.image` on editorial items comes from WP featured image (`post.featuredImage?.node?.sourceUrl` in `unified-feed.ts`)
+- `item.image` on pulse items comes from `story._embedded?.["wp:featuredmedia"]?.[0]?.source_url`
+- OG fields on pulse: `item.ogImage`, `item.ogTitle`, `item.ogDescription`, `item.sourceUrl` — populated from `pulse_og_*` post meta
+
 ---
 
 ## Event system enhancements
@@ -606,6 +613,72 @@ Community event posts (`_template_type = 'event'`) now support an organiser dire
 - Category field now present (maps to `culture_event_categories` taxonomy)
 - Organiser field: `DirectorySearch` component, typeFilter="person"
 - Image upload via WP Media API (not URL input)
+
+---
+
+## NewPostScreen composer — template field reference (v2, June 2026)
+
+Source of truth: `apps/mobile/src/screens/community/NewPostScreen.tsx`
+Template picker: FAB → `TemplatePickerSheet` → `NewPost` route with `template` param
+
+### Inline photos pattern (post, hidden-gem, food-review, itinerary, event)
+Photos are embedded in the scroll body (NOT a floating strip). Pattern: dashed 80×80 add tile + 80×80 thumbs with white ✕, "Up to 4 photos" hint. MAX_IMAGES = 4.
+
+### Per-template field layout
+
+**Standard Post** — section tag chips (top) → emoji guide chips → textarea → char counter → inline photos
+
+**Hidden Gem** — place name input → location input (📍) → DirectorySearch ("Link this place") → divider → "Tell us about it" textarea → star rating (optional) → price range chips (₦/₦₦/₦₦₦/₦₦₦₦) → opening hours input (🕐) → divider → inline photos
+
+**Cultural Take** — "Your take" serif bold 20px textarea → divider → "Explain your take" body textarea → section tags at bottom. No image. DirectorySearch optional at bottom.
+
+**Food Review** — dish/item input → DirectorySearch (restaurant) → divider → MultiRating (Taste/Value/Vibe) → "Your review" textarea → cuisine chips (Nigerian/Pan-African/West African/Continental/Fusion/Seafood) → price range chips → divider → inline photos
+
+**Book Review** — book search input (🔍, fetches from `${MOBILE_API}/books/search?q=X`) + dropdown with book cover/title/author/year + "Add new book" → book card (selected, 48×64 cover) → status chips (Finished/Reading/Want to Read) → overall StarRating → breakdown MultiRating (Writing/Story/Characters/Pacing) → review textarea → favourite quote (ochre left border, italic) → recommend chips (Yes green / No) → genre chips (multi-select). No images.
+
+Submits to `${MOBILE_API}/community/submit` with extra fields: `book_title`, `book_author`, `book_status`, `book_overall_rating`, `book_rating_writing/story/characters/pacing`, `book_fav_quote?`, `book_recommend`, `book_genres?`
+
+**Creative Showcase** — title input → medium chips (Photography/Film/Digital Art/Illustration/Music/Writing, single-select) → "About this work" textarea → collaborator input (@-prefixed) → divider → 120px dashed upload zone. MAX_IMAGES = 4.
+
+**Poll** — question textarea (80px, bordered) → PollBuilder options → divider → poll duration segmented control (1d/3d/7d) → description textarea (optional)
+
+**Itinerary** — trip title input → city/region input (📍) → ItineraryBuilder stops → duration input (⏱, optional) → budget chips (£/££/£££/££££, optional) → best time input (☀️, optional) → divider → inline photos
+
+**Event** — event name input (17px bold) → 2-col date grid (start date | start time / end date | end time) → venue name (🏛) + full address (📍) + city inputs → divider → admission (£ prefix) + ticket link (🔗) → category chips → organiser DirectorySearch pill → inline photos (hint: "Event flyer, venue photos…")
+
+**Quote** — paper-warm bordered box with decorative `"` glyph, italic serif textarea → author input → source input → divider → "Why sharing?" textarea (optional) → quote type chips (Person/Book/Film/Speech/Song)
+
+### State variables (key additions in v2)
+```ts
+// Hidden Gem
+hiddenGemPlaceName, hiddenGemLocation, hiddenGemPriceRange, hiddenGemOpeningHours
+
+// Cultural Take
+culturalTakeHeadline
+
+// Food Review
+cuisineTag, foodPriceRange
+
+// Creative Showcase
+showcaseTitle, showcaseMedium, showcaseCollaborator
+
+// Book Review
+bookEntry, bookSearch, bookSearchResults, bookSearchOpen
+bookStatus, bookOverallRating, bookRatings ({writing, story, characters, pacing})
+bookFavQuote, bookRecommend, bookGenres
+
+// Itinerary
+itineraryTitle, itineraryBudget, itineraryDuration, itineraryBestTime
+
+// Event
+eventAddress (new — separate from eventVenue)
+
+// Poll
+pollDescription
+
+// Quote
+quoteSharingReason, quoteType
+```
 
 ---
 
@@ -828,10 +901,11 @@ Before production build, also run `npm install` after restoring `react-native-ia
 | Custom fonts | App.tsx loads Fraunces + DM Sans + JetBrains Mono via useFonts() |
 | 5-tab navigation + new routes | `src/navigation/index.tsx` (MemberDirectory, Wallet, Coupons, Perks, MemberDashboard, MemberSettings) |
 | ConnectFeedScreen | `screens/community/ConnectFeedScreen.tsx` |
-| FeedItemCard (all templates) | `components/community/FeedItemCard.tsx` (gallery, polls, itinerary, ratings) |
+| FeedItemCard (all templates) | `components/community/FeedItemCard.tsx` (gallery, polls, itinerary, ratings, upgraded Pulse + Editorial cards) |
 | PostDetailScreen, PulseDetailScreen | `screens/community/` |
-| NewPostScreen (all 9 templates) | `screens/community/NewPostScreen.tsx` (post, hidden-gem, cultural-take, food-review, creative-showcase, poll, itinerary, event, quote) |
+| NewPostScreen (all 10 templates) | `screens/community/NewPostScreen.tsx` (post, hidden-gem, cultural-take, food-review, book-review, creative-showcase, poll, itinerary, event, quote) |
 | Composer sub-components | `components/composer/` (StarRating, MultiRating, PollBuilder, ItineraryBuilder, DirectorySearch) |
+| TemplatePickerSheet | `components/community/TemplatePickerSheet.tsx` — 2×2 grid bottom sheet modal, FAB → onSelect → NewPost with template param |
 | Shared UI components | Avatar, TypeBadge, ImageLightbox (`components/ui/`), ReactionBar, HashtagText (`components/community/`) |
 | MemberDirectoryScreen | `screens/community/MemberDirectoryScreen.tsx` |
 | MemberDashboardScreen | `screens/member/MemberDashboardScreen.tsx` (passkey banner, stats, badges, quick links) |
@@ -866,6 +940,7 @@ Before production build, also run `npm install` after restoring `react-native-ia
 | DirectoryDetailModal | `components/community/DirectoryDetailModal.tsx` — migrated to BottomSheet |
 | QuoteDetailModal | `components/community/QuoteDetailModal.tsx` — migrated to BottomSheet |
 | EditorialSheet | `components/community/EditorialSheet.tsx` — full-bleed hero + CTA for editorial cards |
+| InternalLinkCard (in FeedItemCard) | Inline component inside `FeedItemCard.tsx` — mirrors web `InternalLinkCard`: bordered pill with 90px feature image left, gold "MOVEEE MAGAZINE" label, title, excerpt. Used at bottom of EditorialCard. |
 | MagazineScreen (enhanced) | `screens/magazine/MagazineScreen.tsx` — category strip, featured hero, horizontal sections, issues, series |
 | IssuesArchiveScreen | `screens/magazine/IssuesArchiveScreen.tsx` — latest issue hero + 2-col grid |
 | MagazineSearchScreen | `screens/magazine/MagazineSearchScreen.tsx` — search bar + category strip + results |

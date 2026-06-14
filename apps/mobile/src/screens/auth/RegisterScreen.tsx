@@ -11,7 +11,7 @@ import {
   Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import Svg, { Path, Circle, Rect, Line, Polyline } from "react-native-svg";
 import { api, CULTURE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
@@ -196,6 +196,9 @@ const pwS = StyleSheet.create({
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function RegisterScreen() {
   const nav = useNavigation<any>();
+  // Accept optional referral code passed from a deep link or share-link tap.
+  const { params } = useRoute<any>();
+  const referralCode: string = (params as any)?.referralCode ?? "";
 
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -222,11 +225,9 @@ export default function RegisterScreen() {
     if (!isValid) return;
     setLoading(true);
     try {
-      await api.post(
-        `${CULTURE_API}/mobile/register`,
-        { email: email.trim(), username: username.trim(), password },
-        false
-      );
+      const body: Record<string, string> = { email: email.trim(), username: username.trim(), password };
+      if (referralCode) body.referral_code = referralCode;
+      await api.post(`${CULTURE_API}/mobile/register`, body, false);
       nav.navigate("VerifyEmail", { email: email.trim(), password });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Registration failed. Please try again.");
