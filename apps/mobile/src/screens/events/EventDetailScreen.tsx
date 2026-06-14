@@ -15,6 +15,9 @@ import type { EventItem } from "./EventsScreen";
 
 const PROXY = "https://themoveee.com/api";
 
+const EVENT_CHECKIN_REP = 20;
+const EVENT_CHECKIN_CREDITS = 3;
+
 function fmtLongDate(dateStr: string | null): string {
   if (!dateStr) return "";
   try {
@@ -191,6 +194,27 @@ export default function EventDetailScreen() {
             </TouchableOpacity>
           ) : null}
 
+          {/* Check-in info card — shown when today is within 1 day of event start */}
+          {(() => {
+            if (!event.eventDate) return null;
+            const eventDay = new Date(event.eventDate);
+            eventDay.setHours(0, 0, 0, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const diffDays = Math.abs((today.getTime() - eventDay.getTime()) / 86400000);
+            if (diffDays > 1) return null;
+            return (
+              <View style={styles.checkinCard}>
+                <Text style={styles.checkinTitle}>📱 Check In at the Door</Text>
+                <Text style={styles.checkinBody}>
+                  Scan the event QR code with your phone's camera to check in and earn{" "}
+                  <Text style={styles.checkinHighlight}>+{EVENT_CHECKIN_REP} rep</Text> and{" "}
+                  <Text style={styles.checkinHighlight}>+{EVENT_CHECKIN_CREDITS} credits</Text>.
+                </Text>
+              </View>
+            );
+          })()}
+
           {/* Divider */}
           <View style={styles.divider} />
 
@@ -311,6 +335,25 @@ function createStyles(c: ColorPalette) {
       shadowColor: c.ochre, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 3,
     },
     ctaBtnText: { fontFamily: fonts.sansBold, fontSize: 16, color: c.paper },
+
+    // Check-in info card
+    checkinCard: {
+      backgroundColor: c.paperDeep,
+      borderRadius: radius.lg,
+      borderLeftWidth: 3,
+      borderLeftColor: c.ochre,
+      padding: 16,
+      marginBottom: 20,
+    },
+    checkinTitle: {
+      fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink, marginBottom: 6,
+    },
+    checkinBody: {
+      fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft, lineHeight: 20,
+    },
+    checkinHighlight: {
+      fontFamily: fonts.sansBold, color: c.ochre,
+    },
 
     divider: { height: 1, backgroundColor: c.ghost, marginBottom: 24 },
 

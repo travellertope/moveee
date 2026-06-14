@@ -14,6 +14,9 @@ class Culture_REST_API {
         add_action( 'save_post_culture_post', array( 'Culture_Directory', 'recompute_aggregates_on_post_save' ), 10, 2 );
         // Award reputation when a community post is created via the REST API.
         add_action( 'rest_after_insert_culture_post', array( __CLASS__, 'handle_community_post_created' ), 10, 3 );
+        // Event check-in admin meta box.
+        add_action( 'add_meta_boxes', array( __CLASS__, 'add_event_checkin_metabox' ) );
+        add_action( 'wp_ajax_culture_generate_checkin_token', array( __CLASS__, 'ajax_generate_checkin_token' ) );
     }
 
     /**
@@ -1081,6 +1084,18 @@ class Culture_REST_API {
             'args'                => array(
                 'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
+        ) );
+
+        // Phase 9 — Event QR check-in.
+        register_rest_route( 'culture/v1', '/events/(?P<id>\d+)/generate-checkin-token', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_generate_checkin_token' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/events/self-checkin', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_self_checkin' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
     }
 
@@ -4156,5 +4171,164 @@ class Culture_REST_API {
             ),
             'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d', '%s' ),
         );
+    }
+
+    /* ——————————————————————————————————————
+     *  Phase 9 — Event QR Check-in handlers
+     * —————————————————————————————————————— */
+
+    /**
+     * POST /culture/v1/events/{id}/generate-checkin-token
+     * Generates (or regenerates) a check-in token for the event and returns the QR URL.
+     */
+    public static function handle_generate_checkin_token( $request ) {
+        $event_id = (int) $request['id'];
+        $post     = get_post( $event_id );
+        if ( ! $post || 'culture_event' !== $post->post_type ) {
+            return new WP_Error( 'not_found', 'Event not found.', array( 'status' => 404 ) );
+        }
+        $token = bin2hex( random_bytes( 16 ) );
+        update_post_meta( $event_id, '_event_checkin_token_hash', hash( 'sha256', $token ) );
+        $url = "https://connect.themoveee.com/events/checkin?id={$event_id}&t={$token}";
+        return rest_ensure_response( array(
+            'token'       => $token,
+            'checkin_url' => $url,
+            'event_id'    => $event_id,
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/events/self-checkin
+     * Verifies the token and records a check-in for the given user.
+     */
+    public static function handle_self_checkin( $request ) {
+        global $wpdb;
+
+        $event_id = (int) $request->get_param( 'event_id' );
+        $token    = sanitize_text_field( $request->get_param( 'token' ) );
+        $user_id  = (int) $request->get_param( 'user_id' );
+
+        if ( ! $event_id || ! $token || ! $user_id ) {
+            return new WP_Error( 'missing_params', 'event_id, token, and user_id are required.', array( 'status' => 400 ) );
+        }
+
+        $post = get_post( $event_id );
+        if ( ! $post || 'culture_event' !== $post->post_type ) {
+            return new WP_Error( 'not_found', 'Event not found.', array( 'status' => 404 ) );
+        }
+
+        // Verify token.
+        $stored_hash = get_post_meta( $event_id, '_event_checkin_token_hash', true );
+        if ( empty( $stored_hash ) || hash( 'sha256', $token ) !== $stored_hash ) {
+            return new WP_Error( 'invalid_token', 'Invalid check-in token.', array( 'status' => 403 ) );
+        }
+
+        // Check event date window (within 1 day before or after).
+        $start_date = get_post_meta( $event_id, '_event_start_date', true );
+        if ( $start_date ) {
+            $event_ts = strtotime( $start_date );
+            $now_ts   = current_time( 'timestamp' );
+            if ( abs( $now_ts - $event_ts ) > DAY_IN_SECONDS ) {
+                return new WP_Error( 'outside_window', 'Check-in is only available on the day of the event.', array( 'status' => 400 ) );
+            }
+        }
+
+        // Check for duplicate check-in.
+        $table     = $wpdb->prefix . 'culture_attendance';
+        $existing  = $wpdb->get_var( $wpdb->prepare(
+            "SELECT id FROM {$table} WHERE user_id = %d AND event_id = %d AND status = 'checked_in' LIMIT 1",
+            $user_id, $event_id
+        ) );
+        if ( $existing ) {
+            return rest_ensure_response( array(
+                'already_checked_in' => true,
+                'message'            => 'You have already checked in to this event.',
+            ) );
+        }
+
+        // Insert check-in record.
+        $wpdb->insert(
+            $table,
+            array(
+                'user_id'      => $user_id,
+                'event_id'     => $event_id,
+                'status'       => 'checked_in',
+                'checkin_time' => current_time( 'mysql' ),
+            ),
+            array( '%d', '%d', '%s', '%s' )
+        );
+
+        // Award reputation via gamification system.
+        do_action( 'culture_award_points', $user_id, 'event_checkin', $event_id );
+
+        // Award credits.
+        if ( method_exists( 'Culture_Gamification', 'award_credits' ) ) {
+            Culture_Gamification::award_credits( $user_id, 3, 'event_checkin' );
+        } else {
+            do_action( 'culture_award_credits', $user_id, 3, 'event_checkin' );
+        }
+
+        return rest_ensure_response( array(
+            'success'        => true,
+            'message'        => 'Check-in successful! You earned 20 reputation and 3 credits.',
+            'rep_earned'     => 20,
+            'credits_earned' => 3,
+        ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Phase 9 — Admin meta box for event QR
+     * —————————————————————————————————————— */
+
+    public static function add_event_checkin_metabox() {
+        add_meta_box(
+            'culture-event-checkin',
+            'Event Check-in QR',
+            array( __CLASS__, 'render_event_checkin_metabox' ),
+            'culture_event',
+            'side',
+            'high'
+        );
+    }
+
+    public static function render_event_checkin_metabox( $post ) {
+        $token_hash = get_post_meta( $post->ID, '_event_checkin_token_hash', true );
+        $has_token  = ! empty( $token_hash );
+        ?>
+        <div id="culture-checkin-box">
+          <?php if ( $has_token ) : ?>
+            <p style="color:green">&#10003; QR token generated</p>
+          <?php endif; ?>
+          <button type="button" class="button" onclick="cultureGenerateCheckinToken(<?php echo (int) $post->ID; ?>)">
+            <?php echo $has_token ? 'Regenerate QR Token' : 'Generate QR Token'; ?>
+          </button>
+          <div id="culture-checkin-qr-result" style="margin-top:10px"></div>
+        </div>
+        <script>
+        function cultureGenerateCheckinToken(eventId) {
+          fetch(ajaxurl + '?action=culture_generate_checkin_token&event_id=' + eventId + '&nonce=<?php echo wp_create_nonce( 'culture_checkin_nonce' ); ?>', { method: 'POST' })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              if (d.success) {
+                document.getElementById('culture-checkin-qr-result').innerHTML =
+                  '<p><strong>Check-in URL:</strong><br><small>' + d.data.checkin_url + '</small></p>' +
+                  '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(d.data.checkin_url) + '" style="max-width:200px;margin-top:8px">';
+              }
+            });
+        }
+        </script>
+        <?php
+    }
+
+    public static function ajax_generate_checkin_token() {
+        check_ajax_referer( 'culture_checkin_nonce', 'nonce' );
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error( 'Unauthorized' );
+        }
+        $event_id = (int) $_POST['event_id'];
+        $token    = bin2hex( random_bytes( 16 ) );
+        update_post_meta( $event_id, '_event_checkin_token_hash', hash( 'sha256', $token ) );
+        $url = "https://connect.themoveee.com/events/checkin?id={$event_id}&t={$token}";
+        wp_send_json_success( array( 'checkin_url' => $url, 'token' => $token ) );
     }
 }
