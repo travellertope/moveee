@@ -8,13 +8,13 @@ export default async function EventCheckinPage({
 }: {
   searchParams: { id?: string; t?: string };
 }) {
-  const session = await getServerSession(authOptions);
   const { id, t } = searchParams;
 
   if (!id || !t) {
     redirect("/events");
   }
 
+  const session = await getServerSession(authOptions);
   if (!session) {
     redirect(`/login?callbackUrl=${encodeURIComponent(`/events/checkin?id=${id}&t=${t}`)}`);
   }
