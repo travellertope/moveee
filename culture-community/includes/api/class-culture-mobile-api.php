@@ -2143,6 +2143,7 @@ class Culture_Mobile_API {
         }
 
         $category = sanitize_text_field( $request->get_param( 'category' ) );
+        $search   = sanitize_text_field( $request->get_param( 's' ) );
         $page     = max( 1, (int) $request->get_param( 'page' ) );
         $per_page = min( 50, max( 1, (int) $request->get_param( 'per_page' ) ) );
 
@@ -2154,9 +2155,13 @@ class Culture_Mobile_API {
             'post_status'    => 'publish',
             'posts_per_page' => $per_page,
             'paged'          => $page,
-            'orderby'        => 'date',
+            'orderby'        => $search ? 'relevance' : 'date',
             'order'          => 'DESC',
         );
+
+        if ( $search ) {
+            $query_args['s'] = $search;
+        }
 
         if ( $category ) {
             $query_args['tax_query'] = array( array(

@@ -149,7 +149,16 @@ export default function MagazineSearchScreen() {
     try {
       let url = `${WP_POSTS}?_embed=wp:featuredmedia,wp:term,author&per_page=20`;
       if (text.trim()) url += `&search=${encodeURIComponent(text.trim())}`;
-      if (category !== "All") url += `&search=${encodeURIComponent(text + " " + category)}`;
+      if (category !== "All") {
+        // Resolve category slug → ID first, then filter properly
+        try {
+          const cats = await api.get<any[]>(
+            `${WP_URL}/wp-json/wp/v2/categories?slug=${encodeURIComponent(category.toLowerCase())}&per_page=1`,
+            false
+          );
+          if (cats.length > 0) url += `&categories=${cats[0].id}`;
+        } catch { /* ignore — text search still runs */ }
+      }
       const data = await api.get<any[]>(url, false);
       const mapped: Article[] = data.map((post: any) => {
         const embedded = post._embedded;

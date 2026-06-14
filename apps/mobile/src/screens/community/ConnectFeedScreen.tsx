@@ -231,6 +231,15 @@ export default function ConnectFeedScreen() {
               />
             </TouchableOpacity>
 
+            {/* Member directory */}
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => nav.navigate("MemberDirectory")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="people-outline" size={22} color={c.ink} />
+            </TouchableOpacity>
+
             {/* Bell */}
             <TouchableOpacity
               style={styles.iconBtn}
