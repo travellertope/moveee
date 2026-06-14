@@ -163,7 +163,12 @@ export default function WalletScreen() {
 
   // Cashout form
   const [cashoutCredits, setCashoutCreditsRaw] = useState(0);
-  const [currency, setCurrency] = useState<Currency>("GBP");
+  const [currency, setCurrency] = useState<Currency>(() => {
+    const c = (user?.countryOfResidence ?? "").toLowerCase();
+    if (/nigeria|ng\b/.test(c)) return "NGN";
+    if (/united states|usa|\bus\b/.test(c)) return "USD";
+    return "GBP";
+  });
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [sortCode, setSortCode] = useState("");

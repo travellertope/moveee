@@ -10,6 +10,7 @@ import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { api, MOBILE_API } from "../../api/client";
 import type { Member } from "../../types";
+import { useAuthStore } from "../../auth/authStore";
 
 const DISCIPLINES = [
   "All", "Photography", "Visual Art", "Music Production", "Fashion",
@@ -96,6 +97,7 @@ function MemberCard({
 
 export default function MemberDirectoryScreen() {
   const nav = useNavigation<any>();
+  const { user } = useAuthStore() as any;
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const [members,    setMembers]    = useState<Member[]>([]);
@@ -103,7 +105,19 @@ export default function MemberDirectoryScreen() {
   const [loading,    setLoading]    = useState(true);
   const [search,     setSearch]     = useState("");
   const [discipline, setDiscipline] = useState("All");
-  const [location,   setLocation]   = useState("All");
+  // Default location to user's country so they see local members first
+  const [location, setLocation] = useState(() => {
+    const c = user?.countryOfResidence ?? "";
+    if (!c) return "All";
+    if (/nigeria/i.test(c)) return "Nigeria";
+    if (/united kingdom|uk|gb/i.test(c)) return "United Kingdom";
+    if (/united states|usa/i.test(c)) return "United States";
+    if (/ghana/i.test(c)) return "Ghana";
+    if (/kenya/i.test(c)) return "Kenya";
+    if (/canada/i.test(c)) return "Canada";
+    if (/south africa/i.test(c)) return "South Africa";
+    return "All";
+  });
   const [discOpen,   setDiscOpen]   = useState(false);
   const [locOpen,    setLocOpen]    = useState(false);
 

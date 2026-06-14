@@ -81,8 +81,21 @@ export default function ConnectFeedScreen() {
     () => new Set((user?.interests ?? []).map((s) => s.toLowerCase())),
     [user?.interests]
   );
-
   const hasInterests = interestTagSet.size > 0;
+
+  const userCity   = user?.city ?? undefined;
+  const userRegion = useMemo(() => {
+    const c = (user?.countryOfResidence ?? "").toLowerCase().trim();
+    if (!c) return undefined;
+    const map: Record<string, string> = {
+      nigeria: "Africa", ng: "Africa", ghana: "Africa", gh: "Africa",
+      kenya: "Africa", ke: "Africa", "south africa": "Africa", za: "Africa",
+      "united kingdom": "Diaspora UK", uk: "Diaspora UK", gb: "Diaspora UK",
+      "united states": "Diaspora US", us: "Diaspora US", canada: "Diaspora US",
+      france: "Diaspora Europe", germany: "Diaspora Europe",
+    };
+    return map[c] ?? undefined;
+  }, [user?.countryOfResidence]);
 
   const visibleItems = useMemo(() => {
     let filtered = activeCategory
@@ -90,11 +103,11 @@ export default function ConnectFeedScreen() {
       : items;
 
     if (forYou) {
-      filtered = rankFeed(filtered, interestTagSet);
+      filtered = rankFeed(filtered, interestTagSet, userCity, userRegion);
     }
 
     return filtered;
-  }, [items, activeCategory, forYou, interestTagSet]);
+  }, [items, activeCategory, forYou, interestTagSet, userCity, userRegion]);
 
   const trending = useMemo(() => getTrending(items, 3), [items]);
 

@@ -9,6 +9,8 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { api, MOBILE_API } from "../../api/client";
+import { useAuthStore } from "../../auth/authStore";
+import { detectRegion } from "../../features/community/useFeedRecommendations";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -71,6 +73,8 @@ const fmtTime = (d: Date) =>
 
 export default function NewPostScreen() {
   const nav = useNavigation<any>();
+  const { user } = useAuthStore() as any;
+  const userRegion = detectRegion(user?.countryOfResidence);
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
@@ -242,11 +246,13 @@ export default function NewPostScreen() {
       }
 
       const body: Record<string, unknown> = {
-        content:        text,
-        tag:            template === "food-review" ? "Food" : sectionTag,
-        template_type:  template,
-        gallery_images: uploadedUrls.length > 1 ? uploadedUrls : undefined,
-        image_url:      uploadedUrls[0] ?? undefined,
+        content:          text,
+        tag:              template === "food-review" ? "Food" : sectionTag,
+        template_type:    template,
+        gallery_images:   uploadedUrls.length > 1 ? uploadedUrls : undefined,
+        image_url:        uploadedUrls[0] ?? undefined,
+        community_region: userRegion ?? undefined,
+        city:             user?.city ?? undefined,
       };
 
       if (template === "hidden-gem") {
