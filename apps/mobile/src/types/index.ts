@@ -126,6 +126,7 @@ export interface FeedItem {
   communityAuthorAvatar?: string;
   communityTag?: string;
   communityTier?: string;
+  authorRepTier?: string;
   commentCount?: number;
 
   // Community template fields

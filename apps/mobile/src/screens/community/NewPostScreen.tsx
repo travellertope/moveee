@@ -9,7 +9,9 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { api, MOBILE_API } from "../../api/client";
-import { fonts, fontSize, space, radius } from "../../theme";
+import { useAuthStore } from "../../auth/authStore";
+import { detectRegion } from "../../features/community/useFeedRecommendations";
+import { colors, fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import StarRating from "../../components/composer/StarRating";
@@ -69,8 +71,14 @@ const fmtDate = (d: Date) =>
 const fmtTime = (d: Date) =>
   d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
+// Templates requiring Taste Maker (2 500 rep)
+const TASTE_MAKER_TEMPLATES = new Set<TemplateId>(["poll", "itinerary"]);
+
 export default function NewPostScreen() {
   const nav = useNavigation<any>();
+  const { user } = useAuthStore() as any;
+  const userRegion = detectRegion(user?.countryOfResidence);
+  const userRep: number = user?.reputation ?? 0;
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
@@ -242,11 +250,13 @@ export default function NewPostScreen() {
       }
 
       const body: Record<string, unknown> = {
-        content:        text,
-        tag:            template === "food-review" ? "Food" : sectionTag,
-        template_type:  template,
-        gallery_images: uploadedUrls.length > 1 ? uploadedUrls : undefined,
-        image_url:      uploadedUrls[0] ?? undefined,
+        content:          text,
+        tag:              template === "food-review" ? "Food" : sectionTag,
+        template_type:    template,
+        gallery_images:   uploadedUrls.length > 1 ? uploadedUrls : undefined,
+        image_url:        uploadedUrls[0] ?? undefined,
+        community_region: userRegion ?? undefined,
+        city:             user?.city ?? undefined,
       };
 
       if (template === "hidden-gem") {
@@ -318,17 +328,26 @@ export default function NewPostScreen() {
           style={styles.templateStrip}
           contentContainerStyle={styles.templateStripContent}
         >
-          {TEMPLATES.map((t) => (
-            <TouchableOpacity
-              key={t.id}
-              style={[styles.templateChip, template === t.id && styles.templateChipActive]}
-              onPress={() => { setTemplate(t.id); setText(""); setTagLocked(false); setShowPicker(false); }}
-            >
-              <Text style={[styles.templateChipText, template === t.id && styles.templateChipTextActive]}>
-                {t.emoji} {t.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {TEMPLATES.map((t) => {
+            const locked = TASTE_MAKER_TEMPLATES.has(t.id) && userRep < 2500;
+            return (
+              <TouchableOpacity
+                key={t.id}
+                style={[styles.templateChip, template === t.id && styles.templateChipActive, locked && styles.templateChipLocked]}
+                onPress={() => {
+                  if (locked) {
+                    Alert.alert("Taste Maker required", `${t.label} posts unlock at 2,500 reputation (Taste Maker).`, [{ text: "OK" }]);
+                    return;
+                  }
+                  setTemplate(t.id); setText(""); setTagLocked(false); setShowPicker(false);
+                }}
+              >
+                <Text style={[styles.templateChipText, template === t.id && styles.templateChipTextActive, locked && styles.templateChipTextLocked]}>
+                  {locked ? "🔒" : t.emoji} {t.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
 
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
@@ -702,8 +721,10 @@ function createStyles(c: ColorPalette) {
     backgroundColor: c.paperDeep, justifyContent: "center",
   },
   templateChipActive:     { backgroundColor: c.ochre },
+  templateChipLocked:     { opacity: 0.45 },
   templateChipText:       { fontFamily: fonts.sansBold, fontSize: 12, color: c.inkSoft },
   templateChipTextActive: { color: c.paper },
+  templateChipTextLocked: { color: c.mute },
 
   body: { padding: space[4], paddingBottom: 100 },
 

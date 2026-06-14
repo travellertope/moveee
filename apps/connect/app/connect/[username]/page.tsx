@@ -41,10 +41,11 @@ async function getProfile(username: string): Promise<Profile | null> {
 }
 
 const REP_TIER_LABELS: Record<string, string> = {
-  member:              "Member",
+  member:                "Member",
   "culture-contributor": "Culture Contributor",
-  "taste-maker":       "Taste Maker",
-  "culture-authority": "Culture Authority",
+  "taste-maker":         "Taste Maker",
+  "culture-authority":   "Culture Authority",
+  "culture-icon":        "Culture Icon",
 };
 
 function formatJoined(iso: string) {

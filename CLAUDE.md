@@ -611,14 +611,54 @@ Community event posts (`_template_type = 'event'`) now support an organiser dire
 
 ## Reputation tier thresholds
 
-Defined in `Culture_Gamification::REPUTATION_TIERS`:
+Defined in `Culture_Gamification::REPUTATION_TIERS` (Option A+B+C redesign):
 ```php
-1500 => 'culture-authority',
-500  => 'taste-maker',
-100  => 'culture-contributor',
-0    => 'member',
+25000 => 'culture-icon',        // invite/nomination only — requires _culture_icon_nominated usermeta
+10000 => 'culture-authority',
+2500  => 'taste-maker',
+500   => 'culture-contributor',
+0     => 'member',
 ```
+
+`culture-icon` is a nomination-only tier. Even with 25,000+ rep, the user must have
+`_culture_icon_nominated = 1` set by an admin. `get_reputation_tier($rep, $user_id)` enforces this.
+
+**Reputation is earned only from quality signals (Option B).** Passive actions
+(`magazine_read`, `magazine_share`, `game_completed`, `poll_vote`, `newsletter_reaction`,
+`community_like`, `quote_like`) give 0 reputation — they still earn credits.
+Quality signals: event check-in, referral, community post/comment, directory entry,
+quote submission, newsletter comment, profile completed, email verified.
+
 Daily credit cap: `DAILY_CREDIT_CAP = 50` credits per user per day.
+
+### Reputation-gated privileges (implemented)
+
+| Privilege | Minimum tier | Where enforced |
+|---|---|---|
+| Feed boost (+10 score) | Taste Maker | `useFeedRecommendations.ts` scoreItem() — reads `authorRepTier` on FeedItem |
+| Skip new-member review queue | Taste Maker (2,500 rep) | `class-culture-mobile-api.php` handle_submit_post |
+| Poll + Itinerary templates | Taste Maker (2,500 rep) | PHP (403), mobile UI (🔒 chip + Alert) |
+| Gated partner perks | Configurable per perk | `class-culture-perks.php` redeem_perk() checks `min_rep_tier` column |
+| Nominate for Culture Icon | Culture Authority (10,000 rep) | `POST /culture/v1/nominate-icon` |
+
+**Feed boost implementation:**
+- `community_author_rep_tier` saved as post meta on every submit (mobile API)
+- Registered in `class-culture-community.php` register_meta()
+- Returned as `authorRepTier` field in mobile feed response
+- `FeedItem.authorRepTier` added to `src/types/index.ts`
+
+**Perk tier gating:**
+- `culture_partner_perks` table has `min_rep_tier VARCHAR(30) DEFAULT 'member'` column
+- `dbDelta` in `class-culture-activator.php` adds it (ALTER on existing tables happens automatically)
+- Admin perk create/update API (`_sanitize_perk_data`) accepts `min_rep_tier` param
+- Tier order: member(0) < culture-contributor(1) < taste-maker(2) < culture-authority(3) < culture-icon(4)
+
+**Nomination power:**
+- `POST /culture/v1/nominate-icon` — API key auth
+- Body: `{ nominator_id, nominee_id }`
+- Sets `_culture_icon_nominated`, `_culture_icon_nominated_by`, `_culture_icon_nominated_at` usermeta
+- Rate-limited: one nomination per nominator per day (WP transient)
+- Nominations are additive — any Culture Authority can nominate, admin still controls the final flag
 
 ---
 
@@ -835,6 +875,8 @@ Before production build, also run `npm install` after restoring `react-native-ia
 | ContextMenu | `components/ui/ContextMenu.tsx` — 200px floating menu with divider before destructive actions |
 | ReportPostSheet | `components/community/ReportPostSheet.tsx` — 3-option radio sheet, submits to community/report |
 | ForYouExplainerSheet | `components/community/ForYouExplainerSheet.tsx` — sparkle icon + serif title + interests CTA |
+| Location features | ConnectFeedScreen: region chip strip (All/Africa/Diaspora UK/US/Europe) defaults to user's region; EventsScreen: city filter + local sort; MemberDirectoryScreen: city chip strip; MemberSettingsScreen: newsletter segment auto-derived from countryOfResidence |
+| Reputation privileges | Feed boost for high-rep authors; Taste Maker skips new-member queue; Poll/Itinerary gated at 2500 rep (PHP + mobile UI 🔒); Perk min_rep_tier gating; Culture Authority can nominate for Culture Icon |
 
 ### What is missing (priority order)
 1. MembershipScreen IAP wiring (Google Play Billing + App Store IAP) — low priority; current behaviour directs users to the web to upgrade

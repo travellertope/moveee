@@ -15,7 +15,9 @@ class Culture_Perks {
     // ── Constants ─────────────────────────────────────────────────────────────
 
     /** Credits-to-GBP conversion rate (credits per £1). Overridden by option. */
-    const DEFAULT_CREDITS_PER_GBP = 10;
+    const DEFAULT_CREDITS_PER_GBP = 200;
+    const DEFAULT_CREDITS_PER_USD = 150;
+    const DEFAULT_CREDITS_PER_NGN = 110; // per ₦1,000
 
     // ── HMAC helper ───────────────────────────────────────────────────────────
 
@@ -154,6 +156,23 @@ class Culture_Perks {
         $cost    = (int) $perk['credit_cost'];
         $user_id = (int) $user_id;
         $perk_id = (int) $perk_id;
+
+        // Rep tier gate.
+        $tier_order = array( 'member' => 0, 'culture-contributor' => 1, 'taste-maker' => 2, 'culture-authority' => 3, 'culture-icon' => 4 );
+        $min_tier   = $perk['min_rep_tier'] ?? 'member';
+        if ( isset( $tier_order[ $min_tier ] ) && $tier_order[ $min_tier ] > 0 ) {
+            $rep      = Culture_Gamification::get_reputation( $user_id );
+            $user_tier = Culture_Gamification::get_reputation_tier( $rep, $user_id );
+            if ( ( $tier_order[ $user_tier ] ?? 0 ) < $tier_order[ $min_tier ] ) {
+                $tier_labels = array(
+                    'culture-contributor' => 'Culture Contributor',
+                    'taste-maker'         => 'Taste Maker',
+                    'culture-authority'   => 'Culture Authority',
+                    'culture-icon'        => 'Culture Icon',
+                );
+                return new WP_Error( 'rep_tier_required', sprintf( 'This perk requires %s status.', $tier_labels[ $min_tier ] ?? $min_tier ), array( 'status' => 403 ) );
+            }
+        }
 
         // Balance check.
         $balance = Culture_Gamification::get_credits( $user_id );
@@ -395,13 +414,27 @@ class Culture_Perks {
         $fee_credits = (int) round( $credits * $fee_pct / 100 );
         $net_credits = $credits - $fee_credits;
 
-        // Credits per GBP (stored in pence for precision; divided by 100 for display).
-        $credits_per_gbp = (int) get_option( 'culture_credits_per_gbp', self::DEFAULT_CREDITS_PER_GBP );
-        if ( $credits_per_gbp <= 0 ) {
-            $credits_per_gbp = self::DEFAULT_CREDITS_PER_GBP;
+        // Determine credits-per-unit based on requested currency.
+        switch ( strtoupper( $currency ) ) {
+            case 'USD':
+                $rate = (int) get_option( 'culture_credits_per_usd', self::DEFAULT_CREDITS_PER_USD );
+                if ( $rate <= 0 ) $rate = self::DEFAULT_CREDITS_PER_USD;
+                // cashout_amount stored as integer cents.
+                $cashout_amount = (int) round( ( $net_credits / $rate ) * 100 );
+                break;
+            case 'NGN':
+                $rate = (int) get_option( 'culture_credits_per_ngn', self::DEFAULT_CREDITS_PER_NGN );
+                if ( $rate <= 0 ) $rate = self::DEFAULT_CREDITS_PER_NGN;
+                // cashout_amount stored as integer kobo (per ₦1,000 basis → ×100,000).
+                $cashout_amount = (int) round( ( $net_credits / $rate ) * 100000 );
+                break;
+            default: // GBP
+                $rate = (int) get_option( 'culture_credits_per_gbp', self::DEFAULT_CREDITS_PER_GBP );
+                if ( $rate <= 0 ) $rate = self::DEFAULT_CREDITS_PER_GBP;
+                // cashout_amount stored as integer pence.
+                $cashout_amount = (int) round( ( $net_credits / $rate ) * 100 );
+                break;
         }
-        // cashout_amount stored as integer pence.
-        $cashout_amount = (int) round( ( $net_credits / $credits_per_gbp ) * 100 );
 
         // Deduct credits.
         $new_balance = Culture_Gamification::deduct_credits( $user_id, $credits, 'cashout', 0 );

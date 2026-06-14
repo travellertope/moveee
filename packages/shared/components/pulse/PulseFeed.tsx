@@ -119,6 +119,18 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
   const userInterests = (session?.user as any)?.interests as string[] | undefined;
   const interestTagSet = useMemo(() => interestsToTagSet(userInterests ?? []), [userInterests]);
+  const userCity   = (session?.user as any)?.city as string | undefined;
+  const userCountry = (session?.user as any)?.countryOfResidence as string | undefined;
+  const userRegion = useMemo(() => {
+    if (!userCountry) return undefined;
+    const map: Record<string, string> = {
+      nigeria: "Africa", gh: "Africa", ghana: "Africa", kenya: "Africa", "south africa": "Africa",
+      "united kingdom": "Diaspora UK", uk: "Diaspora UK", gb: "Diaspora UK",
+      "united states": "Diaspora US", us: "Diaspora US", canada: "Diaspora US",
+      france: "Diaspora Europe", germany: "Diaspora Europe",
+    };
+    return map[userCountry.toLowerCase().trim()] ?? undefined;
+  }, [userCountry]);
   const hasInterests = (userInterests?.length ?? 0) > 0;
 
   const filtered = useMemo(() => items.filter(item => {
@@ -143,9 +155,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   // When "For You" is active, rank by relevance score; otherwise newest-first.
   const sorted = useMemo(() => (
     forYou && hasInterests
-      ? rankFeed(filtered, interestTagSet)
+      ? rankFeed(filtered, interestTagSet, userCity, userRegion)
       : [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  ), [filtered, forYou, hasInterests, interestTagSet]);
+  ), [filtered, forYou, hasInterests, interestTagSet, userCity, userRegion]);
 
   // Trending items (shown in sidebar and For You mode)
   const trending = useMemo(() => getTrending(items), [items]);

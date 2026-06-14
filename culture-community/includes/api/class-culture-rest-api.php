@@ -347,6 +347,17 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Nominate a member for Culture Icon (Culture Authority tier required).
+        register_rest_route( 'culture/v1', '/nominate-icon', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_nominate_icon' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'nominator_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'nominee_id'   => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Community blocklist — returns admin-configured blocked phrases for the Next.js layer.
         register_rest_route( 'culture/v1', '/community-blocklist', array(
             'methods'             => 'GET',
@@ -664,11 +675,11 @@ class Culture_REST_API {
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
 
-        // Paragraph comments — GET (public) and POST (auth/shared secret).
-        register_rest_route( 'culture/v1', '/comments/paragraph', array(
+        // Article comments — GET (public) and POST (auth/shared secret).
+        register_rest_route( 'culture/v1', '/comments', array(
             array(
                 'methods'             => 'GET',
-                'callback'            => array( __CLASS__, 'handle_get_paragraph_comments' ),
+                'callback'            => array( __CLASS__, 'handle_get_comments' ),
                 'permission_callback' => '__return_true',
                 'args'                => array(
                     'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
@@ -676,13 +687,12 @@ class Culture_REST_API {
             ),
             array(
                 'methods'             => 'POST',
-                'callback'            => array( __CLASS__, 'handle_post_paragraph_comment' ),
+                'callback'            => array( __CLASS__, 'handle_post_comment' ),
                 'permission_callback' => array( __CLASS__, 'api_key_permission' ),
                 'args'                => array(
-                    'post_id'       => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
-                    'paragraph_idx' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
-                    'user_id'       => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
-                    'content'       => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
+                    'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                    'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                    'content' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
                 ),
             ),
         ) );
@@ -1736,6 +1746,44 @@ class Culture_REST_API {
     }
 
     /**
+     * POST /culture/v1/nominate-icon
+     * Allows Culture Authority (or higher) members to nominate someone for Culture Icon.
+     * Sets _culture_icon_nominated = 1 on the nominee. One nomination per nominator per day.
+     */
+    public static function handle_nominate_icon( $request ) {
+        $nominator_id = (int) $request->get_param( 'nominator_id' );
+        $nominee_id   = (int) $request->get_param( 'nominee_id' );
+
+        if ( ! get_userdata( $nominator_id ) || ! get_userdata( $nominee_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+        if ( $nominator_id === $nominee_id ) {
+            return new WP_Error( 'self_nominate', 'You cannot nominate yourself.', array( 'status' => 400 ) );
+        }
+
+        // Nominator must be Culture Authority or Culture Icon.
+        $rep       = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $nominator_id ) : 0;
+        $tier      = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation_tier( $rep, $nominator_id ) : 'member';
+        $auth_tiers = array( 'culture-authority', 'culture-icon' );
+        if ( ! in_array( $tier, $auth_tiers, true ) ) {
+            return new WP_Error( 'tier_required', 'Only Culture Authority members can nominate for Culture Icon.', array( 'status' => 403 ) );
+        }
+
+        // Rate-limit: one nomination per nominator per day.
+        $rate_key = 'culture_icon_nom_' . $nominator_id;
+        if ( get_transient( $rate_key ) ) {
+            return new WP_Error( 'rate_limited', 'You can only submit one nomination per day.', array( 'status' => 429 ) );
+        }
+        set_transient( $rate_key, 1, DAY_IN_SECONDS );
+
+        update_user_meta( $nominee_id, '_culture_icon_nominated', 1 );
+        update_user_meta( $nominee_id, '_culture_icon_nominated_by', $nominator_id );
+        update_user_meta( $nominee_id, '_culture_icon_nominated_at', current_time( 'mysql' ) );
+
+        return rest_ensure_response( array( 'success' => true, 'nominee_id' => $nominee_id ) );
+    }
+
+    /**
      * GET /culture/v1/community-blocklist
      * Returns admin-configured blocked phrases so the Next.js layer can enforce them.
      * The default hardcoded list lives in lib/spam-protection.ts; this endpoint
@@ -2611,49 +2659,38 @@ class Culture_REST_API {
     }
 
     /**
-     * GET /culture/v1/comments/paragraph?post_id=X
-     * Returns comments grouped by paragraph index.
+     * GET /culture/v1/comments?post_id=X
+     * Returns all approved comments for a post, oldest first.
      */
-    public static function handle_get_paragraph_comments( $request ) {
-        $post_id = $request->get_param( 'post_id' );
-        
-        $comments = get_comments( array(
+    public static function handle_get_comments( $request ) {
+        $post_id  = $request->get_param( 'post_id' );
+        $raw      = get_comments( array(
             'post_id' => $post_id,
             'status'  => 'approve',
             'orderby' => 'comment_date',
             'order'   => 'ASC',
         ) );
 
-        $partitioned = array();
-        foreach ( $comments as $comment ) {
-            $idx = get_comment_meta( $comment->comment_ID, '_culture_paragraph_idx', true );
-            if ( '' === $idx ) continue;
-            
-            $idx = (int) $idx;
-            if ( ! isset( $partitioned[ $idx ] ) ) {
-                $partitioned[ $idx ] = array();
-            }
-
-            $partitioned[ $idx ][] = array(
-                'id'      => $comment->comment_ID,
-                'author'  => $comment->comment_author,
-                'content' => wpautop( $comment->comment_content ),
-                'date'    => $comment->comment_date,
+        $comments = array_map( function( $c ) {
+            return array(
+                'id'      => (int) $c->comment_ID,
+                'author'  => $c->comment_author,
+                'content' => wpautop( $c->comment_content ),
+                'date'    => $c->comment_date,
             );
-        }
+        }, $raw );
 
-        return rest_ensure_response( $partitioned );
+        return rest_ensure_response( array( 'comments' => $comments ) );
     }
 
     /**
-     * POST /culture/v1/comments/paragraph
-     * Insert a new comment for a specific paragraph.
+     * POST /culture/v1/comments
+     * Insert a new end-of-article comment.
      */
-    public static function handle_post_paragraph_comment( $request ) {
-        $post_id       = (int) $request->get_param( 'post_id' );
-        $paragraph_idx = (int) $request->get_param( 'paragraph_idx' );
-        $user_id       = (int) $request->get_param( 'user_id' );
-        $content       = $request->get_param( 'content' );
+    public static function handle_post_comment( $request ) {
+        $post_id = (int) $request->get_param( 'post_id' );
+        $user_id = (int) $request->get_param( 'user_id' );
+        $content = $request->get_param( 'content' );
 
         $user = get_userdata( $user_id );
         if ( ! $user ) {
@@ -2673,12 +2710,9 @@ class Culture_REST_API {
             return new WP_Error( 'save_failed', 'Could not save comment.', array( 'status' => 500 ) );
         }
 
-        update_comment_meta( $comment_id, '_culture_paragraph_idx', $paragraph_idx );
-        
-        // Award points.
         if ( class_exists( 'Culture_Gamification' ) ) {
             $post_type = get_post_type( $post_id );
-            $action = ( 'culture_newsletter' === $post_type ) ? 'newsletter_comment' : 'magazine_comment';
+            $action    = ( 'culture_newsletter' === $post_type ) ? 'newsletter_comment' : 'magazine_comment';
             Culture_Gamification::award_points( $user_id, $action );
         }
 
@@ -3985,8 +4019,10 @@ class Culture_REST_API {
                 'status'               => $status,
                 'partner_directory_id' => max( 0, (int) $request->get_param( 'partner_directory_id' ) ),
                 'partner_vendor_id'    => max( 0, (int) $request->get_param( 'partner_vendor_id' ) ),
+                'min_rep_tier'         => in_array( $request->get_param( 'min_rep_tier' ), array( 'member', 'culture-contributor', 'taste-maker', 'culture-authority', 'culture-icon' ), true )
+                                          ? $request->get_param( 'min_rep_tier' ) : 'member',
             ),
-            'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d' ),
+            'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d', '%s' ),
         );
     }
 }

@@ -14,6 +14,7 @@ interface Props {
 }
 
 const TIER_LABELS: Record<string, string> = {
+  'culture-icon':       'Culture Icon',
   'culture-authority':  'Culture Authority',
   'taste-maker':        'Taste Maker',
   'culture-contributor':'Culture Contributor',

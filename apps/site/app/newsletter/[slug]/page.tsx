@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
-import ParagraphCommentSystem from "@/components/ParagraphCommentSystem";
+import ArticleComments from "@/components/ArticleComments";
 import ArticleContentGate from "@/components/ArticleContentGate";
 import { getAccessLevel } from "@/lib/access";
 import "../../newsletter.css";
@@ -182,14 +182,14 @@ export default async function GmlIssuePage({
 
       {/* ── ISSUE BODY + SIDEBAR ── */}
       <div className="gml-issue-wrap">
-        {/* Main content (Interactive Paragraph Comments) */}
+        {/* Main content */}
         <article id="issue-body">
           <ArticleContentGate
             accessLevel={accessLevel}
             callbackUrl={`/newsletter/${resolvedParams.slug}`}
             previewHtml={issue.excerpt ? sanitizeHtml(issue.excerpt.replace(/<[^>]*>/g, "")) : undefined}
             fullContent={
-              <ParagraphCommentSystem
+              <ArticleComments
                 postId={parseInt(issue.databaseId)}
                 content={sanitiseContent(issue.content || "")}
               />
