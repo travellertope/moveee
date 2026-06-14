@@ -2193,6 +2193,352 @@ Output 3 frames side by side.
 
 ---
 
+### PROMPT 11B — Directory Entry Detail Page (All 11 Entry Types)
+
+```
+Senior mobile UX/UI designer — Moveee Connect directory entry detail. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D, ghost #C8BFB0, mute #7A6F5C.
+Typography: Fraunces (display), DM Sans (body/UI), JetBrains Mono (labels/meta).
+Radius system: sm=2px, md=4px, lg=6px, xl=12px, 2xl=20px, full=9999px.
+Shadow-card: 0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04).
+All cards: white #FFFFFF fill + shadow-card.
+
+ENTRY TYPE BADGE COLOURS:
+  Person → bg #B38238 (gold), text white
+  Place → bg #2E7D32 (forest), text white
+  Food → bg #C5491F (ochre), text white
+  Book → bg rgba(120,53,15,0.10) (sepia tint), text #78350F
+  Film → bg #1976D2 (blue), text white
+  Genre → bg #6B48A8 (purple), text white
+  Movement → bg #6B48A8 (purple), text white
+  Artwork → bg #1976D2 (blue), text white
+  Concept → bg #3A342B (dark warm), text white
+  Fashion → bg #7B1FA2 (deep purple), text white
+  TV Series → bg #00695C (teal), text white
+
+SHARED SHELL (identical across all 11 frames — render once, vary content):
+
+NAV HEADER (56px, white bg, shadow-card bottom):
+  Back chevron 24px ink left, 16px inset.
+  Title: entry name truncated, Fraunces 18px bold ink, centred.
+  "⋯" overflow icon right 24px ink, 16px inset (Share / Report / Improve).
+
+HERO IMAGE (220px full width, radius 0):
+  Warm-toned placeholder photo relevant to entry type.
+  TYPE BADGE (bottom-left, 12px inset, 12px bottom):
+    Pill 28px — emoji + "TYPE NAME" JetBrains Mono 10px bold uppercase — colours per table above.
+    Backdrop blur 8px behind badge.
+
+ENTRY HEADER (white bg, 20px top padding, 16px horizontal, shadow-card bottom):
+  TITLE: Fraunces 22px bold ink. 1–2 lines max.
+  CITY + COUNTRY: "📍 Lagos, Nigeria" DM Sans 13px mute, 4px below title.
+  INTEREST TAG CHIPS (horizontal scroll, 8px top, 8px gap):
+    Ghost-border pills, radius-full, DM Sans 11px bold mute, 6px ver 10px hor padding.
+    e.g. "🎵 Music Production" · "🎨 Visual Art" — 2–3 chips typical.
+  EXCERPT: DM Sans 14px ink-soft, 3 lines, 12px top, 16px bottom padding.
+
+BODY SECTION (white card, 8px top margin, 16px padding, shadow-card):
+  "About" DM Sans 13px bold mute uppercase letter-spacing, 12px bottom.
+  Full body text DM Sans 14px ink-soft, 4 paragraphs collapsed to 3 lines initially.
+  "Read more" ochre link if >3 lines — tap expands inline (chevron rotates). DM Sans 13px.
+
+INFOBOX CARD (white card, 8px top margin, 16px padding, shadow-card):
+  "Details" DM Sans 13px bold mute uppercase letter-spacing, 12px bottom.
+  Rows of key–value pairs (12px gap between rows):
+    Left: DM Sans 12px mute label. Right: DM Sans 13px ink value (or chips for multi-value).
+  [Content varies per entry type — see per-frame specs below.]
+
+SELECTED WORKS / GALLERY (white card, 8px top margin, shadow-card):
+  Section title "Works" / "Portfolio" / "Episodes" — DM Sans 13px bold mute uppercase, 16px padding.
+  Horizontal scroll row, 16px left padding, 12px gap:
+    Each tile: 100×130px, white fill, radius-lg, shadow-card.
+    Top: 100×72px image placeholder, radius-md top corners.
+    Bottom (10px padding): title DM Sans 12px bold ink 1 line, year JetBrains Mono 10px ghost.
+  Show 4 tiles (last partially visible).
+  [Skip this section for types with no portfolio content — Concept, Genre, Movement.]
+
+COMMUNITY REVIEWS (white card, 8px top margin, shadow-card):
+  Header row (16px horizontal, 16px vertical):
+    "Community Reviews" DM Sans 13px bold ink left.
+    AGGREGATE STAR (right): ★★★★½ in gold + "4.6" JetBrains Mono 13px bold gold + "(24)" DM Sans 11px mute.
+  Horizontal scroll row of review mini-cards (16px left padding, 12px gap):
+    Review card (200px wide, white fill, radius-lg, shadow-card, 12px padding):
+      Reviewer row: 32px avatar (ghost border) + "Display Name" DM Sans 12px bold ink + "· 2d" JetBrains Mono 10px mute right.
+      Stars: ★★★★★ gold, 4px top.
+      Review text: DM Sans 12px ink-soft, 3 lines, 6px top.
+  Show 3 review cards (third partially visible).
+  "Write a review" ghost-border button (full-width, 44px, radius-lg, DM Sans 13px bold ink) 12px below scroll row, 16px horizontal margin.
+
+UPCOMING EVENTS (white card, 8px top margin, shadow-card):
+  "Upcoming Events" DM Sans 13px bold mute uppercase, 16px padding.
+  2 event rows (12px horizontal padding, 8px gap):
+    Event row (white fill, radius-lg, 12px padding, shadow-card):
+      Left: date block 44×44px paper-warm, radius-md — month JetBrains Mono 9px mute uppercase / day Fraunces 18px bold gold.
+      Right (10px gap): event title DM Sans 13px bold ink 1 line / "📍 Venue Name · Lagos" DM Sans 12px mute / "Free" or "₦2,000" DM Sans 12px ochre.
+      Right edge: chevron 16px ghost.
+
+RELATED ENTRIES (white card, 8px top margin, 16px padding, shadow-card):
+  "Related" DM Sans 13px bold mute uppercase, 12px bottom.
+  Horizontal scroll chips (8px gap):
+    Each chip (ghost border, radius-full, 10px ver 14px hor padding, 8px gap):
+      Type emoji + "Entry Name" DM Sans 12px bold ink.
+  Show 4–5 chips.
+
+IMPROVE CTA (white card, 8px top margin, 16px padding, shadow-card, 24px bottom margin):
+  "Know more about this entry?" DM Sans 13px ink-soft centred, 8px bottom.
+  "Suggest an edit" ghost-border button (full-width, 44px, radius-lg, DM Sans 13px bold mute).
+
+---
+
+FRAME 1 — PERSON ENTRY ("Fela Kuti"):
+HERO: Black-and-white vintage concert photograph, warm-sepia tinted.
+TYPE BADGE: "👤 PERSON" gold bg.
+TITLE: "Fela Kuti"
+CITY: "📍 Lagos, Nigeria"
+INTEREST TAGS: "🎵 Live Music" · "🎵 Music Production" · "💡 Ideas"
+EXCERPT: "Pioneer of Afrobeat, activist, and multi-instrumentalist. One of the most influential musicians of the 20th century and a relentless voice for the oppressed."
+
+INFOBOX — PERSON:
+  Occupation: "Musician · Activist · Bandleader"
+  Disciplines: "Afrobeat · Jazz · Funk"
+  Born: "15 Oct 1938, Abeokuta, Nigeria"
+  Era active: "1960s – 1997"
+  Awards: "Grammy Lifetime Achievement (2024, posthumous)" DM Sans 13px ink.
+  Also known as: "Fela Anikulapo Kuti" DM Sans 13px ink mute italic.
+
+SELECTED WORKS (4 tiles): "Zombie (1977)" · "Expensive Shit (1975)" · "Beast of No Nation (1989)" · "Teacher Don't Teach Me Nonsense (1986)"
+UPCOMING EVENTS: "Felabration 2026" Oct 15 · "Shrine Night: Afrobeat Tribute" Nov 03
+RELATED ENTRIES: 👤 Tony Allen · 🎵 Afrobeat (Genre) · 👤 Hugh Masekela · 💡 Pan-Africanism
+
+---
+
+FRAME 2 — PLACE ENTRY ("New Afrika Shrine"):
+HERO: Warm-lit outdoor venue — corrugated roof, palm trees, warm crowd.
+TYPE BADGE: "📍 PLACE" forest green bg.
+TITLE: "New Afrika Shrine"
+CITY: "📍 Lagos, Nigeria"
+INTEREST TAGS: "🎵 Live Music" · "🍽 Food & Drink" · "🌙 Nightlife"
+EXCERPT: "Legendary open-air music venue founded by Fela Kuti in 1970 and revived by his sons. The spiritual home of Afrobeat in Lagos."
+
+INFOBOX — PLACE:
+  Venue type: "Live Music Venue"
+  Address: "1 Gbemisola St, Allen, Ikeja, Lagos"
+  Opening hours: "Fri–Sun, 6pm – 4am"
+  Admission: "₦2,000 – ₦5,000"
+  Website: "afrikakulture.com" (ochre link)
+  Capacity: "~5,000 standing"
+
+SELECTED WORKS (shows "Events" tiles): "Felabration 2025" · "Afrobeat Friday Live" · "New Year's Eve 2025" · "Shrine Sessions Vol. 4"
+UPCOMING EVENTS: "Felabration 2026" Oct 15 · "Shrine Friday Night" Jul 12
+RELATED ENTRIES: 👤 Fela Kuti · 👤 Seun Kuti · 🎵 Afrobeat · 📍 Freedom Park Lagos
+
+---
+
+FRAME 3 — FOOD ENTRY ("Jollof Rice"):
+HERO: Vivid close-up of smoky Nigerian jollof rice in a party tray.
+TYPE BADGE: "🍽 FOOD" ochre bg.
+TITLE: "Jollof Rice"
+CITY: "📍 Lagos, Nigeria" (origin)
+INTEREST TAGS: "🍽 Food & Drink" · "🌍 Travel" · "🍜 Street Food"
+EXCERPT: "The beloved West African one-pot rice dish cooked in a rich tomato and pepper base. The centrepiece of every celebration from Lagos to London."
+
+INFOBOX — FOOD:
+  Cuisine type: "West African · Nigerian"
+  Best for: "Celebrations · Family dining · Street food"
+  Price range: "₦1,000 – ₦8,000 depending on setting"
+  Common at: "Parties, 'joints', upscale restaurants"
+  Dietary notes: "Usually contains meat; vegetarian versions available"
+  Also known as: "Party jollof · Smoky jollof"
+
+SELECTED WORKS (shows "Where to eat" tiles): "Buka by Ilé" · "Yellow Chilli" · "Ofada Boy" · "Mama Put, Surulere"
+UPCOMING EVENTS: "Jollof Wars Lagos 2026" Aug 10 · "West African Food Festival" Sep 05
+RELATED ENTRIES: 🍽 Egusi Soup · 🍽 Suya · 📍 Lagos Island Market · 👤 Chef Tolu Eros
+
+---
+
+FRAME 4 — BOOK ENTRY ("Things Fall Apart"):
+HERO: Warm editorial flat-lay of the book with African kente fabric backdrop.
+TYPE BADGE: "📚 BOOK" sepia tint bg text #78350F.
+TITLE: "Things Fall Apart"
+CITY: "📍 Ogidi, Anambra (Setting)"
+INTEREST TAGS: "📖 Literature" · "💡 Ideas" · "🌍 Travel"
+EXCERPT: "Chinua Achebe's landmark debut novel depicting life in pre-colonial Igboland through the tragic story of Okonkwo — one of the most read African novels globally."
+
+INFOBOX — BOOK:
+  Author: "Chinua Achebe"
+  Year published: "1958"
+  Genre: "Literary Fiction · Postcolonial"
+  Publisher: "William Heinemann (UK) · Anchor Books (US)"
+  Themes: "Colonialism · Identity · Tradition · Masculinity"
+  Editions: "50+ languages worldwide"
+
+SELECTED WORKS (shows "Also by Achebe" tiles): "No Longer at Ease" · "Arrow of God" · "Anthills of the Savannah" · "There Was a Country"
+UPCOMING EVENTS: "Achebe at 95: Literary Retrospective" Sep 21 · "Things Fall Apart: Lagos Book Club" Aug 08
+RELATED ENTRIES: 👤 Chinua Achebe · 📖 Postcolonial Literature · 📚 Arrow of God · 💡 Pan-Africanism
+
+---
+
+FRAME 5 — FILM ENTRY ("Half of a Yellow Sun"):
+HERO: Cinematic still — two figures in warm dusk light, 1960s Nigerian setting.
+TYPE BADGE: "🎬 FILM" blue bg.
+TITLE: "Half of a Yellow Sun"
+CITY: "📍 Nigeria (setting)"
+INTEREST TAGS: "🎬 Independent Film" · "📖 Literature" · "💡 Ideas"
+EXCERPT: "Biyi Bandele's adaptation of Chimamanda Ngozi Adichie's Booker-longlisted novel about love and war during the Biafran conflict. Starring Thandie Newton and Chiwetel Ejiofor."
+
+INFOBOX — FILM:
+  Director: "Biyi Bandele"
+  Year: "2013"
+  Genre: "Drama · Historical"
+  Cast: "Thandie Newton · Chiwetel Ejiofor · Anika Noni Rose"
+  Runtime: "111 min"
+  Streaming: "Netflix · Prime Video"
+
+SELECTED WORKS (shows related films tiles): "Purple Hibiscus (2022)" · "Lionheart (2018)" · "76 (2016)" · "The Milkmaid (2020)"
+UPCOMING EVENTS: "Nigerian Cinema Retrospective" Oct 12 · "AFRIFF Lagos Screening" Nov 01
+RELATED ENTRIES: 👤 Chimamanda Ngozi Adichie · 📚 Half of a Yellow Sun (Book) · 🎬 Nollywood · 👤 Chiwetel Ejiofor
+
+---
+
+FRAME 6 — GENRE ENTRY ("Afrobeat"):
+HERO: Abstract warm graphic — layered vinyl record rings in ochre and gold on ink.
+TYPE BADGE: "🎵 GENRE" purple bg.
+TITLE: "Afrobeat"
+CITY: "📍 Lagos, Nigeria (Origin)"
+INTEREST TAGS: "🎵 Live Music" · "🎵 Music Production" · "💡 Ideas"
+EXCERPT: "Genre pioneered by Fela Kuti in the late 1960s, blending Yoruba music with jazz, funk, and psychedelic rock — characterised by complex rhythms, extended compositions, and political lyrics."
+
+INFOBOX — GENRE:
+  Origin: "Lagos, Nigeria"
+  Era: "Late 1960s – present"
+  Characteristics: "Polyrhythmic percussion · Extended jams · Horns · Political themes"
+  Key artists: "Fela Kuti · Tony Allen · Seun Kuti · Femi Kuti · Orlando Julius"
+  Influenced by: "Jazz · Highlife · Funk · Yoruba traditional music"
+  Do not confuse with: "'Afrobeats' (contemporary pop genre)" mute italic
+
+[No SELECTED WORKS section — Genre type.]
+UPCOMING EVENTS: "Afrobeat Night: Afrika Shrine" Jul 12 · "Felabration 2026" Oct 15
+RELATED ENTRIES: 👤 Fela Kuti · 👤 Tony Allen · 🎵 Highlife · 🎵 Afrobeats · 📍 New Afrika Shrine
+
+---
+
+FRAME 7 — MOVEMENT ENTRY ("Negritude"):
+HERO: Warm sepia editorial — stacked vintage books and handwritten manuscripts.
+TYPE BADGE: "🌊 MOVEMENT" purple bg.
+TITLE: "Negritude"
+CITY: "📍 Paris, France (Origin)"
+INTEREST TAGS: "📖 Literature" · "💡 Ideas" · "🌍 Travel"
+EXCERPT: "Intellectual and literary movement founded in the 1930s by Francophone African and Caribbean writers asserting the value and beauty of Black African cultural identity in response to French colonialism."
+
+INFOBOX — MOVEMENT:
+  Origin: "Paris, France"
+  Era: "1930s – 1960s"
+  Key figures: "Aimé Césaire · Léopold Sédar Senghor · Léon-Gontran Damas"
+  Philosophy: "Reclaiming African cultural identity; resistance to assimilation"
+  Related movements: "Harlem Renaissance · Pan-Africanism · Black Consciousness"
+  Languages: "French"
+
+[No SELECTED WORKS section — Movement type.]
+UPCOMING EVENTS: "Negritude: A Retrospective" Nov 20 · "African Literary Heritage Symposium" Sep 14
+RELATED ENTRIES: 👤 Aimé Césaire · 👤 Léopold Sédar Senghor · 💡 Pan-Africanism · 🌊 Harlem Renaissance
+
+---
+
+FRAME 8 — ARTWORK ENTRY ("Ori Olokun Sculpture"):
+HERO: Clean gallery-lit photograph of a terracotta Yoruba sculpture on white plinth.
+TYPE BADGE: "🖼 ARTWORK" blue bg.
+TITLE: "Ori Olokun"
+CITY: "📍 Ile-Ife, Nigeria"
+INTEREST TAGS: "🎨 Visual Art" · "💡 Ideas" · "📸 Photography"
+EXCERPT: "Bronze ritual head depicting Yoruba deity Olokun, excavated in Ile-Ife. One of the finest examples of 12th–15th century Ife bronze casting — a masterwork of African art history."
+
+INFOBOX — ARTWORK:
+  Artist / Origin: "Ife bronze casters (anon.), 12th–15th century"
+  Medium: "Brass (lost-wax casting)"
+  Collection: "Ife Museum of Natural History, Ile-Ife"
+  Dimensions: "29.5 cm height"
+  Period: "Ife Civilisation, 12th–15th century"
+  Significance: "Considered the finest Ife bronze; Picasso cited Ife art as an influence"
+
+SELECTED WORKS (shows "Other Ife bronzes" tiles): "Bronze Head of an Oni" · "Tada Seated Figure" · "Obalufon Mask" · "Ife Pot" (tile format with warm photo placeholder)
+UPCOMING EVENTS: "African Art History at the BM" Aug 22 · "Ife Bronzes: British Museum Tour" Oct 05
+RELATED ENTRIES: 🖼 Benin Bronzes · 💡 Yoruba Art · 📍 Ife Museum · 🌊 Ife Civilisation
+
+---
+
+FRAME 9 — FASHION ENTRY ("Ankara Print"):
+HERO: Bold editorial — vibrant ankara fabric rolls in orange, blue, yellow pattern.
+TYPE BADGE: "👗 FASHION" deep purple bg.
+TITLE: "Ankara Print"
+CITY: "📍 West Africa (Origin)"
+INTEREST TAGS: "👗 Fashion & Streetwear" · "🎨 Visual Art" · "🌍 Travel"
+EXCERPT: "Vibrant wax-resist printed cotton fabric that has become one of the defining visual languages of contemporary African identity — from Lagos to London runways."
+
+INFOBOX — FASHION:
+  Also known as: "African wax print · Dutch wax print · Chitenge"
+  Era / origin: "19th century (Dutch manufacture → West African adoption)"
+  Region: "West & Central Africa (especially Nigeria, Ghana, Senegal, Cameroon)"
+  Key figures: "Deola Sagoe · Lisa Folawiyo · Duro Olowu · Ozwald Boateng"
+  Materials: "100% cotton, wax resist-dyed"
+  Characteristics: "Symmetric patterns, vivid colour, symbolic motifs"
+
+SELECTED WORKS (shows designer collections tiles): "Lisa Folawiyo SS26" · "Deola Sagoe Couture" · "Vlisco Heritage 2024" · "ARISE Fashion Week 2026"
+UPCOMING EVENTS: "Lagos Fashion Week 2026" Oct 24 · "Accra Fashion Week" Nov 08
+RELATED ENTRIES: 👤 Lisa Folawiyo · 👤 Duro Olowu · 👗 Agbada · 📍 Balogun Market Lagos
+
+---
+
+FRAME 10 — CONCEPT ENTRY ("Afrofuturism"):
+HERO: Vivid digital art — astronaut silhouette in traditional African fabric against cosmic background.
+TYPE BADGE: "💡 CONCEPT" dark warm bg.
+TITLE: "Afrofuturism"
+CITY: "📍 United States (coined)"
+INTEREST TAGS: "💡 Ideas" · "🎬 Independent Film" · "🎨 Visual Art"
+EXCERPT: "Cultural aesthetic, philosophy, and science fiction framework exploring the intersection of African diaspora culture with technology, futurism, and speculative imagination."
+
+INFOBOX — CONCEPT:
+  Field: "Cultural theory · Art · Literature · Music · Film"
+  Origin era: "1990s (coined by Mark Dery, 1993)"
+  Key thinkers: "Kodwo Eshun · Alondra Nelson · Nettrice Gaskins"
+  Key figures: "Sun Ra · Octavia Butler · Janelle Monáe · Wanuri Kahiu · Kendrick Lamar"
+  Related concepts: "Pan-Africanism · Solarpunk · Black Speculative Fiction"
+  Flagship works: "Black Panther · Pumzi · The Space Traders"
+
+[No SELECTED WORKS section — Concept type.]
+UPCOMING EVENTS: "Afrofuturism Symposium Lagos" Sep 28 · "Future Africa: Digital Art Fair" Nov 12
+RELATED ENTRIES: 🌊 Negritude · 👤 Octavia Butler · 🎬 Black Panther · 💡 Pan-Africanism · 👤 Janelle Monáe
+
+---
+
+FRAME 11 — TV SERIES ENTRY ("Kizzy"):
+HERO: Vintage warm-toned TV still — period drama set, 1970s aesthetic.
+TYPE BADGE: "📺 TV SERIES" teal bg.
+TITLE: "Roots: The Next Generations"
+CITY: "📍 United States"
+INTEREST TAGS: "🎬 Independent Film" · "📖 Literature" · "💡 Ideas"
+EXCERPT: "Landmark 1979 ABC miniseries sequel to Roots, tracing the Haley family from Reconstruction through to Alex Haley's research journey to The Gambia — one of American television's most-watched events."
+
+INFOBOX — TV SERIES:
+  Creator / Showrunner: "Alex Haley (source) · Produced by ABC"
+  Network / Platform: "ABC · Now streaming on Prime Video"
+  Air dates: "1979 (original) · 2016 (remake)"
+  Genre: "Historical Drama · Miniseries"
+  Cast: "James Earl Jones · Marlon Brando · Henry Fonda · Georg Stanford Brown"
+  Seasons / Episodes: "1 season · 7 episodes"
+
+SELECTED WORKS (shows "Related series" tiles): "Roots (1977)" · "Queen (1993)" · "Alex Haley's Queen" · "Underground (2016)"
+UPCOMING EVENTS: "Roots 50th Anniversary Screening" Jan 23 · "Black TV History Panel" Feb 14
+RELATED ENTRIES: 👤 Alex Haley · 📚 Roots (Book) · 🌊 Civil Rights Movement · 🎬 12 Years a Slave
+
+---
+
+Output: 3-column × 4-row grid (11 frames total, last cell empty or filled with component reference sheet).
+All frames share identical shell structure — vary only HERO, TITLE, CITY, TAGS, EXCERPT, INFOBOX fields, and WORKS content.
+Entry type badge on HERO uses the colour table defined above.
+```
+
+---
+
 ## 12. NOTIFICATIONS & ANALYTICS
 
 ---
