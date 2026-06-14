@@ -76,6 +76,19 @@ export default function ConnectFeedScreen() {
 
   const [activeCategory, setActiveCategory] = useState("");
   const [forYou, setForYou] = useState(false);
+  // Edition routing: default to user's region so local content is pre-filtered
+  const [activeRegion, setActiveRegion] = useState<string>(() => {
+    const c = (user?.countryOfResidence ?? "").toLowerCase().trim();
+    if (!c) return "All";
+    const map: Record<string, string> = {
+      nigeria: "Africa", ng: "Africa", ghana: "Africa", gh: "Africa",
+      kenya: "Africa", ke: "Africa", "south africa": "Africa", za: "Africa",
+      "united kingdom": "Diaspora UK", uk: "Diaspora UK", gb: "Diaspora UK",
+      "united states": "Diaspora US", us: "Diaspora US", canada: "Diaspora US",
+      france: "Diaspora Europe", germany: "Diaspora Europe",
+    };
+    return map[c] ?? "All";
+  });
 
   const interestTagSet = useMemo(
     () => new Set((user?.interests ?? []).map((s) => s.toLowerCase())),
@@ -97,17 +110,25 @@ export default function ConnectFeedScreen() {
     return map[c] ?? undefined;
   }, [user?.countryOfResidence]);
 
+  const REGION_LABELS = ["All", "Africa", "Diaspora UK", "Diaspora US", "Diaspora Europe"];
+
   const visibleItems = useMemo(() => {
     let filtered = activeCategory
       ? items.filter((i) => matchesCategory(i, activeCategory))
       : items;
+
+    if (activeRegion !== "All") {
+      filtered = filtered.filter(
+        (i) => !(i as any).region || (i as any).region === activeRegion
+      );
+    }
 
     if (forYou) {
       filtered = rankFeed(filtered, interestTagSet, userCity, userRegion);
     }
 
     return filtered;
-  }, [items, activeCategory, forYou, interestTagSet, userCity, userRegion]);
+  }, [items, activeCategory, activeRegion, forYou, interestTagSet, userCity, userRegion]);
 
   const trending = useMemo(() => getTrending(items, 3), [items]);
 
@@ -251,6 +272,30 @@ export default function ConnectFeedScreen() {
                     ]}
                   >
                     {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* ── Region Strip ─────────────────────────────────────── */}
+        <View style={styles.regionRow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterContent}
+          >
+            {REGION_LABELS.map((r) => {
+              const isActive = r === activeRegion;
+              return (
+                <TouchableOpacity
+                  key={r}
+                  style={[styles.regionPill, isActive && styles.regionPillActive]}
+                  onPress={() => setActiveRegion(r)}
+                >
+                  <Text style={[styles.regionPillText, isActive && styles.regionPillTextActive]}>
+                    {r === "All" ? "🌍 All regions" : r}
                   </Text>
                 </TouchableOpacity>
               );
@@ -452,6 +497,35 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     backgroundColor: c.paper,
     borderBottomWidth: 1,
     borderBottomColor: c.rule,
+  },
+  regionRow: {
+    height: 40,
+    backgroundColor: c.paperWarm,
+    borderBottomWidth: 1,
+    borderBottomColor: c.rule,
+  },
+  regionPill: {
+    height: 26,
+    paddingHorizontal: 10,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: c.ghost,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "transparent",
+  },
+  regionPillActive: {
+    backgroundColor: c.ink,
+    borderColor: c.ink,
+  },
+  regionPillText: {
+    fontFamily: fonts.mono,
+    fontSize: 10,
+    color: c.mute,
+  },
+  regionPillTextActive: {
+    color: c.paper,
+    fontFamily: fonts.monoBold,
   },
   filterContent: {
     paddingHorizontal: space[4],

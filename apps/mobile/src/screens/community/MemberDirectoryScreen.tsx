@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, FlatList, TextInput, TouchableOpacity,
-  StyleSheet, SafeAreaView, ActivityIndicator,
+  StyleSheet, SafeAreaView, ActivityIndicator, ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -120,6 +120,7 @@ export default function MemberDirectoryScreen() {
   });
   const [discOpen,   setDiscOpen]   = useState(false);
   const [locOpen,    setLocOpen]    = useState(false);
+  const [cityFilter, setCityFilter] = useState("All");
 
   useEffect(() => {
     api.get<Member[]>(`${MOBILE_API}/members?per_page=100`)
@@ -127,6 +128,19 @@ export default function MemberDirectoryScreen() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Derive city list from loaded members — user's city first
+  const availableCities = useMemo(() => {
+    const userCity = (user?.city ?? "").trim();
+    const seen = new Set<string>();
+    const cities: string[] = ["All"];
+    if (userCity) { cities.push(userCity); seen.add(userCity.toLowerCase()); }
+    members.forEach((m) => {
+      const c = (m.city ?? "").trim();
+      if (c && !seen.has(c.toLowerCase())) { seen.add(c.toLowerCase()); cities.push(c); }
+    });
+    return cities;
+  }, [members, user?.city]);
 
   useEffect(() => {
     const q = search.toLowerCase();
@@ -142,10 +156,12 @@ export default function MemberDirectoryScreen() {
           allInterests.some((d) => d.toLowerCase().includes(discipline.toLowerCase()));
         const matchLoc = location === "All" ||
           (m.countryOfResidence || "").toLowerCase().includes(location.toLowerCase());
-        return matchSearch && matchDisc && matchLoc;
+        const matchCity = cityFilter === "All" ||
+          (m.city || "").toLowerCase() === cityFilter.toLowerCase();
+        return matchSearch && matchDisc && matchLoc && matchCity;
       })
     );
-  }, [search, discipline, location, members]);
+  }, [search, discipline, location, cityFilter, members]);
 
   const activeFilters = [
     discipline !== "All" && { label: discipline, clear: () => setDiscipline("All") },
@@ -226,6 +242,40 @@ export default function MemberDirectoryScreen() {
           </View>
         )}
       </View>
+
+      {/* City strip — only shown when there are cities and a country is selected */}
+      {availableCities.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ backgroundColor: c.paperWarm, borderBottomWidth: 1, borderBottomColor: c.ghost }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8, flexDirection: "row" }}
+        >
+          {availableCities.map((city) => {
+            const isActive = city === cityFilter;
+            const label = city === "All" ? "All cities" : (city === user?.city ? `📍 ${city}` : city);
+            return (
+              <TouchableOpacity
+                key={city}
+                onPress={() => setCityFilter(city)}
+                style={{
+                  paddingHorizontal: 12, paddingVertical: 5, borderRadius: 99,
+                  borderWidth: 1,
+                  borderColor: isActive ? c.ink : c.ghost,
+                  backgroundColor: isActive ? c.ink : "transparent",
+                }}
+              >
+                <Text style={{
+                  fontFamily: fonts.mono, fontSize: 10,
+                  color: isActive ? c.paper : c.mute,
+                }}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
 
       {loading ? (
         <ActivityIndicator style={{ marginTop: 40 }} color={c.gold} />
