@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useCallback } from "react";
+import React, { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,13 +14,15 @@ import {
   Animated,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  TextInput,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import RenderHtml from "react-native-render-html";
 import { LinearGradient } from "expo-linear-gradient";
 import { useArticle } from "../../features/magazine/useMagazine";
-import { WP_URL } from "../../api/client";
+import { WP_URL, api, MOBILE_API } from "../../api/client";
 import type { Article } from "../../types";
 import { fonts, fontSize, space, radius, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -85,6 +87,145 @@ function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPa
     />
   );
 }
+
+// ── Article Comments Section ──────────────────────────────────────────────────
+
+const PLACEHOLDER_AVATAR = "https://cms.themoveee.com/wp-content/uploads/placeholder-avatar.png";
+
+interface WpComment {
+  id: number;
+  content: { rendered: string };
+  author_name: string;
+  author_avatar_urls?: Record<string, string>;
+  date: string;
+}
+
+function timeAgoComment(dateStr: string): string {
+  try {
+    const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  } catch { return ""; }
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#8220;|&#8221;/g, '"').trim();
+}
+
+function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c: ColorPalette; styles: any }) {
+  const user = useAuthStore((s) => s.user);
+  const [comments, setComments] = useState<WpComment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    fetch(`https://cms.themoveee.com/wp-json/wp/v2/comments?post=${articleId}&per_page=20&order=asc`)
+      .then((r) => r.json())
+      .then((data) => setComments(Array.isArray(data) ? data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [articleId]);
+
+  const submitComment = async () => {
+    if (!text.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      await api.post(`${MOBILE_API}/community/comment`, { post_id: Number(articleId), content: text.trim() });
+      setSubmitted(true);
+      setText("");
+    } catch {} finally { setSubmitting(false); }
+  };
+
+  return (
+    <View style={acStyles.section}>
+      <View style={acStyles.header}>
+        <Text style={[acStyles.heading, { color: c.ink }]}>Discussion</Text>
+        <Text style={[acStyles.count, { color: c.mute }]}>{comments.length} comment{comments.length !== 1 ? "s" : ""}</Text>
+      </View>
+
+      {/* Comment list */}
+      {loading ? (
+        <ActivityIndicator color={c.gold} style={{ marginVertical: 16 }} />
+      ) : comments.length === 0 ? (
+        <Text style={[acStyles.empty, { color: c.ghost }]}>Be the first to leave a comment.</Text>
+      ) : (
+        comments.map((cm) => {
+          const avatar = cm.author_avatar_urls?.["48"] ?? PLACEHOLDER_AVATAR;
+          return (
+            <View key={cm.id} style={[acStyles.commentRow, { borderBottomColor: c.rule }]}>
+              <Image source={{ uri: avatar }} style={acStyles.avatar} />
+              <View style={acStyles.commentBody}>
+                <View style={acStyles.commentMeta}>
+                  <Text style={[acStyles.authorName, { color: c.ink }]}>{cm.author_name}</Text>
+                  <Text style={[acStyles.timestamp, { color: c.ghost }]}>{timeAgoComment(cm.date)}</Text>
+                </View>
+                <Text style={[acStyles.commentText, { color: c.inkSoft }]}>{stripHtml(cm.content.rendered)}</Text>
+              </View>
+            </View>
+          );
+        })
+      )}
+
+      {/* Compose */}
+      <View style={[acStyles.compose, { borderTopColor: c.rule, backgroundColor: c.paperDeep }]}>
+        {user?.avatarUrl ? (
+          <Image source={{ uri: user.avatarUrl }} style={acStyles.composeAvatar} />
+        ) : (
+          <View style={[acStyles.composeAvatar, { backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center" }]}>
+            <Ionicons name="person" size={14} color={c.mute} />
+          </View>
+        )}
+        {submitted ? (
+          <Text style={[acStyles.submittedNote, { color: c.mute }]}>Comment submitted for review ✓</Text>
+        ) : user ? (
+          <>
+            <TextInput
+              style={[acStyles.input, { color: c.ink, backgroundColor: c.paper, borderColor: c.rule }]}
+              placeholder="Add a comment…"
+              placeholderTextColor={c.ghost}
+              value={text}
+              onChangeText={setText}
+              multiline
+              maxLength={600}
+            />
+            <TouchableOpacity onPress={submitComment} disabled={submitting || !text.trim()} activeOpacity={0.7}>
+              {submitting
+                ? <ActivityIndicator size="small" color={c.gold} />
+                : <Ionicons name="send" size={18} color={text.trim() ? c.gold : c.ghost} />
+              }
+            </TouchableOpacity>
+          </>
+        ) : (
+          <Text style={[acStyles.signInNote, { color: c.mute }]}>Sign in to leave a comment</Text>
+        )}
+      </View>
+    </View>
+  );
+}
+
+const acStyles = StyleSheet.create({
+  section: { marginTop: 24, paddingBottom: 32 },
+  header: { flexDirection: "row", alignItems: "baseline", gap: 8, marginBottom: 16 },
+  heading: { fontFamily: "Fraunces_700Bold", fontSize: 20 },
+  count: { fontFamily: "JetBrainsMono_400Regular", fontSize: 11 },
+  empty: { fontFamily: "DMSans_400Regular", fontSize: 14, textAlign: "center", paddingVertical: 24 },
+  commentRow: { flexDirection: "row", paddingVertical: 14, borderBottomWidth: 1, gap: 10 },
+  avatar: { width: 36, height: 36, borderRadius: 18, flexShrink: 0 },
+  commentBody: { flex: 1 },
+  commentMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+  authorName: { fontFamily: "DMSans_700Bold", fontSize: 13 },
+  timestamp: { fontFamily: "JetBrainsMono_400Regular", fontSize: 10 },
+  commentText: { fontFamily: "DMSans_400Regular", fontSize: 14, lineHeight: 20 },
+  compose: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderTopWidth: 1, borderRadius: 8, marginTop: 16 },
+  composeAvatar: { width: 32, height: 32, borderRadius: 16, flexShrink: 0 },
+  input: { flex: 1, fontFamily: "DMSans_400Regular", fontSize: 14, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, maxHeight: 80 },
+  submittedNote: { flex: 1, fontFamily: "DMSans_400Regular", fontSize: 13, fontStyle: "italic" },
+  signInNote: { flex: 1, fontFamily: "DMSans_400Regular", fontSize: 13 },
+});
 
 export default function ArticleScreen() {
   const nav   = useNavigation<any>();
@@ -419,6 +560,9 @@ export default function ArticleScreen() {
                       </TouchableOpacity>
                     </View>
                   ) : null}
+
+                  {/* ── Comments section ── */}
+                  <ArticleCommentsSection articleId={article.id} c={c} styles={styles} />
                 </>
               )}
             </View>
