@@ -17,7 +17,7 @@ class Culture_Perks {
     /** Credits-to-GBP conversion rate (credits per £1). Overridden by option. */
     const DEFAULT_CREDITS_PER_GBP = 200;
     const DEFAULT_CREDITS_PER_USD = 150;
-    const DEFAULT_CREDITS_PER_NGN = 88; // per ₦1,000
+    const DEFAULT_CREDITS_PER_NGN = 110; // per ₦1,000
 
     // ── HMAC helper ───────────────────────────────────────────────────────────
 
