@@ -150,6 +150,11 @@ class Culture_Post_Types {
             '_partner_status'         => 'string',
             '_partner_perk_template'  => 'string',
             '_entry_city'             => 'string',
+            // Rich detail fields for mobile DirectoryDetailScreen
+            '_about_fields'           => 'string',   // JSON: [{label, value}]
+            '_entry_quote'            => 'string',   // featured quote for Concept/Book blockquote
+            '_selected_works'         => 'string',   // JSON: [{imageUrl?, caption}]
+            '_related_entries'        => 'string',   // JSON: [{id, title, type, slug}]
         );
         foreach ( $directory_meta as $meta_key => $type ) {
             register_post_meta( 'culture_directory', $meta_key, array(

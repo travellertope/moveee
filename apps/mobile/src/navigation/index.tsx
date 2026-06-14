@@ -25,6 +25,7 @@ import NewPostScreen from "../screens/community/NewPostScreen";
 import DirectorySubmitScreen from "../screens/community/DirectorySubmitScreen";
 import MemberProfileScreen from "../screens/community/MemberProfileScreen";
 import MemberDirectoryScreen from "../screens/community/MemberDirectoryScreen";
+import DirectoryDetailScreen from "../screens/community/DirectoryDetailScreen";
 
 // Magazine
 import MagazineScreen from "../screens/magazine/MagazineScreen";
@@ -76,6 +77,7 @@ type FeedStackParams = {
   MemberProfile:     { userId: string; username: string };
   MemberDirectory:   undefined;
   Notifications:     undefined;
+  DirectoryDetail:   { id?: number; slug?: string; title?: string; entryType?: string };
   // Editorial articles opened from the Connect feed stay in this stack
   // so the Magazine tab is never polluted by cross-tab navigation.
   Article:           { slug: string };
@@ -104,7 +106,8 @@ function ConnectStack() {
       <Stack.Screen name="NewPost"         component={NewPostScreen} />
       <Stack.Screen name="DirectorySubmit" component={DirectorySubmitScreen} />
       <Stack.Screen name="MemberProfile"   component={MemberProfileScreen} />
-      <Stack.Screen name="MemberDirectory" component={MemberDirectoryScreen} />
+      <Stack.Screen name="MemberDirectory"   component={MemberDirectoryScreen} />
+      <Stack.Screen name="DirectoryDetail"  component={DirectoryDetailScreen} />
       <Stack.Screen name="Notifications"   component={NotificationsScreen} />
       {/* Articles opened from the feed stay within this stack — back → feed */}
       <Stack.Screen name="Article"         component={ArticleScreen} />
