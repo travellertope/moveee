@@ -282,6 +282,7 @@ CARD B1 — STANDARD POST:
 AUTHOR ROW: 44px avatar (Citizen ghost border) + "Kemi Adeyemi" DM Sans 14px bold ink + "@kemi.a" 12px mute + "· 2h" mono right.
 Section tag chip: "Music" — ink fill, white 11px DM Sans, radius-full, 28px height. 8px top.
 Body: DM Sans 14px ink-soft, 3 lines. 8px top.
+2-image grid: two equal images, 140px height, radius-md, 4px gap. 8px top. (Show photos attached to post.)
 Hashtags: "#Lagos #LiveMusic" DM Sans 13px #C5491F. 4px top.
 Reaction bar + comment count. 8px top.
 
@@ -336,7 +337,7 @@ CARD B7 — ITINERARY:
 AUTHOR ROW: 44px avatar + name + "· 4d" mono right.
 Template badge: "🗺️ ITINERARY" — bg rgba(46,125,50,0.08), text #2E7D32, radius-full.
 Trip title: Fraunces 16px bold ink. "48 Hours in Lagos: The Culture Route" 6px top.
-Meta row: 🗂 "6 stops" · ⏱ "2 days" — JetBrains Mono 10px ghost, 12px gap. 4px top.
+Meta row: 🗂 "6 stops" · ⏱ "2 days" · 💰 "££" · ☀️ "Oct–Mar" — JetBrains Mono 10px ghost, 12px gap. 4px top.
 3 stop rows (40px height each, ghost bottom border, 0 outer padding):
   Number bubble (20px circle, ghost border, mono 10px mute) + place name DM Sans 13px bold ink + "→ Directory" 12px ochre right.
   Stops: "1 Nike Art Gallery" · "2 Nok by Alara" · "3 Terra Kulture"
@@ -351,6 +352,23 @@ Event name: Fraunces 16px bold ink. "Amapiano Night — The Jazz Cafe" 8px top.
 Meta (2 rows): 📅 "Fri 20 Jun · 9PM" · 📍 "London" — DM Sans 13px mute, 14px icon ghost.
 Pro perk strip: ★ "Pro members: early entry 8:30PM" DM Sans 12px gold. 4px top.
 RSVP button: "RSVP Now" — ochre fill, white DM Sans 13px bold, radius-full, 36px height, right-aligned. 8px top.
+
+CARD B9 — BOOK REVIEW:
+AUTHOR ROW: 44px avatar (Citizen ghost border) + "Seun Adeyemi" DM Sans 14px bold + "@seun.reads" 12px mute + "· 3h" mono right.
+Template badge: "📚 BOOK REVIEW" — bg rgba(120,53,15,0.08), text #78350F, radius-full. 6px top.
+BOOK IDENTITY ROW (8px top, white bg, ghost border 1px, radius-md, 10px padding):
+  Book cover: 36×48px, radius-sm, shadow-card, left.
+  Right (10px gap): "Things Fall Apart" DM Sans 14px bold ink. "Chinua Achebe · 1958" DM Sans 12px mute. 2px top.
+  Star row: ★★★★★ + "5.0" JetBrains Mono 12px gold. 2px top.
+STATUS + RECOMMEND CHIPS (row, 8px top, 8px gap):
+  "✓ Finished" — #2D6A4F fill, white DM Sans 11px bold, radius-full, 24px height.
+  "👍 Recommended" — paper-warm bg, gold border, DM Sans 11px bold gold, radius-full.
+REVIEW EXCERPT: DM Sans 13px ink-soft, 2 lines. 8px top.
+  "Achebe dismantles the colonial narrative with the very language of the coloniser. Essential reading."
+RATINGS ROW (3 of 4 shown inline, 8px top, 8px gap between items):
+  "Writing ★★★★★" · "Story ★★★★★" · "Pacing ★★★★☆" — DM Sans 11px ink-soft + stars 13px each.
+  (Condensed single-row preview — tap card to see full breakdown in sheet.)
+Reaction bar. ❤️ 88  🔥 43  👏 55  💬 31
 
 ════════════════════════════════════════════
 SECTION C — STANDALONE FEED CARDS
@@ -3822,6 +3840,12 @@ SHARED REACTION + COMMENTS block (appears near bottom of each sheet before foote
     32px avatar + commenter name 13px bold + comment text 13px mute + time mono 10px ghost right.
   "View all N comments" DM Sans 13px mute centred link, 12px bottom.
 
+MULTI-IMAGE GALLERY DISPLAY PATTERN (used by Standard Post, Hidden Gem, Food Review, Itinerary, Event):
+  PRIMARY IMAGE: full width × 200px, radius-md, warm photo placeholder.
+  SECONDARY ROW (8px top): 2 equal images side by side, 100px height each, radius-md, 8px gap.
+  "3 photos" JetBrains Mono 10px ghost, centred, 4px below. Tap any image → lightbox.
+  (For frames with only 1 image added, show just the primary. For 2 images: primary + 1 half-width below.)
+
 All badge pills: radius-full, DM Sans 9px bold uppercase, 4px vertical 10px horizontal padding.
 All timestamps: JetBrains Mono 10px ghost, right-aligned on same row as template badge.
 Content padding: 16px horizontal throughout.
@@ -3848,8 +3872,7 @@ BODY TEXT (DM Sans 15px ink-soft, 16px padding, 12px top, line-height 1.65):
 
 HASHTAGS (12px top): "#Lagos #Tems #Afrobeats #LiveMusic" — DM Sans 13px #C5491F.
 
-IMAGE (optional, shown): full-width image placeholder (warm concert photo tone), 200px height,
-  radius-md, 12px top.
+MULTI-IMAGE GALLERY. [Use shared pattern. Show 2 images (concert crowd + stage shot).]
 
 [SHARED REACTION + COMMENTS BLOCK]
   Reaction counts: ❤️ 34  🔥 19  👏 12  💬 8
@@ -3881,6 +3904,14 @@ BODY TEXT (DM Sans 14px ink-soft, 12px top, line-height 1.65):
 DIRECTORY LINK ROW (12px top, paper-warm bg strip, 40px height, 12px horizontal padding, radius-md):
   🗂 icon (16px ghost) + "Linked to Bisi Ceramics in the Directory" DM Sans 13px ink-soft.
   "View entry →" DM Sans 13px #C5491F right.
+
+META INFO ROW (8px top, 16px padding, ghost bottom border 1px, space-between, 44px):
+  Left group (inline, 16px gap):
+    💰 "₦₦₦" JetBrains Mono 12px gold (price tier, 3 of 4 symbols filled).
+    · separator DM Sans mute ·
+    🕐 "Tues–Sat, 10am–6pm" DM Sans 13px mute.
+
+MULTI-IMAGE GALLERY. [Use shared pattern. Show 3 images (exterior, interior, ceramic pieces).]
 
 HASHTAGS (8px top): "#LagosHiddenGem #Ceramics #MadeInAfrica #SupportLocal" — DM Sans 13px #C5491F.
 
@@ -3949,8 +3980,8 @@ RATINGS BLOCK (16px top, 16px padding):
   └─────────────────────────────────────────────┘
   Overall score: "4.7" Fraunces 28px bold ink, right-aligned. "/ 5.0" DM Sans 13px mute below.
 
-FOOD PHOTO (12px top): full-width 200px, radius-md, warm food photography placeholder.
-  Caption: "Suya Platter for Two — ₦14,500" JetBrains Mono 10px mute, centred, 4px below.
+MULTI-IMAGE GALLERY. [Use shared pattern. Show 3 images (dish close-up, restaurant interior, plantain sides).]
+  Caption below primary: "Suya Platter for Two — ₦14,500" JetBrains Mono 10px mute, centred, 4px below.
 
 REVIEW TEXT (DM Sans 14px ink-soft, 12px top, line-height 1.65):
   "The pan-African menu at Nok changes monthly and this month's Suya platter is a love letter
@@ -3958,7 +3989,9 @@ REVIEW TEXT (DM Sans 14px ink-soft, 12px top, line-height 1.65):
   plantain sides are the best I've had anywhere in Lagos. Service is attentive without being
   intrusive. Worth every naira for a special occasion."
 
-DISH TAG (8px top): Dish / food type tag chip — "Suya · Pan-African · Nigerian" ghost pills, 28px.
+CUISINE + DISH TAGS (8px top, horizontal chip row, 8px gap):
+  "Nigerian" · "Pan-African" — ochre outline pills, DM Sans 11px bold, radius-full.
+  "Suya" · "Grilled" — ghost border pills, DM Sans 11px ink-soft, radius-full.
 
 HASHTAGS: "#NokByAlara #LagosFood #FoodReview #Suya" — DM Sans 13px #C5491F.
 
@@ -4058,8 +4091,9 @@ ITINERARY TITLE (Fraunces 22px bold ink, 12px top):
   "48 Hours in Lagos: The Culture Route"
 
 META ROW (8px top):
-  🗂 "6 stops" · ⏱ "Est. 2 days" · 📍 "Lagos, Nigeria"
+  🗂 "6 stops" · ⏱ "Est. 2 days" · 📍 "Lagos, Nigeria" · 💰 "££" · ☀️ "Oct–Mar ideal"
   Each: JetBrains Mono 11px ghost, 16px gap between items, inline icons 14px ghost.
+  (Budget and best-time entries are the new optional fields from the composer.)
 
 STOPS LIST (12px top, 16px padding):
   Section label: "The Route" DM Sans 11px bold mute uppercase.
@@ -4098,6 +4132,8 @@ STOPS LIST (12px top, 16px padding):
 
   [Collapsed] "2 more stops ↓" DM Sans 13px ochre centred link. (Stops 5–6 hidden behind expand.)
 
+MULTI-IMAGE GALLERY. [Use shared pattern. Show 2 images (street art shot, market scene).]
+
 HASHTAGS (8px top): "#Lagos48Hours #CultureRoute #LagosGuide #VisitLagos" DM Sans 13px #C5491F.
 
 [SHARED REACTION + COMMENTS BLOCK]
@@ -4118,7 +4154,7 @@ AUTHOR ROW (12px top). [Shared layout — "Moveee Lagos" @moveee.lagos · "Event
 EVENT NAME (Fraunces 22px bold ink, 12px top, line-height 1.2):
   "Amapiano Night at The Jazz Cafe"
 
-EVENT IMAGE (12px top): full-width × 200px, radius-md, warm concert/nightlife photo placeholder.
+MULTI-IMAGE GALLERY. [Use shared pattern. Show 1 image (event flyer, portrait ratio cropped to landscape) + placeholder second slot. Caption: "Amapiano Night · The Jazz Cafe"]
 
 METADATA GRID (12px top, 8px row gap):
   Each row: 20px icon (ghost colour, 16px) + text DM Sans 14px ink-soft. Left-aligned.
