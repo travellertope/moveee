@@ -48,6 +48,7 @@ const QUICK_LINKS = [
   { emoji: "💰", label: "Wallet",      screen: "Wallet" },
   { emoji: "🎁", label: "Perks",       screen: "Perks" },
   { emoji: "🎟️", label: "Coupons",     screen: "Coupons" },
+  { emoji: "🔖", label: "Saved",       screen: "SavedArticles" },
   { emoji: "📊", label: "Analytics",   screen: "Analytics" },
   { emoji: "📖", label: "Magazine",    screen: "Magazine" },
   { emoji: "⚙️", label: "Settings",    screen: "MemberSettings" },

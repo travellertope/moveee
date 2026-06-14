@@ -22,7 +22,7 @@ import { Ionicons } from "@expo/vector-icons";
 import RenderHtml from "react-native-render-html";
 import { LinearGradient } from "expo-linear-gradient";
 import { useArticle } from "../../features/magazine/useMagazine";
-import { WP_URL, api, MOBILE_API } from "../../api/client";
+import { WP_URL, api, MOBILE_API, CULTURE_API } from "../../api/client";
 import type { Article } from "../../types";
 import { fonts, fontSize, space, radius, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -259,6 +259,19 @@ export default function ArticleScreen() {
     setShowStickyHeader(offsetY > HEADER_TRIGGER);
   }, []);
 
+  // Bookmark
+  const [bookmarked, setBookmarked] = useState(false);
+  const handleBookmark = useCallback(async () => {
+    if (!article) return;
+    const next = !bookmarked;
+    setBookmarked(next);
+    try {
+      await api.post(`${CULTURE_API}/content/bookmark`, { post_id: article.id, action: next ? "add" : "remove" });
+    } catch {
+      setBookmarked(!next); // revert on failure
+    }
+  }, [article, bookmarked]);
+
   // Article complete
   const [pointsCollected, setPointsCollected] = useState(false);
   const handleCollectPoints = useCallback(() => {
@@ -308,19 +321,6 @@ export default function ArticleScreen() {
         <View style={[styles.progressFill, { width: `${readProgress * 100}%` as any }]} />
       </View>
 
-      {/* ── Sticky header (shows after scroll past hero) ── */}
-      {showStickyHeader && article && (
-        <View style={styles.stickyHeader}>
-          <TouchableOpacity onPress={() => nav.goBack()} style={styles.stickyBackBtn}>
-            <Ionicons name="chevron-back" size={20} color={c.ink} />
-          </TouchableOpacity>
-          <Text style={styles.stickyTitle} numberOfLines={1}>{shortTitle}</Text>
-          <TouchableOpacity style={styles.stickyIconBtn}>
-            <Ionicons name="bookmark-outline" size={18} color={c.ink} />
-          </TouchableOpacity>
-        </View>
-      )}
-
       {/* ── Hero background (absolute, top 280px) ── */}
       <View style={styles.heroWrap}>
         {article?.featuredImage ? (
@@ -336,8 +336,8 @@ export default function ArticleScreen() {
           <Ionicons name="chevron-back" size={20} color={c.ink} />
         </TouchableOpacity>
         <View style={styles.floatRight}>
-          <TouchableOpacity style={styles.floatBtn}>
-            <Ionicons name="bookmark-outline" size={18} color={c.ink} />
+          <TouchableOpacity style={styles.floatBtn} onPress={handleBookmark}>
+            <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={18} color={bookmarked ? c.gold : c.ink} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.floatBtn} onPress={handleShare}>
             <Ionicons name="share-outline" size={18} color={c.ink} />
@@ -430,8 +430,8 @@ export default function ArticleScreen() {
                   </TouchableOpacity>
                 </View>
                 <View style={styles.actionsRight}>
-                  <TouchableOpacity style={styles.actionIconBtn}>
-                    <Ionicons name="bookmark-outline" size={18} color={c.ink} />
+                  <TouchableOpacity style={styles.actionIconBtn} onPress={handleBookmark}>
+                    <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={18} color={bookmarked ? c.gold : c.ink} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionIconBtn} onPress={handleShare}>
                     <Ionicons name="share-outline" size={18} color={c.ink} />
@@ -692,7 +692,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
 
   floatingControls: {
     position: "absolute", top: 56, left: 16, right: 16,
-    flexDirection: "row", justifyContent: "space-between", zIndex: 50,
+    flexDirection: "row", justifyContent: "space-between", zIndex: 150,
   },
   floatRight: { flexDirection: "row", gap: 8 },
   floatBtn: {

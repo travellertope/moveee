@@ -62,6 +62,7 @@ import WalletScreen from "../screens/member/WalletScreen";
 import CouponsScreen from "../screens/member/CouponsScreen";
 import NotificationsScreen from "../screens/member/NotificationsScreen";
 import AnalyticsScreen from "../screens/member/AnalyticsScreen";
+import SavedArticlesScreen from "../screens/member/SavedArticlesScreen";
 import { AppLoadingScreen } from "../components/ui/Skeleton";
 
 // ── Stack param types ──────────────────────────────────────────────────────────
@@ -115,6 +116,7 @@ function ConnectStack() {
       <Stack.Screen name="Perks"           component={PerksScreen} />
       <Stack.Screen name="Membership"      component={MembershipScreen} />
       <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
+      <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
     </Stack.Navigator>
   );
 }
@@ -178,6 +180,7 @@ function MemberStack() {
       <Stack.Screen name="Perks"           component={PerksScreen} />
       <Stack.Screen name="Membership"      component={MembershipScreen} />
       <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
+      <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
     </Stack.Navigator>
   );
 }
