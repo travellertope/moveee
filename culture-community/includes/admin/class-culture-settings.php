@@ -135,9 +135,16 @@ class Culture_Settings {
      * @return int
      */
     public static function get_badge_threshold( $badge_slug ) {
-        $key     = 'culture_badge_' . $badge_slug;
-        $default = isset( self::$defaults[ $key ] ) ? self::$defaults[ $key ] : 0;
-        return (int) get_option( $key, $default );
+        $key = 'culture_badge_' . $badge_slug;
+        // Use the BADGES constant threshold as the canonical default
+        $default = 0;
+        if ( class_exists( 'Culture_Gamification' ) && isset( Culture_Gamification::BADGES[ $badge_slug ]['threshold'] ) ) {
+            $default = (int) Culture_Gamification::BADGES[ $badge_slug ]['threshold'];
+        } elseif ( isset( self::$defaults[ $key ] ) ) {
+            $default = (int) self::$defaults[ $key ];
+        }
+        $saved = get_option( $key, null );
+        return ( $saved !== null && (int) $saved > 0 ) ? (int) $saved : $default;
     }
 
     public static function init() {
@@ -304,14 +311,12 @@ class Culture_Settings {
         register_setting( 'culture_settings_reputation', 'culture_rep_tier_taste-maker', $int );
         register_setting( 'culture_settings_reputation', 'culture_rep_tier_authority', $int );
 
-        // Gamification – badge thresholds only (points moved to Credits/Reputation tabs).
-        register_setting( 'culture_settings_gamification', 'culture_badge_first_steps', $int );
-        register_setting( 'culture_settings_gamification', 'culture_badge_regular', $int );
-        register_setting( 'culture_settings_gamification', 'culture_badge_culture_vulture', $int );
-        register_setting( 'culture_settings_gamification', 'culture_badge_explorer', $int );
-        register_setting( 'culture_settings_gamification', 'culture_badge_globetrotter', $int );
-        register_setting( 'culture_settings_gamification', 'culture_badge_commentator', $int );
-        register_setting( 'culture_settings_gamification', 'culture_badge_century_club', $int );
+        // Gamification – badge thresholds, dynamically registered from BADGES constant.
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            foreach ( array_keys( Culture_Gamification::BADGES ) as $slug ) {
+                register_setting( 'culture_settings_gamification', 'culture_badge_' . $slug, $int );
+            }
+        }
 
         // Referrals.
         register_setting( 'culture_settings_referrals', 'culture_referral_cookie_days', $int );
@@ -530,28 +535,55 @@ class Culture_Settings {
     }
 
     private static function render_gamification_tab() {
+        if ( ! class_exists( 'Culture_Gamification' ) ) return;
+        $badges = Culture_Gamification::BADGES;
+
+        // Human-readable unit label per trigger type
+        $trigger_labels = array(
+            'event_count'           => __( 'events attended', 'culture-community' ),
+            'city_count'            => __( 'different cities visited', 'culture-community' ),
+            'comment_count'         => __( 'newsletter comments', 'culture-community' ),
+            'points'                => __( 'total reputation', 'culture-community' ),
+            'quote_count'           => __( 'quotes shared', 'culture-community' ),
+            'quote_likes_count'     => __( 'quote likes received', 'culture-community' ),
+            'dir_entry_count'       => __( 'directory entries submitted', 'culture-community' ),
+            'total_comment_count'   => __( 'total comments', 'culture-community' ),
+            'magazine_read_count'   => __( 'articles read', 'culture-community' ),
+            'magazine_share_count'  => __( 'articles shared', 'culture-community' ),
+            'community_post_count'  => __( 'community posts', 'culture-community' ),
+            'community_comment_count' => __( 'community comments', 'culture-community' ),
+            'food_review_count'     => __( 'food reviews', 'culture-community' ),
+            'cultural_take_count'   => __( 'cultural takes', 'culture-community' ),
+            'itinerary_count'       => __( 'itineraries created', 'culture-community' ),
+            'poll_count'            => __( 'polls created', 'culture-community' ),
+            'hidden_gem_count'      => __( 'hidden gems shared', 'culture-community' ),
+            'referral_count'        => __( 'successful referrals', 'culture-community' ),
+            'profile_completed'     => __( 'profile completed (boolean)', 'culture-community' ),
+            'directory_opted_in'    => __( 'opted into directory (boolean)', 'culture-community' ),
+            'post_reactions_count'  => __( 'reactions received on posts', 'culture-community' ),
+            'passkey_registered'    => __( 'passkey registered (boolean)', 'culture-community' ),
+            'like_count'            => __( 'likes given', 'culture-community' ),
+        );
         ?>
         <h2><?php esc_html_e( 'Badge Thresholds', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Set the thresholds required to unlock each badge. Credit and reputation values per action are configured in the Credits and Reputation tabs.', 'culture-community' ); ?></p>
+        <p class="description"><?php esc_html_e( 'Set the threshold required to unlock each badge. Credit and reputation values per action are configured in the Credits and Reputation tabs.', 'culture-community' ); ?></p>
         <table class="form-table">
-            <?php
-            $badge_fields = array(
-                'culture_badge_first_steps'     => array( __( 'First Steps', 'culture-community' ), __( 'events attended', 'culture-community' ) ),
-                'culture_badge_regular'         => array( __( 'Regular', 'culture-community' ), __( 'events attended', 'culture-community' ) ),
-                'culture_badge_culture_vulture' => array( __( 'Culture Vulture', 'culture-community' ), __( 'events attended', 'culture-community' ) ),
-                'culture_badge_explorer'        => array( __( 'Explorer', 'culture-community' ), __( 'different cities visited', 'culture-community' ) ),
-                'culture_badge_globetrotter'    => array( __( 'Globetrotter', 'culture-community' ), __( 'different cities visited', 'culture-community' ) ),
-                'culture_badge_commentator'     => array( __( 'Commentator', 'culture-community' ), __( 'newsletter comments', 'culture-community' ) ),
-                'culture_badge_century_club'    => array( __( 'Century Club', 'culture-community' ), __( 'total reputation', 'culture-community' ) ),
-            );
-            foreach ( $badge_fields as $key => $meta ) :
+            <?php foreach ( $badges as $slug => $badge ) :
+                $key     = 'culture_badge_' . $slug;
+                $default = (int) $badge['threshold'];
+                $saved   = get_option( $key, null );
+                $display = ( $saved !== null && (int) $saved > 0 ) ? (int) $saved : $default;
+                $unit    = isset( $trigger_labels[ $badge['trigger'] ] ) ? $trigger_labels[ $badge['trigger'] ] : $badge['trigger'];
             ?>
                 <tr>
-                    <th scope="row"><label for="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $meta[0] ); ?></label></th>
+                    <th scope="row"><label for="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $badge['name'] ); ?></label></th>
                     <td>
                         <input type="number" id="<?php echo esc_attr( $key ); ?>" name="<?php echo esc_attr( $key ); ?>"
-                               value="<?php echo esc_attr( self::get( $key ) ); ?>" min="1" step="1" class="small-text" />
-                        <span class="description"><?php echo esc_html( $meta[1] ); ?></span>
+                               value="<?php echo esc_attr( $display ); ?>" min="1" step="1" class="small-text" />
+                        <span class="description"><?php echo esc_html( $unit ); ?>
+                            <em style="color:#888;margin-left:4px;">(default: <?php echo (int) $default; ?>)</em>
+                        </span>
+                        <p class="description" style="color:#999;font-size:11px;margin-top:2px;"><?php echo esc_html( $badge['description'] ); ?></p>
                     </td>
                 </tr>
             <?php endforeach; ?>
