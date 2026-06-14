@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   SafeAreaView, ScrollView, Alert, ActivityIndicator, Platform,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
@@ -52,33 +52,43 @@ function EntryTypePicker({
 
 export default function DirectorySubmitScreen() {
   const nav = useNavigation();
+  const route = useRoute<any>();
+  const { improvingSlug, improvingTitle } = route.params ?? {};
+  const isImproveMode = !!improvingSlug;
+
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const user = useAuthStore((s) => s.user);
   const isPatron = user?.tier === "patron";
 
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(improvingTitle ?? "");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [entryType, setEntryType] = useState("concept");
   const [submitting, setSubmitting] = useState(false);
 
   const close = () => nav.goBack();
-  const canSubmit = title.trim().length > 0 && excerpt.trim().length > 0 && content.trim().length > 0;
+  const canSubmit = isImproveMode
+    ? content.trim().length > 0
+    : title.trim().length > 0 && excerpt.trim().length > 0 && content.trim().length > 0;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      await api.post(`${MOBILE_API}/directory/submit`, {
-        title: title.trim(),
+      const body: Record<string, string> = {
+        title: title.trim() || improvingTitle || "",
         excerpt: excerpt.trim(),
         content: content.trim(),
         entry_type: entryType,
-      });
+      };
+      if (improvingSlug) body.improving_slug = improvingSlug;
+      await api.post(`${MOBILE_API}/directory/submit`, body);
       Alert.alert(
-        "Entry submitted",
-        "Thanks — your directory entry is under review and will appear once approved.",
+        isImproveMode ? "Improvement submitted" : "Entry submitted",
+        isImproveMode
+          ? "Thanks for contributing! Your improvement suggestion is under editorial review."
+          : "Thanks — your directory entry is under review and will appear once approved.",
         [{ text: "OK", onPress: close }]
       );
     } catch (e: unknown) {
@@ -95,8 +105,8 @@ export default function DirectorySubmitScreen() {
           <Ionicons name="close" size={24} color={c.ink} />
         </TouchableOpacity>
         <View style={styles.headerTitleRow}>
-          <Text style={styles.headerEmoji}>✦</Text>
-          <Text style={styles.title}>Add to Directory</Text>
+          <Text style={styles.headerEmoji}>{isImproveMode ? "✏️" : "✦"}</Text>
+          <Text style={styles.title}>{isImproveMode ? "Improve Entry" : "Add to Directory"}</Text>
         </View>
         <View style={{ width: 24 }} />
       </View>
@@ -115,50 +125,76 @@ export default function DirectorySubmitScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-          <Text style={styles.intro}>
-            Add a person, place, movement, or idea to the Culture Directory. Submissions go to editorial
-            review before they're published.
-          </Text>
+          {isImproveMode ? (
+            <>
+              <View style={styles.improveBanner}>
+                <Text style={styles.improveBannerTitle}>Improving: {improvingTitle}</Text>
+                <Text style={styles.improveBannerSub}>
+                  Add corrected or missing information below. Our editors will review and merge your
+                  contribution into the entry.
+                </Text>
+              </View>
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Title *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Fela Kuti"
-              placeholderTextColor={c.ghost}
-              value={title}
-              onChangeText={setTitle}
-            />
-          </View>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>What would you like to add or correct? *</Text>
+                <TextInput
+                  style={[styles.input, styles.inputMultiline, { minHeight: 160 }]}
+                  placeholder="Describe the correction or addition clearly…"
+                  placeholderTextColor={c.ghost}
+                  value={content}
+                  onChangeText={setContent}
+                  multiline
+                />
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.intro}>
+                Add a person, place, movement, or idea to the Culture Directory. Submissions go to editorial
+                review before they're published.
+              </Text>
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Entry type</Text>
-            <EntryTypePicker value={entryType} onChange={setEntryType} styles={styles} c={c} />
-          </View>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Title *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. Fela Kuti"
+                  placeholderTextColor={c.ghost}
+                  value={title}
+                  onChangeText={setTitle}
+                />
+              </View>
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Excerpt *</Text>
-            <TextInput
-              style={[styles.input, styles.inputMultiline, { minHeight: 60 }]}
-              placeholder="A short one or two sentence summary"
-              placeholderTextColor={c.ghost}
-              value={excerpt}
-              onChangeText={setExcerpt}
-              multiline
-            />
-          </View>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Entry type</Text>
+                <EntryTypePicker value={entryType} onChange={setEntryType} styles={styles} c={c} />
+              </View>
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Content *</Text>
-            <TextInput
-              style={[styles.input, styles.inputMultiline, { minHeight: 160 }]}
-              placeholder="The full entry…"
-              placeholderTextColor={c.ghost}
-              value={content}
-              onChangeText={setContent}
-              multiline
-            />
-          </View>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Excerpt *</Text>
+                <TextInput
+                  style={[styles.input, styles.inputMultiline, { minHeight: 60 }]}
+                  placeholder="A short one or two sentence summary"
+                  placeholderTextColor={c.ghost}
+                  value={excerpt}
+                  onChangeText={setExcerpt}
+                  multiline
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Content *</Text>
+                <TextInput
+                  style={[styles.input, styles.inputMultiline, { minHeight: 160 }]}
+                  placeholder="The full entry…"
+                  placeholderTextColor={c.ghost}
+                  value={content}
+                  onChangeText={setContent}
+                  multiline
+                />
+              </View>
+            </>
+          )}
 
           <TouchableOpacity
             style={[styles.submitBtn, !canSubmit && styles.submitBtnDisabled]}
@@ -168,7 +204,7 @@ export default function DirectorySubmitScreen() {
             {submitting ? (
               <ActivityIndicator size="small" color={c.paper} />
             ) : (
-              <Text style={styles.submitBtnLabel}>Submit entry</Text>
+              <Text style={styles.submitBtnLabel}>{isImproveMode ? "Submit improvement" : "Submit entry"}</Text>
             )}
           </TouchableOpacity>
         </ScrollView>
@@ -213,5 +249,12 @@ function createStyles(c: ColorPalette) {
     submitBtn: { backgroundColor: "#7a4da0", borderRadius: 20, paddingVertical: 12, alignItems: "center", marginTop: 8 },
     submitBtnDisabled: { backgroundColor: c.ruleDark },
     submitBtnLabel: { color: c.paper, fontWeight: "600", fontSize: 14, letterSpacing: 0.4, textTransform: "uppercase" },
+
+    improveBanner: {
+      backgroundColor: c.paperWarm, borderRadius: 10, padding: 14, marginBottom: 18,
+      borderLeftWidth: 3, borderLeftColor: c.ochre,
+    },
+    improveBannerTitle: { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink, marginBottom: 4 },
+    improveBannerSub: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, lineHeight: 19 },
   });
 }

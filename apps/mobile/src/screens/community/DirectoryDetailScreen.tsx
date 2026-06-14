@@ -618,9 +618,17 @@ export default function DirectoryDetailScreen() {
               ))}
             </ScrollView>
             {entry.communityPostCount > 0 && (
-              <Text style={styles.reviewsSeeAll}>
-                See all {entry.communityPostCount} post{entry.communityPostCount !== 1 ? "s" : ""} →
-              </Text>
+              <TouchableOpacity
+                onPress={() => nav.navigate("DirectoryPosts", {
+                  entryId: entry.id,
+                  entryTitle: entry.title,
+                  showRating: showStarRating,
+                })}
+              >
+                <Text style={styles.reviewsSeeAll}>
+                  See all {entry.communityPostCount} post{entry.communityPostCount !== 1 ? "s" : ""} →
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
         )}
