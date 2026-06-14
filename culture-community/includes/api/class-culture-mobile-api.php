@@ -837,69 +837,153 @@ class Culture_Mobile_API {
 
         // Phase 4: Save template-specific meta.
         $template = sanitize_key( $request->get_param( 'template_type' ) ?: 'post' );
-        $allowed_templates = array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'creative-showcase', 'poll', 'itinerary' );
+        $allowed_templates = array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'book-review', 'creative-showcase', 'poll', 'itinerary', 'event', 'quote' );
         if ( in_array( $template, $allowed_templates, true ) ) {
             update_post_meta( $post_id, '_template_type', $template );
+        }
+
+        // Gallery images (all templates that support multi-photo, max 4).
+        $gallery_raw = $request->get_param( 'gallery_images' );
+        if ( is_array( $gallery_raw ) && count( $gallery_raw ) > 0 ) {
+            update_post_meta( $post_id, '_gallery_images', wp_json_encode( array_map( 'esc_url_raw', array_slice( $gallery_raw, 0, 4 ) ) ) );
         }
 
         if ( $request->get_param( 'linked_directory_id' ) ) {
             update_post_meta( $post_id, '_linked_directory_id', (int) $request->get_param( 'linked_directory_id' ) );
         }
-        if ( in_array( $template, array( 'hidden-gem', 'food-review' ), true ) ) {
+
+        // ── Hidden Gem ─────────────────────────────────────────────────────────
+        if ( $template === 'hidden-gem' ) {
             if ( $request->get_param( 'star_rating' ) ) {
                 update_post_meta( $post_id, '_star_rating', max( 1, min( 5, (int) $request->get_param( 'star_rating' ) ) ) );
             }
-            if ( $request->get_param( 'location_name' ) ) {
-                update_post_meta( $post_id, '_location_name', sanitize_text_field( $request->get_param( 'location_name' ) ) );
+            if ( $request->get_param( 'place_name' ) ) {
+                update_post_meta( $post_id, '_place_name', sanitize_text_field( $request->get_param( 'place_name' ) ) );
             }
-            if ( $request->get_param( 'location_lat' ) ) {
-                update_post_meta( $post_id, '_location_lat', (float) $request->get_param( 'location_lat' ) );
+            if ( $request->get_param( 'place_location' ) ) {
+                update_post_meta( $post_id, '_place_location', sanitize_text_field( $request->get_param( 'place_location' ) ) );
             }
-            if ( $request->get_param( 'location_lng' ) ) {
-                update_post_meta( $post_id, '_location_lng', (float) $request->get_param( 'location_lng' ) );
+            if ( $request->get_param( 'price_range' ) ) {
+                update_post_meta( $post_id, '_price_range', sanitize_text_field( $request->get_param( 'price_range' ) ) );
+            }
+            if ( $request->get_param( 'opening_hours' ) ) {
+                update_post_meta( $post_id, '_opening_hours', sanitize_text_field( $request->get_param( 'opening_hours' ) ) );
             }
         }
+
+        // ── Cultural Take ──────────────────────────────────────────────────────
+        if ( $template === 'cultural-take' ) {
+            if ( $request->get_param( 'headline' ) ) {
+                update_post_meta( $post_id, '_cultural_take_headline', sanitize_text_field( $request->get_param( 'headline' ) ) );
+            }
+        }
+
+        // ── Food Review ────────────────────────────────────────────────────────
         if ( $template === 'food-review' ) {
             if ( $request->get_param( 'food_dish_name' ) ) {
                 update_post_meta( $post_id, '_food_dish_name', sanitize_text_field( $request->get_param( 'food_dish_name' ) ) );
             }
             update_post_meta( $post_id, '_food_rating_taste', max( 1, min( 5, (int) $request->get_param( 'food_rating_taste' ) ) ) );
             update_post_meta( $post_id, '_food_rating_value', max( 1, min( 5, (int) $request->get_param( 'food_rating_value' ) ) ) );
-            update_post_meta( $post_id, '_food_rating_vibe', max( 1, min( 5, (int) $request->get_param( 'food_rating_vibe' ) ) ) );
+            update_post_meta( $post_id, '_food_rating_vibe',  max( 1, min( 5, (int) $request->get_param( 'food_rating_vibe' ) ) ) );
+            if ( $request->get_param( 'cuisine_tag' ) ) {
+                update_post_meta( $post_id, '_cuisine_tag', sanitize_text_field( $request->get_param( 'cuisine_tag' ) ) );
+            }
+            if ( $request->get_param( 'price_range' ) ) {
+                update_post_meta( $post_id, '_price_range', sanitize_text_field( $request->get_param( 'price_range' ) ) );
+            }
         }
+
+        // ── Book Review ────────────────────────────────────────────────────────
+        if ( $template === 'book-review' ) {
+            if ( $request->get_param( 'book_title' ) ) {
+                update_post_meta( $post_id, '_book_title',   sanitize_text_field( $request->get_param( 'book_title' ) ) );
+                update_post_meta( $post_id, '_book_author',  sanitize_text_field( $request->get_param( 'book_author' ) ?: '' ) );
+            }
+            $allowed_statuses = array( 'Finished', 'Reading', 'Want to Read' );
+            $book_status = $request->get_param( 'book_status' );
+            if ( in_array( $book_status, $allowed_statuses, true ) ) {
+                update_post_meta( $post_id, '_book_status', $book_status );
+            }
+            update_post_meta( $post_id, '_book_overall_rating',    max( 1, min( 5, (int) $request->get_param( 'book_overall_rating' ) ) ) );
+            update_post_meta( $post_id, '_book_rating_writing',    max( 0, min( 5, (int) $request->get_param( 'book_rating_writing' ) ) ) );
+            update_post_meta( $post_id, '_book_rating_story',      max( 0, min( 5, (int) $request->get_param( 'book_rating_story' ) ) ) );
+            update_post_meta( $post_id, '_book_rating_characters', max( 0, min( 5, (int) $request->get_param( 'book_rating_characters' ) ) ) );
+            update_post_meta( $post_id, '_book_rating_pacing',     max( 0, min( 5, (int) $request->get_param( 'book_rating_pacing' ) ) ) );
+            if ( $request->get_param( 'book_fav_quote' ) ) {
+                update_post_meta( $post_id, '_book_fav_quote', sanitize_textarea_field( $request->get_param( 'book_fav_quote' ) ) );
+            }
+            $book_recommend = $request->get_param( 'book_recommend' );
+            if ( $book_recommend !== null ) {
+                update_post_meta( $post_id, '_book_recommend', (bool) $book_recommend ? '1' : '0' );
+            }
+            $book_genres = $request->get_param( 'book_genres' );
+            if ( is_array( $book_genres ) ) {
+                update_post_meta( $post_id, '_book_genres', wp_json_encode( array_map( 'sanitize_text_field', $book_genres ) ) );
+            }
+        }
+
+        // ── Creative Showcase ──────────────────────────────────────────────────
+        if ( $template === 'creative-showcase' ) {
+            if ( $request->get_param( 'showcase_title' ) ) {
+                update_post_meta( $post_id, '_showcase_title', sanitize_text_field( $request->get_param( 'showcase_title' ) ) );
+            }
+            if ( $request->get_param( 'showcase_medium' ) ) {
+                update_post_meta( $post_id, '_showcase_medium', sanitize_text_field( $request->get_param( 'showcase_medium' ) ) );
+            }
+            if ( $request->get_param( 'collaborator' ) ) {
+                update_post_meta( $post_id, '_showcase_collaborator', sanitize_text_field( $request->get_param( 'collaborator' ) ) );
+            }
+            if ( $request->get_param( 'video_url' ) ) {
+                update_post_meta( $post_id, '_video_url', esc_url_raw( $request->get_param( 'video_url' ) ) );
+            }
+        }
+
+        // ── Poll ───────────────────────────────────────────────────────────────
         if ( $template === 'poll' ) {
             $poll_options = $request->get_param( 'poll_options' );
             if ( is_array( $poll_options ) ) {
                 $clean_options = array_map( function( $opt ) {
-                    return array( 'text' => sanitize_text_field( $opt['text'] ?? '' ), 'votes' => 0 );
+                    return array( 'text' => sanitize_text_field( $opt['text'] ?? (string) $opt ), 'votes' => 0 );
                 }, array_slice( $poll_options, 0, 4 ) );
                 update_post_meta( $post_id, '_poll_options', wp_json_encode( $clean_options ) );
             }
             update_post_meta( $post_id, '_poll_expires_at', sanitize_text_field( $request->get_param( 'poll_expires_at' ) ?: '' ) );
             update_post_meta( $post_id, '_poll_voters', wp_json_encode( array() ) );
+            if ( $request->get_param( 'poll_description' ) ) {
+                update_post_meta( $post_id, '_poll_description', sanitize_textarea_field( $request->get_param( 'poll_description' ) ) );
+            }
         }
+
+        // ── Itinerary ──────────────────────────────────────────────────────────
         if ( $template === 'itinerary' ) {
+            if ( $request->get_param( 'itinerary_title' ) ) {
+                update_post_meta( $post_id, '_itinerary_title', sanitize_text_field( $request->get_param( 'itinerary_title' ) ) );
+            }
             $stops = $request->get_param( 'itinerary_stops' );
             if ( is_array( $stops ) ) {
                 $clean_stops = array_map( function( $stop ) {
                     return array(
                         'name'      => sanitize_text_field( $stop['name'] ?? '' ),
+                        'note'      => sanitize_text_field( $stop['note'] ?? '' ),
                         'lat'       => (float) ( $stop['lat'] ?? 0 ),
                         'lng'       => (float) ( $stop['lng'] ?? 0 ),
-                        'note'      => sanitize_text_field( $stop['note'] ?? '' ),
                         'image_url' => esc_url_raw( $stop['image_url'] ?? '' ),
                     );
-                }, array_slice( $stops, 0, 5 ) );
+                }, array_slice( $stops, 0, 10 ) );
                 update_post_meta( $post_id, '_itinerary_stops', wp_json_encode( $clean_stops ) );
             }
-        }
-        if ( $template === 'creative-showcase' ) {
-            $images = $request->get_param( 'gallery_images' );
-            if ( is_array( $images ) ) {
-                update_post_meta( $post_id, '_gallery_images', wp_json_encode( array_map( 'esc_url_raw', array_slice( $images, 0, 10 ) ) ) );
+            if ( $request->get_param( 'itinerary_city' ) ) {
+                update_post_meta( $post_id, '_itinerary_city', sanitize_text_field( $request->get_param( 'itinerary_city' ) ) );
             }
-            if ( $request->get_param( 'video_url' ) ) {
-                update_post_meta( $post_id, '_video_url', esc_url_raw( $request->get_param( 'video_url' ) ) );
+            if ( $request->get_param( 'itinerary_budget' ) ) {
+                update_post_meta( $post_id, '_itinerary_budget', sanitize_text_field( $request->get_param( 'itinerary_budget' ) ) );
+            }
+            if ( $request->get_param( 'itinerary_duration' ) ) {
+                update_post_meta( $post_id, '_itinerary_duration', sanitize_text_field( $request->get_param( 'itinerary_duration' ) ) );
+            }
+            if ( $request->get_param( 'itinerary_best_time' ) ) {
+                update_post_meta( $post_id, '_itinerary_best_time', sanitize_text_field( $request->get_param( 'itinerary_best_time' ) ) );
             }
         }
 
@@ -1696,13 +1780,39 @@ class Culture_Mobile_API {
                 'locationName'            => get_post_meta( $post->ID, '_location_name', true ) ?: '',
                 'pollOptions'             => json_decode( get_post_meta( $post->ID, '_poll_options', true ) ?: '[]', true ),
                 'pollExpiresAt'           => get_post_meta( $post->ID, '_poll_expires_at', true ) ?: '',
+                'pollDescription'         => get_post_meta( $post->ID, '_poll_description', true ) ?: '',
                 'galleryImages'           => json_decode( get_post_meta( $post->ID, '_gallery_images', true ) ?: '[]', true ),
                 'videoUrl'                => get_post_meta( $post->ID, '_video_url', true ) ?: '',
                 'itineraryStops'          => json_decode( get_post_meta( $post->ID, '_itinerary_stops', true ) ?: '[]', true ),
+                'itineraryTitle'          => get_post_meta( $post->ID, '_itinerary_title', true ) ?: '',
+                'itineraryCity'           => get_post_meta( $post->ID, '_itinerary_city', true ) ?: '',
+                'itineraryBudget'         => get_post_meta( $post->ID, '_itinerary_budget', true ) ?: '',
+                'itineraryDuration'       => get_post_meta( $post->ID, '_itinerary_duration', true ) ?: '',
+                'itineraryBestTime'       => get_post_meta( $post->ID, '_itinerary_best_time', true ) ?: '',
                 'foodDishName'            => get_post_meta( $post->ID, '_food_dish_name', true ) ?: '',
                 'foodRatingTaste'         => (int) get_post_meta( $post->ID, '_food_rating_taste', true ) ?: null,
                 'foodRatingValue'         => (int) get_post_meta( $post->ID, '_food_rating_value', true ) ?: null,
                 'foodRatingVibe'          => (int) get_post_meta( $post->ID, '_food_rating_vibe', true ) ?: null,
+                'cuisineTag'              => get_post_meta( $post->ID, '_cuisine_tag', true ) ?: '',
+                'priceRange'              => get_post_meta( $post->ID, '_price_range', true ) ?: '',
+                'placeName'               => get_post_meta( $post->ID, '_place_name', true ) ?: '',
+                'placeLocation'           => get_post_meta( $post->ID, '_place_location', true ) ?: '',
+                'openingHours'            => get_post_meta( $post->ID, '_opening_hours', true ) ?: '',
+                'culturalTakeHeadline'    => get_post_meta( $post->ID, '_cultural_take_headline', true ) ?: '',
+                'showcaseTitle'           => get_post_meta( $post->ID, '_showcase_title', true ) ?: '',
+                'showcaseMedium'          => get_post_meta( $post->ID, '_showcase_medium', true ) ?: '',
+                'showcaseCollaborator'    => get_post_meta( $post->ID, '_showcase_collaborator', true ) ?: '',
+                'bookTitle'               => get_post_meta( $post->ID, '_book_title', true ) ?: '',
+                'bookAuthor'              => get_post_meta( $post->ID, '_book_author', true ) ?: '',
+                'bookStatus'              => get_post_meta( $post->ID, '_book_status', true ) ?: '',
+                'bookOverallRating'       => (int) get_post_meta( $post->ID, '_book_overall_rating', true ),
+                'bookRatingWriting'       => (int) get_post_meta( $post->ID, '_book_rating_writing', true ),
+                'bookRatingStory'         => (int) get_post_meta( $post->ID, '_book_rating_story', true ),
+                'bookRatingCharacters'    => (int) get_post_meta( $post->ID, '_book_rating_characters', true ),
+                'bookRatingPacing'        => (int) get_post_meta( $post->ID, '_book_rating_pacing', true ),
+                'bookFavQuote'            => get_post_meta( $post->ID, '_book_fav_quote', true ) ?: '',
+                'bookRecommend'           => get_post_meta( $post->ID, '_book_recommend', true ) === '1',
+                'bookGenres'              => json_decode( get_post_meta( $post->ID, '_book_genres', true ) ?: '[]', true ),
             );
         }, $query->posts );
     }
@@ -1917,19 +2027,45 @@ class Culture_Mobile_API {
                 'tier'      => $author_tier,
             ),
             // Phase 4: template meta.
-            'template_type'       => get_post_meta( $post->ID, '_template_type', true ) ?: 'post',
-            'linked_directory_id' => (int) get_post_meta( $post->ID, '_linked_directory_id', true ),
-            'star_rating'         => (int) get_post_meta( $post->ID, '_star_rating', true ),
-            'location_name'       => get_post_meta( $post->ID, '_location_name', true ) ?: '',
-            'poll_options'        => json_decode( get_post_meta( $post->ID, '_poll_options', true ) ?: '[]', true ),
-            'poll_expires_at'     => get_post_meta( $post->ID, '_poll_expires_at', true ) ?: '',
-            'gallery_images'      => json_decode( get_post_meta( $post->ID, '_gallery_images', true ) ?: '[]', true ),
-            'video_url'           => get_post_meta( $post->ID, '_video_url', true ) ?: '',
-            'itinerary_stops'     => json_decode( get_post_meta( $post->ID, '_itinerary_stops', true ) ?: '[]', true ),
-            'food_dish_name'      => get_post_meta( $post->ID, '_food_dish_name', true ) ?: '',
-            'food_rating_taste'   => (int) get_post_meta( $post->ID, '_food_rating_taste', true ),
-            'food_rating_value'   => (int) get_post_meta( $post->ID, '_food_rating_value', true ),
-            'food_rating_vibe'    => (int) get_post_meta( $post->ID, '_food_rating_vibe', true ),
+            'template_type'             => get_post_meta( $post->ID, '_template_type', true ) ?: 'post',
+            'linked_directory_id'       => (int) get_post_meta( $post->ID, '_linked_directory_id', true ),
+            'star_rating'               => (int) get_post_meta( $post->ID, '_star_rating', true ),
+            'location_name'             => get_post_meta( $post->ID, '_location_name', true ) ?: '',
+            'poll_options'              => json_decode( get_post_meta( $post->ID, '_poll_options', true ) ?: '[]', true ),
+            'poll_expires_at'           => get_post_meta( $post->ID, '_poll_expires_at', true ) ?: '',
+            'poll_description'          => get_post_meta( $post->ID, '_poll_description', true ) ?: '',
+            'gallery_images'            => json_decode( get_post_meta( $post->ID, '_gallery_images', true ) ?: '[]', true ),
+            'video_url'                 => get_post_meta( $post->ID, '_video_url', true ) ?: '',
+            'itinerary_stops'           => json_decode( get_post_meta( $post->ID, '_itinerary_stops', true ) ?: '[]', true ),
+            'itinerary_title'           => get_post_meta( $post->ID, '_itinerary_title', true ) ?: '',
+            'itinerary_city'            => get_post_meta( $post->ID, '_itinerary_city', true ) ?: '',
+            'itinerary_budget'          => get_post_meta( $post->ID, '_itinerary_budget', true ) ?: '',
+            'itinerary_duration'        => get_post_meta( $post->ID, '_itinerary_duration', true ) ?: '',
+            'itinerary_best_time'       => get_post_meta( $post->ID, '_itinerary_best_time', true ) ?: '',
+            'food_dish_name'            => get_post_meta( $post->ID, '_food_dish_name', true ) ?: '',
+            'food_rating_taste'         => (int) get_post_meta( $post->ID, '_food_rating_taste', true ),
+            'food_rating_value'         => (int) get_post_meta( $post->ID, '_food_rating_value', true ),
+            'food_rating_vibe'          => (int) get_post_meta( $post->ID, '_food_rating_vibe', true ),
+            'cuisine_tag'               => get_post_meta( $post->ID, '_cuisine_tag', true ) ?: '',
+            'price_range'               => get_post_meta( $post->ID, '_price_range', true ) ?: '',
+            'place_name'                => get_post_meta( $post->ID, '_place_name', true ) ?: '',
+            'place_location'            => get_post_meta( $post->ID, '_place_location', true ) ?: '',
+            'opening_hours'             => get_post_meta( $post->ID, '_opening_hours', true ) ?: '',
+            'cultural_take_headline'    => get_post_meta( $post->ID, '_cultural_take_headline', true ) ?: '',
+            'showcase_title'            => get_post_meta( $post->ID, '_showcase_title', true ) ?: '',
+            'showcase_medium'           => get_post_meta( $post->ID, '_showcase_medium', true ) ?: '',
+            'showcase_collaborator'     => get_post_meta( $post->ID, '_showcase_collaborator', true ) ?: '',
+            'book_title'                => get_post_meta( $post->ID, '_book_title', true ) ?: '',
+            'book_author'               => get_post_meta( $post->ID, '_book_author', true ) ?: '',
+            'book_status'               => get_post_meta( $post->ID, '_book_status', true ) ?: '',
+            'book_overall_rating'       => (int) get_post_meta( $post->ID, '_book_overall_rating', true ),
+            'book_rating_writing'       => (int) get_post_meta( $post->ID, '_book_rating_writing', true ),
+            'book_rating_story'         => (int) get_post_meta( $post->ID, '_book_rating_story', true ),
+            'book_rating_characters'    => (int) get_post_meta( $post->ID, '_book_rating_characters', true ),
+            'book_rating_pacing'        => (int) get_post_meta( $post->ID, '_book_rating_pacing', true ),
+            'book_fav_quote'            => get_post_meta( $post->ID, '_book_fav_quote', true ) ?: '',
+            'book_recommend'            => get_post_meta( $post->ID, '_book_recommend', true ) === '1',
+            'book_genres'               => json_decode( get_post_meta( $post->ID, '_book_genres', true ) ?: '[]', true ),
         );
     }
 

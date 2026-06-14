@@ -2304,6 +2304,17 @@ class Culture_REST_API {
         update_post_meta( $post_id, '_quote_content_hash', $hash );
         update_post_meta( $post_id, '_culture_like_count', 0 );
 
+        // New fields: sharing reason + quote type.
+        $sharing_reason = $request->get_param( 'sharing_reason' );
+        if ( $sharing_reason ) {
+            update_post_meta( $post_id, '_quote_sharing_reason', sanitize_textarea_field( $sharing_reason ) );
+        }
+        $quote_type = $request->get_param( 'quote_type' );
+        $allowed_types = array( 'Person', 'Book', 'Film', 'Speech', 'Song' );
+        if ( $quote_type && in_array( $quote_type, $allowed_types, true ) ) {
+            update_post_meta( $post_id, '_quote_type', sanitize_text_field( $quote_type ) );
+        }
+
         // Award points.
         if ( class_exists( 'Culture_Gamification' ) ) {
             Culture_Gamification::award_points( $user_id, 'quote_submission' );
