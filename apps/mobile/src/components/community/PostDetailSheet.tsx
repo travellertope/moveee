@@ -227,19 +227,19 @@ function ReactionsRow({
     <>
       <View style={styles.divider} />
       <View style={styles.reactionsRow}>
-        <TouchableOpacity style={styles.reactionBtn} onPress={() => react("love")}>
-          <Ionicons name={loved ? "heart" : "heart-outline"} size={18} color={loved ? "#e53e3e" : c.mute} />
-          <Text style={[styles.reactionCount, loved && { color: "#e53e3e" }]}>{love}</Text>
+        <TouchableOpacity style={styles.reactionBtn} onPress={() => react("love")} activeOpacity={0.7}>
+          <Ionicons name={loved ? "heart" : "heart-outline"} size={18} color={loved ? "#E53E3E" : c.mute} />
+          <Text style={[styles.reactionCount, loved && { color: "#E53E3E" }]}>{love}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.reactionBtn} onPress={() => react("fire")}>
-          <Ionicons name="flame-outline" size={18} color={c.mute} />
-          <Text style={styles.reactionCount}>{fire}</Text>
+        <TouchableOpacity style={styles.reactionBtn} onPress={() => react("fire")} activeOpacity={0.7}>
+          <Ionicons name={fired ? "flame" : "flame-outline"} size={18} color={fired ? "#F97316" : c.mute} />
+          <Text style={[styles.reactionCount, fired && { color: "#F97316" }]}>{fire}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.reactionBtn} onPress={() => react("clap")}>
-          <Ionicons name="hand-left-outline" size={18} color={c.mute} />
-          <Text style={styles.reactionCount}>{clap}</Text>
+        <TouchableOpacity style={styles.reactionBtn} onPress={() => react("clap")} activeOpacity={0.7}>
+          <Ionicons name={clapped ? "hand-left" : "hand-left-outline"} size={18} color={clapped ? "#B38238" : c.mute} />
+          <Text style={[styles.reactionCount, clapped && { color: "#B38238" }]}>{clap}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.reactionBtn} onPress={onComment}>
+        <TouchableOpacity style={styles.reactionBtn} onPress={onComment} activeOpacity={0.7}>
           <Ionicons name="chatbubble-outline" size={18} color={c.mute} />
           <Text style={styles.reactionCount}>{item.commentCount ?? 0}</Text>
         </TouchableOpacity>
