@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
-import ParagraphCommentSystem from "@/components/ParagraphCommentSystem";
+import ArticleComments from "@/components/ArticleComments";
 import FinishReading from "@/components/FinishReading";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import ArticleActions from "@/components/ArticleActions";
@@ -182,8 +182,42 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   };
   const processedContent = cleanContent(contentWithIds);
 
+  const articleUrl = `https://themoveee.com/magazine/${resolvedParams.slug}`;
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.excerpt?.replace(/<[^>]*>/g, "").slice(0, 155) || "",
+    image: post.featuredImage?.node?.sourceUrl || "https://themoveee.com/og-fallback.png",
+    datePublished: post.date,
+    dateModified: post.modified || post.date,
+    author: {
+      "@type": "Person",
+      name: post.author?.node?.name || "Moveee Magazine",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Moveee Magazine",
+      logo: { "@type": "ImageObject", url: "https://themoveee.com/logo.png" },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
+    url: articleUrl,
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://themoveee.com" },
+      { "@type": "ListItem", position: 2, name: "Magazine", item: "https://themoveee.com/magazine" },
+      ...(categoryName && categorySlug ? [{ "@type": "ListItem", position: 3, name: categoryName, item: `https://themoveee.com/magazine/category/${categorySlug}` }] : []),
+      { "@type": "ListItem", position: categoryName ? 4 : 3, name: post.title, item: articleUrl },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <ProgressBar />
 
       {/* ── HERO ── */}
@@ -285,7 +319,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         {/* LEFT — TOC */}
         <aside className="toc">
           <div className="toc-heading">In this piece</div>
-          <details className="toc-details">
+          <details className="toc-details" open>
           <summary className="toc-summary">
             <span className="toc-toggle-label">In this piece</span>
             <span className="toc-chevron" aria-hidden>▾</span>
@@ -341,7 +375,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           </details>
         </aside>
 
-        {/* CENTER — PROSE (Interactive Paragraph Comments) */}
+        {/* CENTER — PROSE */}
         <div className="prose" id="article-body">
           <ArticleContentGate
             accessLevel={accessLevel}
@@ -353,7 +387,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             )}
             fullContent={
               <>
-                <ParagraphCommentSystem
+                <ArticleComments
                   postId={parseInt(post.databaseId)}
                   content={processedContent || ""}
                 />
@@ -402,6 +436,31 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                 </span>
               </div>
             </Link>
+          )}
+
+          {/* Shop the Edit — desktop sidebar widget */}
+          {(post.featuredProducts ?? []).length > 0 && (
+            <div className="ste-sidebar-card">
+              <div className="ste-sb-label">Shop the Edit</div>
+              <div className="ste-sb-list">
+                {(post.featuredProducts as any[]).map((p: any) => (
+                  <Link key={p.id} href={`/shop/${p.slug}`} className="ste-sb-item">
+                    <div className="ste-sb-img">
+                      {p.imageUrl ? (
+                        <Image src={p.imageUrl} alt={p.imageAlt || p.name} fill style={{ objectFit: "cover" }} sizes="56px" />
+                      ) : (
+                        <div className="ste-sb-img-placeholder" />
+                      )}
+                    </div>
+                    <div className="ste-sb-info">
+                      <div className="ste-sb-name">{p.name}</div>
+                      <div className="ste-sb-price" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.price) }} />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link href="/shop" className="ste-sb-browse">Browse all products →</Link>
+            </div>
           )}
 
           <div className="newsletter-card">
@@ -490,7 +549,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <>
               <h4>{post.asToldTo}</h4>
               <p className="a-told-to">as told to <strong>{post.author?.node?.name || "The Moveee"}</strong></p>
-              <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and the diaspora."}</p>
+              <p>{post.author?.node?.description || "Culture, lifestyle, and ideas — stories that document the things that matter."}</p>
             </>
           ) : (
             <>
@@ -507,7 +566,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                   <>The <em>Moveee</em></>
                 )}
               </h4>
-              <p>{post.author?.node?.description || "Culture, lifestyle, and heritage — curated from Lagos, London, Accra, and the diaspora. Long-form essays and visual stories that document the things that matter."}</p>
+              <p>{post.author?.node?.description || "Culture, lifestyle, and ideas — stories that document the things that matter. Long-form essays and visual stories that document the things that matter."}</p>
             </>
           )}
         </div>
@@ -521,9 +580,9 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         )}
       </div>
 
-      {/* ── SHOP THE EDIT ── only when the editor has tagged products ── */}
+      {/* ── SHOP THE EDIT — mobile/tablet full-width strip (hidden on desktop where sidebar widget shows) ── */}
       {(post.featuredProducts ?? []).length > 0 && (
-        <section className="ste-section">
+        <section className="ste-section ste-section--mobile">
           <div className="ste-inner">
             <div className="ste-header">
               <div className="ste-eyebrow">Shop the Edit</div>

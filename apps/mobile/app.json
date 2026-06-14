@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "Moveee Connect",
+    "name": "Moveee",
     "slug": "moveee-platform",
+    "owner": "moveees-team",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -19,7 +20,7 @@
       "package": "com.moveee.connect",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#f3ece0"
+        "backgroundColor": "#b54a24"
       },
       "permissions": [
         "NOTIFICATIONS",

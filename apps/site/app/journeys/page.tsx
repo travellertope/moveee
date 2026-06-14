@@ -8,8 +8,24 @@ import "@/app/origins.css";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: { absolute: "Origins · Curated Journeys · The Moveee" },
-  description: "Curated cultural journeys across Africa and the diaspora. Not tours. Slow, deep, culturally anchored experiences.",
+  title: { absolute: "Origins — Curated Journeys | Moveee Magazine" },
+  description: "Slow, writer-led cultural journeys. Not tours — invitations into the places where the work is made. Music, art, food, craft, and the people behind it all.",
+  alternates: { canonical: "https://themoveee.com/journeys" },
+  openGraph: {
+    title: "Origins — Curated Journeys | Moveee Magazine",
+    description: "Slow, writer-led cultural journeys. Not tours — invitations into the places where the work is made.",
+    url: "https://themoveee.com/journeys",
+    siteName: "Moveee Magazine",
+    type: "website",
+    images: [{ url: "/og-fallback.png", width: 1200, height: 630, alt: "Moveee Origins — Curated Journeys" }],
+  },
+  twitter: {
+    card: "summary_large_image" as const,
+    site: "@moveeemedia",
+    creator: "@moveeemedia",
+    title: "Origins — Curated Journeys | Moveee Magazine",
+    description: "Slow, writer-led cultural journeys. Not tours — invitations into the places where the work is made.",
+  },
 };
 
 export default async function OriginsPage() {

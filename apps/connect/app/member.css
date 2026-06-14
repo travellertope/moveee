@@ -125,6 +125,51 @@
   letter-spacing: .15em;
   text-transform: uppercase;
   color: var(--mute);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.mem-stat-info {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--mute);
+  line-height: 1;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.mem-stat-info:hover { opacity: 1; color: var(--ochre); }
+.mem-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.5;
+  padding: 12px 14px;
+  border-radius: 6px;
+  width: 220px;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  pointer-events: none;
+}
+.mem-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--ink);
 }
 
 /* ── Two-column grid ── */

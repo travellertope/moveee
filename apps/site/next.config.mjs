@@ -80,9 +80,9 @@ const nextConfig = {
       ...temporary,
 
       // ── Services old slug redirects (now market-based pages) ────────────
-      { source: '/services/amplify',         destination: '/services', permanent: false },
-      { source: '/services/presskit',        destination: '/services', permanent: false },
-      { source: '/services/book-publishers', destination: '/services', permanent: false },
+      { source: '/services/amplify',         destination: '/services', permanent: true },
+      { source: '/services/presskit',        destination: '/services', permanent: true },
+      { source: '/services/book-publishers', destination: '/services', permanent: true },
 
       // ── Permanent structural redirects ──────────────────────────────────
       { source: '/origins',             destination: '/journeys',                 permanent: true },

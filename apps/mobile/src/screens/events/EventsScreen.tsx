@@ -7,6 +7,7 @@ import { useNavigation } from "@react-navigation/native";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
+import { useAuthStore } from "../../auth/authStore";
 
 const WP_EVENTS_URL =
   "https://cms.themoveee.com/wp-json/wp/v2/culture_event" +
@@ -193,13 +194,17 @@ function EventCard({ event, onPress, styles, c }: { event: EventItem; onPress: (
 
 export default function EventsScreen() {
   const nav = useNavigation<any>();
+  const { user } = useAuthStore() as any;
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const [events, setEvents]         = useState<EventItem[]>([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter]         = useState<EventFilter>("all");
+  const [cityFilter, setCityFilter] = useState<string>("All");
   const [error, setError]           = useState<string | null>(null);
+
+  const userCity = user?.city ?? null;
 
   const fetchEvents = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -228,13 +233,35 @@ export default function EventsScreen() {
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
+  // Derive city list from loaded events + user's city first
+  const availableCities = useMemo(() => {
+    const cities = Array.from(new Set(events.map((e) => e.city).filter(Boolean) as string[])).sort();
+    if (userCity && !cities.includes(userCity)) return [userCity, ...cities];
+    return cities;
+  }, [events, userCity]);
+
   const now = new Date();
-  const filtered = events.filter((e) => {
-    if (filter === "upcoming") return e.eventDate ? new Date(e.eventDate) >= now : false;
-    if (filter === "online")   return e.isOnline;
-    if (filter === "pro")      return e.isProOnly;
-    return true;
-  });
+  const filtered = useMemo(() => {
+    let result = events.filter((e) => {
+      if (filter === "upcoming") return e.eventDate ? new Date(e.eventDate) >= now : false;
+      if (filter === "online")   return e.isOnline;
+      if (filter === "pro")      return e.isProOnly;
+      return true;
+    });
+    if (cityFilter !== "All") {
+      result = result.filter((e) => e.city?.toLowerCase() === cityFilter.toLowerCase());
+    }
+    // Sort: local city first, then by date
+    if (userCity) {
+      result = [...result].sort((a, b) => {
+        const aLocal = a.city?.toLowerCase() === userCity.toLowerCase() ? 0 : 1;
+        const bLocal = b.city?.toLowerCase() === userCity.toLowerCase() ? 0 : 1;
+        if (aLocal !== bLocal) return aLocal - bLocal;
+        return (a.eventDate ?? "").localeCompare(b.eventDate ?? "");
+      });
+    }
+    return result;
+  }, [events, filter, cityFilter, userCity]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -246,25 +273,30 @@ export default function EventsScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Filter chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterBar}
-        contentContainerStyle={styles.filterBarContent}
-      >
+      {/* Type filter chips */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar} contentContainerStyle={styles.filterBarContent}>
         {FILTERS.map((f) => (
-          <TouchableOpacity
-            key={f.id}
-            style={[styles.filterChip, filter === f.id && styles.filterChipActive]}
-            onPress={() => setFilter(f.id)}
-          >
-            <Text style={[styles.filterChipText, filter === f.id && styles.filterChipTextActive]}>
-              {f.label}
-            </Text>
+          <TouchableOpacity key={f.id} style={[styles.filterChip, filter === f.id && styles.filterChipActive]} onPress={() => setFilter(f.id)}>
+            <Text style={[styles.filterChipText, filter === f.id && styles.filterChipTextActive]}>{f.label}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {/* City filter chips — only shown when cities are available */}
+      {availableCities.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar} contentContainerStyle={styles.filterBarContent}>
+          <TouchableOpacity style={[styles.filterChip, cityFilter === "All" && styles.filterChipActive]} onPress={() => setCityFilter("All")}>
+            <Text style={[styles.filterChipText, cityFilter === "All" && styles.filterChipTextActive]}>All cities</Text>
+          </TouchableOpacity>
+          {availableCities.map((city) => (
+            <TouchableOpacity key={city} style={[styles.filterChip, cityFilter === city && styles.filterChipActive]} onPress={() => setCityFilter(city)}>
+              <Text style={[styles.filterChipText, cityFilter === city && styles.filterChipTextActive]}>
+                {city === userCity ? `📍 ${city}` : city}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       {/* Content */}
       {loading ? (

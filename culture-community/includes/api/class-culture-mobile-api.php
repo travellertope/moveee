@@ -412,6 +412,13 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Save an R2-hosted avatar URL (upload handled by Next.js proxy)
+        register_rest_route( 'culture/v1', '/mobile/me/avatar-url', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_save_avatar_url' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Portfolio
         register_rest_route( 'culture/v1', '/mobile/portfolio', array(
             'methods'             => 'GET',
@@ -810,10 +817,26 @@ class Culture_Mobile_API {
         }
         set_transient( $dup_key, true, 30 * MINUTE_IN_SECONDS );
 
+        // Template gating: poll and itinerary require Taste Maker (2 500 rep).
+        $template_check = sanitize_key( $request->get_param( 'template_type' ) ?: 'post' );
+        if ( in_array( $template_check, array( 'poll', 'itinerary' ), true ) ) {
+            $rep = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user_id ) : 0;
+            if ( $rep < 2500 ) {
+                return new WP_Error( 'rep_required', 'Poll and itinerary posts require Taste Maker status (2,500 reputation).', array( 'status' => 403 ) );
+            }
+        }
+        // Event posts require Culture Contributor (500 rep) — handled by the event endpoint separately.
+
         $review_days = (int) get_option( 'culture_new_member_review_days', 7 );
         $user        = get_userdata( $user_id );
         $age_days    = (int) floor( ( time() - strtotime( $user->user_registered ) ) / DAY_IN_SECONDS );
-        $status      = ( $review_days > 0 && $age_days < $review_days ) ? 'pending' : 'publish';
+        $needs_review = $review_days > 0 && $age_days < $review_days;
+        // Taste Makers (2 500 rep) bypass the new-member review queue.
+        if ( $needs_review && class_exists( 'Culture_Gamification' ) ) {
+            $rep = Culture_Gamification::get_reputation( $user_id );
+            if ( $rep >= 2500 ) $needs_review = false;
+        }
+        $status = $needs_review ? 'pending' : 'publish';
 
         $post_id = wp_insert_post( array(
             'post_type'    => 'culture_post',
@@ -989,6 +1012,9 @@ class Culture_Mobile_API {
 
         if ( class_exists( 'Culture_Gamification' ) ) {
             Culture_Gamification::award_points( $user_id, 'community_post' );
+            $rep      = Culture_Gamification::get_reputation( $user_id );
+            $rep_tier = Culture_Gamification::get_reputation_tier( $rep, $user_id );
+            update_post_meta( $post_id, 'community_author_rep_tier', $rep_tier );
         }
 
         $post = get_post( $post_id );
@@ -1759,6 +1785,7 @@ class Culture_Mobile_API {
                 'communityAuthorAvatar'   => get_post_meta( $post->ID, 'community_author_avatar', true ) ?: '',
                 'communityTag'            => get_post_meta( $post->ID, 'community_tag', true ) ?: '',
                 'communityTier'           => get_post_meta( $post->ID, 'community_author_tier', true ) ?: '',
+                'authorRepTier'           => get_post_meta( $post->ID, 'community_author_rep_tier', true ) ?: 'member',
                 'region'                  => get_post_meta( $post->ID, 'community_region', true ) ?: '',
                 'sourceUrl'               => $link_url ?: null,
                 'source'                  => $source ?: null,
@@ -1963,6 +1990,18 @@ class Culture_Mobile_API {
         $url = wp_get_attachment_url( $attachment_id );
         update_user_meta( $user_id, '_culture_avatar_url', $url );
 
+        return rest_ensure_response( array( 'url' => $url ) );
+    }
+
+    public static function handle_save_avatar_url( $request ) {
+        $user_id = get_current_user_id();
+        $url     = esc_url_raw( $request->get_param( 'url' ) );
+
+        if ( empty( $url ) ) {
+            return new WP_Error( 'missing_url', 'URL is required.', array( 'status' => 400 ) );
+        }
+
+        update_user_meta( $user_id, '_culture_avatar_url', $url );
         return rest_ensure_response( array( 'url' => $url ) );
     }
 

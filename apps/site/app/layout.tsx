@@ -36,32 +36,37 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://themoveee.com"),
-  title: {
-    default: "The Moveee — Best in Culture",
-    template: "%s | The Moveee",
+  verification: {
+    google: "-PWVNI7d4eBu_a-Qo35KOTlAknn2MiciJ4c_ycsiqdc",
   },
-  description: "The Moveee is an independent magazine and community celebrating the best of African and diaspora culture — editorials, music, film, travel, lifestyle, and more.",
+  title: {
+    default: "Moveee Magazine — Best in Culture",
+    template: "%s | Moveee Magazine",
+  },
+  description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
   alternates: {
-    canonical: "/",
+    canonical: "https://themoveee.com/",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://themoveee.com",
-    siteName: "The Moveee",
+    siteName: "Moveee Magazine",
     images: [
       {
         url: "/og-fallback.png",
         width: 1200,
         height: 630,
-        alt: "The Moveee — Best in African Culture",
+        alt: "Moveee Magazine — Best in Culture",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Moveee — Best in African Culture",
-    description: "The Moveee is an independent magazine and community celebrating the best of African and diaspora culture — editorials, music, film, travel, lifestyle, and more.",
+    site: "@moveeemedia",
+    creator: "@moveeemedia",
+    title: "Moveee Magazine — Best in Culture",
+    description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
     images: ["/og-fallback.png"],
   },
 };
@@ -86,8 +91,43 @@ export default async function RootLayout({
     slotHeroSidebar:         rawAds?.slotHeroSidebar         ?? null,
   };
 
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Moveee Magazine",
+    url: "https://themoveee.com",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://themoveee.com/magazine?q={search_term_string}",
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Moveee Magazine",
+    url: "https://themoveee.com",
+    logo: "https://themoveee.com/logo.png",
+    sameAs: [
+      "https://twitter.com/moveeemedia",
+      "https://instagram.com/moveeemedia",
+    ],
+    description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
+  };
+
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
+      </head>
       <body
         className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}
       >
