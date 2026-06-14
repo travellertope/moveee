@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Share, ActivityIndicator, Dimensions,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Share,
+  ActivityIndicator,
+  Linking,
+  Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
