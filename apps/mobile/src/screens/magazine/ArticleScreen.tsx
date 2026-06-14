@@ -612,6 +612,7 @@ export default function ArticleScreen() {
               ))}
             </View>
             <Text style={styles.tocSectionLabel}>In this article</Text>
+            <View style={{ height: 1, backgroundColor: c.rule, marginHorizontal: space[5] }} />
             <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator={false}>
               {headings.map((h, i) => (
                 <TouchableOpacity
@@ -920,45 +921,51 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
 
   // TOC sheet
   tocHeader: {
-    paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: c.rule,
+    paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[4],
+    borderBottomWidth: 1, borderBottomColor: c.rule,
   },
   tocHeaderTitle: {
-    fontFamily: fonts.sansBold, fontSize: 16, color: c.ink, marginBottom: 4,
+    fontFamily: fonts.serifBold, fontSize: 22, color: c.ink, marginBottom: 6,
   },
   tocArticleTitle: {
-    fontFamily: fonts.mono, fontSize: 11, color: c.ghost,
+    fontFamily: fonts.mono, fontSize: 11, color: c.ghost, lineHeight: 16,
+    fontStyle: "italic" as const,
   },
   tocMeta: {
-    marginTop: 12, marginBottom: 4,
+    marginTop: 16, marginBottom: 0,
+    borderTopWidth: 1, borderTopColor: c.rule,
   },
   tocMetaRow: {
     flexDirection: "row", justifyContent: "space-between",
-    height: 32, alignItems: "center",
+    alignItems: "center", height: 38,
+    paddingHorizontal: space[5],
     borderBottomWidth: 1, borderBottomColor: c.rule,
-    backgroundColor: c.paperDeep, paddingHorizontal: 8,
   },
   tocMetaLabel: {
     fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
-    color: c.ghost, letterSpacing: 1, textTransform: "uppercase",
+    color: c.ghost, letterSpacing: 1.5, textTransform: "uppercase",
   },
   tocMetaVal: {
-    fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft,
+    fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft, fontWeight: "600" as const,
   },
   tocSectionLabel: {
-    fontFamily: fonts.sansBold, fontSize: 12, color: c.mute,
-    textTransform: "uppercase", letterSpacing: 1, marginTop: 16, marginBottom: 8,
+    fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
+    color: c.mute, textTransform: "uppercase", letterSpacing: 1.5,
+    marginTop: space[5], marginBottom: space[2],
+    paddingHorizontal: space[5],
   },
   tocItem: {
-    flexDirection: "row", alignItems: "center", minHeight: 44,
-    borderBottomWidth: 1, borderBottomColor: c.rule, gap: 10,
+    flexDirection: "row", alignItems: "center", minHeight: 48,
+    borderBottomWidth: 1, borderBottomColor: c.rule, gap: 14,
+    paddingHorizontal: space[5],
   },
-  tocItemNested: { paddingLeft: 12 },
+  tocItemNested: { paddingLeft: space[5] + 20 },
   tocActiveDot: {
-    width: 6, height: 6, borderRadius: 3, backgroundColor: c.ochre, flexShrink: 0,
+    width: 7, height: 7, borderRadius: 4, backgroundColor: c.ochre, flexShrink: 0,
   },
-  tocDotPlaceholder: { width: 6, height: 6, flexShrink: 0 },
+  tocDotPlaceholder: { width: 7, height: 7, flexShrink: 0 },
   tocItemText: {
-    flex: 1, fontFamily: fonts.sans, fontSize: 14, color: c.ink, lineHeight: 20,
+    flex: 1, fontFamily: fonts.sans, fontSize: 15, color: c.ink, lineHeight: 22,
   },
   tocItemTextActive: {
     fontFamily: fonts.sansBold, color: c.ochre,
