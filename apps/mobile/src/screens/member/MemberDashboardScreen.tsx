@@ -6,6 +6,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
+import RewardsInfoSheet from "../../components/member/RewardsInfoSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { SignOutDialog } from "../../components/ui/Overlays";
@@ -156,6 +157,7 @@ export default function MemberDashboardScreen() {
   const { user, logout } = useAuthStore();
   const [earnExpanded, setEarnExpanded] = useState(true);
   const [signOutVisible, setSignOutVisible] = useState(false);
+  const [rewardsSheet, setRewardsSheet] = useState<{ visible: boolean; tab: "credits" | "reputation" }>({ visible: false, tab: "credits" });
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
@@ -253,25 +255,17 @@ export default function MemberDashboardScreen() {
           {/* Credits — with info tooltip */}
           <TouchableOpacity
             style={styles.statItem}
-            onPress={() => Alert.alert(
-              "Moveee Credits",
-              "Credits are your spendable currency. Earn them by posting, engaging, and participating in the community. Redeem for partner perks or cash out (Connect Pro only, 40% fee). Daily cap: 50 credits.",
-              [{ text: "Got it" }]
-            )}
+            onPress={() => setRewardsSheet({ visible: true, tab: "credits" })}
             activeOpacity={0.7}
           >
             <Text style={[styles.statValue, { color: isPro ? c.ochre : c.ink }]}>{user.credits ?? 0}</Text>
             <Text style={styles.statLabel}>Credits ⓘ</Text>
           </TouchableOpacity>
 
-          {/* Reputation — with info tooltip */}
+          {/* Reputation — with info sheet */}
           <TouchableOpacity
             style={[styles.statItem, styles.statItemBorder]}
-            onPress={() => Alert.alert(
-              "Reputation",
-              "Reputation is your permanent standing in the community — it never decreases. It unlocks status tiers: Culture Contributor (100), Taste Maker (500), Culture Authority (1,500). Unlike credits, reputation cannot be spent.",
-              [{ text: "Got it" }]
-            )}
+            onPress={() => setRewardsSheet({ visible: true, tab: "reputation" })}
             activeOpacity={0.7}
           >
             <Text style={[styles.statValue, { color: isPro ? c.gold : c.ink }]}>{user.reputation ?? 0}</Text>
@@ -410,6 +404,11 @@ export default function MemberDashboardScreen() {
         visible={signOutVisible}
         onCancel={() => setSignOutVisible(false)}
         onConfirm={() => { setSignOutVisible(false); logout(); }}
+      />
+      <RewardsInfoSheet
+        visible={rewardsSheet.visible}
+        initialTab={rewardsSheet.tab}
+        onClose={() => setRewardsSheet((s) => ({ ...s, visible: false }))}
       />
     </SafeAreaView>
   );

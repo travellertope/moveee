@@ -482,6 +482,13 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Points & rewards config — public, no auth required
+        register_rest_route( 'culture/v1', '/mobile/points-config', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_points_config' ),
+            'permission_callback' => '__return_true',
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/cart', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_add_to_cart' ),
@@ -2452,6 +2459,61 @@ class Culture_Mobile_API {
         }
 
         return rest_ensure_response( $vendors );
+    }
+
+    public static function handle_points_config( $request ) {
+        $point_values  = Culture_Gamification::get_point_values();
+        $credit_bonuses = Culture_Gamification::CREDIT_BONUSES;
+        $daily_cap     = Culture_Gamification::get_daily_credit_cap();
+
+        $action_labels = array(
+            'event_rsvp'            => 'RSVP to an event',
+            'event_checkin'         => 'Check in at an event',
+            'referral'              => 'Refer a friend',
+            'community_post'        => 'Publish a community post',
+            'community_comment'     => 'Comment on a post',
+            'community_like'        => 'Like a post',
+            'quote_submission'      => 'Submit a quote',
+            'quote_like'            => 'Like a quote',
+            'newsletter_comment'    => 'Comment on a newsletter',
+            'newsletter_reaction'   => 'React to a newsletter',
+            'newsletter_subscribed' => 'Subscribe to a newsletter',
+            'magazine_read'         => 'Read an article',
+            'magazine_share'        => 'Share an article',
+            'directory_entry'       => 'Add a directory entry',
+            'directory_opt_in'      => 'Opt into the directory',
+            'game_completed'        => 'Complete a game',
+            'poll_vote'             => 'Vote in a poll',
+            'profile_completed'     => 'Complete your profile',
+            'email_verified'        => 'Verify your email',
+        );
+
+        $actions = array();
+        foreach ( $action_labels as $key => $label ) {
+            $rep     = isset( $point_values[ $key ] ) ? (int) $point_values[ $key ] : 0;
+            $credits = isset( $credit_bonuses[ $key ] ) ? (int) $credit_bonuses[ $key ] : 0;
+            if ( $rep === 0 && $credits === 0 ) continue;
+            $actions[] = array(
+                'action'  => $key,
+                'label'   => $label,
+                'rep'     => $rep,
+                'credits' => $credits,
+            );
+        }
+
+        $tiers = array(
+            array( 'slug' => 'member',              'label' => 'Member',             'min_rep' => 0,     'perks' => 'Access to community feed, newsletters, and games.' ),
+            array( 'slug' => 'culture-contributor', 'label' => 'Culture Contributor', 'min_rep' => Culture_Gamification::get_rep_tier_threshold( 'contributor' ), 'perks' => 'Boosted feed visibility, unlock more templates.' ),
+            array( 'slug' => 'taste-maker',         'label' => 'Taste Maker',        'min_rep' => Culture_Gamification::get_rep_tier_threshold( 'taste-maker' ),  'perks' => 'Skip post review queue, access poll and itinerary templates.' ),
+            array( 'slug' => 'culture-authority',   'label' => 'Culture Authority',  'min_rep' => Culture_Gamification::get_rep_tier_threshold( 'authority' ),    'perks' => 'Nominate members for Culture Icon.' ),
+            array( 'slug' => 'culture-icon',        'label' => 'Culture Icon',       'min_rep' => 25000, 'perks' => 'Invitation and nomination only.', 'nomination_only' => true ),
+        );
+
+        return rest_ensure_response( array(
+            'actions'    => $actions,
+            'tiers'      => $tiers,
+            'daily_cap'  => $daily_cap,
+        ) );
     }
 
     public static function handle_get_cart( $request ) {
