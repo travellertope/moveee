@@ -504,6 +504,16 @@ class Culture_Mobile_API {
             'callback'            => array( __CLASS__, 'handle_get_referrals' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
+
+        register_rest_route( 'culture/v1', '/mobile/directory/entry', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_directory_entry' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'slug' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'id'   => array( 'required' => false, 'type' => 'integer' ),
+            ),
+        ) );
     }
 
     // -------------------------------------------------------------------------
@@ -2547,6 +2557,108 @@ class Culture_Mobile_API {
             'checkout_url' => $checkout_url,
             'product_id'   => $product_id,
             'quantity'     => $quantity,
+        ) );
+    }
+
+    /**
+     * GET /mobile/directory/entry?slug=X or ?id=X
+     * Returns all data needed for the DirectoryDetailScreen.
+     * Public — no auth required.
+     */
+    public static function handle_get_directory_entry( WP_REST_Request $request ) {
+        $slug = $request->get_param( 'slug' );
+        $id   = (int) $request->get_param( 'id' );
+
+        if ( $slug ) {
+            $post = get_page_by_path( $slug, OBJECT, 'culture_directory' );
+        } elseif ( $id ) {
+            $post = get_post( $id );
+            if ( $post && $post->post_type !== 'culture_directory' ) {
+                $post = null;
+            }
+        } else {
+            return new WP_Error( 'missing_param', 'slug or id required', array( 'status' => 400 ) );
+        }
+
+        if ( ! $post || $post->post_status !== 'publish' ) {
+            return new WP_Error( 'not_found', 'Entry not found', array( 'status' => 404 ) );
+        }
+
+        $pid = $post->ID;
+
+        // Entry type from taxonomy
+        $type_terms = get_the_terms( $pid, 'culture_dir_type' );
+        $entry_type = ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : 'concept';
+
+        // Interest tags from taxonomy
+        $interest_terms = get_the_terms( $pid, 'culture_interest' );
+        $interests = array();
+        if ( $interest_terms && ! is_wp_error( $interest_terms ) ) {
+            foreach ( $interest_terms as $t ) {
+                $interests[] = ucwords( str_replace( '-', ' ', $t->name ) );
+            }
+        }
+
+        $image_url      = get_the_post_thumbnail_url( $pid, 'large' ) ?: null;
+        $about_raw      = get_post_meta( $pid, '_about_fields', true );
+        $about_fields   = $about_raw ? json_decode( $about_raw, true ) : array();
+        $entry_quote    = get_post_meta( $pid, '_entry_quote', true ) ?: '';
+        $selected_raw   = get_post_meta( $pid, '_selected_works', true );
+        $selected_works = $selected_raw ? json_decode( $selected_raw, true ) : array();
+        $related_raw    = get_post_meta( $pid, '_related_entries', true );
+        $related_entries = $related_raw ? json_decode( $related_raw, true ) : array();
+        $is_partner     = (bool) get_post_meta( $pid, '_is_partner', true );
+        $avg_rating     = (float) ( get_post_meta( $pid, '_average_rating', true ) ?: 0 );
+        $review_count   = (int) ( get_post_meta( $pid, '_community_review_count', true ) ?: 0 );
+        $city           = get_post_meta( $pid, '_entry_city', true ) ?: '';
+
+        // Community posts linked to this directory entry (latest 5)
+        global $wpdb;
+        $posts_raw = $wpdb->get_results( $wpdb->prepare(
+            "SELECT p.ID, p.post_title, p.post_excerpt, p.post_author
+             FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '_culture_linked_directory' AND pm.meta_value = %s
+             WHERE p.post_type = 'culture_post' AND p.post_status = 'publish'
+             ORDER BY p.post_date DESC LIMIT 5",
+            (string) $pid
+        ), ARRAY_A );
+
+        $community_posts = array();
+        foreach ( $posts_raw as $cp ) {
+            $author      = get_userdata( (int) $cp['post_author'] );
+            $template    = get_post_meta( $cp['ID'], '_community_template_type', true ) ?: 'post';
+            $star_rating = (float) ( get_post_meta( $cp['ID'], '_star_rating', true ) ?: 0 );
+            $community_posts[] = array(
+                'id'             => (int) $cp['ID'],
+                'slug'           => get_post_field( 'post_name', (int) $cp['ID'] ),
+                'title'          => $cp['post_title'],
+                'excerpt'        => $cp['post_excerpt'],
+                'templateType'   => $template,
+                'authorName'     => $author ? ( $author->display_name ?: $author->user_login ) : 'Member',
+                'authorUsername' => $author ? $author->user_login : '',
+                'starRating'     => $star_rating,
+            );
+        }
+
+        return rest_ensure_response( array(
+            'id'               => $pid,
+            'title'            => $post->post_title,
+            'slug'             => $post->post_name,
+            'excerpt'          => $post->post_excerpt,
+            'body'             => $post->post_content,
+            'imageUrl'         => $image_url,
+            'entryType'        => $entry_type,
+            'interests'        => $interests,
+            'city'             => $city,
+            'isPartner'        => $is_partner,
+            'averageRating'    => $avg_rating,
+            'reviewCount'      => $review_count,
+            'aboutFields'      => is_array( $about_fields ) ? $about_fields : array(),
+            'entryQuote'       => $entry_quote,
+            'selectedWorks'    => is_array( $selected_works ) ? $selected_works : array(),
+            'relatedEntries'   => is_array( $related_entries ) ? $related_entries : array(),
+            'communityPosts'   => $community_posts,
+            'communityPostCount' => $review_count,
         ) );
     }
 
