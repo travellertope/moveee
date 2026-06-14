@@ -87,14 +87,14 @@ function PriceRow({
 // ── ProductCard ───────────────────────────────────────────────────────────────
 
 function ProductCardLarge({
-  product, isPro, onAddToBag,
+  product, isPro, onAddToBag, onPress,
 }: {
-  product: ShopProduct; isPro: boolean; onAddToBag: (p: ShopProduct) => void;
+  product: ShopProduct; isPro: boolean; onAddToBag: (p: ShopProduct) => void; onPress?: () => void;
 }) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
-    <View style={[styles.productCardLarge, shadows.card]}>
+    <TouchableOpacity style={[styles.productCardLarge, shadows.card]} onPress={onPress} activeOpacity={0.9}>
       <View style={styles.productCardLargeImage}>
         {product.imageUrl ? (
           <Image source={{ uri: product.imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
@@ -122,19 +122,19 @@ function ProductCardLarge({
           <Text style={styles.addToBagBtnText}>Add to bag</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 function ProductCardSmall({
-  product, isPro, onAddToBag,
+  product, isPro, onAddToBag, onPress,
 }: {
-  product: ShopProduct; isPro: boolean; onAddToBag: (p: ShopProduct) => void;
+  product: ShopProduct; isPro: boolean; onAddToBag: (p: ShopProduct) => void; onPress?: () => void;
 }) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
-    <View style={[styles.productCardSmall, shadows.card]}>
+    <TouchableOpacity style={[styles.productCardSmall, shadows.card]} onPress={onPress} activeOpacity={0.9}>
       <View style={styles.productCardSmallImage}>
         {product.imageUrl ? (
           <Image source={{ uri: product.imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
@@ -163,7 +163,7 @@ function ProductCardSmall({
           <Text style={styles.addToBagBtnText}>Add to bag</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -345,7 +345,7 @@ export default function ShopScreen() {
           style={styles.hero}
           resizeMode="cover"
         >
-          <View style={styles.heroOverlay} />
+          <View style={styles.heroOverlay} pointerEvents="none" />
           <View style={styles.heroContent}>
             <Text style={styles.heroEyebrow}>Vetted Makers · Handcrafted Objects</Text>
             <Text style={styles.heroTitle}>Objects that carry{"\n"}a story.</Text>
@@ -398,13 +398,13 @@ export default function ShopScreen() {
                   <TouchableOpacity onPress={() => nav.navigate("TheEdit")}><Text style={styles.sectionAction}>The Edit →</Text></TouchableOpacity>
                 </View>
 
-                <ProductCardLarge product={featured[0]} isPro={isPro} onAddToBag={handleAddToBag} />
+                <ProductCardLarge product={featured[0]} isPro={isPro} onAddToBag={handleAddToBag} onPress={() => nav.navigate("ProductDetail", { slug: featured[0].slug })} />
 
                 {featSmall.length > 0 && (
                   <View style={styles.smallGrid}>
                     {featSmall.map((p) => (
                       <View key={p.id} style={{ flex: 1 }}>
-                        <ProductCardSmall product={p} isPro={isPro} onAddToBag={handleAddToBag} />
+                        <ProductCardSmall product={p} isPro={isPro} onAddToBag={handleAddToBag} onPress={() => nav.navigate("ProductDetail", { slug: p.slug })} />
                       </View>
                     ))}
                   </View>

@@ -6,8 +6,6 @@ import {
   StyleSheet,
   Image,
   ScrollView,
-  FlatList,
-  useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
@@ -18,7 +16,6 @@ import ImageLightbox from "../ui/ImageLightbox";
 import HappeningDetailModal from "./HappeningDetailModal";
 import DirectoryDetailModal from "./DirectoryDetailModal";
 import QuoteDetailModal from "./QuoteDetailModal";
-import EditorialSheet from "./EditorialSheet";
 import { ReportSheet } from "../ui/Overlays";
 import type { FeedItem, PollOption } from "../../types";
 
@@ -374,35 +371,31 @@ function ImgPlaceholder({ height, src, borderRadius = 0, width, onPress }: ImgPl
   return content;
 }
 
-// ── InternalLinkCard — editorial feature-image snippet (mirrors the web InternalLinkCard) ──
+// ── LinkPreview ───────────────────────────────────────────────────────────────
 
-interface InternalLinkCardProps {
+interface LinkPreviewProps {
+  source?: string | null;
   title: string;
-  label?: string;
-  excerpt?: string;
+  domain?: string | null;
   image?: string | null;
 }
 
-function InternalLinkCard({ title, label = "Moveee Magazine", excerpt, image }: InternalLinkCardProps) {
+function LinkPreview({ source, title, domain, image }: LinkPreviewProps) {
   return (
-    <View style={internalLinkStyles.container}>
-      {image ? (
-        <Image
-          source={{ uri: image }}
-          style={internalLinkStyles.image}
-          resizeMode="cover"
-        />
-      ) : null}
-      <View style={internalLinkStyles.right}>
-        <Text style={internalLinkStyles.label} numberOfLines={1}>
-          {label}
-        </Text>
-        <Text style={internalLinkStyles.title} numberOfLines={2}>
+    <View style={linkStyles.container}>
+      <ImgPlaceholder height={60} src={image} borderRadius={6} width={60} />
+      <View style={linkStyles.right}>
+        {source ? (
+          <Text style={linkStyles.source} numberOfLines={1}>
+            {source}
+          </Text>
+        ) : null}
+        <Text style={linkStyles.title} numberOfLines={2}>
           {title}
         </Text>
-        {excerpt ? (
-          <Text style={internalLinkStyles.excerpt} numberOfLines={1}>
-            {excerpt}
+        {domain ? (
+          <Text style={linkStyles.domain} numberOfLines={1}>
+            {domain}
           </Text>
         ) : null}
       </View>
@@ -410,34 +403,23 @@ function InternalLinkCard({ title, label = "Moveee Magazine", excerpt, image }: 
   );
 }
 
-const internalLinkStyles = StyleSheet.create({
+const linkStyles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    alignItems: "stretch",
-    borderWidth: 1,
-    borderColor: colors.rule,
-    borderRadius: 8,
-    overflow: "hidden",
-    marginTop: 12,
-    backgroundColor: colors.paperWarm,
-    minHeight: 72,
+    backgroundColor: colors.paperDeep,
+    borderRadius: 6,
+    padding: 12,
+    marginHorizontal: 14,
+    gap: 10,
+    alignItems: "center",
   },
-  image: {
-    width: 90,
-    flexShrink: 0,
-  },
-  right: {
-    flex: 1,
-    padding: 10,
-    justifyContent: "center",
-  },
-  label: {
-    fontFamily: fonts.monoBold,
+  right: { flex: 1 },
+  source: {
+    fontFamily: fonts.mono,
     fontSize: fontSize.tiny,
-    color: colors.gold,
     textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 3,
+    color: colors.mute,
+    marginBottom: 2,
   },
   title: {
     fontFamily: fonts.sansBold,
@@ -445,122 +427,11 @@ const internalLinkStyles = StyleSheet.create({
     color: colors.ink,
     lineHeight: 18,
   },
-  excerpt: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.xs,
-    color: colors.mute,
-    marginTop: 3,
-    lineHeight: 16,
-  },
-});
-
-// ── SourcePreviewCard — OG link preview (mirrors web SourcePreviewCard) ──────────
-// Used for Pulse items with external sourceUrl
-
-interface SourcePreviewProps {
-  sourceName?: string | null;
-  sourceUrl?: string | null;
-  ogTitle?: string | null;
-  ogDescription?: string | null;
-  ogImage?: string | null;
-}
-
-function SourcePreviewCard({ sourceName, sourceUrl, ogTitle, ogDescription, ogImage }: SourcePreviewProps) {
-  const c = useColors();
-  const domain = sourceUrl ? (() => { try { return new URL(sourceUrl).hostname.replace(/^www\./, ""); } catch { return sourceUrl; } })() : null;
-  const displayName = sourceName ?? domain;
-  return (
-    <View style={[spStyles.container, { borderColor: c.ruleDark, backgroundColor: c.paper }]}>
-      {ogImage ? (
-        <Image source={{ uri: ogImage }} style={spStyles.image} resizeMode="cover" />
-      ) : null}
-      <View style={spStyles.right}>
-        <View style={spStyles.metaLine}>
-          {displayName ? <Text style={[spStyles.sourceName, { color: c.mute }]} numberOfLines={1}>{displayName.toUpperCase()}</Text> : null}
-          {domain && displayName !== domain ? <Text style={[spStyles.dot, { color: c.ghost }]}>·</Text> : null}
-          {domain && displayName !== domain ? <Text style={[spStyles.domain, { color: c.ghost }]} numberOfLines={1}>{domain}</Text> : null}
-        </View>
-        {ogTitle ? (
-          <Text style={[spStyles.title, { color: c.ink }]} numberOfLines={2}>{ogTitle}</Text>
-        ) : null}
-        {ogDescription ? (
-          <Text style={[spStyles.desc, { color: c.mute }]} numberOfLines={1}>{ogDescription}</Text>
-        ) : null}
-      </View>
-    </View>
-  );
-}
-
-const spStyles = StyleSheet.create({
-  container: {
-    flexDirection: "row", borderWidth: 1, borderRadius: 8,
-    overflow: "hidden", marginTop: 10, minHeight: 72,
-  },
-  image: { width: 90, alignSelf: "stretch" },
-  right: { flex: 1, padding: 10, justifyContent: "center" },
-  metaLine: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 3 },
-  sourceName: { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, textTransform: "uppercase", letterSpacing: 0.8 },
-  dot: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow },
-  domain: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow, flex: 1 },
-  title: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, lineHeight: 17 },
-  desc: { fontFamily: fonts.sans, fontSize: fontSize.tiny, marginTop: 3, lineHeight: 15 },
-});
-
-// ── PulseCard styles ──────────────────────────────────────────────────────────
-
-const pulseStyles = StyleSheet.create({
-  hero: {
-    width: "100%",
-    height: 200,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-  },
-  body: {
-    padding: 14,
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    flexWrap: "wrap",
-  },
-  regionPill: {
+  domain: {
     fontFamily: fonts.mono,
     fontSize: fontSize.tiny,
-    color: colors.mute,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    borderWidth: 1,
-    borderColor: colors.rule,
-    borderRadius: radius.full,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  title: {
-    fontFamily: fonts.serifBold,
-    fontSize: 17,
-    color: colors.ink,
-    lineHeight: 24,
-    marginTop: 10,
-  },
-  excerpt: {
-    fontFamily: fonts.sans,
-    fontSize: fontSize.sm,
-    color: colors.inkSoft,
-    lineHeight: 20,
-    marginTop: 6,
-  },
-  readMore: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.sm,
-    color: colors.ochre,
-    marginTop: 4,
-  },
-  sourceAttrib: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.tiny,
-    color: colors.mute,
-    marginTop: 8,
+    color: colors.ghost,
+    marginTop: 2,
   },
 });
 
@@ -594,227 +465,129 @@ const reactionStyles = StyleSheet.create({
   },
 });
 
-// ── Gallery: horizontal strip for 1-3 images, 2×2 grid for 4+ ──────────────────
+// ── Gallery (horizontal carousel with lightbox) ─────────────────────────────────
 
-// Unified carousel — full card width, paginated, with dot indicators
-function ImageCarousel({
+function GalleryStrip({
   images,
+  height,
+  width,
   onTap,
-  height = 220,
-  marginTop = 10,
 }: {
   images: string[];
+  height: number;
+  width: number;
   onTap: (idx: number) => void;
-  height?: number;
-  marginTop?: number;
 }) {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const { width } = useWindowDimensions();
-  const count = images.length;
-
-  if (count === 0) return null;
-
-  if (count === 1) {
-    return (
-      <TouchableOpacity
-        onPress={() => onTap(0)}
-        activeOpacity={0.92}
-        style={{ marginTop }}
-      >
-        <Image
-          source={{ uri: images[0] }}
-          style={{ width, height }}
-          resizeMode="cover"
-        />
-      </TouchableOpacity>
-    );
-  }
-
   return (
-    <View style={{ marginTop }}>
-      <FlatList
-        data={images}
-        keyExtractor={(_, i) => String(i)}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
-        onMomentumScrollEnd={(e) => {
-          const idx = Math.round(e.nativeEvent.contentOffset.x / width);
-          setActiveIdx(Math.min(Math.max(0, idx), count - 1));
-        }}
-        renderItem={({ item: src, index }) => (
-          <TouchableOpacity
-            onPress={() => onTap(index)}
-            activeOpacity={0.92}
-            style={{ width, height }}
-          >
-            <Image
-              source={{ uri: src }}
-              style={{ width, height }}
-              resizeMode="cover"
-            />
-          </TouchableOpacity>
-        )}
-      />
-      {/* Dot indicators + counter */}
-      <View style={carouselStyles.footer}>
-        <View style={carouselStyles.dots}>
-          {images.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                carouselStyles.dot,
-                i === activeIdx ? carouselStyles.dotActive : carouselStyles.dotInactive,
-              ]}
-            />
-          ))}
-        </View>
-        <Text style={carouselStyles.counter}>{activeIdx + 1} / {count}</Text>
-      </View>
-    </View>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ marginTop: 10 }}
+      contentContainerStyle={{ gap: 8, paddingHorizontal: 14 }}
+    >
+      {images.map((src, i) => (
+        <ImgPlaceholder
+          key={i}
+          height={height}
+          src={src}
+          borderRadius={6}
+          width={width}
+          onPress={() => onTap(i)}
+        />
+      ))}
+    </ScrollView>
   );
 }
 
-const carouselStyles = StyleSheet.create({
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 8,
-    position: "relative",
-  },
-  dots: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  dotActive:   { backgroundColor: colors.ochre, width: 16 },
-  dotInactive: { backgroundColor: colors.ghost },
-  counter: {
-    position: "absolute",
-    right: 14,
-    fontFamily: fonts.mono,
-    fontSize: 10,
-    color: colors.ghost,
-  },
-});
-
 // ── Card Implementations ──────────────────────────────────────────────────────
 
-const EXCERPT_LIMIT = 320;
-
-// PulseCard (A1) — serif title, excerpt with Read more, OG preview for source links
+// PulseCard (A1)
 function PulseCard({ item, onPress }: FeedCardProps) {
-  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
-  const [expanded, setExpanded] = useState(false);
-  // Gallery images take priority over single hero
-  const gallery = (item.galleryImages && item.galleryImages.length > 0)
-    ? item.galleryImages
-    : item.image ? [item.image] : [];
-  const hasSourcePreview = Boolean(item.sourceUrl || item.ogImage);
-  const rawExcerpt = item.excerpt ?? "";
-  const isLong = rawExcerpt.length > EXCERPT_LIMIT;
-  const displayExcerpt = isLong && !expanded ? rawExcerpt.slice(0, EXCERPT_LIMIT) + "…" : rawExcerpt;
-
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   return (
     <>
       <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
-        {/* Hero image or carousel — full-bleed at top */}
-        {gallery.length > 0 && (
-          <ImageCarousel images={gallery} onTap={(i) => setLightboxIdx(i)} marginTop={0} />
-        )}
-
-        <View style={pulseStyles.body}>
-          {/* Type badge + category/arm + region + timestamp */}
-          <View style={pulseStyles.metaRow}>
-            <BadgePill label={item.arm ?? "Pulse"} bg={colors.badgePulseBg} color={colors.badgePulseText} />
+        <View style={{ padding: 14 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <BadgePill
+              label={item.arm ?? "Pulse"}
+              bg={colors.badgePulseBg}
+              color={colors.badgePulseText}
+            />
             {item.category ? <Text style={cardStyles.eyebrow}>{item.category}</Text> : null}
-            {item.region ? <Text style={pulseStyles.regionPill}>{item.region}</Text> : null}
             <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
           </View>
 
-          {/* Title */}
-          <Text style={pulseStyles.title} numberOfLines={3}>{item.title}</Text>
+          <Text style={[cardStyles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>
+            {item.title}
+          </Text>
 
-          {/* Excerpt with Read more toggle */}
-          {displayExcerpt ? (
-            <Text style={pulseStyles.excerpt}>{displayExcerpt}</Text>
-          ) : null}
-          {isLong && !expanded ? (
-            <TouchableOpacity onPress={(e) => { e.stopPropagation?.(); setExpanded(true); }} activeOpacity={0.7}>
-              <Text style={pulseStyles.readMore}>Read more</Text>
-            </TouchableOpacity>
+          {item.excerpt ? (
+            <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={2}>
+              {item.excerpt}
+            </Text>
           ) : null}
 
-          {/* OG source preview — always shown when sourceUrl exists (same as web) */}
-          {hasSourcePreview && (
-            <SourcePreviewCard
-              sourceName={item.source}
-              sourceUrl={item.sourceUrl}
-              ogTitle={item.ogTitle}
-              ogDescription={item.ogDescription}
-              ogImage={item.ogImage}
+          <View style={{ marginTop: 10 }}>
+            <ImgPlaceholder
+              height={172}
+              src={item.image}
+              onPress={item.image ? () => setLightboxOpen(true) : undefined}
             />
-          )}
-        </View>
+          </View>
 
+          {item.source ? (
+            <Text style={[cardStyles.sourceText, { marginTop: 8 }]}>📰 {item.source}</Text>
+          ) : null}
+        </View>
         <FeedReactionBar item={item} />
       </TouchableOpacity>
-
-      {gallery.length > 0 && (
+      {item.image && (
         <ImageLightbox
-          visible={lightboxIdx !== null}
-          images={gallery}
-          initialIndex={lightboxIdx ?? 0}
-          onClose={() => setLightboxIdx(null)}
+          visible={lightboxOpen}
+          images={[item.image]}
+          onClose={() => setLightboxOpen(false)}
         />
       )}
     </>
   );
 }
 
-// EditorialCard (A2) — article title + excerpt with Read more + InternalLinkCard
+// EditorialCard (A2)
 function EditorialCard({ item, onPress }: FeedCardProps) {
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-  const rawExcerpt = item.excerpt ?? "";
-  const isLong = rawExcerpt.length > EXCERPT_LIMIT;
-  const displayExcerpt = isLong && !expanded ? rawExcerpt.slice(0, EXCERPT_LIMIT) + "…" : rawExcerpt;
-
   return (
-    <>
-      <TouchableOpacity style={cardStyles.card} onPress={() => setSheetOpen(true)} activeOpacity={0.92}>
-        <View style={{ padding: 14 }}>
-          {/* Badges row */}
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <BadgePill label="Editorial" bg={colors.ochre} color={colors.paper} />
-            {item.category ? <Text style={cardStyles.eyebrow}>{item.category}</Text> : null}
-            <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
-          </View>
-
-          {/* Title */}
-          <Text style={[cardStyles.cardTitleXl, { marginTop: 10 }]} numberOfLines={2}>
-            {item.title}
-          </Text>
-
-          {/* Standfirst/excerpt with Read more */}
-          {displayExcerpt ? (
-            <Text style={[cardStyles.cardBody, { marginTop: 6 }]}>{displayExcerpt}</Text>
-          ) : null}
-          {isLong && !expanded ? (
-            <TouchableOpacity onPress={(e) => { e.stopPropagation?.(); setExpanded(true); }} activeOpacity={0.7}>
-              <Text style={[cardStyles.readMore, { marginTop: 4 }]}>Read more →</Text>
-            </TouchableOpacity>
-          ) : null}
-
-          {/* InternalLinkCard — mirrors web InternalLinkCard */}
-          <InternalLinkCard title={item.title} excerpt={item.excerpt} image={item.image} />
+    <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
+      <View style={{ padding: 14 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <BadgePill label="Editorial" bg={colors.ochre} color={colors.paper} />
+          {item.category ? <Text style={cardStyles.eyebrow}>{item.category}</Text> : null}
+          <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
         </View>
-      </TouchableOpacity>
-      <EditorialSheet visible={sheetOpen} item={item} onClose={() => setSheetOpen(false)} />
-    </>
+
+        <Text style={[cardStyles.cardTitleXl, { marginTop: 10 }]} numberOfLines={2}>
+          {item.title}
+        </Text>
+
+        {item.excerpt ? (
+          <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={3}>
+            {item.excerpt}
+          </Text>
+        ) : null}
+
+        <Text style={[cardStyles.readMore, { marginTop: 8 }]}>Read more →</Text>
+
+        {item.source || item.ogTitle ? (
+          <View style={{ marginTop: 8, marginHorizontal: -14 }}>
+            <LinkPreview
+              source={item.source}
+              title={item.ogTitle ?? item.title}
+              domain={item.sourceUrl ?? undefined}
+              image={item.ogImage}
+            />
+          </View>
+        ) : null}
+      </View>
+    </TouchableOpacity>
   );
 }
 
@@ -1067,8 +840,10 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
             />
           </View>
         </View>
-        <ImageCarousel images={gallery} onTap={(i) => setLightboxIdx(i)} />
-        <FeedReactionBar item={item} marginTop={4} />
+        {gallery.length > 0 ? (
+          <GalleryStrip images={gallery} height={130} width={180} onTap={(i) => setLightboxIdx(i)} />
+        ) : null}
+        <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
       <ImageLightbox
         visible={lightboxIdx !== null}
@@ -1082,10 +857,7 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
 
 // CulturalTakeCard (B4)
 function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
-  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
-  const gallery = (item.galleryImages && item.galleryImages.length > 0)
-    ? item.galleryImages
-    : item.image ? [item.image] : [];
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   return (
     <>
       <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
@@ -1105,18 +877,21 @@ function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCar
               style={cardStyles.cardBody}
             />
           </View>
+          <View style={{ marginTop: 10 }}>
+            <ImgPlaceholder
+              height={180}
+              src={item.image}
+              onPress={item.image ? () => setLightboxOpen(true) : undefined}
+            />
+          </View>
         </View>
-        {gallery.length > 0 && (
-          <ImageCarousel images={gallery} onTap={(i) => setLightboxIdx(i)} />
-        )}
-        <FeedReactionBar item={item} marginTop={4} />
+        <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
-      {gallery.length > 0 && (
+      {item.image && (
         <ImageLightbox
-          visible={lightboxIdx !== null}
-          images={gallery}
-          initialIndex={lightboxIdx ?? 0}
-          onClose={() => setLightboxIdx(null)}
+          visible={lightboxOpen}
+          images={[item.image]}
+          onClose={() => setLightboxOpen(false)}
         />
       )}
     </>
@@ -1160,10 +935,10 @@ function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
           </View>
         </View>
 
-        {gallery.length > 0 && (
-          <ImageCarousel images={gallery} onTap={(i) => setLightboxIdx(i)} />
-        )}
-        <FeedReactionBar item={item} marginTop={4} />
+        {gallery.length > 0 ? (
+          <GalleryStrip images={gallery} height={140} width={200} onTap={(i) => setLightboxIdx(i)} />
+        ) : null}
+        <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
       <ImageLightbox
         visible={lightboxIdx !== null}
@@ -1200,10 +975,10 @@ const foodStyles = StyleSheet.create({
 
 // CreativeShowcaseCard (B6)
 function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+  const [activeIdx, setActiveIdx] = useState(0);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
-  const gallery = item.galleryImages && item.galleryImages.length > 0
-    ? item.galleryImages
-    : item.image ? [item.image] : [];
+  const gallery = item.galleryImages ?? [];
+  const count = gallery.length;
 
   return (
     <>
@@ -1222,11 +997,46 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
           </View>
         ) : null}
 
-        {gallery.length > 0 && (
-          <ImageCarousel images={gallery} onTap={(i) => setLightboxIdx(i)} height={260} />
-        )}
+        {count > 0 ? (
+          <>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginTop: 10, height: 200 }}
+              contentContainerStyle={{ gap: 8, paddingHorizontal: 14 }}
+              onMomentumScrollEnd={(e) => {
+                const idx = Math.round(e.nativeEvent.contentOffset.x / 260);
+                setActiveIdx(Math.min(idx, count - 1));
+              }}
+            >
+              {gallery.map((src, i) => (
+                <ImgPlaceholder
+                  key={i}
+                  height={200}
+                  src={src}
+                  borderRadius={6}
+                  width={260}
+                  onPress={() => setLightboxIdx(i)}
+                />
+              ))}
+            </ScrollView>
+            {count > 1 ? (
+              <View style={showcaseStyles.dots}>
+                {gallery.map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      showcaseStyles.dot,
+                      i === activeIdx ? showcaseStyles.dotActive : showcaseStyles.dotInactive,
+                    ]}
+                  />
+                ))}
+              </View>
+            ) : null}
+          </>
+        ) : null}
 
-        <FeedReactionBar item={item} marginTop={4} />
+        <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
       <ImageLightbox
         visible={lightboxIdx !== null}
@@ -1237,6 +1047,19 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
     </>
   );
 }
+
+const showcaseStyles = StyleSheet.create({
+  dots: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 8,
+  },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  dotActive: { backgroundColor: colors.ochre },
+  dotInactive: { backgroundColor: colors.ghost },
+});
 
 // PollCard (B7) — live voting via API
 function PollCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {

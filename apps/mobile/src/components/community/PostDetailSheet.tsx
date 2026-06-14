@@ -146,6 +146,7 @@ const TEMPLATE_BADGES: Record<string, { label: string; emoji: string; bg: string
   "itinerary":         { label: "ITINERARY",        emoji: "🗺️", bg: "rgba(46,125,50,0.08)",  color: "#2E7D32" },
   "event":             { label: "EVENT",             emoji: "📅", bg: "rgba(0,137,123,0.08)",  color: "#00695C" },
   "quote":             { label: "QUOTE",             emoji: "❝",  bg: "rgba(185,140,55,0.10)", color: "#92400E" },
+  "book-review":       { label: "BOOK REVIEW",       emoji: "📚", bg: "rgba(120,53,15,0.08)",  color: "#78350F" },
 };
 
 // ── Helpers ─────────────────────────────────────────────────────────────────────
@@ -338,13 +339,14 @@ function TemplatePost({ item, c, styles }: { item: FeedItem; c: ColorPalette; st
 }
 
 function TemplateHiddenGem({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const images = item.galleryImages ?? [];
   return (
     <>
-      <Text style={styles.serifTitle}>{item.title}</Text>
-      {item.locationName ? (
+      <Text style={styles.serifTitle}>{item.placeName ?? item.title}</Text>
+      {(item.placeLocation ?? item.locationName) ? (
         <View style={styles.locationRow}>
           <Text style={{ fontSize: 14 }}>📍</Text>
-          <Text style={styles.locationText}>{item.locationName}</Text>
+          <Text style={styles.locationText}>{item.placeLocation ?? item.locationName}</Text>
         </View>
       ) : null}
       {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
@@ -354,7 +356,22 @@ function TemplateHiddenGem({ item, c, styles }: { item: FeedItem; c: ColorPalett
           <Text style={styles.directoryChipText}>View in Directory →</Text>
         </View>
       ) : null}
-      {item.image ? <TappableHero uri={item.image} /> : null}
+      {(item.priceRange || item.openingHours) ? (
+        <View style={[styles.locationRow, { marginBottom: 8 }]}>
+          {item.priceRange ? (
+            <Text style={{ fontSize: 13, color: c.gold, fontFamily: MONO, fontWeight: "700" }}>{item.priceRange}</Text>
+          ) : null}
+          {item.priceRange && item.openingHours ? (
+            <Text style={{ fontSize: 13, color: c.ghost, marginHorizontal: 6 }}>·</Text>
+          ) : null}
+          {item.openingHours ? (
+            <Text style={{ fontSize: 13, color: c.mute }}>{item.openingHours}</Text>
+          ) : null}
+        </View>
+      ) : null}
+      {images.length > 0
+        ? <GalleryGrid images={images} />
+        : item.image ? <TappableHero uri={item.image} /> : null}
     </>
   );
 }
@@ -363,12 +380,13 @@ function TemplateCulturalTake({ item, c, styles }: { item: FeedItem; c: ColorPal
   return (
     <>
       <View style={styles.takeHeadlineBlock}>
-        <Text style={styles.takeHeadline}>{item.title}</Text>
+        <Text style={styles.takeHeadline}>{item.culturalTakeHeadline ?? item.title}</Text>
       </View>
-      {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
+      {(item.body ?? item.excerpt) ? <Text style={styles.bodyText}>{item.body ?? item.excerpt}</Text> : null}
       <TouchableOpacity style={styles.agreeChip}>
         <Text style={styles.agreeChipText}>Do you agree? →</Text>
       </TouchableOpacity>
+      {item.communityTag ? <Text style={styles.hashtags}>{item.communityTag}</Text> : null}
       {item.image ? <TappableHero uri={item.image} /> : null}
     </>
   );
@@ -379,10 +397,11 @@ function TemplateFoodReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
   const value = item.foodRatingValue ?? 0;
   const vibe = item.foodRatingVibe ?? 0;
   const overall = taste + value + vibe > 0 ? ((taste + value + vibe) / 3).toFixed(1) : null;
+  const images = item.galleryImages ?? [];
 
   return (
     <>
-      <Text style={styles.serifTitle}>{item.title ?? item.foodDishName}</Text>
+      <Text style={styles.serifTitle}>{item.foodDishName ?? item.title}</Text>
       {item.linkedDirectoryId ? (
         <View style={styles.locationRow}>
           <Ionicons name="grid-outline" size={12} color={c.gold} />
@@ -396,10 +415,9 @@ function TemplateFoodReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
             <Text style={styles.locationText}>{item.locationName}</Text>
           </View>
         ) : null}
-        {item.admission ? (
+        {item.priceRange ? (
           <View style={styles.locationRow}>
-            <Text style={{ fontSize: 14 }}>💰</Text>
-            <Text style={[styles.locationText, { color: c.gold, fontFamily: MONO, fontWeight: "700" }]}>{item.admission}</Text>
+            <Text style={[styles.locationText, { color: c.gold, fontFamily: MONO, fontWeight: "700" }]}>{item.priceRange}</Text>
           </View>
         ) : null}
       </View>
@@ -420,21 +438,22 @@ function TemplateFoodReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
           </View>
         ) : null}
       </View>
-      {item.image ? (
-        <>
-          <TappableHero uri={item.image} caption={item.foodDishName} />
-          {item.foodDishName ? <Text style={styles.dishCaption}>{item.foodDishName}</Text> : null}
-        </>
-      ) : null}
-      {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
-      {/* Tags */}
-      {item.communityTag ? (
-        <View style={styles.tagRow}>
-          {item.communityTag.split(",").map((t) => (
-            <View key={t} style={styles.tag}><Text style={styles.tagText}>{t.trim()}</Text></View>
-          ))}
+      {images.length > 0
+        ? <GalleryGrid images={images} />
+        : item.image ? (
+          <>
+            <TappableHero uri={item.image} caption={item.foodDishName} />
+            {item.foodDishName ? <Text style={styles.dishCaption}>{item.foodDishName}</Text> : null}
+          </>
+        ) : null}
+      {item.cuisineTag ? (
+        <View style={[styles.tagRow, { marginTop: 8 }]}>
+          <View style={[styles.tag, { borderColor: c.gold }]}>
+            <Text style={[styles.tagText, { color: c.gold }]}>{item.cuisineTag}</Text>
+          </View>
         </View>
       ) : null}
+      {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
     </>
   );
 }
@@ -443,12 +462,10 @@ function TemplateCreativeShowcase({ item, c, styles }: { item: FeedItem; c: Colo
   const images = item.galleryImages ?? [];
   return (
     <>
-      <Text style={styles.serifTitle}>{item.title}</Text>
-      {item.communityTag ? (
-        <View style={styles.tagRow}>
-          {item.communityTag.split(",").map((t) => (
-            <View key={t} style={styles.tag}><Text style={styles.tagText}>{t.trim()}</Text></View>
-          ))}
+      <Text style={styles.serifTitle}>{item.showcaseTitle ?? item.title}</Text>
+      {item.showcaseMedium ? (
+        <View style={[styles.tag, { alignSelf: "flex-start", marginBottom: 10 }]}>
+          <Text style={styles.tagText}>{item.showcaseMedium}</Text>
         </View>
       ) : null}
       {images.length > 0
@@ -456,6 +473,13 @@ function TemplateCreativeShowcase({ item, c, styles }: { item: FeedItem; c: Colo
         : item.image ? <TappableHero uri={item.image} /> : null
       }
       {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
+      {item.showcaseCollaborator ? (
+        <View style={[styles.tagRow, { backgroundColor: c.paperWarm, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8, alignItems: "center" }]}>
+          <Text style={{ fontSize: 14 }}>🤝</Text>
+          <Text style={{ fontSize: 13, color: c.inkSoft, flex: 1, marginLeft: 6 }}>Collaboration with {item.showcaseCollaborator}</Text>
+          <Text style={{ fontSize: 13, color: c.gold }}>View profile →</Text>
+        </View>
+      ) : null}
     </>
   );
 }
@@ -508,6 +532,7 @@ function TemplatePoll({ item, c, styles }: { item: FeedItem; c: ColorPalette; st
           </Text>
         )}
       </View>
+      {item.pollDescription ? <Text style={styles.bodyText}>{item.pollDescription}</Text> : null}
       {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
     </>
   );
@@ -517,13 +542,16 @@ function TemplateItinerary({ item, c, styles }: { item: FeedItem; c: ColorPalett
   const stops = item.itineraryStops ?? [];
   const [expanded, setExpanded] = useState(false);
   const displayed = expanded ? stops : stops.slice(0, 4);
+  const images = item.galleryImages ?? [];
 
   return (
     <>
-      <Text style={styles.serifTitle}>{item.title}</Text>
+      <Text style={styles.serifTitle}>{item.itineraryTitle ?? item.title}</Text>
       <View style={styles.itinMeta}>
         <Text style={styles.itinMetaText}>🗂 {stops.length} stops</Text>
-        {item.locationName ? <Text style={styles.itinMetaText}>📍 {item.locationName}</Text> : null}
+        {item.itineraryDuration ? <Text style={styles.itinMetaText}>⏱ {item.itineraryDuration}</Text> : null}
+        {(item.itineraryCity ?? item.locationName) ? <Text style={styles.itinMetaText}>📍 {item.itineraryCity ?? item.locationName}</Text> : null}
+        {item.itineraryBudget ? <Text style={styles.itinMetaText}>💰 {item.itineraryBudget}</Text> : null}
       </View>
       <View style={styles.routeCard}>
         <Text style={styles.routeCardLabel}>The Route</Text>
@@ -545,6 +573,7 @@ function TemplateItinerary({ item, c, styles }: { item: FeedItem; c: ColorPalett
           </TouchableOpacity>
         )}
       </View>
+      {images.length > 0 ? <GalleryGrid images={images} /> : null}
       {item.communityTag ? <Text style={styles.hashtags}>{item.communityTag}</Text> : null}
     </>
   );
@@ -554,7 +583,9 @@ function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
   return (
     <>
       <Text style={[styles.serifTitle, { fontSize: 22 }]}>{item.title}</Text>
-      {item.image ? <Image source={{ uri: item.image }} style={styles.heroImage} resizeMode="cover" /> : null}
+      {(item.galleryImages && item.galleryImages.length > 0)
+        ? <GalleryGrid images={item.galleryImages} />
+        : item.image ? <Image source={{ uri: item.image }} style={styles.heroImage} resizeMode="cover" /> : null}
       <View style={styles.eventMeta}>
         {item.eventDate ? (
           <View style={styles.eventMetaRow}>
@@ -633,6 +664,106 @@ function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
           <Text style={styles.bodyText}>{item.excerpt}</Text>
         </View>
       ) : null}
+      {item.body && item.body !== item.excerpt ? (
+        <View style={styles.posterNote}>
+          <Text style={styles.posterNoteLabel}>💬 Why sharing:</Text>
+          <Text style={styles.bodyText}>{item.body}</Text>
+        </View>
+      ) : null}
+    </>
+  );
+}
+
+function TemplateBookReview({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const overall = item.bookOverallRating ?? 0;
+  const statusColor = "#2D6A4F";
+
+  const ratingRows: { label: string; val: number | undefined }[] = [
+    { label: "Writing",    val: item.bookRatingWriting },
+    { label: "Story",      val: item.bookRatingStory },
+    { label: "Characters", val: item.bookRatingCharacters },
+    { label: "Pacing",     val: item.bookRatingPacing },
+  ].filter((r) => r.val !== undefined && r.val > 0);
+
+  return (
+    <>
+      {/* Book card */}
+      <View style={styles.bookCard}>
+        {item.image ? (
+          <Image source={{ uri: item.image }} style={styles.bookCover} resizeMode="cover" />
+        ) : (
+          <View style={[styles.bookCover, { backgroundColor: c.gold + "30", alignItems: "center", justifyContent: "center" }]}>
+            <Text style={{ fontSize: 24 }}>📚</Text>
+          </View>
+        )}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.bookTitle} numberOfLines={2}>{item.bookTitle ?? item.title}</Text>
+          {item.bookAuthor ? (
+            <Text style={styles.bookAuthor}>{item.bookAuthor}</Text>
+          ) : null}
+          {overall > 0 ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
+              <StarRow rating={overall} c={c} />
+              <Text style={{ fontSize: 11, fontFamily: MONO, color: c.gold }}>{overall.toFixed(1)}</Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+
+      {/* Status + Recommend chips */}
+      <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+        {item.bookStatus ? (
+          <View style={[styles.tag, { backgroundColor: statusColor, borderColor: statusColor }]}>
+            <Text style={[styles.tagText, { color: "#fff" }]}>
+              {item.bookStatus === "finished" ? "✓ Finished"
+                : item.bookStatus === "reading" ? "Reading"
+                : item.bookStatus === "want-to-read" ? "Want to Read"
+                : item.bookStatus}
+            </Text>
+          </View>
+        ) : null}
+        {item.bookRecommend === true ? (
+          <View style={[styles.tag, { backgroundColor: c.paperWarm, borderColor: c.gold }]}>
+            <Text style={[styles.tagText, { color: c.gold }]}>👍 Recommended</Text>
+          </View>
+        ) : null}
+      </View>
+
+      {/* Ratings section */}
+      {ratingRows.length > 0 ? (
+        <View style={styles.ratingsBlock}>
+          <Text style={styles.ratingsLabel}>RATINGS</Text>
+          {ratingRows.map((row) => (
+            <View key={row.label} style={styles.ratingRow}>
+              <Text style={styles.ratingLabel}>{row.label}</Text>
+              <StarRow rating={row.val!} c={c} />
+              <Text style={styles.ratingScore}>{row.val!.toFixed(1)}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {/* Review text */}
+      {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
+
+      {/* Favourite quote */}
+      {item.bookFavQuote ? (
+        <View style={styles.bookFavQuote}>
+          <Text style={styles.bookFavQuoteLabel}>📖 Favourite quote:</Text>
+          <Text style={styles.bookFavQuoteText}>{item.bookFavQuote}</Text>
+        </View>
+      ) : null}
+
+      {/* Genre chips */}
+      {item.bookGenres && item.bookGenres.length > 0 ? (
+        <View style={[styles.tagRow, { marginTop: 8 }]}>
+          {item.bookGenres.map((g, i) => (
+            <View key={g} style={[styles.tag, i === 0 ? { backgroundColor: c.ink, borderColor: c.ink } : {}]}>
+              <Text style={[styles.tagText, i === 0 ? { color: "#fff" } : { color: c.inkSoft }]}>{g}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </>
   );
 }
@@ -671,6 +802,7 @@ export default function PostDetailSheet({ item, visible, onClose }: PostDetailSh
       case "poll":              return <TemplatePoll item={item} c={c} styles={styles} />;
       case "itinerary":         return <TemplateItinerary item={item} c={c} styles={styles} />;
       case "event":             return <TemplateEvent item={item} c={c} styles={styles} />;
+      case "book-review":       return <TemplateBookReview item={item} c={c} styles={styles} />;
       case "quote":             return <TemplateQuote item={item} c={c} styles={styles} />;
       default:                  return <TemplatePost item={item} c={c} styles={styles} />;
     }
@@ -1304,6 +1436,57 @@ function createStyles(c: ColorPalette) {
       color: c.ghost,
       paddingHorizontal: 16,
       paddingBottom: 8,
+    },
+
+    // Book review
+    bookCard: {
+      flexDirection: "row",
+      gap: 10,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: c.ghost + "60",
+      borderRadius: 8,
+      backgroundColor: "#fff",
+      marginBottom: 12,
+    },
+    bookCover: {
+      width: 48,
+      height: 64,
+      borderRadius: 4,
+      backgroundColor: c.ruleDark,
+      flexShrink: 0,
+    },
+    bookTitle: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: c.ink,
+      lineHeight: 20,
+    },
+    bookAuthor: {
+      fontSize: 12,
+      color: c.mute,
+      marginTop: 2,
+    },
+    bookFavQuote: {
+      backgroundColor: c.paperWarm,
+      borderLeftWidth: 3,
+      borderLeftColor: c.gold,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 4,
+      marginBottom: 12,
+    },
+    bookFavQuoteLabel: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: c.mute,
+      marginBottom: 4,
+    },
+    bookFavQuoteText: {
+      fontSize: 13,
+      fontStyle: "italic",
+      color: c.inkSoft,
+      lineHeight: 20,
     },
   });
 }
