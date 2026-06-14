@@ -23,6 +23,8 @@ import {
 import { useAuthStore } from "../../auth/authStore";
 import FeedCard from "../../components/community/FeedItemCard";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
+import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
+import type { TemplateId } from "../../components/community/TemplatePickerSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { FeedSkeleton } from "../../components/ui/Skeleton";
@@ -78,6 +80,7 @@ export default function ConnectFeedScreen() {
   const [activeCategory, setActiveCategory] = useState("");
   const [forYou, setForYou] = useState(false);
   const [sheetItem, setSheetItem] = useState<FeedItem | null>(null);
+  const [pickerVisible, setPickerVisible] = useState(false);
 
   const interestTagSet = useMemo(
     () => new Set((user?.interests ?? []).map((s) => s.toLowerCase())),
@@ -353,9 +356,9 @@ export default function ConnectFeedScreen() {
         {/* ── FAB ───────────────────────────────────────────────── */}
         <TouchableOpacity
           style={styles.fab}
-          onPress={() => nav.navigate("NewPost")}
+          onPress={() => setPickerVisible(true)}
         >
-          <Ionicons name="create-outline" size={24} color="#fff" />
+          <Ionicons name="add" size={28} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -363,6 +366,12 @@ export default function ConnectFeedScreen() {
         item={sheetItem}
         visible={sheetItem !== null}
         onClose={() => setSheetItem(null)}
+      />
+
+      <TemplatePickerSheet
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onSelect={(id: TemplateId) => nav.navigate("NewPost", { template: id })}
       />
     </SafeAreaView>
   );
