@@ -99,6 +99,7 @@ const EDITION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const { searchParams } = new URL(request.url)
 
   // Redirect www → non-www (permanent) so Google indexes the canonical domain
   const host = request.headers.get('host') ?? ''
@@ -106,6 +107,13 @@ export async function proxy(request: NextRequest) {
     const canonical = new URL(request.url)
     canonical.host = host.replace(/^www\./, '')
     return NextResponse.redirect(canonical.toString(), { status: 308 })
+  }
+
+  // Strip legacy WooCommerce currency param — creates duplicate URL variants
+  if (searchParams.has('wmc-currency')) {
+    const clean = new URL(request.url)
+    clean.searchParams.delete('wmc-currency')
+    return NextResponse.redirect(clean.toString(), { status: 301 })
   }
 
   // Set x-country cookie on every request so CurrencyProvider can read it client-side
