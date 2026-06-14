@@ -642,33 +642,100 @@ Show ochre spinner at top of feed area + "Refreshing..." JetBrains Mono 10px mut
 
 ---
 
-## 4. POST COMPOSER
+## 4. POST COMPOSER & TEMPLATE PICKER
 
 ---
 
-### PROMPT 4 — New Post Screen (All 9 Templates)
+### PROMPT 4A — Template Picker Sheet
+
+```
+Senior mobile UX/UI designer — Moveee Connect new post template picker. iOS, 390×844px.
+Brand: white bg, paper-warm #F3ECE0 accents, ochre #C5491F, gold #B38238, ink #14110D.
+DM Sans (UI) + Fraunces (display) + JetBrains Mono (meta).
+
+Design 2 frames — the bottom sheet that appears when a user taps the compose (+) button
+on the Connect Feed. The picker replaces the old in-composer horizontal template scroll strip.
+
+════════════════════════════════════════════
+BOTTOM SHEET STRUCTURE (both frames):
+  White surface, radius-2xl top corners (20px), shadow 0 -4px 32px rgba(20,17,13,0.18).
+  Drag handle: 4×28px rounded pill, #C8BFB0, centred, 8px from top.
+  Sheet height: ~76% of viewport (content-driven, enough for 5-row grid + header).
+  Scrim beneath: rgba(20,17,13,0.40).
+
+SHEET HEADER (16px horizontal padding, 20px from top under drag handle):
+  "New Post" DM Sans 17px bold ink left.
+  × close button — 36px circle, paper-warm bg, DM Sans 16px ink centred — top-right.
+
+SUBTITLE: "Choose a format" DM Sans 13px mute, 4px below header.
+
+TEMPLATE GRID (2-column, 12px gap, 16px horizontal padding, 16px top):
+  10 template cards arranged in 5 rows × 2 columns.
+  Each card: white fill, radius-xl (12px), 1px ghost border, 12px padding, auto height.
+  Card interior (vertical layout, 8px gap):
+    EMOJI CIRCLE: 40px × 40px, radius-full, paper-warm #F3ECE0 fill. Emoji 20px centred.
+    TEMPLATE NAME: DM Sans 14px bold ink.
+    TEMPLATE DESC: DM Sans 12px mute, 2-line max (line-height 1.4), wraps naturally.
+
+TEMPLATES (row order, top to bottom):
+  Row 1: ✏️ Post — "Share a thought, opinion, or moment"
+          💎 Hidden Gem — "Recommend a place worth knowing"
+  Row 2: 🔥 Cultural Take — "Drop a hot take and defend it"
+          🍽️ Food Review — "Review a dish or restaurant"
+  Row 3: 🎨 Creative Showcase — "Show your creative work"
+          📚 Book Review — "Review a book with ratings"
+  Row 4: 📊 Poll — "Ask the community to vote"
+          🗺️ Itinerary — "Share a cultural route or trip"
+  Row 5: 📅 Event — "Post an event for the community"
+          ❝ Quote — "Share a quote that moved you"
+
+════════════════════════════════════════════
+FRAME 1 — DEFAULT STATE (no selection)
+════════════════════════════════════════════
+All 10 cards in default state: white fill, ghost border, no highlight.
+
+════════════════════════════════════════════
+FRAME 2 — "HIDDEN GEM" SELECTED (pressed/highlight state)
+════════════════════════════════════════════
+"Hidden Gem" card shows selected state:
+  Paper-warm #F3ECE0 fill (not white).
+  #C5491F border (1.5px, ochre).
+  Template name DM Sans 14px bold #C5491F (ochre, not ink).
+  Emoji circle border: #C5491F 1.5px ring.
+All other 9 cards remain in default white state.
+
+Output 2 frames side by side. Label each below in JetBrains Mono 11px mute:
+  "Default — choose a format" · "Hidden Gem selected"
+```
+
+---
+
+### PROMPT 4B — Post Composer (All 10 Templates)
 
 ```
 Senior mobile UX/UI designer — Moveee Connect new post composer. iOS, 390×844px.
 Brand: white bg, paper-warm #F3ECE0 accents, ochre #C5491F, gold #B38238, ink #14110D.
 DM Sans (UI) + Fraunces (display) + JetBrains Mono (meta).
 
-Design 9 frames — one per post template. Each frame shows the composer in a partially-filled
+Design 10 frames — one per post template. Each frame shows the composer in a partially-filled
 state for that template so all unique fields are visible.
 
+NOTE: There is NO horizontal template scroll strip in any frame. Users pick the template
+from the picker sheet (Prompt 4A) BEFORE reaching the composer. The only template UI
+inside the composer is the template indicator row described below.
+
 ════════════════════════════════════════════
-SHARED HEADER (identical on all 9 frames):
+SHARED HEADER (identical on all 10 frames):
   White fill, 56px, ghost bottom border.
   "Cancel" DM Sans 14px ochre left (44px tap target).
-  "New Post" DM Sans 15px bold ink centred.
+  Title centred: the template name, DM Sans 15px bold ink
+    (e.g. "New Post", "New Hidden Gem", "New Food Review", etc.)
   "Post" DM Sans 14px bold ochre right (disabled/greyed until content filled).
 
-TEMPLATE SELECTOR (horizontal scroll, 48px, ghost bottom border, white bg):
-  9 pills, DM Sans 12px bold, 36px height, radius-full, 10px horizontal padding, 8px gap.
-  Active: ochre fill, white text. Inactive: paper-warm fill, ink-soft text.
-  Pills: ✏️ Post · 💎 Hidden Gem · 🔥 Cultural Take · 🍽️ Food Review ·
-         🎨 Creative Showcase · 📊 Poll · 🗺️ Itinerary · 📅 Event · ❝ Quote
-  Each frame shows the matching pill as active (ochre fill).
+TEMPLATE INDICATOR ROW (36px, paper-warm #F3ECE0 bg, ghost bottom border):
+  Left: emoji (16px) + template name DM Sans 13px bold #B38238 (gold) — e.g. "💎 Hidden Gem"
+  Right: "Change format" DM Sans 12px #C5491F ochre — tapping returns user to Prompt 4A picker sheet.
+  16px horizontal padding.
 
 SHARED MEDIA TOOLBAR (pinned above keyboard, 48px, ghost top border, white bg):
   Left: 📷 · 📎 · 📍 · 😊 · @ — each 24px icon, ghost mute, 16px padding, 16px gap.
@@ -680,8 +747,11 @@ All section dividers: ghost rule 1px #EEE8DF.
 ════════════════════════════════════════════
 
 ════════════════════════════════════════════
-FRAME 1 — STANDARD POST (✏️ Post active)
+FRAME 1 — STANDARD POST
 ════════════════════════════════════════════
+Header title: "New Post"
+Template indicator row: ✏️ "Post" gold left · "Change format" ochre right.
+
 SECTION TAGS (horizontal scroll, 40px height, 16px padding):
   Active: "Music" — ink fill, white DM Sans 11px bold, radius-full, 28px.
   Inactive: "Film" · "Art" · "Fashion" · "Food" — ghost border, ink-soft.
@@ -699,8 +769,11 @@ MAIN TEXTAREA (no border, 16px padding, 200px min height):
 MEDIA TOOLBAR. [Shared layout.]
 
 ════════════════════════════════════════════
-FRAME 2 — HIDDEN GEM (💎 Hidden Gem active)
+FRAME 2 — HIDDEN GEM
 ════════════════════════════════════════════
+Header title: "New Hidden Gem"
+Template indicator row: 💎 "Hidden Gem" gold left · "Change format" ochre right.
+
 PLACE NAME input (48px): Label "Place name *" · Filled: "Bisi Ceramics Studio"
 
 LOCATION input (48px): Label "Location" · 📍 left icon · Filled: "Balogun Market area · Lagos Island"
@@ -721,8 +794,11 @@ STAR RATING row (optional, 36px):
 MEDIA TOOLBAR. [Shared.]
 
 ════════════════════════════════════════════
-FRAME 3 — CULTURAL TAKE (🔥 Cultural Take active)
+FRAME 3 — CULTURAL TAKE
 ════════════════════════════════════════════
+Header title: "New Cultural Take"
+Template indicator row: 🔥 "Cultural Take" gold left · "Change format" ochre right.
+
 TAKE INPUT (80px min, no border, Fraunces 20px bold ink placeholder style):
   Label "Your take *"
   Filled (Fraunces 20px bold ink):
@@ -741,8 +817,11 @@ SECTION TAGS row (horizontal scroll, same as Standard Post):
 MEDIA TOOLBAR. [Shared.]
 
 ════════════════════════════════════════════
-FRAME 4 — FOOD REVIEW (🍽️ Food Review active)
+FRAME 4 — FOOD REVIEW
 ════════════════════════════════════════════
+Header title: "New Food Review"
+Template indicator row: 🍽️ "Food Review" gold left · "Change format" ochre right.
+
 DISH NAME input (48px): Label "Dish / Item *" · Filled: "Suya Platter for Two"
 
 RESTAURANT LINK:
@@ -770,8 +849,11 @@ PRICE TIER (row, 36px):
 MEDIA TOOLBAR. [Shared.]
 
 ════════════════════════════════════════════
-FRAME 5 — CREATIVE SHOWCASE (🎨 Creative Showcase active)
+FRAME 5 — CREATIVE SHOWCASE
 ════════════════════════════════════════════
+Header title: "New Creative Showcase"
+Template indicator row: 🎨 "Creative Showcase" gold left · "Change format" ochre right.
+
 WORK TITLE input (48px): Label "Title of your work *" · Filled: "Zaria Music Visuals — Vol. 2"
 
 MEDIUM CHIPS (horizontal scroll, 32px height, 8px gap):
@@ -794,8 +876,11 @@ IMAGE UPLOAD AREA (full width, 120px, dashed ghost border, radius-xl):
 MEDIA TOOLBAR. [Shared.]
 
 ════════════════════════════════════════════
-FRAME 6 — POLL (📊 Poll active)
+FRAME 6 — POLL
 ════════════════════════════════════════════
+Header title: "New Poll"
+Template indicator row: 📊 "Poll" gold left · "Change format" ochre right.
+
 POLL QUESTION textarea (80px, ghost border, radius-lg):
   Label "Poll question *"
   Filled: "What's the greatest era of Afrobeats?"
@@ -821,8 +906,11 @@ DESCRIPTION TEXTAREA (80px, optional):
 MEDIA TOOLBAR. [Shared — character counter not shown for poll.]
 
 ════════════════════════════════════════════
-FRAME 7 — ITINERARY (🗺️ Itinerary active)
+FRAME 7 — ITINERARY
 ════════════════════════════════════════════
+Header title: "New Itinerary"
+Template indicator row: 🗺️ "Itinerary" gold left · "Change format" ochre right.
+
 TRIP TITLE input (48px): Label "Trip title *" · Filled: "48 Hours in Lagos: The Culture Route"
 
 CITY input (48px): Label "City / Region" · 📍 left · Filled: "Lagos, Nigeria"
@@ -846,8 +934,11 @@ DURATION input (48px, optional): Label "Estimated duration" · ⏱ left · Place
 MEDIA TOOLBAR. [Shared.]
 
 ════════════════════════════════════════════
-FRAME 8 — EVENT (📅 Event active)
+FRAME 8 — EVENT
 ════════════════════════════════════════════
+Header title: "New Event"
+Template indicator row: 📅 "Event" gold left · "Change format" ochre right.
+
 EVENT TITLE input (48px): Label "Event name *" · Filled (DM Sans 17px bold ink): "Amapiano Night at The Jazz Cafe"
 
 DATE/TIME ROWS (ghost border, radius-lg, 48px each, 8px gap):
@@ -871,8 +962,11 @@ ORGANISER LINK (row):
 MEDIA TOOLBAR. [Shared.]
 
 ════════════════════════════════════════════
-FRAME 9 — QUOTE (❝ Quote active)
+FRAME 9 — QUOTE
 ════════════════════════════════════════════
+Header title: "New Quote"
+Template indicator row: ❝ "Quote" gold left · "Change format" ochre right.
+
 QUOTE TEXT textarea (200px min, large):
   Label "The quote *"
   Filled (Fraunces 18px italic ink — use italic style in this field to preview the quote):
@@ -896,11 +990,74 @@ QUOTE TYPE chips (row, 32px, radius-full):
 MEDIA TOOLBAR. [Shared — no image upload for Quote template.]
 
 ════════════════════════════════════════════
-Output 9 frames in a 3-column grid (3 rows × 3 columns).
+FRAME 10 — BOOK REVIEW
+════════════════════════════════════════════
+Header title: "New Book Review"
+Template indicator row: 📚 "Book Review" gold left · "Change format" ochre right.
+
+BOOK SEARCH FIELD (composite, 16px padding):
+  Label "Book *"
+  Search input (48px, ghost border, radius-lg, 🔍 left): "Things Fall Apart" filled.
+  DROPDOWN RESULTS (white card, shadow-card, radius-lg, below input, 8px gap, 16px padding):
+    3 result rows (48px each, ghost bottom border):
+      [Book cover thumbnail 36×48px, radius-sm] [right: title DM Sans 14px bold ink · author+year DM Sans 12px mute]
+    Row 1: "Things Fall Apart" · "Chinua Achebe · 1958" ← SELECTED (ochre left border 2px on row)
+    Row 2: "Things Fall Apart (Graphic Novel)" · "Chinua Achebe · 2021"
+    Row 3: "The Famished Road" · "Ben Okri · 1991"
+    Divider, then: "+ Add new book" DM Sans 13px ochre with + icon (creates stacked Add Book sheet).
+
+LINKED BOOK CARD (shows after selection, 16px padding, top):
+  White card, ghost border, radius-lg, 12px padding.
+  Left: book cover thumbnail 48×64px, radius-sm, shadow-card.
+  Right: "Things Fall Apart" DM Sans 15px bold ink. "Chinua Achebe" DM Sans 13px mute.
+  "View in Directory →" DM Sans 12px ochre, underline.
+  ✕ remove link top-right DM Sans 12px mute.
+
+READ STATUS CHIPS (row, 32px, 8px gap):
+  Label "Status *"
+  "Finished" (active, ink fill white, radius-full) · "Reading" · "Want to Read" — ghost border.
+
+OVERALL RATING (row, 44px, space-between):
+  Label "Overall rating *" DM Sans 13px ink-soft.
+  5 stars (24px, ochre #C5491F filled) + "5.0" JetBrains Mono 14px bold gold right.
+
+RATINGS BREAKDOWN (label "Ratings *", required):
+  4 rows (44px each, ghost bottom border):
+  Layout: label DM Sans 13px ink-soft (100px wide) + 5 stars (18px) + score JetBrains Mono 12px gold right.
+  Writing      ★★★★★  5.0
+  Story        ★★★★★  5.0
+  Characters   ★★★★★  5.0
+  Pacing       ★★★★☆  4.0
+  (Stars filled = ochre #C5491F. Empty = outline ghost.)
+
+REVIEW TEXTAREA (120px min):
+  Label "Your review *"
+  Filled (DM Sans 14px ink):
+  "Achebe dismantles the colonial narrative with the very language of the coloniser. Every
+  character is fully realised — Okonkwo's tragedy feels earned, not imposed."
+
+FAVOURITE QUOTE (optional, 80px):
+  Label "Favourite quote (optional)"
+  Left border 3px #C5491F. 16px left padding.
+  Filled (DM Sans 14px italic ink): "Things fall apart; the centre cannot hold."
+
+RECOMMEND CHIPS (row, 32px, 8px gap):
+  Label "Would you recommend it? *"
+  "Yes ✓" (active, success green #2D6A4F fill, white text, radius-full) · "No" — ghost border.
+
+GENRE TAGS (horizontal scroll, 32px):
+  Label "Genres (optional)"
+  Active: "Classic Literature" ink fill white, radius-full, DM Sans 12px bold.
+  Inactive: "African Lit" · "Post-Colonial" · "Fiction" · "Historical" — ghost border.
+
+MEDIA TOOLBAR. [Shared — no image upload for Book Review template.]
+
+════════════════════════════════════════════
+Output 10 frames in a grid. Arrange as 2 rows × 5 columns (landscape layout) or
+3 rows × 4 columns (3+3+4 portrait layout — use whatever fits the canvas best).
 Label each frame below in JetBrains Mono 11px mute:
-  Row 1: "Standard Post" · "Hidden Gem" · "Cultural Take"
-  Row 2: "Food Review" · "Creative Showcase" · "Poll"
-  Row 3: "Itinerary" · "Event" · "Quote"
+  "Standard Post" · "Hidden Gem" · "Cultural Take" · "Food Review" · "Creative Showcase"
+  "Book Review" · "Poll" · "Itinerary" · "Event" · "Quote"
 ```
 
 ---
@@ -3591,14 +3748,14 @@ Output 3 frames side by side.
 
 ---
 
-### PROMPT 17B — Community Post Template Sheets (All 9 Types)
+### PROMPT 17B — Community Post Template Sheets (All 10 Types)
 
 ```
 Senior mobile UX/UI designer — Moveee Connect community post bottom sheets. iOS, 390×844px.
 Brand: paper-warm #F3ECE0, white #FFFFFF, ochre #C5491F, gold #B38238, ink #14110D.
 DM Sans (body/UI) + Fraunces (display/headings) + JetBrains Mono (meta/counts/labels).
 
-Design 9 frames — one per community post template — all in FULL STATE (92% viewport height).
+Design 10 frames — one per community post template — all in FULL STATE (92% viewport height).
 
 ════════════════════════════════════════════
 SHARED SHELL (identical on all 9 frames — do not repeat in each frame description):
@@ -3987,11 +4144,58 @@ SHARE PROMPT (12px top):
 [SHARED FOOTER]
 
 ════════════════════════════════════════════
-Output 9 frames in a 3-column grid (3 rows × 3 columns).
+FRAME 10 — BOOK REVIEW
+════════════════════════════════════════════
+TEMPLATE BADGE + TIMESTAMP ROW:
+  "📚 BOOK REVIEW" pill — bg rgba(120,53,15,0.08), text #78350F (sepia/antique brown).
+  "3 hours ago" right.
+
+AUTHOR ROW (12px top). [Shared layout — "Seun Adeyemi" @seun.reads]
+
+BOOK IDENTITY ROW (white card, ghost border, radius-lg, 12px padding, 12px top):
+  Left: book cover thumbnail 48×64px radius-sm shadow-card.
+  Right (12px gap):
+    "Things Fall Apart" DM Sans 16px bold ink.
+    "Chinua Achebe · 1958" DM Sans 13px mute, 4px top.
+    STAR ROW: ★★★★★ 5.0 — 5 gold stars (16px) + "5.0" JetBrains Mono 13px gold bold, 4px top.
+    "View in Directory →" DM Sans 12px ochre underline, 4px top.
+
+READ STATUS + RECOMMEND CHIPS (row, 8px gap, 12px top):
+  "✓ Finished" chip — #2D6A4F fill, white DM Sans 12px bold, radius-full, 28px height.
+  "👍 Recommended" chip — paper-warm bg, gold #B38238 border, gold DM Sans 12px bold, radius-full.
+
+RATINGS BREAKDOWN (12px top, label "Ratings" DM Sans 11px bold mute uppercase 0px bottom):
+  4 rows (40px each, ghost bottom border):
+  Layout: label DM Sans 13px ink-soft (100px wide) + 5 stars (16px) + score JetBrains Mono 12px gold right.
+  Writing      ★★★★★  5.0
+  Story        ★★★★★  5.0
+  Characters   ★★★★★  5.0
+  Pacing       ★★★★☆  4.0
+
+REVIEW TEXT (DM Sans 14px ink-soft, 12px top, line-height 1.65):
+  "Achebe dismantles the colonial narrative with the very language of the coloniser. Okonkwo's
+  tragedy is fully realised — not imposed. I've read this three times and each time the final
+  pages hit harder. The prose is deceptively simple. Essential reading."
+
+FAVOURITE QUOTE (paper-warm bg strip, radius-md, 12px padding, 12px top):
+  Left border 3px #C5491F.
+  "📖 Favourite quote:" DM Sans 11px bold mute uppercase, 0px bottom.
+  "Things fall apart; the centre cannot hold." DM Sans 14px italic ink-soft, 4px top.
+
+GENRE TAGS (horizontal chip scroll, 32px height, 12px top):
+  "Classic Literature" ink fill white + "African Lit" + "Post-Colonial" + "Fiction" — ghost border.
+
+[SHARED REACTION + COMMENTS BLOCK]
+  Reaction counts: ❤️ 88  🔥 43  👏 55  💬 31
+  Comments: "Temi O." — "Still one of the greatest books ever written" · "Dayo A." — "Read it in school. Need to reread now."
+
+[SHARED FOOTER]
+
+════════════════════════════════════════════
+Output 10 frames. Arrange as 2 rows × 5 columns (landscape) or 3 rows of 4/3/3 (portrait).
 Label each frame below in JetBrains Mono 11px mute:
-  Row 1: "Standard Post" · "Hidden Gem" · "Cultural Take"
-  Row 2: "Food Review" · "Creative Showcase" · "Poll"
-  Row 3: "Itinerary" · "Community Event" · "Quote"
+  "Standard Post" · "Hidden Gem" · "Cultural Take" · "Food Review" · "Creative Showcase"
+  "Poll" · "Itinerary" · "Community Event" · "Quote" · "Book Review"
 All frames at full 92%-height open state. Warm backdrop visible behind each.
 ```
 
@@ -4224,7 +4428,8 @@ Complete list of screens to design:
 | 7 | Verify Email | Auth | P0 |
 | 8-9 | Connect Feed (default + For You) | Feed | P0 |
 | 10-12 | Post Detail + Comments + Keyboard | Feed | P1 |
-| 13-16 | New Post Composer (4 templates) | Feed | P1 |
+| 13 | Template Picker Sheet | Feed | P1 |
+| 14-23 | New Post Composer (10 templates) | Feed | P1 |
 | 17 | Magazine Home | Magazine | P1 |
 | 18 | Article Detail | Magazine | P1 |
 | 19 | Events List | Events | P1 |
@@ -4255,10 +4460,10 @@ Complete list of screens to design:
 | 79 | The Moveee Edit (curated picks) | Shop | P2 |
 | 80-83 | Search, Filter Sheet, Early Access Gate, Order Confirmation | Shop | P1 |
 | 84-86 | Bottom sheet shell (3 states: peek, full, dismiss) | Drawers | P1 |
-| 87-91 | Bottom sheet variants (Community, Editorial, Quote, Happening, Directory) | Drawers | P1 |
-| 92-95 | Bottom sheet edge cases (share, compose, overscroll, error) | Drawers | P2 |
+| 87-96 | Bottom sheet variants (10 community templates + Editorial + Quote + Happening + Directory) | Drawers | P1 |
+| 97-100 | Bottom sheet edge cases (share, compose, overscroll, error) | Drawers | P2 |
 
-**Total: ~95 screens / states**
+**Total: ~100 screens / states**
 
 ---
 
