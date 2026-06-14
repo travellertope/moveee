@@ -412,6 +412,13 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Save an R2-hosted avatar URL (upload handled by Next.js proxy)
+        register_rest_route( 'culture/v1', '/mobile/me/avatar-url', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_save_avatar_url' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Portfolio
         register_rest_route( 'culture/v1', '/mobile/portfolio', array(
             'methods'             => 'GET',
@@ -1873,6 +1880,18 @@ class Culture_Mobile_API {
         $url = wp_get_attachment_url( $attachment_id );
         update_user_meta( $user_id, '_culture_avatar_url', $url );
 
+        return rest_ensure_response( array( 'url' => $url ) );
+    }
+
+    public static function handle_save_avatar_url( $request ) {
+        $user_id = get_current_user_id();
+        $url     = esc_url_raw( $request->get_param( 'url' ) );
+
+        if ( empty( $url ) ) {
+            return new WP_Error( 'missing_url', 'URL is required.', array( 'status' => 400 ) );
+        }
+
+        update_user_meta( $user_id, '_culture_avatar_url', $url );
         return rest_ensure_response( array( 'url' => $url ) );
     }
 

@@ -335,16 +335,15 @@ class Culture_Directory {
      */
     public static function handle_attach_image( WP_REST_Request $request ) {
         $post_id           = (int) $request->get_param( 'post_id' );
-        $image_base64      = $request->get_param( 'image_base64' );
-        $filename          = sanitize_file_name( $request->get_param( 'filename' ) ?: 'directory-image.jpg' );
+        $image_url         = esc_url_raw( $request->get_param( 'image_url' ) ?: '' );
         $image_title       = sanitize_text_field( $request->get_param( 'image_title' ) ?: '' );
         $image_description = sanitize_textarea_field( $request->get_param( 'image_description' ) ?: '' );
         $image_alt         = sanitize_text_field( $request->get_param( 'image_alt' ) ?: '' );
 
-        if ( ! $post_id || ! $image_base64 ) {
+        if ( ! $post_id || ! $image_url ) {
             return new WP_Error(
                 'missing_params',
-                __( 'post_id and image_base64 are required.', 'culture-community' ),
+                __( 'post_id and image_url are required.', 'culture-community' ),
                 array( 'status' => 400 )
             );
         }
@@ -359,89 +358,13 @@ class Culture_Directory {
             );
         }
 
-        // Decode the base64 image data.
-        $image_data = base64_decode( $image_base64, true );
-        if ( false === $image_data ) {
-            return new WP_Error(
-                'invalid_image',
-                __( 'Could not decode base64 image data.', 'culture-community' ),
-                array( 'status' => 400 )
-            );
-        }
-
-        // Upload into the WordPress uploads directory.
-        $upload = wp_upload_bits( $filename, null, $image_data );
-        if ( ! empty( $upload['error'] ) ) {
-            return new WP_Error(
-                'upload_failed',
-                $upload['error'],
-                array( 'status' => 500 )
-            );
-        }
-
-        // Determine MIME type from the filename extension.
-        $mime = wp_check_filetype( $filename );
-
-        // Create the media attachment post.
-        // Use visual metadata when provided so the Visuals library is searchable
-        // by what is visible in the illustration, not the directory entry topic.
-        $att_title = $image_title ?: sanitize_text_field( pathinfo( $filename, PATHINFO_FILENAME ) );
-        $attachment_id = wp_insert_attachment(
-            array(
-                'post_mime_type' => $mime['type'] ?: 'image/jpeg',
-                'post_title'     => $att_title,
-                'post_content'   => $image_description,
-                'post_excerpt'   => $image_alt,
-                'post_status'    => 'inherit',
-            ),
-            $upload['file'],
-            $post_id
-        );
-
-        if ( is_wp_error( $attachment_id ) ) {
-            return new WP_Error(
-                'attachment_failed',
-                $attachment_id->get_error_message(),
-                array( 'status' => 500 )
-            );
-        }
-
-        // Generate image size metadata (thumbnails etc.).
-        if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
-            require_once ABSPATH . 'wp-admin/includes/image.php';
-        }
-        $meta = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
-        wp_update_attachment_metadata( $attachment_id, $meta );
-
-        // Set alt text (stored as post meta, separate from the attachment post).
-        if ( $image_alt ) {
-            update_post_meta( $attachment_id, '_wp_attachment_image_alt', $image_alt );
-        }
-
-        // Mark as a Culture Directory visual so it persists in /visuals even if
-        // the parent directory entry is later deleted. Store enough entry context
-        // (slug, title, type) so the gallery can display the card without needing
-        // the parent post to still exist.
-        $entry_type = '';
-        if ( taxonomy_exists( 'culture_dir_type' ) ) {
-            $terms = wp_get_post_terms( $post_id, 'culture_dir_type', array( 'fields' => 'slugs' ) );
-            if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
-                $entry_type = $terms[0];
-            }
-        }
-
-        update_post_meta( $attachment_id, '_culture_dir_visual',      '1' );
-        update_post_meta( $attachment_id, '_culture_dir_entry_slug',  $post->post_name );
-        update_post_meta( $attachment_id, '_culture_dir_entry_title', $post->post_title );
-        update_post_meta( $attachment_id, '_culture_dir_entry_type',  $entry_type );
-
-        // Set as the post's featured image.
-        set_post_thumbnail( $post_id, $attachment_id );
+        // Store the R2 URL as post meta — no WordPress media attachment needed.
+        update_post_meta( $post_id, '_culture_dir_image_url', $image_url );
+        update_post_meta( $post_id, '_culture_dir_image_alt', $image_alt );
 
         return rest_ensure_response( array(
-            'success'       => true,
-            'attachment_id' => $attachment_id,
-            'url'           => $upload['url'],
+            'success' => true,
+            'url'     => $image_url,
         ) );
     }
 

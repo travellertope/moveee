@@ -11,6 +11,8 @@ import * as ImagePicker from "expo-image-picker";
 import * as Passkeys from "react-native-passkeys";
 import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
+
+const PROXY = "https://themoveee.com/api";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -180,7 +182,7 @@ function ProfileTab() {
     });
     if (result.canceled || !result.assets?.[0]) return;
     try {
-      await api.upload(`${MOBILE_API}/me/avatar`, result.assets[0].uri, "avatar");
+      await api.upload(`${PROXY}/mobile/me/avatar`, result.assets[0].uri, "avatar");
       await refreshProfile();
     } catch {
       Alert.alert("Error", "Could not upload photo.");
