@@ -364,7 +364,15 @@ export default function ArticleScreen() {
             {/* ── White rounded card ── */}
             <View style={styles.sheet}>
               {/* Breadcrumb */}
-              <Text style={styles.breadcrumb}>Magazine › {article.category ?? "Article"}</Text>
+              <TouchableOpacity
+                onPress={() => article.category && nav.push("CategoryArchive", {
+                  categorySlug: article.category.toLowerCase().replace(/\s+/g, "-"),
+                  categoryName: article.category,
+                })}
+                disabled={!article.category}
+              >
+                <Text style={styles.breadcrumb}>Magazine › {article.category ?? "Article"}</Text>
+              </TouchableOpacity>
 
               {/* Eyebrow */}
               <Text style={styles.eyebrow}>
@@ -555,7 +563,13 @@ export default function ArticleScreen() {
                       {(article.author as any).bio ? (
                         <Text style={styles.authorBioBio}>{(article.author as any).bio}</Text>
                       ) : null}
-                      <TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => nav.push("AuthorArchive", {
+                          authorSlug: article.author.slug,
+                          authorName: article.author.name,
+                          authorAvatar: article.author.avatarUrl,
+                        })}
+                      >
                         <Text style={styles.authorBioMore}>More articles by {article.author.name} →</Text>
                       </TouchableOpacity>
                     </View>

@@ -31,6 +31,8 @@ import MagazineScreen from "../screens/magazine/MagazineScreen";
 import ArticleScreen from "../screens/magazine/ArticleScreen";
 import IssuesArchiveScreen from "../screens/magazine/IssuesArchiveScreen";
 import MagazineSearchScreen from "../screens/magazine/MagazineSearchScreen";
+import AuthorArchiveScreen from "../screens/magazine/AuthorArchiveScreen";
+import CategoryArchiveScreen from "../screens/magazine/CategoryArchiveScreen";
 
 // Events / Games
 import GamesScreen from "../screens/games/GamesScreen";
@@ -103,6 +105,8 @@ function ConnectStack() {
       <Stack.Screen name="Notifications"   component={NotificationsScreen} />
       {/* Articles opened from the feed stay within this stack — back → feed */}
       <Stack.Screen name="Article"         component={ArticleScreen} />
+      <Stack.Screen name="AuthorArchive"   component={AuthorArchiveScreen} />
+      <Stack.Screen name="CategoryArchive" component={CategoryArchiveScreen} />
       {/* Member screens — accessible via avatar tap in header */}
       <Stack.Screen name="MemberDashboard" component={MemberDashboardScreen} />
       <Stack.Screen name="MemberSettings"  component={MemberSettingsScreen} />
@@ -118,11 +122,12 @@ function ConnectStack() {
 function MagazineStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="MagazineList"    component={MagazineScreen} />
-      {/* popToTopOnBlur: leaving the Magazine tab resets the stack to MagazineList */}
-      <Stack.Screen name="Article"         component={ArticleScreen} options={{ popToTopOnBlur: true }} />
-      <Stack.Screen name="IssuesArchive"   component={IssuesArchiveScreen} />
-      <Stack.Screen name="MagazineSearch"  component={MagazineSearchScreen} />
+      <Stack.Screen name="MagazineList"      component={MagazineScreen} />
+      <Stack.Screen name="Article"           component={ArticleScreen} options={{ popToTopOnBlur: true }} />
+      <Stack.Screen name="IssuesArchive"     component={IssuesArchiveScreen} />
+      <Stack.Screen name="MagazineSearch"    component={MagazineSearchScreen} />
+      <Stack.Screen name="AuthorArchive"     component={AuthorArchiveScreen} />
+      <Stack.Screen name="CategoryArchive"   component={CategoryArchiveScreen} />
     </Stack.Navigator>
   );
 }
