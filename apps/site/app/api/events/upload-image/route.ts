@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import sharp from "sharp";
-import { authOptions } from "@/lib/auth";
 import { uploadToR2 } from "@/lib/r2";
 
 export const runtime = "nodejs";
@@ -9,10 +7,17 @@ export const runtime = "nodejs";
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_BYTES = 8 * 1024 * 1024;
 
+function extractUserKey(req: NextRequest): string {
+  const auth = req.headers.get("authorization") ?? "";
+  if (!auth.startsWith("Bearer ")) return "";
+  const token = auth.slice(7);
+  return token.slice(-8).replace(/[^a-zA-Z0-9]/g, "x");
+}
+
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Sign in to upload images." }, { status: 401 });
+  const userKey = extractUserKey(req);
+  if (!userKey) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
   const formData = await req.formData().catch(() => null);
@@ -42,8 +47,8 @@ export async function POST(req: NextRequest) {
   } else {
     try {
       uploadBuffer = await sharp(rawBuffer)
-        .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
-        .webp({ quality: 82 })
+        .resize({ width: 1920, height: 1080, fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 85 })
         .toBuffer();
       uploadType = "image/webp";
       uploadExt = "webp";
@@ -54,14 +59,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const userId = session.user.id ?? "u";
-  const key = `community/${userId}/${Date.now()}.${uploadExt}`;
+  const key = `events/${userKey}/${Date.now()}.${uploadExt}`;
 
   try {
     const url = await uploadToR2(key, uploadBuffer, uploadType);
     return NextResponse.json({ url });
   } catch (err) {
-    console.error("[upload-image]", err);
+    console.error("[events/upload-image]", err);
     return NextResponse.json({ error: "Upload failed. Please try again." }, { status: 500 });
   }
 }
