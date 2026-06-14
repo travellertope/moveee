@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  FlatList, ActivityIndicator, Linking, Image,
+  FlatList, ActivityIndicator, Linking, Image, ImageBackground,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -340,18 +340,21 @@ export default function ShopScreen() {
         scrollEventThrottle={400}
       >
         {/* ── Hero Banner ── */}
-        <View style={styles.hero}>
-          <View style={styles.heroGradient} />
+        <ImageBackground
+          source={{ uri: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80" }}
+          style={styles.hero}
+          resizeMode="cover"
+        >
           <View style={styles.heroOverlay} />
           <View style={styles.heroContent}>
             <Text style={styles.heroEyebrow}>Vetted Makers · Handcrafted Objects</Text>
-            <Text style={styles.heroTitle}>Objects that carry a story.</Text>
+            <Text style={styles.heroTitle}>Objects that carry{"\n"}a story.</Text>
             <Text style={styles.heroSub}>Curated from independent makers across the diaspora.</Text>
-            <TouchableOpacity style={styles.heroBtn}>
+            <TouchableOpacity style={styles.heroBtn} onPress={() => nav.navigate("TheEdit")}>
               <Text style={styles.heroBtnText}>Shop the edit →</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ImageBackground>
 
         {/* ── Category Scroll ── */}
         <ScrollView
@@ -508,46 +511,46 @@ function createStyles(c: ColorPalette) {
 
     scrollContent: { paddingBottom: 100 },
 
-    hero: { height: 200, width: "100%", overflow: "hidden", position: "relative" },
-    heroGradient: {
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: c.ochre,
-    },
+    hero: { height: 240, width: "100%", overflow: "hidden", position: "relative" },
     heroOverlay: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: "rgba(20,17,13,0.55)",
+      backgroundColor: "rgba(10,8,5,0.68)",
     },
     heroContent: {
       position: "absolute", bottom: 0, left: 0, right: 0,
-      padding: space[4],
+      padding: space[4], paddingBottom: space[5],
     },
     heroEyebrow: {
-      fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
-      color: c.gold, textTransform: "uppercase", letterSpacing: 2, marginBottom: 6,
+      fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
+      color: "#E8C97A", textTransform: "uppercase", letterSpacing: 2, marginBottom: 8,
     },
     heroTitle: {
-      fontFamily: fonts.serifBold, fontSize: 28,
-      color: c.paper, lineHeight: 32, marginBottom: 4,
+      fontFamily: fonts.serifBold, fontSize: 30,
+      color: "#FFFFFF", lineHeight: 36, marginBottom: 6,
     },
-    heroSub: { fontFamily: fonts.sans, fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 12 },
+    heroSub: { fontFamily: fonts.sans, fontSize: 14, color: "rgba(255,255,255,0.75)", marginBottom: 16 },
     heroBtn: {
-      height: 36, paddingHorizontal: 16,
-      borderWidth: 1, borderColor: "rgba(255,255,255,0.4)",
-      backgroundColor: "rgba(255,255,255,0.1)",
+      height: 38, paddingHorizontal: 18,
+      borderWidth: 1.5, borderColor: "rgba(255,255,255,0.5)",
+      backgroundColor: "rgba(255,255,255,0.12)",
       borderRadius: radius.full, alignSelf: "flex-start",
       alignItems: "center", justifyContent: "center",
     },
-    heroBtnText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.paper },
+    heroBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: "#FFFFFF" },
 
-    categoryScrollWrap: { height: 56, marginTop: 8 },
+    categoryScrollWrap: {
+      height: 56, marginTop: 0,
+      backgroundColor: c.paper,
+      borderBottomWidth: 1, borderBottomColor: c.ruleDark,
+    },
     categoryRow: { paddingHorizontal: space[4], gap: 8, alignItems: "center", height: 56 },
     categoryPill: {
-      height: 40, paddingHorizontal: 12,
-      borderRadius: radius.full, backgroundColor: c.paper,
+      height: 34, paddingHorizontal: 14,
+      borderRadius: radius.full, backgroundColor: "transparent",
       borderWidth: 1, borderColor: c.ghost,
       alignItems: "center", justifyContent: "center",
     },
-    categoryPillActive: { backgroundColor: c.ochre, borderColor: c.ochre },
+    categoryPillActive: { backgroundColor: c.ink, borderColor: c.ink },
     categoryPillText: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft },
     categoryPillTextActive: { color: c.paper, fontFamily: fonts.sansBold },
 
@@ -652,24 +655,25 @@ function createStyles(c: ColorPalette) {
     vendorCount: { fontFamily: fonts.mono, fontSize: 10, color: c.mute },
 
     proBand: {
-      backgroundColor: c.ochre,
+      backgroundColor: c.ink,
       paddingVertical: 48, paddingHorizontal: space[4],
       alignItems: "center",
     },
     proBandEyebrow: {
-      fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
-      color: c.gold, textTransform: "uppercase",
+      fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
+      color: "#E8C97A", textTransform: "uppercase",
       letterSpacing: 2, marginBottom: 8,
     },
     proBandTitle: {
-      fontFamily: fonts.serifBold, fontSize: 18, color: c.paper,
-      textAlign: "center", marginBottom: 20,
+      fontFamily: fonts.serifBold, fontSize: 20, color: "#FFFFFF",
+      textAlign: "center", marginBottom: 20, lineHeight: 28,
     },
     proBandBtn: {
-      height: 40, paddingHorizontal: 20,
-      borderRadius: radius.full, borderWidth: 1, borderColor: "rgba(255,255,255,0.4)",
+      height: 42, paddingHorizontal: 24,
+      borderRadius: radius.full, borderWidth: 1.5, borderColor: "#E8C97A",
       alignItems: "center", justifyContent: "center",
+      backgroundColor: "rgba(232,201,122,0.08)",
     },
-    proBandBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
+    proBandBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: "#E8C97A" },
   });
 }

@@ -185,6 +185,10 @@ export default function SudokuGameScreen() {
         <View style={styles.metaBar}>
           <Text style={styles.metaText}>Mistakes: {mistakes}</Text>
           <Text style={styles.metaText}>Medium · 36 clues</Text>
+          <TouchableOpacity style={styles.eraseBtn} onPress={handleErase}>
+            <Ionicons name="backspace-outline" size={18} color={c.mute} />
+            <Text style={styles.eraseBtnText}>Erase</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Grid */}
@@ -248,10 +252,6 @@ export default function SudokuGameScreen() {
             </TouchableOpacity>
           ))}
         </View>
-        <TouchableOpacity style={styles.eraseBtn} onPress={handleErase}>
-          <Ionicons name="backspace-outline" size={20} color={c.mute} />
-          <Text style={styles.eraseBtnText}>Erase</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -322,8 +322,9 @@ function createStyles(c: ColorPalette) {
   numBtnText: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink },
 
   eraseBtn: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    marginTop: space[3], paddingHorizontal: space[4], paddingVertical: space[2],
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: space[2], paddingVertical: 4,
+    borderWidth: 1, borderColor: "rgba(200,191,176,0.5)", borderRadius: radius.md,
   },
   eraseBtnText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
 

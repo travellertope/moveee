@@ -206,12 +206,20 @@ export default function EventsScreen() {
     else setLoading(true);
     setError(null);
     try {
-      const res = await fetch(WP_EVENTS_URL);
-      if (!res.ok) throw new Error("fetch failed");
-      const raw: any[] = await res.json();
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(WP_EVENTS_URL, { signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const body = await res.json();
+      const raw: any[] = Array.isArray(body) ? body : [];
       setEvents(raw.map(mapEvent));
-    } catch {
-      setError("Could not load events. Pull to refresh.");
+    } catch (err: any) {
+      if (err?.name === "AbortError") {
+        setError("Request timed out. Pull to refresh.");
+      } else {
+        setError("Could not load events. Pull to refresh.");
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

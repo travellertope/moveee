@@ -82,9 +82,17 @@ export default function CrosswordGameScreen() {
 
   useEffect(() => { init(); }, [init]);
 
+  const [inputKey, setInputKey] = useState(0);
+
+  const focusInput = useCallback(() => {
+    // Remount + focus in case keyboard was dismissed by user
+    setInputKey((k) => k + 1);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, []);
+
   // Focus hidden input whenever playing
   useEffect(() => {
-    if (phase === "playing") inputRef.current?.focus();
+    if (phase === "playing") focusInput();
   }, [phase, selR, selC]);
 
   const handleCellPress = (r: number, c: number) => {
@@ -98,7 +106,7 @@ export default function CrosswordGameScreen() {
       setSelR(r); setSelC(c);
       setActiveClue(findClue(puzzle, r, c, direction));
     }
-    inputRef.current?.focus();
+    focusInput();
   };
 
   const advance = useCallback((r: number, c: number, dir: Dir, p: CrosswordPuzzle) => {
@@ -243,6 +251,7 @@ export default function CrosswordGameScreen() {
 
       {/* Hidden input to capture keyboard */}
       <TextInput
+        key={inputKey}
         ref={inputRef}
         style={styles.hiddenInput}
         value=""
@@ -323,7 +332,7 @@ export default function CrosswordGameScreen() {
             <TouchableOpacity
               key={`${cl.number}-across`}
               style={[styles.clueRow, activeClue?.number === cl.number && activeClue?.direction === "across" && styles.clueRowActive]}
-              onPress={() => { setSelR(cl.row); setSelC(cl.col); setDirection("across"); setActiveClue(cl); inputRef.current?.focus(); }}
+              onPress={() => { setSelR(cl.row); setSelC(cl.col); setDirection("across"); setActiveClue(cl); focusInput(); }}
             >
               <Text style={styles.clueNum}>{cl.number}.</Text>
               <Text style={styles.clueText}>{cl.clue}</Text>
@@ -337,7 +346,7 @@ export default function CrosswordGameScreen() {
             <TouchableOpacity
               key={`${cl.number}-down`}
               style={[styles.clueRow, activeClue?.number === cl.number && activeClue?.direction === "down" && styles.clueRowActive]}
-              onPress={() => { setSelR(cl.row); setSelC(cl.col); setDirection("down"); setActiveClue(cl); inputRef.current?.focus(); }}
+              onPress={() => { setSelR(cl.row); setSelC(cl.col); setDirection("down"); setActiveClue(cl); focusInput(); }}
             >
               <Text style={styles.clueNum}>{cl.number}.</Text>
               <Text style={styles.clueText}>{cl.clue}</Text>
