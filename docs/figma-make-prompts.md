@@ -741,6 +741,16 @@ SHARED MEDIA TOOLBAR (pinned above keyboard, 48px, ghost top border, white bg):
   Left: 📷 · 📎 · 📍 · 😊 · @ — each 24px icon, ghost mute, 16px padding, 16px gap.
   Right: character remaining count JetBrains Mono 11px mute.
 
+MULTI-IMAGE UPLOAD PATTERN (used by Standard Post, Hidden Gem, Food Review, Itinerary, Event):
+  Label "Photos (optional)" DM Sans 11px bold mute.
+  Upload row (horizontal scroll, 80px height, 8px gap):
+    ADD tile (80×80px, dashed ghost border 1.5px, radius-lg):
+      📷 icon 20px ghost centred + "Add" DM Sans 10px mute below.
+    ADDED IMAGE tiles (80×80px each, radius-lg, object-fit cover):
+      Each has ✕ remove button — 18px circle, white fill, ink ×, top-right corner.
+    Show 2–3 added images + the ADD tile in the row to demonstrate multi-select.
+  Below row: "Up to 4 photos" DM Sans 11px ghost mute.
+
 All text inputs: white bg, ghost border 1px, radius-lg, DM Sans 14–15px ink, 16px horizontal padding.
 All field labels: DM Sans 11px bold mute, displayed above each input.
 All section dividers: ghost rule 1px #EEE8DF.
@@ -766,6 +776,8 @@ MAIN TEXTAREA (no border, 16px padding, 200px min height):
   word between songs — just let the music breathe. The crowd was completely silent."
   Character counter: "184 / 1000" JetBrains Mono 11px mute, bottom-right of textarea.
 
+MULTI-IMAGE UPLOAD. [Use shared pattern. Show 2 images added + ADD tile.]
+
 MEDIA TOOLBAR. [Shared layout.]
 
 ════════════════════════════════════════════
@@ -788,8 +800,17 @@ DESCRIPTION TEXTAREA (120px min):
   Filled: "Tucked behind Balogun Market — ceramics studio using Ondo-state clay. Afternoon workshops
   (₦8,000, 3hrs) worth every minute."
 
-STAR RATING row (optional, 36px): 
+STAR RATING row (optional, 36px):
   Label "Rating (optional)" · 5 stars (20px, outline ghost) · "Tap to rate" DM Sans 12px ghost.
+
+PRICE RANGE CHIPS (row, 32px, 8px gap):
+  Label "Price range (optional)"
+  4 chips: ₦ · ₦₦ · ₦₦₦ (active, ink fill white) · ₦₦₦₦ — radius-full, DM Sans 12px.
+
+OPENING HOURS input (48px, optional):
+  Label "Opening hours (optional)" · 🕐 left icon · Placeholder "e.g. Tues–Sat, 10am–6pm"
+
+MULTI-IMAGE UPLOAD. [Use shared pattern. Show 3 images added (venue exterior, interior, product) + ADD tile.]
 
 MEDIA TOOLBAR. [Shared.]
 
@@ -842,9 +863,16 @@ REVIEW TEXTAREA (120px min):
   Filled: "The suya spice rub is fresh — you can taste the yaji. The grilled plantain sides
   are the best in Lagos. Worth every naira."
 
+CUISINE CHIPS (horizontal scroll, 32px, 8px gap):
+  Label "Cuisine (optional)"
+  Active: "Nigerian" — ink fill white, radius-full.
+  Inactive: "Pan-African" · "West African" · "Continental" · "Fusion" · "Seafood" — ghost border, DM Sans 12px.
+
 PRICE TIER (row, 36px):
   Label "Price range (optional)"
   4 chips: ₦ · ₦₦ · ₦₦₦ (active, ink fill white) · ₦₦₦₦ — radius-full, DM Sans 12px.
+
+MULTI-IMAGE UPLOAD. [Use shared pattern. Show 2 images added (dish close-up, restaurant interior) + ADD tile.]
 
 MEDIA TOOLBAR. [Shared.]
 
@@ -931,6 +959,16 @@ STOPS (label "Stops *" — min 2):
 
 DURATION input (48px, optional): Label "Estimated duration" · ⏱ left · Placeholder "e.g. 2 days"
 
+BUDGET CHIPS (row, 32px, 8px gap):
+  Label "Budget level (optional)"
+  4 chips: £ · ££ (active, ink fill white) · £££ · ££££ — radius-full, DM Sans 12px.
+  (Note: use local currency symbol relevant to each stop's city — show £ as default.)
+
+BEST TIME input (48px, optional):
+  Label "Best time to visit (optional)" · ☀️ left · Placeholder "e.g. Oct–Mar, avoid rainy season"
+
+MULTI-IMAGE UPLOAD. [Use shared pattern. Show 2 images (route highlight shots) + ADD tile.]
+
 MEDIA TOOLBAR. [Shared.]
 
 ════════════════════════════════════════════
@@ -958,6 +996,8 @@ CATEGORY chips (horizontal, 32px height, radius-full):
 ORGANISER LINK (row):
   Label "Organiser (optional)"
   DirectorySearch chip — avatar 24px + "Moveee Events" DM Sans 13px ink + ✕ right. (Already linked.)
+
+MULTI-IMAGE UPLOAD. [Use shared pattern. Show 1 image added (event flyer) + ADD tile. Label below: "Event flyer, venue photos…"]
 
 MEDIA TOOLBAR. [Shared.]
 
