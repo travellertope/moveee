@@ -12,6 +12,27 @@ import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 
+// ── Interest tags ─────────────────────────────────────────────────────────────
+
+const INTERESTS = [
+  { slug: "fashion-streetwear", label: "Fashion & Streetwear",      emoji: "👗" },
+  { slug: "food-drink",         label: "Specialty Coffee & Dining", emoji: "☕" },
+  { slug: "live-music",         label: "Live Music",                emoji: "🎵" },
+  { slug: "music-production",   label: "Music Production",          emoji: "🎧" },
+  { slug: "independent-film",   label: "Independent Film",          emoji: "🎬" },
+  { slug: "visual-art",         label: "Visual Art",                emoji: "🎨" },
+  { slug: "architecture",       label: "Architecture",              emoji: "🏛️" },
+  { slug: "photography",        label: "Photography",               emoji: "📷" },
+  { slug: "literature",         label: "Literature & Poetry",       emoji: "📚" },
+  { slug: "visual-design",      label: "Visual Design",             emoji: "✏️" },
+  { slug: "tech-culture",       label: "Tech & Digital Culture",    emoji: "💻" },
+  { slug: "sport-wellness",     label: "Sport & Wellness",          emoji: "⚽" },
+  { slug: "travel",             label: "Travel & Exploration",      emoji: "✈️" },
+  { slug: "ideas",              label: "Ideas & Culture Theory",    emoji: "💡" },
+  { slug: "street-food",        label: "Street Food & Markets",     emoji: "🍜" },
+  { slug: "nightlife",          label: "Nightlife & Bars",          emoji: "🍸" },
+];
+
 // ── Entry types ───────────────────────────────────────────────────────────────
 
 const ENTRY_TYPES = [
@@ -115,6 +136,16 @@ function createStyles(c: ColorPalette) {
       lineHeight: 26, minHeight: 160, textAlignVertical: "top",
     },
 
+    // Interest chips
+    chipsWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
+    chip: {
+      backgroundColor: c.paperDeep, borderRadius: radius.full,
+      paddingHorizontal: 14, paddingVertical: 7,
+    },
+    chipSelected: { backgroundColor: c.ink },
+    chipText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
+    chipTextSelected: { color: c.paper },
+
     charCount: {
       fontFamily: fonts.mono, fontSize: 11, color: c.ghost,
       textAlign: "right", marginTop: 4,
@@ -165,7 +196,13 @@ export default function DirectorySubmitScreen() {
   const [title,      setTitle]      = useState(improvingTitle ?? "");
   const [excerpt,    setExcerpt]    = useState("");
   const [content,    setContent]    = useState("");
+  const [interests,  setInterests]  = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const toggleInterest = (slug: string) =>
+    setInterests((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    );
 
   const close = () => nav.goBack();
   const currentType = ENTRY_TYPES.find((t) => t.slug === entryType) ?? ENTRY_TYPES[8];
@@ -189,14 +226,15 @@ export default function DirectorySubmitScreen() {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
     try {
-      const body: Record<string, string> = {
+      const body: Record<string, unknown> = {
         title:      title.trim() || improvingTitle || "",
         excerpt:    excerpt.trim(),
         content:    content.trim(),
         entry_type: entryType,
+        interests,
       };
       if (improvingSlug) body.improving_slug = improvingSlug;
-      await api.post(`${MOBILE_API}/directory/submit`, body);
+      await api.post(`${MOBILE_API}/directory/submit`, body as Record<string, string>);
       Alert.alert(
         isImproveMode ? "Improvement submitted ✓" : "Entry submitted ✓",
         isImproveMode
@@ -346,6 +384,27 @@ export default function DirectorySubmitScreen() {
                 maxLength={3000}
               />
               <Text style={styles.charCount}>{content.length} / 3000</Text>
+
+              <View style={styles.divider} />
+
+              <Text style={styles.sectionLabel}>Related interests</Text>
+              <View style={styles.chipsWrap}>
+                {INTERESTS.map((it) => {
+                  const sel = interests.includes(it.slug);
+                  return (
+                    <TouchableOpacity
+                      key={it.slug}
+                      style={[styles.chip, sel && styles.chipSelected]}
+                      onPress={() => toggleInterest(it.slug)}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={[styles.chipText, sel && styles.chipTextSelected]}>
+                        {it.emoji}  {it.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </>
           )}
         </ScrollView>
