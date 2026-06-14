@@ -132,6 +132,7 @@ const QUICK_LINKS = [
   { emoji: "🎟️", label: "Coupons",     screen: "Coupons" },
   { emoji: "🔖", label: "Saved",       screen: "SavedArticles" },
   { emoji: "📊", label: "Analytics",   screen: "Analytics" },
+  { emoji: "🔗", label: "Refer a Friend", screen: "Referral" },
   { emoji: "📖", label: "Magazine",    screen: "Magazine" },
   { emoji: "⚙️", label: "Settings",    screen: "MemberSettings" },
   { emoji: "📧", label: "Newsletters", screen: "MemberSettings", tab: "newsletters" },
@@ -163,9 +164,12 @@ export default function MemberDashboardScreen() {
   const isPro = user.tier === "patron";
 
   const handleCopyReferral = async () => {
-    const link = `https://themoveee.com/register?ref=${user.referralCode}`;
+    const link = `https://connect.themoveee.com/register?ref=${user.referralCode}`;
     try {
-      await Share.share({ message: link });
+      await Share.share({
+        message: `Join me on Moveee — the cultural community for the African diaspora. Use my link: ${link}`,
+        url: link,
+      });
     } catch {
       // silent
     }
@@ -316,13 +320,34 @@ export default function MemberDashboardScreen() {
         )}
 
         {/* Card 6: Referral Link */}
-        <TouchableOpacity style={[styles.card, styles.referralCard]} onPress={handleCopyReferral}>
-          <Ionicons name="link-outline" size={20} color={c.ochre} />
-          <Text style={styles.referralText} numberOfLines={1}>
-            moveee.com/r/{user.username}
-          </Text>
-          <Ionicons name="copy-outline" size={20} color={c.mute} />
-        </TouchableOpacity>
+        <View style={[styles.card, { padding: 0, overflow: "hidden" }]}>
+          <TouchableOpacity
+            style={[styles.referralCard, { borderBottomWidth: 1, borderBottomColor: c.rule }]}
+            onPress={() => nav.navigate("Referral" as never)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="people-outline" size={20} color={c.ochre} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.referralText, { marginBottom: 1 }]} numberOfLines={1}>
+                Refer a friend · {user.referralCount ?? 0} joined
+              </Text>
+              <Text style={{ fontFamily: "monospace", fontSize: 11, color: c.mute }} numberOfLines={1}>
+                connect.themoveee.com/r/{user.referralCode || user.username}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={c.ghost} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{ flexDirection: "row", alignItems: "center", gap: 8, padding: 12, paddingHorizontal: 14 }}
+            onPress={handleCopyReferral}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="share-social-outline" size={16} color={c.ochre} />
+            <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre }}>
+              Share my referral link
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Card 7: Quick Links Menu */}
         <View style={[styles.card, styles.menuCard]}>

@@ -267,6 +267,18 @@ class Culture_REST_API {
             ),
         ) );
 
+        register_rest_route( 'culture/v1', '/user/referrals', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_referrals' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array(
+                    'required'          => true,
+                    'sanitize_callback' => 'absint',
+                ),
+            ),
+        ) );
+
         // Registration endpoint for the Next.js frontend.
         register_rest_route( 'culture/v1', '/register', array(
             'methods'             => 'POST',
@@ -2666,6 +2678,52 @@ class Culture_REST_API {
             'bookmarked_articles' => $unpack( '_culture_bookmark_article_ids' ),
             'liked_quotes'        => $unpack( '_culture_like_quote_ids' ),
             'bookmarked_quotes'   => $unpack( '_culture_bookmark_quote_ids' ),
+        ) );
+    }
+
+    public static function handle_get_referrals( $request ) {
+        global $wpdb;
+        $user_id = (int) $request->get_param( 'user_id' );
+
+        if ( ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $code  = class_exists( 'Culture_Referrals' ) ? Culture_Referrals::get_referral_code( $user_id ) : '';
+        $count = class_exists( 'Culture_Referrals' ) ? Culture_Referrals::get_referral_count( $user_id ) : 0;
+
+        // Fetch referred users (those who have _culture_referred_by = this user_id).
+        $referred_user_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '_culture_referred_by' AND meta_value = %d",
+            $user_id
+        ) );
+
+        $referred = array();
+        foreach ( $referred_user_ids as $rid ) {
+            $u = get_userdata( (int) $rid );
+            if ( ! $u ) continue;
+            $referred[] = array(
+                'username'    => $u->user_login,
+                'displayName' => $u->display_name ?: $u->user_login,
+                'joinedAt'    => strtotime( $u->user_registered ),
+            );
+        }
+
+        // Sort newest first.
+        usort( $referred, fn( $a, $b ) => $b['joinedAt'] - $a['joinedAt'] );
+
+        $rep_per_referral    = class_exists( 'Culture_Gamification' ) ? ( Culture_Gamification::POINTS['referral'] ?? 30 ) : 30;
+        $credits_per_referral = class_exists( 'Culture_Gamification' ) ? ( Culture_Gamification::CREDIT_BONUSES['referral'] ?? 5 ) : 5;
+
+        return rest_ensure_response( array(
+            'referralCode'            => $code,
+            'referralUrl'             => 'https://connect.themoveee.com/register?ref=' . $code,
+            'referralCount'           => $count,
+            'repPerReferral'          => $rep_per_referral,
+            'creditsPerReferral'      => $credits_per_referral,
+            'referredUsers'           => $referred,
+            'connectorThreshold'      => 3,
+            'superConnectorThreshold' => 10,
         ) );
     }
 

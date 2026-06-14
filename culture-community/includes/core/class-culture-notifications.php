@@ -20,6 +20,7 @@ class Culture_Notifications {
         'comment_received'  => 'New Comment',
         'post_validated'    => 'Post Reached Threshold',
         'system'            => 'System',
+        'referral_received'  => 'Friend Joined',
     );
 
     /* ——————————————————————————————————————
@@ -34,6 +35,7 @@ class Culture_Notifications {
         add_action( 'culture_cashout_rejected',   array( __CLASS__, 'on_cashout_rejected' ), 10, 2 );
         add_action( 'culture_escrow_released',    array( __CLASS__, 'on_escrow_released'  ), 10, 2 );
         add_action( 'culture_post_validated',     array( __CLASS__, 'on_post_validated'   ), 10, 2 );
+        add_action( 'culture_referral_completed', array( __CLASS__, 'on_referral_completed' ), 10, 2 );
         // Perk-expiry check via WP Cron (hourly). Scheduling is handled in
         // Culture_Activator::activate() — not here — to avoid a DB lookup on every request.
         add_action( 'culture_check_perk_expiry',  array( __CLASS__, 'check_perk_expiry'  ) );
@@ -233,6 +235,22 @@ class Culture_Notifications {
             "\"{$excerpt}\" has reached the engagement threshold — credits on their way.",
             '/member/wallet',
             array( 'post_id' => $post_id )
+        );
+    }
+
+    public static function on_referral_completed( int $referrer_id, int $new_user_id ) {
+        $new_user = get_userdata( $new_user_id );
+        if ( ! $new_user ) return;
+        $display = $new_user->display_name ?: $new_user->user_login;
+        $points  = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::POINTS['referral'] ?? 30 : 30;
+        $credits = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::CREDIT_BONUSES['referral'] ?? 5 : 5;
+        self::add(
+            $referrer_id,
+            'referral_received',
+            '🎉 ' . $display . ' joined via your link!',
+            "You earned +{$points} reputation and +{$credits} credits. Keep sharing — Connector badge at 3 referrals.",
+            '/member/referrals',
+            array( 'new_user_id' => $new_user_id, 'points' => $points, 'credits' => $credits )
         );
     }
 

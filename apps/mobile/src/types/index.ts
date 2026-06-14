@@ -298,7 +298,8 @@ export interface Passkey {
 export type NotificationType =
   | 'credit_earned' | 'badge_unlocked' | 'perk_expiring' | 'perk_redeemed'
   | 'cashout_approved' | 'cashout_rejected' | 'escrow_released'
-  | 'comment_received' | 'post_validated' | 'system';
+  | 'comment_received' | 'post_validated' | 'system'
+  | 'referral_received';
 
 export interface Notification {
   id: number;

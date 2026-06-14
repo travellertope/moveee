@@ -160,12 +160,16 @@ export default async function MemberPage() {
               <section className="mem-card">
                 <div className="mem-card-label">Invite a Friend</div>
                 <p className="mem-card-desc">
-                  Share your link. Earn 25 points for every member who joins.
+                  Share your link. Earn +30 reputation and +5 credits for every member who joins.
                 </p>
                 <MemberReferralCopy url={referralUrl} />
                 <div className="mem-referral-count">
                   {user.referralCount ?? 0} successful referral
                   {(user.referralCount ?? 0) !== 1 ? "s" : ""}
+                  {" — "}
+                  <Link href="/member/referrals" style={{ color: "var(--ochre)", textDecoration: "none" }}>
+                    View details →
+                  </Link>
                 </div>
               </section>
             )}
@@ -176,6 +180,7 @@ export default async function MemberPage() {
               { label: "My Coupons",       href: "/member/coupons" },
               { label: "Notifications",    href: "/member/notifications" },
               { label: "My Analytics",     href: "/member/analytics" },
+              { label: "Refer a Friend",   href: "/member/referrals" },
               { label: "Browse Perks",     href: "/connect/perks" },
               { label: "My Collection",    href: "/member/collection" },
               { label: "Account Settings", href: "/member/settings" },

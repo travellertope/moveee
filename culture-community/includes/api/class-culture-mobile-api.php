@@ -69,6 +69,11 @@ class Culture_Mobile_API {
                     'required' => true,
                     'type'     => 'string',
                 ),
+                'referral_code' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_key',
+                ),
             ),
         ) );
 
@@ -486,6 +491,12 @@ class Culture_Mobile_API {
                 'quantity'   => array( 'default' => 1,    'sanitize_callback' => 'absint' ),
             ),
         ) );
+
+        register_rest_route( 'culture/v1', '/mobile/user/referrals', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_referrals' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
     }
 
     // -------------------------------------------------------------------------
@@ -592,6 +603,7 @@ class Culture_Mobile_API {
         $email    = $request->get_param( 'email' );
         $username = $request->get_param( 'username' );
         $password = $request->get_param( 'password' );
+        $referral = $request->get_param( 'referral_code' ) ?: '';
 
         if ( strlen( $password ) < 8 ) {
             return new WP_Error( 'weak_password', 'Password must be at least 8 characters.', array( 'status' => 422 ) );
@@ -606,6 +618,12 @@ class Culture_Mobile_API {
         update_user_meta( $user_id, '_culture_points', 0 );
         update_user_meta( $user_id, '_culture_badges', array() );
         update_user_meta( $user_id, '_culture_directory_opt_in', '1' );
+
+        // Process referral if provided.
+        if ( ! empty( $referral ) && class_exists( 'Culture_Referrals' ) ) {
+            $_COOKIE['culture_ref'] = $referral;
+            Culture_Referrals::process_referral( $user_id );
+        }
 
         $verify_token = wp_generate_password( 32, false );
         update_user_meta( $user_id, '_culture_email_verify_token',   wp_hash( $verify_token ) );
@@ -2462,6 +2480,45 @@ class Culture_Mobile_API {
             'checkout_url' => $checkout_url,
             'product_id'   => $product_id,
             'quantity'     => $quantity,
+        ) );
+    }
+
+    public static function handle_get_referrals( $request ) {
+        global $wpdb;
+        $user_id = get_current_user_id();
+
+        $code  = class_exists( 'Culture_Referrals' ) ? Culture_Referrals::get_referral_code( $user_id ) : '';
+        $count = class_exists( 'Culture_Referrals' ) ? Culture_Referrals::get_referral_count( $user_id ) : 0;
+
+        $referred_user_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '_culture_referred_by' AND meta_value = %d",
+            $user_id
+        ) );
+
+        $referred = array();
+        foreach ( $referred_user_ids as $rid ) {
+            $u = get_userdata( (int) $rid );
+            if ( ! $u ) continue;
+            $referred[] = array(
+                'username'    => $u->user_login,
+                'displayName' => $u->display_name ?: $u->user_login,
+                'joinedAt'    => strtotime( $u->user_registered ),
+            );
+        }
+        usort( $referred, fn( $a, $b ) => $b['joinedAt'] - $a['joinedAt'] );
+
+        $rep_per     = class_exists( 'Culture_Gamification' ) ? ( Culture_Gamification::POINTS['referral'] ?? 30 ) : 30;
+        $credits_per = class_exists( 'Culture_Gamification' ) ? ( Culture_Gamification::CREDIT_BONUSES['referral'] ?? 5 ) : 5;
+
+        return rest_ensure_response( array(
+            'referralCode'             => $code,
+            'referralUrl'              => 'https://connect.themoveee.com/register?ref=' . $code,
+            'referralCount'            => $count,
+            'repPerReferral'           => $rep_per,
+            'creditsPerReferral'       => $credits_per,
+            'referredUsers'            => $referred,
+            'connectorThreshold'       => 3,
+            'superConnectorThreshold'  => 10,
         ) );
     }
 }
