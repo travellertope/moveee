@@ -293,27 +293,29 @@ class Culture_Gamification {
      * Default reputation values per action. These replace the old points system
      * — reputation is permanent and never spent.
      */
+    // Reputation is earned only from quality/community signals (Option B).
+    // Passive/low-effort actions (read, share, like, game, poll) give 0 rep —
+    // they still earn credits. This makes tier progression meaningful.
     const POINTS = array(
         'event_rsvp'             => 5,
-        'event_checkin'          => 15,
+        'event_checkin'          => 20,
         'newsletter_comment'     => 10,
-        'newsletter_reaction'    => 2,
-        'referral'               => 25,
+        'newsletter_reaction'    => 0,   // passive — credits only
+        'referral'               => 30,
         'quote_submission'       => 10,
-        'quote_like'             => 1,
-        'magazine_read'          => 5,
-        'magazine_share'         => 5,
-        'community_comment'      => 5,
-        'community_like'         => 2,
-        'directory_entry'        => 15,
-        'game_completed'         => 5,
-        // New actions (Phase 5+)
-        'community_post'         => 5,   // initial post submission
-        'profile_completed'      => 10,  // all KYC fields filled
-        'email_verified'         => 5,   // email verification step
-        'directory_opt_in'       => 5,   // opted into member directory
-        'newsletter_subscribed'  => 3,   // first newsletter subscription
-        'poll_vote'              => 2,   // voting on a community poll
+        'quote_like'             => 0,   // passive — credits only
+        'magazine_read'          => 0,   // passive — credits only
+        'magazine_share'         => 0,   // passive — credits only
+        'community_comment'      => 8,
+        'community_like'         => 0,   // passive — credits only
+        'directory_entry'        => 20,
+        'game_completed'         => 0,   // passive — credits only
+        'community_post'         => 10,
+        'profile_completed'      => 15,
+        'email_verified'         => 5,
+        'directory_opt_in'       => 10,
+        'newsletter_subscribed'  => 5,
+        'poll_vote'              => 0,   // passive — credits only
     );
 
     /**
@@ -339,11 +341,15 @@ class Culture_Gamification {
 
     const DAILY_CREDIT_CAP = 50;
 
+    // Option A: Raised thresholds so tiers take real community standing to reach.
+    // Option C: culture-icon at 25,000 is invite-only — rep alone does not unlock it.
+    //           It requires _culture_icon_nominated = 1 user meta set by admins.
     const REPUTATION_TIERS = array(
-        1500 => 'culture-authority',
-        500  => 'taste-maker',
-        100  => 'culture-contributor',
-        0    => 'member',
+        25000 => 'culture-icon',        // invite/nomination only
+        10000 => 'culture-authority',
+        2500  => 'taste-maker',
+        500   => 'culture-contributor',
+        0     => 'member',
     );
 
     /**
@@ -390,9 +396,10 @@ class Culture_Gamification {
      */
     public static function get_rep_tier_threshold( $tier ) {
         $defaults = array(
-            'contributor' => 100,
-            'taste-maker' => 500,
-            'authority'   => 1500,
+            'contributor' => 500,
+            'taste-maker' => 2500,
+            'authority'   => 10000,
+            // culture-icon threshold is fixed — admin sets the nomination flag instead
         );
         $key   = 'culture_rep_tier_' . $tier;
         $saved = get_option( $key, null );
@@ -407,6 +414,7 @@ class Culture_Gamification {
      */
     public static function get_reputation_tiers() {
         return array(
+            25000 => 'culture-icon',    // nomination only — rep threshold not enforced here
             self::get_rep_tier_threshold( 'authority' )    => 'culture-authority',
             self::get_rep_tier_threshold( 'taste-maker' )  => 'taste-maker',
             self::get_rep_tier_threshold( 'contributor' )  => 'culture-contributor',
@@ -491,10 +499,21 @@ class Culture_Gamification {
         return $legacy;
     }
 
-    /** Get the reputation tier string for a given reputation score. */
-    public static function get_reputation_tier( $reputation ) {
+    /**
+     * Get the reputation tier string for a given reputation score.
+     * culture-icon requires both 25,000 rep AND admin nomination flag.
+     */
+    public static function get_reputation_tier( $reputation, $user_id = 0 ) {
         foreach ( self::get_reputation_tiers() as $threshold => $tier ) {
-            if ( $reputation >= $threshold ) return $tier;
+            if ( $reputation >= $threshold ) {
+                if ( 'culture-icon' === $tier ) {
+                    // Only award culture-icon if admin has set the nomination flag.
+                    if ( ! $user_id || ! get_user_meta( $user_id, '_culture_icon_nominated', true ) ) {
+                        continue;
+                    }
+                }
+                return $tier;
+            }
         }
         return 'member';
     }

@@ -13,10 +13,11 @@ import { SignOutDialog } from "../../components/ui/Overlays";
 // ── Reputation tiers ──────────────────────────────────────────────────────────
 
 const REP_TIERS = [
-  { label: "Member",             min: 0,    max: 100  },
-  { label: "Culture Contributor",min: 100,  max: 500  },
-  { label: "Taste Maker",        min: 500,  max: 1500 },
-  { label: "Culture Authority",  min: 1500, max: null },
+  { label: "Member",             min: 0,     max: 500   },
+  { label: "Culture Contributor",min: 500,   max: 2500  },
+  { label: "Taste Maker",        min: 2500,  max: 10000 },
+  { label: "Culture Authority",  min: 10000, max: 25000 },
+  { label: "Culture Icon",       min: 25000, max: null  },
 ] as const;
 
 function getRepTier(rep: number) {

@@ -18,10 +18,11 @@ const { width: SCREEN_W } = Dimensions.get("window");
 // ── Reputation tiers ──────────────────────────────────────────────────────────
 
 const REP_TIERS = [
-  { slug: "member",             label: "Member",             min: 0,    max: 100  },
-  { slug: "culture-contributor",label: "Culture Contributor",min: 100,  max: 500  },
-  { slug: "taste-maker",        label: "Taste Maker",        min: 500,  max: 1500 },
-  { slug: "culture-authority",  label: "Culture Authority",  min: 1500, max: null },
+  { slug: "member",             label: "Member",             min: 0,     max: 500   },
+  { slug: "culture-contributor",label: "Culture Contributor",min: 500,   max: 2500  },
+  { slug: "taste-maker",        label: "Taste Maker",        min: 2500,  max: 10000 },
+  { slug: "culture-authority",  label: "Culture Authority",  min: 10000, max: 25000 },
+  { slug: "culture-icon",       label: "Culture Icon",       min: 25000, max: null  },
 ] as const;
 
 function getRepTier(rep: number) {

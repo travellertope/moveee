@@ -611,13 +611,24 @@ Community event posts (`_template_type = 'event'`) now support an organiser dire
 
 ## Reputation tier thresholds
 
-Defined in `Culture_Gamification::REPUTATION_TIERS`:
+Defined in `Culture_Gamification::REPUTATION_TIERS` (Option A+B+C redesign):
 ```php
-1500 => 'culture-authority',
-500  => 'taste-maker',
-100  => 'culture-contributor',
-0    => 'member',
+25000 => 'culture-icon',        // invite/nomination only — requires _culture_icon_nominated usermeta
+10000 => 'culture-authority',
+2500  => 'taste-maker',
+500   => 'culture-contributor',
+0     => 'member',
 ```
+
+`culture-icon` is a nomination-only tier. Even with 25,000+ rep, the user must have
+`_culture_icon_nominated = 1` set by an admin. `get_reputation_tier($rep, $user_id)` enforces this.
+
+**Reputation is earned only from quality signals (Option B).** Passive actions
+(`magazine_read`, `magazine_share`, `game_completed`, `poll_vote`, `newsletter_reaction`,
+`community_like`, `quote_like`) give 0 reputation — they still earn credits.
+Quality signals: event check-in, referral, community post/comment, directory entry,
+quote submission, newsletter comment, profile completed, email verified.
+
 Daily credit cap: `DAILY_CREDIT_CAP = 50` credits per user per day.
 
 ---
