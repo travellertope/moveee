@@ -568,6 +568,13 @@ All three are right-side slide-in drawer panels (`position: fixed, zIndex: 8000,
 
 FeedCard lazy-loads all three modals via `dynamic(() => import(...), { ssr: false })`.
 
+### RN FeedItemCard card designs (FeedItemCard.tsx)
+- **PulseCard**: full-bleed hero image (200px, tappable → ImageLightbox), serif bold title, arm/category/region eyebrow row with region pill, OG link preview (LinkPreview) only when no hero image, source attribution below hero if named. Upgraded from plain inline ImgPlaceholder.
+- **EditorialCard**: badge row, serif XL title, excerpt, then `InternalLinkCard` snippet (border pill, 90px feature image from `item.image`, gold "MOVEEE MAGAZINE" label, title, excerpt) — matches site's InternalLinkCard exactly. Opens `EditorialSheet` on tap.
+- `item.image` on editorial items comes from WP featured image (`post.featuredImage?.node?.sourceUrl` in `unified-feed.ts`)
+- `item.image` on pulse items comes from `story._embedded?.["wp:featuredmedia"]?.[0]?.source_url`
+- OG fields on pulse: `item.ogImage`, `item.ogTitle`, `item.ogDescription`, `item.sourceUrl` — populated from `pulse_og_*` post meta
+
 ---
 
 ## Event system enhancements
@@ -769,7 +776,7 @@ Before production build, also run `npm install` after restoring `react-native-ia
 | Custom fonts | App.tsx loads Fraunces + DM Sans + JetBrains Mono via useFonts() |
 | 5-tab navigation + new routes | `src/navigation/index.tsx` (MemberDirectory, Wallet, Coupons, Perks, MemberDashboard, MemberSettings) |
 | ConnectFeedScreen | `screens/community/ConnectFeedScreen.tsx` |
-| FeedItemCard (all templates) | `components/community/FeedItemCard.tsx` (gallery, polls, itinerary, ratings) |
+| FeedItemCard (all templates) | `components/community/FeedItemCard.tsx` (gallery, polls, itinerary, ratings, upgraded Pulse + Editorial cards) |
 | PostDetailScreen, PulseDetailScreen | `screens/community/` |
 | NewPostScreen (all 9 templates) | `screens/community/NewPostScreen.tsx` (post, hidden-gem, cultural-take, food-review, creative-showcase, poll, itinerary, event, quote) |
 | Composer sub-components | `components/composer/` (StarRating, MultiRating, PollBuilder, ItineraryBuilder, DirectorySearch) |
@@ -807,6 +814,7 @@ Before production build, also run `npm install` after restoring `react-native-ia
 | DirectoryDetailModal | `components/community/DirectoryDetailModal.tsx` — migrated to BottomSheet |
 | QuoteDetailModal | `components/community/QuoteDetailModal.tsx` — migrated to BottomSheet |
 | EditorialSheet | `components/community/EditorialSheet.tsx` — full-bleed hero + CTA for editorial cards |
+| InternalLinkCard (in FeedItemCard) | Inline component inside `FeedItemCard.tsx` — mirrors web `InternalLinkCard`: bordered pill with 90px feature image left, gold "MOVEEE MAGAZINE" label, title, excerpt. Used at bottom of EditorialCard. |
 | MagazineScreen (enhanced) | `screens/magazine/MagazineScreen.tsx` — category strip, featured hero, horizontal sections, issues, series |
 | IssuesArchiveScreen | `screens/magazine/IssuesArchiveScreen.tsx` — latest issue hero + 2-col grid |
 | MagazineSearchScreen | `screens/magazine/MagazineSearchScreen.tsx` — search bar + category strip + results |
