@@ -100,6 +100,14 @@ const EDITION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Redirect www → non-www (permanent) so Google indexes the canonical domain
+  const host = request.headers.get('host') ?? ''
+  if (host.startsWith('www.')) {
+    const canonical = new URL(request.url)
+    canonical.host = host.replace(/^www\./, '')
+    return NextResponse.redirect(canonical.toString(), { status: 308 })
+  }
+
   // Set x-country cookie on every request so CurrencyProvider can read it client-side
   const country = request.headers.get('x-vercel-ip-country') || 'US'
   const setCountryCookie = (res: NextResponse) => {
