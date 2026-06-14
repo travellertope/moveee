@@ -452,68 +452,56 @@ const internalLinkStyles = StyleSheet.create({
   },
 });
 
-// ── LinkPreview ───────────────────────────────────────────────────────────────
+// ── SourcePreviewCard — OG link preview (mirrors web SourcePreviewCard) ──────────
+// Used for Pulse items with external sourceUrl
 
-interface LinkPreviewProps {
-  source?: string | null;
-  title: string;
-  domain?: string | null;
-  image?: string | null;
+interface SourcePreviewProps {
+  sourceName?: string | null;
+  sourceUrl?: string | null;
+  ogTitle?: string | null;
+  ogDescription?: string | null;
+  ogImage?: string | null;
 }
 
-function LinkPreview({ source, title, domain, image }: LinkPreviewProps) {
+function SourcePreviewCard({ sourceName, sourceUrl, ogTitle, ogDescription, ogImage }: SourcePreviewProps) {
+  const c = useColors();
+  const domain = sourceUrl ? (() => { try { return new URL(sourceUrl).hostname.replace(/^www\./, ""); } catch { return sourceUrl; } })() : null;
+  const displayName = sourceName ?? domain;
   return (
-    <View style={linkStyles.container}>
-      <ImgPlaceholder height={60} src={image} borderRadius={6} width={60} />
-      <View style={linkStyles.right}>
-        {source ? (
-          <Text style={linkStyles.source} numberOfLines={1}>
-            {source}
-          </Text>
+    <View style={[spStyles.container, { borderColor: c.ruleDark, backgroundColor: c.paper }]}>
+      {ogImage ? (
+        <Image source={{ uri: ogImage }} style={spStyles.image} resizeMode="cover" />
+      ) : null}
+      <View style={spStyles.right}>
+        <View style={spStyles.metaLine}>
+          {displayName ? <Text style={[spStyles.sourceName, { color: c.mute }]} numberOfLines={1}>{displayName.toUpperCase()}</Text> : null}
+          {domain && displayName !== domain ? <Text style={[spStyles.dot, { color: c.ghost }]}>·</Text> : null}
+          {domain && displayName !== domain ? <Text style={[spStyles.domain, { color: c.ghost }]} numberOfLines={1}>{domain}</Text> : null}
+        </View>
+        {ogTitle ? (
+          <Text style={[spStyles.title, { color: c.ink }]} numberOfLines={2}>{ogTitle}</Text>
         ) : null}
-        <Text style={linkStyles.title} numberOfLines={2}>
-          {title}
-        </Text>
-        {domain ? (
-          <Text style={linkStyles.domain} numberOfLines={1}>
-            {domain}
-          </Text>
+        {ogDescription ? (
+          <Text style={[spStyles.desc, { color: c.mute }]} numberOfLines={1}>{ogDescription}</Text>
         ) : null}
       </View>
     </View>
   );
 }
 
-const linkStyles = StyleSheet.create({
+const spStyles = StyleSheet.create({
   container: {
-    flexDirection: "row",
-    backgroundColor: colors.paperDeep,
-    borderRadius: 6,
-    padding: 12,
-    marginHorizontal: 14,
-    gap: 10,
-    alignItems: "center",
+    flexDirection: "row", borderWidth: 1, borderRadius: 8,
+    overflow: "hidden", marginTop: 10, minHeight: 72,
   },
-  right: { flex: 1 },
-  source: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.tiny,
-    textTransform: "uppercase",
-    color: colors.mute,
-    marginBottom: 2,
-  },
-  title: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.sm,
-    color: colors.ink,
-    lineHeight: 18,
-  },
-  domain: {
-    fontFamily: fonts.mono,
-    fontSize: fontSize.tiny,
-    color: colors.ghost,
-    marginTop: 2,
-  },
+  image: { width: 90, alignSelf: "stretch" },
+  right: { flex: 1, padding: 10, justifyContent: "center" },
+  metaLine: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 3 },
+  sourceName: { fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow, textTransform: "uppercase", letterSpacing: 0.8 },
+  dot: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow },
+  domain: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow, flex: 1 },
+  title: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, lineHeight: 17 },
+  desc: { fontFamily: fonts.sans, fontSize: fontSize.tiny, marginTop: 3, lineHeight: 15 },
 });
 
 // ── PulseCard styles ──────────────────────────────────────────────────────────
@@ -559,6 +547,12 @@ const pulseStyles = StyleSheet.create({
     color: colors.inkSoft,
     lineHeight: 20,
     marginTop: 6,
+  },
+  readMore: {
+    fontFamily: fonts.sansBold,
+    fontSize: fontSize.sm,
+    color: colors.ochre,
+    marginTop: 4,
   },
   sourceAttrib: {
     fontFamily: fonts.mono,
@@ -678,93 +672,80 @@ function GalleryStrip({
 
 // ── Card Implementations ──────────────────────────────────────────────────────
 
-// PulseCard (A1) — hero image at top, serif title, arm + category + region eyebrow row, OG preview for source links
+const EXCERPT_LIMIT = 320;
+
+// PulseCard (A1) — serif title, excerpt with Read more, OG preview for source links
 function PulseCard({ item, onPress }: FeedCardProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const hasHero = Boolean(item.image);
-  const hasSourcePreview = !hasHero && Boolean(item.sourceUrl || item.ogImage);
+  const hasSourcePreview = Boolean(item.sourceUrl || item.ogImage);
+  const rawExcerpt = item.excerpt ?? "";
+  const isLong = rawExcerpt.length > EXCERPT_LIMIT;
+  const displayExcerpt = isLong && !expanded ? rawExcerpt.slice(0, EXCERPT_LIMIT) + "…" : rawExcerpt;
 
   return (
     <>
       <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
         {/* Hero image — full-bleed at top when present */}
         {hasHero && (
-          <TouchableOpacity
-            onPress={() => setLightboxOpen(true)}
-            activeOpacity={0.92}
-          >
-            <Image
-              source={{ uri: item.image! }}
-              style={pulseStyles.hero}
-              resizeMode="cover"
-            />
+          <TouchableOpacity onPress={() => setLightboxOpen(true)} activeOpacity={0.92}>
+            <Image source={{ uri: item.image! }} style={pulseStyles.hero} resizeMode="cover" />
           </TouchableOpacity>
         )}
 
         <View style={pulseStyles.body}>
           {/* Type badge + category/arm + region + timestamp */}
           <View style={pulseStyles.metaRow}>
-            <BadgePill
-              label={item.arm ?? "Pulse"}
-              bg={colors.badgePulseBg}
-              color={colors.badgePulseText}
-            />
-            {item.category ? (
-              <Text style={cardStyles.eyebrow}>{item.category}</Text>
-            ) : null}
-            {item.region ? (
-              <Text style={pulseStyles.regionPill}>{item.region}</Text>
-            ) : null}
+            <BadgePill label={item.arm ?? "Pulse"} bg={colors.badgePulseBg} color={colors.badgePulseText} />
+            {item.category ? <Text style={cardStyles.eyebrow}>{item.category}</Text> : null}
+            {item.region ? <Text style={pulseStyles.regionPill}>{item.region}</Text> : null}
             <Text style={cardStyles.timeRight}>{timeAgo(item.date)}</Text>
           </View>
 
-          {/* Title — larger serif, matches editorial weight */}
-          <Text style={pulseStyles.title} numberOfLines={3}>
-            {item.title}
-          </Text>
+          {/* Title */}
+          <Text style={pulseStyles.title} numberOfLines={3}>{item.title}</Text>
 
-          {/* Excerpt / standfirst */}
-          {item.excerpt ? (
-            <Text style={pulseStyles.excerpt} numberOfLines={hasHero ? 2 : 3}>
-              {item.excerpt}
-            </Text>
+          {/* Excerpt with Read more toggle */}
+          {displayExcerpt ? (
+            <Text style={pulseStyles.excerpt}>{displayExcerpt}</Text>
+          ) : null}
+          {isLong && !expanded ? (
+            <TouchableOpacity onPress={(e) => { e.stopPropagation?.(); setExpanded(true); }} activeOpacity={0.7}>
+              <Text style={pulseStyles.readMore}>Read more</Text>
+            </TouchableOpacity>
           ) : null}
 
-          {/* Source link preview (OG snippet) — only when no hero image */}
+          {/* OG source preview — always shown when sourceUrl exists (same as web) */}
           {hasSourcePreview && (
-            <LinkPreview
-              source={item.source}
-              title={item.ogTitle ?? item.title}
-              domain={item.sourceUrl ?? undefined}
-              image={item.ogImage}
+            <SourcePreviewCard
+              sourceName={item.source}
+              sourceUrl={item.sourceUrl}
+              ogTitle={item.ogTitle}
+              ogDescription={item.ogDescription}
+              ogImage={item.ogImage}
             />
           )}
-
-          {/* Source attribution line when there IS a hero but also a named source */}
-          {hasHero && item.source ? (
-            <Text style={pulseStyles.sourceAttrib} numberOfLines={1}>
-              📰 {item.source}
-            </Text>
-          ) : null}
         </View>
 
         <FeedReactionBar item={item} />
       </TouchableOpacity>
 
       {hasHero && (
-        <ImageLightbox
-          visible={lightboxOpen}
-          images={[item.image!]}
-          onClose={() => setLightboxOpen(false)}
-        />
+        <ImageLightbox visible={lightboxOpen} images={[item.image!]} onClose={() => setLightboxOpen(false)} />
       )}
     </>
   );
 }
 
-// EditorialCard (A2) — article title + excerpt + InternalLinkCard with feature image
+// EditorialCard (A2) — article title + excerpt with Read more + InternalLinkCard
 function EditorialCard({ item, onPress }: FeedCardProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const rawExcerpt = item.excerpt ?? "";
+  const isLong = rawExcerpt.length > EXCERPT_LIMIT;
+  const displayExcerpt = isLong && !expanded ? rawExcerpt.slice(0, EXCERPT_LIMIT) + "…" : rawExcerpt;
+
   return (
     <>
       <TouchableOpacity style={cardStyles.card} onPress={() => setSheetOpen(true)} activeOpacity={0.92}>
@@ -781,21 +762,18 @@ function EditorialCard({ item, onPress }: FeedCardProps) {
             {item.title}
           </Text>
 
-          {/* Standfirst/excerpt */}
-          {item.excerpt ? (
-            <Text style={[cardStyles.cardBody, { marginTop: 6 }]} numberOfLines={3}>
-              {item.excerpt}
-            </Text>
+          {/* Standfirst/excerpt with Read more */}
+          {displayExcerpt ? (
+            <Text style={[cardStyles.cardBody, { marginTop: 6 }]}>{displayExcerpt}</Text>
+          ) : null}
+          {isLong && !expanded ? (
+            <TouchableOpacity onPress={(e) => { e.stopPropagation?.(); setExpanded(true); }} activeOpacity={0.7}>
+              <Text style={[cardStyles.readMore, { marginTop: 4 }]}>Read more →</Text>
+            </TouchableOpacity>
           ) : null}
 
-          {/* Feature image snippet — mirrors InternalLinkCard on the web */}
-          <InternalLinkCard
-            title={item.title}
-            excerpt={item.excerpt}
-            image={item.image}
-          />
-
-          <Text style={[cardStyles.readMore, { marginTop: 10 }]}>Read article →</Text>
+          {/* InternalLinkCard — mirrors web InternalLinkCard */}
+          <InternalLinkCard title={item.title} excerpt={item.excerpt} image={item.image} />
         </View>
       </TouchableOpacity>
       <EditorialSheet visible={sheetOpen} item={item} onClose={() => setSheetOpen(false)} />
