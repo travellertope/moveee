@@ -851,6 +851,30 @@ Before production build, also run `npm install` after restoring `react-native-ia
 | PasskeyManager | `screens/member/MemberSettingsScreen.tsx` SecurityTab (full register/delete WebAuthn flow via `react-native-passkeys`) |
 | Dark mode | `src/theme.ts` (`lightColors`, `darkColors`, `ColorPalette`), `src/store/themeStore.ts` (Zustand+MMKV, `ThemeMode`), `src/hooks/useColors.ts` (`useColors()` hook), Appearance tab in MemberSettingsScreen |
 | Lifestyle Shop | `screens/shop/ShopScreen.tsx` (home), `store/cartStore.ts` (item count badge), Shop tab added to navigation (6th tab between Games and Events) |
+| CartScreen | `screens/shop/CartScreen.tsx` — 3 frames: cart with items/qty/summary/Pro savings strip, empty state, checkout handoff with animated progress bar + security badges |
+| cartStore (full) | `store/cartStore.ts` — expanded from count-only to full item mgmt: `addItem/removeItem/updateQty/clearCart`, legacy `setItemCount/increment` kept |
+| TheEditScreen | `screens/shop/TheEditScreen.tsx` — editorial curated shop: hero gradient, feature card with editorial quote, horizontal season picks with badges, editorial stories, 2-col grid |
+| MakerProfileScreen | `screens/shop/MakerProfileScreen.tsx` — maker hero + stats bar + about + Origins bridge + 2-col product grid + contact card |
+| ShopSearchScreen | `screens/shop/ShopSearchScreen.tsx` — search with recent/popular suggestions, debounced results list |
+| ShopFilterSheet | `components/shop/ShopFilterSheet.tsx` — BottomSheet with category pills, sort radios, toggle rows; exports `ShopFilters` type |
+| ProEarlyAccessGate | `components/shop/ProEarlyAccessGate.tsx` — gold-bordered gate card with countdown, upgrade CTA |
+| OrderConfirmationScreen | `screens/shop/OrderConfirmationScreen.tsx` — celebration screen with overlapping item circles, track/continue buttons |
+| BottomSheet system | `components/ui/BottomSheet.tsx` — peek/full/dismiss states with PanResponder gestures |
+| PostDetailSheet | `components/community/PostDetailSheet.tsx` — all 9 community templates in a bottom sheet |
+| SheetErrorState | `components/ui/SheetErrorState.tsx` — wifi error state in a peek-height bottom sheet |
+| HappeningDetailModal | `components/community/HappeningDetailModal.tsx` — migrated to BottomSheet |
+| DirectoryDetailModal | `components/community/DirectoryDetailModal.tsx` — migrated to BottomSheet |
+| QuoteDetailModal | `components/community/QuoteDetailModal.tsx` — migrated to BottomSheet |
+| EditorialSheet | `components/community/EditorialSheet.tsx` — full-bleed hero + CTA for editorial cards |
+| MagazineScreen (enhanced) | `screens/magazine/MagazineScreen.tsx` — category strip, featured hero, horizontal sections, issues, series |
+| IssuesArchiveScreen | `screens/magazine/IssuesArchiveScreen.tsx` — latest issue hero + 2-col grid |
+| MagazineSearchScreen | `screens/magazine/MagazineSearchScreen.tsx` — search bar + category strip + results |
+| ArticleScreen (enhanced) | `screens/magazine/ArticleScreen.tsx` — progress bar, sticky header, hero controls, pull quote, Pro gate, "Article complete!" banner, series strip, TOC FAB bottom sheet |
+| ConfirmDialog | `components/ui/ConfirmDialog.tsx` — reusable modal dialog, supports destructive variant |
+| Toast system | `components/ui/Toast.tsx` + `components/ui/ToastContainer.tsx` + `hooks/useToast.ts` — 4 types with animated progress bar |
+| ContextMenu | `components/ui/ContextMenu.tsx` — 200px floating menu with divider before destructive actions |
+| ReportPostSheet | `components/community/ReportPostSheet.tsx` — 3-option radio sheet, submits to community/report |
+| ForYouExplainerSheet | `components/community/ForYouExplainerSheet.tsx` — sparkle icon + serif title + interests CTA |
 | Location features | ConnectFeedScreen: region chip strip (All/Africa/Diaspora UK/US/Europe) defaults to user's region; EventsScreen: city filter + local sort; MemberDirectoryScreen: city chip strip; MemberSettingsScreen: newsletter segment auto-derived from countryOfResidence |
 | Reputation privileges | Feed boost for high-rep authors; Taste Maker skips new-member queue; Poll/Itinerary gated at 2500 rep (PHP + mobile UI 🔒); Perk min_rep_tier gating; Culture Authority can nominate for Culture Icon |
 
@@ -897,6 +921,40 @@ All other post templates submit to `${CULTURE_API}/community/submit` (WordPress 
 - Cashout fee is flat 30% (not tiered); `credits_per_gbp` comes from the wallet balance API response — never hardcode
 - Phase 8b "For You" scoring is pure client-side TypeScript — `scoreItem()` from `lib/feed-recommendations.ts` on the web; replicate the same algorithm in `src/features/community/useFeedRecommendations.ts`
 - Full spec at `docs/moveee-connect-rn-spec.md` — that file is the single source of truth for RN implementation details
-- **Shop product data**: fetched from `GET /mobile/shop/products?category=X&page=N` (public, no auth). PHP handler uses `wc_get_product()` (requires WooCommerce). Pro pricing = 10% off regular price. Product badges: `new` (< 14 days old), `pro_early_access` (meta `_pro_early_access`), `sale` (has sale price), `low_stock` (≤ 3 stock). Vendor/maker stored in product meta `_maker_name` and `_maker_city`.
-- **Cart**: `cartStore.ts` tracks item count for badge only. Full cart uses WooCommerce Store API or web checkout URL (`wc_get_checkout_url()`).
-- **Dark mode pattern**: screens use `const c = useColors(); const styles = useMemo(() => createStyles(c), [c]);` where `createStyles(c: ColorPalette)` is defined at module level. Static `colors` import still works for non-themed screens. Only screens converted so far: ConnectFeedScreen, ArticleScreen, MemberDashboardScreen.
+- **Shop product data**: fetched from `GET /mobile/shop/products?category=X&page=N` (public, no auth). PHP handler uses `wc_get_product()` (requires WooCommerce). Pro pricing = **10% off** regular price (not 7%). Product badges: `new` (< 14 days old), `pro_early_access` (meta `_pro_early_access`), `sale` (has sale price), `low_stock` (≤ 3 stock). Vendor/maker stored in product meta `_maker_name` and `_maker_city`.
+- **Cart**: `cartStore.ts` supports full item management (`addItem/removeItem/updateQty/clearCart`). CartScreen uses WooCommerce web checkout via `Linking.openURL()`.
+- **Dark mode pattern**: ALL screens must use `const c = useColors(); const styles = useMemo(() => createStyles(c), [c]);` where `createStyles(c: ColorPalette)` is defined at module level. **Never use the static `colors.*` import inside `createStyles`** — it bypasses dark mode. Use `c.*` exclusively inside that function.
+
+### Cross-stack navigation rules (critical)
+React Navigation stacks are isolated — a screen in ShopStack cannot navigate to a screen registered only in MagazineStack or ConnectStack. Rules:
+
+| From stack | To navigate to | Use |
+|---|---|---|
+| ShopStack | Article (magazine) | `nav.navigate("Magazine", { screen: "Article", params: { slug } } as any)` |
+| ShopStack | Membership (member) | `nav.navigate("Connect", { screen: "Membership" } as any)` |
+| Any stack | Login | Only valid from unauthenticated AuthStack — authenticated screens should navigate to Membership instead |
+
+Screens registered per stack (as of latest):
+- **ConnectStack**: ConnectFeed, PostDetail, PulseDetail, NewPost, DirectorySubmit, MemberProfile, MemberDirectory, Notifications, Article, MemberDashboard, MemberSettings, Wallet, Coupons, Perks, Membership, Analytics
+- **MagazineStack**: MagazineList, Article, IssuesArchive, MagazineSearch
+- **ShopStack**: ShopHome, ShopListing, ProductDetail, Cart, TheEdit, ShopSearch, MakerProfile, OrderConfirmation
+- **GamesStack**: GamesList, TriviaGame, WhoSaidIt, Sudoku, Crossword
+- **EventsStack**: EventsList, EventDetail
+- **MemberStack**: MemberDashboard, MemberSettings, Wallet, Coupons, Perks, Membership, Analytics
+
+### api.get() / api.post() signature
+```ts
+api.get<T>(url: string, auth = true)   // second arg is boolean, NOT an options object
+api.post<T>(url: string, body: Record<string,unknown>, auth = true)
+api.put / api.patch / api.delete       // always authenticated
+```
+Common mistake: `api.get(url, { auth: false })` — the object is truthy so it injects the Bearer token anyway. Correct: `api.get(url, false)`.
+
+### useNotificationCount hook
+Returns `{ unread: number, refresh: () => void }`. The field is `unread`, not `unreadCount`. Destructure as `const { unread } = useNotificationCount()` or alias: `const { unread: unreadCount } = useNotificationCount()`.
+
+### theme.ts — available keys
+- `shadows`: only `card`, `modal`, `fab` — no `sm`, `lg`, `xl` variants
+- `radius`: `sm`(2), `md`(4), `lg`(6), `xl`(12), `"2xl"`(20), `full`(9999) — use bracket notation for `"2xl"`
+- `fontSize`: includes `eyebrow`(9) for uppercase labels
+- `fonts`: `sans`, `sansBold`, `serif`, `serifBold`, `mono`, `monoBold` — no `sansItalic`/`serifItalic` (use `fontStyle: "italic"` instead)

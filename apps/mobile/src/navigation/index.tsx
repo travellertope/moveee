@@ -29,6 +29,8 @@ import MemberDirectoryScreen from "../screens/community/MemberDirectoryScreen";
 // Magazine
 import MagazineScreen from "../screens/magazine/MagazineScreen";
 import ArticleScreen from "../screens/magazine/ArticleScreen";
+import IssuesArchiveScreen from "../screens/magazine/IssuesArchiveScreen";
+import MagazineSearchScreen from "../screens/magazine/MagazineSearchScreen";
 
 // Events / Games
 import GamesScreen from "../screens/games/GamesScreen";
@@ -43,6 +45,11 @@ import EventDetailScreen from "../screens/events/EventDetailScreen";
 import ShopScreen from "../screens/shop/ShopScreen";
 import ShopListingScreen from "../screens/shop/ShopListingScreen";
 import ProductDetailScreen from "../screens/shop/ProductDetailScreen";
+import CartScreen from "../screens/shop/CartScreen";
+import TheEditScreen from "../screens/shop/TheEditScreen";
+import ShopSearchScreen from "../screens/shop/ShopSearchScreen";
+import MakerProfileScreen from "../screens/shop/MakerProfileScreen";
+import OrderConfirmationScreen from "../screens/shop/OrderConfirmationScreen";
 
 // Member
 import MemberDashboardScreen from "../screens/member/MemberDashboardScreen";
@@ -111,9 +118,11 @@ function ConnectStack() {
 function MagazineStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="MagazineList" component={MagazineScreen} />
+      <Stack.Screen name="MagazineList"    component={MagazineScreen} />
       {/* popToTopOnBlur: leaving the Magazine tab resets the stack to MagazineList */}
-      <Stack.Screen name="Article" component={ArticleScreen} options={{ popToTopOnBlur: true }} />
+      <Stack.Screen name="Article"         component={ArticleScreen} options={{ popToTopOnBlur: true }} />
+      <Stack.Screen name="IssuesArchive"   component={IssuesArchiveScreen} />
+      <Stack.Screen name="MagazineSearch"  component={MagazineSearchScreen} />
     </Stack.Navigator>
   );
 }
@@ -131,8 +140,13 @@ function ShopStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ShopHome"      component={ShopScreen} />
-      <Stack.Screen name="ShopListing"  component={ShopListingScreen} />
+      <Stack.Screen name="ShopListing"   component={ShopListingScreen} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <Stack.Screen name="Cart"              component={CartScreen} />
+      <Stack.Screen name="TheEdit"           component={TheEditScreen} />
+      <Stack.Screen name="ShopSearch"        component={ShopSearchScreen} />
+      <Stack.Screen name="MakerProfile"      component={MakerProfileScreen} />
+      <Stack.Screen name="OrderConfirmation" component={OrderConfirmationScreen} />
     </Stack.Navigator>
   );
 }

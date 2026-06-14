@@ -309,6 +309,7 @@ export default function ShopScreen() {
           <TouchableOpacity
             style={styles.iconBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => nav.navigate("ShopSearch")}
           >
             <Ionicons name="search-outline" size={22} color={c.ink} />
           </TouchableOpacity>
@@ -391,7 +392,7 @@ export default function ShopScreen() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Featured Picks</Text>
-                  <TouchableOpacity><Text style={styles.sectionAction}>The Edit →</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => nav.navigate("TheEdit")}><Text style={styles.sectionAction}>The Edit →</Text></TouchableOpacity>
                 </View>
 
                 <ProductCardLarge product={featured[0]} isPro={isPro} onAddToBag={handleAddToBag} />
@@ -473,7 +474,7 @@ export default function ShopScreen() {
               <Text style={styles.proBandTitle}>Early access · Member pricing · Free returns</Text>
               <TouchableOpacity
                 style={styles.proBandBtn}
-                onPress={() => nav.navigate("Me", { screen: "Membership" })}
+                onPress={() => nav.navigate("Connect", { screen: "Membership" } as any)}
               >
                 <Text style={styles.proBandBtnText}>Upgrade →</Text>
               </TouchableOpacity>
