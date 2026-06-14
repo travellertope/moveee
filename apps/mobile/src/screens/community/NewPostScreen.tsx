@@ -46,28 +46,28 @@ const TEMPLATES: TemplateMeta[] = [
     description: "Share news, a link, or a quick thought from your cultural world.",
     chips: ["Hot take:", "Just saw that", "Anyone else noticed"],
     placeholder: "What's on your cultural mind?",
-    showPhoto: true, showAt: true, showLocation: false, multiPhoto: false,
+    showPhoto: true, showAt: true, showLocation: false, multiPhoto: true,
   },
   {
     id: "hidden-gem", label: "Hidden Gem", emoji: "💎", minText: 50, maxText: 500,
     description: "Recommend a place worth discovering — hidden spots, local favourites, underrated venues.",
     chips: ["Hidden gem alert:", "Not enough people know about", "If you haven't been to"],
     placeholder: "Tell people why this place is special…",
-    showPhoto: true, showAt: false, showLocation: false, multiPhoto: false,
+    showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
   },
   {
     id: "cultural-take", label: "Cultural Take", emoji: "💬", minText: 100, maxText: 1000,
     description: "Share a cultural opinion — a book, film, event, or idea worth discussing.",
     chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"],
     placeholder: "Your take on the culture…",
-    showPhoto: true, showAt: false, showLocation: false, multiPhoto: false,
+    showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
   },
   {
     id: "food-review", label: "Food Review", emoji: "🍽️", minText: 50, maxText: 500,
     description: "Review a dish or restaurant. Rate the taste, value, and vibe.",
     chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"],
     placeholder: "What did you eat and what did you think?",
-    showPhoto: true, showAt: false, showLocation: false, multiPhoto: false,
+    showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
   },
   {
     id: "creative-showcase", label: "Creative Showcase", emoji: "🎨", minText: 0, maxText: 500,
@@ -189,14 +189,28 @@ export default function NewPostScreen() {
     setLocationVisible(false);
   }, []);
 
+  const MAX_IMAGES = 10;
+
   const pickImages = useCallback(async (multi = false) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: multi,
+      selectionLimit: multi ? MAX_IMAGES : 1,
       quality: 0.85,
     });
     if (!result.canceled) {
-      setImages(multi ? result.assets.map((a) => a.uri) : [result.assets[0].uri]);
+      if (multi) {
+        setImages((prev) => {
+          const newUris = result.assets.map((a) => a.uri);
+          const combined = [...prev, ...newUris];
+          if (combined.length > MAX_IMAGES) {
+            Alert.alert("Maximum 10 images", "You can add up to 10 images per post.");
+          }
+          return combined.slice(0, MAX_IMAGES);
+        });
+      } else {
+        setImages([result.assets[0].uri]);
+      }
     }
   }, []);
 

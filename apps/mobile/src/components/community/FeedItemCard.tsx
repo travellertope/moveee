@@ -6,6 +6,8 @@ import {
   StyleSheet,
   Image,
   ScrollView,
+  FlatList,
+  useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
@@ -594,81 +596,110 @@ const reactionStyles = StyleSheet.create({
 
 // ── Gallery: horizontal strip for 1-3 images, 2×2 grid for 4+ ──────────────────
 
-function GalleryStrip({
+// Unified carousel — full card width, paginated, with dot indicators
+function ImageCarousel({
   images,
-  height,
-  width,
   onTap,
+  height = 220,
+  marginTop = 10,
 }: {
   images: string[];
-  height: number;
-  width: number;
   onTap: (idx: number) => void;
+  height?: number;
+  marginTop?: number;
 }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const { width } = useWindowDimensions();
   const count = images.length;
 
-  if (count >= 4) {
-    // 2×2 grid with +N overlay on last visible cell
-    const extra = count - 4;
-    const gap = 3;
-    const half = (width * 2 + gap) / 2; // approximate half width
-    const cellH = height * 0.85;
+  if (count === 0) return null;
+
+  if (count === 1) {
     return (
-      <View style={{ marginTop: 10, paddingHorizontal: 14, gap }}>
-        {[[0, 1], [2, 3]].map((pair, ri) => (
-          <View key={ri} style={{ flexDirection: "row", gap }}>
-            {pair.map((idx) => {
-              const isLast = idx === 3 && extra > 0;
-              return (
-                <TouchableOpacity
-                  key={idx}
-                  style={{ flex: 1, height: cellH, borderRadius: 6, overflow: "hidden" }}
-                  activeOpacity={0.88}
-                  onPress={() => onTap(idx)}
-                >
-                  {images[idx] ? (
-                    <Image source={{ uri: images[idx] }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                  ) : (
-                    <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.ghost }]} />
-                  )}
-                  {isLast && (
-                    <View style={{
-                      ...StyleSheet.absoluteFillObject,
-                      backgroundColor: "rgba(10,8,5,0.58)",
-                      alignItems: "center", justifyContent: "center",
-                    }}>
-                      <Text style={{ color: "#fff", fontFamily: "JetBrainsMono_700Bold", fontSize: 20 }}>+{extra + 1}</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        ))}
-      </View>
+      <TouchableOpacity
+        onPress={() => onTap(0)}
+        activeOpacity={0.92}
+        style={{ marginTop }}
+      >
+        <Image
+          source={{ uri: images[0] }}
+          style={{ width, height }}
+          resizeMode="cover"
+        />
+      </TouchableOpacity>
     );
   }
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={{ marginTop: 10 }}
-      contentContainerStyle={{ gap: 8, paddingHorizontal: 14 }}
-    >
-      {images.map((src, i) => (
-        <ImgPlaceholder
-          key={i}
-          height={height}
-          src={src}
-          borderRadius={6}
-          width={width}
-          onPress={() => onTap(i)}
-        />
-      ))}
-    </ScrollView>
+    <View style={{ marginTop }}>
+      <FlatList
+        data={images}
+        keyExtractor={(_, i) => String(i)}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        onMomentumScrollEnd={(e) => {
+          const idx = Math.round(e.nativeEvent.contentOffset.x / width);
+          setActiveIdx(Math.min(Math.max(0, idx), count - 1));
+        }}
+        renderItem={({ item: src, index }) => (
+          <TouchableOpacity
+            onPress={() => onTap(index)}
+            activeOpacity={0.92}
+            style={{ width, height }}
+          >
+            <Image
+              source={{ uri: src }}
+              style={{ width, height }}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+        )}
+      />
+      {/* Dot indicators + counter */}
+      <View style={carouselStyles.footer}>
+        <View style={carouselStyles.dots}>
+          {images.map((_, i) => (
+            <View
+              key={i}
+              style={[
+                carouselStyles.dot,
+                i === activeIdx ? carouselStyles.dotActive : carouselStyles.dotInactive,
+              ]}
+            />
+          ))}
+        </View>
+        <Text style={carouselStyles.counter}>{activeIdx + 1} / {count}</Text>
+      </View>
+    </View>
   );
 }
+
+const carouselStyles = StyleSheet.create({
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    position: "relative",
+  },
+  dots: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  dotActive:   { backgroundColor: colors.ochre, width: 16 },
+  dotInactive: { backgroundColor: colors.ghost },
+  counter: {
+    position: "absolute",
+    right: 14,
+    fontFamily: fonts.mono,
+    fontSize: 10,
+    color: colors.ghost,
+  },
+});
 
 // ── Card Implementations ──────────────────────────────────────────────────────
 
@@ -676,9 +707,12 @@ const EXCERPT_LIMIT = 320;
 
 // PulseCard (A1) — serif title, excerpt with Read more, OG preview for source links
 function PulseCard({ item, onPress }: FeedCardProps) {
-  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const hasHero = Boolean(item.image);
+  // Gallery images take priority over single hero
+  const gallery = (item.galleryImages && item.galleryImages.length > 0)
+    ? item.galleryImages
+    : item.image ? [item.image] : [];
   const hasSourcePreview = Boolean(item.sourceUrl || item.ogImage);
   const rawExcerpt = item.excerpt ?? "";
   const isLong = rawExcerpt.length > EXCERPT_LIMIT;
@@ -687,11 +721,9 @@ function PulseCard({ item, onPress }: FeedCardProps) {
   return (
     <>
       <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
-        {/* Hero image — full-bleed at top when present */}
-        {hasHero && (
-          <TouchableOpacity onPress={() => setLightboxOpen(true)} activeOpacity={0.92}>
-            <Image source={{ uri: item.image! }} style={pulseStyles.hero} resizeMode="cover" />
-          </TouchableOpacity>
+        {/* Hero image or carousel — full-bleed at top */}
+        {gallery.length > 0 && (
+          <ImageCarousel images={gallery} onTap={(i) => setLightboxIdx(i)} marginTop={0} />
         )}
 
         <View style={pulseStyles.body}>
@@ -731,8 +763,13 @@ function PulseCard({ item, onPress }: FeedCardProps) {
         <FeedReactionBar item={item} />
       </TouchableOpacity>
 
-      {hasHero && (
-        <ImageLightbox visible={lightboxOpen} images={[item.image!]} onClose={() => setLightboxOpen(false)} />
+      {gallery.length > 0 && (
+        <ImageLightbox
+          visible={lightboxIdx !== null}
+          images={gallery}
+          initialIndex={lightboxIdx ?? 0}
+          onClose={() => setLightboxIdx(null)}
+        />
       )}
     </>
   );
@@ -1030,10 +1067,8 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
             />
           </View>
         </View>
-        {gallery.length > 0 ? (
-          <GalleryStrip images={gallery} height={130} width={180} onTap={(i) => setLightboxIdx(i)} />
-        ) : null}
-        <FeedReactionBar item={item} marginTop={10} />
+        <ImageCarousel images={gallery} onTap={(i) => setLightboxIdx(i)} />
+        <FeedReactionBar item={item} marginTop={4} />
       </TouchableOpacity>
       <ImageLightbox
         visible={lightboxIdx !== null}
@@ -1047,7 +1082,10 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
 
 // CulturalTakeCard (B4)
 function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
-  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const gallery = (item.galleryImages && item.galleryImages.length > 0)
+    ? item.galleryImages
+    : item.image ? [item.image] : [];
   return (
     <>
       <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.92}>
@@ -1067,21 +1105,18 @@ function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCar
               style={cardStyles.cardBody}
             />
           </View>
-          <View style={{ marginTop: 10 }}>
-            <ImgPlaceholder
-              height={180}
-              src={item.image}
-              onPress={item.image ? () => setLightboxOpen(true) : undefined}
-            />
-          </View>
         </View>
-        <FeedReactionBar item={item} marginTop={10} />
+        {gallery.length > 0 && (
+          <ImageCarousel images={gallery} onTap={(i) => setLightboxIdx(i)} />
+        )}
+        <FeedReactionBar item={item} marginTop={4} />
       </TouchableOpacity>
-      {item.image && (
+      {gallery.length > 0 && (
         <ImageLightbox
-          visible={lightboxOpen}
-          images={[item.image]}
-          onClose={() => setLightboxOpen(false)}
+          visible={lightboxIdx !== null}
+          images={gallery}
+          initialIndex={lightboxIdx ?? 0}
+          onClose={() => setLightboxIdx(null)}
         />
       )}
     </>
@@ -1125,10 +1160,10 @@ function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
           </View>
         </View>
 
-        {gallery.length > 0 ? (
-          <GalleryStrip images={gallery} height={140} width={200} onTap={(i) => setLightboxIdx(i)} />
-        ) : null}
-        <FeedReactionBar item={item} marginTop={10} />
+        {gallery.length > 0 && (
+          <ImageCarousel images={gallery} onTap={(i) => setLightboxIdx(i)} />
+        )}
+        <FeedReactionBar item={item} marginTop={4} />
       </TouchableOpacity>
       <ImageLightbox
         visible={lightboxIdx !== null}
@@ -1165,10 +1200,10 @@ const foodStyles = StyleSheet.create({
 
 // CreativeShowcaseCard (B6)
 function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
-  const [activeIdx, setActiveIdx] = useState(0);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
-  const gallery = item.galleryImages ?? [];
-  const count = gallery.length;
+  const gallery = item.galleryImages && item.galleryImages.length > 0
+    ? item.galleryImages
+    : item.image ? [item.image] : [];
 
   return (
     <>
@@ -1187,46 +1222,11 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
           </View>
         ) : null}
 
-        {count > 0 ? (
-          <>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ marginTop: 10, height: 200 }}
-              contentContainerStyle={{ gap: 8, paddingHorizontal: 14 }}
-              onMomentumScrollEnd={(e) => {
-                const idx = Math.round(e.nativeEvent.contentOffset.x / 260);
-                setActiveIdx(Math.min(idx, count - 1));
-              }}
-            >
-              {gallery.map((src, i) => (
-                <ImgPlaceholder
-                  key={i}
-                  height={200}
-                  src={src}
-                  borderRadius={6}
-                  width={260}
-                  onPress={() => setLightboxIdx(i)}
-                />
-              ))}
-            </ScrollView>
-            {count > 1 ? (
-              <View style={showcaseStyles.dots}>
-                {gallery.map((_, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      showcaseStyles.dot,
-                      i === activeIdx ? showcaseStyles.dotActive : showcaseStyles.dotInactive,
-                    ]}
-                  />
-                ))}
-              </View>
-            ) : null}
-          </>
-        ) : null}
+        {gallery.length > 0 && (
+          <ImageCarousel images={gallery} onTap={(i) => setLightboxIdx(i)} height={260} />
+        )}
 
-        <FeedReactionBar item={item} marginTop={10} />
+        <FeedReactionBar item={item} marginTop={4} />
       </TouchableOpacity>
       <ImageLightbox
         visible={lightboxIdx !== null}
@@ -1237,19 +1237,6 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
     </>
   );
 }
-
-const showcaseStyles = StyleSheet.create({
-  dots: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 5,
-    marginTop: 8,
-  },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  dotActive: { backgroundColor: colors.ochre },
-  dotInactive: { backgroundColor: colors.ghost },
-});
 
 // PollCard (B7) — live voting via API
 function PollCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
