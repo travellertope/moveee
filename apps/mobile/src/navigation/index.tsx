@@ -1,10 +1,12 @@
 import React from "react";
+import { View, Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useAuthStore } from "../auth/authStore";
+import { useNotificationCount } from "../features/notifications/useNotificationCount";
 import { colors } from "../theme";
 import type { FeedItem } from "../types";
 
@@ -190,6 +192,7 @@ function MemberStack() {
 }
 
 function MainTabs() {
+  const { unread } = useNotificationCount();
 
   return (
     <Tab.Navigator
@@ -203,7 +206,6 @@ function MainTabs() {
         },
         tabBarIcon: ({ focused, color, size }) => {
           const icons: Record<string, [string, string]> = {
-            Connect:  ["people",          "people-outline"],
             Magazine: ["newspaper",       "newspaper-outline"],
             Games:    ["game-controller", "game-controller-outline"],
             Events:   ["calendar",        "calendar-outline"],
@@ -214,7 +216,46 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Connect"  component={ConnectStack} />
+      <Tab.Screen
+        name="Connect"
+        component={ConnectStack}
+        options={{
+          tabBarIcon: ({ focused, color, size }) => (
+            <View style={{ width: size, height: size }}>
+              <Ionicons
+                name={focused ? "people" : "people-outline"}
+                size={size}
+                color={color}
+              />
+              {unread > 0 && (
+                <View style={{
+                  position: "absolute",
+                  top: -2,
+                  right: -4,
+                  minWidth: 14,
+                  height: 14,
+                  borderRadius: 7,
+                  backgroundColor: "#b38238",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingHorizontal: 2,
+                  borderWidth: 1.5,
+                  borderColor: colors.paperWarm,
+                }}>
+                  <Text style={{
+                    fontFamily: "JetBrainsMono_700Bold",
+                    fontSize: 8,
+                    color: "#FFFFFF",
+                    lineHeight: 10,
+                  }}>
+                    {unread > 9 ? "9+" : String(unread)}
+                  </Text>
+                </View>
+              )}
+            </View>
+          ),
+        }}
+      />
       <Tab.Screen name="Magazine" component={MagazineStack} />
       <Tab.Screen name="Games"    component={GamesStack} />
       <Tab.Screen name="Shop"     component={ShopStack} />

@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useMagazine, type MagazineSection } from "../../features/magazine/useMagazine";
-import { useNotificationCount } from "../../features/notifications/useNotificationCount";
+import { useNewsletters, type NewsletterSummary } from "../../features/magazine/useNewsletters";
 import type { Article } from "../../types";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
@@ -227,6 +227,63 @@ const PLACEHOLDER_SERIES: SeriesItem[] = [
   { id: "4", name: "Sound & City", articleCount: 4 },
 ];
 
+// ── Newsletter section ────────────────────────────────────────────────────────
+function NewsletterSection({
+  newsletters,
+  styles,
+  c,
+  onPress,
+}: {
+  newsletters: NewsletterSummary[];
+  styles: ReturnType<typeof createStyles>;
+  c: ColorPalette;
+  onPress: (nl: NewsletterSummary) => void;
+}) {
+  if (newsletters.length === 0) return null;
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Newsletters</Text>
+        <TouchableOpacity>
+          <Text style={styles.seeAll}>Browse all →</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={[styles.sectionRow, { paddingBottom: 4 }]}
+      >
+        {newsletters.map((nl) => (
+          <TouchableOpacity
+            key={nl.id}
+            style={styles.nlCard}
+            onPress={() => onPress(nl)}
+            activeOpacity={0.85}
+          >
+            {/* Colour header strip */}
+            <View style={[styles.nlStrip, { backgroundColor: nl.color }]}>
+              <Text style={styles.nlStripLabel}>{nl.name.toUpperCase()}</Text>
+            </View>
+            <View style={styles.nlBody}>
+              {nl.latestIssue ? (
+                <>
+                  <Text style={styles.nlIssueLabel}>LATEST</Text>
+                  <Text style={styles.nlTitle} numberOfLines={2}>{nl.latestIssue.title}</Text>
+                  <Text style={styles.nlExcerpt} numberOfLines={2}>{nl.latestIssue.excerpt}</Text>
+                </>
+              ) : (
+                <Text style={styles.nlDesc} numberOfLines={3}>{nl.description}</Text>
+              )}
+              <Text style={styles.nlCta}>Read →</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+// ── Series strip ──────────────────────────────────────────────────────────────
 function SeriesStrip({ styles }: { styles: ReturnType<typeof createStyles> }) {
   return (
     <View style={styles.section}>
@@ -259,7 +316,7 @@ function SeriesStrip({ styles }: { styles: ReturnType<typeof createStyles> }) {
 export default function MagazineScreen() {
   const nav = useNavigation<any>();
   const { featured, sections, loading, error, refresh } = useMagazine();
-  const { unread: unreadCount } = useNotificationCount();
+  const { newsletters } = useNewsletters();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
@@ -275,6 +332,10 @@ export default function MagazineScreen() {
 
   const openIssues = () => {
     nav.navigate("IssuesArchive");
+  };
+
+  const openNewsletter = (nl: NewsletterSummary) => {
+    nav.navigate("IssuesArchive", { nlList: nl.id, nlName: nl.name } as any);
   };
 
   if (error && !featured && sections.length === 0) {
@@ -318,11 +379,6 @@ export default function MagazineScreen() {
           <TouchableOpacity style={styles.headerBtn} onPress={openSearch}>
             {/* Search icon */}
             <Text style={styles.headerIcon}>⌕</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerBtn} onPress={() => nav.navigate("Notifications")}>
-            {/* Bell icon */}
-            <Text style={styles.headerIcon}>🔔</Text>
-            {unreadCount > 0 ? <View style={styles.notifDot} /> : null}
           </TouchableOpacity>
         </View>
       </View>
@@ -381,6 +437,14 @@ export default function MagazineScreen() {
           <LatestIssueCard styles={styles} onExplore={openIssues} />
         </View>
 
+        {/* Newsletters */}
+        <NewsletterSection
+          newsletters={newsletters}
+          styles={styles}
+          c={c}
+          onPress={openNewsletter}
+        />
+
         {/* Series */}
         <SeriesStrip styles={styles} />
       </ScrollView>
@@ -416,18 +480,6 @@ function createStyles(c: ColorPalette) {
     headerActions: { flexDirection: "row", alignItems: "center", gap: space[4] },
     headerBtn: { position: "relative", width: 32, height: 32, alignItems: "center", justifyContent: "center" },
     headerIcon: { fontSize: 20, color: c.ink },
-    notifDot: {
-      position: "absolute",
-      top: 2,
-      right: 4,
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: c.ochre,
-      borderWidth: 1.5,
-      borderColor: c.paper,
-    },
-
     // Category strip
     catStripWrap: {
       backgroundColor: c.paperWarm,
@@ -642,5 +694,37 @@ function createStyles(c: ColorPalette) {
       lineHeight: 18,
     },
     seriesMeta: { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: c.ghost, marginTop: 4 },
+
+    // Newsletter cards
+    nlCard: {
+      width: 200,
+      backgroundColor: c.paper,
+      borderRadius: radius.xl,
+      overflow: "hidden",
+      ...shadows.card,
+    },
+    nlStrip: {
+      height: 44,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    nlStripLabel: {
+      fontFamily: fonts.monoBold ?? fonts.mono,
+      fontSize: fontSize.eyebrow,
+      color: "#FFFFFF",
+      letterSpacing: 1.5,
+    },
+    nlBody: { padding: 12, gap: 4 },
+    nlIssueLabel: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.eyebrow,
+      color: c.mute,
+      letterSpacing: 1,
+      textTransform: "uppercase",
+    },
+    nlTitle: { fontFamily: fonts.serifBold, fontSize: 14, color: c.ink, lineHeight: 18 },
+    nlExcerpt: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft, lineHeight: 18 },
+    nlDesc: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft, lineHeight: 18 },
+    nlCta: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ochre, marginTop: 4 },
   });
 }
