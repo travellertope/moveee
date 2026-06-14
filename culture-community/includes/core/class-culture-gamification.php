@@ -273,19 +273,33 @@ class Culture_Gamification {
             'trigger'     => 'points',
             'threshold'   => 250,
         ),
-        'taste_maker_badge' => array(
-            'name'        => 'Taste Maker',
-            'description' => 'Earned 500 reputation.',
-            'icon'        => 'dashicons-star-filled',
+        'culture_contributor_badge' => array(
+            'name'        => 'Culture Contributor',
+            'description' => 'Earned 500 reputation — officially a Culture Contributor.',
+            'icon'        => 'dashicons-awards',
             'trigger'     => 'points',
             'threshold'   => 500,
         ),
+        'taste_maker_badge' => array(
+            'name'        => 'Taste Maker',
+            'description' => 'Earned 2,500 reputation — reached Taste Maker tier.',
+            'icon'        => 'dashicons-star-filled',
+            'trigger'     => 'points',
+            'threshold'   => 2500,
+        ),
         'culture_authority_badge' => array(
             'name'        => 'Culture Authority',
-            'description' => 'Earned 1500 reputation.',
+            'description' => 'Earned 10,000 reputation — reached Culture Authority tier.',
             'icon'        => 'dashicons-superhero',
             'trigger'     => 'points',
-            'threshold'   => 1500,
+            'threshold'   => 10000,
+        ),
+        'culture_icon_badge' => array(
+            'name'        => 'Culture Icon',
+            'description' => 'Earned 25,000 reputation and nominated by the community.',
+            'icon'        => 'dashicons-superhero-alt',
+            'trigger'     => 'points',
+            'threshold'   => 25000,
         ),
     );
 
@@ -299,6 +313,7 @@ class Culture_Gamification {
     const POINTS = array(
         'event_rsvp'             => 5,
         'event_checkin'          => 20,
+        'magazine_comment'       => 5,
         'newsletter_comment'     => 10,
         'newsletter_reaction'    => 0,   // passive — credits only
         'referral'               => 30,
@@ -326,6 +341,7 @@ class Culture_Gamification {
         'event_rsvp'            => 1,
         'event_checkin'         => 3,
         'referral'              => 5,
+        'magazine_comment'      => 2,
         'newsletter_comment'    => 1,
         'quote_submission'      => 1,
         'magazine_read'         => 1,

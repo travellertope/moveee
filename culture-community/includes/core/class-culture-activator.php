@@ -169,6 +169,22 @@ class Culture_Activator {
         ) {$charset_collate};" );
 
         update_option( 'culture_db_version', CULTURE_VERSION );
+
+        // ── Badge threshold migration (v2.0+) ────────────────────────────────
+        // Old defaults: taste_maker_badge=500, culture_authority_badge=1500.
+        // New defaults match REPUTATION_TIERS: 2500 and 10000 respectively.
+        // Delete stale DB values so get_badge_threshold() falls back to the
+        // updated BADGES constant defaults.
+        $stale_badge_resets = array(
+            'culture_badge_taste_maker_badge'       => array( 500, 1500 ),
+            'culture_badge_culture_authority_badge' => array( 500, 1500 ),
+        );
+        foreach ( $stale_badge_resets as $option_key => $old_values ) {
+            $current = (int) get_option( $option_key, 0 );
+            if ( in_array( $current, $old_values, true ) ) {
+                delete_option( $option_key );
+            }
+        }
     }
 
     /**

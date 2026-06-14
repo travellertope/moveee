@@ -216,6 +216,27 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Games — crossword daily cache (same puzzle for every player each day).
+        register_rest_route( 'culture/v1', '/games/crossword-daily', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_crossword_daily' ),
+                'permission_callback' => '__return_true',
+                'args'                => array(
+                    'date' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_set_crossword_daily' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+                'args'                => array(
+                    'date'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                    'puzzle' => array( 'required' => true, 'type' => 'object' ),
+                ),
+            ),
+        ) );
+
         // Quote audit batch — fetch unaudited quotes for the Next.js audit bot.
         register_rest_route( 'culture/v1', '/quotes/audit-batch', array(
             'methods'             => 'GET',
@@ -2496,6 +2517,42 @@ class Culture_REST_API {
     }
 
     /**
+     * GET /culture/v1/games/crossword-daily
+     * Returns today's cached crossword puzzle, or 404 if not generated yet.
+     */
+    public static function handle_get_crossword_daily( $request ) {
+        $date   = $request->get_param( 'date' ) ?: gmdate( 'Y-m-d' );
+        $cached = get_option( 'culture_games_crossword_' . $date, null );
+
+        if ( null === $cached || ! is_array( $cached ) ) {
+            return new WP_Error( 'not_found', 'No crossword cached for this date.', array( 'status' => 404 ) );
+        }
+
+        return rest_ensure_response( array( 'date' => $date, 'puzzle' => $cached ) );
+    }
+
+    /**
+     * POST /culture/v1/games/crossword-daily
+     * Stores today's crossword puzzle (called by the Next.js API route after
+     * Gemini generation). Cleans up the previous day's option automatically.
+     */
+    public static function handle_set_crossword_daily( $request ) {
+        $date   = $request->get_param( 'date' );
+        $puzzle = $request->get_param( 'puzzle' );
+
+        if ( ! is_array( $puzzle ) || empty( $puzzle ) ) {
+            return new WP_Error( 'invalid', 'puzzle must be a non-empty object.', array( 'status' => 400 ) );
+        }
+
+        $yesterday = gmdate( 'Y-m-d', strtotime( $date . ' -1 day' ) );
+
+        update_option( 'culture_games_crossword_' . $date,      $puzzle, false );
+        delete_option( 'culture_games_crossword_' . $yesterday );
+
+        return rest_ensure_response( array( 'success' => true, 'date' => $date ) );
+    }
+
+    /**
      * GET /culture/v1/quotes/audit-batch?size=N
      * Returns up to N unaudited culture_quote posts for the audit bot.
      * A quote is "unaudited" when it has no _quote_audit_status meta at all.
@@ -2826,6 +2883,12 @@ class Culture_REST_API {
                 $count = (int) get_user_meta( $user_id, '_magazine_share_count', true ) + 1;
                 update_user_meta( $user_id, '_magazine_share_count', $count );
             }
+        }
+
+        // Increment action-specific counters for badge tracking
+        if ( 'community_comment' === $action ) {
+            $count = (int) get_user_meta( $user_id, '_community_comment_count', true ) + 1;
+            update_user_meta( $user_id, '_community_comment_count', $count );
         }
 
         $new_total = Culture_Gamification::award_points( $user_id, $action );
