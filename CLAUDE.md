@@ -860,6 +860,40 @@ All other post templates submit to `${CULTURE_API}/community/submit` (WordPress 
 - Cashout fee is flat 30% (not tiered); `credits_per_gbp` comes from the wallet balance API response — never hardcode
 - Phase 8b "For You" scoring is pure client-side TypeScript — `scoreItem()` from `lib/feed-recommendations.ts` on the web; replicate the same algorithm in `src/features/community/useFeedRecommendations.ts`
 - Full spec at `docs/moveee-connect-rn-spec.md` — that file is the single source of truth for RN implementation details
-- **Shop product data**: fetched from `GET /mobile/shop/products?category=X&page=N` (public, no auth). PHP handler uses `wc_get_product()` (requires WooCommerce). Pro pricing = 10% off regular price. Product badges: `new` (< 14 days old), `pro_early_access` (meta `_pro_early_access`), `sale` (has sale price), `low_stock` (≤ 3 stock). Vendor/maker stored in product meta `_maker_name` and `_maker_city`.
-- **Cart**: `cartStore.ts` tracks item count for badge only. Full cart uses WooCommerce Store API or web checkout URL (`wc_get_checkout_url()`).
-- **Dark mode pattern**: screens use `const c = useColors(); const styles = useMemo(() => createStyles(c), [c]);` where `createStyles(c: ColorPalette)` is defined at module level. Static `colors` import still works for non-themed screens. Only screens converted so far: ConnectFeedScreen, ArticleScreen, MemberDashboardScreen.
+- **Shop product data**: fetched from `GET /mobile/shop/products?category=X&page=N` (public, no auth). PHP handler uses `wc_get_product()` (requires WooCommerce). Pro pricing = **10% off** regular price (not 7%). Product badges: `new` (< 14 days old), `pro_early_access` (meta `_pro_early_access`), `sale` (has sale price), `low_stock` (≤ 3 stock). Vendor/maker stored in product meta `_maker_name` and `_maker_city`.
+- **Cart**: `cartStore.ts` supports full item management (`addItem/removeItem/updateQty/clearCart`). CartScreen uses WooCommerce web checkout via `Linking.openURL()`.
+- **Dark mode pattern**: ALL screens must use `const c = useColors(); const styles = useMemo(() => createStyles(c), [c]);` where `createStyles(c: ColorPalette)` is defined at module level. **Never use the static `colors.*` import inside `createStyles`** — it bypasses dark mode. Use `c.*` exclusively inside that function.
+
+### Cross-stack navigation rules (critical)
+React Navigation stacks are isolated — a screen in ShopStack cannot navigate to a screen registered only in MagazineStack or ConnectStack. Rules:
+
+| From stack | To navigate to | Use |
+|---|---|---|
+| ShopStack | Article (magazine) | `nav.navigate("Magazine", { screen: "Article", params: { slug } } as any)` |
+| ShopStack | Membership (member) | `nav.navigate("Connect", { screen: "Membership" } as any)` |
+| Any stack | Login | Only valid from unauthenticated AuthStack — authenticated screens should navigate to Membership instead |
+
+Screens registered per stack (as of latest):
+- **ConnectStack**: ConnectFeed, PostDetail, PulseDetail, NewPost, DirectorySubmit, MemberProfile, MemberDirectory, Notifications, Article, MemberDashboard, MemberSettings, Wallet, Coupons, Perks, Membership, Analytics
+- **MagazineStack**: MagazineList, Article, IssuesArchive, MagazineSearch
+- **ShopStack**: ShopHome, ShopListing, ProductDetail, Cart, TheEdit, ShopSearch, MakerProfile, OrderConfirmation
+- **GamesStack**: GamesList, TriviaGame, WhoSaidIt, Sudoku, Crossword
+- **EventsStack**: EventsList, EventDetail
+- **MemberStack**: MemberDashboard, MemberSettings, Wallet, Coupons, Perks, Membership, Analytics
+
+### api.get() / api.post() signature
+```ts
+api.get<T>(url: string, auth = true)   // second arg is boolean, NOT an options object
+api.post<T>(url: string, body: Record<string,unknown>, auth = true)
+api.put / api.patch / api.delete       // always authenticated
+```
+Common mistake: `api.get(url, { auth: false })` — the object is truthy so it injects the Bearer token anyway. Correct: `api.get(url, false)`.
+
+### useNotificationCount hook
+Returns `{ unread: number, refresh: () => void }`. The field is `unread`, not `unreadCount`. Destructure as `const { unread } = useNotificationCount()` or alias: `const { unread: unreadCount } = useNotificationCount()`.
+
+### theme.ts — available keys
+- `shadows`: only `card`, `modal`, `fab` — no `sm`, `lg`, `xl` variants
+- `radius`: `sm`(2), `md`(4), `lg`(6), `xl`(12), `"2xl"`(20), `full`(9999) — use bracket notation for `"2xl"`
+- `fontSize`: includes `eyebrow`(9) for uppercase labels
+- `fonts`: `sans`, `sansBold`, `serif`, `serifBold`, `mono`, `monoBold` — no `sansItalic`/`serifItalic` (use `fontStyle: "italic"` instead)
