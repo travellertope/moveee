@@ -7,10 +7,12 @@ import {
   StyleSheet,
   ActivityIndicator,
   TextInput,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomSheet from "../ui/BottomSheet";
 import SheetErrorState from "../ui/SheetErrorState";
+import ImageLightbox from "../ui/ImageLightbox";
 import { useColors } from "../../hooks/useColors";
 import { useAuthStore } from "../../auth/authStore";
 import { useComments } from "../../features/community/useComments";
@@ -18,6 +20,113 @@ import { api, MOBILE_API } from "../../api/client";
 import type { ColorPalette } from "../../theme";
 import { radius } from "../../theme";
 import type { FeedItem, PollOption, ItineraryStop } from "../../types";
+
+const SCREEN_W = Dimensions.get("window").width;
+
+// ── GalleryGrid ─────────────────────────────────────────────────────────────────
+// 1 image: full width tall. 2 images: side by side. 3 images: 1 main + 2 small.
+// 4+ images: 2×2 grid, last cell shows "+N more" overlay.
+function GalleryGrid({ images }: { images: string[] }) {
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const count = images.length;
+  if (count === 0) return null;
+
+  const gap = 3;
+  const w = SCREEN_W - 32; // 16px padding each side
+
+  const cell = (src: string, idx: number, style: any, overlay?: React.ReactNode) => (
+    <TouchableOpacity
+      key={idx}
+      style={[{ overflow: "hidden", borderRadius: 6 }, style]}
+      activeOpacity={0.88}
+      onPress={() => setLightboxIdx(idx)}
+    >
+      <Image source={{ uri: src }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      {overlay}
+    </TouchableOpacity>
+  );
+
+  let grid: React.ReactNode;
+  if (count === 1) {
+    grid = cell(images[0], 0, { width: w, height: 260 });
+  } else if (count === 2) {
+    const hw = (w - gap) / 2;
+    grid = (
+      <View style={{ flexDirection: "row", gap }}>
+        {cell(images[0], 0, { width: hw, height: 200 })}
+        {cell(images[1], 1, { width: hw, height: 200 })}
+      </View>
+    );
+  } else if (count === 3) {
+    const hw = (w - gap) / 2;
+    const sh = (200 - gap) / 2;
+    grid = (
+      <View style={{ flexDirection: "row", gap }}>
+        {cell(images[0], 0, { width: hw, height: 200 })}
+        <View style={{ width: hw, gap }}>
+          {cell(images[1], 1, { flex: 1, height: sh })}
+          {cell(images[2], 2, { flex: 1, height: sh })}
+        </View>
+      </View>
+    );
+  } else {
+    // 4+ → 2×2 grid, last cell has +N overlay
+    const hw = (w - gap) / 2;
+    const extra = count - 4;
+    const rows: React.ReactNode[][] = [
+      [images[0], images[1]],
+      [images[2], images[3]],
+    ];
+    grid = (
+      <View style={{ gap }}>
+        {rows.map((row, ri) => (
+          <View key={ri} style={{ flexDirection: "row", gap }}>
+            {row.map((src, ci) => {
+              const idx = ri * 2 + ci;
+              const isLast = ri === 1 && ci === 1 && extra > 0;
+              return cell(src, idx, { width: hw, height: 160 },
+                isLast ? (
+                  <View style={{
+                    ...StyleSheet.absoluteFillObject,
+                    backgroundColor: "rgba(10,8,5,0.58)",
+                    alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Text style={{ color: "#fff", fontFamily: "JetBrainsMono_700Bold", fontSize: 22 }}>+{extra + 1}</Text>
+                  </View>
+                ) : undefined,
+              );
+            })}
+          </View>
+        ))}
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ marginBottom: 12 }}>
+      {grid}
+      <ImageLightbox
+        visible={lightboxIdx !== null}
+        images={images}
+        initialIndex={lightboxIdx ?? 0}
+        onClose={() => setLightboxIdx(null)}
+      />
+    </View>
+  );
+}
+
+// ── TappableHero ───────────────────────────────────────────────────────────────
+function TappableHero({ uri, caption }: { uri: string; caption?: string | null }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ marginBottom: caption ? 4 : 12 }}>
+      <TouchableOpacity activeOpacity={0.88} onPress={() => setOpen(true)}>
+        <Image source={{ uri }} style={{ width: "100%", height: 220, borderRadius: 6 }} resizeMode="cover" />
+      </TouchableOpacity>
+      <ImageLightbox visible={open} images={[uri]} onClose={() => setOpen(false)} />
+    </View>
+  );
+}
 
 const SERIF = "Fraunces_400Regular";
 const SERIF_BOLD = "Fraunces_700Bold";
@@ -222,7 +331,7 @@ function TemplatePost({ item, c, styles }: { item: FeedItem; c: ColorPalette; st
       {item.body ? <Text style={styles.bodyText}>{item.body}</Text>
         : item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text>
         : null}
-      {item.image ? <Image source={{ uri: item.image }} style={styles.heroImage} resizeMode="cover" /> : null}
+      {item.image ? <TappableHero uri={item.image} /> : null}
       {item.excerpt ? <Text style={styles.hashtags}>{item.excerpt}</Text> : null}
     </>
   );
@@ -245,7 +354,7 @@ function TemplateHiddenGem({ item, c, styles }: { item: FeedItem; c: ColorPalett
           <Text style={styles.directoryChipText}>View in Directory →</Text>
         </View>
       ) : null}
-      {item.image ? <Image source={{ uri: item.image }} style={styles.heroImage} resizeMode="cover" /> : null}
+      {item.image ? <TappableHero uri={item.image} /> : null}
     </>
   );
 }
@@ -260,7 +369,7 @@ function TemplateCulturalTake({ item, c, styles }: { item: FeedItem; c: ColorPal
       <TouchableOpacity style={styles.agreeChip}>
         <Text style={styles.agreeChipText}>Do you agree? →</Text>
       </TouchableOpacity>
-      {item.image ? <Image source={{ uri: item.image }} style={styles.heroImage} resizeMode="cover" /> : null}
+      {item.image ? <TappableHero uri={item.image} /> : null}
     </>
   );
 }
@@ -313,7 +422,7 @@ function TemplateFoodReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
       </View>
       {item.image ? (
         <>
-          <Image source={{ uri: item.image }} style={styles.heroImage} resizeMode="cover" />
+          <TappableHero uri={item.image} caption={item.foodDishName} />
           {item.foodDishName ? <Text style={styles.dishCaption}>{item.foodDishName}</Text> : null}
         </>
       ) : null}
@@ -342,22 +451,10 @@ function TemplateCreativeShowcase({ item, c, styles }: { item: FeedItem; c: Colo
           ))}
         </View>
       ) : null}
-      {/* Gallery: 1 main + 2 small */}
-      {images.length > 0 && (
-        <View style={styles.galleryContainer}>
-          <Image source={{ uri: images[0] }} style={styles.galleryMain} resizeMode="cover" />
-          {images.length > 1 && (
-            <View style={styles.galleryGrid}>
-              {images.slice(1, 3).map((uri, i) => (
-                <Image key={i} source={{ uri }} style={styles.galleryThumb} resizeMode="cover" />
-              ))}
-            </View>
-          )}
-        </View>
-      )}
-      {item.image && images.length === 0 && (
-        <Image source={{ uri: item.image }} style={styles.heroImage} resizeMode="cover" />
-      )}
+      {images.length > 0
+        ? <GalleryGrid images={images} />
+        : item.image ? <TappableHero uri={item.image} /> : null
+      }
       {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
     </>
   );

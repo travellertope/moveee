@@ -598,7 +598,7 @@ const reactionStyles = StyleSheet.create({
   },
 });
 
-// ── Gallery (horizontal carousel with lightbox) ─────────────────────────────────
+// ── Gallery: horizontal strip for 1-3 images, 2×2 grid for 4+ ──────────────────
 
 function GalleryStrip({
   images,
@@ -611,6 +611,50 @@ function GalleryStrip({
   width: number;
   onTap: (idx: number) => void;
 }) {
+  const count = images.length;
+
+  if (count >= 4) {
+    // 2×2 grid with +N overlay on last visible cell
+    const extra = count - 4;
+    const gap = 3;
+    const half = (width * 2 + gap) / 2; // approximate half width
+    const cellH = height * 0.85;
+    return (
+      <View style={{ marginTop: 10, paddingHorizontal: 14, gap }}>
+        {[[0, 1], [2, 3]].map((pair, ri) => (
+          <View key={ri} style={{ flexDirection: "row", gap }}>
+            {pair.map((idx) => {
+              const isLast = idx === 3 && extra > 0;
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={{ flex: 1, height: cellH, borderRadius: 6, overflow: "hidden" }}
+                  activeOpacity={0.88}
+                  onPress={() => onTap(idx)}
+                >
+                  {images[idx] ? (
+                    <Image source={{ uri: images[idx] }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                  ) : (
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.ghost }]} />
+                  )}
+                  {isLast && (
+                    <View style={{
+                      ...StyleSheet.absoluteFillObject,
+                      backgroundColor: "rgba(10,8,5,0.58)",
+                      alignItems: "center", justifyContent: "center",
+                    }}>
+                      <Text style={{ color: "#fff", fontFamily: "JetBrainsMono_700Bold", fontSize: 20 }}>+{extra + 1}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ))}
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       horizontal
