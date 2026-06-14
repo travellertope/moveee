@@ -631,6 +631,35 @@ quote submission, newsletter comment, profile completed, email verified.
 
 Daily credit cap: `DAILY_CREDIT_CAP = 50` credits per user per day.
 
+### Reputation-gated privileges (implemented)
+
+| Privilege | Minimum tier | Where enforced |
+|---|---|---|
+| Feed boost (+10 score) | Taste Maker | `useFeedRecommendations.ts` scoreItem() — reads `authorRepTier` on FeedItem |
+| Skip new-member review queue | Taste Maker (2,500 rep) | `class-culture-mobile-api.php` handle_submit_post |
+| Poll + Itinerary templates | Taste Maker (2,500 rep) | PHP (403), mobile UI (🔒 chip + Alert) |
+| Gated partner perks | Configurable per perk | `class-culture-perks.php` redeem_perk() checks `min_rep_tier` column |
+| Nominate for Culture Icon | Culture Authority (10,000 rep) | `POST /culture/v1/nominate-icon` |
+
+**Feed boost implementation:**
+- `community_author_rep_tier` saved as post meta on every submit (mobile API)
+- Registered in `class-culture-community.php` register_meta()
+- Returned as `authorRepTier` field in mobile feed response
+- `FeedItem.authorRepTier` added to `src/types/index.ts`
+
+**Perk tier gating:**
+- `culture_partner_perks` table has `min_rep_tier VARCHAR(30) DEFAULT 'member'` column
+- `dbDelta` in `class-culture-activator.php` adds it (ALTER on existing tables happens automatically)
+- Admin perk create/update API (`_sanitize_perk_data`) accepts `min_rep_tier` param
+- Tier order: member(0) < culture-contributor(1) < taste-maker(2) < culture-authority(3) < culture-icon(4)
+
+**Nomination power:**
+- `POST /culture/v1/nominate-icon` — API key auth
+- Body: `{ nominator_id, nominee_id }`
+- Sets `_culture_icon_nominated`, `_culture_icon_nominated_by`, `_culture_icon_nominated_at` usermeta
+- Rate-limited: one nomination per nominator per day (WP transient)
+- Nominations are additive — any Culture Authority can nominate, admin still controls the final flag
+
 ---
 
 ## Public profiles (`app/connect/[username]/`)
@@ -822,6 +851,8 @@ Before production build, also run `npm install` after restoring `react-native-ia
 | PasskeyManager | `screens/member/MemberSettingsScreen.tsx` SecurityTab (full register/delete WebAuthn flow via `react-native-passkeys`) |
 | Dark mode | `src/theme.ts` (`lightColors`, `darkColors`, `ColorPalette`), `src/store/themeStore.ts` (Zustand+MMKV, `ThemeMode`), `src/hooks/useColors.ts` (`useColors()` hook), Appearance tab in MemberSettingsScreen |
 | Lifestyle Shop | `screens/shop/ShopScreen.tsx` (home), `store/cartStore.ts` (item count badge), Shop tab added to navigation (6th tab between Games and Events) |
+| Location features | ConnectFeedScreen: region chip strip (All/Africa/Diaspora UK/US/Europe) defaults to user's region; EventsScreen: city filter + local sort; MemberDirectoryScreen: city chip strip; MemberSettingsScreen: newsletter segment auto-derived from countryOfResidence |
+| Reputation privileges | Feed boost for high-rep authors; Taste Maker skips new-member queue; Poll/Itinerary gated at 2500 rep (PHP + mobile UI 🔒); Perk min_rep_tier gating; Culture Authority can nominate for Culture Icon |
 
 ### What is missing (priority order)
 1. MembershipScreen IAP wiring (Google Play Billing + App Store IAP) — low priority; current behaviour directs users to the web to upgrade
