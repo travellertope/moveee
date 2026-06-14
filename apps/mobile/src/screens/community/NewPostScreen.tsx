@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useMemo, useCallback } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
@@ -33,18 +33,77 @@ interface TemplateMeta {
   maxText: number;
   description: string;
   chips: string[];
+  placeholder: string;
+  showPhoto: boolean;
+  showAt: boolean;
+  showLocation: boolean;
+  multiPhoto: boolean;
 }
 
 const TEMPLATES: TemplateMeta[] = [
-  { id: "post",              label: "Post",             emoji: "✏️",  minText: 1,   maxText: 3000, description: "Share news, a link, or a quick thought from your cultural world.", chips: ["Hot take:", "Just saw that", "Anyone else noticed"] },
-  { id: "hidden-gem",        label: "Hidden Gem",       emoji: "💎",  minText: 50,  maxText: 500,  description: "Recommend a place worth visiting — hidden spots, local favourites, underrated venues.", chips: ["Hidden gem alert:", "Not enough people know about", "If you haven't been to"] },
-  { id: "cultural-take",     label: "Cultural Take",    emoji: "💬",  minText: 100, maxText: 1000, description: "Share a cultural opinion on a book, film, event, or idea worth discussing.", chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"] },
-  { id: "food-review",       label: "Food Review",      emoji: "🍽️",  minText: 50,  maxText: 500,  description: "Review a dish or restaurant. Rate the taste, value, and vibe.", chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"] },
-  { id: "creative-showcase", label: "Creative Showcase",emoji: "🎨",  minText: 0,   maxText: 500,  description: "Share your creative work — art, photography, design, or music.", chips: ["Working on something:", "New piece:", "Behind the work:"] },
-  { id: "poll",              label: "Poll",             emoji: "📊",  minText: 10,  maxText: 280,  description: "Ask the community something. Great for settling debates or gathering opinions.", chips: ["Which is better:", "Settle this for me:", "Genuine question:"] },
-  { id: "itinerary",         label: "Itinerary",        emoji: "🗺️",  minText: 0,   maxText: 300,  description: "Share a travel itinerary or a local route worth following.", chips: ["A perfect day in", "My go-to route:", "For first-timers in"] },
-  { id: "event",             label: "Event",            emoji: "📅",  minText: 0,   maxText: 1000, description: "Submit an event to the Moveee calendar — exhibitions, gigs, screenings, markets, and more.", chips: ["Opening night:", "One night only:", "Catch it before it closes:"] },
-  { id: "quote",             label: "Quote",            emoji: "✦",   minText: 10,  maxText: 600,  description: "Share a quote that moved you. Add the author and source below.", chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"] },
+  {
+    id: "post", label: "Post", emoji: "✏️", minText: 1, maxText: 3000,
+    description: "Share news, a link, or a quick thought from your cultural world.",
+    chips: ["Hot take:", "Just saw that", "Anyone else noticed"],
+    placeholder: "What's on your cultural mind?",
+    showPhoto: true, showAt: true, showLocation: false, multiPhoto: false,
+  },
+  {
+    id: "hidden-gem", label: "Hidden Gem", emoji: "💎", minText: 50, maxText: 500,
+    description: "Recommend a place worth discovering — hidden spots, local favourites, underrated venues.",
+    chips: ["Hidden gem alert:", "Not enough people know about", "If you haven't been to"],
+    placeholder: "Tell people why this place is special…",
+    showPhoto: true, showAt: false, showLocation: false, multiPhoto: false,
+  },
+  {
+    id: "cultural-take", label: "Cultural Take", emoji: "💬", minText: 100, maxText: 1000,
+    description: "Share a cultural opinion — a book, film, event, or idea worth discussing.",
+    chips: ["Here's my honest take on", "I finally watched/read", "Why this matters:"],
+    placeholder: "Your take on the culture…",
+    showPhoto: true, showAt: false, showLocation: false, multiPhoto: false,
+  },
+  {
+    id: "food-review", label: "Food Review", emoji: "🍽️", minText: 50, maxText: 500,
+    description: "Review a dish or restaurant. Rate the taste, value, and vibe.",
+    chips: ["Came for the hype, and", "Best thing on the menu:", "Honest review:"],
+    placeholder: "What did you eat and what did you think?",
+    showPhoto: true, showAt: false, showLocation: false, multiPhoto: false,
+  },
+  {
+    id: "creative-showcase", label: "Creative Showcase", emoji: "🎨", minText: 0, maxText: 500,
+    description: "Share your creative work — art, photography, design, or music.",
+    chips: ["Working on something:", "New piece:", "Behind the work:"],
+    placeholder: "Tell us about the work, your process, or inspiration…",
+    showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
+  },
+  {
+    id: "poll", label: "Poll", emoji: "📊", minText: 10, maxText: 280,
+    description: "Ask the community something. Great for settling debates or gathering opinions.",
+    chips: ["Which is better:", "Settle this for me:", "Genuine question:"],
+    placeholder: "Ask the community…",
+    showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
+  },
+  {
+    id: "itinerary", label: "Itinerary", emoji: "🗺️", minText: 0, maxText: 300,
+    description: "Share a travel itinerary or a local route worth following.",
+    chips: ["A perfect day in", "My go-to route:", "For first-timers in"],
+    placeholder: "Set the scene — where is this route and who is it for?",
+    showPhoto: false, showAt: false, showLocation: true, multiPhoto: false,
+  },
+  {
+    id: "event", label: "Event", emoji: "📅", minText: 0, maxText: 1000,
+    description: "Submit an event to the Moveee calendar — exhibitions, gigs, screenings, markets, and more.",
+    chips: ["Opening night:", "One night only:", "Catch it before it closes:"],
+    placeholder: "Describe the event — what makes it worth attending?",
+    showPhoto: true, showAt: false, showLocation: false, multiPhoto: false,
+  },
+  {
+    id: "quote", label: "Quote", emoji: "✦", minText: 10, maxText: 600,
+    description: "Share a quote that moved you. Add the author and source.",
+    chips: ["This has stayed with me:", "Still thinking about this:", "Words I keep returning to:"],
+    placeholder: "The quote…",
+    showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
+  },
 ];
 
 const SECTION_TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"];
@@ -80,6 +139,8 @@ export default function NewPostScreen() {
   const [tagLocked, setTagLocked] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [locationVisible, setLocationVisible] = useState(false);
+  const [itineraryCity, setItineraryCity] = useState("");
 
   // Template-specific state
   const [starRating, setStarRating]   = useState(0);
@@ -119,16 +180,35 @@ export default function NewPostScreen() {
     }
   };
 
-  const pickImages = async (multi = false) => {
+  const switchTemplate = useCallback((id: TemplateId) => {
+    setTemplate(id);
+    setText("");
+    setTagLocked(false);
+    setShowPicker(false);
+    setImages([]);
+    setLocationVisible(false);
+  }, []);
+
+  const pickImages = useCallback(async (multi = false) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: multi,
-      quality: 0.8,
+      quality: 0.85,
     });
     if (!result.canceled) {
-      setImages(result.assets.map((a) => a.uri));
+      setImages(multi ? result.assets.map((a) => a.uri) : [result.assets[0].uri]);
     }
-  };
+  }, []);
+
+  const removeImage = useCallback((i: number) => {
+    setImages((prev) => prev.filter((_, idx) => idx !== i));
+  }, []);
+
+  const insertAt = useCallback(() => {
+    const cur = text;
+    setText(cur + (cur.endsWith(" ") || cur === "" ? "@" : " @"));
+    setTimeout(() => textRef.current?.focus(), 50);
+  }, [text]);
 
   const uploadImages = async (): Promise<string[]> => {
     const urls: string[] = [];
@@ -138,9 +218,7 @@ export default function NewPostScreen() {
         const fileType = fileName.endsWith(".png") ? "image/png" : "image/jpeg";
         const res = await api.upload<{ url: string }>(`${MOBILE_API}/community/upload-image`, uri, fileName, fileType);
         urls.push(res.url);
-      } catch {
-        // skip failed uploads
-      }
+      } catch { /* skip */ }
     }
     return urls;
   };
@@ -188,13 +266,13 @@ export default function NewPostScreen() {
       Alert.alert("Dish details required", "Please add the dish name and taste rating."); return;
     }
     if (template === "creative-showcase" && images.length === 0) {
-      Alert.alert("Media required", "Please add at least one image."); return;
+      Alert.alert("Media required", "Add at least one image of your work."); return;
     }
     if (template === "poll" && poll.options.filter((o) => o.trim()).length < 2) {
       Alert.alert("Poll options required", "Add at least 2 poll options."); return;
     }
     if (template === "itinerary" && stops.filter((s) => s.name.trim()).length < 2) {
-      Alert.alert("Stops required", "Add at least 2 itinerary stops."); return;
+      Alert.alert("Stops required", "Add at least 2 stops."); return;
     }
     if (template === "quote" && !quoteAuthor.trim()) {
       Alert.alert("Author required", "Please enter the quote author."); return;
@@ -270,6 +348,7 @@ export default function NewPostScreen() {
       }
       if (template === "itinerary") {
         body.itinerary_stops = stops.filter((s) => s.name.trim());
+        body.itinerary_city  = itineraryCity.trim() || undefined;
       }
 
       await api.post(`${MOBILE_API}/community/submit`, body);
@@ -282,18 +361,75 @@ export default function NewPostScreen() {
   };
 
   const remaining = tmpl.maxText - text.length;
-  const showGuide = text.length === 0 && template !== "event";
-  const multi = ["hidden-gem", "food-review", "creative-showcase"].includes(template);
   const isSubmitDisabled =
     submitting ||
     (template !== "event" && text.length < tmpl.minText) ||
     (template === "event" && (!eventTitle.trim() || !eventDate));
 
+  // ── Toolbar icon set per template ──────────────────────────────────────────
+  const toolbarIcons = useMemo(() => {
+    const icons: React.ReactNode[] = [];
+
+    if (tmpl.showPhoto) {
+      icons.push(
+        <TouchableOpacity
+          key="photo"
+          onPress={() => pickImages(tmpl.multiPhoto)}
+          style={[styles.toolbarIconBtn, images.length > 0 && styles.toolbarIconActive]}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons
+            name={images.length > 0 ? "camera" : "camera-outline"}
+            size={22}
+            color={images.length > 0 ? c.gold : c.inkSoft}
+          />
+          {images.length > 0 && (
+            <View style={styles.iconBadge}>
+              <Text style={styles.iconBadgeText}>{images.length}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      );
+    }
+
+    if (tmpl.showLocation) {
+      icons.push(
+        <TouchableOpacity
+          key="location"
+          onPress={() => setLocationVisible((v) => !v)}
+          style={[styles.toolbarIconBtn, locationVisible && styles.toolbarIconActive]}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons
+            name={locationVisible ? "location" : "location-outline"}
+            size={22}
+            color={locationVisible ? c.gold : c.inkSoft}
+          />
+        </TouchableOpacity>
+      );
+    }
+
+    if (tmpl.showAt) {
+      icons.push(
+        <TouchableOpacity
+          key="at"
+          onPress={insertAt}
+          style={styles.toolbarIconBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.toolbarAt}>@</Text>
+        </TouchableOpacity>
+      );
+    }
+
+    return icons;
+  }, [tmpl, images.length, locationVisible, c, pickImages, insertAt]);
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
 
-        {/* Header */}
+        {/* ── Header ── */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerSideBtn}>
             <Text style={styles.cancelText}>Cancel</Text>
@@ -311,7 +447,7 @@ export default function NewPostScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Template selector strip */}
+        {/* ── Template selector strip ── */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -322,7 +458,7 @@ export default function NewPostScreen() {
             <TouchableOpacity
               key={t.id}
               style={[styles.templateChip, template === t.id && styles.templateChipActive]}
-              onPress={() => { setTemplate(t.id); setText(""); setTagLocked(false); setShowPicker(false); }}
+              onPress={() => switchTemplate(t.id)}
             >
               <Text style={[styles.templateChipText, template === t.id && styles.templateChipTextActive]}>
                 {t.emoji} {t.label}
@@ -331,190 +467,267 @@ export default function NewPostScreen() {
           ))}
         </ScrollView>
 
-        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        {/* ── Scrollable body ── */}
+        <ScrollView
+          contentContainerStyle={styles.body}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
 
-          {/* Guide chips */}
-          {showGuide && (
-            <View style={styles.guide}>
-              <Text style={styles.guideDesc}>{tmpl.description}</Text>
-              <View style={styles.chips}>
-                {tmpl.chips.map((chip) => (
-                  <TouchableOpacity key={chip} style={styles.chip} onPress={() => { setText(chip + " "); textRef.current?.focus(); }}>
-                    <Text style={styles.chipText}>{chip}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+          {/* ── CREATIVE SHOWCASE: upload zone first ── */}
+          {template === "creative-showcase" && (
+            <TouchableOpacity
+              style={[styles.showcaseUpload, images.length > 0 && styles.showcaseUploadFilled]}
+              onPress={() => pickImages(true)}
+              activeOpacity={0.85}
+            >
+              {images.length === 0 ? (
+                <>
+                  <Ionicons name="camera-outline" size={32} color={c.ochre} />
+                  <Text style={styles.showcaseUploadTitle}>Add your work</Text>
+                  <Text style={styles.showcaseUploadSub}>Photos, screenshots, renders</Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle" size={28} color={c.ochre} />
+                  <Text style={styles.showcaseUploadTitle}>{images.length} image{images.length > 1 ? "s" : ""} ready</Text>
+                  <Text style={styles.showcaseUploadSub}>Tap to change selection</Text>
+                </>
+              )}
+            </TouchableOpacity>
           )}
 
-          {/* Event title */}
-          {template === "event" && (
-            <>
-              {/* Calendar info banner */}
-              <View style={styles.eventBanner}>
-                <Text style={styles.eventBannerText}>📅 This will be added to the Moveee events calendar.</Text>
-              </View>
-              <TextInput
-                style={styles.eventTitleInput}
-                value={eventTitle}
-                onChangeText={setEventTitle}
-                placeholder="Event title"
-                placeholderTextColor={c.ghost}
-                autoFocus
-              />
-            </>
-          )}
-
-          {/* Quote textarea with decorative wrapper */}
+          {/* ── QUOTE: decorative text area ── */}
           {template === "quote" ? (
-            <View style={styles.quoteArea}>
-              <Text style={styles.quoteDecoration}>"</Text>
+            <View style={styles.quoteWrap}>
+              <Text style={styles.quoteDecorationOpen}>"</Text>
               <TextInput
                 ref={textRef}
                 style={styles.quoteTextarea}
                 value={text}
                 onChangeText={handleTextChange}
                 multiline
-                placeholder="The quote text…"
+                placeholder={tmpl.placeholder}
                 placeholderTextColor={c.ghost}
                 maxLength={tmpl.maxText + 50}
               />
-              <Text style={styles.charCountInline}>{remaining} remaining</Text>
+              <Text style={styles.quoteDecorationClose}>"</Text>
             </View>
+          ) : template === "event" ? (
+            /* ── EVENT: title first ── */
+            <>
+              <View style={styles.eventBanner}>
+                <Ionicons name="calendar-outline" size={14} color={c.mute} />
+                <Text style={styles.eventBannerText}>This will be added to the Moveee events calendar.</Text>
+              </View>
+              <TextInput
+                style={styles.eventTitleInput}
+                value={eventTitle}
+                onChangeText={setEventTitle}
+                placeholder="Event title *"
+                placeholderTextColor={c.ghost}
+                autoFocus
+              />
+            </>
           ) : (
-            /* Main textarea for all other templates */
-            template !== "event" || true ? (
+            /* ── ALL OTHER TEMPLATES: starter chips + textarea ── */
+            <>
+              {text.length === 0 && (
+                <View style={styles.guide}>
+                  <Text style={styles.guideDesc}>{tmpl.description}</Text>
+                  <View style={styles.chips}>
+                    {tmpl.chips.map((chip) => (
+                      <TouchableOpacity
+                        key={chip}
+                        style={styles.chip}
+                        onPress={() => { setText(chip + " "); setTimeout(() => textRef.current?.focus(), 50); }}
+                      >
+                        <Text style={styles.chipText}>{chip}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
               <TextInput
                 ref={textRef}
                 style={styles.textarea}
                 value={text}
                 onChangeText={handleTextChange}
                 multiline
-                placeholder={
-                  template === "event"     ? "Event description (optional)…" :
-                  template === "itinerary" ? "Describe this route… where, when, who for?" :
-                  "What's on your cultural mind?"
-                }
+                placeholder={tmpl.placeholder}
                 placeholderTextColor={c.ghost}
                 maxLength={tmpl.maxText + 50}
+                textAlignVertical="top"
               />
-            ) : null
+            </>
           )}
 
-          {/* Char counter (not for quote — shown inline) */}
-          {template !== "quote" && (
-            <Text style={[styles.charCount, remaining < 50 && { color: c.gold }, remaining < 0 && { color: c.ochre }]}>
+          {/* ── Char counter ── */}
+          {template !== "event" && (
+            <Text style={[
+              styles.charCount,
+              remaining < 50 && { color: c.gold },
+              remaining < 0 && { color: c.ochre },
+            ]}>
               {remaining}
             </Text>
           )}
 
-          {/* Quote author + source fields */}
+          {/* ── QUOTE: author + source ── */}
           {template === "quote" && (
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Author</Text>
-              <TextInput style={styles.input} value={quoteAuthor} onChangeText={setQuoteAuthor} placeholder="Author *" placeholderTextColor={c.ghost} />
-              <Text style={[styles.fieldLabel, { marginTop: 8 }]}>Source (optional)</Text>
-              <TextInput style={styles.input} value={quoteSource} onChangeText={setQuoteSource} placeholder="Source (optional)" placeholderTextColor={c.ghost} />
-              {/* Quote category chips */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionTags}>
-                {["📚 Book", "🎙️ Speech", "🎬 Film"].map((cat) => (
-                  <TouchableOpacity key={cat} style={styles.sectionTag}>
-                    <Text style={styles.sectionTagText}>{cat}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <Text style={styles.fieldLabel}>Author *</Text>
+              <TextInput
+                style={styles.input}
+                value={quoteAuthor}
+                onChangeText={setQuoteAuthor}
+                placeholder="Who said this?"
+                placeholderTextColor={c.ghost}
+              />
+              <Text style={[styles.fieldLabel, { marginTop: space[2] }]}>Source</Text>
+              <TextInput
+                style={styles.input}
+                value={quoteSource}
+                onChangeText={setQuoteSource}
+                placeholder="Book, speech, film… (optional)"
+                placeholderTextColor={c.ghost}
+              />
             </View>
           )}
 
-          {/* Directory search */}
-          {(template === "hidden-gem" || template === "cultural-take" || template === "food-review") && (
-            <View style={styles.fieldGroup}>
-              <DirectorySearch selected={linkedEntry} onSelect={setLinkedEntry} label="Link a place" />
-            </View>
-          )}
-
-          {/* Star rating */}
-          {template === "hidden-gem" && (
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Rating *</Text>
-              <StarRating value={starRating} onChange={setStarRating} />
-            </View>
-          )}
-
-          {/* Food fields */}
+          {/* ── FOOD REVIEW: dish name + ratings ── */}
           {template === "food-review" && (
             <View style={styles.fieldGroup}>
-              <TextInput style={styles.input} value={foodDishName} onChangeText={setFoodDishName} placeholder="Dish / item name *" placeholderTextColor={c.ghost} />
-              <Text style={styles.fieldLabel}>Ratings *</Text>
+              <Text style={styles.fieldLabel}>Dish / item *</Text>
+              <TextInput
+                style={styles.input}
+                value={foodDishName}
+                onChangeText={setFoodDishName}
+                placeholder="What did you eat?"
+                placeholderTextColor={c.ghost}
+              />
+              <Text style={[styles.fieldLabel, { marginTop: space[2] }]}>Ratings *</Text>
               <MultiRating ratings={foodRatings} onChange={setFoodRatings} />
             </View>
           )}
 
-          {/* Poll */}
+          {/* ── Directory search (Hidden Gem, Cultural Take, Food Review) ── */}
+          {(template === "hidden-gem" || template === "cultural-take" || template === "food-review") && (
+            <View style={styles.fieldGroup}>
+              <DirectorySearch
+                selected={linkedEntry}
+                onSelect={setLinkedEntry}
+                label={
+                  template === "food-review"  ? "Restaurant / venue" :
+                  template === "cultural-take" ? "Link a place or work (optional)" :
+                  "Link a place *"
+                }
+              />
+            </View>
+          )}
+
+          {/* ── HIDDEN GEM: star rating ── */}
+          {template === "hidden-gem" && (
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Your rating *</Text>
+              <StarRating value={starRating} onChange={setStarRating} />
+            </View>
+          )}
+
+          {/* ── POLL: options builder ── */}
           {template === "poll" && (
             <View style={styles.fieldGroup}>
               <PollBuilder poll={poll} onChange={setPoll} />
             </View>
           )}
 
-          {/* Itinerary */}
+          {/* ── ITINERARY: stops + optional location city ── */}
           {template === "itinerary" && (
-            <View style={styles.fieldGroup}>
-              <ItineraryBuilder stops={stops} onChange={setStops} />
-            </View>
+            <>
+              <View style={styles.fieldGroup}>
+                <ItineraryBuilder stops={stops} onChange={setStops} />
+              </View>
+              {locationVisible && (
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>City / destination</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={itineraryCity}
+                    onChangeText={setItineraryCity}
+                    placeholder="e.g. Lagos, London, Tokyo…"
+                    placeholderTextColor={c.ghost}
+                    autoFocus
+                  />
+                </View>
+              )}
+            </>
           )}
 
-          {/* Event fields */}
+          {/* ── EVENT: date + location + category ── */}
           {template === "event" && (
             <View style={styles.fieldGroup}>
 
               {/* Date rows */}
               <View style={styles.eventDateBlock}>
-                {/* Start date */}
-                <View style={styles.eventDateRow}>
-                  <Text style={styles.eventDateEmoji}>📅</Text>
-                  <Text style={styles.eventDateLabel}>Start date</Text>
-                  <TouchableOpacity style={styles.eventDateInput} onPress={() => openPicker("start", "date")}>
-                    <Text style={[styles.eventDateInputText, !!eventDate && styles.eventDateInputTextSet]}>
-                      {eventDate ? fmtDate(eventDate) : "Set date"}
+                <TouchableOpacity style={styles.eventDateRow} onPress={() => openPicker("start", "date")}>
+                  <View style={styles.eventDateIconWrap}>
+                    <Ionicons name="calendar-outline" size={16} color={c.mute} />
+                  </View>
+                  <View style={styles.eventDateContent}>
+                    <Text style={styles.eventDateRowLabel}>Start date *</Text>
+                    <Text style={[styles.eventDateValue, !!eventDate && styles.eventDateValueSet]}>
+                      {eventDate ? fmtDate(eventDate) : "Select date"}
                     </Text>
-                  </TouchableOpacity>
-                </View>
-                {/* Start time */}
-                <View style={styles.eventDateRow}>
-                  <Text style={styles.eventDateEmoji}>🕐</Text>
-                  <Text style={styles.eventDateLabel}>Start time</Text>
-                  <TouchableOpacity style={styles.eventDateInput} onPress={() => openPicker("start", "time")}>
-                    <Text style={[styles.eventDateInputText, !!eventDate && styles.eventDateInputTextSet]}>
-                      {eventDate ? fmtTime(eventDate) : "Time"}
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={c.ghost} />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.eventDateRow} onPress={() => openPicker("start", "time")}>
+                  <View style={styles.eventDateIconWrap}>
+                    <Ionicons name="time-outline" size={16} color={c.mute} />
+                  </View>
+                  <View style={styles.eventDateContent}>
+                    <Text style={styles.eventDateRowLabel}>Start time *</Text>
+                    <Text style={[styles.eventDateValue, !!eventDate && styles.eventDateValueSet]}>
+                      {eventDate ? fmtTime(eventDate) : "Select time"}
                     </Text>
-                  </TouchableOpacity>
-                </View>
-                {/* End date */}
-                <View style={styles.eventDateRow}>
-                  <Text style={[styles.eventDateEmoji, { opacity: 0.4 }]}>📅</Text>
-                  <Text style={styles.eventDateLabel}>End date</Text>
-                  <TouchableOpacity style={styles.eventDateInput} onPress={() => openPicker("end", "date")}>
-                    <Text style={[styles.eventDateInputText, !!eventEndDate && styles.eventDateInputTextSet]}>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={c.ghost} />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.eventDateRow} onPress={() => openPicker("end", "date")}>
+                  <View style={styles.eventDateIconWrap}>
+                    <Ionicons name="calendar-outline" size={16} color={c.ghost} />
+                  </View>
+                  <View style={styles.eventDateContent}>
+                    <Text style={styles.eventDateRowLabel}>End date</Text>
+                    <Text style={[styles.eventDateValue, !!eventEndDate && styles.eventDateValueSet]}>
                       {eventEndDate ? fmtDate(eventEndDate) : "Optional"}
                     </Text>
-                  </TouchableOpacity>
-                  {eventEndDate && (
-                    <TouchableOpacity onPress={() => setEventEndDate(null)} style={{ paddingLeft: 4 }}>
-                      <Ionicons name="close" size={16} color={c.mute} />
+                  </View>
+                  {eventEndDate ? (
+                    <TouchableOpacity onPress={() => setEventEndDate(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <Ionicons name="close-circle" size={18} color={c.ghost} />
                     </TouchableOpacity>
+                  ) : (
+                    <Ionicons name="chevron-forward" size={16} color={c.ghost} />
                   )}
-                </View>
-                {/* End time */}
-                <View style={styles.eventDateRow}>
-                  <Text style={[styles.eventDateEmoji, { opacity: 0.4 }]}>🕐</Text>
-                  <Text style={styles.eventDateLabel}>End time</Text>
-                  <TouchableOpacity style={styles.eventDateInput} onPress={() => openPicker("end", "time")}>
-                    <Text style={[styles.eventDateInputText, !!eventEndDate && styles.eventDateInputTextSet]}>
-                      {eventEndDate ? fmtTime(eventEndDate) : "Optional"}
-                    </Text>
+                </TouchableOpacity>
+
+                {eventEndDate && (
+                  <TouchableOpacity style={styles.eventDateRow} onPress={() => openPicker("end", "time")}>
+                    <View style={styles.eventDateIconWrap}>
+                      <Ionicons name="time-outline" size={16} color={c.ghost} />
+                    </View>
+                    <View style={styles.eventDateContent}>
+                      <Text style={styles.eventDateRowLabel}>End time</Text>
+                      <Text style={[styles.eventDateValue, styles.eventDateValueSet]}>
+                        {fmtTime(eventEndDate)}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={c.ghost} />
                   </TouchableOpacity>
-                </View>
+                )}
               </View>
 
               {showPicker && (
@@ -533,53 +746,65 @@ export default function NewPostScreen() {
                 </View>
               )}
 
-              {/* Location meta */}
-              <View style={styles.eventMetaBlock}>
-                <View style={styles.eventMetaRow}>
-                  <Text style={styles.eventMetaIcon}>📍</Text>
+              {/* Description textarea */}
+              <TextInput
+                ref={textRef}
+                style={[styles.textarea, { marginTop: space[3] }]}
+                value={text}
+                onChangeText={setText}
+                multiline
+                placeholder="Describe the event — what makes it worth attending? (optional)"
+                placeholderTextColor={c.ghost}
+                maxLength={1000}
+                textAlignVertical="top"
+              />
+
+              {/* Location block */}
+              <View style={styles.locationBlock}>
+                <View style={styles.locationRow}>
+                  <Ionicons name="location-outline" size={16} color={c.mute} style={{ marginTop: 14 }} />
                   <TextInput
                     style={[styles.input, { flex: 1 }]}
                     value={eventVenue}
                     onChangeText={setEventVenue}
-                    placeholder="Venue, address"
+                    placeholder="Venue or address"
                     placeholderTextColor={c.ghost}
                   />
                 </View>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { marginTop: 8 }]}
                   value={eventCity}
                   onChangeText={setEventCity}
                   placeholder="City"
                   placeholderTextColor={c.ghost}
                 />
-                <View style={styles.eventMetaRow}>
-                  <View style={styles.currencyPrefix}>
-                    <Text style={styles.currencyText}>£</Text>
-                  </View>
-                  <TextInput
-                    style={[styles.input, { flex: 1 }]}
-                    value={eventAdmission}
-                    onChangeText={setEventAdmission}
-                    placeholder="Admission (e.g. Free / £15 adv)"
-                    placeholderTextColor={c.ghost}
-                  />
-                </View>
-                <View style={styles.eventMetaRow}>
-                  <Text style={styles.eventMetaIcon}>🔗</Text>
-                  <TextInput
-                    style={[styles.input, { flex: 1 }]}
-                    value={eventTicketUrl}
-                    onChangeText={setEventTicketUrl}
-                    placeholder="https://..."
-                    placeholderTextColor={c.ghost}
-                    autoCapitalize="none"
-                    keyboardType="url"
-                  />
-                </View>
+              </View>
+
+              {/* Admission + ticket URL */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Admission</Text>
+                <TextInput
+                  style={styles.input}
+                  value={eventAdmission}
+                  onChangeText={setEventAdmission}
+                  placeholder="Free / £15 adv / £20 door"
+                  placeholderTextColor={c.ghost}
+                />
+                <Text style={[styles.fieldLabel, { marginTop: space[2] }]}>Tickets / info URL</Text>
+                <TextInput
+                  style={styles.input}
+                  value={eventTicketUrl}
+                  onChangeText={setEventTicketUrl}
+                  placeholder="https://…"
+                  placeholderTextColor={c.ghost}
+                  autoCapitalize="none"
+                  keyboardType="url"
+                />
               </View>
 
               {/* Category chips */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionTags}>
+              <Text style={[styles.fieldLabel, { marginTop: space[3] }]}>Category</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
                 {EVENT_CATEGORIES.map((cat) => (
                   <TouchableOpacity
                     key={cat.id}
@@ -594,20 +819,22 @@ export default function NewPostScreen() {
               </ScrollView>
 
               {/* Organiser */}
-              <DirectorySearch selected={eventOrganiser} onSelect={setEventOrganiser} label="Organiser (optional)" />
+              <View style={{ marginTop: space[3] }}>
+                <DirectorySearch selected={eventOrganiser} onSelect={setEventOrganiser} label="Organiser (optional)" />
+              </View>
             </View>
           )}
 
-          {/* Section tag (not for food-review, quote, or event) */}
+          {/* ── Section tag (most templates) ── */}
           {template !== "food-review" && template !== "quote" && template !== "event" && (
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Section tag</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionTags}>
+              <Text style={styles.fieldLabel}>Section</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
                 {SECTION_TAGS.map((t) => (
                   <TouchableOpacity
                     key={t}
                     style={[styles.sectionTag, sectionTag === t && styles.sectionTagActive]}
-                    onPress={() => { setSectionTag(t); setTagLocked(true); }}
+                    onPress={() => { setSectionTag(sectionTag === t ? null : t); setTagLocked(true); }}
                   >
                     <Text style={[styles.sectionTagText, sectionTag === t && styles.sectionTagTextActive]}>{t}</Text>
                   </TouchableOpacity>
@@ -616,61 +843,41 @@ export default function NewPostScreen() {
             </View>
           )}
 
-          {/* Image picker */}
-          {template !== "poll" && template !== "quote" && (
-            <View style={styles.fieldGroup}>
-              {template === "creative-showcase" ? (
-                /* Showcase: large upload area */
-                <TouchableOpacity style={styles.showcaseUpload} onPress={() => pickImages(true)}>
-                  <Ionicons name="camera-outline" size={28} color={c.ochre} />
-                  <Text style={styles.showcaseUploadText}>Add your work</Text>
-                  <Text style={styles.showcaseUploadSub}>photos, screenshots, renders</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity style={styles.imagePicker} onPress={() => pickImages(multi)}>
-                  <Ionicons name="image-outline" size={20} color={c.mute} />
-                  <Text style={styles.imagePickerText}>
-                    {images.length > 0 ? `${images.length} image${images.length > 1 ? "s" : ""} selected` : "Add image (optional)"}
-                  </Text>
-                </TouchableOpacity>
-              )}
-              {images.length > 0 && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.previewStrip}>
-                  {images.map((uri, i) => (
-                    <View key={i} style={styles.previewWrap}>
-                      <Image source={{ uri }} style={styles.previewThumb} />
-                      <TouchableOpacity style={styles.removeThumb} onPress={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}>
-                        <Ionicons name="close" size={12} color="#fff" />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </ScrollView>
-              )}
-            </View>
-          )}
-
         </ScrollView>
 
-        {/* Bottom media toolbar */}
-        <View style={styles.toolbar}>
-          <View style={styles.toolbarIcons}>
-            <TouchableOpacity onPress={() => pickImages(multi)}>
-              <Ionicons name="camera-outline" size={24} color={template === "creative-showcase" ? c.ochre : c.mute} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Ionicons name="attach-outline" size={24} color={c.mute} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Ionicons name="location-outline" size={24} color={c.mute} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Ionicons name="happy-outline" size={24} color={c.mute} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Text style={styles.toolbarAt}>@</Text>
-            </TouchableOpacity>
+        {/* ── Image preview strip (above toolbar, only when images selected) ── */}
+        {images.length > 0 && template !== "creative-showcase" && (
+          <View style={styles.previewStrip}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, padding: 8 }}>
+              {images.map((uri, i) => (
+                <View key={i} style={styles.previewWrap}>
+                  <Image source={{ uri }} style={styles.previewThumb} />
+                  <TouchableOpacity style={styles.removeThumb} onPress={() => removeImage(i)}>
+                    <Ionicons name="close" size={11} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+              <TouchableOpacity style={styles.addMoreBtn} onPress={() => pickImages(tmpl.multiPhoto)}>
+                <Ionicons name="add" size={20} color={c.mute} />
+              </TouchableOpacity>
+            </ScrollView>
           </View>
-          <Text style={styles.toolbarCount}>{remaining} remaining</Text>
+        )}
+
+        {/* ── Bottom toolbar ── */}
+        <View style={styles.toolbar}>
+          <View style={styles.toolbarLeft}>
+            {toolbarIcons}
+          </View>
+          {template !== "event" && (
+            <Text style={[
+              styles.toolbarCount,
+              remaining < 50 && { color: c.gold },
+              remaining < 0 && { color: c.ochre },
+            ]}>
+              {remaining} left
+            </Text>
+          )}
         </View>
 
       </KeyboardAvoidingView>
@@ -680,170 +887,186 @@ export default function NewPostScreen() {
 
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({
-  container: { flex: 1, backgroundColor: c.paper },
+    container: { flex: 1, backgroundColor: c.paper },
 
-  // Header
-  header: {
-    height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: space[4], borderBottomWidth: 1, borderBottomColor: c.ghost,
-    backgroundColor: c.paper,
-  },
-  headerSideBtn:   { minWidth: 44, minHeight: 44, justifyContent: "center" },
-  headerTitle:     { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
-  cancelText:      { fontFamily: fonts.sans, fontSize: 14, color: c.ochre },
-  postText:        { fontFamily: fonts.sansBold, fontSize: 14, color: c.ochre, textAlign: "right" },
-  postTextDisabled:{ opacity: 0.35 },
+    // Header
+    header: {
+      height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], borderBottomWidth: 1, borderBottomColor: c.rule,
+      backgroundColor: c.paper,
+    },
+    headerSideBtn:    { minWidth: 60, minHeight: 44, justifyContent: "center" },
+    headerTitle:      { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
+    cancelText:       { fontFamily: fonts.sans, fontSize: 14, color: c.ochre },
+    postText:         { fontFamily: fonts.sansBold, fontSize: 14, color: c.ochre, textAlign: "right" },
+    postTextDisabled: { opacity: 0.35 },
 
-  // Template strip
-  templateStrip:        { flexGrow: 0, maxHeight: 48, borderBottomWidth: 1, borderBottomColor: c.ghost, backgroundColor: c.paper },
-  templateStripContent: { paddingHorizontal: space[4], alignItems: "center", gap: 8 },
-  templateChip: {
-    height: 36, paddingHorizontal: 10, borderRadius: radius.full,
-    backgroundColor: c.paperDeep, justifyContent: "center",
-  },
-  templateChipActive:     { backgroundColor: c.ochre },
-  templateChipText:       { fontFamily: fonts.sansBold, fontSize: 12, color: c.inkSoft },
-  templateChipTextActive: { color: c.paper },
+    // Template strip
+    templateStrip:        { flexGrow: 0, maxHeight: 48, borderBottomWidth: 1, borderBottomColor: c.rule, backgroundColor: c.paper },
+    templateStripContent: { paddingHorizontal: space[3], alignItems: "center", gap: 6 },
+    templateChip: {
+      height: 34, paddingHorizontal: 12, borderRadius: radius.full,
+      backgroundColor: c.paperDeep, justifyContent: "center",
+    },
+    templateChipActive:     { backgroundColor: c.ochre },
+    templateChipText:       { fontFamily: fonts.sansBold, fontSize: 12, color: c.inkSoft },
+    templateChipTextActive: { color: "#fff" },
 
-  body: { padding: space[4], paddingBottom: 100 },
+    // Scroll body
+    body: { padding: space[4], paddingBottom: 24 },
 
-  // Guide
-  guide:     { marginBottom: space[3] },
-  guideDesc: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, marginBottom: space[2] },
-  chips:     { flexDirection: "row", flexWrap: "wrap", gap: space[2] },
-  chip: {
-    backgroundColor: c.paperDeep, borderRadius: radius.full,
-    paddingHorizontal: 12, paddingVertical: 6,
-  },
-  chipText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
+    // Guide / starter chips
+    guide:     { marginBottom: space[3] },
+    guideDesc: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, lineHeight: 20, marginBottom: space[2] },
+    chips:     { flexDirection: "row", flexWrap: "wrap", gap: space[2] },
+    chip: {
+      backgroundColor: c.paperDeep, borderRadius: radius.full,
+      paddingHorizontal: 14, paddingVertical: 7,
+    },
+    chipText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
 
-  // Textarea
-  textarea: {
-    fontFamily: fonts.sans, fontSize: 15, color: c.ink,
-    lineHeight: 24, minHeight: 100, textAlignVertical: "top",
-  },
-  charCount: {
-    fontFamily: fonts.mono, fontSize: 11, color: c.mute,
-    textAlign: "right", marginBottom: space[2],
-  },
+    // Main textarea
+    textarea: {
+      fontFamily: fonts.sans, fontSize: 16, color: c.ink,
+      lineHeight: 26, minHeight: 120,
+    },
+    charCount: {
+      fontFamily: fonts.mono, fontSize: 11, color: c.ghost,
+      textAlign: "right", marginTop: 4, marginBottom: space[1],
+    },
 
-  // Quote area
-  quoteArea: {
-    backgroundColor: c.paperWarm, padding: 16,
-    borderRadius: radius.md, minHeight: 140, marginBottom: space[3], position: "relative",
-  },
-  quoteDecoration: {
-    position: "absolute", top: 4, left: 12,
-    fontFamily: fonts.serif, fontSize: 40, color: c.ghost, opacity: 0.4, lineHeight: 44,
-  },
-  quoteTextarea: {
-    fontFamily: fonts.serif, fontSize: 16, fontStyle: "italic", color: c.ink,
-    lineHeight: 26, minHeight: 100, textAlignVertical: "top", marginTop: 16,
-    backgroundColor: "transparent",
-  },
-  charCountInline: {
-    fontFamily: fonts.mono, fontSize: 11, color: c.mute, textAlign: "right", marginTop: 4,
-  },
+    // Quote
+    quoteWrap: {
+      backgroundColor: c.paperWarm, borderRadius: radius.xl,
+      padding: space[4], paddingTop: space[6], marginBottom: space[3], position: "relative",
+    },
+    quoteDecorationOpen: {
+      position: "absolute", top: 2, left: 14,
+      fontFamily: fonts.serif, fontSize: 52, color: c.ghost, opacity: 0.35, lineHeight: 56,
+    },
+    quoteDecorationClose: {
+      fontFamily: fonts.serif, fontSize: 52, color: c.ghost, opacity: 0.35,
+      textAlign: "right", lineHeight: 28, marginTop: 4,
+    },
+    quoteTextarea: {
+      fontFamily: fonts.serif, fontSize: 18, fontStyle: "italic", color: c.ink,
+      lineHeight: 28, minHeight: 100, textAlignVertical: "top",
+    },
 
-  // Fields
-  fieldGroup: { marginTop: 12, gap: 8 },
-  fieldLabel: {
-    fontFamily: fonts.mono, fontSize: 12, color: c.mute,
-    letterSpacing: 0.8, textTransform: "uppercase",
-  },
-  input: {
-    height: 44, fontFamily: fonts.sans, fontSize: 14, color: c.ink,
-    borderWidth: 1, borderColor: c.ghost, borderRadius: 8,
-    paddingHorizontal: 16, backgroundColor: c.paper,
-  },
+    // Creative showcase upload zone
+    showcaseUpload: {
+      height: 150, borderWidth: 1.5, borderColor: c.rule, borderRadius: radius.xl,
+      borderStyle: "dashed", backgroundColor: c.paperDeep,
+      alignItems: "center", justifyContent: "center", gap: 6,
+      marginBottom: space[3],
+    },
+    showcaseUploadFilled: {
+      borderColor: c.gold, borderStyle: "solid",
+      backgroundColor: "rgba(179,130,56,0.06)",
+    },
+    showcaseUploadTitle: { fontFamily: fonts.sansBold, fontSize: 15, color: c.inkSoft },
+    showcaseUploadSub:   { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
 
-  // Section tags
-  sectionTags: { gap: 8, paddingVertical: 2 },
-  sectionTag: {
-    height: 32, paddingHorizontal: 16, borderRadius: radius.full,
-    borderWidth: 1, borderColor: c.ghost, backgroundColor: c.paper,
-    justifyContent: "center",
-  },
-  sectionTagActive:     { backgroundColor: c.ink, borderColor: c.ink },
-  sectionTagText:       { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
-  sectionTagTextActive: { color: c.paper, fontFamily: fonts.sansBold },
+    // Event
+    eventBanner: {
+      flexDirection: "row", alignItems: "center", gap: 6,
+      backgroundColor: c.paperDeep, borderRadius: radius.md,
+      paddingVertical: 10, paddingHorizontal: 12, marginBottom: space[3],
+    },
+    eventBannerText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, flex: 1 },
+    eventTitleInput: {
+      fontFamily: fonts.serifBold, fontSize: 20, color: c.ink,
+      paddingVertical: 10, borderBottomWidth: 1.5, borderBottomColor: c.rule,
+      marginBottom: space[2],
+    },
+    eventDateBlock: {
+      borderWidth: 1, borderColor: c.rule, borderRadius: radius.lg,
+      overflow: "hidden", marginBottom: space[3],
+    },
+    eventDateRow: {
+      flexDirection: "row", alignItems: "center", gap: 10,
+      paddingHorizontal: space[3], paddingVertical: space[3],
+      borderBottomWidth: 1, borderBottomColor: c.rule,
+      backgroundColor: c.paper,
+    },
+    eventDateIconWrap: { width: 28, alignItems: "center" },
+    eventDateContent:  { flex: 1 },
+    eventDateRowLabel: { fontFamily: fonts.mono, fontSize: 10, color: c.mute, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 2 },
+    eventDateValue:    { fontFamily: fonts.sans, fontSize: 14, color: c.ghost },
+    eventDateValueSet: { color: c.ink, fontFamily: fonts.sansBold },
 
-  // Event styles
-  eventBanner: {
-    backgroundColor: c.paperDeep, borderRadius: 8,
-    padding: 10, marginBottom: 12,
-  },
-  eventBannerText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
-  eventTitleInput: {
-    height: 52, fontFamily: fonts.sansBold, fontSize: 17, color: c.ink,
-    borderWidth: 1, borderColor: c.ghost, borderRadius: 8,
-    paddingHorizontal: 16, backgroundColor: c.paper, marginBottom: 12,
-  },
-  eventDateBlock:   { gap: 10, marginBottom: 12 },
-  eventDateRow:     { flexDirection: "row", alignItems: "center", gap: 8 },
-  eventDateEmoji:   { fontSize: 16, width: 20, textAlign: "center" },
-  eventDateLabel:   { fontFamily: fonts.sans, fontSize: 12, color: c.mute, width: 72 },
-  eventDateInput: {
-    flex: 1, height: 48, borderWidth: 1, borderColor: c.ghost,
-    borderRadius: 8, paddingHorizontal: 12, backgroundColor: c.paper,
-    justifyContent: "center",
-  },
-  eventDateInputText:    { fontFamily: fonts.sans, fontSize: 14, color: c.ghost },
-  eventDateInputTextSet: { color: c.ink },
-  eventMetaBlock:  { gap: 10, marginBottom: 12 },
-  eventMetaRow:    { flexDirection: "row", alignItems: "center", gap: 8 },
-  eventMetaIcon:   { fontSize: 16, width: 24, textAlign: "center" },
-  currencyPrefix: {
-    backgroundColor: c.paperDeep, borderRadius: 4,
-    paddingHorizontal: 8, paddingVertical: 4,
-  },
-  currencyText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.inkSoft },
+    locationBlock:   { gap: 8, marginBottom: space[2] },
+    locationRow:     { flexDirection: "row", alignItems: "flex-start", gap: 8 },
 
-  // Image pickers
-  imagePicker: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    height: 48, borderWidth: 1, borderColor: c.ghost, borderRadius: 8,
-    paddingHorizontal: 16, backgroundColor: c.paper,
-  },
-  imagePickerText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute },
-  showcaseUpload: {
-    height: 140, borderWidth: 1, borderColor: c.ghost, borderRadius: 12,
-    borderStyle: "dashed", backgroundColor: c.paperDeep,
-    alignItems: "center", justifyContent: "center", gap: 6,
-  },
-  showcaseUploadText: { fontFamily: fonts.sansBold, fontSize: 14, color: c.inkSoft },
-  showcaseUploadSub:  { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
-  previewStrip: { marginTop: 8 },
-  previewWrap:  { position: "relative", marginRight: 8 },
-  previewThumb: { width: 72, height: 72, borderRadius: 8 },
-  removeThumb: {
-    position: "absolute", top: 4, right: 4,
-    backgroundColor: "rgba(0,0,0,0.55)", borderRadius: 8, padding: 2,
-  },
+    // Common fields
+    fieldGroup: { marginTop: space[3], gap: 6 },
+    fieldLabel: {
+      fontFamily: fonts.mono, fontSize: 11, color: c.mute,
+      letterSpacing: 0.8, textTransform: "uppercase",
+    },
+    input: {
+      height: 46, fontFamily: fonts.sans, fontSize: 14, color: c.ink,
+      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
+      paddingHorizontal: 14, backgroundColor: c.paper,
+    },
 
-  // Date picker
-  pickerWrap: {
-    borderWidth: 1, borderColor: c.ghost, borderRadius: 8,
-    overflow: "hidden", backgroundColor: c.paperDeep,
-  },
-  iosDoneBtn: {
-    alignSelf: "flex-end", margin: 8,
-    backgroundColor: c.ink, borderRadius: 6,
-    paddingHorizontal: 12, paddingVertical: 4,
-  },
-  iosDoneBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
+    // Section / category tags
+    chipRow: { gap: 8, paddingVertical: 4 },
+    sectionTag: {
+      height: 34, paddingHorizontal: 16, borderRadius: radius.full,
+      borderWidth: 1, borderColor: c.rule, backgroundColor: c.paper,
+      justifyContent: "center",
+    },
+    sectionTagActive:     { backgroundColor: c.ink, borderColor: c.ink },
+    sectionTagText:       { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft },
+    sectionTagTextActive: { color: c.paper, fontFamily: fonts.sansBold },
 
-  // Bottom toolbar
-  toolbar: {
-    height: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: c.paper, borderTopWidth: 1, borderTopColor: c.ghost,
-    paddingHorizontal: 16,
-  },
-  toolbarIcons: { flexDirection: "row", alignItems: "center", gap: 20 },
-  toolbarAt: {
-    fontFamily: fonts.sans, fontSize: 20, color: c.mute,
-    lineHeight: 24, includeFontPadding: false,
-  },
-  toolbarCount: { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
+    // Date picker
+    pickerWrap: {
+      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
+      overflow: "hidden", backgroundColor: c.paperDeep, marginBottom: space[2],
+    },
+    iosDoneBtn: {
+      alignSelf: "flex-end", margin: 8,
+      backgroundColor: c.ink, borderRadius: radius.md,
+      paddingHorizontal: 14, paddingVertical: 6,
+    },
+    iosDoneBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
+
+    // Image preview strip
+    previewStrip: {
+      borderTopWidth: 1, borderTopColor: c.rule,
+      backgroundColor: c.paper,
+    },
+    previewWrap:  { position: "relative" },
+    previewThumb: { width: 64, height: 64, borderRadius: radius.md },
+    removeThumb: {
+      position: "absolute", top: 3, right: 3,
+      backgroundColor: "rgba(0,0,0,0.6)", borderRadius: 8, padding: 3,
+    },
+    addMoreBtn: {
+      width: 64, height: 64, borderRadius: radius.md,
+      borderWidth: 1, borderColor: c.rule, borderStyle: "dashed",
+      alignItems: "center", justifyContent: "center",
+      backgroundColor: c.paperDeep,
+    },
+
+    // Bottom toolbar
+    toolbar: {
+      minHeight: 50, flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      backgroundColor: c.paper, borderTopWidth: 1, borderTopColor: c.rule,
+      paddingHorizontal: space[4], paddingVertical: space[2],
+    },
+    toolbarLeft:       { flexDirection: "row", alignItems: "center", gap: 20 },
+    toolbarIconBtn:    { position: "relative" },
+    toolbarIconActive: {},
+    iconBadge: {
+      position: "absolute", top: -6, right: -8,
+      backgroundColor: c.ochre, borderRadius: 8,
+      minWidth: 16, height: 16, alignItems: "center", justifyContent: "center", paddingHorizontal: 3,
+    },
+    iconBadgeText: { fontFamily: fonts.monoBold, fontSize: 9, color: "#fff" },
+    toolbarAt:    { fontFamily: fonts.sansBold, fontSize: 18, color: c.inkSoft, lineHeight: 22 },
+    toolbarCount: { fontFamily: fonts.mono, fontSize: 12, color: c.ghost },
   });
 }
