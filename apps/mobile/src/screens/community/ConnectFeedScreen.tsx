@@ -15,6 +15,14 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useUnifiedFeed } from "../../features/community/useUnifiedFeed";
 import { useNotificationCount } from "../../features/notifications/useNotificationCount";
+import { useThemeStore } from "../../store/themeStore";
+import { useColorScheme } from "react-native";
+
+const LOGO_LIGHT = require("../../../assets/logo-black.png");
+const LOGO_DARK  = require("../../../assets/logo-white.png");
+// Logo natural size: 717×107 — render at 26px height → ~160px wide
+const LOGO_H = 26;
+const LOGO_W = Math.round((717 / 107) * LOGO_H);
 import {
   rankFeed,
   getTrending,
@@ -65,6 +73,9 @@ export default function ConnectFeedScreen() {
   const { user } = useAuthStore();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const { mode } = useThemeStore();
+  const systemScheme = useColorScheme();
+  const isDark = mode === "dark" || (mode === "system" && systemScheme === "dark");
   const {
     items,
     refreshing,
@@ -200,8 +211,11 @@ export default function ConnectFeedScreen() {
         {/* ── AppHeader ─────────────────────────────────────────── */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.headerLogo}>moveee</Text>
-            <Text style={styles.headerSubtitle}>connect</Text>
+            <Image
+              source={isDark ? LOGO_DARK : LOGO_LIGHT}
+              style={{ width: LOGO_W, height: LOGO_H }}
+              resizeMode="contain"
+            />
           </View>
           <View style={styles.headerRight}>
             {/* Ghost refresh */}
@@ -449,13 +463,8 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     backgroundColor: c.paper,
     ...shadows.card,
   },
-  headerLeft: { flexDirection: "row", alignItems: "flex-end" },
-  headerLogo: {
-    fontFamily: fonts.serifBold,
-    fontSize: fontSize.lg,
-    color: c.ink,
-  },
-  headerSubtitle: {
+  headerLeft: { flexDirection: "row", alignItems: "center" },
+  _unused_headerSubtitle: {
     fontFamily: fonts.sansBold,
     fontSize: fontSize.tiny,
     color: c.gold,

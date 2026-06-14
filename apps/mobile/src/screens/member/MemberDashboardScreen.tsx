@@ -4,11 +4,18 @@ import {
   ScrollView, Share, Alert, Animated, Modal,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
+import { useThemeStore } from "../../store/themeStore";
 import RewardsInfoSheet from "../../components/member/RewardsInfoSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+
+const LOGO_LIGHT = require("../../../assets/logo-black.png");
+const LOGO_DARK  = require("../../../assets/logo-white.png");
+const LOGO_H = 26;
+const LOGO_W = Math.round((717 / 107) * LOGO_H);
 import { SignOutDialog } from "../../components/ui/Overlays";
 
 // ── Reputation tiers ──────────────────────────────────────────────────────────
@@ -160,6 +167,9 @@ export default function MemberDashboardScreen() {
   const [rewardsSheet, setRewardsSheet] = useState<{ visible: boolean; tab: "credits" | "reputation" }>({ visible: false, tab: "credits" });
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const { mode } = useThemeStore();
+  const systemScheme = useColorScheme();
+  const isDark = mode === "dark" || (mode === "system" && systemScheme === "dark");
 
   if (!user) return null;
 
@@ -185,8 +195,11 @@ export default function MemberDashboardScreen() {
       <View style={styles.header}>
         <View style={styles.headerSpacer} />
         <View style={styles.headerCenter}>
-          <Text style={styles.headerWordmark}>moveee</Text>
-          <Text style={styles.headerSub}>connect</Text>
+          <Image
+            source={isDark ? LOGO_DARK : LOGO_LIGHT}
+            style={{ width: LOGO_W, height: LOGO_H }}
+            resizeMode="contain"
+          />
         </View>
         <TouchableOpacity style={styles.headerRight} onPress={() => setSignOutVisible(true)}>
           <Text style={styles.headerSignOut}>Sign out</Text>
@@ -434,23 +447,8 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   headerCenter: {
     flex: 1,
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "center",
-  },
-  headerWordmark: {
-    fontFamily: fonts.serifBold,
-    fontSize: 16,
-    color: c.ink,
-    lineHeight: 20,
-  },
-  headerSub: {
-    fontFamily: fonts.sansBold,
-    fontSize: 8,
-    color: c.gold,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginLeft: 2,
-    marginTop: 2,
   },
   headerRight: { width: 60, alignItems: "flex-end" },
   headerSignOut: {
