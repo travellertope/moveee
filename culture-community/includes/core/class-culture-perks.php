@@ -15,7 +15,9 @@ class Culture_Perks {
     // ── Constants ─────────────────────────────────────────────────────────────
 
     /** Credits-to-GBP conversion rate (credits per £1). Overridden by option. */
-    const DEFAULT_CREDITS_PER_GBP = 10;
+    const DEFAULT_CREDITS_PER_GBP = 200;
+    const DEFAULT_CREDITS_PER_USD = 150;
+    const DEFAULT_CREDITS_PER_NGN = 88; // per ₦1,000
 
     // ── HMAC helper ───────────────────────────────────────────────────────────
 
@@ -395,13 +397,27 @@ class Culture_Perks {
         $fee_credits = (int) round( $credits * $fee_pct / 100 );
         $net_credits = $credits - $fee_credits;
 
-        // Credits per GBP (stored in pence for precision; divided by 100 for display).
-        $credits_per_gbp = (int) get_option( 'culture_credits_per_gbp', self::DEFAULT_CREDITS_PER_GBP );
-        if ( $credits_per_gbp <= 0 ) {
-            $credits_per_gbp = self::DEFAULT_CREDITS_PER_GBP;
+        // Determine credits-per-unit based on requested currency.
+        switch ( strtoupper( $currency ) ) {
+            case 'USD':
+                $rate = (int) get_option( 'culture_credits_per_usd', self::DEFAULT_CREDITS_PER_USD );
+                if ( $rate <= 0 ) $rate = self::DEFAULT_CREDITS_PER_USD;
+                // cashout_amount stored as integer cents.
+                $cashout_amount = (int) round( ( $net_credits / $rate ) * 100 );
+                break;
+            case 'NGN':
+                $rate = (int) get_option( 'culture_credits_per_ngn', self::DEFAULT_CREDITS_PER_NGN );
+                if ( $rate <= 0 ) $rate = self::DEFAULT_CREDITS_PER_NGN;
+                // cashout_amount stored as integer kobo (per ₦1,000 basis → ×100,000).
+                $cashout_amount = (int) round( ( $net_credits / $rate ) * 100000 );
+                break;
+            default: // GBP
+                $rate = (int) get_option( 'culture_credits_per_gbp', self::DEFAULT_CREDITS_PER_GBP );
+                if ( $rate <= 0 ) $rate = self::DEFAULT_CREDITS_PER_GBP;
+                // cashout_amount stored as integer pence.
+                $cashout_amount = (int) round( ( $net_credits / $rate ) * 100 );
+                break;
         }
-        // cashout_amount stored as integer pence.
-        $cashout_amount = (int) round( ( $net_credits / $credits_per_gbp ) * 100 );
 
         // Deduct credits.
         $new_balance = Culture_Gamification::deduct_credits( $user_id, $credits, 'cashout', 0 );

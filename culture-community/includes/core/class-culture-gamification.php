@@ -322,20 +322,19 @@ class Culture_Gamification {
      */
     const CREDIT_BONUSES = array(
         'event_rsvp'            => 1,
-        'event_checkin'         => 2,
-        'referral'              => 3,
+        'event_checkin'         => 3,
+        'referral'              => 5,
         'newsletter_comment'    => 1,
         'quote_submission'      => 1,
         'magazine_read'         => 1,
-        'magazine_share'        => 1,
-        'directory_entry'       => 2,
+        'magazine_share'        => 2,
+        'directory_entry'       => 3,
         'game_completed'        => 1,
-        // New actions
         'community_post'        => 2,
-        'profile_completed'     => 5,
+        'profile_completed'     => 10,
         'email_verified'        => 2,
         'directory_opt_in'      => 2,
-        'newsletter_subscribed' => 1,
+        'newsletter_subscribed' => 2,
     );
 
     const DAILY_CREDIT_CAP = 50;
@@ -626,8 +625,8 @@ class Culture_Gamification {
         // Determine credit/reputation amount by template type.
         $template = get_post_meta( $post_id, '_template_type', true ) ?: 'post';
         $credit_amounts = array(
-            'post'              => array( 'credits' => 10, 'reputation' => 5 ),
-            'hidden-gem'        => array( 'credits' => 15, 'reputation' => 10 ),
+            'post'              => array( 'credits' => 10, 'reputation' => 5 ),  // overridable via culture_credits_post_validated_standard
+            'hidden-gem'        => array( 'credits' => 20, 'reputation' => 10 ),
             'cultural-take'     => array( 'credits' => 12, 'reputation' => 8 ),
             'food-review'       => array( 'credits' => 15, 'reputation' => 10 ),
             'creative-showcase' => array( 'credits' => 12, 'reputation' => 8 ),
