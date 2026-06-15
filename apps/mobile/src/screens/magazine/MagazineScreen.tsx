@@ -12,6 +12,7 @@ import {
   TextInput,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import { useMagazine, type MagazineSection } from "../../features/magazine/useMagazine";
 import { useNewsletters, type NewsletterSummary } from "../../features/magazine/useNewsletters";
 import type { Article } from "../../types";
@@ -376,9 +377,11 @@ export default function MagazineScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Magazine</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerBtn} onPress={openSearch}>
-            {/* Search icon */}
-            <Text style={styles.headerIcon}>⌕</Text>
+          <TouchableOpacity style={styles.headerBtn} onPress={() => nav.navigate("MagazineSearch")}>
+            <Ionicons name="search-outline" size={22} color={c.ink} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerBtn} onPress={() => nav.navigate("Connect", { screen: "SavedArticles" } as any)}>
+            <Ionicons name="bookmark-outline" size={22} color={c.ink} />
           </TouchableOpacity>
         </View>
       </View>
@@ -478,8 +481,7 @@ function createStyles(c: ColorPalette) {
     },
     headerTitle: { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink },
     headerActions: { flexDirection: "row", alignItems: "center", gap: space[4] },
-    headerBtn: { position: "relative", width: 32, height: 32, alignItems: "center", justifyContent: "center" },
-    headerIcon: { fontSize: 20, color: c.ink },
+    headerBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
     // Category strip
     catStripWrap: {
       backgroundColor: c.paperWarm,
@@ -614,9 +616,9 @@ function createStyles(c: ColorPalette) {
       letterSpacing: 1,
       textTransform: "uppercase",
     },
-    cardBody: { padding: 12, flex: 1, justifyContent: "space-between" },
-    cardTitle: { fontFamily: fonts.sansBold ?? fonts.sans, fontSize: 14, color: c.ink, lineHeight: 18 },
-    cardMeta: { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: c.ghost, marginTop: "auto" },
+    cardBody: { padding: 12, flex: 1 },
+    cardTitle: { fontFamily: fonts.sansBold ?? fonts.sans, fontSize: 14, color: c.ink, lineHeight: 18, marginBottom: 6 },
+    cardMeta: { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: c.ghost },
 
     // Visuals (vertical list)
     visualsList: { paddingHorizontal: space[4], gap: 12 },
