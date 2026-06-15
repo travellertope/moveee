@@ -256,7 +256,6 @@ export default async function CommunityPostPage({
                 {/* Post text + reactions + comments (client) */}
                 <CommunityPostClient
                   text={rawText}
-                  hashtags={hashtags}
                   wpId={String(post.id)}
                   postId={post.id}
                   initialReactions={{

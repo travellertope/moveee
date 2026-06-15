@@ -59,7 +59,6 @@ function PollDisplay({ postId, options, expiresAt }: { postId: string; options: 
 
 interface Props {
   text: string;
-  hashtags: string[];
   wpId: string;
   postId: number;
   initialReactions: { love: number; fire: number; clap: number };
