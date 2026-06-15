@@ -13,17 +13,23 @@ import type { ColorPalette } from "../../theme";
 const CITIZEN_PERKS = [
   "Pulse feed & community posts",
   "Member directory listing",
-  "Online event access",
+  "All events — online & in-person",
   "GetMeLit & Culture Drop newsletters",
+  "1 game play per day",
+  "50 culture credits per day",
   "Culture points & badges",
 ];
 
 const PRO_PERKS = [
   "Everything in Connect Citizen, plus:",
-  "Connect Pro badge on posts",
-  "Exclusive gated content & editorials",
-  "Early access to product drops",
-  "Pro pricing on Moveee Shop",
+  "Patron-only articles & editorials",
+  "10% off in the Moveee Shop",
+  "Early access to new product drops",
+  "Cash out your credits",
+  "100 culture credits per day",
+  "5 game plays per day",
+  "Poll & itinerary post templates",
+  "Connect Pro badge on profile & posts",
   "Early access to new features",
 ];
 
