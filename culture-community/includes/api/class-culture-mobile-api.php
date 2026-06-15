@@ -2922,13 +2922,12 @@ class Culture_Mobile_API {
             return rest_ensure_response( array( 'products' => array() ) );
         }
 
-        // Product IDs stored as comma-separated post meta
-        $meta_ids = get_post_meta( $post->ID, '_article_products', true );
-        if ( empty( $meta_ids ) ) {
+        // Product IDs stored as JSON array in _culture_featured_products post meta
+        $raw = get_post_meta( $post->ID, '_culture_featured_products', true );
+        $product_ids = $raw ? array_filter( array_map( 'absint', (array) json_decode( $raw, true ) ) ) : array();
+        if ( empty( $product_ids ) ) {
             return rest_ensure_response( array( 'products' => array() ) );
         }
-
-        $product_ids = array_filter( array_map( 'absint', explode( ',', (string) $meta_ids ) ) );
         if ( empty( $product_ids ) || ! function_exists( 'wc_get_product' ) ) {
             return rest_ensure_response( array( 'products' => array() ) );
         }
