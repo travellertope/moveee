@@ -882,9 +882,9 @@ function PulseCard({ item, onPress }: FeedCardProps) {
             {item.source ? (
               <Text style={[styles.sourceText, { marginTop: 4 }]}>🌐 {item.source}</Text>
             ) : null}
-            {(item.excerpt || item.ogDescription) ? (
+            {(item.body || item.excerpt || item.ogDescription) ? (
               <Text style={{ fontFamily: fonts.sans, fontSize: 13, color: c.mute, lineHeight: 19, marginTop: 5 }} numberOfLines={3}>
-                {item.excerpt || item.ogDescription}
+                {item.body || item.excerpt || item.ogDescription}
               </Text>
             ) : null}
           </View>
