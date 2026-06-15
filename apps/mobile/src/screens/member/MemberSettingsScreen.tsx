@@ -8,7 +8,11 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import * as Passkeys from "react-native-passkeys";
+// try/catch: real module in EAS builds, no-op stub in Expo Go (native binary not bundled)
+let Passkeys: { isSupported: () => boolean; create: (o: unknown) => Promise<unknown>; get: (o: unknown) => Promise<unknown> } = {
+  isSupported: () => false, create: async () => null, get: async () => null,
+};
+try { Passkeys = require("react-native-passkeys"); } catch {}
 import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
 
