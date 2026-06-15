@@ -189,10 +189,7 @@ export default function ConnectFeedScreen() {
       setSheetItem(item);
       return;
     }
-    if (item.type === "pulse") {
-      nav.navigate("PulseDetail", { item });
-      return;
-    }
+
     if (item.type === "editorial") {
       // Stay within ConnectStack so back → feed and Magazine tab is never polluted.
       nav.navigate("Article", { slug: item.slug });

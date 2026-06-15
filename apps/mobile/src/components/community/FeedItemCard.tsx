@@ -21,6 +21,7 @@ import ImageLightbox from "../ui/ImageLightbox";
 import HappeningDetailModal from "./HappeningDetailModal";
 import DirectoryDetailModal from "./DirectoryDetailModal";
 import QuoteDetailModal from "./QuoteDetailModal";
+import PulseDetailSheet from "./PulseDetailSheet";
 import { ReportSheet } from "../ui/Overlays";
 import type { FeedItem, PollOption } from "../../types";
 
@@ -864,13 +865,14 @@ function GalleryStrip({ images, height, width, onTap }: {
 // ── Card Implementations ──────────────────────────────────────────────────────
 
 // PulseCard (A3 in design — compact with ⚡ icon)
-function PulseCard({ item, onPress }: FeedCardProps) {
+function PulseCard({ item }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   return (
     <>
-      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
+      <TouchableOpacity style={styles.card} onPress={() => setSheetOpen(true)} activeOpacity={0.92}>
         <View style={{ padding: 14, flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
           <Text style={{ fontSize: 20, color: c.ochre, lineHeight: 24, paddingTop: 2 }}>⚡</Text>
           <View style={{ flex: 1 }}>
@@ -896,6 +898,7 @@ function PulseCard({ item, onPress }: FeedCardProps) {
       {item.image && (
         <ImageLightbox visible={lightboxOpen} images={[item.image]} onClose={() => setLightboxOpen(false)} />
       )}
+      <PulseDetailSheet visible={sheetOpen} item={item} onClose={() => setSheetOpen(false)} />
     </>
   );
 }
