@@ -151,6 +151,9 @@ function createStyles(c: ColorPalette) {
     },
     tagText:       { fontFamily: fonts.sansBold, fontSize: 11, color: c.inkSoft },
 
+    cityRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, marginTop: 4 },
+    cityText: { fontFamily: fonts.sans, fontSize: 13, color: c.mute },
+
     excerpt: {
       fontFamily: fonts.sans, fontSize: 15, lineHeight: 24.75,
       color: c.inkSoft, paddingHorizontal: 16, marginTop: 12,
@@ -219,6 +222,13 @@ function createStyles(c: ColorPalette) {
     eventTitle:     { fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
     eventMeta:      { fontFamily: fonts.mono, fontSize: 12, color: c.mute, marginTop: 2 },
     eventPrice:     { fontFamily: fonts.sansBold, fontSize: 12, color: c.ochre },
+
+    reviewsRatingRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+    reviewsRatingScore: { fontFamily: fonts.monoBold, fontSize: 13, color: c.ochre },
+    reviewsRatingStar:  { fontSize: 12, color: c.ochre },
+    reviewsRatingCount: { fontFamily: fonts.sans, fontSize: 11, color: c.ghost },
+    reviewsStarsRow: { paddingHorizontal: 16, marginBottom: 12 },
+    reviewsStarsText: { fontSize: 20, color: c.ochre, lineHeight: 24 },
 
     // Community reviews
     reviewsScroll: { paddingHorizontal: 16, gap: 8, paddingBottom: 8 },
@@ -470,6 +480,13 @@ export default function DirectoryDetailScreen() {
         {/* ── Title ── */}
         <Text style={styles.title}>{entry.title}</Text>
 
+        {/* ── City subtitle ── */}
+        {!!entry.city && (
+          <View style={styles.cityRow}>
+            <Text style={styles.cityText}>📍 {entry.city}</Text>
+          </View>
+        )}
+
         {/* ── Interest tags ── */}
         {entry.interests.length > 0 && (
           <ScrollView
@@ -601,7 +618,22 @@ export default function DirectoryDetailScreen() {
           <View style={{ marginTop: 20 }}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Community Reviews</Text>
+              {entry.averageRating > 0 && (
+                <View style={styles.reviewsRatingRow}>
+                  <Text style={styles.reviewsRatingScore}>{entry.averageRating.toFixed(1)}</Text>
+                  <Text style={styles.reviewsRatingStar}>★</Text>
+                  <Text style={styles.reviewsRatingCount}>({entry.reviewCount} review{entry.reviewCount !== 1 ? "s" : ""})</Text>
+                </View>
+              )}
             </View>
+            {entry.averageRating > 0 && (
+              <View style={styles.reviewsStarsRow}>
+                <Text style={styles.reviewsStarsText}>
+                  {"★".repeat(Math.round(entry.averageRating))}
+                  <Text style={{ color: c.ghost }}>{"☆".repeat(5 - Math.round(entry.averageRating))}</Text>
+                </Text>
+              </View>
+            )}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -673,7 +705,7 @@ export default function DirectoryDetailScreen() {
             <Text style={{ fontSize: 16 }}>✏️</Text>
             <Text style={styles.improveText}>Know more about this entry?</Text>
           </View>
-          <TouchableOpacity onPress={() => nav.navigate("DirectorySubmit", { improvingSlug: entry.slug })}>
+          <TouchableOpacity onPress={() => nav.navigate("DirectorySubmit", { improvingSlug: entry.slug, improvingTitle: entry.title, improvingEntryType: entry.entryType })}>
             <Text style={styles.improveBtn}>Improve →</Text>
           </TouchableOpacity>
         </View>

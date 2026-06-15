@@ -308,30 +308,6 @@ export default function ConnectFeedScreen() {
           </ScrollView>
         </View>
 
-        {/* ── Region Strip ─────────────────────────────────────── */}
-        <View style={styles.regionRow}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterContent}
-          >
-            {REGION_LABELS.map((r) => {
-              const isActive = r === activeRegion;
-              return (
-                <TouchableOpacity
-                  key={r}
-                  style={[styles.regionPill, isActive && styles.regionPillActive]}
-                  onPress={() => setActiveRegion(r)}
-                >
-                  <Text style={[styles.regionPillText, isActive && styles.regionPillTextActive]}>
-                    {r === "All" ? "🌍 All regions" : r}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
         {/* ── Trending Strip ────────────────────────────────────── */}
         {forYou && trending.length > 0 && (
           <View style={styles.trendingStrip}>
@@ -533,35 +509,6 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     backgroundColor: c.paper,
     borderBottomWidth: 1,
     borderBottomColor: c.rule,
-  },
-  regionRow: {
-    height: 40,
-    backgroundColor: c.paperWarm,
-    borderBottomWidth: 1,
-    borderBottomColor: c.rule,
-  },
-  regionPill: {
-    height: 26,
-    paddingHorizontal: 10,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: c.ghost,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "transparent",
-  },
-  regionPillActive: {
-    backgroundColor: c.ink,
-    borderColor: c.ink,
-  },
-  regionPillText: {
-    fontFamily: fonts.mono,
-    fontSize: 10,
-    color: c.mute,
-  },
-  regionPillTextActive: {
-    color: c.paper,
-    fontFamily: fonts.monoBold,
   },
   filterContent: {
     paddingHorizontal: space[4],
