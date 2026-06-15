@@ -243,6 +243,12 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        register_rest_route( 'culture/v1', '/mobile/events/my-rsvps', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_my_rsvps' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/events/submit', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_submit_event_mobile' ),
@@ -2611,7 +2617,14 @@ class Culture_Mobile_API {
         $id   = (int) $request->get_param( 'id' );
 
         if ( $slug ) {
-            $post = get_page_by_path( $slug, OBJECT, 'culture_directory' );
+            $q = new WP_Query( array(
+                'post_type'      => 'culture_directory',
+                'post_status'    => 'publish',
+                'name'           => $slug,
+                'posts_per_page' => 1,
+                'no_found_rows'  => true,
+            ) );
+            $post = $q->have_posts() ? $q->posts[0] : null;
         } elseif ( $id ) {
             $post = get_post( $id );
             if ( $post && $post->post_type !== 'culture_directory' ) {
@@ -2740,5 +2753,46 @@ class Culture_Mobile_API {
             'connectorThreshold'       => 3,
             'superConnectorThreshold'  => 10,
         ) );
+    }
+
+    public static function handle_my_rsvps( WP_REST_Request $request ) {
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'culture_event_rsvps';
+
+        // Check if table exists
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) {
+            return rest_ensure_response( array( 'rsvps' => array() ) );
+        }
+
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT r.event_id, r.status, r.created_at, p.post_title, p.post_name,
+                    pm_start.meta_value AS start_date, pm_loc.meta_value AS location
+             FROM {$table} r
+             INNER JOIN {$wpdb->posts} p ON p.ID = r.event_id AND p.post_status = 'publish'
+             LEFT JOIN {$wpdb->postmeta} pm_start ON pm_start.post_id = r.event_id AND pm_start.meta_key = '_culture_event_start_date'
+             LEFT JOIN {$wpdb->postmeta} pm_loc ON pm_loc.post_id = r.event_id AND pm_loc.meta_key = '_culture_event_location'
+             WHERE r.user_id = %d
+             ORDER BY pm_start.meta_value DESC",
+            $user_id
+        ), ARRAY_A );
+
+        $rsvps = array_map( function( $row ) {
+            return array(
+                'eventId'   => (int) $row['event_id'],
+                'slug'      => $row['post_name'],
+                'title'     => $row['post_title'],
+                'startDate' => $row['start_date'] ?: '',
+                'location'  => $row['location'] ?: '',
+                'status'    => $row['status'] ?: 'attending',
+                'rsvpAt'    => $row['created_at'],
+            );
+        }, $rows ?: array() );
+
+        return rest_ensure_response( array( 'rsvps' => $rsvps ) );
     }
 }

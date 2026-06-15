@@ -46,6 +46,7 @@ import SudokuGameScreen from "../screens/games/SudokuGameScreen";
 import CrosswordGameScreen from "../screens/games/CrosswordGameScreen";
 import EventsScreen from "../screens/events/EventsScreen";
 import EventDetailScreen from "../screens/events/EventDetailScreen";
+import MyRSVPsScreen from "../screens/events/MyRSVPsScreen";
 
 // Shop
 import ShopScreen from "../screens/shop/ShopScreen";
@@ -151,6 +152,7 @@ function EventsStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="EventsList"  component={EventsScreen} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} />
+      <Stack.Screen name="MyRSVPs"     component={MyRSVPsScreen} />
     </Stack.Navigator>
   );
 }

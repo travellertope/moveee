@@ -103,9 +103,9 @@ function createStyles(c: ColorPalette) {
     },
     cardTitleXl: {
       fontFamily: fonts.serifBold,
-      fontSize: fontSize.xl,
+      fontSize: fontSize.lg,
       color: c.ink,
-      lineHeight: 30,
+      lineHeight: 28,
     },
     cardBody: {
       fontFamily: fonts.sans,
@@ -777,9 +777,9 @@ function PulseCard({ item, onPress }: FeedCardProps) {
             {item.category ? <Text style={styles.eyebrow}>{item.category}</Text> : null}
             <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
           </View>
-          <Text style={[styles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>{item.title}</Text>
+          <Text style={[styles.cardTitle, { marginTop: 10 }]}>{item.title}</Text>
           {item.excerpt ? (
-            <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={2}>{item.excerpt}</Text>
+            <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={3}>{item.excerpt}</Text>
           ) : null}
           <View style={{ marginTop: 10 }}>
             <ImgPlaceholder height={172} src={item.image} onPress={item.image ? () => setLightboxOpen(true) : undefined} />
@@ -807,9 +807,9 @@ function EditorialCard({ item, onPress }: FeedCardProps) {
           {item.category ? <Text style={styles.eyebrow}>{item.category}</Text> : null}
           <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
         </View>
-        <Text style={[styles.cardTitleXl, { marginTop: 10 }]} numberOfLines={2}>{item.title}</Text>
+        <Text style={[styles.cardTitleXl, { marginTop: 10 }]}>{item.title}</Text>
         {item.excerpt ? (
-          <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={3}>{item.excerpt}</Text>
+          <Text style={[styles.cardBody, { marginTop: 6 }]}>{item.excerpt}</Text>
         ) : null}
         <Text style={[styles.readMore, { marginTop: 8 }]}>Read more →</Text>
         {item.source || item.ogTitle ? (
@@ -846,7 +846,7 @@ function HappeningCard({ item, onPress }: FeedCardProps) {
             {item.image ? (
               <BadgePill label="Happening" bg={c.badgeHappeningBg} color={c.badgeHappeningText} styles={styles} />
             ) : null}
-            <Text style={[styles.happeningTitle, item.image ? { marginTop: 8 } : null]} numberOfLines={2}>{item.title}</Text>
+            <Text style={[styles.happeningTitle, item.image ? { marginTop: 8 } : null]}>{item.title}</Text>
             {item.eventDate ? (
               <View style={styles.happeningMetaRow}>
                 <Ionicons name="calendar-outline" size={14} color={c.gold} />
@@ -905,9 +905,9 @@ function DirectoryCard({ item }: FeedCardProps) {
           ) : null}
           <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
         </View>
-        <Text style={[styles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>{item.title}</Text>
+        <Text style={[styles.cardTitle, { marginTop: 10 }]}>{item.title}</Text>
         {item.excerpt ? (
-          <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={3}>{item.excerpt}</Text>
+          <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={4}>{item.excerpt}</Text>
         ) : null}
         <Text style={[styles.successLink, { marginTop: 8 }]}>View entry →</Text>
       </View>
@@ -965,7 +965,7 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
             <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.placeLocation ?? item.locationName}</Text>
           ) : null}
           <View style={{ marginTop: 8 }}>
-            <HashtagText text={item.body ?? item.excerpt ?? item.title ?? ""} numberOfLines={2} style={styles.cardBody} />
+            <HashtagText text={item.body ?? item.excerpt ?? item.title ?? ""} numberOfLines={4} style={styles.cardBody} />
           </View>
         </View>
         {gallery.length > 0 ? (
@@ -988,12 +988,12 @@ function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCar
       <View style={{ paddingHorizontal: 14 }}>
         <BadgePill label="Cultural Take" bg={c.templateTakeBg} color={c.templateTakeText} styles={styles} />
         {(item.culturalTakeHeadline ?? item.title) ? (
-          <Text style={[styles.cardTitle, { marginTop: 8, fontStyle: "italic" }]} numberOfLines={2}>
+          <Text style={[styles.cardTitle, { marginTop: 8, fontStyle: "italic" }]}>
             {item.culturalTakeHeadline ?? item.title}
           </Text>
         ) : null}
         {(item.body ?? item.excerpt) ? (
-          <HashtagText text={item.body ?? item.excerpt ?? ""} numberOfLines={2} style={[styles.cardBody, { marginTop: 6 }]} />
+          <HashtagText text={item.body ?? item.excerpt ?? ""} numberOfLines={4} style={[styles.cardBody, { marginTop: 6 }]} />
         ) : null}
       </View>
       <FeedReactionBar item={item} marginTop={10} />
@@ -1319,7 +1319,7 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedC
         ) : null}
         <View style={{ paddingHorizontal: 14, paddingTop: item.image ? 12 : 0 }}>
           <BadgePill label="Event" bg={c.templateEventBg} color={c.templateEventText} styles={styles} />
-          <Text style={[styles.cardTitle, { marginTop: 8 }]} numberOfLines={2}>{item.title}</Text>
+          <Text style={[styles.cardTitle, { marginTop: 8 }]}>{item.title}</Text>
 
           {item.eventDate ? (
             <View style={[styles.happeningMetaRow, { marginTop: 8 }]}>
