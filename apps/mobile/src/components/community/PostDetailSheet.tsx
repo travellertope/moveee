@@ -642,6 +642,8 @@ function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
 }
 
 function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const sharingReason = item.body && item.body !== item.excerpt ? item.body : item.excerpt;
+  const posterName = item.authorName ?? "Their note";
   return (
     <>
       <View style={styles.quoteBlock}>
@@ -651,25 +653,19 @@ function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
         <View style={styles.quoteAttrib}>
           <Text style={styles.quoteAuthor}>{item.quoteAuthor ?? "Unknown"}</Text>
           {item.quoteSource ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 }}>
-              <Ionicons name="mic-outline" size={12} color={c.ghost} />
-              <Text style={styles.quoteSource}>{item.quoteSource}</Text>
-            </View>
+            <Text style={styles.quoteSource}>{item.quoteSource}</Text>
           ) : null}
         </View>
       </View>
-      {item.excerpt ? (
+      {sharingReason ? (
         <View style={styles.posterNote}>
-          <Text style={styles.posterNoteLabel}>💬 Note:</Text>
-          <Text style={styles.bodyText}>{item.excerpt}</Text>
+          <Text style={styles.posterNoteLabel}>💬 {posterName}'s note:</Text>
+          <Text style={styles.bodyText}>{sharingReason}</Text>
         </View>
       ) : null}
-      {item.body && item.body !== item.excerpt ? (
-        <View style={styles.posterNote}>
-          <Text style={styles.posterNoteLabel}>💬 Why sharing:</Text>
-          <Text style={styles.bodyText}>{item.body}</Text>
-        </View>
-      ) : null}
+      <View style={styles.sharePrompt}>
+        <Text style={styles.sharePromptText}>Know someone who needs to see this?</Text>
+      </View>
     </>
   );
 }
@@ -743,8 +739,10 @@ function TemplateBookReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
         </View>
       ) : null}
 
-      {/* Review text */}
-      {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
+      {/* Review text — body takes priority; fall back to excerpt */}
+      {(item.body || item.excerpt) ? (
+        <Text style={[styles.bodyText, { marginBottom: 12 }]}>{item.body || item.excerpt}</Text>
+      ) : null}
 
       {/* Favourite quote */}
       {item.bookFavQuote ? (
@@ -1281,25 +1279,19 @@ function createStyles(c: ColorPalette) {
       position: "relative",
     },
     quoteMark: {
-      fontSize: 80,
+      fontSize: 72,
       fontFamily: SERIF,
       color: c.ghost,
-      lineHeight: 80,
-      position: "absolute",
-      top: -4,
-      left: 0,
-      zIndex: 0,
+      lineHeight: 60,
+      marginBottom: -8,
     },
     quoteText: {
       fontSize: 22,
-      fontWeight: "700",
       fontFamily: SERIF_BOLD,
       color: c.ink,
       lineHeight: 30,
       paddingLeft: 8,
-      paddingTop: 24,
       marginBottom: 12,
-      zIndex: 1,
     },
     quoteAttrib: { paddingLeft: 8, marginTop: 12 },
     quoteAuthor: {
@@ -1324,6 +1316,8 @@ function createStyles(c: ColorPalette) {
       textTransform: "uppercase",
       marginBottom: 4,
     },
+    sharePrompt: { alignItems: "center", paddingVertical: 8 },
+    sharePromptText: { fontSize: 13, fontFamily: SANS, color: c.mute },
 
     // Reactions
     divider: {
