@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { fonts, fontSize, space, radius, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -49,7 +49,7 @@ export default function SavedArticlesScreen() {
     setError(null);
     try {
       const data = await api.get<{ articles?: SavedArticle[] }>(
-        `${CULTURE_API}/user/saved?user_id=${user.id}`
+        `${MOBILE_API}/saved`
       );
       setArticles(data.articles ?? []);
     } catch {

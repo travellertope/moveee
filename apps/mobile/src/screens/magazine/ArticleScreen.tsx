@@ -266,7 +266,7 @@ export default function ArticleScreen() {
     const next = !bookmarked;
     setBookmarked(next);
     try {
-      await api.post(`${CULTURE_API}/content/bookmark`, { post_id: article.id, action: next ? "add" : "remove" });
+      await api.post(`${MOBILE_API}/content/bookmark`, { post_id: article.id, action: next ? "add" : "remove" });
     } catch {
       setBookmarked(!next); // revert on failure
     }

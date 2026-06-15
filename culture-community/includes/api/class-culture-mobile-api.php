@@ -514,6 +514,22 @@ class Culture_Mobile_API {
                 'id'   => array( 'required' => false, 'type' => 'integer' ),
             ),
         ) );
+
+        register_rest_route( 'culture/v1', '/mobile/saved', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_saved' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/content/bookmark', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_bookmark' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'action'  => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
     }
 
     // -------------------------------------------------------------------------
@@ -1945,6 +1961,18 @@ class Culture_Mobile_API {
         $user_id = get_current_user_id();
         $request->set_param( 'user_id', $user_id );
         return Culture_REST_API::handle_member_analytics( $request );
+    }
+
+    public static function handle_saved( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_get_user_saved( $request );
+    }
+
+    public static function handle_bookmark( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_toggle_bookmark( $request );
     }
 
     public static function handle_wallet_balance( $request ) {
