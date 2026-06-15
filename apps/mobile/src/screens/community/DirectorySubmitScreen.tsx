@@ -77,6 +77,98 @@ const EXCERPT_PLACEHOLDERS: Record<string, string> = {
   "tv-series": "e.g. A South African teen crime drama set in Cape Town…",
 };
 
+// ── Structured improve fields per entry type ──────────────────────────────────
+// These mirror the About card fields shown on DirectoryDetailScreen.
+// All optional — members fill in only what they know.
+
+const IMPROVE_FIELDS: Record<string, Array<{ key: string; label: string; placeholder: string }>> = {
+  person: [
+    { key: "Born",         label: "Born",         placeholder: "e.g. 1938, Abeokuta, Nigeria" },
+    { key: "Died",         label: "Died",         placeholder: "e.g. 1997, Lagos, Nigeria" },
+    { key: "Nationality",  label: "Nationality",  placeholder: "e.g. Nigerian" },
+    { key: "Occupation",   label: "Occupation",   placeholder: "e.g. Musician · Activist · Composer" },
+    { key: "Known for",    label: "Known for",    placeholder: "e.g. Afrobeat · Political Resistance" },
+    { key: "Active years", label: "Active years", placeholder: "e.g. 1958–1997" },
+    { key: "Awards",       label: "Awards",       placeholder: "e.g. Grammy nomination 1999" },
+  ],
+  place: [
+    { key: "Country",           label: "Country",           placeholder: "e.g. Nigeria" },
+    { key: "Region",            label: "Region",            placeholder: "e.g. Lagos State" },
+    { key: "Population",        label: "Population",        placeholder: "e.g. ~15 million (metro)" },
+    { key: "Official language", label: "Official language", placeholder: "e.g. English · Yoruba" },
+    { key: "Currency",          label: "Currency",          placeholder: "e.g. Nigerian Naira (₦)" },
+    { key: "Founded",           label: "Founded",           placeholder: "e.g. ~1450 CE" },
+  ],
+  food: [
+    { key: "Origin country",  label: "Origin country",  placeholder: "e.g. West Africa (disputed)" },
+    { key: "Food type",       label: "Food type",       placeholder: "e.g. Main course · Rice dish" },
+    { key: "Main ingredients",label: "Main ingredients",placeholder: "e.g. Long-grain rice · Tomatoes" },
+    { key: "Also known as",   label: "Also known as",   placeholder: "e.g. Benachin · Thieboudienne" },
+  ],
+  book: [
+    { key: "Author",    label: "Author",    placeholder: "e.g. Chinua Achebe" },
+    { key: "Published", label: "Published", placeholder: "e.g. 1958" },
+    { key: "Genre",     label: "Genre",     placeholder: "e.g. Literary Fiction · Post-Colonial" },
+    { key: "Publisher", label: "Publisher", placeholder: "e.g. Heinemann" },
+    { key: "Language",  label: "Language",  placeholder: "e.g. English" },
+    { key: "Pages",     label: "Pages",     placeholder: "e.g. 209" },
+  ],
+  film: [
+    { key: "Director",           label: "Director",           placeholder: "e.g. Ryan Coogler" },
+    { key: "Year",               label: "Year",               placeholder: "e.g. 2018" },
+    { key: "Starring",           label: "Starring",           placeholder: "e.g. Chadwick Boseman · Lupita Nyong'o" },
+    { key: "Cinematographer",    label: "Cinematographer",    placeholder: "e.g. Rachel Morrison" },
+    { key: "Country",            label: "Country",            placeholder: "e.g. USA" },
+    { key: "Language",           label: "Language",           placeholder: "e.g. English · Xhosa" },
+    { key: "Runtime",            label: "Runtime",            placeholder: "e.g. 134 min" },
+    { key: "Production company", label: "Production company", placeholder: "e.g. Marvel Studios" },
+  ],
+  genre: [
+    { key: "Origin country", label: "Origin country", placeholder: "e.g. Nigeria · Ghana · UK" },
+    { key: "Origin decade",  label: "Origin decade",  placeholder: "e.g. 2000s" },
+    { key: "Tempo",          label: "Tempo",          placeholder: "e.g. Typically 90–100 BPM" },
+    { key: "Key artists",    label: "Key artists",    placeholder: "e.g. Wizkid · Davido · Burna Boy" },
+    { key: "Related genres", label: "Related genres", placeholder: "e.g. Afropop · Amapiano" },
+    { key: "Subgenres",      label: "Subgenres",      placeholder: "e.g. Afro-fusion · Afro-soul" },
+  ],
+  movement: [
+    { key: "Founders",          label: "Founders",          placeholder: "e.g. Aimé Césaire · Léopold Sédar Senghor" },
+    { key: "Origin country",    label: "Origin country",    placeholder: "e.g. France (Francophone diaspora)" },
+    { key: "Active period",     label: "Active period",     placeholder: "e.g. 1930s–1960s" },
+    { key: "Ideology",          label: "Ideology",          placeholder: "e.g. Anti-colonialism · Black consciousness" },
+    { key: "Key figures",       label: "Key figures",       placeholder: "e.g. Frantz Fanon · Paulette Nardal" },
+    { key: "Related movements", label: "Related movements", placeholder: "e.g. Pan-Africanism · Harlem Renaissance" },
+  ],
+  artwork: [
+    { key: "Artist",           label: "Artist",           placeholder: "e.g. Frida Kahlo" },
+    { key: "Year",             label: "Year",             placeholder: "e.g. 1939" },
+    { key: "Medium",           label: "Medium",           placeholder: "e.g. Oil on canvas" },
+    { key: "Dimensions",       label: "Dimensions",       placeholder: "e.g. 173.5 × 173 cm" },
+    { key: "Current location", label: "Current location", placeholder: "e.g. Museo de Arte Moderno, Mexico City" },
+    { key: "Art collection",   label: "Art collection",   placeholder: "e.g. Permanent collection — MAM" },
+    { key: "Style",            label: "Style",            placeholder: "e.g. Surrealism · Mexican Folk Art" },
+  ],
+  concept: [
+    { key: "Origin",            label: "Origin",            placeholder: "e.g. Nguni Bantu peoples, Southern Africa" },
+    { key: "Field",             label: "Field",             placeholder: "e.g. Philosophy · Ethics" },
+    { key: "Related concepts",  label: "Related concepts",  placeholder: "e.g. Ubuntu · Communalism" },
+  ],
+  fashion: [
+    { key: "Origin",        label: "Origin",        placeholder: "e.g. Yoruba people, West Africa" },
+    { key: "Era",           label: "Era",           placeholder: "e.g. Pre-colonial — present" },
+    { key: "Key designers", label: "Key designers", placeholder: "e.g. Names, houses, or brands" },
+    { key: "Materials",     label: "Materials",     placeholder: "e.g. Aso-oke fabric · Gold thread" },
+  ],
+  "tv-series": [
+    { key: "Creator",      label: "Creator",      placeholder: "e.g. Shonda Rhimes" },
+    { key: "First aired",  label: "First aired",  placeholder: "e.g. 2005" },
+    { key: "Network",      label: "Network",      placeholder: "e.g. ABC · Netflix" },
+    { key: "Seasons",      label: "Seasons",      placeholder: "e.g. 8" },
+    { key: "Country",      label: "Country",      placeholder: "e.g. USA" },
+    { key: "Genre",        label: "Genre",        placeholder: "e.g. Drama · Medical" },
+  ],
+};
+
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 function createStyles(c: ColorPalette) {
@@ -170,6 +262,28 @@ function createStyles(c: ColorPalette) {
       lineHeight: 26, minHeight: 200, textAlignVertical: "top",
     },
 
+    // Structured improve fields
+    structuredSection: {
+      marginTop: space[4],
+    },
+    fieldRow: {
+      marginBottom: space[3],
+    },
+    fieldLabel: {
+      fontFamily: fonts.sansBold, fontSize: 12, color: c.mute,
+      textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4,
+    },
+    fieldInput: {
+      fontFamily: fonts.sans, fontSize: 14, color: c.ink,
+      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
+      paddingHorizontal: 12, paddingVertical: 10, backgroundColor: c.paper,
+    },
+    improveNote: {
+      fontFamily: fonts.sans, fontSize: 12, color: c.mute,
+      lineHeight: 18, marginTop: space[3],
+      fontStyle: "italic",
+    },
+
     // Pro gate
     gate:         { flex: 1, alignItems: "center", justifyContent: "center", padding: 36, gap: 12 },
     gateTitle:    { fontFamily: fonts.sansBold, fontSize: 16, color: c.ink, textAlign: "center" },
@@ -184,7 +298,7 @@ function createStyles(c: ColorPalette) {
 export default function DirectorySubmitScreen() {
   const nav   = useNavigation<any>();
   const route = useRoute<any>();
-  const { improvingSlug, improvingTitle } = route.params ?? {};
+  const { improvingSlug, improvingTitle, improvingEntryType } = route.params ?? {};
   const isImproveMode = !!improvingSlug;
 
   const c      = useColors();
@@ -196,8 +310,14 @@ export default function DirectorySubmitScreen() {
   const [title,      setTitle]      = useState(improvingTitle ?? "");
   const [excerpt,    setExcerpt]    = useState("");
   const [content,    setContent]    = useState("");
-  const [interests,  setInterests]  = useState<string[]>([]);
-  const [submitting, setSubmitting] = useState(false);
+  const [interests,   setInterests]   = useState<string[]>([]);
+  const [aboutFields, setAboutFields] = useState<Record<string, string>>({});
+  const [submitting,  setSubmitting]  = useState(false);
+
+  const improveFields = IMPROVE_FIELDS[improvingEntryType ?? ""] ?? [];
+
+  const setAboutField = (key: string, value: string) =>
+    setAboutFields((prev) => ({ ...prev, [key]: value }));
 
   const toggleInterest = (slug: string) =>
     setInterests((prev) =>
@@ -207,8 +327,9 @@ export default function DirectorySubmitScreen() {
   const close = () => nav.goBack();
   const currentType = ENTRY_TYPES.find((t) => t.slug === entryType) ?? ENTRY_TYPES[8];
 
+  const hasStructuredData = Object.values(aboutFields).some((v) => v.trim().length > 0);
   const canSubmit = isImproveMode
-    ? content.trim().length > 10
+    ? content.trim().length > 10 || hasStructuredData
     : title.trim().length > 0 && content.trim().length > 20;
 
   const pickType = () => {
@@ -226,6 +347,10 @@ export default function DirectorySubmitScreen() {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
     try {
+      const filledFields = Object.entries(aboutFields)
+        .filter(([, v]) => v.trim().length > 0)
+        .map(([label, value]) => ({ label, value }));
+
       const body: Record<string, unknown> = {
         title:      title.trim() || improvingTitle || "",
         excerpt:    excerpt.trim(),
@@ -234,6 +359,7 @@ export default function DirectorySubmitScreen() {
         interests,
       };
       if (improvingSlug) body.improving_slug = improvingSlug;
+      if (filledFields.length > 0) body.about_fields = filledFields;
       await api.post(`${MOBILE_API}/directory/submit`, body as Record<string, string>);
       Alert.alert(
         isImproveMode ? "Improvement submitted ✓" : "Entry submitted ✓",
@@ -328,21 +454,48 @@ export default function DirectorySubmitScreen() {
               <View style={styles.improveBanner}>
                 <Text style={styles.improveBannerTitle}>Improving: {improvingTitle}</Text>
                 <Text style={styles.improveBannerSub}>
-                  Add corrected or missing information. Our editors will review and merge your
-                  contribution into the entry.
+                  Fill in what you know — only add fields you're confident about. Our editors
+                  will review and merge your contribution.
                 </Text>
               </View>
+
+              {/* Structured fields (when entry type is known) */}
+              {improveFields.length > 0 && (
+                <View style={styles.structuredSection}>
+                  <Text style={styles.sectionLabel}>About details</Text>
+                  {improveFields.map((field) => (
+                    <View key={field.key} style={styles.fieldRow}>
+                      <Text style={styles.fieldLabel}>{field.label}</Text>
+                      <TextInput
+                        style={styles.fieldInput}
+                        placeholder={field.placeholder}
+                        placeholderTextColor={c.ghost}
+                        value={aboutFields[field.key] ?? ""}
+                        onChangeText={(v) => setAboutField(field.key, v)}
+                        returnKeyType="next"
+                      />
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              <View style={styles.divider} />
+
+              <Text style={styles.sectionLabel}>Additional notes</Text>
               <TextInput
                 style={styles.improveTextarea}
-                placeholder="Describe what you'd like to correct or add…"
+                placeholder="Any other corrections, context, or information to add…"
                 placeholderTextColor={c.ghost}
                 value={content}
                 onChangeText={setContent}
                 multiline
                 maxLength={2000}
-                autoFocus
+                autoFocus={improveFields.length === 0}
               />
               <Text style={styles.charCount}>{content.length} / 2000</Text>
+              <Text style={styles.improveNote}>
+                Leave fields blank if you're unsure — only share what you know for certain.
+              </Text>
             </>
           ) : (
             /* ── New entry ── */
