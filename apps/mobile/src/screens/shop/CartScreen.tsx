@@ -18,6 +18,7 @@ import { useAuthStore } from "../../auth/authStore";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { openInApp } from "../../utils/openInApp";
+import { api, MOBILE_API } from "../../api/client";
 
 // WooCommerce checkout lives on the CMS (WordPress) host
 const CHECKOUT_BASE = "https://cms.themoveee.com/checkout";
@@ -44,21 +45,39 @@ export default function CartScreen() {
   const totalQty  = items.reduce((sum, i) => sum + i.qty, 0);
 
   useEffect(() => {
-    if (view === "checkout") {
-      progressAnim.setValue(0);
-      Animated.timing(progressAnim, {
-        toValue: 1,
-        duration: 2000,
-        useNativeDriver: false,
-      }).start(() => {
-        // Build checkout URL with coupon if applied
+    if (view !== "checkout") return;
+
+    progressAnim.setValue(0);
+    Animated.timing(progressAnim, {
+      toValue: 1,
+      duration: 2000,
+      useNativeDriver: false,
+    }).start(async () => {
+      try {
+        // Build checkout path — append coupon if the user has one applied
+        let redirectPath = "/checkout";
+        if (appliedVoucher) {
+          redirectPath += `?coupon_code=${encodeURIComponent(appliedVoucher)}`;
+        }
+
+        // Exchange the user's JWT for a one-time token so the in-app browser
+        // lands on checkout already logged in (no password prompt).
+        const { url } = await api.post<{ url: string }>(
+          `${MOBILE_API}/checkout-token`,
+          { redirect_to: redirectPath },
+        );
+        await openInApp(url);
+      } catch {
+        // Fallback: open checkout directly without auto-login
         let checkoutUrl = CHECKOUT_BASE;
         if (appliedVoucher) {
           checkoutUrl += `?coupon_code=${encodeURIComponent(appliedVoucher)}`;
         }
-        openInApp(checkoutUrl).finally(() => setView("cart"));
-      });
-    }
+        await openInApp(checkoutUrl);
+      } finally {
+        setView("cart");
+      }
+    });
   }, [view]);
 
   const handleApplyVoucher = () => {

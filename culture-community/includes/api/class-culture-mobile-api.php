@@ -24,6 +24,8 @@ class Culture_Mobile_API {
 
     public static function init() {
         add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
+        // Consume one-time checkout auth token before WordPress renders anything
+        add_action( 'init', array( __CLASS__, 'handle_checkout_auth_redirect' ), 1 );
     }
 
     // -------------------------------------------------------------------------
@@ -241,6 +243,13 @@ class Culture_Mobile_API {
                 'post_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
                 'option_index' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
+        ) );
+
+        // Checkout auto-login: issues a one-time token the in-app browser redeems.
+        register_rest_route( 'culture/v1', '/mobile/checkout-token', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_checkout_token' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
         register_rest_route( 'culture/v1', '/mobile/events/my-rsvps', array(
@@ -2753,6 +2762,68 @@ class Culture_Mobile_API {
             'connectorThreshold'       => 3,
             'superConnectorThreshold'  => 10,
         ) );
+    }
+
+    /**
+     * POST /mobile/checkout-token
+     * Issues a one-time, 120-second transient key the mobile in-app browser
+     * exchanges for a WordPress auth cookie, enabling seamless checkout.
+     */
+    public static function handle_checkout_token( WP_REST_Request $request ) {
+        $user_id     = get_current_user_id();
+        $redirect_to = sanitize_text_field( $request->get_param( 'redirect_to' ) ?: '/checkout' );
+
+        // Only allow same-site paths to prevent open-redirect abuse
+        if ( ! str_starts_with( $redirect_to, '/' ) || str_contains( $redirect_to, '//' ) ) {
+            $redirect_to = '/checkout';
+        }
+
+        // Generate a cryptographically random key (48 hex chars)
+        $key = bin2hex( random_bytes( 24 ) );
+        set_transient( 'culture_mob_checkout_' . $key, $user_id, 120 );
+
+        $auth_url = home_url( '/?mobile_checkout_auth=' . $key . '&mobile_redirect=' . urlencode( $redirect_to ) );
+
+        return rest_ensure_response( array( 'url' => $auth_url ) );
+    }
+
+    /**
+     * Hooked on `init` (priority 1) — runs before any template output.
+     * Validates the one-time token, logs the user in, sets a persistent
+     * WP auth cookie, then redirects to the requested path.
+     */
+    public static function handle_checkout_auth_redirect() {
+        if ( empty( $_GET['mobile_checkout_auth'] ) ) {
+            return;
+        }
+
+        $key     = sanitize_text_field( wp_unslash( $_GET['mobile_checkout_auth'] ) );
+        $user_id = get_transient( 'culture_mob_checkout_' . $key );
+
+        if ( ! $user_id ) {
+            // Token missing or expired — send to login
+            wp_safe_redirect( wp_login_url( home_url( '/checkout' ) ) );
+            exit;
+        }
+
+        // Consume the token (one-time use)
+        delete_transient( 'culture_mob_checkout_' . $key );
+
+        // Log the user in and set a remember-me cookie (14-day expiry)
+        wp_set_current_user( (int) $user_id );
+        wp_set_auth_cookie( (int) $user_id, true );
+
+        $redirect_path = isset( $_GET['mobile_redirect'] )
+            ? sanitize_text_field( urldecode( wp_unslash( $_GET['mobile_redirect'] ) ) )
+            : '/checkout';
+
+        // Safety: only allow same-origin paths
+        if ( ! str_starts_with( $redirect_path, '/' ) || str_contains( $redirect_path, '//' ) ) {
+            $redirect_path = '/checkout';
+        }
+
+        wp_safe_redirect( home_url( $redirect_path ) );
+        exit;
     }
 
     public static function handle_my_rsvps( WP_REST_Request $request ) {
