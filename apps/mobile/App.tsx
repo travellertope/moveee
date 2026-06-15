@@ -1,5 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
+import { hydrateStorage } from "./src/store/storage";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
@@ -54,6 +55,7 @@ async function registerPushToken() {
 export default function App() {
   const hydrate = useAuthStore((s) => s.hydrate);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const [storageReady, setStorageReady] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Fraunces_400Regular,
@@ -67,15 +69,18 @@ export default function App() {
   });
 
   useEffect(() => {
-    hydrate();
+    hydrateStorage().then(() => {
+      setStorageReady(true);
+      hydrate();
+    });
   }, []);
 
   useEffect(() => {
     if (isAuthenticated) registerPushToken();
   }, [isAuthenticated]);
 
-  // Block render until fonts are ready — prevents flash of unstyled text
-  if (!fontsLoaded) return null;
+  // Block render until fonts and persisted storage are ready
+  if (!fontsLoaded || !storageReady) return null;
 
   return (
     <>
