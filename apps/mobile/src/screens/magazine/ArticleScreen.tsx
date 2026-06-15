@@ -513,11 +513,20 @@ export default function ArticleScreen() {
 
   // Article complete
   const [pointsCollected, setPointsCollected] = useState(false);
-  const handleCollectPoints = useCallback(() => {
-    if (pointsCollected) return;
+  const [creditsEarned, setCreditsEarned] = useState<number | null>(null);
+  const handleCollectPoints = useCallback(async () => {
+    if (pointsCollected || !article) return;
     setPointsCollected(true);
-    // TODO: call awards API
-  }, [pointsCollected]);
+    try {
+      const res = await api.post<{ credits_earned?: number }>(`${MOBILE_API}/articles/read-complete`, {
+        post_id: Number(article.id),
+        slug: article.slug,
+      });
+      setCreditsEarned(res?.credits_earned ?? null);
+    } catch {
+      // silently fail — points may still have been awarded server-side
+    }
+  }, [pointsCollected, article]);
 
   // TOC
   const [tocOpen, setTocOpen] = useState(false);
@@ -593,12 +602,18 @@ export default function ArticleScreen() {
         </View>
       ) : article ? (
         <>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={0}
+          >
           <ScrollView
             ref={scrollRef}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingTop: HERO_HEIGHT - SHEET_OVERLAP, paddingBottom: 120 }}
             onScroll={handleScroll}
             scrollEventThrottle={16}
+            keyboardShouldPersistTaps="handled"
           >
             {/* ── White rounded card ── */}
             <View style={styles.sheet}>
@@ -745,7 +760,11 @@ export default function ArticleScreen() {
                       </View>
                       <View>
                         <Text style={styles.completeTitle}>Article complete!</Text>
-                        <Text style={styles.completePoints}>+ 15 Culture Points earned</Text>
+                        <Text style={styles.completePoints}>
+                          {pointsCollected && creditsEarned != null
+                            ? `+ ${creditsEarned} Culture Points earned`
+                            : "+ Culture Points to collect"}
+                        </Text>
                       </View>
                     </View>
                     <TouchableOpacity
@@ -842,6 +861,7 @@ export default function ArticleScreen() {
               )}
             </View>
           </ScrollView>
+          </KeyboardAvoidingView>
 
           {/* ── TOC floating button ── */}
           {headings.length > 0 && (

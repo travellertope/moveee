@@ -548,6 +548,12 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        register_rest_route( 'culture/v1', '/mobile/articles/read-complete', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_article_read_complete' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/articles/(?P<slug>[a-zA-Z0-9-]+)/products', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_article_products' ),
@@ -2942,6 +2948,38 @@ class Culture_Mobile_API {
         }, $rows ?: array() );
 
         return rest_ensure_response( array( 'rsvps' => $rsvps ) );
+    }
+
+    public static function handle_article_read_complete( WP_REST_Request $request ) {
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+        }
+
+        $post_id = intval( $request->get_param( 'post_id' ) );
+        $slug    = sanitize_text_field( $request->get_param( 'slug' ) );
+
+        // Resolve post
+        if ( ! $post_id && $slug ) {
+            $post = get_page_by_path( $slug, OBJECT, 'post' );
+            $post_id = $post ? $post->ID : 0;
+        }
+        if ( ! $post_id ) {
+            return new WP_Error( 'not_found', 'Article not found.', array( 'status' => 404 ) );
+        }
+
+        // Idempotency — don't double-award in the same day
+        $meta_key   = '_culture_article_read_' . $post_id;
+        $today      = gmdate( 'Y-m-d' );
+        $last_read  = get_user_meta( $user_id, $meta_key, true );
+        if ( $last_read === $today ) {
+            return rest_ensure_response( array( 'credits_earned' => 0, 'already_awarded' => true ) );
+        }
+
+        $credits = Culture_Gamification::award_credits( $user_id, 'magazine_read', $post_id );
+        update_user_meta( $user_id, $meta_key, $today );
+
+        return rest_ensure_response( array( 'credits_earned' => max( 0, intval( $credits ) ) ) );
     }
 
     public static function handle_article_products( WP_REST_Request $request ) {
