@@ -119,6 +119,8 @@ export interface FeedItem {
 
   // Editorial
   category?: string;
+  author?: string;
+  readingTime?: number;
 
   // Community
   communityAuthor?: string;

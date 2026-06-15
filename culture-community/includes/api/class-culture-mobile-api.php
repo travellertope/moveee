@@ -1697,17 +1697,22 @@ class Culture_Mobile_API {
 
         return array_map( function( WP_Post $post ) {
             $thumb      = get_the_post_thumbnail_url( $post->ID, 'large' );
-            $categories = get_the_category( $post->ID );
+            $categories    = get_the_category( $post->ID );
+            $author_data   = get_userdata( $post->post_author );
+            $word_count    = str_word_count( wp_strip_all_tags( $post->post_content ) );
+            $reading_time  = max( 1, (int) round( $word_count / 200 ) );
             return array(
-                'id'       => 'editorial-' . $post->post_name,
-                'type'     => 'editorial',
-                'title'    => get_the_title( $post ),
-                'slug'     => $post->post_name,
-                'date'     => $post->post_date_gmt,
-                'excerpt'  => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
-                'image'    => $thumb ?: null,
-                'href'     => '/magazine/' . $post->post_name,
-                'category' => ! empty( $categories ) ? $categories[0]->name : '',
+                'id'          => 'editorial-' . $post->post_name,
+                'type'        => 'editorial',
+                'title'       => get_the_title( $post ),
+                'slug'        => $post->post_name,
+                'date'        => $post->post_date_gmt,
+                'excerpt'     => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
+                'image'       => $thumb ?: null,
+                'href'        => '/magazine/' . $post->post_name,
+                'category'    => ! empty( $categories ) ? $categories[0]->name : '',
+                'author'      => $author_data ? $author_data->display_name : '',
+                'readingTime' => $reading_time,
             );
         }, $query->posts );
     }
