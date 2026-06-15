@@ -16,10 +16,11 @@ import type { ColorPalette } from "../../theme";
 import { radius, shadows } from "../../theme";
 
 const { height: SCREEN_H } = Dimensions.get("window");
-const FULL_H      = SCREEN_H * 0.92;   // 92% — full state
-const PEEK_H      = SCREEN_H * 0.55;   // 55% — peek state (content-hugging cap)
+const FULL_H      = SCREEN_H * 0.90;   // 90% — full state (leaves 10% gap at top)
+const PEEK_H      = SCREEN_H * 0.52;   // 52% — peek state
 const DISMISS_VEL = 0.5;               // velocity threshold to dismiss
 const EXPAND_VEL  = -0.5;              // velocity threshold to expand from peek
+const PEEK_Y      = FULL_H - PEEK_H;   // translateY for peek (offset within sheet)
 
 export type BottomSheetState = "peek" | "full" | "closed";
 
@@ -49,12 +50,12 @@ export default function BottomSheet({
   const backdropOpac  = useRef(new Animated.Value(0)).current;
   const dragStart     = useRef(0);
 
-  const targetY = sheetState === "full" ? 0 : SCREEN_H - PEEK_H;
+  const targetY = sheetState === "full" ? 0 : PEEK_Y;
 
   // Animate in when visible
   useEffect(() => {
     if (visible) {
-      const startY = sheetState === "full" ? 0 : SCREEN_H - PEEK_H;
+      const startY = sheetState === "full" ? 0 : PEEK_Y;
       Animated.parallel([
         Animated.spring(translateY, {
           toValue: startY,
@@ -115,7 +116,7 @@ export default function BottomSheet({
     setSheetState("peek");
     Animated.parallel([
       Animated.spring(translateY, {
-        toValue: SCREEN_H - PEEK_H,
+        toValue: PEEK_Y,
         useNativeDriver: true,
         damping: 22,
         stiffness: 220,
@@ -141,7 +142,7 @@ export default function BottomSheet({
         const clamped = Math.max(-34, next);
         translateY.setValue(clamped);
         // Backdrop opacity tracks position
-        const ratio = 1 - clamped / (SCREEN_H - PEEK_H);
+        const ratio = 1 - clamped / (PEEK_Y);
         backdropOpac.setValue(Math.min(1, Math.max(0, 0.4 + ratio * 0.6)));
       },
       onPanResponderRelease: (_, g) => {
@@ -242,7 +243,7 @@ function createStyles(c: ColorPalette) {
       bottom: 0,
       left: 0,
       right: 0,
-      height: SCREEN_H,
+      height: FULL_H,
       backgroundColor: c.paper,
       borderTopLeftRadius: radius["2xl"] + 4,
       borderTopRightRadius: radius["2xl"] + 4,

@@ -142,9 +142,10 @@ export default function HappeningDetailModal({ visible, item, onClose }: Props) 
           )}
         </View>
 
-        {/* Description */}
-        {item.excerpt ? <Text style={styles.description}>{item.excerpt}</Text> : null}
-        {item.body ? <Text style={styles.description}>{item.body}</Text> : null}
+        {/* Description — prefer body (full text), fall back to excerpt */}
+        {(item.body ?? item.excerpt) ? (
+          <Text style={styles.description}>{item.body ?? item.excerpt}</Text>
+        ) : null}
 
         <View style={styles.divider} />
 
