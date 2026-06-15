@@ -54,7 +54,7 @@ function extractHeadings(html: string): Array<{ id: string; text: string; level:
   let m: RegExpExecArray | null;
   let idx = 0;
   while ((m = re.exec(html)) !== null) {
-    const text = m[2].replace(/<[^>]+>/g, "").trim();
+    const text = m[2].replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&#\d+;/g, "").trim();
     if (text) {
       headings.push({ id: `h${idx++}`, text, level: parseInt(m[1], 10) });
     }
@@ -902,7 +902,7 @@ export default function ArticleScreen() {
             </View>
             <Text style={styles.tocSectionLabel}>In this article</Text>
             <View style={{ height: 1, backgroundColor: c.rule, marginHorizontal: space[5] }} />
-            <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator={false}>
+            <View style={{ paddingBottom: 8 }}>
               {headings.map((h, i) => (
                 <TouchableOpacity
                   key={h.id}
@@ -934,7 +934,7 @@ export default function ArticleScreen() {
                   </Text>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </View>
           </BottomSheet>
         </>
       ) : null}
