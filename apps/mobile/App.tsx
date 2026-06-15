@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Component, type ReactNode } from "react";
 import { StatusBar } from "expo-status-bar";
+import { Text, View } from "react-native";
 import { hydrateStorage } from "./src/store/storage";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
@@ -24,6 +25,22 @@ import Navigation from "./src/navigation";
 import { useAuthStore } from "./src/auth/authStore";
 import { api, CULTURE_API } from "./src/api/client";
 
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: string | null }> {
+  state = { error: null };
+  static getDerivedStateFromError(e: Error) { return { error: e.message + "\n" + e.stack }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <View style={{ flex: 1, padding: 24, paddingTop: 80, backgroundColor: "#fff" }}>
+          <Text style={{ fontSize: 16, fontWeight: "bold", color: "red", marginBottom: 12 }}>Startup Error</Text>
+          <Text style={{ fontSize: 12, color: "#333", fontFamily: "monospace" }}>{this.state.error}</Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -40,7 +57,7 @@ async function registerPushToken() {
     : await Notifications.requestPermissionsAsync();
   if (status !== "granted") return;
 
-  const token = (await Notifications.getExpoPushTokenAsync()).data;
+  const token = (await Notifications.getExpoPushTokenAsync({ projectId: "943d1ee4-9194-4a36-8b6a-48ab32dfd813" })).data;
 
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
@@ -83,9 +100,9 @@ export default function App() {
   if (!fontsLoaded || !storageReady) return null;
 
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar style="dark" />
       <Navigation />
-    </>
+    </ErrorBoundary>
   );
 }
