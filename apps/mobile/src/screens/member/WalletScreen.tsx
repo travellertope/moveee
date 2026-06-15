@@ -24,6 +24,8 @@ const NGN_BANKS = [
 ];
 
 const SOURCE_LABELS: Record<string, string> = {
+  community_post:     "Community post",
+  community_comment:  "Community comment",
   post_validated:     "Post validated",
   perk_redeem:        "Perk redeemed",
   cashout:            "Cash out",
@@ -31,11 +33,18 @@ const SOURCE_LABELS: Record<string, string> = {
   event_rsvp:         "Event RSVP",
   event_checkin:      "Event check-in",
   quote_share:        "Share a quote",
+  quote_like:         "Quote liked",
   magazine_read:      "Read magazine",
   magazine_share:     "Share magazine",
   directory_entry:    "Directory entry",
   game_complete:      "Game completed",
+  game_completed:     "Game completed",
   newsletter_comment: "Newsletter comment",
+  newsletter_reaction:"Newsletter reaction",
+  profile_completed:  "Profile completed",
+  email_verified:     "Email verified",
+  poll_vote:          "Poll vote",
+  community_like:     "Community like",
 };
 
 function groupByMonth(entries: LedgerEntry[]): { month: string; items: LedgerEntry[] }[] {
@@ -261,13 +270,32 @@ export default function WalletScreen() {
         </View>
 
         <View style={styles.balanceHero}>
-          <Text style={styles.balanceEyebrow}>CULTURE POINTS</Text>
+          <TouchableOpacity
+            onPress={() => Alert.alert(
+              "Culture Points",
+              "Culture Points (Credits) are your spendable currency. Earn them by posting, engaging, and participating in the community. Redeem for partner perks, or cash out to real money (Connect Pro only, 40% fee). Daily cap: 50 credits.",
+              [{ text: "Got it" }]
+            )}
+            style={styles.eyebrowBtn}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.balanceEyebrow}>CULTURE POINTS  ⓘ</Text>
+          </TouchableOpacity>
           <Text style={styles.balanceValue}>{balance}</Text>
           <Text style={styles.balanceGbp}>
             ≈ £{creditsPerGbp > 0 ? (balance / creditsPerGbp).toFixed(2) : "0.00"} GBP
           </Text>
           <View style={styles.statsRow}>
-            <Text style={styles.statText}>{user?.reputation ?? 0} REP</Text>
+            <TouchableOpacity
+              onPress={() => Alert.alert(
+                "Reputation",
+                "Reputation is your permanent standing in the Moveee community — it never decreases. Quality contributions (posts, comments, directory entries) earn reputation. Tiers: Culture Contributor (500), Taste Maker (2,500), Culture Authority (10,000), Culture Icon (25,000 + nomination).",
+                [{ text: "Got it" }]
+              )}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.statText}>{user?.reputation ?? 0} REP ⓘ</Text>
+            </TouchableOpacity>
             <View style={styles.statDot} />
             <Text style={styles.statText}>{user?.dailyCreditsRemaining ?? 0} CR today</Text>
           </View>
@@ -458,6 +486,7 @@ function createStyles(c: ColorPalette) {
   headerTitle:     { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink, alignSelf: "flex-end", paddingBottom: 12 },
 
   balanceHero:     { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 24, alignItems: "center" },
+  eyebrowBtn:      { alignSelf: "center" },
   balanceEyebrow:  { fontFamily: fonts.sansBold, fontSize: 9, color: c.mute, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 },
   balanceValue:    { fontFamily: fonts.serifBold, fontSize: 48, color: c.ink, lineHeight: 48 },
   balanceGbp:      { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.gold, marginTop: 4 },
