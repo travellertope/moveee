@@ -16,6 +16,64 @@ if ( ! function_exists( 'WC' ) ) {
     wp_redirect( home_url() );
     exit;
 }
+
+/**
+ * On this bespoke checkout page we only want to surface notices that
+ * genuinely need the customer's attention:
+ *   ✓  Errors (validation failures, payment errors, etc.)
+ *   ✓  Coupon applied / removed confirmations
+ *   ✗  "Product has been added to your cart" flash messages
+ *   ✗  "Product removed from your cart" flash messages
+ *   ✗  Generic info banners that don't require action
+ *
+ * We do this by filtering WooCommerce's notice queue before output.
+ */
+add_filter( 'woocommerce_notice_types', function( $notice_types ) {
+    // Keep the error type always. For 'success' and 'notice', we'll
+    // inspect and strip irrelevant messages in the filter below.
+    return $notice_types;
+} );
+
+add_action( 'woocommerce_before_checkout_form', function() {
+    if ( ! function_exists( 'wc_get_notices' ) ) return;
+
+    // Patterns that indicate "added/removed from cart" messages — not useful
+    // on the checkout page because the user is already here.
+    $suppress_patterns = [
+        'has been added to your cart',
+        'was removed from your cart',
+        'been removed from your cart',
+        'added to your cart',
+        'removed from your cart',
+    ];
+
+    foreach ( [ 'success', 'notice' ] as $type ) {
+        $notices = wc_get_notices( $type );
+        if ( empty( $notices ) ) continue;
+
+        $filtered = [];
+        foreach ( $notices as $notice ) {
+            $text = is_array( $notice ) ? ( $notice['notice'] ?? '' ) : (string) $notice;
+            $keep = true;
+            foreach ( $suppress_patterns as $pattern ) {
+                if ( stripos( $text, $pattern ) !== false ) {
+                    $keep = false;
+                    break;
+                }
+            }
+            if ( $keep ) {
+                $filtered[] = $notice;
+            }
+        }
+
+        wc_clear_notices( $type );
+        foreach ( $filtered as $notice ) {
+            $text  = is_array( $notice ) ? ( $notice['notice'] ?? '' ) : (string) $notice;
+            $extra = is_array( $notice ) ? ( $notice['data'] ?? [] ) : [];
+            wc_add_notice( $text, $type, $extra );
+        }
+    }
+}, 5 );
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -68,12 +126,15 @@ body {
   z-index: 100;
 }
 .mc-wordmark {
-  font-family: var(--font-serif);
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--ink);
+  display: flex;
+  align-items: center;
   text-decoration: none;
-  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+.mc-wordmark img {
+  height: 36px;
+  width: auto;
+  display: block;
 }
 .mc-back-link {
   font-family: var(--font-sans);
@@ -226,7 +287,9 @@ body {
   cursor: pointer;
 }
 
-/* Notices */
+/* Notices — only errors and coupon confirmations surface by default.
+   "Added to cart" flash messages are suppressed via PHP filter below,
+   so the only messages reaching here are important ones. */
 .woocommerce-error,
 .woocommerce-message,
 .woocommerce-info {
@@ -240,6 +303,8 @@ body {
 }
 .woocommerce-error { border-color: #c5491f; }
 .woocommerce-message { border-color: var(--gold); }
+/* Hide generic "View cart" button inside notices on checkout — it's redundant */
+.woocommerce-message .button.wc-forward { display: none; }
 
 /* Coupon row */
 .woocommerce-checkout .checkout_coupon {
@@ -307,7 +372,13 @@ body {
 <body class="woocommerce-checkout-moveee">
 
 <header class="mc-header">
-  <a href="https://themoveee.com" class="mc-wordmark">The Moveee</a>
+  <a href="https://themoveee.com" class="mc-wordmark">
+    <img
+      src="https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png"
+      alt="The Moveee"
+      height="36"
+    >
+  </a>
   <span class="mc-secure-note">
     <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="1" y="6" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>

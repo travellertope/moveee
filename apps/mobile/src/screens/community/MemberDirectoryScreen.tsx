@@ -45,10 +45,11 @@ function MemberCard({
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       {/* Avatar */}
-      <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
-        <View style={styles.avatarInner}>
-          {/* Initials placeholder — swap for Image when avatarUrl exists */}
-          <Text style={styles.avatarText}>{initials(member.displayName)}</Text>
+      <View style={isPro ? styles.avatarGlowWrap : undefined}>
+        <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
+          <View style={styles.avatarInner}>
+            <Text style={styles.avatarText}>{initials(member.displayName)}</Text>
+          </View>
         </View>
       </View>
 
@@ -118,6 +119,7 @@ export default function MemberDirectoryScreen() {
     if (/south africa/i.test(c)) return "South Africa";
     return "All";
   });
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [discOpen,   setDiscOpen]   = useState(false);
   const [locOpen,    setLocOpen]    = useState(false);
   const [cityFilter, setCityFilter] = useState("All");
@@ -163,11 +165,6 @@ export default function MemberDirectoryScreen() {
     );
   }, [search, discipline, location, cityFilter, members]);
 
-  const activeFilters = [
-    discipline !== "All" && { label: discipline, clear: () => setDiscipline("All") },
-    location   !== "All" && { label: location,   clear: () => setLocation("All")   },
-  ].filter(Boolean) as { label: string; clear: () => void }[];
-
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -190,66 +187,81 @@ export default function MemberDirectoryScreen() {
             value={search}
             onChangeText={setSearch}
           />
-          <TouchableOpacity onPress={() => { setDiscOpen(!discOpen); setLocOpen(false); }}>
-            <Ionicons name="options-outline" size={20} color={c.ink} />
+          <TouchableOpacity
+            onPress={() => { setFiltersOpen((v) => !v); setDiscOpen(false); setLocOpen(false); }}
+            style={[styles.filterIconBtn, filtersOpen && styles.filterIconBtnActive]}
+          >
+            <Ionicons name="options-outline" size={20} color={filtersOpen ? c.paper : c.ink} />
+            {(discipline !== "All" || location !== "All" || cityFilter !== "All") && (
+              <View style={styles.filterDot} />
+            )}
           </TouchableOpacity>
         </View>
 
-        {/* Filter chips row */}
-        <View style={styles.chipsRow}>
-          <TouchableOpacity
-            style={[styles.filterChip, discipline !== "All" && styles.filterChipActive]}
-            onPress={() => { setDiscOpen(!discOpen); setLocOpen(false); }}
-          >
-            <Text style={[styles.filterChipText, discipline !== "All" && styles.filterChipTextActive]}>
-              {discipline === "All" ? "All Disciplines" : discipline} ▾
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterChip, location !== "All" && styles.filterChipActive]}
-            onPress={() => { setLocOpen(!locOpen); setDiscOpen(false); }}
-          >
-            <Text style={[styles.filterChipText, location !== "All" && styles.filterChipTextActive]}>
-              {location === "All" ? "All Locations" : location} ▾
-            </Text>
-          </TouchableOpacity>
-          {activeFilters.map((f) => (
-            <TouchableOpacity key={f.label} style={styles.activeChip} onPress={f.clear}>
-              <Text style={styles.activeChipText}>{f.label}</Text>
-              <Text style={styles.activeChipX}> ✕</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {/* Filter panel — shown only when filter icon is toggled */}
+        {filtersOpen && (
+          <>
+            <View style={styles.chipsRow}>
+              <TouchableOpacity
+                style={[styles.filterChip, discipline !== "All" && styles.filterChipActive]}
+                onPress={() => {
+                  if (discipline !== "All") { setDiscipline("All"); }
+                  else { setDiscOpen(!discOpen); setLocOpen(false); }
+                }}
+              >
+                <Text style={[styles.filterChipText, discipline !== "All" && styles.filterChipTextActive]}>
+                  {discipline === "All" ? "Discipline ▾" : `${discipline} ✕`}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.filterChip, location !== "All" && styles.filterChipActive]}
+                onPress={() => {
+                  if (location !== "All") { setLocation("All"); }
+                  else { setLocOpen(!locOpen); setDiscOpen(false); }
+                }}
+              >
+                <Text style={[styles.filterChipText, location !== "All" && styles.filterChipTextActive]}>
+                  {location === "All" ? "Location ▾" : `${location} ✕`}
+                </Text>
+              </TouchableOpacity>
+              {(discipline !== "All" || location !== "All" || cityFilter !== "All") && (
+                <TouchableOpacity onPress={() => { setDiscipline("All"); setLocation("All"); setCityFilter("All"); }}>
+                  <Text style={{ fontFamily: fonts.sans, fontSize: 12, color: c.mute }}>Clear all</Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
-        {/* Dropdown — Disciplines */}
-        {discOpen && (
-          <View style={styles.dropdown}>
-            {DISCIPLINES.map((d) => (
-              <TouchableOpacity key={d} style={styles.dropdownItem} onPress={() => { setDiscipline(d); setDiscOpen(false); }}>
-                <Text style={[styles.dropdownItemText, discipline === d && { color: c.ochre, fontFamily: fonts.sansBold }]}>{d}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-        {/* Dropdown — Locations */}
-        {locOpen && (
-          <View style={styles.dropdown}>
-            {LOCATIONS.map((l) => (
-              <TouchableOpacity key={l} style={styles.dropdownItem} onPress={() => { setLocation(l); setLocOpen(false); }}>
-                <Text style={[styles.dropdownItemText, location === l && { color: c.ochre, fontFamily: fonts.sansBold }]}>{l}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+            {/* Discipline dropdown */}
+            {discOpen && (
+              <View style={styles.dropdown}>
+                {DISCIPLINES.map((d) => (
+                  <TouchableOpacity key={d} style={styles.dropdownItem} onPress={() => { setDiscipline(d); setDiscOpen(false); }}>
+                    <Text style={[styles.dropdownItemText, discipline === d && { color: c.ochre, fontFamily: fonts.sansBold }]}>{d}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            {/* Location dropdown */}
+            {locOpen && (
+              <View style={styles.dropdown}>
+                {LOCATIONS.map((l) => (
+                  <TouchableOpacity key={l} style={styles.dropdownItem} onPress={() => { setLocation(l); setLocOpen(false); }}>
+                    <Text style={[styles.dropdownItemText, location === l && { color: c.ochre, fontFamily: fonts.sansBold }]}>{l}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </>
         )}
       </View>
 
-      {/* City strip — only shown when there are cities and a country is selected */}
-      {availableCities.length > 1 && (
+      {/* City strip — only shown when filters panel is open */}
+      {filtersOpen && availableCities.length > 1 && (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={{ backgroundColor: c.paperWarm, borderBottomWidth: 1, borderBottomColor: c.ghost }}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8, flexDirection: "row" }}
+          style={{ height: 44, backgroundColor: c.paperWarm, borderBottomWidth: 1, borderBottomColor: c.ghost }}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 8, flexDirection: "row", alignItems: "center" }}
         >
           {availableCities.map((city) => {
             const isActive = city === cityFilter;
@@ -259,8 +271,8 @@ export default function MemberDirectoryScreen() {
                 key={city}
                 onPress={() => setCityFilter(city)}
                 style={{
-                  paddingHorizontal: 12, paddingVertical: 5, borderRadius: 99,
-                  borderWidth: 1,
+                  paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99,
+                  borderWidth: 1, alignSelf: "center",
                   borderColor: isActive ? c.ink : c.ghost,
                   backgroundColor: isActive ? c.ink : "transparent",
                 }}
@@ -334,9 +346,19 @@ function createStyles(c: ColorPalette) {
     searchInput: {
       flex: 1, fontFamily: fonts.sans, fontSize: 14, color: c.ink,
     },
+    filterIconBtn: {
+      width: 36, height: 36, borderRadius: 18,
+      alignItems: "center", justifyContent: "center",
+    },
+    filterIconBtnActive: { backgroundColor: c.ink },
+    filterDot: {
+      position: "absolute", top: 4, right: 4,
+      width: 7, height: 7, borderRadius: 4,
+      backgroundColor: c.ochre, borderWidth: 1.5, borderColor: c.paper,
+    },
     chipsRow: {
-      height: 44, flexDirection: "row", alignItems: "center",
-      paddingHorizontal: 16, gap: 8, marginTop: 8,
+      flexDirection: "row", alignItems: "center", flexWrap: "wrap",
+      paddingHorizontal: 16, gap: 8, paddingVertical: 10,
     },
     filterChip: {
       height: 32, paddingHorizontal: 12, borderRadius: radius.full,
@@ -345,13 +367,6 @@ function createStyles(c: ColorPalette) {
     filterChipActive:     { backgroundColor: c.ochre, borderColor: c.ochre },
     filterChipText:       { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft },
     filterChipTextActive: { color: c.paper, fontFamily: fonts.sansBold },
-    activeChip: {
-      height: 32, paddingHorizontal: 10, borderRadius: radius.full,
-      backgroundColor: c.ochre, flexDirection: "row", alignItems: "center",
-    },
-    activeChipText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.paper },
-    activeChipX:    { fontFamily: fonts.sans, fontSize: 11, color: c.paper },
-
     dropdown: {
       position: "absolute", top: 52, left: 16, right: 16, zIndex: 100,
       backgroundColor: c.paper, borderRadius: 8, ...shadows.card,
@@ -371,12 +386,21 @@ function createStyles(c: ColorPalette) {
       flex: 1, backgroundColor: c.paper, borderRadius: 12,
       padding: 12, alignItems: "center", gap: 0, ...shadows.card,
     },
+    avatarGlowWrap: {
+      borderRadius: 26,
+      shadowColor: c.gold,
+      shadowOpacity: 0.6,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 0 },
+      elevation: 8,
+      marginBottom: 8,
+    },
     avatarRing: {
       width: 44, height: 44, borderRadius: 22,
-      borderWidth: 2, padding: 2, marginBottom: 8,
+      borderWidth: 2, padding: 2,
     },
     avatarRingPro:     { borderColor: c.gold },
-    avatarRingCitizen: { borderColor: c.ghost },
+    avatarRingCitizen: { borderColor: c.ghost, marginBottom: 8 },
     avatarInner: {
       flex: 1, borderRadius: 20, backgroundColor: c.paperDeep,
       justifyContent: "center", alignItems: "center",

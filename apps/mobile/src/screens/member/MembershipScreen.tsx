@@ -1,8 +1,9 @@
 import React, { useMemo } from "react";
 import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
-  TouchableOpacity, Linking,
+  TouchableOpacity,
 } from "react-native";
+import { openInApp } from "../../utils/openInApp";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
@@ -42,7 +43,7 @@ export default function MembershipScreen() {
   const styles = useMemo(() => createStyles(c), [c]);
 
   const handleUpgrade = () => {
-    Linking.openURL("https://themoveee.com/register?upgrade=patron");
+    openInApp("https://connect.themoveee.com/register?upgrade=patron");
   };
 
   const handleJoinFree = () => {

@@ -2,8 +2,9 @@ import React, { useState, useMemo } from "react";
 import {
   View, Text, Image, FlatList, TextInput, TouchableOpacity,
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
-  ActivityIndicator, useWindowDimensions, Linking, Share,
+  ActivityIndicator, useWindowDimensions, Share,
 } from "react-native";
+import { openInApp } from "../../utils/openInApp";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import RenderHtml from "react-native-render-html";
@@ -23,7 +24,7 @@ function formatLongDate(dateStr: string): string {
 
 function SourcePreview({ item, styles }: { item: FeedItem; styles: ReturnType<typeof createStyles> }) {
   if (!item.sourceUrl) return null;
-  const open = () => Linking.openURL(item.sourceUrl!).catch(() => {});
+  const open = () => openInApp(item.sourceUrl!);
   return (
     <TouchableOpacity style={styles.sourceCard} onPress={open} activeOpacity={0.85}>
       {item.ogImage ? <Image source={{ uri: item.ogImage }} style={styles.sourceImage} resizeMode="cover" /> : null}

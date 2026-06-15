@@ -3034,15 +3034,25 @@ class Culture_REST_API {
      * Toggles a bookmark (private save) on any post for a user.
      */
     public static function handle_toggle_bookmark( $request ) {
-        $user_id = (int) $request->get_param( 'user_id' );
-        $post_id = (int) $request->get_param( 'post_id' );
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $post_id      = (int) $request->get_param( 'post_id' );
+        $content_type = sanitize_key( $request->get_param( 'content_type' ) ?: '' );
 
         $post = get_post( $post_id );
         if ( ! $post || ! in_array( $post->post_status, array( 'publish' ), true ) ) {
             return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
         }
 
-        $bookmarked_ids     = (array) get_user_meta( $user_id, '_culture_bookmarked_posts', true );
+        // Route to the correct meta key based on content_type or post_type.
+        if ( $content_type === 'quote' || $post->post_type === 'culture_quote' ) {
+            $meta_key = '_culture_bookmark_quote_ids';
+        } elseif ( $content_type === 'article' || $post->post_type === 'post' ) {
+            $meta_key = '_culture_bookmark_article_ids';
+        } else {
+            $meta_key = '_culture_bookmarked_posts';
+        }
+
+        $bookmarked_ids     = (array) get_user_meta( $user_id, $meta_key, true );
         $already_bookmarked = in_array( $post_id, $bookmarked_ids, true );
 
         if ( $already_bookmarked ) {
@@ -3051,7 +3061,7 @@ class Culture_REST_API {
             $bookmarked_ids[] = $post_id;
         }
 
-        update_user_meta( $user_id, '_culture_bookmarked_posts', $bookmarked_ids );
+        update_user_meta( $user_id, $meta_key, $bookmarked_ids );
 
         return rest_ensure_response( array(
             'success'    => true,

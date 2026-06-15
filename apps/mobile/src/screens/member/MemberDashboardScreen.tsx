@@ -262,21 +262,24 @@ export default function MemberDashboardScreen() {
         {/* Card 1: Hero Profile */}
         <View style={styles.card}>
           <View style={styles.heroRow}>
-            {user.avatarUrl ? (
-              <Image
-                source={{ uri: user.avatarUrl }}
-                style={[styles.avatar, isPro ? styles.avatarPro : styles.avatarCitizen]}
-              />
-            ) : (
-              <View style={[styles.avatarFallback, isPro ? styles.avatarPro : styles.avatarCitizen]}>
-                <Text style={styles.avatarFallbackText}>{initials(user.displayName)}</Text>
-              </View>
-            )}
+            <View style={isPro ? styles.avatarGlowWrap : undefined}>
+              {user.avatarUrl ? (
+                <Image
+                  source={{ uri: user.avatarUrl }}
+                  style={[styles.avatar, isPro ? styles.avatarPro : styles.avatarCitizen]}
+                />
+              ) : (
+                <View style={[styles.avatarFallback, isPro ? styles.avatarPro : styles.avatarCitizen]}>
+                  <Text style={styles.avatarFallbackText}>{initials(user.displayName)}</Text>
+                </View>
+              )}
+            </View>
             <View style={styles.heroInfo}>
               <Text style={styles.heroName} numberOfLines={1}>{user.displayName}</Text>
               {isPro ? (
                 <View style={styles.tierBadgePro}>
-                  <Text style={styles.tierTextPro}>★ CONNECT PRO</Text>
+                  <Ionicons name="ribbon" size={10} color={c.gold} />
+                  <Text style={styles.tierTextPro}>CONNECT PRO</Text>
                 </View>
               ) : (
                 <View style={styles.tierBadgeCitizen}>
@@ -532,8 +535,16 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     borderRadius: 48,
     backgroundColor: c.rule,
   },
+  avatarGlowWrap: {
+    borderRadius: 52,
+    shadowColor: c.gold,
+    shadowOpacity: 0.6,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 10,
+  },
   avatarPro: {
-    borderWidth: 3,
+    borderWidth: 2.5,
     borderColor: c.gold,
     padding: 2,
   },
@@ -574,6 +585,9 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 9999,
     alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   tierTextPro: {
     fontFamily: fonts.sansBold,

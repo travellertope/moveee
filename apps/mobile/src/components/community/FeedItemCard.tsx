@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import {
   View,
@@ -7,12 +7,14 @@ import {
   StyleSheet,
   Image,
   ScrollView,
+  Share,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
-import { api, MOBILE_API } from "../../api/client";
+import { api, MOBILE_API, CULTURE_API } from "../../api/client";
+import { useAuthStore } from "../../auth/authStore";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
 import ImageLightbox from "../ui/ImageLightbox";
@@ -103,9 +105,9 @@ function createStyles(c: ColorPalette) {
     },
     cardTitleXl: {
       fontFamily: fonts.serifBold,
-      fontSize: fontSize.xl,
+      fontSize: fontSize.lg,
       color: c.ink,
-      lineHeight: 30,
+      lineHeight: 28,
     },
     cardBody: {
       fontFamily: fonts.sans,
@@ -150,13 +152,14 @@ function createStyles(c: ColorPalette) {
       position: "relative" as const,
     },
     avatarWrapPro: {
-      borderWidth: 2,
-      borderColor: c.goldBorder,
+      borderWidth: 2.5,
+      borderColor: c.gold,
       borderRadius: 20,
       shadowColor: c.gold,
-      shadowOpacity: 0.18,
-      shadowRadius: 8,
-      elevation: 2,
+      shadowOpacity: 0.6,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 0 },
+      elevation: 8,
     },
     avatar: { width: 40, height: 40, borderRadius: 20 },
     avatarFallback: {
@@ -193,6 +196,14 @@ function createStyles(c: ColorPalette) {
       color: c.ink,
       flexShrink: 1,
     },
+    proBadgePill: {
+      backgroundColor: c.gold,
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      alignItems: "center" as const,
+      justifyContent: "center" as const,
+    },
     authorDot: {
       fontFamily: fonts.sans,
       fontSize: fontSize.sm,
@@ -211,16 +222,16 @@ function createStyles(c: ColorPalette) {
     },
     tagChip: {
       marginTop: 4,
-      backgroundColor: c.paperDeep,
-      borderRadius: radius.sm,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
+      backgroundColor: c.ink,
+      borderRadius: radius.full,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
       alignSelf: "flex-start" as const,
     },
     tagChipText: {
-      fontFamily: fonts.mono,
-      fontSize: fontSize.tiny,
-      color: c.inkSoft,
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.xs,
+      color: c.paper,
     },
     topRight: {
       alignItems: "flex-end" as const,
@@ -565,6 +576,104 @@ function createStyles(c: ColorPalette) {
       fontSize: fontSize.xs,
       color: c.ghost,
     },
+    quoteActionBar: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      paddingHorizontal: 14,
+      paddingBottom: 12,
+      paddingTop: 4,
+      gap: 20,
+    },
+    quoteActionBtn: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 4,
+    },
+    quoteActionCount: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.tiny,
+      color: c.mute,
+    },
+    // event community
+    eventProStrip: {
+      backgroundColor: c.goldLight,
+      borderRadius: radius.md,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      marginTop: 10,
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+    },
+    eventProStripText: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.xs,
+      color: c.gold,
+    },
+    eventRsvpBtn: {
+      backgroundColor: c.ochre,
+      borderRadius: radius.full,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+    },
+    eventRsvpBtnDone: {
+      backgroundColor: c.success,
+    },
+    eventRsvpBtnText: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.sm,
+      color: "#FFFFFF",
+    },
+    // photo counter
+    photoCounter: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.tiny,
+      color: c.ghost,
+      textAlign: "center" as const,
+      marginTop: 4,
+    },
+    // editorial card
+    editorialCategoryChip: {
+      backgroundColor: "rgba(243,236,224,0.92)",
+      borderRadius: radius.full,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
+    editorialCategoryChipText: {
+      fontFamily: fonts.monoBold,
+      fontSize: fontSize.eyebrow,
+      color: c.ochre,
+      letterSpacing: 1,
+    },
+    editorialAuthorRow: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 6,
+      marginTop: 10,
+    },
+    editorialAvatar: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: c.goldLight,
+      justifyContent: "center" as const,
+      alignItems: "center" as const,
+      flexShrink: 0,
+    },
+    editorialAvatarInitial: {
+      fontFamily: fonts.sansBold,
+      fontSize: 10,
+      color: c.gold,
+    },
+    editorialAuthorName: {
+      fontFamily: fonts.sansBold,
+      fontSize: 12,
+      color: c.ink,
+    },
+    editorialReadTime: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.tiny,
+      color: c.ghost,
+    },
   });
 }
 
@@ -631,7 +740,7 @@ function AuthorRow({ item, forYouBadge, onAuthorPress }: {
           )}
           {isPro && (
             <View style={styles.proStar}>
-              <Text style={{ fontSize: 8, color: c.gold }}>★</Text>
+              <Ionicons name="ribbon" size={8} color={c.gold} />
             </View>
           )}
         </View>
@@ -641,7 +750,11 @@ function AuthorRow({ item, forYouBadge, onAuthorPress }: {
         <TouchableOpacity onPress={onAuthorPress} activeOpacity={onAuthorPress ? 0.7 : 1} disabled={!onAuthorPress}>
           <View style={styles.nameRow}>
             <Text style={styles.authorName} numberOfLines={1}>{item.communityAuthor ?? "Anonymous"}</Text>
-            {isPro && <BadgePill label="Connect Pro" bg={c.gold} color={c.paper} styles={styles} />}
+            {isPro && (
+              <View style={styles.proBadgePill}>
+                <Ionicons name="ribbon" size={9} color="#fff" />
+              </View>
+            )}
             <Text style={styles.authorDot}>·</Text>
             <Text style={styles.authorTime}>{timeAgo(item.date)}</Text>
           </View>
@@ -681,7 +794,7 @@ function ImgPlaceholder({ height, src, borderRadius = 0, width, onPress }: {
   const content = src ? (
     <Image source={{ uri: src }} style={[style, { backgroundColor: c.ghost }]} resizeMode="cover" />
   ) : (
-    <View style={[style, { backgroundColor: "#C8BFB0", justifyContent: "center", alignItems: "center" }]}>
+    <View style={[style, { backgroundColor: c.ghost, justifyContent: "center", alignItems: "center" }]}>
       <Ionicons name="image-outline" size={24} color={c.ghost} />
     </View>
   );
@@ -750,7 +863,7 @@ function GalleryStrip({ images, height, width, onTap }: {
 
 // ── Card Implementations ──────────────────────────────────────────────────────
 
-// PulseCard (A1)
+// PulseCard (A3 in design — compact with ⚡ icon)
 function PulseCard({ item, onPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
@@ -758,21 +871,26 @@ function PulseCard({ item, onPress }: FeedCardProps) {
   return (
     <>
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
-        <View style={{ padding: 14 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <BadgePill label={item.arm ?? "Pulse"} bg={c.badgePulseBg} color={c.badgePulseText} styles={styles} />
-            {item.category ? <Text style={styles.eyebrow}>{item.category}</Text> : null}
-            <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
+        <View style={{ padding: 14, flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+          <Text style={{ fontSize: 20, color: c.ochre, lineHeight: 24, paddingTop: 2 }}>⚡</Text>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <BadgePill label="PULSE" bg={c.ink} color={c.paper} styles={styles} />
+              <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
+            </View>
+            <Text style={[styles.cardTitle, { marginTop: 6, fontSize: fontSize.base, lineHeight: 22 }]} numberOfLines={2}>{item.title}</Text>
+            {item.source ? (
+              <Text style={[styles.sourceText, { marginTop: 4 }]}>🌐 {item.source}</Text>
+            ) : null}
           </View>
-          <Text style={[styles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>{item.title}</Text>
-          {item.excerpt ? (
-            <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={2}>{item.excerpt}</Text>
-          ) : null}
-          <View style={{ marginTop: 10 }}>
-            <ImgPlaceholder height={172} src={item.image} onPress={item.image ? () => setLightboxOpen(true) : undefined} />
-          </View>
-          {item.source ? <Text style={[styles.sourceText, { marginTop: 8 }]}>📰 {item.source}</Text> : null}
         </View>
+        {item.image ? (
+          <ImgPlaceholder height={172} src={item.image} onPress={() => setLightboxOpen(true)} />
+        ) : item.ogImage ? (
+          <View style={{ marginTop: 0 }}>
+            <LinkPreview source={item.source} title={item.ogTitle ?? item.title} domain={item.sourceUrl ?? undefined} image={item.ogImage} />
+          </View>
+        ) : null}
         <FeedReactionBar item={item} />
       </TouchableOpacity>
       {item.image && (
@@ -782,29 +900,62 @@ function PulseCard({ item, onPress }: FeedCardProps) {
   );
 }
 
-// EditorialCard (A2)
+// EditorialCard (A1 with hero / A2 text-only)
 function EditorialCard({ item, onPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const hasHero = !!item.image;
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
+      {/* A1 — hero image with category badge overlay bottom-left */}
+      {hasHero ? (
+        <View style={{ position: "relative", overflow: "hidden", borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
+          <Image source={{ uri: item.image! }} style={{ width: "100%", height: 180 }} resizeMode="cover" />
+          {item.category ? (
+            <View style={{ position: "absolute", bottom: 12, left: 12 }}>
+              <View style={styles.editorialCategoryChip}>
+                <Text style={styles.editorialCategoryChipText}>{item.category.toUpperCase()}</Text>
+              </View>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+
       <View style={{ padding: 14 }}>
+        {/* Badge row: Editorial label + section eyebrow + timestamp */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <BadgePill label="Editorial" bg={c.ochre} color={c.paper} styles={styles} />
-          {item.category ? <Text style={styles.eyebrow}>{item.category}</Text> : null}
           <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
         </View>
-        <Text style={[styles.cardTitleXl, { marginTop: 10 }]} numberOfLines={2}>{item.title}</Text>
-        {item.excerpt ? (
-          <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={3}>{item.excerpt}</Text>
-        ) : null}
-        <Text style={[styles.readMore, { marginTop: 8 }]}>Read more →</Text>
-        {item.source || item.ogTitle ? (
-          <View style={{ marginTop: 8, marginHorizontal: -14 }}>
-            <LinkPreview source={item.source} title={item.ogTitle ?? item.title} domain={item.sourceUrl ?? undefined} image={item.ogImage} />
+
+        {/* A2 only: category pill above title */}
+        {!hasHero && item.category ? (
+          <View style={{ marginTop: 8 }}>
+            <BadgePill label={item.category} bg={c.badgeEditorialBg} color={c.badgeEditorialText} styles={styles} />
           </View>
         ) : null}
+
+        <Text style={[styles.cardTitleXl, { marginTop: 8 }]}>{item.title}</Text>
+        {item.excerpt ? (
+          <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={hasHero ? 2 : 3}>{item.excerpt}</Text>
+        ) : null}
+
+        {/* Compact author row: 24px avatar fallback + name + reading time */}
+        <View style={styles.editorialAuthorRow}>
+          <View style={styles.editorialAvatar}>
+            <Text style={styles.editorialAvatarInitial}>
+              {(item.author ?? "M")[0]?.toUpperCase()}
+            </Text>
+          </View>
+          {item.author ? (
+            <Text style={styles.editorialAuthorName}>{item.author}</Text>
+          ) : null}
+          {item.readingTime ? (
+            <Text style={styles.editorialReadTime}>· {item.readingTime} min read</Text>
+          ) : null}
+        </View>
       </View>
+      <FeedReactionBar item={item} />
     </TouchableOpacity>
   );
 }
@@ -833,7 +984,7 @@ function HappeningCard({ item, onPress }: FeedCardProps) {
             {item.image ? (
               <BadgePill label="Happening" bg={c.badgeHappeningBg} color={c.badgeHappeningText} styles={styles} />
             ) : null}
-            <Text style={[styles.happeningTitle, item.image ? { marginTop: 8 } : null]} numberOfLines={2}>{item.title}</Text>
+            <Text style={[styles.happeningTitle, item.image ? { marginTop: 8 } : null]}>{item.title}</Text>
             {item.eventDate ? (
               <View style={styles.happeningMetaRow}>
                 <Ionicons name="calendar-outline" size={14} color={c.gold} />
@@ -892,9 +1043,9 @@ function DirectoryCard({ item }: FeedCardProps) {
           ) : null}
           <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
         </View>
-        <Text style={[styles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>{item.title}</Text>
+        <Text style={[styles.cardTitle, { marginTop: 10 }]}>{item.title}</Text>
         {item.excerpt ? (
-          <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={3}>{item.excerpt}</Text>
+          <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={4}>{item.excerpt}</Text>
         ) : null}
         <Text style={[styles.successLink, { marginTop: 8 }]}>View entry →</Text>
       </View>
@@ -947,12 +1098,12 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <BadgePill label={`Hidden Gem ${starsText(item.starRating)}`} bg={c.templateGemBg} color={c.templateGemText} styles={styles} />
+          <BadgePill label="💎 HIDDEN GEM" bg={c.templateGemBg} color={c.templateGemText} styles={styles} />
           {(item.placeLocation ?? item.locationName) ? (
             <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.placeLocation ?? item.locationName}</Text>
           ) : null}
           <View style={{ marginTop: 8 }}>
-            <HashtagText text={item.body ?? item.excerpt ?? item.title ?? ""} numberOfLines={2} style={styles.cardBody} />
+            <HashtagText text={item.body ?? item.excerpt ?? item.title ?? ""} numberOfLines={4} style={styles.cardBody} />
           </View>
         </View>
         {gallery.length > 0 ? (
@@ -973,14 +1124,14 @@ function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCar
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
-        <BadgePill label="Cultural Take" bg={c.templateTakeBg} color={c.templateTakeText} styles={styles} />
+        <BadgePill label="🔥 CULTURAL TAKE" bg={c.templateTakeBg} color={c.templateTakeText} styles={styles} />
         {(item.culturalTakeHeadline ?? item.title) ? (
-          <Text style={[styles.cardTitle, { marginTop: 8, fontStyle: "italic" }]} numberOfLines={2}>
+          <Text style={[styles.cardTitle, { marginTop: 8, fontStyle: "italic" }]}>
             {item.culturalTakeHeadline ?? item.title}
           </Text>
         ) : null}
         {(item.body ?? item.excerpt) ? (
-          <HashtagText text={item.body ?? item.excerpt ?? ""} numberOfLines={2} style={[styles.cardBody, { marginTop: 6 }]} />
+          <HashtagText text={item.body ?? item.excerpt ?? ""} numberOfLines={4} style={[styles.cardBody, { marginTop: 6 }]} />
         ) : null}
       </View>
       <FeedReactionBar item={item} marginTop={10} />
@@ -999,7 +1150,7 @@ function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <BadgePill label={`Food Review${item.foodDishName ? " · " + item.foodDishName : ""}`} bg={c.templateFoodBg} color={c.templateFoodText} styles={styles} />
+          <BadgePill label="🍽️ FOOD REVIEW" bg={c.templateFoodBg} color={c.templateFoodText} styles={styles} />
           {(item.placeLocation ?? item.locationName) ? (
             <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.placeLocation ?? item.locationName}</Text>
           ) : null}
@@ -1044,7 +1195,7 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <BadgePill label="Creative Showcase" bg={c.templateShowcaseBg} color={c.templateShowcaseText} styles={styles} />
+          <BadgePill label="🎨 CREATIVE SHOWCASE" bg={c.templateShowcaseBg} color={c.templateShowcaseText} styles={styles} />
           {item.showcaseMedium ? (
             <View style={{ marginTop: 4 }}>
               <BadgePill label={item.showcaseMedium} bg={c.paperDeep} color={c.inkSoft} styles={styles} />
@@ -1072,13 +1223,9 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
                 <ImgPlaceholder key={i} height={200} src={src} borderRadius={6} width={260} onPress={() => setLightboxIdx(i)} />
               ))}
             </ScrollView>
-            {count > 1 ? (
-              <View style={styles.showcaseDots}>
-                {gallery.map((_, i) => (
-                  <View key={i} style={[styles.showcaseDot, i === activeIdx ? styles.showcaseDotActive : styles.showcaseDotInactive]} />
-                ))}
-              </View>
-            ) : null}
+            <Text style={styles.photoCounter}>
+              {activeIdx + 1} of {count} photo{count !== 1 ? "s" : ""}
+            </Text>
           </>
         ) : null}
         <FeedReactionBar item={item} marginTop={10} />
@@ -1115,7 +1262,8 @@ function PollCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) 
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
-        <Text style={styles.pollQuestion}>{item.title}</Text>
+        <BadgePill label="📊 POLL" bg={c.templatePollBg} color={c.templatePollText} styles={styles} />
+        <Text style={[styles.pollQuestion, { marginTop: 8 }]}>{item.title}</Text>
         {localOpts.map((opt, i) => {
           const pct = total > 0 ? Math.round((opt.votes / total) * 100) : 0;
           const isWinner = opt.votes === maxVotes && maxVotes > 0;
@@ -1151,26 +1299,38 @@ function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
-        <BadgePill label="Weekend Route" bg={c.templateRouteBg} color={c.templateRouteText} styles={styles} />
-        {(item.itineraryCity ?? item.city) ? (
-          <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.itineraryCity ?? item.city}</Text>
+        <BadgePill label="🗺️ ITINERARY" bg={c.templateRouteBg} color={c.templateRouteText} styles={styles} />
+        {(item.itineraryTitle ?? item.title) ? (
+          <Text style={[styles.cardTitle, { marginTop: 8 }]}>{item.itineraryTitle ?? item.title}</Text>
         ) : null}
-        {item.body || item.excerpt ? (
-          <Text style={[styles.cardBody, { marginTop: 8 }]} numberOfLines={2}>{item.body ?? item.excerpt}</Text>
-        ) : null}
+        {/* Metadata strip */}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
+          {item.itineraryStops && item.itineraryStops.length > 0 ? (
+            <Text style={styles.sourceText}>🗂 {item.itineraryStops.length} stops</Text>
+          ) : null}
+          {item.itineraryDuration ? <Text style={styles.sourceText}>⏱ {item.itineraryDuration}</Text> : null}
+          {item.itineraryBudget ? <Text style={styles.sourceText}>💰 {item.itineraryBudget}</Text> : null}
+          {item.itineraryBestTime ? <Text style={styles.sourceText}>☀️ {item.itineraryBestTime}</Text> : null}
+          {(item.itineraryCity ?? item.city) ? (
+            <Text style={styles.sourceText}>📍 {item.itineraryCity ?? item.city}</Text>
+          ) : null}
+        </View>
         {item.itineraryStops && item.itineraryStops.length > 0 ? (
-          <View style={{ marginTop: 10 }}>
-            {item.itineraryStops.map((stop, i) => (
-              <View key={i} style={styles.itinStopRow}>
+          <View style={{ marginTop: 10, borderTopWidth: 1, borderTopColor: c.rule }}>
+            {item.itineraryStops.slice(0, 3).map((stop, i) => (
+              <View key={i} style={[styles.itinStopRow, { borderBottomWidth: 1, borderBottomColor: c.rule, paddingVertical: 8 }]}>
                 <View style={styles.itinStopNum}>
                   <Text style={styles.itinStopNumText}>{i + 1}</Text>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.itinStopName}>{stop.name}</Text>
-                  {stop.note ? <Text style={styles.itinStopNote}>{stop.note}</Text> : null}
-                </View>
+                <Text style={[styles.itinStopName, { flex: 1 }]}>{stop.name}</Text>
+                <Text style={[styles.readMore, { fontSize: fontSize.sm }]}>→</Text>
               </View>
             ))}
+            {item.itineraryStops.length > 3 ? (
+              <Text style={[styles.readMore, { marginTop: 4, fontSize: fontSize.sm }]}>
+                + {item.itineraryStops.length - 3} more stops
+              </Text>
+            ) : null}
           </View>
         ) : null}
       </View>
@@ -1209,7 +1369,7 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardP
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
-        <BadgePill label="Book Review" bg={c.templateBookBg} color={c.templateBookText} styles={styles} />
+        <BadgePill label="📚 BOOK REVIEW" bg={c.templateBookBg} color={c.templateBookText} styles={styles} />
 
         {/* Book card */}
         {item.bookTitle ? (
@@ -1289,11 +1449,22 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardP
   );
 }
 
-// EventCommunityCard (B9) — community post with _template_type = 'event'
+// EventCommunityCard (B8 in design) — community post with _template_type = 'event'
 function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [rsvped, setRsvped] = useState(false);
+
+  const handleRsvp = async () => {
+    if (rsvped || !item.wpId) return;
+    setRsvped(true);
+    try {
+      await api.post(`${MOBILE_API}/events/rsvp`, { event_id: item.wpId });
+    } catch {
+      setRsvped(false);
+    }
+  };
 
   return (
     <>
@@ -1305,8 +1476,8 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedC
           </TouchableOpacity>
         ) : null}
         <View style={{ paddingHorizontal: 14, paddingTop: item.image ? 12 : 0 }}>
-          <BadgePill label="Event" bg={c.templateEventBg} color={c.templateEventText} styles={styles} />
-          <Text style={[styles.cardTitle, { marginTop: 8 }]} numberOfLines={2}>{item.title}</Text>
+          <BadgePill label="📅 EVENT" bg={c.templateEventBg} color={c.templateEventText} styles={styles} />
+          <Text style={[styles.cardTitle, { marginTop: 8 }]}>{item.title}</Text>
 
           {item.eventDate ? (
             <View style={[styles.happeningMetaRow, { marginTop: 8 }]}>
@@ -1342,6 +1513,31 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedC
               <BadgePill label={item.eventCategory} bg={c.paperDeep} color={c.inkSoft} styles={styles} />
             </View>
           ) : null}
+
+          {/* Pro perk strip — only when isProOnly */}
+          {item.isProOnly ? (
+            <View style={styles.eventProStrip}>
+              <Text style={styles.eventProStripText}>⭐ Pro members get early access</Text>
+            </View>
+          ) : null}
+
+          {/* RSVP button — only when no external ticket URL */}
+          {!item.ticketUrl ? (
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
+              <TouchableOpacity
+                style={[styles.eventRsvpBtn, rsvped ? styles.eventRsvpBtnDone : undefined]}
+                onPress={handleRsvp}
+                activeOpacity={0.8}
+                disabled={rsvped}
+              >
+                <Text style={styles.eventRsvpBtnText}>{rsvped ? "RSVPed ✓" : "RSVP Now"}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
+              <Text style={styles.readMore}>Get Tickets →</Text>
+            </View>
+          )}
         </View>
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
@@ -1352,11 +1548,61 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedC
   );
 }
 
-// QuoteCard (C1)
+// QuoteCard (C1) — heart + bookmark + share
 function QuoteCard({ item }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const user = useAuthStore((s) => s.user);
   const [modalOpen, setModalOpen] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [loved, setLoved] = useState(false);
+  const [loveCount, setLoveCount] = useState(item.reactions?.love ?? 0);
+
+  useEffect(() => {
+    if (!item.wpId || !user) return;
+    api.get<{ bookmarked_quotes?: (number | string)[] }>(
+      `${CULTURE_API}/user/interactions`
+    ).then((res) => {
+      const ids = (res.bookmarked_quotes ?? []).map(String);
+      setBookmarked(ids.includes(String(item.wpId)));
+    }).catch(() => {});
+  }, [item.wpId, user?.id]);
+
+  const handleLove = async () => {
+    if (!item.wpId) return;
+    const next = !loved;
+    setLoved(next);
+    setLoveCount((prev) => prev + (next ? 1 : -1));
+    try {
+      await api.post(`${MOBILE_API}/community/react`, { post_id: Number(item.wpId), type: "love" });
+    } catch {
+      setLoved(!next);
+      setLoveCount((prev) => prev + (next ? -1 : 1));
+    }
+  };
+
+  const handleBookmark = async () => {
+    if (!item.wpId) return;
+    const next = !bookmarked;
+    setBookmarked(next);
+    try {
+      await api.post(`${MOBILE_API}/content/bookmark`, {
+        content_type: "quote",
+        post_id: Number(item.wpId),
+      });
+    } catch {
+      setBookmarked(!next);
+    }
+  };
+
+  const handleShare = async () => {
+    const url = shareUrlFor(item);
+    if (!url) return;
+    try {
+      await Share.share({ message: `"${item.title}" — ${item.quoteAuthor ?? ""}\n\n${url}` });
+    } catch { /* user dismissed */ }
+  };
+
   return (
     <>
       <TouchableOpacity style={styles.card} onPress={() => setModalOpen(true)} activeOpacity={0.92}>
@@ -1364,12 +1610,23 @@ function QuoteCard({ item }: FeedCardProps) {
           <Text style={styles.bigQuote}>"</Text>
           <Text style={styles.quoteText}>{item.title}</Text>
           <View style={styles.quoteAttribution}>
-            {item.quoteAuthor ? <Text style={styles.quoteAuthor}>{item.quoteAuthor}</Text> : null}
+            {item.quoteAuthor ? <Text style={styles.quoteAuthor}>— {item.quoteAuthor}</Text> : null}
             {item.quoteAuthor && item.quoteSource ? <Text style={styles.quoteDot}>·</Text> : null}
             {item.quoteSource ? <Text style={styles.quoteSource}>{item.quoteSource}</Text> : null}
           </View>
         </View>
-        <FeedReactionBar item={item} marginTop={4} />
+        <View style={styles.quoteActionBar}>
+          <TouchableOpacity style={styles.quoteActionBtn} onPress={handleLove} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name={loved ? "heart" : "heart-outline"} size={18} color={loved ? "#E53E3E" : c.mute} />
+            {loveCount > 0 ? <Text style={styles.quoteActionCount}>{loveCount}</Text> : null}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quoteActionBtn} onPress={handleBookmark} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={18} color={bookmarked ? c.ochre : c.mute} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.quoteActionBtn, { marginLeft: "auto" as any }]} onPress={handleShare} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="share-social-outline" size={18} color={c.mute} />
+          </TouchableOpacity>
+        </View>
       </TouchableOpacity>
       <QuoteDetailModal visible={modalOpen} item={item} onClose={() => setModalOpen(false)} />
     </>

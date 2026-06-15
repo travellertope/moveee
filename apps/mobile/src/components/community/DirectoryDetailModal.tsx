@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { View, Text, TouchableOpacity, Linking, StyleSheet, Image } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { openInApp } from "../../utils/openInApp";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import TypeBadge from "../ui/TypeBadge";
@@ -34,7 +35,7 @@ export default function DirectoryDetailModal({ visible, item, onClose }: Props) 
         entryType: item.entryType,
       });
     } else if (item.href) {
-      Linking.openURL(item.href);
+      openInApp(item.href);
     }
   };
 
@@ -97,7 +98,7 @@ export default function DirectoryDetailModal({ visible, item, onClose }: Props) 
           {hasInstagram && (
             <TouchableOpacity
               style={styles.pillBtn}
-              onPress={() => Linking.openURL(item.communityTag!)}
+              onPress={() => openInApp(item.communityTag!)}
             >
               <Ionicons name="logo-instagram" size={14} color={c.ink} />
               <Text style={styles.pillBtnText}>Instagram</Text>

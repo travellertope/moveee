@@ -46,6 +46,7 @@ import SudokuGameScreen from "../screens/games/SudokuGameScreen";
 import CrosswordGameScreen from "../screens/games/CrosswordGameScreen";
 import EventsScreen from "../screens/events/EventsScreen";
 import EventDetailScreen from "../screens/events/EventDetailScreen";
+import MyRSVPsScreen from "../screens/events/MyRSVPsScreen";
 
 // Shop
 import ShopScreen from "../screens/shop/ShopScreen";
@@ -56,6 +57,7 @@ import TheEditScreen from "../screens/shop/TheEditScreen";
 import ShopSearchScreen from "../screens/shop/ShopSearchScreen";
 import MakerProfileScreen from "../screens/shop/MakerProfileScreen";
 import OrderConfirmationScreen from "../screens/shop/OrderConfirmationScreen";
+import WishlistScreen from "../screens/shop/WishlistScreen";
 
 // Member
 import MemberDashboardScreen from "../screens/member/MemberDashboardScreen";
@@ -150,6 +152,7 @@ function EventsStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="EventsList"  component={EventsScreen} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} />
+      <Stack.Screen name="MyRSVPs"     component={MyRSVPsScreen} />
     </Stack.Navigator>
   );
 }
@@ -165,6 +168,7 @@ function ShopStack() {
       <Stack.Screen name="ShopSearch"        component={ShopSearchScreen} />
       <Stack.Screen name="MakerProfile"      component={MakerProfileScreen} />
       <Stack.Screen name="OrderConfirmation" component={OrderConfirmationScreen} />
+      <Stack.Screen name="Wishlist"          component={WishlistScreen} />
     </Stack.Navigator>
   );
 }

@@ -291,15 +291,18 @@ export default function MemberProfileScreen() {
             <Ionicons name="share-outline" size={18} color={c.ink} />
           </TouchableOpacity>
 
-          <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
-            <View style={styles.avatarInner}>
-              <Text style={styles.avatarInitials}>{initials(profile.displayName)}</Text>
+          <View style={isPro ? styles.avatarGlowWrap : undefined}>
+            <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
+              <View style={styles.avatarInner}>
+                <Text style={styles.avatarInitials}>{initials(profile.displayName)}</Text>
+              </View>
             </View>
           </View>
 
           {isPro && (
             <View style={styles.tierBadge}>
-              <Text style={styles.tierBadgeText}>★ CONNECT PRO</Text>
+              <Ionicons name="ribbon" size={10} color={c.paper} />
+              <Text style={styles.tierBadgeText}>CONNECT PRO</Text>
             </View>
           )}
 
@@ -393,12 +396,21 @@ function createStyles(c: ColorPalette) {
       justifyContent: "center", alignItems: "center",
     },
 
+    avatarGlowWrap: {
+      borderRadius: 52,
+      shadowColor: c.gold,
+      shadowOpacity: 0.6,
+      shadowRadius: 14,
+      shadowOffset: { width: 0, height: 0 },
+      elevation: 10,
+      marginTop: -48,
+    },
     avatarRing: {
       width: 96, height: 96, borderRadius: 48, borderWidth: 3, padding: 3,
-      marginTop: -48, backgroundColor: c.paper,
+      backgroundColor: c.paper,
     },
     avatarRingPro:     { borderColor: c.gold },
-    avatarRingCitizen: { borderColor: c.ghost },
+    avatarRingCitizen: { borderColor: c.ghost, marginTop: -48 },
     avatarInner: {
       flex: 1, borderRadius: 44, backgroundColor: c.paperDeep,
       justifyContent: "center", alignItems: "center",
@@ -408,6 +420,7 @@ function createStyles(c: ColorPalette) {
     tierBadge: {
       marginTop: 8, marginBottom: 4, backgroundColor: c.gold,
       paddingHorizontal: 10, paddingVertical: 3, borderRadius: radius.full,
+      flexDirection: "row", alignItems: "center", gap: 4,
     },
     tierBadgeText: { fontFamily: fonts.sansBold, fontSize: 9, color: c.paper, letterSpacing: 1.4, textTransform: "uppercase" },
 

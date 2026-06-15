@@ -241,7 +241,8 @@ const CATEGORIES_STATIC = [
 export default function ShopScreen() {
   const nav = useNavigation<any>();
   const { user } = useAuthStore();
-  const { itemCount } = useCartStore();
+  const { itemCount, wishlist } = useCartStore();
+  const wishlistCount = wishlist.length;
   const isPro = user?.tier === "patron";
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
@@ -321,6 +322,18 @@ export default function ShopScreen() {
             onPress={() => nav.navigate("ShopSearch")}
           >
             <Ionicons name="search-outline" size={22} color={c.ink} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => nav.navigate("Wishlist")}
+          >
+            <Ionicons name={wishlistCount > 0 ? "heart" : "heart-outline"} size={22} color={wishlistCount > 0 ? c.error : c.ink} />
+            {wishlistCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{wishlistCount > 9 ? "9+" : wishlistCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconBtn}
@@ -468,7 +481,7 @@ export default function ShopScreen() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Meet the Makers</Text>
-                  <TouchableOpacity><Text style={styles.sectionAction}>See all →</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => nav.navigate("ShopListing", { categoryName: "All Products", categorySlug: "" })}><Text style={styles.sectionAction}>See all →</Text></TouchableOpacity>
                 </View>
                 <ScrollView
                   horizontal
