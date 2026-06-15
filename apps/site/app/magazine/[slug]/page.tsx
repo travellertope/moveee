@@ -391,7 +391,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                   postId={parseInt(post.databaseId)}
                   content={processedContent || ""}
                 />
-                <FinishReading postId={parseInt(post.databaseId)} />
+                <FinishReading postId={parseInt(post.databaseId)} readingTime={readingTime} />
               </>
             }
           />

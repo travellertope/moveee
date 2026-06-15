@@ -774,6 +774,17 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Article read-complete — awards magazine_read credits once ever per article per user.
+        register_rest_route( 'culture/v1', '/articles/read-complete', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_article_read_complete' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Bookmark toggle — any post type.
         register_rest_route( 'culture/v1', '/content/bookmark', array(
             'methods'             => 'POST',
@@ -3027,6 +3038,29 @@ class Culture_REST_API {
             'liked'   => ! $already_liked,
             'count'   => $new_count,
         ) );
+    }
+
+    /**
+     * POST /culture/v1/articles/read-complete
+     * Awards magazine_read credits once ever per article per user.
+     */
+    public static function handle_article_read_complete( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+
+        if ( ! $user_id || ! $post_id ) {
+            return new WP_Error( 'bad_request', 'user_id and post_id are required.', array( 'status' => 400 ) );
+        }
+
+        $meta_key = '_culture_article_read_' . $post_id;
+        if ( get_user_meta( $user_id, $meta_key, true ) ) {
+            return rest_ensure_response( array( 'success' => true, 'credits_earned' => 0, 'already_awarded' => true ) );
+        }
+
+        $credits = Culture_Gamification::award_credits( $user_id, 'magazine_read', $post_id );
+        update_user_meta( $user_id, $meta_key, '1' );
+
+        return rest_ensure_response( array( 'success' => true, 'credits_earned' => max( 0, intval( $credits ) ) ) );
     }
 
     /**
