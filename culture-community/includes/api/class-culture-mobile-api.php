@@ -542,8 +542,9 @@ class Culture_Mobile_API {
             'callback'            => array( __CLASS__, 'handle_bookmark' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
             'args'                => array(
-                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
-                'action'  => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'post_id'      => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'content_type' => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_key', 'default' => '' ),
+                'action'       => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
             ),
         ) );
 
@@ -1089,6 +1090,21 @@ class Culture_Mobile_API {
             }
             if ( $request->get_param( 'itinerary_best_time' ) ) {
                 update_post_meta( $post_id, '_itinerary_best_time', sanitize_text_field( $request->get_param( 'itinerary_best_time' ) ) );
+            }
+        }
+
+        // ── Event ─────────────────────────────────────────────────────────────
+        if ( $template === 'event' ) {
+            update_post_meta( $post_id, '_event_date',      sanitize_text_field( $request->get_param( 'event_date' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_end_date',  sanitize_text_field( $request->get_param( 'event_end_date' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_venue',     sanitize_text_field( $request->get_param( 'event_venue' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_city',      sanitize_text_field( $request->get_param( 'event_city' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_address',   sanitize_text_field( $request->get_param( 'event_address' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_admission', sanitize_text_field( $request->get_param( 'event_admission' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_ticket_url', esc_url_raw( $request->get_param( 'ticket_url' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_category',  sanitize_text_field( $request->get_param( 'event_category' ) ?: '' ) );
+            if ( $request->get_param( 'organiser_directory_id' ) ) {
+                update_post_meta( $post_id, '_culture_event_organiser_id', (int) $request->get_param( 'organiser_directory_id' ) );
             }
         }
 
@@ -1922,6 +1938,16 @@ class Culture_Mobile_API {
                 'bookFavQuote'            => get_post_meta( $post->ID, '_book_fav_quote', true ) ?: '',
                 'bookRecommend'           => get_post_meta( $post->ID, '_book_recommend', true ) === '1',
                 'bookGenres'              => json_decode( get_post_meta( $post->ID, '_book_genres', true ) ?: '[]', true ),
+                // Community event template fields
+                'eventDate'               => get_post_meta( $post->ID, '_event_date', true ) ?: '',
+                'endDate'                 => get_post_meta( $post->ID, '_event_end_date', true ) ?: '',
+                'location'                => get_post_meta( $post->ID, '_event_venue', true ) ?: '',
+                'city'                    => get_post_meta( $post->ID, '_event_city', true ) ?: '',
+                'eventAddress'            => get_post_meta( $post->ID, '_event_address', true ) ?: '',
+                'admission'               => get_post_meta( $post->ID, '_event_admission', true ) ?: '',
+                'ticketUrl'               => get_post_meta( $post->ID, '_event_ticket_url', true ) ?: '',
+                'isProOnly'               => (bool) get_post_meta( $post->ID, '_culture_event_pro_only', true ),
+                'eventCategory'           => get_post_meta( $post->ID, '_event_category', true ) ?: '',
             );
         }, $query->posts );
     }

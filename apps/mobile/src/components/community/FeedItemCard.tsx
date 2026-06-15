@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import {
   View,
@@ -7,12 +7,14 @@ import {
   StyleSheet,
   Image,
   ScrollView,
+  Share,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
-import { api, MOBILE_API } from "../../api/client";
+import { api, MOBILE_API, CULTURE_API } from "../../api/client";
+import { useAuthStore } from "../../auth/authStore";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
 import ImageLightbox from "../ui/ImageLightbox";
@@ -574,6 +576,61 @@ function createStyles(c: ColorPalette) {
       fontSize: fontSize.xs,
       color: c.ghost,
     },
+    quoteActionBar: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      paddingHorizontal: 14,
+      paddingBottom: 12,
+      paddingTop: 4,
+      gap: 20,
+    },
+    quoteActionBtn: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 4,
+    },
+    quoteActionCount: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.tiny,
+      color: c.mute,
+    },
+    // event community
+    eventProStrip: {
+      backgroundColor: c.goldLight,
+      borderRadius: radius.md,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      marginTop: 10,
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+    },
+    eventProStripText: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.xs,
+      color: c.gold,
+    },
+    eventRsvpBtn: {
+      backgroundColor: c.ochre,
+      borderRadius: radius.full,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+    },
+    eventRsvpBtnDone: {
+      backgroundColor: c.success,
+    },
+    eventRsvpBtnText: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.sm,
+      color: "#FFFFFF",
+    },
+    // photo counter
+    photoCounter: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.tiny,
+      color: c.ghost,
+      textAlign: "center" as const,
+      marginTop: 4,
+    },
   });
 }
 
@@ -694,7 +751,7 @@ function ImgPlaceholder({ height, src, borderRadius = 0, width, onPress }: {
   const content = src ? (
     <Image source={{ uri: src }} style={[style, { backgroundColor: c.ghost }]} resizeMode="cover" />
   ) : (
-    <View style={[style, { backgroundColor: "#C8BFB0", justifyContent: "center", alignItems: "center" }]}>
+    <View style={[style, { backgroundColor: c.ghost, justifyContent: "center", alignItems: "center" }]}>
       <Ionicons name="image-outline" size={24} color={c.ghost} />
     </View>
   );
@@ -763,7 +820,7 @@ function GalleryStrip({ images, height, width, onTap }: {
 
 // ── Card Implementations ──────────────────────────────────────────────────────
 
-// PulseCard (A1)
+// PulseCard (A3 in design — compact with ⚡ icon)
 function PulseCard({ item, onPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
@@ -771,21 +828,22 @@ function PulseCard({ item, onPress }: FeedCardProps) {
   return (
     <>
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
-        <View style={{ padding: 14 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <BadgePill label={item.arm ?? "Pulse"} bg={c.badgePulseBg} color={c.badgePulseText} styles={styles} />
-            {item.category ? <Text style={styles.eyebrow}>{item.category}</Text> : null}
-            <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
+        <View style={{ padding: 14, flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+          <Text style={{ fontSize: 20, color: c.ochre, lineHeight: 24, paddingTop: 2 }}>⚡</Text>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <BadgePill label="PULSE" bg={c.ink} color={c.paper} styles={styles} />
+              <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
+            </View>
+            <Text style={[styles.cardTitle, { marginTop: 6, fontSize: fontSize.base, lineHeight: 22 }]} numberOfLines={2}>{item.title}</Text>
+            {item.source ? (
+              <Text style={[styles.sourceText, { marginTop: 4 }]}>🌐 {item.source}</Text>
+            ) : null}
           </View>
-          <Text style={[styles.cardTitle, { marginTop: 10 }]}>{item.title}</Text>
-          {item.excerpt ? (
-            <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={3}>{item.excerpt}</Text>
-          ) : null}
-          <View style={{ marginTop: 10 }}>
-            <ImgPlaceholder height={172} src={item.image} onPress={item.image ? () => setLightboxOpen(true) : undefined} />
-          </View>
-          {item.source ? <Text style={[styles.sourceText, { marginTop: 8 }]}>📰 {item.source}</Text> : null}
         </View>
+        {item.image ? (
+          <ImgPlaceholder height={172} src={item.image} onPress={() => setLightboxOpen(true)} />
+        ) : null}
         <FeedReactionBar item={item} />
       </TouchableOpacity>
       {item.image && (
@@ -795,29 +853,42 @@ function PulseCard({ item, onPress }: FeedCardProps) {
   );
 }
 
-// EditorialCard (A2)
+// EditorialCard (A1 with hero / A2 text-only)
 function EditorialCard({ item, onPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
+      {/* Hero image (A1) with category badge overlay */}
+      {item.image ? (
+        <View style={{ position: "relative", overflow: "hidden", borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
+          <Image source={{ uri: item.image }} style={{ width: "100%", height: 180 }} resizeMode="cover" />
+          {item.category ? (
+            <View style={{ position: "absolute", bottom: 12, left: 12 }}>
+              <BadgePill label={item.category.toUpperCase()} bg="rgba(243,236,224,0.92)" color={c.ochre} styles={styles} />
+            </View>
+          ) : null}
+        </View>
+      ) : null}
       <View style={{ padding: 14 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <BadgePill label="Editorial" bg={c.ochre} color={c.paper} styles={styles} />
-          {item.category ? <Text style={styles.eyebrow}>{item.category}</Text> : null}
+          {/* Show category inline only when no hero image */}
+          {!item.image && item.category ? <Text style={styles.eyebrow}>{item.category}</Text> : null}
           <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
         </View>
         <Text style={[styles.cardTitleXl, { marginTop: 10 }]}>{item.title}</Text>
         {item.excerpt ? (
-          <Text style={[styles.cardBody, { marginTop: 6 }]}>{item.excerpt}</Text>
+          <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={item.image ? 2 : 3}>{item.excerpt}</Text>
         ) : null}
         <Text style={[styles.readMore, { marginTop: 8 }]}>Read more →</Text>
-        {item.source || item.ogTitle ? (
+        {!item.image && (item.source || item.ogTitle) ? (
           <View style={{ marginTop: 8, marginHorizontal: -14 }}>
             <LinkPreview source={item.source} title={item.ogTitle ?? item.title} domain={item.sourceUrl ?? undefined} image={item.ogImage} />
           </View>
         ) : null}
       </View>
+      <FeedReactionBar item={item} />
     </TouchableOpacity>
   );
 }
@@ -1085,13 +1156,9 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
                 <ImgPlaceholder key={i} height={200} src={src} borderRadius={6} width={260} onPress={() => setLightboxIdx(i)} />
               ))}
             </ScrollView>
-            {count > 1 ? (
-              <View style={styles.showcaseDots}>
-                {gallery.map((_, i) => (
-                  <View key={i} style={[styles.showcaseDot, i === activeIdx ? styles.showcaseDotActive : styles.showcaseDotInactive]} />
-                ))}
-              </View>
-            ) : null}
+            <Text style={styles.photoCounter}>
+              {activeIdx + 1} of {count} photo{count !== 1 ? "s" : ""}
+            </Text>
           </>
         ) : null}
         <FeedReactionBar item={item} marginTop={10} />
@@ -1302,11 +1369,22 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardP
   );
 }
 
-// EventCommunityCard (B9) — community post with _template_type = 'event'
+// EventCommunityCard (B8 in design) — community post with _template_type = 'event'
 function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [rsvped, setRsvped] = useState(false);
+
+  const handleRsvp = async () => {
+    if (rsvped || !item.wpId) return;
+    setRsvped(true);
+    try {
+      await api.post(`${MOBILE_API}/events/rsvp`, { event_id: item.wpId });
+    } catch {
+      setRsvped(false);
+    }
+  };
 
   return (
     <>
@@ -1318,7 +1396,7 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedC
           </TouchableOpacity>
         ) : null}
         <View style={{ paddingHorizontal: 14, paddingTop: item.image ? 12 : 0 }}>
-          <BadgePill label="Event" bg={c.templateEventBg} color={c.templateEventText} styles={styles} />
+          <BadgePill label="📅 EVENT" bg={c.templateEventBg} color={c.templateEventText} styles={styles} />
           <Text style={[styles.cardTitle, { marginTop: 8 }]}>{item.title}</Text>
 
           {item.eventDate ? (
@@ -1355,6 +1433,31 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedC
               <BadgePill label={item.eventCategory} bg={c.paperDeep} color={c.inkSoft} styles={styles} />
             </View>
           ) : null}
+
+          {/* Pro perk strip — only when isProOnly */}
+          {item.isProOnly ? (
+            <View style={styles.eventProStrip}>
+              <Text style={styles.eventProStripText}>⭐ Pro members get early access</Text>
+            </View>
+          ) : null}
+
+          {/* RSVP button — only when no external ticket URL */}
+          {!item.ticketUrl ? (
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
+              <TouchableOpacity
+                style={[styles.eventRsvpBtn, rsvped ? styles.eventRsvpBtnDone : undefined]}
+                onPress={handleRsvp}
+                activeOpacity={0.8}
+                disabled={rsvped}
+              >
+                <Text style={styles.eventRsvpBtnText}>{rsvped ? "RSVPed ✓" : "RSVP Now"}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
+              <Text style={styles.readMore}>Get Tickets →</Text>
+            </View>
+          )}
         </View>
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
@@ -1365,11 +1468,61 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedC
   );
 }
 
-// QuoteCard (C1)
+// QuoteCard (C1) — heart + bookmark + share
 function QuoteCard({ item }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const user = useAuthStore((s) => s.user);
   const [modalOpen, setModalOpen] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [loved, setLoved] = useState(false);
+  const [loveCount, setLoveCount] = useState(item.reactions?.love ?? 0);
+
+  useEffect(() => {
+    if (!item.wpId || !user) return;
+    api.get<{ bookmarked_quotes?: (number | string)[] }>(
+      `${CULTURE_API}/user/interactions`
+    ).then((res) => {
+      const ids = (res.bookmarked_quotes ?? []).map(String);
+      setBookmarked(ids.includes(String(item.wpId)));
+    }).catch(() => {});
+  }, [item.wpId, user?.id]);
+
+  const handleLove = async () => {
+    if (!item.wpId) return;
+    const next = !loved;
+    setLoved(next);
+    setLoveCount((prev) => prev + (next ? 1 : -1));
+    try {
+      await api.post(`${MOBILE_API}/community/react`, { post_id: Number(item.wpId), type: "love" });
+    } catch {
+      setLoved(!next);
+      setLoveCount((prev) => prev + (next ? -1 : 1));
+    }
+  };
+
+  const handleBookmark = async () => {
+    if (!item.wpId) return;
+    const next = !bookmarked;
+    setBookmarked(next);
+    try {
+      await api.post(`${MOBILE_API}/content/bookmark`, {
+        content_type: "quote",
+        post_id: Number(item.wpId),
+      });
+    } catch {
+      setBookmarked(!next);
+    }
+  };
+
+  const handleShare = async () => {
+    const url = shareUrlFor(item);
+    if (!url) return;
+    try {
+      await Share.share({ message: `"${item.title}" — ${item.quoteAuthor ?? ""}\n\n${url}` });
+    } catch { /* user dismissed */ }
+  };
+
   return (
     <>
       <TouchableOpacity style={styles.card} onPress={() => setModalOpen(true)} activeOpacity={0.92}>
@@ -1377,12 +1530,23 @@ function QuoteCard({ item }: FeedCardProps) {
           <Text style={styles.bigQuote}>"</Text>
           <Text style={styles.quoteText}>{item.title}</Text>
           <View style={styles.quoteAttribution}>
-            {item.quoteAuthor ? <Text style={styles.quoteAuthor}>{item.quoteAuthor}</Text> : null}
+            {item.quoteAuthor ? <Text style={styles.quoteAuthor}>— {item.quoteAuthor}</Text> : null}
             {item.quoteAuthor && item.quoteSource ? <Text style={styles.quoteDot}>·</Text> : null}
             {item.quoteSource ? <Text style={styles.quoteSource}>{item.quoteSource}</Text> : null}
           </View>
         </View>
-        <FeedReactionBar item={item} marginTop={4} />
+        <View style={styles.quoteActionBar}>
+          <TouchableOpacity style={styles.quoteActionBtn} onPress={handleLove} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name={loved ? "heart" : "heart-outline"} size={18} color={loved ? "#E53E3E" : c.mute} />
+            {loveCount > 0 ? <Text style={styles.quoteActionCount}>{loveCount}</Text> : null}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quoteActionBtn} onPress={handleBookmark} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={18} color={bookmarked ? c.ochre : c.mute} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.quoteActionBtn, { marginLeft: "auto" as any }]} onPress={handleShare} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="share-social-outline" size={18} color={c.mute} />
+          </TouchableOpacity>
+        </View>
       </TouchableOpacity>
       <QuoteDetailModal visible={modalOpen} item={item} onClose={() => setModalOpen(false)} />
     </>
