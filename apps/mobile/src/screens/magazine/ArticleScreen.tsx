@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Platform,
   useWindowDimensions,
-  Linking,
   Share,
   Animated,
   NativeSyntheticEvent,
@@ -23,6 +22,7 @@ import RenderHtml from "react-native-render-html";
 import { LinearGradient } from "expo-linear-gradient";
 import { useArticle } from "../../features/magazine/useMagazine";
 import { WP_URL, api, MOBILE_API, CULTURE_API } from "../../api/client";
+import { openInApp } from "../../utils/openInApp";
 import type { Article } from "../../types";
 import { fonts, fontSize, space, radius, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -75,7 +75,7 @@ function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPa
       nav.push("Article", { slug: m[1] });
       return;
     }
-    Linking.openURL(href).catch(() => {});
+    openInApp(href);
   };
 
   return (

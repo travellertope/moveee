@@ -8,7 +8,7 @@ import {
   Image,
   TextInput,
   Animated,
-  Linking,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,52 +17,71 @@ import { useCartStore } from "../../store/cartStore";
 import { useAuthStore } from "../../auth/authStore";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
+import { openInApp } from "../../utils/openInApp";
 
-const PRO_DISCOUNT_RATE = 0.10; // 10% Pro member discount
+// WooCommerce checkout lives on the CMS (WordPress) host
+const CHECKOUT_BASE = "https://cms.themoveee.com/checkout";
+
+const PRO_DISCOUNT_RATE = 0.10;
 
 export default function CartScreen() {
   const nav = useNavigation<any>();
   const { user } = useAuthStore();
-  const { items, removeItem, updateQty } = useCartStore();
+  const { items, removeItem, updateQty, clearCart } = useCartStore();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
-  const [voucher, setVoucher] = useState("");
-  const [view, setView] = useState<"cart" | "checkout">("cart");
+  const [voucher, setVoucher]       = useState("");
+  const [appliedVoucher, setApplied] = useState("");
+  const [editing, setEditing]        = useState(false);
+  const [view, setView]              = useState<"cart" | "checkout">("cart");
   const progressAnim = useRef(new Animated.Value(0)).current;
 
-  const isPatron = user?.tier === "patron";
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const isPatron  = user?.tier === "patron";
+  const subtotal  = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const proDiscount = isPatron ? subtotal * PRO_DISCOUNT_RATE : 0;
-  const total = subtotal - proDiscount;
-  const totalQty = items.reduce((sum, i) => sum + i.qty, 0);
+  const total     = subtotal - proDiscount;
+  const totalQty  = items.reduce((sum, i) => sum + i.qty, 0);
 
   useEffect(() => {
     if (view === "checkout") {
+      progressAnim.setValue(0);
       Animated.timing(progressAnim, {
         toValue: 1,
         duration: 2000,
         useNativeDriver: false,
-      }).start();
+      }).start(() => {
+        // Build checkout URL with coupon if applied
+        let checkoutUrl = CHECKOUT_BASE;
+        if (appliedVoucher) {
+          checkoutUrl += `?coupon_code=${encodeURIComponent(appliedVoucher)}`;
+        }
+        openInApp(checkoutUrl).finally(() => setView("cart"));
+      });
     }
   }, [view]);
 
-  const handleCheckout = () => {
-    setView("checkout");
-    setTimeout(() => {
-      // In production, open WooCommerce checkout URL
-      Linking.openURL("https://themoveee.com/checkout").catch(() => {});
-    }, 2500);
+  const handleApplyVoucher = () => {
+    const code = voucher.trim().toUpperCase();
+    if (!code) return;
+    setApplied(code);
+    setVoucher("");
+    Alert.alert("Promo code saved", `"${code}" will be applied at checkout.`);
   };
 
+  const handleCheckout = () => {
+    setView("checkout");
+  };
+
+  // ── Checkout loading screen ───────────────────────────────────────────────
   if (view === "checkout") {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: c.paper }]}>
         <View style={styles.checkoutContainer}>
           <Text style={styles.checkoutLogo}>moveee</Text>
-          <Text style={styles.checkoutHeading}>Taking you to secure checkout...</Text>
+          <Text style={styles.checkoutHeading}>Taking you to secure checkout…</Text>
           <Text style={styles.checkoutSub}>
-            You'll be redirected to our secure payment partner.
+            You'll complete your purchase in our secure payment partner.
           </Text>
 
           <View style={styles.progressTrack}>
@@ -79,10 +98,17 @@ export default function CartScreen() {
             />
           </View>
 
+          {appliedVoucher ? (
+            <View style={styles.voucherAppliedBadge}>
+              <Ionicons name="pricetag" size={12} color={c.gold} />
+              <Text style={styles.voucherAppliedText}>Code "{appliedVoucher}" will be applied</Text>
+            </View>
+          ) : null}
+
           <View style={styles.badgeRow}>
             {[
               { icon: "lock-closed-outline", label: "SSL Secure" },
-              { icon: "card-outline", label: "Visa, Mastercard, PayPal" },
+              { icon: "card-outline", label: "Visa · Mastercard · PayPal" },
               { icon: "return-down-back-outline", label: "Free Returns" },
             ].map((b) => (
               <View key={b.label} style={styles.badge}>
@@ -100,6 +126,7 @@ export default function CartScreen() {
     );
   }
 
+  // ── Empty cart ────────────────────────────────────────────────────────────
   if (items.length === 0) {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: c.paperWarm }]}>
@@ -126,16 +153,19 @@ export default function CartScreen() {
     );
   }
 
+  // ── Cart ──────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.paperWarm }]}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerBtn}>
           <Ionicons name="chevron-back" size={22} color={c.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Your Bag</Text>
-        <TouchableOpacity style={styles.headerBtn}>
-          <Text style={styles.editText}>Edit</Text>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={() => setEditing((v) => !v)}
+        >
+          <Text style={styles.editText}>{editing ? "Done" : "Edit"}</Text>
         </TouchableOpacity>
       </View>
 
@@ -144,9 +174,17 @@ export default function CartScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Cart Items */}
         {items.map((item) => (
           <View key={item.id} style={styles.itemCard}>
+            {editing && (
+              <TouchableOpacity
+                style={styles.deleteCircle}
+                onPress={() => removeItem(item.id)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="remove-circle" size={24} color="#C5491F" />
+              </TouchableOpacity>
+            )}
             <View style={styles.itemImageBox}>
               {item.image ? (
                 <Image source={{ uri: item.image }} style={styles.itemImage} />
@@ -156,19 +194,14 @@ export default function CartScreen() {
             </View>
             <View style={styles.itemContent}>
               <Text style={styles.itemBrand}>{item.brand}</Text>
-              <Text style={styles.itemTitle} numberOfLines={2}>
-                {item.title}
-              </Text>
+              <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
               {item.variant ? (
                 <Text style={styles.itemVariant}>{item.variant}</Text>
               ) : null}
               <View style={styles.itemFooter}>
                 <View style={styles.qtyRow}>
                   <TouchableOpacity
-                    style={[
-                      styles.qtyBtn,
-                      item.qty <= 1 && styles.qtyBtnDisabled,
-                    ]}
+                    style={[styles.qtyBtn, item.qty <= 1 && styles.qtyBtnDisabled]}
                     onPress={() => updateQty(item.id, item.qty - 1)}
                     disabled={item.qty <= 1}
                   >
@@ -191,19 +224,28 @@ export default function CartScreen() {
           </View>
         ))}
 
-        {/* Voucher */}
+        {/* Voucher / Promo */}
         <View style={styles.voucherCard}>
           <Ionicons name="pricetag-outline" size={20} color={c.mute} />
           <TextInput
             style={styles.voucherInput}
-            placeholder="Add promo code"
-            placeholderTextColor={c.ghost}
+            placeholder={appliedVoucher ? `Applied: ${appliedVoucher}` : "Add promo code"}
+            placeholderTextColor={appliedVoucher ? c.gold : c.ghost}
             value={voucher}
             onChangeText={setVoucher}
+            autoCapitalize="characters"
+            returnKeyType="done"
+            onSubmitEditing={handleApplyVoucher}
           />
-          <TouchableOpacity>
-            <Text style={styles.applyBtn}>Apply</Text>
-          </TouchableOpacity>
+          {appliedVoucher ? (
+            <TouchableOpacity onPress={() => setApplied("")}>
+              <Text style={styles.removeVoucherBtn}>Remove</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={handleApplyVoucher} disabled={!voucher.trim()}>
+              <Text style={[styles.applyBtn, !voucher.trim() && { opacity: 0.4 }]}>Apply</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Order Summary */}
@@ -214,18 +256,20 @@ export default function CartScreen() {
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Delivery</Text>
-            <Text style={[styles.summaryValue, { color: c.mute }]}>
-              Calculated at checkout
-            </Text>
+            <Text style={[styles.summaryValue, { color: c.mute }]}>Calculated at checkout</Text>
           </View>
           {isPatron && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Pro member discount</Text>
-              <Text style={[styles.summaryValue, { color: c.gold }]}>
-                –£{proDiscount.toFixed(2)}
-              </Text>
+              <Text style={[styles.summaryValue, { color: c.gold }]}>–£{proDiscount.toFixed(2)}</Text>
             </View>
           )}
+          {appliedVoucher ? (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Promo code "{appliedVoucher}"</Text>
+              <Text style={[styles.summaryValue, { color: c.gold }]}>Applied at checkout</Text>
+            </View>
+          ) : null}
           <View style={styles.summaryDivider} />
           <View style={styles.summaryRow}>
             <Text style={styles.totalLabel}>Estimated total</Text>
@@ -250,12 +294,11 @@ export default function CartScreen() {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Sticky footer */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.checkoutBtn} onPress={handleCheckout}>
           <Text style={styles.checkoutBtnText}>Proceed to Checkout</Text>
         </TouchableOpacity>
-        <Text style={styles.secureNote}>🔒 Secure checkout via Moveee</Text>
+        <Text style={styles.secureNote}>🔒 Secure checkout · Powered by Moveee</Text>
       </View>
     </SafeAreaView>
   );
@@ -288,15 +331,16 @@ function createStyles(c: ColorPalette) {
     scroll: { flex: 1 },
     scrollContent: { padding: space[4], gap: 12 },
 
-    // Item card
     itemCard: {
       backgroundColor: c.paper,
       borderRadius: 12,
       padding: 16,
       flexDirection: "row",
       gap: 12,
+      alignItems: "center",
       ...shadows.card,
     },
+    deleteCircle: { marginRight: -4 },
     itemImageBox: {},
     itemImage: { width: 80, height: 80, borderRadius: 8 },
     imagePlaceholder: { backgroundColor: c.ghost + "60" },
@@ -319,12 +363,7 @@ function createStyles(c: ColorPalette) {
       borderRadius: radius.full,
       overflow: "hidden",
     },
-    qtyBtn: {
-      width: 28,
-      height: 28,
-      alignItems: "center",
-      justifyContent: "center",
-    },
+    qtyBtn: { width: 28, height: 28, alignItems: "center", justifyContent: "center" },
     qtyBtnDisabled: { opacity: 0.4 },
     qtyNum: {
       width: 24,
@@ -334,14 +373,8 @@ function createStyles(c: ColorPalette) {
       color: c.ink,
     },
     removeLink: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: "#C5491F" },
-    itemPrice: {
-      fontFamily: fonts.sansBold,
-      fontSize: 15,
-      color: c.ink,
-      alignSelf: "flex-start",
-    },
+    itemPrice: { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink, alignSelf: "flex-start" },
 
-    // Voucher
     voucherCard: {
       backgroundColor: c.paper,
       borderRadius: 12,
@@ -363,13 +396,12 @@ function createStyles(c: ColorPalette) {
       paddingHorizontal: 12,
     },
     applyBtn: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: "#C5491F" },
+    removeVoucherBtn: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
 
-    // Summary
     summaryCard: {
       backgroundColor: c.paperWarm,
       borderRadius: 12,
       padding: 16,
-      gap: 0,
     },
     summaryRow: {
       flexDirection: "row",
@@ -384,7 +416,6 @@ function createStyles(c: ColorPalette) {
     totalValue: { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
     taxNote: { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: c.mute, marginTop: 4 },
 
-    // Pro strip
     proStrip: {
       backgroundColor: c.gold,
       borderRadius: 8,
@@ -396,7 +427,6 @@ function createStyles(c: ColorPalette) {
     proStripText: { flex: 1, fontFamily: fonts.sansBold, fontSize: 13, color: "#fff" },
     proStripCta: { fontFamily: fonts.monoBold, fontSize: 10, color: "#fff" },
 
-    // Footer
     footer: {
       position: "absolute",
       bottom: 0,
@@ -425,7 +455,6 @@ function createStyles(c: ColorPalette) {
       marginTop: 8,
     },
 
-    // Empty state
     emptyContainer: {
       flex: 1,
       alignItems: "center",
@@ -433,11 +462,7 @@ function createStyles(c: ColorPalette) {
       padding: space[8],
       gap: 12,
     },
-    emptyHeading: {
-      fontFamily: fonts.serifBold,
-      fontSize: 22,
-      color: c.ink,
-    },
+    emptyHeading: { fontFamily: fonts.serifBold, fontSize: 22, color: c.ink },
     emptySub: {
       fontFamily: fonts.sans,
       fontSize: fontSize.sm,
@@ -457,7 +482,6 @@ function createStyles(c: ColorPalette) {
     browseBtnText: { fontFamily: fonts.sansBold, fontSize: 15, color: "#fff" },
     editLink: { fontFamily: fonts.sans, fontSize: 13, color: "#C5491F" },
 
-    // Checkout handoff
     checkoutContainer: {
       flex: 1,
       alignItems: "center",
@@ -465,11 +489,7 @@ function createStyles(c: ColorPalette) {
       padding: space[8],
       gap: 12,
     },
-    checkoutLogo: {
-      fontFamily: fonts.serifBold,
-      fontSize: 28,
-      color: c.ink,
-    },
+    checkoutLogo: { fontFamily: fonts.serifBold, fontSize: 28, color: c.ink },
     checkoutHeading: {
       fontFamily: fonts.serifBold,
       fontSize: 20,
@@ -491,11 +511,19 @@ function createStyles(c: ColorPalette) {
       overflow: "hidden",
       marginTop: 8,
     },
-    progressFill: {
-      height: 4,
-      backgroundColor: "#C5491F",
-      borderRadius: 2,
+    progressFill: { height: 4, backgroundColor: "#C5491F", borderRadius: 2 },
+    voucherAppliedBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: c.goldLight,
+      borderRadius: radius.full,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderWidth: 1,
+      borderColor: c.goldBorder,
     },
+    voucherAppliedText: { fontFamily: fonts.sansBold, fontSize: 11, color: c.gold },
     badgeRow: {
       flexDirection: "row",
       gap: 8,
@@ -514,11 +542,6 @@ function createStyles(c: ColorPalette) {
       paddingVertical: 4,
     },
     badgeText: { fontFamily: fonts.mono, fontSize: 10, color: c.mute },
-    cancelLink: {
-      fontFamily: fonts.sans,
-      fontSize: 13,
-      color: c.mute,
-      marginTop: 16,
-    },
+    cancelLink: { fontFamily: fonts.sans, fontSize: 13, color: c.mute, marginTop: 16 },
   });
 }
