@@ -55,17 +55,6 @@ class Culture_Ajax {
             wp_send_json_error( array( 'message' => __( 'Event not found.', 'culture-community' ) ) );
         }
 
-        // Membership tier check for physical events.
-        $is_physical = get_post_meta( $event_id, '_culture_is_physical', true );
-        $user_tier   = get_user_meta( $user_id, '_culture_membership_tier', true );
-
-        if ( '1' === $is_physical && 'patron' !== $user_tier ) {
-            wp_send_json_error( array(
-                'message'      => __( 'Physical events require a Patron membership. Upgrade to attend!', 'culture-community' ),
-                'upgrade_required' => true,
-            ) );
-        }
-
         // Capacity check.
         $capacity = (int) get_post_meta( $event_id, '_culture_capacity', true );
         if ( $capacity > 0 ) {

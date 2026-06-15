@@ -7,13 +7,17 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { storage } from "../../store/storage";
 import { api } from "../../api/client";
+import { useAuthStore } from "../../auth/authStore";
 import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
 
-const PROXY    = "https://themoveee.com/api";
-const KEY_DATE = "wsi_last_played_date";
+const PROXY      = "https://themoveee.com/api";
+const KEY_DATE   = "wsi_last_played_date";
+const KEY_COUNT  = "wsi_play_count";
+const PRO_LIMIT  = 5;
+const FREE_LIMIT = 1;
 
 interface WsiQuestion {
   id:             string;
@@ -29,6 +33,8 @@ export default function WhoSaidItGameScreen() {
   const nav = useNavigation<any>();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const { user } = useAuthStore();
+  const isPro = user?.tier === "patron";
 
   const [phase,     setPhase]     = useState<Phase>("loading");
   const [questions, setQuestions] = useState<WsiQuestion[]>([]);
@@ -43,8 +49,10 @@ export default function WhoSaidItGameScreen() {
   const init = useCallback(async () => {
     setPhase("loading");
     try {
-      const lastDate = storage.getString(KEY_DATE);
-      if (lastDate === todayStr) {
+      const limit = isPro ? PRO_LIMIT : FREE_LIMIT;
+      const countKey = `${KEY_COUNT}_${todayStr}`;
+      const playedToday = parseInt(storage.getString(countKey) ?? "0", 10);
+      if (playedToday >= limit) {
         setPhase("played");
         return;
       }
@@ -82,7 +90,9 @@ export default function WhoSaidItGameScreen() {
       setSelected(null);
       setQIndex((i) => i + 1);
     } else {
-      storage.set(KEY_DATE, todayStr);
+      const countKey = `${KEY_COUNT}_${todayStr}`;
+      const prev = parseInt(storage.getString(countKey) ?? "0", 10);
+      storage.set(countKey, String(prev + 1));
       recordPlayedToday();
       setPhase("done");
     }
@@ -117,13 +127,23 @@ export default function WhoSaidItGameScreen() {
 
   // ── already played ────────────────────────────────────────────────────────────
   if (phase === "played") {
+    const countKey = `${KEY_COUNT}_${todayStr}`;
+    const playsToday = parseInt(storage.getString(countKey) ?? "0", 10);
+    const limit = isPro ? PRO_LIMIT : FREE_LIMIT;
     return (
       <SafeAreaView style={styles.container}>
         <Header nav={nav} styles={styles} c={c} />
         <View style={styles.centred}>
           <Text style={styles.doneEmoji}>✍️</Text>
-          <Text style={styles.doneTitle}>Already played today!</Text>
+          <Text style={styles.doneTitle}>
+            {isPro ? `${playsToday}/${limit} plays used today` : "Already played today!"}
+          </Text>
           <Text style={styles.doneSub}>New quotes drop every day.</Text>
+          {!isPro && (
+            <TouchableOpacity onPress={() => nav.navigate("Membership" as never)} style={{ marginBottom: 12 }}>
+              <Text style={{ fontFamily: fonts.sans, fontSize: fontSize.sm, color: colors.ochre }}>Connect Pro members get 5 plays/day →</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={[styles.primaryBtn, { marginTop: space[4] }]} onPress={() => nav.goBack()}>
             <Text style={styles.primaryBtnText}>Back to Games</Text>
           </TouchableOpacity>

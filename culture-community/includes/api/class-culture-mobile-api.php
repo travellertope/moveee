@@ -845,9 +845,12 @@ class Culture_Mobile_API {
         // Template gating: poll and itinerary require Taste Maker (2 500 rep).
         $template_check = sanitize_key( $request->get_param( 'template_type' ) ?: 'post' );
         if ( in_array( $template_check, array( 'poll', 'itinerary' ), true ) ) {
-            $rep = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user_id ) : 0;
-            if ( $rep < 2500 ) {
-                return new WP_Error( 'rep_required', 'Poll and itinerary posts require Taste Maker status (2,500 reputation).', array( 'status' => 403 ) );
+            $tier = get_user_meta( $user_id, '_culture_membership_tier', true );
+            if ( 'patron' !== $tier ) {
+                $rep = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user_id ) : 0;
+                if ( $rep < 2500 ) {
+                    return new WP_Error( 'rep_required', 'Poll and itinerary posts require Connect Pro membership or Taste Maker status (2,500 reputation).', array( 'status' => 403 ) );
+                }
             }
         }
         // Event posts require Culture Contributor (500 rep) — handled by the event endpoint separately.

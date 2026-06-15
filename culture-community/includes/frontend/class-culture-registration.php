@@ -188,8 +188,10 @@ class Culture_Registration {
                                 <span class="cr__tierprice"><?php esc_html_e( 'Paid', 'culture-community' ); ?></span>
                                 <ul>
                                     <li><?php esc_html_e( 'Everything in Citizen, plus:', 'culture-community' ); ?></li>
-                                    <li><?php esc_html_e( 'Physical event access', 'culture-community' ); ?></li>
-                                    <li><?php esc_html_e( 'Priority RSVP', 'culture-community' ); ?></li>
+                                    <li><?php esc_html_e( 'Patron-only articles', 'culture-community' ); ?></li>
+                                    <li><?php esc_html_e( '10% shop discount + early access', 'culture-community' ); ?></li>
+                                    <li><?php esc_html_e( 'Cash out credits · 100 credits/day', 'culture-community' ); ?></li>
+                                    <li><?php esc_html_e( '5 game plays/day · Pro badge', 'culture-community' ); ?></li>
                                 </ul>
                             </div>
                         </label>

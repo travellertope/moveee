@@ -906,12 +906,12 @@ class Culture_Settings {
             </thead>
             <tbody>
                 <tr><td><?php esc_html_e( 'Virtual events', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Physical events', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Primary chapter', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Secondary chapter', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'GetMeLit & Culture Drop', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Priority RSVP', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Points & badges', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'Physical &amp; virtual events', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'GetMeLit &amp; Culture Drop', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'Cash out credits', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'Daily credit cap', 'culture-community' ); ?></td><td>50</td><td>100</td></tr>
+                <tr><td><?php esc_html_e( 'Games plays per day', 'culture-community' ); ?></td><td>1</td><td>5</td></tr>
+                <tr><td><?php esc_html_e( 'Points &amp; badges', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
                 <tr><td><?php esc_html_e( 'Referral system', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
             </tbody>
         </table>

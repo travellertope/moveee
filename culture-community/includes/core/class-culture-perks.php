@@ -400,6 +400,11 @@ class Culture_Perks {
         $credits = (int) $credits;
         $user_id = (int) $user_id;
 
+        $tier = get_user_meta( $user_id, '_culture_membership_tier', true );
+        if ( 'patron' !== $tier ) {
+            return new WP_Error( 'pro_required', 'Cashout is available to Connect Pro members only.', array( 'status' => 403 ) );
+        }
+
         if ( $credits <= 0 ) {
             return new WP_Error( 'invalid_amount', 'Credits must be greater than zero.', array( 'status' => 400 ) );
         }

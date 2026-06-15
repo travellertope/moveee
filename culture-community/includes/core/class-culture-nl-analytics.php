@@ -469,12 +469,13 @@ class Culture_NL_Analytics {
         'origins-field-notes'       => 'Origins Field Notes',
     );
     const SEGMENT_LABELS = array(
-        'us' => 'The Moveee America (US)',
-        'uk' => 'The British Moveee (UK)',
-        'ng' => 'Nigeria',
-        'gh' => 'Ghana',
-        'ca' => 'Canada',
-        'au' => 'Australia',
+        'us'  => 'The Moveee America (US)',
+        'uk'  => 'The British Moveee (UK)',
+        'ng'  => 'Nigeria',
+        'gh'  => 'Ghana',
+        'ca'  => 'Canada',
+        'au'  => 'Australia',
+        'pro' => 'Connect Pro Members',
     );
 
     /**

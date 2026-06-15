@@ -6,13 +6,17 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { storage } from "../../store/storage";
+import { useAuthStore } from "../../auth/authStore";
 import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 
-const PROXY    = "https://themoveee.com/api";
-const KEY_DATE = "crossword_last_played_date";
+const PROXY      = "https://themoveee.com/api";
+const KEY_DATE   = "crossword_last_played_date";
+const KEY_COUNT  = "crossword_play_count";
+const PRO_LIMIT  = 5;
+const FREE_LIMIT = 1;
 
 interface CrosswordCell  { letter: string; number?: number; black: boolean }
 interface CrosswordClue  { number: number; direction: "across" | "down"; clue: string; answer: string; row: number; col: number; length: number }
@@ -25,6 +29,8 @@ export default function CrosswordGameScreen() {
   const nav = useNavigation<any>();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const { user } = useAuthStore();
+  const isPro = user?.tier === "patron";
   const inputRef = useRef<TextInput>(null);
 
   const [phase,      setPhase]      = useState<Phase>("loading");
@@ -51,8 +57,10 @@ export default function CrosswordGameScreen() {
 
   const init = useCallback(async () => {
     setPhase("loading");
-    const lastDate = storage.getString(KEY_DATE);
-    if (lastDate === todayStr) { setPhase("played"); return; }
+    const limit = isPro ? PRO_LIMIT : FREE_LIMIT;
+    const countKey = `${KEY_COUNT}_${todayStr}`;
+    const playedToday = parseInt(storage.getString(countKey) ?? "0", 10);
+    if (playedToday >= limit) { setPhase("played"); return; }
     try {
       const resp = await fetch(`${PROXY}/games/crossword/daily`);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -161,7 +169,9 @@ export default function CrosswordGameScreen() {
       row.every((cell, c) => cell.black || b[r][c] === cell.letter)
     );
     if (done) {
-      storage.set(KEY_DATE, todayStr);
+      const countKey = `${KEY_COUNT}_${todayStr}`;
+      const prev = parseInt(storage.getString(countKey) ?? "0", 10);
+      storage.set(countKey, String(prev + 1));
       recordPlayedToday();
       setPhase("done");
     }
@@ -197,19 +207,31 @@ export default function CrosswordGameScreen() {
     </SafeAreaView>
   );
 
-  if (phase === "played") return (
-    <SafeAreaView style={styles.container}>
-      <Header nav={nav} title="Crossword" c={c} styles={styles} />
-      <View style={styles.center}>
-        <Text style={styles.doneEmoji}>✓</Text>
-        <Text style={styles.doneTitle}>Already solved today!</Text>
-        <Text style={styles.doneSub}>Come back tomorrow for a new puzzle.</Text>
-        <TouchableOpacity onPress={() => nav.goBack()} style={styles.actionBtn}>
-          <Text style={styles.actionBtnText}>Back to Games</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
+  if (phase === "played") {
+    const countKey = `${KEY_COUNT}_${todayStr}`;
+    const playsToday = parseInt(storage.getString(countKey) ?? "0", 10);
+    const limit = isPro ? PRO_LIMIT : FREE_LIMIT;
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header nav={nav} title="Crossword" c={c} styles={styles} />
+        <View style={styles.center}>
+          <Text style={styles.doneEmoji}>✓</Text>
+          <Text style={styles.doneTitle}>
+            {isPro ? `${playsToday}/${limit} plays used today` : "Already solved today!"}
+          </Text>
+          <Text style={styles.doneSub}>Come back tomorrow for a new puzzle.</Text>
+          {!isPro && (
+            <TouchableOpacity onPress={() => nav.navigate("Membership" as never)} style={{ marginBottom: 12 }}>
+              <Text style={{ fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ochre }}>Connect Pro members get 5 plays/day →</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={() => nav.goBack()} style={styles.actionBtn}>
+            <Text style={styles.actionBtnText}>Back to Games</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (phase === "done") return (
     <SafeAreaView style={styles.container}>

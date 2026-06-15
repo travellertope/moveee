@@ -36,7 +36,7 @@ class Culture_Newsletter_Send {
         }
 
         // Segment is optional — empty string means send to all segments of this list.
-        $allowed_segments = array( '', 'us', 'uk', 'ng', 'gh', 'ca', 'au' );
+        $allowed_segments = array( '', 'us', 'uk', 'ng', 'gh', 'ca', 'au', 'pro' );
         $segment = sanitize_key( $_POST['culture_nl_segment'] ?? '' );
         if ( in_array( $segment, $allowed_segments, true ) ) {
             if ( $segment ) {
@@ -131,13 +131,14 @@ class Culture_Newsletter_Send {
         );
 
         $segments_config = array(
-            ''   => 'All segments',
-            'us' => 'The Moveee America (US)',
-            'uk' => 'The British Moveee (UK)',
-            'ng' => 'Nigeria',
-            'gh' => 'Ghana',
-            'ca' => 'Canada',
-            'au' => 'Australia',
+            ''    => 'All segments',
+            'us'  => 'The Moveee America (US)',
+            'uk'  => 'The British Moveee (UK)',
+            'ng'  => 'Nigeria',
+            'gh'  => 'Ghana',
+            'ca'  => 'Canada',
+            'au'  => 'Australia',
+            'pro' => 'Connect Pro Members',
         );
 
         // Build counts[list][segment] — empty string segment = whole list total.
