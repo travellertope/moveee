@@ -103,10 +103,8 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   }, []);
 
   useEffect(() => {
-    const hashtag = searchParams.get("hashtag");
     const tag = searchParams.get("tag");
-    if (hashtag) { setActiveType("community"); setActiveTag(`#${hashtag}`); }
-    else if (tag) { setActiveType("community"); setActiveTag(tag); }
+    if (tag) { setActiveType("community"); setActiveTag(tag); }
   }, [searchParams]);
 
   const availableTags = useMemo(() => {
@@ -207,13 +205,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     setVisibleCount(20);
   }, []);
 
-  const handleHashtagClick = useCallback((hashtag: string) => {
-    setActiveType("community");
-    setActiveTag(prev => prev === hashtag ? "" : hashtag);
-    setVisibleCount(20);
-  }, []);
-
-  const handleType = (type: FeedItemType | "all") => {
+const handleType = (type: FeedItemType | "all") => {
     setActiveType(type);
     setForYou(false);
     setActiveTag("");
@@ -239,15 +231,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const showRegions = activeType === "all" || activeType === "pulse";
   const showTags = availableTags.length > 0 && (activeType === "all" || activeType === "community");
 
-  const trendingHashtags = useMemo(() => {
-    const counts: Record<string, number> = {};
-    items.forEach(item => {
-      if (item.type !== "community") return;
-      const matches = item.title.match(/#([a-zA-Z][a-zA-Z0-9_]{1,49})/g) ?? [];
-      matches.forEach(tag => { counts[tag] = (counts[tag] ?? 0) + 1; });
-    });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([tag]) => tag);
-  }, [items]);
 
   return (
     <div style={{ background: "#ffffff" }}>
@@ -421,24 +404,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
             )}
           </div>
 
-          {/* Active hashtag chip */}
-          {activeTag.startsWith("#") && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: "0.5rem",
-              padding: "0.6rem 1.25rem",
-              borderBottom: "1px solid #e8e2d8",
-              background: "#fff",
-            }}>
-              <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>Filtering by</span>
-              <span style={{ background: "#fdf5e6", color: "#b38238", fontSize: "0.7rem", fontWeight: 700, padding: "0.15rem 0.45rem", borderRadius: "2px" }}>{activeTag}</span>
-              <button
-                onClick={() => { setActiveTag(""); setVisibleCount(20); }}
-                style={{ background: "transparent", border: "none", color: "#bbb", cursor: "pointer", fontSize: "0.85rem", lineHeight: 1, padding: "0 0.1rem" }}
-                aria-label="Clear hashtag filter"
-              >×</button>
-            </div>
-          )}
-
           {/* Interests nudge for logged-in users with no interests set */}
           {session && !hasInterests && (
             <div style={{ margin: "0.75rem 1.25rem", padding: "0.75rem 1rem", background: "#fdf5e6", border: "1px solid #e8d8b0", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
@@ -484,7 +449,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 key={item.id}
                 item={item}
                 onTagClick={handleTagClick}
-                onHashtagClick={handleHashtagClick}
                 interestMatch={forYou && hasInterests && matchesInterests(item, interestTagSet)}
               />
             ))
@@ -499,24 +463,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
         {/* ── Right Sidebar ── */}
         <aside className="pulse-sidebar-right">
           <div style={{ padding: "1.25rem 1rem" }}>
-            {trendingHashtags.length > 0 && (
-              <div style={{ marginBottom: "1.5rem" }}>
-                <p style={{ color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.65rem" }}>Trending</p>
-                <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-                  {trendingHashtags.map(tag => (
-                    <li key={tag} style={{ marginBottom: "0.35rem" }}>
-                      <button
-                        onClick={() => handleHashtagClick(tag)}
-                        style={{ background: "transparent", border: "none", color: "#b38238", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", padding: 0 }}
-                      >
-                        {tag}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
             {/* Most engaged posts this week */}
             {trending.length > 0 && (
               <div style={{ marginBottom: "1.5rem" }}>

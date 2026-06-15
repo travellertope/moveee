@@ -22,16 +22,44 @@ class Culture_REST_API {
     /**
      * Fires after a culture_post is inserted/updated via the REST API.
      * Awards reputation + credits to the community author on first publish only.
+     * Also extracts @mentions from the post content and sends mention notifications.
      */
     public static function handle_community_post_created( $post, $request, $creating ) {
         if ( ! $creating ) return;
         if ( 'publish' !== $post->post_status ) return;
-        if ( ! class_exists( 'Culture_Gamification' ) ) return;
 
         $author_id = (int) get_post_meta( $post->ID, 'community_author_id', true );
         if ( ! $author_id ) return;
 
-        Culture_Gamification::award_points( $author_id, 'community_post', 0 );
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::award_points( $author_id, 'community_post', 0 );
+        }
+
+        // Extract @mentions from post content and notify mentioned users.
+        if ( class_exists( 'Culture_Notifications' ) ) {
+            $content = wp_strip_all_tags( $post->post_content );
+            $mention_matches = array();
+            preg_match_all( '/@(\w+)/', $content, $mention_matches );
+            $mentioned_usernames = array_unique( $mention_matches[1] );
+            if ( ! empty( $mentioned_usernames ) ) {
+                $author_data = get_userdata( $author_id );
+                $author_name = $author_data ? $author_data->display_name : 'Someone';
+                $post_slug   = get_post_field( 'post_name', $post->ID );
+                foreach ( $mentioned_usernames as $username ) {
+                    $mentioned = get_user_by( 'login', $username );
+                    if ( $mentioned && (int) $mentioned->ID !== (int) $author_id ) {
+                        Culture_Notifications::add(
+                            (int) $mentioned->ID,
+                            'mention',
+                            $author_name . ' mentioned you',
+                            wp_trim_words( $content, 15, '…' ),
+                            '/community/' . $post_slug,
+                            array( 'post_id' => $post->ID, 'author_id' => $author_id )
+                        );
+                    }
+                }
+            }
+        }
     }
 
     /**

@@ -125,6 +125,7 @@ export interface FeedItem {
   readingTime?: number;
 
   // Community
+  communityAuthorId?: string;
   communityAuthor?: string;
   communityAuthorUsername?: string;
   communityAuthorAvatar?: string;
@@ -307,7 +308,7 @@ export type NotificationType =
   | 'credit_earned' | 'badge_unlocked' | 'perk_expiring' | 'perk_redeemed'
   | 'cashout_approved' | 'cashout_rejected' | 'escrow_released'
   | 'comment_received' | 'post_validated' | 'system'
-  | 'referral_received';
+  | 'referral_received' | 'mention';
 
 export interface Notification {
   id: number;

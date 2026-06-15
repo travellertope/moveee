@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import type { FeedItem } from "@/lib/unified-feed";
@@ -273,14 +274,17 @@ function Badge({ label, bg, color }: { label: string; bg: string; color: string 
 export default function FeedCard({
   item,
   onTagClick,
-  onHashtagClick,
+  onMentionClick,
   interestMatch,
 }: {
   item: FeedItem;
   onTagClick?: (tag: string) => void;
-  onHashtagClick?: (hashtag: string) => void;
+  onMentionClick?: (username: string) => void;
   interestMatch?: boolean;
 }) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const router = useRouter();
+  const handleMentionClick = onMentionClick ?? ((username: string) => router.push(`/${username}`));
   const typeMeta = TYPE_BADGE[item.type] ?? TYPE_BADGE.pulse;
 
   // ── Quote card ──
@@ -529,7 +533,7 @@ export default function FeedCard({
                 lineHeight: 1.6,
                 marginBottom: item.image ? "0.65rem" : "0.5rem",
               }}>
-                <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onHashtagClick={onHashtagClick} clamp={6} />
+                <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onMentionClick={handleMentionClick} clamp={6} />
               </div>
             </div>
 
@@ -689,7 +693,7 @@ export default function FeedCard({
         </article>
 
         {modalOpen && (
-          <CommunityDetailModal item={item} onClose={closeModal} onHashtagClick={onHashtagClick} />
+          <CommunityDetailModal item={item} onClose={closeModal} onMentionClick={handleMentionClick} />
         )}
       </>
     );

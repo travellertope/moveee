@@ -10,9 +10,11 @@ import {
   Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import BottomSheet from "../ui/BottomSheet";
 import SheetErrorState from "../ui/SheetErrorState";
 import ImageLightbox from "../ui/ImageLightbox";
+import HashtagText from "./HashtagText";
 import { useColors } from "../../hooks/useColors";
 import { useAuthStore } from "../../auth/authStore";
 import { useComments } from "../../features/community/useComments";
@@ -326,10 +328,10 @@ function CommentsSection({ postId, c, styles }: { postId: string; c: ColorPalett
 
 // ── Template bodies ─────────────────────────────────────────────────────────────
 
-function TemplatePost({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+function TemplatePost({ item, c, styles, onMentionPress }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles>; onMentionPress?: (username: string) => void }) {
   return (
     <>
-      {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
+      {item.title ? <HashtagText text={item.title} style={styles.bodyText} onMentionPress={onMentionPress} /> : null}
       {item.image ? <TappableHero uri={item.image} /> : null}
     </>
   );
@@ -769,11 +771,14 @@ interface PostDetailSheetProps {
   item: FeedItem | null;
   visible: boolean;
   onClose: () => void;
+  onMentionPress?: (username: string) => void;
 }
 
-export default function PostDetailSheet({ item, visible, onClose }: PostDetailSheetProps) {
+export default function PostDetailSheet({ item, visible, onClose, onMentionPress }: PostDetailSheetProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNavigation<any>();
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   if (!item) {
     return (
@@ -799,7 +804,7 @@ export default function PostDetailSheet({ item, visible, onClose }: PostDetailSh
       case "event":             return <TemplateEvent item={item} c={c} styles={styles} />;
       case "book-review":       return <TemplateBookReview item={item} c={c} styles={styles} />;
       case "quote":             return <TemplateQuote item={item} c={c} styles={styles} />;
-      default:                  return <TemplatePost item={item} c={c} styles={styles} />;
+      default:                  return <TemplatePost item={item} c={c} styles={styles} onMentionPress={handleMentionPress} />;
     }
   };
 
