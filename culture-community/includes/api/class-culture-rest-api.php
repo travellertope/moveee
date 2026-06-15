@@ -3561,6 +3561,7 @@ class Culture_REST_API {
             $m = $meta_map[ $user->ID ] ?? array();
             return array(
                 'id'                     => $user->ID,
+                'username'               => $user->user_nicename,
                 'display_name'           => $user->display_name,
                 'occupation'             => $m['_culture_occupation']             ?? '',
                 'city'                   => $m['_culture_city']                   ?? '',

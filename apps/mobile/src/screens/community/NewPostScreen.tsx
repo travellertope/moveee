@@ -19,6 +19,7 @@ import MultiRating from "../../components/composer/MultiRating";
 import PollBuilder, { PollDraft } from "../../components/composer/PollBuilder";
 import ItineraryBuilder, { StopDraft } from "../../components/composer/ItineraryBuilder";
 import DirectorySearch from "../../components/composer/DirectorySearch";
+import UserSearch, { MemberResult } from "../../components/composer/UserSearch";
 
 import { TEMPLATE_DEFS } from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
@@ -228,7 +229,7 @@ export default function NewPostScreen() {
   // Creative Showcase extras
   const [showcaseTitle, setShowcaseTitle] = useState("");
   const [showcaseMedium, setShowcaseMedium] = useState("");
-  const [showcaseCollaborator, setShowcaseCollaborator] = useState("");
+  const [showcaseCollaborator, setShowcaseCollaborator] = useState<MemberResult | null>(null);
 
   // Book Review state
   const [bookEntry, setBookEntry] = useState<{ id: number; title: string; author: string; year?: string } | null>(null);
@@ -512,7 +513,9 @@ export default function NewPostScreen() {
       if (template === "creative-showcase") {
         body.showcase_title      = showcaseTitle.trim();
         body.showcase_medium     = showcaseMedium || undefined;
-        body.collaborator        = showcaseCollaborator.trim() || undefined;
+        body.collaborator            = showcaseCollaborator?.display_name || undefined;
+        body.collaborator_username   = showcaseCollaborator?.username || undefined;
+        body.collaborator_user_id    = showcaseCollaborator?.id || undefined;
       }
       if (template === "poll") {
         const expiresAt = new Date(Date.now() + poll.durationDays * 24 * 60 * 60 * 1000).toISOString();
@@ -906,18 +909,12 @@ export default function NewPostScreen() {
         <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
       <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Collaborator (optional)</Text>
-        <View style={styles.prefixedInputWrap}>
-          <Text style={styles.prefixIcon}>@</Text>
-          <TextInput
-            style={styles.prefixedInput}
-            value={showcaseCollaborator}
-            onChangeText={setShowcaseCollaborator}
-            placeholder="username or name"
-            placeholderTextColor={c.ghost}
-            autoCapitalize="none"
-          />
-        </View>
+        <UserSearch
+          label="Collaborator (optional)"
+          placeholder="Search members by name or username"
+          selected={showcaseCollaborator}
+          onSelect={setShowcaseCollaborator}
+        />
       </View>
       {renderDivider()}
       {/* Upload zone */}
