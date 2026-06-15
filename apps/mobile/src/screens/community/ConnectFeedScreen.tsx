@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from "react";
+import React, { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   FlatList,
@@ -11,7 +11,7 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useUnifiedFeed } from "../../features/community/useUnifiedFeed";
 import { useNotificationCount } from "../../features/notifications/useNotificationCount";
@@ -116,6 +116,20 @@ export default function ConnectFeedScreen() {
     });
     return () => unsubscribe?.();
   }, [nav, refresh]);
+
+  // Refresh and scroll to top whenever the screen comes back into focus
+  // (e.g. returning from NewPost after submitting)
+  const isFirstFocus = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (isFirstFocus.current) {
+        isFirstFocus.current = false;
+        return;
+      }
+      refresh();
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }, [refresh])
+  );
 
   const interestTagSet = useMemo(
     () => new Set((user?.interests ?? []).map((s) => s.toLowerCase())),
