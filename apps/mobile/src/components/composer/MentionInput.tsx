@@ -9,7 +9,7 @@ import {
   type TextInputProps,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import type { MemberResult } from "./UserSearch";
 
@@ -79,7 +79,7 @@ export default function MentionInput({
           setLoading(true);
           try {
             const data = await api.get<MemberResult[]>(
-              `${CULTURE_API}/members?search=${encodeURIComponent(query)}&per_page=8`,
+              `${MOBILE_API}/members?search=${encodeURIComponent(query)}&per_page=8`,
               true
             );
             setResults(data ?? []);

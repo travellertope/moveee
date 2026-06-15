@@ -4,7 +4,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { api, CULTURE_API } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 
 export interface MemberResult {
@@ -48,7 +48,7 @@ export default function UserSearch({ onSelect, selected, label, placeholder }: P
       setLoading(true);
       try {
         const data = await api.get<MemberResult[]>(
-          `${CULTURE_API}/members?search=${encodeURIComponent(q)}&per_page=10`,
+          `${MOBILE_API}/members?search=${encodeURIComponent(q)}&per_page=10`,
           true
         );
         setResults(data ?? []);
