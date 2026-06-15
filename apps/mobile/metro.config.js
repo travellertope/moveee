@@ -26,9 +26,12 @@ const rnDir = findPkg('react-native');
 
 // Pin react and react-native to a single copy so third-party packages
 // cannot accidentally resolve a different instance from their own node_modules.
+// react-native-passkeys is stubbed out because Expo Go doesn't bundle native
+// passkey modules — isSupported() returns false so the UI hides passkey options.
 config.resolver.extraNodeModules = {
   react: reactDir,
   'react-native': rnDir,
+  'react-native-passkeys': path.resolve(projectRoot, 'src/mocks/react-native-passkeys.js'),
 };
 
 // Block any OTHER copy of react/react-native that Metro might discover
