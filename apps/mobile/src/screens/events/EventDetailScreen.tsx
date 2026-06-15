@@ -2,13 +2,15 @@ import React, { useState, useMemo } from "react";
 import {
   View, Text, ScrollView, Image, StyleSheet,
   TouchableOpacity, Linking, Alert, ActivityIndicator,
-  TextInput, useWindowDimensions,
+  TextInput, StatusBar,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "../../auth/authStore";
 import { api } from "../../api/client";
-import { fonts, fontSize, space, radius } from "../../theme";
+import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
 import type { EventItem } from "./EventsScreen";
@@ -18,24 +20,25 @@ const PROXY = "https://themoveee.com/api";
 const EVENT_CHECKIN_REP = 20;
 const EVENT_CHECKIN_CREDITS = 3;
 
-function fmtLongDate(dateStr: string | null): string {
-  if (!dateStr) return "";
+function fmtDateRange(start: string | null, end: string | null): string {
+  if (!start) return "";
   try {
-    return new Date(dateStr).toLocaleDateString("en-GB", {
-      weekday: "long", day: "numeric", month: "long", year: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
+    const s = new Date(start);
+    const sStr = s.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    if (!end) return sStr;
+    const e = new Date(end);
+    if (s.toDateString() === e.toDateString()) return sStr;
+    const sShort = `${s.getDate()} ${s.toLocaleDateString("en-GB", { month: "short" })}`;
+    const eStr = e.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    return `${sShort}–${eStr}`;
+  } catch { return start; }
 }
 
-function fmtTime(dateStr: string | null): string {
-  if (!dateStr) return "";
+function fmtTime(d: string | null): string {
+  if (!d) return "";
   try {
-    return new Date(dateStr).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-  } catch {
-    return "";
-  }
+    return new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  } catch { return ""; }
 }
 
 export default function EventDetailScreen() {
@@ -43,7 +46,7 @@ export default function EventDetailScreen() {
   const route  = useRoute<any>();
   const { event } = route.params as { event: EventItem };
   const { user }  = useAuthStore();
-  const { height } = useWindowDimensions();
+  const insets    = useSafeAreaInsets();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
@@ -51,6 +54,9 @@ export default function EventDetailScreen() {
   const [email,      setEmail]      = useState(user?.email ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [rsvpDone,   setRsvpDone]   = useState(false);
+
+  const isUpcoming = event.eventDate ? new Date(event.eventDate) >= new Date() : false;
+  const isFree     = !event.admission || event.admission.toLowerCase().includes("free");
 
   const handleRsvp = async () => {
     if (!name.trim() || !email.trim()) {
@@ -72,125 +78,181 @@ export default function EventDetailScreen() {
     }
   };
 
-  // ── RSVP Success screen ───────────────────────────────────────────────────
+  // ── RSVP success ─────────────────────────────────────────────────────────
   if (rsvpDone) {
     return (
-      <View style={[styles.container, styles.successContainer]}>
-        <View style={styles.successContent}>
-          <View style={styles.successCircle}>
-            <Ionicons name="checkmark" size={32} color={c.paper} strokeWidth={3} />
-          </View>
-          <Text style={styles.successTitle}>You're on the list! 🎉</Text>
-          <Text style={styles.successSub}>
-            A confirmation will be sent to{"\n"}{email}
-          </Text>
-          <TouchableOpacity style={styles.calendarBtn}>
-            <Text style={styles.calendarBtnText}>Add to Calendar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => nav.goBack()}>
-            <Text style={styles.backLink}>Back to Events</Text>
-          </TouchableOpacity>
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.successCircle}>
+          <Ionicons name="checkmark" size={32} color={c.paper} />
         </View>
+        <Text style={styles.successTitle}>You're on the list! 🎉</Text>
+        <Text style={styles.successSub}>A confirmation will be sent to{"\n"}{email}</Text>
+        <TouchableOpacity style={styles.successBtn} onPress={() => nav.goBack()}>
+          <Text style={styles.successBtnText}>Back to Events</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
+  const dateLabel = fmtDateRange(event.eventDate, event.endDate);
+  const timeLabel = fmtTime(event.eventDate);
+
   return (
     <View style={styles.container}>
-      {/* Hero region */}
-      <View style={styles.hero}>
-        {event.imageUrl ? (
-          <Image source={{ uri: event.imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, styles.heroPlaceholder]} />
-        )}
+      <StatusBar barStyle="light-content" />
 
-        {/* Category badge on hero */}
-        {event.category ? (
-          <View style={styles.heroCatBadge}>
-            <Text style={styles.heroCatBadgeText}>{event.category.replace(/-/g, " ").toUpperCase()}</Text>
-          </View>
-        ) : null}
-      </View>
-
-      {/* Floating back button */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => nav.goBack()}>
-        <Ionicons name="chevron-back" size={20} color={c.ink} />
-      </TouchableOpacity>
-
-      {/* Scrollable content */}
       <ScrollView
-        contentContainerStyle={{ paddingTop: 220, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 60 }}
       >
-        {/* White content sheet */}
-        <View style={styles.sheet}>
-          <Text style={styles.title}>{event.title}</Text>
+        {/* ── Hero ── */}
+        <View style={styles.hero}>
+          {event.imageUrl ? (
+            <Image source={{ uri: event.imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.heroFallback]} />
+          )}
 
-          {/* Attendee row */}
-          <View style={styles.attendeeRow}>
-            {[0, 1, 2].map((i) => (
-              <View key={i} style={[styles.attendeeAvatar, { marginLeft: i > 0 ? -8 : 0, zIndex: 3 - i }]} />
-            ))}
-            <Text style={styles.attendeeText}>
-              {event.attendeeCount ? `${event.attendeeCount} attending` : "Be the first to attend"}
-            </Text>
+          {/* gradient overlay */}
+          <LinearGradient
+            colors={["transparent", "rgba(20,17,13,0.55)", "rgba(20,17,13,0.88)"]}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0.3 }}
+            end={{ x: 0, y: 1 }}
+          />
+
+          {/* Back button */}
+          <TouchableOpacity
+            style={[styles.backBtn, { top: insets.top + 8 }]}
+            onPress={() => nav.goBack()}
+          >
+            <Ionicons name="chevron-back" size={20} color="#fff" />
+          </TouchableOpacity>
+
+          {/* Hero content — bottom aligned */}
+          <View style={styles.heroContent}>
+            {/* Badges row */}
+            <View style={styles.heroBadgeRow}>
+              {isUpcoming && (
+                <View style={styles.heroBadge}>
+                  <View style={styles.greenDot} />
+                  <Text style={styles.heroBadgeText}>Upcoming</Text>
+                </View>
+              )}
+              {event.isOnline && (
+                <View style={styles.heroBadge}>
+                  <Text style={styles.heroBadgeText}>Online</Text>
+                </View>
+              )}
+              {event.isProOnly && (
+                <View style={[styles.heroBadge, styles.heroBadgePro]}>
+                  <Text style={[styles.heroBadgeText, styles.heroBadgeProText]}>★ Pro Only</Text>
+                </View>
+              )}
+              {event.category ? (
+                <View style={[styles.heroBadge, styles.heroBadgeCategory]}>
+                  <Text style={styles.heroBadgeCategoryText}>
+                    {event.category.replace(/-/g, " ")}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            {/* Title */}
+            <Text style={styles.heroTitle}>{event.title}</Text>
+
+            {/* One-line meta preview */}
+            {(dateLabel || event.city) ? (
+              <Text style={styles.heroMeta}>
+                {[dateLabel, event.city].filter(Boolean).join("  ·  ")}
+              </Text>
+            ) : null}
           </View>
+        </View>
 
-          {/* Meta card */}
+        {/* ── Content sheet ── */}
+        <View style={styles.sheet}>
+
+          {/* Attendee count */}
+          {event.attendeeCount ? (
+            <View style={styles.attendeeRow}>
+              {[0, 1, 2].map((i) => (
+                <View key={i} style={[styles.attendeeAvatar, { marginLeft: i > 0 ? -8 : 0, zIndex: 3 - i }]} />
+              ))}
+              <Text style={styles.attendeeText}>{event.attendeeCount} attending</Text>
+            </View>
+          ) : null}
+
+          {/* Meta rows card */}
           <View style={styles.metaCard}>
-            {event.eventDate ? (
+            {dateLabel ? (
               <View style={styles.metaRow}>
-                <Text style={styles.metaEmoji}>📅</Text>
-                <Text style={styles.metaValue}>
-                  {fmtLongDate(event.eventDate)}
-                  {fmtTime(event.eventDate) ? `\n${fmtTime(event.eventDate)} – Late` : ""}
-                </Text>
+                <Ionicons name="calendar-outline" size={18} color={c.gold} style={styles.metaIcon} />
+                <View style={styles.metaBody}>
+                  <Text style={styles.metaLabel}>DATE</Text>
+                  <Text style={styles.metaValue}>{dateLabel}{timeLabel ? `  ·  ${timeLabel}` : ""}</Text>
+                </View>
               </View>
             ) : null}
+
             {(event.venue || event.city) ? (
-              <View style={styles.metaRow}>
-                <Text style={styles.metaEmoji}>📍</Text>
-                <Text style={styles.metaValue}>
-                  {event.venue ?? ""}
-                  {event.city ? `\n${event.city}${event.country ? `, ${event.country}` : ""}` : ""}
-                </Text>
+              <View style={[styles.metaRow, styles.metaRowBorder]}>
+                <Ionicons name="location-outline" size={18} color={c.gold} style={styles.metaIcon} />
+                <View style={styles.metaBody}>
+                  <Text style={styles.metaLabel}>LOCATION</Text>
+                  {event.venue ? <Text style={styles.metaValue}>{event.venue}</Text> : null}
+                  {event.city  ? (
+                    <Text style={styles.metaValueSub}>{event.city}{event.country ? `, ${event.country}` : ""}</Text>
+                  ) : null}
+                </View>
               </View>
             ) : null}
+
             {event.admission ? (
-              <View style={styles.metaRow}>
-                <Text style={styles.metaEmoji}>💳</Text>
-                <Text style={styles.metaValue}>{event.admission}</Text>
+              <View style={[styles.metaRow, styles.metaRowBorder]}>
+                <Ionicons name="ticket-outline" size={18} color={c.gold} style={styles.metaIcon} />
+                <View style={styles.metaBody}>
+                  <Text style={styles.metaLabel}>ADMISSION</Text>
+                  <Text style={styles.metaValue}>{event.admission}</Text>
+                </View>
               </View>
             ) : null}
+
             {event.organiserName ? (
-              <View style={styles.metaRow}>
-                <Text style={styles.metaEmoji}>👤</Text>
-                {event.organiserSlug ? (
-                  <TouchableOpacity onPress={() => nav.navigate("DirectoryDetail", { slug: event.organiserSlug })}>
-                    <Text style={[styles.metaValue, styles.metaLink]}>
-                      Organised by: {event.organiserName}
-                    </Text>
-                  </TouchableOpacity>
-                ) : (
-                  <Text style={styles.metaValue}>Organised by: {event.organiserName}</Text>
-                )}
-              </View>
+              <TouchableOpacity
+                style={[styles.metaRow, styles.metaRowBorder]}
+                onPress={event.organiserSlug ? () => nav.navigate("DirectoryDetail", { slug: event.organiserSlug }) : undefined}
+                disabled={!event.organiserSlug}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="person-outline" size={18} color={c.gold} style={styles.metaIcon} />
+                <View style={styles.metaBody}>
+                  <Text style={styles.metaLabel}>ORGANISER</Text>
+                  <Text style={[styles.metaValue, event.organiserSlug ? styles.metaValueLink : undefined]}>
+                    {event.organiserName}{event.organiserSlug ? "  →" : ""}
+                  </Text>
+                </View>
+              </TouchableOpacity>
             ) : null}
           </View>
 
           {/* Description */}
-          {!!event.excerpt ? (
+          {event.excerpt ? (
             <Text style={styles.description}>{event.excerpt}</Text>
           ) : null}
 
-          {/* CTA button */}
+          {/* Primary CTA */}
           {event.ticketUrl ? (
             <TouchableOpacity
               style={styles.ctaBtn}
               onPress={() => Linking.openURL(event.ticketUrl!).catch(() => {})}
+              activeOpacity={0.85}
             >
-              <Text style={styles.ctaBtnText}>Get Tickets / Find Out More</Text>
+              <Ionicons name="ticket-outline" size={18} color={c.paper} />
+              <Text style={styles.ctaBtnText}>
+                {isFree ? "Register / Find Out More" : "Get Tickets"}
+              </Text>
             </TouchableOpacity>
           ) : null}
 
@@ -215,12 +277,10 @@ export default function EventDetailScreen() {
             );
           })()}
 
-          {/* Divider */}
-          <View style={styles.divider} />
-
           {/* RSVP section */}
-          <Text style={styles.rsvpTitle}>RSVP to secure your spot</Text>
-          <View style={styles.rsvpForm}>
+          <View style={styles.rsvpCard}>
+            <Text style={styles.rsvpTitle}>RSVP to secure your spot</Text>
+
             <View style={styles.rsvpField}>
               <Text style={styles.rsvpLabel}>Name</Text>
               <TextInput
@@ -229,6 +289,7 @@ export default function EventDetailScreen() {
                 onChangeText={setName}
                 placeholder="Jane Doe"
                 placeholderTextColor={c.ghost}
+                returnKeyType="next"
               />
             </View>
             <View style={styles.rsvpField}>
@@ -241,19 +302,23 @@ export default function EventDetailScreen() {
                 placeholderTextColor={c.ghost}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                returnKeyType="done"
               />
             </View>
+
             <TouchableOpacity
               style={[styles.rsvpBtn, submitting && { opacity: 0.6 }]}
               onPress={handleRsvp}
               disabled={submitting}
+              activeOpacity={0.85}
             >
               {submitting
-                ? <ActivityIndicator color={c.paper} />
+                ? <ActivityIndicator color="#fff" size="small" />
                 : <Text style={styles.rsvpBtnText}>Confirm RSVP</Text>
               }
             </TouchableOpacity>
           </View>
+
         </View>
       </ScrollView>
     </View>
@@ -262,79 +327,167 @@ export default function EventDetailScreen() {
 
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.paperWarm },
+    container: { flex: 1, backgroundColor: c.paper },
 
-    // Hero
+    // ── Hero ──
     hero: {
-      position: "absolute", top: 0, left: 0, right: 0,
-      height: 260, zIndex: 0,
-      backgroundColor: c.paperDeep,
+      height: 340,
+      backgroundColor: "#14110d",
+      justifyContent: "flex-end",
     },
-    heroPlaceholder: { backgroundColor: c.paperDeep },
-    heroCatBadge: {
-      position: "absolute", bottom: 60, left: 24,
-      backgroundColor: "rgba(0,0,0,0.3)",
-      borderWidth: 1, borderColor: "rgba(255,255,255,0.2)",
-      borderRadius: radius.full,
-      paddingHorizontal: 12, paddingVertical: 6,
+    heroFallback: {
+      backgroundColor: "#2a1208",
     },
-    heroCatBadgeText: {
-      fontFamily: fonts.sansBold, fontSize: fontSize.eyebrow,
-      color: c.paper, letterSpacing: 1, textTransform: "uppercase",
-    },
-
-    // Floating back button
     backBtn: {
-      position: "absolute", top: 52, left: 16, zIndex: 50,
-      width: 40, height: 40, borderRadius: 20,
-      backgroundColor: c.paper, alignItems: "center", justifyContent: "center",
-      shadowColor: c.ink, shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.15, shadowRadius: 6, elevation: 4,
+      position: "absolute",
+      left: 16,
+      zIndex: 10,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: "rgba(20,17,13,0.45)",
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.15)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    heroContent: {
+      paddingHorizontal: 20,
+      paddingBottom: 24,
+      gap: 8,
+    },
+    heroBadgeRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 6,
+    },
+    heroBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      backgroundColor: "rgba(255,255,255,0.14)",
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.2)",
+      borderRadius: radius.full,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    heroBadgePro: {
+      backgroundColor: "rgba(180,130,56,0.25)",
+      borderColor: "rgba(180,130,56,0.5)",
+    },
+    heroBadgeCategory: {
+      backgroundColor: "rgba(197,73,31,0.25)",
+      borderColor: "rgba(197,73,31,0.5)",
+    },
+    heroBadgeText:         { fontFamily: fonts.sansBold, fontSize: 11, color: "#fff", letterSpacing: 0.3 },
+    heroBadgeProText:      { color: "#FCD34D" },
+    heroBadgeCategoryText: { fontFamily: fonts.sansBold, fontSize: 11, color: "#f4a67a", letterSpacing: 0.3 },
+    greenDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#4ADE80" },
+
+    heroTitle: {
+      fontFamily: fonts.serifBold,
+      fontSize: 28,
+      color: "#f3ece0",
+      lineHeight: 36,
+    },
+    heroMeta: {
+      fontFamily: fonts.mono,
+      fontSize: 11,
+      color: "rgba(243,236,224,0.6)",
+      letterSpacing: 0.5,
     },
 
-    // Content sheet
+    // ── Content sheet ──
     sheet: {
       backgroundColor: c.paper,
-      borderTopLeftRadius: 20, borderTopRightRadius: 20,
-      paddingHorizontal: 24, paddingTop: 32, paddingBottom: 40,
-      shadowColor: "#000", shadowOffset: { width: 0, height: -8 },
-      shadowOpacity: 0.12, shadowRadius: 30, elevation: 8,
-      minHeight: 400,
+      paddingHorizontal: 20,
+      paddingTop: 24,
+      gap: 20,
     },
 
-    title: {
-      fontFamily: fonts.serifBold, fontSize: 24, color: c.ink,
-      lineHeight: 30, marginBottom: 12,
+    attendeeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
     },
-
-    attendeeRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 20 },
     attendeeAvatar: {
-      width: 24, height: 24, borderRadius: 12,
-      backgroundColor: c.paperDeep, borderWidth: 1.5, borderColor: c.paper,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: c.paperDeep,
+      borderWidth: 1.5,
+      borderColor: c.paper,
     },
-    attendeeText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
+    attendeeText: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.mute,
+    },
 
     // Meta card
     metaCard: {
-      backgroundColor: c.paperDeep, borderRadius: 8,
-      padding: 16, gap: 12, marginBottom: 20,
+      backgroundColor: c.paperWarm,
+      borderWidth: 1,
+      borderColor: c.rule,
+      borderRadius: radius.lg,
+      overflow: "hidden",
     },
-    metaRow:   { flexDirection: "row", alignItems: "flex-start", gap: 4 },
-    metaEmoji: { fontSize: 16, width: 20, color: c.ochre, paddingTop: 2 },
-    metaValue: { fontFamily: fonts.sans, fontSize: 14, color: c.inkSoft, flex: 1, lineHeight: 20 },
-    metaLink:  { color: c.ochre, textDecorationLine: "underline" },
+    metaRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 12,
+      padding: 14,
+    },
+    metaRowBorder: {
+      borderTopWidth: 1,
+      borderTopColor: c.rule,
+    },
+    metaIcon: { marginTop: 2, flexShrink: 0 },
+    metaBody: { flex: 1, gap: 2 },
+    metaLabel: {
+      fontFamily: fonts.monoBold,
+      fontSize: fontSize.eyebrow,
+      color: c.mute,
+      letterSpacing: 1.2,
+      marginBottom: 2,
+    },
+    metaValue: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.base,
+      color: c.ink,
+    },
+    metaValueSub: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.xs,
+      color: c.mute,
+    },
+    metaValueLink: { color: c.ochre },
 
+    // Description
     description: {
-      fontFamily: fonts.sans, fontSize: fontSize.base, color: c.inkSoft,
-      lineHeight: 24, marginBottom: 20,
+      fontFamily: fonts.serif,
+      fontSize: 17,
+      color: c.inkSoft,
+      lineHeight: 26,
     },
 
+    // CTA button
     ctaBtn: {
-      height: 52, backgroundColor: c.ochre, borderRadius: radius.full,
-      alignItems: "center", justifyContent: "center", marginBottom: 20,
-      shadowColor: c.ochre, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 3,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      height: 52,
+      backgroundColor: c.ochre,
+      borderRadius: radius.full,
+      ...shadows.card,
     },
-    ctaBtnText: { fontFamily: fonts.sansBold, fontSize: 16, color: c.paper },
+    ctaBtnText: {
+      fontFamily: fonts.sansBold,
+      fontSize: 16,
+      color: c.paper,
+    },
 
     // Check-in info card
     checkinCard: {
@@ -343,7 +496,6 @@ function createStyles(c: ColorPalette) {
       borderLeftWidth: 3,
       borderLeftColor: c.ochre,
       padding: 16,
-      marginBottom: 20,
     },
     checkinTitle: {
       fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink, marginBottom: 6,
@@ -355,51 +507,75 @@ function createStyles(c: ColorPalette) {
       fontFamily: fonts.sansBold, color: c.ochre,
     },
 
-    divider: { height: 1, backgroundColor: c.ghost, marginBottom: 24 },
-
-    rsvpTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink, marginBottom: 16 },
-    rsvpForm:  { gap: 12 },
+    // RSVP section — light
+    rsvpCard: { gap: 14, paddingTop: 4 },
+    rsvpTitle: { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink, marginBottom: 2 },
     rsvpField: { gap: 4 },
-    rsvpLabel: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
+    rsvpLabel: {
+      fontFamily: fonts.sans,
+      fontSize: 12,
+      color: c.mute,
+    },
     rsvpInput: {
-      height: 48, borderWidth: 1, borderColor: c.ghost, borderRadius: 8,
-      paddingHorizontal: space[4], fontFamily: fonts.sans, fontSize: fontSize.base,
-      color: c.ink, backgroundColor: c.paper,
+      height: 48,
+      borderWidth: 1,
+      borderColor: c.ghost,
+      borderRadius: radius.lg,
+      paddingHorizontal: 16,
+      fontFamily: fonts.sans,
+      fontSize: fontSize.base,
+      color: c.ink,
+      backgroundColor: "#fff",
     },
     rsvpBtn: {
-      height: 52, backgroundColor: c.ochre, borderRadius: radius.full,
-      alignItems: "center", justifyContent: "center", marginTop: 4,
-      shadowColor: c.ochre, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 3,
+      height: 52,
+      backgroundColor: c.ochre,
+      borderRadius: radius.full,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 4,
     },
-    rsvpBtnText: { fontFamily: fonts.sansBold, fontSize: 16, color: c.paper },
+    rsvpBtnText: {
+      fontFamily: fonts.sansBold,
+      fontSize: 16,
+      color: "#fff",
+    },
 
-    // RSVP Success
-    successContainer: { justifyContent: "center", alignItems: "center" },
-    successContent:   { alignItems: "center", paddingHorizontal: 32 },
+    // Success screen
     successCircle: {
-      width: 72, height: 72, borderRadius: 36,
-      backgroundColor: c.success, alignItems: "center", justifyContent: "center",
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: c.success,
+      alignItems: "center",
+      justifyContent: "center",
       marginBottom: 20,
-      shadowColor: c.success, shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.35, shadowRadius: 12, elevation: 3,
     },
     successTitle: {
-      fontFamily: fonts.serifBold, fontSize: 24, color: c.ink,
-      textAlign: "center", marginBottom: 8,
+      fontFamily: fonts.serifBold,
+      fontSize: 24,
+      color: c.ink,
+      textAlign: "center",
+      marginBottom: 8,
     },
     successSub: {
-      fontFamily: fonts.sans, fontSize: 14, color: c.mute,
-      textAlign: "center", marginBottom: 32, lineHeight: 20,
+      fontFamily: fonts.sans,
+      fontSize: 14,
+      color: c.mute,
+      textAlign: "center",
+      marginBottom: 32,
+      lineHeight: 20,
     },
-    calendarBtn: {
-      width: "100%", maxWidth: 280, height: 48,
-      borderWidth: 1.5, borderColor: c.ink, borderRadius: radius.full,
-      alignItems: "center", justifyContent: "center", marginBottom: 24,
+    successBtn: {
+      backgroundColor: c.ink,
+      borderRadius: radius.full,
+      paddingHorizontal: 32,
+      paddingVertical: 14,
     },
-    calendarBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
-    backLink: {
-      fontFamily: fonts.sansBold, fontSize: fontSize.sm,
-      color: c.ochre, textDecorationLine: "underline",
+    successBtnText: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.base,
+      color: c.paper,
     },
   });
 }
