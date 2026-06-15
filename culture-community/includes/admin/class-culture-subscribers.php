@@ -19,13 +19,14 @@ class Culture_Subscribers {
         'origins-field-notes'       => 'Origins Field Notes (waitlist)',
     );
     const SEGMENT_OPTIONS = array(
-        ''   => 'All segments',
-        'us' => 'The Moveee America (US)',
-        'uk' => 'The British Moveee (UK)',
-        'ng' => 'Nigeria',
-        'gh' => 'Ghana',
-        'ca' => 'Canada',
-        'au' => 'Australia',
+        ''    => 'All segments',
+        'us'  => 'The Moveee America (US)',
+        'uk'  => 'The British Moveee (UK)',
+        'ng'  => 'Nigeria',
+        'gh'  => 'Ghana',
+        'ca'  => 'Canada',
+        'au'  => 'Australia',
+        'pro' => 'Connect Pro Members',
     );
 
     public static function init() {

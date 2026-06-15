@@ -101,11 +101,15 @@ class Culture_Email_Templates {
 <tr><td style="padding:10px 12px;background:#f8f9fa;font-weight:600;">Date</td><td style="padding:10px 12px;">{date}</td></tr>
 </tbody>
 </table>
-<p>As a Patron member, you now have access to:</p>
+<p>As a Connect Pro member, you now have access to:</p>
 <ul>
-<li>Physical (in-person) event attendance</li>
-<li>Dual chapter membership</li>
-<li>Priority RSVP for events</li>
+<li>All patron-only articles and content</li>
+<li>10% discount in the Moveee shop + early access to new drops</li>
+<li>Cash out your credits to your bank account</li>
+<li>100 credits per day (double the Citizen cap)</li>
+<li>5 game plays per day</li>
+<li>Poll and itinerary post templates</li>
+<li>Pro badge on your profile and posts</li>
 </ul>',
             ),
 
@@ -126,9 +130,11 @@ class Culture_Email_Templates {
 </div>
 <p>If your account is downgraded, you will lose access to:</p>
 <ul>
-<li>Physical event attendance</li>
-<li>Your secondary chapter membership</li>
-<li>Priority RSVP</li>
+<li>Patron-only articles and content</li>
+<li>10% shop discount and early access</li>
+<li>Credit cashout</li>
+<li>5 daily game plays (reverts to 1)</li>
+<li>100 daily credit cap (reverts to 50)</li>
 </ul>
 <p>Please update your payment details to continue enjoying Patron benefits.</p>',
             ),

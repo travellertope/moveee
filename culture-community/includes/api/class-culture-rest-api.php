@@ -1416,17 +1416,6 @@ class Culture_REST_API {
             return new WP_Error( 'invalid_event', __( 'Event not found.', 'culture-community' ), array( 'status' => 404 ) );
         }
 
-        // Check if physical event - require patron tier.
-        $is_physical = get_post_meta( $event_id, '_culture_is_physical', true );
-        $user_tier   = get_user_meta( $user_id, '_culture_membership_tier', true );
-
-        if ( '1' === $is_physical && 'patron' !== $user_tier ) {
-            return new WP_Error(
-                'tier_restricted',
-                __( 'Physical events require a Patron membership.', 'culture-community' ),
-                array( 'status' => 403 )
-            );
-        }
 
         $table = $wpdb->prefix . 'culture_attendance';
 

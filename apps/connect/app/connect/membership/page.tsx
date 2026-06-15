@@ -9,7 +9,7 @@ import "../connect.css";
 export const metadata: Metadata = {
   title: "Membership — Moveee Connect",
   description:
-    "Join Moveee Connect as a Citizen for free, or upgrade to Connect Pro for exclusive gated content, a Pro badge, priority event access, shop discounts, and more.",
+    "Join Moveee as a Citizen for free, or upgrade to Connect Pro for patron-only content, 10% shop discount, credit cashout, 5 game plays per day, and more.",
 };
 
 export default async function MembershipPage() {
@@ -90,11 +90,15 @@ export default async function MembershipPage() {
               <PatronPrice variant="yearly" /> · <PatronPrice variant="monthly" /> — cancel anytime
             </div>
             <ul className="mco-tier-perks">
-              <li>Everything in Citizen</li>
-              <li>Connect Pro badge on your Pulse posts</li>
-              <li>Exclusive gated content &amp; editorials</li>
-              <li>Early access to new product drops</li>
-              <li>Pro member pricing on selected products</li>
+              <li>Everything in Citizen, plus:</li>
+              <li>Exclusive patron-only articles &amp; editorials</li>
+              <li>10% off in the Moveee Shop + early access to new drops</li>
+              <li>Cash out your credits to your bank account</li>
+              <li>100 culture credits per day (vs 50 for Citizen)</li>
+              <li>5 game plays per day (vs 1 for Citizen)</li>
+              <li>Poll &amp; itinerary post templates unlocked</li>
+              <li>All events — online &amp; in-person</li>
+              <li>Connect Pro badge on your profile &amp; posts</li>
               <li>Early access to new features</li>
             </ul>
             <Link href="/connect/perks" className="mco-perks-link">See all shop perks →</Link>
@@ -127,20 +131,25 @@ export default async function MembershipPage() {
               </thead>
               <tbody>
                 {[
-                  ["Pulse feed & community posts",         true,  true],
-                  ["Member directory listing",             true,  true],
-                  ["Connect Pro badge on Pulse posts",     false, true],
-                  ["Online event access",                  true,  true],
-                  ["GetMeLit & Culture Drop newsletters",  true,  true],
-                  ["Exclusive gated content",              false, true],
-                  ["10% Moveee Shop discount",             false, true],
-                  ["Early access to features",             false, true],
-                  ["Culture points & badges",              true,  true],
+                  ["Pulse feed & community posts",                   true,     true],
+                  ["Member directory listing",                       true,     true],
+                  ["All events (online & in-person)",               true,     true],
+                  ["GetMeLit & Culture Drop newsletters",            true,     true],
+                  ["Culture points & badges",                        true,     true],
+                  ["Game plays per day",                             "1",      "5"],
+                  ["Daily culture credit cap",                       "50",     "100"],
+                  ["Cash out credits",                               false,    true],
+                  ["Poll & itinerary post templates",                false,    true],
+                  ["Patron-only articles & editorials",              false,    true],
+                  ["10% Moveee Shop discount",                       false,    true],
+                  ["Early access to new drops",                      false,    true],
+                  ["Connect Pro badge",                              false,    true],
+                  ["Early access to new features",                   false,    true],
                 ].map(([feature, citizen, pro]) => (
                   <tr key={feature as string}>
                     <td>{feature as string}</td>
-                    <td>{citizen ? <span className="mco-check">✓</span> : <span className="mco-cross">—</span>}</td>
-                    <td>{pro ? <span className="mco-check mco-check--pro">✓</span> : <span className="mco-cross">—</span>}</td>
+                    <td>{typeof citizen === "string" ? <span className="mco-check">{citizen}</span> : citizen ? <span className="mco-check">✓</span> : <span className="mco-cross">—</span>}</td>
+                    <td>{typeof pro === "string" ? <span className="mco-check mco-check--pro">{pro}</span> : pro ? <span className="mco-check mco-check--pro">✓</span> : <span className="mco-cross">—</span>}</td>
                   </tr>
                 ))}
               </tbody>

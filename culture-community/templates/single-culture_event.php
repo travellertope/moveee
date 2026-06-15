@@ -29,10 +29,8 @@ while ( have_posts() ) :
 
     $spots_left = $capacity ? max( 0, (int) $capacity - $rsvp_count ) : null;
 
-    // User tier check.
     $user_id   = get_current_user_id();
-    $user_tier = $user_id ? get_user_meta( $user_id, '_culture_membership_tier', true ) : '';
-    $is_restricted = ( '1' === $is_physical && 'patron' !== $user_tier );
+    $is_restricted = false;
 
     // Check if user already RSVPed.
     $has_rsvp = false;

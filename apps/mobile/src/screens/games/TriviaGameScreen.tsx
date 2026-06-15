@@ -6,14 +6,18 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { storage } from "../../store/storage";
 import { api } from "../../api/client";
+import { useAuthStore } from "../../auth/authStore";
 import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
 
-const PROXY     = "https://themoveee.com/api";
-const KEY_DATE  = "trivia_last_played_date";
-const KEY_SCORE = "trivia_last_score";
+const PROXY      = "https://themoveee.com/api";
+const KEY_DATE   = "trivia_last_played_date";
+const KEY_SCORE  = "trivia_last_score";
+const KEY_COUNT  = "trivia_play_count";
+const PRO_LIMIT  = 5;
+const FREE_LIMIT = 1;
 
 interface TriviaQuestion {
   question:    string;
@@ -44,6 +48,8 @@ export default function TriviaGameScreen() {
   const nav = useNavigation<any>();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const { user } = useAuthStore();
+  const isPro = user?.tier === "patron";
 
   const [phase,     setPhase]     = useState<Phase>("loading");
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
@@ -59,8 +65,10 @@ export default function TriviaGameScreen() {
   const init = useCallback(async () => {
     setPhase("loading");
     try {
-      const lastDate = storage.getString(KEY_DATE);
-      if (lastDate === todayStr) {
+      const limit = isPro ? PRO_LIMIT : FREE_LIMIT;
+      const countKey = `${KEY_COUNT}_${todayStr}`;
+      const playedToday = parseInt(storage.getString(countKey) ?? "0", 10);
+      if (playedToday >= limit) {
         const saved = storage.getString(KEY_SCORE);
         setLastScore(saved !== undefined ? parseInt(saved, 10) : null);
         setPhase("played");
@@ -104,7 +112,9 @@ export default function TriviaGameScreen() {
         const ans = a !== null ? a : selected;
         return ans === questions[i]?.correct;
       }).length;
-      storage.set(KEY_DATE, todayStr);
+      const countKey = `${KEY_COUNT}_${todayStr}`;
+      const prev = parseInt(storage.getString(countKey) ?? "0", 10);
+      storage.set(countKey, String(prev + 1));
       storage.set(KEY_SCORE, String(finalScore));
       recordPlayedToday();
       setPhase("done");
@@ -144,13 +154,18 @@ export default function TriviaGameScreen() {
   // ── Already played ────────────────────────────────────────────────────────────
   if (phase === "played") {
     const cr = lastScore !== null ? Math.round((lastScore / 10) * 50) : 0;
+    const countKey = `${KEY_COUNT}_${todayStr}`;
+    const playsToday = parseInt(storage.getString(countKey) ?? "0", 10);
+    const limit = isPro ? PRO_LIMIT : FREE_LIMIT;
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: c.paperWarm }]}>
         <View style={styles.centred}>
           <View style={styles.playedCircle}>
             <Text style={styles.playedCheck}>✓</Text>
           </View>
-          <Text style={styles.playedTitle}>Already played today!</Text>
+          <Text style={styles.playedTitle}>
+            {isPro ? `${playsToday}/${limit} plays used today` : "Already played today!"}
+          </Text>
           {lastScore !== null && (
             <Text style={styles.playedSub}>You scored {lastScore}/10 · +{cr} CR earned</Text>
           )}
@@ -158,6 +173,11 @@ export default function TriviaGameScreen() {
             <Text style={styles.countdownLabel}>Next game available in</Text>
             <Text style={styles.countdownValue}>Resets tomorrow</Text>
           </View>
+          {!isPro && (
+            <TouchableOpacity onPress={() => nav.navigate("Membership" as never)} style={styles.proHintBtn}>
+              <Text style={styles.proHintText}>Connect Pro members get 5 plays/day →</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity onPress={() => nav.goBack()}>
             <Text style={styles.browseFeedLink}>Browse the feed while you wait →</Text>
           </TouchableOpacity>
@@ -421,6 +441,8 @@ function createStyles(c: ColorPalette) {
     countdownLabel: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
     countdownValue: { fontFamily: fonts.monoBold, fontSize: 28, color: c.ink, letterSpacing: -0.5 },
     browseFeedLink: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre },
+    proHintBtn: { marginBottom: 12 },
+    proHintText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ochre },
 
     // Score screen
     scoreBody: { padding: space[8], alignItems: "center", gap: space[3], paddingTop: 60 },

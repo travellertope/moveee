@@ -399,9 +399,14 @@ class Culture_Gamification {
      *
      * @return int
      */
-    public static function get_daily_cap() {
+    public static function get_daily_cap( $user_id = 0 ) {
         $saved = get_option( 'culture_daily_credit_cap', null );
-        return $saved !== null ? (int) $saved : self::DAILY_CREDIT_CAP;
+        if ( $saved !== null ) return (int) $saved;
+        if ( $user_id ) {
+            $tier = get_user_meta( (int) $user_id, '_culture_membership_tier', true );
+            if ( 'patron' === $tier ) return 100;
+        }
+        return self::DAILY_CREDIT_CAP;
     }
 
     /**
@@ -561,7 +566,7 @@ class Culture_Gamification {
             }
 
             $earned_today = (int) get_user_meta( $user_id, '_culture_credits_earned_today', true );
-            $remaining    = self::get_daily_cap() - $earned_today;
+            $remaining    = self::get_daily_cap( $user_id ) - $earned_today;
             if ( $remaining <= 0 ) {
                 $wpdb->get_var( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
                 return 0;
@@ -611,9 +616,9 @@ class Culture_Gamification {
     /** Get how many credits the user can still earn today. */
     public static function get_daily_credits_remaining( $user_id ) {
         $reset_date = get_user_meta( $user_id, '_culture_credits_reset_date', true );
-        if ( $reset_date !== gmdate( 'Y-m-d' ) ) return self::get_daily_cap();
+        if ( $reset_date !== gmdate( 'Y-m-d' ) ) return self::get_daily_cap( $user_id );
         $earned = (int) get_user_meta( $user_id, '_culture_credits_earned_today', true );
-        return max( 0, self::get_daily_cap() - $earned );
+        return max( 0, self::get_daily_cap( $user_id ) - $earned );
     }
 
     // ── Threshold (upvote-to-earn) ────────────────────────────────────────────
