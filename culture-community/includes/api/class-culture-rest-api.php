@@ -240,6 +240,24 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Games — crossword rotation tracking (no repeat until all shown).
+        register_rest_route( 'culture/v1', '/games/crossword-rotation', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_crossword_rotation' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_set_crossword_rotation' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+                'args'                => array(
+                    'index' => array( 'required' => true, 'type' => 'integer' ),
+                    'total' => array( 'required' => true, 'type' => 'integer' ),
+                ),
+            ),
+        ) );
+
         // Quote audit batch — fetch unaudited quotes for the Next.js audit bot.
         register_rest_route( 'culture/v1', '/quotes/audit-batch', array(
             'methods'             => 'GET',
@@ -2573,6 +2591,42 @@ class Culture_REST_API {
         }
 
         return rest_ensure_response( array( 'success' => true, 'date' => $date, 'slot' => $slot ) );
+    }
+
+    /**
+     * GET /culture/v1/games/crossword-rotation
+     * Returns the list of puzzle indices already used in the current rotation cycle.
+     */
+    public static function handle_get_crossword_rotation( $request ) {
+        $used = get_option( 'culture_games_crossword_used', array() );
+        return rest_ensure_response( array( 'used' => $used ) );
+    }
+
+    /**
+     * POST /culture/v1/games/crossword-rotation
+     * Marks a puzzle index as used. Resets the rotation when all puzzles have been shown.
+     */
+    public static function handle_set_crossword_rotation( $request ) {
+        $index = (int) $request->get_param( 'index' );
+        $total = (int) $request->get_param( 'total' );
+
+        $used = get_option( 'culture_games_crossword_used', array() );
+        if ( ! is_array( $used ) ) {
+            $used = array();
+        }
+
+        if ( ! in_array( $index, $used, true ) ) {
+            $used[] = $index;
+        }
+
+        // Reset rotation when all puzzles have been shown
+        if ( count( $used ) >= $total ) {
+            $used = array( $index );
+        }
+
+        update_option( 'culture_games_crossword_used', $used, false );
+
+        return rest_ensure_response( array( 'success' => true, 'used_count' => count( $used ), 'total' => $total ) );
     }
 
     /**

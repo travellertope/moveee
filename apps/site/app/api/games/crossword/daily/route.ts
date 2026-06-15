@@ -587,7 +587,7 @@ const PUZZLES: { grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "
   },
 ];
 
-// ── WordPress cache (persists across serverless invocations) ─────────────────
+// ── WordPress cache and rotation tracking ────────────────────────────────────
 const WP_URL  = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const API_KEY = process.env.CULTURE_API_SECRET ?? "";
 
@@ -678,6 +678,51 @@ function numberAndClues(
 }
 
 
+// ── Rotation tracking — no puzzle repeats until all have been shown ──────────
+async function getUsedPuzzleIndices(): Promise<number[]> {
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/games/crossword-rotation`, {
+      headers: { "x-api-key": API_KEY },
+      next: { revalidate: 0 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data?.used) ? data.used : [];
+  } catch { return []; }
+}
+
+async function markPuzzleUsed(idx: number, totalPuzzles: number): Promise<void> {
+  try {
+    await fetch(`${WP_URL}/wp-json/culture/v1/games/crossword-rotation`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": API_KEY },
+      body: JSON.stringify({ index: idx, total: totalPuzzles }),
+    });
+  } catch { /* non-fatal */ }
+}
+
+async function pickRotatedPuzzleIndex(seedKey: string): Promise<number> {
+  const used = await getUsedPuzzleIndices();
+  const total = PUZZLES.length;
+  const rng = makeRng(dateToSeed(seedKey));
+
+  // Build pool of unused indices
+  let available = Array.from({ length: total }, (_, i) => i).filter(i => !used.includes(i));
+  // If all puzzles have been shown, reset rotation
+  if (available.length === 0) {
+    available = Array.from({ length: total }, (_, i) => i);
+  }
+
+  // Deterministic pick from available pool
+  const pick = Math.floor(rng() * available.length);
+  const idx = available[pick];
+
+  // Record this puzzle as used (fire and forget)
+  markPuzzleUsed(idx, total);
+
+  return idx;
+}
+
 // ── Route handler ─────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -711,15 +756,13 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Fallback to pre-built bank (deterministic per slot seed)
+  // Fallback to pre-built bank with rotation tracking
   if (!raw) {
     let idx: number;
     if (isRandom) {
       idx = Math.floor(Math.random() * PUZZLES.length);
     } else {
-      // Each slot+date combination picks a different puzzle from the bank
-      const rng = makeRng(dateToSeed(seedKey));
-      idx = Math.floor(rng() * PUZZLES.length);
+      idx = await pickRotatedPuzzleIndex(seedKey);
     }
     raw = PUZZLES[idx];
   }
