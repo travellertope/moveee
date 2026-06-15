@@ -27,9 +27,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { colors, fonts } from "../../theme";
 
 const { width: W } = Dimensions.get("window");
-const LOGO_IMG = require("../../../assets/logo-black.png");
-const SPLASH_LOGO_H = 28;
-const SPLASH_LOGO_W = Math.round((717 / 107) * SPLASH_LOGO_H);
+const SPLASH_ICON = require("../../../assets/logo.png");
 
 // ── Shared animation ─────────────────────────────────────────────────────────
 // Single Animated.Value so all bones sweep in sync.
@@ -581,8 +579,8 @@ export function AppLoadingScreen() {
   return (
     <SafeAreaView style={sk.splashSafe}>
       <Image
-        source={LOGO_IMG}
-        style={{ width: SPLASH_LOGO_W, height: SPLASH_LOGO_H }}
+        source={SPLASH_ICON}
+        style={{ width: 56, height: 56, borderRadius: 28 }}
         resizeMode="contain"
       />
       <View style={sk.splashSpinnerWrap}>

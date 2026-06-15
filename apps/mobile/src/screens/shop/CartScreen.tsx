@@ -60,8 +60,8 @@ export default function CartScreen() {
       <SafeAreaView style={[styles.safe, { backgroundColor: c.paper }]}>
         <View style={styles.checkoutContainer}>
           <Image
-            source={require("../../../assets/logo-black.png")}
-            style={{ width: Math.round((717 / 107) * 24), height: 24 }}
+            source={require("../../../assets/logo.png")}
+            style={{ width: 40, height: 40, borderRadius: 20 }}
             resizeMode="contain"
           />
           <Text style={styles.checkoutHeading}>Taking you to secure checkout...</Text>

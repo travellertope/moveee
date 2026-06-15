@@ -25,9 +25,7 @@ import { colors, fonts, fontSize, space, shadows } from "../../theme";
 
 const { width: W, height: H } = Dimensions.get("window");
 const ONBOARDING_KEY = "onboarding_complete";
-const LOGO_IMG = require("../../../assets/logo-black.png");
-const SPLASH_LOGO_H = 30;
-const SPLASH_LOGO_W = Math.round((717 / 107) * SPLASH_LOGO_H);
+const SPLASH_ICON = require("../../../assets/logo.png");
 
 // ── Textile SVG (Slide 1 top) ─────────────────────────────────────────────────
 function TextileIllustration({ height }: { height: number }) {
@@ -233,8 +231,8 @@ function Splash({ onDone }: { onDone: () => void }) {
   return (
     <Pressable style={splashS.container} onPress={onDone}>
       <Image
-        source={LOGO_IMG}
-        style={{ width: SPLASH_LOGO_W, height: SPLASH_LOGO_H }}
+        source={SPLASH_ICON}
+        style={{ width: 56, height: 56, borderRadius: 28 }}
         resizeMode="contain"
       />
       <Animated.View style={{ marginTop: 32, transform: [{ rotate: spin }] }}>

@@ -9,6 +9,7 @@ import {
   Platform,
   ActivityIndicator,
   Pressable,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -110,34 +111,15 @@ function FingerprintIcon({ color = colors.ink }: { color?: string }) {
   );
 }
 
-// ── Wordmark ──────────────────────────────────────────────────────────────────
+const AUTH_ICON = require("../../../assets/logo.png");
+
 function Wordmark() {
   return (
-    <View style={wmS.wrap}>
-      <Text style={wmS.moveee}>moveee</Text>
-      <Text style={wmS.connect}>connect</Text>
-      <View style={wmS.line} />
+    <View style={{ alignItems: "center", marginBottom: space[6] }}>
+      <Image source={AUTH_ICON} style={{ width: 48, height: 48, borderRadius: 24 }} resizeMode="contain" />
     </View>
   );
 }
-const wmS = StyleSheet.create({
-  wrap: { alignItems: "center", marginBottom: space[6] },
-  moveee: {
-    fontFamily: fonts.serifBold,
-    fontSize: 22,
-    color: colors.ink,
-    letterSpacing: -0.5,
-  },
-  connect: {
-    fontFamily: fonts.sansBold,
-    fontSize: 9,
-    color: colors.gold,
-    letterSpacing: 2,
-    textTransform: "uppercase",
-    marginTop: 3,
-  },
-  line: { width: 32, height: 2, backgroundColor: colors.ochre, marginTop: 10 },
-});
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function LoginScreen() {
