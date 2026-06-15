@@ -8,7 +8,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { api, MOBILE_API } from "../../api/client";
+import { api, MOBILE_API, CULTURE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { detectRegion } from "../../features/community/useFeedRecommendations";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
@@ -125,7 +125,7 @@ const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
-interface DirectoryEntry { id: number; title: string; entry_type: string; city?: string }
+interface DirectoryEntry { id: number; title: string; type: string; city?: string }
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
@@ -274,6 +274,7 @@ export default function NewPostScreen() {
   const [pickerTarget, setPickerTarget] = useState<"start" | "end">("start");
 
   const textRef = useRef<TextInput>(null);
+  const bookSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tmpl = TEMPLATES.find((t) => t.id === template)!;
   const tmplDef = TEMPLATE_DEFS.find((t) => t.id === template)!;
 
@@ -951,25 +952,66 @@ export default function NewPostScreen() {
             value={bookSearch}
             onChangeText={(v) => {
               setBookSearch(v);
-              setBookSearchOpen(v.length > 1);
+              if (!v.trim()) {
+                setBookSearchResults([]);
+                setBookSearchOpen(false);
+                return;
+              }
+              setBookSearchOpen(true);
+              if (bookSearchTimer.current) clearTimeout(bookSearchTimer.current);
+              bookSearchTimer.current = setTimeout(async () => {
+                try {
+                  const data = await api.get<Array<{ id: number; title: string; type: string; city?: string }>>(
+                    `${CULTURE_API}/directory/search?q=${encodeURIComponent(v.trim())}`,
+                    false
+                  );
+                  setBookSearchResults((data ?? []).map((r) => ({ id: r.id, title: r.title, author: r.city ?? "" })));
+                } catch {
+                  setBookSearchResults([]);
+                }
+              }, 350);
             }}
-            placeholder="Search by title or author"
+            placeholder="Search by title"
             placeholderTextColor={c.ghost}
           />
         </View>
-        {bookSearchOpen && bookSearchResults.length === 0 && (
-          <TouchableOpacity
-            style={styles.bookSearchNoResult}
-            onPress={() => {
-              if (bookSearch.trim()) {
-                setBookEntry({ id: Date.now(), title: bookSearch.trim(), author: "" });
-                setBookSearch("");
-                setBookSearchOpen(false);
-              }
-            }}
-          >
-            <Text style={styles.bookSearchNoResultText}>Add "{bookSearch}" as a new book</Text>
-          </TouchableOpacity>
+        {bookSearchOpen && (
+          <View style={styles.bookSearchDropdown}>
+            {bookSearchResults.length > 0 ? (
+              <>
+                {bookSearchResults.slice(0, 8).map((r) => (
+                  <TouchableOpacity
+                    key={r.id}
+                    style={styles.bookSearchResultRow}
+                    onPress={() => {
+                      setBookEntry(r);
+                      setBookSearch("");
+                      setBookSearchResults([]);
+                      setBookSearchOpen(false);
+                    }}
+                  >
+                    <Text style={styles.bookSearchResultTitle}>{r.title}</Text>
+                    {r.author ? <Text style={styles.bookSearchResultAuthor}>{r.author}</Text> : null}
+                  </TouchableOpacity>
+                ))}
+              </>
+            ) : null}
+            <TouchableOpacity
+              style={styles.bookSearchNoResult}
+              onPress={() => {
+                if (bookSearch.trim()) {
+                  setBookEntry({ id: Date.now(), title: bookSearch.trim(), author: "" });
+                  setBookSearch("");
+                  setBookSearchResults([]);
+                  setBookSearchOpen(false);
+                }
+              }}
+            >
+              <Text style={styles.bookSearchNoResultText}>
+                {bookSearchResults.length > 0 ? `Add "${bookSearch}" as a new entry` : `Add "${bookSearch}" as a new book`}
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
@@ -1337,7 +1379,7 @@ export default function NewPostScreen() {
 
       {/* Organiser */}
       <View style={{ marginTop: space[3] }}>
-        <DirectorySearch selected={eventOrganiser} onSelect={setEventOrganiser} label="Organiser (optional)" />
+        <DirectorySearch selected={eventOrganiser} onSelect={setEventOrganiser} label="Organiser (optional)" typeFilter="person" />
       </View>
 
       {/* Inline photos */}
@@ -1640,8 +1682,18 @@ function createStyles(c: ColorPalette) {
     bookCover: { width: 48, height: 64, borderRadius: 2, backgroundColor: c.paperDeep },
     bookTitle: { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
     bookAuthor: { fontFamily: fonts.sans, fontSize: 13, color: c.mute, marginTop: 2 },
+    bookSearchDropdown: {
+      borderWidth: 1, borderColor: c.rule, borderRadius: radius.md,
+      backgroundColor: c.paper, overflow: "hidden", marginTop: 4,
+    },
+    bookSearchResultRow: {
+      paddingHorizontal: 14, paddingVertical: 10,
+      borderBottomWidth: 1, borderBottomColor: c.rule,
+    },
+    bookSearchResultTitle: { fontFamily: fonts.sans, fontSize: 14, color: c.ink },
+    bookSearchResultAuthor: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, marginTop: 1 },
     bookSearchNoResult: {
-      padding: 12, backgroundColor: c.paperDeep, borderRadius: radius.md, marginTop: 4,
+      padding: 12, backgroundColor: c.paperDeep,
     },
     bookSearchNoResultText: { fontFamily: fonts.sans, fontSize: 13, color: c.ochre },
     bookRatingsContainer: {
