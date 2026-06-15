@@ -62,37 +62,97 @@ function ReputationBar({ reputation, c, styles }: {
 
 // ── Badge icon-only with tooltip ─────────────────────────────────────────────
 
-const BADGE_META: Record<string, { emoji: string; name: string }> = {
-  first_post:        { emoji: "📝", name: "First Post" },
-  verified:          { emoji: "✅", name: "Verified" },
-  culture_maker:     { emoji: "🎨", name: "Culture Maker" },
-  tastemaker:        { emoji: "✨", name: "Taste Maker" },
-  community_builder: { emoji: "🏗️", name: "Community Builder" },
-  patron:            { emoji: "⭐", name: "Connect Pro" },
-  referred_3:        { emoji: "🤝", name: "Referrer" },
-  explorer:          { emoji: "🧭", name: "Explorer" },
+const BADGE_META: Record<string, { emoji: string; name: string; bg: string; ring: string }> = {
+  // posting & content
+  first_post:           { emoji: "📝", name: "First Post",          bg: "#FEF9C3", ring: "#CA8A04" },
+  post_validated:       { emoji: "✅", name: "Validated Post",       bg: "#D1FAE5", ring: "#059669" },
+  hidden_gem:           { emoji: "💎", name: "Hidden Gem",           bg: "#EDE9FE", ring: "#7C3AED" },
+  food_critic:          { emoji: "🍽️", name: "Food Critic",          bg: "#FCE7F3", ring: "#BE185D" },
+  book_reviewer:        { emoji: "📚", name: "Book Reviewer",        bg: "#F0FDF4", ring: "#15803D" },
+  creative_showcase:    { emoji: "🎨", name: "Creative Showcase",    bg: "#F3E8FF", ring: "#9333EA" },
+  culture_maker:        { emoji: "🎨", name: "Culture Maker",        bg: "#F3E8FF", ring: "#7C3AED" },
+  quote_sharer:         { emoji: "💬", name: "Quote Sharer",         bg: "#FEF3C7", ring: "#D97706" },
+  itinerary_maker:      { emoji: "🗺️", name: "Itinerary Maker",      bg: "#D1FAE5", ring: "#065F46" },
+  // community & social
+  community_builder:    { emoji: "🏗️", name: "Community Builder",    bg: "#FEE2E2", ring: "#DC2626" },
+  connector:            { emoji: "🔗", name: "Connector",            bg: "#DBEAFE", ring: "#2563EB" },
+  referred_1:           { emoji: "🤝", name: "First Referral",       bg: "#D1FAE5", ring: "#16A34A" },
+  referred_3:           { emoji: "🤝", name: "Referrer",             bg: "#D1FAE5", ring: "#059669" },
+  referred_10:          { emoji: "🌟", name: "Super Referrer",       bg: "#FEF9C3", ring: "#CA8A04" },
+  // profile & account
+  verified:             { emoji: "✅", name: "Verified",             bg: "#D1FAE5", ring: "#059669" },
+  profile_complete:     { emoji: "🪪",  name: "Profile Complete",     bg: "#EDE9FE", ring: "#7C3AED" },
+  passkey_set:          { emoji: "🔐", name: "Passkey Set",          bg: "#DBEAFE", ring: "#1D4ED8" },
+  // tier & status
+  patron:               { emoji: "⭐", name: "Connect Pro",          bg: "#FEF9C3", ring: "#B45309" },
+  tastemaker:           { emoji: "✨", name: "Taste Maker",           bg: "#FEF3C7", ring: "#D97706" },
+  culture_contributor:  { emoji: "🏆", name: "Culture Contributor",  bg: "#FEE2E2", ring: "#B91C1C" },
+  culture_authority:    { emoji: "👑", name: "Culture Authority",    bg: "#FEF9C3", ring: "#92400E" },
+  culture_icon:         { emoji: "🦁", name: "Culture Icon",         bg: "#1C1917", ring: "#CA8A04" },
+  // participation
+  explorer:             { emoji: "🧭", name: "Explorer",             bg: "#E0F2FE", ring: "#0369A1" },
+  event_goer:           { emoji: "🎟️", name: "Event Goer",           bg: "#FCE7F3", ring: "#9D174D" },
+  event_checkin:        { emoji: "📍", name: "Checked In",           bg: "#FEE2E2", ring: "#DC2626" },
+  directory_contributor:{ emoji: "🗂️", name: "Directory Contributor",bg: "#E0F2FE", ring: "#075985" },
+  game_winner:          { emoji: "🎮", name: "Game Winner",          bg: "#D1FAE5", ring: "#065F46" },
+  streak_7:             { emoji: "🔥", name: "7-Day Streak",         bg: "#FEE2E2", ring: "#DC2626" },
+  streak_30:            { emoji: "💥", name: "30-Day Streak",        bg: "#FEF9C3", ring: "#B45309" },
+  // newsletter
+  newsletter_reader:    { emoji: "📰", name: "Newsletter Reader",    bg: "#F0FDF4", ring: "#15803D" },
+  newsletter_commenter: { emoji: "✍️", name: "Newsletter Commenter", bg: "#FEF3C7", ring: "#D97706" },
 };
 
+function slugToName(slug: string): string {
+  return slug
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Deterministic colour from slug for unknown badges
+const FALLBACK_PALETTES: Array<{ bg: string; ring: string }> = [
+  { bg: "#FEF3C7", ring: "#D97706" }, { bg: "#D1FAE5", ring: "#059669" },
+  { bg: "#DBEAFE", ring: "#2563EB" }, { bg: "#FCE7F3", ring: "#BE185D" },
+  { bg: "#EDE9FE", ring: "#7C3AED" }, { bg: "#E0F2FE", ring: "#0369A1" },
+];
+function fallbackPalette(slug: string): { bg: string; ring: string } {
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) & 0xfffffff;
+  return FALLBACK_PALETTES[h % FALLBACK_PALETTES.length];
+}
+
 function BadgeIcons({ badges, styles }: { badges: string[]; styles: ReturnType<typeof createStyles> }) {
-  const [tooltip, setTooltip] = useState<{ emoji: string; name: string } | null>(null);
+  const [tooltip, setTooltip] = useState<{ emoji: string; name: string; bg: string } | null>(null);
   if (!badges.length) return null;
   return (
     <>
-      <View style={styles.badgeIconRow}>
-        {badges.slice(0, 8).map((slug) => {
-          const meta = BADGE_META[slug] ?? { emoji: "🏅", name: slug };
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingBottom: 16, paddingTop: 4 }}
+      >
+        {badges.map((slug) => {
+          const known = BADGE_META[slug];
+          const { bg, ring } = known ?? fallbackPalette(slug);
+          const emoji = known?.emoji ?? "🏅";
+          const name  = known?.name  ?? slugToName(slug);
           return (
-            <TouchableOpacity key={slug} style={styles.badgeIconBtn} onPress={() => setTooltip(meta)} activeOpacity={0.7}>
-              <Text style={styles.badgeIconEmoji}>{meta.emoji}</Text>
+            <TouchableOpacity
+              key={slug}
+              style={[styles.badgeIconBtn, { backgroundColor: bg, borderColor: ring }]}
+              onPress={() => setTooltip({ emoji, name, bg })}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.badgeIconEmoji}>{emoji}</Text>
             </TouchableOpacity>
           );
         })}
-      </View>
+      </ScrollView>
       <Modal visible={!!tooltip} transparent animationType="fade" onRequestClose={() => setTooltip(null)}>
         <TouchableOpacity style={styles.tooltipOverlay} activeOpacity={1} onPress={() => setTooltip(null)}>
           <View style={styles.tooltipBox}>
             <Text style={styles.tooltipEmoji}>{tooltip?.emoji}</Text>
             <Text style={styles.tooltipName}>{tooltip?.name}</Text>
+            <Text style={styles.tooltipHint}>Tap anywhere to close</Text>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -100,16 +160,6 @@ function BadgeIcons({ badges, styles }: { badges: string[]; styles: ReturnType<t
   );
 }
 
-const BADGE_LABELS: Record<string, string> = {
-  "first_post":        "First Post",
-  "verified":          "Verified",
-  "culture_maker":     "Culture Maker",
-  "tastemaker":        "Taste Maker",
-  "community_builder": "Community Builder",
-  "patron":            "Connect Pro",
-  "referred_3":        "Referrer",
-  "explorer":          "Explorer",
-};
 
 const EARN_TABLE = [
   { action: "Post validated (5+ reactions or 3+ comments)", cr: "+10", rep: "+5" },
@@ -317,12 +367,11 @@ export default function MemberDashboardScreen() {
         {/* Card 5: Badges */}
         {(user.badges || []).length > 0 && (
           <View style={styles.card}>
-            <View style={styles.cardHeaderRow}>
+            <View style={[styles.cardHeaderRow, { paddingBottom: 4 }]}>
               <Text style={styles.cardHeaderLabel}>My Badges</Text>
+              <Text style={styles.badgeCount}>{(user.badges || []).length} earned</Text>
             </View>
-            <View style={{ paddingHorizontal: 16, paddingBottom: 16, paddingTop: 8 }}>
-              <BadgeIcons badges={user.badges || []} styles={styles} />
-            </View>
+            <BadgeIcons badges={user.badges || []} styles={styles} />
           </View>
         )}
 
@@ -684,20 +733,23 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   repFill:     { height: 6, backgroundColor: c.ochre, borderRadius: 3 },
   repNext:     { fontFamily: fonts.mono, fontSize: 10, color: c.mute, marginTop: 5 },
 
-  /* ── Card 5: Badges (icon-only) ── */
-  badgeIconRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  /* ── Card 5: Badges (icon-only horizontal scroll) ── */
+  badgeCount: {
+    fontFamily: fonts.mono, fontSize: 11, color: c.mute,
+  },
   badgeIconBtn: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: c.paperDeep, borderWidth: 1, borderColor: c.ghost,
+    width: 52, height: 52, borderRadius: 26,
+    borderWidth: 2,
     justifyContent: "center", alignItems: "center",
   },
-  badgeIconEmoji: { fontSize: 22 },
+  badgeIconEmoji: { fontSize: 24 },
 
   /* ── Badge tooltip modal ── */
-  tooltipOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)", justifyContent: "center", alignItems: "center" },
-  tooltipBox:     { backgroundColor: c.ink, borderRadius: 14, paddingHorizontal: 28, paddingVertical: 20, alignItems: "center", gap: 8, minWidth: 160 },
-  tooltipEmoji:   { fontSize: 36 },
-  tooltipName:    { fontFamily: fonts.sansBold, fontSize: 15, color: c.paper, textAlign: "center" },
+  tooltipOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center" },
+  tooltipBox:     { backgroundColor: c.paper, borderRadius: 18, paddingHorizontal: 32, paddingVertical: 24, alignItems: "center", gap: 8, minWidth: 180, ...shadows.modal },
+  tooltipEmoji:   { fontSize: 44 },
+  tooltipName:    { fontFamily: fonts.sansBold, fontSize: 16, color: c.ink, textAlign: "center" },
+  tooltipHint:    { fontFamily: fonts.mono, fontSize: 10, color: c.ghost, textAlign: "center" },
 
   /* ── Card 6: Referral ── */
   referralCard: {
