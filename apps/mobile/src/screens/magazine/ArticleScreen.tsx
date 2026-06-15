@@ -474,6 +474,7 @@ export default function ArticleScreen() {
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const contentHeightRef = useRef(0);
   const layoutHeightRef = useRef(0);
+  const readProgressRef = useRef(0); // ref copy for use inside intervals
 
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = e.nativeEvent.contentOffset.y;
@@ -483,7 +484,9 @@ export default function ArticleScreen() {
     layoutHeightRef.current = layoutH;
     const scrollable = contentH - layoutH;
     if (scrollable > 0) {
-      setReadProgress(Math.min(1, Math.max(0, offsetY / scrollable)));
+      const progress = Math.min(1, Math.max(0, offsetY / scrollable));
+      readProgressRef.current = progress;
+      setReadProgress(progress);
     }
     setShowStickyHeader(offsetY > HEADER_TRIGGER);
   }, []);
@@ -511,22 +514,34 @@ export default function ArticleScreen() {
     }
   }, [article, bookmarked]);
 
-  // Article complete
-  const [pointsCollected, setPointsCollected] = useState(false);
-  const [creditsEarned, setCreditsEarned] = useState<number | null>(null);
-  const handleCollectPoints = useCallback(async () => {
-    if (pointsCollected || !article) return;
-    setPointsCollected(true);
-    try {
-      const res = await api.post<{ credits_earned?: number }>(`${MOBILE_API}/articles/read-complete`, {
-        post_id: Number(article.id),
-        slug: article.slug,
-      });
-      setCreditsEarned(res?.credits_earned ?? null);
-    } catch {
-      // silently fail — points may still have been awarded server-side
-    }
-  }, [pointsCollected, article]);
+  // Auto-award: fires once when scroll ≥85% AND time on screen ≥ 50% of reading time (min 30s)
+  const [awarded, setAwarded] = useState(false);
+  const [creditsEarned, setCreditsEarned] = useState(0);
+  const awardFired = useRef(false);
+  const timeOnScreen = useRef(0);
+
+  useEffect(() => {
+    if (!article || !user) return;
+    const minSeconds = Math.max(30, (article.readingTime ?? 5) * 60 * 0.5);
+    const interval = setInterval(() => {
+      if (awardFired.current) { clearInterval(interval); return; }
+      timeOnScreen.current += 1;
+      if (readProgressRef.current >= 0.85 && timeOnScreen.current >= minSeconds) {
+        awardFired.current = true;
+        clearInterval(interval);
+        api.post<{ credits_earned?: number; already_awarded?: boolean }>(
+          `${MOBILE_API}/articles/read-complete`,
+          { post_id: Number(article.id), slug: article.slug }
+        ).then((res) => {
+          setCreditsEarned(res?.credits_earned ?? 0);
+          setAwarded(true);
+        }).catch(() => {
+          setAwarded(true); // show banner even if network fails
+        });
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [article?.id, user?.id]);
 
   // TOC
   const [tocOpen, setTocOpen] = useState(false);
@@ -752,31 +767,24 @@ export default function ArticleScreen() {
                     noBorder={false}
                   />
 
-                  {/* ── Frame 3: Article complete banner ── */}
-                  <View style={styles.completeBanner}>
-                    <View style={styles.completeBannerLeft}>
-                      <View style={styles.completeCheck}>
-                        <Ionicons name="checkmark" size={18} color={c.ochre} />
-                      </View>
-                      <View>
-                        <Text style={styles.completeTitle}>Article complete!</Text>
-                        <Text style={styles.completePoints}>
-                          {pointsCollected && creditsEarned != null
-                            ? `+ ${creditsEarned} Culture Points earned`
-                            : "+ Culture Points to collect"}
-                        </Text>
+                  {/* ── Frame 3: Article complete banner — auto-shown when read ── */}
+                  {awarded && (
+                    <View style={styles.completeBanner}>
+                      <View style={styles.completeBannerLeft}>
+                        <View style={styles.completeCheck}>
+                          <Ionicons name="checkmark" size={18} color={c.ochre} />
+                        </View>
+                        <View>
+                          <Text style={styles.completeTitle}>Article complete!</Text>
+                          <Text style={styles.completePoints}>
+                            {creditsEarned > 0
+                              ? `+ ${creditsEarned} Culture Points earned`
+                              : "Already credited — thanks for reading!"}
+                          </Text>
+                        </View>
                       </View>
                     </View>
-                    <TouchableOpacity
-                      style={[styles.collectBtn, pointsCollected && styles.collectBtnDone]}
-                      onPress={handleCollectPoints}
-                      disabled={pointsCollected}
-                    >
-                      <Text style={styles.collectBtnText}>
-                        {pointsCollected ? "Collected!" : "Collect Points"}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                  )}
 
                   {/* Series context strip */}
                   {(article as any).series ? (
@@ -1103,10 +1111,9 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
 
   // Article complete banner
   completeBanner: {
-    marginTop: 32, height: 72, backgroundColor: c.ochre,
+    marginTop: 32, paddingVertical: 16, backgroundColor: c.ochre,
     borderRadius: radius.xl, flexDirection: "row",
-    alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 16,
+    alignItems: "center", paddingHorizontal: 16,
   },
   completeBannerLeft: {
     flexDirection: "row", alignItems: "center", gap: 12, flex: 1,

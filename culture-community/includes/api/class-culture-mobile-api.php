@@ -2968,16 +2968,15 @@ class Culture_Mobile_API {
             return new WP_Error( 'not_found', 'Article not found.', array( 'status' => 404 ) );
         }
 
-        // Idempotency — don't double-award in the same day
-        $meta_key   = '_culture_article_read_' . $post_id;
-        $today      = gmdate( 'Y-m-d' );
-        $last_read  = get_user_meta( $user_id, $meta_key, true );
-        if ( $last_read === $today ) {
+        // Idempotency — award once ever per article per user
+        $meta_key  = '_culture_article_read_' . $post_id;
+        $already   = get_user_meta( $user_id, $meta_key, true );
+        if ( $already ) {
             return rest_ensure_response( array( 'credits_earned' => 0, 'already_awarded' => true ) );
         }
 
         $credits = Culture_Gamification::award_credits( $user_id, 'magazine_read', $post_id );
-        update_user_meta( $user_id, $meta_key, $today );
+        update_user_meta( $user_id, $meta_key, '1' );
 
         return rest_ensure_response( array( 'credits_earned' => max( 0, intval( $credits ) ) ) );
     }
