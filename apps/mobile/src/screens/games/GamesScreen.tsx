@@ -76,7 +76,7 @@ export default function GamesScreen() {
         <Text style={styles.headerSub}>Daily challenges · Earn culture points</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: 90 }}>
         {/* Streak banner */}
         {streak > 0 && (
           <View style={styles.streakBanner}>
@@ -139,7 +139,7 @@ export default function GamesScreen() {
             </View>
             <View style={styles.cardBody}>
               <Text style={styles.cardName}>Crossword</Text>
-              <Text style={styles.cardDesc}>Mini 7×7 · African & diaspora culture</Text>
+              <Text style={styles.cardDesc}>Mini 7×7 · cultural clues</Text>
               <View style={styles.playBtn}>
                 <Text style={styles.playBtnText}>Play now →</Text>
               </View>
@@ -176,7 +176,7 @@ function createStyles(c: ColorPalette) {
     header: {
       flexDirection: "row", alignItems: "center", justifyContent: "space-between",
       backgroundColor: c.paper, paddingHorizontal: space[4],
-      paddingTop: space[2], paddingBottom: space[2],
+      height: 56,
       borderBottomWidth: 1, borderBottomColor: c.ghost,
     },
     headerLeft:  { flexDirection: "row", alignItems: "center", gap: 6 },

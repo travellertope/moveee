@@ -118,11 +118,11 @@ const EVENT_CATEGORIES: { id: string; label: string }[] = [
 ];
 
 const SHOWCASE_MEDIUMS = ["Photography", "Film", "Digital Art", "Illustration", "Music", "Writing"];
-const CUISINE_TAGS = ["Nigerian", "Pan-African", "West African", "Continental", "Fusion", "Seafood"];
+const CUISINE_TAGS = ["Nigerian", "West African", "Continental", "Pan-Cultural", "Fusion", "Seafood"];
 const PRICE_RANGES_NGN = ["₦", "₦₦", "₦₦₦", "₦₦₦₦"];
 const PRICE_RANGES_GBP = ["£", "££", "£££", "££££"];
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
-const BOOK_GENRES = ["Classic Literature", "African Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
+const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
 interface DirectoryEntry { id: number; title: string; entry_type: string; city?: string }

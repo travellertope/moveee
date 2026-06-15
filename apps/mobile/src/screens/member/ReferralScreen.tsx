@@ -170,7 +170,7 @@ export default function ReferralScreen() {
     if (!data?.referralUrl) return;
     try {
       await Share.share({
-        message: `Join me on Moveee — the cultural community for the African diaspora. Use my link: ${data.referralUrl}`,
+        message: `Join me on Moveee — the community for people who live for culture. Use my link: ${data.referralUrl}`,
         url: data.referralUrl,
       });
     } catch { /* user cancelled */ }

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useNavigation } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -868,28 +869,37 @@ function HappeningCard({ item, onPress }: FeedCardProps) {
 function DirectoryCard({ item }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const [modalOpen, setModalOpen] = useState(false);
+  const nav = useNavigation<any>();
+
+  const handlePress = () => {
+    nav.navigate("DirectoryDetail", {
+      slug: item.slug,
+      title: item.title,
+      entryType: item.entryType,
+    });
+  };
+
   return (
-    <>
-      <TouchableOpacity style={styles.card} onPress={() => setModalOpen(true)} activeOpacity={0.92}>
-        <View style={{ padding: 14 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <BadgePill label="Directory" bg={c.badgeDirectoryBg} color={c.badgeDirectoryText} styles={styles} />
-            {item.entryType || item.city ? (
-              <Text style={styles.eyebrow}>{[item.entryType, item.city].filter(Boolean).join(" · ")}</Text>
-            ) : null}
-            <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
-          </View>
-          <Text style={[styles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>{item.title}</Text>
-          {item.excerpt ? (
-            <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={3}>{item.excerpt}</Text>
+    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.92}>
+      {item.image ? (
+        <Image source={{ uri: item.image }} style={{ width: "100%", height: 140 }} resizeMode="cover" />
+      ) : null}
+      <View style={{ padding: 14 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <BadgePill label="Directory" bg={c.badgeDirectoryBg} color={c.badgeDirectoryText} styles={styles} />
+          {item.entryType ? (
+            <Text style={styles.eyebrow}>{item.entryType}{item.city ? ` · ${item.city}` : ""}</Text>
           ) : null}
-          <Text style={[styles.successLink, { marginTop: 8 }]}>View entry →</Text>
+          <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
         </View>
-        <FeedReactionBar item={item} />
-      </TouchableOpacity>
-      <DirectoryDetailModal visible={modalOpen} item={item} onClose={() => setModalOpen(false)} />
-    </>
+        <Text style={[styles.cardTitle, { marginTop: 10 }]} numberOfLines={2}>{item.title}</Text>
+        {item.excerpt ? (
+          <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={3}>{item.excerpt}</Text>
+        ) : null}
+        <Text style={[styles.successLink, { marginTop: 8 }]}>View entry →</Text>
+      </View>
+      <FeedReactionBar item={item} />
+    </TouchableOpacity>
   );
 }
 

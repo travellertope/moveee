@@ -11,7 +11,7 @@ import { useAuthStore } from "../../auth/authStore";
 
 const WP_EVENTS_URL =
   "https://cms.themoveee.com/wp-json/wp/v2/culture_event" +
-  "?per_page=50&status=publish&_embed=1&orderby=date&order=asc";
+  "?per_page=50&status=publish&_embed=wp:featuredmedia&orderby=date&order=asc";
 
 type EventFilter = "all" | "upcoming" | "online" | "pro";
 
@@ -212,7 +212,7 @@ export default function EventsScreen() {
     setError(null);
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 10000);
+      const timer = setTimeout(() => controller.abort(), 15000);
       const res = await fetch(WP_EVENTS_URL, { signal: controller.signal });
       clearTimeout(timer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -268,9 +268,6 @@ export default function EventsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Events</Text>
-        <TouchableOpacity style={styles.filterIconBtn}>
-          <Text style={styles.filterIcon}>⚙</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Type filter chips */}
@@ -339,14 +336,12 @@ function createStyles(c: ColorPalette) {
     container: { flex: 1, backgroundColor: c.paperWarm },
 
     header: {
-      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      flexDirection: "row", alignItems: "center",
       backgroundColor: c.paper, paddingHorizontal: space[4],
-      paddingTop: space[2], paddingBottom: space[2],
+      height: 56,
       borderBottomWidth: 1, borderBottomColor: "rgba(200,191,176,0.3)",
     },
-    headerTitle:   { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink, paddingLeft: space[2] },
-    filterIconBtn: { width: 32, height: 32, alignItems: "flex-end", justifyContent: "center" },
-    filterIcon:    { fontSize: 18, color: c.ink },
+    headerTitle: { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink },
 
     filterBar:        { flexGrow: 0, backgroundColor: c.paper, borderBottomWidth: 1, borderBottomColor: c.ghost },
     filterBarContent: { paddingHorizontal: space[4], gap: 8, paddingVertical: 6 },
@@ -359,7 +354,7 @@ function createStyles(c: ColorPalette) {
     filterChipText:       { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft },
     filterChipTextActive: { fontFamily: fonts.sansBold, color: c.paper },
 
-    list: { padding: space[4], gap: 16, paddingBottom: 90 },
+    list: { padding: space[4], paddingTop: space[4], gap: 16, paddingBottom: 90 },
 
     // Event card
     card: {

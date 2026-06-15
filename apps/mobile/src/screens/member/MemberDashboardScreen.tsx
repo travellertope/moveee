@@ -121,7 +121,7 @@ function fallbackPalette(slug: string): { bg: string; ring: string } {
 }
 
 function BadgeIcons({ badges, styles }: { badges: string[]; styles: ReturnType<typeof createStyles> }) {
-  const [tooltip, setTooltip] = useState<{ emoji: string; name: string; bg: string } | null>(null);
+  const [tooltip, setTooltip] = useState<{ emoji: string; name: string; bg: string; ring: string } | null>(null);
   if (!badges.length) return null;
   return (
     <>
@@ -133,16 +133,15 @@ function BadgeIcons({ badges, styles }: { badges: string[]; styles: ReturnType<t
         {badges.map((slug) => {
           const known = BADGE_META[slug];
           const { bg, ring } = known ?? fallbackPalette(slug);
-          const emoji = known?.emoji ?? "🏅";
           const name  = known?.name  ?? slugToName(slug);
           return (
             <TouchableOpacity
               key={slug}
               style={[styles.badgeIconBtn, { backgroundColor: bg, borderColor: ring }]}
-              onPress={() => setTooltip({ emoji, name, bg })}
+              onPress={() => setTooltip({ emoji: "ribbon", name, bg, ring })}
               activeOpacity={0.75}
             >
-              <Text style={styles.badgeIconEmoji}>{emoji}</Text>
+              <Ionicons name="ribbon" size={24} color={ring} />
             </TouchableOpacity>
           );
         })}
@@ -150,7 +149,7 @@ function BadgeIcons({ badges, styles }: { badges: string[]; styles: ReturnType<t
       <Modal visible={!!tooltip} transparent animationType="fade" onRequestClose={() => setTooltip(null)}>
         <TouchableOpacity style={styles.tooltipOverlay} activeOpacity={1} onPress={() => setTooltip(null)}>
           <View style={styles.tooltipBox}>
-            <Text style={styles.tooltipEmoji}>{tooltip?.emoji}</Text>
+            <Ionicons name="ribbon" size={48} color={tooltip?.ring ?? "#B38238"} />
             <Text style={styles.tooltipName}>{tooltip?.name}</Text>
             <Text style={styles.tooltipHint}>Tap anywhere to close</Text>
           </View>
@@ -229,7 +228,7 @@ export default function MemberDashboardScreen() {
     const link = `https://connect.themoveee.com/register?ref=${user.referralCode}`;
     try {
       await Share.share({
-        message: `Join me on Moveee — the cultural community for the African diaspora. Use my link: ${link}`,
+        message: `Join me on Moveee — the community for people who live for culture. Use my link: ${link}`,
         url: link,
       });
     } catch {
