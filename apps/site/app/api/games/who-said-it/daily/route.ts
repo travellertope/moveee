@@ -69,8 +69,12 @@ function decodeEntities(html: string): string {
     .trim();
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const slot = Math.min(5, Math.max(1, parseInt(searchParams.get("slot") ?? "1") || 1));
   const date = new Date().toISOString().slice(0, 10);
+  // Unique seed per day+slot ensures no cross-slot or cross-day repetition
+  const seedKey = `${date}-slot-${slot}`;
 
   let data: any;
   try {
@@ -87,7 +91,7 @@ export async function GET() {
     return NextResponse.json({ error: "Not enough quotes in the database yet." }, { status: 404 });
   }
 
-  const rng         = makeRng(dateToSeed(date));
+  const rng         = makeRng(dateToSeed(seedKey));
   const shuffled    = seededShuffle(all, rng);
   const todaySet    = shuffled.slice(0, 10);
   const authorPool  = [...new Set(all.map((q: any) => q.quoteAuthors.nodes[0].name as string))];
@@ -109,5 +113,5 @@ export async function GET() {
     };
   });
 
-  return NextResponse.json({ date, questions });
+  return NextResponse.json({ date, slot, questions });
 }

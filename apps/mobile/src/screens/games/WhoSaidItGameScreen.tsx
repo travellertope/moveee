@@ -56,8 +56,9 @@ export default function WhoSaidItGameScreen() {
         setPhase("played");
         return;
       }
-      const data = await api.get<{ date: string; questions: WsiQuestion[] }>(
-        `${PROXY}/games/who-said-it/daily`
+      const slot = playedToday + 1;
+      const data = await api.get<{ date: string; slot: number; questions: WsiQuestion[] }>(
+        `${PROXY}/games/who-said-it/daily?slot=${slot}`
       );
       if (!data.questions?.length) throw new Error("no questions");
       setQuestions(data.questions);

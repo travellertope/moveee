@@ -2486,26 +2486,33 @@ class Culture_REST_API {
 
     /**
      * GET /culture/v1/games/trivia-daily
-     * Returns today's cached trivia questions, or 404 if not generated yet.
+     * Returns today's cached trivia questions for a given slot, or 404 if not generated yet.
      */
     public static function handle_get_trivia_daily( $request ) {
-        $date   = gmdate( 'Y-m-d' );
-        $cached = get_option( 'culture_games_trivia_' . $date, null );
-
-        if ( null === $cached || ! is_array( $cached ) ) {
-            return new WP_Error( 'not_found', 'No trivia cached for today.', array( 'status' => 404 ) );
+        $date = gmdate( 'Y-m-d' );
+        $slot = max( 1, min( 5, (int) ( $request->get_param( 'slot' ) ?: 1 ) ) );
+        $key  = 'culture_games_trivia_' . $date . '_slot_' . $slot;
+        // Legacy fallback: slot 1 may have been cached without slot suffix
+        if ( $slot === 1 ) {
+            $cached = get_option( $key, get_option( 'culture_games_trivia_' . $date, null ) );
+        } else {
+            $cached = get_option( $key, null );
         }
 
-        return rest_ensure_response( array( 'date' => $date, 'questions' => $cached ) );
+        if ( null === $cached || ! is_array( $cached ) ) {
+            return new WP_Error( 'not_found', 'No trivia cached for today/slot.', array( 'status' => 404 ) );
+        }
+
+        return rest_ensure_response( array( 'date' => $date, 'slot' => $slot, 'questions' => $cached ) );
     }
 
     /**
      * POST /culture/v1/games/trivia-daily
-     * Stores today's trivia questions (called by the Next.js API route after
-     * Gemini generation). Cleans up the previous day's option automatically.
+     * Stores today's trivia questions for a given slot. Cleans up yesterday's options.
      */
     public static function handle_set_trivia_daily( $request ) {
         $questions = $request->get_param( 'questions' );
+        $slot      = max( 1, min( 5, (int) ( $request->get_param( 'slot' ) ?: 1 ) ) );
 
         if ( ! is_array( $questions ) || empty( $questions ) ) {
             return new WP_Error( 'invalid', 'questions must be a non-empty array.', array( 'status' => 400 ) );
@@ -2513,11 +2520,16 @@ class Culture_REST_API {
 
         $date      = gmdate( 'Y-m-d' );
         $yesterday = gmdate( 'Y-m-d', strtotime( '-1 day' ) );
+        $key       = 'culture_games_trivia_' . $date . '_slot_' . $slot;
 
-        update_option( 'culture_games_trivia_' . $date,      $questions, false );
+        update_option( $key, $questions, false );
+        // Clean up all yesterday's slots
+        for ( $s = 1; $s <= 5; $s++ ) {
+            delete_option( 'culture_games_trivia_' . $yesterday . '_slot_' . $s );
+        }
         delete_option( 'culture_games_trivia_' . $yesterday );
 
-        return rest_ensure_response( array( 'success' => true, 'date' => $date ) );
+        return rest_ensure_response( array( 'success' => true, 'date' => $date, 'slot' => $slot ) );
     }
 
     /**
@@ -2526,13 +2538,15 @@ class Culture_REST_API {
      */
     public static function handle_get_crossword_daily( $request ) {
         $date   = $request->get_param( 'date' ) ?: gmdate( 'Y-m-d' );
-        $cached = get_option( 'culture_games_crossword_' . $date, null );
+        $slot   = max( 1, min( 5, (int) ( $request->get_param( 'slot' ) ?: 1 ) ) );
+        $key    = 'culture_games_crossword_' . $date . ( $slot > 1 ? '_slot_' . $slot : '' );
+        $cached = get_option( $key, null );
 
         if ( null === $cached || ! is_array( $cached ) ) {
-            return new WP_Error( 'not_found', 'No crossword cached for this date.', array( 'status' => 404 ) );
+            return new WP_Error( 'not_found', 'No crossword cached for this date/slot.', array( 'status' => 404 ) );
         }
 
-        return rest_ensure_response( array( 'date' => $date, 'puzzle' => $cached ) );
+        return rest_ensure_response( array( 'date' => $date, 'slot' => $slot, 'puzzle' => $cached ) );
     }
 
     /**
@@ -2543,17 +2557,22 @@ class Culture_REST_API {
     public static function handle_set_crossword_daily( $request ) {
         $date   = $request->get_param( 'date' );
         $puzzle = $request->get_param( 'puzzle' );
+        $slot   = max( 1, min( 5, (int) ( $request->get_param( 'slot' ) ?: 1 ) ) );
 
         if ( ! is_array( $puzzle ) || empty( $puzzle ) ) {
             return new WP_Error( 'invalid', 'puzzle must be a non-empty object.', array( 'status' => 400 ) );
         }
 
         $yesterday = gmdate( 'Y-m-d', strtotime( $date . ' -1 day' ) );
+        $key       = 'culture_games_crossword_' . $date . ( $slot > 1 ? '_slot_' . $slot : '' );
 
-        update_option( 'culture_games_crossword_' . $date,      $puzzle, false );
+        update_option( $key, $puzzle, false );
         delete_option( 'culture_games_crossword_' . $yesterday );
+        for ( $s = 2; $s <= 5; $s++ ) {
+            delete_option( 'culture_games_crossword_' . $yesterday . '_slot_' . $s );
+        }
 
-        return rest_ensure_response( array( 'success' => true, 'date' => $date ) );
+        return rest_ensure_response( array( 'success' => true, 'date' => $date, 'slot' => $slot ) );
     }
 
     /**
