@@ -36,25 +36,25 @@ function createStyles(c: ColorPalette) {
   return StyleSheet.create({
     overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
     sheet: {
-      backgroundColor: c.background,
+      backgroundColor: c.paper,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
       maxHeight: "90%",
     },
     handle: {
       width: 36, height: 4, borderRadius: 2,
-      backgroundColor: c.border, alignSelf: "center", marginTop: 10,
+      backgroundColor: c.rule, alignSelf: "center", marginTop: 10,
     },
     header: {
       flexDirection: "row", alignItems: "center", justifyContent: "space-between",
       paddingHorizontal: space[4], paddingVertical: space[3],
-      borderBottomWidth: 1, borderBottomColor: c.border,
+      borderBottomWidth: 1, borderBottomColor: c.rule,
     },
     title: { fontFamily: fonts.serifBold, fontSize: fontSize.lg, color: c.ink },
     closeBtn: { padding: 4 },
     tabs: {
       flexDirection: "row",
-      borderBottomWidth: 1, borderBottomColor: c.border,
+      borderBottomWidth: 1, borderBottomColor: c.rule,
       paddingHorizontal: space[4],
     },
     tab: {
@@ -66,7 +66,7 @@ function createStyles(c: ColorPalette) {
     tabTextActive: { fontFamily: fonts.sansBold, color: c.ink },
     scroll: { padding: space[4] },
     capBanner: {
-      backgroundColor: c.paperDeep ?? c.background,
+      backgroundColor: c.paperDeep,
       borderRadius: radius.md, padding: space[3],
       marginBottom: space[4], flexDirection: "row", alignItems: "center", gap: space[2],
     },
@@ -80,7 +80,7 @@ function createStyles(c: ColorPalette) {
     row: {
       flexDirection: "row", alignItems: "center",
       paddingVertical: space[3],
-      borderBottomWidth: 1, borderBottomColor: c.border,
+      borderBottomWidth: 1, borderBottomColor: c.rule,
     },
     rowLabel: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ink },
     badge: {
@@ -95,8 +95,8 @@ function createStyles(c: ColorPalette) {
     tierCard: {
       borderRadius: radius.lg, padding: space[3],
       marginBottom: space[3],
-      borderWidth: 1, borderColor: c.border,
-      backgroundColor: c.paperDeep ?? c.background,
+      borderWidth: 1, borderColor: c.rule,
+      backgroundColor: c.paperDeep,
     },
     tierHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
     tierName: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
