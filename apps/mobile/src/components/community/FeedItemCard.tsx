@@ -452,6 +452,73 @@ function createStyles(c: ColorPalette) {
       color: c.mute,
       marginTop: 1,
     },
+    // book review
+    bookCard: {
+      flexDirection: "row" as const,
+      gap: 12,
+      marginTop: 10,
+      backgroundColor: c.paperDeep,
+      borderRadius: radius.md,
+      padding: 10,
+      alignItems: "flex-start" as const,
+    },
+    bookCover: {
+      width: 48,
+      height: 64,
+      borderRadius: 4,
+      flexShrink: 0,
+    },
+    bookCoverFallback: {
+      backgroundColor: c.ghost,
+      justifyContent: "center" as const,
+      alignItems: "center" as const,
+    },
+    bookTitle: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.base,
+      color: c.ink,
+      lineHeight: 20,
+    },
+    bookMeta: {
+      fontFamily: fonts.mono,
+      fontSize: fontSize.xs,
+      color: c.mute,
+      marginTop: 2,
+    },
+    bookOverallWrap: {
+      alignItems: "center" as const,
+      justifyContent: "center" as const,
+      paddingLeft: 8,
+    },
+    bookOverallScore: {
+      fontFamily: fonts.monoBold,
+      fontSize: 22,
+      color: c.ochre,
+    },
+    bookOverallStar: {
+      fontFamily: fonts.mono,
+      fontSize: 12,
+      color: c.gold,
+      textAlign: "center" as const,
+    },
+    bookFavQuote: {
+      marginTop: 10,
+      borderLeftWidth: 3,
+      borderLeftColor: c.ochre,
+      paddingLeft: 10,
+    },
+    bookFavQuoteText: {
+      fontFamily: fonts.serif,
+      fontStyle: "italic" as const,
+      fontSize: fontSize.sm,
+      color: c.inkSoft,
+      lineHeight: 20,
+    },
+    // event community
+    eventHero: {
+      width: "100%" as any,
+      height: 180,
+    },
     // quote
     quoteContainer: {
       padding: 20,
@@ -1102,6 +1169,179 @@ function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
   );
 }
 
+// BookReviewCard (B8)
+function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
+  const coverUri = item.image ?? null;
+
+  const statusColor: Record<string, string> = {
+    "Finished": "#16a34a",
+    "Reading": "#2563eb",
+    "Want to Read": "#9333ea",
+  };
+  const statusBg: Record<string, string> = {
+    "Finished": "#dcfce7",
+    "Reading": "#dbeafe",
+    "Want to Read": "#f3e8ff",
+  };
+  const status = item.bookStatus ?? "";
+
+  const ratings: { label: string; value?: number }[] = [
+    { label: "Writing",    value: item.bookRatingWriting },
+    { label: "Story",      value: item.bookRatingStory },
+    { label: "Characters", value: item.bookRatingCharacters },
+    { label: "Pacing",     value: item.bookRatingPacing },
+  ];
+  const hasRatings = ratings.some((r) => r.value != null);
+
+  return (
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
+      <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
+      <View style={{ paddingHorizontal: 14 }}>
+        <BadgePill label="Book Review" bg={c.templateBookBg} color={c.templateBookText} styles={styles} />
+
+        {/* Book card */}
+        {item.bookTitle ? (
+          <View style={styles.bookCard}>
+            {coverUri ? (
+              <Image source={{ uri: coverUri }} style={styles.bookCover} resizeMode="cover" />
+            ) : (
+              <View style={[styles.bookCover, styles.bookCoverFallback]}>
+                <Ionicons name="book-outline" size={22} color={c.mute} />
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bookTitle} numberOfLines={2}>{item.bookTitle}</Text>
+              {item.bookAuthor ? <Text style={styles.bookMeta}>{item.bookAuthor}</Text> : null}
+              {status ? (
+                <View style={{ marginTop: 4, alignSelf: "flex-start" }}>
+                  <BadgePill
+                    label={status}
+                    bg={statusBg[status] ?? c.paperDeep}
+                    color={statusColor[status] ?? c.inkSoft}
+                    styles={styles}
+                  />
+                </View>
+              ) : null}
+            </View>
+            {item.bookOverallRating != null ? (
+              <View style={styles.bookOverallWrap}>
+                <Text style={styles.bookOverallScore}>{item.bookOverallRating}</Text>
+                <Text style={styles.bookOverallStar}>★</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* Review body */}
+        {(item.body ?? item.excerpt) ? (
+          <HashtagText text={item.body ?? item.excerpt ?? ""} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} />
+        ) : null}
+
+        {/* Favourite quote */}
+        {item.bookFavQuote ? (
+          <View style={styles.bookFavQuote}>
+            <Text style={styles.bookFavQuoteText}>"{item.bookFavQuote}"</Text>
+          </View>
+        ) : null}
+
+        {/* Breakdown ratings */}
+        {hasRatings ? (
+          <View style={[styles.foodRatingsGrid, { marginTop: 10 }]}>
+            {ratings.filter((r) => r.value != null).map(({ label, value }) => (
+              <View key={label} style={styles.foodRatingRow}>
+                <Text style={styles.foodRatingLabel}>{label}</Text>
+                <Text style={styles.foodRatingStars}>{starsText(value)}</Text>
+                <Text style={styles.foodRatingNum}>{value}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {/* Recommend + genres */}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+          {item.bookRecommend != null ? (
+            <BadgePill
+              label={item.bookRecommend ? "👍 Recommend" : "👎 Not for everyone"}
+              bg={item.bookRecommend ? "#dcfce7" : "#fee2e2"}
+              color={item.bookRecommend ? "#15803d" : "#b91c1c"}
+              styles={styles}
+            />
+          ) : null}
+          {(item.bookGenres ?? []).slice(0, 3).map((g) => (
+            <BadgePill key={g} label={g} bg={c.paperDeep} color={c.inkSoft} styles={styles} />
+          ))}
+        </View>
+      </View>
+      <FeedReactionBar item={item} marginTop={10} />
+    </TouchableOpacity>
+  );
+}
+
+// EventCommunityCard (B9) — community post with _template_type = 'event'
+function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  return (
+    <>
+      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
+        <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
+        {item.image ? (
+          <TouchableOpacity onPress={() => setLightboxOpen(true)} activeOpacity={0.9}>
+            <Image source={{ uri: item.image }} style={styles.eventHero} resizeMode="cover" />
+          </TouchableOpacity>
+        ) : null}
+        <View style={{ paddingHorizontal: 14, paddingTop: item.image ? 12 : 0 }}>
+          <BadgePill label="Event" bg={c.templateEventBg} color={c.templateEventText} styles={styles} />
+          <Text style={[styles.cardTitle, { marginTop: 8 }]} numberOfLines={2}>{item.title}</Text>
+
+          {item.eventDate ? (
+            <View style={[styles.happeningMetaRow, { marginTop: 8 }]}>
+              <Ionicons name="calendar-outline" size={14} color={c.gold} />
+              <Text style={styles.happeningMetaText}>{item.eventDate}</Text>
+            </View>
+          ) : null}
+          {(item.location ?? item.city) ? (
+            <View style={[styles.happeningMetaRow, { marginTop: 4 }]}>
+              <Ionicons name="location-outline" size={14} color={c.gold} />
+              <Text style={styles.happeningMetaText} numberOfLines={1}>
+                {[item.location, item.city].filter(Boolean).join(", ")}
+              </Text>
+            </View>
+          ) : null}
+          {item.admission ? (
+            <View style={[styles.happeningMetaRow, { marginTop: 4 }]}>
+              <Ionicons name="ticket-outline" size={14} color={c.gold} />
+              <Text style={styles.happeningMetaText}>{item.admission}</Text>
+            </View>
+          ) : null}
+
+          {(item.body ?? item.excerpt) ? (
+            <HashtagText
+              text={item.body ?? item.excerpt ?? ""}
+              style={[styles.cardBody, { marginTop: 10 }]}
+              numberOfLines={2}
+            />
+          ) : null}
+
+          {item.eventCategory ? (
+            <View style={{ marginTop: 8 }}>
+              <BadgePill label={item.eventCategory} bg={c.paperDeep} color={c.inkSoft} styles={styles} />
+            </View>
+          ) : null}
+        </View>
+        <FeedReactionBar item={item} marginTop={10} />
+      </TouchableOpacity>
+      {item.image && (
+        <ImageLightbox visible={lightboxOpen} images={[item.image]} onClose={() => setLightboxOpen(false)} />
+      )}
+    </>
+  );
+}
+
 // QuoteCard (C1)
 function QuoteCard({ item }: FeedCardProps) {
   const c = useColors();
@@ -1145,6 +1385,8 @@ export default function FeedItemCard(props: FeedCardProps) {
       case "creative-showcase": return <CreativeShowcaseCard {...props} />;
       case "poll":           return <PollCard {...props} />;
       case "itinerary":      return <ItineraryCard {...props} />;
+      case "book-review":    return <BookReviewCard {...props} />;
+      case "event":          return <EventCommunityCard {...props} />;
       default:               return <BasicPostCard {...props} />;
     }
   }
