@@ -24,6 +24,8 @@ class Culture_Mobile_API {
 
     public static function init() {
         add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
+        // Consume one-time checkout auth token before WordPress renders anything
+        add_action( 'init', array( __CLASS__, 'handle_checkout_auth_redirect' ), 1 );
     }
 
     // -------------------------------------------------------------------------
@@ -243,6 +245,19 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Checkout auto-login: issues a one-time token the in-app browser redeems.
+        register_rest_route( 'culture/v1', '/mobile/checkout-token', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_checkout_token' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/events/my-rsvps', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_my_rsvps' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/events/submit', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_submit_event_mobile' ),
@@ -453,6 +468,7 @@ class Culture_Mobile_API {
             'permission_callback' => '__return_true',
             'args'                => array(
                 'category' => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
+                'maker'    => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
                 'page'     => array( 'default' => 1,  'sanitize_callback' => 'absint' ),
                 'per_page' => array( 'default' => 20, 'sanitize_callback' => 'absint' ),
             ),
@@ -513,6 +529,41 @@ class Culture_Mobile_API {
                 'slug' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
                 'id'   => array( 'required' => false, 'type' => 'integer' ),
             ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/saved', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_saved' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/content/bookmark', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_bookmark' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id'      => array( 'required' => true,  'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'content_type' => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_key', 'default' => '' ),
+                'action'       => array( 'required' => false, 'type' => 'string',  'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/articles/read-complete', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_article_read_complete' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/articles/(?P<slug>[a-zA-Z0-9-]+)/products', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_article_products' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/articles/(?P<slug>[a-zA-Z0-9-]+)/related', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_article_related' ),
+            'permission_callback' => '__return_true',
         ) );
     }
 
@@ -1045,6 +1096,21 @@ class Culture_Mobile_API {
             }
             if ( $request->get_param( 'itinerary_best_time' ) ) {
                 update_post_meta( $post_id, '_itinerary_best_time', sanitize_text_field( $request->get_param( 'itinerary_best_time' ) ) );
+            }
+        }
+
+        // ── Event ─────────────────────────────────────────────────────────────
+        if ( $template === 'event' ) {
+            update_post_meta( $post_id, '_event_date',      sanitize_text_field( $request->get_param( 'event_date' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_end_date',  sanitize_text_field( $request->get_param( 'event_end_date' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_venue',     sanitize_text_field( $request->get_param( 'event_venue' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_city',      sanitize_text_field( $request->get_param( 'event_city' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_address',   sanitize_text_field( $request->get_param( 'event_address' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_admission', sanitize_text_field( $request->get_param( 'event_admission' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_ticket_url', esc_url_raw( $request->get_param( 'ticket_url' ) ?: '' ) );
+            update_post_meta( $post_id, '_event_category',  sanitize_text_field( $request->get_param( 'event_category' ) ?: '' ) );
+            if ( $request->get_param( 'organiser_directory_id' ) ) {
+                update_post_meta( $post_id, '_culture_event_organiser_id', (int) $request->get_param( 'organiser_directory_id' ) );
             }
         }
 
@@ -1637,17 +1703,22 @@ class Culture_Mobile_API {
 
         return array_map( function( WP_Post $post ) {
             $thumb      = get_the_post_thumbnail_url( $post->ID, 'large' );
-            $categories = get_the_category( $post->ID );
+            $categories    = get_the_category( $post->ID );
+            $author_data   = get_userdata( $post->post_author );
+            $word_count    = str_word_count( wp_strip_all_tags( $post->post_content ) );
+            $reading_time  = max( 1, (int) round( $word_count / 200 ) );
             return array(
-                'id'       => 'editorial-' . $post->post_name,
-                'type'     => 'editorial',
-                'title'    => get_the_title( $post ),
-                'slug'     => $post->post_name,
-                'date'     => $post->post_date_gmt,
-                'excerpt'  => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
-                'image'    => $thumb ?: null,
-                'href'     => '/magazine/' . $post->post_name,
-                'category' => ! empty( $categories ) ? $categories[0]->name : '',
+                'id'          => 'editorial-' . $post->post_name,
+                'type'        => 'editorial',
+                'title'       => get_the_title( $post ),
+                'slug'        => $post->post_name,
+                'date'        => $post->post_date_gmt,
+                'excerpt'     => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ) ),
+                'image'       => $thumb ?: null,
+                'href'        => '/magazine/' . $post->post_name,
+                'category'    => ! empty( $categories ) ? $categories[0]->name : '',
+                'author'      => $author_data ? $author_data->display_name : '',
+                'readingTime' => $reading_time,
             );
         }, $query->posts );
     }
@@ -1878,6 +1949,16 @@ class Culture_Mobile_API {
                 'bookFavQuote'            => get_post_meta( $post->ID, '_book_fav_quote', true ) ?: '',
                 'bookRecommend'           => get_post_meta( $post->ID, '_book_recommend', true ) === '1',
                 'bookGenres'              => json_decode( get_post_meta( $post->ID, '_book_genres', true ) ?: '[]', true ),
+                // Community event template fields
+                'eventDate'               => get_post_meta( $post->ID, '_event_date', true ) ?: '',
+                'endDate'                 => get_post_meta( $post->ID, '_event_end_date', true ) ?: '',
+                'location'                => get_post_meta( $post->ID, '_event_venue', true ) ?: '',
+                'city'                    => get_post_meta( $post->ID, '_event_city', true ) ?: '',
+                'eventAddress'            => get_post_meta( $post->ID, '_event_address', true ) ?: '',
+                'admission'               => get_post_meta( $post->ID, '_event_admission', true ) ?: '',
+                'ticketUrl'               => get_post_meta( $post->ID, '_event_ticket_url', true ) ?: '',
+                'isProOnly'               => (bool) get_post_meta( $post->ID, '_culture_event_pro_only', true ),
+                'eventCategory'           => get_post_meta( $post->ID, '_event_category', true ) ?: '',
             );
         }, $query->posts );
     }
@@ -1945,6 +2026,18 @@ class Culture_Mobile_API {
         $user_id = get_current_user_id();
         $request->set_param( 'user_id', $user_id );
         return Culture_REST_API::handle_member_analytics( $request );
+    }
+
+    public static function handle_saved( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_get_user_saved( $request );
+    }
+
+    public static function handle_bookmark( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_toggle_bookmark( $request );
     }
 
     public static function handle_wallet_balance( $request ) {
@@ -2156,6 +2249,7 @@ class Culture_Mobile_API {
         }
 
         $category = sanitize_text_field( $request->get_param( 'category' ) );
+        $maker    = sanitize_text_field( $request->get_param( 'maker' ) );
         $search   = sanitize_text_field( $request->get_param( 's' ) );
         $page     = max( 1, (int) $request->get_param( 'page' ) );
         $per_page = min( 50, max( 1, (int) $request->get_param( 'per_page' ) ) );
@@ -2181,6 +2275,14 @@ class Culture_Mobile_API {
                 'taxonomy' => 'product_cat',
                 'field'    => 'slug',
                 'terms'    => $category,
+            ) );
+        }
+
+        if ( $maker ) {
+            $query_args['meta_query'] = array( array(
+                'key'     => '_maker_name',
+                'value'   => $maker,
+                'compare' => '=',
             ) );
         }
 
@@ -2573,7 +2675,14 @@ class Culture_Mobile_API {
         $id   = (int) $request->get_param( 'id' );
 
         if ( $slug ) {
-            $post = get_page_by_path( $slug, OBJECT, 'culture_directory' );
+            $q = new WP_Query( array(
+                'post_type'      => 'culture_directory',
+                'post_status'    => 'publish',
+                'name'           => $slug,
+                'posts_per_page' => 1,
+                'no_found_rows'  => true,
+            ) );
+            $post = $q->have_posts() ? $q->posts[0] : null;
         } elseif ( $id ) {
             $post = get_post( $id );
             if ( $post && $post->post_type !== 'culture_directory' ) {
@@ -2702,5 +2811,265 @@ class Culture_Mobile_API {
             'connectorThreshold'       => 3,
             'superConnectorThreshold'  => 10,
         ) );
+    }
+
+    /**
+     * POST /mobile/checkout-token
+     * Issues a one-time, 120-second transient key the mobile in-app browser
+     * exchanges for a WordPress auth cookie, enabling seamless checkout.
+     */
+    public static function handle_checkout_token( WP_REST_Request $request ) {
+        $user_id     = get_current_user_id();
+        $redirect_to = sanitize_text_field( $request->get_param( 'redirect_to' ) ?: '/checkout' );
+
+        // Only allow same-site paths to prevent open-redirect abuse
+        if ( ! str_starts_with( $redirect_to, '/' ) || str_contains( $redirect_to, '//' ) ) {
+            $redirect_to = '/checkout';
+        }
+
+        // Sanitise cart items: [{ id: int, qty: int, variation_id?: int }]
+        $raw_items = $request->get_param( 'cart_items' );
+        $cart_items = array();
+        if ( is_array( $raw_items ) ) {
+            foreach ( $raw_items as $raw ) {
+                $product_id = absint( $raw['id'] ?? 0 );
+                $qty        = max( 1, absint( $raw['qty'] ?? 1 ) );
+                if ( $product_id > 0 ) {
+                    $cart_items[] = array( 'id' => $product_id, 'qty' => $qty );
+                }
+            }
+        }
+
+        // Generate a cryptographically random key (48 hex chars)
+        $key = bin2hex( random_bytes( 24 ) );
+        set_transient( 'culture_mob_checkout_' . $key, array(
+            'user_id'    => $user_id,
+            'cart_items' => $cart_items,
+        ), 120 );
+
+        $auth_url = home_url( '/?mobile_checkout_auth=' . $key . '&mobile_redirect=' . urlencode( $redirect_to ) );
+
+        return rest_ensure_response( array( 'url' => $auth_url ) );
+    }
+
+    /**
+     * Hooked on `init` (priority 1) — runs before any template output.
+     * Validates the one-time token, logs the user in, populates the
+     * WooCommerce cart with the items from the mobile app, then redirects.
+     */
+    public static function handle_checkout_auth_redirect() {
+        if ( empty( $_GET['mobile_checkout_auth'] ) ) {
+            return;
+        }
+
+        $key  = sanitize_text_field( wp_unslash( $_GET['mobile_checkout_auth'] ) );
+        $data = get_transient( 'culture_mob_checkout_' . $key );
+
+        if ( ! $data ) {
+            // Token missing or expired — send to login
+            wp_safe_redirect( wp_login_url( home_url( '/checkout' ) ) );
+            exit;
+        }
+
+        // Consume the token (one-time use)
+        delete_transient( 'culture_mob_checkout_' . $key );
+
+        $user_id    = (int) ( $data['user_id'] ?? 0 );
+        $cart_items = $data['cart_items'] ?? array();
+
+        if ( ! $user_id ) {
+            wp_safe_redirect( wp_login_url( home_url( '/checkout' ) ) );
+            exit;
+        }
+
+        // Log the user in and set a remember-me cookie (14-day expiry)
+        wp_set_current_user( $user_id );
+        wp_set_auth_cookie( $user_id, true );
+
+        // Populate the WooCommerce cart with the mobile app's items
+        if ( ! empty( $cart_items ) && function_exists( 'WC' ) ) {
+            WC()->initialize_session();
+            WC()->initialize_cart();
+            WC()->cart->empty_cart();
+            foreach ( $cart_items as $item ) {
+                WC()->cart->add_to_cart( $item['id'], $item['qty'] );
+            }
+        }
+
+        $redirect_path = isset( $_GET['mobile_redirect'] )
+            ? sanitize_text_field( urldecode( wp_unslash( $_GET['mobile_redirect'] ) ) )
+            : '/checkout';
+
+        // Safety: only allow same-origin paths
+        if ( ! str_starts_with( $redirect_path, '/' ) || str_contains( $redirect_path, '//' ) ) {
+            $redirect_path = '/checkout';
+        }
+
+        wp_safe_redirect( home_url( $redirect_path ) );
+        exit;
+    }
+
+    public static function handle_my_rsvps( WP_REST_Request $request ) {
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'culture_event_rsvps';
+
+        // Check if table exists
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) {
+            return rest_ensure_response( array( 'rsvps' => array() ) );
+        }
+
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT r.event_id, r.status, r.created_at, p.post_title, p.post_name,
+                    pm_start.meta_value AS start_date, pm_loc.meta_value AS location
+             FROM {$table} r
+             INNER JOIN {$wpdb->posts} p ON p.ID = r.event_id AND p.post_status = 'publish'
+             LEFT JOIN {$wpdb->postmeta} pm_start ON pm_start.post_id = r.event_id AND pm_start.meta_key = '_culture_event_start_date'
+             LEFT JOIN {$wpdb->postmeta} pm_loc ON pm_loc.post_id = r.event_id AND pm_loc.meta_key = '_culture_event_location'
+             WHERE r.user_id = %d
+             ORDER BY pm_start.meta_value DESC",
+            $user_id
+        ), ARRAY_A );
+
+        $rsvps = array_map( function( $row ) {
+            return array(
+                'eventId'   => (int) $row['event_id'],
+                'slug'      => $row['post_name'],
+                'title'     => $row['post_title'],
+                'startDate' => $row['start_date'] ?: '',
+                'location'  => $row['location'] ?: '',
+                'status'    => $row['status'] ?: 'attending',
+                'rsvpAt'    => $row['created_at'],
+            );
+        }, $rows ?: array() );
+
+        return rest_ensure_response( array( 'rsvps' => $rsvps ) );
+    }
+
+    public static function handle_article_read_complete( WP_REST_Request $request ) {
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+        }
+
+        $post_id = intval( $request->get_param( 'post_id' ) );
+        $slug    = sanitize_text_field( $request->get_param( 'slug' ) );
+
+        // Resolve post
+        if ( ! $post_id && $slug ) {
+            $post = get_page_by_path( $slug, OBJECT, 'post' );
+            $post_id = $post ? $post->ID : 0;
+        }
+        if ( ! $post_id ) {
+            return new WP_Error( 'not_found', 'Article not found.', array( 'status' => 404 ) );
+        }
+
+        // Idempotency — award once ever per article per user
+        $meta_key  = '_culture_article_read_' . $post_id;
+        $already   = get_user_meta( $user_id, $meta_key, true );
+        if ( $already ) {
+            return rest_ensure_response( array( 'credits_earned' => 0, 'already_awarded' => true ) );
+        }
+
+        $credits = Culture_Gamification::award_credits( $user_id, 'magazine_read', $post_id );
+        update_user_meta( $user_id, $meta_key, '1' );
+
+        return rest_ensure_response( array( 'credits_earned' => max( 0, intval( $credits ) ) ) );
+    }
+
+    public static function handle_article_products( WP_REST_Request $request ) {
+        $slug = sanitize_text_field( $request->get_param( 'slug' ) );
+
+        // Look up the post by slug
+        $post = get_page_by_path( $slug, OBJECT, 'post' );
+        if ( ! $post ) {
+            return rest_ensure_response( array( 'products' => array() ) );
+        }
+
+        // Product IDs stored as JSON array in _culture_featured_products post meta
+        $raw = get_post_meta( $post->ID, '_culture_featured_products', true );
+        $product_ids = $raw ? array_filter( array_map( 'absint', (array) json_decode( $raw, true ) ) ) : array();
+        if ( empty( $product_ids ) ) {
+            return rest_ensure_response( array( 'products' => array() ) );
+        }
+        if ( empty( $product_ids ) || ! function_exists( 'wc_get_product' ) ) {
+            return rest_ensure_response( array( 'products' => array() ) );
+        }
+
+        $products = array();
+        foreach ( array_slice( $product_ids, 0, 4 ) as $pid ) {
+            $wc = wc_get_product( $pid );
+            if ( ! $wc || ! $wc->is_visible() ) continue;
+
+            $image_id  = $wc->get_image_id();
+            $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : '';
+            $price_raw = (float) $wc->get_regular_price();
+
+            $products[] = array(
+                'id'        => $wc->get_id(),
+                'slug'      => $wc->get_slug(),
+                'name'      => $wc->get_name(),
+                'brand'     => get_post_meta( $pid, '_maker_name', true ) ?: '',
+                'price'     => html_entity_decode( strip_tags( wc_price( $price_raw ) ) ),
+                'pro_price' => $price_raw > 0
+                    ? html_entity_decode( strip_tags( wc_price( $price_raw * 0.9 ) ) )
+                    : '',
+                'image'     => $image_url ?: '',
+            );
+        }
+
+        return rest_ensure_response( array( 'products' => $products ) );
+    }
+
+    public static function handle_article_related( WP_REST_Request $request ) {
+        $slug = sanitize_text_field( $request->get_param( 'slug' ) );
+
+        $post = get_page_by_path( $slug, OBJECT, 'post' );
+        if ( ! $post ) {
+            return rest_ensure_response( array( 'articles' => array() ) );
+        }
+
+        // Use same category to find related
+        $terms = wp_get_post_terms( $post->ID, 'category', array( 'fields' => 'ids' ) );
+        $args  = array(
+            'post_type'      => 'post',
+            'post_status'    => 'publish',
+            'posts_per_page' => 5,
+            'post__not_in'   => array( $post->ID ),
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'no_found_rows'  => true,
+        );
+        if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
+            $args['tax_query'] = array(
+                array( 'taxonomy' => 'category', 'field' => 'term_id', 'terms' => $terms ),
+            );
+        }
+
+        $query    = new WP_Query( $args );
+        $articles = array();
+        foreach ( $query->posts as $p ) {
+            $thumb_id = get_post_thumbnail_id( $p->ID );
+            $thumb    = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'medium' ) : '';
+            $cats     = wp_get_post_terms( $p->ID, 'category', array( 'fields' => 'names' ) );
+            $author   = get_the_author_meta( 'display_name', $p->post_author );
+            $rt       = (int) get_post_meta( $p->ID, '_reading_time', true );
+
+            $articles[] = array(
+                'id'          => $p->ID,
+                'slug'        => $p->post_name,
+                'title'       => $p->post_title,
+                'category'    => ! empty( $cats ) && ! is_wp_error( $cats ) ? $cats[0] : '',
+                'author'      => $author,
+                'readingTime' => $rt ?: null,
+                'image'       => $thumb ?: '',
+            );
+        }
+
+        return rest_ensure_response( array( 'articles' => $articles ) );
     }
 }

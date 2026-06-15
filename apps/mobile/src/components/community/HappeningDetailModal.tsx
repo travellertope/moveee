@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity, Linking, StyleSheet, Image } from "react-native";
+import { openInApp } from "../../utils/openInApp";
 import { Ionicons } from "@expo/vector-icons";
 import TypeBadge from "../ui/TypeBadge";
 import BottomSheet from "../ui/BottomSheet";
@@ -43,17 +44,17 @@ export default function HappeningDetailModal({ visible, item, onClose }: Props) 
   const isPatronOnly = item.communityTier === "patron";
 
   const handleTickets = () => {
-    if (item.href) Linking.openURL(item.href);
+    if (item.href) openInApp(item.href);
   };
 
   const handleOrganiser = () => {
     if (item.organiserSlug) {
-      Linking.openURL(`https://themoveee.com/directory/${item.organiserSlug}`);
+      openInApp(`https://themoveee.com/directory/${item.organiserSlug}`);
     }
   };
 
   const handleUpgrade = () => {
-    Linking.openURL("https://connect.themoveee.com/register?upgrade=patron");
+    openInApp("https://connect.themoveee.com/register?upgrade=patron");
   };
 
   const handleCalendar = () => {
@@ -83,6 +84,7 @@ export default function HappeningDetailModal({ visible, item, onClose }: Props) 
           <TypeBadge type="happening" />
           {isPatronOnly && (
             <View style={styles.proBadge}>
+              <Ionicons name="ribbon" size={9} color="#fff" />
               <Text style={styles.proBadgeText}>PRO ONLY</Text>
             </View>
           )}
@@ -197,6 +199,9 @@ function createStyles(c: ColorPalette) {
       borderColor: c.goldBorder,
       paddingHorizontal: space[2],
       paddingVertical: 2,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
     },
     proBadgeText: {
       fontFamily: fonts.monoBold,

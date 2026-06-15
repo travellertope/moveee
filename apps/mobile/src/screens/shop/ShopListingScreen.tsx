@@ -8,7 +8,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
-import { useCartStore } from "../../store/cartStore";
+import { useCartStore, type WishlistItem } from "../../store/cartStore";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -105,7 +105,16 @@ function GridCard({
 }) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const [liked, setLiked] = useState(false);
+  const { toggleWishlist, isWishlisted } = useCartStore();
+  const liked = isWishlisted(product.id);
+
+  const handleWishlist = () => {
+    const item: WishlistItem = {
+      id: product.id, title: product.name, brand: product.makerName,
+      price: product.currencySymbol + product.price, image: product.imageUrl, slug: product.slug,
+    };
+    toggleWishlist(item);
+  };
 
   return (
     <TouchableOpacity
@@ -130,7 +139,7 @@ function GridCard({
         />
         <TouchableOpacity
           style={styles.wishlistBtn}
-          onPress={() => setLiked((v) => !v)}
+          onPress={handleWishlist}
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
           <Ionicons
@@ -228,13 +237,14 @@ export default function ShopListingScreen() {
   const nav = useNavigation<any>();
   const { params } = useRoute<any>();
   const { user } = useAuthStore();
-  const { itemCount } = useCartStore();
+  const { itemCount, addItem } = useCartStore();
   const isPro = user?.tier === "patron";
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
   const categoryName: string = params?.categoryName ?? "All Products";
   const categorySlug: string = params?.categorySlug ?? "";
+  const makerFilter: string  = params?.makerName ?? "";
 
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [sort, setSort]         = useState<SortOption>("featured");
@@ -248,11 +258,12 @@ export default function ShopListingScreen() {
   const [total, setTotal]       = useState(0);
 
   const fetchProducts = async (catSlug: string, pageNum = 1, append = false) => {
-    const catParam  = catSlug ? `&category=${catSlug}` : "";
-    const sortParam = sort !== "featured" ? `&orderby=${sort}` : "";
+    const catParam   = catSlug ? `&category=${catSlug}` : "";
+    const sortParam  = sort !== "featured" ? `&orderby=${sort}` : "";
+    const makerParam = makerFilter ? `&maker=${encodeURIComponent(makerFilter)}` : "";
     try {
       const res = await api.get<{ products: ShopProduct[]; pages: number; total: number }>(
-        `${MOBILE_API}/shop/products?per_page=20&page=${pageNum}${catParam}${sortParam}`,
+        `${MOBILE_API}/shop/products?per_page=20&page=${pageNum}${catParam}${sortParam}${makerParam}`,
         false
       );
       setProducts((prev) => append ? [...prev, ...res.products] : res.products);
@@ -283,8 +294,15 @@ export default function ShopListingScreen() {
   };
 
   const handleAddToBag = (product: ShopProduct) => {
-    const url = `https://themoveee.com/shop/${product.slug}`;
-    Linking.openURL(url).catch(() => {});
+    addItem({
+      id: `${product.id}`,
+      productId: product.id,
+      title: product.name,
+      brand: product.makerName,
+      price: parseFloat(product.price) || 0,
+      image: product.imageUrl ?? undefined,
+    });
+    nav.navigate("Cart");
   };
 
   const colW = (SCREEN_W - 32 - 12) / 2;

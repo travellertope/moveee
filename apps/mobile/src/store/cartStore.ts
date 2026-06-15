@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { storage } from "./storage";
 
 export interface CartItem {
   id: string;
@@ -11,25 +12,55 @@ export interface CartItem {
   qty: number;
 }
 
+export interface WishlistItem {
+  id: number;
+  title: string;
+  brand: string;
+  price: string;
+  image?: string | null;
+  slug: string;
+}
+
 interface CartState {
   items: CartItem[];
   itemCount: number;
+  wishlist: WishlistItem[];
   addItem: (item: Omit<CartItem, "qty">) => void;
   removeItem: (id: string) => void;
   updateQty: (id: string, qty: number) => void;
   clearCart: () => void;
+  toggleWishlist: (item: WishlistItem) => void;
+  isWishlisted: (id: number) => boolean;
   // legacy compat
   setItemCount: (n: number) => void;
   increment: () => void;
+}
+
+const WISHLIST_KEY = "wishlist_items";
+
+function loadWishlist(): WishlistItem[] {
+  try {
+    const raw = storage.getString(WISHLIST_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveWishlist(items: WishlistItem[]) {
+  try {
+    storage.set(WISHLIST_KEY, JSON.stringify(items));
+  } catch {}
 }
 
 function countItems(items: CartItem[]) {
   return items.reduce((sum, i) => sum + i.qty, 0);
 }
 
-export const useCartStore = create<CartState>((set) => ({
+export const useCartStore = create<CartState>((set, get) => ({
   items: [],
   itemCount: 0,
+  wishlist: loadWishlist(),
 
   addItem: (item) =>
     set((s) => {
@@ -56,6 +87,18 @@ export const useCartStore = create<CartState>((set) => ({
     }),
 
   clearCart: () => set({ items: [], itemCount: 0 }),
+
+  toggleWishlist: (item) =>
+    set((s) => {
+      const exists = s.wishlist.some((w) => w.id === item.id);
+      const wishlist = exists
+        ? s.wishlist.filter((w) => w.id !== item.id)
+        : [...s.wishlist, item];
+      saveWishlist(wishlist);
+      return { wishlist };
+    }),
+
+  isWishlisted: (id) => get().wishlist.some((w) => w.id === id),
 
   // legacy compat used by older screens
   setItemCount: (n) => set({ itemCount: n }),

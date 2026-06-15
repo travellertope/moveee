@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { View, Text, TouchableOpacity, Linking, StyleSheet, Image, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from "react-native";
+import { openInApp } from "../../utils/openInApp";
 import BottomSheet from "../ui/BottomSheet";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, space, radius } from "../../theme";
@@ -32,7 +33,7 @@ export default function EditorialSheet({ visible, item, onClose }: Props) {
   const articleUrl = item.href ?? item.sourceUrl;
 
   const handleReadFull = () => {
-    if (articleUrl) Linking.openURL(articleUrl);
+    if (articleUrl) openInApp(articleUrl);
   };
 
   const handleSave = () => {

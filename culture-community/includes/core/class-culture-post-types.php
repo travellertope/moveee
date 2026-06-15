@@ -49,6 +49,7 @@ class Culture_Post_Types {
             '_culture_opening_hours'      => array( 'type' => 'string' ),
             '_culture_event_organiser_id'  => array( 'type' => 'integer' ),
             '_culture_event_showcase_urls' => array( 'type' => 'string' ),
+            '_culture_event_pro_only'      => array( 'type' => 'boolean' ),
         );
         // Expose AIOSEO meta on standard posts so REST-based fetches can read them
         foreach ( array( '_aioseo_title', '_aioseo_description' ) as $aioseo_key ) {

@@ -135,7 +135,7 @@ export default function PerksScreen() {
           <Text style={styles.balanceStar}>★</Text>
           <Text style={styles.balanceText}>{credits.toLocaleString()} CR available</Text>
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => nav.navigate("Wallet")}>
           <Text style={styles.earnMore}>Earn more →</Text>
         </TouchableOpacity>
       </View>

@@ -19,6 +19,7 @@ import { fonts, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { api, CULTURE_API } from "../../api/client";
+import { openInApp } from "../../utils/openInApp";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -343,6 +344,7 @@ export default function DirectoryDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [bodyExpanded, setBodyExpanded] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Derive display values (optimistic while loading)
   const displayType = entry?.entryType ?? routeType ?? "concept";
@@ -366,7 +368,7 @@ export default function DirectoryDetailScreen() {
         setLoading(false);
       }
     })();
-  }, [slug, id]);
+  }, [slug, id, retryCount]);
 
   // Fetch events for person + place
   useEffect(() => {
@@ -421,9 +423,14 @@ export default function DirectoryDetailScreen() {
         </LinearGradient>
         <View style={styles.centered}>
           <Text style={styles.errorText}>Unable to load this entry.{"\n"}Check your connection and try again.</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={() => { setError(false); setLoading(true); }}>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => setRetryCount(n => n + 1)}>
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
+          {!!slug && (
+            <TouchableOpacity style={[styles.retryBtn, { marginTop: 10 }]} onPress={() => openInApp(`https://connect.themoveee.com/directory/${slug ?? ""}`)}>
+              <Text style={styles.retryText}>Open in browser →</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     );

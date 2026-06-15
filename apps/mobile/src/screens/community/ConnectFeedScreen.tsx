@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import {
   View,
   FlatList,
@@ -108,6 +108,17 @@ export default function ConnectFeedScreen() {
   });
   const [sheetItem, setSheetItem] = useState<FeedItem | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    const unsubscribe = nav.getParent()?.addListener("tabPress" as any, () => {
+      if (nav.isFocused()) {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+        refresh();
+      }
+    });
+    return () => unsubscribe?.();
+  }, [nav, refresh]);
 
   const interestTagSet = useMemo(
     () => new Set((user?.interests ?? []).map((s) => s.toLowerCase())),
@@ -298,6 +309,10 @@ export default function ConnectFeedScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            scrollEventThrottle={16}
+            bounces={false}
+            overScrollMode="never"
             contentContainerStyle={styles.filterContent}
           >
             {FILTER_LABELS.map((label) => {
@@ -383,6 +398,7 @@ export default function ConnectFeedScreen() {
           <FeedSkeleton />
         ) : (
           <FlatList
+            ref={flatListRef}
             data={visibleItems}
             keyExtractor={(item) => item.id}
             renderItem={renderItem}

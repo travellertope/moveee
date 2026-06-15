@@ -2,8 +2,9 @@ import React, { useState, useMemo } from "react";
 import {
   View, Text, Image, FlatList, TextInput, TouchableOpacity,
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
-  ActivityIndicator, Linking, Share,
+  ActivityIndicator, Share,
 } from "react-native";
+import { openInApp } from "../../utils/openInApp";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useComments } from "../../features/community/useComments";
@@ -63,7 +64,7 @@ function ReactionRow({ item, styles, c }: { item: FeedItem; styles: ReturnType<t
   const handleShare = () => {
     if (!item.slug) return;
     const url = `https://themoveee.com/community/${item.slug}`;
-    Linking.openURL(url).catch(() => {});
+    openInApp(url);
   };
 
   return (
@@ -93,7 +94,7 @@ function ReactionRow({ item, styles, c }: { item: FeedItem; styles: ReturnType<t
 
 function SourcePreview({ item, styles }: { item: FeedItem; styles: ReturnType<typeof createStyles> }) {
   if (!item.sourceUrl) return null;
-  const open = () => Linking.openURL(item.sourceUrl!).catch(() => {});
+  const open = () => openInApp(item.sourceUrl!);
   return (
     <TouchableOpacity style={styles.sourceCard} onPress={open} activeOpacity={0.85}>
       {item.ogImage ? <Image source={{ uri: item.ogImage }} style={styles.sourceImage} resizeMode="cover" /> : null}
@@ -184,7 +185,7 @@ export default function PostDetailScreen() {
                   <Text style={styles.authorName}>{item.communityAuthor || "Community Member"}</Text>
                   {item.communityTier === "patron" ? (
                     <View style={styles.proBadge}>
-                      <Text style={styles.proBadgeText}>Pro</Text>
+                      <Ionicons name="ribbon" size={9} color="#fff" />
                     </View>
                   ) : null}
                 </View>

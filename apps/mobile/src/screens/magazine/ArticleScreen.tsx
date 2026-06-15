@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Platform,
   useWindowDimensions,
-  Linking,
   Share,
   Animated,
   NativeSyntheticEvent,
@@ -23,12 +22,14 @@ import RenderHtml from "react-native-render-html";
 import { LinearGradient } from "expo-linear-gradient";
 import { useArticle } from "../../features/magazine/useMagazine";
 import { WP_URL, api, MOBILE_API, CULTURE_API } from "../../api/client";
+import { openInApp } from "../../utils/openInApp";
 import type { Article } from "../../types";
 import { fonts, fontSize, space, radius, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { ArticleSkeleton } from "../../components/ui/Skeleton";
 import { useAuthStore } from "../../auth/authStore";
 import BottomSheet from "../../components/ui/BottomSheet";
+import ReactionBar from "../../components/community/ReactionBar";
 
 const HERO_HEIGHT = 280;
 const SHEET_OVERLAP = 32;
@@ -75,7 +76,7 @@ function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPa
       nav.push("Article", { slug: m[1] });
       return;
     }
-    Linking.openURL(href).catch(() => {});
+    openInApp(href);
   };
 
   return (
@@ -85,6 +86,252 @@ function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPa
       tagsStyles={HTML_TAG_STYLES}
       renderersProps={{ a: { onPress: handleLinkPress } }}
     />
+  );
+}
+
+
+// ── Newsletter CTA ───────────────────────────────────────────────────────────
+
+function NewsletterCTA({ c }: { c: ColorPalette }) {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const handleSubscribe = async () => {
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes("@")) return;
+    setBusy(true);
+    try {
+      await api.post(`${CULTURE_API}/newsletter/subscribe`, { email: trimmed, list: "getmelit" }, false);
+      setSubmitted(true);
+    } catch {
+      // fail silently — user can retry
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <View style={{
+      marginTop: 32, borderRadius: radius.xl, padding: 24,
+      backgroundColor: c.paperDeep,
+      borderWidth: 1, borderColor: c.rule,
+    }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 14 }}>
+        <View style={{
+          width: 36, height: 36, borderRadius: 18,
+          backgroundColor: c.goldLight, alignItems: "center", justifyContent: "center",
+        }}>
+          <Ionicons name="mail-outline" size={18} color={c.gold} />
+        </View>
+        <Text style={{
+          fontFamily: fonts.serifBold, fontSize: 16, color: c.ink, flex: 1, lineHeight: 22,
+        }}>{"Culture in your inbox,\nevery Friday"}</Text>
+      </View>
+      <Text style={{
+        fontFamily: fonts.sans, fontSize: 13, color: c.mute, lineHeight: 19, marginBottom: 16,
+      }}>
+        GetMeLit — the Moveee weekly. Handpicked stories, what to watch, read, and experience.
+      </Text>
+      {submitted ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Ionicons name="checkmark-circle" size={18} color={c.gold} />
+          <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.gold }}>
+            You're on the list!
+          </Text>
+        </View>
+      ) : (
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <TextInput
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Your email address"
+            placeholderTextColor={c.ghost}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            style={{
+              flex: 1, height: 44, borderWidth: 1, borderColor: c.rule,
+              borderRadius: radius.md, paddingHorizontal: 12,
+              fontFamily: fonts.sans, fontSize: 14, color: c.ink,
+              backgroundColor: c.paper,
+            }}
+          />
+          <TouchableOpacity
+            onPress={handleSubscribe}
+            disabled={busy}
+            style={{
+              height: 44, paddingHorizontal: 16, borderRadius: radius.md,
+              backgroundColor: c.ink, alignItems: "center", justifyContent: "center",
+              opacity: busy ? 0.6 : 1,
+            }}
+          >
+            <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.paper }}>
+              {busy ? "…" : "Subscribe"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ── Shop the Edit ─────────────────────────────────────────────────────────────
+
+interface ShopProduct {
+  id: number;
+  name: string;
+  brand: string;
+  price: string;
+  pro_price?: string;
+  image?: string;
+  slug: string;
+}
+
+function ShopTheEdit({ articleSlug, c, nav }: { articleSlug: string; c: ColorPalette; nav: any }) {
+  const [products, setProducts] = useState<ShopProduct[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    api.get<{ products: ShopProduct[] }>(`${MOBILE_API}/articles/${articleSlug}/products`, false)
+      .then((res) => { setProducts(res.products ?? []); })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [articleSlug]);
+
+  if (!loaded || products.length === 0) return null;
+
+  return (
+    <View style={{ marginTop: 32 }}>
+      <View style={{
+        flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16,
+      }}>
+        <Text style={{ fontFamily: fonts.serifBold, fontSize: 20, color: c.ink }}>Shop the edit</Text>
+        <TouchableOpacity onPress={() => nav.navigate("ShopHome")}>
+          <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre }}>Browse all →</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+        {products.slice(0, 4).map((p) => (
+          <TouchableOpacity
+            key={p.id}
+            onPress={() => nav.navigate("Shop", { screen: "ProductDetail", params: { id: p.id, slug: p.slug } } as any)}
+            activeOpacity={0.85}
+            style={{
+              width: "48%", borderWidth: 1, borderColor: c.rule,
+              borderRadius: radius.xl, overflow: "hidden", backgroundColor: c.paper,
+            }}
+          >
+            {p.image ? (
+              <Image source={{ uri: p.image }} style={{ width: "100%", height: 140 }} resizeMode="cover" />
+            ) : (
+              <View style={{ width: "100%", height: 140, backgroundColor: c.paperDeep }} />
+            )}
+            <View style={{ padding: 10 }}>
+              <Text style={{
+                fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
+                color: c.ghost, textTransform: "uppercase", letterSpacing: 1, marginBottom: 3,
+              }}>
+                {p.brand}
+              </Text>
+              <Text style={{
+                fontFamily: fonts.sansBold, fontSize: 13, color: c.ink, lineHeight: 17,
+              }} numberOfLines={2}>
+                {p.name}
+              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 }}>
+                <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ink }}>{p.price}</Text>
+                {p.pro_price ? (
+                  <Text style={{ fontFamily: fonts.sansBold, fontSize: 11, color: c.gold }}>{p.pro_price} Pro</Text>
+                ) : null}
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// ── Keep Reading ──────────────────────────────────────────────────────────────
+
+interface RelatedArticle {
+  id: number;
+  slug: string;
+  title: string;
+  category?: string;
+  author?: string;
+  readingTime?: number;
+  image?: string;
+}
+
+function KeepReading({ articleSlug, c, nav }: { articleSlug: string; c: ColorPalette; nav: any }) {
+  const [articles, setArticles] = useState<RelatedArticle[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    api.get<{ articles: RelatedArticle[] }>(`${MOBILE_API}/articles/${articleSlug}/related`, false)
+      .then((res) => { setArticles(res.articles ?? []); })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [articleSlug]);
+
+  if (!loaded || articles.length === 0) return null;
+
+  return (
+    <View style={{ marginTop: 32, paddingBottom: 8 }}>
+      <View style={{
+        flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16,
+      }}>
+        <Text style={{ fontFamily: fonts.serifBold, fontSize: 20, color: c.ink }}>Keep reading</Text>
+        <TouchableOpacity onPress={() => nav.navigate("MagazineList")}>
+          <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre }}>See all →</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{ borderTopWidth: 1, borderTopColor: c.rule }}>
+        {articles.slice(0, 4).map((a) => (
+          <TouchableOpacity
+            key={a.id}
+            onPress={() => nav.push("Article", { slug: a.slug })}
+            activeOpacity={0.85}
+            style={{
+              flexDirection: "row", gap: 14, paddingVertical: 16,
+              borderBottomWidth: 1, borderBottomColor: c.rule,
+            }}
+          >
+            {a.image ? (
+              <Image
+                source={{ uri: a.image }}
+                style={{ width: 88, height: 66, borderRadius: radius.lg }}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={{ width: 88, height: 66, borderRadius: radius.lg, backgroundColor: c.paperDeep }} />
+            )}
+            <View style={{ flex: 1, justifyContent: "space-between" }}>
+              {a.category ? (
+                <Text style={{
+                  fontFamily: fonts.mono, fontSize: fontSize.eyebrow,
+                  color: c.ochre, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4,
+                }}>
+                  {a.category}
+                </Text>
+              ) : null}
+              <Text style={{
+                fontFamily: fonts.sansBold, fontSize: 14, color: c.ink, lineHeight: 19,
+              }} numberOfLines={3}>
+                {a.title}
+              </Text>
+              <Text style={{
+                fontFamily: fonts.mono, fontSize: 11, color: c.ghost, marginTop: 4,
+              }}>
+                {[a.author, a.readingTime ? `${a.readingTime} min read` : null]
+                  .filter(Boolean).join(" · ")}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -141,29 +388,29 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
   };
 
   return (
-    <View style={acStyles.section}>
-      <View style={acStyles.header}>
-        <Text style={[acStyles.heading, { color: c.ink }]}>Discussion</Text>
-        <Text style={[acStyles.count, { color: c.mute }]}>{comments.length} comment{comments.length !== 1 ? "s" : ""}</Text>
+    <View style={styles.cm_section}>
+      <View style={styles.cm_header}>
+        <Text style={styles.cm_heading}>Discussion</Text>
+        <Text style={styles.cm_count}>{comments.length} comment{comments.length !== 1 ? "s" : ""}</Text>
       </View>
 
       {/* Comment list */}
       {loading ? (
         <ActivityIndicator color={c.gold} style={{ marginVertical: 16 }} />
       ) : comments.length === 0 ? (
-        <Text style={[acStyles.empty, { color: c.ghost }]}>Be the first to leave a comment.</Text>
+        <Text style={styles.cm_empty}>Be the first to leave a comment.</Text>
       ) : (
         comments.map((cm) => {
           const avatar = cm.author_avatar_urls?.["48"] ?? PLACEHOLDER_AVATAR;
           return (
-            <View key={cm.id} style={[acStyles.commentRow, { borderBottomColor: c.rule }]}>
-              <Image source={{ uri: avatar }} style={acStyles.avatar} />
-              <View style={acStyles.commentBody}>
-                <View style={acStyles.commentMeta}>
-                  <Text style={[acStyles.authorName, { color: c.ink }]}>{cm.author_name}</Text>
-                  <Text style={[acStyles.timestamp, { color: c.ghost }]}>{timeAgoComment(cm.date)}</Text>
+            <View key={cm.id} style={styles.cm_row}>
+              <Image source={{ uri: avatar }} style={styles.cm_avatar} />
+              <View style={styles.cm_body}>
+                <View style={styles.cm_meta}>
+                  <Text style={styles.cm_author}>{cm.author_name}</Text>
+                  <Text style={styles.cm_time}>{timeAgoComment(cm.date)}</Text>
                 </View>
-                <Text style={[acStyles.commentText, { color: c.inkSoft }]}>{stripHtml(cm.content.rendered)}</Text>
+                <Text style={styles.cm_text}>{stripHtml(cm.content.rendered)}</Text>
               </View>
             </View>
           );
@@ -171,20 +418,20 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
       )}
 
       {/* Compose */}
-      <View style={[acStyles.compose, { borderTopColor: c.rule, backgroundColor: c.paperDeep }]}>
+      <View style={styles.cm_compose}>
         {user?.avatarUrl ? (
-          <Image source={{ uri: user.avatarUrl }} style={acStyles.composeAvatar} />
+          <Image source={{ uri: user.avatarUrl }} style={styles.cm_composeAvatar} />
         ) : (
-          <View style={[acStyles.composeAvatar, { backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center" }]}>
+          <View style={[styles.cm_composeAvatar, styles.cm_composeAvatarFallback]}>
             <Ionicons name="person" size={14} color={c.mute} />
           </View>
         )}
         {submitted ? (
-          <Text style={[acStyles.submittedNote, { color: c.mute }]}>Comment submitted for review ✓</Text>
+          <Text style={styles.cm_submittedNote}>Comment submitted for review ✓</Text>
         ) : user ? (
           <>
             <TextInput
-              style={[acStyles.input, { color: c.ink, backgroundColor: c.paper, borderColor: c.rule }]}
+              style={styles.cm_input}
               placeholder="Add a comment…"
               placeholderTextColor={c.ghost}
               value={text}
@@ -200,32 +447,14 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
             </TouchableOpacity>
           </>
         ) : (
-          <Text style={[acStyles.signInNote, { color: c.mute }]}>Sign in to leave a comment</Text>
+          <Text style={styles.cm_signIn}>Sign in to leave a comment</Text>
         )}
       </View>
     </View>
   );
 }
 
-const acStyles = StyleSheet.create({
-  section: { marginTop: 24, paddingBottom: 32 },
-  header: { flexDirection: "row", alignItems: "baseline", gap: 8, marginBottom: 16 },
-  heading: { fontFamily: "Fraunces_700Bold", fontSize: 20 },
-  count: { fontFamily: "JetBrainsMono_400Regular", fontSize: 11 },
-  empty: { fontFamily: "DMSans_400Regular", fontSize: 14, textAlign: "center", paddingVertical: 24 },
-  commentRow: { flexDirection: "row", paddingVertical: 14, borderBottomWidth: 1, gap: 10 },
-  avatar: { width: 36, height: 36, borderRadius: 18, flexShrink: 0 },
-  commentBody: { flex: 1 },
-  commentMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
-  authorName: { fontFamily: "DMSans_700Bold", fontSize: 13 },
-  timestamp: { fontFamily: "JetBrainsMono_400Regular", fontSize: 10 },
-  commentText: { fontFamily: "DMSans_400Regular", fontSize: 14, lineHeight: 20 },
-  compose: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderTopWidth: 1, borderRadius: 8, marginTop: 16 },
-  composeAvatar: { width: 32, height: 32, borderRadius: 16, flexShrink: 0 },
-  input: { flex: 1, fontFamily: "DMSans_400Regular", fontSize: 14, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, maxHeight: 80 },
-  submittedNote: { flex: 1, fontFamily: "DMSans_400Regular", fontSize: 13, fontStyle: "italic" },
-  signInNote: { flex: 1, fontFamily: "DMSans_400Regular", fontSize: 13 },
-});
+// acStyles is intentionally empty — comment styles now live in createStyles(c) as cm_* keys
 
 export default function ArticleScreen() {
   const nav   = useNavigation<any>();
@@ -245,6 +474,7 @@ export default function ArticleScreen() {
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const contentHeightRef = useRef(0);
   const layoutHeightRef = useRef(0);
+  const readProgressRef = useRef(0); // ref copy for use inside intervals
 
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = e.nativeEvent.contentOffset.y;
@@ -254,31 +484,64 @@ export default function ArticleScreen() {
     layoutHeightRef.current = layoutH;
     const scrollable = contentH - layoutH;
     if (scrollable > 0) {
-      setReadProgress(Math.min(1, Math.max(0, offsetY / scrollable)));
+      const progress = Math.min(1, Math.max(0, offsetY / scrollable));
+      readProgressRef.current = progress;
+      setReadProgress(progress);
     }
     setShowStickyHeader(offsetY > HEADER_TRIGGER);
   }, []);
 
-  // Bookmark
+  // Bookmark — fetch actual state from interactions endpoint once article loads
   const [bookmarked, setBookmarked] = useState(false);
+  useEffect(() => {
+    if (!article || !user) return;
+    api.get<{ bookmarked_articles?: (number | string)[] }>(
+      `${CULTURE_API}/user/interactions`
+    ).then((res) => {
+      const ids = (res.bookmarked_articles ?? []).map(String);
+      setBookmarked(ids.includes(String(article.id)));
+    }).catch(() => {});
+  }, [article?.id, user?.id]);
+
   const handleBookmark = useCallback(async () => {
     if (!article) return;
     const next = !bookmarked;
     setBookmarked(next);
     try {
-      await api.post(`${CULTURE_API}/content/bookmark`, { post_id: article.id, action: next ? "add" : "remove" });
+      await api.post(`${MOBILE_API}/content/bookmark`, { post_id: Number(article.id), action: next ? "add" : "remove" });
     } catch {
       setBookmarked(!next); // revert on failure
     }
   }, [article, bookmarked]);
 
-  // Article complete
-  const [pointsCollected, setPointsCollected] = useState(false);
-  const handleCollectPoints = useCallback(() => {
-    if (pointsCollected) return;
-    setPointsCollected(true);
-    // TODO: call awards API
-  }, [pointsCollected]);
+  // Auto-award: fires once when scroll ≥85% AND time on screen ≥ 50% of reading time (min 30s)
+  const [awarded, setAwarded] = useState(false);
+  const [creditsEarned, setCreditsEarned] = useState(0);
+  const awardFired = useRef(false);
+  const timeOnScreen = useRef(0);
+
+  useEffect(() => {
+    if (!article || !user) return;
+    const minSeconds = Math.max(30, (article.readingTime ?? 5) * 60 * 0.5);
+    const interval = setInterval(() => {
+      if (awardFired.current) { clearInterval(interval); return; }
+      timeOnScreen.current += 1;
+      if (readProgressRef.current >= 0.85 && timeOnScreen.current >= minSeconds) {
+        awardFired.current = true;
+        clearInterval(interval);
+        api.post<{ credits_earned?: number; already_awarded?: boolean }>(
+          `${MOBILE_API}/articles/read-complete`,
+          { post_id: Number(article.id), slug: article.slug }
+        ).then((res) => {
+          setCreditsEarned(res?.credits_earned ?? 0);
+          setAwarded(true);
+        }).catch(() => {
+          setAwarded(true); // show banner even if network fails
+        });
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [article?.id, user?.id]);
 
   // TOC
   const [tocOpen, setTocOpen] = useState(false);
@@ -354,12 +617,18 @@ export default function ArticleScreen() {
         </View>
       ) : article ? (
         <>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={0}
+          >
           <ScrollView
             ref={scrollRef}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingTop: HERO_HEIGHT - SHEET_OVERLAP, paddingBottom: 120 }}
             onScroll={handleScroll}
             scrollEventThrottle={16}
+            keyboardShouldPersistTaps="handled"
           >
             {/* ── White rounded card ── */}
             <View style={styles.sheet}>
@@ -485,27 +754,37 @@ export default function ArticleScreen() {
                   {/* Full body */}
                   <ArticleBody article={article} colors={c} />
 
-                  {/* ── Frame 3: Article complete banner ── */}
-                  <View style={styles.completeBanner}>
-                    <View style={styles.completeBannerLeft}>
-                      <View style={styles.completeCheck}>
-                        <Ionicons name="checkmark" size={18} color={c.ochre} />
-                      </View>
-                      <View>
-                        <Text style={styles.completeTitle}>Article complete!</Text>
-                        <Text style={styles.completePoints}>+ 15 Culture Points earned</Text>
+                  {/* ── Reaction row ── */}
+                  <ReactionBar
+                    postId={article.id}
+                    initialCounts={{
+                      love: (article as any).reactions?.love ?? (article as any).reactions?.heart ?? 0,
+                      fire: (article as any).reactions?.fire ?? 0,
+                      clap: (article as any).reactions?.clap ?? 0,
+                    }}
+                    shareUrl={`https://themoveee.com/magazine/${article.slug}`}
+                    shareTitle={article.title}
+                    noBorder={false}
+                  />
+
+                  {/* ── Frame 3: Article complete banner — auto-shown when read ── */}
+                  {awarded && (
+                    <View style={styles.completeBanner}>
+                      <View style={styles.completeBannerLeft}>
+                        <View style={styles.completeCheck}>
+                          <Ionicons name="checkmark" size={18} color={c.ochre} />
+                        </View>
+                        <View>
+                          <Text style={styles.completeTitle}>Article complete!</Text>
+                          <Text style={styles.completePoints}>
+                            {creditsEarned > 0
+                              ? `+ ${creditsEarned} Culture Points earned`
+                              : "Already credited — thanks for reading!"}
+                          </Text>
+                        </View>
                       </View>
                     </View>
-                    <TouchableOpacity
-                      style={[styles.collectBtn, pointsCollected && styles.collectBtnDone]}
-                      onPress={handleCollectPoints}
-                      disabled={pointsCollected}
-                    >
-                      <Text style={styles.collectBtnText}>
-                        {pointsCollected ? "Collected!" : "Collect Points"}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                  )}
 
                   {/* Series context strip */}
                   {(article as any).series ? (
@@ -575,12 +854,22 @@ export default function ArticleScreen() {
                     </View>
                   ) : null}
 
+                  {/* ── Newsletter CTA ── */}
+                  <NewsletterCTA c={c} />
+
+                  {/* ── Shop the Edit ── */}
+                  <ShopTheEdit articleSlug={article.slug} c={c} nav={nav} />
+
+                  {/* ── Keep Reading ── */}
+                  <KeepReading articleSlug={article.slug} c={c} nav={nav} />
+
                   {/* ── Comments section ── */}
                   <ArticleCommentsSection articleId={article.id} c={c} styles={styles} />
                 </>
               )}
             </View>
           </ScrollView>
+          </KeyboardAvoidingView>
 
           {/* ── TOC floating button ── */}
           {headings.length > 0 && (
@@ -822,10 +1111,9 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
 
   // Article complete banner
   completeBanner: {
-    marginTop: 32, height: 72, backgroundColor: c.ochre,
+    marginTop: 32, paddingVertical: 16, backgroundColor: c.ochre,
     borderRadius: radius.xl, flexDirection: "row",
-    alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 16,
+    alignItems: "center", paddingHorizontal: 16,
   },
   completeBannerLeft: {
     flexDirection: "row", alignItems: "center", gap: 12, flex: 1,
@@ -973,4 +1261,33 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   tocItemTextNested: {
     fontSize: 13, color: c.inkSoft,
   },
+
+  // Comments section
+  cm_section: { marginTop: 24, paddingBottom: 32 },
+  cm_header: { flexDirection: "row", alignItems: "baseline", gap: 8, marginBottom: 16 },
+  cm_heading: { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink },
+  cm_count: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute },
+  cm_empty: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ghost, textAlign: "center", paddingVertical: 24 },
+  cm_row: { flexDirection: "row", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.rule, gap: 10 },
+  cm_avatar: { width: 36, height: 36, borderRadius: 18, flexShrink: 0 },
+  cm_body: { flex: 1 },
+  cm_meta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+  cm_author: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ink },
+  cm_time: { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: c.ghost },
+  cm_text: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.inkSoft, lineHeight: 20 },
+  cm_compose: {
+    flexDirection: "row", alignItems: "center", gap: 10, padding: 12,
+    borderTopWidth: 1, borderTopColor: c.rule,
+    borderRadius: radius.lg, marginTop: 16, backgroundColor: c.paperDeep,
+  },
+  cm_composeAvatar: { width: 32, height: 32, borderRadius: 16, flexShrink: 0 },
+  cm_composeAvatarFallback: { backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center" },
+  cm_input: {
+    flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base,
+    borderWidth: 1, borderColor: c.rule, borderRadius: radius.full,
+    paddingHorizontal: 14, paddingVertical: 8, maxHeight: 80,
+    color: c.ink, backgroundColor: c.paper,
+  },
+  cm_submittedNote: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, fontStyle: "italic", color: c.mute },
+  cm_signIn: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
 }); }

@@ -4,6 +4,7 @@ import {
   TouchableOpacity, Image, ActivityIndicator, RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
@@ -268,6 +269,9 @@ export default function EventsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Events</Text>
+        <TouchableOpacity onPress={() => nav.navigate("MyRSVPs")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="calendar-outline" size={22} color={c.ink} />
+        </TouchableOpacity>
       </View>
 
       {/* Type filter chips */}
@@ -336,7 +340,7 @@ function createStyles(c: ColorPalette) {
     container: { flex: 1, backgroundColor: c.paperWarm },
 
     header: {
-      flexDirection: "row", alignItems: "center",
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
       backgroundColor: c.paper, paddingHorizontal: space[4],
       height: 56,
       borderBottomWidth: 1, borderBottomColor: "rgba(200,191,176,0.3)",

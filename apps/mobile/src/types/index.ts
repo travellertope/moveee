@@ -119,6 +119,8 @@ export interface FeedItem {
 
   // Editorial
   category?: string;
+  author?: string;
+  readingTime?: number;
 
   // Community
   communityAuthor?: string;
@@ -175,6 +177,10 @@ export interface FeedItem {
   itineraryBudget?: string;
   itineraryDuration?: string;
   itineraryBestTime?: string;
+  // Community Event (template)
+  isProOnly?: boolean;
+  ticketUrl?: string;
+  eventAddress?: string;
 
   // Reactions
   reactions?: { love: number; fire: number; clap: number };
