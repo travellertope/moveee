@@ -1125,7 +1125,7 @@ class Culture_Mobile_API {
         return rest_ensure_response( self::format_community_post( $post, array() ) );
     }
 
-    const COMMENTABLE_POST_TYPES = array( 'culture_post', 'pulse_story' );
+    const COMMENTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'post' );
 
     public static function handle_get_comments( $request ) {
         $post_id = (int) $request->get_param( 'post_id' );

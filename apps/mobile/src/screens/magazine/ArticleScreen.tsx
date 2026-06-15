@@ -367,7 +367,6 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     fetch(`https://cms.themoveee.com/wp-json/wp/v2/comments?post=${articleId}&per_page=20&order=asc`)
@@ -378,13 +377,28 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
   }, [articleId]);
 
   const submitComment = async () => {
-    if (!text.trim() || submitting) return;
+    const body = text.trim();
+    if (!body || submitting) return;
     setSubmitting(true);
+    // Optimistic — show comment immediately
+    const optimistic: WpComment = {
+      id: Date.now(),
+      author_name: (user as any)?.displayName ?? user?.username ?? "You",
+      author_avatar_urls: user?.avatarUrl ? { "48": user.avatarUrl } : undefined,
+      content: { rendered: body },
+      date: new Date().toISOString(),
+    };
+    setComments((prev) => [...prev, optimistic]);
+    setText("");
     try {
-      await api.post(`${MOBILE_API}/community/comment`, { post_id: Number(articleId), content: text.trim() });
-      setSubmitted(true);
-      setText("");
-    } catch {} finally { setSubmitting(false); }
+      await api.post(`${MOBILE_API}/community/comment`, { post_id: Number(articleId), content: body });
+    } catch {
+      // Revert optimistic on failure
+      setComments((prev) => prev.filter((c) => c.id !== optimistic.id));
+      setText(body);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -426,9 +440,7 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
             <Ionicons name="person" size={14} color={c.mute} />
           </View>
         )}
-        {submitted ? (
-          <Text style={styles.cm_submittedNote}>Comment submitted for review ✓</Text>
-        ) : user ? (
+        {user ? (
           <>
             <TextInput
               style={styles.cm_input}
@@ -440,12 +452,11 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
               maxLength={600}
             />
             <TouchableOpacity onPress={submitComment} disabled={submitting || !text.trim()} activeOpacity={0.7}>
-              {submitting
-                ? <ActivityIndicator size="small" color={c.gold} />
-                : <Ionicons name="send" size={18} color={text.trim() ? c.gold : c.ghost} />
-              }
-            </TouchableOpacity>
-          </>
+            {submitting
+              ? <ActivityIndicator size="small" color={c.gold} />
+              : <Ionicons name="send" size={18} color={text.trim() ? c.gold : c.ghost} />
+            }
+          </TouchableOpacity>
         ) : (
           <Text style={styles.cm_signIn}>Sign in to leave a comment</Text>
         )}
@@ -1295,9 +1306,9 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   cm_composeAvatarFallback: { backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center" },
   cm_input: {
     flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base,
-    borderWidth: 1, borderColor: c.rule, borderRadius: radius.full,
-    paddingHorizontal: 14, paddingVertical: 8, maxHeight: 80,
-    color: c.ink, backgroundColor: c.paper,
+    borderWidth: 1, borderColor: c.rule, borderRadius: radius.xl,
+    paddingHorizontal: 12, paddingVertical: 10, minHeight: 40, maxHeight: 120,
+    color: c.ink, backgroundColor: c.paper, textAlignVertical: "top",
   },
   cm_submittedNote: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, fontStyle: "italic", color: c.mute },
   cm_signIn: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
