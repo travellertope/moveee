@@ -493,17 +493,19 @@ export default function ShopScreen() {
               </View>
             )}
 
-            {/* ── Pro Band ── */}
-            <View style={styles.proBand}>
-              <Text style={styles.proBandEyebrow}>★ Connect Pro Members</Text>
-              <Text style={styles.proBandTitle}>Early access · Member pricing · Free returns</Text>
-              <TouchableOpacity
-                style={styles.proBandBtn}
-                onPress={() => nav.navigate("Connect", { screen: "Membership" } as any)}
-              >
-                <Text style={styles.proBandBtnText}>Upgrade →</Text>
-              </TouchableOpacity>
-            </View>
+            {/* ── Pro Band — only shown to non-Pro members ── */}
+            {!isPro && (
+              <View style={styles.proBand}>
+                <Text style={styles.proBandEyebrow}>★ Connect Pro Members</Text>
+                <Text style={styles.proBandTitle}>Early access · Member pricing · Free returns</Text>
+                <TouchableOpacity
+                  style={styles.proBandBtn}
+                  onPress={() => nav.navigate("Connect", { screen: "Membership" } as any)}
+                >
+                  <Text style={styles.proBandBtnText}>Upgrade →</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </>
         )}
       </ScrollView>

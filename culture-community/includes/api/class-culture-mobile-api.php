@@ -254,6 +254,17 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Validate a WooCommerce coupon code and return discount details.
+        register_rest_route( 'culture/v1', '/mobile/validate-coupon', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_validate_coupon' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'code'     => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'subtotal' => array( 'required' => false, 'type' => 'number', 'default' => 0 ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/events/my-rsvps', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_my_rsvps' ),
@@ -2821,6 +2832,58 @@ class Culture_Mobile_API {
     }
 
     /**
+     * POST /mobile/validate-coupon
+     * Validates a WooCommerce coupon code and returns discount information.
+     * Lets the app show the real discount before opening the web checkout.
+     */
+    public static function handle_validate_coupon( WP_REST_Request $request ) {
+        $code     = strtoupper( sanitize_text_field( $request->get_param( 'code' ) ) );
+        $subtotal = (float) $request->get_param( 'subtotal' );
+
+        if ( ! class_exists( 'WC_Coupon' ) ) {
+            return new WP_Error( 'woocommerce_unavailable', 'WooCommerce is not active.', array( 'status' => 503 ) );
+        }
+
+        $coupon = new WC_Coupon( $code );
+
+        if ( ! $coupon->get_id() ) {
+            return new WP_Error( 'invalid_coupon', 'This promo code is not valid.', array( 'status' => 422 ) );
+        }
+
+        // Check expiry
+        $expiry = $coupon->get_date_expires();
+        if ( $expiry && $expiry->getTimestamp() < time() ) {
+            return new WP_Error( 'coupon_expired', 'This promo code has expired.', array( 'status' => 422 ) );
+        }
+
+        // Check usage limit
+        $usage_limit = $coupon->get_usage_limit();
+        if ( $usage_limit > 0 && $coupon->get_usage_count() >= $usage_limit ) {
+            return new WP_Error( 'coupon_exhausted', 'This promo code has reached its usage limit.', array( 'status' => 422 ) );
+        }
+
+        // Calculate discount amount
+        $discount_type   = $coupon->get_discount_type(); // percent, fixed_cart, fixed_product
+        $discount_amount = (float) $coupon->get_amount();
+        $discount_value  = 0.0;
+
+        if ( $discount_type === 'percent' ) {
+            $discount_value = $subtotal > 0 ? round( $subtotal * ( $discount_amount / 100 ), 2 ) : 0;
+        } elseif ( in_array( $discount_type, array( 'fixed_cart', 'fixed_product' ), true ) ) {
+            $discount_value = min( $discount_amount, $subtotal );
+        }
+
+        return rest_ensure_response( array(
+            'valid'          => true,
+            'code'           => $code,
+            'discount_type'  => $discount_type,
+            'discount_amount' => $discount_amount,
+            'discount_value' => $discount_value,
+            'description'    => $coupon->get_description() ?: '',
+        ) );
+    }
+
+    /**
      * POST /mobile/checkout-token
      * Issues a one-time, 120-second transient key the mobile in-app browser
      * exchanges for a WordPress auth cookie, enabling seamless checkout.
@@ -2899,20 +2962,22 @@ class Culture_Mobile_API {
             WC()->initialize_cart();
             WC()->cart->empty_cart();
             foreach ( $cart_items as $item ) {
-                WC()->cart->add_to_cart( $item['id'], $item['qty'] );
+                $product_id = (int) ( $item['id'] ?? 0 );
+                $qty        = max( 1, (int) ( $item['qty'] ?? 1 ) );
+                if ( $product_id > 0 ) {
+                    WC()->cart->add_to_cart( $product_id, $qty );
+                }
             }
+            // Persist session so the redirect request finds the cart
+            WC()->session->save_data();
         }
 
-        $redirect_path = isset( $_GET['mobile_redirect'] )
-            ? sanitize_text_field( urldecode( wp_unslash( $_GET['mobile_redirect'] ) ) )
-            : '/checkout';
+        // Use WooCommerce's own checkout URL; fall back to /checkout
+        $checkout_url = function_exists( 'wc_get_checkout_url' )
+            ? wc_get_checkout_url()
+            : home_url( '/checkout/' );
 
-        // Safety: only allow same-origin paths
-        if ( ! str_starts_with( $redirect_path, '/' ) || str_contains( $redirect_path, '//' ) ) {
-            $redirect_path = '/checkout';
-        }
-
-        wp_safe_redirect( home_url( $redirect_path ) );
+        wp_safe_redirect( $checkout_url );
         exit;
     }
 
