@@ -273,7 +273,7 @@ export default function EventsScreen() {
             <View style={styles.filterDot} />
           )}
           <TouchableOpacity onPress={() => setFilterSheetOpen(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="options-outline" size={22} color={cityFilter !== "All" ? c.ochre : c.ink} />
+            <Ionicons name="funnel-outline" size={20} color={cityFilter !== "All" ? c.ochre : c.ink} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => nav.navigate("MyRSVPs")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="calendar-outline" size={22} color={c.ink} />
