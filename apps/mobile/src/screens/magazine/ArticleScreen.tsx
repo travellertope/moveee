@@ -543,6 +543,12 @@ export default function ArticleScreen() {
     return () => clearInterval(interval);
   }, [article?.id, user?.id]);
 
+  // Comment scroll
+  const commentsY = useRef(0);
+  const scrollToComments = useCallback(() => {
+    scrollRef.current?.scrollTo({ y: commentsY.current, animated: true });
+  }, []);
+
   // TOC
   const [tocOpen, setTocOpen] = useState(false);
   const [activeTocIdx, setActiveTocIdx] = useState(0);
@@ -643,11 +649,12 @@ export default function ArticleScreen() {
                 <Text style={styles.breadcrumb}>Magazine › {article.category ?? "Article"}</Text>
               </TouchableOpacity>
 
-              {/* Eyebrow */}
-              <Text style={styles.eyebrow}>
-                ★ {article.category ? article.category.toUpperCase() : "ARTICLE"}
-                {(article as any).region ? ` · ${((article as any).region as string).toUpperCase()}` : ""}
-              </Text>
+              {/* Region eyebrow — only shown when there's a region to display */}
+              {(article as any).region ? (
+                <Text style={styles.eyebrow}>
+                  {((article as any).region as string).toUpperCase()}
+                </Text>
+              ) : null}
 
               {/* Title */}
               <Text style={styles.title}>{article.title}</Text>
@@ -686,17 +693,19 @@ export default function ArticleScreen() {
                 ) : null}
               </View>
 
-              {/* Actions bar */}
+              {/* Actions bar — reactions (live) + comment + bookmark + share */}
               <View style={styles.actionsBar}>
                 <View style={styles.actionsLeft}>
-                  <TouchableOpacity style={styles.actionItem}>
-                    <Text style={styles.actionEmoji}>❤️</Text>
-                    <Text style={styles.actionCount}>{article.reactions?.heart ?? 0}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionItem}>
-                    <Text style={styles.actionEmoji}>🔥</Text>
-                    <Text style={styles.actionCount}>{article.reactions?.fire ?? 0}</Text>
-                  </TouchableOpacity>
+                  <ReactionBar
+                    postId={article.id}
+                    initialCounts={{
+                      love: (article as any).reactions?.love ?? (article as any).reactions?.heart ?? 0,
+                      fire: (article as any).reactions?.fire ?? 0,
+                      clap: (article as any).reactions?.clap ?? 0,
+                    }}
+                    noBorder
+                    onCommentPress={scrollToComments}
+                  />
                 </View>
                 <View style={styles.actionsRight}>
                   <TouchableOpacity style={styles.actionIconBtn} onPress={handleBookmark}>
@@ -864,7 +873,9 @@ export default function ArticleScreen() {
                   <KeepReading articleSlug={article.slug} c={c} nav={nav} />
 
                   {/* ── Comments section ── */}
-                  <ArticleCommentsSection articleId={article.id} c={c} styles={styles} />
+                  <View onLayout={(e) => { commentsY.current = e.nativeEvent.layout.y + HERO_HEIGHT - SHEET_OVERLAP; }}>
+                    <ArticleCommentsSection articleId={article.id} c={c} styles={styles} />
+                  </View>
                 </>
               )}
             </View>
