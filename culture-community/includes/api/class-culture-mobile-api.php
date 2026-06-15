@@ -578,6 +578,13 @@ class Culture_Mobile_API {
             'callback'            => array( __CLASS__, 'handle_article_related' ),
             'permission_callback' => '__return_true',
         ) );
+
+        // The Edit — curated editorial shop picks derived from articles with featured products.
+        register_rest_route( 'culture/v1', '/mobile/shop/the-edit', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_the_edit' ),
+            'permission_callback' => '__return_true',
+        ) );
     }
 
     // -------------------------------------------------------------------------
@@ -3053,6 +3060,141 @@ class Culture_Mobile_API {
         update_user_meta( $user_id, $meta_key, '1' );
 
         return rest_ensure_response( array( 'credits_earned' => max( 0, intval( $credits ) ) ) );
+    }
+
+    /**
+     * GET /mobile/shop/the-edit
+     * Returns curated editorial picks for "The Edit" screen.
+     *
+     * Data source: magazine articles (post type 'post') that have
+     * '_culture_featured_products' meta set. Products in turn carry
+     * '_as_seen_in' meta linking back to the article.
+     *
+     * Response shape:
+     *   hero         — first product from the newest featured article (with story context)
+     *   season_picks — next up to 4 products (from same or second article)
+     *   stories      — up to 4 articles that have featured products
+     *   grid         — all remaining products, deduped
+     */
+    public static function handle_the_edit( WP_REST_Request $request ) {
+        if ( ! function_exists( 'wc_get_product' ) ) {
+            return rest_ensure_response( array(
+                'hero'         => null,
+                'season_picks' => array(),
+                'stories'      => array(),
+                'grid'         => array(),
+            ) );
+        }
+
+        global $wpdb;
+
+        // Fetch the most recent 6 articles that have _culture_featured_products set
+        $article_ids = $wpdb->get_col(
+            "SELECT DISTINCT p.ID FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+             WHERE p.post_type = 'post'
+               AND p.post_status = 'publish'
+               AND pm.meta_key = '_culture_featured_products'
+               AND pm.meta_value != ''
+               AND pm.meta_value != '[]'
+             ORDER BY p.post_date DESC
+             LIMIT 6"
+        );
+
+        if ( empty( $article_ids ) ) {
+            return rest_ensure_response( array(
+                'hero'         => null,
+                'season_picks' => array(),
+                'stories'      => array(),
+                'grid'         => array(),
+            ) );
+        }
+
+        $currency        = get_woocommerce_currency();
+        $currency_symbol = get_woocommerce_currency_symbol( $currency );
+
+        $stories      = array();
+        $all_products = array(); // keyed by product id to dedupe
+        $seen_ids     = array();
+
+        foreach ( $article_ids as $article_id ) {
+            $post = get_post( $article_id );
+            if ( ! $post ) continue;
+
+            $raw         = get_post_meta( $article_id, '_culture_featured_products', true );
+            $product_ids = $raw ? array_filter( array_map( 'absint', (array) json_decode( $raw, true ) ) ) : array();
+            if ( empty( $product_ids ) ) continue;
+
+            $thumb = get_the_post_thumbnail_url( $article_id, 'medium' );
+            $cats  = get_the_category( $article_id );
+
+            $stories[] = array(
+                'slug'        => $post->post_name,
+                'title'       => $post->post_title,
+                'category'    => ! empty( $cats ) ? strtoupper( $cats[0]->name ) : 'CULTURE',
+                'image'       => $thumb ?: null,
+                'readTime'    => (int) get_post_meta( $article_id, '_reading_time', true ) ?: null,
+                'productIds'  => array_values( $product_ids ),
+            );
+
+            foreach ( $product_ids as $pid ) {
+                if ( isset( $seen_ids[ $pid ] ) ) continue;
+                $wc = wc_get_product( $pid );
+                if ( ! $wc || ! $wc->is_visible() ) continue;
+
+                $image_id  = $wc->get_image_id();
+                $reg_price = (float) $wc->get_regular_price();
+                $sale_price = (float) $wc->get_sale_price();
+                $stock_qty = $wc->get_stock_quantity();
+
+                // Badge
+                $badge      = null;
+                $badge_label = null;
+                if ( get_post_meta( $pid, '_pro_early_access', true ) ) {
+                    $badge = 'pro_early_access'; $badge_label = 'PRO EARLY ACCESS';
+                } elseif ( $sale_price > 0 ) {
+                    $badge = 'sale'; $badge_label = 'SALE';
+                } elseif ( $stock_qty !== null && $stock_qty <= 3 && $stock_qty > 0 ) {
+                    $badge = 'low_stock'; $badge_label = 'ONLY ' . $stock_qty . ' LEFT';
+                } elseif ( ( time() - get_post_time( 'U', false, $pid ) ) < 14 * DAY_IN_SECONDS ) {
+                    $badge = 'new'; $badge_label = 'NEW';
+                }
+
+                $all_products[ $pid ] = array(
+                    'id'             => $pid,
+                    'productId'      => $pid,
+                    'slug'           => $wc->get_slug(),
+                    'title'          => $wc->get_name(),
+                    'brand'          => get_post_meta( $pid, '_maker_name', true ) ?: '',
+                    'city'           => get_post_meta( $pid, '_maker_city', true ) ?: '',
+                    'price'          => $reg_price,
+                    'proPrice'       => $reg_price > 0 ? round( $reg_price * 0.9, 2 ) : null,
+                    'originalPrice'  => $sale_price > 0 ? $reg_price : null,
+                    'currency'       => $currency,
+                    'currencySymbol' => $currency_symbol,
+                    'image'          => $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : null,
+                    'badge'          => $badge,
+                    'badgeLabel'     => $badge_label,
+                    'storySlug'      => $post->post_name,
+                    'storyTitle'     => $post->post_title,
+                    'editorialQuote' => $wc->get_short_description() ?: '',
+                );
+                $seen_ids[ $pid ] = true;
+            }
+        }
+
+        $products_list = array_values( $all_products );
+
+        $hero         = ! empty( $products_list ) ? $products_list[0] : null;
+        $season_picks = array_slice( $products_list, 1, 4 );
+        $grid         = array_slice( $products_list, 5 );
+
+        return rest_ensure_response( array(
+            'hero'         => $hero,
+            'season_picks' => $season_picks,
+            'stories'      => array_slice( $stories, 0, 4 ),
+            'grid'         => $grid,
+        ) );
     }
 
     public static function handle_article_products( WP_REST_Request $request ) {

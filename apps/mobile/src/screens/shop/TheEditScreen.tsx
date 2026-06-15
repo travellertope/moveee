@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,50 +17,42 @@ import { useCartStore } from "../../store/cartStore";
 import { useAuthStore } from "../../auth/authStore";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
+import { api, MOBILE_API } from "../../api/client";
 
 interface EditProduct {
-  id: string;
+  id?: string;
   productId: number;
+  slug?: string;
   title: string;
   brand: string;
   city?: string;
   price: number;
   proPrice?: number;
+  currency?: string;
+  currencySymbol?: string;
   image?: string;
   badge?: "new" | "low_stock" | "sale" | null;
   badgeLabel?: string;
   storySlug?: string;
   storyTitle?: string;
   editorialQuote?: string;
-  originalPrice?: number;
+  originalPrice?: number | null;
 }
 
 interface EditStory {
   slug: string;
   title: string;
   category: string;
-  readTime: string;
+  readTime?: number | null;
   image?: string;
 }
 
-const HERO_PICKS: EditProduct[] = [];
-const PLACEHOLDER_PICKS: EditProduct[] = [
-  { id: "p1", productId: 1, title: "Indigo Resist-Dye Throw", brand: "Adire Studio", city: "Lagos", price: 145 },
-  { id: "p2", productId: 2, title: "Leather Card Holder", brand: "Craft Co", city: "Accra", price: 48, badge: "low_stock", badgeLabel: "ONLY 3 LEFT" },
-  { id: "p3", productId: 3, title: "Oxidised Silver Cuff", brand: "Atelier Nne", city: "London", price: 95, originalPrice: 130, badge: "sale", badgeLabel: "SALE" },
-];
-const PLACEHOLDER_GRID: EditProduct[] = [
-  { id: "g1", productId: 11, title: "Hand-Bound Journal", brand: "Paper Works Lagos", price: 28, badge: "new", badgeLabel: "NEW" },
-  { id: "g2", productId: 12, title: "Brass Incense Holder", brand: "Objects Lagos", price: 55 },
-  { id: "g3", productId: 13, title: "Batik Throw Cushion", brand: "Adire Studio", price: 89 },
-  { id: "g4", productId: 14, title: "Woven Hand Basket", brand: "Craft Co", price: 65, proPrice: 58 },
-  { id: "g5", productId: 15, title: "Tall Pitcher Jug", brand: "Bisi Ceramics", price: 95, badge: "low_stock", badgeLabel: "ONLY 1 LEFT" },
-  { id: "g6", productId: 16, title: "Leather Tote Bag", brand: "Craft Co", price: 185 },
-];
-const PLACEHOLDER_STORIES: EditStory[] = [
-  { slug: "craft-revival", title: "The Resurgence of Traditional Hand-Dyeing in West Africa", category: "CULTURE · CRAFT", readTime: "12 min read" },
-  { slug: "atelier-nne", title: "Inside Atelier Nne's Minimalist Metalworks Space", category: "CULTURE · CRAFT", readTime: "8 min read" },
-];
+interface TheEditResponse {
+  hero: EditProduct | null;
+  season_picks: EditProduct[];
+  stories: EditStory[];
+  grid: EditProduct[];
+}
 
 export default function TheEditScreen() {
   const nav = useNavigation<any>();
@@ -69,11 +61,30 @@ export default function TheEditScreen() {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
-  const [heroPick, setHeroPick] = useState<EditProduct | null>(null);
-  const [seasonPicks, setSeasonPicks] = useState<EditProduct[]>(PLACEHOLDER_PICKS);
-  const [gridPicks, setGridPicks] = useState<EditProduct[]>(PLACEHOLDER_GRID);
-  const [stories, setStories] = useState<EditStory[]>(PLACEHOLDER_STORIES);
-  const [loading, setLoading] = useState(false);
+  const [heroPick, setHeroPick]   = useState<EditProduct | null>(null);
+  const [seasonPicks, setSeasonPicks] = useState<EditProduct[]>([]);
+  const [gridPicks, setGridPicks] = useState<EditProduct[]>([]);
+  const [stories, setStories]     = useState<EditStory[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState(false);
+
+  const fetchEdit = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const data = await api.get<TheEditResponse>(`${MOBILE_API}/shop/the-edit`, false);
+      setHeroPick(data.hero);
+      setSeasonPicks(data.season_picks ?? []);
+      setGridPicks(data.grid ?? []);
+      setStories(data.stories ?? []);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchEdit(); }, [fetchEdit]);
 
   const isPatron = user?.tier === "patron";
 
@@ -129,57 +140,80 @@ export default function TheEditScreen() {
           </LinearGradient>
         </LinearGradient>
 
-        {/* As Seen in Magazine */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>AS SEEN IN THE MAGAZINE</Text>
+        {/* Loading / error state */}
+        {loading && (
+          <ActivityIndicator color={c.gold} style={{ marginTop: 40 }} />
+        )}
+        {!loading && error && (
+          <View style={{ alignItems: "center", paddingVertical: 40 }}>
+            <Text style={{ fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute, marginBottom: 12 }}>
+              Couldn't load The Edit.
+            </Text>
+            <TouchableOpacity onPress={fetchEdit}>
+              <Text style={{ fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre }}>Try again</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-          <View style={styles.featureCard}>
-            <View style={styles.featureImageBox}>
-              <LinearGradient
-                colors={["#E27D60", "#C5491F"]}
-                style={styles.featureImage}
-              />
-              <View style={styles.storyTag}>
-                <Ionicons name="book-outline" size={10} color={c.inkSoft} />
-                <Text style={styles.storyTagText}>Read Story</Text>
-              </View>
-            </View>
-            <View style={styles.featureContent}>
-              <Text style={styles.featureStoryLabel}>
-                📖 Story: The Craft Revival
-              </Text>
-              <Text style={styles.featureTitle}>Terracotta Ritual Bowl</Text>
-              <Text style={styles.featureMaker}>Bisi Ceramics · Lagos</Text>
-              <View style={styles.quoteBlock}>
-                <Text style={styles.quoteText}>
-                  "A vessel that holds memory as much as water — the terracotta knows what hands have shaped it."
-                </Text>
-              </View>
-              <View style={styles.featurePriceRow}>
-                <Text style={styles.featurePrice}>£68.00</Text>
-                {isPatron && (
-                  <Text style={styles.featureProPrice}>£61.00 for Pro ★</Text>
+        {/* As Seen in Magazine — hero feature card */}
+        {!loading && heroPick && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>AS SEEN IN THE MAGAZINE</Text>
+
+            <TouchableOpacity
+              style={styles.featureCard}
+              onPress={() => nav.navigate("ProductDetail", { id: heroPick.productId })}
+              activeOpacity={0.92}
+            >
+              <View style={styles.featureImageBox}>
+                {heroPick.image ? (
+                  <Image source={{ uri: heroPick.image }} style={styles.featureImage} resizeMode="cover" />
+                ) : (
+                  <LinearGradient colors={["#E27D60", "#C5491F"]} style={styles.featureImage} />
+                )}
+                {heroPick.storySlug && (
+                  <TouchableOpacity
+                    style={styles.storyTag}
+                    onPress={() => nav.navigate("Magazine", { screen: "Article", params: { slug: heroPick.storySlug } } as any)}
+                  >
+                    <Ionicons name="book-outline" size={10} color={c.inkSoft} />
+                    <Text style={styles.storyTagText}>Read Story</Text>
+                  </TouchableOpacity>
                 )}
               </View>
-              <TouchableOpacity
-                style={styles.addToBagBtn}
-                onPress={() =>
-                  handleAdd({
-                    id: "featured-bowl",
-                    productId: 100,
-                    title: "Terracotta Ritual Bowl",
-                    brand: "Bisi Ceramics",
-                    price: 68,
-                  })
-                }
-              >
-                <Text style={styles.addToBagText}>Add to Bag</Text>
-              </TouchableOpacity>
-            </View>
+              <View style={styles.featureContent}>
+                {heroPick.storyTitle ? (
+                  <Text style={styles.featureStoryLabel}>📖 Story: {heroPick.storyTitle}</Text>
+                ) : null}
+                <Text style={styles.featureTitle}>{heroPick.title}</Text>
+                <Text style={styles.featureMaker}>
+                  {heroPick.brand}{heroPick.city ? ` · ${heroPick.city}` : ""}
+                </Text>
+                {heroPick.editorialQuote ? (
+                  <View style={styles.quoteBlock}>
+                    <Text style={styles.quoteText}>"{heroPick.editorialQuote}"</Text>
+                  </View>
+                ) : null}
+                <View style={styles.featurePriceRow}>
+                  <Text style={styles.featurePrice}>
+                    {heroPick.currencySymbol ?? "£"}{heroPick.price?.toFixed(2)}
+                  </Text>
+                  {isPatron && heroPick.proPrice ? (
+                    <Text style={styles.featureProPrice}>
+                      {heroPick.currencySymbol ?? "£"}{heroPick.proPrice.toFixed(2)} for Pro ★
+                    </Text>
+                  ) : null}
+                </View>
+                <TouchableOpacity style={styles.addToBagBtn} onPress={() => handleAdd(heroPick)}>
+                  <Text style={styles.addToBagText}>Add to Bag</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
           </View>
-        </View>
+        )}
 
         {/* This Season's Picks */}
+        {!loading && seasonPicks.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>THIS SEASON'S PICKS</Text>
           <ScrollView
@@ -188,7 +222,7 @@ export default function TheEditScreen() {
             contentContainerStyle={styles.picksScroll}
           >
             {seasonPicks.map((item) => (
-              <View key={item.id} style={styles.pickCard}>
+              <TouchableOpacity key={item.productId} style={styles.pickCard} onPress={() => nav.navigate("ProductDetail", { id: item.productId })} activeOpacity={0.9}>
                 <View style={styles.pickImageBox}>
                   {item.image ? (
                     <Image source={{ uri: item.image }} style={styles.pickImage} />
@@ -236,12 +270,14 @@ export default function TheEditScreen() {
                     </TouchableOpacity>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
+        )}
 
         {/* Editorial Stories */}
+        {!loading && stories.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>STORIES FEATURING THESE OBJECTS</Text>
           {stories.map((story) => (
@@ -250,28 +286,33 @@ export default function TheEditScreen() {
               style={styles.storyCard}
               onPress={() => nav.navigate("Magazine", { screen: "Article", params: { slug: story.slug } } as any)}
             >
-              <LinearGradient
-                colors={["#E27D60", "#E8A87C"]}
-                style={styles.storyImage}
-              />
+              {story.image ? (
+                <Image source={{ uri: story.image }} style={styles.storyImage} resizeMode="cover" />
+              ) : (
+                <LinearGradient colors={["#E27D60", "#E8A87C"]} style={styles.storyImage} />
+              )}
               <View style={styles.storyContent}>
                 <Text style={styles.storyCat}>{story.category}</Text>
                 <Text style={styles.storyTitle} numberOfLines={2}>
                   {story.title}
                 </Text>
-                <Text style={styles.storyTime}>{story.readTime}</Text>
+                {story.readTime ? (
+                  <Text style={styles.storyTime}>{story.readTime} min read</Text>
+                ) : null}
               </View>
               <Ionicons name="chevron-forward" size={16} color={c.ghost} />
             </TouchableOpacity>
           ))}
         </View>
+        )}
 
         {/* All Edit Picks Grid */}
+        {!loading && gridPicks.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>ALL EDIT PICKS</Text>
           <View style={styles.grid}>
             {gridPicks.map((item) => (
-              <View key={item.id} style={styles.gridCard}>
+              <TouchableOpacity key={item.productId} style={styles.gridCard} onPress={() => nav.navigate("ProductDetail", { id: item.productId })} activeOpacity={0.9}>
                 <View style={styles.gridImageBox}>
                   {item.image ? (
                     <Image source={{ uri: item.image }} style={styles.gridImage} />
@@ -318,10 +359,11 @@ export default function TheEditScreen() {
                     </TouchableOpacity>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
+        )}
 
         {/* Sign-off band */}
         <View style={styles.signOff}>
