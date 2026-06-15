@@ -273,13 +273,14 @@ function dateToSeed(date: string): number {
   return h >>> 0;
 }
 
-function buildDailyPrompt(date: string, seed: number): string {
+function buildDailyPrompt(seedKey: string, seed: number): string {
   const topics = seededShuffle(TOPIC_POOL, seed).slice(0, 10);
   const topicList = topics.map((t, i) => `${i + 1}. ${t}`).join("\n");
+  const displayDate = seedKey.slice(0, 10);
 
   return `You are the question writer for Culture Games — a daily trivia game on The Moveee, celebrating global culture with a strong focus on African, Caribbean, and Black diaspora culture.
 
-Today is ${date}. Generate exactly 10 trivia questions — one for each topic assigned below. You MUST write one question per topic, in order. Roughly 70% of questions cover African/diaspora culture; 30% cover wider global culture.
+Today is ${displayDate}. Generate exactly 10 trivia questions — one for each topic assigned below. You MUST write one question per topic, in order. Roughly 70% of questions cover African/diaspora culture; 30% cover wider global culture.
 
 TODAY'S ASSIGNED TOPICS:
 ${topicList}
@@ -312,41 +313,10 @@ function extractJson(raw: string): string {
   return raw.slice(s, e + 1);
 }
 
-async function fetchFromWP(date: string): Promise<TriviaQuestion[] | null> {
-  try {
-    const res = await fetch(`${WP_URL}/wp-json/culture/v1/games/trivia-daily`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (data.date === date && Array.isArray(data.questions) && data.questions.length > 0) {
-      return data.questions as TriviaQuestion[];
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
 
-async function saveToWP(questions: TriviaQuestion[]): Promise<void> {
-  try {
-    await fetch(`${WP_URL}/wp-json/culture/v1/games/trivia-daily`, {
-      method:  "POST",
-      headers: {
-        "Content-Type":         "application/json",
-        "Authorization":        `Bearer ${API_KEY}`,
-        "X-Culture-API-Secret": API_KEY,
-      },
-      body: JSON.stringify({ questions }),
-    });
-  } catch {
-    // Non-fatal
-  }
-}
-
-async function generateQuestions(date: string): Promise<TriviaQuestion[] | null> {
-  const seed   = dateToSeed(date);
-  const prompt = buildDailyPrompt(date, seed);
+async function generateQuestions(seedKey: string): Promise<TriviaQuestion[] | null> {
+  const seed   = dateToSeed(seedKey);
+  const prompt = buildDailyPrompt(seedKey, seed);
   let lastErr: any;
 
   for (const modelId of TEXT_MODELS) {
@@ -818,30 +788,66 @@ const FALLBACK_QUESTIONS: TriviaQuestion[] = [
   },
 ];
 
-function getFallbackQuestions(date: string): TriviaQuestion[] {
-  const seed     = dateToSeed(date);
+function getFallbackQuestions(seedKey: string): TriviaQuestion[] {
+  const seed     = dateToSeed(seedKey);
   const shuffled = seededShuffle(FALLBACK_QUESTIONS, seed);
   return shuffled.slice(0, 10);
 }
 
-// ── Route handler ──────────────────────────────────────────────────────────────
-export async function GET() {
-  const date = new Date().toISOString().slice(0, 10);
+async function fetchFromWPSlot(date: string, slot: number): Promise<TriviaQuestion[] | null> {
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/games/trivia-daily?slot=${slot}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.date === date && data.slot === slot && Array.isArray(data.questions) && data.questions.length > 0) {
+      return data.questions as TriviaQuestion[];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
-  // 1. Try WordPress cache (same day)
-  const cached = await fetchFromWP(date);
+async function saveToWPSlot(questions: TriviaQuestion[], slot: number): Promise<void> {
+  try {
+    await fetch(`${WP_URL}/wp-json/culture/v1/games/trivia-daily`, {
+      method:  "POST",
+      headers: {
+        "Content-Type":         "application/json",
+        "Authorization":        `Bearer ${API_KEY}`,
+        "X-Culture-API-Secret": API_KEY,
+      },
+      body: JSON.stringify({ questions, slot }),
+    });
+  } catch {
+    // Non-fatal
+  }
+}
+
+// ── Route handler ──────────────────────────────────────────────────────────────
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const slot = Math.min(5, Math.max(1, parseInt(searchParams.get("slot") ?? "1") || 1));
+  const date = new Date().toISOString().slice(0, 10);
+  // Unique seed per day+slot — slots 2-5 are Pro-only extras, never repeating with other slots
+  const seedKey = `${date}-slot-${slot}`;
+
+  // 1. Try WordPress cache (slot-specific)
+  const cached = await fetchFromWPSlot(date, slot);
   if (cached) {
-    return NextResponse.json({ date, questions: cached, source: "cache" });
+    return NextResponse.json({ date, slot, questions: cached, source: "cache" });
   }
 
-  // 2. Generate via Gemini with today's unique topic brief
-  const generated = await generateQuestions(date);
+  // 2. Generate via Gemini with slot-seeded topic brief
+  const generated = await generateQuestions(seedKey);
   if (generated) {
-    await saveToWP(generated);
-    return NextResponse.json({ date, questions: generated, source: "gemini" });
+    await saveToWPSlot(generated, slot);
+    return NextResponse.json({ date, slot, questions: generated, source: "gemini" });
   }
 
   // 3. Gemini unavailable — serve from hardcoded fallback (never returns 500)
-  const fallback = getFallbackQuestions(date);
-  return NextResponse.json({ date, questions: fallback, source: "fallback" });
+  const fallback = getFallbackQuestions(seedKey);
+  return NextResponse.json({ date, slot, questions: fallback, source: "fallback" });
 }

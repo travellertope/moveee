@@ -62,7 +62,8 @@ export default function CrosswordGameScreen() {
     const playedToday = parseInt(storage.getString(countKey) ?? "0", 10);
     if (playedToday >= limit) { setPhase("played"); return; }
     try {
-      const resp = await fetch(`${PROXY}/games/crossword/daily`);
+      const slot = playedToday + 1;
+      const resp = await fetch(`${PROXY}/games/crossword/daily?slot=${slot}`);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       const p: CrosswordPuzzle = data.puzzle;

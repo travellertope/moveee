@@ -74,8 +74,10 @@ export default function TriviaGameScreen() {
         setPhase("played");
         return;
       }
-      const data = await api.get<{ date: string; questions: TriviaQuestion[] }>(
-        `${PROXY}/games/trivia/daily`
+      // slot = play number (1-5), ensuring each play is a unique game
+      const slot = playedToday + 1;
+      const data = await api.get<{ date: string; slot: number; questions: TriviaQuestion[] }>(
+        `${PROXY}/games/trivia/daily?slot=${slot}`
       );
       if (!data.questions?.length) throw new Error("no questions");
       setQuestions(data.questions);

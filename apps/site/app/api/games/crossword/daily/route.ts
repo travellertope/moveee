@@ -682,16 +682,19 @@ function numberAndClues(
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const isRandom = searchParams.get("random") === "true";
+  const slot = Math.min(5, Math.max(1, parseInt(searchParams.get("slot") ?? "1") || 1));
   const date = new Date().toISOString().slice(0, 10);
-  
+  // Unique seed per day+slot prevents any puzzle repeating across slots or days
+  const seedKey = isRandom ? `random-${Date.now()}` : `${date}-slot-${slot}`;
+
   let raw: { title: string; grid: string[]; clues: Omit<CrosswordClue, "number" | "row" | "col" | "length">[] } | null = null;
 
-  // Try WordPress cache first (persists across serverless invocations)
-  if (!isRandom) {
+  // Try WordPress cache first (slot 1 only — the shared daily game)
+  if (!isRandom && slot === 1) {
     raw = await fetchCrosswordFromWP(date);
   }
 
-  // Try Gemini if not cached
+  // Try Gemini if not cached (slot 1) or for Pro slots 2-5
   if (!raw && process.env.GEMINI_API_KEY) {
     const geminiPuzzle = await generateCrosswordWithGemini();
     if (geminiPuzzle) {
@@ -701,22 +704,21 @@ export async function GET(req: NextRequest) {
         clues: geminiPuzzle.clues.map(c => ({ direction: c.direction, answer: c.answer.toUpperCase(), clue: c.clue }))
       };
 
-      // Cache to WordPress if not a random request
-      if (!isRandom) {
+      // Only cache slot 1 to WordPress (shared daily game)
+      if (!isRandom && slot === 1) {
         await saveCrosswordToWP(raw, date);
       }
     }
   }
 
-  // Fallback to pre-built bank if Gemini failed or no API key
+  // Fallback to pre-built bank (deterministic per slot seed)
   if (!raw) {
     let idx: number;
     if (isRandom) {
-      // Truly random — different puzzle each press
       idx = Math.floor(Math.random() * PUZZLES.length);
     } else {
-      // Deterministic — same puzzle for all players today
-      const rng = makeRng(dateToSeed(date));
+      // Each slot+date combination picks a different puzzle from the bank
+      const rng = makeRng(dateToSeed(seedKey));
       idx = Math.floor(rng() * PUZZLES.length);
     }
     raw = PUZZLES[idx];
@@ -727,5 +729,5 @@ export async function GET(req: NextRequest) {
   const clues = numberAndClues(cells, raw.clues, size);
 
   const puzzle: CrosswordPuzzle = { size, cells, clues, title: raw.title };
-  return NextResponse.json({ date, puzzle });
+  return NextResponse.json({ date, slot, puzzle });
 }
