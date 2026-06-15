@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Composer States</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        'success-green': '#2D6A4F'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.05)',
+                        'sheet': '0 -4px 32px rgba(20, 17, 13, 0.18)',
+                        'dropdown': '0 10px 25px -5px rgba(20, 17, 13, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; min-width: 390px; min-height: 844px; flex-shrink: 0; }
+        
+        input:focus, textarea:focus { outline: none; border-color: #C5491F; }
+        ::placeholder { color: #C8BFB0; }
+        .drag-dots { letter-spacing: -2px; }
+    </style>
+</head>
+<body class="text-ink font-sans min-h-screen">
+
+    <!-- 2x5 Grid Container -->
+    <div class="flex flex-wrap justify-center gap-x-12 gap-y-16 max-w-[2400px] mx-auto">
+
+        <!-- ============================================== -->
+        <!-- FRAME 1: STANDARD POST                         -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <!-- Status Bar -->
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0 text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <!-- Shared Header -->
+                <header class="h-[56px] flex items-center justify-between px-4 border-b border-ghost bg-white z-20 shrink-0">
+                    <button class="text-ochre font-sans text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-start">Cancel</button>
+                    <h1 class="text-ink font-sans font-bold text-[15px]">New Post</h1>
+                    <button class="text-ochre font-sans font-bold text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-end">Post</button>
+                </header>
+
+                <!-- Template Indicator Row -->
+                <div class="h-[36px] w-full bg-paper-warm border-b border-ghost flex items-center justify-between px-[16px] shrink-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[16px] leading-none pb-0.5">✏️</span>
+                        <span class="font-sans text-[13px] font-bold text-gold">Post</span>
+                    </div>
+                    <button class="font-sans text-[12px] text-ochre hover:underline underline-offset-2">Change format</button>
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 overflow-y-auto pb-[48px] flex flex-col relative pt-[16px]">
+                    <!-- Section Tags -->
+                    <div class="flex px-[16px] gap-[8px] overflow-x-auto hide-scrollbar shrink-0 h-[40px] items-center">
+                        <button class="h-[28px] px-3 rounded-full bg-ink text-white text-[11px] font-bold whitespace-nowrap">Music</button>
+                        <button class="h-[28px] px-3 rounded-full bg-transparent border border-ghost text-ink-soft text-[11px] whitespace-nowrap">Film</button>
+                        <button class="h-[28px] px-3 rounded-full bg-transparent border border-ghost text-ink-soft text-[11px] whitespace-nowrap">Art</button>
+                        <button class="h-[28px] px-3 rounded-full bg-transparent border border-ghost text-ink-soft text-[11px] whitespace-nowrap">Fashion</button>
+                        <button class="h-[28px] px-3 rounded-full bg-transparent border border-ghost text-ink-soft text-[11px] whitespace-nowrap">Food</button>
+                    </div>
+
+                    <!-- Guide Chips -->
+                    <div class="flex px-[16px] gap-[8px] overflow-x-auto hide-scrollbar mt-1 shrink-0">
+                        <button class="py-[8px] px-[12px] rounded-full bg-paper-warm text-ink-soft text-[12px] whitespace-nowrap">🎵 What I'm listening to</button>
+                        <button class="py-[8px] px-[12px] rounded-full bg-paper-warm text-ink-soft text-[12px] whitespace-nowrap">🎬 Film reaction</button>
+                        <button class="py-[8px] px-[12px] rounded-full bg-paper-warm text-ink-soft text-[12px] whitespace-nowrap">✨ Discovery</button>
+                    </div>
+
+                    <!-- Main Textarea -->
+                    <div class="px-[16px] py-[16px] flex-1 flex flex-col relative min-h-[200px]">
+                        <textarea class="w-full flex-1 resize-none bg-transparent text-[15px] text-ink leading-relaxed" placeholder="What's on your mind?">Saw Tems perform at an intimate venue last night and I'm still not over it. She didn't say a word between songs — just let the music breathe. The crowd was completely silent.</textarea>
+                        <div class="absolute bottom-4 right-4 text-mute text-[11px] font-mono">184 / 1000</div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="w-full h-[1px] bg-ghost-light my-2"></div>
+
+                    <!-- Multi-Image Upload Pattern -->
+                    <div class="px-[16px] mb-4">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[8px]">Photos (optional)</label>
+                        <div class="flex gap-[8px] overflow-x-auto hide-scrollbar">
+                            <!-- Add tile -->
+                            <div class="w-[80px] h-[80px] rounded-lg border-[1.5px] border-dashed border-ghost flex flex-col items-center justify-center shrink-0 cursor-pointer hover:bg-gray-50">
+                                <svg class="w-5 h-5 text-ghost mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <span class="font-sans text-[10px] text-mute">Add</span>
+                            </div>
+                            <!-- Image 1 -->
+                            <div class="w-[80px] h-[80px] rounded-lg bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] relative shrink-0">
+                                <button class="absolute top-1 right-1 w-[18px] h-[18px] bg-white rounded-full flex items-center justify-center text-ink text-[12px] shadow-sm">✕</button>
+                            </div>
+                            <!-- Image 2 -->
+                            <div class="w-[80px] h-[80px] rounded-lg bg-gradient-to-tr from-[#2D9CDB] to-[#9b51e0] relative shrink-0">
+                                <button class="absolute top-1 right-1 w-[18px] h-[18px] bg-white rounded-full flex items-center justify-center text-ink text-[12px] shadow-sm">✕</button>
+                            </div>
+                        </div>
+                        <span class="block font-sans text-[11px] text-ghost mt-[6px]">Up to 4 photos</span>
+                    </div>
+
+                </div>
+
+                <!-- Shared Media Toolbar -->
+                <div class="h-[48px] bg-white border-t border-ghost flex items-center justify-between absolute bottom-0 w-full z-20">
+                    <div class="flex gap-[16px] px-[16px] text-mute">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[20px] font-medium leading-none flex items-center h-[24px]">@</span>
+                    </div>
+                    <div class="pr-[16px] text-mute text-[11px] font-mono">816</div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute">Standard Post</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: HIDDEN GEM                            -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0 text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <header class="h-[56px] flex items-center justify-between px-4 border-b border-ghost bg-white z-20 shrink-0">
+                    <button class="text-ochre font-sans text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-start">Cancel</button>
+                    <h1 class="text-ink font-sans font-bold text-[15px]">New Hidden Gem</h1>
+                    <button class="text-ochre font-sans font-bold text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-end">Post</button>
+                </header>
+
+                <div class="h-[36px] w-full bg-paper-warm border-b border-ghost flex items-center justify-between px-[16px] shrink-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[16px] leading-none pb-0.5">💎</span>
+                        <span class="font-sans text-[13px] font-bold text-gold">Hidden Gem</span>
+                    </div>
+                    <button class="font-sans text-[12px] text-ochre hover:underline underline-offset-2">Change format</button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pb-[48px] flex flex-col relative pt-[16px] gap-[16px]">
+                    
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Place name *</label>
+                        <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] text-[14px] text-ink bg-white" value="Bisi Ceramics Studio">
+                    </div>
+
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Location</label>
+                        <div class="relative flex items-center">
+                            <span class="absolute left-[16px] text-[16px]">📍</span>
+                            <input type="text" class="w-full h-[48px] border border-ghost rounded-lg pl-[40px] pr-[16px] text-[14px] text-ink bg-white" value="Balogun Market area · Lagos Island">
+                        </div>
+                    </div>
+
+                    <div class="px-[16px] flex flex-col gap-[8px]">
+                        <span class="font-sans text-[13px] text-mute">Link this place in the Directory</span>
+                        <div class="relative flex items-center">
+                            <svg class="w-4 h-4 text-ghost absolute left-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" class="w-full h-[40px] border border-ghost rounded-lg pl-[40px] pr-[16px] text-[14px] text-ink bg-white" value="Bisi Ceramics">
+                        </div>
+                        <div class="inline-flex items-center bg-paper-deep rounded-full pl-[12px] pr-[8px] py-[6px] border border-ghost/50 w-fit">
+                            <span class="text-[14px] mr-[6px]">🗂</span>
+                            <span class="text-[13px] text-ink mr-[8px]">Bisi Ceramics · Lagos</span>
+                            <button class="text-mute text-[14px] hover:text-ink-soft">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost-light"></div>
+
+                    <div class="px-[16px] flex flex-col min-h-[120px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Tell us about it *</label>
+                        <textarea class="w-full flex-1 resize-none bg-transparent text-[14px] text-ink leading-relaxed border border-ghost rounded-lg p-[16px]">Tucked behind Balogun Market — ceramics studio using Ondo-state clay. Afternoon workshops (₦8,000, 3hrs) worth every minute.</textarea>
+                    </div>
+
+                    <div class="px-[16px] flex items-center justify-between h-[36px]">
+                        <label class="font-sans text-[11px] font-bold text-mute">Rating (optional)</label>
+                        <div class="flex items-center gap-[8px]">
+                            <div class="flex gap-[4px]">
+                                <span class="text-[20px] text-ghost outline-text leading-none">☆</span>
+                                <span class="text-[20px] text-ghost outline-text leading-none">☆</span>
+                                <span class="text-[20px] text-ghost outline-text leading-none">☆</span>
+                                <span class="text-[20px] text-ghost outline-text leading-none">☆</span>
+                                <span class="text-[20px] text-ghost outline-text leading-none">☆</span>
+                            </div>
+                            <span class="font-sans text-[12px] text-ghost">Tap to rate</span>
+                        </div>
+                    </div>
+
+                    <div class="px-[16px] flex flex-col gap-[6px]">
+                        <label class="font-sans text-[11px] font-bold text-mute">Price range (optional)</label>
+                        <div class="flex gap-[8px]">
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink font-sans text-[12px]">₦</button>
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink font-sans text-[12px]">₦₦</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-ink text-white font-sans text-[12px]">₦₦₦</button>
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink font-sans text-[12px]">₦₦₦₦</button>
+                        </div>
+                    </div>
+
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Opening hours (optional)</label>
+                        <div class="relative flex items-center">
+                            <span class="absolute left-[16px] text-[16px]">🕐</span>
+                            <input type="text" class="w-full h-[48px] border border-ghost rounded-lg pl-[40px] pr-[16px] text-[14px] text-ink bg-white placeholder:text-ghost" placeholder="e.g. Tues–Sat, 10am–6pm">
+                        </div>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost-light"></div>
+
+                    <!-- Multi-Image Upload -->
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[8px]">Photos (optional)</label>
+                        <div class="flex gap-[8px] overflow-x-auto hide-scrollbar">
+                            <div class="w-[80px] h-[80px] rounded-lg border-[1.5px] border-dashed border-ghost flex flex-col items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 text-ghost mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <span class="font-sans text-[10px] text-mute">Add</span>
+                            </div>
+                            <div class="w-[80px] h-[80px] rounded-lg bg-gradient-to-tr from-[#A66C52] to-[#E2B19B] relative shrink-0">
+                                <button class="absolute top-1 right-1 w-[18px] h-[18px] bg-white rounded-full flex items-center justify-center text-ink text-[12px] shadow-sm">✕</button>
+                            </div>
+                            <div class="w-[80px] h-[80px] rounded-lg bg-gradient-to-tr from-[#D2B48C] to-[#EBE5DC] relative shrink-0">
+                                <button class="absolute top-1 right-1 w-[18px] h-[18px] bg-white rounded-full flex items-center justify-center text-ink text-[12px] shadow-sm">✕</button>
+                            </div>
+                            <div class="w-[80px] h-[80px] rounded-lg bg-gradient-to-tr from-[#708090] to-[#A0AEBD] relative shrink-0">
+                                <button class="absolute top-1 right-1 w-[18px] h-[18px] bg-white rounded-full flex items-center justify-center text-ink text-[12px] shadow-sm">✕</button>
+                            </div>
+                        </div>
+                        <span class="block font-sans text-[11px] text-ghost mt-[6px]">Up to 4 photos</span>
+                    </div>
+                </div>
+
+                <!-- Shared Media Toolbar -->
+                <div class="h-[48px] bg-white border-t border-ghost flex items-center justify-between absolute bottom-0 w-full z-20">
+                    <div class="flex gap-[16px] px-[16px] text-mute">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[20px] font-medium leading-none flex items-center h-[24px]">@</span>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute">Hidden Gem</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 3: CULTURAL TAKE                         -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0 text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <header class="h-[56px] flex items-center justify-between px-4 border-b border-ghost bg-white z-20 shrink-0">
+                    <button class="text-ochre font-sans text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-start">Cancel</button>
+                    <h1 class="text-ink font-sans font-bold text-[15px]">New Cultural Take</h1>
+                    <button class="text-ochre font-sans font-bold text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-end">Post</button>
+                </header>
+
+                <div class="h-[36px] w-full bg-paper-warm border-b border-ghost flex items-center justify-between px-[16px] shrink-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[16px] leading-none pb-0.5">🔥</span>
+                        <span class="font-sans text-[13px] font-bold text-gold">Cultural Take</span>
+                    </div>
+                    <button class="font-sans text-[12px] text-ochre hover:underline underline-offset-2">Change format</button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pb-[48px] flex flex-col relative pt-[16px]">
+                    
+                    <div class="px-[16px] mb-4 flex flex-col min-h-[80px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Your take *</label>
+                        <textarea class="w-full flex-1 resize-none bg-transparent font-serif text-[20px] font-bold text-ink leading-[1.3] placeholder-ghost" placeholder="What's your take?">Streaming killed the African album as an art form.</textarea>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost-light my-2"></div>
+
+                    <div class="px-[16px] mb-4 flex flex-col flex-1 min-h-[200px] mt-2">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Explain your take *</label>
+                        <textarea class="w-full flex-1 resize-none bg-transparent font-sans text-[14px] text-ink leading-relaxed placeholder-ghost">We've spent a decade celebrating Afrobeats going global. But look at what's actually being released: endless singles, loosely stitched 'albums' built for playlists. Fela never needed a playlist algorithm. We're losing narrative depth and calling it progress.</textarea>
+                    </div>
+
+                    <!-- Section Tags -->
+                    <div class="flex px-[16px] gap-[8px] overflow-x-auto hide-scrollbar shrink-0 h-[40px] items-center mt-auto mb-4 border-t border-ghost-light pt-4">
+                        <button class="h-[28px] px-3 rounded-full bg-ink text-white text-[11px] font-bold whitespace-nowrap">Music</button>
+                        <button class="h-[28px] px-3 rounded-full bg-transparent border border-ghost text-ink-soft text-[11px] whitespace-nowrap">Culture</button>
+                        <button class="h-[28px] px-3 rounded-full bg-transparent border border-ghost text-ink-soft text-[11px] whitespace-nowrap">Film</button>
+                        <button class="h-[28px] px-3 rounded-full bg-transparent border border-ghost text-ink-soft text-[11px] whitespace-nowrap">Ideas</button>
+                    </div>
+
+                </div>
+
+                <div class="h-[48px] bg-white border-t border-ghost flex items-center justify-between absolute bottom-0 w-full z-20">
+                    <div class="flex gap-[16px] px-[16px] text-mute">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[20px] font-medium leading-none flex items-center h-[24px]">@</span>
+                    </div>
+                    <div class="pr-[16px] text-mute text-[11px] font-mono">248 / 1000</div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute">Cultural Take</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 4: FOOD REVIEW                           -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0 text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <header class="h-[56px] flex items-center justify-between px-4 border-b border-ghost bg-white z-20 shrink-0">
+                    <button class="text-ochre font-sans text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-start">Cancel</button>
+                    <h1 class="text-ink font-sans font-bold text-[15px]">New Food Review</h1>
+                    <button class="text-ochre font-sans font-bold text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-end">Post</button>
+                </header>
+
+                <div class="h-[36px] w-full bg-paper-warm border-b border-ghost flex items-center justify-between px-[16px] shrink-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[16px] leading-none pb-0.5">🍽️</span>
+                        <span class="font-sans text-[13px] font-bold text-gold">Food Review</span>
+                    </div>
+                    <button class="font-sans text-[12px] text-ochre hover:underline underline-offset-2">Change format</button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pb-[48px] flex flex-col relative pt-[16px] gap-[16px]">
+                    
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Dish / Item *</label>
+                        <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] text-[14px] text-ink bg-white" value="Suya Platter for Two">
+                    </div>
+
+                    <div class="px-[16px] flex flex-col gap-[8px]">
+                        <span class="font-sans text-[11px] font-bold text-mute">Restaurant or venue</span>
+                        <div class="relative flex items-center">
+                            <svg class="w-4 h-4 text-ghost absolute left-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" class="w-full h-[40px] border border-ghost rounded-lg pl-[40px] pr-[16px] text-[14px] text-ink bg-white" value="Nok by Alara">
+                        </div>
+                        <div class="inline-flex items-center bg-paper-deep rounded-full pl-[12px] pr-[8px] py-[6px] border border-ghost/50 w-fit">
+                            <span class="text-[14px] mr-[6px]">🗂</span>
+                            <span class="text-[13px] text-ink mr-[8px]">Nok by Alara · Victoria Island</span>
+                            <button class="text-mute text-[14px] hover:text-ink-soft">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost-light"></div>
+
+                    <!-- Ratings Block -->
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[8px]">Ratings *</label>
+                        <div class="flex flex-col border-t border-ghost/50">
+                            <!-- Taste -->
+                            <div class="h-[44px] flex items-center border-b border-ghost/50">
+                                <span class="font-sans text-[13px] text-ink-soft w-[72px]">Taste</span>
+                                <div class="flex gap-[4px] flex-1">
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                </div>
+                                <span class="font-mono text-[12px] text-gold">5.0</span>
+                            </div>
+                            <!-- Value -->
+                            <div class="h-[44px] flex items-center border-b border-ghost/50">
+                                <span class="font-sans text-[13px] text-ink-soft w-[72px]">Value</span>
+                                <div class="flex gap-[4px] flex-1">
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                    <span class="text-[20px] text-ghost outline-text leading-none">☆</span>
+                                </div>
+                                <span class="font-mono text-[12px] text-gold">4.0</span>
+                            </div>
+                            <!-- Vibe -->
+                            <div class="h-[44px] flex items-center border-b border-ghost/50">
+                                <span class="font-sans text-[13px] text-ink-soft w-[72px]">Vibe</span>
+                                <div class="flex gap-[4px] flex-1">
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                    <span class="text-[20px] text-ochre leading-none">★</span>
+                                </div>
+                                <span class="font-mono text-[12px] text-gold">5.0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-[16px] flex flex-col min-h-[120px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Your review *</label>
+                        <textarea class="w-full flex-1 resize-none bg-transparent text-[14px] text-ink leading-relaxed border border-ghost rounded-lg p-[16px]">The suya spice rub is fresh — you can taste the yaji. The grilled plantain sides are the best in Lagos. Worth every naira.</textarea>
+                    </div>
+
+                    <div class="flex flex-col gap-[6px]">
+                        <label class="font-sans text-[11px] font-bold text-mute px-[16px]">Cuisine (optional)</label>
+                        <div class="flex gap-[8px] px-[16px] overflow-x-auto hide-scrollbar h-[32px]">
+                            <button class="h-[32px] px-[16px] rounded-full bg-ink text-white font-sans text-[12px] font-bold whitespace-nowrap">Nigerian</button>
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Pan-African</button>
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">West African</button>
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Continental</button>
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Fusion</button>
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Seafood</button>
+                        </div>
+                    </div>
+
+                    <div class="px-[16px] flex items-center h-[36px]">
+                        <label class="font-sans text-[11px] font-bold text-mute mr-[12px] w-[120px]">Price range (optional)</label>
+                        <div class="flex gap-[8px]">
+                            <button class="h-[32px] px-[12px] rounded-full border border-ghost text-ink font-sans text-[12px]">₦</button>
+                            <button class="h-[32px] px-[12px] rounded-full border border-ghost text-ink font-sans text-[12px]">₦₦</button>
+                            <button class="h-[32px] px-[12px] rounded-full bg-ink text-white font-sans text-[12px]">₦₦₦</button>
+                            <button class="h-[32px] px-[12px] rounded-full border border-ghost text-ink font-sans text-[12px]">₦₦₦₦</button>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost-light"></div>
+
+                    <!-- Multi-Image Upload -->
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[8px]">Photos (optional)</label>
+                        <div class="flex gap-[8px] overflow-x-auto hide-scrollbar">
+                            <div class="w-[80px] h-[80px] rounded-lg border-[1.5px] border-dashed border-ghost flex flex-col items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 text-ghost mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <span class="font-sans text-[10px] text-mute">Add</span>
+                            </div>
+                            <div class="w-[80px] h-[80px] rounded-lg bg-gradient-to-tr from-[#C5491F] to-[#E2B19B] relative shrink-0">
+                                <button class="absolute top-1 right-1 w-[18px] h-[18px] bg-white rounded-full flex items-center justify-center text-ink text-[12px] shadow-sm">✕</button>
+                            </div>
+                            <div class="w-[80px] h-[80px] rounded-lg bg-gradient-to-tr from-[#2c3e50] to-[#A0AEBD] relative shrink-0">
+                                <button class="absolute top-1 right-1 w-[18px] h-[18px] bg-white rounded-full flex items-center justify-center text-ink text-[12px] shadow-sm">✕</button>
+                            </div>
+                        </div>
+                        <span class="block font-sans text-[11px] text-ghost mt-[6px]">Up to 4 photos</span>
+                    </div>
+
+                </div>
+
+                <div class="h-[48px] bg-white border-t border-ghost flex items-center justify-between absolute bottom-0 w-full z-20">
+                    <div class="flex gap-[16px] px-[16px] text-mute">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[20px] font-medium leading-none flex items-center h-[24px]">@</span>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute">Food Review</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 5: CREATIVE SHOWCASE                     -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0 text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <header class="h-[56px] flex items-center justify-between px-4 border-b border-ghost bg-white z-20 shrink-0">
+                    <button class="text-ochre font-sans text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-start">Cancel</button>
+                    <h1 class="text-ink font-sans font-bold text-[15px]">New Creative Showcase</h1>
+                    <button class="text-ochre font-sans font-bold text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-end">Post</button>
+                </header>
+
+                <div class="h-[36px] w-full bg-paper-warm border-b border-ghost flex items-center justify-between px-[16px] shrink-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[16px] leading-none pb-0.5">🎨</span>
+                        <span class="font-sans text-[13px] font-bold text-gold">Creative Showcase</span>
+                    </div>
+                    <button class="font-sans text-[12px] text-ochre hover:underline underline-offset-2">Change format</button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pb-[48px] flex flex-col relative pt-[16px] gap-[16px]">
+                    
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Title of your work *</label>
+                        <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] text-[14px] text-ink bg-white" value="Zaria Music Visuals — Vol. 2">
+                    </div>
+
+                    <div class="flex flex-col gap-[6px]">
+                        <label class="font-sans text-[11px] font-bold text-mute px-[16px]">Medium</label>
+                        <div class="flex gap-[8px] px-[16px] overflow-x-auto hide-scrollbar h-[32px]">
+                            <button class="h-[32px] px-[16px] rounded-full bg-ink text-white font-sans text-[12px] font-bold whitespace-nowrap">Photography</button>
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Film</button>
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Digital Art</button>
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Illustration</button>
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Music</button>
+                            <button class="h-[32px] px-[16px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Writing</button>
+                        </div>
+                    </div>
+
+                    <div class="px-[16px] flex flex-col min-h-[160px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">About this work *</label>
+                        <textarea class="w-full flex-1 resize-none bg-transparent text-[14px] text-ink leading-relaxed border border-ghost rounded-lg p-[16px]">This series explores the space between performance and stillness — the moment after the last note. Shot over two months on film, no digital corrections.</textarea>
+                    </div>
+
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Collaborator (optional)</label>
+                        <div class="relative flex items-center">
+                            <span class="absolute left-[16px] text-[16px] font-medium">@</span>
+                            <input type="text" class="w-full h-[40px] border border-ghost rounded-lg pl-[40px] pr-[16px] text-[14px] text-ink bg-white" value="@zaria.official">
+                        </div>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost-light"></div>
+
+                    <!-- Single Large Image Upload Area -->
+                    <div class="px-[16px]">
+                        <div class="w-full h-[120px] rounded-xl border-[1.5px] border-dashed border-ghost bg-paper-deep/50 flex flex-col items-center justify-center relative cursor-pointer">
+                            <svg class="w-6 h-6 text-ghost mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span class="font-sans text-[13px] text-mute">Add photos or video</span>
+                            
+                            <!-- Overlaid 'added' chip to match spec -->
+                            <div class="absolute bottom-[12px] bg-white border border-ghost rounded-md p-1 pr-2 flex items-center gap-2 shadow-sm">
+                                <div class="w-[32px] h-[32px] bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] rounded-sm"></div>
+                                <span class="font-mono text-[11px] text-ink">zaria-visuals-01.jpg</span>
+                                <button class="ml-1 text-mute hover:text-ink">✕</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-[48px] bg-white border-t border-ghost flex items-center justify-between absolute bottom-0 w-full z-20">
+                    <div class="flex gap-[16px] px-[16px] text-mute">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[20px] font-medium leading-none flex items-center h-[24px]">@</span>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute">Creative Showcase</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 6: BOOK REVIEW 📚                        -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0 text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <header class="h-[56px] flex items-center justify-between px-4 border-b border-ghost bg-white z-20 shrink-0">
+                    <button class="text-ochre font-sans text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-start">Cancel</button>
+                    <h1 class="text-ink font-sans font-bold text-[15px]">New Book Review</h1>
+                    <button class="text-ochre font-sans font-bold text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-end">Post</button>
+                </header>
+
+                <div class="h-[36px] w-full bg-paper-warm border-b border-ghost flex items-center justify-between px-[16px] shrink-0 z-10">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[16px] leading-none pb-0.5">📚</span>
+                        <span class="font-sans text-[13px] font-bold text-gold">Book Review</span>
+                    </div>
+                    <button class="font-sans text-[12px] text-ochre hover:underline underline-offset-2">Change format</button>
+                </div>
+
+                <!-- Content Area -->
+                <div class="flex-1 overflow-y-auto pb-[48px] flex flex-col relative pt-[16px] gap-[16px] z-0">
+                    
+                    <!-- Search Field + Dropdown -->
+                    <div class="px-[16px] relative z-30">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Book *</label>
+                        <div class="relative flex items-center">
+                            <svg class="w-4 h-4 text-ghost absolute left-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" class="w-full h-[48px] border border-ghost rounded-lg pl-[40px] pr-[16px] text-[14px] text-ink bg-white" value="Things Fall Apart">
+                        </div>
+                        
+                        <!-- Dropdown Results -->
+                        <div class="absolute top-[76px] left-[16px] right-[16px] bg-white rounded-lg shadow-dropdown border border-ghost/20 flex flex-col px-[16px] py-[8px]">
+                            <!-- Row 1 -->
+                            <div class="h-[48px] border-l-[2px] border-ochre flex items-center px-[8px] gap-[12px] bg-paper-deep/50 rounded-r-md cursor-pointer mb-[4px]">
+                                <div class="w-[36px] h-[40px] bg-gradient-to-tr from-[#A66C52] to-[#E2B19B] rounded-[2px] shrink-0"></div>
+                                <div class="flex flex-col flex-1 justify-center">
+                                    <span class="font-sans text-[14px] font-bold text-ink leading-tight">Things Fall Apart</span>
+                                    <span class="font-sans text-[12px] text-mute">Chinua Achebe · 1958</span>
+                                </div>
+                            </div>
+                            <!-- Row 2 -->
+                            <div class="h-[48px] border-b border-ghost/30 flex items-center px-[8px] gap-[12px] cursor-pointer">
+                                <div class="w-[36px] h-[40px] bg-gradient-to-tr from-[#8E54E9] to-[#4776E6] rounded-[2px] shrink-0"></div>
+                                <div class="flex flex-col flex-1 justify-center">
+                                    <span class="font-sans text-[14px] font-bold text-ink leading-tight">Things Fall Apart (Graphic Novel)</span>
+                                    <span class="font-sans text-[12px] text-mute">Chinua Achebe · 2021</span>
+                                </div>
+                            </div>
+                            <!-- Row 3 -->
+                            <div class="h-[48px] border-b border-ghost/30 flex items-center px-[8px] gap-[12px] cursor-pointer">
+                                <div class="w-[36px] h-[40px] bg-gradient-to-tr from-[#F2C94C] to-[#F2994A] rounded-[2px] shrink-0"></div>
+                                <div class="flex flex-col flex-1 justify-center">
+                                    <span class="font-sans text-[14px] font-bold text-ink leading-tight">The Famished Road</span>
+                                    <span class="font-sans text-[12px] text-mute">Ben Okri · 1991</span>
+                                </div>
+                            </div>
+                            <button class="font-sans text-[13px] text-ochre flex items-center gap-[6px] h-[40px] px-[8px]">
+                                <span class="text-[16px] font-medium leading-none mb-0.5">+</span> Add new book
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pushing content down manually to mock the dropdown overlay space -->
+                    <div class="mt-[200px]"></div>
+
+                    <!-- Linked Book Card -->
+                    <div class="px-[16px]">
+                        <div class="bg-white border border-ghost rounded-lg p-[12px] flex items-start gap-[12px] relative shadow-sm">
+                            <div class="w-[48px] h-[64px] rounded-sm shadow-card bg-gradient-to-tr from-[#A66C52] to-[#E2B19B] shrink-0"></div>
+                            <div class="flex flex-col flex-1 pt-[2px]">
+                                <span class="font-sans text-[15px] font-bold text-ink leading-tight">Things Fall Apart</span>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">Chinua Achebe</span>
+                                <a href="#" class="font-sans text-[12px] text-ochre underline underline-offset-2 mt-[6px]">View in Directory &rarr;</a>
+                            </div>
+                            <button class="absolute top-[12px] right-[12px] text-mute text-[12px] hover:text-ink flex items-center justify-center w-[20px] h-[20px]">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- Read Status -->
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Status *</label>
+                        <div class="flex gap-[8px]">
+                            <button class="h-[32px] px-[16px] rounded-full bg-ink text-white font-sans text-[12px] font-bold">Finished</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px]">Reading</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px]">Want to Read</button>
+                        </div>
+                    </div>
+
+                    <!-- Overall Rating -->
+                    <div class="px-[16px] flex items-center justify-between h-[44px]">
+                        <span class="font-sans text-[13px] text-ink-soft">Overall rating *</span>
+                        <div class="flex items-center gap-[8px]">
+                            <div class="flex gap-[4px]">
+                                <span class="text-[24px] text-ochre leading-none">★</span>
+                                <span class="text-[24px] text-ochre leading-none">★</span>
+                                <span class="text-[24px] text-ochre leading-none">★</span>
+                                <span class="text-[24px] text-ochre leading-none">★</span>
+                                <span class="text-[24px] text-ochre leading-none">★</span>
+                            </div>
+                            <span class="font-mono text-[14px] font-bold text-gold">5.0</span>
+                        </div>
+                    </div>
+
+                    <!-- Ratings Breakdown -->
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Ratings *</label>
+                        <div class="flex flex-col border-t border-ghost/50">
+                            <div class="h-[44px] flex items-center border-b border-ghost/50">
+                                <span class="font-sans text-[13px] text-ink-soft w-[100px]">Writing</span>
+                                <div class="flex gap-[2px] flex-1">
+                                    <span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span>
+                                </div>
+                                <span class="font-mono text-[12px] text-gold text-right w-[30px]">5.0</span>
+                            </div>
+                            <div class="h-[44px] flex items-center border-b border-ghost/50">
+                                <span class="font-sans text-[13px] text-ink-soft w-[100px]">Story</span>
+                                <div class="flex gap-[2px] flex-1">
+                                    <span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span>
+                                </div>
+                                <span class="font-mono text-[12px] text-gold text-right w-[30px]">5.0</span>
+                            </div>
+                            <div class="h-[44px] flex items-center border-b border-ghost/50">
+                                <span class="font-sans text-[13px] text-ink-soft w-[100px]">Characters</span>
+                                <div class="flex gap-[2px] flex-1">
+                                    <span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span>
+                                </div>
+                                <span class="font-mono text-[12px] text-gold text-right w-[30px]">5.0</span>
+                            </div>
+                            <div class="h-[44px] flex items-center border-b border-ghost/50">
+                                <span class="font-sans text-[13px] text-ink-soft w-[100px]">Pacing</span>
+                                <div class="flex gap-[2px] flex-1">
+                                    <span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ochre leading-none">★</span><span class="text-[18px] text-ghost outline-text leading-none">☆</span>
+                                </div>
+                                <span class="font-mono text-[12px] text-gold text-right w-[30px]">4.0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Review Textarea -->
+                    <div class="px-[16px] flex flex-col min-h-[120px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Your review *</label>
+                        <textarea class="w-full flex-1 resize-none bg-transparent text-[14px] text-ink leading-relaxed border border-ghost rounded-lg p-[16px]">Achebe dismantles the colonial narrative with the very language of the coloniser. Every character is fully realised — Okonkwo's tragedy feels earned, not imposed.</textarea>
+                    </div>
+
+                    <!-- Favourite Quote -->
+                    <div class="px-[16px] flex flex-col min-h-[80px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Favourite quote (optional)</label>
+                        <div class="border-l-[3px] border-ochre pl-[16px]">
+                            <textarea class="w-full h-full min-h-[60px] resize-none bg-transparent font-sans text-[14px] italic text-ink leading-relaxed outline-none">"Things fall apart; the centre cannot hold."</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Recommend Chips -->
+                    <div class="px-[16px] flex flex-col gap-[6px]">
+                        <label class="font-sans text-[11px] font-bold text-mute">Would you recommend it? *</label>
+                        <div class="flex gap-[8px]">
+                            <button class="h-[32px] px-[16px] rounded-full bg-success-green text-white font-sans text-[12px] font-bold flex items-center gap-[6px]">Yes ✓</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px]">No</button>
+                        </div>
+                    </div>
+
+                    <!-- Genre Tags -->
+                    <div class="flex flex-col gap-[6px]">
+                        <label class="font-sans text-[11px] font-bold text-mute px-[16px]">Genres (optional)</label>
+                        <div class="flex gap-[8px] px-[16px] overflow-x-auto hide-scrollbar h-[32px]">
+                            <button class="h-[32px] px-[12px] rounded-full bg-ink text-white font-sans text-[12px] font-bold whitespace-nowrap">Classic Literature</button>
+                            <button class="h-[32px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">African Lit</button>
+                            <button class="h-[32px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Post-Colonial</button>
+                            <button class="h-[32px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Fiction</button>
+                            <button class="h-[32px] px-[12px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Historical</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Media Toolbar (No Camera) -->
+                <div class="h-[48px] bg-white border-t border-ghost flex items-center justify-between absolute bottom-0 w-full z-20">
+                    <div class="flex gap-[16px] px-[16px] text-mute">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[20px] font-medium leading-none flex items-center h-[24px]">@</span>
+                    </div>
+                </div>
+
+            </div>
+            <span class="font-mono text-[11px] text-mute uppercase tracking-widest text-center mt-2">Book Review</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 7: POLL 📊                               -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0 text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <header class="h-[56px] flex items-center justify-between px-4 border-b border-ghost bg-white z-20 shrink-0">
+                    <button class="text-ochre font-sans text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-start">Cancel</button>
+                    <h1 class="text-ink font-sans font-bold text-[15px]">New Poll</h1>
+                    <button class="text-ochre font-sans font-bold text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-end">Post</button>
+                </header>
+
+                <div class="h-[36px] w-full bg-paper-warm border-b border-ghost flex items-center justify-between px-[16px] shrink-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[16px] leading-none pb-0.5">📊</span>
+                        <span class="font-sans text-[13px] font-bold text-gold">Poll</span>
+                    </div>
+                    <button class="font-sans text-[12px] text-ochre hover:underline underline-offset-2">Change format</button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pb-[48px] flex flex-col relative pt-[16px] gap-[16px]">
+                    
+                    <div class="px-[16px] relative">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Poll question *</label>
+                        <textarea class="w-full h-[80px] border border-ghost rounded-lg p-[16px] text-[15px] text-ink resize-none bg-white" placeholder="Ask a question...">What's the greatest era of Afrobeats?</textarea>
+                    </div>
+
+                    <div class="flex flex-col gap-[8px] px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[2px]">Options *</label>
+                        
+                        <!-- Option 1 -->
+                        <div class="h-[48px] border border-ghost rounded-lg px-[16px] flex items-center bg-white">
+                            <span class="text-ghost text-[16px] mr-[8px] drag-dots select-none">⠿</span>
+                            <input type="text" class="flex-1 h-full bg-transparent text-[14px] text-ink" value="90s Fela era">
+                            <button class="text-ghost ml-[8px] hover:text-ink-soft text-[16px]">✕</button>
+                        </div>
+                        <!-- Option 2 -->
+                        <div class="h-[48px] border border-ghost rounded-lg px-[16px] flex items-center bg-white">
+                            <span class="text-ghost text-[16px] mr-[8px] drag-dots select-none">⠿</span>
+                            <input type="text" class="flex-1 h-full bg-transparent text-[14px] text-ink" value="Wizkid / Davido 2010s">
+                            <button class="text-ghost ml-[8px] hover:text-ink-soft text-[16px]">✕</button>
+                        </div>
+                        <!-- Option 3 -->
+                        <div class="h-[48px] border border-ghost rounded-lg px-[16px] flex items-center bg-white">
+                            <span class="text-ghost text-[16px] mr-[8px] drag-dots select-none">⠿</span>
+                            <input type="text" class="flex-1 h-full bg-transparent text-[14px] text-ink" value="Burna Boy / Tems era">
+                            <button class="text-ghost ml-[8px] hover:text-ink-soft text-[16px]">✕</button>
+                        </div>
+                        <!-- Option 4 -->
+                        <div class="h-[48px] border border-ghost rounded-lg px-[16px] flex items-center bg-paper-deep">
+                            <span class="text-ghost text-[16px] mr-[8px] drag-dots select-none opacity-50">⠿</span>
+                            <input type="text" class="flex-1 h-full bg-transparent text-[14px] text-ink placeholder:text-ghost" placeholder="Option 4...">
+                            <button class="text-ghost ml-[8px] hover:text-ink-soft text-[16px] opacity-0 pointer-events-none">✕</button>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mt-[4px]">
+                            <button class="text-[13px] text-ghost font-sans text-left disabled cursor-default">+ Add option</button>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost-light my-1"></div>
+
+                    <div class="flex items-center justify-between px-[16px] h-[36px]">
+                        <span class="font-sans text-[13px] text-mute">Poll duration</span>
+                        <div class="flex">
+                            <button class="h-[32px] px-4 rounded-l-lg border border-ghost border-r-0 bg-white text-ink-soft font-sans text-[13px]">1d</button>
+                            <button class="h-[32px] px-4 border border-ink bg-ink text-white font-sans text-[13px] font-bold">3d</button>
+                            <button class="h-[32px] px-4 rounded-r-lg border border-ghost border-l-0 bg-white text-ink-soft font-sans text-[13px]">7d</button>
+                        </div>
+                    </div>
+
+                    <div class="px-[16px] flex-1 flex flex-col relative min-h-[80px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Add a description (optional)</label>
+                        <textarea class="w-full flex-1 resize-none bg-transparent text-[14px] text-ink border border-ghost rounded-lg p-[16px] placeholder:text-ghost placeholder:italic leading-relaxed" placeholder="Give context for your poll..."></textarea>
+                    </div>
+
+                </div>
+
+                <div class="h-[48px] bg-white border-t border-ghost flex items-center justify-between absolute bottom-0 w-full z-20">
+                    <div class="flex gap-[16px] px-[16px] text-mute">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[20px] font-medium leading-none flex items-center h-[24px]">@</span>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute uppercase tracking-widest text-center mt-2">Poll</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 8: ITINERARY 🗺️                          -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0 text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <header class="h-[56px] flex items-center justify-between px-4 border-b border-ghost bg-white z-20 shrink-0">
+                    <button class="text-ochre font-sans text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-start">Cancel</button>
+                    <h1 class="text-ink font-sans font-bold text-[15px]">New Itinerary</h1>
+                    <button class="text-ochre font-sans font-bold text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-end">Post</button>
+                </header>
+
+                <div class="h-[36px] w-full bg-paper-warm border-b border-ghost flex items-center justify-between px-[16px] shrink-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[16px] leading-none pb-0.5">🗺️</span>
+                        <span class="font-sans text-[13px] font-bold text-gold">Itinerary</span>
+                    </div>
+                    <button class="font-sans text-[12px] text-ochre hover:underline underline-offset-2">Change format</button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pb-[48px] flex flex-col relative pt-[16px] gap-[16px]">
+                    
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Trip title *</label>
+                        <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] text-[14px] text-ink bg-white" value="48 Hours in Lagos: The Culture Route">
+                    </div>
+
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">City / Region</label>
+                        <div class="relative flex items-center">
+                            <span class="absolute left-[16px] text-[16px]">📍</span>
+                            <input type="text" class="w-full h-[48px] border border-ghost rounded-lg pl-[40px] pr-[16px] text-[14px] text-ink bg-white" value="Lagos, Nigeria">
+                        </div>
+                    </div>
+
+                    <div class="px-[16px] flex flex-col gap-[12px]">
+                        <div class="flex justify-between items-center mb-[2px]">
+                            <span class="font-sans text-[11px] font-bold text-mute">Stops *</span>
+                            <button class="font-sans text-[13px] text-ochre">Add stop +</button>
+                        </div>
+
+                        <!-- Stop 1 -->
+                        <div class="bg-white border border-ghost rounded-lg p-[16px] flex relative min-h-[80px]">
+                            <div class="absolute left-[28px] top-[44px] bottom-[-16px] w-[1px] border-l border-dashed border-gold z-0"></div>
+                            <div class="w-[24px] h-[24px] rounded-full bg-paper-warm border border-ghost flex items-center justify-center shrink-0 z-10"><span class="text-mute font-mono text-[12px] font-bold">1</span></div>
+                            <div class="ml-[12px] flex-1 flex flex-col gap-[4px] z-10">
+                                <input type="text" class="w-full bg-transparent font-sans text-[14px] font-bold text-ink outline-none" value="Nike Art Gallery">
+                                <span class="font-sans text-[12px] text-ochre">🗂 Nike Art Gallery · Ikoyi</span>
+                                <input type="text" class="w-full bg-transparent font-sans text-[13px] text-ink outline-none mt-[4px]" value="Go early for the rooftop.">
+                            </div>
+                            <button class="text-ghost text-[14px] absolute top-[12px] right-[12px]">✕</button>
+                        </div>
+
+                        <!-- Stop 2 -->
+                        <div class="bg-white border border-ghost rounded-lg p-[16px] flex relative min-h-[80px]">
+                            <div class="absolute left-[28px] top-[44px] bottom-[-16px] w-[1px] border-l border-dashed border-gold z-0"></div>
+                            <div class="w-[24px] h-[24px] rounded-full bg-paper-warm border border-ghost flex items-center justify-center shrink-0 z-10"><span class="text-mute font-mono text-[12px] font-bold">2</span></div>
+                            <div class="ml-[12px] flex-1 flex flex-col gap-[4px] z-10">
+                                <input type="text" class="w-full bg-transparent font-sans text-[14px] font-bold text-ink outline-none" value="Nok by Alara">
+                                <span class="font-sans text-[12px] text-ochre">🗂 Nok by Alara · Victoria Island</span>
+                                <input type="text" class="w-full bg-transparent font-sans text-[13px] text-ink outline-none mt-[4px]" value="Book in advance.">
+                            </div>
+                            <button class="text-ghost text-[14px] absolute top-[12px] right-[12px]">✕</button>
+                        </div>
+
+                        <!-- Stop 3 (Empty) -->
+                        <div class="bg-white border border-ghost rounded-lg p-[16px] flex relative min-h-[80px]">
+                            <div class="w-[24px] h-[24px] rounded-full bg-paper-warm border border-ghost flex items-center justify-center shrink-0 z-10"><span class="text-mute font-mono text-[12px] font-bold">3</span></div>
+                            <div class="ml-[12px] flex-1 flex flex-col gap-[4px] z-10">
+                                <input type="text" class="w-full bg-transparent font-sans text-[14px] font-bold text-ink placeholder:text-ghost outline-none" placeholder="Place name...">
+                                <span class="font-sans text-[12px] text-ghost">🗂 Search directory...</span>
+                            </div>
+                            <button class="text-ghost text-[14px] absolute top-[12px] right-[12px]">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Estimated duration (optional)</label>
+                        <div class="relative flex items-center">
+                            <span class="absolute left-[16px] text-[16px]">⏱</span>
+                            <input type="text" class="w-full h-[48px] border border-ghost rounded-lg pl-[40px] pr-[16px] text-[14px] text-ink bg-white placeholder:text-ghost" placeholder="e.g. 2 days">
+                        </div>
+                    </div>
+
+                    <div class="px-[16px] flex items-center h-[36px]">
+                        <label class="font-sans text-[11px] font-bold text-mute mr-[12px] w-[120px]">Budget level (optional)</label>
+                        <div class="flex gap-[8px]">
+                            <button class="h-[32px] px-[12px] rounded-full border border-ghost text-ink font-sans text-[12px]">£</button>
+                            <button class="h-[32px] px-[12px] rounded-full bg-ink text-white font-sans text-[12px]">££</button>
+                            <button class="h-[32px] px-[12px] rounded-full border border-ghost text-ink font-sans text-[12px]">£££</button>
+                            <button class="h-[32px] px-[12px] rounded-full border border-ghost text-ink font-sans text-[12px]">££££</button>
+                        </div>
+                    </div>
+
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Best time to visit (optional)</label>
+                        <div class="relative flex items-center">
+                            <span class="absolute left-[16px] text-[16px]">☀️</span>
+                            <input type="text" class="w-full h-[48px] border border-ghost rounded-lg pl-[40px] pr-[16px] text-[14px] text-ink bg-white placeholder:text-ghost" placeholder="e.g. Oct–Mar, avoid rainy season">
+                        </div>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost-light"></div>
+
+                    <!-- Multi-Image Upload -->
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[8px]">Photos (optional)</label>
+                        <div class="flex gap-[8px] overflow-x-auto hide-scrollbar">
+                            <div class="w-[80px] h-[80px] rounded-lg border-[1.5px] border-dashed border-ghost flex flex-col items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 text-ghost mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <span class="font-sans text-[10px] text-mute">Add</span>
+                            </div>
+                            <div class="w-[80px] h-[80px] rounded-lg bg-gradient-to-tr from-[#A66C52] to-[#C5491F] relative shrink-0">
+                                <button class="absolute top-1 right-1 w-[18px] h-[18px] bg-white rounded-full flex items-center justify-center text-ink text-[12px] shadow-sm">✕</button>
+                            </div>
+                            <div class="w-[80px] h-[80px] rounded-lg bg-gradient-to-tr from-[#D18E70] to-[#E2A684] relative shrink-0">
+                                <button class="absolute top-1 right-1 w-[18px] h-[18px] bg-white rounded-full flex items-center justify-center text-ink text-[12px] shadow-sm">✕</button>
+                            </div>
+                        </div>
+                        <span class="block font-sans text-[11px] text-ghost mt-[6px]">Up to 4 photos</span>
+                    </div>
+
+                </div>
+
+                <div class="h-[48px] bg-white border-t border-ghost flex items-center justify-between absolute bottom-0 w-full z-20">
+                    <div class="flex gap-[16px] px-[16px] text-mute">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[20px] font-medium leading-none flex items-center h-[24px]">@</span>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute uppercase tracking-widest text-center mt-2">Itinerary</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 9: EVENT 📅                              -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0 text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <header class="h-[56px] flex items-center justify-between px-4 border-b border-ghost bg-white z-20 shrink-0">
+                    <button class="text-ochre font-sans text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-start">Cancel</button>
+                    <h1 class="text-ink font-sans font-bold text-[15px]">New Event</h1>
+                    <button class="text-ochre font-sans font-bold text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-end">Post</button>
+                </header>
+
+                <div class="h-[36px] w-full bg-paper-warm border-b border-ghost flex items-center justify-between px-[16px] shrink-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[16px] leading-none pb-0.5">📅</span>
+                        <span class="font-sans text-[12px] font-bold text-[#00695C]">Event</span>
+                    </div>
+                    <button class="font-sans text-[12px] text-ochre hover:underline underline-offset-2">Change format</button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pb-[48px] flex flex-col relative pt-[16px] gap-[16px]">
+                    
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Event name *</label>
+                        <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] text-[17px] font-bold text-ink bg-white" value="Amapiano Night at The Jazz Cafe">
+                    </div>
+
+                    <div class="flex flex-col gap-[8px] px-[16px]">
+                        <div class="flex gap-[8px]">
+                            <div class="flex-1 h-[48px] border border-ghost rounded-lg px-[12px] flex items-center bg-white relative">
+                                <span class="text-[16px] absolute left-[12px]">📅</span>
+                                <input type="text" class="w-full pl-[28px] bg-transparent text-[14px] text-ink" value="Fri 20 Jun 2026">
+                            </div>
+                            <div class="flex-1 h-[48px] border border-ghost rounded-lg px-[12px] flex items-center bg-white relative">
+                                <span class="text-[16px] absolute left-[12px]">🕐</span>
+                                <input type="text" class="w-full pl-[28px] bg-transparent text-[14px] text-ink" value="9:00 PM">
+                            </div>
+                        </div>
+                        <div class="flex gap-[8px]">
+                            <div class="flex-1 h-[48px] border border-ghost rounded-lg px-[12px] flex items-center bg-white relative">
+                                <span class="text-[16px] absolute left-[12px] text-ghost">📅</span>
+                                <input type="text" class="w-full pl-[28px] bg-transparent text-[14px] text-ink" value="Sat 21 Jun 2026">
+                            </div>
+                            <div class="flex-1 h-[48px] border border-ghost rounded-lg px-[12px] flex items-center bg-white relative">
+                                <span class="text-[16px] absolute left-[12px] text-ghost">🕐</span>
+                                <input type="text" class="w-full pl-[28px] bg-transparent text-[14px] text-ink" value="3:00 AM">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-[12px] px-[16px]">
+                        <div>
+                            <label class="block font-sans text-[11px] font-bold text-mute mb-[4px]">Venue name</label>
+                            <div class="relative flex items-center">
+                                <span class="absolute left-[12px] text-[16px]">🏛</span>
+                                <input type="text" class="w-full h-[48px] border border-ghost rounded-lg pl-[36px] pr-4 text-[14px] text-ink bg-white" value="The Jazz Cafe">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block font-sans text-[11px] font-bold text-mute mb-[4px]">Full address</label>
+                            <div class="relative flex items-center">
+                                <span class="absolute left-[12px] text-[16px]">📍</span>
+                                <input type="text" class="w-full h-[48px] border border-ghost rounded-lg pl-[36px] pr-4 text-[14px] text-ink bg-white" value="Chalk Farm Road, Camden, London">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block font-sans text-[11px] font-bold text-mute mb-[4px]">City *</label>
+                            <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] text-[14px] text-ink bg-white" value="London">
+                        </div>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost-light"></div>
+
+                    <div class="flex flex-col gap-[12px] px-[16px]">
+                        <div>
+                            <label class="block font-sans text-[11px] font-bold text-mute mb-[4px]">Admission</label>
+                            <div class="relative flex items-center">
+                                <div class="absolute left-[12px] bg-paper-deep text-ink-soft rounded px-2 py-0.5 text-[12px] font-bold">£</div>
+                                <input type="text" class="w-full h-[48px] border border-ghost rounded-lg pl-[40px] pr-4 text-[14px] text-ink bg-white" value="15 adv / 20 door">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block font-sans text-[11px] font-bold text-mute mb-[4px]">Ticket link (optional)</label>
+                            <div class="relative flex items-center">
+                                <span class="absolute left-[12px] text-[16px]">🔗</span>
+                                <input type="text" class="w-full h-[48px] border border-ghost rounded-lg pl-[36px] pr-4 text-[14px] text-ink bg-white" value="https://dice.fm/...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-[16px]">
+                        <div class="flex gap-[8px] overflow-x-auto hide-scrollbar h-[32px]">
+                            <button class="h-[32px] px-[16px] rounded-full bg-ink text-white font-sans text-[12px] font-bold whitespace-nowrap">Music</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Art</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Food</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Sport</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Culture</button>
+                        </div>
+                    </div>
+
+                    <div class="px-[16px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[4px]">Organiser (optional)</label>
+                        <div class="inline-flex items-center bg-paper-deep rounded-full pl-[4px] pr-[8px] py-[4px] border border-ghost w-fit">
+                            <div class="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center mr-2 overflow-hidden text-white text-[10px] font-bold">M</div>
+                            <span class="text-[13px] text-ink mr-2">Moveee Events</span>
+                            <button class="w-5 h-5 flex items-center justify-center text-mute hover:text-ink-soft rounded-full">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- Multi-Image Upload -->
+                    <div class="px-[16px] mb-4">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[8px]">Photos (optional)</label>
+                        <div class="flex gap-[8px] overflow-x-auto hide-scrollbar">
+                            <div class="w-[80px] h-[80px] rounded-lg border-[1.5px] border-dashed border-ghost flex flex-col items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 text-ghost mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <span class="font-sans text-[10px] text-mute">Add</span>
+                            </div>
+                            <div class="w-[80px] h-[80px] rounded-lg bg-gradient-to-tr from-purple-500 to-indigo-500 relative shrink-0">
+                                <button class="absolute top-1 right-1 w-[18px] h-[18px] bg-white rounded-full flex items-center justify-center text-ink text-[12px] shadow-sm">✕</button>
+                            </div>
+                        </div>
+                        <span class="block font-sans text-[11px] text-ghost mt-[6px]">Event flyer, venue photos…</span>
+                    </div>
+
+                </div>
+
+                <div class="h-[48px] bg-white border-t border-ghost flex items-center justify-between absolute bottom-0 w-full z-20">
+                    <div class="flex gap-[16px] px-[16px] text-mute">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[20px] font-medium leading-none flex items-center h-[24px]">@</span>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute uppercase tracking-widest text-center mt-2">Event</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 10: QUOTE ❝                              -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-white rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                <div class="h-12 w-full flex justify-between items-end px-6 pb-2 text-[14px] font-medium bg-white z-20 shrink-0 text-ink">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center pb-0.5">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <header class="h-[56px] flex items-center justify-between px-4 border-b border-ghost bg-white z-20 shrink-0">
+                    <button class="text-ochre font-sans text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-start">Cancel</button>
+                    <h1 class="text-ink font-sans font-bold text-[15px]">New Quote</h1>
+                    <button class="text-ochre font-sans font-bold text-[14px] min-w-[44px] min-h-[44px] flex items-center justify-end">Post</button>
+                </header>
+
+                <div class="h-[36px] w-full bg-paper-warm border-b border-ghost flex items-center justify-between px-[16px] shrink-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[16px] leading-none pb-0.5">❝</span>
+                        <span class="font-sans text-[12px] font-bold text-[#92400E]">Quote</span>
+                    </div>
+                    <button class="font-sans text-[12px] text-ochre hover:underline underline-offset-2">Change format</button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pb-[48px] flex flex-col relative pt-[16px] gap-[16px]">
+                    <!-- Quote Text Area -->
+                    <div class="px-[16px] flex flex-col relative min-h-[200px] z-0">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">The quote *</label>
+                        <div class="w-full bg-paper-warm p-[16px] rounded-xl border border-ghost relative flex-1 flex flex-col">
+                            <span class="absolute top-2 left-4 text-ghost text-[40px] font-serif leading-none opacity-40 select-none z-0">"</span>
+                            <textarea class="w-full flex-1 resize-none bg-transparent text-[18px] font-serif italic text-ink placeholder:text-ghost relative z-10 leading-relaxed mt-4">African culture doesn't need validation from the West. It needs infrastructure, documentation, and distribution. The rest will follow.</textarea>
+                            <div class="absolute bottom-4 right-4 text-mute text-[11px] font-mono">148 / 500</div>
+                        </div>
+                    </div>
+
+                    <div class="px-[16px] flex flex-col gap-[12px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[2px]">Who said it *</label>
+                        <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] text-[14px] text-ink bg-white" value="Ngozi Adichie">
+                        
+                        <div class="relative mt-1">
+                            <label class="block font-sans text-[11px] font-bold text-mute mb-[6px] absolute -top-[24px]">Source (optional)</label>
+                            <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-[16px] text-[14px] text-ink bg-white" value="Lagos Book & Art Festival · 2024">
+                        </div>
+                    </div>
+
+                    <div class="w-full h-[1px] bg-ghost-light"></div>
+
+                    <div class="px-[16px] flex flex-col min-h-[100px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute mb-[6px]">Why are you sharing this? (optional)</label>
+                        <textarea class="w-full flex-1 resize-none bg-transparent text-[14px] text-ink leading-relaxed border border-ghost rounded-lg p-[16px]">Been sitting with this all week. The infrastructure piece is what we need to build.</textarea>
+                    </div>
+
+                    <div class="px-[16px] flex flex-col gap-[6px] mb-[20px]">
+                        <label class="block font-sans text-[11px] font-bold text-mute">Quote type</label>
+                        <div class="flex gap-[8px] overflow-x-auto hide-scrollbar h-[32px]">
+                            <button class="h-[32px] px-[16px] rounded-full bg-ink text-white font-sans text-[12px] font-bold whitespace-nowrap">Person</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Book</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Film</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Speech</button>
+                            <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[12px] whitespace-nowrap">Song</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Media Toolbar (No image upload) -->
+                <div class="h-[48px] bg-white border-t border-ghost flex items-center justify-between absolute bottom-0 w-full z-20">
+                    <div class="flex gap-[16px] px-[16px] text-mute">
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[20px] font-medium leading-none flex items-center h-[24px]">@</span>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute uppercase tracking-widest text-center mt-2">Quote</span>
+        </div>
+
+    </div>
+</body>
+</html>

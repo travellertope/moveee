@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Feed Cards Showcase</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'success-green': '#2D6A4F'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'feed-card': '0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            background-color: #F3ECE0; 
+            margin: 0; 
+            display: flex;
+            justify-content: center;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; min-height: 3200px; background-color: #F3ECE0; }
+        
+        /* Outline Icons Shared Classes */
+        .icon-outline { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    </style>
+</head>
+<body class="font-sans text-ink">
+
+    <div class="ios-screen flex flex-col py-[24px]">
+
+        <!-- ============================================== -->
+        <!-- SECTION A: EDITORIAL & PULSE                   -->
+        <!-- ============================================== -->
+        <div class="px-[16px] mb-[12px] mt-[12px]">
+            <h2 class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest border-b border-ghost pb-2">Section A: Editorial & Pulse</h2>
+        </div>
+
+        <!-- CARD A1: EDITORIAL (WITH HERO) -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] flex flex-col">
+            <div class="w-full h-[180px] relative rounded-t-xl overflow-hidden bg-gradient-to-tr from-[#D18E70] to-[#E2A684]">
+                <div class="absolute bottom-[12px] left-[12px] bg-[#fff0eb] text-ochre px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">FASHION</div>
+            </div>
+            <div class="p-[16px] flex flex-col">
+                <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-[0.1em]">The Culture Brief</span>
+                <h3 class="font-serif text-[17px] font-bold text-ink leading-[1.2] mt-[4px]">Why Nigerian Fashion Is Rewriting the Rules of Luxury</h3>
+                <p class="font-sans text-[13px] text-ink-soft line-clamp-2 mt-[4px] leading-relaxed">Local designers are bypassing traditional European houses to build direct relationships with a new global elite.</p>
+                
+                <div class="flex items-center justify-between mt-[12px]">
+                    <div class="flex items-center gap-[8px]">
+                        <div class="w-[24px] h-[24px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0"></div>
+                        <span class="font-sans text-[12px] font-bold text-ink">Funmi Osei</span>
+                    </div>
+                    <span class="font-mono text-[10px] text-ghost">· 6 min read</span>
+                </div>
+
+                <div class="flex items-center justify-between mt-[12px]">
+                    <div class="flex items-center gap-[20px] text-mute">
+                        <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">24</span></button>
+                        <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">9</span></button>
+                        <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">16</span></button>
+                    </div>
+                    <button class="text-mute hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg></button>
+                </div>
+            </div>
+        </article>
+
+        <!-- CARD A2: EDITORIAL (TEXT-ONLY) -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex flex-col">
+            <span class="font-mono text-[9px] font-bold text-ochre uppercase tracking-[0.1em]">From the Editors</span>
+            <h3 class="font-serif text-[20px] font-bold text-ink leading-tight mt-[4px] line-clamp-3">The Economics of Cool: How African Creatives Are Building on Their Own Terms</h3>
+            <p class="font-sans text-[14px] text-ink-soft line-clamp-2 mt-[6px] leading-relaxed">It is no longer enough to be celebrated abroad; the new benchmark is owning the infrastructure at home.</p>
+            
+            <div class="flex items-center gap-[8px] mt-[8px]">
+                <div class="w-[24px] h-[24px] rounded-full bg-gradient-to-tr from-[#2F80ED] to-[#56CCF2] shrink-0"></div>
+                <span class="font-sans text-[12px] font-bold text-ink">Lekan Dada</span>
+                <span class="font-mono text-[10px] text-ghost ml-auto">· 8 min read</span>
+            </div>
+
+            <div class="flex items-center justify-between mt-[12px]">
+                <div class="flex items-center gap-[20px] text-mute">
+                    <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">42</span></button>
+                    <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">18</span></button>
+                    <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">35</span></button>
+                </div>
+                <button class="text-mute hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg></button>
+            </div>
+        </article>
+
+        <!-- CARD A3: PULSE / BREAKING -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex items-start">
+            <div class="text-[20px] text-ochre leading-none pt-[2px]">⚡</div>
+            <div class="flex flex-col flex-1 ml-[12px]">
+                <div class="flex items-center gap-[6px]">
+                    <span class="bg-ink text-white px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">PULSE</span>
+                    <span class="font-mono text-[10px] text-ghost">· 30m ago</span>
+                </div>
+                <h3 class="font-sans text-[16px] font-bold text-ink leading-snug mt-[4px] line-clamp-2">Tems Announces Third Studio Album, Coming This October</h3>
+                <span class="font-mono text-[11px] text-ghost mt-[4px]">🌐 The Guardian</span>
+                
+                <div class="flex items-center gap-[20px] text-mute mt-[8px]">
+                    <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">128</span></button>
+                    <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">89</span></button>
+                    <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">14</span></button>
+                </div>
+            </div>
+        </article>
+
+        <!-- ============================================== -->
+        <!-- SECTION B: COMMUNITY TEMPLATES                 -->
+        <!-- ============================================== -->
+        <div class="px-[16px] mb-[12px] mt-[24px]">
+            <h2 class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest border-b border-ghost pb-2">Section B: Community Templates</h2>
+        </div>
+
+        <!-- CARD B1: STANDARD POST -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex flex-col">
+            <div class="flex items-center justify-between mb-[8px]">
+                <div class="flex items-center gap-[12px]">
+                    <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0 border border-ghost"></div>
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Kemi Adeyemi</span>
+                        <span class="font-sans text-[12px] text-mute mt-[2px]">@kemi.a</span>
+                    </div>
+                </div>
+                <span class="font-mono text-[10px] text-ghost">· 2h</span>
+            </div>
+            
+            <div class="mt-[8px]">
+                <span class="bg-ink text-white px-[12px] h-[28px] rounded-full inline-flex items-center font-sans text-[11px] font-bold">Music</span>
+            </div>
+            
+            <p class="font-sans text-[14px] text-ink-soft leading-[1.6] line-clamp-3 mt-[8px]">
+                Saw Tems perform at an intimate venue last night and I'm still not over it. She didn't say a word between songs — just let the music breathe. The crowd was completely silent.
+            </p>
+
+            <div class="grid grid-cols-2 gap-[4px] mt-[8px]">
+                <div class="h-[140px] rounded-md bg-gradient-to-tr from-[#E2B19B] to-[#C5491F]"></div>
+                <div class="h-[140px] rounded-md bg-gradient-to-bl from-[#8E54E9] to-[#4776E6]"></div>
+            </div>
+
+            <div class="mt-[4px]">
+                <span class="font-sans text-[13px] text-ochre">#Lagos #LiveMusic</span>
+            </div>
+
+            <div class="flex items-center gap-[20px] text-mute mt-[8px]">
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">34</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">19</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">12</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">8</span></button>
+            </div>
+        </article>
+
+        <!-- CARD B2: HIDDEN GEM -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex flex-col">
+            <div class="flex items-center justify-between mb-[8px]">
+                <div class="flex items-center gap-[12px]">
+                    <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-[#2D9CDB] to-[#9b51e0] shrink-0 border-[2px] border-gold p-[1px]"><div class="w-full h-full rounded-full border border-white"></div></div>
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">David K.</span>
+                        <div class="flex items-center gap-1 mt-[2px]">
+                            <span class="font-sans text-[12px] text-mute">@david.k</span>
+                            <span class="bg-gold px-1.5 py-0.5 rounded-sm text-white font-sans text-[7px] font-bold tracking-widest uppercase">PRO</span>
+                        </div>
+                    </div>
+                </div>
+                <span class="font-mono text-[10px] text-ghost">· 3d</span>
+            </div>
+
+            <div class="mb-[4px]">
+                <span class="bg-[#B38238]/10 text-gold px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider inline-block">💎 HIDDEN GEM</span>
+            </div>
+
+            <h3 class="font-serif text-[16px] font-bold text-ink mt-[4px]">Bisi Ceramics — Lagos Island</h3>
+            <span class="font-mono text-[11px] text-ghost mt-[2px] flex items-center gap-1"><span class="text-[12px]">📍</span> Balogun Market area</span>
+
+            <p class="font-sans text-[13px] text-ink-soft leading-[1.65] line-clamp-2 mt-[6px]">
+                Tucked behind the market chaos — this studio is one of those places Lagos keeps hidden for those who look.
+            </p>
+
+            <div class="grid grid-cols-2 gap-[4px] mt-[8px]">
+                <div class="h-[140px] rounded-md bg-gradient-to-br from-[#EAECC6] to-[#2BC0E4]"></div>
+                <div class="h-[140px] rounded-md bg-gradient-to-tl from-[#F2C94C] to-[#F2994A]"></div>
+            </div>
+
+            <div class="flex items-center gap-[20px] text-mute mt-[8px]">
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">22</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">8</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">15</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">5</span></button>
+            </div>
+        </article>
+
+        <!-- CARD B3: CULTURAL TAKE -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex flex-col">
+            <div class="flex items-center justify-between mb-[8px]">
+                <div class="flex items-center gap-[12px]">
+                    <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 shrink-0 border border-ghost"></div>
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Funmi Osei</span>
+                        <span class="font-sans text-[12px] text-mute mt-[2px]">@funmiosei</span>
+                    </div>
+                </div>
+                <span class="font-mono text-[10px] text-ghost">· 5h</span>
+            </div>
+
+            <div class="mb-[4px]">
+                <span class="bg-[#6B48A8]/10 text-[#6B48A8] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider inline-block">🔥 CULTURAL TAKE</span>
+            </div>
+
+            <h3 class="font-serif text-[18px] font-bold text-ink mt-[8px] leading-[1.3] line-clamp-2">Streaming killed the African album format.</h3>
+            
+            <p class="font-sans text-[13px] text-ink-soft leading-[1.65] line-clamp-2 mt-[6px]">
+                We've spent the last decade celebrating the globalisation of Afrobeats. But look at what's actually been released: endless singles...
+            </p>
+
+            <div class="flex items-center gap-[20px] text-mute mt-[8px]">
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">91</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px] font-bold text-ochre">67</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">14</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">43</span></button>
+            </div>
+        </article>
+
+        <!-- CARD B4: FOOD REVIEW -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex flex-col">
+            <div class="flex items-center justify-between mb-[8px]">
+                <div class="flex items-center gap-[12px]">
+                    <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-500 shrink-0 border-[2px] border-gold p-[1px]"><div class="w-full h-full rounded-full border border-white"></div></div>
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Chidi Eze</span>
+                        <div class="flex items-center gap-1 mt-[2px]">
+                            <span class="font-sans text-[12px] text-mute">@chidi.eats</span>
+                            <span class="bg-gold px-1.5 py-0.5 rounded-sm text-white font-sans text-[7px] font-bold tracking-widest uppercase">PRO</span>
+                        </div>
+                    </div>
+                </div>
+                <span class="font-mono text-[10px] text-ghost">· 1w</span>
+            </div>
+
+            <div class="mb-[4px]">
+                <span class="bg-[#C5491F]/10 text-ochre px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider inline-block">🍽️ FOOD REVIEW</span>
+            </div>
+
+            <div class="flex items-baseline justify-between mt-[6px]">
+                <h3 class="font-serif text-[16px] font-bold text-ink">Nok by Alara</h3>
+                <span class="font-mono text-[11px] text-ghost">📍 Victoria Island</span>
+            </div>
+
+            <div class="flex gap-[4px] mt-[8px]">
+                <div class="flex-1 h-[110px] rounded-md bg-gradient-to-br from-[#D18E70] to-[#E2A684]"></div>
+                <div class="flex-1 h-[110px] rounded-md bg-gradient-to-tr from-[#A66C52] to-[#E2B19B]"></div>
+                <div class="flex-1 h-[110px] rounded-md bg-gradient-to-bl from-[#C5491F] to-[#E2A684]"></div>
+            </div>
+
+            <div class="flex flex-col gap-[8px] mt-[8px]">
+                <div class="flex items-center justify-between">
+                    <span class="font-sans text-[12px] text-ink-soft w-[56px]">Taste</span>
+                    <div class="flex text-[16px] text-ochre gap-[2px] flex-1 leading-none justify-center">★★★★★</div>
+                    <span class="font-mono text-[11px] text-gold w-[20px] text-right">5.0</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="font-sans text-[12px] text-ink-soft w-[56px]">Value</span>
+                    <div class="flex text-[16px] text-ochre gap-[2px] flex-1 leading-none justify-center">★★★★<span class="text-ghost outline-text">☆</span></div>
+                    <span class="font-mono text-[11px] text-gold w-[20px] text-right">4.0</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="font-sans text-[12px] text-ink-soft w-[56px]">Vibe</span>
+                    <div class="flex text-[16px] text-ochre gap-[2px] flex-1 leading-none justify-center">★★★★★</div>
+                    <span class="font-mono text-[11px] text-gold w-[20px] text-right">5.0</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-[20px] text-mute mt-[8px]">
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">41</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">18</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">29</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">12</span></button>
+            </div>
+        </article>
+
+        <!-- CARD B5: CREATIVE SHOWCASE -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex flex-col relative overflow-hidden">
+            <!-- FOR YOU BADGE OVERLAY -->
+            <div class="absolute top-[16px] right-[16px]">
+                <span class="border border-[#B38238] text-[#B38238] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider">✦ FOR YOU</span>
+            </div>
+
+            <div class="flex items-center justify-between mb-[8px]">
+                <div class="flex items-center gap-[12px]">
+                    <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-[#F2994A] to-[#EB5757] shrink-0 border-[2px] border-gold p-[1px]"><div class="w-full h-full rounded-full border border-white"></div></div>
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Zara Mensah</span>
+                        <div class="flex items-center gap-1 mt-[2px]">
+                            <span class="font-sans text-[12px] text-mute">@zaramensah</span>
+                            <span class="bg-gold px-1.5 py-0.5 rounded-sm text-white font-sans text-[7px] font-bold tracking-widest uppercase">PRO</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-[4px]">
+                <span class="bg-[#1976D2]/10 text-[#1976D2] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider inline-block">🎨 CREATIVE SHOWCASE</span>
+            </div>
+
+            <h3 class="font-serif text-[16px] font-bold text-ink mt-[6px]">Zaria Music Visuals — Vol. 2</h3>
+            
+            <div class="mt-[4px]">
+                <span class="border border-ghost rounded-full px-[10px] py-[2px] font-sans text-[11px] font-bold text-ink-soft">Photography</span>
+            </div>
+
+            <div class="mt-[8px] flex flex-col">
+                <div class="w-full h-[200px] rounded-md bg-gradient-to-br from-[#8E54E9] to-[#4776E6]"></div>
+                <div class="flex gap-[4px] mt-[4px]">
+                    <div class="flex-1 h-[100px] rounded-md bg-gradient-to-tr from-[#FF9A9E] to-[#FECFEF]"></div>
+                    <div class="flex-1 h-[100px] rounded-md bg-gradient-to-tr from-[#F6D365] to-[#FDA085]"></div>
+                </div>
+                <span class="font-mono text-[10px] text-ghost text-center mt-[4px]">3 of 12 photos</span>
+            </div>
+
+            <div class="flex items-center gap-[20px] text-mute mt-[8px]">
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">118</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">52</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">86</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">31</span></button>
+            </div>
+        </article>
+
+        <!-- CARD B6: POLL -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex flex-col">
+            <div class="flex items-center justify-between mb-[8px]">
+                <div class="flex items-center gap-[12px]">
+                    <div class="w-[44px] h-[44px] rounded-full bg-paper-deep border border-ghost flex items-center justify-center shrink-0"><svg class="w-5 h-5 text-mute" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Moveee Community</span>
+                    </div>
+                </div>
+                <span class="font-mono text-[10px] text-ghost">· Closes in 1d</span>
+            </div>
+
+            <div class="mb-[4px]">
+                <span class="bg-[#6B48A8]/10 text-[#6B48A8] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider inline-block">📊 POLL</span>
+            </div>
+
+            <h3 class="font-sans text-[15px] font-bold text-ink leading-[1.3] mt-[8px]">What's the greatest era of Afrobeats?</h3>
+            
+            <div class="flex flex-col gap-[6px] mt-[8px]">
+                <div class="relative h-[44px] bg-white border border-ghost rounded-lg px-[12px] flex items-center justify-between overflow-hidden">
+                    <div class="absolute top-0 left-0 h-full bg-ochre/15" style="width: 12%;"></div>
+                    <span class="font-sans text-[13px] text-ink relative z-10">90s Fela Era</span>
+                    <span class="font-mono text-[11px] text-gold relative z-10">12%</span>
+                </div>
+                <div class="relative h-[44px] bg-white border-[1.5px] border-ochre rounded-lg px-[12px] flex items-center justify-between overflow-hidden">
+                    <div class="absolute top-0 left-0 h-full bg-ochre/15" style="width: 38%;"></div>
+                    <span class="font-sans text-[13px] text-ink relative z-10">Wizkid / Davido 2010s 👑</span>
+                    <span class="font-mono text-[11px] text-gold relative z-10">38%</span>
+                </div>
+                <div class="relative h-[44px] bg-white border border-ghost rounded-lg px-[12px] flex items-center justify-between overflow-hidden">
+                    <div class="absolute top-0 left-0 h-full bg-ochre/15" style="width: 35%;"></div>
+                    <span class="font-sans text-[13px] text-ink relative z-10">Burna Boy / Tems era</span>
+                    <span class="font-mono text-[11px] text-gold relative z-10">35%</span>
+                </div>
+                <div class="relative h-[44px] bg-white border border-ghost rounded-lg px-[12px] flex items-center justify-between overflow-hidden">
+                    <div class="absolute top-0 left-0 h-full bg-ochre/15" style="width: 15%;"></div>
+                    <span class="font-sans text-[13px] text-ink relative z-10">Right now — it's still evolving</span>
+                    <span class="font-mono text-[11px] text-gold relative z-10">15%</span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between mt-[6px]">
+                <span class="font-mono text-[10px] text-ghost">342 votes</span>
+                <span class="font-sans text-[11px] text-gold">You voted: 2010s ✓</span>
+            </div>
+
+            <div class="flex items-center gap-[20px] text-mute mt-[8px]">
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">58</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">31</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">9</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">47</span></button>
+            </div>
+        </article>
+
+        <!-- CARD B7: ITINERARY -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex flex-col">
+            <div class="flex items-center justify-between mb-[8px]">
+                <div class="flex items-center gap-[12px]">
+                    <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-cyan-400 to-emerald-400 shrink-0"></div>
+                    <span class="font-sans text-[14px] font-bold text-ink leading-tight">Lekan Dada</span>
+                </div>
+                <span class="font-mono text-[10px] text-ghost">· 4d</span>
+            </div>
+
+            <div class="mb-[4px]">
+                <span class="bg-[#2E7D32]/10 text-[#2E7D32] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider inline-block">🗺️ ITINERARY</span>
+            </div>
+
+            <h3 class="font-serif text-[16px] font-bold text-ink mt-[6px]">48 Hours in Lagos: The Culture Route</h3>
+            
+            <div class="flex items-center gap-[12px] mt-[4px]">
+                <span class="font-mono text-[10px] text-ghost">🗂 6 stops</span>
+                <span class="font-mono text-[10px] text-ghost">⏱ 2 days</span>
+                <span class="font-mono text-[10px] text-ghost">💰 ££</span>
+                <span class="font-mono text-[10px] text-ghost">☀️ Oct–Mar</span>
+            </div>
+
+            <div class="flex flex-col mt-[8px]">
+                <div class="h-[40px] border-b border-ghost-light flex items-center justify-between">
+                    <div class="flex items-center gap-[8px]">
+                        <div class="w-[20px] h-[20px] rounded-full border border-ghost flex items-center justify-center"><span class="font-mono text-[10px] text-mute">1</span></div>
+                        <span class="font-sans text-[13px] font-bold text-ink">Nike Art Gallery</span>
+                    </div>
+                    <span class="font-sans text-[12px] text-ochre">→ Directory</span>
+                </div>
+                <div class="h-[40px] border-b border-ghost-light flex items-center justify-between">
+                    <div class="flex items-center gap-[8px]">
+                        <div class="w-[20px] h-[20px] rounded-full border border-ghost flex items-center justify-center"><span class="font-mono text-[10px] text-mute">2</span></div>
+                        <span class="font-sans text-[13px] font-bold text-ink">Nok by Alara</span>
+                    </div>
+                    <span class="font-sans text-[12px] text-ochre">→ Directory</span>
+                </div>
+                <div class="h-[40px] border-b border-ghost-light flex items-center justify-between">
+                    <div class="flex items-center gap-[8px]">
+                        <div class="w-[20px] h-[20px] rounded-full border border-ghost flex items-center justify-center"><span class="font-mono text-[10px] text-mute">3</span></div>
+                        <span class="font-sans text-[13px] font-bold text-ink">Terra Kulture</span>
+                    </div>
+                    <span class="font-sans text-[12px] text-ochre">→ Directory</span>
+                </div>
+                <div class="pt-[4px]">
+                    <span class="font-sans text-[12px] text-ochre cursor-pointer">+ 3 more stops</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-[20px] text-mute mt-[8px]">
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">76</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">28</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">55</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">19</span></button>
+            </div>
+        </article>
+
+        <!-- CARD B8: COMMUNITY EVENT -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex flex-col">
+            <div class="flex items-center justify-between mb-[8px]">
+                <div class="flex items-center gap-[12px]">
+                    <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-pink-500 to-orange-400 shrink-0"></div>
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Moveee Lagos</span>
+                        <span class="font-sans text-[12px] text-mute mt-[2px]">@moveee.lagos</span>
+                    </div>
+                </div>
+                <span class="font-mono text-[10px] text-ghost">· 2d</span>
+            </div>
+
+            <div class="mb-[4px]">
+                <span class="bg-[#00695C]/10 text-[#00695C] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider inline-block">📅 EVENT</span>
+            </div>
+
+            <div class="w-full h-[160px] bg-gradient-to-br from-violet-500 via-fuchsia-500 to-orange-500 rounded-md mt-[6px]"></div>
+
+            <h3 class="font-serif text-[16px] font-bold text-ink mt-[8px]">Amapiano Night — The Jazz Cafe</h3>
+            
+            <div class="flex flex-col gap-[2px] mt-[4px]">
+                <span class="font-sans text-[13px] text-mute flex items-center gap-1"><span class="text-[14px] text-ghost">📅</span> Fri 20 Jun · 9PM</span>
+                <span class="font-sans text-[13px] text-mute flex items-center gap-1"><span class="text-[14px] text-ghost">📍</span> London</span>
+            </div>
+
+            <div class="bg-paper-warm rounded-md px-[8px] py-[4px] mt-[4px]">
+                <span class="font-sans text-[12px] text-gold">★ Pro members: early entry 8:30PM</span>
+            </div>
+
+            <div class="flex justify-end mt-[8px]">
+                <button class="h-[36px] px-[16px] bg-ochre rounded-full text-white font-sans text-[13px] font-bold shadow-sm">RSVP Now</button>
+            </div>
+        </article>
+
+        <!-- CARD B9: BOOK REVIEW -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex flex-col">
+            <div class="flex items-center justify-between mb-[8px]">
+                <div class="flex items-center gap-[12px]">
+                    <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-[#2F80ED] to-[#56CCF2] shrink-0 border border-ghost"></div>
+                    <div class="flex flex-col">
+                        <span class="font-sans text-[14px] font-bold text-ink leading-tight">Seun Adeyemi</span>
+                        <span class="font-sans text-[12px] text-mute mt-[2px]">@seun.reads</span>
+                    </div>
+                </div>
+                <span class="font-mono text-[10px] text-ghost">· 3h</span>
+            </div>
+
+            <div class="mb-[4px] mt-[6px]">
+                <span class="bg-[#78350F]/10 text-[#78350F] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider inline-block">📚 BOOK REVIEW</span>
+            </div>
+
+            <div class="bg-white border border-ghost rounded-md p-[10px] flex items-start gap-[10px] mt-[8px] shadow-sm">
+                <div class="w-[36px] h-[48px] rounded-sm bg-gradient-to-tr from-[#A66C52] to-[#E2B19B] shrink-0 shadow-card"></div>
+                <div class="flex flex-col flex-1 pt-0.5">
+                    <span class="font-sans text-[14px] font-bold text-ink leading-tight">Things Fall Apart</span>
+                    <span class="font-sans text-[12px] text-mute mt-[2px]">Chinua Achebe · 1958</span>
+                    <div class="flex items-center gap-[4px] mt-[2px]">
+                        <span class="text-[12px] text-gold leading-none">★★★★★</span>
+                        <span class="font-mono text-[12px] font-bold text-gold">5.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-[8px] mt-[8px]">
+                <span class="h-[24px] px-[10px] rounded-full bg-success-green text-white font-sans text-[11px] font-bold flex items-center">✓ Finished</span>
+                <span class="h-[24px] px-[10px] rounded-full bg-paper-warm border border-gold text-gold font-sans text-[11px] font-bold flex items-center">👍 Recommended</span>
+            </div>
+
+            <p class="font-sans text-[13px] text-ink-soft leading-[1.65] line-clamp-2 mt-[8px]">
+                Achebe dismantles the colonial narrative with the very language of the coloniser. Essential reading.
+            </p>
+
+            <div class="flex items-center gap-[8px] mt-[8px] overflow-x-auto hide-scrollbar">
+                <div class="flex items-center gap-[4px] shrink-0">
+                    <span class="font-sans text-[11px] text-ink-soft">Writing</span><span class="text-[13px] text-ochre leading-none pt-[1px]">★★★★★</span>
+                </div>
+                <div class="w-1 h-1 rounded-full bg-ghost shrink-0"></div>
+                <div class="flex items-center gap-[4px] shrink-0">
+                    <span class="font-sans text-[11px] text-ink-soft">Story</span><span class="text-[13px] text-ochre leading-none pt-[1px]">★★★★★</span>
+                </div>
+                <div class="w-1 h-1 rounded-full bg-ghost shrink-0"></div>
+                <div class="flex items-center gap-[4px] shrink-0">
+                    <span class="font-sans text-[11px] text-ink-soft">Pacing</span><span class="text-[13px] text-ochre leading-none pt-[1px]">★★★★<span class="text-ghost outline-text">☆</span></span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-[20px] text-mute mt-[12px]">
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">88</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">43</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">55</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">31</span></button>
+            </div>
+        </article>
+
+        <!-- ============================================== -->
+        <!-- SECTION C: STANDALONE FEED CARDS               -->
+        <!-- ============================================== -->
+        <div class="px-[16px] mb-[12px] mt-[24px]">
+            <h2 class="font-mono text-[11px] font-bold text-mute uppercase tracking-widest border-b border-ghost pb-2">Section C: Standalone Cards</h2>
+        </div>
+
+        <!-- CARD C1: QUOTE -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex flex-col relative">
+            <span class="absolute top-[16px] left-[16px] font-serif text-[52px] text-ghost leading-none select-none">"</span>
+            
+            <p class="font-serif text-[18px] font-bold text-ink leading-[1.4] pl-[24px] relative z-10 pt-[8px]">
+                African culture doesn't need validation from the West. It needs infrastructure, documentation, and distribution. The rest will follow.
+            </p>
+            
+            <span class="font-sans text-[13px] text-ink-soft mt-[12px] pl-[24px]">— Ngozi Adichie</span>
+            <span class="font-mono text-[10px] text-ghost mt-[2px] pl-[24px]">Lagos Book & Art Festival · 2024</span>
+
+            <div class="flex items-center gap-[20px] text-mute mt-[12px] pl-[24px]">
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">48</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg><span class="font-mono text-[10px]">22</span></button>
+                <button class="flex items-center gap-[6px] hover:text-ink"><svg class="w-[18px] h-[18px] icon-outline" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg></button>
+            </div>
+        </article>
+
+        <!-- CARD C2: DIRECTORY ENTRY -->
+        <article class="bg-white rounded-xl shadow-feed-card mx-[16px] mb-[20px] p-[16px] flex flex-col">
+            <div class="mb-[8px]">
+                <span class="bg-[#e8f5ee] text-[#085041] px-[10px] py-[4px] rounded-full font-sans text-[9px] font-bold uppercase tracking-wider inline-block">DIRECTORY</span>
+            </div>
+            
+            <div class="w-full h-[120px] bg-gradient-to-br from-[#E2B19B] to-[#C5491F] rounded-md mt-[8px]"></div>
+
+            <div class="flex items-center gap-[8px] mt-[8px]">
+                <h3 class="font-serif text-[16px] font-bold text-ink">Bisi Ceramics</h3>
+                <span class="font-mono text-[9px] text-ghost border border-ghost rounded-full px-[8px] py-[2px] leading-none">STUDIO</span>
+            </div>
+            
+            <span class="font-sans text-[12px] text-mute mt-[2px]">📍 Lagos, Nigeria</span>
+            
+            <div class="mt-[4px]">
+                <span class="bg-success-green text-white px-[8px] py-[2px] rounded-full font-sans text-[9px] font-bold inline-block">✓ Vetted</span>
+            </div>
+
+            <p class="font-sans text-[13px] text-ink-soft line-clamp-2 mt-[6px] leading-[1.6]">
+                Award-winning ceramics studio in Lagos making ritual objects and everyday wares inspired by Yoruba tradition.
+            </p>
+
+            <div class="mt-[8px] flex justify-end">
+                <span class="font-sans text-[13px] text-ochre font-medium">View entry &rarr;</span>
+            </div>
+        </article>
+
+    </div>
+
+</body>
+</html>
