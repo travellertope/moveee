@@ -19,7 +19,7 @@
 
 import React, { useEffect, useRef } from "react";
 import {
-  Animated, View, Text, StyleSheet, Easing,
+  Animated, View, Text, Image, StyleSheet, Easing,
   Dimensions, ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,6 +27,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { colors, fonts } from "../../theme";
 
 const { width: W } = Dimensions.get("window");
+const LOGO_IMG = require("../../../assets/logo-black.png");
+const SPLASH_LOGO_H = 28;
+const SPLASH_LOGO_W = Math.round((717 / 107) * SPLASH_LOGO_H);
 
 // ── Shared animation ─────────────────────────────────────────────────────────
 // Single Animated.Value so all bones sweep in sync.
@@ -577,17 +580,18 @@ export function AppLoadingScreen() {
 
   return (
     <SafeAreaView style={sk.splashSafe}>
-      <View style={sk.splashBrand}>
-        <Text style={sk.splashWordmark}>moveee</Text>
-        <Text style={sk.splashTagline}>CONNECT</Text>
-      </View>
+      <Image
+        source={LOGO_IMG}
+        style={{ width: SPLASH_LOGO_W, height: SPLASH_LOGO_H }}
+        resizeMode="contain"
+      />
       <View style={sk.splashSpinnerWrap}>
         <Animated.View style={{ transform: [{ rotate }] }}>
           <View style={sk.splashArc} />
         </Animated.View>
         <Text style={sk.splashSubtext}>Loading your culture...</Text>
       </View>
-      <Text style={sk.splashFooter}>Moveee Connect</Text>
+      <Text style={sk.splashFooter}>Connect to Culture</Text>
     </SafeAreaView>
   );
 }

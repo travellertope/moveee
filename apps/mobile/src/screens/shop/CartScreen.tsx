@@ -59,7 +59,11 @@ export default function CartScreen() {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: c.paper }]}>
         <View style={styles.checkoutContainer}>
-          <Text style={styles.checkoutLogo}>moveee</Text>
+          <Image
+            source={require("../../../assets/logo-black.png")}
+            style={{ width: Math.round((717 / 107) * 24), height: 24 }}
+            resizeMode="contain"
+          />
           <Text style={styles.checkoutHeading}>Taking you to secure checkout...</Text>
           <Text style={styles.checkoutSub}>
             You'll be redirected to our secure payment partner.

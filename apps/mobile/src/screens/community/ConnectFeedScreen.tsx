@@ -20,8 +20,8 @@ import { useColorScheme } from "react-native";
 
 const LOGO_LIGHT = require("../../../assets/logo-black.png");
 const LOGO_DARK  = require("../../../assets/logo-white.png");
-// Logo natural size: 717×107 — render at 26px height → ~160px wide
-const LOGO_H = 26;
+// Logo natural size: 717×107
+const LOGO_H = 20;
 const LOGO_W = Math.round((717 / 107) * LOGO_H);
 import {
   rankFeed,
