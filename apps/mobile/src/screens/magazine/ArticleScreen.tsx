@@ -37,14 +37,95 @@ const HEADER_TRIGGER = HERO_HEIGHT - 60;
 
 function makeHtmlTagStyles(c: ColorPalette) {
   return {
+    // Block
     p:          { fontSize: 16, lineHeight: 26, color: c.inkSoft, marginBottom: 14 },
-    a:          { color: c.gold, textDecorationLine: "underline" as const },
-    h2:         { fontSize: 20, fontWeight: "700" as const, color: c.ink, marginTop: 8, marginBottom: 10 },
-    h3:         { fontSize: 18, fontWeight: "700" as const, color: c.ink, marginTop: 6, marginBottom: 8 },
-    blockquote: { borderLeftWidth: 3, borderLeftColor: c.ochre, paddingLeft: 12, fontStyle: "italic" as const, color: c.mute },
+    h2:         { fontFamily: "DMSans_700Bold", fontSize: 20, color: c.ink, marginTop: 16, marginBottom: 8 },
+    h3:         { fontFamily: "DMSans_700Bold", fontSize: 18, color: c.ink, marginTop: 12, marginBottom: 6 },
+    h4:         { fontFamily: "DMSans_700Bold", fontSize: 16, color: c.ink, marginTop: 10, marginBottom: 4 },
+    blockquote: { borderLeftWidth: 3, borderLeftColor: c.ochre, paddingLeft: 12, fontStyle: "italic" as const, color: c.mute, marginVertical: 12 },
+    ul:         { marginBottom: 14, paddingLeft: 4 },
+    ol:         { marginBottom: 14, paddingLeft: 4 },
+    li:         { fontSize: 16, lineHeight: 26, color: c.inkSoft, marginBottom: 4 },
     img:        { borderRadius: 6 },
     figcaption: { fontSize: 11, color: c.mute, textAlign: "center" as const, marginTop: 4 },
+    // Inline — must use explicit fontFamily for Expo custom fonts; fontWeight alone won't switch the variant
+    a:          { color: c.gold, textDecorationLine: "underline" as const },
+    strong:     { fontFamily: "DMSans_700Bold" },
+    b:          { fontFamily: "DMSans_700Bold" },
+    em:         { fontStyle: "italic" as const },
+    i:          { fontStyle: "italic" as const },
+    u:          { textDecorationLine: "underline" as const },
+    code:       { fontFamily: "JetBrainsMono_400Regular", fontSize: 13, backgroundColor: c.paperDeep },
+    pre:        { fontFamily: "JetBrainsMono_400Regular", fontSize: 13, backgroundColor: c.paperDeep, padding: 12, borderRadius: 6 },
   };
+}
+
+// ── Lightweight HTML table renderer ──────────────────────────────────────────
+// react-native-render-html v6 doesn't support <table> natively.
+// We extract table content from the HTML string and render it as a
+// horizontally-scrollable grid using plain RN views.
+
+function parseTable(html: string): Array<Array<string>> {
+  const rows: Array<Array<string>> = [];
+  const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  const cellRe = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+  let rowMatch: RegExpExecArray | null;
+  while ((rowMatch = rowRe.exec(html)) !== null) {
+    const cells: string[] = [];
+    let cellMatch: RegExpExecArray | null;
+    const rowHtml = rowMatch[1];
+    cellRe.lastIndex = 0;
+    while ((cellMatch = cellRe.exec(rowHtml)) !== null) {
+      cells.push(cellMatch[1].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").trim());
+    }
+    if (cells.length) rows.push(cells);
+  }
+  return rows;
+}
+
+function HtmlTable({ html, c }: { html: string; c: ColorPalette }) {
+  const rows = parseTable(html);
+  if (!rows.length) return null;
+  const colCount = Math.max(...rows.map((r) => r.length));
+  const colWidth = Math.max(100, Math.floor(320 / colCount));
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator
+      style={{ marginVertical: 16, borderWidth: 1, borderColor: c.rule, borderRadius: 6 }}
+    >
+      <View>
+        {rows.map((row, ri) => (
+          <View
+            key={ri}
+            style={{
+              flexDirection: "row",
+              backgroundColor: ri === 0 ? c.paperDeep : ri % 2 === 0 ? c.paperWarm : c.paper,
+              borderBottomWidth: ri < rows.length - 1 ? 1 : 0,
+              borderBottomColor: c.rule,
+            }}
+          >
+            {row.map((cell, ci) => (
+              <Text
+                key={ci}
+                style={{
+                  width: colWidth,
+                  padding: 8,
+                  fontFamily: ri === 0 ? "DMSans_700Bold" : "DMSans_400Regular",
+                  fontSize: 13,
+                  color: c.ink,
+                  borderRightWidth: ci < row.length - 1 ? 1 : 0,
+                  borderRightColor: c.rule,
+                }}
+              >
+                {cell}
+              </Text>
+            ))}
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  );
 }
 
 // Minimal TOC heading extraction from HTML
@@ -79,13 +160,43 @@ function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPa
     openInApp(href);
   };
 
+  // Split content into alternating html/table segments
+  const segments = useMemo(() => {
+    const parts: Array<{ type: "html" | "table"; content: string }> = [];
+    const regex = /(<table[\s\S]*?<\/table>)/gi;
+    let last = 0;
+    let match;
+    const src = article.content ?? "";
+    while ((match = regex.exec(src)) !== null) {
+      if (match.index > last) {
+        parts.push({ type: "html", content: src.slice(last, match.index) });
+      }
+      parts.push({ type: "table", content: match[1] });
+      last = match.index + match[0].length;
+    }
+    if (last < src.length) {
+      parts.push({ type: "html", content: src.slice(last) });
+    }
+    return parts;
+  }, [article.content]);
+
   return (
-    <RenderHtml
-      contentWidth={contentWidth}
-      source={{ html: article.content }}
-      tagsStyles={HTML_TAG_STYLES}
-      renderersProps={{ a: { onPress: handleLinkPress } }}
-    />
+    <>
+      {segments.map((seg, i) =>
+        seg.type === "table" ? (
+          <HtmlTable key={i} html={seg.content} c={c} />
+        ) : (
+          <RenderHtml
+            key={i}
+            contentWidth={contentWidth}
+            source={{ html: seg.content }}
+            tagsStyles={HTML_TAG_STYLES}
+            renderersProps={{ a: { onPress: handleLinkPress } }}
+            ignoredDomTags={["table", "thead", "tbody", "tr", "td", "th"]}
+          />
+        )
+      )}
+    </>
   );
 }
 
