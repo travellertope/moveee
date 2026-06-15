@@ -40,6 +40,9 @@
           "photosPermission": "Allow Moveee to access your photos so you can share images in Connect posts."
         }
       ],
+      "@react-native-community/datetimepicker",
+      "expo-asset",
+      "expo-font"
     ],
     "extra": {
       "eas": {
