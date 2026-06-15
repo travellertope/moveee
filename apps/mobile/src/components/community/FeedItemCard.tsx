@@ -1128,13 +1128,13 @@ function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCar
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
         <BadgePill label="🔥 CULTURAL TAKE" bg={c.templateTakeBg} color={c.templateTakeText} styles={styles} />
-        {(item.culturalTakeHeadline ?? item.title) ? (
+        {item.culturalTakeHeadline ? (
           <Text style={[styles.cardTitle, { marginTop: 8, fontStyle: "italic" }]}>
-            {item.culturalTakeHeadline ?? item.title}
+            {item.culturalTakeHeadline}
           </Text>
         ) : null}
-        {(item.body ?? item.excerpt) ? (
-          <HashtagText text={item.body ?? item.excerpt ?? ""} numberOfLines={4} style={[styles.cardBody, { marginTop: 6 }]} />
+        {item.title ? (
+          <HashtagText text={item.title} numberOfLines={4} style={[styles.cardBody, { marginTop: 6 }]} />
         ) : null}
       </View>
       <FeedReactionBar item={item} marginTop={10} />
@@ -1158,7 +1158,7 @@ function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
             <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.placeLocation ?? item.locationName}</Text>
           ) : null}
           <Text style={[styles.cardBody, { marginTop: 8 }]} numberOfLines={3}>
-            {item.body ?? item.excerpt ?? ""}
+            {item.title ?? ""}
           </Text>
           <View style={styles.foodRatingsGrid}>
             {[
@@ -1205,9 +1205,9 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
             </View>
           ) : null}
         </View>
-        {item.body || item.excerpt ? (
+        {item.title ? (
           <View style={{ paddingHorizontal: 14, marginTop: 8 }}>
-            <HashtagText text={item.body ?? item.excerpt ?? ""} style={styles.cardBody} />
+            <HashtagText text={item.title} style={styles.cardBody} />
           </View>
         ) : null}
         {count > 0 ? (
@@ -1408,8 +1408,8 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardP
         ) : null}
 
         {/* Review body */}
-        {(item.body ?? item.excerpt) ? (
-          <HashtagText text={item.body ?? item.excerpt ?? ""} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} />
+        {item.title ? (
+          <HashtagText text={item.title} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} />
         ) : null}
 
         {/* Favourite quote */}
@@ -1503,9 +1503,9 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedC
             </View>
           ) : null}
 
-          {(item.body ?? item.excerpt) ? (
+          {item.title ? (
             <HashtagText
-              text={item.body ?? item.excerpt ?? ""}
+              text={item.title}
               style={[styles.cardBody, { marginTop: 10 }]}
               numberOfLines={2}
             />

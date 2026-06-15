@@ -123,6 +123,7 @@ export interface FeedItem {
   readingTime?: number;
 
   // Community
+  communityAuthorId?: string;
   communityAuthor?: string;
   communityAuthorUsername?: string;
   communityAuthorAvatar?: string;

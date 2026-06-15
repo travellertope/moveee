@@ -1121,6 +1121,14 @@ class Culture_Mobile_API {
             update_post_meta( $post_id, 'community_author_rep_tier', $rep_tier );
         }
 
+        // Snapshot author display fields so the feed never needs live user lookups.
+        $author_user = get_userdata( $user_id );
+        update_post_meta( $post_id, 'community_author_id',       (string) $user_id );
+        update_post_meta( $post_id, 'community_author_name',     $author_user ? $author_user->display_name : '' );
+        update_post_meta( $post_id, 'community_author_username', $author_user ? $author_user->user_login   : '' );
+        update_post_meta( $post_id, 'community_author_avatar',   get_user_meta( $user_id, '_culture_avatar_url',       true ) ?: '' );
+        update_post_meta( $post_id, 'community_author_tier',     get_user_meta( $user_id, '_culture_membership_tier',  true ) ?: 'citizen' );
+
         $post = get_post( $post_id );
         return rest_ensure_response( self::format_community_post( $post, array() ) );
     }
@@ -1891,9 +1899,9 @@ class Culture_Mobile_API {
                 'communityAuthorId'       => get_post_meta( $post->ID, 'community_author_id', true ) ?: (string) $author_id,
                 'communityAuthor'         => get_post_meta( $post->ID, 'community_author_name', true ) ?: ( $author ? $author->display_name : '' ),
                 'communityAuthorUsername' => get_post_meta( $post->ID, 'community_author_username', true ) ?: ( $author ? $author->user_login : '' ),
-                'communityAuthorAvatar'   => get_post_meta( $post->ID, 'community_author_avatar', true ) ?: '',
+                'communityAuthorAvatar'   => get_post_meta( $post->ID, 'community_author_avatar', true ) ?: get_user_meta( $author_id, '_culture_avatar_url', true ) ?: '',
                 'communityTag'            => get_post_meta( $post->ID, 'community_tag', true ) ?: '',
-                'communityTier'           => get_post_meta( $post->ID, 'community_author_tier', true ) ?: '',
+                'communityTier'           => get_post_meta( $post->ID, 'community_author_tier', true ) ?: get_user_meta( $author_id, '_culture_membership_tier', true ) ?: 'citizen',
                 'authorRepTier'           => get_post_meta( $post->ID, 'community_author_rep_tier', true ) ?: 'member',
                 'region'                  => get_post_meta( $post->ID, 'community_region', true ) ?: '',
                 'sourceUrl'               => $link_url ?: null,

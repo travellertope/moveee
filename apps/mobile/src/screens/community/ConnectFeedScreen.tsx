@@ -205,11 +205,11 @@ export default function ConnectFeedScreen() {
         item={item}
         onPress={() => openItem(item)}
         onAuthorPress={
-          item.type === "community" && (item as any).communityAuthorId
+          item.type === "community" && item.communityAuthorId
             ? () =>
                 nav.navigate("MemberProfile", {
-                  userId: (item as any).communityAuthorId,
-                  username: (item as any).communityAuthorUsername ?? "",
+                  userId: item.communityAuthorId!,
+                  username: item.communityAuthorUsername ?? "",
                 })
             : undefined
         }
