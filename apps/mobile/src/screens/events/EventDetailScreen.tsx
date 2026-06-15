@@ -127,7 +127,7 @@ export default function EventDetailScreen() {
             style={[styles.backBtn, { top: insets.top + 8 }]}
             onPress={() => nav.goBack()}
           >
-            <Ionicons name="chevron-back" size={20} color="#fff" />
+            <Ionicons name="chevron-back" size={20} color={c.ink} />
           </TouchableOpacity>
 
           {/* Hero content — bottom aligned */}
@@ -313,7 +313,7 @@ export default function EventDetailScreen() {
               activeOpacity={0.85}
             >
               {submitting
-                ? <ActivityIndicator color="#fff" size="small" />
+                ? <ActivityIndicator color={c.paper} size="small" />
                 : <Text style={styles.rsvpBtnText}>Confirm RSVP</Text>
               }
             </TouchableOpacity>
@@ -332,24 +332,23 @@ function createStyles(c: ColorPalette) {
     // ── Hero ──
     hero: {
       height: 340,
-      backgroundColor: "#14110d",
+      backgroundColor: c.ink,
       justifyContent: "flex-end",
     },
     heroFallback: {
-      backgroundColor: "#2a1208",
+      backgroundColor: c.ink,
     },
     backBtn: {
       position: "absolute",
       left: 16,
       zIndex: 10,
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: "rgba(20,17,13,0.45)",
-      borderWidth: 1,
-      borderColor: "rgba(255,255,255,0.15)",
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.paper,
       alignItems: "center",
       justifyContent: "center",
+      ...shadows.card,
     },
     heroContent: {
       paddingHorizontal: 20,
@@ -525,7 +524,7 @@ function createStyles(c: ColorPalette) {
       fontFamily: fonts.sans,
       fontSize: fontSize.base,
       color: c.ink,
-      backgroundColor: "#fff",
+      backgroundColor: c.paper,
     },
     rsvpBtn: {
       height: 52,
@@ -538,7 +537,7 @@ function createStyles(c: ColorPalette) {
     rsvpBtnText: {
       fontFamily: fonts.sansBold,
       fontSize: 16,
-      color: "#fff",
+      color: c.paper,
     },
 
     // Success screen
