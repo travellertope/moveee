@@ -12,6 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import BottomSheet from "../ui/BottomSheet";
 import SheetErrorState from "../ui/SheetErrorState";
+import ReportPostSheet from "./ReportPostSheet";
 import ImageLightbox from "../ui/ImageLightbox";
 import { useColors } from "../../hooks/useColors";
 import { useAuthStore } from "../../auth/authStore";
@@ -202,11 +203,13 @@ function ReactionsRow({
   c,
   styles,
   onComment,
+  onReport,
 }: {
   item: FeedItem;
   c: ColorPalette;
   styles: ReturnType<typeof createStyles>;
   onComment?: () => void;
+  onReport?: () => void;
 }) {
   const [loved, setLoved] = useState(false);
   const [fired, setFired] = useState(false);
@@ -243,6 +246,14 @@ function ReactionsRow({
         <TouchableOpacity style={styles.reactionBtn} onPress={onComment} activeOpacity={0.7}>
           <Ionicons name="chatbubble-outline" size={18} color={c.mute} />
           <Text style={styles.reactionCount}>{item.commentCount ?? 0}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.reactionBtn, { marginLeft: "auto" as any }]}
+          onPress={onReport}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="flag-outline" size={18} color={c.ghost} />
         </TouchableOpacity>
       </View>
       <View style={styles.divider} />
@@ -316,10 +327,6 @@ function CommentsSection({ postId, c, styles }: { postId: string; c: ColorPalett
         </TouchableOpacity>
       </View>
 
-      <View style={styles.divider} />
-      <TouchableOpacity style={{ paddingVertical: 12 }}>
-        <Text style={styles.reportBtn}>⚑ Report this post</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -777,6 +784,7 @@ interface PostDetailSheetProps {
 export default function PostDetailSheet({ item, visible, onClose }: PostDetailSheetProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const [reportOpen, setReportOpen] = useState(false);
 
   if (!item) {
     return (
@@ -807,6 +815,7 @@ export default function PostDetailSheet({ item, visible, onClose }: PostDetailSh
   };
 
   return (
+    <>
     <BottomSheet visible={visible} onClose={onClose} initialState="full">
       {/* Type badge + time */}
       <View style={styles.topRow}>
@@ -827,11 +836,20 @@ export default function PostDetailSheet({ item, visible, onClose }: PostDetailSh
       </View>
 
       {/* Reactions */}
-      <ReactionsRow item={item} c={c} styles={styles} />
+      <ReactionsRow item={item} c={c} styles={styles} onReport={() => setReportOpen(true)} />
 
       {/* Comments */}
       <CommentsSection postId={postId} c={c} styles={styles} />
     </BottomSheet>
+
+    {postId ? (
+      <ReportPostSheet
+        visible={reportOpen}
+        onClose={() => setReportOpen(false)}
+        postId={String(postId)}
+      />
+    ) : null}
+    </>
   );
 }
 
