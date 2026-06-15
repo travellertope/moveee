@@ -132,7 +132,7 @@ export default function UserSearch({ onSelect, selected, label, placeholder }: P
                   </View>
                   {r.tier === "patron" && (
                     <View style={styles.proBadge}>
-                      <Text style={styles.proBadgeText}>PRO</Text>
+                      <Ionicons name="ribbon" size={9} color="#fff" />
                     </View>
                   )}
                 </TouchableOpacity>

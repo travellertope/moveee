@@ -83,6 +83,7 @@ export default function HappeningDetailModal({ visible, item, onClose }: Props) 
           <TypeBadge type="happening" />
           {isPatronOnly && (
             <View style={styles.proBadge}>
+              <Ionicons name="ribbon" size={9} color="#fff" />
               <Text style={styles.proBadgeText}>PRO ONLY</Text>
             </View>
           )}
@@ -197,6 +198,9 @@ function createStyles(c: ColorPalette) {
       borderColor: c.goldBorder,
       paddingHorizontal: space[2],
       paddingVertical: 2,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
     },
     proBadgeText: {
       fontFamily: fonts.monoBold,

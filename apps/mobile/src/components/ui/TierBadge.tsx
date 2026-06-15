@@ -1,23 +1,39 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import type { Tier } from "../../types";
 
 export default function TierBadge({ tier }: { tier: Tier }) {
   const isPro = tier === "patron";
+  if (!isPro) {
+    return (
+      <View style={styles.citizen}>
+        <Ionicons name="person-outline" size={9} color="#6b6560" />
+      </View>
+    );
+  }
   return (
-    <View style={[styles.badge, isPro ? styles.pro : styles.citizen]}>
-      <Text style={[styles.label, isPro ? styles.proLabel : styles.citizenLabel]}>
-        {isPro ? "Pro" : "Citizen"}
-      </Text>
+    <View style={styles.pro}>
+      <Ionicons name="ribbon" size={10} color="#fff" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  badge: { borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 },
-  pro: { backgroundColor: "#b38238" },
-  citizen: { backgroundColor: "#e0d8cc" },
-  label: { fontSize: 10, fontWeight: "700" },
-  proLabel: { color: "#fff" },
-  citizenLabel: { color: "#14110d" },
+  pro: {
+    backgroundColor: "#b38238",
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  citizen: {
+    backgroundColor: "#e0d8cc",
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

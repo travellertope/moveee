@@ -184,7 +184,7 @@ export default function PostDetailScreen() {
                   <Text style={styles.authorName}>{item.communityAuthor || "Community Member"}</Text>
                   {item.communityTier === "patron" ? (
                     <View style={styles.proBadge}>
-                      <Text style={styles.proBadgeText}>Pro</Text>
+                      <Ionicons name="ribbon" size={9} color="#fff" />
                     </View>
                   ) : null}
                 </View>

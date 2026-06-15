@@ -150,13 +150,14 @@ function createStyles(c: ColorPalette) {
       position: "relative" as const,
     },
     avatarWrapPro: {
-      borderWidth: 2,
-      borderColor: c.goldBorder,
+      borderWidth: 2.5,
+      borderColor: c.gold,
       borderRadius: 20,
       shadowColor: c.gold,
-      shadowOpacity: 0.18,
-      shadowRadius: 8,
-      elevation: 2,
+      shadowOpacity: 0.6,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 0 },
+      elevation: 8,
     },
     avatar: { width: 40, height: 40, borderRadius: 20 },
     avatarFallback: {
@@ -192,6 +193,14 @@ function createStyles(c: ColorPalette) {
       fontSize: fontSize.base,
       color: c.ink,
       flexShrink: 1,
+    },
+    proBadgePill: {
+      backgroundColor: c.gold,
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      alignItems: "center" as const,
+      justifyContent: "center" as const,
     },
     authorDot: {
       fontFamily: fonts.sans,
@@ -631,7 +640,7 @@ function AuthorRow({ item, forYouBadge, onAuthorPress }: {
           )}
           {isPro && (
             <View style={styles.proStar}>
-              <Text style={{ fontSize: 8, color: c.gold }}>★</Text>
+              <Ionicons name="ribbon" size={8} color={c.gold} />
             </View>
           )}
         </View>
@@ -641,7 +650,11 @@ function AuthorRow({ item, forYouBadge, onAuthorPress }: {
         <TouchableOpacity onPress={onAuthorPress} activeOpacity={onAuthorPress ? 0.7 : 1} disabled={!onAuthorPress}>
           <View style={styles.nameRow}>
             <Text style={styles.authorName} numberOfLines={1}>{item.communityAuthor ?? "Anonymous"}</Text>
-            {isPro && <BadgePill label="Connect Pro" bg={c.gold} color={c.paper} styles={styles} />}
+            {isPro && (
+              <View style={styles.proBadgePill}>
+                <Ionicons name="ribbon" size={9} color="#fff" />
+              </View>
+            )}
             <Text style={styles.authorDot}>·</Text>
             <Text style={styles.authorTime}>{timeAgo(item.date)}</Text>
           </View>

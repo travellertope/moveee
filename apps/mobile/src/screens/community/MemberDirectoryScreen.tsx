@@ -45,10 +45,11 @@ function MemberCard({
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       {/* Avatar */}
-      <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
-        <View style={styles.avatarInner}>
-          {/* Initials placeholder — swap for Image when avatarUrl exists */}
-          <Text style={styles.avatarText}>{initials(member.displayName)}</Text>
+      <View style={isPro ? styles.avatarGlowWrap : undefined}>
+        <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
+          <View style={styles.avatarInner}>
+            <Text style={styles.avatarText}>{initials(member.displayName)}</Text>
+          </View>
         </View>
       </View>
 
@@ -371,12 +372,21 @@ function createStyles(c: ColorPalette) {
       flex: 1, backgroundColor: c.paper, borderRadius: 12,
       padding: 12, alignItems: "center", gap: 0, ...shadows.card,
     },
+    avatarGlowWrap: {
+      borderRadius: 26,
+      shadowColor: c.gold,
+      shadowOpacity: 0.6,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 0 },
+      elevation: 8,
+      marginBottom: 8,
+    },
     avatarRing: {
       width: 44, height: 44, borderRadius: 22,
-      borderWidth: 2, padding: 2, marginBottom: 8,
+      borderWidth: 2, padding: 2,
     },
     avatarRingPro:     { borderColor: c.gold },
-    avatarRingCitizen: { borderColor: c.ghost },
+    avatarRingCitizen: { borderColor: c.ghost, marginBottom: 8 },
     avatarInner: {
       flex: 1, borderRadius: 20, backgroundColor: c.paperDeep,
       justifyContent: "center", alignItems: "center",
