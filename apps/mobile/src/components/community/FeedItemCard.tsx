@@ -33,6 +33,7 @@ interface FeedCardProps {
   onAuthorPress?: () => void;
   onReact?: (type: "love" | "fire" | "clap") => void;
   forYouBadge?: boolean;
+  onMentionPress?: (username: string) => void;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -1058,19 +1059,21 @@ function DirectoryCard({ item }: FeedCardProps) {
 }
 
 // BasicPostCard (B1)
-function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNavigation<any>();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const hasLink = !!(item.ogTitle || item.ogImage || item.source);
   const rawBody = item.body ?? item.excerpt ?? item.title ?? "";
   const displayBody = hasLink ? (stripLinkFromBody(rawBody, item.sourceUrl) ?? rawBody) : rawBody;
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
   return (
     <>
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <HashtagText text={displayBody} style={styles.cardBody} />
+          <HashtagText text={displayBody} style={styles.cardBody} onMentionPress={handleMentionPress} />
         </View>
         {item.image ? (
           <View style={{ marginTop: 10 }}>
@@ -1091,11 +1094,13 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
 }
 
 // HiddenGemCard (B2)
-function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNavigation<any>();
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const gallery = item.galleryImages ?? [];
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
   return (
     <>
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
@@ -1106,7 +1111,7 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
             <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.placeLocation ?? item.locationName}</Text>
           ) : null}
           <View style={{ marginTop: 8 }}>
-            <HashtagText text={item.body ?? item.excerpt ?? item.title ?? ""} numberOfLines={4} style={styles.cardBody} />
+            <HashtagText text={item.body ?? item.excerpt ?? item.title ?? ""} numberOfLines={4} style={styles.cardBody} onMentionPress={handleMentionPress} />
           </View>
         </View>
         {gallery.length > 0 ? (
@@ -1120,9 +1125,11 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
 }
 
 // CulturalTakeCard (B3)
-function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNavigation<any>();
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
@@ -1134,7 +1141,7 @@ function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCar
           </Text>
         ) : null}
         {item.title ? (
-          <HashtagText text={item.title} numberOfLines={4} style={[styles.cardBody, { marginTop: 6 }]} />
+          <HashtagText text={item.title} numberOfLines={4} style={[styles.cardBody, { marginTop: 6 }]} onMentionPress={handleMentionPress} />
         ) : null}
       </View>
       <FeedReactionBar item={item} marginTop={10} />
@@ -1185,13 +1192,15 @@ function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
 }
 
 // CreativeShowcaseCard (B5)
-function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNavigation<any>();
   const [activeIdx, setActiveIdx] = useState(0);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const gallery = item.galleryImages ?? [];
   const count = gallery.length;
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   return (
     <>
@@ -1207,7 +1216,7 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
         </View>
         {item.title ? (
           <View style={{ paddingHorizontal: 14, marginTop: 8 }}>
-            <HashtagText text={item.title} style={styles.cardBody} />
+            <HashtagText text={item.title} style={styles.cardBody} onMentionPress={handleMentionPress} />
           </View>
         ) : null}
         {count > 0 ? (
@@ -1343,10 +1352,12 @@ function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
 }
 
 // BookReviewCard (B8)
-function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNavigation<any>();
   const coverUri = item.image ?? null;
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   const statusColor: Record<string, string> = {
     "Finished": "#16a34a",
@@ -1409,7 +1420,7 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardP
 
         {/* Review body */}
         {item.title ? (
-          <HashtagText text={item.title} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} />
+          <HashtagText text={item.title} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} />
         ) : null}
 
         {/* Favourite quote */}
@@ -1453,11 +1464,13 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardP
 }
 
 // EventCommunityCard (B8 in design) — community post with _template_type = 'event'
-function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNavigation<any>();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [rsvped, setRsvped] = useState(false);
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   const handleRsvp = async () => {
     if (rsvped || !item.wpId) return;
@@ -1508,6 +1521,7 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedC
               text={item.title}
               style={[styles.cardBody, { marginTop: 10 }]}
               numberOfLines={2}
+              onMentionPress={handleMentionPress}
             />
           ) : null}
 
