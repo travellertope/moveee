@@ -642,32 +642,31 @@ function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
 }
 
 function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const sharerFirstName = item.communityAuthor?.split(" ")[0] ?? "Their";
   return (
     <>
       <View style={styles.quoteBlock}>
         <Text style={styles.quoteMark}>"</Text>
         <Text style={styles.quoteText}>{item.title}</Text>
-        <View style={styles.divider} />
+        <Text style={[styles.quoteMark, { textAlign: "right" as const, fontSize: 36, lineHeight: 28 }]}>"</Text>
+      </View>
+      {(item.quoteAuthor || item.quoteSource) ? (
         <View style={styles.quoteAttrib}>
-          <Text style={styles.quoteAuthor}>{item.quoteAuthor ?? "Unknown"}</Text>
+          {item.quoteAuthor ? (
+            <Text style={styles.quoteAuthor}>{item.quoteAuthor}</Text>
+          ) : null}
           {item.quoteSource ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 }}>
+            <View style={{ flexDirection: "row" as const, alignItems: "center" as const, gap: 4, marginTop: 4 }}>
               <Ionicons name="mic-outline" size={12} color={c.ghost} />
               <Text style={styles.quoteSource}>{item.quoteSource}</Text>
             </View>
           ) : null}
         </View>
-      </View>
-      {item.excerpt ? (
-        <View style={styles.posterNote}>
-          <Text style={styles.posterNoteLabel}>💬 Note:</Text>
-          <Text style={styles.bodyText}>{item.excerpt}</Text>
-        </View>
       ) : null}
-      {item.body && item.body !== item.excerpt ? (
+      {item.quoteSharingReason ? (
         <View style={styles.posterNote}>
-          <Text style={styles.posterNoteLabel}>💬 Why sharing:</Text>
-          <Text style={styles.bodyText}>{item.body}</Text>
+          <Text style={styles.posterNoteLabel}>💬 {sharerFirstName.toUpperCase()}'S NOTE:</Text>
+          <Text style={styles.bodyText}>{item.quoteSharingReason}</Text>
         </View>
       ) : null}
     </>

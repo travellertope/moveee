@@ -1099,6 +1099,24 @@ class Culture_Mobile_API {
             }
         }
 
+        // ── Quote ─────────────────────────────────────────────────────────────
+        if ( $template === 'quote' ) {
+            if ( $request->get_param( 'quote_author' ) ) {
+                update_post_meta( $post_id, '_quote_author', sanitize_text_field( $request->get_param( 'quote_author' ) ) );
+            }
+            if ( $request->get_param( 'quote_source' ) ) {
+                update_post_meta( $post_id, '_quote_source', sanitize_text_field( $request->get_param( 'quote_source' ) ) );
+            }
+            if ( $request->get_param( 'sharing_reason' ) ) {
+                update_post_meta( $post_id, '_quote_sharing_reason', sanitize_textarea_field( $request->get_param( 'sharing_reason' ) ) );
+            }
+            $allowed_quote_types = array( 'Person', 'Book', 'Film', 'Speech', 'Song' );
+            $quote_type = $request->get_param( 'quote_type' );
+            if ( $quote_type && in_array( $quote_type, $allowed_quote_types, true ) ) {
+                update_post_meta( $post_id, '_quote_type', sanitize_text_field( $quote_type ) );
+            }
+        }
+
         // ── Event ─────────────────────────────────────────────────────────────
         if ( $template === 'event' ) {
             update_post_meta( $post_id, '_event_date',      sanitize_text_field( $request->get_param( 'event_date' ) ?: '' ) );
@@ -1949,6 +1967,11 @@ class Culture_Mobile_API {
                 'bookFavQuote'            => get_post_meta( $post->ID, '_book_fav_quote', true ) ?: '',
                 'bookRecommend'           => get_post_meta( $post->ID, '_book_recommend', true ) === '1',
                 'bookGenres'              => json_decode( get_post_meta( $post->ID, '_book_genres', true ) ?: '[]', true ),
+                // Quote template fields
+                'quoteAuthor'             => get_post_meta( $post->ID, '_quote_author', true ) ?: '',
+                'quoteSource'             => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
+                'quoteSharingReason'      => get_post_meta( $post->ID, '_quote_sharing_reason', true ) ?: '',
+                'quoteType'               => get_post_meta( $post->ID, '_quote_type', true ) ?: '',
                 // Community event template fields
                 'eventDate'               => get_post_meta( $post->ID, '_event_date', true ) ?: '',
                 'endDate'                 => get_post_meta( $post->ID, '_event_end_date', true ) ?: '',
