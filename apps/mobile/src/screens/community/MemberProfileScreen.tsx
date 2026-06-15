@@ -151,9 +151,9 @@ function BadgeRow({
         contentContainerStyle={styles.badgeRow}
         style={styles.badgeRowWrap}
       >
-        {badges.map((b) => (
+        {badges.map((b, i) => (
           <TouchableOpacity
-            key={b.slug}
+            key={b.slug ?? i}
             style={styles.badgeIcon}
             onPress={() => setTooltip({ name: b.name, emoji: b.emoji })}
             activeOpacity={0.7}
@@ -273,7 +273,11 @@ export default function MemberProfileScreen() {
   if (loading) return <SafeAreaView style={styles.container}><View style={styles.center}><ActivityIndicator color={c.gold} /></View></SafeAreaView>;
   if (!profile) return <SafeAreaView style={styles.container}><View style={styles.center}><Text style={styles.errorText}>Member not found.</Text></View></SafeAreaView>;
 
-  const badges    = profile.badges ?? [];
+  const badges = (profile.badges ?? []).map((b: any) =>
+    typeof b === "string"
+      ? { slug: b, name: b.replace(/-_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()), emoji: "🏅" }
+      : b
+  );
   const hasSocial = !!(profile.instagram || profile.linkedin || profile.website);
   const rep       = profile.reputation ?? 0;
 
