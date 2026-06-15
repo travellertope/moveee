@@ -801,8 +801,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             )}
 
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" ? handleGalleryChange : handleFileChange}
-              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review"}
+              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" ? handleGalleryChange : handleFileChange}
+              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take"}
               style={{ display: "none" }}
             />
 
@@ -828,7 +828,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               )}
 
               {/* Image button (not for poll, quote, cultural-take, book-review) */}
-              {template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && (
+              {template !== "poll" && template !== "quote" && template !== "cultural-take" && (
                 <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
