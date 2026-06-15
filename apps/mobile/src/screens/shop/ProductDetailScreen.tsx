@@ -9,7 +9,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
-import { useCartStore } from "../../store/cartStore";
+import { useCartStore, type WishlistItem } from "../../store/cartStore";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -23,14 +23,16 @@ const { width: W } = Dimensions.get("window");
 // ── Image Gallery ─────────────────────────────────────────────────────────────
 
 function ImageGallery({
-  images, badge, isPro,
+  images, badge, isPro, wishlistItem,
 }: {
   images: string[]; badge?: string | null; isPro: boolean;
+  wishlistItem?: { id: number; title: string; brand: string; price: string; image?: string | null; slug: string };
 }) {
   const c = useColors();
   const gS = useMemo(() => createGalleryStyles(c), [c]);
+  const { toggleWishlist, isWishlisted } = useCartStore();
   const [idx, setIdx] = useState(0);
-  const [liked, setLiked] = useState(false);
+  const liked = wishlistItem ? isWishlisted(wishlistItem.id) : false;
   const scrollRef = useRef<ScrollView>(null);
   const total = images.length || 1;
 
@@ -84,7 +86,7 @@ function ImageGallery({
 
       <TouchableOpacity
         style={[gS.wishlist, badge === "pro_early_access" && { top: 52 }]}
-        onPress={() => setLiked((v) => !v)}
+        onPress={() => wishlistItem && toggleWishlist(wishlistItem)}
       >
         <Ionicons
           name={liked ? "heart" : "heart-outline"}
@@ -475,12 +477,20 @@ function createHowItsMadeStyles(c: ColorPalette) {
 function MakerCard({ detail }: { detail: ShopProductDetail }) {
   const c = useColors();
   const mkS = useMemo(() => createMakerStyles(c), [c]);
+  const nav = useNavigation<any>();
   const stars = Math.round(detail.makerRating);
+
+  const goToMakerShop = () => {
+    if (detail.makerName) {
+      nav.navigate("ShopListing", { categoryName: detail.makerName, categorySlug: "", makerName: detail.makerName });
+    }
+  };
+
   return (
     <View style={mkS.card}>
       <View style={mkS.cardHeader}>
         <Text style={mkS.cardTitle}>About the Maker</Text>
-        <TouchableOpacity onPress={() => {}}>
+        <TouchableOpacity onPress={goToMakerShop}>
           <Text style={mkS.cardAction}>See full shop →</Text>
         </TouchableOpacity>
       </View>
@@ -517,7 +527,7 @@ function MakerCard({ detail }: { detail: ShopProductDetail }) {
       {detail.makerBio ? (
         <Text style={mkS.bio} numberOfLines={3}>{detail.makerBio}</Text>
       ) : null}
-      <TouchableOpacity>
+      <TouchableOpacity onPress={goToMakerShop}>
         <Text style={mkS.viewAll}>View all their products →</Text>
       </TouchableOpacity>
     </View>
@@ -582,12 +592,15 @@ function RelatedProducts({
 }) {
   const c = useColors();
   const rpS = useMemo(() => createRelatedStyles(c), [c]);
+  const nav = useNavigation<any>();
   if (!products.length) return null;
   return (
     <View style={rpS.section}>
       <View style={rpS.header}>
         <Text style={rpS.title}>From {makerName}</Text>
-        <TouchableOpacity><Text style={rpS.seeMore}>See more →</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => nav.navigate("ShopListing", { categoryName: makerName, categorySlug: "", makerName })}>
+          <Text style={rpS.seeMore}>See more →</Text>
+        </TouchableOpacity>
       </View>
       <ScrollView
         horizontal
@@ -649,7 +662,7 @@ export default function ProductDetailScreen() {
   const nav = useNavigation<any>();
   const { params } = useRoute<any>();
   const { user } = useAuthStore();
-  const { addItem } = useCartStore();
+  const { addItem, toggleWishlist, isWishlisted } = useCartStore();
   const isPro = user?.tier === "patron";
   const c = useColors();
   const s = useMemo(() => createStyles(c), [c]);
@@ -719,7 +732,16 @@ export default function ProductDetailScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={s.scrollContent}
       >
-        <ImageGallery images={images} badge={product?.badge} isPro={isPro} />
+        <ImageGallery
+          images={images}
+          badge={product?.badge}
+          isPro={isPro}
+          wishlistItem={product ? {
+            id: product.id, title: product.name, brand: product.makerName,
+            price: (product.currencySymbol ?? "£") + product.price,
+            image: product.imageUrl, slug: product.slug,
+          } : undefined}
+        />
 
         <View style={s.card}>
           {loading && !detail ? (
@@ -825,9 +847,25 @@ export default function ProductDetailScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={s.saveForLater}>
-                  <Ionicons name="heart-outline" size={14} color={c.mute} />
-                  <Text style={s.saveForLaterText}>Save for later</Text>
+                <TouchableOpacity
+                  style={s.saveForLater}
+                  onPress={() => {
+                    if (!product) return;
+                    toggleWishlist({
+                      id: product.id, title: product.name, brand: product.makerName,
+                      price: (product.currencySymbol ?? "£") + product.price,
+                      image: product.imageUrl, slug: product.slug,
+                    });
+                  }}
+                >
+                  <Ionicons
+                    name={product && isWishlisted(product.id) ? "heart" : "heart-outline"}
+                    size={14}
+                    color={product && isWishlisted(product.id) ? c.error : c.mute}
+                  />
+                  <Text style={s.saveForLaterText}>
+                    {product && isWishlisted(product.id) ? "Saved to wishlist" : "Save for later"}
+                  </Text>
                 </TouchableOpacity>
               </View>
 

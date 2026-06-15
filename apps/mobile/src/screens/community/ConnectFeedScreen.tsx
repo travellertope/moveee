@@ -284,6 +284,10 @@ export default function ConnectFeedScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            scrollEventThrottle={16}
+            bounces={false}
+            overScrollMode="never"
             contentContainerStyle={styles.filterContent}
           >
             {FILTER_LABELS.map((label) => {

@@ -453,6 +453,7 @@ class Culture_Mobile_API {
             'permission_callback' => '__return_true',
             'args'                => array(
                 'category' => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
+                'maker'    => array( 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
                 'page'     => array( 'default' => 1,  'sanitize_callback' => 'absint' ),
                 'per_page' => array( 'default' => 20, 'sanitize_callback' => 'absint' ),
             ),
@@ -2184,6 +2185,7 @@ class Culture_Mobile_API {
         }
 
         $category = sanitize_text_field( $request->get_param( 'category' ) );
+        $maker    = sanitize_text_field( $request->get_param( 'maker' ) );
         $search   = sanitize_text_field( $request->get_param( 's' ) );
         $page     = max( 1, (int) $request->get_param( 'page' ) );
         $per_page = min( 50, max( 1, (int) $request->get_param( 'per_page' ) ) );
@@ -2209,6 +2211,14 @@ class Culture_Mobile_API {
                 'taxonomy' => 'product_cat',
                 'field'    => 'slug',
                 'terms'    => $category,
+            ) );
+        }
+
+        if ( $maker ) {
+            $query_args['meta_query'] = array( array(
+                'key'     => '_maker_name',
+                'value'   => $maker,
+                'compare' => '=',
             ) );
         }
 
