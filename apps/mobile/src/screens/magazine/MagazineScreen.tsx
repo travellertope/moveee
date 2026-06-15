@@ -472,7 +472,7 @@ function createStyles(c: ColorPalette) {
       justifyContent: "space-between",
       backgroundColor: c.paper,
       paddingHorizontal: space[4],
-      paddingVertical: space[3],
+      height: 56,
       borderBottomWidth: 1,
       borderBottomColor: c.rule,
     },

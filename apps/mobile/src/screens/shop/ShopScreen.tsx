@@ -358,7 +358,7 @@ export default function ShopScreen() {
           <View style={styles.heroContent}>
             <Text style={styles.heroEyebrow}>Vetted Makers · Handcrafted Objects</Text>
             <Text style={styles.heroTitle}>Objects that carry{"\n"}a story.</Text>
-            <Text style={styles.heroSub}>Curated from independent makers across the diaspora.</Text>
+            <Text style={styles.heroSub}>Curated from independent makers and creators worldwide.</Text>
             <TouchableOpacity style={styles.heroBtn} onPress={() => nav.navigate("TheEdit")}>
               <Text style={styles.heroBtnText}>Shop the edit →</Text>
             </TouchableOpacity>

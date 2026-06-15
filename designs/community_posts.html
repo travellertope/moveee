@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Community Posts (10 Templates)</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500;1,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        'ghost-light': '#EEE8DF',
+                        'success-green': '#2D6A4F'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'sheet': '0 -4px 32px rgba(20, 17, 13, 0.18)',
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; min-width: 390px; min-height: 844px; flex-shrink: 0; }
+    </style>
+</head>
+<body class="text-ink font-sans min-h-screen overflow-x-auto hide-scrollbar pt-8 pb-12">
+
+    <!-- Responsive Wrapping Container -->
+    <div class="flex flex-wrap justify-center gap-x-10 gap-y-16 max-w-[2400px] mx-auto px-8">
+
+        <!-- ============================================== -->
+        <!-- FRAME 1: STANDARD POST                         -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <!-- BACKGROUND: Simulated Feed -->
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-ghost rounded-full"></div><div class="w-[120px] h-3 bg-ghost rounded-full"></div></div><div class="w-full h-4 bg-ghost rounded-full mb-2"></div><div class="w-[80%] h-4 bg-ghost rounded-full mb-2"></div></div>
+                </div>
+
+                <!-- OVERLAY BACKDROP (40% opacity) -->
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <!-- BOTTOM SHEET: FULL (92% = 776px) -->
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[34px]">
+                    
+                    <!-- TOP CHROME -->
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink hover:bg-gray-200 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- CONTENT AREA (Scrollable) -->
+                    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative">
+                        
+                        <!-- Badge & Timestamp -->
+                        <div class="flex justify-between items-center px-[16px] pt-[8px]">
+                            <span style="background: rgba(129,199,132,0.15); color: #2E7D32" class="rounded-full font-sans text-[9px] font-bold uppercase px-[10px] py-[4px] tracking-wider">✏️ POST</span>
+                            <span class="font-mono text-[10px] text-ghost">Just now</span>
+                        </div>
+
+                        <!-- Section Tags -->
+                        <div class="flex gap-[8px] mt-[8px] px-[16px] overflow-x-auto hide-scrollbar shrink-0">
+                            <span class="h-[28px] px-3 rounded-full bg-ink text-white font-sans text-[11px] font-bold flex items-center shrink-0">Music</span>
+                            <span class="h-[28px] px-3 rounded-full border border-ghost text-ink-soft font-sans text-[11px] flex items-center shrink-0">Culture</span>
+                            <span class="h-[28px] px-3 rounded-full border border-ghost text-ink-soft font-sans text-[11px] flex items-center shrink-0">Lagos</span>
+                            <span class="h-[28px] px-3 rounded-full border border-ghost text-ink-soft font-sans text-[11px] flex items-center shrink-0">Discovery</span>
+                        </div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center gap-[12px] px-[16px] mt-[12px] shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0 border border-ghost/20"></div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">Zainab O.</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@zainab.o</span>
+                            </div>
+                            <button class="h-[24px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-bold text-ink hover:bg-paper-deep transition-colors">Follow</button>
+                        </div>
+
+                        <!-- Post Body -->
+                        <div class="px-[16px] mt-[12px]">
+                            <p class="font-sans text-[15px] text-ink-soft leading-[1.65]">
+                                Saw Tems perform at an intimate venue last night and I'm still not over it. She didn't say a word between songs — just let the music breathe. The crowd was completely silent. That's what real artistry looks like. Lagos has become the centre of the world and we don't even realise it yet. The energy in that room was something I'll carry for a long time.
+                            </p>
+                            <!-- Hashtags -->
+                            <div class="mt-[12px]">
+                                <span class="font-sans text-[13px] text-ochre">#Lagos #Tems #Afrobeats #LiveMusic</span>
+                            </div>
+                        </div>
+
+                        <!-- Multi-Image Gallery (2 Images) -->
+                        <div class="px-[16px] mt-[12px] flex flex-col shrink-0">
+                            <div class="w-full h-[200px] bg-gradient-to-br from-[#8E54E9] to-[#4776E6] rounded-md shadow-sm"></div>
+                            <div class="flex gap-[8px] mt-[8px]">
+                                <div class="w-1/2 h-[100px] bg-gradient-to-tr from-[#FF9A9E] to-[#FECFEF] rounded-md shadow-sm"></div>
+                            </div>
+                            <span class="font-mono text-[10px] text-ghost text-center mt-[4px]">2 photos</span>
+                        </div>
+
+                        <!-- Shared Reactions & Comments -->
+                        <div class="w-full h-[1px] bg-ghost-light mt-[16px] shrink-0"></div>
+                        <div class="px-[16px] py-[12px] flex items-center gap-[20px] shrink-0">
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">34</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">19</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">12</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">8</span></div>
+                        </div>
+                        <div class="w-full h-[1px] bg-ghost-light mb-[12px] shrink-0"></div>
+
+                        <div class="px-[16px] flex justify-between items-center mb-[12px] shrink-0">
+                            <span class="font-sans text-[13px] font-bold text-ink">Comments (8)</span>
+                            <button class="font-sans text-[13px] text-ochre">Add comment</button>
+                        </div>
+                        
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Seun B.</span>
+                                    <span class="font-mono text-[10px] text-ghost">1h</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">The silence was the loudest part 🖤</span>
+                            </div>
+                        </div>
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Kemi A.</span>
+                                    <span class="font-mono text-[10px] text-ghost">45m</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">I was there too!!</span>
+                            </div>
+                        </div>
+
+                        <button class="w-full text-center font-sans text-[13px] text-mute mt-[12px] mb-[12px] shrink-0 hover:text-ink">View all 8 comments</button>
+                        
+                        <div class="w-full h-[1px] bg-ghost-light shrink-0"></div>
+                        <div class="w-full flex justify-center py-[24px]">
+                            <button class="font-sans text-[12px] text-ghost hover:text-ink">⚑ Report this post</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest uppercase">Standard Post</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: HIDDEN GEM                            -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-ghost rounded-full"></div><div class="w-[120px] h-3 bg-ghost rounded-full"></div></div><div class="w-full h-4 bg-ghost rounded-full mb-2"></div></div>
+                </div>
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[34px]">
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative">
+                        
+                        <div class="flex justify-between items-center px-[16px] pt-[8px]">
+                            <span style="background: rgba(179,130,56,0.10); color: #B38238" class="rounded-full font-sans text-[9px] font-bold uppercase px-[10px] py-[4px] tracking-wider">💎 HIDDEN GEM</span>
+                            <span class="font-mono text-[10px] text-ghost">3 days ago</span>
+                        </div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center gap-[12px] px-[16px] mt-[12px] shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-bl from-teal-400 to-blue-500 shrink-0 border border-ghost/20"></div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">David K.</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@david.k</span>
+                            </div>
+                            <button class="h-[24px] px-[12px] rounded-full border border-ghost font-sans text-[12px] font-bold text-ink flex items-center justify-center hover:bg-paper-deep">Follow</button>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="px-[16px]">
+                            <h2 class="font-serif text-[22px] font-bold text-ink mt-[12px]">Bisi Ceramics Studio</h2>
+                            <div class="flex items-center gap-[6px] mt-[8px]">
+                                <svg class="w-4 h-4 text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <span class="font-sans text-[13px] text-mute">Balogun Market area · Lagos Island</span>
+                            </div>
+
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.65] mt-[12px]">
+                                Tucked behind the market chaos — this studio is one of those places Lagos keeps hidden for those who look. Adaeze sources her clay from Ondo state, fires it in a traditional kiln out back, and sells directly from the studio. Afternoon workshop slots (₦8,000, 3hrs) sell out weeks in advance but are completely worth it. The terracotta ritual bowls start at ₦12,000.
+                            </p>
+
+                            <!-- Directory Link -->
+                            <div class="bg-paper-warm rounded-md h-[40px] px-[12px] flex items-center mt-[12px] justify-between cursor-pointer hover:bg-[#EAE0D2]">
+                                <div class="flex items-center gap-[8px]">
+                                    <svg class="w-4 h-4 text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                    <span class="font-sans text-[13px] text-ink-soft line-clamp-1">Linked to Bisi Ceramics in the Directory</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-ochre whitespace-nowrap">View entry &rarr;</span>
+                            </div>
+                        </div>
+
+                        <!-- Meta Info Row -->
+                        <div class="mt-[8px] mx-[16px] py-[12px] flex items-center justify-between border-b border-ghost-light">
+                            <div class="flex items-center gap-[16px]">
+                                <span class="font-mono text-[12px] text-gold font-bold tracking-wider">₦₦₦</span>
+                                <span class="text-mute text-[10px]">•</span>
+                                <span class="font-sans text-[13px] text-mute">Tues–Sat, 10am–6pm</span>
+                            </div>
+                        </div>
+
+                        <!-- Multi-Image Gallery (3 Images) -->
+                        <div class="px-[16px] mt-[12px] flex flex-col shrink-0">
+                            <div class="w-full h-[200px] bg-gradient-to-tr from-[#E2B19B] to-[#C5491F] rounded-md shadow-sm"></div>
+                            <div class="flex gap-[8px] mt-[8px]">
+                                <div class="w-1/2 h-[100px] bg-gradient-to-br from-[#D2B48C] to-[#EBE5DC] rounded-md shadow-sm"></div>
+                                <div class="w-1/2 h-[100px] bg-gradient-to-tr from-[#708090] to-[#A0AEBD] rounded-md shadow-sm"></div>
+                            </div>
+                            <span class="font-mono text-[10px] text-ghost text-center mt-[4px]">3 photos</span>
+                        </div>
+
+                        <div class="px-[16px] mt-[8px]">
+                            <span class="font-sans text-[13px] text-ochre">#LagosHiddenGem #Ceramics #MadeInAfrica #SupportLocal</span>
+                        </div>
+
+                        <!-- Shared Reactions & Comments -->
+                        <div class="w-full h-[1px] bg-ghost-light mt-[16px] shrink-0"></div>
+                        <div class="px-[16px] py-[12px] flex items-center gap-[20px] shrink-0">
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">22</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">8</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">15</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">5</span></div>
+                        </div>
+                        <div class="w-full h-[1px] bg-ghost-light mb-[12px] shrink-0"></div>
+
+                        <div class="px-[16px] flex justify-between items-center mb-[12px] shrink-0">
+                            <span class="font-sans text-[13px] font-bold text-ink">Comments (5)</span>
+                            <button class="font-sans text-[13px] text-ochre">Add comment</button>
+                        </div>
+                        
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Kola M.</span>
+                                    <span class="font-mono text-[10px] text-ghost">1d</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">Need this address! 😭</span>
+                            </div>
+                        </div>
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Zara W.</span>
+                                    <span class="font-mono text-[10px] text-ghost">2d</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">The workshops are 🔥</span>
+                            </div>
+                        </div>
+
+                        <button class="w-full text-center font-sans text-[13px] text-mute mt-[12px] mb-[12px] shrink-0 hover:text-ink">View all 5 comments</button>
+                        
+                        <div class="w-full h-[1px] bg-ghost-light shrink-0"></div>
+                        <div class="w-full flex justify-center py-[24px]">
+                            <button class="font-sans text-[12px] text-ghost hover:text-ink">⚑ Report this post</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest uppercase">Hidden Gem</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 3: CULTURAL TAKE                         -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-ghost rounded-full"></div><div class="w-[120px] h-3 bg-ghost rounded-full"></div></div><div class="w-full h-4 bg-ghost rounded-full mb-2"></div></div>
+                </div>
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[34px]">
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative">
+                        
+                        <div class="flex justify-between items-center px-[16px] pt-[8px]">
+                            <span style="background: rgba(107,72,168,0.08); color: #6B48A8" class="rounded-full font-sans text-[9px] font-bold uppercase px-[10px] py-[4px] tracking-wider">🔥 CULTURAL TAKE</span>
+                            <span class="font-mono text-[10px] text-ghost">5 hours ago</span>
+                        </div>
+
+                        <div class="flex items-center gap-[12px] px-[16px] mt-[12px] shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 shrink-0 border border-ghost/20"></div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">Funmi Osei</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@funmiosei</span>
+                            </div>
+                            <button class="h-[24px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-bold text-ink flex items-center justify-center hover:bg-paper-deep">Follow</button>
+                        </div>
+
+                        <!-- The Take -->
+                        <div class="bg-paper-warm/50 px-[16px] py-[16px] mt-[16px] border-y border-ghost-light shrink-0">
+                            <h2 class="font-serif text-[21px] font-bold text-ink leading-[1.3]">
+                                Streaming killed the album as an art form. And African artists are the ones paying the price.
+                            </h2>
+                        </div>
+
+                        <!-- Argument -->
+                        <div class="px-[16px] mt-[12px]">
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.65]">
+                                We've spent the last decade celebrating the globalisation of Afrobeats. But look at what's actually been released: endless singles, loosely stitched 'albums' designed to hit Spotify playlists, not tell a cohesive story. Fela never needed a playlist. Neither did Lagbaja. The economics of streaming have replaced the album with the single, and the narrative with the hook. We're losing something and calling it progress.
+                            </p>
+                            
+                            <!-- Disagree Prompt -->
+                            <div class="bg-paper-warm rounded-md h-[40px] px-[12px] flex items-center mt-[12px] justify-between cursor-pointer">
+                                <div class="flex items-center gap-[8px]">
+                                    <span>💬</span>
+                                    <span class="font-sans text-[13px] text-ink-soft">Do you agree? Reply with your take</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-ochre font-bold">&rarr;</span>
+                            </div>
+                            
+                            <div class="mt-[8px]">
+                                <span class="font-sans text-[13px] text-ochre">#AfrobeatsDebate #MusicCulture #HotTake #CulturalTake</span>
+                            </div>
+                        </div>
+
+                        <!-- Shared Reactions & Comments -->
+                        <div class="w-full h-[1px] bg-ghost-light mt-[16px] shrink-0"></div>
+                        <div class="px-[16px] py-[12px] flex items-center gap-[20px] shrink-0">
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">91</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">67</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">14</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">43</span></div>
+                        </div>
+                        <div class="w-full h-[1px] bg-ghost-light mb-[12px] shrink-0"></div>
+
+                        <div class="px-[16px] flex justify-between items-center mb-[12px] shrink-0">
+                            <span class="font-sans text-[13px] font-bold text-ink">Comments (43)</span>
+                            <button class="font-sans text-[13px] text-ochre">Add comment</button>
+                        </div>
+                        
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Lekan D.</span>
+                                    <span class="font-mono text-[10px] text-ghost">1h</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">You're not wrong but Burna's 'Love Damini' was an album 👀</span>
+                            </div>
+                        </div>
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Amaka S.</span>
+                                    <span class="font-mono text-[10px] text-ghost">2h</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">Playlist culture ruined everything after 2018</span>
+                            </div>
+                        </div>
+
+                        <button class="w-full text-center font-sans text-[13px] text-mute mt-[12px] mb-[12px] shrink-0 hover:text-ink">View all 43 comments</button>
+                        
+                        <div class="w-full h-[1px] bg-ghost-light shrink-0"></div>
+                        <div class="w-full flex justify-center py-[24px]">
+                            <button class="font-sans text-[12px] text-ghost hover:text-ink">⚑ Report this post</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest uppercase">Cultural Take</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 4: FOOD REVIEW                           -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-ghost rounded-full"></div><div class="w-[120px] h-3 bg-ghost rounded-full"></div></div><div class="w-full h-4 bg-ghost rounded-full mb-2"></div></div>
+                </div>
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[34px]">
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative">
+                        
+                        <div class="flex justify-between items-center px-[16px] pt-[8px]">
+                            <span style="background: rgba(197,73,31,0.08); color: #C5491F" class="rounded-full font-sans text-[9px] font-bold uppercase px-[10px] py-[4px] tracking-wider">🍽️ FOOD REVIEW</span>
+                            <span class="font-mono text-[10px] text-ghost">1 week ago</span>
+                        </div>
+
+                        <div class="flex items-center gap-[12px] px-[16px] mt-[12px] shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-500 shrink-0 border border-ghost/20"></div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">Chidi Eze</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@chidi.eats</span>
+                            </div>
+                            <button class="h-[24px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-bold text-ink flex items-center justify-center hover:bg-paper-deep">Follow</button>
+                        </div>
+
+                        <!-- Review Info -->
+                        <div class="px-[16px]">
+                            <h2 class="font-serif text-[20px] font-bold text-ink mt-[12px]">Nok by Alara</h2>
+                            <div class="flex items-center gap-[4px] mt-[4px] mb-[8px]">
+                                <span class="font-sans text-[12px] text-ochre">🗂 View in Directory &rarr;</span>
+                            </div>
+
+                            <div class="flex items-center justify-between border-b border-ghost-light pb-[8px]">
+                                <span class="font-sans text-[13px] text-mute">📍 Victoria Island, Lagos</span>
+                                <span class="font-mono text-[12px] text-gold font-bold tracking-wider">₦₦₦<span class="text-ghost font-normal">₦</span></span>
+                            </div>
+
+                            <!-- Ratings Block -->
+                            <div class="mt-[16px]">
+                                <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-widest block mb-[8px]">Ratings</span>
+                                
+                                <div class="flex items-center justify-between h-[44px] border-b border-ghost-light">
+                                    <span class="font-sans text-[13px] text-ink-soft w-[100px]">Taste</span>
+                                    <div class="flex text-[20px] text-ochre gap-1 leading-none tracking-widest items-center">★★★★★</div>
+                                    <span class="font-mono text-[12px] text-gold w-[30px] text-right font-bold">5.0</span>
+                                </div>
+                                <div class="flex items-center justify-between h-[44px] border-b border-ghost-light">
+                                    <span class="font-sans text-[13px] text-ink-soft w-[100px]">Value</span>
+                                    <div class="flex text-[20px] text-ochre gap-1 leading-none tracking-widest items-center">★★★★<span class="text-ghost outline-text">☆</span></div>
+                                    <span class="font-mono text-[12px] text-gold w-[30px] text-right font-bold">4.0</span>
+                                </div>
+                                <div class="flex items-center justify-between h-[44px] border-b border-ghost-light">
+                                    <span class="font-sans text-[13px] text-ink-soft w-[100px]">Vibe</span>
+                                    <div class="flex text-[20px] text-ochre gap-1 leading-none tracking-widest items-center">★★★★★</div>
+                                    <span class="font-mono text-[12px] text-gold w-[30px] text-right font-bold">5.0</span>
+                                </div>
+                                
+                                <div class="mt-[12px] flex flex-col items-end">
+                                    <span class="font-serif text-[28px] font-bold text-ink leading-none">4.7</span>
+                                    <span class="font-sans text-[13px] text-mute">/ 5.0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Multi-Image Gallery (3 Images) -->
+                        <div class="px-[16px] mt-[12px] flex flex-col shrink-0">
+                            <div class="w-full h-[200px] bg-gradient-to-tr from-[#D18E70] to-[#E2A684] rounded-md shadow-sm"></div>
+                            <div class="flex gap-[8px] mt-[8px]">
+                                <div class="w-1/2 h-[100px] bg-gradient-to-br from-[#A66C52] to-[#E2B19B] rounded-md shadow-sm"></div>
+                                <div class="w-1/2 h-[100px] bg-gradient-to-tr from-[#C5491F] to-[#E2A684] rounded-md shadow-sm"></div>
+                            </div>
+                            <span class="font-mono text-[10px] text-mute text-center mt-[4px]">Suya Platter for Two — ₦14,500</span>
+                        </div>
+
+                        <div class="px-[16px] mt-[12px]">
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.65]">
+                                The pan-African menu at Nok changes monthly and this month's Suya platter is a love letter to Northern Nigeria. The suya spice rub is fresh — you can taste the yaji — and the grilled plantain sides are the best I've had anywhere in Lagos. Service is attentive without being intrusive. Worth every naira for a special occasion.
+                            </p>
+                            
+                            <!-- Tags -->
+                            <div class="flex gap-[8px] mt-[8px] overflow-x-auto hide-scrollbar py-1">
+                                <span class="h-[28px] px-3 rounded-full border border-ochre text-ochre font-sans text-[11px] font-bold flex items-center shrink-0">Nigerian</span>
+                                <span class="h-[28px] px-3 rounded-full border border-ochre text-ochre font-sans text-[11px] font-bold flex items-center shrink-0">Pan-African</span>
+                                <span class="h-[28px] px-3 rounded-full border border-ghost text-ink-soft font-sans text-[11px] flex items-center shrink-0">Suya</span>
+                                <span class="h-[28px] px-3 rounded-full border border-ghost text-ink-soft font-sans text-[11px] flex items-center shrink-0">Grilled</span>
+                            </div>
+                            <span class="font-sans text-[13px] text-ochre mt-[4px] block">#NokByAlara #LagosFood #FoodReview #Suya</span>
+                        </div>
+
+                        <!-- Shared Reactions & Comments -->
+                        <div class="w-full h-[1px] bg-ghost-light mt-[16px] shrink-0"></div>
+                        <div class="px-[16px] py-[12px] flex items-center gap-[20px] shrink-0">
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">41</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">18</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">29</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">12</span></div>
+                        </div>
+                        <div class="w-full h-[1px] bg-ghost-light mb-[12px] shrink-0"></div>
+
+                        <div class="px-[16px] flex justify-between items-center mb-[12px] shrink-0">
+                            <span class="font-sans text-[13px] font-bold text-ink">Comments (12)</span>
+                            <button class="font-sans text-[13px] text-ochre">Add comment</button>
+                        </div>
+                        
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Bisi A.</span>
+                                    <span class="font-mono text-[10px] text-ghost">1d</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">The suya here changed my life 😭🔥</span>
+                            </div>
+                        </div>
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Tunde K.</span>
+                                    <span class="font-mono text-[10px] text-ghost">2d</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">Is the jollof still on the menu?</span>
+                            </div>
+                        </div>
+
+                        <button class="w-full text-center font-sans text-[13px] text-mute mt-[12px] mb-[12px] shrink-0 hover:text-ink">View all 12 comments</button>
+                        
+                        <div class="w-full h-[1px] bg-ghost-light shrink-0"></div>
+                        <div class="w-full flex justify-center py-[24px]">
+                            <button class="font-sans text-[12px] text-ghost hover:text-ink">⚑ Report this post</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest uppercase">Food Review</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 5: CREATIVE SHOWCASE                     -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-ghost rounded-full"></div><div class="w-[120px] h-3 bg-ghost rounded-full"></div></div><div class="w-full h-4 bg-ghost rounded-full mb-2"></div></div>
+                </div>
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[34px]">
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative">
+                        
+                        <div class="flex justify-between items-center px-[16px] pt-[8px]">
+                            <span style="background: rgba(25,118,210,0.08); color: #1976D2" class="rounded-full font-sans text-[9px] font-bold uppercase px-[10px] py-[4px] tracking-wider">🎨 CREATIVE SHOWCASE</span>
+                            <span class="font-mono text-[10px] text-ghost">2 weeks ago</span>
+                        </div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center gap-[12px] px-[16px] mt-[12px] shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-[#F2994A] to-[#EB5757] shrink-0 border border-ghost/20"></div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">Zara Mensah</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@zaramensah</span>
+                            </div>
+                            <button class="h-[24px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-bold text-ink flex items-center justify-center hover:bg-paper-deep">Follow</button>
+                        </div>
+
+                        <div class="px-[16px]">
+                            <h2 class="font-serif text-[22px] font-bold text-ink mt-[12px]">Zaria Music Visuals — Vol. 2</h2>
+                            
+                            <div class="flex gap-[8px] mt-[8px]">
+                                <span class="h-[24px] px-3 rounded-full border border-ghost text-ink-soft font-sans text-[11px] font-bold flex items-center shrink-0">Photography</span>
+                                <span class="h-[24px] px-3 rounded-full border border-ghost text-ink-soft font-sans text-[11px] font-bold flex items-center shrink-0">Music Portraits</span>
+                            </div>
+                        </div>
+
+                        <!-- Multi-Image Gallery (3 Images) -->
+                        <div class="px-[16px] mt-[12px] flex flex-col shrink-0">
+                            <div class="w-full h-[240px] bg-gradient-to-tr from-[#8E54E9] to-[#4776E6] rounded-md shadow-sm"></div>
+                            <div class="flex gap-[8px] mt-[8px]">
+                                <div class="w-1/2 h-[100px] bg-gradient-to-tr from-[#FF9A9E] to-[#FECFEF] rounded-md shadow-sm"></div>
+                                <div class="w-1/2 h-[100px] bg-gradient-to-tr from-[#F6D365] to-[#FDA085] rounded-md shadow-sm"></div>
+                            </div>
+                            <span class="font-mono text-[10px] text-ghost text-center mt-[4px]">3 of 12 photos</span>
+                        </div>
+
+                        <div class="px-[16px]">
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.65] mt-[12px]">
+                                This series explores the space between performance and stillness — the moment after the last note when an artist is still inside the sound. Shot over two months following Zaria across Lagos, Accra, and London. All film, no digital corrections.
+                            </p>
+
+                            <!-- Collaboration Tag -->
+                            <div class="bg-paper-warm rounded-md h-[40px] px-[12px] flex items-center mt-[12px] justify-between cursor-pointer hover:bg-[#EAE0D2] shrink-0">
+                                <div class="flex items-center gap-[8px]">
+                                    <span>🤝</span>
+                                    <span class="font-sans text-[13px] text-ink-soft line-clamp-1">Collaboration with @zaria.official</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-ochre whitespace-nowrap">View profile &rarr;</span>
+                            </div>
+
+                            <span class="font-sans text-[13px] text-ochre mt-[8px] block">#Photography #MusicPortraits #FilmPhotography #AfricanCreatives</span>
+                        </div>
+
+                        <!-- Shared Reactions & Comments -->
+                        <div class="w-full h-[1px] bg-ghost-light mt-[16px] shrink-0"></div>
+                        <div class="px-[16px] py-[12px] flex items-center gap-[20px] shrink-0">
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">118</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">52</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">86</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">31</span></div>
+                        </div>
+                        <div class="w-full h-[1px] bg-ghost-light mb-[12px] shrink-0"></div>
+
+                        <div class="px-[16px] flex justify-between items-center mb-[12px] shrink-0">
+                            <span class="font-sans text-[13px] font-bold text-ink">Comments (31)</span>
+                            <button class="font-sans text-[13px] text-ochre">Add comment</button>
+                        </div>
+                        
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Ade F.</span>
+                                    <span class="font-mono text-[10px] text-ghost">2d</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">The film grain on the second shot 👌👌</span>
+                            </div>
+                        </div>
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Kemi O.</span>
+                                    <span class="font-mono text-[10px] text-ghost">4d</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">This needs to be exhibited</span>
+                            </div>
+                        </div>
+
+                        <button class="w-full text-center font-sans text-[13px] text-mute mt-[12px] mb-[12px] shrink-0 hover:text-ink">View all 31 comments</button>
+                        
+                        <div class="w-full h-[1px] bg-ghost-light shrink-0"></div>
+                        <div class="w-full flex justify-center py-[24px]">
+                            <button class="font-sans text-[12px] text-ghost hover:text-ink">⚑ Report this post</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest uppercase">Creative Showcase</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 6: POLL                                  -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-ghost rounded-full"></div><div class="w-[120px] h-3 bg-ghost rounded-full"></div></div><div class="w-full h-4 bg-ghost rounded-full mb-2"></div></div>
+                </div>
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[34px]">
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative">
+                        
+                        <div class="flex justify-between items-center px-[16px] pt-[8px]">
+                            <span style="background: rgba(107,72,168,0.08); color: #6B48A8" class="rounded-full font-sans text-[9px] font-bold uppercase px-[10px] py-[4px] tracking-wider">📊 POLL</span>
+                            <span class="font-mono text-[10px] text-ghost">Closes in 1 day</span>
+                        </div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center gap-[12px] px-[16px] mt-[12px] shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full bg-paper-deep border border-ghost flex items-center justify-center shrink-0">
+                                <svg class="w-6 h-6 text-mute" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            </div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">Moveee Community</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@community</span>
+                            </div>
+                            <button class="h-[24px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-bold text-ink flex items-center justify-center hover:bg-paper-deep">Follow</button>
+                        </div>
+
+                        <div class="px-[16px]">
+                            <h2 class="font-serif text-[20px] font-bold text-ink mt-[12px] leading-[1.3]">What's the greatest era of Afrobeats?</h2>
+
+                            <!-- Poll Options -->
+                            <div class="flex flex-col gap-[12px] mt-[12px]">
+                                <!-- Option A -->
+                                <div class="h-[56px] rounded-lg border border-ghost bg-white relative overflow-hidden flex items-center px-[16px] justify-between">
+                                    <div class="absolute top-0 left-0 h-full bg-ochre/15 rounded-l-lg" style="width: 12%;"></div>
+                                    <span class="font-sans text-[14px] font-bold text-ink relative z-10">90s Fela Era</span>
+                                    <span class="font-mono text-[12px] text-gold relative z-10">12%</span>
+                                </div>
+                                <!-- Option B (Leader) -->
+                                <div class="h-[56px] rounded-lg border-[1.5px] border-ochre bg-white relative overflow-hidden flex items-center px-[16px] justify-between">
+                                    <div class="absolute top-0 left-0 h-full bg-ochre/15 rounded-l-lg" style="width: 38%;"></div>
+                                    <div class="relative z-10 flex items-center gap-2">
+                                        <span class="font-sans text-[14px] font-bold text-ink">Wizkid / Davido 2010s</span>
+                                        <span class="text-[14px]">👑</span>
+                                    </div>
+                                    <span class="font-mono text-[12px] text-gold font-bold relative z-10">38%</span>
+                                </div>
+                                <!-- Option C -->
+                                <div class="h-[56px] rounded-lg border border-ghost bg-white relative overflow-hidden flex items-center px-[16px] justify-between">
+                                    <div class="absolute top-0 left-0 h-full bg-ochre/15 rounded-l-lg" style="width: 35%;"></div>
+                                    <span class="font-sans text-[14px] font-bold text-ink relative z-10">Burna Boy / Tems era</span>
+                                    <span class="font-mono text-[12px] text-gold relative z-10">35%</span>
+                                </div>
+                                <!-- Option D -->
+                                <div class="h-[56px] rounded-lg border border-ghost bg-white relative overflow-hidden flex items-center px-[16px] justify-between">
+                                    <div class="absolute top-0 left-0 h-full bg-ochre/15 rounded-l-lg" style="width: 15%;"></div>
+                                    <span class="font-sans text-[14px] font-bold text-ink relative z-10">Right now — it's still evolving</span>
+                                    <span class="font-mono text-[12px] text-gold relative z-10">15%</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between mt-[12px]">
+                                <span class="font-mono text-[12px] text-mute">342 votes · Closes 14 Jun 2026</span>
+                                <span class="font-sans text-[12px] text-gold font-medium">You voted: 2010s ✓</span>
+                            </div>
+
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.6] mt-[12px]">
+                                Inspired by the debate at last week's community event. Drop your take in the comments.
+                            </p>
+                        </div>
+
+                        <!-- Shared Reactions & Comments -->
+                        <div class="w-full h-[1px] bg-ghost-light mt-[16px] shrink-0"></div>
+                        <div class="px-[16px] py-[12px] flex items-center gap-[20px] shrink-0">
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">58</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">31</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">9</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">47</span></div>
+                        </div>
+                        <div class="w-full h-[1px] bg-ghost-light mb-[12px] shrink-0"></div>
+
+                        <div class="px-[16px] flex justify-between items-center mb-[12px] shrink-0">
+                            <span class="font-sans text-[13px] font-bold text-ink">Comments (47)</span>
+                            <button class="font-sans text-[13px] text-ochre">Add comment</button>
+                        </div>
+                        
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Tolu P.</span>
+                                    <span class="font-mono text-[10px] text-ghost">3h</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">You can't count out Fela, the foundation of everything 💯</span>
+                            </div>
+                        </div>
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Mide A.</span>
+                                    <span class="font-mono text-[10px] text-ghost">4h</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">2010s gave us the template but 2020s perfected it</span>
+                            </div>
+                        </div>
+
+                        <button class="w-full text-center font-sans text-[13px] text-mute mt-[12px] mb-[12px] shrink-0 hover:text-ink">View all 47 comments</button>
+                        
+                        <div class="w-full h-[1px] bg-ghost-light shrink-0"></div>
+                        <div class="w-full flex justify-center py-[24px]">
+                            <button class="font-sans text-[12px] text-ghost hover:text-ink">⚑ Report this post</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest uppercase">Poll</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 7: ITINERARY                             -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-ghost rounded-full"></div><div class="w-[120px] h-3 bg-ghost rounded-full"></div></div><div class="w-full h-4 bg-ghost rounded-full mb-2"></div></div>
+                </div>
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[34px]">
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative">
+                        
+                        <div class="flex justify-between items-center px-[16px] pt-[8px]">
+                            <span style="background: rgba(46,125,50,0.08); color: #2E7D32" class="rounded-full font-sans text-[9px] font-bold uppercase px-[10px] py-[4px] tracking-wider">🗺️ ITINERARY</span>
+                            <span class="font-mono text-[10px] text-ghost">4 days ago</span>
+                        </div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center gap-[12px] px-[16px] mt-[12px] shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-cyan-400 to-emerald-400 shrink-0 border border-ghost/20"></div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">Lekan Dada</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@lekandada</span>
+                            </div>
+                            <button class="h-[24px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-bold text-ink flex items-center justify-center hover:bg-paper-deep">Follow</button>
+                        </div>
+
+                        <div class="px-[16px]">
+                            <h2 class="font-serif text-[22px] font-bold text-ink mt-[12px]">48 Hours in Lagos: The Culture Route</h2>
+
+                            <!-- Meta Row -->
+                            <div class="flex items-center gap-[16px] mt-[8px]">
+                                <div class="flex items-center gap-1.5 font-mono text-[11px] text-ghost">
+                                    <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                    6 stops
+                                </div>
+                                <div class="flex items-center gap-1.5 font-mono text-[11px] text-ghost">
+                                    <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Est. 2 days
+                                </div>
+                                <div class="flex items-center gap-1.5 font-mono text-[11px] text-ghost">
+                                    <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    Lagos, Nigeria
+                                </div>
+                                <div class="flex items-center gap-1.5 font-mono text-[11px] text-ghost">
+                                    💰 ££
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stops List -->
+                        <div class="mt-[12px] px-[16px] shrink-0">
+                            <span class="font-sans text-[11px] font-bold text-mute uppercase block mb-[4px]">The Route</span>
+
+                            <!-- Stop 1 -->
+                            <div class="min-h-[72px] border-b border-ghost-light py-[12px] flex items-start gap-[12px] relative">
+                                <div class="w-[24px] h-[24px] rounded-full bg-paper-warm border border-ghost flex items-center justify-center shrink-0 relative z-10">
+                                    <span class="font-mono text-[12px] text-mute">1</span>
+                                </div>
+                                <div class="flex-1 flex flex-col">
+                                    <h3 class="font-sans text-[14px] font-bold text-ink leading-tight">Nike Art Gallery</h3>
+                                    <span class="font-sans text-[12px] text-ochre mt-[2px]">🗂 Ikoyi · View in Directory &rarr;</span>
+                                    <span class="font-sans text-[12px] text-mute mt-[2px]">Arrive early — rooftop has the best light before 10am.</span>
+                                    <span class="font-mono text-[10px] text-ghost mt-[2px]">⏱ 2–3 hours</span>
+                                </div>
+                            </div>
+
+                            <!-- Stop 2 -->
+                            <div class="min-h-[72px] border-b border-ghost-light py-[12px] flex items-start gap-[12px] relative">
+                                <div class="w-[24px] h-[24px] rounded-full bg-paper-warm border border-ghost flex items-center justify-center shrink-0 relative z-10">
+                                    <span class="font-mono text-[12px] text-mute">2</span>
+                                </div>
+                                <div class="flex-1 flex flex-col">
+                                    <h3 class="font-sans text-[14px] font-bold text-ink leading-tight">Nok by Alara</h3>
+                                    <span class="font-sans text-[12px] text-ochre mt-[2px]">🗂 Victoria Island &rarr; Directory</span>
+                                    <span class="font-sans text-[12px] text-mute mt-[2px]">Lunch — book in advance.</span>
+                                    <span class="font-mono text-[10px] text-ghost mt-[2px]">⏱ 1.5 hours</span>
+                                </div>
+                            </div>
+
+                            <!-- Stop 3 -->
+                            <div class="min-h-[72px] border-b border-ghost-light py-[12px] flex items-start gap-[12px] relative">
+                                <div class="w-[24px] h-[24px] rounded-full bg-paper-warm border border-ghost flex items-center justify-center shrink-0 relative z-10">
+                                    <span class="font-mono text-[12px] text-mute">3</span>
+                                </div>
+                                <div class="flex-1 flex flex-col">
+                                    <h3 class="font-sans text-[14px] font-bold text-ink leading-tight">Terra Kulture</h3>
+                                    <span class="font-sans text-[12px] text-ochre mt-[2px]">🗂 Victoria Island &rarr; Directory</span>
+                                    <span class="font-sans text-[12px] text-mute mt-[2px]">Afternoon gallery + bookshop.</span>
+                                    <span class="font-mono text-[10px] text-ghost mt-[2px]">⏱ 1–2 hours</span>
+                                </div>
+                            </div>
+
+                            <!-- Stop 4 -->
+                            <div class="min-h-[72px] py-[12px] flex items-start gap-[12px] relative border-b border-ghost-light">
+                                <div class="w-[24px] h-[24px] rounded-full bg-paper-warm border border-ghost flex items-center justify-center shrink-0 relative z-10">
+                                    <span class="font-mono text-[12px] text-mute">4</span>
+                                </div>
+                                <div class="flex-1 flex flex-col">
+                                    <h3 class="font-sans text-[14px] font-bold text-ink leading-tight">Café Beside the Point</h3>
+                                    <span class="font-sans text-[12px] text-mute mt-[2px]">Hidden coffee spot on Akin Adesola.</span>
+                                    <span class="font-mono text-[10px] text-ghost mt-[2px]">⏱ 45 min</span>
+                                </div>
+                            </div>
+                            
+                            <div class="pt-[8px] pb-[4px]">
+                                <button class="w-full font-sans text-[13px] text-ochre text-center">2 more stops &darr;</button>
+                            </div>
+                        </div>
+
+                        <!-- Multi-Image Gallery (2 Images) -->
+                        <div class="px-[16px] mt-[12px] flex flex-col shrink-0">
+                            <div class="w-full h-[200px] bg-gradient-to-tr from-emerald-400 to-cyan-500 rounded-md shadow-sm"></div>
+                            <div class="flex gap-[8px] mt-[8px]">
+                                <div class="w-1/2 h-[100px] bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] rounded-md shadow-sm"></div>
+                            </div>
+                            <span class="font-mono text-[10px] text-ghost text-center mt-[4px]">2 photos</span>
+                        </div>
+
+                        <div class="px-[16px] mt-[8px]">
+                            <span class="font-sans text-[13px] text-ochre">#Lagos48Hours #CultureRoute #LagosGuide #VisitLagos</span>
+                        </div>
+
+                        <!-- Shared Reactions & Comments -->
+                        <div class="w-full h-[1px] bg-ghost-light mt-[16px] shrink-0"></div>
+                        <div class="px-[16px] py-[12px] flex items-center gap-[20px] shrink-0">
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">76</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">28</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">55</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">19</span></div>
+                        </div>
+                        <div class="w-full h-[1px] bg-ghost-light mb-[12px] shrink-0"></div>
+
+                        <div class="px-[16px] flex justify-between items-center mb-[12px] shrink-0">
+                            <span class="font-sans text-[13px] font-bold text-ink">Comments (19)</span>
+                            <button class="font-sans text-[13px] text-ochre">Add comment</button>
+                        </div>
+                        
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Fatima R.</span>
+                                    <span class="font-mono text-[10px] text-ghost">2d</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">Done this route twice now, it's perfect</span>
+                            </div>
+                        </div>
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Olu B.</span>
+                                    <span class="font-mono text-[10px] text-ghost">3d</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">Add Bisi Ceramics to stop 5!</span>
+                            </div>
+                        </div>
+
+                        <button class="w-full text-center font-sans text-[13px] text-mute mt-[12px] mb-[12px] shrink-0 hover:text-ink">View all 19 comments</button>
+                        
+                        <div class="w-full h-[1px] bg-ghost-light shrink-0"></div>
+                        <div class="w-full flex justify-center py-[24px]">
+                            <button class="font-sans text-[12px] text-ghost hover:text-ink">⚑ Report this post</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest uppercase">Itinerary</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 8: COMMUNITY EVENT                       -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-ghost rounded-full"></div><div class="w-[120px] h-3 bg-ghost rounded-full"></div></div><div class="w-full h-4 bg-ghost rounded-full mb-2"></div></div>
+                </div>
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[34px]">
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative">
+                        
+                        <div class="flex justify-between items-center px-[16px] pt-[8px]">
+                            <span style="background: rgba(0,137,123,0.08); color: #00695C" class="rounded-full font-sans text-[9px] font-bold uppercase px-[10px] py-[4px] tracking-wider">📅 EVENT</span>
+                            <span class="font-mono text-[10px] text-ghost">Posted 2 days ago</span>
+                        </div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center gap-[12px] px-[16px] mt-[12px] shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-pink-500 to-orange-400 shrink-0 border border-ghost/20"></div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">Moveee Lagos</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@moveee.lagos · Event Organiser</span>
+                            </div>
+                            <button class="h-[24px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-bold text-ink flex items-center justify-center hover:bg-paper-deep">Follow</button>
+                        </div>
+
+                        <div class="px-[16px]">
+                            <h2 class="font-serif text-[22px] font-bold text-ink mt-[12px] leading-[1.2]">Amapiano Night at The Jazz Cafe</h2>
+                        </div>
+
+                        <!-- Multi-Image Gallery (1 Image) -->
+                        <div class="px-[16px] mt-[12px] flex flex-col shrink-0">
+                            <div class="w-full h-[200px] bg-gradient-to-br from-violet-500 via-fuchsia-500 to-orange-500 rounded-md shadow-inner"></div>
+                            <span class="font-mono text-[10px] text-ghost text-center mt-[4px]">Amapiano Night · The Jazz Cafe</span>
+                        </div>
+
+                        <!-- Meta Grid -->
+                        <div class="flex flex-col gap-[8px] px-[16px] mt-[12px] shrink-0">
+                            <div class="flex items-start gap-[8px]">
+                                <span class="w-[20px] text-center text-[16px] text-ghost shrink-0">📅</span>
+                                <span class="font-sans text-[14px] text-ink-soft">Friday, 20 June 2026 · 9:00 PM – 3:00 AM</span>
+                            </div>
+                            <div class="flex items-start gap-[8px]">
+                                <span class="w-[20px] text-center text-[16px] text-ghost shrink-0">📍</span>
+                                <span class="font-sans text-[14px] text-ink-soft">The Jazz Cafe · Chalk Farm Road, London</span>
+                            </div>
+                            <div class="flex items-center gap-[8px]">
+                                <span class="w-[20px] text-center text-[16px] text-ghost shrink-0">🏙️</span>
+                                <span class="font-sans text-[14px] text-ink-soft">London, UK</span>
+                            </div>
+                            <div class="flex items-center gap-[8px]">
+                                <span class="w-[20px] text-center text-[16px] text-ghost shrink-0">💰</span>
+                                <span class="font-sans text-[14px] text-ink-soft">£15 advance · £20 door</span>
+                            </div>
+                            <div class="flex items-center gap-[8px] mt-1">
+                                <span class="w-[20px] text-center text-[16px] text-ghost shrink-0">🏷️</span>
+                                <span class="bg-paper-deep border border-ghost rounded-full px-3 py-1 text-[11px] font-bold text-ink-soft">Music</span>
+                            </div>
+                            <div class="flex items-center gap-[8px] mt-1">
+                                <span class="w-[20px] text-center text-[16px] text-ghost shrink-0">👤</span>
+                                <span class="font-sans text-[13px] text-ochre underline underline-offset-2 cursor-pointer">Moveee Events</span>
+                            </div>
+                        </div>
+
+                        <div class="px-[16px]">
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.6] mt-[12px]">
+                                An intimate Amapiano takeover at one of London's most iconic jazz rooms. Two rooms, three DJs, late licence until 3am. Connect members get priority entry — show your app at the door.
+                            </p>
+
+                            <!-- Pro Perk -->
+                            <div class="bg-paper-warm rounded-md min-h-[44px] px-[16px] py-[12px] flex items-start gap-[8px] mt-[12px]">
+                                <span class="text-[12px] text-gold pt-[2px]">★</span>
+                                <span class="font-sans text-[13px] text-ink-soft">Pro Members: Early entry from 8:30 PM + free drink token.</span>
+                            </div>
+
+                            <button class="w-full h-[52px] bg-ochre text-white font-sans font-bold text-[14px] rounded-full mt-[12px] shadow-sm">
+                                RSVP Now &rarr;
+                            </button>
+                            
+                            <button class="w-full text-center font-sans text-[13px] text-mute mt-[8px] hover:text-ink">Add to calendar</button>
+                        </div>
+
+                        <!-- Shared Reactions & Comments -->
+                        <div class="w-full h-[1px] bg-ghost-light mt-[16px] shrink-0"></div>
+                        <div class="px-[16px] py-[12px] flex items-center gap-[20px] shrink-0">
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">103</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">78</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">41</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">22</span></div>
+                        </div>
+                        <div class="w-full h-[1px] bg-ghost-light mb-[12px] shrink-0"></div>
+
+                        <div class="px-[16px] flex justify-between items-center mb-[12px] shrink-0">
+                            <span class="font-sans text-[13px] font-bold text-ink">Comments (22)</span>
+                            <button class="font-sans text-[13px] text-ochre">Add comment</button>
+                        </div>
+                        
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Tayo B.</span>
+                                    <span class="font-mono text-[10px] text-ghost">1d</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">Already got my ticket 🕺</span>
+                            </div>
+                        </div>
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Sade O.</span>
+                                    <span class="font-mono text-[10px] text-ghost">2d</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">Is this 18+?</span>
+                            </div>
+                        </div>
+
+                        <button class="w-full text-center font-sans text-[13px] text-mute mt-[12px] mb-[12px] shrink-0 hover:text-ink">View all 22 comments</button>
+                        
+                        <div class="w-full h-[1px] bg-ghost-light shrink-0"></div>
+                        <div class="w-full flex justify-center py-[24px]">
+                            <button class="font-sans text-[12px] text-ghost hover:text-ink">⚑ Report this post</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest uppercase">Community Event</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 9: QUOTE                                 -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-ghost rounded-full"></div><div class="w-[120px] h-3 bg-ghost rounded-full"></div></div><div class="w-full h-4 bg-ghost rounded-full mb-2"></div></div>
+                </div>
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[34px]">
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative">
+                        
+                        <div class="flex justify-between items-center px-[16px] pt-[8px]">
+                            <span style="background: rgba(185,140,55,0.10); color: #92400E" class="rounded-full font-sans text-[9px] font-bold uppercase px-[10px] py-[4px] tracking-wider">❝ QUOTE</span>
+                            <span class="font-mono text-[10px] text-ghost">6 hours ago</span>
+                        </div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center gap-[12px] px-[16px] mt-[12px] shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-[#9b51e0] to-[#f2994a] shrink-0 border border-gold p-[1px]">
+                                <div class="w-full h-full rounded-full border border-white"></div>
+                            </div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">Adaeze Obi</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@adaeze.obi</span>
+                            </div>
+                            <button class="h-[24px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-bold text-ink flex items-center justify-center hover:bg-paper-deep">Follow</button>
+                        </div>
+
+                        <!-- Quote Display Block -->
+                        <div class="mt-[24px] pt-[16px] pb-[16px] relative px-[16px] shrink-0">
+                            <span class="absolute top-[-4px] left-[16px] font-serif text-[80px] text-ghost leading-none select-none z-0">"</span>
+                            <p class="font-serif text-[22px] font-bold text-ink leading-[1.35] relative z-10 pl-[8px] pt-[12px]">
+                                African culture doesn't need validation from the West. It needs infrastructure, documentation, and distribution. The rest will follow.
+                            </p>
+                            
+                            <div class="w-full h-[1px] bg-ghost-light mt-[12px]"></div>
+                            
+                            <!-- Attribution -->
+                            <div class="mt-[12px] pl-[8px]">
+                                <span class="font-sans text-[14px] font-bold text-ink block">Ngozi Adichie</span>
+                                <span class="font-sans text-[12px] text-mute mt-[4px] block">Lions on the Move, Lagos Book & Art Festival · 2024</span>
+                            </div>
+                        </div>
+
+                        <!-- Poster's Note -->
+                        <div class="px-[16px]">
+                            <div class="bg-paper-warm rounded-md p-[12px] mt-[12px]">
+                                <span class="font-sans text-[11px] font-bold text-mute uppercase block mb-[4px]">💬 Adaeze's note:</span>
+                                <p class="font-sans text-[14px] text-ink-soft leading-[1.6]">
+                                    Been sitting with this all week. The infrastructure piece is what we need to be building.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Share Prompt -->
+                        <div class="mt-[24px] flex flex-col items-center shrink-0">
+                            <span class="font-sans text-[13px] text-mute text-center">Know someone who needs to see this?</span>
+                            <button class="font-sans text-[13px] text-ochre text-center mt-[4px]">Share quote &rarr;</button>
+                        </div>
+
+                        <!-- Shared Reactions & Comments -->
+                        <div class="w-full h-[1px] bg-ghost-light mt-[16px] shrink-0"></div>
+                        <div class="px-[16px] py-[12px] flex items-center gap-[20px] shrink-0">
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">64</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">29</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">47</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">18</span></div>
+                        </div>
+                        <div class="w-full h-[1px] bg-ghost-light mb-[12px] shrink-0"></div>
+
+                        <div class="px-[16px] flex justify-between items-center mb-[12px] shrink-0">
+                            <span class="font-sans text-[13px] font-bold text-ink">Comments (18)</span>
+                            <button class="font-sans text-[13px] text-ochre">Add comment</button>
+                        </div>
+                        
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Kola M.</span>
+                                    <span class="font-mono text-[10px] text-ghost">1h</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">The distribution problem is real</span>
+                            </div>
+                        </div>
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Seun A.</span>
+                                    <span class="font-mono text-[10px] text-ghost">2h</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">This deserves a thread 🧵</span>
+                            </div>
+                        </div>
+
+                        <button class="w-full text-center font-sans text-[13px] text-mute mt-[12px] mb-[12px] shrink-0 hover:text-ink">View all 18 comments</button>
+                        
+                        <div class="w-full h-[1px] bg-ghost-light shrink-0"></div>
+                        <div class="w-full flex justify-center py-[24px]">
+                            <button class="font-sans text-[12px] text-ghost hover:text-ink">⚑ Report this post</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest uppercase">Quote</span>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 10: BOOK REVIEW                          -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <div class="ios-screen bg-paper-warm rounded-[40px] border-[8px] border-gray-900 overflow-hidden relative flex flex-col shadow-2xl">
+                
+                <div class="absolute inset-0 z-0 p-4 pt-16 flex flex-col gap-4">
+                    <div class="w-full h-[240px] bg-white rounded-xl shadow-sm p-4"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-ghost rounded-full"></div><div class="w-[120px] h-3 bg-ghost rounded-full"></div></div><div class="w-full h-4 bg-ghost rounded-full mb-2"></div></div>
+                </div>
+                <div class="absolute inset-0 bg-ink/40 z-10"></div>
+
+                <div class="absolute bottom-0 w-full h-[776px] bg-white rounded-t-[24px] shadow-sheet z-20 flex flex-col pb-[34px]">
+                    <div class="h-[52px] w-full relative shrink-0">
+                        <div class="absolute top-[10px] left-1/2 -translate-x-1/2 w-[28px] h-[4px] bg-ghost rounded-full"></div>
+                        <button class="absolute top-[14px] right-[16px] w-[36px] h-[36px] bg-paper-warm rounded-full flex items-center justify-center text-ink"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative">
+                        
+                        <div class="flex justify-between items-center px-[16px] pt-[8px]">
+                            <span style="background: rgba(120,53,15,0.08); color: #78350F" class="rounded-full font-sans text-[9px] font-bold uppercase px-[10px] py-[4px] tracking-wider">📚 BOOK REVIEW</span>
+                            <span class="font-mono text-[10px] text-ghost">3 hours ago</span>
+                        </div>
+
+                        <!-- Author Row -->
+                        <div class="flex items-center gap-[12px] px-[16px] mt-[12px] shrink-0">
+                            <div class="w-[44px] h-[44px] rounded-full bg-gradient-to-tr from-[#2F80ED] to-[#56CCF2] shrink-0 border border-ghost/20"></div>
+                            <div class="flex flex-col flex-1">
+                                <span class="font-sans text-[14px] font-bold text-ink leading-tight">Seun Adeyemi</span>
+                                <span class="font-sans text-[12px] text-mute mt-[2px]">@seun.reads</span>
+                            </div>
+                            <button class="h-[24px] px-[12px] rounded-full border border-ghost bg-white font-sans text-[12px] font-bold text-ink flex items-center justify-center hover:bg-paper-deep">Follow</button>
+                        </div>
+
+                        <!-- Book Identity Row -->
+                        <div class="px-[16px] mt-[12px]">
+                            <div class="bg-white border border-ghost rounded-lg p-[12px] flex items-start gap-[12px] shadow-sm">
+                                <div class="w-[48px] h-[64px] rounded-sm shadow-card bg-gradient-to-tr from-[#A66C52] to-[#E2B19B] shrink-0"></div>
+                                <div class="flex flex-col flex-1">
+                                    <span class="font-sans text-[16px] font-bold text-ink leading-tight">Things Fall Apart</span>
+                                    <span class="font-sans text-[13px] text-mute mt-[2px]">Chinua Achebe · 1958</span>
+                                    <div class="flex items-center gap-[4px] mt-[4px]">
+                                        <div class="flex text-[16px] text-gold leading-none">★★★★★</div>
+                                        <span class="font-mono text-[13px] font-bold text-gold ml-1 pt-0.5">5.0</span>
+                                    </div>
+                                    <a href="#" class="font-sans text-[12px] text-ochre underline underline-offset-2 mt-[6px]">View in Directory &rarr;</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Read Status + Recommend Chips -->
+                        <div class="px-[16px] flex gap-[8px] mt-[12px]">
+                            <span class="h-[28px] px-[12px] rounded-full bg-success-green text-white font-sans text-[12px] font-bold flex items-center">✓ Finished</span>
+                            <span class="h-[28px] px-[12px] rounded-full bg-paper-warm border border-gold text-gold font-sans text-[12px] font-bold flex items-center">👍 Recommended</span>
+                        </div>
+
+                        <!-- Ratings Breakdown -->
+                        <div class="px-[16px] mt-[16px]">
+                            <span class="font-sans text-[11px] font-bold text-mute uppercase tracking-widest block mb-[8px]">Ratings</span>
+                            <div class="flex flex-col border-t border-ghost/50">
+                                <div class="h-[40px] flex items-center border-b border-ghost/50">
+                                    <span class="font-sans text-[13px] text-ink-soft w-[100px]">Writing</span>
+                                    <div class="flex text-[16px] text-ochre gap-[2px] flex-1 leading-none">★★★★★</div>
+                                    <span class="font-mono text-[12px] text-gold text-right font-bold">5.0</span>
+                                </div>
+                                <div class="h-[40px] flex items-center border-b border-ghost/50">
+                                    <span class="font-sans text-[13px] text-ink-soft w-[100px]">Story</span>
+                                    <div class="flex text-[16px] text-ochre gap-[2px] flex-1 leading-none">★★★★★</div>
+                                    <span class="font-mono text-[12px] text-gold text-right font-bold">5.0</span>
+                                </div>
+                                <div class="h-[40px] flex items-center border-b border-ghost/50">
+                                    <span class="font-sans text-[13px] text-ink-soft w-[100px]">Characters</span>
+                                    <div class="flex text-[16px] text-ochre gap-[2px] flex-1 leading-none">★★★★★</div>
+                                    <span class="font-mono text-[12px] text-gold text-right font-bold">5.0</span>
+                                </div>
+                                <div class="h-[40px] flex items-center border-b border-ghost/50">
+                                    <span class="font-sans text-[13px] text-ink-soft w-[100px]">Pacing</span>
+                                    <div class="flex text-[16px] text-ochre gap-[2px] flex-1 leading-none">★★★★<span class="text-ghost outline-text">☆</span></div>
+                                    <span class="font-mono text-[12px] text-gold text-right font-bold">4.0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Review Text -->
+                        <div class="px-[16px] mt-[12px]">
+                            <p class="font-sans text-[14px] text-ink-soft leading-[1.65]">
+                                Achebe dismantles the colonial narrative with the very language of the coloniser. Okonkwo's tragedy is fully realised — not imposed. I've read this three times and each time the final pages hit harder. The prose is deceptively simple. Essential reading.
+                            </p>
+                        </div>
+
+                        <!-- Favourite Quote -->
+                        <div class="px-[16px] mt-[12px]">
+                            <div class="bg-paper-warm rounded-md p-[12px] border-l-[3px] border-ochre">
+                                <span class="font-sans text-[11px] font-bold text-mute uppercase block mb-[4px]">📖 Favourite quote:</span>
+                                <p class="font-sans text-[14px] italic text-ink-soft leading-relaxed">
+                                    "Things fall apart; the centre cannot hold."
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Genre Tags -->
+                        <div class="px-[16px] mt-[12px] flex gap-[8px] overflow-x-auto hide-scrollbar py-1">
+                            <span class="h-[32px] px-[12px] rounded-full bg-ink text-white font-sans text-[12px] font-bold flex items-center shrink-0">Classic Literature</span>
+                            <span class="h-[32px] px-[12px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] flex items-center shrink-0">African Lit</span>
+                            <span class="h-[32px] px-[12px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] flex items-center shrink-0">Post-Colonial</span>
+                            <span class="h-[32px] px-[12px] rounded-full border border-ghost text-ink-soft font-sans text-[12px] flex items-center shrink-0">Fiction</span>
+                        </div>
+
+                        <!-- Shared Reactions & Comments -->
+                        <div class="w-full h-[1px] bg-ghost-light mt-[16px] shrink-0"></div>
+                        <div class="px-[16px] py-[12px] flex items-center gap-[20px] shrink-0">
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span class="font-mono text-[10px]">88</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg><span class="font-mono text-[10px]">43</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="font-mono text-[10px]">55</span></div>
+                            <div class="flex items-center gap-[6px] text-mute hover:text-ink"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span class="font-mono text-[10px]">31</span></div>
+                        </div>
+                        <div class="w-full h-[1px] bg-ghost-light mb-[12px] shrink-0"></div>
+
+                        <div class="px-[16px] flex justify-between items-center mb-[12px] shrink-0">
+                            <span class="font-sans text-[13px] font-bold text-ink">Comments (31)</span>
+                            <button class="font-sans text-[13px] text-ochre">Add comment</button>
+                        </div>
+                        
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Temi O.</span>
+                                    <span class="font-mono text-[10px] text-ghost">1d</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">Still one of the greatest books ever written</span>
+                            </div>
+                        </div>
+                        <div class="px-[16px] flex gap-[12px] min-h-[56px] border-b border-ghost/40 py-[8px] shrink-0">
+                            <div class="w-[32px] h-[32px] rounded-full bg-paper-warm shrink-0"></div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="font-sans text-[13px] font-bold text-ink">Dayo A.</span>
+                                    <span class="font-mono text-[10px] text-ghost">2d</span>
+                                </div>
+                                <span class="font-sans text-[13px] text-mute mt-[2px]">Read it in school. Need to reread now.</span>
+                            </div>
+                        </div>
+
+                        <button class="w-full text-center font-sans text-[13px] text-mute mt-[12px] mb-[12px] shrink-0 hover:text-ink">View all 31 comments</button>
+                        
+                        <div class="w-full h-[1px] bg-ghost-light shrink-0"></div>
+                        <div class="w-full flex justify-center py-[24px]">
+                            <button class="font-sans text-[12px] text-ghost hover:text-ink">⚑ Report this post</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="font-mono text-[11px] text-mute tracking-widest uppercase">Book Review</span>
+        </div>
+
+    </div>
+</body>
+</html>

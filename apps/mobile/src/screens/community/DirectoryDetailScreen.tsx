@@ -355,7 +355,10 @@ export default function DirectoryDetailScreen() {
         setLoading(true);
         setError(false);
         const params = slug ? `slug=${encodeURIComponent(slug)}` : `id=${id}`;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 12000);
         const res = await api.get<DirectoryEntry>(`${CULTURE_API}/mobile/directory/entry?${params}`, false);
+        clearTimeout(timer);
         setEntry(res);
       } catch {
         setError(true);

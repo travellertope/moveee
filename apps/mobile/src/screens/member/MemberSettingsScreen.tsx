@@ -44,7 +44,7 @@ const NEWSLETTERS = [
   {
     id: "getmelit",
     name: "GetMeLit",
-    desc: "Weekly cultural digest — African arts, diaspora news, and cultural moments.",
+    desc: "Weekly cultural digest — arts, music, film, and cultural moments worth knowing.",
     cadence: "✉️ Weekly · Every Monday",
   },
   {

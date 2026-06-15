@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moveee Connect - Events</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400;1,9..40,500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'paper-warm': '#F3ECE0',
+                        'paper-deep': '#F5F5F5',
+                        ochre: '#C5491F',
+                        gold: '#B38238',
+                        ink: '#14110D',
+                        'ink-soft': '#3A342B',
+                        mute: '#7A6F5C',
+                        ghost: '#C8BFB0',
+                        success: '#2D6A4F'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(20, 17, 13, 0.08)'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #E5E5E5; margin: 0; padding: 40px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-screen { width: 390px; height: 844px; }
+        input:focus { outline: none; border-color: #C5491F; }
+    </style>
+</head>
+<body class="flex justify-center text-ink font-sans min-h-screen">
+
+    <!-- Grid Container -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-12 max-w-[1300px] mx-auto">
+
+        <!-- ============================================== -->
+        <!-- FRAME 1: EVENTS LIST                           -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">FRAME 1: EVENTS LIST</span>
+            
+            <div class="ios-screen bg-paper-warm shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+                
+                <!-- Header (64px including status bar) -->
+                <header class="h-[64px] bg-white relative shrink-0 z-40">
+                    <!-- Status Bar Mock -->
+                    <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-ink z-50">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+                    <!-- Nav Bar -->
+                    <div class="absolute bottom-0 w-full px-4 pb-2 flex items-center justify-between">
+                        <h1 class="font-serif text-[20px] font-bold text-ink pl-2">Events</h1>
+                        <button class="w-8 h-8 flex items-center justify-end text-ink">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Filter Tabs -->
+                <div class="h-[44px] bg-white border-b border-ghost flex items-center px-4 gap-[8px] overflow-x-auto hide-scrollbar shrink-0 z-30">
+                    <button class="h-[32px] px-[16px] rounded-full bg-ink text-white font-sans text-[13px] font-bold whitespace-nowrap">All</button>
+                    <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] whitespace-nowrap">Upcoming</button>
+                    <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] whitespace-nowrap">Online</button>
+                    <button class="h-[32px] px-[16px] rounded-full bg-white border border-ghost text-ink-soft font-sans text-[13px] whitespace-nowrap">Pro Only</button>
+                </div>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto hide-scrollbar bg-paper-warm pb-[90px] px-[16px] pt-[16px]">
+                    <div class="flex flex-col gap-[16px]">
+                        
+                        <!-- Card 1: Free live event -->
+                        <div class="bg-white rounded-xl shadow-card w-full flex flex-col">
+                            <!-- Image Area -->
+                            <div class="w-full h-[180px] rounded-t-xl relative overflow-hidden shrink-0 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-orange-500">
+                                <div class="absolute top-[12px] left-[12px] flex flex-col gap-1.5 items-start">
+                                    <div class="bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
+                                        <span class="w-2 h-2 rounded-full bg-success"></span>
+                                        <span class="text-ink font-sans text-[10px] font-bold uppercase tracking-wider">UPCOMING</span>
+                                    </div>
+                                    <div class="bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm">
+                                        <span class="text-mute font-sans text-[10px] font-bold uppercase tracking-wider">MUSIC</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Content Area -->
+                            <div class="p-[16px]">
+                                <h2 class="font-sans text-[17px] font-bold text-ink mb-2">Amapiano Night at Jazz Cafe</h2>
+                                <div class="flex flex-col gap-1 mb-2">
+                                    <div class="flex items-center text-mute font-sans text-[13px]">
+                                        <span class="w-[20px] text-center mr-1">📅</span> Fri 13 Jun · 9:00 PM
+                                    </div>
+                                    <div class="flex items-center text-mute font-sans text-[13px]">
+                                        <span class="w-[20px] text-center mr-1">📍</span> Jazz Cafe, Camden, London
+                                    </div>
+                                </div>
+                                <div class="text-ink-soft font-sans text-[13px] mb-4">Free entry · Limited spots</div>
+                                
+                                <!-- Footer Row -->
+                                <div class="flex items-center justify-between border-t border-ghost/40 pt-3">
+                                    <div class="text-mute font-sans text-[13px] flex items-center">
+                                        <span class="mr-1.5">👥</span> 47 attending
+                                    </div>
+                                    <button class="bg-ochre text-white font-sans font-bold text-[13px] px-4 py-1.5 rounded-full shadow-sm">RSVP</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Pro-only paid event -->
+                        <div class="bg-white rounded-xl shadow-card w-full flex flex-col">
+                            <!-- Image Area -->
+                            <div class="w-full h-[180px] rounded-t-xl relative overflow-hidden shrink-0 bg-gradient-to-tr from-stone-800 via-zinc-700 to-stone-500">
+                                <div class="absolute top-[12px] right-[12px]">
+                                    <div class="bg-gold px-2.5 py-1 rounded-full shadow-md flex items-center gap-1">
+                                        <span class="text-white text-[12px]">⭐</span>
+                                        <span class="text-white font-sans text-[10px] font-bold uppercase tracking-wider">PRO ONLY</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Content Area -->
+                            <div class="p-[16px]">
+                                <h2 class="font-sans text-[17px] font-bold text-ink mb-2">Exclusive Industry Mixer — Spring Edition</h2>
+                                <div class="flex flex-col gap-1 mb-2">
+                                    <div class="flex items-center text-mute font-sans text-[13px]">
+                                        <span class="w-[20px] text-center mr-1">📅</span> Sat 14 Jun · 7:00 PM
+                                    </div>
+                                    <div class="flex items-center text-mute font-sans text-[13px]">
+                                        <span class="w-[20px] text-center mr-1">📍</span> Shoreditch, London
+                                    </div>
+                                </div>
+                                <div class="text-ink-soft font-sans text-[13px] mb-4 font-medium">£25 advance / £35 door</div>
+                                
+                                <!-- Footer Row -->
+                                <div class="flex items-center justify-between border-t border-ghost/40 pt-3">
+                                    <div class="flex items-center">
+                                        <div class="flex -space-x-2 mr-2">
+                                            <div class="w-6 h-6 rounded-full border border-white bg-gradient-to-br from-pink-400 to-orange-400"></div>
+                                            <div class="w-6 h-6 rounded-full border border-white bg-gradient-to-br from-emerald-400 to-cyan-500"></div>
+                                            <div class="w-6 h-6 rounded-full border border-white bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-[8px] font-bold">M</div>
+                                        </div>
+                                        <span class="text-mute font-sans text-[13px]">Zara +24 others</span>
+                                    </div>
+                                    <button class="bg-white border border-ink text-ink font-sans font-bold text-[13px] px-4 py-1.5 rounded-full shadow-sm">Get Tickets &rarr;</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Online event -->
+                        <div class="bg-white rounded-xl shadow-card w-full flex flex-col mb-4">
+                            <!-- Image Area -->
+                            <div class="w-full h-[180px] rounded-t-xl relative overflow-hidden shrink-0 bg-gradient-to-bl from-blue-500 via-cyan-400 to-teal-400">
+                                <div class="absolute top-[12px] left-[12px]">
+                                    <div class="bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
+                                        <span class="text-blue-600 text-[12px]">🔗</span>
+                                        <span class="text-blue-600 font-sans text-[10px] font-bold uppercase tracking-wider">ONLINE</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Content Area -->
+                            <div class="p-[16px]">
+                                <h2 class="font-sans text-[17px] font-bold text-ink mb-2">Diasporic Futures: An Open Conversation</h2>
+                                <div class="flex flex-col gap-1 mb-2">
+                                    <div class="flex items-center text-mute font-sans text-[13px]">
+                                        <span class="w-[20px] text-center mr-1">📅</span> Sun 15 Jun · 3:00 PM
+                                    </div>
+                                    <div class="flex items-center text-mute font-sans text-[13px]">
+                                        <span class="w-[20px] text-center mr-1">🔗</span> Zoom Webinar
+                                    </div>
+                                </div>
+                                <div class="text-ink-soft font-sans text-[13px] mb-3">Free · 200 spots available</div>
+                                
+                                <!-- Capacity Bar -->
+                                <div class="mb-4">
+                                    <div class="w-full h-[8px] bg-paper-deep rounded-full overflow-hidden">
+                                        <div class="h-full bg-ochre w-[67%] rounded-full"></div>
+                                    </div>
+                                    <div class="text-mute font-sans text-[12px] mt-1.5">134 attending</div>
+                                </div>
+                                
+                                <!-- Footer Row -->
+                                <div class="flex justify-end border-t border-ghost/40 pt-3">
+                                    <button class="bg-ochre text-white font-sans font-bold text-[13px] px-4 py-1.5 rounded-full shadow-sm">RSVP</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <div class="absolute bottom-0 w-full h-[84px] bg-white border-t border-ghost flex justify-around items-start pt-3 px-2 z-50">
+                    <button class="flex flex-col items-center gap-1 text-mute">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        <span class="text-[10px] font-sans">Home</span>
+                    </button>
+                    <button class="flex flex-col items-center gap-1 text-mute">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <span class="text-[10px] font-sans">Discover</span>
+                    </button>
+                    <button class="flex flex-col items-center justify-center -mt-1 w-10 h-10 bg-ink text-white rounded-full shadow-md">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                    <button class="flex flex-col items-center gap-1 text-ochre">
+                        <!-- Solid calendar icon for active event tab -->
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+                        <span class="text-[10px] font-sans font-bold">Events</span>
+                    </button>
+                    <button class="flex flex-col items-center gap-1 text-mute">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <span class="text-[10px] font-sans">Profile</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 2: EVENT DETAIL                          -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">FRAME 2: EVENT DETAIL</span>
+            
+            <div class="ios-screen bg-paper-warm shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col">
+                
+                <!-- Hero Image Background (390x260) -->
+                <div class="absolute top-0 w-full h-[260px] bg-gradient-to-br from-violet-500 via-fuchsia-500 to-orange-500 z-0">
+                    
+                    <!-- Status Bar Mock (Overlaid, white text) -->
+                    <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-white z-50 drop-shadow-md">
+                        <span>9:41</span>
+                        <div class="flex gap-1 items-center">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- Floating Back Button -->
+                    <button class="absolute top-[52px] left-[16px] w-[40px] h-[40px] bg-white rounded-full flex items-center justify-center shadow-lg text-ink z-50">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+
+                    <!-- Category Badge -->
+                    <div class="absolute bottom-[60px] left-[24px] bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full z-10 border border-white/20">
+                        <span class="text-white font-sans text-[10px] font-bold uppercase tracking-wider">MUSIC</span>
+                    </div>
+                </div>
+
+                <!-- Scrollable Content Area -->
+                <div class="flex-1 overflow-y-auto hide-scrollbar z-10 pt-[220px]">
+                    <!-- White Content Sheet overlaps hero by 40px -->
+                    <div class="bg-white rounded-t-[20px] min-h-screen px-[24px] pt-[32px] pb-[40px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
+                        
+                        <!-- Title & Attendees -->
+                        <h1 class="font-serif text-[24px] font-bold text-ink leading-tight mb-3">Amapiano Night at Jazz Cafe</h1>
+                        
+                        <div class="flex items-center mt-3 mb-5">
+                            <div class="flex -space-x-2 mr-3 shrink-0">
+                                <div class="w-6 h-6 rounded-full border-[1.5px] border-white bg-gradient-to-br from-indigo-400 to-cyan-400 flex items-center justify-center text-white text-[10px] font-bold">K</div>
+                                <div class="w-6 h-6 rounded-full border-[1.5px] border-white bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center text-white text-[10px] font-bold">Z</div>
+                                <div class="w-6 h-6 rounded-full border-[1.5px] border-white bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-[10px] font-bold">M</div>
+                            </div>
+                            <span class="font-sans text-[13px] text-mute">Kemi, Zara, Michael +24 attending</span>
+                        </div>
+
+                        <!-- Meta Card -->
+                        <div class="bg-paper-deep rounded-lg p-[16px] my-[20px] flex flex-col gap-[12px]">
+                            <!-- Date Row -->
+                            <div class="flex items-start">
+                                <span class="w-[20px] text-ochre text-[16px] shrink-0 pt-0.5">📅</span>
+                                <span class="font-sans text-[14px] text-ink-soft leading-snug">Friday, 13 June 2026<br>9:00 PM – Late</span>
+                            </div>
+                            <!-- Location Row -->
+                            <div class="flex items-start">
+                                <span class="w-[20px] text-ochre text-[16px] shrink-0 pt-0.5">📍</span>
+                                <span class="font-sans text-[14px] text-ink-soft leading-snug">Jazz Cafe<br>5 Parkway, Camden, London NW1 7PG</span>
+                            </div>
+                            <!-- Price Row -->
+                            <div class="flex items-center">
+                                <span class="w-[20px] text-ochre text-[16px] shrink-0">💳</span>
+                                <span class="font-sans text-[14px] text-ink-soft">Free entry / £15 advance</span>
+                            </div>
+                            <!-- Organiser Row -->
+                            <div class="flex items-center">
+                                <span class="w-[20px] text-ochre text-[16px] shrink-0">👤</span>
+                                <span class="font-sans text-[14px] text-ochre underline underline-offset-2">Organised by: Moveee Events</span>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="font-sans text-[15px] text-ink-soft leading-[1.6]">
+                            <p>Join us for a legendary night of Amapiano and Afro house at one of London's most iconic live music venues. We're bringing the authentic sounds of South Africa straight to Camden, featuring a curated lineup of resident DJs and special guest performers.</p>
+                        </div>
+
+                        <!-- CTA Button -->
+                        <button class="w-full h-[52px] mt-[20px] bg-ochre text-white font-sans font-bold text-[16px] rounded-full shadow-md active:scale-[0.98] transition-transform">
+                            Get Tickets / Find Out More
+                        </button>
+
+                        <!-- Divider -->
+                        <div class="w-full h-[1px] bg-ghost my-[24px]"></div>
+
+                        <!-- RSVP Section -->
+                        <div>
+                            <h2 class="font-sans text-[15px] font-bold text-ink mb-4">RSVP to secure your spot</h2>
+                            <div class="flex flex-col gap-3">
+                                <div>
+                                    <label class="block text-[12px] text-mute mb-1">Name</label>
+                                    <input type="text" class="w-full h-[48px] border border-ghost rounded-lg px-4 text-[15px] text-ink bg-white" placeholder="Jane Doe">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="block text-[12px] text-mute mb-1">Email</label>
+                                    <input type="email" class="w-full h-[48px] border border-ghost rounded-lg px-4 text-[15px] text-ink bg-white" placeholder="jane@example.com">
+                                </div>
+                                <button class="w-full h-[52px] bg-ochre text-white font-sans font-bold text-[16px] rounded-full shadow-md active:scale-[0.98] transition-transform">
+                                    Confirm RSVP
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- FRAME 3: RSVP SUCCESS                          -->
+        <!-- ============================================== -->
+        <div class="flex flex-col items-center gap-3">
+            <span class="text-ink-soft font-bold font-mono text-[14px] tracking-wide uppercase">FRAME 3: RSVP SUCCESS</span>
+            
+            <div class="ios-screen bg-paper-warm shadow-2xl rounded-[40px] border-8 border-gray-900 overflow-hidden relative flex flex-col justify-center px-[32px]">
+                
+                <!-- Status Bar Mock -->
+                <div class="absolute top-0 w-full h-12 flex justify-between items-start px-6 pt-3 text-[14px] font-medium text-ink z-50">
+                    <span>9:41</span>
+                    <div class="flex gap-1 items-center">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                    </div>
+                </div>
+
+                <!-- Success Content -->
+                <div class="flex flex-col items-center text-center -mt-[40px]">
+                    <!-- Success Circle -->
+                    <div class="w-[72px] h-[72px] rounded-full bg-success flex items-center justify-center mb-5 shadow-lg">
+                        <svg class="w-[32px] h-[32px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+
+                    <!-- Title -->
+                    <h1 class="font-serif text-[24px] font-bold text-ink mb-2">You're on the list! 🎉</h1>
+                    
+                    <!-- Subtitle -->
+                    <p class="font-sans text-[14px] text-mute mb-[32px] max-w-[280px]">
+                        A confirmation will be sent to<br>kemi@example.com
+                    </p>
+
+                    <!-- Actions -->
+                    <button class="w-full max-w-[280px] h-[48px] border-[1.5px] border-ink text-ink font-sans font-bold text-[15px] rounded-full mb-[24px] hover:bg-ink hover:text-white transition-colors">
+                        Add to Calendar
+                    </button>
+
+                    <button class="font-sans text-[13px] font-medium text-ochre hover:underline underline-offset-4">
+                        Back to Events
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

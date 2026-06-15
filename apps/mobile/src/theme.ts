@@ -63,6 +63,8 @@ export const lightColors = {
   templatePollText:    '#4C1D95',
   templateEventBg:     '#FEE2E2',
   templateEventText:   '#991B1B',
+  templateBookBg:      '#F0FDF4',
+  templateBookText:    '#14532D',
 
   // Poll
   pollVoteBg:  'rgba(46,125,50,0.10)',
@@ -136,6 +138,8 @@ export const darkColors = {
   templatePollText:    '#A78BFA',
   templateEventBg:     '#2A0A0A',
   templateEventText:   '#FCA5A5',
+  templateBookBg:      '#052E16',
+  templateBookText:    '#4ADE80',
 
   // Poll
   pollVoteBg:  'rgba(74,222,128,0.10)',
