@@ -12,6 +12,7 @@ import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { LedgerEntry } from "../../types";
+import RewardsInfoSheet from "../../components/member/RewardsInfoSheet";
 
 type Currency = "GBP" | "USD" | "NGN";
 type WalletTab = "history" | "cashout";
@@ -165,6 +166,7 @@ export default function WalletScreen() {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const [tab, setTab] = useState<WalletTab>("history");
+  const [rewardsSheet, setRewardsSheet] = useState<{ visible: boolean; tab: "credits" | "reputation"; intro?: string }>({ visible: false, tab: "credits" });
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [creditsPerGbp, setCreditsPerGbp] = useState(200);
@@ -271,11 +273,10 @@ export default function WalletScreen() {
 
         <View style={styles.balanceHero}>
           <TouchableOpacity
-            onPress={() => Alert.alert(
-              "Culture Points",
-              "Culture Points (Credits) are your spendable currency. Earn them by posting, engaging, and participating in the community. Redeem for partner perks, or cash out to real money (Connect Pro only, 40% fee). Daily cap: 50 credits.",
-              [{ text: "Got it" }]
-            )}
+            onPress={() => setRewardsSheet({
+              visible: true, tab: "credits",
+              intro: "Culture Points (Credits) are your spendable currency. Earn them by posting, engaging, and participating in the community. Redeem for partner perks, or cash out to real money (Connect Pro only, 40% fee). Daily cap: 50 credits.",
+            })}
             style={styles.eyebrowBtn}
             activeOpacity={0.7}
           >
@@ -287,11 +288,10 @@ export default function WalletScreen() {
           </Text>
           <View style={styles.statsRow}>
             <TouchableOpacity
-              onPress={() => Alert.alert(
-                "Reputation",
-                "Reputation is your permanent standing in the Moveee community — it never decreases. Quality contributions (posts, comments, directory entries) earn reputation. Tiers: Culture Contributor (500), Taste Maker (2,500), Culture Authority (10,000), Culture Icon (25,000 + nomination).",
-                [{ text: "Got it" }]
-              )}
+              onPress={() => setRewardsSheet({
+                visible: true, tab: "reputation",
+                intro: "Reputation is your permanent standing in the Moveee community — it never decreases. Quality contributions (posts, comments, directory entries) earn reputation. Higher tiers unlock exclusive privileges and perks.",
+              })}
               activeOpacity={0.7}
             >
               <Text style={styles.statText}>{user?.reputation ?? 0} REP ⓘ</Text>
@@ -473,6 +473,12 @@ export default function WalletScreen() {
           </View>
         </ScrollView>
       )}
+      <RewardsInfoSheet
+        visible={rewardsSheet.visible}
+        initialTab={rewardsSheet.tab}
+        intro={rewardsSheet.intro}
+        onClose={() => setRewardsSheet({ visible: false, tab: "credits" })}
+      />
     </SafeAreaView>
   );
 }
@@ -483,7 +489,7 @@ function createStyles(c: ColorPalette) {
   whiteBlock:      { backgroundColor: c.paper, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, elevation: 2, shadowColor: c.ink, shadowOpacity: 0.03, shadowRadius: 10, shadowOffset: { width: 0, height: 2 }, zIndex: 10 },
   header:          { height: 44, justifyContent: "flex-end", alignItems: "center", position: "relative" },
   backBtn:         { position: "absolute", left: 16, bottom: 8, padding: 4 },
-  headerTitle:     { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink, alignSelf: "flex-end", paddingBottom: 12 },
+  headerTitle:     { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink, paddingBottom: 12 },
 
   balanceHero:     { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 24, alignItems: "center" },
   eyebrowBtn:      { alignSelf: "center" },

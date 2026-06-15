@@ -1,9 +1,12 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Share } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import ReactionBar from "./ReactionBar";
 import BottomSheet from "../ui/BottomSheet";
 import { useColors } from "../../hooks/useColors";
+import { useAuthStore } from "../../auth/authStore";
+import { api, CULTURE_API } from "../../api/client";
 import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import type { FeedItem } from "../../types";
@@ -17,6 +20,9 @@ interface Props {
 export default function QuoteDetailModal({ visible, item, onClose }: Props) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNavigation<any>();
+  const { user } = useAuthStore();
+  const [bookmarked, setBookmarked] = useState(false);
 
   const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : undefined;
 
@@ -27,6 +33,24 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
         url: shareUrl,
       });
     } catch { /* silent */ }
+  };
+
+  const handleBookmark = async () => {
+    if (!item.wpId || !user?.id) return;
+    const next = !bookmarked;
+    setBookmarked(next);
+    try {
+      await api.post(`${CULTURE_API}/content/bookmark`, { user_id: Number(user.id), post_id: Number(item.wpId) });
+    } catch {
+      setBookmarked(!next);
+    }
+  };
+
+  const handleExploreQuotes = () => {
+    onClose();
+    setTimeout(() => {
+      nav.navigate("Connect", { screen: "ConnectFeed", params: { filterQuotes: true } } as any);
+    }, 300);
   };
 
   return (
@@ -53,32 +77,39 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
 
         {/* Reactions row */}
         <View style={styles.reactionsRow}>
-          {item.reactions && item.wpId ? (
+          {item.wpId ? (
             <ReactionBar
               postId={item.wpId}
-              initialCounts={item.reactions}
+              initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
               shareUrl={shareUrl}
             />
           ) : (
-            <>
+            <View style={styles.reactionsRow}>
               <View style={styles.reactionItem}>
                 <Text style={styles.reactionEmoji}>❤️</Text>
                 <Text style={styles.reactionCount}>{item.reactions?.love ?? 0}</Text>
               </View>
-              <TouchableOpacity style={styles.reactionItem}>
-                <Ionicons name="bookmark-outline" size={20} color={c.mute} />
-              </TouchableOpacity>
               <TouchableOpacity style={styles.reactionItem} onPress={handleShare}>
                 <Ionicons name="share-outline" size={20} color={c.mute} />
               </TouchableOpacity>
-            </>
+            </View>
           )}
+          <TouchableOpacity
+            style={[styles.bookmarkBtn, bookmarked && styles.bookmarkBtnActive]}
+            onPress={handleBookmark}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={bookmarked ? "bookmark" : "bookmark-outline"}
+              size={20}
+              color={bookmarked ? c.ochre : c.mute}
+            />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.divider} />
 
-        {/* More in series — placeholder */}
-        <TouchableOpacity style={styles.exploreLink}>
+        <TouchableOpacity style={styles.exploreLink} onPress={handleExploreQuotes} activeOpacity={0.7}>
           <Text style={styles.exploreLinkText}>Explore more quotes →</Text>
         </TouchableOpacity>
       </View>
@@ -124,6 +155,8 @@ function createStyles(c: ColorPalette) {
     reactionItem: { flexDirection: "row", alignItems: "center", gap: space[1] },
     reactionEmoji: { fontSize: 20 },
     reactionCount: { fontFamily: fonts.mono, fontSize: fontSize.sm, color: c.mute },
+    bookmarkBtn: { marginLeft: "auto" as any, padding: 4 },
+    bookmarkBtnActive: {},
 
     exploreLink: { paddingVertical: space[1] },
     exploreLinkText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre },

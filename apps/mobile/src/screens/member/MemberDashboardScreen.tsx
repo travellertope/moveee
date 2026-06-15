@@ -14,7 +14,7 @@ import { useColors } from "../../hooks/useColors";
 
 const LOGO_LIGHT = require("../../../assets/logo-black.png");
 const LOGO_DARK  = require("../../../assets/logo-white.png");
-const LOGO_H = 26;
+const LOGO_H = 20;
 const LOGO_W = Math.round((717 / 107) * LOGO_H);
 import { SignOutDialog } from "../../components/ui/Overlays";
 
@@ -242,14 +242,11 @@ export default function MemberDashboardScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerSpacer} />
-        <View style={styles.headerCenter}>
-          <Image
-            source={isDark ? LOGO_DARK : LOGO_LIGHT}
-            style={{ width: LOGO_W, height: LOGO_H }}
-            resizeMode="contain"
-          />
-        </View>
+        <Image
+          source={isDark ? LOGO_DARK : LOGO_LIGHT}
+          style={{ width: LOGO_W, height: LOGO_H }}
+          resizeMode="contain"
+        />
         <TouchableOpacity style={styles.headerRight} onPress={() => setSignOutVisible(true)}>
           <Text style={styles.headerSignOut}>Sign out</Text>
         </TouchableOpacity>
@@ -494,14 +491,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     borderBottomColor: c.rule + "50",
     paddingHorizontal: 16,
   },
-  headerSpacer: { width: 60 },
-  headerCenter: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerRight: { width: 60, alignItems: "flex-end" },
+  headerRight: { marginLeft: "auto" as any, alignItems: "flex-end" },
   headerSignOut: {
     fontFamily: fonts.sans,
     fontSize: 13,
