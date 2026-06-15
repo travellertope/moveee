@@ -534,17 +534,14 @@ function createStyles(c: ColorPalette) {
     // quote
     quoteContainer: {
       padding: 20,
-      paddingTop: 24,
-      position: "relative" as const,
+      paddingTop: 16,
     },
     bigQuote: {
-      position: "absolute" as const,
-      top: 8,
-      left: 14,
       fontFamily: fonts.serifBold,
-      fontSize: 52,
+      fontSize: 44,
       color: c.ghost,
-      lineHeight: 40,
+      lineHeight: 44,
+      marginBottom: -8,
     },
     quoteText: {
       fontFamily: fonts.serif,
@@ -1629,7 +1626,7 @@ function QuoteCard({ item }: FeedCardProps) {
             <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={18} color={bookmarked ? c.ochre : c.mute} />
           </TouchableOpacity>
           <TouchableOpacity style={[styles.quoteActionBtn, { marginLeft: "auto" as any }]} onPress={handleShare} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="share-social-outline" size={18} color={c.mute} />
+            <Ionicons name="arrow-redo-outline" size={18} color={c.mute} />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
