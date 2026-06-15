@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
-  TouchableOpacity, Image, ActivityIndicator, RefreshControl,
+  TouchableOpacity, Image, ActivityIndicator, RefreshControl, Modal,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,9 +10,7 @@ import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
 import { useAuthStore } from "../../auth/authStore";
 
-const WP_EVENTS_URL =
-  "https://cms.themoveee.com/wp-json/wp/v2/culture_event" +
-  "?per_page=50&status=publish&_embed=wp:featuredmedia&orderby=date&order=asc";
+const EVENTS_URL = "https://themoveee.com/api/events/list?per_page=50";
 
 type EventFilter = "all" | "upcoming" | "online" | "pro";
 
@@ -204,6 +202,7 @@ export default function EventsScreen() {
   const [filter, setFilter]         = useState<EventFilter>("all");
   const [cityFilter, setCityFilter] = useState<string>("All");
   const [error, setError]           = useState<string | null>(null);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
   const userCity = user?.city ?? null;
 
@@ -213,8 +212,8 @@ export default function EventsScreen() {
     setError(null);
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 15000);
-      const res = await fetch(WP_EVENTS_URL, { signal: controller.signal });
+      const timer = setTimeout(() => controller.abort(), 20000);
+      const res = await fetch(EVENTS_URL, { signal: controller.signal });
       clearTimeout(timer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const body = await res.json();
@@ -269,9 +268,17 @@ export default function EventsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Events</Text>
-        <TouchableOpacity onPress={() => nav.navigate("MyRSVPs")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="calendar-outline" size={22} color={c.ink} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          {cityFilter !== "All" && (
+            <View style={styles.filterDot} />
+          )}
+          <TouchableOpacity onPress={() => setFilterSheetOpen(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="options-outline" size={22} color={cityFilter !== "All" ? c.ochre : c.ink} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => nav.navigate("MyRSVPs")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="calendar-outline" size={22} color={c.ink} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Type filter chips */}
@@ -283,21 +290,33 @@ export default function EventsScreen() {
         ))}
       </ScrollView>
 
-      {/* City filter chips — only shown when cities are available */}
-      {availableCities.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar} contentContainerStyle={styles.filterBarContent}>
-          <TouchableOpacity style={[styles.filterChip, cityFilter === "All" && styles.filterChipActive]} onPress={() => setCityFilter("All")}>
-            <Text style={[styles.filterChipText, cityFilter === "All" && styles.filterChipTextActive]}>All cities</Text>
-          </TouchableOpacity>
-          {availableCities.map((city) => (
-            <TouchableOpacity key={city} style={[styles.filterChip, cityFilter === city && styles.filterChipActive]} onPress={() => setCityFilter(city)}>
-              <Text style={[styles.filterChipText, cityFilter === city && styles.filterChipTextActive]}>
-                {city === userCity ? `📍 ${city}` : city}
-              </Text>
+      {/* City filter sheet */}
+      <Modal visible={filterSheetOpen} transparent animationType="slide" onRequestClose={() => setFilterSheetOpen(false)}>
+        <TouchableOpacity style={styles.sheetOverlay} activeOpacity={1} onPress={() => setFilterSheetOpen(false)} />
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <View style={styles.sheetHeader}>
+            <Text style={styles.sheetTitle}>Filter by city</Text>
+            <TouchableOpacity onPress={() => setFilterSheetOpen(false)}>
+              <Ionicons name="close" size={22} color={c.mute} />
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
+          </View>
+          <ScrollView contentContainerStyle={styles.sheetContent}>
+            {["All", ...availableCities].map((city) => (
+              <TouchableOpacity
+                key={city}
+                style={styles.sheetRow}
+                onPress={() => { setCityFilter(city); setFilterSheetOpen(false); }}
+              >
+                <Text style={[styles.sheetRowText, cityFilter === city && styles.sheetRowTextActive]}>
+                  {city === "All" ? "All cities" : city === userCity ? `📍 ${city}` : city}
+                </Text>
+                {cityFilter === city && <Ionicons name="checkmark" size={18} color={c.ochre} />}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </Modal>
 
       {/* Content */}
       {loading ? (
@@ -420,5 +439,35 @@ function createStyles(c: ColorPalette) {
     retryBtn:     { backgroundColor: c.ink, borderRadius: radius.xl, paddingHorizontal: space[5], paddingVertical: space[2] },
     retryBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.paper },
     emptyText:    { fontFamily: fonts.mono, fontSize: fontSize.sm, color: c.ghost, textAlign: "center", marginTop: space[8] },
+
+    filterDot: {
+      width: 6, height: 6, borderRadius: 3,
+      backgroundColor: c.ochre, position: "absolute", top: -2, right: 44,
+    },
+    sheetOverlay: {
+      flex: 1, backgroundColor: "rgba(0,0,0,0.4)",
+    },
+    sheet: {
+      backgroundColor: c.paper,
+      borderTopLeftRadius: 20, borderTopRightRadius: 20,
+      paddingBottom: 40, maxHeight: "60%",
+    },
+    sheetHandle: {
+      width: 36, height: 4, borderRadius: 2,
+      backgroundColor: c.rule, alignSelf: "center", marginTop: 10, marginBottom: 4,
+    },
+    sheetHeader: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[4], paddingVertical: space[3],
+      borderBottomWidth: 1, borderBottomColor: c.rule,
+    },
+    sheetTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
+    sheetContent: { paddingVertical: space[2] },
+    sheetRow: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: space[5], paddingVertical: space[3],
+    },
+    sheetRowText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink },
+    sheetRowTextActive: { fontFamily: fonts.sansBold, color: c.ochre },
   });
 }

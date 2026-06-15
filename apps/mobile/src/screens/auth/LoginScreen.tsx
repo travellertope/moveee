@@ -352,11 +352,13 @@ const styles = StyleSheet.create({
     fontSize: 26,
     color: colors.ink,
     marginBottom: space[1],
+    textAlign: "center",
   },
   subheading: {
     fontFamily: fonts.sans,
     fontSize: fontSize.base - 1,
     color: colors.mute,
+    textAlign: "center",
     marginBottom: space[6],
   },
   errorBanner: {
