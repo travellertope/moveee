@@ -1129,6 +1129,29 @@ class Culture_Mobile_API {
         update_post_meta( $post_id, 'community_author_avatar',   get_user_meta( $user_id, '_culture_avatar_url',       true ) ?: '' );
         update_post_meta( $post_id, 'community_author_tier',     get_user_meta( $user_id, '_culture_membership_tier',  true ) ?: 'citizen' );
 
+        // Extract @mentions from post content and notify mentioned users.
+        $mention_matches = array();
+        preg_match_all( '/@(\w+)/', $content, $mention_matches );
+        $mentioned_usernames = array_unique( $mention_matches[1] );
+        if ( ! empty( $mentioned_usernames ) ) {
+            $author_data = get_userdata( $user_id );
+            $author_name = $author_data ? $author_data->display_name : 'Someone';
+            $post_slug   = get_post_field( 'post_name', $post_id );
+            foreach ( $mentioned_usernames as $username ) {
+                $mentioned = get_user_by( 'login', $username );
+                if ( $mentioned && (int) $mentioned->ID !== (int) $user_id ) {
+                    Culture_Notifications::add(
+                        (int) $mentioned->ID,
+                        'mention',
+                        $author_name . ' mentioned you',
+                        wp_trim_words( $content, 15, '…' ),
+                        '/community/' . $post_slug,
+                        array( 'post_id' => $post_id, 'author_id' => $user_id )
+                    );
+                }
+            }
+        }
+
         $post = get_post( $post_id );
         return rest_ensure_response( self::format_community_post( $post, array() ) );
     }

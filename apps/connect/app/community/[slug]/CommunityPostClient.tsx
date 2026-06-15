@@ -187,8 +187,8 @@ export default function CommunityPostClient({
   const loggedIn = status === "authenticated";
   const user = session?.user as any;
 
-  const handleHashtagClick = (hashtag: string) => {
-    router.push(`/pulse?hashtag=${encodeURIComponent(hashtag.replace(/^#/, ""))}`);
+  const handleMentionClick = (username: string) => {
+    router.push(`/${username}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -275,7 +275,7 @@ export default function CommunityPostClient({
         margin: "0 0 1.25rem",
         whiteSpace: "pre-wrap",
       }}>
-        <HashtagText text={text} onHashtagClick={handleHashtagClick} />
+        <HashtagText text={text} onMentionClick={handleMentionClick} />
       </p>
 
       {/* Food ratings */}

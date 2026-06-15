@@ -20,7 +20,8 @@ class Culture_Notifications {
         'comment_received'  => 'New Comment',
         'post_validated'    => 'Post Reached Threshold',
         'system'            => 'System',
-        'referral_received'  => 'Friend Joined',
+        'referral_received' => 'Friend Joined',
+        'mention'           => 'You were mentioned',
     );
 
     /* ——————————————————————————————————————

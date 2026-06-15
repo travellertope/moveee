@@ -331,13 +331,7 @@ export default function NewPostScreen() {
     setTimeout(() => textRef.current?.focus(), 50);
   }, [text]);
 
-  const insertHash = useCallback(() => {
-    const cur = text;
-    setText(cur + (cur.endsWith(" ") || cur === "" ? "#" : " #"));
-    setTimeout(() => textRef.current?.focus(), 50);
-  }, [text]);
-
-  const uploadImages = async (): Promise<string[]> => {
+const uploadImages = async (): Promise<string[]> => {
     const urls: string[] = [];
     for (const uri of images) {
       try {
@@ -596,16 +590,6 @@ export default function NewPostScreen() {
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Text style={styles.toolbarAt}>@</Text>
-        </TouchableOpacity>
-      );
-      icons.push(
-        <TouchableOpacity
-          key="hash"
-          onPress={insertHash}
-          style={styles.toolbarIconBtn}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Text style={styles.toolbarAt}>#</Text>
         </TouchableOpacity>
       );
     }
