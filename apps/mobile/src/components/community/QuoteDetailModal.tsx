@@ -189,10 +189,10 @@ function createStyles(c: ColorPalette) {
     quoteBlock: { paddingTop: 8 },
     openQuote: {
       fontFamily: "Fraunces_700Bold",
-      fontSize: 64,
+      fontSize: 56,
       color: c.ghost,
       lineHeight: 56,
-      marginBottom: -8,
+      marginBottom: -4,
     },
     quoteText: {
       fontFamily: "Fraunces_400Regular",
