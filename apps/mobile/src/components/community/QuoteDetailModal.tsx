@@ -174,9 +174,6 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
           <CommentsBlock postId={String(item.wpId)} c={c} styles={styles} />
         ) : null}
 
-        <TouchableOpacity style={styles.exploreLink}>
-          <Text style={styles.exploreLinkText}>Explore more quotes →</Text>
-        </TouchableOpacity>
       </View>
     </BottomSheet>
   );
@@ -242,7 +239,5 @@ function createStyles(c: ColorPalette) {
       paddingHorizontal: 12, paddingVertical: 8, maxHeight: 80,
     },
 
-    exploreLink: { paddingVertical: space[1] },
-    exploreLinkText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre },
   });
 }

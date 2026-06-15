@@ -1866,6 +1866,7 @@ class Culture_Mobile_API {
                 'quoteAuthor'        => ( $authors && ! is_wp_error( $authors ) && ! empty( $authors ) ) ? $authors[0]->name : '',
                 'quoteSharingReason' => get_post_meta( $post->ID, '_quote_sharing_reason', true ) ?: '',
                 'authorName'         => get_the_author_meta( 'display_name', $post->post_author ),
+                'quoteType'          => get_post_meta( $post->ID, '_quote_type', true ) ?: '',
             );
         }, $query->posts );
     }
@@ -1883,7 +1884,25 @@ class Culture_Mobile_API {
             'no_found_rows'  => true,
         ) );
 
-        return array_map( function( WP_Post $post ) use ( $liked_ids ) {
+        // Pre-warm organiser directory posts in one query to avoid N+1 lookups.
+        $organiser_map = array(); // organiser_id => [name, slug]
+        $org_ids = array_filter( array_map( function( $p ) {
+            return (int) get_post_meta( $p->ID, '_culture_event_organiser_id', true );
+        }, $query->posts ) );
+        if ( ! empty( $org_ids ) ) {
+            $org_posts = get_posts( array(
+                'post__in'       => array_values( array_unique( $org_ids ) ),
+                'post_type'      => 'culture_directory',
+                'post_status'    => 'publish',
+                'posts_per_page' => count( $org_ids ),
+                'no_found_rows'  => true,
+            ) );
+            foreach ( $org_posts as $op ) {
+                $organiser_map[ $op->ID ] = array( 'name' => $op->post_title, 'slug' => $op->post_name );
+            }
+        }
+
+        return array_map( function( WP_Post $post ) use ( $liked_ids, $organiser_map ) {
             $author_id   = (int) $post->post_author;
             $author      = get_userdata( $author_id );
             $raw         = wpautop( $post->post_content );
@@ -1984,6 +2003,12 @@ class Culture_Mobile_API {
                 'ticketUrl'               => get_post_meta( $post->ID, '_event_ticket_url', true ) ?: '',
                 'isProOnly'               => (bool) get_post_meta( $post->ID, '_culture_event_pro_only', true ),
                 'eventCategory'           => get_post_meta( $post->ID, '_event_category', true ) ?: '',
+                'organiserName'           => isset( $organiser_map[ (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ] )
+                    ? $organiser_map[ (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ]['name']
+                    : '',
+                'organiserSlug'           => isset( $organiser_map[ (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ] )
+                    ? $organiser_map[ (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ]['slug']
+                    : '',
             );
         }, $query->posts );
     }

@@ -1173,6 +1173,7 @@ class Culture_Post_Types {
         add_meta_box( 'culture_partner_meta', __( 'Partner Programme', 'culture-community' ), array( __CLASS__, 'render_partner_meta_box' ), 'culture_directory', 'side', 'default' );
         add_meta_box( 'culture_quote_meta', __( 'Quote Details', 'culture-community' ), array( __CLASS__, 'render_quote_meta_box' ), 'culture_quote', 'normal', 'high' );
         add_meta_box( 'culture_as_told_to', __( 'As-Told-To', 'culture-community' ), array( __CLASS__, 'render_as_told_to_meta_box' ), 'post', 'side', 'high' );
+        add_meta_box( 'culture_featured_products', __( 'The Edit — Featured Products', 'culture-community' ), array( __CLASS__, 'render_featured_products_meta_box' ), 'post', 'side', 'default' );
     }
 
     public static function render_event_checkin_meta_box( $post ) {
@@ -1264,6 +1265,43 @@ class Culture_Post_Types {
         <p class="description" style="font-size:11px;color:#666;">
             <?php esc_html_e( 'When set, the byline reads: "Words by [Guest], as told to [WP Author]".', 'culture-community' ); ?>
         </p>
+        <?php
+    }
+
+    public static function render_featured_products_meta_box( $post ) {
+        wp_nonce_field( 'culture_featured_products', 'culture_featured_products_nonce' );
+        $raw  = get_post_meta( $post->ID, '_culture_featured_products', true );
+        $ids  = $raw ? (array) json_decode( $raw, true ) : array();
+        $ids  = array_filter( array_map( 'absint', $ids ) );
+
+        // Build a label showing each product name if WooCommerce is active.
+        $labels = array();
+        if ( function_exists( 'wc_get_product' ) ) {
+            foreach ( $ids as $pid ) {
+                $p = wc_get_product( $pid );
+                if ( $p ) { $labels[] = $p->get_name() . ' (#' . $pid . ')'; }
+                else      { $labels[] = '#' . $pid; }
+            }
+        }
+        ?>
+        <p style="margin-bottom:4px;font-size:11px;color:#666;">
+            <?php esc_html_e( 'Product IDs to feature in The Edit on the mobile app. Comma-separated. Products must be published WooCommerce products.', 'culture-community' ); ?>
+        </p>
+        <input
+            type="text"
+            id="culture_featured_products"
+            name="culture_featured_products"
+            value="<?php echo esc_attr( implode( ', ', $ids ) ); ?>"
+            style="width:100%;margin-bottom:6px;"
+            placeholder="e.g. 123, 456, 789"
+        >
+        <?php if ( ! empty( $labels ) ) : ?>
+        <ul style="margin:0;padding:0;list-style:none;">
+            <?php foreach ( $labels as $label ) : ?>
+            <li style="font-size:11px;color:#444;padding:2px 0;">✓ <?php echo esc_html( $label ); ?></li>
+            <?php endforeach; ?>
+        </ul>
+        <?php endif; ?>
         <?php
     }
 
@@ -1397,6 +1435,15 @@ class Culture_Post_Types {
         }
         if ( isset( $_POST['culture_as_told_to_nonce'] ) && wp_verify_nonce( $_POST['culture_as_told_to_nonce'], 'culture_as_told_to' ) ) {
             update_post_meta( $post_id, 'as_told_to', sanitize_text_field( $_POST['as_told_to'] ?? '' ) );
+        }
+        if ( isset( $_POST['culture_featured_products_nonce'] ) && wp_verify_nonce( $_POST['culture_featured_products_nonce'], 'culture_featured_products' ) ) {
+            $raw_ids = sanitize_text_field( $_POST['culture_featured_products'] ?? '' );
+            $ids     = array_values( array_filter( array_map( 'absint', explode( ',', $raw_ids ) ) ) );
+            if ( ! empty( $ids ) ) {
+                update_post_meta( $post_id, '_culture_featured_products', wp_json_encode( $ids ) );
+            } else {
+                delete_post_meta( $post_id, '_culture_featured_products' );
+            }
         }
         // Gutenberg saves via REST — the nonce above won't be present, so also save
         // when the field arrives without a nonce (capability check is sufficient here
