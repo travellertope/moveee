@@ -388,29 +388,29 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
   };
 
   return (
-    <View style={acStyles.section}>
-      <View style={acStyles.header}>
-        <Text style={[acStyles.heading, { color: c.ink }]}>Discussion</Text>
-        <Text style={[acStyles.count, { color: c.mute }]}>{comments.length} comment{comments.length !== 1 ? "s" : ""}</Text>
+    <View style={styles.cm_section}>
+      <View style={styles.cm_header}>
+        <Text style={styles.cm_heading}>Discussion</Text>
+        <Text style={styles.cm_count}>{comments.length} comment{comments.length !== 1 ? "s" : ""}</Text>
       </View>
 
       {/* Comment list */}
       {loading ? (
         <ActivityIndicator color={c.gold} style={{ marginVertical: 16 }} />
       ) : comments.length === 0 ? (
-        <Text style={[acStyles.empty, { color: c.ghost }]}>Be the first to leave a comment.</Text>
+        <Text style={styles.cm_empty}>Be the first to leave a comment.</Text>
       ) : (
         comments.map((cm) => {
           const avatar = cm.author_avatar_urls?.["48"] ?? PLACEHOLDER_AVATAR;
           return (
-            <View key={cm.id} style={[acStyles.commentRow, { borderBottomColor: c.rule }]}>
-              <Image source={{ uri: avatar }} style={acStyles.avatar} />
-              <View style={acStyles.commentBody}>
-                <View style={acStyles.commentMeta}>
-                  <Text style={[acStyles.authorName, { color: c.ink }]}>{cm.author_name}</Text>
-                  <Text style={[acStyles.timestamp, { color: c.ghost }]}>{timeAgoComment(cm.date)}</Text>
+            <View key={cm.id} style={styles.cm_row}>
+              <Image source={{ uri: avatar }} style={styles.cm_avatar} />
+              <View style={styles.cm_body}>
+                <View style={styles.cm_meta}>
+                  <Text style={styles.cm_author}>{cm.author_name}</Text>
+                  <Text style={styles.cm_time}>{timeAgoComment(cm.date)}</Text>
                 </View>
-                <Text style={[acStyles.commentText, { color: c.inkSoft }]}>{stripHtml(cm.content.rendered)}</Text>
+                <Text style={styles.cm_text}>{stripHtml(cm.content.rendered)}</Text>
               </View>
             </View>
           );
@@ -418,20 +418,20 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
       )}
 
       {/* Compose */}
-      <View style={[acStyles.compose, { borderTopColor: c.rule, backgroundColor: c.paperDeep }]}>
+      <View style={styles.cm_compose}>
         {user?.avatarUrl ? (
-          <Image source={{ uri: user.avatarUrl }} style={acStyles.composeAvatar} />
+          <Image source={{ uri: user.avatarUrl }} style={styles.cm_composeAvatar} />
         ) : (
-          <View style={[acStyles.composeAvatar, { backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center" }]}>
+          <View style={[styles.cm_composeAvatar, styles.cm_composeAvatarFallback]}>
             <Ionicons name="person" size={14} color={c.mute} />
           </View>
         )}
         {submitted ? (
-          <Text style={[acStyles.submittedNote, { color: c.mute }]}>Comment submitted for review ✓</Text>
+          <Text style={styles.cm_submittedNote}>Comment submitted for review ✓</Text>
         ) : user ? (
           <>
             <TextInput
-              style={[acStyles.input, { color: c.ink, backgroundColor: c.paper, borderColor: c.rule }]}
+              style={styles.cm_input}
               placeholder="Add a comment…"
               placeholderTextColor={c.ghost}
               value={text}
@@ -447,32 +447,14 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
             </TouchableOpacity>
           </>
         ) : (
-          <Text style={[acStyles.signInNote, { color: c.mute }]}>Sign in to leave a comment</Text>
+          <Text style={styles.cm_signIn}>Sign in to leave a comment</Text>
         )}
       </View>
     </View>
   );
 }
 
-const acStyles = StyleSheet.create({
-  section: { marginTop: 24, paddingBottom: 32 },
-  header: { flexDirection: "row", alignItems: "baseline", gap: 8, marginBottom: 16 },
-  heading: { fontFamily: "Fraunces_700Bold", fontSize: 20 },
-  count: { fontFamily: "JetBrainsMono_400Regular", fontSize: 11 },
-  empty: { fontFamily: "DMSans_400Regular", fontSize: 14, textAlign: "center", paddingVertical: 24 },
-  commentRow: { flexDirection: "row", paddingVertical: 14, borderBottomWidth: 1, gap: 10 },
-  avatar: { width: 36, height: 36, borderRadius: 18, flexShrink: 0 },
-  commentBody: { flex: 1 },
-  commentMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
-  authorName: { fontFamily: "DMSans_700Bold", fontSize: 13 },
-  timestamp: { fontFamily: "JetBrainsMono_400Regular", fontSize: 10 },
-  commentText: { fontFamily: "DMSans_400Regular", fontSize: 14, lineHeight: 20 },
-  compose: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderTopWidth: 1, borderRadius: 8, marginTop: 16 },
-  composeAvatar: { width: 32, height: 32, borderRadius: 16, flexShrink: 0 },
-  input: { flex: 1, fontFamily: "DMSans_400Regular", fontSize: 14, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, maxHeight: 80 },
-  submittedNote: { flex: 1, fontFamily: "DMSans_400Regular", fontSize: 13, fontStyle: "italic" },
-  signInNote: { flex: 1, fontFamily: "DMSans_400Regular", fontSize: 13 },
-});
+// acStyles is intentionally empty — comment styles now live in createStyles(c) as cm_* keys
 
 export default function ArticleScreen() {
   const nav   = useNavigation<any>();
@@ -1252,4 +1234,33 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   tocItemTextNested: {
     fontSize: 13, color: c.inkSoft,
   },
+
+  // Comments section
+  cm_section: { marginTop: 24, paddingBottom: 32 },
+  cm_header: { flexDirection: "row", alignItems: "baseline", gap: 8, marginBottom: 16 },
+  cm_heading: { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink },
+  cm_count: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute },
+  cm_empty: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ghost, textAlign: "center", paddingVertical: 24 },
+  cm_row: { flexDirection: "row", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.rule, gap: 10 },
+  cm_avatar: { width: 36, height: 36, borderRadius: 18, flexShrink: 0 },
+  cm_body: { flex: 1 },
+  cm_meta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+  cm_author: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ink },
+  cm_time: { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: c.ghost },
+  cm_text: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.inkSoft, lineHeight: 20 },
+  cm_compose: {
+    flexDirection: "row", alignItems: "center", gap: 10, padding: 12,
+    borderTopWidth: 1, borderTopColor: c.rule,
+    borderRadius: radius.lg, marginTop: 16, backgroundColor: c.paperDeep,
+  },
+  cm_composeAvatar: { width: 32, height: 32, borderRadius: 16, flexShrink: 0 },
+  cm_composeAvatarFallback: { backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center" },
+  cm_input: {
+    flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base,
+    borderWidth: 1, borderColor: c.rule, borderRadius: radius.full,
+    paddingHorizontal: 14, paddingVertical: 8, maxHeight: 80,
+    color: c.ink, backgroundColor: c.paper,
+  },
+  cm_submittedNote: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, fontStyle: "italic", color: c.mute },
+  cm_signIn: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
 }); }
