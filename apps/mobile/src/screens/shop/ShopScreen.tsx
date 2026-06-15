@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  FlatList, ActivityIndicator, Linking, Image, ImageBackground,
+  FlatList, ActivityIndicator, Image, ImageBackground,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -286,9 +286,18 @@ export default function ShopScreen() {
     } catch {} finally { setLoadingMore(false); }
   };
 
+  const { addItem } = useCartStore();
+
   const handleAddToBag = (product: ShopProduct) => {
-    const url = `https://themoveee.com/shop/${product.slug}`;
-    Linking.openURL(url).catch(() => {});
+    addItem({
+      id:        String(product.id),
+      productId: product.id,
+      title:     product.name,
+      brand:     product.makerName,
+      price:     parseFloat(product.price) || 0,
+      image:     product.imageUrl ?? undefined,
+    });
+    nav.navigate("Cart");
   };
 
   const pillLabels = useMemo(() => {

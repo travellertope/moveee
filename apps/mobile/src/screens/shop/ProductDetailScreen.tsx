@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Image, Dimensions, Linking, ActivityIndicator, NativeScrollEvent,
+  Image, Dimensions, ActivityIndicator, NativeScrollEvent,
   NativeSyntheticEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -649,7 +649,7 @@ export default function ProductDetailScreen() {
   const nav = useNavigation<any>();
   const { params } = useRoute<any>();
   const { user } = useAuthStore();
-  const { increment } = useCartStore();
+  const { addItem } = useCartStore();
   const isPro = user?.tier === "patron";
   const c = useColors();
   const s = useMemo(() => createStyles(c), [c]);
@@ -674,9 +674,17 @@ export default function ProductDetailScreen() {
   const inStock = product?.stockStatus !== "outofstock";
 
   const handleAddToBag = () => {
-    const url = `https://themoveee.com/shop/${product?.slug}`;
-    Linking.openURL(url).catch(() => {});
-    increment();
+    if (!product) return;
+    addItem({
+      id:        String(product.id) + (undefined ?? ""),
+      productId: product.id,
+      title:     product.name,
+      brand:     product.makerName,
+      variant:   undefined ?? undefined,
+      price:     parseFloat(displayPrice ?? product.price) || 0,
+      image:     (detail?.images?.[0] ?? product.imageUrl) ?? undefined,
+    });
+    nav.navigate("Cart");
   };
 
   return (
