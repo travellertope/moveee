@@ -13,7 +13,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import Svg, { Path, Circle, Rect, Line } from "react-native-svg";
-import * as Passkeys from "react-native-passkeys";
+// try/catch: real module in EAS builds, no-op stub in Expo Go (native binary not bundled)
+let Passkeys: { isSupported: () => boolean; create: (o: unknown) => Promise<unknown>; get: (o: unknown) => Promise<unknown> } = {
+  isSupported: () => false, create: async () => null, get: async () => null,
+};
+try { Passkeys = require("react-native-passkeys"); } catch {}
 import { useAuthStore } from "../../auth/authStore";
 import { api } from "../../api/client";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
