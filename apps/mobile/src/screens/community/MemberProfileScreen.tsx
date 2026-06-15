@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator, Dimensions, Animated, Image,
+  SafeAreaView, ActivityIndicator, Dimensions, Image,
   Modal,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -27,12 +27,6 @@ const REP_TIERS = [
 
 function getRepTier(rep: number) {
   return [...REP_TIERS].reverse().find((t) => rep >= t.min) ?? REP_TIERS[0];
-}
-
-function repProgress(rep: number) {
-  const tier = getRepTier(rep);
-  if (!tier.max) return 1; // maxed out
-  return Math.min(1, (rep - tier.min) / (tier.max - tier.min));
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -85,50 +79,28 @@ const PORTFOLIO_GRADIENTS: Array<[string, string]> = [
   ["#A18CD1", "#FBC2EB"], ["#FBC2EB", "#A6C1EE"],
 ];
 
+const TIER_ICONS: Record<string, string> = {
+  "member":              "★",
+  "culture-contributor": "✦",
+  "taste-maker":         "◆",
+  "culture-authority":   "❖",
+  "culture-icon":        "✸",
+};
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-// Reputation bar with tier label and progress
-function ReputationBar({
+// Tier chip — shows earned tier only (no progress details for other members)
+function TierChip({
   reputation = 0, styles, c,
 }: {
   reputation?: number; styles: ReturnType<typeof createStyles>; c: ColorPalette;
 }) {
   const tier = getRepTier(reputation);
-  const pct  = repProgress(reputation);
-  const next = REP_TIERS.find((t) => t.min > reputation);
-  const widthAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(widthAnim, {
-      toValue: pct,
-      duration: 700,
-      delay: 300,
-      useNativeDriver: false,
-    }).start();
-  }, [pct]);
-
+  const icon = TIER_ICONS[tier.slug] ?? "★";
   return (
-    <View style={styles.repBar}>
-      <View style={styles.repBarRow}>
-        <Text style={styles.repTierLabel}>{tier.label}</Text>
-        <Text style={styles.repScore}>{reputation} REP</Text>
-      </View>
-      <View style={styles.repTrack}>
-        <Animated.View
-          style={[
-            styles.repFill,
-            { width: widthAnim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }) },
-          ]}
-        />
-      </View>
-      {next && (
-        <Text style={styles.repNext}>
-          {tier.max! - reputation} more to {next.label}
-        </Text>
-      )}
-      {!next && (
-        <Text style={styles.repNext}>Highest tier reached ✦</Text>
-      )}
+    <View style={styles.tierChip}>
+      <Text style={styles.tierChipIcon}>{icon}</Text>
+      <Text style={styles.tierChipLabel}>{tier.label}</Text>
     </View>
   );
 }
@@ -318,8 +290,8 @@ export default function MemberProfileScreen() {
             {profile.registeredAt ? <Text style={styles.profileSince}>{formatMemberSince(profile.registeredAt)}</Text> : null}
           </View>
 
-          {/* Reputation progress bar */}
-          <ReputationBar reputation={rep} styles={styles} c={c} />
+          {/* Reputation tier chip */}
+          <TierChip reputation={rep} styles={styles} c={c} />
 
           {/* Badges — icon only, tap for name */}
           <BadgeRow badges={badges} styles={styles} c={c} />
@@ -431,14 +403,15 @@ function createStyles(c: ColorPalette) {
     profileCity:       { fontFamily: fonts.sans, fontSize: 12, color: c.mute, marginTop: 4 },
     profileSince:      { fontFamily: fonts.mono, fontSize: 10, color: c.ghost, marginTop: 8 },
 
-    // Reputation bar
-    repBar:      { width: "100%", paddingHorizontal: 20, marginTop: 20 },
-    repBarRow:   { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
-    repTierLabel:{ fontFamily: fonts.sansBold, fontSize: 12, color: c.ink },
-    repScore:    { fontFamily: fonts.mono, fontSize: 11, color: c.ochre },
-    repTrack:    { height: 6, backgroundColor: c.ghost, borderRadius: 3, overflow: "hidden" },
-    repFill:     { height: 6, backgroundColor: c.ochre, borderRadius: 3 },
-    repNext:     { fontFamily: fonts.mono, fontSize: 10, color: c.mute, marginTop: 5 },
+    // Reputation tier chip
+    tierChip: {
+      flexDirection: "row", alignItems: "center", gap: 6,
+      marginTop: 16, paddingHorizontal: 14, paddingVertical: 7,
+      backgroundColor: c.paperDeep, borderRadius: radius.full,
+      borderWidth: 1, borderColor: c.ghost,
+    },
+    tierChipIcon:  { fontSize: 13, color: c.ochre },
+    tierChipLabel: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ink, letterSpacing: 0.3 },
 
     // Badge row — icon only
     badgeRowWrap: { marginTop: 16, width: "100%" },
@@ -481,7 +454,7 @@ function createStyles(c: ColorPalette) {
     tabTextActive: { fontFamily: fonts.sansBold, color: c.ink },
 
     tabContent: {
-      width: "100%", backgroundColor: c.paperDeep,
+      width: "100%", backgroundColor: c.paper,
       paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24, gap: 8,
     },
 
