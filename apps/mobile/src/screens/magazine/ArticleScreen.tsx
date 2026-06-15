@@ -29,6 +29,7 @@ import { useColors } from "../../hooks/useColors";
 import { ArticleSkeleton } from "../../components/ui/Skeleton";
 import { useAuthStore } from "../../auth/authStore";
 import BottomSheet from "../../components/ui/BottomSheet";
+import ReactionBar from "../../components/community/ReactionBar";
 
 const HERO_HEIGHT = 280;
 const SHEET_OVERLAP = 32;
@@ -88,85 +89,6 @@ function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPa
   );
 }
 
-// ── Article Reaction Row ──────────────────────────────────────────────────────
-
-const REACTIONS = [
-  { key: "love",  emoji: "❤️" },
-  { key: "fire",  emoji: "🔥" },
-  { key: "clap",  emoji: "👏" },
-] as const;
-
-type ReactionKey = typeof REACTIONS[number]["key"];
-
-function ReactionRow({ articleId, initialCounts, c }: {
-  articleId: string;
-  initialCounts?: Partial<Record<ReactionKey, number>>;
-  c: ColorPalette;
-}) {
-  const [counts, setCounts] = useState<Record<ReactionKey, number>>({
-    love: initialCounts?.love ?? 0,
-    fire: initialCounts?.fire ?? 0,
-    clap: initialCounts?.clap ?? 0,
-  });
-  const [mine, setMine] = useState<ReactionKey | null>(null);
-  const [pending, setPending] = useState(false);
-
-  const handleReact = async (key: ReactionKey) => {
-    if (pending) return;
-    const prev = mine;
-    const prevCounts = { ...counts };
-    // optimistic update
-    const next: ReactionKey | null = mine === key ? null : key;
-    setMine(next);
-    setCounts((c) => {
-      const updated = { ...c };
-      if (prev) updated[prev] = Math.max(0, updated[prev] - 1);
-      if (next) updated[next] = updated[next] + 1;
-      return updated;
-    });
-    setPending(true);
-    try {
-      await api.post(`${MOBILE_API}/community/react`, { post_id: Number(articleId), type: key });
-    } catch {
-      // rollback
-      setMine(prev);
-      setCounts(prevCounts);
-    } finally {
-      setPending(false);
-    }
-  };
-
-  return (
-    <View style={{
-      flexDirection: "row", gap: 10, marginTop: 24,
-      paddingTop: 20, borderTopWidth: 1, borderTopColor: c.rule,
-    }}>
-      {REACTIONS.map(({ key, emoji }) => {
-        const active = mine === key;
-        return (
-          <TouchableOpacity
-            key={key}
-            onPress={() => handleReact(key)}
-            activeOpacity={0.75}
-            style={{
-              flexDirection: "row", alignItems: "center", gap: 6,
-              paddingHorizontal: 14, paddingVertical: 7,
-              borderRadius: 999, borderWidth: 1,
-              borderColor: active ? c.ruleDark ?? c.inkSoft : c.rule,
-              backgroundColor: active ? c.paperDeep : "transparent",
-            }}
-          >
-            <Text style={{ fontSize: 15 }}>{emoji}</Text>
-            <Text style={{
-              fontFamily: fonts.sansBold, fontSize: fontSize.sm,
-              color: active ? c.ink : c.mute,
-            }}>{counts[key]}</Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-}
 
 // ── Newsletter CTA ───────────────────────────────────────────────────────────
 
@@ -584,14 +506,24 @@ export default function ArticleScreen() {
     setShowStickyHeader(offsetY > HEADER_TRIGGER);
   }, []);
 
-  // Bookmark
+  // Bookmark — fetch actual state from interactions endpoint once article loads
   const [bookmarked, setBookmarked] = useState(false);
+  useEffect(() => {
+    if (!article || !user) return;
+    api.get<{ bookmarked_articles?: (number | string)[] }>(
+      `${CULTURE_API}/user/interactions`
+    ).then((res) => {
+      const ids = (res.bookmarked_articles ?? []).map(String);
+      setBookmarked(ids.includes(String(article.id)));
+    }).catch(() => {});
+  }, [article?.id, user?.id]);
+
   const handleBookmark = useCallback(async () => {
     if (!article) return;
     const next = !bookmarked;
     setBookmarked(next);
     try {
-      await api.post(`${MOBILE_API}/content/bookmark`, { post_id: article.id, action: next ? "add" : "remove" });
+      await api.post(`${MOBILE_API}/content/bookmark`, { post_id: Number(article.id), action: next ? "add" : "remove" });
     } catch {
       setBookmarked(!next); // revert on failure
     }
@@ -811,14 +743,16 @@ export default function ArticleScreen() {
                   <ArticleBody article={article} colors={c} />
 
                   {/* ── Reaction row ── */}
-                  <ReactionRow
-                    articleId={article.id}
+                  <ReactionBar
+                    postId={article.id}
                     initialCounts={{
                       love: (article as any).reactions?.love ?? (article as any).reactions?.heart ?? 0,
                       fire: (article as any).reactions?.fire ?? 0,
                       clap: (article as any).reactions?.clap ?? 0,
                     }}
-                    c={c}
+                    shareUrl={`https://themoveee.com/magazine/${article.slug}`}
+                    shareTitle={article.title}
+                    noBorder={false}
                   />
 
                   {/* ── Frame 3: Article complete banner ── */}
