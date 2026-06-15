@@ -92,20 +92,55 @@ function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPa
 
 // ── Newsletter CTA ───────────────────────────────────────────────────────────
 
+// Derive a segment code from the device locale (best-effort, no network call).
+function segmentFromLocale(): string {
+  try {
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale ?? "";
+    const region = locale.split("-")[1]?.toUpperCase() ?? "";
+    if (region === "NG") return "ng";
+    if (region === "GH") return "gh";
+    if (region === "KE") return "ke";
+    if (region === "ZA") return "za";
+    if (region === "GB") return "uk";
+    if (region === "US") return "us";
+    if (region === "CA") return "ca";
+    if (region === "AU") return "au";
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "";
+    if (tz.startsWith("Africa/Lagos") || tz.startsWith("Africa/Abuja")) return "ng";
+    if (tz.startsWith("Africa/Accra")) return "gh";
+    if (tz.startsWith("Europe/London")) return "uk";
+    if (tz.startsWith("America/New_York") || tz.startsWith("America/Chicago") || tz.startsWith("America/Los_Angeles")) return "us";
+  } catch {}
+  return "";
+}
+
 function NewsletterCTA({ c }: { c: ColorPalette }) {
-  const [email, setEmail] = useState("");
+  const { user } = useAuthStore();
+  const [email, setEmail] = useState(user?.email ?? "");
   const [submitted, setSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubscribe = async () => {
     const trimmed = email.trim();
-    if (!trimmed || !trimmed.includes("@")) return;
+    if (!trimmed || !trimmed.includes("@")) { setError("Enter a valid email address."); return; }
+    setError("");
     setBusy(true);
     try {
-      await api.post(`${CULTURE_API}/newsletter/subscribe`, { email: trimmed, list: "getmelit" }, false);
+      const segment = segmentFromLocale();
+      await api.post(
+        `${CULTURE_API}/newsletter-subscribe`,
+        {
+          email: trimmed,
+          name: user?.displayName ?? "",
+          list: "culture-drop",
+          segment,
+        },
+        false
+      );
       setSubmitted(true);
     } catch {
-      // fail silently — user can retry
+      setError("Something went wrong. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -126,50 +161,59 @@ function NewsletterCTA({ c }: { c: ColorPalette }) {
         </View>
         <Text style={{
           fontFamily: fonts.serifBold, fontSize: 16, color: c.ink, flex: 1, lineHeight: 22,
-        }}>{"Culture in your inbox,\nevery Friday"}</Text>
+        }}>{"Culture in your inbox,\nevery Tuesday"}</Text>
       </View>
       <Text style={{
         fontFamily: fonts.sans, fontSize: 13, color: c.mute, lineHeight: 19, marginBottom: 16,
       }}>
-        GetMeLit — the Moveee weekly. Handpicked stories, what to watch, read, and experience.
+        Culture Drop — our weekly edit of what to watch, read, see and experience. Straight to your inbox.
       </Text>
       {submitted ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Ionicons name="checkmark-circle" size={18} color={c.gold} />
           <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.gold }}>
-            You're on the list!
+            You're on the list — see you Tuesday!
           </Text>
         </View>
       ) : (
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Your email address"
-            placeholderTextColor={c.ghost}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={{
-              flex: 1, height: 44, borderWidth: 1, borderColor: c.rule,
-              borderRadius: radius.md, paddingHorizontal: 12,
-              fontFamily: fonts.sans, fontSize: 14, color: c.ink,
-              backgroundColor: c.paper,
-            }}
-          />
-          <TouchableOpacity
-            onPress={handleSubscribe}
-            disabled={busy}
-            style={{
-              height: 44, paddingHorizontal: 16, borderRadius: radius.md,
-              backgroundColor: c.ink, alignItems: "center", justifyContent: "center",
-              opacity: busy ? 0.6 : 1,
-            }}
-          >
-            <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.paper }}>
-              {busy ? "…" : "Subscribe"}
+        <>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <TextInput
+              value={email}
+              onChangeText={(t) => { setEmail(t); setError(""); }}
+              placeholder="Your email address"
+              placeholderTextColor={c.ghost}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={{
+                flex: 1, height: 44, borderWidth: 1,
+                borderColor: error ? "#c5491f" : c.rule,
+                borderRadius: radius.md, paddingHorizontal: 12,
+                fontFamily: fonts.sans, fontSize: 14, color: c.ink,
+                backgroundColor: c.paper,
+              }}
+            />
+            <TouchableOpacity
+              onPress={handleSubscribe}
+              disabled={busy}
+              style={{
+                height: 44, paddingHorizontal: 16, borderRadius: radius.md,
+                backgroundColor: c.ink, alignItems: "center", justifyContent: "center",
+                opacity: busy ? 0.6 : 1,
+              }}
+            >
+              <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.paper }}>
+                {busy ? "…" : "Subscribe"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {error ? (
+            <Text style={{ fontFamily: fonts.sans, fontSize: 12, color: "#c5491f", marginTop: 6 }}>
+              {error}
             </Text>
-          </TouchableOpacity>
-        </View>
+          ) : null}
+        </>
       )}
     </View>
   );

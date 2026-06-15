@@ -3057,7 +3057,8 @@ class Culture_REST_API {
             return rest_ensure_response( array( 'success' => true, 'credits_earned' => 0, 'already_awarded' => true ) );
         }
 
-        $credits = Culture_Gamification::award_credits( $user_id, 'magazine_read', $post_id );
+        $amount  = max( 1, (int) Culture_Gamification::get_credit_bonus( 'magazine_read' ) );
+        $credits = Culture_Gamification::award_credits( $user_id, $amount, 'magazine_read', $post_id );
         update_user_meta( $user_id, $meta_key, '1' );
 
         return rest_ensure_response( array( 'success' => true, 'credits_earned' => max( 0, intval( $credits ) ) ) );
