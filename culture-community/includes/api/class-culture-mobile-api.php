@@ -1194,8 +1194,11 @@ class Culture_Mobile_API {
         }
 
         if ( class_exists( 'Culture_Gamification' ) ) {
-            Culture_Gamification::award_points( $user_id, 'community_comment' );
-            // Check if the post has now crossed the validation threshold.
+            // Use the correct action based on post type:
+            // magazine articles ('post') → 5 rep + 2 credits
+            // community/pulse posts     → 8 rep + 0 credits
+            $action = ( $post->post_type === 'post' ) ? 'magazine_comment' : 'community_comment';
+            Culture_Gamification::award_points( $user_id, $action );
             Culture_Gamification::check_post_threshold( $post_id );
         }
 
