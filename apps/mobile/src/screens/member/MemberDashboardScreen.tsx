@@ -321,7 +321,7 @@ export default function MemberDashboardScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.statValue, { color: isPro ? c.ochre : c.ink }]}>{user.credits ?? 0}</Text>
-            <Text style={styles.statLabel}>Credits ⓘ</Text>
+            <Text style={styles.statLabel}>Credits <Text style={styles.infoIcon}>ⓘ</Text></Text>
           </TouchableOpacity>
 
           {/* Reputation — with info sheet */}
@@ -331,7 +331,7 @@ export default function MemberDashboardScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.statValue, { color: isPro ? c.gold : c.ink }]}>{user.reputation ?? 0}</Text>
-            <Text style={styles.statLabel}>Reputation ⓘ</Text>
+            <Text style={styles.statLabel}>Reputation <Text style={styles.infoIcon}>ⓘ</Text></Text>
           </TouchableOpacity>
 
           <View style={[styles.statItem, styles.statItemBorder]}>
@@ -664,6 +664,11 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     letterSpacing: 1,
     marginTop: 4,
     textAlign: "center",
+  },
+  infoIcon: {
+    fontSize: 13,
+    color: "#b34a2e",
+    textTransform: "none" as const,
   },
 
   /* ── Card 4: Upgrade Banner ── */
