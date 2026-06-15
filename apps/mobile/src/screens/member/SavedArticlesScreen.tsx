@@ -9,20 +9,47 @@ import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { fonts, fontSize, space, radius, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import type { FeedItem } from "../../types";
+import QuoteDetailModal from "../../components/community/QuoteDetailModal";
+import PostDetailSheet from "../../components/community/PostDetailSheet";
 
 interface SavedItem {
   id: number;
-  type: "article" | "quote";
+  type: "article" | "quote" | "community";
   slug: string;
   title: string;
   excerpt?: string;
   featuredImage?: string;
   author?: { name: string };
   publishedAt?: string;
+  date?: string;
   readingTime?: number;
   category?: string;
+  // Quote
   quoteAuthor?: string;
   quoteSource?: string;
+  // Community post
+  templateType?: string;
+  communityTag?: string;
+  authorName?: string;
+  authorUsername?: string;
+}
+
+function decodeEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&hellip;/g, "…")
+    .replace(/&mdash;/g, "—")
+    .replace(/&ndash;/g, "–")
+    .replace(/&lsquo;/g, "‘")
+    .replace(/&rsquo;/g, "’")
+    .replace(/&ldquo;/g, "“")
+    .replace(/&rdquo;/g, "”")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
 }
 
 function timeAgo(dateStr: string): string {
@@ -36,7 +63,7 @@ function timeAgo(dateStr: string): string {
   } catch { return ""; }
 }
 
-type Tab = "articles" | "quotes";
+type Tab = "articles" | "quotes" | "posts";
 
 export default function SavedArticlesScreen() {
   const nav = useNavigation<any>();
@@ -48,6 +75,11 @@ export default function SavedArticlesScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("articles");
+
+  // Quote modal state
+  const [quoteItem, setQuoteItem] = useState<FeedItem | null>(null);
+  // Community post sheet state
+  const [postItem, setPostItem] = useState<FeedItem | null>(null);
 
   const fetchSaved = useCallback(async () => {
     if (!user?.id) return;
@@ -67,9 +99,51 @@ export default function SavedArticlesScreen() {
 
   useEffect(() => { fetchSaved(); }, [fetchSaved]);
 
-  const articles = all.filter((i) => i.type !== "quote");
-  const quotes = all.filter((i) => i.type === "quote");
-  const items = tab === "articles" ? articles : quotes;
+  const articles  = all.filter((i) => i.type === "article");
+  const quotes    = all.filter((i) => i.type === "quote");
+  const posts     = all.filter((i) => i.type === "community");
+
+  const items = tab === "articles" ? articles : tab === "quotes" ? quotes : posts;
+
+  const openQuote = (item: SavedItem) => {
+    const feedItem: FeedItem = {
+      id: String(item.id),
+      wpId: String(item.id),
+      type: "quote",
+      title: decodeEntities(item.title),
+      slug: item.slug,
+      date: item.date ?? item.publishedAt ?? "",
+      href: `/quotes/${item.slug}`,
+      quoteAuthor: item.quoteAuthor,
+      quoteSource: item.quoteSource,
+    };
+    setQuoteItem(feedItem);
+  };
+
+  const openPost = (item: SavedItem) => {
+    const feedItem: FeedItem = {
+      id: String(item.id),
+      wpId: String(item.id),
+      type: "community",
+      title: decodeEntities(item.title),
+      slug: item.slug,
+      date: item.date ?? item.publishedAt ?? "",
+      href: `/community/${item.slug}`,
+      excerpt: item.excerpt,
+      image: item.featuredImage ?? null,
+      templateType: (item.templateType as any) ?? "post",
+      communityTag: item.communityTag,
+      communityAuthor: item.authorName,
+      communityAuthorUsername: item.authorUsername,
+    };
+    setPostItem(feedItem);
+  };
+
+  const TABS: { key: Tab; label: string; count: number }[] = [
+    { key: "articles", label: "Articles", count: articles.length },
+    { key: "quotes",   label: "Quotes",   count: quotes.length },
+    { key: "posts",    label: "Posts",    count: posts.length },
+  ];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -88,47 +162,87 @@ export default function SavedArticlesScreen() {
 
       {/* Tab switcher */}
       <View style={styles.tabRow}>
-        <TouchableOpacity
-          style={[styles.tab, tab === "articles" ? styles.tabActive : undefined]}
-          onPress={() => setTab("articles")}
-        >
-          <Text style={[styles.tabText, tab === "articles" ? styles.tabTextActive : undefined]}>
-            Articles {articles.length > 0 ? `(${articles.length})` : ""}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, tab === "quotes" ? styles.tabActive : undefined]}
-          onPress={() => setTab("quotes")}
-        >
-          <Text style={[styles.tabText, tab === "quotes" ? styles.tabTextActive : undefined]}>
-            Quotes {quotes.length > 0 ? `(${quotes.length})` : ""}
-          </Text>
-        </TouchableOpacity>
+        {TABS.map((t) => (
+          <TouchableOpacity
+            key={t.key}
+            style={[styles.tab, tab === t.key ? styles.tabActive : undefined]}
+            onPress={() => setTab(t.key)}
+          >
+            <Text style={[styles.tabText, tab === t.key ? styles.tabTextActive : undefined]}>
+              {t.label}{t.count > 0 ? ` (${t.count})` : ""}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <FlatList
         data={items}
         keyExtractor={(a) => `${a.type}-${a.id}`}
-        renderItem={({ item }) =>
-          item.type === "quote" ? (
-            <TouchableOpacity
-              style={styles.quoteCard}
-              onPress={() => nav.push("Article", { slug: item.slug })}
-              activeOpacity={0.88}
-            >
-              <Text style={styles.quoteGlyph}>"</Text>
-              <Text style={styles.quoteText} numberOfLines={3}>{item.title}</Text>
-              {item.quoteAuthor ? (
-                <Text style={styles.quoteAuthor}>— {item.quoteAuthor}</Text>
-              ) : null}
-              {item.quoteSource ? (
-                <Text style={styles.quoteSource}>{item.quoteSource}</Text>
-              ) : null}
-              {item.publishedAt ? (
-                <Text style={styles.cardDate}>{timeAgo(item.publishedAt)}</Text>
-              ) : null}
-            </TouchableOpacity>
-          ) : (
+        renderItem={({ item }) => {
+          if (item.type === "quote") {
+            return (
+              <TouchableOpacity
+                style={styles.quoteCard}
+                onPress={() => openQuote(item)}
+                activeOpacity={0.88}
+              >
+                <Text style={styles.quoteGlyph}>"</Text>
+                <Text style={styles.quoteText} numberOfLines={3}>
+                  {decodeEntities(item.title)}
+                </Text>
+                {item.quoteAuthor ? (
+                  <Text style={styles.quoteAuthor}>— {item.quoteAuthor}</Text>
+                ) : null}
+                {item.quoteSource ? (
+                  <Text style={styles.quoteSource}>{item.quoteSource}</Text>
+                ) : null}
+                {(item.date || item.publishedAt) ? (
+                  <Text style={styles.cardDate}>{timeAgo(item.date ?? item.publishedAt ?? "")}</Text>
+                ) : null}
+              </TouchableOpacity>
+            );
+          }
+
+          if (item.type === "community") {
+            return (
+              <TouchableOpacity
+                style={styles.card}
+                onPress={() => openPost(item)}
+                activeOpacity={0.88}
+              >
+                <View style={styles.cardBody}>
+                  {item.communityTag ? (
+                    <Text style={styles.cardCategory}>{item.communityTag.toUpperCase()}</Text>
+                  ) : item.templateType ? (
+                    <Text style={styles.cardCategory}>{item.templateType.replace(/-/g, " ").toUpperCase()}</Text>
+                  ) : null}
+                  <Text style={styles.cardTitle} numberOfLines={2}>{decodeEntities(item.title)}</Text>
+                  {item.excerpt ? (
+                    <Text style={styles.cardExcerpt} numberOfLines={2}>{item.excerpt}</Text>
+                  ) : null}
+                  <View style={styles.cardMeta}>
+                    {item.authorName ? (
+                      <Text style={styles.cardAuthor}>{item.authorName}</Text>
+                    ) : null}
+                    {(item.date || item.publishedAt) ? (
+                      <>
+                        <Text style={styles.cardDot}>·</Text>
+                        <Text style={styles.cardDate}>{timeAgo(item.date ?? item.publishedAt ?? "")}</Text>
+                      </>
+                    ) : null}
+                  </View>
+                </View>
+                {item.featuredImage ? (
+                  <Image source={{ uri: item.featuredImage }} style={styles.cardThumb} resizeMode="cover" />
+                ) : (
+                  <View style={[styles.cardThumb, styles.cardThumbPlaceholder]} />
+                )}
+              </TouchableOpacity>
+            );
+          }
+
+          // Article
+          return (
             <TouchableOpacity
               style={styles.card}
               onPress={() => nav.push("Article", { slug: item.slug })}
@@ -138,7 +252,7 @@ export default function SavedArticlesScreen() {
                 {item.category ? (
                   <Text style={styles.cardCategory}>{item.category.toUpperCase()}</Text>
                 ) : null}
-                <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.cardTitle} numberOfLines={2}>{decodeEntities(item.title)}</Text>
                 {item.excerpt ? (
                   <Text style={styles.cardExcerpt} numberOfLines={2}>{item.excerpt}</Text>
                 ) : null}
@@ -166,8 +280,8 @@ export default function SavedArticlesScreen() {
                 <View style={[styles.cardThumb, styles.cardThumbPlaceholder]} />
               )}
             </TouchableOpacity>
-          )
-        }
+          );
+        }}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
           loading ? (
@@ -188,11 +302,15 @@ export default function SavedArticlesScreen() {
                 style={{ marginBottom: space[3] }}
               />
               <Text style={styles.emptyTitle}>
-                {tab === "quotes" ? "No saved quotes yet" : "No saved articles yet"}
+                {tab === "quotes" ? "No saved quotes yet"
+                  : tab === "posts" ? "No saved posts yet"
+                  : "No saved articles yet"}
               </Text>
               <Text style={styles.emptyText}>
                 {tab === "quotes"
                   ? "Tap the bookmark icon on any quote to save it here."
+                  : tab === "posts"
+                  ? "Tap the bookmark icon on any community post to save it here."
                   : "Tap the bookmark icon on any article to save it here."}
               </Text>
             </View>
@@ -200,6 +318,22 @@ export default function SavedArticlesScreen() {
         }
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+      />
+
+      {/* Quote detail modal */}
+      {quoteItem && (
+        <QuoteDetailModal
+          visible={!!quoteItem}
+          item={quoteItem}
+          onClose={() => setQuoteItem(null)}
+        />
+      )}
+
+      {/* Community post sheet */}
+      <PostDetailSheet
+        item={postItem}
+        visible={!!postItem}
+        onClose={() => setPostItem(null)}
       />
     </SafeAreaView>
   );
@@ -218,7 +352,6 @@ function createStyles(c: ColorPalette) {
     headerEyebrow: { fontFamily: fonts.mono, fontSize: fontSize.eyebrow, color: c.mute, textTransform: "uppercase", letterSpacing: 1 },
     headerTitle: { fontFamily: fonts.serifBold, fontSize: 18, color: c.ink },
 
-    // Tabs
     tabRow: {
       flexDirection: "row",
       backgroundColor: c.paper,
@@ -229,25 +362,16 @@ function createStyles(c: ColorPalette) {
     tab: {
       paddingVertical: 10,
       paddingHorizontal: space[2],
-      marginRight: space[4],
+      marginRight: space[3],
       borderBottomWidth: 2,
       borderBottomColor: "transparent",
     },
-    tabActive: {
-      borderBottomColor: c.ochre,
-    },
-    tabText: {
-      fontFamily: fonts.sansBold,
-      fontSize: fontSize.sm,
-      color: c.mute,
-    },
-    tabTextActive: {
-      color: c.ink,
-    },
+    tabActive: { borderBottomColor: c.ochre },
+    tabText: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.mute },
+    tabTextActive: { color: c.ink },
 
     list: { paddingBottom: 60 },
 
-    // Article card
     card: {
       flexDirection: "row", gap: 12, alignItems: "flex-start",
       paddingHorizontal: space[4], paddingVertical: space[4],
@@ -264,21 +388,17 @@ function createStyles(c: ColorPalette) {
     cardThumb: { width: 80, height: 80, borderRadius: radius.lg, flexShrink: 0 },
     cardThumbPlaceholder: { backgroundColor: c.paperDeep },
 
-    // Quote card
     quoteCard: {
       paddingHorizontal: space[4],
       paddingVertical: space[4],
       backgroundColor: c.paper,
-      position: "relative",
     },
     quoteGlyph: {
-      position: "absolute",
-      top: 12,
-      left: 14,
       fontFamily: fonts.serifBold,
       fontSize: 40,
+      lineHeight: 40,
       color: c.ghost,
-      lineHeight: 32,
+      marginBottom: -4,
     },
     quoteText: {
       fontFamily: fonts.serif,
@@ -286,21 +406,21 @@ function createStyles(c: ColorPalette) {
       fontSize: 15,
       color: c.ink,
       lineHeight: 22,
-      paddingLeft: 22,
-      marginTop: 6,
+      paddingLeft: 4,
+      marginTop: 4,
     },
     quoteAuthor: {
       fontFamily: fonts.sansBold,
       fontSize: fontSize.sm,
       color: c.inkSoft,
       marginTop: 8,
-      paddingLeft: 22,
+      paddingLeft: 4,
     },
     quoteSource: {
       fontFamily: fonts.mono,
       fontSize: fontSize.tiny,
       color: c.ghost,
-      paddingLeft: 22,
+      paddingLeft: 4,
       marginTop: 2,
     },
 
