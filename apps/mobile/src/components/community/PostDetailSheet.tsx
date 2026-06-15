@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TextInput,
   Dimensions,
+  Share,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomSheet from "../ui/BottomSheet";
@@ -649,8 +650,19 @@ function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
 }
 
 function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
-  const sharingReason = item.body && item.body !== item.excerpt ? item.body : item.excerpt;
+  const sharingReason = item.quoteSharingReason || item.body || item.excerpt;
   const posterName = item.authorName ?? "Their note";
+  const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : undefined;
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `"${item.title}" — ${item.quoteAuthor ?? ""}${shareUrl ? `\n${shareUrl}` : ""}`,
+        url: shareUrl,
+      });
+    } catch { /* dismissed */ }
+  };
+
   return (
     <>
       <View style={styles.quoteBlock}>
@@ -672,6 +684,9 @@ function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
       ) : null}
       <View style={styles.sharePrompt}>
         <Text style={styles.sharePromptText}>Know someone who needs to see this?</Text>
+        <TouchableOpacity onPress={handleShare}>
+          <Text style={styles.sharePromptLink}>Share quote →</Text>
+        </TouchableOpacity>
       </View>
     </>
   );
@@ -1334,8 +1349,9 @@ function createStyles(c: ColorPalette) {
       textTransform: "uppercase",
       marginBottom: 4,
     },
-    sharePrompt: { alignItems: "center", paddingVertical: 8 },
+    sharePrompt: { alignItems: "center", paddingVertical: 8, gap: 4 },
     sharePromptText: { fontSize: 13, fontFamily: SANS, color: c.mute },
+    sharePromptLink: { fontSize: 13, fontFamily: SANS_BOLD, color: c.ochre },
 
     // Reactions
     divider: {

@@ -229,9 +229,11 @@ class Culture_Mobile_API {
             'callback'            => array( __CLASS__, 'handle_submit_quote' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
             'args'                => array(
-                'text'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
-                'author' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
-                'source' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'text'           => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
+                'author'         => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'source'         => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'sharing_reason' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field' ),
+                'quote_type'     => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
             ),
         ) );
 
@@ -1125,7 +1127,7 @@ class Culture_Mobile_API {
         return rest_ensure_response( self::format_community_post( $post, array() ) );
     }
 
-    const COMMENTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'post' );
+    const COMMENTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'post', 'culture_quote' );
 
     public static function handle_get_comments( $request ) {
         $post_id = (int) $request->get_param( 'post_id' );
@@ -1842,8 +1844,10 @@ class Culture_Mobile_API {
                 'date'        => $post->post_date_gmt,
                 'href'        => '/quotes/' . $post->ID . '-' . $post->post_name,
                 'wpId'        => (string) $post->ID,
-                'quoteSource' => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
-                'quoteAuthor' => ( $authors && ! is_wp_error( $authors ) && ! empty( $authors ) ) ? $authors[0]->name : '',
+                'quoteSource'        => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
+                'quoteAuthor'        => ( $authors && ! is_wp_error( $authors ) && ! empty( $authors ) ) ? $authors[0]->name : '',
+                'quoteSharingReason' => get_post_meta( $post->ID, '_quote_sharing_reason', true ) ?: '',
+                'authorName'         => get_the_author_meta( 'display_name', $post->post_author ),
             );
         }, $query->posts );
     }

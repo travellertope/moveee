@@ -683,9 +683,6 @@ export default function NewPostScreen() {
         maxLength={tmpl.maxText + 50}
         textAlignVertical="top"
       />
-      <Text style={[styles.charCount, remaining < 50 && { color: c.gold }, remaining < 0 && { color: c.ochre }]}>
-        {remaining}
-      </Text>
       <InlinePhotosSection
         images={images}
         onAdd={() => pickImages(true)}
@@ -733,7 +730,6 @@ export default function NewPostScreen() {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
       <View style={styles.fieldGroup}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
@@ -785,7 +781,6 @@ export default function NewPostScreen() {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
       <View style={styles.fieldGroup}>
         <DirectorySearch
@@ -836,7 +831,6 @@ export default function NewPostScreen() {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Cuisine (optional)</Text>
@@ -906,7 +900,6 @@ export default function NewPostScreen() {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
       <View style={styles.fieldGroup}>
         <UserSearch
@@ -1039,7 +1032,6 @@ export default function NewPostScreen() {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
 
       {/* Favourite quote */}
@@ -1113,7 +1105,6 @@ export default function NewPostScreen() {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Options *</Text>
@@ -1367,7 +1358,6 @@ export default function NewPostScreen() {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }, { marginTop: 4 }]}>{remaining}</Text>
       </View>
 
       <View style={[styles.fieldGroup, { marginTop: space[3] }]}>
@@ -1491,15 +1481,6 @@ export default function NewPostScreen() {
           <View style={styles.toolbarLeft}>
             {toolbarIcons}
           </View>
-          {template !== "event" && (
-            <Text style={[
-              styles.toolbarCount,
-              remaining < 50 && { color: c.gold },
-              remaining < 0 && { color: c.ochre },
-            ]}>
-              {remaining} left
-            </Text>
-          )}
         </View>
 
       </KeyboardAvoidingView>
