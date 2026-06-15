@@ -11,6 +11,8 @@ import * as ImagePicker from "expo-image-picker";
 import * as Passkeys from "react-native-passkeys";
 import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
+
+const PROXY = "https://themoveee.com/api";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -180,7 +182,7 @@ function ProfileTab() {
     });
     if (result.canceled || !result.assets?.[0]) return;
     try {
-      await api.upload(`${MOBILE_API}/me/avatar`, result.assets[0].uri, "avatar");
+      await api.upload(`${PROXY}/mobile/me/avatar`, result.assets[0].uri, "avatar");
       await refreshProfile();
     } catch {
       Alert.alert("Error", "Could not upload photo.");
@@ -767,8 +769,22 @@ function createIntStyles(c: ColorPalette) {
   });
 }
 
+function deriveSegment(countryOfResidence?: string): string {
+  const c = (countryOfResidence ?? "").toLowerCase().trim();
+  if (/nigeria/.test(c)) return "ng";
+  if (/ghana/.test(c)) return "gh";
+  if (/kenya/.test(c)) return "ke";
+  if (/south africa/.test(c)) return "za";
+  if (/united kingdom|uk\b|gb\b/.test(c)) return "uk";
+  if (/united states|usa/.test(c)) return "us";
+  if (/canada/.test(c)) return "ca";
+  if (/australia/.test(c)) return "au";
+  return "";
+}
+
 // ── Newsletters Tab ───────────────────────────────────────────────────────────
 function NewslettersTab() {
+  const { user } = useAuthStore();
   const c = useColors();
   const nlStyles = useMemo(() => createNlStyles(c), [c]);
   const [subscribed, setSubscribed] = useState<Record<string, boolean>>({
@@ -792,7 +808,8 @@ function NewslettersTab() {
     const next = { ...subscribed, [id]: val };
     setSubscribed(next);
     const lists = Object.entries(next).filter(([, v]) => v).map(([k]) => k);
-    await api.post(`${MOBILE_API}/newsletter-preferences`, { lists }).catch(() => {});
+    const segment = deriveSegment(user?.countryOfResidence);
+    await api.post(`${MOBILE_API}/newsletter-preferences`, { lists, ...(segment ? { segment } : {}) }).catch(() => {});
   };
 
   if (loading) return <ActivityIndicator style={{ marginTop: 40 }} color={c.ochre} />;

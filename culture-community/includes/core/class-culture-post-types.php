@@ -15,6 +15,7 @@ class Culture_Post_Types {
         self::register_taxonomies();
         self::register_rest_meta_fields();
         add_action( 'add_meta_boxes', array( __CLASS__, 'register_meta_boxes' ) );
+        add_action( 'wp_ajax_culture_generate_checkin_token', array( __CLASS__, 'ajax_generate_checkin_token' ) );
         add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
         add_action( 'acf/save_post', array( __CLASS__, 'cache_event_showcase_urls' ), 20 );
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
@@ -150,6 +151,11 @@ class Culture_Post_Types {
             '_partner_status'         => 'string',
             '_partner_perk_template'  => 'string',
             '_entry_city'             => 'string',
+            // Rich detail fields for mobile DirectoryDetailScreen
+            '_about_fields'           => 'string',   // JSON: [{label, value}]
+            '_entry_quote'            => 'string',   // featured quote for Concept/Book blockquote
+            '_selected_works'         => 'string',   // JSON: [{imageUrl?, caption}]
+            '_related_entries'        => 'string',   // JSON: [{id, title, type, slug}]
         );
         foreach ( $directory_meta as $meta_key => $type ) {
             register_post_meta( 'culture_directory', $meta_key, array(
@@ -1161,13 +1167,64 @@ class Culture_Post_Types {
      */
     public static function register_meta_boxes() {
         add_meta_box( 'culture_event_meta', __( 'Event Details', 'culture-community' ), array( __CLASS__, 'render_event_meta_box' ), 'culture_event', 'normal', 'high' );
+        add_meta_box( 'culture_event_checkin', __( 'Event Check-in QR', 'culture-community' ), array( __CLASS__, 'render_event_checkin_meta_box' ), 'culture_event', 'side', 'high' );
         add_meta_box( 'culture_directory_meta', __( 'Directory Entry Details', 'culture-community' ), array( __CLASS__, 'render_directory_meta_box' ), 'culture_directory', 'side', 'high' );
         add_meta_box( 'culture_partner_meta', __( 'Partner Programme', 'culture-community' ), array( __CLASS__, 'render_partner_meta_box' ), 'culture_directory', 'side', 'default' );
         add_meta_box( 'culture_quote_meta', __( 'Quote Details', 'culture-community' ), array( __CLASS__, 'render_quote_meta_box' ), 'culture_quote', 'normal', 'high' );
         add_meta_box( 'culture_as_told_to', __( 'As-Told-To', 'culture-community' ), array( __CLASS__, 'render_as_told_to_meta_box' ), 'post', 'side', 'high' );
     }
 
+    public static function render_event_checkin_meta_box( $post ) {
+        $has_token = ! empty( get_post_meta( $post->ID, '_event_checkin_token_hash', true ) );
+        $nonce     = wp_create_nonce( 'culture_checkin_nonce_' . $post->ID );
+        ?>
+        <div id="culture-checkin-box">
+            <?php if ( $has_token ) : ?>
+                <p style="color:#16a34a;margin:0 0 8px">✓ Token generated</p>
+            <?php endif; ?>
+            <button type="button" class="button" onclick="cultureGenerateCheckin(<?php echo (int) $post->ID; ?>, '<?php echo esc_js( $nonce ); ?>')">
+                <?php echo $has_token ? 'Regenerate QR' : 'Generate QR Token'; ?>
+            </button>
+            <div id="culture-checkin-result" style="margin-top:12px"></div>
+        </div>
+        <script>
+        function cultureGenerateCheckin(eventId, nonce) {
+            var fd = new FormData();
+            fd.append('action', 'culture_generate_checkin_token');
+            fd.append('event_id', eventId);
+            fd.append('nonce', nonce);
+            fetch(ajaxurl, { method: 'POST', body: fd })
+                .then(function(r){ return r.json(); })
+                .then(function(d){
+                    if (d.success) {
+                        var url = d.data.checkin_url;
+                        document.getElementById('culture-checkin-result').innerHTML =
+                            '<p style="word-break:break-all;font-size:11px;margin:0 0 8px"><strong>URL:</strong><br>' + url + '</p>' +
+                            '<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(url) + '" style="max-width:180px;display:block">';
+                    } else {
+                        alert('Error generating token');
+                    }
+                });
+        }
+        </script>
+        <?php
+    }
+
     /** Saves as_told_to when Gutenberg updates the post via the REST API. */
+    public static function ajax_generate_checkin_token() {
+        $event_id = (int) ( $_POST['event_id'] ?? 0 );
+        if ( ! check_ajax_referer( 'culture_checkin_nonce_' . $event_id, 'nonce', false ) ) {
+            wp_send_json_error( 'Invalid nonce' );
+        }
+        if ( ! current_user_can( 'edit_posts' ) || get_post_type( $event_id ) !== 'culture_event' ) {
+            wp_send_json_error( 'Unauthorized' );
+        }
+        $token = bin2hex( random_bytes( 16 ) );
+        update_post_meta( $event_id, '_event_checkin_token_hash', hash( 'sha256', $token ) );
+        $url = "https://connect.themoveee.com/events/checkin?id={$event_id}&t={$token}";
+        wp_send_json_success( array( 'checkin_url' => $url ) );
+    }
+
     public static function save_as_told_to_rest( $post, $request ) {
         $params = $request->get_json_params();
         if ( isset( $params['meta']['as_told_to'] ) ) {

@@ -2,18 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import sharp from "sharp";
 import { authOptions } from "@/lib/auth";
-
-function getAuth() {
-  return Buffer.from(`${process.env.WP_USERNAME ?? ""}:${process.env.WP_APP_PASSWORD ?? ""}`).toString("base64");
-}
+import { uploadToR2 } from "@/lib/r2";
 
 export const runtime = "nodejs";
 
-const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
-
-
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-const MAX_BYTES = 8 * 1024 * 1024; // 8 MB raw input limit
+const MAX_BYTES = 8 * 1024 * 1024;
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -37,8 +31,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Image must be under 8 MB." }, { status: 400 });
   }
 
-  // Compress still images to WebP; leave GIFs as-is (animated GIF support
-  // requires additional sharp options and is rarely used here).
   let uploadBuffer: Buffer;
   let uploadType: string;
   let uploadExt: string;
@@ -56,36 +48,20 @@ export async function POST(req: NextRequest) {
       uploadType = "image/webp";
       uploadExt = "webp";
     } catch {
-      // Compression failed (e.g. unsupported format variant) — upload original.
       uploadBuffer = rawBuffer;
       uploadType = file.type;
       uploadExt = file.type.split("/")[1].replace("jpeg", "jpg");
     }
   }
 
-  const filename = `community-${Date.now()}.${uploadExt}`;
+  const userId = session.user.id ?? "u";
+  const key = `community/${userId}/${Date.now()}.${uploadExt}`;
 
-  const wpRes = await fetch(`${WP_URL}/wp-json/wp/v2/media`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${getAuth()}`,
-      "Content-Type": uploadType,
-      "Content-Disposition": `attachment; filename="${filename}"`,
-    },
-    body: new Uint8Array(uploadBuffer),
-  });
-
-  if (!wpRes.ok) {
-    const err = await wpRes.json().catch(() => ({}));
-    return NextResponse.json(
-      { error: (err as any).message ?? `Upload failed (${wpRes.status})` },
-      { status: 500 }
-    );
+  try {
+    const url = await uploadToR2(key, uploadBuffer, uploadType);
+    return NextResponse.json({ url });
+  } catch (err) {
+    console.error("[upload-image]", err);
+    return NextResponse.json({ error: "Upload failed. Please try again." }, { status: 500 });
   }
-
-  const media = await wpRes.json();
-  // Optimole rewrites source_url automatically once the plugin is active.
-  const url: string = media.source_url ?? media.guid?.rendered ?? "";
-
-  return NextResponse.json({ url });
 }

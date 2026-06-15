@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity, Linking, StyleSheet, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import TypeBadge from "../ui/TypeBadge";
 import BottomSheet from "../ui/BottomSheet";
 import { useColors } from "../../hooks/useColors";
@@ -20,9 +21,21 @@ interface Props {
 export default function DirectoryDetailModal({ visible, item, onClose }: Props) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNavigation<any>();
 
   const handleViewFull = () => {
-    if (item.href) Linking.openURL(item.href);
+    // Navigate to the rich detail screen if we have a slug/id, else web fallback
+    if (item.linkedDirectoryId || item.slug) {
+      onClose();
+      nav.navigate("DirectoryDetail", {
+        id: item.linkedDirectoryId,
+        slug: item.slug,
+        title: item.title,
+        entryType: item.entryType,
+      });
+    } else if (item.href) {
+      Linking.openURL(item.href);
+    }
   };
 
   const hasInstagram = item.communityTag && item.communityTag.startsWith("http");

@@ -69,6 +69,11 @@ class Culture_Mobile_API {
                     'required' => true,
                     'type'     => 'string',
                 ),
+                'referral_code' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_key',
+                ),
             ),
         ) );
 
@@ -412,6 +417,13 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Save an R2-hosted avatar URL (upload handled by Next.js proxy)
+        register_rest_route( 'culture/v1', '/mobile/me/avatar-url', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_save_avatar_url' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Portfolio
         register_rest_route( 'culture/v1', '/mobile/portfolio', array(
             'methods'             => 'GET',
@@ -470,6 +482,13 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Points & rewards config — public, no auth required
+        register_rest_route( 'culture/v1', '/mobile/points-config', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_points_config' ),
+            'permission_callback' => '__return_true',
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/cart', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_add_to_cart' ),
@@ -477,6 +496,22 @@ class Culture_Mobile_API {
             'args'                => array(
                 'product_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
                 'quantity'   => array( 'default' => 1,    'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/user/referrals', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_referrals' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/directory/entry', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_directory_entry' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'slug' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'id'   => array( 'required' => false, 'type' => 'integer' ),
             ),
         ) );
     }
@@ -585,6 +620,7 @@ class Culture_Mobile_API {
         $email    = $request->get_param( 'email' );
         $username = $request->get_param( 'username' );
         $password = $request->get_param( 'password' );
+        $referral = $request->get_param( 'referral_code' ) ?: '';
 
         if ( strlen( $password ) < 8 ) {
             return new WP_Error( 'weak_password', 'Password must be at least 8 characters.', array( 'status' => 422 ) );
@@ -599,6 +635,12 @@ class Culture_Mobile_API {
         update_user_meta( $user_id, '_culture_points', 0 );
         update_user_meta( $user_id, '_culture_badges', array() );
         update_user_meta( $user_id, '_culture_directory_opt_in', '1' );
+
+        // Process referral if provided.
+        if ( ! empty( $referral ) && class_exists( 'Culture_Referrals' ) ) {
+            $_COOKIE['culture_ref'] = $referral;
+            Culture_Referrals::process_referral( $user_id );
+        }
 
         $verify_token = wp_generate_password( 32, false );
         update_user_meta( $user_id, '_culture_email_verify_token',   wp_hash( $verify_token ) );
@@ -810,10 +852,26 @@ class Culture_Mobile_API {
         }
         set_transient( $dup_key, true, 30 * MINUTE_IN_SECONDS );
 
+        // Template gating: poll and itinerary require Taste Maker (2 500 rep).
+        $template_check = sanitize_key( $request->get_param( 'template_type' ) ?: 'post' );
+        if ( in_array( $template_check, array( 'poll', 'itinerary' ), true ) ) {
+            $rep = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user_id ) : 0;
+            if ( $rep < 2500 ) {
+                return new WP_Error( 'rep_required', 'Poll and itinerary posts require Taste Maker status (2,500 reputation).', array( 'status' => 403 ) );
+            }
+        }
+        // Event posts require Culture Contributor (500 rep) — handled by the event endpoint separately.
+
         $review_days = (int) get_option( 'culture_new_member_review_days', 7 );
         $user        = get_userdata( $user_id );
         $age_days    = (int) floor( ( time() - strtotime( $user->user_registered ) ) / DAY_IN_SECONDS );
-        $status      = ( $review_days > 0 && $age_days < $review_days ) ? 'pending' : 'publish';
+        $needs_review = $review_days > 0 && $age_days < $review_days;
+        // Taste Makers (2 500 rep) bypass the new-member review queue.
+        if ( $needs_review && class_exists( 'Culture_Gamification' ) ) {
+            $rep = Culture_Gamification::get_reputation( $user_id );
+            if ( $rep >= 2500 ) $needs_review = false;
+        }
+        $status = $needs_review ? 'pending' : 'publish';
 
         $post_id = wp_insert_post( array(
             'post_type'    => 'culture_post',
@@ -837,74 +895,161 @@ class Culture_Mobile_API {
 
         // Phase 4: Save template-specific meta.
         $template = sanitize_key( $request->get_param( 'template_type' ) ?: 'post' );
-        $allowed_templates = array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'creative-showcase', 'poll', 'itinerary' );
+        $allowed_templates = array( 'post', 'hidden-gem', 'cultural-take', 'food-review', 'book-review', 'creative-showcase', 'poll', 'itinerary', 'event', 'quote' );
         if ( in_array( $template, $allowed_templates, true ) ) {
             update_post_meta( $post_id, '_template_type', $template );
+        }
+
+        // Gallery images (all templates that support multi-photo, max 4).
+        $gallery_raw = $request->get_param( 'gallery_images' );
+        if ( is_array( $gallery_raw ) && count( $gallery_raw ) > 0 ) {
+            update_post_meta( $post_id, '_gallery_images', wp_json_encode( array_map( 'esc_url_raw', array_slice( $gallery_raw, 0, 4 ) ) ) );
         }
 
         if ( $request->get_param( 'linked_directory_id' ) ) {
             update_post_meta( $post_id, '_linked_directory_id', (int) $request->get_param( 'linked_directory_id' ) );
         }
-        if ( in_array( $template, array( 'hidden-gem', 'food-review' ), true ) ) {
+
+        // ── Hidden Gem ─────────────────────────────────────────────────────────
+        if ( $template === 'hidden-gem' ) {
             if ( $request->get_param( 'star_rating' ) ) {
                 update_post_meta( $post_id, '_star_rating', max( 1, min( 5, (int) $request->get_param( 'star_rating' ) ) ) );
             }
-            if ( $request->get_param( 'location_name' ) ) {
-                update_post_meta( $post_id, '_location_name', sanitize_text_field( $request->get_param( 'location_name' ) ) );
+            if ( $request->get_param( 'place_name' ) ) {
+                update_post_meta( $post_id, '_place_name', sanitize_text_field( $request->get_param( 'place_name' ) ) );
             }
-            if ( $request->get_param( 'location_lat' ) ) {
-                update_post_meta( $post_id, '_location_lat', (float) $request->get_param( 'location_lat' ) );
+            if ( $request->get_param( 'place_location' ) ) {
+                update_post_meta( $post_id, '_place_location', sanitize_text_field( $request->get_param( 'place_location' ) ) );
             }
-            if ( $request->get_param( 'location_lng' ) ) {
-                update_post_meta( $post_id, '_location_lng', (float) $request->get_param( 'location_lng' ) );
+            if ( $request->get_param( 'price_range' ) ) {
+                update_post_meta( $post_id, '_price_range', sanitize_text_field( $request->get_param( 'price_range' ) ) );
+            }
+            if ( $request->get_param( 'opening_hours' ) ) {
+                update_post_meta( $post_id, '_opening_hours', sanitize_text_field( $request->get_param( 'opening_hours' ) ) );
             }
         }
+
+        // ── Cultural Take ──────────────────────────────────────────────────────
+        if ( $template === 'cultural-take' ) {
+            if ( $request->get_param( 'headline' ) ) {
+                update_post_meta( $post_id, '_cultural_take_headline', sanitize_text_field( $request->get_param( 'headline' ) ) );
+            }
+        }
+
+        // ── Food Review ────────────────────────────────────────────────────────
         if ( $template === 'food-review' ) {
             if ( $request->get_param( 'food_dish_name' ) ) {
                 update_post_meta( $post_id, '_food_dish_name', sanitize_text_field( $request->get_param( 'food_dish_name' ) ) );
             }
             update_post_meta( $post_id, '_food_rating_taste', max( 1, min( 5, (int) $request->get_param( 'food_rating_taste' ) ) ) );
             update_post_meta( $post_id, '_food_rating_value', max( 1, min( 5, (int) $request->get_param( 'food_rating_value' ) ) ) );
-            update_post_meta( $post_id, '_food_rating_vibe', max( 1, min( 5, (int) $request->get_param( 'food_rating_vibe' ) ) ) );
-        }
-        if ( $template === 'poll' ) {
-            $poll_options = $request->get_param( 'poll_options' );
-            if ( is_array( $poll_options ) ) {
-                $clean_options = array_map( function( $opt ) {
-                    return array( 'text' => sanitize_text_field( $opt['text'] ?? '' ), 'votes' => 0 );
-                }, array_slice( $poll_options, 0, 4 ) );
-                update_post_meta( $post_id, '_poll_options', wp_json_encode( $clean_options ) );
+            update_post_meta( $post_id, '_food_rating_vibe',  max( 1, min( 5, (int) $request->get_param( 'food_rating_vibe' ) ) ) );
+            if ( $request->get_param( 'cuisine_tag' ) ) {
+                update_post_meta( $post_id, '_cuisine_tag', sanitize_text_field( $request->get_param( 'cuisine_tag' ) ) );
             }
-            update_post_meta( $post_id, '_poll_expires_at', sanitize_text_field( $request->get_param( 'poll_expires_at' ) ?: '' ) );
-            update_post_meta( $post_id, '_poll_voters', wp_json_encode( array() ) );
-        }
-        if ( $template === 'itinerary' ) {
-            $stops = $request->get_param( 'itinerary_stops' );
-            if ( is_array( $stops ) ) {
-                $clean_stops = array_map( function( $stop ) {
-                    return array(
-                        'name'      => sanitize_text_field( $stop['name'] ?? '' ),
-                        'lat'       => (float) ( $stop['lat'] ?? 0 ),
-                        'lng'       => (float) ( $stop['lng'] ?? 0 ),
-                        'note'      => sanitize_text_field( $stop['note'] ?? '' ),
-                        'image_url' => esc_url_raw( $stop['image_url'] ?? '' ),
-                    );
-                }, array_slice( $stops, 0, 5 ) );
-                update_post_meta( $post_id, '_itinerary_stops', wp_json_encode( $clean_stops ) );
+            if ( $request->get_param( 'price_range' ) ) {
+                update_post_meta( $post_id, '_price_range', sanitize_text_field( $request->get_param( 'price_range' ) ) );
             }
         }
+
+        // ── Book Review ────────────────────────────────────────────────────────
+        if ( $template === 'book-review' ) {
+            if ( $request->get_param( 'book_title' ) ) {
+                update_post_meta( $post_id, '_book_title',   sanitize_text_field( $request->get_param( 'book_title' ) ) );
+                update_post_meta( $post_id, '_book_author',  sanitize_text_field( $request->get_param( 'book_author' ) ?: '' ) );
+            }
+            $allowed_statuses = array( 'Finished', 'Reading', 'Want to Read' );
+            $book_status = $request->get_param( 'book_status' );
+            if ( in_array( $book_status, $allowed_statuses, true ) ) {
+                update_post_meta( $post_id, '_book_status', $book_status );
+            }
+            update_post_meta( $post_id, '_book_overall_rating',    max( 1, min( 5, (int) $request->get_param( 'book_overall_rating' ) ) ) );
+            update_post_meta( $post_id, '_book_rating_writing',    max( 0, min( 5, (int) $request->get_param( 'book_rating_writing' ) ) ) );
+            update_post_meta( $post_id, '_book_rating_story',      max( 0, min( 5, (int) $request->get_param( 'book_rating_story' ) ) ) );
+            update_post_meta( $post_id, '_book_rating_characters', max( 0, min( 5, (int) $request->get_param( 'book_rating_characters' ) ) ) );
+            update_post_meta( $post_id, '_book_rating_pacing',     max( 0, min( 5, (int) $request->get_param( 'book_rating_pacing' ) ) ) );
+            if ( $request->get_param( 'book_fav_quote' ) ) {
+                update_post_meta( $post_id, '_book_fav_quote', sanitize_textarea_field( $request->get_param( 'book_fav_quote' ) ) );
+            }
+            $book_recommend = $request->get_param( 'book_recommend' );
+            if ( $book_recommend !== null ) {
+                update_post_meta( $post_id, '_book_recommend', (bool) $book_recommend ? '1' : '0' );
+            }
+            $book_genres = $request->get_param( 'book_genres' );
+            if ( is_array( $book_genres ) ) {
+                update_post_meta( $post_id, '_book_genres', wp_json_encode( array_map( 'sanitize_text_field', $book_genres ) ) );
+            }
+        }
+
+        // ── Creative Showcase ──────────────────────────────────────────────────
         if ( $template === 'creative-showcase' ) {
-            $images = $request->get_param( 'gallery_images' );
-            if ( is_array( $images ) ) {
-                update_post_meta( $post_id, '_gallery_images', wp_json_encode( array_map( 'esc_url_raw', array_slice( $images, 0, 10 ) ) ) );
+            if ( $request->get_param( 'showcase_title' ) ) {
+                update_post_meta( $post_id, '_showcase_title', sanitize_text_field( $request->get_param( 'showcase_title' ) ) );
+            }
+            if ( $request->get_param( 'showcase_medium' ) ) {
+                update_post_meta( $post_id, '_showcase_medium', sanitize_text_field( $request->get_param( 'showcase_medium' ) ) );
+            }
+            if ( $request->get_param( 'collaborator' ) ) {
+                update_post_meta( $post_id, '_showcase_collaborator', sanitize_text_field( $request->get_param( 'collaborator' ) ) );
             }
             if ( $request->get_param( 'video_url' ) ) {
                 update_post_meta( $post_id, '_video_url', esc_url_raw( $request->get_param( 'video_url' ) ) );
             }
         }
 
+        // ── Poll ───────────────────────────────────────────────────────────────
+        if ( $template === 'poll' ) {
+            $poll_options = $request->get_param( 'poll_options' );
+            if ( is_array( $poll_options ) ) {
+                $clean_options = array_map( function( $opt ) {
+                    return array( 'text' => sanitize_text_field( $opt['text'] ?? (string) $opt ), 'votes' => 0 );
+                }, array_slice( $poll_options, 0, 4 ) );
+                update_post_meta( $post_id, '_poll_options', wp_json_encode( $clean_options ) );
+            }
+            update_post_meta( $post_id, '_poll_expires_at', sanitize_text_field( $request->get_param( 'poll_expires_at' ) ?: '' ) );
+            update_post_meta( $post_id, '_poll_voters', wp_json_encode( array() ) );
+            if ( $request->get_param( 'poll_description' ) ) {
+                update_post_meta( $post_id, '_poll_description', sanitize_textarea_field( $request->get_param( 'poll_description' ) ) );
+            }
+        }
+
+        // ── Itinerary ──────────────────────────────────────────────────────────
+        if ( $template === 'itinerary' ) {
+            if ( $request->get_param( 'itinerary_title' ) ) {
+                update_post_meta( $post_id, '_itinerary_title', sanitize_text_field( $request->get_param( 'itinerary_title' ) ) );
+            }
+            $stops = $request->get_param( 'itinerary_stops' );
+            if ( is_array( $stops ) ) {
+                $clean_stops = array_map( function( $stop ) {
+                    return array(
+                        'name'      => sanitize_text_field( $stop['name'] ?? '' ),
+                        'note'      => sanitize_text_field( $stop['note'] ?? '' ),
+                        'lat'       => (float) ( $stop['lat'] ?? 0 ),
+                        'lng'       => (float) ( $stop['lng'] ?? 0 ),
+                        'image_url' => esc_url_raw( $stop['image_url'] ?? '' ),
+                    );
+                }, array_slice( $stops, 0, 10 ) );
+                update_post_meta( $post_id, '_itinerary_stops', wp_json_encode( $clean_stops ) );
+            }
+            if ( $request->get_param( 'itinerary_city' ) ) {
+                update_post_meta( $post_id, '_itinerary_city', sanitize_text_field( $request->get_param( 'itinerary_city' ) ) );
+            }
+            if ( $request->get_param( 'itinerary_budget' ) ) {
+                update_post_meta( $post_id, '_itinerary_budget', sanitize_text_field( $request->get_param( 'itinerary_budget' ) ) );
+            }
+            if ( $request->get_param( 'itinerary_duration' ) ) {
+                update_post_meta( $post_id, '_itinerary_duration', sanitize_text_field( $request->get_param( 'itinerary_duration' ) ) );
+            }
+            if ( $request->get_param( 'itinerary_best_time' ) ) {
+                update_post_meta( $post_id, '_itinerary_best_time', sanitize_text_field( $request->get_param( 'itinerary_best_time' ) ) );
+            }
+        }
+
         if ( class_exists( 'Culture_Gamification' ) ) {
             Culture_Gamification::award_points( $user_id, 'community_post' );
+            $rep      = Culture_Gamification::get_reputation( $user_id );
+            $rep_tier = Culture_Gamification::get_reputation_tier( $rep, $user_id );
+            update_post_meta( $post_id, 'community_author_rep_tier', $rep_tier );
         }
 
         $post = get_post( $post_id );
@@ -1675,6 +1820,7 @@ class Culture_Mobile_API {
                 'communityAuthorAvatar'   => get_post_meta( $post->ID, 'community_author_avatar', true ) ?: '',
                 'communityTag'            => get_post_meta( $post->ID, 'community_tag', true ) ?: '',
                 'communityTier'           => get_post_meta( $post->ID, 'community_author_tier', true ) ?: '',
+                'authorRepTier'           => get_post_meta( $post->ID, 'community_author_rep_tier', true ) ?: 'member',
                 'region'                  => get_post_meta( $post->ID, 'community_region', true ) ?: '',
                 'sourceUrl'               => $link_url ?: null,
                 'source'                  => $source ?: null,
@@ -1696,13 +1842,39 @@ class Culture_Mobile_API {
                 'locationName'            => get_post_meta( $post->ID, '_location_name', true ) ?: '',
                 'pollOptions'             => json_decode( get_post_meta( $post->ID, '_poll_options', true ) ?: '[]', true ),
                 'pollExpiresAt'           => get_post_meta( $post->ID, '_poll_expires_at', true ) ?: '',
+                'pollDescription'         => get_post_meta( $post->ID, '_poll_description', true ) ?: '',
                 'galleryImages'           => json_decode( get_post_meta( $post->ID, '_gallery_images', true ) ?: '[]', true ),
                 'videoUrl'                => get_post_meta( $post->ID, '_video_url', true ) ?: '',
                 'itineraryStops'          => json_decode( get_post_meta( $post->ID, '_itinerary_stops', true ) ?: '[]', true ),
+                'itineraryTitle'          => get_post_meta( $post->ID, '_itinerary_title', true ) ?: '',
+                'itineraryCity'           => get_post_meta( $post->ID, '_itinerary_city', true ) ?: '',
+                'itineraryBudget'         => get_post_meta( $post->ID, '_itinerary_budget', true ) ?: '',
+                'itineraryDuration'       => get_post_meta( $post->ID, '_itinerary_duration', true ) ?: '',
+                'itineraryBestTime'       => get_post_meta( $post->ID, '_itinerary_best_time', true ) ?: '',
                 'foodDishName'            => get_post_meta( $post->ID, '_food_dish_name', true ) ?: '',
                 'foodRatingTaste'         => (int) get_post_meta( $post->ID, '_food_rating_taste', true ) ?: null,
                 'foodRatingValue'         => (int) get_post_meta( $post->ID, '_food_rating_value', true ) ?: null,
                 'foodRatingVibe'          => (int) get_post_meta( $post->ID, '_food_rating_vibe', true ) ?: null,
+                'cuisineTag'              => get_post_meta( $post->ID, '_cuisine_tag', true ) ?: '',
+                'priceRange'              => get_post_meta( $post->ID, '_price_range', true ) ?: '',
+                'placeName'               => get_post_meta( $post->ID, '_place_name', true ) ?: '',
+                'placeLocation'           => get_post_meta( $post->ID, '_place_location', true ) ?: '',
+                'openingHours'            => get_post_meta( $post->ID, '_opening_hours', true ) ?: '',
+                'culturalTakeHeadline'    => get_post_meta( $post->ID, '_cultural_take_headline', true ) ?: '',
+                'showcaseTitle'           => get_post_meta( $post->ID, '_showcase_title', true ) ?: '',
+                'showcaseMedium'          => get_post_meta( $post->ID, '_showcase_medium', true ) ?: '',
+                'showcaseCollaborator'    => get_post_meta( $post->ID, '_showcase_collaborator', true ) ?: '',
+                'bookTitle'               => get_post_meta( $post->ID, '_book_title', true ) ?: '',
+                'bookAuthor'              => get_post_meta( $post->ID, '_book_author', true ) ?: '',
+                'bookStatus'              => get_post_meta( $post->ID, '_book_status', true ) ?: '',
+                'bookOverallRating'       => (int) get_post_meta( $post->ID, '_book_overall_rating', true ),
+                'bookRatingWriting'       => (int) get_post_meta( $post->ID, '_book_rating_writing', true ),
+                'bookRatingStory'         => (int) get_post_meta( $post->ID, '_book_rating_story', true ),
+                'bookRatingCharacters'    => (int) get_post_meta( $post->ID, '_book_rating_characters', true ),
+                'bookRatingPacing'        => (int) get_post_meta( $post->ID, '_book_rating_pacing', true ),
+                'bookFavQuote'            => get_post_meta( $post->ID, '_book_fav_quote', true ) ?: '',
+                'bookRecommend'           => get_post_meta( $post->ID, '_book_recommend', true ) === '1',
+                'bookGenres'              => json_decode( get_post_meta( $post->ID, '_book_genres', true ) ?: '[]', true ),
             );
         }, $query->posts );
     }
@@ -1856,6 +2028,18 @@ class Culture_Mobile_API {
         return rest_ensure_response( array( 'url' => $url ) );
     }
 
+    public static function handle_save_avatar_url( $request ) {
+        $user_id = get_current_user_id();
+        $url     = esc_url_raw( $request->get_param( 'url' ) );
+
+        if ( empty( $url ) ) {
+            return new WP_Error( 'missing_url', 'URL is required.', array( 'status' => 400 ) );
+        }
+
+        update_user_meta( $user_id, '_culture_avatar_url', $url );
+        return rest_ensure_response( array( 'url' => $url ) );
+    }
+
     public static function handle_get_portfolio( $request ) {
         $requested_user = (int) $request->get_param( 'user_id' );
         $user_id        = $requested_user ?: get_current_user_id();
@@ -1917,19 +2101,45 @@ class Culture_Mobile_API {
                 'tier'      => $author_tier,
             ),
             // Phase 4: template meta.
-            'template_type'       => get_post_meta( $post->ID, '_template_type', true ) ?: 'post',
-            'linked_directory_id' => (int) get_post_meta( $post->ID, '_linked_directory_id', true ),
-            'star_rating'         => (int) get_post_meta( $post->ID, '_star_rating', true ),
-            'location_name'       => get_post_meta( $post->ID, '_location_name', true ) ?: '',
-            'poll_options'        => json_decode( get_post_meta( $post->ID, '_poll_options', true ) ?: '[]', true ),
-            'poll_expires_at'     => get_post_meta( $post->ID, '_poll_expires_at', true ) ?: '',
-            'gallery_images'      => json_decode( get_post_meta( $post->ID, '_gallery_images', true ) ?: '[]', true ),
-            'video_url'           => get_post_meta( $post->ID, '_video_url', true ) ?: '',
-            'itinerary_stops'     => json_decode( get_post_meta( $post->ID, '_itinerary_stops', true ) ?: '[]', true ),
-            'food_dish_name'      => get_post_meta( $post->ID, '_food_dish_name', true ) ?: '',
-            'food_rating_taste'   => (int) get_post_meta( $post->ID, '_food_rating_taste', true ),
-            'food_rating_value'   => (int) get_post_meta( $post->ID, '_food_rating_value', true ),
-            'food_rating_vibe'    => (int) get_post_meta( $post->ID, '_food_rating_vibe', true ),
+            'template_type'             => get_post_meta( $post->ID, '_template_type', true ) ?: 'post',
+            'linked_directory_id'       => (int) get_post_meta( $post->ID, '_linked_directory_id', true ),
+            'star_rating'               => (int) get_post_meta( $post->ID, '_star_rating', true ),
+            'location_name'             => get_post_meta( $post->ID, '_location_name', true ) ?: '',
+            'poll_options'              => json_decode( get_post_meta( $post->ID, '_poll_options', true ) ?: '[]', true ),
+            'poll_expires_at'           => get_post_meta( $post->ID, '_poll_expires_at', true ) ?: '',
+            'poll_description'          => get_post_meta( $post->ID, '_poll_description', true ) ?: '',
+            'gallery_images'            => json_decode( get_post_meta( $post->ID, '_gallery_images', true ) ?: '[]', true ),
+            'video_url'                 => get_post_meta( $post->ID, '_video_url', true ) ?: '',
+            'itinerary_stops'           => json_decode( get_post_meta( $post->ID, '_itinerary_stops', true ) ?: '[]', true ),
+            'itinerary_title'           => get_post_meta( $post->ID, '_itinerary_title', true ) ?: '',
+            'itinerary_city'            => get_post_meta( $post->ID, '_itinerary_city', true ) ?: '',
+            'itinerary_budget'          => get_post_meta( $post->ID, '_itinerary_budget', true ) ?: '',
+            'itinerary_duration'        => get_post_meta( $post->ID, '_itinerary_duration', true ) ?: '',
+            'itinerary_best_time'       => get_post_meta( $post->ID, '_itinerary_best_time', true ) ?: '',
+            'food_dish_name'            => get_post_meta( $post->ID, '_food_dish_name', true ) ?: '',
+            'food_rating_taste'         => (int) get_post_meta( $post->ID, '_food_rating_taste', true ),
+            'food_rating_value'         => (int) get_post_meta( $post->ID, '_food_rating_value', true ),
+            'food_rating_vibe'          => (int) get_post_meta( $post->ID, '_food_rating_vibe', true ),
+            'cuisine_tag'               => get_post_meta( $post->ID, '_cuisine_tag', true ) ?: '',
+            'price_range'               => get_post_meta( $post->ID, '_price_range', true ) ?: '',
+            'place_name'                => get_post_meta( $post->ID, '_place_name', true ) ?: '',
+            'place_location'            => get_post_meta( $post->ID, '_place_location', true ) ?: '',
+            'opening_hours'             => get_post_meta( $post->ID, '_opening_hours', true ) ?: '',
+            'cultural_take_headline'    => get_post_meta( $post->ID, '_cultural_take_headline', true ) ?: '',
+            'showcase_title'            => get_post_meta( $post->ID, '_showcase_title', true ) ?: '',
+            'showcase_medium'           => get_post_meta( $post->ID, '_showcase_medium', true ) ?: '',
+            'showcase_collaborator'     => get_post_meta( $post->ID, '_showcase_collaborator', true ) ?: '',
+            'book_title'                => get_post_meta( $post->ID, '_book_title', true ) ?: '',
+            'book_author'               => get_post_meta( $post->ID, '_book_author', true ) ?: '',
+            'book_status'               => get_post_meta( $post->ID, '_book_status', true ) ?: '',
+            'book_overall_rating'       => (int) get_post_meta( $post->ID, '_book_overall_rating', true ),
+            'book_rating_writing'       => (int) get_post_meta( $post->ID, '_book_rating_writing', true ),
+            'book_rating_story'         => (int) get_post_meta( $post->ID, '_book_rating_story', true ),
+            'book_rating_characters'    => (int) get_post_meta( $post->ID, '_book_rating_characters', true ),
+            'book_rating_pacing'        => (int) get_post_meta( $post->ID, '_book_rating_pacing', true ),
+            'book_fav_quote'            => get_post_meta( $post->ID, '_book_fav_quote', true ) ?: '',
+            'book_recommend'            => get_post_meta( $post->ID, '_book_recommend', true ) === '1',
+            'book_genres'               => json_decode( get_post_meta( $post->ID, '_book_genres', true ) ?: '[]', true ),
         );
     }
 
@@ -1943,6 +2153,7 @@ class Culture_Mobile_API {
         }
 
         $category = sanitize_text_field( $request->get_param( 'category' ) );
+        $search   = sanitize_text_field( $request->get_param( 's' ) );
         $page     = max( 1, (int) $request->get_param( 'page' ) );
         $per_page = min( 50, max( 1, (int) $request->get_param( 'per_page' ) ) );
 
@@ -1954,9 +2165,13 @@ class Culture_Mobile_API {
             'post_status'    => 'publish',
             'posts_per_page' => $per_page,
             'paged'          => $page,
-            'orderby'        => 'date',
+            'orderby'        => $search ? 'relevance' : 'date',
             'order'          => 'DESC',
         );
+
+        if ( $search ) {
+            $query_args['s'] = $search;
+        }
 
         if ( $category ) {
             $query_args['tax_query'] = array( array(
@@ -2261,6 +2476,61 @@ class Culture_Mobile_API {
         return rest_ensure_response( $vendors );
     }
 
+    public static function handle_points_config( $request ) {
+        $point_values  = Culture_Gamification::get_point_values();
+        $credit_bonuses = Culture_Gamification::CREDIT_BONUSES;
+        $daily_cap     = Culture_Gamification::get_daily_credit_cap();
+
+        $action_labels = array(
+            'event_rsvp'            => 'RSVP to an event',
+            'event_checkin'         => 'Check in at an event',
+            'referral'              => 'Refer a friend',
+            'community_post'        => 'Publish a community post',
+            'community_comment'     => 'Comment on a post',
+            'community_like'        => 'Like a post',
+            'quote_submission'      => 'Submit a quote',
+            'quote_like'            => 'Like a quote',
+            'newsletter_comment'    => 'Comment on a newsletter',
+            'newsletter_reaction'   => 'React to a newsletter',
+            'newsletter_subscribed' => 'Subscribe to a newsletter',
+            'magazine_read'         => 'Read an article',
+            'magazine_share'        => 'Share an article',
+            'directory_entry'       => 'Add a directory entry',
+            'directory_opt_in'      => 'Opt into the directory',
+            'game_completed'        => 'Complete a game',
+            'poll_vote'             => 'Vote in a poll',
+            'profile_completed'     => 'Complete your profile',
+            'email_verified'        => 'Verify your email',
+        );
+
+        $actions = array();
+        foreach ( $action_labels as $key => $label ) {
+            $rep     = isset( $point_values[ $key ] ) ? (int) $point_values[ $key ] : 0;
+            $credits = isset( $credit_bonuses[ $key ] ) ? (int) $credit_bonuses[ $key ] : 0;
+            if ( $rep === 0 && $credits === 0 ) continue;
+            $actions[] = array(
+                'action'  => $key,
+                'label'   => $label,
+                'rep'     => $rep,
+                'credits' => $credits,
+            );
+        }
+
+        $tiers = array(
+            array( 'slug' => 'member',              'label' => 'Member',             'min_rep' => 0,     'perks' => 'Access to community feed, newsletters, and games.' ),
+            array( 'slug' => 'culture-contributor', 'label' => 'Culture Contributor', 'min_rep' => Culture_Gamification::get_rep_tier_threshold( 'contributor' ), 'perks' => 'Boosted feed visibility, unlock more templates.' ),
+            array( 'slug' => 'taste-maker',         'label' => 'Taste Maker',        'min_rep' => Culture_Gamification::get_rep_tier_threshold( 'taste-maker' ),  'perks' => 'Skip post review queue, access poll and itinerary templates.' ),
+            array( 'slug' => 'culture-authority',   'label' => 'Culture Authority',  'min_rep' => Culture_Gamification::get_rep_tier_threshold( 'authority' ),    'perks' => 'Nominate members for Culture Icon.' ),
+            array( 'slug' => 'culture-icon',        'label' => 'Culture Icon',       'min_rep' => 25000, 'perks' => 'Invitation and nomination only.', 'nomination_only' => true ),
+        );
+
+        return rest_ensure_response( array(
+            'actions'    => $actions,
+            'tiers'      => $tiers,
+            'daily_cap'  => $daily_cap,
+        ) );
+    }
+
     public static function handle_get_cart( $request ) {
         // Stub: WooCommerce session-based cart does not translate to REST easily.
         // Return an empty cart structure; real cart management is handled by
@@ -2287,6 +2557,147 @@ class Culture_Mobile_API {
             'checkout_url' => $checkout_url,
             'product_id'   => $product_id,
             'quantity'     => $quantity,
+        ) );
+    }
+
+    /**
+     * GET /mobile/directory/entry?slug=X or ?id=X
+     * Returns all data needed for the DirectoryDetailScreen.
+     * Public — no auth required.
+     */
+    public static function handle_get_directory_entry( WP_REST_Request $request ) {
+        $slug = $request->get_param( 'slug' );
+        $id   = (int) $request->get_param( 'id' );
+
+        if ( $slug ) {
+            $post = get_page_by_path( $slug, OBJECT, 'culture_directory' );
+        } elseif ( $id ) {
+            $post = get_post( $id );
+            if ( $post && $post->post_type !== 'culture_directory' ) {
+                $post = null;
+            }
+        } else {
+            return new WP_Error( 'missing_param', 'slug or id required', array( 'status' => 400 ) );
+        }
+
+        if ( ! $post || $post->post_status !== 'publish' ) {
+            return new WP_Error( 'not_found', 'Entry not found', array( 'status' => 404 ) );
+        }
+
+        $pid = $post->ID;
+
+        // Entry type from taxonomy
+        $type_terms = get_the_terms( $pid, 'culture_dir_type' );
+        $entry_type = ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : 'concept';
+
+        // Interest tags from taxonomy
+        $interest_terms = get_the_terms( $pid, 'culture_interest' );
+        $interests = array();
+        if ( $interest_terms && ! is_wp_error( $interest_terms ) ) {
+            foreach ( $interest_terms as $t ) {
+                $interests[] = ucwords( str_replace( '-', ' ', $t->name ) );
+            }
+        }
+
+        $image_url      = get_the_post_thumbnail_url( $pid, 'large' ) ?: null;
+        $about_raw      = get_post_meta( $pid, '_about_fields', true );
+        $about_fields   = $about_raw ? json_decode( $about_raw, true ) : array();
+        $entry_quote    = get_post_meta( $pid, '_entry_quote', true ) ?: '';
+        $selected_raw   = get_post_meta( $pid, '_selected_works', true );
+        $selected_works = $selected_raw ? json_decode( $selected_raw, true ) : array();
+        $related_raw    = get_post_meta( $pid, '_related_entries', true );
+        $related_entries = $related_raw ? json_decode( $related_raw, true ) : array();
+        $is_partner     = (bool) get_post_meta( $pid, '_is_partner', true );
+        $avg_rating     = (float) ( get_post_meta( $pid, '_average_rating', true ) ?: 0 );
+        $review_count   = (int) ( get_post_meta( $pid, '_community_review_count', true ) ?: 0 );
+        $city           = get_post_meta( $pid, '_entry_city', true ) ?: '';
+
+        // Community posts linked to this directory entry (latest 5)
+        global $wpdb;
+        $posts_raw = $wpdb->get_results( $wpdb->prepare(
+            "SELECT p.ID, p.post_title, p.post_excerpt, p.post_author
+             FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '_culture_linked_directory' AND pm.meta_value = %s
+             WHERE p.post_type = 'culture_post' AND p.post_status = 'publish'
+             ORDER BY p.post_date DESC LIMIT 5",
+            (string) $pid
+        ), ARRAY_A );
+
+        $community_posts = array();
+        foreach ( $posts_raw as $cp ) {
+            $author      = get_userdata( (int) $cp['post_author'] );
+            $template    = get_post_meta( $cp['ID'], '_community_template_type', true ) ?: 'post';
+            $star_rating = (float) ( get_post_meta( $cp['ID'], '_star_rating', true ) ?: 0 );
+            $community_posts[] = array(
+                'id'             => (int) $cp['ID'],
+                'slug'           => get_post_field( 'post_name', (int) $cp['ID'] ),
+                'title'          => $cp['post_title'],
+                'excerpt'        => $cp['post_excerpt'],
+                'templateType'   => $template,
+                'authorName'     => $author ? ( $author->display_name ?: $author->user_login ) : 'Member',
+                'authorUsername' => $author ? $author->user_login : '',
+                'starRating'     => $star_rating,
+            );
+        }
+
+        return rest_ensure_response( array(
+            'id'               => $pid,
+            'title'            => $post->post_title,
+            'slug'             => $post->post_name,
+            'excerpt'          => $post->post_excerpt,
+            'body'             => $post->post_content,
+            'imageUrl'         => $image_url,
+            'entryType'        => $entry_type,
+            'interests'        => $interests,
+            'city'             => $city,
+            'isPartner'        => $is_partner,
+            'averageRating'    => $avg_rating,
+            'reviewCount'      => $review_count,
+            'aboutFields'      => is_array( $about_fields ) ? $about_fields : array(),
+            'entryQuote'       => $entry_quote,
+            'selectedWorks'    => is_array( $selected_works ) ? $selected_works : array(),
+            'relatedEntries'   => is_array( $related_entries ) ? $related_entries : array(),
+            'communityPosts'   => $community_posts,
+            'communityPostCount' => $review_count,
+        ) );
+    }
+
+    public static function handle_get_referrals( $request ) {
+        global $wpdb;
+        $user_id = get_current_user_id();
+
+        $code  = class_exists( 'Culture_Referrals' ) ? Culture_Referrals::get_referral_code( $user_id ) : '';
+        $count = class_exists( 'Culture_Referrals' ) ? Culture_Referrals::get_referral_count( $user_id ) : 0;
+
+        $referred_user_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '_culture_referred_by' AND meta_value = %d",
+            $user_id
+        ) );
+
+        $referred = array();
+        foreach ( $referred_user_ids as $rid ) {
+            $u = get_userdata( (int) $rid );
+            if ( ! $u ) continue;
+            $referred[] = array(
+                'username'    => $u->user_login,
+                'displayName' => $u->display_name ?: $u->user_login,
+                'joinedAt'    => strtotime( $u->user_registered ),
+            );
+        }
+        usort( $referred, fn( $a, $b ) => $b['joinedAt'] - $a['joinedAt'] );
+
+        $rep_per     = class_exists( 'Culture_Gamification' ) ? ( Culture_Gamification::POINTS['referral'] ?? 30 ) : 30;
+        $credits_per = class_exists( 'Culture_Gamification' ) ? ( Culture_Gamification::CREDIT_BONUSES['referral'] ?? 5 ) : 5;
+
+        return rest_ensure_response( array(
+            'referralCode'             => $code,
+            'referralUrl'              => 'https://connect.themoveee.com/register?ref=' . $code,
+            'referralCount'            => $count,
+            'repPerReferral'           => $rep_per,
+            'creditsPerReferral'       => $credits_per,
+            'referredUsers'            => $referred,
+            'connectorThreshold'       => 3,
+            'superConnectorThreshold'  => 10,
         ) );
     }
 }

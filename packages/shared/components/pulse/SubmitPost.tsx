@@ -237,11 +237,11 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   }
 
   function handleGalleryChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []).slice(0, 10);
-    setGalleryFiles(prev => [...prev, ...files].slice(0, 10));
+    const files = Array.from(e.target.files ?? []).slice(0, 4);
+    setGalleryFiles(prev => [...prev, ...files].slice(0, 4));
     files.forEach(f => {
       const reader = new FileReader();
-      reader.onload = ev => setGalleryPreviews(prev => [...prev, ev.target?.result as string].slice(0, 10));
+      reader.onload = ev => setGalleryPreviews(prev => [...prev, ev.target?.result as string].slice(0, 4));
       reader.readAsDataURL(f);
     });
   }
@@ -432,6 +432,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         authorTier: user?.tier ?? undefined,
         authorAvatar: user?.avatarUrl || undefined,
         template_type: template,
+        // Always include all gallery images (not just for creative-showcase)
+        gallery_images: galleryUrls.length > 0 ? galleryUrls : undefined,
       };
 
       // Link preview (post only)
@@ -465,9 +467,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       }
       if (template === "itinerary") {
         payload.itinerary_stops = itineraryStops.filter(s => s.name.trim());
-      }
-      if (template === "creative-showcase" && galleryUrls.length > 0) {
-        payload.gallery_images = galleryUrls;
       }
       if (template === "creative-showcase" && videoUrl.trim()) {
         payload.video_url = videoUrl.trim();
@@ -817,8 +816,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             )}
 
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={template === "creative-showcase" || template === "hidden-gem" || template === "food-review" ? handleGalleryChange : handleFileChange}
-              multiple={template === "creative-showcase" || template === "hidden-gem" || template === "food-review"}
+              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" ? handleGalleryChange : handleFileChange}
+              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review"}
               style={{ display: "none" }}
             />
 
@@ -843,8 +842,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                 )
               )}
 
-              {/* Image button (not for poll or itinerary) */}
-              {template !== "poll" && template !== "quote" && template !== "itinerary" && (
+              {/* Image button (not for poll, quote, cultural-take, book-review) */}
+              {template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && (
                 <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -856,7 +855,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                   <circle cx="8.5" cy="8.5" r="1.5" />
                   <polyline points="21 15 16 10 5 21" />
                 </svg>
-                {(imageFile || galleryFiles.length > 0) ? `${galleryFiles.length || 1} image${(galleryFiles.length || 1) > 1 ? "s" : ""}` : "Image"}
+                {galleryFiles.length > 0 ? `${galleryFiles.length}/4 image${galleryFiles.length > 1 ? "s" : ""}` : imageFile ? "1 image" : "Image"}
               </button>
               )}
 

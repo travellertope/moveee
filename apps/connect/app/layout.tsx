@@ -29,6 +29,9 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://connect.themoveee.com"),
+  verification: {
+    google: "-PWVNI7d4eBu_a-Qo35KOTlAknn2MiciJ4c_ycsiqdc",
+  },
   title: {
     default: "Moveee — Connect to Culture",
     template: "%s | Moveee",

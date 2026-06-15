@@ -15,6 +15,14 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useUnifiedFeed } from "../../features/community/useUnifiedFeed";
 import { useNotificationCount } from "../../features/notifications/useNotificationCount";
+import { useThemeStore } from "../../store/themeStore";
+import { useColorScheme } from "react-native";
+
+const LOGO_LIGHT = require("../../../assets/logo-black.png");
+const LOGO_DARK  = require("../../../assets/logo-white.png");
+// Logo natural size: 717×107 — render at 26px height → ~160px wide
+const LOGO_H = 26;
+const LOGO_W = Math.round((717 / 107) * LOGO_H);
 import {
   rankFeed,
   getTrending,
@@ -23,6 +31,8 @@ import {
 import { useAuthStore } from "../../auth/authStore";
 import FeedCard from "../../components/community/FeedItemCard";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
+import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
+import type { TemplateId } from "../../components/community/TemplatePickerSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import { FeedSkeleton } from "../../components/ui/Skeleton";
@@ -63,6 +73,9 @@ export default function ConnectFeedScreen() {
   const { user } = useAuthStore();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const { mode } = useThemeStore();
+  const systemScheme = useColorScheme();
+  const isDark = mode === "dark" || (mode === "system" && systemScheme === "dark");
   const {
     items,
     refreshing,
@@ -77,26 +90,61 @@ export default function ConnectFeedScreen() {
 
   const [activeCategory, setActiveCategory] = useState("");
   const [forYou, setForYou] = useState(false);
+  // Edition routing: default to user's region so local content is pre-filtered
+  const [activeRegion, setActiveRegion] = useState<string>(() => {
+    const c = (user?.countryOfResidence ?? "").toLowerCase().trim();
+    if (!c) return "All";
+    const map: Record<string, string> = {
+      nigeria: "Africa", ng: "Africa", ghana: "Africa", gh: "Africa",
+      kenya: "Africa", ke: "Africa", "south africa": "Africa", za: "Africa",
+      "united kingdom": "Diaspora UK", uk: "Diaspora UK", gb: "Diaspora UK",
+      "united states": "Diaspora US", us: "Diaspora US", canada: "Diaspora US",
+      france: "Diaspora Europe", germany: "Diaspora Europe",
+    };
+    return map[c] ?? "All";
+  });
   const [sheetItem, setSheetItem] = useState<FeedItem | null>(null);
+  const [pickerVisible, setPickerVisible] = useState(false);
 
   const interestTagSet = useMemo(
     () => new Set((user?.interests ?? []).map((s) => s.toLowerCase())),
     [user?.interests]
   );
-
   const hasInterests = interestTagSet.size > 0;
+
+  const userCity   = user?.city ?? undefined;
+  const userRegion = useMemo(() => {
+    const c = (user?.countryOfResidence ?? "").toLowerCase().trim();
+    if (!c) return undefined;
+    const map: Record<string, string> = {
+      nigeria: "Africa", ng: "Africa", ghana: "Africa", gh: "Africa",
+      kenya: "Africa", ke: "Africa", "south africa": "Africa", za: "Africa",
+      "united kingdom": "Diaspora UK", uk: "Diaspora UK", gb: "Diaspora UK",
+      "united states": "Diaspora US", us: "Diaspora US", canada: "Diaspora US",
+      france: "Diaspora Europe", germany: "Diaspora Europe",
+    };
+    return map[c] ?? undefined;
+  }, [user?.countryOfResidence]);
+
+  const REGION_LABELS = ["All", "Africa", "Diaspora UK", "Diaspora US", "Diaspora Europe"];
 
   const visibleItems = useMemo(() => {
     let filtered = activeCategory
       ? items.filter((i) => matchesCategory(i, activeCategory))
       : items;
 
+    if (activeRegion !== "All") {
+      filtered = filtered.filter(
+        (i) => !(i as any).region || (i as any).region === activeRegion
+      );
+    }
+
     if (forYou) {
-      filtered = rankFeed(filtered, interestTagSet);
+      filtered = rankFeed(filtered, interestTagSet, userCity, userRegion);
     }
 
     return filtered;
-  }, [items, activeCategory, forYou, interestTagSet]);
+  }, [items, activeCategory, activeRegion, forYou, interestTagSet, userCity, userRegion]);
 
   const trending = useMemo(() => getTrending(items, 3), [items]);
 
@@ -163,8 +211,11 @@ export default function ConnectFeedScreen() {
         {/* ── AppHeader ─────────────────────────────────────────── */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.headerLogo}>moveee</Text>
-            <Text style={styles.headerSubtitle}>connect</Text>
+            <Image
+              source={isDark ? LOGO_DARK : LOGO_LIGHT}
+              style={{ width: LOGO_W, height: LOGO_H }}
+              resizeMode="contain"
+            />
           </View>
           <View style={styles.headerRight}>
             {/* Ghost refresh */}
@@ -178,6 +229,15 @@ export default function ConnectFeedScreen() {
                 size={20}
                 color={c.ghost}
               />
+            </TouchableOpacity>
+
+            {/* Member directory */}
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => nav.navigate("MemberDirectory")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="people-outline" size={22} color={c.ink} />
             </TouchableOpacity>
 
             {/* Bell */}
@@ -241,6 +301,30 @@ export default function ConnectFeedScreen() {
                     ]}
                   >
                     {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* ── Region Strip ─────────────────────────────────────── */}
+        <View style={styles.regionRow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterContent}
+          >
+            {REGION_LABELS.map((r) => {
+              const isActive = r === activeRegion;
+              return (
+                <TouchableOpacity
+                  key={r}
+                  style={[styles.regionPill, isActive && styles.regionPillActive]}
+                  onPress={() => setActiveRegion(r)}
+                >
+                  <Text style={[styles.regionPillText, isActive && styles.regionPillTextActive]}>
+                    {r === "All" ? "🌍 All regions" : r}
                   </Text>
                 </TouchableOpacity>
               );
@@ -353,9 +437,9 @@ export default function ConnectFeedScreen() {
         {/* ── FAB ───────────────────────────────────────────────── */}
         <TouchableOpacity
           style={styles.fab}
-          onPress={() => nav.navigate("NewPost")}
+          onPress={() => setPickerVisible(true)}
         >
-          <Ionicons name="create-outline" size={24} color="#fff" />
+          <Ionicons name="add" size={28} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -363,6 +447,12 @@ export default function ConnectFeedScreen() {
         item={sheetItem}
         visible={sheetItem !== null}
         onClose={() => setSheetItem(null)}
+      />
+
+      <TemplatePickerSheet
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onSelect={(id: TemplateId) => nav.navigate("NewPost", { template: id })}
       />
     </SafeAreaView>
   );
@@ -382,13 +472,8 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     backgroundColor: c.paper,
     ...shadows.card,
   },
-  headerLeft: { flexDirection: "row", alignItems: "flex-end" },
-  headerLogo: {
-    fontFamily: fonts.serifBold,
-    fontSize: fontSize.lg,
-    color: c.ink,
-  },
-  headerSubtitle: {
+  headerLeft: { flexDirection: "row", alignItems: "center" },
+  _unused_headerSubtitle: {
     fontFamily: fonts.sansBold,
     fontSize: fontSize.tiny,
     color: c.gold,
@@ -448,6 +533,35 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     backgroundColor: c.paper,
     borderBottomWidth: 1,
     borderBottomColor: c.rule,
+  },
+  regionRow: {
+    height: 40,
+    backgroundColor: c.paperWarm,
+    borderBottomWidth: 1,
+    borderBottomColor: c.rule,
+  },
+  regionPill: {
+    height: 26,
+    paddingHorizontal: 10,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: c.ghost,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "transparent",
+  },
+  regionPillActive: {
+    backgroundColor: c.ink,
+    borderColor: c.ink,
+  },
+  regionPillText: {
+    fontFamily: fonts.mono,
+    fontSize: 10,
+    color: c.mute,
+  },
+  regionPillTextActive: {
+    color: c.paper,
+    fontFamily: fonts.monoBold,
   },
   filterContent: {
     paddingHorizontal: space[4],

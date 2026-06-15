@@ -1,46 +1,77 @@
 import type { FeedItem } from "../../types";
 
-export function scoreItem(item: FeedItem, interestTagSet: Set<string>): number {
+// Country → region mapping (mirrors SubmitPost.tsx on web)
+const COUNTRY_TO_REGION: Record<string, string> = {
+  nigeria: "Africa", ng: "Africa", ghana: "Africa", gh: "Africa",
+  kenya: "Africa", ke: "Africa", "south africa": "Africa", za: "Africa",
+  ethiopia: "Africa", senegal: "Africa", cameroon: "Africa",
+  "united kingdom": "Diaspora UK", uk: "Diaspora UK", gb: "Diaspora UK",
+  "united states": "Diaspora US", us: "Diaspora US",
+  canada: "Diaspora US", ca: "Diaspora US",
+  france: "Diaspora Europe", germany: "Diaspora Europe",
+  netherlands: "Diaspora Europe", spain: "Diaspora Europe",
+};
+
+export function detectRegion(countryOfResidence?: string): string | null {
+  if (!countryOfResidence) return null;
+  return COUNTRY_TO_REGION[countryOfResidence.toLowerCase().trim()] ?? null;
+}
+
+export function scoreItem(
+  item: FeedItem,
+  interestTagSet: Set<string>,
+  userCity?: string,
+  userRegion?: string,
+): number {
   let score = 0;
 
+  // Interest match: 0–50 pts
   if (interestTagSet.size > 0) {
     const candidates = [item.category, item.communityTag, item.entryType, item.arm]
-      .filter(Boolean)
-      .map((s) => s!.toLowerCase());
+      .filter(Boolean).map((s) => s!.toLowerCase());
     if (candidates.some((c) => interestTagSet.has(c))) score += 50;
   } else {
     score += 25;
   }
 
+  // Recency: 0–30 pts (72-hour half-life)
   const ageMs = Date.now() - new Date(item.date).getTime();
   const ageHours = ageMs / 3_600_000;
-  const halfLifeH = 72;
-  score += Math.round(30 * Math.pow(0.5, ageHours / halfLifeH));
+  score += Math.round(30 * Math.pow(0.5, ageHours / 72));
 
+  // Engagement: 0–20 pts
   const totalReactions =
-    (item.reactions?.love ?? 0) +
-    (item.reactions?.fire ?? 0) +
-    (item.reactions?.clap ?? 0);
-  score += Math.round(
-    Math.min(20, Math.log1p(totalReactions + (item.commentCount ?? 0)) * 4)
-  );
+    (item.reactions?.love ?? 0) + (item.reactions?.fire ?? 0) + (item.reactions?.clap ?? 0);
+  score += Math.round(Math.min(20, Math.log1p(totalReactions + (item.commentCount ?? 0)) * 4));
+
+  // Location boost: 0–25 pts — soft nudge, not a wall
+  if (userCity && item.city) {
+    if (item.city.toLowerCase() === userCity.toLowerCase()) score += 25;
+  } else if (userRegion && item.region) {
+    if (item.region === userRegion) score += 15;
+  }
+
+  // Reputation boost: high-rep authors signal proven quality (+10)
+  const HIGH_REP = new Set(['taste-maker', 'culture-authority', 'culture-icon']);
+  if (item.authorRepTier && HIGH_REP.has(item.authorRepTier)) score += 10;
 
   return Math.min(100, Math.max(0, score));
 }
 
 export function rankFeed(
   items: FeedItem[],
-  interestTagSet: Set<string>
+  interestTagSet: Set<string>,
+  userCity?: string,
+  userRegion?: string,
 ): FeedItem[] {
   const scored = items.map((item) => ({
     item,
-    score: scoreItem(item, interestTagSet),
+    score: scoreItem(item, interestTagSet, userCity, userRegion),
   }));
   return scored
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return new Date(b.item.date).getTime() - new Date(a.item.date).getTime();
-    })
+    .sort((a, b) => b.score !== a.score
+      ? b.score - a.score
+      : new Date(b.item.date).getTime() - new Date(a.item.date).getTime())
     .map(({ item }) => item);
 }
 
@@ -49,28 +80,16 @@ export function getTrending(items: FeedItem[], limit = 5): FeedItem[] {
   return [...items]
     .filter((item) => new Date(item.date).getTime() > cutoff)
     .sort((a, b) => {
-      const engA =
-        (a.reactions?.love ?? 0) +
-        (a.reactions?.fire ?? 0) +
-        (a.reactions?.clap ?? 0) +
-        (a.commentCount ?? 0);
-      const engB =
-        (b.reactions?.love ?? 0) +
-        (b.reactions?.fire ?? 0) +
-        (b.reactions?.clap ?? 0) +
-        (b.commentCount ?? 0);
+      const engA = (a.reactions?.love ?? 0) + (a.reactions?.fire ?? 0) + (a.reactions?.clap ?? 0) + (a.commentCount ?? 0);
+      const engB = (b.reactions?.love ?? 0) + (b.reactions?.fire ?? 0) + (b.reactions?.clap ?? 0) + (b.commentCount ?? 0);
       return engB - engA;
     })
     .slice(0, limit);
 }
 
-export function matchesInterests(
-  item: FeedItem,
-  interestTagSet: Set<string>
-): boolean {
+export function matchesInterests(item: FeedItem, interestTagSet: Set<string>): boolean {
   if (interestTagSet.size === 0) return false;
   const candidates = [item.category, item.communityTag, item.entryType, item.arm]
-    .filter(Boolean)
-    .map((s) => s!.toLowerCase());
+    .filter(Boolean).map((s) => s!.toLowerCase());
   return candidates.some((c) => interestTagSet.has(c));
 }

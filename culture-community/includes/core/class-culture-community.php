@@ -23,6 +23,18 @@ class Culture_Community {
         add_action( 'init', [ __CLASS__, 'register_meta' ] );
         add_action( 'save_post', [ __CLASS__, 'flush_vercel_kv_cache' ], 10, 2 );
         add_action( 'transition_post_status', [ __CLASS__, 'flush_on_publish' ], 10, 3 );
+        // Also flush when posts are trashed or permanently deleted
+        add_action( 'trashed_post',   [ __CLASS__, 'flush_on_delete' ] );
+        add_action( 'deleted_post',   [ __CLASS__, 'flush_on_delete' ] );
+        add_action( 'untrashed_post', [ __CLASS__, 'flush_on_delete' ] );
+    }
+
+    public static function flush_on_delete( $post_id ) {
+        $post = get_post( $post_id );
+        if ( ! $post ) return;
+        $cacheable_types = [ 'post', 'page', 'culture_newsletter', 'culture_journey', 'culture_directory', 'culture_quote', 'culture_event', 'culture_post', 'product' ];
+        if ( ! in_array( $post->post_type, $cacheable_types, true ) ) return;
+        self::flush_vercel_kv_cache( $post_id, $post );
     }
 
     /**
@@ -101,6 +113,7 @@ class Culture_Community {
             'community_tag',
             'community_region',
             'community_author_tier',
+            'community_author_rep_tier',
             'community_link_url',
             'community_og_title',
             'community_og_description',

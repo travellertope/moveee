@@ -27,7 +27,6 @@ class Culture_Cron {
     const HOOK_REFRESH_PULSE    = 'culture_refresh_pulse';
     const HOOK_SEED_EVENTS      = 'culture_seed_events';
     const HOOK_SEED_QUOTES      = 'culture_seed_quotes';
-    const HOOK_TWEET_PULSE      = 'culture_tweet_pulse';
 
     /** Default grace period in days. */
     const GRACE_PERIOD_DAYS = 7;
@@ -41,7 +40,6 @@ class Culture_Cron {
         add_action( self::HOOK_REFRESH_PULSE,  array( __CLASS__, 'refresh_pulse' ) );
         add_action( self::HOOK_SEED_EVENTS,    array( __CLASS__, 'seed_events' ) );
         add_action( self::HOOK_SEED_QUOTES,    array( __CLASS__, 'seed_quotes' ) );
-        add_action( self::HOOK_TWEET_PULSE,    array( __CLASS__, 'tweet_pulse' ) );
 
         // Deferred gamification: newsletter subscribe fires this instead of calling
         // award_points() synchronously inside the public unauthenticated endpoint.
@@ -242,16 +240,6 @@ class Culture_Cron {
      */
     public static function seed_quotes() {
         self::call_nextjs( '/api/quotes/auto-populate' );
-    }
-
-    /**
-     * Tweet the latest unposted pulse story.
-     * Runs every 30 minutes.
-     */
-    public static function tweet_pulse() {
-        if ( class_exists( 'Culture_Twitter' ) ) {
-            Culture_Twitter::tweet_latest_pulse();
-        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

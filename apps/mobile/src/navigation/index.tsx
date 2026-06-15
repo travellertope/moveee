@@ -1,10 +1,12 @@
 import React from "react";
+import { View, Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useAuthStore } from "../auth/authStore";
+import { useNotificationCount } from "../features/notifications/useNotificationCount";
 import { colors } from "../theme";
 import type { FeedItem } from "../types";
 
@@ -25,12 +27,16 @@ import NewPostScreen from "../screens/community/NewPostScreen";
 import DirectorySubmitScreen from "../screens/community/DirectorySubmitScreen";
 import MemberProfileScreen from "../screens/community/MemberProfileScreen";
 import MemberDirectoryScreen from "../screens/community/MemberDirectoryScreen";
+import DirectoryDetailScreen from "../screens/community/DirectoryDetailScreen";
+import DirectoryPostsScreen from "../screens/community/DirectoryPostsScreen";
 
 // Magazine
 import MagazineScreen from "../screens/magazine/MagazineScreen";
 import ArticleScreen from "../screens/magazine/ArticleScreen";
 import IssuesArchiveScreen from "../screens/magazine/IssuesArchiveScreen";
 import MagazineSearchScreen from "../screens/magazine/MagazineSearchScreen";
+import AuthorArchiveScreen from "../screens/magazine/AuthorArchiveScreen";
+import CategoryArchiveScreen from "../screens/magazine/CategoryArchiveScreen";
 
 // Events / Games
 import GamesScreen from "../screens/games/GamesScreen";
@@ -60,6 +66,8 @@ import WalletScreen from "../screens/member/WalletScreen";
 import CouponsScreen from "../screens/member/CouponsScreen";
 import NotificationsScreen from "../screens/member/NotificationsScreen";
 import AnalyticsScreen from "../screens/member/AnalyticsScreen";
+import SavedArticlesScreen from "../screens/member/SavedArticlesScreen";
+import ReferralScreen from "../screens/member/ReferralScreen";
 import { AppLoadingScreen } from "../components/ui/Skeleton";
 
 // ── Stack param types ──────────────────────────────────────────────────────────
@@ -72,6 +80,8 @@ type FeedStackParams = {
   MemberProfile:     { userId: string; username: string };
   MemberDirectory:   undefined;
   Notifications:     undefined;
+  DirectoryDetail:   { id?: number; slug?: string; title?: string; entryType?: string };
+  DirectoryPosts:    { entryId: number; entryTitle: string; showRating?: boolean };
   // Editorial articles opened from the Connect feed stay in this stack
   // so the Magazine tab is never polluted by cross-tab navigation.
   Article:           { slug: string };
@@ -85,6 +95,7 @@ type MemberStackParams = {
   Perks:           undefined;
   Membership:      undefined;
   Analytics:       undefined;
+  Referral:        undefined;
 };
 
 const Tab   = createBottomTabNavigator();
@@ -99,10 +110,14 @@ function ConnectStack() {
       <Stack.Screen name="NewPost"         component={NewPostScreen} />
       <Stack.Screen name="DirectorySubmit" component={DirectorySubmitScreen} />
       <Stack.Screen name="MemberProfile"   component={MemberProfileScreen} />
-      <Stack.Screen name="MemberDirectory" component={MemberDirectoryScreen} />
+      <Stack.Screen name="MemberDirectory"   component={MemberDirectoryScreen} />
+      <Stack.Screen name="DirectoryDetail"  component={DirectoryDetailScreen} />
+      <Stack.Screen name="DirectoryPosts"   component={DirectoryPostsScreen} />
       <Stack.Screen name="Notifications"   component={NotificationsScreen} />
       {/* Articles opened from the feed stay within this stack — back → feed */}
       <Stack.Screen name="Article"         component={ArticleScreen} />
+      <Stack.Screen name="AuthorArchive"   component={AuthorArchiveScreen} />
+      <Stack.Screen name="CategoryArchive" component={CategoryArchiveScreen} />
       {/* Member screens — accessible via avatar tap in header */}
       <Stack.Screen name="MemberDashboard" component={MemberDashboardScreen} />
       <Stack.Screen name="MemberSettings"  component={MemberSettingsScreen} />
@@ -111,6 +126,8 @@ function ConnectStack() {
       <Stack.Screen name="Perks"           component={PerksScreen} />
       <Stack.Screen name="Membership"      component={MembershipScreen} />
       <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
+      <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
+      <Stack.Screen name="Referral"        component={ReferralScreen} />
     </Stack.Navigator>
   );
 }
@@ -118,11 +135,12 @@ function ConnectStack() {
 function MagazineStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="MagazineList"    component={MagazineScreen} />
-      {/* popToTopOnBlur: leaving the Magazine tab resets the stack to MagazineList */}
-      <Stack.Screen name="Article"         component={ArticleScreen} options={{ popToTopOnBlur: true }} />
-      <Stack.Screen name="IssuesArchive"   component={IssuesArchiveScreen} />
-      <Stack.Screen name="MagazineSearch"  component={MagazineSearchScreen} />
+      <Stack.Screen name="MagazineList"      component={MagazineScreen} />
+      <Stack.Screen name="Article"           component={ArticleScreen} options={{ popToTopOnBlur: true }} />
+      <Stack.Screen name="IssuesArchive"     component={IssuesArchiveScreen} />
+      <Stack.Screen name="MagazineSearch"    component={MagazineSearchScreen} />
+      <Stack.Screen name="AuthorArchive"     component={AuthorArchiveScreen} />
+      <Stack.Screen name="CategoryArchive"   component={CategoryArchiveScreen} />
     </Stack.Navigator>
   );
 }
@@ -173,11 +191,14 @@ function MemberStack() {
       <Stack.Screen name="Perks"           component={PerksScreen} />
       <Stack.Screen name="Membership"      component={MembershipScreen} />
       <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
+      <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
+      <Stack.Screen name="Referral"        component={ReferralScreen} />
     </Stack.Navigator>
   );
 }
 
 function MainTabs() {
+  const { unread } = useNotificationCount();
 
   return (
     <Tab.Navigator
@@ -191,7 +212,6 @@ function MainTabs() {
         },
         tabBarIcon: ({ focused, color, size }) => {
           const icons: Record<string, [string, string]> = {
-            Connect:  ["people",          "people-outline"],
             Magazine: ["newspaper",       "newspaper-outline"],
             Games:    ["game-controller", "game-controller-outline"],
             Events:   ["calendar",        "calendar-outline"],
@@ -202,7 +222,46 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Connect"  component={ConnectStack} />
+      <Tab.Screen
+        name="Connect"
+        component={ConnectStack}
+        options={{
+          tabBarIcon: ({ focused, color, size }) => (
+            <View style={{ width: size, height: size }}>
+              <Ionicons
+                name={focused ? "people" : "people-outline"}
+                size={size}
+                color={color}
+              />
+              {unread > 0 && (
+                <View style={{
+                  position: "absolute",
+                  top: -2,
+                  right: -4,
+                  minWidth: 14,
+                  height: 14,
+                  borderRadius: 7,
+                  backgroundColor: "#b38238",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingHorizontal: 2,
+                  borderWidth: 1.5,
+                  borderColor: colors.paperWarm,
+                }}>
+                  <Text style={{
+                    fontFamily: "JetBrainsMono_700Bold",
+                    fontSize: 8,
+                    color: "#FFFFFF",
+                    lineHeight: 10,
+                  }}>
+                    {unread > 9 ? "9+" : String(unread)}
+                  </Text>
+                </View>
+              )}
+            </View>
+          ),
+        }}
+      />
       <Tab.Screen name="Magazine" component={MagazineStack} />
       <Tab.Screen name="Games"    component={GamesStack} />
       <Tab.Screen name="Shop"     component={ShopStack} />

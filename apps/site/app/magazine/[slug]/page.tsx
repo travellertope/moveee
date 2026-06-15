@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import ProgressBar from "@/components/ProgressBar";
-import ParagraphCommentSystem from "@/components/ParagraphCommentSystem";
+import ArticleComments from "@/components/ArticleComments";
 import FinishReading from "@/components/FinishReading";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import ArticleActions from "@/components/ArticleActions";
@@ -375,7 +375,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           </details>
         </aside>
 
-        {/* CENTER — PROSE (Interactive Paragraph Comments) */}
+        {/* CENTER — PROSE */}
         <div className="prose" id="article-body">
           <ArticleContentGate
             accessLevel={accessLevel}
@@ -387,7 +387,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             )}
             fullContent={
               <>
-                <ParagraphCommentSystem
+                <ArticleComments
                   postId={parseInt(post.databaseId)}
                   content={processedContent || ""}
                 />

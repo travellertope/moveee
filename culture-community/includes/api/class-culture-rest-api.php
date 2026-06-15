@@ -14,6 +14,9 @@ class Culture_REST_API {
         add_action( 'save_post_culture_post', array( 'Culture_Directory', 'recompute_aggregates_on_post_save' ), 10, 2 );
         // Award reputation when a community post is created via the REST API.
         add_action( 'rest_after_insert_culture_post', array( __CLASS__, 'handle_community_post_created' ), 10, 3 );
+        // Event check-in admin meta box.
+        add_action( 'add_meta_boxes', array( __CLASS__, 'add_event_checkin_metabox' ) );
+        add_action( 'wp_ajax_culture_generate_checkin_token', array( __CLASS__, 'ajax_generate_checkin_token' ) );
     }
 
     /**
@@ -216,6 +219,27 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Games — crossword daily cache (same puzzle for every player each day).
+        register_rest_route( 'culture/v1', '/games/crossword-daily', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_crossword_daily' ),
+                'permission_callback' => '__return_true',
+                'args'                => array(
+                    'date' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_set_crossword_daily' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+                'args'                => array(
+                    'date'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                    'puzzle' => array( 'required' => true, 'type' => 'object' ),
+                ),
+            ),
+        ) );
+
         // Quote audit batch — fetch unaudited quotes for the Next.js audit bot.
         register_rest_route( 'culture/v1', '/quotes/audit-batch', array(
             'methods'             => 'GET',
@@ -264,6 +288,18 @@ class Culture_REST_API {
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
             'args'                => array(
                 'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/user/referrals', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_referrals' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array(
+                    'required'          => true,
+                    'sanitize_callback' => 'absint',
+                ),
             ),
         ) );
 
@@ -344,6 +380,17 @@ class Culture_REST_API {
                     'type'              => 'string',
                     'sanitize_callback' => 'sanitize_text_field',
                 ),
+            ),
+        ) );
+
+        // Nominate a member for Culture Icon (Culture Authority tier required).
+        register_rest_route( 'culture/v1', '/nominate-icon', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_nominate_icon' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'nominator_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'nominee_id'   => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
 
@@ -664,11 +711,11 @@ class Culture_REST_API {
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
 
-        // Paragraph comments — GET (public) and POST (auth/shared secret).
-        register_rest_route( 'culture/v1', '/comments/paragraph', array(
+        // Article comments — GET (public) and POST (auth/shared secret).
+        register_rest_route( 'culture/v1', '/comments', array(
             array(
                 'methods'             => 'GET',
-                'callback'            => array( __CLASS__, 'handle_get_paragraph_comments' ),
+                'callback'            => array( __CLASS__, 'handle_get_comments' ),
                 'permission_callback' => '__return_true',
                 'args'                => array(
                     'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
@@ -676,13 +723,12 @@ class Culture_REST_API {
             ),
             array(
                 'methods'             => 'POST',
-                'callback'            => array( __CLASS__, 'handle_post_paragraph_comment' ),
+                'callback'            => array( __CLASS__, 'handle_post_comment' ),
                 'permission_callback' => array( __CLASS__, 'api_key_permission' ),
                 'args'                => array(
-                    'post_id'       => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
-                    'paragraph_idx' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
-                    'user_id'       => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
-                    'content'       => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
+                    'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                    'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                    'content' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
                 ),
             ),
         ) );
@@ -1038,6 +1084,18 @@ class Culture_REST_API {
             'args'                => array(
                 'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
+        ) );
+
+        // Phase 9 — Event QR check-in.
+        register_rest_route( 'culture/v1', '/events/(?P<id>\d+)/generate-checkin-token', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_generate_checkin_token' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/events/self-checkin', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_self_checkin' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
     }
 
@@ -1736,6 +1794,44 @@ class Culture_REST_API {
     }
 
     /**
+     * POST /culture/v1/nominate-icon
+     * Allows Culture Authority (or higher) members to nominate someone for Culture Icon.
+     * Sets _culture_icon_nominated = 1 on the nominee. One nomination per nominator per day.
+     */
+    public static function handle_nominate_icon( $request ) {
+        $nominator_id = (int) $request->get_param( 'nominator_id' );
+        $nominee_id   = (int) $request->get_param( 'nominee_id' );
+
+        if ( ! get_userdata( $nominator_id ) || ! get_userdata( $nominee_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+        if ( $nominator_id === $nominee_id ) {
+            return new WP_Error( 'self_nominate', 'You cannot nominate yourself.', array( 'status' => 400 ) );
+        }
+
+        // Nominator must be Culture Authority or Culture Icon.
+        $rep       = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $nominator_id ) : 0;
+        $tier      = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation_tier( $rep, $nominator_id ) : 'member';
+        $auth_tiers = array( 'culture-authority', 'culture-icon' );
+        if ( ! in_array( $tier, $auth_tiers, true ) ) {
+            return new WP_Error( 'tier_required', 'Only Culture Authority members can nominate for Culture Icon.', array( 'status' => 403 ) );
+        }
+
+        // Rate-limit: one nomination per nominator per day.
+        $rate_key = 'culture_icon_nom_' . $nominator_id;
+        if ( get_transient( $rate_key ) ) {
+            return new WP_Error( 'rate_limited', 'You can only submit one nomination per day.', array( 'status' => 429 ) );
+        }
+        set_transient( $rate_key, 1, DAY_IN_SECONDS );
+
+        update_user_meta( $nominee_id, '_culture_icon_nominated', 1 );
+        update_user_meta( $nominee_id, '_culture_icon_nominated_by', $nominator_id );
+        update_user_meta( $nominee_id, '_culture_icon_nominated_at', current_time( 'mysql' ) );
+
+        return rest_ensure_response( array( 'success' => true, 'nominee_id' => $nominee_id ) );
+    }
+
+    /**
      * GET /culture/v1/community-blocklist
      * Returns admin-configured blocked phrases so the Next.js layer can enforce them.
      * The default hardcoded list lives in lib/spam-protection.ts; this endpoint
@@ -2304,6 +2400,17 @@ class Culture_REST_API {
         update_post_meta( $post_id, '_quote_content_hash', $hash );
         update_post_meta( $post_id, '_culture_like_count', 0 );
 
+        // New fields: sharing reason + quote type.
+        $sharing_reason = $request->get_param( 'sharing_reason' );
+        if ( $sharing_reason ) {
+            update_post_meta( $post_id, '_quote_sharing_reason', sanitize_textarea_field( $sharing_reason ) );
+        }
+        $quote_type = $request->get_param( 'quote_type' );
+        $allowed_types = array( 'Person', 'Book', 'Film', 'Speech', 'Song' );
+        if ( $quote_type && in_array( $quote_type, $allowed_types, true ) ) {
+            update_post_meta( $post_id, '_quote_type', sanitize_text_field( $quote_type ) );
+        }
+
         // Award points.
         if ( class_exists( 'Culture_Gamification' ) ) {
             Culture_Gamification::award_points( $user_id, 'quote_submission' );
@@ -2420,6 +2527,42 @@ class Culture_REST_API {
 
         update_option( 'culture_games_trivia_' . $date,      $questions, false );
         delete_option( 'culture_games_trivia_' . $yesterday );
+
+        return rest_ensure_response( array( 'success' => true, 'date' => $date ) );
+    }
+
+    /**
+     * GET /culture/v1/games/crossword-daily
+     * Returns today's cached crossword puzzle, or 404 if not generated yet.
+     */
+    public static function handle_get_crossword_daily( $request ) {
+        $date   = $request->get_param( 'date' ) ?: gmdate( 'Y-m-d' );
+        $cached = get_option( 'culture_games_crossword_' . $date, null );
+
+        if ( null === $cached || ! is_array( $cached ) ) {
+            return new WP_Error( 'not_found', 'No crossword cached for this date.', array( 'status' => 404 ) );
+        }
+
+        return rest_ensure_response( array( 'date' => $date, 'puzzle' => $cached ) );
+    }
+
+    /**
+     * POST /culture/v1/games/crossword-daily
+     * Stores today's crossword puzzle (called by the Next.js API route after
+     * Gemini generation). Cleans up the previous day's option automatically.
+     */
+    public static function handle_set_crossword_daily( $request ) {
+        $date   = $request->get_param( 'date' );
+        $puzzle = $request->get_param( 'puzzle' );
+
+        if ( ! is_array( $puzzle ) || empty( $puzzle ) ) {
+            return new WP_Error( 'invalid', 'puzzle must be a non-empty object.', array( 'status' => 400 ) );
+        }
+
+        $yesterday = gmdate( 'Y-m-d', strtotime( $date . ' -1 day' ) );
+
+        update_option( 'culture_games_crossword_' . $date,      $puzzle, false );
+        delete_option( 'culture_games_crossword_' . $yesterday );
 
         return rest_ensure_response( array( 'success' => true, 'date' => $date ) );
     }
@@ -2610,50 +2753,85 @@ class Culture_REST_API {
         ) );
     }
 
+    public static function handle_get_referrals( $request ) {
+        global $wpdb;
+        $user_id = (int) $request->get_param( 'user_id' );
+
+        if ( ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $code  = class_exists( 'Culture_Referrals' ) ? Culture_Referrals::get_referral_code( $user_id ) : '';
+        $count = class_exists( 'Culture_Referrals' ) ? Culture_Referrals::get_referral_count( $user_id ) : 0;
+
+        // Fetch referred users (those who have _culture_referred_by = this user_id).
+        $referred_user_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '_culture_referred_by' AND meta_value = %d",
+            $user_id
+        ) );
+
+        $referred = array();
+        foreach ( $referred_user_ids as $rid ) {
+            $u = get_userdata( (int) $rid );
+            if ( ! $u ) continue;
+            $referred[] = array(
+                'username'    => $u->user_login,
+                'displayName' => $u->display_name ?: $u->user_login,
+                'joinedAt'    => strtotime( $u->user_registered ),
+            );
+        }
+
+        // Sort newest first.
+        usort( $referred, fn( $a, $b ) => $b['joinedAt'] - $a['joinedAt'] );
+
+        $rep_per_referral    = class_exists( 'Culture_Gamification' ) ? ( Culture_Gamification::POINTS['referral'] ?? 30 ) : 30;
+        $credits_per_referral = class_exists( 'Culture_Gamification' ) ? ( Culture_Gamification::CREDIT_BONUSES['referral'] ?? 5 ) : 5;
+
+        return rest_ensure_response( array(
+            'referralCode'            => $code,
+            'referralUrl'             => 'https://connect.themoveee.com/register?ref=' . $code,
+            'referralCount'           => $count,
+            'repPerReferral'          => $rep_per_referral,
+            'creditsPerReferral'      => $credits_per_referral,
+            'referredUsers'           => $referred,
+            'connectorThreshold'      => 3,
+            'superConnectorThreshold' => 10,
+        ) );
+    }
+
     /**
-     * GET /culture/v1/comments/paragraph?post_id=X
-     * Returns comments grouped by paragraph index.
+     * GET /culture/v1/comments?post_id=X
+     * Returns all approved comments for a post, oldest first.
      */
-    public static function handle_get_paragraph_comments( $request ) {
-        $post_id = $request->get_param( 'post_id' );
-        
-        $comments = get_comments( array(
+    public static function handle_get_comments( $request ) {
+        $post_id  = $request->get_param( 'post_id' );
+        $raw      = get_comments( array(
             'post_id' => $post_id,
             'status'  => 'approve',
             'orderby' => 'comment_date',
             'order'   => 'ASC',
         ) );
 
-        $partitioned = array();
-        foreach ( $comments as $comment ) {
-            $idx = get_comment_meta( $comment->comment_ID, '_culture_paragraph_idx', true );
-            if ( '' === $idx ) continue;
-            
-            $idx = (int) $idx;
-            if ( ! isset( $partitioned[ $idx ] ) ) {
-                $partitioned[ $idx ] = array();
-            }
-
-            $partitioned[ $idx ][] = array(
-                'id'      => $comment->comment_ID,
-                'author'  => $comment->comment_author,
-                'content' => wpautop( $comment->comment_content ),
-                'date'    => $comment->comment_date,
+        $comments = array_map( function( $c ) {
+            return array(
+                'id'      => (int) $c->comment_ID,
+                'author'  => $c->comment_author,
+                'content' => wpautop( $c->comment_content ),
+                'date'    => $c->comment_date,
             );
-        }
+        }, $raw );
 
-        return rest_ensure_response( $partitioned );
+        return rest_ensure_response( array( 'comments' => $comments ) );
     }
 
     /**
-     * POST /culture/v1/comments/paragraph
-     * Insert a new comment for a specific paragraph.
+     * POST /culture/v1/comments
+     * Insert a new end-of-article comment.
      */
-    public static function handle_post_paragraph_comment( $request ) {
-        $post_id       = (int) $request->get_param( 'post_id' );
-        $paragraph_idx = (int) $request->get_param( 'paragraph_idx' );
-        $user_id       = (int) $request->get_param( 'user_id' );
-        $content       = $request->get_param( 'content' );
+    public static function handle_post_comment( $request ) {
+        $post_id = (int) $request->get_param( 'post_id' );
+        $user_id = (int) $request->get_param( 'user_id' );
+        $content = $request->get_param( 'content' );
 
         $user = get_userdata( $user_id );
         if ( ! $user ) {
@@ -2673,12 +2851,9 @@ class Culture_REST_API {
             return new WP_Error( 'save_failed', 'Could not save comment.', array( 'status' => 500 ) );
         }
 
-        update_comment_meta( $comment_id, '_culture_paragraph_idx', $paragraph_idx );
-        
-        // Award points.
         if ( class_exists( 'Culture_Gamification' ) ) {
             $post_type = get_post_type( $post_id );
-            $action = ( 'culture_newsletter' === $post_type ) ? 'newsletter_comment' : 'magazine_comment';
+            $action    = ( 'culture_newsletter' === $post_type ) ? 'newsletter_comment' : 'magazine_comment';
             Culture_Gamification::award_points( $user_id, $action );
         }
 
@@ -2723,6 +2898,12 @@ class Culture_REST_API {
                 $count = (int) get_user_meta( $user_id, '_magazine_share_count', true ) + 1;
                 update_user_meta( $user_id, '_magazine_share_count', $count );
             }
+        }
+
+        // Increment action-specific counters for badge tracking
+        if ( 'community_comment' === $action ) {
+            $count = (int) get_user_meta( $user_id, '_community_comment_count', true ) + 1;
+            update_user_meta( $user_id, '_community_comment_count', $count );
         }
 
         $new_total = Culture_Gamification::award_points( $user_id, $action );
@@ -3985,8 +4166,169 @@ class Culture_REST_API {
                 'status'               => $status,
                 'partner_directory_id' => max( 0, (int) $request->get_param( 'partner_directory_id' ) ),
                 'partner_vendor_id'    => max( 0, (int) $request->get_param( 'partner_vendor_id' ) ),
+                'min_rep_tier'         => in_array( $request->get_param( 'min_rep_tier' ), array( 'member', 'culture-contributor', 'taste-maker', 'culture-authority', 'culture-icon' ), true )
+                                          ? $request->get_param( 'min_rep_tier' ) : 'member',
             ),
-            'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d' ),
+            'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d', '%s' ),
         );
+    }
+
+    /* ——————————————————————————————————————
+     *  Phase 9 — Event QR Check-in handlers
+     * —————————————————————————————————————— */
+
+    /**
+     * POST /culture/v1/events/{id}/generate-checkin-token
+     * Generates (or regenerates) a check-in token for the event and returns the QR URL.
+     */
+    public static function handle_generate_checkin_token( $request ) {
+        $event_id = (int) $request['id'];
+        $post     = get_post( $event_id );
+        if ( ! $post || 'culture_event' !== $post->post_type ) {
+            return new WP_Error( 'not_found', 'Event not found.', array( 'status' => 404 ) );
+        }
+        $token = bin2hex( random_bytes( 16 ) );
+        update_post_meta( $event_id, '_event_checkin_token_hash', hash( 'sha256', $token ) );
+        $url = "https://connect.themoveee.com/events/checkin?id={$event_id}&t={$token}";
+        return rest_ensure_response( array(
+            'token'       => $token,
+            'checkin_url' => $url,
+            'event_id'    => $event_id,
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/events/self-checkin
+     * Verifies the token and records a check-in for the given user.
+     */
+    public static function handle_self_checkin( $request ) {
+        global $wpdb;
+
+        $event_id = (int) $request->get_param( 'event_id' );
+        $token    = sanitize_text_field( $request->get_param( 'token' ) );
+        $user_id  = (int) $request->get_param( 'user_id' );
+
+        if ( ! $event_id || ! $token || ! $user_id ) {
+            return new WP_Error( 'missing_params', 'event_id, token, and user_id are required.', array( 'status' => 400 ) );
+        }
+
+        $post = get_post( $event_id );
+        if ( ! $post || 'culture_event' !== $post->post_type ) {
+            return new WP_Error( 'not_found', 'Event not found.', array( 'status' => 404 ) );
+        }
+
+        // Verify token.
+        $stored_hash = get_post_meta( $event_id, '_event_checkin_token_hash', true );
+        if ( empty( $stored_hash ) || hash( 'sha256', $token ) !== $stored_hash ) {
+            return new WP_Error( 'invalid_token', 'Invalid check-in token.', array( 'status' => 403 ) );
+        }
+
+        // Check event date window (within 1 day before or after).
+        $start_date = get_post_meta( $event_id, '_event_start_date', true );
+        if ( $start_date ) {
+            $event_ts = strtotime( $start_date );
+            $now_ts   = current_time( 'timestamp' );
+            if ( abs( $now_ts - $event_ts ) > DAY_IN_SECONDS ) {
+                return new WP_Error( 'outside_window', 'Check-in is only available on the day of the event.', array( 'status' => 400 ) );
+            }
+        }
+
+        // Check for duplicate check-in.
+        $table     = $wpdb->prefix . 'culture_attendance';
+        $existing  = $wpdb->get_var( $wpdb->prepare(
+            "SELECT id FROM {$table} WHERE user_id = %d AND event_id = %d AND status = 'checked_in' LIMIT 1",
+            $user_id, $event_id
+        ) );
+        if ( $existing ) {
+            return rest_ensure_response( array(
+                'already_checked_in' => true,
+                'message'            => 'You have already checked in to this event.',
+            ) );
+        }
+
+        // Insert check-in record.
+        $wpdb->insert(
+            $table,
+            array(
+                'user_id'      => $user_id,
+                'event_id'     => $event_id,
+                'status'       => 'checked_in',
+                'checkin_time' => current_time( 'mysql' ),
+            ),
+            array( '%d', '%d', '%s', '%s' )
+        );
+
+        // Award reputation via gamification system.
+        do_action( 'culture_award_points', $user_id, 'event_checkin', $event_id );
+
+        // Award credits.
+        if ( method_exists( 'Culture_Gamification', 'award_credits' ) ) {
+            Culture_Gamification::award_credits( $user_id, 3, 'event_checkin' );
+        } else {
+            do_action( 'culture_award_credits', $user_id, 3, 'event_checkin' );
+        }
+
+        return rest_ensure_response( array(
+            'success'        => true,
+            'message'        => 'Check-in successful! You earned 20 reputation and 3 credits.',
+            'rep_earned'     => 20,
+            'credits_earned' => 3,
+        ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Phase 9 — Admin meta box for event QR
+     * —————————————————————————————————————— */
+
+    public static function add_event_checkin_metabox() {
+        add_meta_box(
+            'culture-event-checkin',
+            'Event Check-in QR',
+            array( __CLASS__, 'render_event_checkin_metabox' ),
+            'culture_event',
+            'side',
+            'high'
+        );
+    }
+
+    public static function render_event_checkin_metabox( $post ) {
+        $token_hash = get_post_meta( $post->ID, '_event_checkin_token_hash', true );
+        $has_token  = ! empty( $token_hash );
+        ?>
+        <div id="culture-checkin-box">
+          <?php if ( $has_token ) : ?>
+            <p style="color:green">&#10003; QR token generated</p>
+          <?php endif; ?>
+          <button type="button" class="button" onclick="cultureGenerateCheckinToken(<?php echo (int) $post->ID; ?>)">
+            <?php echo $has_token ? 'Regenerate QR Token' : 'Generate QR Token'; ?>
+          </button>
+          <div id="culture-checkin-qr-result" style="margin-top:10px"></div>
+        </div>
+        <script>
+        function cultureGenerateCheckinToken(eventId) {
+          fetch(ajaxurl + '?action=culture_generate_checkin_token&event_id=' + eventId + '&nonce=<?php echo wp_create_nonce( 'culture_checkin_nonce' ); ?>', { method: 'POST' })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              if (d.success) {
+                document.getElementById('culture-checkin-qr-result').innerHTML =
+                  '<p><strong>Check-in URL:</strong><br><small>' + d.data.checkin_url + '</small></p>' +
+                  '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(d.data.checkin_url) + '" style="max-width:200px;margin-top:8px">';
+              }
+            });
+        }
+        </script>
+        <?php
+    }
+
+    public static function ajax_generate_checkin_token() {
+        check_ajax_referer( 'culture_checkin_nonce', 'nonce' );
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error( 'Unauthorized' );
+        }
+        $event_id = (int) $_POST['event_id'];
+        $token    = bin2hex( random_bytes( 16 ) );
+        update_post_meta( $event_id, '_event_checkin_token_hash', hash( 'sha256', $token ) );
+        $url = "https://connect.themoveee.com/events/checkin?id={$event_id}&t={$token}";
+        wp_send_json_success( array( 'checkin_url' => $url, 'token' => $token ) );
     }
 }

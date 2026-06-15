@@ -148,6 +148,94 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
   );
 }
 
+function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (src: string) => void }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const count = images.length;
+
+  if (count === 0) return null;
+
+  if (count === 1) {
+    return (
+      <div style={{ marginBottom: "0.6rem", borderRadius: "8px", overflow: "hidden", border: "1px solid #e8e2d8" }}>
+        <img
+          src={images[0]}
+          alt=""
+          onClick={() => onTap(images[0])}
+          style={{ width: "100%", maxHeight: "320px", objectFit: "cover", display: "block", cursor: "zoom-in" }}
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginBottom: "0.6rem", border: "1px solid #e8e2d8", borderRadius: "8px", overflow: "hidden" }}>
+      {/* Scrollable carousel row */}
+      <div
+        style={{
+          display: "flex",
+          overflowX: "auto",
+          scrollSnapType: "x mandatory",
+          WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none",
+        }}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          const idx = Math.round(el.scrollLeft / el.clientWidth);
+          setActiveIdx(Math.min(Math.max(0, idx), count - 1));
+        }}
+      >
+        {images.map((img, i) => (
+          <img
+            key={i}
+            src={img}
+            alt=""
+            onClick={() => onTap(img)}
+            style={{
+              flex: "0 0 100%",
+              width: "100%",
+              height: "260px",
+              objectFit: "cover",
+              display: "block",
+              scrollSnapAlign: "start",
+              cursor: "zoom-in",
+            }}
+            loading="lazy"
+          />
+        ))}
+      </div>
+      {/* Dots + counter */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "6px 12px", gap: "6px", position: "relative",
+        borderTop: "1px solid #e8e2d8", backgroundColor: "var(--paper, #f3ece0)",
+      }}>
+        <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+          {images.map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: i === activeIdx ? "16px" : "6px",
+                height: "6px",
+                borderRadius: "3px",
+                backgroundColor: i === activeIdx ? "var(--ochre, #b38238)" : "#c8bfaf",
+                transition: "width 0.2s ease",
+              }}
+            />
+          ))}
+        </div>
+        <span style={{
+          position: "absolute", right: "12px",
+          fontFamily: "var(--font-mono, monospace)",
+          fontSize: "10px", color: "#9e9e9e",
+        }}>
+          {activeIdx + 1} / {count}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 const TYPE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   pulse:     { label: "Pulse",      bg: "#fef3e2", color: "#b38238" },
   editorial: { label: "Editorial",  bg: "#fff0eb", color: "#c5491f" },
@@ -459,20 +547,9 @@ export default function FeedCard({
               <PollDisplay postId={item.wpId} options={item.pollOptions} expiresAt={item.pollExpiresAt} />
             )}
 
-            {/* Gallery carousel (creative-showcase, hidden-gem, food-review) */}
+            {/* Gallery carousel — all image-capable templates */}
             {item.galleryImages && item.galleryImages.length >= 1 && (
-              <div style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.6rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
-                {item.galleryImages.map((img: string, i: number) => (
-                  <img
-                    key={i}
-                    src={img}
-                    alt=""
-                    onClick={() => setLightbox(img)}
-                    style={{ height: "200px", objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }}
-                    loading="lazy"
-                  />
-                ))}
-              </div>
+              <GalleryCarousel images={item.galleryImages} onTap={setLightbox} />
             )}
 
             {/* Video embed */}

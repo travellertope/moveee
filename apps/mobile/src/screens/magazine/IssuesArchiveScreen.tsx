@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,11 +9,13 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useIssues, type MagazineIssue } from "../../features/magazine/useMagazine";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+
+const WP_URL = "https://cms.themoveee.com";
 
 // ── Past issue grid card ──────────────────────────────────────────────────────
 function PastIssueCard({
@@ -51,7 +53,47 @@ function PastIssueCard({
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function IssuesArchiveScreen() {
   const nav = useNavigation<any>();
-  const { issues, loading, error } = useIssues();
+  const route = useRoute<any>();
+  const { nlList, nlName } = (route.params ?? {}) as { nlList?: string; nlName?: string };
+
+  const { issues: magazineIssues, loading: magazineLoading, error: magazineError } = useIssues();
+
+  // Newsletter-filtered mode
+  const [nlIssues, setNlIssues] = useState<MagazineIssue[]>([]);
+  const [nlLoading, setNlLoading] = useState(false);
+  const [nlError, setNlError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!nlList) return;
+    setNlLoading(true);
+    setNlError(null);
+    fetch(
+      `${WP_URL}/wp-json/wp/v2/culture_newsletter?per_page=50&orderby=date&order=desc&_embed=1&meta_key=_culture_nl_list&meta_value=${nlList}`
+    )
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to fetch newsletters");
+        return r.json();
+      })
+      .then((posts: any[]) => {
+        const mapped: MagazineIssue[] = posts.map((p, idx) => ({
+          id: String(p.id),
+          number: idx + 1,
+          title: (p.title?.rendered ?? "").replace(/<[^>]+>/g, ""),
+          date: p.date ? new Date(p.date).toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : "",
+          coverImage: p._embedded?.["wp:featuredmedia"]?.[0]?.source_url ?? null,
+          description: (p.excerpt?.rendered ?? "").replace(/<[^>]+>/g, "").trim(),
+          articleCount: 0,
+        }));
+        setNlIssues(mapped);
+      })
+      .catch((e) => setNlError(e.message ?? "Error"))
+      .finally(() => setNlLoading(false));
+  }, [nlList]);
+
+  const issues = nlList ? nlIssues : magazineIssues;
+  const loading = nlList ? nlLoading : magazineLoading;
+  const error = nlList ? nlError : magazineError;
+
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
@@ -85,7 +127,7 @@ export default function IssuesArchiveScreen() {
         <TouchableOpacity style={styles.backBtn} onPress={() => nav.goBack()}>
           <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Issues</Text>
+        <Text style={styles.headerTitle}>{nlName ?? "Issues"}</Text>
         <View style={styles.headerSpacer} />
       </View>
 

@@ -1,14 +1,104 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import {
   View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, Share,
+  ScrollView, Share, Alert, Animated, Modal,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
+import { useThemeStore } from "../../store/themeStore";
+import RewardsInfoSheet from "../../components/member/RewardsInfoSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+
+const LOGO_LIGHT = require("../../../assets/logo-black.png");
+const LOGO_DARK  = require("../../../assets/logo-white.png");
+const LOGO_H = 26;
+const LOGO_W = Math.round((717 / 107) * LOGO_H);
 import { SignOutDialog } from "../../components/ui/Overlays";
+
+// ── Reputation tiers ──────────────────────────────────────────────────────────
+
+const REP_TIERS = [
+  { label: "Member",             min: 0,     max: 500   },
+  { label: "Culture Contributor",min: 500,   max: 2500  },
+  { label: "Taste Maker",        min: 2500,  max: 10000 },
+  { label: "Culture Authority",  min: 10000, max: 25000 },
+  { label: "Culture Icon",       min: 25000, max: null  },
+] as const;
+
+function getRepTier(rep: number) {
+  return [...REP_TIERS].reverse().find((t) => rep >= t.min) ?? REP_TIERS[0];
+}
+
+function ReputationBar({ reputation, c, styles }: {
+  reputation: number; c: ColorPalette; styles: ReturnType<typeof createStyles>;
+}) {
+  const tier = getRepTier(reputation);
+  const pct  = tier.max ? Math.min(1, (reputation - tier.min) / (tier.max - tier.min)) : 1;
+  const next = REP_TIERS.find((t) => t.min > reputation);
+  const anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(anim, { toValue: pct, duration: 700, delay: 200, useNativeDriver: false }).start();
+  }, [pct]);
+
+  return (
+    <View style={styles.repBar}>
+      <View style={styles.repBarRow}>
+        <Text style={styles.repTierLabel}>{tier.label}</Text>
+        <Text style={styles.repScore}>{reputation} REP</Text>
+      </View>
+      <View style={styles.repTrack}>
+        <Animated.View style={[styles.repFill, { width: anim.interpolate({ inputRange: [0,1], outputRange: ["0%","100%"] }) }]} />
+      </View>
+      <Text style={styles.repNext}>
+        {next ? `${tier.max! - reputation} to ${next.label}` : "Highest tier reached ✦"}
+      </Text>
+    </View>
+  );
+}
+
+// ── Badge icon-only with tooltip ─────────────────────────────────────────────
+
+const BADGE_META: Record<string, { emoji: string; name: string }> = {
+  first_post:        { emoji: "📝", name: "First Post" },
+  verified:          { emoji: "✅", name: "Verified" },
+  culture_maker:     { emoji: "🎨", name: "Culture Maker" },
+  tastemaker:        { emoji: "✨", name: "Taste Maker" },
+  community_builder: { emoji: "🏗️", name: "Community Builder" },
+  patron:            { emoji: "⭐", name: "Connect Pro" },
+  referred_3:        { emoji: "🤝", name: "Referrer" },
+  explorer:          { emoji: "🧭", name: "Explorer" },
+};
+
+function BadgeIcons({ badges, styles }: { badges: string[]; styles: ReturnType<typeof createStyles> }) {
+  const [tooltip, setTooltip] = useState<{ emoji: string; name: string } | null>(null);
+  if (!badges.length) return null;
+  return (
+    <>
+      <View style={styles.badgeIconRow}>
+        {badges.slice(0, 8).map((slug) => {
+          const meta = BADGE_META[slug] ?? { emoji: "🏅", name: slug };
+          return (
+            <TouchableOpacity key={slug} style={styles.badgeIconBtn} onPress={() => setTooltip(meta)} activeOpacity={0.7}>
+              <Text style={styles.badgeIconEmoji}>{meta.emoji}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+      <Modal visible={!!tooltip} transparent animationType="fade" onRequestClose={() => setTooltip(null)}>
+        <TouchableOpacity style={styles.tooltipOverlay} activeOpacity={1} onPress={() => setTooltip(null)}>
+          <View style={styles.tooltipBox}>
+            <Text style={styles.tooltipEmoji}>{tooltip?.emoji}</Text>
+            <Text style={styles.tooltipName}>{tooltip?.name}</Text>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
+  );
+}
 
 const BADGE_LABELS: Record<string, string> = {
   "first_post":        "First Post",
@@ -48,7 +138,9 @@ const QUICK_LINKS = [
   { emoji: "💰", label: "Wallet",      screen: "Wallet" },
   { emoji: "🎁", label: "Perks",       screen: "Perks" },
   { emoji: "🎟️", label: "Coupons",     screen: "Coupons" },
+  { emoji: "🔖", label: "Saved",       screen: "SavedArticles" },
   { emoji: "📊", label: "Analytics",   screen: "Analytics" },
+  { emoji: "🔗", label: "Refer a Friend", screen: "Referral" },
   { emoji: "📖", label: "Magazine",    screen: "Magazine" },
   { emoji: "⚙️", label: "Settings",    screen: "MemberSettings" },
   { emoji: "📧", label: "Newsletters", screen: "MemberSettings", tab: "newsletters" },
@@ -72,17 +164,24 @@ export default function MemberDashboardScreen() {
   const { user, logout } = useAuthStore();
   const [earnExpanded, setEarnExpanded] = useState(true);
   const [signOutVisible, setSignOutVisible] = useState(false);
+  const [rewardsSheet, setRewardsSheet] = useState<{ visible: boolean; tab: "credits" | "reputation" }>({ visible: false, tab: "credits" });
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const { mode } = useThemeStore();
+  const systemScheme = useColorScheme();
+  const isDark = mode === "dark" || (mode === "system" && systemScheme === "dark");
 
   if (!user) return null;
 
   const isPro = user.tier === "patron";
 
   const handleCopyReferral = async () => {
-    const link = `https://themoveee.com/register?ref=${user.referralCode}`;
+    const link = `https://connect.themoveee.com/register?ref=${user.referralCode}`;
     try {
-      await Share.share({ message: link });
+      await Share.share({
+        message: `Join me on Moveee — the cultural community for the African diaspora. Use my link: ${link}`,
+        url: link,
+      });
     } catch {
       // silent
     }
@@ -96,8 +195,11 @@ export default function MemberDashboardScreen() {
       <View style={styles.header}>
         <View style={styles.headerSpacer} />
         <View style={styles.headerCenter}>
-          <Text style={styles.headerWordmark}>moveee</Text>
-          <Text style={styles.headerSub}>connect</Text>
+          <Image
+            source={isDark ? LOGO_DARK : LOGO_LIGHT}
+            style={{ width: LOGO_W, height: LOGO_H }}
+            resizeMode="contain"
+          />
         </View>
         <TouchableOpacity style={styles.headerRight} onPress={() => setSignOutVisible(true)}>
           <Text style={styles.headerSignOut}>Sign out</Text>
@@ -163,17 +265,40 @@ export default function MemberDashboardScreen() {
 
         {/* Card 3: Stats Bar */}
         <View style={[styles.card, styles.statsCard]}>
-          {[
-            { label: "Credits",    value: user.credits ?? 0,                  accent: isPro ? c.ochre : c.ink },
-            { label: "Reputation", value: user.reputation ?? 0,               accent: isPro ? c.gold  : c.ink },
-            { label: "Badges",     value: (user.badges || []).length,          accent: c.ink },
-            { label: "Daily Left", value: user.dailyCreditsRemaining ?? 0,    accent: c.ink },
-          ].map((stat, i) => (
-            <View key={stat.label} style={[styles.statItem, i > 0 && styles.statItemBorder]}>
-              <Text style={[styles.statValue, { color: stat.accent }]}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-            </View>
-          ))}
+          {/* Credits — with info tooltip */}
+          <TouchableOpacity
+            style={styles.statItem}
+            onPress={() => setRewardsSheet({ visible: true, tab: "credits" })}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.statValue, { color: isPro ? c.ochre : c.ink }]}>{user.credits ?? 0}</Text>
+            <Text style={styles.statLabel}>Credits ⓘ</Text>
+          </TouchableOpacity>
+
+          {/* Reputation — with info sheet */}
+          <TouchableOpacity
+            style={[styles.statItem, styles.statItemBorder]}
+            onPress={() => setRewardsSheet({ visible: true, tab: "reputation" })}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.statValue, { color: isPro ? c.gold : c.ink }]}>{user.reputation ?? 0}</Text>
+            <Text style={styles.statLabel}>Reputation ⓘ</Text>
+          </TouchableOpacity>
+
+          <View style={[styles.statItem, styles.statItemBorder]}>
+            <Text style={[styles.statValue, { color: c.ink }]}>{(user.badges || []).length}</Text>
+            <Text style={styles.statLabel}>Badges</Text>
+          </View>
+
+          <View style={[styles.statItem, styles.statItemBorder]}>
+            <Text style={[styles.statValue, { color: c.ink }]}>{user.dailyCreditsRemaining ?? 0}</Text>
+            <Text style={styles.statLabel}>Daily Left</Text>
+          </View>
+        </View>
+
+        {/* Reputation bar */}
+        <View style={[styles.card, { paddingHorizontal: 16, paddingVertical: 14 }]}>
+          <ReputationBar reputation={user.reputation ?? 0} c={c} styles={styles} />
         </View>
 
         {/* Card 4: Upgrade Banner (Citizen only) */}
@@ -194,27 +319,42 @@ export default function MemberDashboardScreen() {
           <View style={styles.card}>
             <View style={styles.cardHeaderRow}>
               <Text style={styles.cardHeaderLabel}>My Badges</Text>
-              <Text style={styles.cardHeaderAction}>See all →</Text>
             </View>
-            <View style={styles.badgesRow}>
-              {(user.badges || []).slice(0, 6).map((badge) => (
-                <View key={badge} style={styles.badgePill}>
-                  <Text style={styles.badgePillEmoji}>🏅</Text>
-                  <Text style={styles.badgePillLabel}>{BADGE_LABELS[badge] ?? badge}</Text>
-                </View>
-              ))}
+            <View style={{ paddingHorizontal: 16, paddingBottom: 16, paddingTop: 8 }}>
+              <BadgeIcons badges={user.badges || []} styles={styles} />
             </View>
           </View>
         )}
 
         {/* Card 6: Referral Link */}
-        <TouchableOpacity style={[styles.card, styles.referralCard]} onPress={handleCopyReferral}>
-          <Ionicons name="link-outline" size={20} color={c.ochre} />
-          <Text style={styles.referralText} numberOfLines={1}>
-            moveee.com/r/{user.username}
-          </Text>
-          <Ionicons name="copy-outline" size={20} color={c.mute} />
-        </TouchableOpacity>
+        <View style={[styles.card, { padding: 0, overflow: "hidden" }]}>
+          <TouchableOpacity
+            style={[styles.referralCard, { borderBottomWidth: 1, borderBottomColor: c.rule }]}
+            onPress={() => nav.navigate("Referral" as never)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="people-outline" size={20} color={c.ochre} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.referralText, { marginBottom: 1 }]} numberOfLines={1}>
+                Refer a friend · {user.referralCount ?? 0} joined
+              </Text>
+              <Text style={{ fontFamily: "monospace", fontSize: 11, color: c.mute }} numberOfLines={1}>
+                connect.themoveee.com/r/{user.referralCode || user.username}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={c.ghost} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{ flexDirection: "row", alignItems: "center", gap: 8, padding: 12, paddingHorizontal: 14 }}
+            onPress={handleCopyReferral}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="share-social-outline" size={16} color={c.ochre} />
+            <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre }}>
+              Share my referral link
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Card 7: Quick Links Menu */}
         <View style={[styles.card, styles.menuCard]}>
@@ -278,6 +418,11 @@ export default function MemberDashboardScreen() {
         onCancel={() => setSignOutVisible(false)}
         onConfirm={() => { setSignOutVisible(false); logout(); }}
       />
+      <RewardsInfoSheet
+        visible={rewardsSheet.visible}
+        initialTab={rewardsSheet.tab}
+        onClose={() => setRewardsSheet((s) => ({ ...s, visible: false }))}
+      />
     </SafeAreaView>
   );
 }
@@ -302,23 +447,8 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   headerCenter: {
     flex: 1,
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "center",
-  },
-  headerWordmark: {
-    fontFamily: fonts.serifBold,
-    fontSize: 16,
-    color: c.ink,
-    lineHeight: 20,
-  },
-  headerSub: {
-    fontFamily: fonts.sansBold,
-    fontSize: 8,
-    color: c.gold,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginLeft: 2,
-    marginTop: 2,
   },
   headerRight: { width: 60, alignItems: "flex-end" },
   headerSignOut: {
@@ -545,31 +675,29 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     color: c.ochre,
   },
 
-  /* ── Card 5: Badges ── */
-  badgesRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    padding: 16,
-    paddingTop: 12,
+  /* ── Reputation bar ── */
+  repBar:      { width: "100%" },
+  repBarRow:   { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
+  repTierLabel:{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ink },
+  repScore:    { fontFamily: fonts.mono, fontSize: 12, color: c.ochre },
+  repTrack:    { height: 6, backgroundColor: c.ghost, borderRadius: 3, overflow: "hidden" },
+  repFill:     { height: 6, backgroundColor: c.ochre, borderRadius: 3 },
+  repNext:     { fontFamily: fonts.mono, fontSize: 10, color: c.mute, marginTop: 5 },
+
+  /* ── Card 5: Badges (icon-only) ── */
+  badgeIconRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  badgeIconBtn: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: c.paperDeep, borderWidth: 1, borderColor: c.ghost,
+    justifyContent: "center", alignItems: "center",
   },
-  badgePill: {
-    backgroundColor: c.paper,
-    borderWidth: 1,
-    borderColor: c.ghost,
-    borderRadius: 9999,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  badgePillEmoji: { fontSize: 14 },
-  badgePillLabel: {
-    fontFamily: fonts.sansBold,
-    fontSize: 12,
-    color: c.ink,
-  },
+  badgeIconEmoji: { fontSize: 22 },
+
+  /* ── Badge tooltip modal ── */
+  tooltipOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)", justifyContent: "center", alignItems: "center" },
+  tooltipBox:     { backgroundColor: c.ink, borderRadius: 14, paddingHorizontal: 28, paddingVertical: 20, alignItems: "center", gap: 8, minWidth: 160 },
+  tooltipEmoji:   { fontSize: 36 },
+  tooltipName:    { fontFamily: fonts.sansBold, fontSize: 15, color: c.paper, textAlign: "center" },
 
   /* ── Card 6: Referral ── */
   referralCard: {

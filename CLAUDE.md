@@ -587,6 +587,13 @@ All three are right-side slide-in drawer panels (`position: fixed, zIndex: 8000,
 
 FeedCard lazy-loads all three modals via `dynamic(() => import(...), { ssr: false })`.
 
+### RN FeedItemCard card designs (FeedItemCard.tsx)
+- **PulseCard**: full-bleed hero image (200px, tappable → ImageLightbox), serif bold title, arm/category/region eyebrow row with region pill, OG link preview (LinkPreview) only when no hero image, source attribution below hero if named. Upgraded from plain inline ImgPlaceholder.
+- **EditorialCard**: badge row, serif XL title, excerpt, then `InternalLinkCard` snippet (border pill, 90px feature image from `item.image`, gold "MOVEEE MAGAZINE" label, title, excerpt) — matches site's InternalLinkCard exactly. Opens `EditorialSheet` on tap.
+- `item.image` on editorial items comes from WP featured image (`post.featuredImage?.node?.sourceUrl` in `unified-feed.ts`)
+- `item.image` on pulse items comes from `story._embedded?.["wp:featuredmedia"]?.[0]?.source_url`
+- OG fields on pulse: `item.ogImage`, `item.ogTitle`, `item.ogDescription`, `item.sourceUrl` — populated from `pulse_og_*` post meta
+
 ---
 
 ## Event system enhancements
@@ -609,16 +616,122 @@ Community event posts (`_template_type = 'event'`) now support an organiser dire
 
 ---
 
+## NewPostScreen composer — template field reference (v2, June 2026)
+
+Source of truth: `apps/mobile/src/screens/community/NewPostScreen.tsx`
+Template picker: FAB → `TemplatePickerSheet` → `NewPost` route with `template` param
+
+### Inline photos pattern (post, hidden-gem, food-review, itinerary, event)
+Photos are embedded in the scroll body (NOT a floating strip). Pattern: dashed 80×80 add tile + 80×80 thumbs with white ✕, "Up to 4 photos" hint. MAX_IMAGES = 4.
+
+### Per-template field layout
+
+**Standard Post** — section tag chips (top) → emoji guide chips → textarea → char counter → inline photos
+
+**Hidden Gem** — place name input → location input (📍) → DirectorySearch ("Link this place") → divider → "Tell us about it" textarea → star rating (optional) → price range chips (₦/₦₦/₦₦₦/₦₦₦₦) → opening hours input (🕐) → divider → inline photos
+
+**Cultural Take** — "Your take" serif bold 20px textarea → divider → "Explain your take" body textarea → section tags at bottom. No image. DirectorySearch optional at bottom.
+
+**Food Review** — dish/item input → DirectorySearch (restaurant) → divider → MultiRating (Taste/Value/Vibe) → "Your review" textarea → cuisine chips (Nigerian/Pan-African/West African/Continental/Fusion/Seafood) → price range chips → divider → inline photos
+
+**Book Review** — book search input (🔍, fetches from `${MOBILE_API}/books/search?q=X`) + dropdown with book cover/title/author/year + "Add new book" → book card (selected, 48×64 cover) → status chips (Finished/Reading/Want to Read) → overall StarRating → breakdown MultiRating (Writing/Story/Characters/Pacing) → review textarea → favourite quote (ochre left border, italic) → recommend chips (Yes green / No) → genre chips (multi-select). No images.
+
+Submits to `${MOBILE_API}/community/submit` with extra fields: `book_title`, `book_author`, `book_status`, `book_overall_rating`, `book_rating_writing/story/characters/pacing`, `book_fav_quote?`, `book_recommend`, `book_genres?`
+
+**Creative Showcase** — title input → medium chips (Photography/Film/Digital Art/Illustration/Music/Writing, single-select) → "About this work" textarea → collaborator input (@-prefixed) → divider → 120px dashed upload zone. MAX_IMAGES = 4.
+
+**Poll** — question textarea (80px, bordered) → PollBuilder options → divider → poll duration segmented control (1d/3d/7d) → description textarea (optional)
+
+**Itinerary** — trip title input → city/region input (📍) → ItineraryBuilder stops → duration input (⏱, optional) → budget chips (£/££/£££/££££, optional) → best time input (☀️, optional) → divider → inline photos
+
+**Event** — event name input (17px bold) → 2-col date grid (start date | start time / end date | end time) → venue name (🏛) + full address (📍) + city inputs → divider → admission (£ prefix) + ticket link (🔗) → category chips → organiser DirectorySearch pill → inline photos (hint: "Event flyer, venue photos…")
+
+**Quote** — paper-warm bordered box with decorative `"` glyph, italic serif textarea → author input → source input → divider → "Why sharing?" textarea (optional) → quote type chips (Person/Book/Film/Speech/Song)
+
+### State variables (key additions in v2)
+```ts
+// Hidden Gem
+hiddenGemPlaceName, hiddenGemLocation, hiddenGemPriceRange, hiddenGemOpeningHours
+
+// Cultural Take
+culturalTakeHeadline
+
+// Food Review
+cuisineTag, foodPriceRange
+
+// Creative Showcase
+showcaseTitle, showcaseMedium, showcaseCollaborator
+
+// Book Review
+bookEntry, bookSearch, bookSearchResults, bookSearchOpen
+bookStatus, bookOverallRating, bookRatings ({writing, story, characters, pacing})
+bookFavQuote, bookRecommend, bookGenres
+
+// Itinerary
+itineraryTitle, itineraryBudget, itineraryDuration, itineraryBestTime
+
+// Event
+eventAddress (new — separate from eventVenue)
+
+// Poll
+pollDescription
+
+// Quote
+quoteSharingReason, quoteType
+```
+
+---
+
 ## Reputation tier thresholds
 
-Defined in `Culture_Gamification::REPUTATION_TIERS`:
+Defined in `Culture_Gamification::REPUTATION_TIERS` (Option A+B+C redesign):
 ```php
-1500 => 'culture-authority',
-500  => 'taste-maker',
-100  => 'culture-contributor',
-0    => 'member',
+25000 => 'culture-icon',        // invite/nomination only — requires _culture_icon_nominated usermeta
+10000 => 'culture-authority',
+2500  => 'taste-maker',
+500   => 'culture-contributor',
+0     => 'member',
 ```
+
+`culture-icon` is a nomination-only tier. Even with 25,000+ rep, the user must have
+`_culture_icon_nominated = 1` set by an admin. `get_reputation_tier($rep, $user_id)` enforces this.
+
+**Reputation is earned only from quality signals (Option B).** Passive actions
+(`magazine_read`, `magazine_share`, `game_completed`, `poll_vote`, `newsletter_reaction`,
+`community_like`, `quote_like`) give 0 reputation — they still earn credits.
+Quality signals: event check-in, referral, community post/comment, directory entry,
+quote submission, newsletter comment, profile completed, email verified.
+
 Daily credit cap: `DAILY_CREDIT_CAP = 50` credits per user per day.
+
+### Reputation-gated privileges (implemented)
+
+| Privilege | Minimum tier | Where enforced |
+|---|---|---|
+| Feed boost (+10 score) | Taste Maker | `useFeedRecommendations.ts` scoreItem() — reads `authorRepTier` on FeedItem |
+| Skip new-member review queue | Taste Maker (2,500 rep) | `class-culture-mobile-api.php` handle_submit_post |
+| Poll + Itinerary templates | Taste Maker (2,500 rep) | PHP (403), mobile UI (🔒 chip + Alert) |
+| Gated partner perks | Configurable per perk | `class-culture-perks.php` redeem_perk() checks `min_rep_tier` column |
+| Nominate for Culture Icon | Culture Authority (10,000 rep) | `POST /culture/v1/nominate-icon` |
+
+**Feed boost implementation:**
+- `community_author_rep_tier` saved as post meta on every submit (mobile API)
+- Registered in `class-culture-community.php` register_meta()
+- Returned as `authorRepTier` field in mobile feed response
+- `FeedItem.authorRepTier` added to `src/types/index.ts`
+
+**Perk tier gating:**
+- `culture_partner_perks` table has `min_rep_tier VARCHAR(30) DEFAULT 'member'` column
+- `dbDelta` in `class-culture-activator.php` adds it (ALTER on existing tables happens automatically)
+- Admin perk create/update API (`_sanitize_perk_data`) accepts `min_rep_tier` param
+- Tier order: member(0) < culture-contributor(1) < taste-maker(2) < culture-authority(3) < culture-icon(4)
+
+**Nomination power:**
+- `POST /culture/v1/nominate-icon` — API key auth
+- Body: `{ nominator_id, nominee_id }`
+- Sets `_culture_icon_nominated`, `_culture_icon_nominated_by`, `_culture_icon_nominated_at` usermeta
+- Rate-limited: one nomination per nominator per day (WP transient)
+- Nominations are additive — any Culture Authority can nominate, admin still controls the final flag
 
 ---
 
@@ -788,10 +901,11 @@ Before production build, also run `npm install` after restoring `react-native-ia
 | Custom fonts | App.tsx loads Fraunces + DM Sans + JetBrains Mono via useFonts() |
 | 5-tab navigation + new routes | `src/navigation/index.tsx` (MemberDirectory, Wallet, Coupons, Perks, MemberDashboard, MemberSettings) |
 | ConnectFeedScreen | `screens/community/ConnectFeedScreen.tsx` |
-| FeedItemCard (all templates) | `components/community/FeedItemCard.tsx` (gallery, polls, itinerary, ratings) |
+| FeedItemCard (all templates) | `components/community/FeedItemCard.tsx` (gallery, polls, itinerary, ratings, upgraded Pulse + Editorial cards) |
 | PostDetailScreen, PulseDetailScreen | `screens/community/` |
-| NewPostScreen (all 9 templates) | `screens/community/NewPostScreen.tsx` (post, hidden-gem, cultural-take, food-review, creative-showcase, poll, itinerary, event, quote) |
+| NewPostScreen (all 10 templates) | `screens/community/NewPostScreen.tsx` (post, hidden-gem, cultural-take, food-review, book-review, creative-showcase, poll, itinerary, event, quote) |
 | Composer sub-components | `components/composer/` (StarRating, MultiRating, PollBuilder, ItineraryBuilder, DirectorySearch) |
+| TemplatePickerSheet | `components/community/TemplatePickerSheet.tsx` — 2×2 grid bottom sheet modal, FAB → onSelect → NewPost with template param |
 | Shared UI components | Avatar, TypeBadge, ImageLightbox (`components/ui/`), ReactionBar, HashtagText (`components/community/`) |
 | MemberDirectoryScreen | `screens/community/MemberDirectoryScreen.tsx` |
 | MemberDashboardScreen | `screens/member/MemberDashboardScreen.tsx` (passkey banner, stats, badges, quick links) |
@@ -826,6 +940,7 @@ Before production build, also run `npm install` after restoring `react-native-ia
 | DirectoryDetailModal | `components/community/DirectoryDetailModal.tsx` — migrated to BottomSheet |
 | QuoteDetailModal | `components/community/QuoteDetailModal.tsx` — migrated to BottomSheet |
 | EditorialSheet | `components/community/EditorialSheet.tsx` — full-bleed hero + CTA for editorial cards |
+| InternalLinkCard (in FeedItemCard) | Inline component inside `FeedItemCard.tsx` — mirrors web `InternalLinkCard`: bordered pill with 90px feature image left, gold "MOVEEE MAGAZINE" label, title, excerpt. Used at bottom of EditorialCard. |
 | MagazineScreen (enhanced) | `screens/magazine/MagazineScreen.tsx` — category strip, featured hero, horizontal sections, issues, series |
 | IssuesArchiveScreen | `screens/magazine/IssuesArchiveScreen.tsx` — latest issue hero + 2-col grid |
 | MagazineSearchScreen | `screens/magazine/MagazineSearchScreen.tsx` — search bar + category strip + results |
@@ -835,6 +950,8 @@ Before production build, also run `npm install` after restoring `react-native-ia
 | ContextMenu | `components/ui/ContextMenu.tsx` — 200px floating menu with divider before destructive actions |
 | ReportPostSheet | `components/community/ReportPostSheet.tsx` — 3-option radio sheet, submits to community/report |
 | ForYouExplainerSheet | `components/community/ForYouExplainerSheet.tsx` — sparkle icon + serif title + interests CTA |
+| Location features | ConnectFeedScreen: region chip strip (All/Africa/Diaspora UK/US/Europe) defaults to user's region; EventsScreen: city filter + local sort; MemberDirectoryScreen: city chip strip; MemberSettingsScreen: newsletter segment auto-derived from countryOfResidence |
+| Reputation privileges | Feed boost for high-rep authors; Taste Maker skips new-member queue; Poll/Itinerary gated at 2500 rep (PHP + mobile UI 🔒); Perk min_rep_tier gating; Culture Authority can nominate for Culture Icon |
 
 ### What is missing (priority order)
 1. MembershipScreen IAP wiring (Google Play Billing + App Store IAP) — low priority; current behaviour directs users to the web to upgrade
@@ -879,6 +996,40 @@ All other post templates submit to `${CULTURE_API}/community/submit` (WordPress 
 - Cashout fee is flat 30% (not tiered); `credits_per_gbp` comes from the wallet balance API response — never hardcode
 - Phase 8b "For You" scoring is pure client-side TypeScript — `scoreItem()` from `lib/feed-recommendations.ts` on the web; replicate the same algorithm in `src/features/community/useFeedRecommendations.ts`
 - Full spec at `docs/moveee-connect-rn-spec.md` — that file is the single source of truth for RN implementation details
-- **Shop product data**: fetched from `GET /mobile/shop/products?category=X&page=N` (public, no auth). PHP handler uses `wc_get_product()` (requires WooCommerce). Pro pricing = 10% off regular price. Product badges: `new` (< 14 days old), `pro_early_access` (meta `_pro_early_access`), `sale` (has sale price), `low_stock` (≤ 3 stock). Vendor/maker stored in product meta `_maker_name` and `_maker_city`.
-- **Cart**: `cartStore.ts` tracks item count for badge only. Full cart uses WooCommerce Store API or web checkout URL (`wc_get_checkout_url()`).
-- **Dark mode pattern**: screens use `const c = useColors(); const styles = useMemo(() => createStyles(c), [c]);` where `createStyles(c: ColorPalette)` is defined at module level. Static `colors` import still works for non-themed screens. Only screens converted so far: ConnectFeedScreen, ArticleScreen, MemberDashboardScreen.
+- **Shop product data**: fetched from `GET /mobile/shop/products?category=X&page=N` (public, no auth). PHP handler uses `wc_get_product()` (requires WooCommerce). Pro pricing = **10% off** regular price (not 7%). Product badges: `new` (< 14 days old), `pro_early_access` (meta `_pro_early_access`), `sale` (has sale price), `low_stock` (≤ 3 stock). Vendor/maker stored in product meta `_maker_name` and `_maker_city`.
+- **Cart**: `cartStore.ts` supports full item management (`addItem/removeItem/updateQty/clearCart`). CartScreen uses WooCommerce web checkout via `Linking.openURL()`.
+- **Dark mode pattern**: ALL screens must use `const c = useColors(); const styles = useMemo(() => createStyles(c), [c]);` where `createStyles(c: ColorPalette)` is defined at module level. **Never use the static `colors.*` import inside `createStyles`** — it bypasses dark mode. Use `c.*` exclusively inside that function.
+
+### Cross-stack navigation rules (critical)
+React Navigation stacks are isolated — a screen in ShopStack cannot navigate to a screen registered only in MagazineStack or ConnectStack. Rules:
+
+| From stack | To navigate to | Use |
+|---|---|---|
+| ShopStack | Article (magazine) | `nav.navigate("Magazine", { screen: "Article", params: { slug } } as any)` |
+| ShopStack | Membership (member) | `nav.navigate("Connect", { screen: "Membership" } as any)` |
+| Any stack | Login | Only valid from unauthenticated AuthStack — authenticated screens should navigate to Membership instead |
+
+Screens registered per stack (as of latest):
+- **ConnectStack**: ConnectFeed, PostDetail, PulseDetail, NewPost, DirectorySubmit, MemberProfile, MemberDirectory, Notifications, Article, MemberDashboard, MemberSettings, Wallet, Coupons, Perks, Membership, Analytics
+- **MagazineStack**: MagazineList, Article, IssuesArchive, MagazineSearch
+- **ShopStack**: ShopHome, ShopListing, ProductDetail, Cart, TheEdit, ShopSearch, MakerProfile, OrderConfirmation
+- **GamesStack**: GamesList, TriviaGame, WhoSaidIt, Sudoku, Crossword
+- **EventsStack**: EventsList, EventDetail
+- **MemberStack**: MemberDashboard, MemberSettings, Wallet, Coupons, Perks, Membership, Analytics
+
+### api.get() / api.post() signature
+```ts
+api.get<T>(url: string, auth = true)   // second arg is boolean, NOT an options object
+api.post<T>(url: string, body: Record<string,unknown>, auth = true)
+api.put / api.patch / api.delete       // always authenticated
+```
+Common mistake: `api.get(url, { auth: false })` — the object is truthy so it injects the Bearer token anyway. Correct: `api.get(url, false)`.
+
+### useNotificationCount hook
+Returns `{ unread: number, refresh: () => void }`. The field is `unread`, not `unreadCount`. Destructure as `const { unread } = useNotificationCount()` or alias: `const { unread: unreadCount } = useNotificationCount()`.
+
+### theme.ts — available keys
+- `shadows`: only `card`, `modal`, `fab` — no `sm`, `lg`, `xl` variants
+- `radius`: `sm`(2), `md`(4), `lg`(6), `xl`(12), `"2xl"`(20), `full`(9999) — use bracket notation for `"2xl"`
+- `fontSize`: includes `eyebrow`(9) for uppercase labels
+- `fonts`: `sans`, `sansBold`, `serif`, `serifBold`, `mono`, `monoBold` — no `sansItalic`/`serifItalic` (use `fontStyle: "italic"` instead)
