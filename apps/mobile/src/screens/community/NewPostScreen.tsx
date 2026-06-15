@@ -20,6 +20,7 @@ import PollBuilder, { PollDraft } from "../../components/composer/PollBuilder";
 import ItineraryBuilder, { StopDraft } from "../../components/composer/ItineraryBuilder";
 import DirectorySearch from "../../components/composer/DirectorySearch";
 import UserSearch, { MemberResult } from "../../components/composer/UserSearch";
+import MentionInput from "../../components/composer/MentionInput";
 
 import { TEMPLATE_DEFS } from "../../components/community/TemplatePickerSheet";
 import type { TemplateId } from "../../components/community/TemplatePickerSheet";
@@ -330,6 +331,12 @@ export default function NewPostScreen() {
     setTimeout(() => textRef.current?.focus(), 50);
   }, [text]);
 
+  const insertHash = useCallback(() => {
+    const cur = text;
+    setText(cur + (cur.endsWith(" ") || cur === "" ? "#" : " #"));
+    setTimeout(() => textRef.current?.focus(), 50);
+  }, [text]);
+
   const uploadImages = async (): Promise<string[]> => {
     const urls: string[] = [];
     for (const uri of images) {
@@ -591,6 +598,16 @@ export default function NewPostScreen() {
           <Text style={styles.toolbarAt}>@</Text>
         </TouchableOpacity>
       );
+      icons.push(
+        <TouchableOpacity
+          key="hash"
+          onPress={insertHash}
+          style={styles.toolbarIconBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.toolbarAt}>#</Text>
+        </TouchableOpacity>
+      );
     }
     return icons;
   }, [tmpl, images.length, c, pickImages, insertAt]);
@@ -673,8 +690,8 @@ export default function NewPostScreen() {
           </ScrollView>
         </View>
       )}
-      <TextInput
-        ref={textRef}
+      <MentionInput
+        inputRef={textRef}
         style={[styles.textarea, { marginTop: space[2] }]}
         value={text}
         onChangeText={handleTextChange}
@@ -723,8 +740,8 @@ export default function NewPostScreen() {
       {renderDivider()}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Tell us about it *</Text>
-        <TextInput
-          ref={textRef}
+        <MentionInput
+          inputRef={textRef}
           style={styles.borderedTextarea}
           value={text}
           onChangeText={handleTextChange}
@@ -775,8 +792,8 @@ export default function NewPostScreen() {
       {renderDivider()}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Explain your take *</Text>
-        <TextInput
-          ref={textRef}
+        <MentionInput
+          inputRef={textRef}
           style={[styles.borderedTextarea, { minHeight: 200 }]}
           value={text}
           onChangeText={handleTextChange}
@@ -826,8 +843,8 @@ export default function NewPostScreen() {
       </View>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Your review *</Text>
-        <TextInput
-          ref={textRef}
+        <MentionInput
+          inputRef={textRef}
           style={styles.borderedTextarea}
           value={text}
           onChangeText={handleTextChange}
@@ -896,8 +913,8 @@ export default function NewPostScreen() {
       </View>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>About this work *</Text>
-        <TextInput
-          ref={textRef}
+        <MentionInput
+          inputRef={textRef}
           style={styles.borderedTextarea}
           value={text}
           onChangeText={handleTextChange}
@@ -1070,8 +1087,8 @@ export default function NewPostScreen() {
       {/* Review */}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Your review *</Text>
-        <TextInput
-          ref={textRef}
+        <MentionInput
+          inputRef={textRef}
           style={styles.borderedTextarea}
           value={text}
           onChangeText={handleTextChange}
@@ -1144,8 +1161,8 @@ export default function NewPostScreen() {
     <>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Poll question *</Text>
-        <TextInput
-          ref={textRef}
+        <MentionInput
+          inputRef={textRef}
           style={[styles.borderedTextarea, { minHeight: 80 }]}
           value={text}
           onChangeText={handleTextChange}
@@ -1398,8 +1415,8 @@ export default function NewPostScreen() {
       {/* Quote box */}
       <View style={styles.quoteBox}>
         <Text style={styles.quoteOpenMark}>"</Text>
-        <TextInput
-          ref={textRef}
+        <MentionInput
+          inputRef={textRef}
           style={styles.quoteBoxInput}
           value={text}
           onChangeText={handleTextChange}
