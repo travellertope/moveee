@@ -546,6 +546,18 @@ class Culture_Mobile_API {
                 'action'  => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
             ),
         ) );
+
+        register_rest_route( 'culture/v1', '/mobile/articles/(?P<slug>[a-zA-Z0-9-]+)/products', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_article_products' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/articles/(?P<slug>[a-zA-Z0-9-]+)/related', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_article_related' ),
+            'permission_callback' => '__return_true',
+        ) );
     }
 
     // -------------------------------------------------------------------------
@@ -2899,5 +2911,98 @@ class Culture_Mobile_API {
         }, $rows ?: array() );
 
         return rest_ensure_response( array( 'rsvps' => $rsvps ) );
+    }
+
+    public static function handle_article_products( WP_REST_Request $request ) {
+        $slug = sanitize_text_field( $request->get_param( 'slug' ) );
+
+        // Look up the post by slug
+        $post = get_page_by_path( $slug, OBJECT, 'post' );
+        if ( ! $post ) {
+            return rest_ensure_response( array( 'products' => array() ) );
+        }
+
+        // Product IDs stored as comma-separated post meta
+        $meta_ids = get_post_meta( $post->ID, '_article_products', true );
+        if ( empty( $meta_ids ) ) {
+            return rest_ensure_response( array( 'products' => array() ) );
+        }
+
+        $product_ids = array_filter( array_map( 'absint', explode( ',', (string) $meta_ids ) ) );
+        if ( empty( $product_ids ) || ! function_exists( 'wc_get_product' ) ) {
+            return rest_ensure_response( array( 'products' => array() ) );
+        }
+
+        $products = array();
+        foreach ( array_slice( $product_ids, 0, 4 ) as $pid ) {
+            $wc = wc_get_product( $pid );
+            if ( ! $wc || ! $wc->is_visible() ) continue;
+
+            $image_id  = $wc->get_image_id();
+            $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : '';
+            $price_raw = (float) $wc->get_regular_price();
+
+            $products[] = array(
+                'id'        => $wc->get_id(),
+                'slug'      => $wc->get_slug(),
+                'name'      => $wc->get_name(),
+                'brand'     => get_post_meta( $pid, '_maker_name', true ) ?: '',
+                'price'     => html_entity_decode( strip_tags( wc_price( $price_raw ) ) ),
+                'pro_price' => $price_raw > 0
+                    ? html_entity_decode( strip_tags( wc_price( $price_raw * 0.9 ) ) )
+                    : '',
+                'image'     => $image_url ?: '',
+            );
+        }
+
+        return rest_ensure_response( array( 'products' => $products ) );
+    }
+
+    public static function handle_article_related( WP_REST_Request $request ) {
+        $slug = sanitize_text_field( $request->get_param( 'slug' ) );
+
+        $post = get_page_by_path( $slug, OBJECT, 'post' );
+        if ( ! $post ) {
+            return rest_ensure_response( array( 'articles' => array() ) );
+        }
+
+        // Use same category to find related
+        $terms = wp_get_post_terms( $post->ID, 'category', array( 'fields' => 'ids' ) );
+        $args  = array(
+            'post_type'      => 'post',
+            'post_status'    => 'publish',
+            'posts_per_page' => 5,
+            'post__not_in'   => array( $post->ID ),
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'no_found_rows'  => true,
+        );
+        if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
+            $args['tax_query'] = array(
+                array( 'taxonomy' => 'category', 'field' => 'term_id', 'terms' => $terms ),
+            );
+        }
+
+        $query    = new WP_Query( $args );
+        $articles = array();
+        foreach ( $query->posts as $p ) {
+            $thumb_id = get_post_thumbnail_id( $p->ID );
+            $thumb    = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'medium' ) : '';
+            $cats     = wp_get_post_terms( $p->ID, 'category', array( 'fields' => 'names' ) );
+            $author   = get_the_author_meta( 'display_name', $p->post_author );
+            $rt       = (int) get_post_meta( $p->ID, '_reading_time', true );
+
+            $articles[] = array(
+                'id'          => $p->ID,
+                'slug'        => $p->post_name,
+                'title'       => $p->post_title,
+                'category'    => ! empty( $cats ) && ! is_wp_error( $cats ) ? $cats[0] : '',
+                'author'      => $author,
+                'readingTime' => $rt ?: null,
+                'image'       => $thumb ?: '',
+            );
+        }
+
+        return rest_ensure_response( array( 'articles' => $articles ) );
     }
 }

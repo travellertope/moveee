@@ -168,6 +168,251 @@ function ReactionRow({ articleId, initialCounts, c }: {
   );
 }
 
+// ── Newsletter CTA ───────────────────────────────────────────────────────────
+
+function NewsletterCTA({ c }: { c: ColorPalette }) {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const handleSubscribe = async () => {
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes("@")) return;
+    setBusy(true);
+    try {
+      await api.post(`${CULTURE_API}/newsletter/subscribe`, { email: trimmed, list: "getmelit" }, false);
+      setSubmitted(true);
+    } catch {
+      // fail silently — user can retry
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <View style={{
+      marginTop: 32, borderRadius: radius.xl, padding: 24,
+      backgroundColor: c.paperDeep,
+      borderWidth: 1, borderColor: c.rule,
+    }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 14 }}>
+        <View style={{
+          width: 36, height: 36, borderRadius: 18,
+          backgroundColor: c.goldLight, alignItems: "center", justifyContent: "center",
+        }}>
+          <Ionicons name="mail-outline" size={18} color={c.gold} />
+        </View>
+        <Text style={{
+          fontFamily: fonts.serifBold, fontSize: 16, color: c.ink, flex: 1, lineHeight: 22,
+        }}>{"Culture in your inbox,\nevery Friday"}</Text>
+      </View>
+      <Text style={{
+        fontFamily: fonts.sans, fontSize: 13, color: c.mute, lineHeight: 19, marginBottom: 16,
+      }}>
+        GetMeLit — the Moveee weekly. Handpicked stories, what to watch, read, and experience.
+      </Text>
+      {submitted ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Ionicons name="checkmark-circle" size={18} color={c.gold} />
+          <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.gold }}>
+            You're on the list!
+          </Text>
+        </View>
+      ) : (
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <TextInput
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Your email address"
+            placeholderTextColor={c.ghost}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            style={{
+              flex: 1, height: 44, borderWidth: 1, borderColor: c.rule,
+              borderRadius: radius.md, paddingHorizontal: 12,
+              fontFamily: fonts.sans, fontSize: 14, color: c.ink,
+              backgroundColor: c.paper,
+            }}
+          />
+          <TouchableOpacity
+            onPress={handleSubscribe}
+            disabled={busy}
+            style={{
+              height: 44, paddingHorizontal: 16, borderRadius: radius.md,
+              backgroundColor: c.ink, alignItems: "center", justifyContent: "center",
+              opacity: busy ? 0.6 : 1,
+            }}
+          >
+            <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.paper }}>
+              {busy ? "…" : "Subscribe"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ── Shop the Edit ─────────────────────────────────────────────────────────────
+
+interface ShopProduct {
+  id: number;
+  name: string;
+  brand: string;
+  price: string;
+  pro_price?: string;
+  image?: string;
+  slug: string;
+}
+
+function ShopTheEdit({ articleSlug, c, nav }: { articleSlug: string; c: ColorPalette; nav: any }) {
+  const [products, setProducts] = useState<ShopProduct[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    api.get<{ products: ShopProduct[] }>(`${MOBILE_API}/articles/${articleSlug}/products`, false)
+      .then((res) => { setProducts(res.products ?? []); })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [articleSlug]);
+
+  if (!loaded || products.length === 0) return null;
+
+  return (
+    <View style={{ marginTop: 32 }}>
+      <View style={{
+        flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16,
+      }}>
+        <Text style={{ fontFamily: fonts.serifBold, fontSize: 20, color: c.ink }}>Shop the edit</Text>
+        <TouchableOpacity onPress={() => nav.navigate("ShopHome")}>
+          <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre }}>Browse all →</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+        {products.slice(0, 4).map((p) => (
+          <TouchableOpacity
+            key={p.id}
+            onPress={() => nav.navigate("Shop", { screen: "ProductDetail", params: { id: p.id, slug: p.slug } } as any)}
+            activeOpacity={0.85}
+            style={{
+              width: "48%", borderWidth: 1, borderColor: c.rule,
+              borderRadius: radius.xl, overflow: "hidden", backgroundColor: c.paper,
+            }}
+          >
+            {p.image ? (
+              <Image source={{ uri: p.image }} style={{ width: "100%", height: 140 }} resizeMode="cover" />
+            ) : (
+              <View style={{ width: "100%", height: 140, backgroundColor: c.paperDeep }} />
+            )}
+            <View style={{ padding: 10 }}>
+              <Text style={{
+                fontFamily: fonts.monoBold, fontSize: fontSize.eyebrow,
+                color: c.ghost, textTransform: "uppercase", letterSpacing: 1, marginBottom: 3,
+              }}>
+                {p.brand}
+              </Text>
+              <Text style={{
+                fontFamily: fonts.sansBold, fontSize: 13, color: c.ink, lineHeight: 17,
+              }} numberOfLines={2}>
+                {p.name}
+              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 }}>
+                <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ink }}>{p.price}</Text>
+                {p.pro_price ? (
+                  <Text style={{ fontFamily: fonts.sansBold, fontSize: 11, color: c.gold }}>{p.pro_price} Pro</Text>
+                ) : null}
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// ── Keep Reading ──────────────────────────────────────────────────────────────
+
+interface RelatedArticle {
+  id: number;
+  slug: string;
+  title: string;
+  category?: string;
+  author?: string;
+  readingTime?: number;
+  image?: string;
+}
+
+function KeepReading({ articleSlug, c, nav }: { articleSlug: string; c: ColorPalette; nav: any }) {
+  const [articles, setArticles] = useState<RelatedArticle[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    api.get<{ articles: RelatedArticle[] }>(`${MOBILE_API}/articles/${articleSlug}/related`, false)
+      .then((res) => { setArticles(res.articles ?? []); })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [articleSlug]);
+
+  if (!loaded || articles.length === 0) return null;
+
+  return (
+    <View style={{ marginTop: 32, paddingBottom: 8 }}>
+      <View style={{
+        flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16,
+      }}>
+        <Text style={{ fontFamily: fonts.serifBold, fontSize: 20, color: c.ink }}>Keep reading</Text>
+        <TouchableOpacity onPress={() => nav.navigate("MagazineList")}>
+          <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre }}>See all →</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{ borderTopWidth: 1, borderTopColor: c.rule }}>
+        {articles.slice(0, 4).map((a) => (
+          <TouchableOpacity
+            key={a.id}
+            onPress={() => nav.push("Article", { slug: a.slug })}
+            activeOpacity={0.85}
+            style={{
+              flexDirection: "row", gap: 14, paddingVertical: 16,
+              borderBottomWidth: 1, borderBottomColor: c.rule,
+            }}
+          >
+            {a.image ? (
+              <Image
+                source={{ uri: a.image }}
+                style={{ width: 88, height: 66, borderRadius: radius.lg }}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={{ width: 88, height: 66, borderRadius: radius.lg, backgroundColor: c.paperDeep }} />
+            )}
+            <View style={{ flex: 1, justifyContent: "space-between" }}>
+              {a.category ? (
+                <Text style={{
+                  fontFamily: fonts.mono, fontSize: fontSize.eyebrow,
+                  color: c.ochre, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4,
+                }}>
+                  {a.category}
+                </Text>
+              ) : null}
+              <Text style={{
+                fontFamily: fonts.sansBold, fontSize: 14, color: c.ink, lineHeight: 19,
+              }} numberOfLines={3}>
+                {a.title}
+              </Text>
+              <Text style={{
+                fontFamily: fonts.mono, fontSize: 11, color: c.ghost, marginTop: 4,
+              }}>
+                {[a.author, a.readingTime ? `${a.readingTime} min read` : null]
+                  .filter(Boolean).join(" · ")}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 // ── Article Comments Section ──────────────────────────────────────────────────
 
 const PLACEHOLDER_AVATAR = "https://cms.themoveee.com/wp-content/uploads/placeholder-avatar.png";
@@ -665,6 +910,15 @@ export default function ArticleScreen() {
                       </TouchableOpacity>
                     </View>
                   ) : null}
+
+                  {/* ── Newsletter CTA ── */}
+                  <NewsletterCTA c={c} />
+
+                  {/* ── Shop the Edit ── */}
+                  <ShopTheEdit articleSlug={article.slug} c={c} nav={nav} />
+
+                  {/* ── Keep Reading ── */}
+                  <KeepReading articleSlug={article.slug} c={c} nav={nav} />
 
                   {/* ── Comments section ── */}
                   <ArticleCommentsSection articleId={article.id} c={c} styles={styles} />
