@@ -2778,9 +2778,25 @@ class Culture_Mobile_API {
             $redirect_to = '/checkout';
         }
 
+        // Sanitise cart items: [{ id: int, qty: int, variation_id?: int }]
+        $raw_items = $request->get_param( 'cart_items' );
+        $cart_items = array();
+        if ( is_array( $raw_items ) ) {
+            foreach ( $raw_items as $raw ) {
+                $product_id = absint( $raw['id'] ?? 0 );
+                $qty        = max( 1, absint( $raw['qty'] ?? 1 ) );
+                if ( $product_id > 0 ) {
+                    $cart_items[] = array( 'id' => $product_id, 'qty' => $qty );
+                }
+            }
+        }
+
         // Generate a cryptographically random key (48 hex chars)
         $key = bin2hex( random_bytes( 24 ) );
-        set_transient( 'culture_mob_checkout_' . $key, $user_id, 120 );
+        set_transient( 'culture_mob_checkout_' . $key, array(
+            'user_id'    => $user_id,
+            'cart_items' => $cart_items,
+        ), 120 );
 
         $auth_url = home_url( '/?mobile_checkout_auth=' . $key . '&mobile_redirect=' . urlencode( $redirect_to ) );
 
@@ -2789,18 +2805,18 @@ class Culture_Mobile_API {
 
     /**
      * Hooked on `init` (priority 1) — runs before any template output.
-     * Validates the one-time token, logs the user in, sets a persistent
-     * WP auth cookie, then redirects to the requested path.
+     * Validates the one-time token, logs the user in, populates the
+     * WooCommerce cart with the items from the mobile app, then redirects.
      */
     public static function handle_checkout_auth_redirect() {
         if ( empty( $_GET['mobile_checkout_auth'] ) ) {
             return;
         }
 
-        $key     = sanitize_text_field( wp_unslash( $_GET['mobile_checkout_auth'] ) );
-        $user_id = get_transient( 'culture_mob_checkout_' . $key );
+        $key  = sanitize_text_field( wp_unslash( $_GET['mobile_checkout_auth'] ) );
+        $data = get_transient( 'culture_mob_checkout_' . $key );
 
-        if ( ! $user_id ) {
+        if ( ! $data ) {
             // Token missing or expired — send to login
             wp_safe_redirect( wp_login_url( home_url( '/checkout' ) ) );
             exit;
@@ -2809,9 +2825,27 @@ class Culture_Mobile_API {
         // Consume the token (one-time use)
         delete_transient( 'culture_mob_checkout_' . $key );
 
+        $user_id    = (int) ( $data['user_id'] ?? 0 );
+        $cart_items = $data['cart_items'] ?? array();
+
+        if ( ! $user_id ) {
+            wp_safe_redirect( wp_login_url( home_url( '/checkout' ) ) );
+            exit;
+        }
+
         // Log the user in and set a remember-me cookie (14-day expiry)
-        wp_set_current_user( (int) $user_id );
-        wp_set_auth_cookie( (int) $user_id, true );
+        wp_set_current_user( $user_id );
+        wp_set_auth_cookie( $user_id, true );
+
+        // Populate the WooCommerce cart with the mobile app's items
+        if ( ! empty( $cart_items ) && function_exists( 'WC' ) ) {
+            WC()->initialize_session();
+            WC()->initialize_cart();
+            WC()->cart->empty_cart();
+            foreach ( $cart_items as $item ) {
+                WC()->cart->add_to_cart( $item['id'], $item['qty'] );
+            }
+        }
 
         $redirect_path = isset( $_GET['mobile_redirect'] )
             ? sanitize_text_field( urldecode( wp_unslash( $_GET['mobile_redirect'] ) ) )

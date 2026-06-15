@@ -61,10 +61,13 @@ export default function CartScreen() {
         }
 
         // Exchange the user's JWT for a one-time token so the in-app browser
-        // lands on checkout already logged in (no password prompt).
+        // lands on checkout already logged in with cart items pre-populated.
         const { url } = await api.post<{ url: string }>(
           `${MOBILE_API}/checkout-token`,
-          { redirect_to: redirectPath },
+          {
+            redirect_to: redirectPath,
+            cart_items: items.map((i) => ({ id: i.id, qty: i.qty })),
+          },
         );
         await openInApp(url);
       } catch {
