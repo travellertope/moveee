@@ -16,6 +16,9 @@ export async function POST(req: NextRequest) {
   try {
     const { kv } = await import("@vercel/kv");
 
+    // Always reset the circuit breaker first so CMS requests can flow immediately
+    await kv.del("cb:cms");
+
     // Flush all wp: keys — fired when any post is published/updated in WP Admin
     const keys: string[] = [];
     let cursor = 0;
@@ -29,8 +32,8 @@ export async function POST(req: NextRequest) {
       await kv.del(...keys);
     }
 
-    console.log(`[kv-revalidate] Flushed ${keys.length} cached WP queries`);
-    return NextResponse.json({ flushed: keys.length });
+    console.log(`[kv-revalidate] Reset circuit breaker + flushed ${keys.length} cached WP queries`);
+    return NextResponse.json({ flushed: keys.length, circuit_breaker: "reset" });
   } catch (err: any) {
     console.error("[kv-revalidate] Error:", err.message);
     return NextResponse.json({ error: "Flush failed" }, { status: 500 });
