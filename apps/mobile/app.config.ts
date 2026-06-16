@@ -34,6 +34,7 @@ export default {
     },
     plugins: [
       "expo-notifications",
+      "expo-web-browser",
       "expo-secure-store",
       [
         "expo-image-picker",
