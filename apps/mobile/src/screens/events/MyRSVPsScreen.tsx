@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
@@ -103,7 +103,7 @@ function createStyles(c: ColorPalette) {
 }
 
 export default function MyRSVPsScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const { user } = useAuthStore() as any;

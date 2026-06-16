@@ -4,7 +4,8 @@ import {
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert, Image, FlatList,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -190,7 +191,7 @@ function BookRatingsRow({
 }
 
 export default function NewPostScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const route = useRoute<any>();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);

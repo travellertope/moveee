@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { useIssues, type MagazineIssue } from "../../features/magazine/useMagazine";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
@@ -52,7 +53,7 @@ function PastIssueCard({
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function IssuesArchiveScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const route = useRoute<any>();
   const { nlList, nlName } = (route.params ?? {}) as { nlList?: string; nlName?: string };
 

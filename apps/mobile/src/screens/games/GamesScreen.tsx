@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
@@ -60,7 +60,7 @@ function SudokuIllustration({ styles }: { styles: ReturnType<typeof createStyles
 }
 
 export default function GamesScreen() {
-  const nav    = useNavigation<any>();
+  const nav    = useNav();
   const c      = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const streak = useGameStreak();

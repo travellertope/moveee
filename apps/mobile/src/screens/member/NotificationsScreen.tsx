@@ -3,7 +3,7 @@ import {
   View, Text, SectionList, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, RefreshControl,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, space, radius } from "../../theme";
@@ -112,7 +112,7 @@ function NotifRow({
 }
 
 export default function NotificationsScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [refreshing,   setRefreshing]   = useState(false);

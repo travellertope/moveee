@@ -4,7 +4,8 @@ import {
   SafeAreaView, ScrollView, KeyboardAvoidingView, Platform,
   Alert, ActivityIndicator,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
@@ -296,7 +297,7 @@ function createStyles(c: ColorPalette) {
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function DirectorySubmitScreen() {
-  const nav   = useNavigation<any>();
+  const nav   = useNav();
   const route = useRoute<any>();
   const { improvingSlug, improvingTitle, improvingEntryType } = route.params ?? {};
   const isImproveMode = !!improvingSlug;

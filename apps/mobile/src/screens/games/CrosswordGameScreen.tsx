@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
   ScrollView, TextInput, ActivityIndicator, Platform,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { storage } from "../../store/storage";
 import { useAuthStore } from "../../auth/authStore";
@@ -26,7 +26,7 @@ type Phase = "loading" | "error" | "played" | "playing" | "done";
 type Dir   = "across" | "down";
 
 export default function CrosswordGameScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const { user } = useAuthStore();

@@ -12,7 +12,8 @@ import {
   Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { fonts, radius, shadows } from "../../theme";
@@ -332,7 +333,7 @@ function CommunityReviewCard({
 // ── Main screen ────────────────────────────────────────────────────────────────
 
 export default function DirectoryDetailScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const route = useRoute<any>();
   const { slug, id, title: routeTitle, entryType: routeType } = route.params ?? {};
   const c = useColors();

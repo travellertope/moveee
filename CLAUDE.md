@@ -1018,6 +1018,16 @@ All other post templates submit to `${CULTURE_API}/community/submit` (WordPress 
 - Notification bell polls `/api/notifications/count` every 30s via `useNotificationCount` hook
 - "For You" badge on community cards: ochre `badgePulseBg` background, `badgePulseText` colour
 
+### Expo SDK version — critical
+The mobile app uses **Expo SDK 52** (not 54). The lockfile is the source of truth.
+- `expo: ~52.0.0`, `react: 18.3.1`, `react-native: 0.76.9`
+- `react-native-passkeys` must be pinned to `0.4.0` (0.4.1 requires Expo 53+)
+- **Always regenerate `package-lock.json` from scratch** after changing `package.json` —
+  EAS Build uses `npm ci` which only installs what's in the lockfile. If a package is in
+  `package.json` but not in the lockfile, it won't be installed.
+- To regenerate: `cd /tmp && cp apps/mobile/package.json . && npm install --package-lock-only && cp package-lock.json apps/mobile/`
+  (must be outside the monorepo to avoid workspace interference)
+
 ### Key gotchas
 - The RN app calls **WordPress REST directly** for most endpoints. Wallet/Perks/Passkey endpoints require `CULTURE_API_SECRET` so those must go through Next.js proxy routes at `https://themoveee.com/api/...`
 - `patron` = Connect Pro DB value — never rename in code

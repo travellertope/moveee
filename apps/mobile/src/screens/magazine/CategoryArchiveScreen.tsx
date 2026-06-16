@@ -3,7 +3,8 @@ import {
   View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity,
   FlatList, ActivityIndicator,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useCategoryArchive } from "../../features/magazine/useMagazine";
 import { fonts, fontSize, space, radius } from "../../theme";
@@ -52,7 +53,7 @@ function ArticleCard({ article, onPress, c, styles }: { article: Article; onPres
 }
 
 export default function CategoryArchiveScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const route = useRoute<any>();
   const { categorySlug, categoryName: passedName } = route.params ?? {};
   const c = useColors();

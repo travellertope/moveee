@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import BottomSheet from "../ui/BottomSheet";
 import SheetErrorState from "../ui/SheetErrorState";
 import ImageLightbox from "../ui/ImageLightbox";
@@ -777,7 +777,7 @@ interface PostDetailSheetProps {
 export default function PostDetailSheet({ item, visible, onClose, onMentionPress }: PostDetailSheetProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   if (!item) {

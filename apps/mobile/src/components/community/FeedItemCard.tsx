@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import {
   View,
   Text,
@@ -1130,7 +1130,7 @@ function HappeningCard({ item, onPress }: FeedCardProps) {
 function DirectoryCard({ item }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
 
   const handlePress = () => {
     nav.navigate("DirectoryDetail", {
@@ -1168,7 +1168,7 @@ function DirectoryCard({ item }: FeedCardProps) {
 function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const hasLink = !!(item.ogTitle || item.ogImage || item.source);
   const rawBody = item.body ?? item.excerpt ?? item.title ?? "";
@@ -1203,7 +1203,7 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPre
 function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const gallery = item.galleryImages ?? [];
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
@@ -1234,7 +1234,7 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPre
 function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
@@ -1301,7 +1301,7 @@ function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
 function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const [activeIdx, setActiveIdx] = useState(0);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const gallery = item.galleryImages ?? [];
@@ -1461,7 +1461,7 @@ function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
 function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const coverUri = item.image ?? null;
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
@@ -1573,7 +1573,7 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
 function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [rsvped, setRsvped] = useState(false);
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));

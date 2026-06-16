@@ -3,7 +3,7 @@ import {
   View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity,
   ScrollView, Share, Alert, Animated, Modal,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
@@ -209,7 +209,7 @@ function formatMemberSince(registeredAt?: number): string | null {
 }
 
 export default function MemberDashboardScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { user, logout } = useAuthStore();
   const [earnExpanded, setEarnExpanded] = useState(true);
   const [signOutVisible, setSignOutVisible] = useState(false);

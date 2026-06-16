@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { useCartStore } from "../../store/cartStore";
 import { useAuthStore } from "../../auth/authStore";
 import { useColors } from "../../hooks/useColors";
@@ -63,7 +63,7 @@ const PLACEHOLDER_STORIES: EditStory[] = [
 ];
 
 export default function TheEditScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { user } = useAuthStore();
   const { addItem, itemCount } = useCartStore();
   const c = useColors();
