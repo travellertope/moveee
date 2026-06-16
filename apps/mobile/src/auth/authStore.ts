@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
-import { api, CULTURE_API, setUnauthorizedHandler } from "../api/client";
-import { storage } from "../store/storage";
+import { api, CULTURE_API, setUnauthorizedHandler, setAuthToken } from "../api/client";
 import type { User } from "../types";
 
 interface AuthState {
@@ -36,12 +35,12 @@ export const useAuthStore = create<AuthState>((set, get) => {
     try {
       const token = await SecureStore.getItemAsync("auth_token");
       if (!token) return;
-      storage.set("auth_token", token);
+      setAuthToken(token);
       const user = await api.get<User>(`${CULTURE_API}/mobile/me`);
       set({ user, token, isAuthenticated: true });
     } catch {
       await SecureStore.deleteItemAsync("auth_token");
-      storage.delete("auth_token");
+      setAuthToken(null);
     } finally {
       set({ isLoading: false });
     }
@@ -54,20 +53,20 @@ export const useAuthStore = create<AuthState>((set, get) => {
       false
     );
     await SecureStore.setItemAsync("auth_token", res.token);
-    storage.set("auth_token", res.token);
+    setAuthToken(res.token);
     set({ user: res.user, token: res.token, isAuthenticated: true });
   },
 
   loginWithToken: async (token, user) => {
     await SecureStore.setItemAsync("auth_token", token);
-    storage.set("auth_token", token);
+    setAuthToken(token);
     set({ user, token, isAuthenticated: true });
   },
 
   logout: async () => {
     // Clear auth state immediately so the 401 handler doesn't re-trigger logout.
     set({ user: null, token: null, isAuthenticated: false, profileSetupRequired: false });
-    storage.delete("auth_token");
+    setAuthToken(null);
     await SecureStore.deleteItemAsync("auth_token").catch(() => null);
     api.post(`${CULTURE_API}/mobile/logout`, {}).catch(() => null);
   },

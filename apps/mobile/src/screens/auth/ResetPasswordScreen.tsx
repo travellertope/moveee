@@ -12,7 +12,8 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import Svg, { Circle, Path, Rect, Polyline } from "react-native-svg";
 import { api, CULTURE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
@@ -162,7 +163,7 @@ const pwS = StyleSheet.create({
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function ResetPasswordScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { params } = useRoute<any>();
   const token: string = params?.token ?? "";
 

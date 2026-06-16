@@ -5,7 +5,8 @@ import {
   NativeSyntheticEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
@@ -477,7 +478,7 @@ function createHowItsMadeStyles(c: ColorPalette) {
 function MakerCard({ detail }: { detail: ShopProductDetail }) {
   const c = useColors();
   const mkS = useMemo(() => createMakerStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const stars = Math.round(detail.makerRating);
 
   const goToMakerShop = () => {
@@ -592,7 +593,7 @@ function RelatedProducts({
 }) {
   const c = useColors();
   const rpS = useMemo(() => createRelatedStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
   if (!products.length) return null;
   return (
     <View style={rpS.section}>
@@ -659,7 +660,7 @@ function createRelatedStyles(c: ColorPalette) {
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function ProductDetailScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { params } = useRoute<any>();
   const { user } = useAuthStore();
   const { addItem, toggleWishlist, isWishlisted } = useCartStore();

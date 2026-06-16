@@ -5,7 +5,8 @@ import {
   ActivityIndicator, Share,
 } from "react-native";
 import { openInApp } from "../../utils/openInApp";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useComments } from "../../features/community/useComments";
 import { useAuthStore } from "../../auth/authStore";
@@ -109,7 +110,7 @@ function SourcePreview({ item, styles }: { item: FeedItem; styles: ReturnType<ty
 
 export default function PostDetailScreen() {
   const { params } = useRoute<any>();
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const item: FeedItem = params?.item;
   const postId = item?.wpId ?? params?.postId ?? "";
   const user = useAuthStore((s) => s.user);

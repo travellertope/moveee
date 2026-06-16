@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { useRoute, RouteProp } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useCartStore } from "../../store/cartStore";
@@ -122,7 +123,7 @@ const PLACEHOLDER_GRADIENTS: [string, string][] = [
 export default function OrderConfirmationScreen() {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const route = useRoute<RouteProp<OrderConfirmationParams, "OrderConfirmation">>();
   const { orderId, total, itemCount } = route.params;
   const { items } = useCartStore();

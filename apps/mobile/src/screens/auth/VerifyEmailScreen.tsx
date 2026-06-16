@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,8 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import Svg, { Rect, Path, Circle, Polyline } from "react-native-svg";
 import { api, CULTURE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
@@ -45,12 +46,14 @@ const iconS = StyleSheet.create({
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function VerifyEmailScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { params } = useRoute<any>();
   const email: string = params?.email ?? "";
   const password: string = params?.password ?? "";
 
   const { login, setProfileSetupRequired } = useAuthStore();
+
+  const resendTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [countdown, setCountdown] = useState(0);
   const [resending, setResending] = useState(false);
@@ -65,6 +68,12 @@ export default function VerifyEmailScreen() {
     return () => clearTimeout(t);
   }, [countdown]);
 
+  useEffect(() => {
+    return () => {
+      if (resendTimerRef.current) clearTimeout(resendTimerRef.current);
+    };
+  }, []);
+
   async function handleResend() {
     if (countdown > 0 || resending) return;
     setResentError("");
@@ -73,7 +82,7 @@ export default function VerifyEmailScreen() {
       await api.post(`${CULTURE_API}/mobile/resend-verification`, { email }, false);
       setResent(true);
       setCountdown(RESEND_COOLDOWN);
-      setTimeout(() => setResent(false), 4000);
+      resendTimerRef.current = setTimeout(() => setResent(false), 4000);
     } catch (e: unknown) {
       setResentError(e instanceof Error ? e.message : "Failed to resend. Please try again.");
     } finally {

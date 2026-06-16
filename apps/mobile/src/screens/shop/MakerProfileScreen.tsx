@@ -12,7 +12,8 @@ import {
   Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { useRoute, RouteProp } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { api, MOBILE_API } from "../../api/client";
@@ -298,7 +299,7 @@ function createProductCardStyles(c: ColorPalette) {
 export default function MakerProfileScreen() {
   const c = useColors();
   const s = useMemo(() => createStyles(c), [c]);
-  const navigation = useNavigation<any>();
+  const navigation = useNav();
   const route = useRoute<RouteProp<MakerProfileRouteParams, "MakerProfile">>();
   const { makerId } = route.params;
 

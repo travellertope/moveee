@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Share } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import ReactionBar from "./ReactionBar";
 import BottomSheet from "../ui/BottomSheet";
 import { useColors } from "../../hooks/useColors";
@@ -20,7 +20,7 @@ interface Props {
 export default function QuoteDetailModal({ visible, item, onClose }: Props) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { user } = useAuthStore();
   const [bookmarked, setBookmarked] = useState(false);
 

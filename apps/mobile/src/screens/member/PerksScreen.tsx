@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, Alert,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
 import { api, CULTURE_API, MOBILE_API } from "../../api/client";
@@ -73,7 +73,7 @@ function PerkCard({
 }
 
 export default function PerksScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { user, updateUser } = useAuthStore() as any;
   const [perks,     setPerks]     = useState<Perk[]>([]);
   const [loading,   setLoading]   = useState(true);

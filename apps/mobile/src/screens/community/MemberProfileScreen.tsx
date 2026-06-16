@@ -4,7 +4,8 @@ import {
   SafeAreaView, ActivityIndicator, Dimensions, Animated, Image,
   Modal,
 } from "react-native";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { api, MOBILE_API } from "../../api/client";
@@ -237,7 +238,7 @@ function PortfolioGrid({ items, isOwnProfile, styles, c }: {
 
 export default function MemberProfileScreen() {
   const { params } = useRoute<any>();
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 

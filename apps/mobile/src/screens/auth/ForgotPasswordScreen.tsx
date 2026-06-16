@@ -12,7 +12,7 @@ import {
   Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import Svg, { Rect, Path, Circle, Polyline } from "react-native-svg";
 
 const PROXY = "https://themoveee.com/api";
@@ -99,7 +99,7 @@ const envS = StyleSheet.create({
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function ForgotPasswordScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
 
   const [email, setEmail] = useState("");
   const [focused, setFocused] = useState(false);
