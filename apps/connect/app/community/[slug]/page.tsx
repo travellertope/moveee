@@ -284,24 +284,6 @@ export default async function CommunityPostPage({
                   ogImage={ogImage}
                 />
 
-                {/* Hashtags */}
-                {hashtags.length > 0 && (
-                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "1rem" }}>
-                    {hashtags.map((ht) => (
-                      <Link
-                        key={ht}
-                        href={`/connect?hashtag=${encodeURIComponent(ht)}`}
-                        style={{
-                          color: "#b38238", fontSize: "0.78rem", fontWeight: 600,
-                          textDecoration: "none", background: "#fdf5e6",
-                          padding: "0.2rem 0.55rem",
-                        }}
-                      >
-                        #{ht}
-                      </Link>
-                    ))}
-                  </div>
-                )}
               </div>
             </article>
           </main>
