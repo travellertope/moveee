@@ -33,18 +33,22 @@ const SPLASH_ICON = require("../../../assets/logo.png");
 // Single Animated.Value so all bones sweep in sync.
 
 const SHARED_ANIM = new Animated.Value(0);
+let _shimmerStarted = false;
 
-function startShimmer() {
-  Animated.loop(
-    Animated.timing(SHARED_ANIM, {
-      toValue: 1,
-      duration: 1400,
-      easing: Easing.inOut(Easing.ease),
-      useNativeDriver: true,
-    })
-  ).start();
+function ensureShimmer() {
+  if (_shimmerStarted) return;
+  _shimmerStarted = true;
+  try {
+    Animated.loop(
+      Animated.timing(SHARED_ANIM, {
+        toValue: 1,
+        duration: 1400,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      })
+    ).start();
+  } catch {}
 }
-startShimmer();
 
 // ── Base colours ──────────────────────────────────────────────────────────────
 
@@ -66,6 +70,7 @@ interface SkelProps {
 }
 
 function SkelCore({ width, height = 14, radius: r = 6, circle, size, img, style }: SkelProps) {
+  ensureShimmer();
   const base = img ? IMG_BASE : BASE;
   const hl   = img ? IMG_HL   : HL;
 
