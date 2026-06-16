@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
   TouchableOpacity, ActivityIndicator, Share,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { storage } from "../../store/storage";
 import { api } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
@@ -45,7 +45,7 @@ function Header({ nav, styles }: { nav: any; styles: ReturnType<typeof createSty
 }
 
 export default function TriviaGameScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const { user } = useAuthStore();

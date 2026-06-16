@@ -4,7 +4,8 @@ import {
   FlatList, ActivityIndicator, Linking, Image, Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
@@ -234,7 +235,7 @@ type ViewMode = "grid" | "list";
 type SortOption = "featured" | "price_asc" | "price_desc" | "newest";
 
 export default function ShopListingScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { params } = useRoute<any>();
   const { user } = useAuthStore();
   const { itemCount, addItem } = useCartStore();

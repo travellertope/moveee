@@ -3,7 +3,8 @@ import {
   View, Text, FlatList, TouchableOpacity,
   StyleSheet, SafeAreaView, ActivityIndicator,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
@@ -207,7 +208,7 @@ function PostCard({
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function DirectoryPostsScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const route = useRoute<any>();
   const { entryId, entryTitle, showRating } = route.params ?? {};
 

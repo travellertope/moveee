@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { openInApp } from "../../utils/openInApp";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import TypeBadge from "../ui/TypeBadge";
 import BottomSheet from "../ui/BottomSheet";
 import { useColors } from "../../hooks/useColors";
@@ -22,7 +22,7 @@ interface Props {
 export default function DirectoryDetailModal({ visible, item, onClose }: Props) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
 
   const handleViewFull = () => {
     // Navigate to the rich detail screen if we have a slug/id, else web fallback

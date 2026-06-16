@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
   TouchableOpacity, ActivityIndicator,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { storage } from "../../store/storage";
 import { api } from "../../api/client";
@@ -30,7 +30,7 @@ interface WsiQuestion {
 type Phase = "loading" | "error" | "played" | "game" | "done";
 
 export default function WhoSaidItGameScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const { user } = useAuthStore();

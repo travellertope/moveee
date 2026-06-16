@@ -11,7 +11,8 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useUnifiedFeed } from "../../features/community/useUnifiedFeed";
 import { useNotificationCount } from "../../features/notifications/useNotificationCount";
@@ -70,7 +71,7 @@ function matchesCategory(item: FeedItem, category: string): boolean {
 const TRENDING_COLORS = ["#C5491F", "#7C3AED", "#065F46"];
 
 export default function ConnectFeedScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const route = useRoute<any>();
   const { user } = useAuthStore();
   const c = useColors();

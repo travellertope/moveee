@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   SafeAreaView, Image,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useCartStore, type WishlistItem } from "../../store/cartStore";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
@@ -11,7 +11,7 @@ import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 
 export default function WishlistScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const { wishlist, toggleWishlist } = useCartStore();

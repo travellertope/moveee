@@ -12,7 +12,7 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import Svg, { Path, Circle, Rect, Line } from "react-native-svg";
 // try/catch: real module in EAS builds, no-op stub in Expo Go (native binary not bundled)
 let Passkeys: { isSupported: () => boolean; create: (o: unknown) => Promise<unknown>; get: (o: unknown) => Promise<unknown> } = {
@@ -123,7 +123,7 @@ function Wordmark() {
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function LoginScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { login, loginWithToken, isLoading, error: authError } = useAuthStore();
 
   const [email, setEmail] = useState("");

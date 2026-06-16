@@ -5,7 +5,8 @@ import {
   StyleSheet, SafeAreaView, Alert, ActivityIndicator, Platform,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 // try/catch: real module in EAS builds, no-op stub in Expo Go (native binary not bundled)
@@ -1201,7 +1202,7 @@ function createSecStyles(c: ColorPalette) {
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function MemberSettingsScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const route = useRoute<any>();
   const c = useColors();
   const mainStyles = useMemo(() => createMainStyles(c), [c]);

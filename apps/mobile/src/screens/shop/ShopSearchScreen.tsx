@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, space, radius, type ColorPalette } from "../../theme";
 import { MOBILE_API } from "../../api/client";
@@ -142,7 +142,7 @@ function createStyles(c: ColorPalette) {
 export default function ShopSearchScreen() {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);

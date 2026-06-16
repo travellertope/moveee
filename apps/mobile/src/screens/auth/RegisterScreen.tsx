@@ -12,7 +12,8 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import Svg, { Path, Circle, Rect, Line, Polyline } from "react-native-svg";
 import { api, CULTURE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
@@ -177,7 +178,7 @@ const pwS = StyleSheet.create({
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function RegisterScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   // Accept optional referral code passed from a deep link or share-link tap.
   const { params } = useRoute<any>();
   const referralCode: string = (params as any)?.referralCode ?? "";

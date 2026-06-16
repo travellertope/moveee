@@ -5,7 +5,8 @@ import {
   ActivityIndicator, useWindowDimensions, Share,
 } from "react-native";
 import { openInApp } from "../../utils/openInApp";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import RenderHtml from "react-native-render-html";
 import { useComments } from "../../features/community/useComments";
@@ -39,7 +40,7 @@ function SourcePreview({ item, styles }: { item: FeedItem; styles: ReturnType<ty
 
 export default function PulseDetailScreen() {
   const { params } = useRoute<any>();
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { width } = useWindowDimensions();
   const item: FeedItem = params?.item;
   const postId = item?.wpId ?? "";
