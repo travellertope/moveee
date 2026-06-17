@@ -464,8 +464,8 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           )}
 
           <div className="newsletter-card">
-            <div className="s-label">★ The Moveee Weekly</div>
-            <h4>Culture in your inbox, every Friday.</h4>
+            <div className="s-label">★ Culture Drop</div>
+            <h4>Culture in your inbox, every Tuesday.</h4>
             <p>Film picks, exhibition openings, music worth your time. No noise.</p>
             <NewsletterSubscribeWidget placeholder="your@email.com" buttonLabel="Subscribe free →" />
           </div>

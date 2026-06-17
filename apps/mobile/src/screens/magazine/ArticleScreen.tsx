@@ -870,6 +870,7 @@ export default function ArticleScreen() {
                       clap: (article as any).reactions?.clap ?? 0,
                     }}
                     noBorder
+                    commentCount={comments.length}
                     onCommentPress={scrollToComments}
                   />
                 </View>

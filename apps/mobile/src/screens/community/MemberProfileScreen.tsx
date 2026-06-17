@@ -251,7 +251,11 @@ export default function MemberProfileScreen() {
 
   return (
     <View style={styles.outerContainer}>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <LinearGradient
           colors={["#F3ECE0", "#E8D3BA", "#C5491F"]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -346,6 +350,7 @@ function createStyles(c: ColorPalette) {
     outerContainer: { flex: 1, backgroundColor: c.paper },
     container:      { flex: 1, backgroundColor: c.paper },
     scroll:         { flex: 1 },
+    scrollContent:  { flexGrow: 1 },
     center:         { flex: 1, justifyContent: "center", alignItems: "center" },
     errorText:      { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute },
     hero:           { width: "100%", height: 200 },
@@ -357,6 +362,7 @@ function createStyles(c: ColorPalette) {
     },
 
     profileCard: {
+      flexGrow: 1,
       backgroundColor: c.paper, borderTopLeftRadius: 20, borderTopRightRadius: 20,
       marginTop: -40, zIndex: 10, paddingBottom: 24, alignItems: "center",
     },

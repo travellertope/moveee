@@ -1559,11 +1559,21 @@ class Culture_REST_API {
         $name    = $request->get_param( 'name' ) ?: '';
         $list    = $request->get_param( 'list' ) ?: 'culture-drop';
         $segment = $request->get_param( 'segment' ) ?: '';
+        $tier    = $request->get_param( 'tier' ) ?: '';
 
         $allowed_lists = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes' );
         if ( ! in_array( $list, $allowed_lists, true ) ) {
             $list = 'culture-drop';
         }
+
+        $allowed_segments = array( 'us', 'uk', 'ng', 'gh', 'ca', 'au', '' );
+        if ( ! in_array( $segment, $allowed_segments, true ) ) {
+            $segment = '';
+        }
+
+        // 'patron' is the internal DB value for Connect Pro — stored as-is on the
+        // subscriber record so Pro-only newsletter campaigns can target it.
+        $is_pro = ( 'patron' === $tier );
 
         $subscribers = get_option( 'culture_newsletter_subscribers', array() );
 
@@ -1581,13 +1591,19 @@ class Culture_REST_API {
             $existing = $subscribers[ $found_idx ];
 
             if ( is_array( $existing ) ) {
-                // Already an object — add list if not present.
+                // Already an object — add list if not present, refresh segment/pro tag.
                 $lists = $existing['lists'] ?? array();
                 if ( ! in_array( $list, $lists, true ) ) {
                     $lists[] = $list;
                     $subscribers[ $found_idx ]['lists'] = $lists;
-                    update_option( 'culture_newsletter_subscribers', $subscribers, false );
                 }
+                if ( $segment ) {
+                    $subscribers[ $found_idx ]['segment'] = $segment;
+                }
+                if ( $tier ) {
+                    $subscribers[ $found_idx ]['pro'] = $is_pro;
+                }
+                update_option( 'culture_newsletter_subscribers', $subscribers, false );
             } else {
                 // Upgrade legacy plain-string to object, add new list.
                 $subscribers[ $found_idx ] = array(
@@ -1596,6 +1612,7 @@ class Culture_REST_API {
                     'date'    => current_time( 'mysql' ),
                     'lists'   => array( 'getmelit', $list ),
                     'segment' => $segment,
+                    'pro'     => $is_pro,
                 );
                 update_option( 'culture_newsletter_subscribers', $subscribers, false );
             }
@@ -1613,6 +1630,7 @@ class Culture_REST_API {
             'date'    => current_time( 'mysql' ),
             'lists'   => array( $list ),
             'segment' => $segment,
+            'pro'     => $is_pro,
         );
         update_option( 'culture_newsletter_subscribers', $subscribers, false );
 

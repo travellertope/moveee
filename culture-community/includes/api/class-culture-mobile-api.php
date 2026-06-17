@@ -1324,7 +1324,7 @@ class Culture_Mobile_API {
         return rest_ensure_response( array( 'options' => $options ) );
     }
 
-    const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote' );
+    const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote', 'post' );
 
     public static function handle_react( $request ) {
         $user_id = get_current_user_id();

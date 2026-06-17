@@ -90,15 +90,16 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   toggleWishlist: (item) =>
     set((s) => {
-      const exists = s.wishlist.some((w) => w.id === item.id);
+      const id = Number(item.id);
+      const exists = s.wishlist.some((w) => Number(w.id) === id);
       const wishlist = exists
-        ? s.wishlist.filter((w) => w.id !== item.id)
-        : [...s.wishlist, item];
+        ? s.wishlist.filter((w) => Number(w.id) !== id)
+        : [...s.wishlist, { ...item, id }];
       saveWishlist(wishlist);
       return { wishlist };
     }),
 
-  isWishlisted: (id) => get().wishlist.some((w) => w.id === id),
+  isWishlisted: (id) => get().wishlist.some((w) => Number(w.id) === Number(id)),
 
   // legacy compat used by older screens
   setItemCount: (n) => set({ itemCount: n }),
