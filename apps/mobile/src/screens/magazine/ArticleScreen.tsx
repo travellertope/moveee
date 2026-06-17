@@ -16,7 +16,8 @@ import {
   TextInput,
   KeyboardAvoidingView,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import RenderHtml from "react-native-render-html";
 import { LinearGradient } from "expo-linear-gradient";
@@ -165,7 +166,7 @@ function extractHeadings(html: string): Array<{ id: string; text: string; level:
 }
 
 function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPalette }) {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { width } = useWindowDimensions();
   const contentWidth = width - 64;
   const HTML_TAG_STYLES = useMemo(() => makeHtmlTagStyles(c), [c]);
@@ -644,7 +645,7 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
 // acStyles is intentionally empty — comment styles now live in createStyles(c) as cm_* keys
 
 export default function ArticleScreen() {
-  const nav   = useNavigation<any>();
+  const nav   = useNav();
   const route = useRoute<any>();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);

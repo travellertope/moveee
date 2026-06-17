@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { useCartStore } from "../../store/cartStore";
 import { useAuthStore } from "../../auth/authStore";
 import { useColors } from "../../hooks/useColors";
@@ -26,7 +26,7 @@ const CHECKOUT_BASE = "https://cms.themoveee.com/checkout";
 const PRO_DISCOUNT_RATE = 0.10;
 
 export default function CartScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { user } = useAuthStore();
   const { items, removeItem, updateQty, clearCart } = useCartStore();
   const c = useColors();

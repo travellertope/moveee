@@ -5,7 +5,8 @@ import {
   TextInput, StatusBar,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "../../auth/authStore";
@@ -42,7 +43,7 @@ function fmtTime(d: string | null): string {
 }
 
 export default function EventDetailScreen() {
-  const nav    = useNavigation<any>();
+  const nav    = useNav();
   const route  = useRoute<any>();
   const { event } = route.params as { event: EventItem };
   const { user }  = useAuthStore();

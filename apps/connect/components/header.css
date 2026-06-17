@@ -267,11 +267,13 @@
   background: rgba(20, 17, 13, 0.35);
   z-index: 150;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.2s;
 }
 
 .ch-mobile-overlay.open {
   opacity: 1;
+  pointer-events: auto;
 }
 
 /* ── Mobile nav drawer ── */

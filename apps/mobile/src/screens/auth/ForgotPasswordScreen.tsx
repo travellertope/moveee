@@ -12,9 +12,8 @@ import {
   Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import Svg, { Rect, Path, Circle, Polyline } from "react-native-svg";
-import { api } from "../../api/client";
 
 const PROXY = "https://themoveee.com/api";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
@@ -100,7 +99,7 @@ const envS = StyleSheet.create({
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function ForgotPasswordScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
 
   const [email, setEmail] = useState("");
   const [focused, setFocused] = useState(false);
@@ -116,10 +115,26 @@ export default function ForgotPasswordScreen() {
     }
     setLoading(true);
     try {
-      await api.post(`${PROXY}/forgot-password`, { email: email.trim() }, false);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      const res = await fetch(`${PROXY}/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.message ?? "Something went wrong. Please try again.");
+      }
       setSent(true);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+    } catch (e: any) {
+      if (e?.name === "AbortError") {
+        setError("Request timed out. Please check your connection and try again.");
+      } else {
+        setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

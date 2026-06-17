@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { api, WP_URL } from "../../api/client";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
@@ -130,7 +130,7 @@ function RelatedSeriesSection({ styles, c }: { styles: ReturnType<typeof createS
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function MagazineSearchScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 

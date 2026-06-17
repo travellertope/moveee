@@ -4,7 +4,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { openInApp } from "../../utils/openInApp";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
 import { fonts, fontSize, space, radius } from "../../theme";
@@ -35,7 +35,7 @@ const PRO_PERKS = [
 ];
 
 export default function MembershipScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { user, isAuthenticated } = useAuthStore();
   const isPro = user?.tier === "patron";
 

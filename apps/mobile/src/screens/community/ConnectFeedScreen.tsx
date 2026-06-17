@@ -11,7 +11,8 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useUnifiedFeed } from "../../features/community/useUnifiedFeed";
 import { useNotificationCount } from "../../features/notifications/useNotificationCount";
@@ -70,7 +71,7 @@ function matchesCategory(item: FeedItem, category: string): boolean {
 const TRENDING_COLORS = ["#C5491F", "#7C3AED", "#065F46"];
 
 export default function ConnectFeedScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const route = useRoute<any>();
   const { user } = useAuthStore();
   const c = useColors();
@@ -203,10 +204,7 @@ export default function ConnectFeedScreen() {
       setSheetItem(item);
       return;
     }
-    if (item.type === "pulse") {
-      nav.navigate("PulseDetail", { item });
-      return;
-    }
+
     if (item.type === "editorial") {
       // Stay within ConnectStack so back → feed and Magazine tab is never polluted.
       nav.navigate("Article", { slug: item.slug });
@@ -222,11 +220,11 @@ export default function ConnectFeedScreen() {
         item={item}
         onPress={() => openItem(item)}
         onAuthorPress={
-          item.type === "community" && (item as any).communityAuthorId
+          item.type === "community" && item.communityAuthorId
             ? () =>
                 nav.navigate("MemberProfile", {
-                  userId: (item as any).communityAuthorId,
-                  username: (item as any).communityAuthorUsername ?? "",
+                  userId: item.communityAuthorId!,
+                  username: item.communityAuthorUsername ?? "",
                 })
             : undefined
         }

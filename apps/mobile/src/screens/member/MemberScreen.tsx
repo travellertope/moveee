@@ -1,13 +1,13 @@
 import React from "react";
 import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
 import TierBadge from "../../components/ui/TierBadge";
 import Avatar from "../../components/ui/Avatar";
 
 export default function MemberScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { user, logout } = useAuthStore();
 
   if (!user) return null;

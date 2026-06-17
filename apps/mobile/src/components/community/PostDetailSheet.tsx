@@ -11,10 +11,12 @@ import {
   Share,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNav } from "../../hooks/useNav";
 import BottomSheet from "../ui/BottomSheet";
 import SheetErrorState from "../ui/SheetErrorState";
 import ReportPostSheet from "./ReportPostSheet";
 import ImageLightbox from "../ui/ImageLightbox";
+import HashtagText from "./HashtagText";
 import { useColors } from "../../hooks/useColors";
 import { useAuthStore } from "../../auth/authStore";
 import { useComments } from "../../features/community/useComments";
@@ -334,14 +336,11 @@ function CommentsSection({ postId, c, styles }: { postId: string; c: ColorPalett
 
 // ── Template bodies ─────────────────────────────────────────────────────────────
 
-function TemplatePost({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+function TemplatePost({ item, c, styles, onMentionPress }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles>; onMentionPress?: (username: string) => void }) {
   return (
     <>
-      {item.body ? <Text style={styles.bodyText}>{item.body}</Text>
-        : item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text>
-        : null}
+      {item.title ? <HashtagText text={item.title} style={styles.bodyText} onMentionPress={onMentionPress} /> : null}
       {item.image ? <TappableHero uri={item.image} /> : null}
-      {item.excerpt ? <Text style={styles.hashtags}>{item.excerpt}</Text> : null}
     </>
   );
 }
@@ -350,14 +349,14 @@ function TemplateHiddenGem({ item, c, styles }: { item: FeedItem; c: ColorPalett
   const images = item.galleryImages ?? [];
   return (
     <>
-      <Text style={styles.serifTitle}>{item.placeName ?? item.title}</Text>
+      {item.placeName ? <Text style={styles.serifTitle}>{item.placeName}</Text> : null}
       {(item.placeLocation ?? item.locationName) ? (
         <View style={styles.locationRow}>
           <Text style={{ fontSize: 14 }}>📍</Text>
           <Text style={styles.locationText}>{item.placeLocation ?? item.locationName}</Text>
         </View>
       ) : null}
-      {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
+      {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
       {item.linkedDirectoryId ? (
         <View style={styles.directoryChip}>
           <Ionicons name="grid-outline" size={12} color={c.gold} />
@@ -390,7 +389,7 @@ function TemplateCulturalTake({ item, c, styles }: { item: FeedItem; c: ColorPal
       <View style={styles.takeHeadlineBlock}>
         <Text style={styles.takeHeadline}>{item.culturalTakeHeadline ?? item.title}</Text>
       </View>
-      {(item.body ?? item.excerpt) ? <Text style={styles.bodyText}>{item.body ?? item.excerpt}</Text> : null}
+      {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
       <TouchableOpacity style={styles.agreeChip}>
         <Text style={styles.agreeChipText}>Do you agree? →</Text>
       </TouchableOpacity>
@@ -461,7 +460,7 @@ function TemplateFoodReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
           </View>
         </View>
       ) : null}
-      {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
+      {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
     </>
   );
 }
@@ -480,7 +479,7 @@ function TemplateCreativeShowcase({ item, c, styles }: { item: FeedItem; c: Colo
         ? <GalleryGrid images={images} />
         : item.image ? <TappableHero uri={item.image} /> : null
       }
-      {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
+      {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
       {item.showcaseCollaborator ? (
         <View style={[styles.tagRow, { backgroundColor: c.paperWarm, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8, alignItems: "center" }]}>
           <Text style={{ fontSize: 14 }}>🤝</Text>
@@ -541,7 +540,6 @@ function TemplatePoll({ item, c, styles }: { item: FeedItem; c: ColorPalette; st
         )}
       </View>
       {item.pollDescription ? <Text style={styles.bodyText}>{item.pollDescription}</Text> : null}
-      {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
     </>
   );
 }
@@ -634,7 +632,7 @@ function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
           </View>
         ) : null}
       </View>
-      {item.excerpt ? <Text style={styles.bodyText}>{item.excerpt}</Text> : null}
+      {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
       <View style={styles.proPerk}>
         <Text style={[styles.proPerkText, { color: c.gold, marginRight: 6 }]}>★</Text>
         <Text style={styles.proPerkText}>Pro Members: Early entry + priority access.</Text>
@@ -650,8 +648,7 @@ function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
 }
 
 function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
-  const sharingReason = item.quoteSharingReason || item.body || item.excerpt;
-  const posterName = item.authorName ?? "Their note";
+  const sharerFirstName = item.communityAuthor?.split(" ")[0] ?? "Their";
   const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : undefined;
 
   const handleShare = async () => {
@@ -662,24 +659,30 @@ function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
       });
     } catch { /* dismissed */ }
   };
-
   return (
     <>
       <View style={styles.quoteBlock}>
         <Text style={styles.quoteMark}>"</Text>
         <Text style={styles.quoteText}>{item.title}</Text>
-        <View style={styles.divider} />
+        <Text style={[styles.quoteMark, { textAlign: "right" as const, fontSize: 36, lineHeight: 28 }]}>"</Text>
+      </View>
+      {(item.quoteAuthor || item.quoteSource) ? (
         <View style={styles.quoteAttrib}>
-          <Text style={styles.quoteAuthor}>{item.quoteAuthor ?? "Unknown"}</Text>
+          {item.quoteAuthor ? (
+            <Text style={styles.quoteAuthor}>{item.quoteAuthor}</Text>
+          ) : null}
           {item.quoteSource ? (
-            <Text style={styles.quoteSource}>{item.quoteSource}</Text>
+            <View style={{ flexDirection: "row" as const, alignItems: "center" as const, gap: 4, marginTop: 4 }}>
+              <Ionicons name="mic-outline" size={12} color={c.ghost} />
+              <Text style={styles.quoteSource}>{item.quoteSource}</Text>
+            </View>
           ) : null}
         </View>
-      </View>
-      {sharingReason ? (
+      ) : null}
+      {item.quoteSharingReason ? (
         <View style={styles.posterNote}>
-          <Text style={styles.posterNoteLabel}>💬 {posterName}'s note:</Text>
-          <Text style={styles.bodyText}>{sharingReason}</Text>
+          <Text style={styles.posterNoteLabel}>💬 {sharerFirstName.toUpperCase()}'S NOTE:</Text>
+          <Text style={styles.bodyText}>{item.quoteSharingReason}</Text>
         </View>
       ) : null}
       <View style={styles.sharePrompt}>
@@ -761,10 +764,8 @@ function TemplateBookReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
         </View>
       ) : null}
 
-      {/* Review text — body takes priority; fall back to excerpt */}
-      {(item.body || item.excerpt) ? (
-        <Text style={[styles.bodyText, { marginBottom: 12 }]}>{item.body || item.excerpt}</Text>
-      ) : null}
+      {/* Review text */}
+      {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
 
       {/* Favourite quote */}
       {item.bookFavQuote ? (
@@ -794,12 +795,15 @@ interface PostDetailSheetProps {
   item: FeedItem | null;
   visible: boolean;
   onClose: () => void;
+  onMentionPress?: (username: string) => void;
 }
 
-export default function PostDetailSheet({ item, visible, onClose }: PostDetailSheetProps) {
+export default function PostDetailSheet({ item, visible, onClose, onMentionPress }: PostDetailSheetProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const [reportOpen, setReportOpen] = useState(false);
+  const nav = useNav();
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   if (!item) {
     return (
@@ -825,7 +829,7 @@ export default function PostDetailSheet({ item, visible, onClose }: PostDetailSh
       case "event":             return <TemplateEvent item={item} c={c} styles={styles} />;
       case "book-review":       return <TemplateBookReview item={item} c={c} styles={styles} />;
       case "quote":             return <TemplateQuote item={item} c={c} styles={styles} />;
-      default:                  return <TemplatePost item={item} c={c} styles={styles} />;
+      default:                  return <TemplatePost item={item} c={c} styles={styles} onMentionPress={handleMentionPress} />;
     }
   };
 

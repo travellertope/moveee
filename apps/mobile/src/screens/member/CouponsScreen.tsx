@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
   ActivityIndicator, TouchableOpacity,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import QRCode from "react-native-qrcode-svg";
 import { api, MOBILE_API } from "../../api/client";
@@ -101,7 +101,7 @@ function CouponCard({ redemption, styles, c }: { redemption: Redemption; styles:
 }
 
 export default function CouponsScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [loading,     setLoading]     = useState(true);
 

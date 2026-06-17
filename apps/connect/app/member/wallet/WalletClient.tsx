@@ -223,6 +223,7 @@ export default function WalletClient({
               </a>
             </div>
           ) : (
+          <>
           <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 8px", lineHeight: 1.5 }}>
             Minimum 100 credits. A flat 40% fee applies.
             Partner perks are fee-free —{" "}
@@ -367,6 +368,7 @@ export default function WalletClient({
               </button>
             </form>
           )}
+          </>
           )}
         </section>
       )}

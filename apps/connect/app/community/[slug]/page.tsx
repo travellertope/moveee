@@ -4,7 +4,6 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCommunityPostBySlug, getAllCommunitySlugs, getPostComments } from "@/lib/community-wordpress";
-import { parseHashtags } from "@/lib/hashtags";
 import CommunityPostClient from "./CommunityPostClient";
 import "@/app/pulse-layout.css";
 
@@ -42,13 +41,11 @@ export async function generateMetadata({
   const tag     = post.meta.community_tag ?? "";
   const image   = post.meta.community_image_url || `${SITE_URL}/og-fallback.png`;
   const url     = `${SITE_URL}/community/${post.slug}`;
-  const hashtags = parseHashtags(rawText);
-
   return {
     title: `${title} — Moveee Community`,
     description,
     authors: [{ name: author }],
-    keywords: [tag, ...hashtags].filter(Boolean),
+    keywords: [tag].filter(Boolean),
     openGraph: {
       title, description, url, siteName: "The Moveee",
       images: [{ url: image, width: 1200, height: 630, alt: title }],
@@ -86,7 +83,6 @@ export default async function CommunityPostPage({
   const author   = post.meta.community_author_name ?? "Community Member";
   const tag      = post.meta.community_tag ?? "";
   const image    = post.meta.community_image_url ?? null;
-  const hashtags = parseHashtags(rawText);
   const initials = author.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
   const url      = `${SITE_URL}/community/${post.slug}`;
 
@@ -129,7 +125,7 @@ export default async function CommunityPostPage({
       },
     },
     ...(image ? { image: { "@type": "ImageObject", url: image } } : {}),
-    keywords: [tag, ...hashtags].filter(Boolean).join(", "),
+    keywords: [tag].filter(Boolean).join(", "),
   };
 
   return (
@@ -260,7 +256,6 @@ export default async function CommunityPostPage({
                 {/* Post text + reactions + comments (client) */}
                 <CommunityPostClient
                   text={rawText}
-                  hashtags={hashtags}
                   wpId={String(post.id)}
                   postId={post.id}
                   initialReactions={{
@@ -289,24 +284,6 @@ export default async function CommunityPostPage({
                   ogImage={ogImage}
                 />
 
-                {/* Hashtags */}
-                {hashtags.length > 0 && (
-                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "1rem" }}>
-                    {hashtags.map((ht) => (
-                      <Link
-                        key={ht}
-                        href={`/connect?hashtag=${encodeURIComponent(ht)}`}
-                        style={{
-                          color: "#b38238", fontSize: "0.78rem", fontWeight: 600,
-                          textDecoration: "none", background: "#fdf5e6",
-                          padding: "0.2rem 0.55rem",
-                        }}
-                      >
-                        #{ht}
-                      </Link>
-                    ))}
-                  </div>
-                )}
               </div>
             </article>
           </main>

@@ -67,10 +67,10 @@ function stripTrailingUrl(text: string, sourceUrl?: string): string {
 interface CommunityDetailModalProps {
   item: FeedItem;
   onClose: () => void;
-  onHashtagClick?: (hashtag: string) => void;
+  onMentionClick?: (username: string) => void;
 }
 
-export default function CommunityDetailModal({ item, onClose, onHashtagClick }: CommunityDetailModalProps) {
+export default function CommunityDetailModal({ item, onClose, onMentionClick }: CommunityDetailModalProps) {
   const [comments, setComments] = useState<WpComment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -249,7 +249,7 @@ export default function CommunityDetailModal({ item, onClose, onHashtagClick }: 
             wordBreak: "break-word",
             overflowWrap: "break-word",
           }}>
-            <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onHashtagClick={onHashtagClick} />
+            <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onMentionClick={onMentionClick} />
           </div>
 
           {/* Food review ratings */}

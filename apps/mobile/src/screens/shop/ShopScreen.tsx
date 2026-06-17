@@ -4,7 +4,7 @@ import {
   FlatList, ActivityIndicator, Image, ImageBackground,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
@@ -239,7 +239,7 @@ const CATEGORIES_STATIC = [
 ];
 
 export default function ShopScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { user } = useAuthStore();
   const { itemCount, wishlist } = useCartStore();
   const wishlistCount = wishlist.length;

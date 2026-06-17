@@ -11,7 +11,7 @@ import { colors, fonts, fontSize, space, radius } from "../../theme";
 interface DirectoryEntry {
   id: number;
   title: string;
-  entry_type: string;
+  type: string;
   city?: string;
 }
 
@@ -19,11 +19,13 @@ interface Props {
   onSelect: (entry: DirectoryEntry) => void;
   selected?: DirectoryEntry | null;
   label?: string;
+  /** Optional slug to pass as ?type= to the backend search endpoint */
+  typeFilter?: string;
 }
 
 let debounceTimer: ReturnType<typeof setTimeout>;
 
-export default function DirectorySearch({ onSelect, selected, label }: Props) {
+export default function DirectorySearch({ onSelect, selected, label, typeFilter }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DirectoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,8 +42,11 @@ export default function DirectorySearch({ onSelect, selected, label }: Props) {
     debounceTimer = setTimeout(async () => {
       setLoading(true);
       try {
+        const qs = typeFilter
+          ? `q=${encodeURIComponent(q)}&type=${encodeURIComponent(typeFilter)}`
+          : `q=${encodeURIComponent(q)}`;
         const data = await api.get<DirectoryEntry[]>(
-          `${CULTURE_API}/directory/search?q=${encodeURIComponent(q)}`,
+          `${CULTURE_API}/directory/search?${qs}`,
           false
         );
         setResults(data ?? []);

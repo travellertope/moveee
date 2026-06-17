@@ -1,4 +1,3 @@
-import * as WebBrowser from "expo-web-browser";
 import { Linking } from "react-native";
 
 const MOVEEE_DOMAINS = [
@@ -17,23 +16,19 @@ function isMoveeeUrl(url: string): boolean {
   }
 }
 
-/**
- * Opens a URL. Moveee domains open in an in-app browser (Safari View Controller /
- * Chrome Custom Tab) so users never leave the app. All other domains open in the
- * system browser via Linking.
- */
 export async function openInApp(url: string): Promise<void> {
   if (!url) return;
   if (isMoveeeUrl(url)) {
-    await WebBrowser.openBrowserAsync(url, {
-      // Brand the in-app browser with Moveee gold
-      toolbarColor: "#b38238",
-      controlsColor: "#ffffff",
-      enableBarCollapsing: true,
-    }).catch(() => {
-      // Fallback to system browser if WebBrowser fails
+    try {
+      const WebBrowser = await import("expo-web-browser");
+      await WebBrowser.openBrowserAsync(url, {
+        toolbarColor: "#b38238",
+        controlsColor: "#ffffff",
+        enableBarCollapsing: true,
+      });
+    } catch {
       Linking.openURL(url).catch(() => {});
-    });
+    }
   } else {
     Linking.openURL(url).catch(() => {});
   }

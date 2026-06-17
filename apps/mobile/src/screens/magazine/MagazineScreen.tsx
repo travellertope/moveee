@@ -11,8 +11,8 @@ import {
   ScrollView,
   TextInput,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNav } from "../../hooks/useNav";
 import { useMagazine, type MagazineSection } from "../../features/magazine/useMagazine";
 import { useNewsletters, type NewsletterSummary } from "../../features/magazine/useNewsletters";
 import type { Article } from "../../types";
@@ -320,7 +320,7 @@ function SeriesStrip({ styles }: { styles: ReturnType<typeof createStyles> }) {
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function MagazineScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { featured, sections, loading, error, refresh } = useMagazine();
   const { newsletters } = useNewsletters();
   const c = useColors();

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useRef, useMemo, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { parseHashtags } from "@/lib/hashtags";
 import SourcePreviewCard from "./SourcePreviewCard";
 import StarRating from "@/components/composer/StarRating";
 import MultiRating from "@/components/composer/MultiRating";
@@ -112,19 +111,6 @@ const MAX_CHARS: Record<string, number> = {
   "creative-showcase": 500, poll: 280, itinerary: 300, event: 1000, quote: 600,
 };
 
-function HashtagPreview({ text }: { text: string }) {
-  const tags = useMemo(() => parseHashtags(text), [text]);
-  if (!tags.length) return null;
-  return (
-    <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
-      {tags.map(tag => (
-        <span key={tag} style={{ color: "#b38238", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.04em" }}>
-          #{tag}
-        </span>
-      ))}
-    </div>
-  );
-}
 
 interface SubmitPostProps {
   onPosted?: (item: { id: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null; galleryImages?: string[]; templateType?: string }) => void;
@@ -709,7 +695,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               rows={template === "cultural-take" ? 6 : template === "creative-showcase" ? 2 : 4}
               className={`composer-textarea${template === "quote" ? " composer-textarea--italic" : ""}`}
             />
-            <HashtagPreview text={text} />
 
             {/* Quote author/source */}
             {template === "quote" && (
@@ -816,8 +801,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
             )}
 
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" ? handleGalleryChange : handleFileChange}
-              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review"}
+              onChange={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take" ? handleGalleryChange : handleFileChange}
+              multiple={template !== "event" && template !== "poll" && template !== "quote" && template !== "cultural-take"}
               style={{ display: "none" }}
             />
 
@@ -843,7 +828,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               )}
 
               {/* Image button (not for poll, quote, cultural-take, book-review) */}
-              {template !== "poll" && template !== "quote" && template !== "cultural-take" && template !== "book-review" && (
+              {template !== "poll" && template !== "quote" && template !== "cultural-take" && (
                 <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}

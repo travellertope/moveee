@@ -3,7 +3,7 @@ import {
   View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity,
   FlatList, ActivityIndicator,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
@@ -66,7 +66,7 @@ function timeAgo(dateStr: string): string {
 type Tab = "articles" | "quotes" | "posts";
 
 export default function SavedArticlesScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const user = useAuthStore((s) => s.user);
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);

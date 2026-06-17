@@ -384,8 +384,38 @@ Endpoints that depend on WP logic and must stay on `WP_Query`/`get_user_meta`:
 
 ## Git branch
 
-Active development branch: `claude/admiring-dirac-lgzivc`
-Always commit and push to this branch.
+Active development branch: `claude/sweet-ritchie-xr21c3` (merged to main 2026-06-15)
+New work: create a fresh branch from main or use whatever branch is specified at session start.
+
+---
+
+## @mentions system (June 2026)
+
+Hashtags removed entirely. @mentions implemented end-to-end.
+
+### Mobile composer
+- `components/composer/MentionInput.tsx` — drop-in TextInput replacement; detects `@word` at cursor, debounced search (300ms) to `GET /culture/v1/mobile/members?search=...`, shows suggestion dropdown above input, inserts `@username ` on select
+- All 10 post template main text areas use `MentionInput` (not plain `TextInput`)
+- `components/composer/UserSearch.tsx` — also uses `/mobile/members` (NOT `/culture/v1/members` which is API-key-only)
+- **Critical**: `/culture/v1/members` requires API key (server-side). Mobile must use `/culture/v1/mobile/members` (JWT Bearer). Wrong endpoint → 401 → auto-logout
+
+### Mobile display
+- `components/community/HashtagText.tsx` — repurposed to parse `@username` tokens (not `#hashtag`). Renders in `colors.gold + fonts.sansBold`. Prop: `onMentionPress?: (username) => void` (was `onHashtagPress`)
+- `FeedItemCard.tsx` + `PostDetailSheet.tsx` — pass `onMentionPress` → `nav.navigate("MemberProfile", { username })`
+
+### Web display
+- `packages/shared/components/pulse/HashtagText.tsx` — same repurpose. Prop: `onMentionClick?: (username) => void`
+- `FeedCard.tsx`, `CommunityDetailModal.tsx` — navigate to `/${username}` on mention tap
+
+### PHP notifications
+- `class-culture-notifications.php` — added `'mention' => 'You were mentioned'` to TYPES
+- `class-culture-mobile-api.php` `handle_submit_post()` — extracts `@username` via `preg_match_all`, calls `Culture_Notifications::add()` for each mentioned user (skips self-mentions)
+- `class-culture-rest-api.php` — same mention extraction on web post submit
+
+### Removed (hashtags)
+- Deleted: `apps/site/app/pulse/hashtag/`, `apps/connect/app/pulse/hashtag/`, `packages/shared/components/pulse/HashtagFeed.tsx`, `packages/utils/hashtags.ts`
+- Removed `HashtagPreview` from `SubmitPost.tsx`
+- Removed `#` toolbar button from `NewPostScreen.tsx`
 
 ---
 
@@ -987,6 +1017,16 @@ All other post templates submit to `${CULTURE_API}/community/submit` (WordPress 
 - AnalyticsScreen uses `react-native-svg` for SVG bar/line charts — no external charting lib
 - Notification bell polls `/api/notifications/count` every 30s via `useNotificationCount` hook
 - "For You" badge on community cards: ochre `badgePulseBg` background, `badgePulseText` colour
+
+### Expo SDK version — critical
+The mobile app uses **Expo SDK 52** (not 54). The lockfile is the source of truth.
+- `expo: ~52.0.0`, `react: 18.3.1`, `react-native: 0.76.9`
+- `react-native-passkeys` must be pinned to `0.4.0` (0.4.1 requires Expo 53+)
+- **Always regenerate `package-lock.json` from scratch** after changing `package.json` —
+  EAS Build uses `npm ci` which only installs what's in the lockfile. If a package is in
+  `package.json` but not in the lockfile, it won't be installed.
+- To regenerate: `cd /tmp && cp apps/mobile/package.json . && npm install --package-lock-only && cp package-lock.json apps/mobile/`
+  (must be outside the monorepo to avoid workspace interference)
 
 ### Key gotchas
 - The RN app calls **WordPress REST directly** for most endpoints. Wallet/Perks/Passkey endpoints require `CULTURE_API_SECRET` so those must go through Next.js proxy routes at `https://themoveee.com/api/...`

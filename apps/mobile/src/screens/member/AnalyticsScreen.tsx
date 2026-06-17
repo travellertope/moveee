@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
   ActivityIndicator, TouchableOpacity,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, {
   Rect, Line, Polyline, Path, Circle,
@@ -167,7 +167,7 @@ function LineChart({ months, c }: { months: AnalyticsData["rep_months"]; c: Colo
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function AnalyticsScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const [data,    setData]    = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState("");

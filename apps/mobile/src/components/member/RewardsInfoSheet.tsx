@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  ActivityIndicator, Modal, SafeAreaView,
+  ActivityIndicator, Modal, Dimensions,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, space, radius, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 
 const PROXY = "https://themoveee.com/api";
+const SHEET_MAX_H = Dimensions.get("window").height * 0.85;
 
 interface Action {
   action: string;
@@ -36,12 +38,11 @@ function createStyles(c: ColorPalette) {
   return StyleSheet.create({
     overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
     backdropTap: { flex: 1 },
-    sheetWrap: { maxHeight: "85%" },
     sheet: {
       backgroundColor: c.paper,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
-      flex: 1,
+      maxHeight: SHEET_MAX_H,
     },
     handle: {
       width: 36, height: 4, borderRadius: 2,
@@ -150,99 +151,97 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.backdropTap} activeOpacity={1} onPress={onClose} />
-        <SafeAreaView style={styles.sheetWrap}>
-          <View style={styles.sheet}>
-              <View style={styles.handle} />
-              <View style={styles.header}>
-                <Text style={styles.title}>How Rewards Work</Text>
-                <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                  <Ionicons name="close" size={22} color={c.mute} />
-                </TouchableOpacity>
-              </View>
+        <View style={styles.sheet}>
+          <View style={styles.handle} />
+          <View style={styles.header}>
+            <Text style={styles.title}>How Rewards Work</Text>
+            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+              <Ionicons name="close" size={22} color={c.mute} />
+            </TouchableOpacity>
+          </View>
 
-              <View style={styles.tabs}>
-                {(["credits", "reputation"] as Tab[]).map((t) => (
-                  <TouchableOpacity key={t} style={[styles.tab, tab === t && styles.tabActive]} onPress={() => setTab(t)}>
-                    <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-                      {t === "credits" ? "Credits" : "Reputation"}
+          <View style={styles.tabs}>
+            {(["credits", "reputation"] as Tab[]).map((t) => (
+              <TouchableOpacity key={t} style={[styles.tab, tab === t && styles.tabActive]} onPress={() => setTab(t)}>
+                <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
+                  {t === "credits" ? "Credits" : "Reputation"}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {loading ? (
+            <View style={styles.loader}><ActivityIndicator color={c.ochre} /></View>
+          ) : (
+            <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+              {intro ? <Text style={styles.intro}>{intro}</Text> : null}
+              {tab === "credits" ? (
+                <>
+                  <View style={styles.capBanner}>
+                    <Ionicons name="flash" size={16} color="#92400e" />
+                    <Text style={styles.capText}>
+                      Daily cap:{" "}
+                      <Text style={styles.capBold}>{config?.daily_cap ?? 50} credits</Text>
+                      {" "}— resets at midnight UTC.
                     </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {loading ? (
-                <View style={styles.loader}><ActivityIndicator color={c.ochre} /></View>
+                  </View>
+                  <Text style={styles.sectionTitle}>Earn Credits</Text>
+                  {creditActions.map((a) => (
+                    <View key={a.action} style={styles.row}>
+                      <Text style={styles.rowLabel}>{a.label}</Text>
+                      <View style={[styles.badge, styles.badgeCredit]}>
+                        <Text style={[styles.badgeText, styles.badgeCreditText]}>+{a.credits}</Text>
+                      </View>
+                    </View>
+                  ))}
+                  <Text style={[styles.sectionTitle, { marginTop: space[5] }]}>Spend Credits</Text>
+                  {[
+                    "Redeem partner perks in the Perks tab",
+                    "Cash out to GBP/USD/NGN (Connect Pro only)",
+                  ].map((item) => (
+                    <View key={item} style={styles.row}>
+                      <Text style={styles.rowLabel}>{item}</Text>
+                    </View>
+                  ))}
+                </>
               ) : (
-                <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-                  {intro ? <Text style={styles.intro}>{intro}</Text> : null}
-                  {tab === "credits" ? (
-                    <>
-                      <View style={styles.capBanner}>
-                        <Ionicons name="flash" size={16} color="#92400e" />
-                        <Text style={styles.capText}>
-                          Daily cap:{" "}
-                          <Text style={styles.capBold}>{config?.daily_cap ?? 50} credits</Text>
-                          {" "}— resets at midnight UTC.
-                        </Text>
+                <>
+                  <View style={styles.capBanner}>
+                    <Ionicons name="trending-up" size={16} color="#5b21b6" />
+                    <Text style={styles.capText}>
+                      Reputation is <Text style={styles.capBold}>permanent</Text> — it never decreases and cannot be spent. It unlocks higher tiers and privileges.
+                    </Text>
+                  </View>
+                  <Text style={styles.sectionTitle}>Earn Reputation</Text>
+                  {repActions.map((a) => (
+                    <View key={a.action} style={styles.row}>
+                      <Text style={styles.rowLabel}>{a.label}</Text>
+                      <View style={[styles.badge, styles.badgeRep]}>
+                        <Text style={[styles.badgeText, styles.badgeRepText]}>+{a.rep} REP</Text>
                       </View>
-                      <Text style={styles.sectionTitle}>Earn Credits</Text>
-                      {creditActions.map((a) => (
-                        <View key={a.action} style={styles.row}>
-                          <Text style={styles.rowLabel}>{a.label}</Text>
-                          <View style={[styles.badge, styles.badgeCredit]}>
-                            <Text style={[styles.badgeText, styles.badgeCreditText]}>+{a.credits}</Text>
-                          </View>
-                        </View>
-                      ))}
-                      <Text style={[styles.sectionTitle, { marginTop: space[5] }]}>Spend Credits</Text>
-                      {[
-                        "Redeem partner perks in the Perks tab",
-                        "Cash out to GBP/USD/NGN (Connect Pro only)",
-                      ].map((item) => (
-                        <View key={item} style={styles.row}>
-                          <Text style={styles.rowLabel}>{item}</Text>
-                        </View>
-                      ))}
-                    </>
-                  ) : (
-                    <>
-                      <View style={styles.capBanner}>
-                        <Ionicons name="trending-up" size={16} color="#5b21b6" />
-                        <Text style={styles.capText}>
-                          Reputation is <Text style={styles.capBold}>permanent</Text> — it never decreases and cannot be spent. It unlocks higher tiers and privileges.
-                        </Text>
+                    </View>
+                  ))}
+                  <Text style={[styles.sectionTitle, { marginTop: space[5] }]}>Reputation Tiers</Text>
+                  {(config?.tiers ?? []).map((tier) => (
+                    <View key={tier.slug} style={styles.tierCard}>
+                      <View style={styles.tierHeader}>
+                        <Text style={styles.tierName}>{tier.label}</Text>
+                        <Text style={styles.tierRep}>{tier.min_rep.toLocaleString()} REP</Text>
                       </View>
-                      <Text style={styles.sectionTitle}>Earn Reputation</Text>
-                      {repActions.map((a) => (
-                        <View key={a.action} style={styles.row}>
-                          <Text style={styles.rowLabel}>{a.label}</Text>
-                          <View style={[styles.badge, styles.badgeRep]}>
-                            <Text style={[styles.badgeText, styles.badgeRepText]}>+{a.rep} REP</Text>
-                          </View>
+                      <Text style={styles.tierPerks}>{tier.perks}</Text>
+                      {tier.nomination_only && (
+                        <View style={styles.nomChip}>
+                          <Text style={styles.nomText}>Nomination only</Text>
                         </View>
-                      ))}
-                      <Text style={[styles.sectionTitle, { marginTop: space[5] }]}>Reputation Tiers</Text>
-                      {(config?.tiers ?? []).map((tier) => (
-                        <View key={tier.slug} style={styles.tierCard}>
-                          <View style={styles.tierHeader}>
-                            <Text style={styles.tierName}>{tier.label}</Text>
-                            <Text style={styles.tierRep}>{tier.min_rep.toLocaleString()} REP</Text>
-                          </View>
-                          <Text style={styles.tierPerks}>{tier.perks}</Text>
-                          {tier.nomination_only && (
-                            <View style={styles.nomChip}>
-                              <Text style={styles.nomText}>Nomination only</Text>
-                            </View>
-                          )}
-                        </View>
-                      ))}
-                    </>
-                  )}
-                  <View style={{ height: space[8] }} />
-                </ScrollView>
+                      )}
+                    </View>
+                  ))}
+                </>
               )}
-            </View>
-        </SafeAreaView>
+              <SafeAreaView edges={["bottom"]} />
+            </ScrollView>
+          )}
+        </View>
       </View>
     </Modal>
   );

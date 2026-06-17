@@ -1,4 +1,3 @@
-import { storage } from "../store/storage";
 import * as SecureStore from "expo-secure-store";
 
 const WP_URL = "https://cms.themoveee.com";
@@ -18,9 +17,16 @@ interface RequestOptions {
 
 // Called when any authenticated request returns 401 — wired up in authStore.
 let _onUnauthorized: (() => void) | null = null;
+let _handlingUnauthorized = false;
 export function setUnauthorizedHandler(fn: () => void) {
   _onUnauthorized = fn;
 }
+
+// In-memory token store — avoids writing the JWT to unencrypted AsyncStorage.
+// authStore writes to SecureStore (encrypted) and calls setAuthToken() here.
+let _authToken: string | null = null;
+export function setAuthToken(token: string | null) { _authToken = token; }
+export function getAuthToken(): string | null { return _authToken; }
 
 async function request<T>(url: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, auth = true } = options;
@@ -30,7 +36,7 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
   };
 
   if (auth) {
-    const token = storage.getString("auth_token");
+    const token = _authToken;
     if (token) headers["Authorization"] = `Bearer ${token}`;
   }
 
@@ -42,8 +48,10 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
 
   if (!res.ok) {
     // Auto-logout on 401 so the user is sent back to login with a fresh token.
-    if (res.status === 401 && auth && _onUnauthorized) {
+    if (res.status === 401 && auth && _onUnauthorized && !_handlingUnauthorized) {
+      _handlingUnauthorized = true;
       _onUnauthorized();
+      setTimeout(() => { _handlingUnauthorized = false; }, 5000);
     }
     const err = await res.json().catch(() => ({ message: res.statusText }));
     throw new ApiError(res.status, err?.message ?? res.statusText);
@@ -57,14 +65,16 @@ async function upload<T>(url: string, uri: string, name: string, type: string): 
   form.append("file", { uri, name, type } as unknown as Blob);
 
   const headers: Record<string, string> = {};
-  const token = storage.getString("auth_token");
+  const token = _authToken;
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const res = await fetch(url, { method: "POST", headers, body: form });
 
   if (!res.ok) {
-    if (res.status === 401 && _onUnauthorized) {
+    if (res.status === 401 && _onUnauthorized && !_handlingUnauthorized) {
+      _handlingUnauthorized = true;
       _onUnauthorized();
+      setTimeout(() => { _handlingUnauthorized = false; }, 5000);
     }
     const err = await res.json().catch(() => ({ message: res.statusText }));
     throw new ApiError(res.status, err?.message ?? res.statusText);

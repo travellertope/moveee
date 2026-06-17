@@ -4,7 +4,7 @@ import {
   StyleSheet, SafeAreaView, ActivityIndicator, Alert, PanResponder,
   Dimensions,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
@@ -160,7 +160,7 @@ function BankPicker({
 }
 
 export default function WalletScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { user } = useAuthStore() as any;
   const isPro = user?.tier === "patron";
   const c = useColors();

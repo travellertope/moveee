@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TextInput, TouchableOpacity,
   StyleSheet, SafeAreaView, ActivityIndicator, ScrollView,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
@@ -102,7 +102,7 @@ function MemberCard({
 }
 
 export default function MemberDirectoryScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { user } = useAuthStore() as any;
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);

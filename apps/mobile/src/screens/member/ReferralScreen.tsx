@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
   TouchableOpacity, Share, TextInput, ActivityIndicator, Clipboard,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
@@ -126,14 +126,22 @@ function createStyles(c: ColorPalette) {
 }
 
 export default function ReferralScreen() {
-  const nav = useNavigation<any>();
+  const nav = useNav();
   const { user } = useAuthStore();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [data, setData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -164,7 +172,7 @@ export default function ReferralScreen() {
     if (!data?.referralUrl) return;
     Clipboard.setString(data.referralUrl);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
   };
 
   const handleShare = async () => {

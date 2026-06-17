@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { useNav } from "../../hooks/useNav";
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import ImageLightbox from "../ui/ImageLightbox";
 import HappeningDetailModal from "./HappeningDetailModal";
 import DirectoryDetailModal from "./DirectoryDetailModal";
 import QuoteDetailModal from "./QuoteDetailModal";
+import PulseDetailSheet from "./PulseDetailSheet";
 import { ReportSheet } from "../ui/Overlays";
 import type { FeedItem, PollOption } from "../../types";
 
@@ -32,6 +33,7 @@ interface FeedCardProps {
   onAuthorPress?: () => void;
   onReact?: (type: "love" | "fire" | "clap") => void;
   forYouBadge?: boolean;
+  onMentionPress?: (username: string) => void;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -712,6 +714,112 @@ function createStyles(c: ColorPalette) {
       fontSize: fontSize.tiny,
       color: c.ghost,
     },
+
+    // ── CommunityQuoteCard ────────────────────────────────────────────────────
+    cqHeader: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 10,
+      paddingHorizontal: 14,
+      paddingTop: 14,
+      paddingBottom: 10,
+    },
+    cqAvatarWrap: {},
+    cqAvatar: { width: 38, height: 38, borderRadius: 19 },
+    cqAvatarFallback: {
+      backgroundColor: c.paperDeep,
+      justifyContent: "center" as const,
+      alignItems: "center" as const,
+    },
+    cqAvatarInitial: { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink },
+    cqAuthorName: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ink },
+    cqAuthorHandle: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: c.mute },
+    cqBadge: {
+      fontFamily: fonts.monoBold,
+      fontSize: 9,
+      color: c.ochre,
+      letterSpacing: 1,
+      textTransform: "uppercase" as const,
+    },
+
+    cqBody: {
+      paddingHorizontal: 14,
+      paddingBottom: 4,
+      position: "relative" as const,
+    },
+    cqOpenMark: {
+      fontFamily: fonts.serifBold,
+      fontSize: 44,
+      color: c.ghost,
+      lineHeight: 36,
+      marginBottom: -4,
+    },
+    cqQuoteText: {
+      fontFamily: fonts.serif,
+      fontStyle: "italic" as const,
+      fontSize: 20,
+      color: c.ink,
+      lineHeight: 30,
+      marginLeft: 4,
+    },
+    cqCloseMark: {
+      fontFamily: fonts.serifBold,
+      fontSize: 32,
+      color: c.ghost,
+      lineHeight: 24,
+      textAlign: "right" as const,
+      marginTop: 4,
+    },
+
+    cqAttrib: {
+      paddingHorizontal: 14,
+      paddingTop: 8,
+      paddingBottom: 4,
+      borderLeftWidth: 2,
+      borderLeftColor: c.ochre,
+      marginHorizontal: 14,
+      marginTop: 4,
+      gap: 2,
+    },
+    cqQuoteAuthor: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ink },
+    cqQuoteSource: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute },
+
+    cqNote: {
+      backgroundColor: c.paperDeep,
+      borderRadius: 8,
+      marginHorizontal: 14,
+      marginTop: 12,
+      padding: 12,
+      gap: 4,
+    },
+    cqNoteLabel: {
+      fontFamily: fonts.monoBold,
+      fontSize: 9,
+      color: c.inkSoft,
+      letterSpacing: 0.8,
+    },
+    cqNoteText: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.ink,
+      lineHeight: 20,
+    },
+
+    cqShareCta: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.xs,
+      color: c.mute,
+      textAlign: "center" as const,
+      marginTop: 14,
+    },
+    cqShareLink: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.sm,
+      color: c.ochre,
+      textAlign: "center" as const,
+      marginTop: 2,
+      marginBottom: 4,
+    },
   });
 }
 
@@ -899,13 +1007,14 @@ function GalleryStrip({ images, height, width, onTap }: {
 // ── Card Implementations ──────────────────────────────────────────────────────
 
 // PulseCard (A3 in design — compact with ⚡ icon)
-function PulseCard({ item, onPress }: FeedCardProps) {
+function PulseCard({ item }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   return (
     <>
-      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
+      <TouchableOpacity style={styles.card} onPress={() => setSheetOpen(true)} activeOpacity={0.92}>
         <View style={{ padding: 14, flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
           <Text style={{ fontSize: 20, color: c.ochre, lineHeight: 24, paddingTop: 2 }}>⚡</Text>
           <View style={{ flex: 1 }}>
@@ -940,6 +1049,7 @@ function PulseCard({ item, onPress }: FeedCardProps) {
       {item.image && (
         <ImageLightbox visible={lightboxOpen} images={[item.image]} onClose={() => setLightboxOpen(false)} />
       )}
+      <PulseDetailSheet visible={sheetOpen} item={item} onClose={() => setSheetOpen(false)} />
     </>
   );
 }
@@ -1064,7 +1174,7 @@ function HappeningCard({ item, onPress }: FeedCardProps) {
 function DirectoryCard({ item }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const nav = useNavigation<any>();
+  const nav = useNav();
 
   const handlePress = () => {
     nav.navigate("DirectoryDetail", {
@@ -1099,19 +1209,21 @@ function DirectoryCard({ item }: FeedCardProps) {
 }
 
 // BasicPostCard (B1)
-function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNav();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const hasLink = !!(item.ogTitle || item.ogImage || item.source);
   const rawBody = item.body ?? item.excerpt ?? item.title ?? "";
   const displayBody = hasLink ? (stripLinkFromBody(rawBody, item.sourceUrl) ?? rawBody) : rawBody;
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
   return (
     <>
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <HashtagText text={displayBody} style={styles.cardBody} />
+          <HashtagText text={displayBody} style={styles.cardBody} onMentionPress={handleMentionPress} />
         </View>
         {item.image ? (
           <View style={{ marginTop: 10 }}>
@@ -1132,11 +1244,13 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
 }
 
 // HiddenGemCard (B2)
-function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNav();
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const gallery = item.galleryImages ?? [];
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
   return (
     <>
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
@@ -1147,7 +1261,7 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
             <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.placeLocation ?? item.locationName}</Text>
           ) : null}
           <View style={{ marginTop: 8 }}>
-            <HashtagText text={item.body ?? item.excerpt ?? item.title ?? ""} numberOfLines={4} style={styles.cardBody} />
+            <HashtagText text={item.body ?? item.excerpt ?? item.title ?? ""} numberOfLines={4} style={styles.cardBody} onMentionPress={handleMentionPress} />
           </View>
         </View>
         {gallery.length > 0 ? (
@@ -1161,21 +1275,23 @@ function HiddenGemCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
 }
 
 // CulturalTakeCard (B3)
-function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+function CulturalTakeCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNav();
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
         <BadgePill label="🔥 CULTURAL TAKE" bg={c.templateTakeBg} color={c.templateTakeText} styles={styles} />
-        {(item.culturalTakeHeadline ?? item.title) ? (
+        {item.culturalTakeHeadline ? (
           <Text style={[styles.cardTitle, { marginTop: 8, fontStyle: "italic" }]}>
-            {item.culturalTakeHeadline ?? item.title}
+            {item.culturalTakeHeadline}
           </Text>
         ) : null}
-        {(item.body ?? item.excerpt) ? (
-          <HashtagText text={item.body ?? item.excerpt ?? ""} numberOfLines={4} style={[styles.cardBody, { marginTop: 6 }]} />
+        {item.title ? (
+          <HashtagText text={item.title} numberOfLines={4} style={[styles.cardBody, { marginTop: 6 }]} onMentionPress={handleMentionPress} />
         ) : null}
       </View>
       <FeedReactionBar item={item} marginTop={10} />
@@ -1199,7 +1315,7 @@ function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
             <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.placeLocation ?? item.locationName}</Text>
           ) : null}
           <Text style={[styles.cardBody, { marginTop: 8 }]} numberOfLines={3}>
-            {item.body ?? item.excerpt ?? ""}
+            {item.title ?? ""}
           </Text>
           <View style={styles.foodRatingsGrid}>
             {[
@@ -1226,13 +1342,15 @@ function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
 }
 
 // CreativeShowcaseCard (B5)
-function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNav();
   const [activeIdx, setActiveIdx] = useState(0);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const gallery = item.galleryImages ?? [];
   const count = gallery.length;
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   return (
     <>
@@ -1246,9 +1364,9 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge }: Fee
             </View>
           ) : null}
         </View>
-        {item.body || item.excerpt ? (
+        {item.title ? (
           <View style={{ paddingHorizontal: 14, marginTop: 8 }}>
-            <HashtagText text={item.body ?? item.excerpt ?? ""} style={styles.cardBody} />
+            <HashtagText text={item.title} style={styles.cardBody} onMentionPress={handleMentionPress} />
           </View>
         ) : null}
         {count > 0 ? (
@@ -1384,10 +1502,12 @@ function ItineraryCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardPr
 }
 
 // BookReviewCard (B8)
-function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNav();
   const coverUri = item.image ?? null;
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   const statusColor: Record<string, string> = {
     "Finished": "#16a34a",
@@ -1449,8 +1569,8 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardP
         ) : null}
 
         {/* Review body */}
-        {(item.body ?? item.excerpt) ? (
-          <HashtagText text={item.body ?? item.excerpt ?? ""} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} />
+        {item.title ? (
+          <HashtagText text={item.title} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} />
         ) : null}
 
         {/* Favourite quote */}
@@ -1494,11 +1614,13 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardP
 }
 
 // EventCommunityCard (B8 in design) — community post with _template_type = 'event'
-function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedCardProps) {
+function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNav();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [rsvped, setRsvped] = useState(false);
+  const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   const handleRsvp = async () => {
     if (rsvped || !item.wpId) return;
@@ -1544,11 +1666,12 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge }: FeedC
             </View>
           ) : null}
 
-          {(item.body ?? item.excerpt) ? (
+          {item.title ? (
             <HashtagText
-              text={item.body ?? item.excerpt ?? ""}
+              text={item.title}
               style={[styles.cardBody, { marginTop: 10 }]}
               numberOfLines={2}
+              onMentionPress={handleMentionPress}
             />
           ) : null}
 
@@ -1683,6 +1806,85 @@ function QuoteCard({ item }: FeedCardProps) {
   );
 }
 
+// CommunityQuoteCard — community post with templateType="quote"
+function CommunityQuoteCard({ item, onPress, onAuthorPress }: FeedCardProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
+
+  const QUOTE_TYPE_ICON: Record<string, string> = {
+    Book: "📚", Film: "🎬", Person: "🗣", Speech: "🎤", Song: "🎵",
+  };
+
+  return (
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
+      {/* Author row */}
+      <View style={styles.cqHeader}>
+        <TouchableOpacity
+          style={styles.cqAvatarWrap}
+          onPress={onAuthorPress}
+          disabled={!onAuthorPress}
+          activeOpacity={onAuthorPress ? 0.7 : 1}
+        >
+          {item.communityAuthorAvatar ? (
+            <Image source={{ uri: item.communityAuthorAvatar }} style={styles.cqAvatar} />
+          ) : (
+            <View style={[styles.cqAvatar, styles.cqAvatarFallback]}>
+              <Text style={styles.cqAvatarInitial}>
+                {(item.communityAuthor ?? "?")[0]?.toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.cqAuthorName}>{item.communityAuthor ?? "Member"}</Text>
+          {item.communityAuthorUsername ? (
+            <Text style={styles.cqAuthorHandle}>@{item.communityAuthorUsername}</Text>
+          ) : null}
+        </View>
+        <Text style={styles.cqBadge}>
+          {item.quoteType ? (QUOTE_TYPE_ICON[item.quoteType] ?? "❝") : "❝"} QUOTE
+        </Text>
+      </View>
+
+      {/* Quote body */}
+      <View style={styles.cqBody}>
+        <Text style={styles.cqOpenMark}>"</Text>
+        <Text style={styles.cqQuoteText}>{item.title}</Text>
+        <Text style={styles.cqCloseMark}>"</Text>
+      </View>
+
+      {/* Attribution */}
+      {(item.quoteAuthor || item.quoteSource) ? (
+        <View style={styles.cqAttrib}>
+          {item.quoteAuthor ? (
+            <Text style={styles.cqQuoteAuthor}>{item.quoteAuthor}</Text>
+          ) : null}
+          {item.quoteSource ? (
+            <Text style={styles.cqQuoteSource}>{item.quoteSource}</Text>
+          ) : null}
+        </View>
+      ) : null}
+
+      {/* Sharer's note */}
+      {item.quoteSharingReason ? (
+        <View style={styles.cqNote}>
+          <Text style={styles.cqNoteLabel}>
+            💬 {(item.communityAuthor?.split(" ")[0] ?? "Their").toUpperCase()}'S NOTE:
+          </Text>
+          <Text style={styles.cqNoteText}>{item.quoteSharingReason}</Text>
+        </View>
+      ) : null}
+
+      {/* Share CTA */}
+      <Text style={styles.cqShareCta}>Know someone who needs to see this?</Text>
+      <Text style={styles.cqShareLink}>Share quote →</Text>
+
+      {/* Reactions */}
+      <FeedReactionBar item={item} marginTop={8} />
+    </TouchableOpacity>
+  );
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export default function FeedItemCard(props: FeedCardProps) {
@@ -1704,6 +1906,7 @@ export default function FeedItemCard(props: FeedCardProps) {
       case "itinerary":      return <ItineraryCard {...props} />;
       case "book-review":    return <BookReviewCard {...props} />;
       case "event":          return <EventCommunityCard {...props} />;
+      case "quote":          return <CommunityQuoteCard {...props} />;
       default:               return <BasicPostCard {...props} />;
     }
   }

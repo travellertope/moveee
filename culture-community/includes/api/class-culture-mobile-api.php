@@ -1126,6 +1126,24 @@ class Culture_Mobile_API {
             }
         }
 
+        // ── Quote ─────────────────────────────────────────────────────────────
+        if ( $template === 'quote' ) {
+            if ( $request->get_param( 'quote_author' ) ) {
+                update_post_meta( $post_id, '_quote_author', sanitize_text_field( $request->get_param( 'quote_author' ) ) );
+            }
+            if ( $request->get_param( 'quote_source' ) ) {
+                update_post_meta( $post_id, '_quote_source', sanitize_text_field( $request->get_param( 'quote_source' ) ) );
+            }
+            if ( $request->get_param( 'sharing_reason' ) ) {
+                update_post_meta( $post_id, '_quote_sharing_reason', sanitize_textarea_field( $request->get_param( 'sharing_reason' ) ) );
+            }
+            $allowed_quote_types = array( 'Person', 'Book', 'Film', 'Speech', 'Song' );
+            $quote_type = $request->get_param( 'quote_type' );
+            if ( $quote_type && in_array( $quote_type, $allowed_quote_types, true ) ) {
+                update_post_meta( $post_id, '_quote_type', sanitize_text_field( $quote_type ) );
+            }
+        }
+
         // ── Event ─────────────────────────────────────────────────────────────
         if ( $template === 'event' ) {
             update_post_meta( $post_id, '_event_date',      sanitize_text_field( $request->get_param( 'event_date' ) ?: '' ) );
@@ -1146,6 +1164,37 @@ class Culture_Mobile_API {
             $rep      = Culture_Gamification::get_reputation( $user_id );
             $rep_tier = Culture_Gamification::get_reputation_tier( $rep, $user_id );
             update_post_meta( $post_id, 'community_author_rep_tier', $rep_tier );
+        }
+
+        // Snapshot author display fields so the feed never needs live user lookups.
+        $author_user = get_userdata( $user_id );
+        update_post_meta( $post_id, 'community_author_id',       (string) $user_id );
+        update_post_meta( $post_id, 'community_author_name',     $author_user ? $author_user->display_name : '' );
+        update_post_meta( $post_id, 'community_author_username', $author_user ? $author_user->user_login   : '' );
+        update_post_meta( $post_id, 'community_author_avatar',   get_user_meta( $user_id, '_culture_avatar_url',       true ) ?: '' );
+        update_post_meta( $post_id, 'community_author_tier',     get_user_meta( $user_id, '_culture_membership_tier',  true ) ?: 'citizen' );
+
+        // Extract @mentions from post content and notify mentioned users.
+        $mention_matches = array();
+        preg_match_all( '/@(\w+)/', $content, $mention_matches );
+        $mentioned_usernames = array_unique( $mention_matches[1] );
+        if ( ! empty( $mentioned_usernames ) ) {
+            $author_data = get_userdata( $user_id );
+            $author_name = $author_data ? $author_data->display_name : 'Someone';
+            $post_slug   = get_post_field( 'post_name', $post_id );
+            foreach ( $mentioned_usernames as $username ) {
+                $mentioned = get_user_by( 'login', $username );
+                if ( $mentioned && (int) $mentioned->ID !== (int) $user_id ) {
+                    Culture_Notifications::add(
+                        (int) $mentioned->ID,
+                        'mention',
+                        $author_name . ' mentioned you',
+                        wp_trim_words( $content, 15, '…' ),
+                        '/community/' . $post_slug,
+                        array( 'post_id' => $post_id, 'author_id' => $user_id )
+                    );
+                }
+            }
         }
 
         $post = get_post( $post_id );
@@ -1942,9 +1991,9 @@ class Culture_Mobile_API {
                 'communityAuthorId'       => get_post_meta( $post->ID, 'community_author_id', true ) ?: (string) $author_id,
                 'communityAuthor'         => get_post_meta( $post->ID, 'community_author_name', true ) ?: ( $author ? $author->display_name : '' ),
                 'communityAuthorUsername' => get_post_meta( $post->ID, 'community_author_username', true ) ?: ( $author ? $author->user_login : '' ),
-                'communityAuthorAvatar'   => get_post_meta( $post->ID, 'community_author_avatar', true ) ?: '',
+                'communityAuthorAvatar'   => get_post_meta( $post->ID, 'community_author_avatar', true ) ?: get_user_meta( $author_id, '_culture_avatar_url', true ) ?: '',
                 'communityTag'            => get_post_meta( $post->ID, 'community_tag', true ) ?: '',
-                'communityTier'           => get_post_meta( $post->ID, 'community_author_tier', true ) ?: '',
+                'communityTier'           => get_post_meta( $post->ID, 'community_author_tier', true ) ?: get_user_meta( $author_id, '_culture_membership_tier', true ) ?: 'citizen',
                 'authorRepTier'           => get_post_meta( $post->ID, 'community_author_rep_tier', true ) ?: 'member',
                 'region'                  => get_post_meta( $post->ID, 'community_region', true ) ?: '',
                 'sourceUrl'               => $link_url ?: null,
@@ -2000,6 +2049,11 @@ class Culture_Mobile_API {
                 'bookFavQuote'            => get_post_meta( $post->ID, '_book_fav_quote', true ) ?: '',
                 'bookRecommend'           => get_post_meta( $post->ID, '_book_recommend', true ) === '1',
                 'bookGenres'              => json_decode( get_post_meta( $post->ID, '_book_genres', true ) ?: '[]', true ),
+                // Quote template fields
+                'quoteAuthor'             => get_post_meta( $post->ID, '_quote_author', true ) ?: '',
+                'quoteSource'             => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
+                'quoteSharingReason'      => get_post_meta( $post->ID, '_quote_sharing_reason', true ) ?: '',
+                'quoteType'               => get_post_meta( $post->ID, '_quote_type', true ) ?: '',
                 // Community event template fields
                 'eventDate'               => get_post_meta( $post->ID, '_event_date', true ) ?: '',
                 'endDate'                 => get_post_meta( $post->ID, '_event_end_date', true ) ?: '',
