@@ -22,7 +22,7 @@ import { useAuthStore } from "../../auth/authStore";
 import { useComments } from "../../features/community/useComments";
 import { api, MOBILE_API } from "../../api/client";
 import type { ColorPalette } from "../../theme";
-import { radius } from "../../theme";
+import { radius, fonts } from "../../theme";
 import type { FeedItem, PollOption, ItineraryStop } from "../../types";
 
 const SCREEN_W = Dimensions.get("window").width;
@@ -131,10 +131,6 @@ function TappableHero({ uri, caption }: { uri: string; caption?: string | null }
     </View>
   );
 }
-
-const SERIF = "Fraunces_400Regular";
-const SERIF_BOLD = "Fraunces_700Bold";
-const MONO = "JetBrainsMono_400Regular";
 
 const PLACEHOLDER_AVATAR = "https://cms.themoveee.com/wp-content/uploads/placeholder-avatar.png";
 
@@ -366,7 +362,7 @@ function TemplateHiddenGem({ item, c, styles }: { item: FeedItem; c: ColorPalett
       {(item.priceRange || item.openingHours) ? (
         <View style={[styles.locationRow, { marginBottom: 8 }]}>
           {item.priceRange ? (
-            <Text style={{ fontSize: 13, color: c.gold, fontFamily: MONO, fontWeight: "700" }}>{item.priceRange}</Text>
+            <Text style={{ fontSize: 13, color: c.gold, fontFamily: fonts.mono, fontWeight: "700" }}>{item.priceRange}</Text>
           ) : null}
           {item.priceRange && item.openingHours ? (
             <Text style={{ fontSize: 13, color: c.ghost, marginHorizontal: 6 }}>·</Text>
@@ -424,7 +420,7 @@ function TemplateFoodReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
         ) : null}
         {item.priceRange ? (
           <View style={styles.locationRow}>
-            <Text style={[styles.locationText, { color: c.gold, fontFamily: MONO, fontWeight: "700" }]}>{item.priceRange}</Text>
+            <Text style={[styles.locationText, { color: c.gold, fontFamily: fonts.mono, fontWeight: "700" }]}>{item.priceRange}</Text>
           </View>
         ) : null}
       </View>
@@ -725,7 +721,7 @@ function TemplateBookReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
           {overall > 0 ? (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
               <StarRow rating={overall} c={c} />
-              <Text style={{ fontSize: 11, fontFamily: MONO, color: c.gold }}>{overall.toFixed(1)}</Text>
+              <Text style={{ fontSize: 11, fontFamily: fonts.mono, color: c.gold }}>{overall.toFixed(1)}</Text>
             </View>
           ) : null}
         </View>
@@ -897,7 +893,7 @@ function createStyles(c: ColorPalette) {
     timeAgo: {
       fontSize: 10,
       color: c.ghost,
-      fontFamily: MONO,
+      fontFamily: fonts.mono,
     },
 
     // Author
@@ -951,7 +947,7 @@ function createStyles(c: ColorPalette) {
     serifTitle: {
       fontSize: 20,
       fontWeight: "700",
-      fontFamily: SERIF_BOLD,
+      fontFamily: fonts.serifBold,
       color: c.ink,
       marginBottom: 8,
       lineHeight: 26,
@@ -1028,7 +1024,7 @@ function createStyles(c: ColorPalette) {
     takeHeadline: {
       fontSize: 20,
       fontWeight: "700",
-      fontFamily: SERIF_BOLD,
+      fontFamily: fonts.serifBold,
       color: c.ink,
       lineHeight: 26,
     },
@@ -1085,7 +1081,7 @@ function createStyles(c: ColorPalette) {
     ratingScore: {
       fontSize: 12,
       color: c.gold,
-      fontFamily: MONO,
+      fontFamily: fonts.mono,
       width: 30,
       textAlign: "right",
     },
@@ -1099,7 +1095,7 @@ function createStyles(c: ColorPalette) {
     overallScore: {
       fontSize: 28,
       fontWeight: "700",
-      fontFamily: SERIF_BOLD,
+      fontFamily: fonts.serifBold,
       color: c.ink,
       lineHeight: 32,
     },
@@ -1110,7 +1106,7 @@ function createStyles(c: ColorPalette) {
     dishCaption: {
       textAlign: "center",
       fontSize: 10,
-      fontFamily: MONO,
+      fontFamily: fonts.mono,
       color: c.mute,
       marginTop: 4,
       marginBottom: 12,
@@ -1164,7 +1160,7 @@ function createStyles(c: ColorPalette) {
     },
     pollPct: {
       fontSize: 12,
-      fontFamily: MONO,
+      fontFamily: fonts.mono,
       color: c.gold,
       fontWeight: "700",
       zIndex: 1,
@@ -1180,7 +1176,7 @@ function createStyles(c: ColorPalette) {
     },
     pollMetaText: {
       fontSize: 12,
-      fontFamily: MONO,
+      fontFamily: fonts.mono,
       color: c.mute,
     },
 
@@ -1192,7 +1188,7 @@ function createStyles(c: ColorPalette) {
     },
     itinMetaText: {
       fontSize: 11,
-      fontFamily: MONO,
+      fontFamily: fonts.mono,
       color: c.ghost,
     },
     routeCard: {
@@ -1317,14 +1313,14 @@ function createStyles(c: ColorPalette) {
     },
     quoteMark: {
       fontSize: 72,
-      fontFamily: SERIF,
+      fontFamily: fonts.serif,
       color: c.ghost,
       lineHeight: 60,
       marginBottom: -8,
     },
     quoteText: {
       fontSize: 22,
-      fontFamily: SERIF_BOLD,
+      fontFamily: fonts.serifBold,
       color: c.ink,
       lineHeight: 30,
       paddingLeft: 8,
@@ -1354,8 +1350,8 @@ function createStyles(c: ColorPalette) {
       marginBottom: 4,
     },
     sharePrompt: { alignItems: "center", paddingVertical: 8, gap: 4 },
-    sharePromptText: { fontSize: 13, fontFamily: SANS, color: c.mute },
-    sharePromptLink: { fontSize: 13, fontFamily: SANS_BOLD, color: c.ochre },
+    sharePromptText: { fontSize: 13, fontFamily: fonts.sans, color: c.mute },
+    sharePromptLink: { fontSize: 13, fontFamily: fonts.sansBold, color: c.ochre },
 
     // Reactions
     divider: {
@@ -1377,7 +1373,7 @@ function createStyles(c: ColorPalette) {
     },
     reactionCount: {
       fontSize: 10,
-      fontFamily: MONO,
+      fontFamily: fonts.mono,
       color: c.mute,
     },
 
@@ -1425,7 +1421,7 @@ function createStyles(c: ColorPalette) {
     },
     commentTime: {
       fontSize: 10,
-      fontFamily: MONO,
+      fontFamily: fonts.mono,
       color: c.ghost,
     },
     commentContent: {
