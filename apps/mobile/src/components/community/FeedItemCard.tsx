@@ -72,6 +72,47 @@ function stripLinkFromBody(body?: string | null, sourceUrl?: string | null): str
   return result || undefined;
 }
 
+function stripHtmlTags(html?: string | null): string | undefined {
+  if (!html) return undefined;
+  const text = html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#8217;|&rsquo;/g, "’")
+    .replace(/&#8216;|&lsquo;/g, "‘")
+    .replace(/&#8220;|&ldquo;/g, "“")
+    .replace(/&#8221;|&rdquo;/g, "”")
+    .replace(/&#\d+;/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text || undefined;
+}
+
+function faviconUrl(sourceUrl?: string | null): string | undefined {
+  if (!sourceUrl) return undefined;
+  try {
+    const domain = new URL(sourceUrl).hostname;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+  } catch {
+    return undefined;
+  }
+}
+
+function SourceLine({ source, sourceUrl, style }: { source: string; sourceUrl?: string | null; style: any }) {
+  const [faviconFailed, setFaviconFailed] = useState(false);
+  const favicon = faviconUrl(sourceUrl);
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 }}>
+      {favicon && !faviconFailed ? (
+        <Image source={{ uri: favicon }} style={{ width: 12, height: 12, borderRadius: 2 }} onError={() => setFaviconFailed(true)} />
+      ) : (
+        <Text style={{ fontSize: 11 }}>🌐</Text>
+      )}
+      <Text style={style}>{source}</Text>
+    </View>
+  );
+}
+
 // ── Styles factory ────────────────────────────────────────────────────────────
 
 function createStyles(c: ColorPalette) {
@@ -877,13 +918,17 @@ function PulseCard({ item, onPress }: FeedCardProps) {
             </View>
             <Text style={[styles.cardTitle, { marginTop: 6, fontSize: fontSize.base, lineHeight: 22 }]} numberOfLines={2}>{item.title}</Text>
             {item.source ? (
-              <Text style={[styles.sourceText, { marginTop: 4 }]}>🌐 {item.source}</Text>
+              <SourceLine source={item.source} sourceUrl={item.sourceUrl} style={styles.sourceText} />
             ) : null}
-            {(item.body || item.excerpt || item.ogDescription) ? (
-              <Text style={{ fontFamily: fonts.sans, fontSize: 13, color: c.mute, lineHeight: 19, marginTop: 5 }} numberOfLines={3}>
-                {item.body || item.excerpt || item.ogDescription}
-              </Text>
-            ) : null}
+            {(() => {
+              let pulseExcerpt = stripHtmlTags(item.excerpt) || stripHtmlTags(item.body) || stripHtmlTags(item.ogDescription);
+              if (pulseExcerpt && pulseExcerpt.length > 220) pulseExcerpt = pulseExcerpt.slice(0, 220).trim() + "…";
+              return pulseExcerpt ? (
+                <Text style={{ fontFamily: fonts.sans, fontSize: 13, color: c.mute, lineHeight: 19, marginTop: 5 }} numberOfLines={3}>
+                  {pulseExcerpt}
+                </Text>
+              ) : null;
+            })()}
           </View>
         </View>
         {item.image ? (
