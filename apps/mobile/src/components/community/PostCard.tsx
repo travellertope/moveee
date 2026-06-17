@@ -12,6 +12,7 @@ import { api, MOBILE_API } from "../../api/client";
 import type { CommunityPost } from "../../types";
 import TierBadge from "../ui/TierBadge";
 import TimeAgo from "../ui/TimeAgo";
+import Avatar from "../ui/Avatar";
 
 interface Props {
   post: CommunityPost;
@@ -46,9 +47,11 @@ export default function PostCard({ post, onPress, onLike, onAuthorPress }: Props
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.95}>
       <TouchableOpacity style={styles.authorRow} onPress={onAuthorPress}>
-        <Image
-          source={{ uri: post.author.avatarUrl || "https://cms.themoveee.com/wp-content/uploads/placeholder-avatar.png" }}
-          style={styles.avatar}
+        <Avatar
+          uri={post.author.avatarUrl}
+          name={post.author.name}
+          size={40}
+          tier={post.author.tier}
         />
         <View style={styles.authorMeta}>
           <View style={styles.nameRow}>

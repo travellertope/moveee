@@ -8,11 +8,13 @@ import {
   ActivityIndicator,
   TextInput,
   Dimensions,
+  Share,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNav } from "../../hooks/useNav";
 import BottomSheet from "../ui/BottomSheet";
 import SheetErrorState from "../ui/SheetErrorState";
+import ReportPostSheet from "./ReportPostSheet";
 import ImageLightbox from "../ui/ImageLightbox";
 import HashtagText from "./HashtagText";
 import { useColors } from "../../hooks/useColors";
@@ -204,11 +206,13 @@ function ReactionsRow({
   c,
   styles,
   onComment,
+  onReport,
 }: {
   item: FeedItem;
   c: ColorPalette;
   styles: ReturnType<typeof createStyles>;
   onComment?: () => void;
+  onReport?: () => void;
 }) {
   const [loved, setLoved] = useState(false);
   const [fired, setFired] = useState(false);
@@ -245,6 +249,14 @@ function ReactionsRow({
         <TouchableOpacity style={styles.reactionBtn} onPress={onComment} activeOpacity={0.7}>
           <Ionicons name="chatbubble-outline" size={18} color={c.mute} />
           <Text style={styles.reactionCount}>{item.commentCount ?? 0}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.reactionBtn, { marginLeft: "auto" as any }]}
+          onPress={onReport}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="flag-outline" size={18} color={c.ghost} />
         </TouchableOpacity>
       </View>
       <View style={styles.divider} />
@@ -318,10 +330,6 @@ function CommentsSection({ postId, c, styles }: { postId: string; c: ColorPalett
         </TouchableOpacity>
       </View>
 
-      <View style={styles.divider} />
-      <TouchableOpacity style={{ paddingVertical: 12 }}>
-        <Text style={styles.reportBtn}>⚑ Report this post</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -641,6 +649,16 @@ function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
 
 function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
   const sharerFirstName = item.communityAuthor?.split(" ")[0] ?? "Their";
+  const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : undefined;
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `"${item.title}" — ${item.quoteAuthor ?? ""}${shareUrl ? `\n${shareUrl}` : ""}`,
+        url: shareUrl,
+      });
+    } catch { /* dismissed */ }
+  };
   return (
     <>
       <View style={styles.quoteBlock}>
@@ -667,6 +685,12 @@ function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
           <Text style={styles.bodyText}>{item.quoteSharingReason}</Text>
         </View>
       ) : null}
+      <View style={styles.sharePrompt}>
+        <Text style={styles.sharePromptText}>Know someone who needs to see this?</Text>
+        <TouchableOpacity onPress={handleShare}>
+          <Text style={styles.sharePromptLink}>Share quote →</Text>
+        </TouchableOpacity>
+      </View>
     </>
   );
 }
@@ -777,6 +801,7 @@ interface PostDetailSheetProps {
 export default function PostDetailSheet({ item, visible, onClose, onMentionPress }: PostDetailSheetProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const [reportOpen, setReportOpen] = useState(false);
   const nav = useNav();
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
@@ -809,6 +834,7 @@ export default function PostDetailSheet({ item, visible, onClose, onMentionPress
   };
 
   return (
+    <>
     <BottomSheet visible={visible} onClose={onClose} initialState="full">
       {/* Type badge + time */}
       <View style={styles.topRow}>
@@ -829,11 +855,20 @@ export default function PostDetailSheet({ item, visible, onClose, onMentionPress
       </View>
 
       {/* Reactions */}
-      <ReactionsRow item={item} c={c} styles={styles} />
+      <ReactionsRow item={item} c={c} styles={styles} onReport={() => setReportOpen(true)} />
 
       {/* Comments */}
       <CommentsSection postId={postId} c={c} styles={styles} />
     </BottomSheet>
+
+    {postId ? (
+      <ReportPostSheet
+        visible={reportOpen}
+        onClose={() => setReportOpen(false)}
+        postId={String(postId)}
+      />
+    ) : null}
+    </>
   );
 }
 
@@ -1281,25 +1316,19 @@ function createStyles(c: ColorPalette) {
       position: "relative",
     },
     quoteMark: {
-      fontSize: 80,
+      fontSize: 72,
       fontFamily: SERIF,
       color: c.ghost,
-      lineHeight: 80,
-      position: "absolute",
-      top: -4,
-      left: 0,
-      zIndex: 0,
+      lineHeight: 60,
+      marginBottom: -8,
     },
     quoteText: {
       fontSize: 22,
-      fontWeight: "700",
       fontFamily: SERIF_BOLD,
       color: c.ink,
       lineHeight: 30,
       paddingLeft: 8,
-      paddingTop: 24,
       marginBottom: 12,
-      zIndex: 1,
     },
     quoteAttrib: { paddingLeft: 8, marginTop: 12 },
     quoteAuthor: {
@@ -1324,6 +1353,9 @@ function createStyles(c: ColorPalette) {
       textTransform: "uppercase",
       marginBottom: 4,
     },
+    sharePrompt: { alignItems: "center", paddingVertical: 8, gap: 4 },
+    sharePromptText: { fontSize: 13, fontFamily: SANS, color: c.mute },
+    sharePromptLink: { fontSize: 13, fontFamily: SANS_BOLD, color: c.ochre },
 
     // Reactions
     divider: {

@@ -108,7 +108,15 @@ export default async function PublicProfilePage(
             </div>
 
             <div className="prf-identity-body">
-              <h1 className="prf-name">{profile.display_name}</h1>
+              <h1 className="prf-name">
+                {profile.display_name}
+                {isPatron && (
+                  <svg className="prf-pro-check" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-label="Connect Pro">
+                    <path d="M12 2l2.4 1.7 2.9-.4 1.2 2.6 2.6 1.2-.4 2.9L22 12l-1.7 2.4.4 2.9-2.6 1.2-1.2 2.6-2.9-.4L12 22l-2.4-1.7-2.9.4-1.2-2.6-2.6-1.2.4-2.9L2 12l1.7-2.4-.4-2.9 2.6-1.2 1.2-2.6 2.9.4L12 2z" fill="#B38238"/>
+                    <path d="M8.5 12.2l2.4 2.4 4.8-5.4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  </svg>
+                )}
+              </h1>
 
               <p className="prf-handle-line">
                 <span>@{profile.username}</span>
@@ -127,9 +135,6 @@ export default async function PublicProfilePage(
               </p>
 
               <div className="prf-badges">
-                <span className={`prf-tier-badge prf-tier-badge--${isPatron ? "patron" : "citizen"}`}>
-                  {isPatron ? "Connect Pro" : "Connect Citizen"}
-                </span>
                 {profile.reputation_tier !== "member" && (
                   <span className="prf-rep-badge">{repLabel}</span>
                 )}

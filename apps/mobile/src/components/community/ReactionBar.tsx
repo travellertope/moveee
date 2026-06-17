@@ -5,6 +5,7 @@ import { api, MOBILE_API } from "../../api/client";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, space } from "../../theme";
 import type { ColorPalette } from "../../theme";
+import { ReportSheet } from "../ui/Overlays";
 
 interface Props {
   postId: string;
@@ -14,6 +15,7 @@ interface Props {
   noBorder?: boolean;
   commentCount?: number;
   onCommentPress?: () => void;
+  showReport?: boolean;
 }
 
 type EmojiKey = "love" | "fire" | "clap";
@@ -30,12 +32,22 @@ const REACTIONS: Array<{
 ];
 
 export default function ReactionBar({
-  postId, initialCounts, shareUrl, shareTitle, noBorder, commentCount, onCommentPress,
+  postId, initialCounts, shareUrl, shareTitle, noBorder, commentCount, onCommentPress, showReport,
 }: Props) {
   const c = useColors();
   const styles = createStyles(c);
   const [counts, setCounts]   = useState(initialCounts);
   const [reacted, setReacted] = useState<Set<EmojiKey>>(new Set());
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reported, setReported] = useState(false);
+
+  const submitReport = async (reason: "spam" | "harassment" | "inappropriate") => {
+    setReportOpen(false);
+    try {
+      await api.post(`${MOBILE_API}/community/report`, { post_id: Number(postId), reason });
+      setReported(true);
+    } catch { /* silent */ }
+  };
 
   const handleReact = async (key: EmojiKey) => {
     const already = reacted.has(key);
@@ -97,6 +109,24 @@ export default function ReactionBar({
         <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.7}>
           <Ionicons name="share-outline" size={16} color={c.mute} />
         </TouchableOpacity>
+      ) : null}
+
+      {showReport ? (
+        reported ? (
+          <Ionicons name="flag" size={14} color={c.ochre} style={styles.shareBtn} />
+        ) : (
+          <>
+            <TouchableOpacity
+              style={styles.shareBtn}
+              onPress={() => setReportOpen(true)}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="flag-outline" size={14} color={c.ghost} />
+            </TouchableOpacity>
+            <ReportSheet visible={reportOpen} onClose={() => setReportOpen(false)} onSubmit={submitReport} />
+          </>
+        )
       ) : null}
     </View>
   );

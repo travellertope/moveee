@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator, Dimensions, Animated, Image,
+  SafeAreaView, ActivityIndicator, Dimensions, Image,
   Modal,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
@@ -30,34 +30,42 @@ function getRepTier(rep: number) {
   return [...REP_TIERS].reverse().find((t) => rep >= t.min) ?? REP_TIERS[0];
 }
 
-function repProgress(rep: number) {
-  const tier = getRepTier(rep);
-  if (!tier.max) return 1; // maxed out
-  return Math.min(1, (rep - tier.min) / (tier.max - tier.min));
-}
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface PublicProfile extends Member {
   interests?: string[];
-  badges?: Array<{ slug: string; name: string; emoji: string }>;
+  badges?: string[];
   registeredAt?: number;
   reputation?: number;
   reputationTier?: string;
 }
 
 interface CommunityPost {
-  id: string; slug: string; templateType: string; templateEmoji: string;
-  templateLabel: string; excerpt: string; timeAgo: string;
-  reactions: number; hotness: number; applause: number;
+  id: string;
+  content: string;
+  imageUrl?: string | null;
+  publishedAt: string;
+  likeCount: number;
+  commentCount: number;
+  template_type: string;
 }
 
 interface PortfolioItem {
-  id: string; title: string; year: string;
-  imageUrl?: string; gradientColors: [string, string];
+  id: string;
+  title: string;
+  created_at: string;
+  media?: Array<{ type: string; url: string }>;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function timeAgo(dateStr: string): string {
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
 
 function initials(name: string) {
   return (name || "?").split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
@@ -86,50 +94,28 @@ const PORTFOLIO_GRADIENTS: Array<[string, string]> = [
   ["#A18CD1", "#FBC2EB"], ["#FBC2EB", "#A6C1EE"],
 ];
 
+const TIER_ICONS: Record<string, string> = {
+  "member":              "★",
+  "culture-contributor": "✦",
+  "taste-maker":         "◆",
+  "culture-authority":   "❖",
+  "culture-icon":        "✸",
+};
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-// Reputation bar with tier label and progress
-function ReputationBar({
+// Tier chip — shows earned tier only (no progress details for other members)
+function TierChip({
   reputation = 0, styles, c,
 }: {
   reputation?: number; styles: ReturnType<typeof createStyles>; c: ColorPalette;
 }) {
   const tier = getRepTier(reputation);
-  const pct  = repProgress(reputation);
-  const next = REP_TIERS.find((t) => t.min > reputation);
-  const widthAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(widthAnim, {
-      toValue: pct,
-      duration: 700,
-      delay: 300,
-      useNativeDriver: false,
-    }).start();
-  }, [pct]);
-
+  const icon = TIER_ICONS[tier.slug] ?? "★";
   return (
-    <View style={styles.repBar}>
-      <View style={styles.repBarRow}>
-        <Text style={styles.repTierLabel}>{tier.label}</Text>
-        <Text style={styles.repScore}>{reputation} REP</Text>
-      </View>
-      <View style={styles.repTrack}>
-        <Animated.View
-          style={[
-            styles.repFill,
-            { width: widthAnim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }) },
-          ]}
-        />
-      </View>
-      {next && (
-        <Text style={styles.repNext}>
-          {tier.max! - reputation} more to {next.label}
-        </Text>
-      )}
-      {!next && (
-        <Text style={styles.repNext}>Highest tier reached ✦</Text>
-      )}
+    <View style={styles.tierChip}>
+      <Text style={styles.tierChipIcon}>{icon}</Text>
+      <Text style={styles.tierChipLabel}>{tier.label}</Text>
     </View>
   );
 }
@@ -138,7 +124,7 @@ function ReputationBar({
 function BadgeRow({
   badges, styles, c,
 }: {
-  badges: Array<{ slug: string; name: string; emoji: string }>;
+  badges: { slug: string; name: string; emoji: string }[];
   styles: ReturnType<typeof createStyles>;
   c: ColorPalette;
 }) {
@@ -186,20 +172,19 @@ function BadgeRow({
 }
 
 function MiniPostCard({ post, styles }: { post: CommunityPost; styles: ReturnType<typeof createStyles> }) {
-  const meta = TEMPLATE_META[post.templateType] ?? { emoji: "📝", label: "Post" };
+  const meta = TEMPLATE_META[post.template_type] ?? { emoji: "📝", label: "Post" };
   return (
     <View style={styles.postCard}>
       <View style={styles.postCardHeader}>
         <View style={styles.templateBadge}>
           <Text style={styles.templateBadgeText}>{meta.emoji} {meta.label}</Text>
         </View>
-        <Text style={styles.postTimeAgo}>{post.timeAgo}</Text>
+        <Text style={styles.postTimeAgo}>{timeAgo(post.publishedAt)}</Text>
       </View>
-      <Text style={styles.postExcerpt} numberOfLines={2}>{post.excerpt}</Text>
+      <Text style={styles.postExcerpt} numberOfLines={2}>{post.content}</Text>
       <View style={styles.postMetaRow}>
-        <Text style={styles.postMeta}>❤️ {post.reactions}</Text>
-        <Text style={styles.postMeta}>🔥 {post.hotness}</Text>
-        <Text style={styles.postMeta}>👏 {post.applause}</Text>
+        <Text style={styles.postMeta}>❤️ {post.likeCount}</Text>
+        <Text style={styles.postMeta}>💬 {post.commentCount}</Text>
       </View>
     </View>
   );
@@ -212,18 +197,22 @@ function PortfolioGrid({ items, isOwnProfile, styles, c }: {
   const colW = (SCREEN_W - 32 - 8) / 2;
   return (
     <View style={styles.portfolioGrid}>
-      {items.map((item, i) => (
-        <View key={item.id} style={[styles.portfolioItem, { width: colW }]}>
-          <View style={styles.portfolioImage}>
-            {item.imageUrl
-              ? <Image source={{ uri: item.imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-              : <View style={[StyleSheet.absoluteFill, { backgroundColor: PORTFOLIO_GRADIENTS[i % PORTFOLIO_GRADIENTS.length][0] }]} />
-            }
+      {items.map((item, i) => {
+        const imageUrl = item.media?.find((m) => m.type === "image")?.url;
+        const year = item.created_at ? new Date(item.created_at).getFullYear() : "";
+        return (
+          <View key={item.id} style={[styles.portfolioItem, { width: colW }]}>
+            <View style={styles.portfolioImage}>
+              {imageUrl
+                ? <Image source={{ uri: imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                : <View style={[StyleSheet.absoluteFill, { backgroundColor: PORTFOLIO_GRADIENTS[i % PORTFOLIO_GRADIENTS.length][0] }]} />
+              }
+            </View>
+            <Text style={styles.portfolioTitle} numberOfLines={1}>{item.title}</Text>
+            <Text style={styles.portfolioYear}>{year}</Text>
           </View>
-          <Text style={styles.portfolioTitle} numberOfLines={1}>{item.title}</Text>
-          <Text style={styles.portfolioYear}>{item.year}</Text>
-        </View>
-      ))}
+        );
+      })}
       {isOwnProfile && (
         <TouchableOpacity style={[styles.portfolioAddBtn, { width: colW }]}>
           <Ionicons name="add" size={20} color={c.ghost} />
@@ -284,7 +273,11 @@ export default function MemberProfileScreen() {
 
   return (
     <View style={styles.outerContainer}>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <LinearGradient
           colors={["#F3ECE0", "#E8D3BA", "#C5491F"]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -304,15 +297,11 @@ export default function MemberProfileScreen() {
             </View>
           </View>
 
-          {isPro && (
-            <View style={styles.tierBadge}>
-              <Ionicons name="ribbon" size={10} color={c.paper} />
-              <Text style={styles.tierBadgeText}>CONNECT PRO</Text>
-            </View>
-          )}
-
           <View style={styles.identity}>
-            <Text style={styles.profileName}>{profile.displayName}</Text>
+            <View style={styles.profileNameRow}>
+              <Text style={styles.profileName}>{profile.displayName}</Text>
+              {isPro && <Ionicons name="checkmark-circle" size={18} color="#B38238" style={styles.proCheck} />}
+            </View>
             {profile.username    ? <Text style={styles.profileHandle}>@{profile.username}</Text> : null}
             {profile.occupation  ? <Text style={styles.profileOccupation}>{profile.occupation}</Text> : null}
             {(profile.city || profile.countryOfResidence) ? (
@@ -323,8 +312,8 @@ export default function MemberProfileScreen() {
             {profile.registeredAt ? <Text style={styles.profileSince}>{formatMemberSince(profile.registeredAt)}</Text> : null}
           </View>
 
-          {/* Reputation progress bar */}
-          <ReputationBar reputation={rep} styles={styles} c={c} />
+          {/* Reputation tier chip */}
+          <TierChip reputation={rep} styles={styles} c={c} />
 
           {/* Badges — icon only, tap for name */}
           <BadgeRow badges={badges} styles={styles} c={c} />
@@ -379,6 +368,7 @@ function createStyles(c: ColorPalette) {
     outerContainer: { flex: 1, backgroundColor: c.paper },
     container:      { flex: 1, backgroundColor: c.paper },
     scroll:         { flex: 1 },
+    scrollContent:  { flexGrow: 1 },
     center:         { flex: 1, justifyContent: "center", alignItems: "center" },
     errorText:      { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.mute },
     hero:           { width: "100%", height: 200 },
@@ -390,6 +380,7 @@ function createStyles(c: ColorPalette) {
     },
 
     profileCard: {
+      flexGrow: 1,
       backgroundColor: c.paper, borderTopLeftRadius: 20, borderTopRightRadius: 20,
       marginTop: -40, zIndex: 10, paddingBottom: 24, alignItems: "center",
     },
@@ -430,20 +421,23 @@ function createStyles(c: ColorPalette) {
     tierBadgeText: { fontFamily: fonts.sansBold, fontSize: 9, color: c.paper, letterSpacing: 1.4, textTransform: "uppercase" },
 
     identity:          { alignItems: "center", paddingHorizontal: 16, marginTop: 12, gap: 2 },
+    profileNameRow:    { flexDirection: "row", alignItems: "center", gap: 4 },
     profileName:       { fontFamily: fonts.serifBold, fontSize: 24, color: c.ink },
+    proCheck:           { marginTop: 2 },
     profileHandle:     { fontFamily: fonts.mono, fontSize: 13, color: c.mute, marginTop: 2 },
     profileOccupation: { fontFamily: fonts.sans, fontSize: 14, color: c.inkSoft, marginTop: 4, textAlign: "center" },
     profileCity:       { fontFamily: fonts.sans, fontSize: 12, color: c.mute, marginTop: 4 },
     profileSince:      { fontFamily: fonts.mono, fontSize: 10, color: c.ghost, marginTop: 8 },
 
-    // Reputation bar
-    repBar:      { width: "100%", paddingHorizontal: 20, marginTop: 20 },
-    repBarRow:   { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
-    repTierLabel:{ fontFamily: fonts.sansBold, fontSize: 12, color: c.ink },
-    repScore:    { fontFamily: fonts.mono, fontSize: 11, color: c.ochre },
-    repTrack:    { height: 6, backgroundColor: c.ghost, borderRadius: 3, overflow: "hidden" },
-    repFill:     { height: 6, backgroundColor: c.ochre, borderRadius: 3 },
-    repNext:     { fontFamily: fonts.mono, fontSize: 10, color: c.mute, marginTop: 5 },
+    // Reputation tier chip
+    tierChip: {
+      flexDirection: "row", alignItems: "center", gap: 6,
+      marginTop: 16, paddingHorizontal: 14, paddingVertical: 7,
+      backgroundColor: c.paperDeep, borderRadius: radius.full,
+      borderWidth: 1, borderColor: c.ghost,
+    },
+    tierChipIcon:  { fontSize: 13, color: c.ochre },
+    tierChipLabel: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ink, letterSpacing: 0.3 },
 
     // Badge row — icon only
     badgeRowWrap: { marginTop: 16, width: "100%" },
@@ -486,7 +480,7 @@ function createStyles(c: ColorPalette) {
     tabTextActive: { fontFamily: fonts.sansBold, color: c.ink },
 
     tabContent: {
-      width: "100%", backgroundColor: c.paperDeep,
+      width: "100%", backgroundColor: c.paper,
       paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24, gap: 8,
     },
 

@@ -4,6 +4,7 @@ import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../../auth/authStore";
 import TierBadge from "../../components/ui/TierBadge";
+import Avatar from "../../components/ui/Avatar";
 
 export default function MemberScreen() {
   const nav = useNav();
@@ -17,9 +18,11 @@ export default function MemberScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView>
         <View style={styles.hero}>
-          <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-          <Text style={styles.name}>{user.displayName}</Text>
-          <TierBadge tier={user.tier} />
+          <Avatar uri={user.avatarUrl} name={user.displayName} size={88} tier={user.tier} />
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{user.displayName}</Text>
+            <TierBadge tier={user.tier} />
+          </View>
           <View style={styles.pointsRow}>
             <Ionicons name="star" size={16} color="#b38238" />
             <Text style={styles.points}>{user.points} points</Text>
@@ -58,7 +61,7 @@ export default function MemberScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f3ece0" },
   hero: { alignItems: "center", padding: 28, gap: 8 },
-  avatar: { width: 88, height: 88, borderRadius: 44, backgroundColor: "#e0d8cc", marginBottom: 8 },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   name: { fontSize: 22, fontWeight: "800", color: "#14110d" },
   pointsRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
   points: { fontSize: 14, color: "#b38238", fontWeight: "600" },

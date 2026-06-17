@@ -117,6 +117,7 @@ export interface FeedItem {
   quoteSource?: string;
   quoteAuthor?: string;
   quoteSharingReason?: string;
+  authorName?: string;
   quoteType?: string;
 
   // Editorial

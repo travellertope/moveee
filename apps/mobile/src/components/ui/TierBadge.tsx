@@ -5,35 +5,12 @@ import type { Tier } from "../../types";
 
 export default function TierBadge({ tier }: { tier: Tier }) {
   const isPro = tier === "patron";
-  if (!isPro) {
-    return (
-      <View style={styles.citizen}>
-        <Ionicons name="person-outline" size={9} color="#6b6560" />
-      </View>
-    );
-  }
-  return (
-    <View style={styles.pro}>
-      <Ionicons name="ribbon" size={10} color="#fff" />
-    </View>
-  );
+  if (!isPro) return null;
+  return <Ionicons name="checkmark-circle" size={14} color="#B38238" style={styles.check} />;
 }
 
 const styles = StyleSheet.create({
-  pro: {
-    backgroundColor: "#b38238",
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  citizen: {
-    backgroundColor: "#e0d8cc",
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    alignItems: "center",
-    justifyContent: "center",
+  check: {
+    marginTop: 1,
   },
 });

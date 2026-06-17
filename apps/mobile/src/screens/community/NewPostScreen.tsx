@@ -686,9 +686,6 @@ const uploadImages = async (): Promise<string[]> => {
         maxLength={tmpl.maxText + 50}
         textAlignVertical="top"
       />
-      <Text style={[styles.charCount, remaining < 50 && { color: c.gold }, remaining < 0 && { color: c.ochre }]}>
-        {remaining}
-      </Text>
       <InlinePhotosSection
         images={images}
         onAdd={() => pickImages(true)}
@@ -736,7 +733,6 @@ const uploadImages = async (): Promise<string[]> => {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
       <View style={styles.fieldGroup}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
@@ -788,7 +784,6 @@ const uploadImages = async (): Promise<string[]> => {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
       <View style={styles.fieldGroup}>
         <DirectorySearch
@@ -839,7 +834,6 @@ const uploadImages = async (): Promise<string[]> => {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Cuisine (optional)</Text>
@@ -909,7 +903,6 @@ const uploadImages = async (): Promise<string[]> => {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
       <View style={styles.fieldGroup}>
         <UserSearch
@@ -1083,7 +1076,6 @@ const uploadImages = async (): Promise<string[]> => {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
 
       {/* Favourite quote */}
@@ -1157,7 +1149,6 @@ const uploadImages = async (): Promise<string[]> => {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }]}>{remaining}</Text>
       </View>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Options *</Text>
@@ -1411,7 +1402,6 @@ const uploadImages = async (): Promise<string[]> => {
           maxLength={tmpl.maxText + 50}
           textAlignVertical="top"
         />
-        <Text style={[styles.charCount, remaining < 50 && { color: c.gold }, { marginTop: 4 }]}>{remaining}</Text>
       </View>
 
       <View style={[styles.fieldGroup, { marginTop: space[3] }]}>
@@ -1535,15 +1525,6 @@ const uploadImages = async (): Promise<string[]> => {
           <View style={styles.toolbarLeft}>
             {toolbarIcons}
           </View>
-          {template !== "event" && (
-            <Text style={[
-              styles.toolbarCount,
-              remaining < 50 && { color: c.gold },
-              remaining < 0 && { color: c.ochre },
-            ]}>
-              {remaining} left
-            </Text>
-          )}
         </View>
 
       </KeyboardAvoidingView>

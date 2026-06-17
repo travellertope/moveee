@@ -74,6 +74,47 @@ function stripLinkFromBody(body?: string | null, sourceUrl?: string | null): str
   return result || undefined;
 }
 
+function stripHtmlTags(html?: string | null): string | undefined {
+  if (!html) return undefined;
+  const text = html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#8217;|&rsquo;/g, "’")
+    .replace(/&#8216;|&lsquo;/g, "‘")
+    .replace(/&#8220;|&ldquo;/g, "“")
+    .replace(/&#8221;|&rdquo;/g, "”")
+    .replace(/&#\d+;/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text || undefined;
+}
+
+function faviconUrl(sourceUrl?: string | null): string | undefined {
+  if (!sourceUrl) return undefined;
+  try {
+    const domain = new URL(sourceUrl).hostname;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+  } catch {
+    return undefined;
+  }
+}
+
+function SourceLine({ source, sourceUrl, style }: { source: string; sourceUrl?: string | null; style: any }) {
+  const [faviconFailed, setFaviconFailed] = useState(false);
+  const favicon = faviconUrl(sourceUrl);
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 }}>
+      {favicon && !faviconFailed ? (
+        <Image source={{ uri: favicon }} style={{ width: 12, height: 12, borderRadius: 2 }} onError={() => setFaviconFailed(true)} />
+      ) : (
+        <Text style={{ fontSize: 11 }}>🌐</Text>
+      )}
+      <Text style={style}>{source}</Text>
+    </View>
+  );
+}
+
 // ── Styles factory ────────────────────────────────────────────────────────────
 
 function createStyles(c: ColorPalette) {
@@ -536,17 +577,14 @@ function createStyles(c: ColorPalette) {
     // quote
     quoteContainer: {
       padding: 20,
-      paddingTop: 24,
-      position: "relative" as const,
+      paddingTop: 16,
     },
     bigQuote: {
-      position: "absolute" as const,
-      top: 8,
-      left: 14,
       fontFamily: fonts.serifBold,
-      fontSize: 52,
+      fontSize: 44,
       color: c.ghost,
-      lineHeight: 40,
+      lineHeight: 56,
+      marginBottom: -4,
     },
     quoteText: {
       fontFamily: fonts.serif,
@@ -881,10 +919,6 @@ function AuthorRow({ item, forYouBadge, onAuthorPress }: {
           </View>
         ) : null}
       </View>
-
-      <View style={styles.topRight}>
-        <ReportControl item={item} />
-      </View>
     </View>
   );
 }
@@ -945,6 +979,7 @@ function FeedReactionBar({ item, marginTop }: { item: FeedItem; marginTop?: numb
         initialCounts={item.reactions}
         shareUrl={shareUrlFor(item)}
         shareTitle={item.title || item.communityAuthor ? `${item.communityAuthor ?? "Someone"}'s post on Moveee` : undefined}
+        showReport
       />
     </View>
   );
@@ -989,8 +1024,17 @@ function PulseCard({ item }: FeedCardProps) {
             </View>
             <Text style={[styles.cardTitle, { marginTop: 6, fontSize: fontSize.base, lineHeight: 22 }]} numberOfLines={2}>{item.title}</Text>
             {item.source ? (
-              <Text style={[styles.sourceText, { marginTop: 4 }]}>🌐 {item.source}</Text>
+              <SourceLine source={item.source} sourceUrl={item.sourceUrl} style={styles.sourceText} />
             ) : null}
+            {(() => {
+              let pulseExcerpt = stripHtmlTags(item.excerpt) || stripHtmlTags(item.body) || stripHtmlTags(item.ogDescription);
+              if (pulseExcerpt && pulseExcerpt.length > 220) pulseExcerpt = pulseExcerpt.slice(0, 220).trim() + "…";
+              return pulseExcerpt ? (
+                <Text style={{ fontFamily: fonts.sans, fontSize: 13, color: c.mute, lineHeight: 19, marginTop: 5 }} numberOfLines={3}>
+                  {pulseExcerpt}
+                </Text>
+              ) : null;
+            })()}
           </View>
         </View>
         {item.image ? (
@@ -1746,9 +1790,15 @@ function QuoteCard({ item }: FeedCardProps) {
           <TouchableOpacity style={styles.quoteActionBtn} onPress={handleBookmark} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={18} color={bookmarked ? c.ochre : c.mute} />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.quoteActionBtn, { marginLeft: "auto" as any }]} onPress={handleShare} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="share-social-outline" size={18} color={c.mute} />
+          <TouchableOpacity style={styles.quoteActionBtn} onPress={() => setModalOpen(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="chatbubble-outline" size={18} color={c.mute} />
+            {item.commentCount ? <Text style={styles.quoteActionCount}>{item.commentCount}</Text> : null}
           </TouchableOpacity>
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity style={styles.quoteActionBtn} onPress={handleShare} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="share-outline" size={16} color={c.mute} />
+          </TouchableOpacity>
+          <ReportControl item={item} />
         </View>
       </TouchableOpacity>
       <QuoteDetailModal visible={modalOpen} item={item} onClose={() => setModalOpen(false)} />

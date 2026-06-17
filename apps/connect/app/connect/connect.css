@@ -233,7 +233,10 @@
   flex-shrink: 0;
   line-height: 1;
 }
-.mco-member-card--patron .mco-member-avatar { background: var(--ochre); }
+.mco-member-card--patron .mco-member-avatar {
+  background: var(--ochre);
+  box-shadow: 0 0 0 2px var(--ochre), 0 0 10px 2px rgba(179,130,56,.55);
+}
 .mco-member-info { flex: 1; min-width: 0; }
 .mco-member-name {
   font-family: 'Fraunces', serif;
@@ -245,6 +248,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mco-member-name-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 .mco-member-role {
   font-size: 13px;

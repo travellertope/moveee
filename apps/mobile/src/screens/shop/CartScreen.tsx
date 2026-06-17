@@ -32,16 +32,19 @@ export default function CartScreen() {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
-  const [voucher, setVoucher]       = useState("");
-  const [appliedVoucher, setApplied] = useState("");
-  const [editing, setEditing]        = useState(false);
-  const [view, setView]              = useState<"cart" | "checkout">("cart");
+  const [voucher, setVoucher]         = useState("");
+  const [appliedVoucher, setApplied]   = useState("");
+  const [couponDiscount, setCouponDisc] = useState(0);   // real discount from API
+  const [couponError, setCouponError]   = useState("");
+  const [validating, setValidating]     = useState(false);
+  const [editing, setEditing]           = useState(false);
+  const [view, setView]                 = useState<"cart" | "checkout">("cart");
   const progressAnim = useRef(new Animated.Value(0)).current;
 
-  const isPatron  = user?.tier === "patron";
-  const subtotal  = items.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const isPatron    = user?.tier === "patron";
+  const subtotal    = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const proDiscount = isPatron ? subtotal * PRO_DISCOUNT_RATE : 0;
-  const total     = subtotal - proDiscount;
+  const total       = subtotal - proDiscount - couponDiscount;
   const totalQty  = items.reduce((sum, i) => sum + i.qty, 0);
 
   useEffect(() => {
@@ -83,12 +86,35 @@ export default function CartScreen() {
     });
   }, [view]);
 
-  const handleApplyVoucher = () => {
+  const handleApplyVoucher = async () => {
     const code = voucher.trim().toUpperCase();
     if (!code) return;
-    setApplied(code);
-    setVoucher("");
-    Alert.alert("Promo code saved", `"${code}" will be applied at checkout.`);
+    setCouponError("");
+    setValidating(true);
+    try {
+      const res = await api.post<{
+        valid: boolean;
+        code: string;
+        discount_type: string;
+        discount_amount: number;
+        discount_value: number;
+        description: string;
+      }>(`${MOBILE_API}/validate-coupon`, { code, subtotal });
+      setApplied(res.code);
+      setCouponDisc(res.discount_value);
+      setVoucher("");
+    } catch (e: any) {
+      const msg = e?.message || "Invalid promo code.";
+      setCouponError(msg);
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handleRemoveVoucher = () => {
+    setApplied("");
+    setCouponDisc(0);
+    setCouponError("");
   };
 
   const handleCheckout = () => {
@@ -252,27 +278,35 @@ export default function CartScreen() {
 
         {/* Voucher / Promo */}
         <View style={styles.voucherCard}>
-          <Ionicons name="pricetag-outline" size={20} color={c.mute} />
+          <Ionicons name="pricetag-outline" size={20} color={appliedVoucher ? c.gold : c.mute} />
           <TextInput
             style={styles.voucherInput}
             placeholder={appliedVoucher ? `Applied: ${appliedVoucher}` : "Add promo code"}
             placeholderTextColor={appliedVoucher ? c.gold : c.ghost}
             value={voucher}
-            onChangeText={setVoucher}
+            onChangeText={(t) => { setVoucher(t); setCouponError(""); }}
             autoCapitalize="characters"
             returnKeyType="done"
             onSubmitEditing={handleApplyVoucher}
+            editable={!appliedVoucher && !validating}
           />
           {appliedVoucher ? (
-            <TouchableOpacity onPress={() => setApplied("")}>
+            <TouchableOpacity onPress={handleRemoveVoucher}>
               <Text style={styles.removeVoucherBtn}>Remove</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={handleApplyVoucher} disabled={!voucher.trim()}>
-              <Text style={[styles.applyBtn, !voucher.trim() && { opacity: 0.4 }]}>Apply</Text>
+            <TouchableOpacity onPress={handleApplyVoucher} disabled={!voucher.trim() || validating}>
+              <Text style={[styles.applyBtn, (!voucher.trim() || validating) && { opacity: 0.4 }]}>
+                {validating ? "…" : "Apply"}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
+        {couponError ? (
+          <Text style={{ fontFamily: fonts.sans, fontSize: fontSize.tiny, color: "#C5491F", paddingHorizontal: space[4], marginBottom: space[2] }}>
+            {couponError}
+          </Text>
+        ) : null}
 
         {/* Order Summary */}
         <View style={styles.summaryCard}>

@@ -24,8 +24,6 @@ class Culture_Mobile_API {
 
     public static function init() {
         add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
-        // Consume one-time checkout auth token before WordPress renders anything
-        add_action( 'init', array( __CLASS__, 'handle_checkout_auth_redirect' ), 1 );
     }
 
     // -------------------------------------------------------------------------
@@ -229,9 +227,11 @@ class Culture_Mobile_API {
             'callback'            => array( __CLASS__, 'handle_submit_quote' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
             'args'                => array(
-                'text'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
-                'author' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
-                'source' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'text'           => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
+                'author'         => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'source'         => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'sharing_reason' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field' ),
+                'quote_type'     => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
             ),
         ) );
 
@@ -250,6 +250,26 @@ class Culture_Mobile_API {
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_checkout_token' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Redeems the one-time token above. Lives under /wp-json/ so Varnish's
+        // page cache (which can serve a stale homepage for "/?param=...") never
+        // intercepts the handshake.
+        register_rest_route( 'culture/v1', '/mobile/checkout-redirect', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_checkout_redirect' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        // Validate a WooCommerce coupon code and return discount details.
+        register_rest_route( 'culture/v1', '/mobile/validate-coupon', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_validate_coupon' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'code'     => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'subtotal' => array( 'required' => false, 'type' => 'number', 'default' => 0 ),
+            ),
         ) );
 
         register_rest_route( 'culture/v1', '/mobile/events/my-rsvps', array(
@@ -563,6 +583,13 @@ class Culture_Mobile_API {
         register_rest_route( 'culture/v1', '/mobile/articles/(?P<slug>[a-zA-Z0-9-]+)/related', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_article_related' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        // The Edit — curated editorial shop picks derived from articles with featured products.
+        register_rest_route( 'culture/v1', '/mobile/shop/the-edit', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_the_edit' ),
             'permission_callback' => '__return_true',
         ) );
     }
@@ -1174,7 +1201,7 @@ class Culture_Mobile_API {
         return rest_ensure_response( self::format_community_post( $post, array() ) );
     }
 
-    const COMMENTABLE_POST_TYPES = array( 'culture_post', 'pulse_story' );
+    const COMMENTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'post', 'culture_quote' );
 
     public static function handle_get_comments( $request ) {
         $post_id = (int) $request->get_param( 'post_id' );
@@ -1243,8 +1270,11 @@ class Culture_Mobile_API {
         }
 
         if ( class_exists( 'Culture_Gamification' ) ) {
-            Culture_Gamification::award_points( $user_id, 'community_comment' );
-            // Check if the post has now crossed the validation threshold.
+            // Use the correct action based on post type:
+            // magazine articles ('post') → 5 rep + 2 credits
+            // community/pulse posts     → 8 rep + 0 credits
+            $action = ( $post->post_type === 'post' ) ? 'magazine_comment' : 'community_comment';
+            Culture_Gamification::award_points( $user_id, $action );
             Culture_Gamification::check_post_threshold( $post_id );
         }
 
@@ -1350,7 +1380,7 @@ class Culture_Mobile_API {
         return rest_ensure_response( array( 'options' => $options ) );
     }
 
-    const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote' );
+    const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote', 'post' );
 
     public static function handle_react( $request ) {
         $user_id = get_current_user_id();
@@ -1888,8 +1918,11 @@ class Culture_Mobile_API {
                 'date'        => $post->post_date_gmt,
                 'href'        => '/quotes/' . $post->ID . '-' . $post->post_name,
                 'wpId'        => (string) $post->ID,
-                'quoteSource' => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
-                'quoteAuthor' => ( $authors && ! is_wp_error( $authors ) && ! empty( $authors ) ) ? $authors[0]->name : '',
+                'quoteSource'        => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
+                'quoteAuthor'        => ( $authors && ! is_wp_error( $authors ) && ! empty( $authors ) ) ? $authors[0]->name : '',
+                'quoteSharingReason' => get_post_meta( $post->ID, '_quote_sharing_reason', true ) ?: '',
+                'authorName'         => get_the_author_meta( 'display_name', $post->post_author ),
+                'quoteType'          => get_post_meta( $post->ID, '_quote_type', true ) ?: '',
             );
         }, $query->posts );
     }
@@ -1907,7 +1940,25 @@ class Culture_Mobile_API {
             'no_found_rows'  => true,
         ) );
 
-        return array_map( function( WP_Post $post ) use ( $liked_ids ) {
+        // Pre-warm organiser directory posts in one query to avoid N+1 lookups.
+        $organiser_map = array(); // organiser_id => [name, slug]
+        $org_ids = array_filter( array_map( function( $p ) {
+            return (int) get_post_meta( $p->ID, '_culture_event_organiser_id', true );
+        }, $query->posts ) );
+        if ( ! empty( $org_ids ) ) {
+            $org_posts = get_posts( array(
+                'post__in'       => array_values( array_unique( $org_ids ) ),
+                'post_type'      => 'culture_directory',
+                'post_status'    => 'publish',
+                'posts_per_page' => count( $org_ids ),
+                'no_found_rows'  => true,
+            ) );
+            foreach ( $org_posts as $op ) {
+                $organiser_map[ $op->ID ] = array( 'name' => $op->post_title, 'slug' => $op->post_name );
+            }
+        }
+
+        return array_map( function( WP_Post $post ) use ( $liked_ids, $organiser_map ) {
             $author_id   = (int) $post->post_author;
             $author      = get_userdata( $author_id );
             $raw         = wpautop( $post->post_content );
@@ -2013,6 +2064,12 @@ class Culture_Mobile_API {
                 'ticketUrl'               => get_post_meta( $post->ID, '_event_ticket_url', true ) ?: '',
                 'isProOnly'               => (bool) get_post_meta( $post->ID, '_culture_event_pro_only', true ),
                 'eventCategory'           => get_post_meta( $post->ID, '_event_category', true ) ?: '',
+                'organiserName'           => isset( $organiser_map[ (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ] )
+                    ? $organiser_map[ (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ]['name']
+                    : '',
+                'organiserSlug'           => isset( $organiser_map[ (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ] )
+                    ? $organiser_map[ (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ]['slug']
+                    : '',
             );
         }, $query->posts );
     }
@@ -2041,6 +2098,7 @@ class Culture_Mobile_API {
             'website'            => get_user_meta( $user->ID, '_culture_directory_website', true ) ?: '',
             'registeredAt'       => strtotime( $user->user_registered ),
             'points'             => (int) get_user_meta( $user->ID, '_culture_points', true ),
+            'reputation'         => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user->ID ) : 0,
             'badges'             => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_badges( $user->ID ) : array(),
         );
     }
@@ -2868,9 +2926,62 @@ class Culture_Mobile_API {
     }
 
     /**
+     * POST /mobile/validate-coupon
+     * Validates a WooCommerce coupon code and returns discount information.
+     * Lets the app show the real discount before opening the web checkout.
+     */
+    public static function handle_validate_coupon( WP_REST_Request $request ) {
+        $code     = strtoupper( sanitize_text_field( $request->get_param( 'code' ) ) );
+        $subtotal = (float) $request->get_param( 'subtotal' );
+
+        if ( ! class_exists( 'WC_Coupon' ) ) {
+            return new WP_Error( 'woocommerce_unavailable', 'WooCommerce is not active.', array( 'status' => 503 ) );
+        }
+
+        $coupon = new WC_Coupon( $code );
+
+        if ( ! $coupon->get_id() ) {
+            return new WP_Error( 'invalid_coupon', 'This promo code is not valid.', array( 'status' => 422 ) );
+        }
+
+        // Check expiry
+        $expiry = $coupon->get_date_expires();
+        if ( $expiry && $expiry->getTimestamp() < time() ) {
+            return new WP_Error( 'coupon_expired', 'This promo code has expired.', array( 'status' => 422 ) );
+        }
+
+        // Check usage limit
+        $usage_limit = $coupon->get_usage_limit();
+        if ( $usage_limit > 0 && $coupon->get_usage_count() >= $usage_limit ) {
+            return new WP_Error( 'coupon_exhausted', 'This promo code has reached its usage limit.', array( 'status' => 422 ) );
+        }
+
+        // Calculate discount amount
+        $discount_type   = $coupon->get_discount_type(); // percent, fixed_cart, fixed_product
+        $discount_amount = (float) $coupon->get_amount();
+        $discount_value  = 0.0;
+
+        if ( $discount_type === 'percent' ) {
+            $discount_value = $subtotal > 0 ? round( $subtotal * ( $discount_amount / 100 ), 2 ) : 0;
+        } elseif ( in_array( $discount_type, array( 'fixed_cart', 'fixed_product' ), true ) ) {
+            $discount_value = min( $discount_amount, $subtotal );
+        }
+
+        return rest_ensure_response( array(
+            'valid'          => true,
+            'code'           => $code,
+            'discount_type'  => $discount_type,
+            'discount_amount' => $discount_amount,
+            'discount_value' => $discount_value,
+            'description'    => $coupon->get_description() ?: '',
+        ) );
+    }
+
+    /**
      * POST /mobile/checkout-token
      * Issues a one-time, 120-second transient key the mobile in-app browser
-     * exchanges for a WordPress auth cookie, enabling seamless checkout.
+     * exchanges (via GET /mobile/checkout-redirect) for a WordPress auth cookie,
+     * enabling seamless checkout.
      */
     public static function handle_checkout_token( WP_REST_Request $request ) {
         $user_id     = get_current_user_id();
@@ -2879,6 +2990,14 @@ class Culture_Mobile_API {
         // Only allow same-site paths to prevent open-redirect abuse
         if ( ! str_starts_with( $redirect_to, '/' ) || str_contains( $redirect_to, '//' ) ) {
             $redirect_to = '/checkout';
+        }
+
+        // Pull an optional coupon code out of the redirect path's query string
+        $coupon_code = '';
+        $query = (string) wp_parse_url( $redirect_to, PHP_URL_QUERY );
+        if ( $query ) {
+            wp_parse_str( $query, $redirect_params );
+            $coupon_code = sanitize_text_field( $redirect_params['coupon_code'] ?? '' );
         }
 
         // Sanitise cart items: [{ id: int, qty: int, variation_id?: int }]
@@ -2897,27 +3016,27 @@ class Culture_Mobile_API {
         // Generate a cryptographically random key (48 hex chars)
         $key = bin2hex( random_bytes( 24 ) );
         set_transient( 'culture_mob_checkout_' . $key, array(
-            'user_id'    => $user_id,
-            'cart_items' => $cart_items,
+            'user_id'     => $user_id,
+            'cart_items'  => $cart_items,
+            'coupon_code' => $coupon_code,
         ), 120 );
 
-        $auth_url = home_url( '/?mobile_checkout_auth=' . $key . '&mobile_redirect=' . urlencode( $redirect_to ) );
+        // Redeemed under /wp-json/ — never served from the Varnish page cache,
+        // unlike a homepage URL with a query string would be.
+        $auth_url = add_query_arg( 'key', $key, rest_url( 'culture/v1/mobile/checkout-redirect' ) );
 
         return rest_ensure_response( array( 'url' => $auth_url ) );
     }
 
     /**
-     * Hooked on `init` (priority 1) — runs before any template output.
+     * GET /mobile/checkout-redirect
      * Validates the one-time token, logs the user in, populates the
-     * WooCommerce cart with the items from the mobile app, then redirects.
+     * WooCommerce cart (and coupon) with the items from the mobile app,
+     * then redirects to the real WooCommerce checkout page.
      */
-    public static function handle_checkout_auth_redirect() {
-        if ( empty( $_GET['mobile_checkout_auth'] ) ) {
-            return;
-        }
-
-        $key  = sanitize_text_field( wp_unslash( $_GET['mobile_checkout_auth'] ) );
-        $data = get_transient( 'culture_mob_checkout_' . $key );
+    public static function handle_checkout_redirect( WP_REST_Request $request ) {
+        $key  = sanitize_text_field( $request->get_param( 'key' ) ?: '' );
+        $data = $key ? get_transient( 'culture_mob_checkout_' . $key ) : false;
 
         if ( ! $data ) {
             // Token missing or expired — send to login
@@ -2928,8 +3047,9 @@ class Culture_Mobile_API {
         // Consume the token (one-time use)
         delete_transient( 'culture_mob_checkout_' . $key );
 
-        $user_id    = (int) ( $data['user_id'] ?? 0 );
-        $cart_items = $data['cart_items'] ?? array();
+        $user_id     = (int) ( $data['user_id'] ?? 0 );
+        $cart_items  = $data['cart_items'] ?? array();
+        $coupon_code = $data['coupon_code'] ?? '';
 
         if ( ! $user_id ) {
             wp_safe_redirect( wp_login_url( home_url( '/checkout' ) ) );
@@ -2946,20 +3066,26 @@ class Culture_Mobile_API {
             WC()->initialize_cart();
             WC()->cart->empty_cart();
             foreach ( $cart_items as $item ) {
-                WC()->cart->add_to_cart( $item['id'], $item['qty'] );
+                $product_id = (int) ( $item['id'] ?? 0 );
+                $qty        = max( 1, (int) ( $item['qty'] ?? 1 ) );
+                if ( $product_id > 0 ) {
+                    WC()->cart->add_to_cart( $product_id, $qty );
+                }
             }
+            if ( $coupon_code ) {
+                WC()->cart->add_discount( sanitize_text_field( $coupon_code ) );
+            }
+
+            // Persist session so the redirect request finds the cart
+            WC()->session->save_data();
         }
 
-        $redirect_path = isset( $_GET['mobile_redirect'] )
-            ? sanitize_text_field( urldecode( wp_unslash( $_GET['mobile_redirect'] ) ) )
-            : '/checkout';
+        // Use WooCommerce's own checkout URL; fall back to /checkout
+        $checkout_url = function_exists( 'wc_get_checkout_url' )
+            ? wc_get_checkout_url()
+            : home_url( '/checkout/' );
 
-        // Safety: only allow same-origin paths
-        if ( ! str_starts_with( $redirect_path, '/' ) || str_contains( $redirect_path, '//' ) ) {
-            $redirect_path = '/checkout';
-        }
-
-        wp_safe_redirect( home_url( $redirect_path ) );
+        wp_safe_redirect( $checkout_url );
         exit;
     }
 
@@ -3029,10 +3155,147 @@ class Culture_Mobile_API {
             return rest_ensure_response( array( 'credits_earned' => 0, 'already_awarded' => true ) );
         }
 
-        $credits = Culture_Gamification::award_credits( $user_id, 'magazine_read', $post_id );
+        // Look up the configured credit amount for magazine_read (default 1).
+        $amount  = max( 1, (int) Culture_Gamification::get_credit_bonus( 'magazine_read' ) );
+        $credits = Culture_Gamification::award_credits( $user_id, $amount, 'magazine_read', $post_id );
         update_user_meta( $user_id, $meta_key, '1' );
 
         return rest_ensure_response( array( 'credits_earned' => max( 0, intval( $credits ) ) ) );
+    }
+
+    /**
+     * GET /mobile/shop/the-edit
+     * Returns curated editorial picks for "The Edit" screen.
+     *
+     * Data source: magazine articles (post type 'post') that have
+     * '_culture_featured_products' meta set. Products in turn carry
+     * '_as_seen_in' meta linking back to the article.
+     *
+     * Response shape:
+     *   hero         — first product from the newest featured article (with story context)
+     *   season_picks — next up to 4 products (from same or second article)
+     *   stories      — up to 4 articles that have featured products
+     *   grid         — all remaining products, deduped
+     */
+    public static function handle_the_edit( WP_REST_Request $request ) {
+        if ( ! function_exists( 'wc_get_product' ) ) {
+            return rest_ensure_response( array(
+                'hero'         => null,
+                'season_picks' => array(),
+                'stories'      => array(),
+                'grid'         => array(),
+            ) );
+        }
+
+        global $wpdb;
+
+        // Fetch the most recent 6 articles that have _culture_featured_products set
+        $article_ids = $wpdb->get_col(
+            "SELECT DISTINCT p.ID FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+             WHERE p.post_type = 'post'
+               AND p.post_status = 'publish'
+               AND pm.meta_key = '_culture_featured_products'
+               AND pm.meta_value != ''
+               AND pm.meta_value != '[]'
+             ORDER BY p.post_date DESC
+             LIMIT 6"
+        );
+
+        if ( empty( $article_ids ) ) {
+            return rest_ensure_response( array(
+                'hero'         => null,
+                'season_picks' => array(),
+                'stories'      => array(),
+                'grid'         => array(),
+            ) );
+        }
+
+        $currency        = get_woocommerce_currency();
+        $currency_symbol = get_woocommerce_currency_symbol( $currency );
+
+        $stories      = array();
+        $all_products = array(); // keyed by product id to dedupe
+        $seen_ids     = array();
+
+        foreach ( $article_ids as $article_id ) {
+            $post = get_post( $article_id );
+            if ( ! $post ) continue;
+
+            $raw         = get_post_meta( $article_id, '_culture_featured_products', true );
+            $product_ids = $raw ? array_filter( array_map( 'absint', (array) json_decode( $raw, true ) ) ) : array();
+            if ( empty( $product_ids ) ) continue;
+
+            $thumb = get_the_post_thumbnail_url( $article_id, 'medium' );
+            $cats  = get_the_category( $article_id );
+
+            $stories[] = array(
+                'slug'        => $post->post_name,
+                'title'       => $post->post_title,
+                'category'    => ! empty( $cats ) ? strtoupper( $cats[0]->name ) : 'CULTURE',
+                'image'       => $thumb ?: null,
+                'readTime'    => (int) get_post_meta( $article_id, '_reading_time', true ) ?: null,
+                'productIds'  => array_values( $product_ids ),
+            );
+
+            foreach ( $product_ids as $pid ) {
+                if ( isset( $seen_ids[ $pid ] ) ) continue;
+                $wc = wc_get_product( $pid );
+                if ( ! $wc || ! $wc->is_visible() ) continue;
+
+                $image_id  = $wc->get_image_id();
+                $reg_price = (float) $wc->get_regular_price();
+                $sale_price = (float) $wc->get_sale_price();
+                $stock_qty = $wc->get_stock_quantity();
+
+                // Badge
+                $badge      = null;
+                $badge_label = null;
+                if ( get_post_meta( $pid, '_pro_early_access', true ) ) {
+                    $badge = 'pro_early_access'; $badge_label = 'PRO EARLY ACCESS';
+                } elseif ( $sale_price > 0 ) {
+                    $badge = 'sale'; $badge_label = 'SALE';
+                } elseif ( $stock_qty !== null && $stock_qty <= 3 && $stock_qty > 0 ) {
+                    $badge = 'low_stock'; $badge_label = 'ONLY ' . $stock_qty . ' LEFT';
+                } elseif ( ( time() - get_post_time( 'U', false, $pid ) ) < 14 * DAY_IN_SECONDS ) {
+                    $badge = 'new'; $badge_label = 'NEW';
+                }
+
+                $all_products[ $pid ] = array(
+                    'id'             => $pid,
+                    'productId'      => $pid,
+                    'slug'           => $wc->get_slug(),
+                    'title'          => $wc->get_name(),
+                    'brand'          => get_post_meta( $pid, '_maker_name', true ) ?: '',
+                    'city'           => get_post_meta( $pid, '_maker_city', true ) ?: '',
+                    'price'          => $reg_price,
+                    'proPrice'       => $reg_price > 0 ? round( $reg_price * 0.9, 2 ) : null,
+                    'originalPrice'  => $sale_price > 0 ? $reg_price : null,
+                    'currency'       => $currency,
+                    'currencySymbol' => $currency_symbol,
+                    'image'          => $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : null,
+                    'badge'          => $badge,
+                    'badgeLabel'     => $badge_label,
+                    'storySlug'      => $post->post_name,
+                    'storyTitle'     => $post->post_title,
+                    'editorialQuote' => $wc->get_short_description() ?: '',
+                );
+                $seen_ids[ $pid ] = true;
+            }
+        }
+
+        $products_list = array_values( $all_products );
+
+        $hero         = ! empty( $products_list ) ? $products_list[0] : null;
+        $season_picks = array_slice( $products_list, 1, 4 );
+        $grid         = array_slice( $products_list, 5 );
+
+        return rest_ensure_response( array(
+            'hero'         => $hero,
+            'season_picks' => $season_picks,
+            'stories'      => array_slice( $stories, 0, 4 ),
+            'grid'         => $grid,
+        ) );
     }
 
     public static function handle_article_products( WP_REST_Request $request ) {

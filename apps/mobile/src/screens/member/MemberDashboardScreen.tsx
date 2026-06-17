@@ -175,13 +175,6 @@ const EARN_TABLE = [
   { action: "Game completed",                               cr: "+1",  rep: "+5" },
 ];
 
-const FIGMA_EARN_ROWS = [
-  { action: "Publish a post",  cr: "+10", rep: "+5"  },
-  { action: "Get 5 reactions", cr: "+5",  rep: "+2"  },
-  { action: "Leave a comment", cr: "+2",  rep: "+1"  },
-  { action: "Win daily game",  cr: "+30", rep: "0"   },
-  { action: "Refer a friend",  cr: "+50", rep: "+10" },
-];
 
 const QUICK_LINKS = [
   { emoji: "💰", label: "Wallet",      screen: "Wallet" },
@@ -211,7 +204,6 @@ function formatMemberSince(registeredAt?: number): string | null {
 export default function MemberDashboardScreen() {
   const nav = useNav();
   const { user, logout } = useAuthStore();
-  const [earnExpanded, setEarnExpanded] = useState(true);
   const [signOutVisible, setSignOutVisible] = useState(false);
   const [rewardsSheet, setRewardsSheet] = useState<{ visible: boolean; tab: "credits" | "reputation" }>({ visible: false, tab: "credits" });
   const c = useColors();
@@ -272,13 +264,11 @@ export default function MemberDashboardScreen() {
               )}
             </View>
             <View style={styles.heroInfo}>
-              <Text style={styles.heroName} numberOfLines={1}>{user.displayName}</Text>
-              {isPro ? (
-                <View style={styles.tierBadgePro}>
-                  <Ionicons name="ribbon" size={10} color={c.gold} />
-                  <Text style={styles.tierTextPro}>CONNECT PRO</Text>
-                </View>
-              ) : (
+              <View style={styles.heroNameRow}>
+                <Text style={styles.heroName} numberOfLines={1}>{user.displayName}</Text>
+                {isPro && <Ionicons name="checkmark-circle" size={16} color={c.gold} style={styles.proCheck} />}
+              </View>
+              {!isPro && (
                 <View style={styles.tierBadgeCitizen}>
                   <Text style={styles.tierTextCitizen}>CONNECT CITIZEN</Text>
                 </View>
@@ -419,47 +409,6 @@ export default function MemberDashboardScreen() {
           ))}
         </View>
 
-        {/* Card 8: How to Earn Points */}
-        <View style={styles.card}>
-          <TouchableOpacity
-            style={styles.earnHeaderRow}
-            onPress={() => setEarnExpanded((v) => !v)}
-          >
-            <Text style={styles.cardHeaderLabel}>How to Earn Points</Text>
-            <Ionicons
-              name={earnExpanded ? "chevron-up" : "chevron-down"}
-              size={16}
-              color={c.ghost}
-            />
-          </TouchableOpacity>
-          {earnExpanded && (
-            <View style={styles.earnTableWrap}>
-              <View style={styles.earnColHeaderRow}>
-                <Text style={[styles.earnColHeader, { flex: 1 }]}>Action</Text>
-                <Text style={[styles.earnColHeader, styles.earnAmountCol]}>CR</Text>
-                <Text style={[styles.earnColHeader, styles.earnAmountCol]}>REP</Text>
-              </View>
-              {FIGMA_EARN_ROWS.map((row, i) => (
-                <View
-                  key={i}
-                  style={[styles.earnRow, i % 2 === 0 ? styles.earnRowEven : styles.earnRowOdd]}
-                >
-                  <Text style={[styles.earnCell, { flex: 1 }]}>{row.action}</Text>
-                  <Text style={[styles.earnAmountCell, styles.earnAmountCol, { color: c.ochre }]}>
-                    {row.cr}
-                  </Text>
-                  <Text style={[
-                    styles.earnAmountCell,
-                    styles.earnAmountCol,
-                    { color: row.rep === "0" ? c.mute : c.gold },
-                  ]}>
-                    {row.rep}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
       </ScrollView>
       <SignOutDialog
         visible={signOutVisible}
@@ -560,6 +509,14 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     marginLeft: 16,
     gap: 8,
     flex: 1,
+  },
+  heroNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  proCheck: {
+    marginTop: 1,
   },
   heroName: {
     fontFamily: fonts.serifBold,

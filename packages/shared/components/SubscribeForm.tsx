@@ -17,7 +17,7 @@ export default function SubscribeForm({
   buttonLabel = "Subscribe →",
   buttonClassName = "",
   inputClassName = "",
-  successMessage = "You're in. First issue arrives Friday.",
+  successMessage = "You're in. First issue arrives Tuesday.",
   list = "culture-drop",
   segment = "",
 }: SubscribeFormProps) {

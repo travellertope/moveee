@@ -1587,11 +1587,21 @@ class Culture_REST_API {
         $name    = $request->get_param( 'name' ) ?: '';
         $list    = $request->get_param( 'list' ) ?: 'culture-drop';
         $segment = $request->get_param( 'segment' ) ?: '';
+        $tier    = $request->get_param( 'tier' ) ?: '';
 
         $allowed_lists = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes' );
         if ( ! in_array( $list, $allowed_lists, true ) ) {
             $list = 'culture-drop';
         }
+
+        $allowed_segments = array( 'us', 'uk', 'ng', 'gh', 'ca', 'au', '' );
+        if ( ! in_array( $segment, $allowed_segments, true ) ) {
+            $segment = '';
+        }
+
+        // 'patron' is the internal DB value for Connect Pro — stored as-is on the
+        // subscriber record so Pro-only newsletter campaigns can target it.
+        $is_pro = ( 'patron' === $tier );
 
         $subscribers = get_option( 'culture_newsletter_subscribers', array() );
 
@@ -1609,13 +1619,19 @@ class Culture_REST_API {
             $existing = $subscribers[ $found_idx ];
 
             if ( is_array( $existing ) ) {
-                // Already an object — add list if not present.
+                // Already an object — add list if not present, refresh segment/pro tag.
                 $lists = $existing['lists'] ?? array();
                 if ( ! in_array( $list, $lists, true ) ) {
                     $lists[] = $list;
                     $subscribers[ $found_idx ]['lists'] = $lists;
-                    update_option( 'culture_newsletter_subscribers', $subscribers, false );
                 }
+                if ( $segment ) {
+                    $subscribers[ $found_idx ]['segment'] = $segment;
+                }
+                if ( $tier ) {
+                    $subscribers[ $found_idx ]['pro'] = $is_pro;
+                }
+                update_option( 'culture_newsletter_subscribers', $subscribers, false );
             } else {
                 // Upgrade legacy plain-string to object, add new list.
                 $subscribers[ $found_idx ] = array(
@@ -1624,6 +1640,7 @@ class Culture_REST_API {
                     'date'    => current_time( 'mysql' ),
                     'lists'   => array( 'getmelit', $list ),
                     'segment' => $segment,
+                    'pro'     => $is_pro,
                 );
                 update_option( 'culture_newsletter_subscribers', $subscribers, false );
             }
@@ -1641,6 +1658,7 @@ class Culture_REST_API {
             'date'    => current_time( 'mysql' ),
             'lists'   => array( $list ),
             'segment' => $segment,
+            'pro'     => $is_pro,
         );
         update_option( 'culture_newsletter_subscribers', $subscribers, false );
 
@@ -3085,7 +3103,8 @@ class Culture_REST_API {
             return rest_ensure_response( array( 'success' => true, 'credits_earned' => 0, 'already_awarded' => true ) );
         }
 
-        $credits = Culture_Gamification::award_credits( $user_id, 'magazine_read', $post_id );
+        $amount  = max( 1, (int) Culture_Gamification::get_credit_bonus( 'magazine_read' ) );
+        $credits = Culture_Gamification::award_credits( $user_id, $amount, 'magazine_read', $post_id );
         update_user_meta( $user_id, $meta_key, '1' );
 
         return rest_ensure_response( array( 'success' => true, 'credits_earned' => max( 0, intval( $credits ) ) ) );
@@ -3189,7 +3208,7 @@ class Culture_REST_API {
         if ( ! empty( $bookmarked_ids ) ) {
             $posts = get_posts( array(
                 'post__in'       => $bookmarked_ids,
-                'post_type'      => array( 'post', 'culture_quote' ),
+                'post_type'      => array( 'post', 'culture_quote', 'culture_post' ),
                 'post_status'    => 'publish',
                 'posts_per_page' => 100,
                 'orderby'        => 'post__in',
@@ -3259,19 +3278,46 @@ class Culture_REST_API {
 
     /** Build a minimal summary for a saved post. */
     private static function saved_post_summary( $post ) {
-        $is_quote = ( 'culture_quote' === $post->post_type );
-        return array(
+        $is_quote   = ( 'culture_quote' === $post->post_type );
+        $is_community = ( 'culture_post' === $post->post_type );
+
+        $base = array(
             'id'      => $post->ID,
-            'type'    => $is_quote ? 'quote' : 'article',
+            'type'    => $is_quote ? 'quote' : ( $is_community ? 'community' : 'article' ),
             'title'   => $post->post_title,
             'slug'    => $post->post_name,
-            'url'     => $is_quote
-                ? '/quotes/' . $post->ID . '-' . $post->post_name
-                : '/magazine/' . $post->post_name,
             'excerpt' => wp_trim_words( wp_strip_all_tags( $post->post_content ), 20 ),
             'date'    => get_the_date( 'Y-m-d', $post ),
             'likes'   => (int) get_post_meta( $post->ID, '_culture_like_count', true ),
         );
+
+        if ( $is_quote ) {
+            $base['quoteAuthor'] = get_post_meta( $post->ID, '_quote_author', true ) ?: '';
+            $base['quoteSource'] = get_post_meta( $post->ID, '_quote_source', true ) ?: '';
+        }
+
+        if ( $is_community ) {
+            $base['templateType']   = get_post_meta( $post->ID, '_template_type', true ) ?: 'post';
+            $base['communityTag']   = get_post_meta( $post->ID, '_culture_section_tag', true ) ?: '';
+            $base['authorName']     = get_the_author_meta( 'display_name', $post->post_author );
+            $base['authorUsername'] = get_the_author_meta( 'user_login', $post->post_author );
+            $thumb = get_the_post_thumbnail_url( $post->ID, 'medium' );
+            if ( $thumb ) { $base['featuredImage'] = $thumb; }
+        }
+
+        if ( ! $is_quote && ! $is_community ) {
+            // Article
+            $thumb = get_the_post_thumbnail_url( $post->ID, 'medium' );
+            if ( $thumb ) { $base['featuredImage'] = $thumb; }
+            $categories = get_the_category( $post->ID );
+            if ( ! empty( $categories ) ) { $base['category'] = $categories[0]->name; }
+            $author_id = $post->post_author;
+            $base['author'] = array( 'name' => get_the_author_meta( 'display_name', $author_id ) );
+            $base['readingTime'] = (int) get_post_meta( $post->ID, '_reading_time', true ) ?: null;
+            $base['publishedAt'] = get_the_date( 'c', $post );
+        }
+
+        return $base;
     }
 
     /**

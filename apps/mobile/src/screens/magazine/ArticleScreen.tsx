@@ -38,14 +38,116 @@ const HEADER_TRIGGER = HERO_HEIGHT - 60;
 
 function makeHtmlTagStyles(c: ColorPalette) {
   return {
+    // Block
     p:          { fontSize: 16, lineHeight: 26, color: c.inkSoft, marginBottom: 14 },
-    a:          { color: c.gold, textDecorationLine: "underline" as const },
-    h2:         { fontSize: 20, fontWeight: "700" as const, color: c.ink, marginTop: 8, marginBottom: 10 },
-    h3:         { fontSize: 18, fontWeight: "700" as const, color: c.ink, marginTop: 6, marginBottom: 8 },
-    blockquote: { borderLeftWidth: 3, borderLeftColor: c.ochre, paddingLeft: 12, fontStyle: "italic" as const, color: c.mute },
+    h2:         { fontFamily: "DMSans_700Bold", fontSize: 20, color: c.ink, marginTop: 16, marginBottom: 8 },
+    h3:         { fontFamily: "DMSans_700Bold", fontSize: 18, color: c.ink, marginTop: 12, marginBottom: 6 },
+    h4:         { fontFamily: "DMSans_700Bold", fontSize: 16, color: c.ink, marginTop: 10, marginBottom: 4 },
+    blockquote: { borderLeftWidth: 3, borderLeftColor: c.ochre, paddingLeft: 12, fontStyle: "italic" as const, color: c.mute, marginVertical: 12 },
+    ul:         { marginBottom: 14, paddingLeft: 4 },
+    ol:         { marginBottom: 14, paddingLeft: 4 },
+    li:         { fontSize: 16, lineHeight: 26, color: c.inkSoft, marginBottom: 4 },
     img:        { borderRadius: 6 },
     figcaption: { fontSize: 11, color: c.mute, textAlign: "center" as const, marginTop: 4 },
+    // Inline — must use explicit fontFamily for Expo custom fonts; fontWeight alone won't switch the variant
+    a:          { color: c.gold, textDecorationLine: "underline" as const },
+    strong:     { fontFamily: "DMSans_700Bold" },
+    b:          { fontFamily: "DMSans_700Bold" },
+    em:         { fontStyle: "italic" as const },
+    i:          { fontStyle: "italic" as const },
+    u:          { textDecorationLine: "underline" as const },
+    code:       { fontFamily: "JetBrainsMono_400Regular", fontSize: 13, backgroundColor: c.paperDeep },
+    pre:        { fontFamily: "JetBrainsMono_400Regular", fontSize: 13, backgroundColor: c.paperDeep, padding: 12, borderRadius: 6 },
   };
+}
+
+// ── Lightweight HTML table renderer ──────────────────────────────────────────
+// react-native-render-html v6 doesn't support <table> natively.
+// We extract table content from the HTML string and render it as a
+// horizontally-scrollable grid using plain RN views.
+
+function parseTable(html: string): Array<Array<string>> {
+  const rows: Array<Array<string>> = [];
+  const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  const cellRe = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+  let rowMatch: RegExpExecArray | null;
+  while ((rowMatch = rowRe.exec(html)) !== null) {
+    const cells: string[] = [];
+    let cellMatch: RegExpExecArray | null;
+    const rowHtml = rowMatch[1];
+    cellRe.lastIndex = 0;
+    while ((cellMatch = cellRe.exec(rowHtml)) !== null) {
+      cells.push(cellMatch[1].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").trim());
+    }
+    if (cells.length) rows.push(cells);
+  }
+  return rows;
+}
+
+function HtmlTable({ html, c }: { html: string; c: ColorPalette }) {
+  const rows = parseTable(html);
+  if (!rows.length) return null;
+  const colCount = Math.max(...rows.map((r) => r.length));
+  const colWidth = Math.max(100, Math.floor(320 / colCount));
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator
+      style={{ marginVertical: 16, borderWidth: 1, borderColor: c.rule, borderRadius: 6 }}
+    >
+      <View>
+        {rows.map((row, ri) => (
+          <View
+            key={ri}
+            style={{
+              flexDirection: "row",
+              backgroundColor: ri === 0 ? c.paperDeep : ri % 2 === 0 ? c.paperWarm : c.paper,
+              borderBottomWidth: ri < rows.length - 1 ? 1 : 0,
+              borderBottomColor: c.rule,
+            }}
+          >
+            {row.map((cell, ci) => (
+              <Text
+                key={ci}
+                style={{
+                  width: colWidth,
+                  padding: 8,
+                  fontFamily: ri === 0 ? "DMSans_700Bold" : "DMSans_400Regular",
+                  fontSize: 13,
+                  color: c.ink,
+                  borderRightWidth: ci < row.length - 1 ? 1 : 0,
+                  borderRightColor: c.rule,
+                }}
+              >
+                {cell}
+              </Text>
+            ))}
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+
+// Content pasted from Word/Docs into WP often encodes bold/italic as inline
+// `style="font-weight:700"` on a <span> instead of a semantic <strong> tag.
+// react-native-render-html maps that to RN's `fontWeight` style, but Expo's
+// custom font files have no synthetic-bold variant, so it renders as plain
+// text. Rewrite such spans to real <strong>/<em> tags so our tagsStyles
+// (which swap fontFamily instead) actually apply.
+function normalizeInlineBold(html: string): string {
+  return html.replace(
+    /<span([^>]*)style=(["'])([^"']*)\2([^>]*)>([\s\S]*?)<\/span>/gi,
+    (full, before, _q, style, after, inner) => {
+      const isBold = /font-weight\s*:\s*(bold|[6-9]00)/i.test(style);
+      const isItalic = /font-style\s*:\s*italic/i.test(style);
+      let result = inner;
+      if (isBold) result = `<strong>${result}</strong>`;
+      if (isItalic) result = `<em>${result}</em>`;
+      if (!isBold && !isItalic) return full;
+      return result;
+    }
+  );
 }
 
 // Minimal TOC heading extraction from HTML
@@ -55,7 +157,7 @@ function extractHeadings(html: string): Array<{ id: string; text: string; level:
   let m: RegExpExecArray | null;
   let idx = 0;
   while ((m = re.exec(html)) !== null) {
-    const text = m[2].replace(/<[^>]+>/g, "").trim();
+    const text = m[2].replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&#\d+;/g, "").trim();
     if (text) {
       headings.push({ id: `h${idx++}`, text, level: parseInt(m[1], 10) });
     }
@@ -80,33 +182,98 @@ function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPa
     openInApp(href);
   };
 
+  // Split content into alternating html/table segments
+  const segments = useMemo(() => {
+    const parts: Array<{ type: "html" | "table"; content: string }> = [];
+    const regex = /(<table[\s\S]*?<\/table>)/gi;
+    let last = 0;
+    let match;
+    const src = article.content ?? "";
+    while ((match = regex.exec(src)) !== null) {
+      if (match.index > last) {
+        parts.push({ type: "html", content: src.slice(last, match.index) });
+      }
+      parts.push({ type: "table", content: match[1] });
+      last = match.index + match[0].length;
+    }
+    if (last < src.length) {
+      parts.push({ type: "html", content: src.slice(last) });
+    }
+    return parts;
+  }, [article.content]);
+
   return (
-    <RenderHtml
-      contentWidth={contentWidth}
-      source={{ html: article.content }}
-      tagsStyles={HTML_TAG_STYLES}
-      renderersProps={{ a: { onPress: handleLinkPress } }}
-    />
+    <>
+      {segments.map((seg, i) =>
+        seg.type === "table" ? (
+          <HtmlTable key={i} html={seg.content} c={c} />
+        ) : (
+          <RenderHtml
+            key={i}
+            contentWidth={contentWidth}
+            source={{ html: normalizeInlineBold(seg.content) }}
+            tagsStyles={HTML_TAG_STYLES}
+            renderersProps={{ a: { onPress: handleLinkPress } }}
+            ignoredDomTags={["table", "thead", "tbody", "tr", "td", "th"]}
+          />
+        )
+      )}
+    </>
   );
 }
 
 
 // ── Newsletter CTA ───────────────────────────────────────────────────────────
 
+// Derive a segment code from the device locale (best-effort, no network call).
+function segmentFromLocale(): string {
+  try {
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale ?? "";
+    const region = locale.split("-")[1]?.toUpperCase() ?? "";
+    if (region === "NG") return "ng";
+    if (region === "GH") return "gh";
+    if (region === "KE") return "ke";
+    if (region === "ZA") return "za";
+    if (region === "GB") return "uk";
+    if (region === "US") return "us";
+    if (region === "CA") return "ca";
+    if (region === "AU") return "au";
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "";
+    if (tz.startsWith("Africa/Lagos") || tz.startsWith("Africa/Abuja")) return "ng";
+    if (tz.startsWith("Africa/Accra")) return "gh";
+    if (tz.startsWith("Europe/London")) return "uk";
+    if (tz.startsWith("America/New_York") || tz.startsWith("America/Chicago") || tz.startsWith("America/Los_Angeles")) return "us";
+  } catch {}
+  return "";
+}
+
 function NewsletterCTA({ c }: { c: ColorPalette }) {
-  const [email, setEmail] = useState("");
+  const { user } = useAuthStore();
+  const [email, setEmail] = useState(user?.email ?? "");
   const [submitted, setSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubscribe = async () => {
     const trimmed = email.trim();
-    if (!trimmed || !trimmed.includes("@")) return;
+    if (!trimmed || !trimmed.includes("@")) { setError("Enter a valid email address."); return; }
+    setError("");
     setBusy(true);
     try {
-      await api.post(`${CULTURE_API}/newsletter/subscribe`, { email: trimmed, list: "getmelit" }, false);
+      const segment = segmentFromLocale();
+      await api.post(
+        `${CULTURE_API}/newsletter-subscribe`,
+        {
+          email: trimmed,
+          name: user?.displayName ?? "",
+          list: "culture-drop",
+          segment,
+        },
+        false
+      );
       setSubmitted(true);
     } catch {
-      // fail silently — user can retry
+      setError("Something went wrong. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -127,50 +294,59 @@ function NewsletterCTA({ c }: { c: ColorPalette }) {
         </View>
         <Text style={{
           fontFamily: fonts.serifBold, fontSize: 16, color: c.ink, flex: 1, lineHeight: 22,
-        }}>{"Culture in your inbox,\nevery Friday"}</Text>
+        }}>{"Culture in your inbox,\nevery Tuesday"}</Text>
       </View>
       <Text style={{
         fontFamily: fonts.sans, fontSize: 13, color: c.mute, lineHeight: 19, marginBottom: 16,
       }}>
-        GetMeLit — the Moveee weekly. Handpicked stories, what to watch, read, and experience.
+        Culture Drop — our weekly edit of what to watch, read, see and experience. Straight to your inbox.
       </Text>
       {submitted ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Ionicons name="checkmark-circle" size={18} color={c.gold} />
           <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.gold }}>
-            You're on the list!
+            You're on the list — see you Tuesday!
           </Text>
         </View>
       ) : (
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Your email address"
-            placeholderTextColor={c.ghost}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={{
-              flex: 1, height: 44, borderWidth: 1, borderColor: c.rule,
-              borderRadius: radius.md, paddingHorizontal: 12,
-              fontFamily: fonts.sans, fontSize: 14, color: c.ink,
-              backgroundColor: c.paper,
-            }}
-          />
-          <TouchableOpacity
-            onPress={handleSubscribe}
-            disabled={busy}
-            style={{
-              height: 44, paddingHorizontal: 16, borderRadius: radius.md,
-              backgroundColor: c.ink, alignItems: "center", justifyContent: "center",
-              opacity: busy ? 0.6 : 1,
-            }}
-          >
-            <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.paper }}>
-              {busy ? "…" : "Subscribe"}
+        <>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <TextInput
+              value={email}
+              onChangeText={(t) => { setEmail(t); setError(""); }}
+              placeholder="Your email address"
+              placeholderTextColor={c.ghost}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={{
+                flex: 1, height: 44, borderWidth: 1,
+                borderColor: error ? "#c5491f" : c.rule,
+                borderRadius: radius.md, paddingHorizontal: 12,
+                fontFamily: fonts.sans, fontSize: 14, color: c.ink,
+                backgroundColor: c.paper,
+              }}
+            />
+            <TouchableOpacity
+              onPress={handleSubscribe}
+              disabled={busy}
+              style={{
+                height: 44, paddingHorizontal: 16, borderRadius: radius.md,
+                backgroundColor: c.ink, alignItems: "center", justifyContent: "center",
+                opacity: busy ? 0.6 : 1,
+              }}
+            >
+              <Text style={{ fontFamily: fonts.sansBold, fontSize: 13, color: c.paper }}>
+                {busy ? "…" : "Subscribe"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {error ? (
+            <Text style={{ fontFamily: fonts.sans, fontSize: 12, color: "#c5491f", marginTop: 6 }}>
+              {error}
             </Text>
-          </TouchableOpacity>
-        </View>
+          ) : null}
+        </>
       )}
     </View>
   );
@@ -368,7 +544,6 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     fetch(`https://cms.themoveee.com/wp-json/wp/v2/comments?post=${articleId}&per_page=20&order=asc`)
@@ -379,13 +554,28 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
   }, [articleId]);
 
   const submitComment = async () => {
-    if (!text.trim() || submitting) return;
+    const body = text.trim();
+    if (!body || submitting) return;
     setSubmitting(true);
+    // Optimistic — show comment immediately
+    const optimistic: WpComment = {
+      id: Date.now(),
+      author_name: (user as any)?.displayName ?? user?.username ?? "You",
+      author_avatar_urls: user?.avatarUrl ? { "48": user.avatarUrl } : undefined,
+      content: { rendered: body },
+      date: new Date().toISOString(),
+    };
+    setComments((prev) => [...prev, optimistic]);
+    setText("");
     try {
-      await api.post(`${MOBILE_API}/community/comment`, { post_id: Number(articleId), content: text.trim() });
-      setSubmitted(true);
-      setText("");
-    } catch {} finally { setSubmitting(false); }
+      await api.post(`${MOBILE_API}/community/comment`, { post_id: Number(articleId), content: body });
+    } catch {
+      // Revert optimistic on failure
+      setComments((prev) => prev.filter((c) => c.id !== optimistic.id));
+      setText(body);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -427,9 +617,7 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
             <Ionicons name="person" size={14} color={c.mute} />
           </View>
         )}
-        {submitted ? (
-          <Text style={styles.cm_submittedNote}>Comment submitted for review ✓</Text>
-        ) : user ? (
+        {user ? (
           <>
             <TextInput
               style={styles.cm_input}
@@ -441,12 +629,11 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
               maxLength={600}
             />
             <TouchableOpacity onPress={submitComment} disabled={submitting || !text.trim()} activeOpacity={0.7}>
-              {submitting
-                ? <ActivityIndicator size="small" color={c.gold} />
-                : <Ionicons name="send" size={18} color={text.trim() ? c.gold : c.ghost} />
-              }
-            </TouchableOpacity>
-          </>
+            {submitting
+              ? <ActivityIndicator size="small" color={c.gold} />
+              : <Ionicons name="send" size={18} color={text.trim() ? c.gold : c.ghost} />
+            }
+          </TouchableOpacity>
         ) : (
           <Text style={styles.cm_signIn}>Sign in to leave a comment</Text>
         )}
@@ -543,6 +730,12 @@ export default function ArticleScreen() {
     }, 1000);
     return () => clearInterval(interval);
   }, [article?.id, user?.id]);
+
+  // Comment scroll
+  const commentsY = useRef(0);
+  const scrollToComments = useCallback(() => {
+    scrollRef.current?.scrollTo({ y: commentsY.current, animated: true });
+  }, []);
 
   // TOC
   const [tocOpen, setTocOpen] = useState(false);
@@ -644,11 +837,12 @@ export default function ArticleScreen() {
                 <Text style={styles.breadcrumb}>Magazine › {article.category ?? "Article"}</Text>
               </TouchableOpacity>
 
-              {/* Eyebrow */}
-              <Text style={styles.eyebrow}>
-                ★ {article.category ? article.category.toUpperCase() : "ARTICLE"}
-                {(article as any).region ? ` · ${((article as any).region as string).toUpperCase()}` : ""}
-              </Text>
+              {/* Region eyebrow — only shown when there's a region to display */}
+              {(article as any).region ? (
+                <Text style={styles.eyebrow}>
+                  {((article as any).region as string).toUpperCase()}
+                </Text>
+              ) : null}
 
               {/* Title */}
               <Text style={styles.title}>{article.title}</Text>
@@ -687,17 +881,20 @@ export default function ArticleScreen() {
                 ) : null}
               </View>
 
-              {/* Actions bar */}
+              {/* Actions bar — reactions (live) + comment + bookmark + share */}
               <View style={styles.actionsBar}>
                 <View style={styles.actionsLeft}>
-                  <TouchableOpacity style={styles.actionItem}>
-                    <Text style={styles.actionEmoji}>❤️</Text>
-                    <Text style={styles.actionCount}>{article.reactions?.heart ?? 0}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionItem}>
-                    <Text style={styles.actionEmoji}>🔥</Text>
-                    <Text style={styles.actionCount}>{article.reactions?.fire ?? 0}</Text>
-                  </TouchableOpacity>
+                  <ReactionBar
+                    postId={article.id}
+                    initialCounts={{
+                      love: (article as any).reactions?.love ?? (article as any).reactions?.heart ?? 0,
+                      fire: (article as any).reactions?.fire ?? 0,
+                      clap: (article as any).reactions?.clap ?? 0,
+                    }}
+                    noBorder
+                    commentCount={comments.length}
+                    onCommentPress={scrollToComments}
+                  />
                 </View>
                 <View style={styles.actionsRight}>
                   <TouchableOpacity style={styles.actionIconBtn} onPress={handleBookmark}>
@@ -865,7 +1062,9 @@ export default function ArticleScreen() {
                   <KeepReading articleSlug={article.slug} c={c} nav={nav} />
 
                   {/* ── Comments section ── */}
-                  <ArticleCommentsSection articleId={article.id} c={c} styles={styles} />
+                  <View onLayout={(e) => { commentsY.current = e.nativeEvent.layout.y + HERO_HEIGHT - SHEET_OVERLAP; }}>
+                    <ArticleCommentsSection articleId={article.id} c={c} styles={styles} />
+                  </View>
                 </>
               )}
             </View>
@@ -903,7 +1102,7 @@ export default function ArticleScreen() {
             </View>
             <Text style={styles.tocSectionLabel}>In this article</Text>
             <View style={{ height: 1, backgroundColor: c.rule, marginHorizontal: space[5] }} />
-            <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator={false}>
+            <View style={{ paddingBottom: 8 }}>
               {headings.map((h, i) => (
                 <TouchableOpacity
                   key={h.id}
@@ -935,7 +1134,7 @@ export default function ArticleScreen() {
                   </Text>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </View>
           </BottomSheet>
         </>
       ) : null}
@@ -1285,9 +1484,9 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
   cm_composeAvatarFallback: { backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center" },
   cm_input: {
     flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base,
-    borderWidth: 1, borderColor: c.rule, borderRadius: radius.full,
-    paddingHorizontal: 14, paddingVertical: 8, maxHeight: 80,
-    color: c.ink, backgroundColor: c.paper,
+    borderWidth: 1, borderColor: c.rule, borderRadius: radius.xl,
+    paddingHorizontal: 12, paddingVertical: 10, minHeight: 40, maxHeight: 120,
+    color: c.ink, backgroundColor: c.paper, textAlignVertical: "top",
   },
   cm_submittedNote: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, fontStyle: "italic", color: c.mute },
   cm_signIn: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
