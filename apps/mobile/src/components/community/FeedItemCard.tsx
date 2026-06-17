@@ -581,8 +581,8 @@ function createStyles(c: ColorPalette) {
       fontFamily: fonts.serifBold,
       fontSize: 44,
       color: c.ghost,
-      lineHeight: 44,
-      marginBottom: -8,
+      lineHeight: 56,
+      marginBottom: -4,
     },
     quoteText: {
       fontFamily: fonts.serif,
@@ -811,10 +811,6 @@ function AuthorRow({ item, forYouBadge, onAuthorPress }: {
           </View>
         ) : null}
       </View>
-
-      <View style={styles.topRight}>
-        <ReportControl item={item} />
-      </View>
     </View>
   );
 }
@@ -875,6 +871,7 @@ function FeedReactionBar({ item, marginTop }: { item: FeedItem; marginTop?: numb
         initialCounts={item.reactions}
         shareUrl={shareUrlFor(item)}
         shareTitle={item.title || item.communityAuthor ? `${item.communityAuthor ?? "Someone"}'s post on Moveee` : undefined}
+        showReport
       />
     </View>
   );
@@ -1670,9 +1667,15 @@ function QuoteCard({ item }: FeedCardProps) {
           <TouchableOpacity style={styles.quoteActionBtn} onPress={handleBookmark} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={18} color={bookmarked ? c.ochre : c.mute} />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.quoteActionBtn, { marginLeft: "auto" as any }]} onPress={handleShare} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="arrow-redo-outline" size={18} color={c.mute} />
+          <TouchableOpacity style={styles.quoteActionBtn} onPress={() => setModalOpen(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="chatbubble-outline" size={18} color={c.mute} />
+            {item.commentCount ? <Text style={styles.quoteActionCount}>{item.commentCount}</Text> : null}
           </TouchableOpacity>
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity style={styles.quoteActionBtn} onPress={handleShare} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="share-outline" size={16} color={c.mute} />
+          </TouchableOpacity>
+          <ReportControl item={item} />
         </View>
       </TouchableOpacity>
       <QuoteDetailModal visible={modalOpen} item={item} onClose={() => setModalOpen(false)} />

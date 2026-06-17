@@ -860,9 +860,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
               )}
 
               <div className="composer-spacer" />
-              <span className={`composer-char-count${charRemaining < 0 ? " composer-char-count--error" : charRemaining < 50 ? " composer-char-count--warn" : ""}`}>
-                {charRemaining}
-              </span>
               <button
                 type="submit"
                 disabled={!canSubmit()}

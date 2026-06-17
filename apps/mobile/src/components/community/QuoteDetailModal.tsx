@@ -118,6 +118,8 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
   const [bookmarked, setBookmarked] = useState(false);
 
   const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : undefined;
+  const sharingReason = item.quoteSharingReason || undefined;
+  const posterName = item.communityAuthor ?? "Their";
 
   const handleShare = async () => {
     try {
@@ -159,6 +161,20 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
           ) : null}
         </View>
 
+        {sharingReason ? (
+          <View style={styles.posterNote}>
+            <Text style={styles.posterNoteLabel}>💬 {posterName}'s note:</Text>
+            <Text style={styles.posterNoteText}>{sharingReason}</Text>
+          </View>
+        ) : null}
+
+        <View style={styles.sharePrompt}>
+          <Text style={styles.sharePromptText}>Know someone who needs to see this?</Text>
+          <TouchableOpacity onPress={handleShare}>
+            <Text style={styles.sharePromptLink}>Share quote →</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.divider} />
 
         {/* Reactions row */}
@@ -168,6 +184,7 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
               postId={item.wpId}
               initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
               shareUrl={shareUrl}
+              showReport
             />
           ) : (
             <View style={styles.reactionsRow}>
@@ -176,7 +193,7 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
                 <Text style={styles.reactionCount}>{item.reactions?.love ?? 0}</Text>
               </View>
               <TouchableOpacity style={styles.reactionItem} onPress={handleShare}>
-                <Ionicons name="arrow-redo-outline" size={20} color={c.mute} />
+                <Ionicons name="share-outline" size={18} color={c.mute} />
               </TouchableOpacity>
             </View>
           )}
@@ -213,8 +230,8 @@ function createStyles(c: ColorPalette) {
       fontFamily: "Fraunces_700Bold",
       fontSize: 56,
       color: c.ghost,
-      lineHeight: 56,
-      marginBottom: -4,
+      lineHeight: 70,
+      marginBottom: -8,
     },
     quoteText: {
       fontFamily: "Fraunces_400Regular",
@@ -235,6 +252,17 @@ function createStyles(c: ColorPalette) {
     attribution: { gap: space[1], paddingLeft: space[2] },
     author: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
     source: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, letterSpacing: 0.5 },
+
+    posterNote: {
+      backgroundColor: c.paperDeep, borderRadius: radius.md, padding: space[3],
+      borderLeftWidth: 2, borderLeftColor: c.ochre,
+    },
+    posterNoteLabel: { fontFamily: fonts.sansBold, fontSize: 12, color: c.inkSoft, marginBottom: 4 },
+    posterNoteText: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, lineHeight: 19 },
+
+    sharePrompt: { alignItems: "center", gap: 2 },
+    sharePromptText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
+    sharePromptLink: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ochre },
 
     divider: { height: 1, backgroundColor: c.rule },
 
