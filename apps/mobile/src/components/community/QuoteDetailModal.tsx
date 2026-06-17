@@ -4,12 +4,13 @@ import {
   TextInput, ActivityIndicator, ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import ReactionBar from "./ReactionBar";
 import BottomSheet from "../ui/BottomSheet";
 import { useColors } from "../../hooks/useColors";
 import { useAuthStore } from "../../auth/authStore";
 import { useComments } from "../../features/community/useComments";
-import { api, MOBILE_API } from "../../api/client";
+import { api, MOBILE_API, CULTURE_API } from "../../api/client";
 import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import type { FeedItem } from "../../types";
@@ -112,6 +113,9 @@ function CommentsBlock({ postId, c, styles }: { postId: string; c: ColorPalette;
 export default function QuoteDetailModal({ visible, item, onClose }: Props) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const nav = useNavigation<any>();
+  const { user } = useAuthStore();
+  const [bookmarked, setBookmarked] = useState(false);
 
   const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : undefined;
 
@@ -122,6 +126,17 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
         url: shareUrl,
       });
     } catch { /* silent */ }
+  };
+
+  const handleBookmark = async () => {
+    if (!item.wpId || !user?.id) return;
+    const next = !bookmarked;
+    setBookmarked(next);
+    try {
+      await api.post(`${CULTURE_API}/content/bookmark`, { user_id: Number(user.id), post_id: Number(item.wpId) });
+    } catch {
+      setBookmarked(!next);
+    }
   };
 
   return (
@@ -148,14 +163,14 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
 
         {/* Reactions row */}
         <View style={styles.reactionsRow}>
-          {item.reactions && item.wpId ? (
+          {item.wpId ? (
             <ReactionBar
               postId={item.wpId}
-              initialCounts={item.reactions}
+              initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
               shareUrl={shareUrl}
             />
           ) : (
-            <>
+            <View style={styles.reactionsRow}>
               <View style={styles.reactionItem}>
                 <Text style={styles.reactionEmoji}>❤️</Text>
                 <Text style={styles.reactionCount}>{item.reactions?.love ?? 0}</Text>
@@ -163,8 +178,19 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
               <TouchableOpacity style={styles.reactionItem} onPress={handleShare}>
                 <Ionicons name="arrow-redo-outline" size={20} color={c.mute} />
               </TouchableOpacity>
-            </>
+            </View>
           )}
+          <TouchableOpacity
+            style={[styles.bookmarkBtn, bookmarked && styles.bookmarkBtnActive]}
+            onPress={handleBookmark}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={bookmarked ? "bookmark" : "bookmark-outline"}
+              size={20}
+              color={bookmarked ? c.ochre : c.mute}
+            />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.divider} />
@@ -173,7 +199,6 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
         {item.wpId ? (
           <CommentsBlock postId={String(item.wpId)} c={c} styles={styles} />
         ) : null}
-
       </View>
     </BottomSheet>
   );
@@ -217,6 +242,8 @@ function createStyles(c: ColorPalette) {
     reactionItem: { flexDirection: "row", alignItems: "center", gap: space[1] },
     reactionEmoji: { fontSize: 20 },
     reactionCount: { fontFamily: fonts.mono, fontSize: fontSize.sm, color: c.mute },
+    bookmarkBtn: { marginLeft: "auto" as any, padding: 4 },
+    bookmarkBtnActive: {},
 
     // Comments
     commentsBlock: { gap: 12 },

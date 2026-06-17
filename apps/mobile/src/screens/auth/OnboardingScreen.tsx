@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   Animated,
   Easing,
@@ -24,6 +25,7 @@ import { colors, fonts, fontSize, space, shadows } from "../../theme";
 
 const { width: W, height: H } = Dimensions.get("window");
 const ONBOARDING_KEY = "onboarding_complete";
+const SPLASH_ICON = require("../../../assets/logo.png");
 
 // ── Textile SVG (Slide 1 top) ─────────────────────────────────────────────────
 function TextileIllustration({ height }: { height: number }) {
@@ -202,29 +204,7 @@ const dotsS = StyleSheet.create({
   inactive: { width: 6, height: 6, backgroundColor: colors.ghost },
 });
 
-// ── Wordmark ──────────────────────────────────────────────────────────────────
-function Wordmark({ size = 22 }: { size?: number }) {
-  return (
-    <View style={wmS.wrap}>
-      <Text style={[wmS.moveee, { fontSize: size }]}>moveee</Text>
-      <Text style={wmS.connect}>connect</Text>
-      <View style={wmS.line} />
-    </View>
-  );
-}
-const wmS = StyleSheet.create({
-  wrap: { alignItems: "center" },
-  moveee: { fontFamily: fonts.serifBold, color: colors.ink, letterSpacing: -1 },
-  connect: {
-    fontFamily: fonts.sansBold,
-    fontSize: fontSize.eyebrow,
-    color: colors.gold,
-    letterSpacing: 2,
-    textTransform: "uppercase",
-    marginTop: 4,
-  },
-  line: { width: 40, height: 2, backgroundColor: colors.ochre, marginTop: 16 },
-});
+// ── Logo ─────────────────────────────────────────────────────────────────────
 
 // ── Splash ────────────────────────────────────────────────────────────────────
 function Splash({ onDone }: { onDone: () => void }) {
@@ -250,7 +230,11 @@ function Splash({ onDone }: { onDone: () => void }) {
 
   return (
     <Pressable style={splashS.container} onPress={onDone}>
-      <Wordmark size={36} />
+      <Image
+        source={SPLASH_ICON}
+        style={{ width: 56, height: 56, borderRadius: 28 }}
+        resizeMode="contain"
+      />
       <Animated.View style={{ marginTop: 32, transform: [{ rotate: spin }] }}>
         <Svg width={40} height={40}>
           <Circle cx={20} cy={20} r={18} stroke={colors.ghost} strokeWidth={2.5} fill="none" />

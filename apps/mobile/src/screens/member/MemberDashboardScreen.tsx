@@ -14,7 +14,7 @@ import { useColors } from "../../hooks/useColors";
 
 const LOGO_LIGHT = require("../../../assets/logo-black.png");
 const LOGO_DARK  = require("../../../assets/logo-white.png");
-const LOGO_H = 26;
+const LOGO_H = 20;
 const LOGO_W = Math.round((717 / 107) * LOGO_H);
 import { SignOutDialog } from "../../components/ui/Overlays";
 
@@ -234,14 +234,11 @@ export default function MemberDashboardScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerSpacer} />
-        <View style={styles.headerCenter}>
-          <Image
-            source={isDark ? LOGO_DARK : LOGO_LIGHT}
-            style={{ width: LOGO_W, height: LOGO_H }}
-            resizeMode="contain"
-          />
-        </View>
+        <Image
+          source={isDark ? LOGO_DARK : LOGO_LIGHT}
+          style={{ width: LOGO_W, height: LOGO_H }}
+          resizeMode="contain"
+        />
         <TouchableOpacity style={styles.headerRight} onPress={() => setSignOutVisible(true)}>
           <Text style={styles.headerSignOut}>Sign out</Text>
         </TouchableOpacity>
@@ -316,7 +313,7 @@ export default function MemberDashboardScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.statValue, { color: isPro ? c.ochre : c.ink }]}>{user.credits ?? 0}</Text>
-            <Text style={styles.statLabel}>Credits ⓘ</Text>
+            <Text style={styles.statLabel}>Credits <Text style={styles.infoIcon}>ⓘ</Text></Text>
           </TouchableOpacity>
 
           {/* Reputation — with info sheet */}
@@ -326,7 +323,7 @@ export default function MemberDashboardScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.statValue, { color: isPro ? c.gold : c.ink }]}>{user.reputation ?? 0}</Text>
-            <Text style={styles.statLabel}>Reputation ⓘ</Text>
+            <Text style={styles.statLabel}>Reputation <Text style={styles.infoIcon}>ⓘ</Text></Text>
           </TouchableOpacity>
 
           <View style={[styles.statItem, styles.statItemBorder]}>
@@ -445,14 +442,7 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     borderBottomColor: c.rule + "50",
     paddingHorizontal: 16,
   },
-  headerSpacer: { width: 60 },
-  headerCenter: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerRight: { width: 60, alignItems: "flex-end" },
+  headerRight: { marginLeft: "auto" as any, alignItems: "flex-end" },
   headerSignOut: {
     fontFamily: fonts.sans,
     fontSize: 13,
@@ -629,6 +619,11 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     letterSpacing: 1,
     marginTop: 4,
     textAlign: "center",
+  },
+  infoIcon: {
+    fontSize: 13,
+    color: "#b34a2e",
+    textTransform: "none" as const,
   },
 
   /* ── Card 4: Upgrade Banner ── */

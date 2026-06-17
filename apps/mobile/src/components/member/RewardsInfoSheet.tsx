@@ -35,11 +35,13 @@ type Tab = "credits" | "reputation";
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({
     overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
+    backdropTap: { flex: 1 },
+    sheetWrap: { maxHeight: "85%" },
     sheet: {
       backgroundColor: c.paper,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
-      maxHeight: "90%",
+      flex: 1,
     },
     handle: {
       width: 36, height: 4, borderRadius: 2,
@@ -64,7 +66,11 @@ function createStyles(c: ColorPalette) {
     tabActive: { borderBottomColor: c.ochre },
     tabText: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
     tabTextActive: { fontFamily: fonts.sansBold, color: c.ink },
-    scroll: { padding: space[4] },
+    scroll: { flex: 1, padding: space[4] },
+    intro: {
+      fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.inkSoft,
+      lineHeight: 20, marginBottom: space[4],
+    },
     capBanner: {
       backgroundColor: c.paperDeep,
       borderRadius: radius.md, padding: space[3],
@@ -114,10 +120,11 @@ function createStyles(c: ColorPalette) {
 interface Props {
   visible: boolean;
   initialTab?: Tab;
+  intro?: string;
   onClose: () => void;
 }
 
-export default function RewardsInfoSheet({ visible, initialTab = "credits", onClose }: Props) {
+export default function RewardsInfoSheet({ visible, initialTab = "credits", intro, onClose }: Props) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -141,10 +148,10 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", onCl
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
-        <SafeAreaView>
-          <TouchableOpacity activeOpacity={1}>
-            <View style={styles.sheet}>
+      <View style={styles.overlay}>
+        <TouchableOpacity style={styles.backdropTap} activeOpacity={1} onPress={onClose} />
+        <SafeAreaView style={styles.sheetWrap}>
+          <View style={styles.sheet}>
               <View style={styles.handle} />
               <View style={styles.header}>
                 <Text style={styles.title}>How Rewards Work</Text>
@@ -167,6 +174,7 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", onCl
                 <View style={styles.loader}><ActivityIndicator color={c.ochre} /></View>
               ) : (
                 <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+                  {intro ? <Text style={styles.intro}>{intro}</Text> : null}
                   {tab === "credits" ? (
                     <>
                       <View style={styles.capBanner}>
@@ -234,9 +242,8 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", onCl
                 </ScrollView>
               )}
             </View>
-          </TouchableOpacity>
         </SafeAreaView>
-      </TouchableOpacity>
+      </View>
     </Modal>
   );
 }

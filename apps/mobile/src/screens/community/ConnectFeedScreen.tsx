@@ -11,7 +11,7 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useUnifiedFeed } from "../../features/community/useUnifiedFeed";
 import { useNotificationCount } from "../../features/notifications/useNotificationCount";
@@ -20,8 +20,8 @@ import { useColorScheme } from "react-native";
 
 const LOGO_LIGHT = require("../../../assets/logo-black.png");
 const LOGO_DARK  = require("../../../assets/logo-white.png");
-// Logo natural size: 717×107 — render at 26px height → ~160px wide
-const LOGO_H = 26;
+// Logo natural size: 717×107
+const LOGO_H = 20;
 const LOGO_W = Math.round((717 / 107) * LOGO_H);
 import {
   rankFeed,
@@ -45,6 +45,7 @@ function feedItemToPostId(item: FeedItem): string {
 const FILTER_LABELS = [
   "✦ For You",
   "All",
+  "Quotes",
   "Music",
   "Film",
   "Art",
@@ -70,6 +71,7 @@ const TRENDING_COLORS = ["#C5491F", "#7C3AED", "#065F46"];
 
 export default function ConnectFeedScreen() {
   const nav = useNavigation<any>();
+  const route = useRoute<any>();
   const { user } = useAuthStore();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
@@ -89,6 +91,7 @@ export default function ConnectFeedScreen() {
   const { unread } = useNotificationCount();
 
   const [activeCategory, setActiveCategory] = useState("");
+  const [filterQuotes, setFilterQuotes] = useState(() => !!route?.params?.filterQuotes);
   const [forYou, setForYou] = useState(false);
   // Edition routing: default to user's region so local content is pre-filtered
   const [activeRegion, setActiveRegion] = useState<string>(() => {
@@ -154,7 +157,9 @@ export default function ConnectFeedScreen() {
   const REGION_LABELS = ["All", "Africa", "Diaspora UK", "Diaspora US", "Diaspora Europe"];
 
   const visibleItems = useMemo(() => {
-    let filtered = activeCategory
+    let filtered = filterQuotes
+      ? items.filter((i) => i.type === "quote")
+      : activeCategory
       ? items.filter((i) => matchesCategory(i, activeCategory))
       : items;
 
@@ -169,7 +174,7 @@ export default function ConnectFeedScreen() {
     }
 
     return filtered;
-  }, [items, activeCategory, activeRegion, forYou, interestTagSet, userCity, userRegion]);
+  }, [items, activeCategory, activeRegion, forYou, filterQuotes, interestTagSet, userCity, userRegion]);
 
   const trending = useMemo(() => getTrending(items, 3), [items]);
 
@@ -177,12 +182,19 @@ export default function ConnectFeedScreen() {
     if (label === "✦ For You") {
       setForYou(true);
       setActiveCategory("");
+      setFilterQuotes(false);
     } else if (label === "All") {
       setForYou(false);
       setActiveCategory("");
+      setFilterQuotes(false);
+    } else if (label === "Quotes") {
+      setForYou(false);
+      setActiveCategory("");
+      setFilterQuotes((prev) => !prev);
     } else {
       setForYou(false);
       setActiveCategory((prev) => (prev === label ? "" : label));
+      setFilterQuotes(false);
     }
   };
 
@@ -226,6 +238,8 @@ export default function ConnectFeedScreen() {
 
   const activeFilterLabel = forYou
     ? "✦ For You"
+    : filterQuotes
+    ? "Quotes"
     : activeCategory
     ? activeCategory
     : "All";
