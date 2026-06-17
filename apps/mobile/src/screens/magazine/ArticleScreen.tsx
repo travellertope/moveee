@@ -629,15 +629,15 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
               maxLength={600}
             />
             <TouchableOpacity onPress={submitComment} disabled={submitting || !text.trim()} activeOpacity={0.7}>
-            {submitting
-              ? <ActivityIndicator size="small" color={c.gold} />
-              : <Ionicons name="send" size={18} color={text.trim() ? c.gold : c.ghost} />
-            }
-          </TouchableOpacity>
+              {submitting
+                ? <ActivityIndicator size="small" color={c.gold} />
+                : <Ionicons name="send" size={18} color={text.trim() ? c.gold : c.ghost} />
+              }
+            </TouchableOpacity>
+          </>
         ) : (
           <Text style={styles.cm_signIn}>Sign in to leave a comment</Text>
-        )}
-      </View>
+        )}      </View>
     </View>
   );
 }
