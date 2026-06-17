@@ -54,7 +54,12 @@ function MemberCard({
       </View>
 
       {/* Identity */}
-      <Text style={styles.cardName} numberOfLines={1}>{member.displayName}</Text>
+      <View style={styles.cardNameRow}>
+        <Text style={styles.cardName} numberOfLines={1}>{member.displayName}</Text>
+        {isPro ? (
+          <Ionicons name="checkmark-circle" size={14} color="#B38238" style={styles.proCheck} />
+        ) : null}
+      </View>
       {member.username ? (
         <Text style={styles.cardHandle}>@{member.username}</Text>
       ) : null}
@@ -407,7 +412,9 @@ function createStyles(c: ColorPalette) {
     },
     avatarText: { fontFamily: fonts.monoBold, fontSize: 12, color: c.inkSoft },
 
+    cardNameRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 3 },
     cardName:   { fontFamily: fonts.sansBold, fontSize: 13, color: c.ink, textAlign: "center" },
+    proCheck:   { marginTop: 1 },
     cardHandle: { fontFamily: fonts.mono, fontSize: 10, color: c.mute, marginTop: 2 },
     cardCity:   { fontFamily: fonts.sans, fontSize: 11, color: c.mute, marginTop: 4 },
 

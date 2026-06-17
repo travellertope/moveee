@@ -333,15 +333,11 @@ export default function MemberProfileScreen() {
             </View>
           </View>
 
-          {isPro && (
-            <View style={styles.tierBadge}>
-              <Ionicons name="ribbon" size={10} color={c.paper} />
-              <Text style={styles.tierBadgeText}>CONNECT PRO</Text>
-            </View>
-          )}
-
           <View style={styles.identity}>
-            <Text style={styles.profileName}>{profile.displayName}</Text>
+            <View style={styles.profileNameRow}>
+              <Text style={styles.profileName}>{profile.displayName}</Text>
+              {isPro && <Ionicons name="checkmark-circle" size={18} color="#B38238" style={styles.proCheck} />}
+            </View>
             {profile.username    ? <Text style={styles.profileHandle}>@{profile.username}</Text> : null}
             {profile.occupation  ? <Text style={styles.profileOccupation}>{profile.occupation}</Text> : null}
             {(profile.city || profile.countryOfResidence) ? (
@@ -461,7 +457,9 @@ function createStyles(c: ColorPalette) {
     tierBadgeText: { fontFamily: fonts.sansBold, fontSize: 9, color: c.paper, letterSpacing: 1.4, textTransform: "uppercase" },
 
     identity:          { alignItems: "center", paddingHorizontal: 16, marginTop: 12, gap: 2 },
+    profileNameRow:    { flexDirection: "row", alignItems: "center", gap: 4 },
     profileName:       { fontFamily: fonts.serifBold, fontSize: 24, color: c.ink },
+    proCheck:           { marginTop: 2 },
     profileHandle:     { fontFamily: fonts.mono, fontSize: 13, color: c.mute, marginTop: 2 },
     profileOccupation: { fontFamily: fonts.sans, fontSize: 14, color: c.inkSoft, marginTop: 4, textAlign: "center" },
     profileCity:       { fontFamily: fonts.sans, fontSize: 12, color: c.mute, marginTop: 4 },

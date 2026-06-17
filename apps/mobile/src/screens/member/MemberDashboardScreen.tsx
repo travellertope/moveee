@@ -264,13 +264,11 @@ export default function MemberDashboardScreen() {
               )}
             </View>
             <View style={styles.heroInfo}>
-              <Text style={styles.heroName} numberOfLines={1}>{user.displayName}</Text>
-              {isPro ? (
-                <View style={styles.tierBadgePro}>
-                  <Ionicons name="ribbon" size={10} color={c.gold} />
-                  <Text style={styles.tierTextPro}>CONNECT PRO</Text>
-                </View>
-              ) : (
+              <View style={styles.heroNameRow}>
+                <Text style={styles.heroName} numberOfLines={1}>{user.displayName}</Text>
+                {isPro && <Ionicons name="checkmark-circle" size={16} color={c.gold} style={styles.proCheck} />}
+              </View>
+              {!isPro && (
                 <View style={styles.tierBadgeCitizen}>
                   <Text style={styles.tierTextCitizen}>CONNECT CITIZEN</Text>
                 </View>
@@ -511,6 +509,14 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     marginLeft: 16,
     gap: 8,
     flex: 1,
+  },
+  heroNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  proCheck: {
+    marginTop: 1,
   },
   heroName: {
     fontFamily: fonts.serifBold,
