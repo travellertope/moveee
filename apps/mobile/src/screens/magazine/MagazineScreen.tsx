@@ -378,10 +378,10 @@ export default function MagazineScreen() {
         <Text style={styles.headerTitle}>Magazine</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerBtn} onPress={() => nav.navigate("MagazineSearch")}>
-            <Ionicons name="search-outline" size={22} color={c.ink} />
+            <Ionicons name="search-outline" size={26} color={c.ink} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerBtn} onPress={() => nav.navigate("Connect", { screen: "SavedArticles" } as any)}>
-            <Ionicons name="bookmark-outline" size={22} color={c.ink} />
+            <Ionicons name="bookmark-outline" size={26} color={c.ink} />
           </TouchableOpacity>
         </View>
       </View>
@@ -481,7 +481,7 @@ function createStyles(c: ColorPalette) {
     },
     headerTitle: { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink },
     headerActions: { flexDirection: "row", alignItems: "center", gap: space[4] },
-    headerBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
+    headerBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
     // Category strip
     catStripWrap: {
       backgroundColor: c.paperWarm,
@@ -616,7 +616,7 @@ function createStyles(c: ColorPalette) {
       letterSpacing: 1,
       textTransform: "uppercase",
     },
-    cardBody: { padding: 12, flex: 1 },
+    cardBody: { padding: 12 },
     cardTitle: { fontFamily: fonts.sansBold ?? fonts.sans, fontSize: 14, color: c.ink, lineHeight: 18, marginBottom: 6 },
     cardMeta: { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: c.ghost },
 
