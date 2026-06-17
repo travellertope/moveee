@@ -128,6 +128,27 @@ function HtmlTable({ html, c }: { html: string; c: ColorPalette }) {
   );
 }
 
+// Content pasted from Word/Docs into WP often encodes bold/italic as inline
+// `style="font-weight:700"` on a <span> instead of a semantic <strong> tag.
+// react-native-render-html maps that to RN's `fontWeight` style, but Expo's
+// custom font files have no synthetic-bold variant, so it renders as plain
+// text. Rewrite such spans to real <strong>/<em> tags so our tagsStyles
+// (which swap fontFamily instead) actually apply.
+function normalizeInlineBold(html: string): string {
+  return html.replace(
+    /<span([^>]*)style=(["'])([^"']*)\2([^>]*)>([\s\S]*?)<\/span>/gi,
+    (full, before, _q, style, after, inner) => {
+      const isBold = /font-weight\s*:\s*(bold|[6-9]00)/i.test(style);
+      const isItalic = /font-style\s*:\s*italic/i.test(style);
+      let result = inner;
+      if (isBold) result = `<strong>${result}</strong>`;
+      if (isItalic) result = `<em>${result}</em>`;
+      if (!isBold && !isItalic) return full;
+      return result;
+    }
+  );
+}
+
 // Minimal TOC heading extraction from HTML
 function extractHeadings(html: string): Array<{ id: string; text: string; level: number }> {
   const headings: Array<{ id: string; text: string; level: number }> = [];
@@ -189,7 +210,7 @@ function ArticleBody({ article, colors: c }: { article: Article; colors: ColorPa
           <RenderHtml
             key={i}
             contentWidth={contentWidth}
-            source={{ html: seg.content }}
+            source={{ html: normalizeInlineBold(seg.content) }}
             tagsStyles={HTML_TAG_STYLES}
             renderersProps={{ a: { onPress: handleLinkPress } }}
             ignoredDomTags={["table", "thead", "tbody", "tr", "td", "th"]}
