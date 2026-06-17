@@ -33,24 +33,38 @@ function getRepTier(rep: number) {
 
 interface PublicProfile extends Member {
   interests?: string[];
-  badges?: Array<{ slug: string; name: string; emoji: string }>;
+  badges?: string[];
   registeredAt?: number;
   reputation?: number;
   reputationTier?: string;
 }
 
 interface CommunityPost {
-  id: string; slug: string; templateType: string; templateEmoji: string;
-  templateLabel: string; excerpt: string; timeAgo: string;
-  reactions: number; hotness: number; applause: number;
+  id: string;
+  content: string;
+  imageUrl?: string | null;
+  publishedAt: string;
+  likeCount: number;
+  commentCount: number;
+  template_type: string;
 }
 
 interface PortfolioItem {
-  id: string; title: string; year: string;
-  imageUrl?: string; gradientColors: [string, string];
+  id: string;
+  title: string;
+  created_at: string;
+  media?: Array<{ type: string; url: string }>;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function timeAgo(dateStr: string): string {
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
 
 function initials(name: string) {
   return (name || "?").split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
@@ -78,6 +92,44 @@ const PORTFOLIO_GRADIENTS: Array<[string, string]> = [
   ["#FF9A9E", "#FECFEF"], ["#F6D365", "#FDA085"], ["#84FAB0", "#8FD3F4"],
   ["#A18CD1", "#FBC2EB"], ["#FBC2EB", "#A6C1EE"],
 ];
+
+const BADGE_META: Record<string, { emoji: string; name: string }> = {
+  first_post:           { emoji: "📝", name: "First Post" },
+  post_validated:       { emoji: "✅", name: "Validated Post" },
+  hidden_gem:           { emoji: "💎", name: "Hidden Gem" },
+  food_critic:          { emoji: "🍽", name: "Food Critic" },
+  book_reviewer:        { emoji: "📚", name: "Book Reviewer" },
+  creative_showcase:    { emoji: "🎨", name: "Creative Showcase" },
+  culture_maker:        { emoji: "🎨", name: "Culture Maker" },
+  quote_sharer:         { emoji: "💬", name: "Quote Sharer" },
+  itinerary_maker:      { emoji: "🗺", name: "Itinerary Maker" },
+  community_builder:    { emoji: "🏗", name: "Community Builder" },
+  connector:            { emoji: "🔗", name: "Connector" },
+  referred_1:           { emoji: "🤝", name: "First Referral" },
+  referred_3:           { emoji: "🤝", name: "Referrer" },
+  referred_10:          { emoji: "🌟", name: "Super Referrer" },
+  verified:             { emoji: "✅", name: "Verified" },
+  profile_complete:     { emoji: "🪪", name: "Profile Complete" },
+  passkey_set:          { emoji: "🔐", name: "Passkey Set" },
+  patron:               { emoji: "⭐", name: "Connect Pro" },
+  tastemaker:           { emoji: "✨", name: "Taste Maker" },
+  culture_contributor:  { emoji: "🏆", name: "Culture Contributor" },
+  culture_authority:    { emoji: "👑", name: "Culture Authority" },
+  culture_icon:         { emoji: "🦁", name: "Culture Icon" },
+  explorer:             { emoji: "🧭", name: "Explorer" },
+  event_goer:           { emoji: "🎟", name: "Event Goer" },
+  event_checkin:        { emoji: "📍", name: "Checked In" },
+  directory_contributor:{ emoji: "🗂", name: "Directory Contributor" },
+  game_winner:          { emoji: "🎮", name: "Game Winner" },
+  streak_7:             { emoji: "🔥", name: "7-Day Streak" },
+  streak_30:            { emoji: "💥", name: "30-Day Streak" },
+  newsletter_reader:    { emoji: "📰", name: "Newsletter Reader" },
+  newsletter_commenter: { emoji: "✍️", name: "Newsletter Commenter" },
+};
+
+function slugToName(slug: string): string {
+  return slug.replace(/_/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
 
 const TIER_ICONS: Record<string, string> = {
   "member":              "★",
@@ -109,7 +161,7 @@ function TierChip({
 function BadgeRow({
   badges, styles, c,
 }: {
-  badges: Array<{ slug: string; name: string; emoji: string }>;
+  badges: string[];
   styles: ReturnType<typeof createStyles>;
   c: ColorPalette;
 }) {
@@ -123,16 +175,19 @@ function BadgeRow({
         contentContainerStyle={styles.badgeRow}
         style={styles.badgeRowWrap}
       >
-        {badges.map((b) => (
-          <TouchableOpacity
-            key={b.slug}
-            style={styles.badgeIcon}
-            onPress={() => setTooltip({ name: b.name, emoji: b.emoji })}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.badgeEmoji}>{b.emoji}</Text>
-          </TouchableOpacity>
-        ))}
+        {badges.map((slug) => {
+          const meta = BADGE_META[slug] ?? { emoji: "🏅", name: slugToName(slug) };
+          return (
+            <TouchableOpacity
+              key={slug}
+              style={styles.badgeIcon}
+              onPress={() => setTooltip({ name: meta.name, emoji: meta.emoji })}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.badgeEmoji}>{meta.emoji}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
       <Modal
@@ -157,20 +212,19 @@ function BadgeRow({
 }
 
 function MiniPostCard({ post, styles }: { post: CommunityPost; styles: ReturnType<typeof createStyles> }) {
-  const meta = TEMPLATE_META[post.templateType] ?? { emoji: "📝", label: "Post" };
+  const meta = TEMPLATE_META[post.template_type] ?? { emoji: "📝", label: "Post" };
   return (
     <View style={styles.postCard}>
       <View style={styles.postCardHeader}>
         <View style={styles.templateBadge}>
           <Text style={styles.templateBadgeText}>{meta.emoji} {meta.label}</Text>
         </View>
-        <Text style={styles.postTimeAgo}>{post.timeAgo}</Text>
+        <Text style={styles.postTimeAgo}>{timeAgo(post.publishedAt)}</Text>
       </View>
-      <Text style={styles.postExcerpt} numberOfLines={2}>{post.excerpt}</Text>
+      <Text style={styles.postExcerpt} numberOfLines={2}>{post.content}</Text>
       <View style={styles.postMetaRow}>
-        <Text style={styles.postMeta}>❤️ {post.reactions}</Text>
-        <Text style={styles.postMeta}>🔥 {post.hotness}</Text>
-        <Text style={styles.postMeta}>👏 {post.applause}</Text>
+        <Text style={styles.postMeta}>❤️ {post.likeCount}</Text>
+        <Text style={styles.postMeta}>💬 {post.commentCount}</Text>
       </View>
     </View>
   );
@@ -183,18 +237,22 @@ function PortfolioGrid({ items, isOwnProfile, styles, c }: {
   const colW = (SCREEN_W - 32 - 8) / 2;
   return (
     <View style={styles.portfolioGrid}>
-      {items.map((item, i) => (
-        <View key={item.id} style={[styles.portfolioItem, { width: colW }]}>
-          <View style={styles.portfolioImage}>
-            {item.imageUrl
-              ? <Image source={{ uri: item.imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-              : <View style={[StyleSheet.absoluteFill, { backgroundColor: PORTFOLIO_GRADIENTS[i % PORTFOLIO_GRADIENTS.length][0] }]} />
-            }
+      {items.map((item, i) => {
+        const imageUrl = item.media?.find((m) => m.type === "image")?.url;
+        const year = item.created_at ? new Date(item.created_at).getFullYear() : "";
+        return (
+          <View key={item.id} style={[styles.portfolioItem, { width: colW }]}>
+            <View style={styles.portfolioImage}>
+              {imageUrl
+                ? <Image source={{ uri: imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                : <View style={[StyleSheet.absoluteFill, { backgroundColor: PORTFOLIO_GRADIENTS[i % PORTFOLIO_GRADIENTS.length][0] }]} />
+              }
+            </View>
+            <Text style={styles.portfolioTitle} numberOfLines={1}>{item.title}</Text>
+            <Text style={styles.portfolioYear}>{year}</Text>
           </View>
-          <Text style={styles.portfolioTitle} numberOfLines={1}>{item.title}</Text>
-          <Text style={styles.portfolioYear}>{item.year}</Text>
-        </View>
-      ))}
+        );
+      })}
       {isOwnProfile && (
         <TouchableOpacity style={[styles.portfolioAddBtn, { width: colW }]}>
           <Ionicons name="add" size={20} color={c.ghost} />

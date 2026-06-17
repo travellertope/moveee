@@ -2037,6 +2037,7 @@ class Culture_Mobile_API {
             'website'            => get_user_meta( $user->ID, '_culture_directory_website', true ) ?: '',
             'registeredAt'       => strtotime( $user->user_registered ),
             'points'             => (int) get_user_meta( $user->ID, '_culture_points', true ),
+            'reputation'         => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user->ID ) : 0,
             'badges'             => class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_badges( $user->ID ) : array(),
         );
     }
