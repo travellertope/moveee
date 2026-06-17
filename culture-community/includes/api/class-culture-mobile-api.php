@@ -24,8 +24,6 @@ class Culture_Mobile_API {
 
     public static function init() {
         add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
-        // Consume one-time checkout auth token before WordPress renders anything
-        add_action( 'init', array( __CLASS__, 'handle_checkout_auth_redirect' ), 1 );
     }
 
     // -------------------------------------------------------------------------
@@ -252,6 +250,15 @@ class Culture_Mobile_API {
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_checkout_token' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Redeems the one-time token above. Lives under /wp-json/ so Varnish's
+        // page cache (which can serve a stale homepage for "/?param=...") never
+        // intercepts the handshake.
+        register_rest_route( 'culture/v1', '/mobile/checkout-redirect', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_checkout_redirect' ),
+            'permission_callback' => '__return_true',
         ) );
 
         // Validate a WooCommerce coupon code and return discount details.
@@ -2919,7 +2926,8 @@ class Culture_Mobile_API {
     /**
      * POST /mobile/checkout-token
      * Issues a one-time, 120-second transient key the mobile in-app browser
-     * exchanges for a WordPress auth cookie, enabling seamless checkout.
+     * exchanges (via GET /mobile/checkout-redirect) for a WordPress auth cookie,
+     * enabling seamless checkout.
      */
     public static function handle_checkout_token( WP_REST_Request $request ) {
         $user_id     = get_current_user_id();
@@ -2928,6 +2936,14 @@ class Culture_Mobile_API {
         // Only allow same-site paths to prevent open-redirect abuse
         if ( ! str_starts_with( $redirect_to, '/' ) || str_contains( $redirect_to, '//' ) ) {
             $redirect_to = '/checkout';
+        }
+
+        // Pull an optional coupon code out of the redirect path's query string
+        $coupon_code = '';
+        $query = (string) wp_parse_url( $redirect_to, PHP_URL_QUERY );
+        if ( $query ) {
+            wp_parse_str( $query, $redirect_params );
+            $coupon_code = sanitize_text_field( $redirect_params['coupon_code'] ?? '' );
         }
 
         // Sanitise cart items: [{ id: int, qty: int, variation_id?: int }]
@@ -2946,27 +2962,27 @@ class Culture_Mobile_API {
         // Generate a cryptographically random key (48 hex chars)
         $key = bin2hex( random_bytes( 24 ) );
         set_transient( 'culture_mob_checkout_' . $key, array(
-            'user_id'    => $user_id,
-            'cart_items' => $cart_items,
+            'user_id'     => $user_id,
+            'cart_items'  => $cart_items,
+            'coupon_code' => $coupon_code,
         ), 120 );
 
-        $auth_url = home_url( '/?mobile_checkout_auth=' . $key . '&mobile_redirect=' . urlencode( $redirect_to ) );
+        // Redeemed under /wp-json/ — never served from the Varnish page cache,
+        // unlike a homepage URL with a query string would be.
+        $auth_url = add_query_arg( 'key', $key, rest_url( 'culture/v1/mobile/checkout-redirect' ) );
 
         return rest_ensure_response( array( 'url' => $auth_url ) );
     }
 
     /**
-     * Hooked on `init` (priority 1) — runs before any template output.
+     * GET /mobile/checkout-redirect
      * Validates the one-time token, logs the user in, populates the
-     * WooCommerce cart with the items from the mobile app, then redirects.
+     * WooCommerce cart (and coupon) with the items from the mobile app,
+     * then redirects to the real WooCommerce checkout page.
      */
-    public static function handle_checkout_auth_redirect() {
-        if ( empty( $_GET['mobile_checkout_auth'] ) ) {
-            return;
-        }
-
-        $key  = sanitize_text_field( wp_unslash( $_GET['mobile_checkout_auth'] ) );
-        $data = get_transient( 'culture_mob_checkout_' . $key );
+    public static function handle_checkout_redirect( WP_REST_Request $request ) {
+        $key  = sanitize_text_field( $request->get_param( 'key' ) ?: '' );
+        $data = $key ? get_transient( 'culture_mob_checkout_' . $key ) : false;
 
         if ( ! $data ) {
             // Token missing or expired — send to login
@@ -2977,8 +2993,9 @@ class Culture_Mobile_API {
         // Consume the token (one-time use)
         delete_transient( 'culture_mob_checkout_' . $key );
 
-        $user_id    = (int) ( $data['user_id'] ?? 0 );
-        $cart_items = $data['cart_items'] ?? array();
+        $user_id     = (int) ( $data['user_id'] ?? 0 );
+        $cart_items  = $data['cart_items'] ?? array();
+        $coupon_code = $data['coupon_code'] ?? '';
 
         if ( ! $user_id ) {
             wp_safe_redirect( wp_login_url( home_url( '/checkout' ) ) );
@@ -3001,6 +3018,10 @@ class Culture_Mobile_API {
                     WC()->cart->add_to_cart( $product_id, $qty );
                 }
             }
+            if ( $coupon_code ) {
+                WC()->cart->add_discount( sanitize_text_field( $coupon_code ) );
+            }
+
             // Persist session so the redirect request finds the cart
             WC()->session->save_data();
         }
