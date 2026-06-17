@@ -10,7 +10,7 @@ import { colors, fonts, fontSize, space, radius } from "../../theme";
 export interface MemberResult {
   id: number;
   username: string;
-  display_name: string;
+  displayName: string;
   occupation?: string;
   city?: string;
   tier?: string;
@@ -74,12 +74,12 @@ export default function UserSearch({ onSelect, selected, label, placeholder }: P
   };
 
   if (selected) {
-    const [g1, g2] = avatarGradient(selected.display_name);
+    const [g1, g2] = avatarGradient(selected.displayName);
     return (
       <View style={styles.selectedRow}>
         <LinearGradient colors={[g1, g2]} style={styles.selectedAvatar} />
         <View style={{ flex: 1 }}>
-          <Text style={styles.selectedName}>{selected.display_name}</Text>
+          <Text style={styles.selectedName}>{selected.displayName}</Text>
           <Text style={styles.selectedHandle}>@{selected.username}</Text>
         </View>
         <TouchableOpacity onPress={() => onSelect(null)} style={styles.clearBtn}>
@@ -115,7 +115,7 @@ export default function UserSearch({ onSelect, selected, label, placeholder }: P
             <Text style={styles.noResultsText}>No members found for "{query}"</Text>
           ) : (
             results.slice(0, 8).map((r) => {
-              const [g1, g2] = avatarGradient(r.display_name);
+              const [g1, g2] = avatarGradient(r.displayName);
               return (
                 <TouchableOpacity
                   key={r.id}
@@ -125,7 +125,7 @@ export default function UserSearch({ onSelect, selected, label, placeholder }: P
                 >
                   <LinearGradient colors={[g1, g2]} style={styles.resultAvatar} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.resultName}>{r.display_name}</Text>
+                    <Text style={styles.resultName}>{r.displayName}</Text>
                     <Text style={styles.resultMeta}>
                       @{r.username}{r.occupation ? `  ·  ${r.occupation}` : ""}{r.city ? `  ·  ${r.city}` : ""}
                     </Text>

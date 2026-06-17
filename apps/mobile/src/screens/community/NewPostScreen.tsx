@@ -516,7 +516,7 @@ const uploadImages = async (): Promise<string[]> => {
       if (template === "creative-showcase") {
         body.showcase_title      = showcaseTitle.trim();
         body.showcase_medium     = showcaseMedium || undefined;
-        body.collaborator            = showcaseCollaborator?.display_name || undefined;
+        body.collaborator            = showcaseCollaborator?.displayName || undefined;
         body.collaborator_username   = showcaseCollaborator?.username || undefined;
         body.collaborator_user_id    = showcaseCollaborator?.id || undefined;
       }

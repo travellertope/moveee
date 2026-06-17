@@ -126,13 +126,13 @@ export default function MentionInput({
                 onPress={() => handleSelect(r)}
                 activeOpacity={0.75}
               >
-                <View style={[styles.avatar, { backgroundColor: avatarColor(r.display_name) }]}>
+                <View style={[styles.avatar, { backgroundColor: avatarColor(r.displayName) }]}>
                   <Text style={styles.avatarInitial}>
-                    {r.display_name[0]?.toUpperCase() ?? "?"}
+                    {r.displayName[0]?.toUpperCase() ?? "?"}
                   </Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.resultName}>{r.display_name}</Text>
+                  <Text style={styles.resultName}>{r.displayName}</Text>
                   <Text style={styles.resultMeta}>
                     @{r.username}
                     {r.occupation ? `  ·  ${r.occupation}` : ""}
