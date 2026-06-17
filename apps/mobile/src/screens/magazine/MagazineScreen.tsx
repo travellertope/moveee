@@ -88,6 +88,11 @@ function ArticleCard({
         <Text style={styles.cardTitle} numberOfLines={2}>
           {article.title}
         </Text>
+        {article.excerpt ? (
+          <Text style={styles.cardExcerpt} numberOfLines={2}>
+            {article.excerpt}
+          </Text>
+        ) : null}
         <Text style={styles.cardMeta} numberOfLines={1}>
           {article.author?.name ?? ""} · {article.readingTime ?? "?"} min
         </Text>
@@ -617,7 +622,8 @@ function createStyles(c: ColorPalette) {
       textTransform: "uppercase",
     },
     cardBody: { padding: 12 },
-    cardTitle: { fontFamily: fonts.sansBold ?? fonts.sans, fontSize: 14, color: c.ink, lineHeight: 18, marginBottom: 6 },
+    cardTitle: { fontFamily: fonts.sansBold ?? fonts.sans, fontSize: 14, color: c.ink, lineHeight: 18, marginBottom: 4 },
+    cardExcerpt: { fontFamily: fonts.sans, fontSize: 12, color: c.mute ?? c.ghost, lineHeight: 16, marginBottom: 6 },
     cardMeta: { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: c.ghost },
 
     // Visuals (vertical list)
