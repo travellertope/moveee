@@ -7,6 +7,7 @@ const TABS = [
   { label: "Directory",   href: "/member/settings/directory" },
   { label: "Interests",   href: "/member/settings/interests" },
   { label: "Newsletters", href: "/member/settings/newsletters" },
+  { label: "Notifications", href: "/member/settings/notifications" },
   { label: "Security",    href: "/member/settings/security" },
 ];
 

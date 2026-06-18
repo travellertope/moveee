@@ -1132,6 +1132,24 @@ class Culture_REST_API {
             'callback'            => array( __CLASS__, 'handle_mark_notifications_read' ),
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
+        register_rest_route( 'culture/v1', '/notifications/preferences', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_notification_prefs' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+                'args'                => array(
+                    'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_set_notification_prefs' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+                'args'                => array(
+                    'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                ),
+            ),
+        ) );
 
         // Follow system (web — API key, explicit user_id).
         register_rest_route( 'culture/v1', '/follow', array(
@@ -1338,6 +1356,20 @@ class Culture_REST_API {
             Culture_Notifications::mark_all_read( $user_id );
         }
         return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_get_notification_prefs( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        return rest_ensure_response( Culture_Notifications::get_prefs( $user_id ) );
+    }
+
+    public static function handle_set_notification_prefs( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $prefs   = $request->get_param( 'prefs' );
+        if ( ! is_array( $prefs ) ) {
+            $prefs = array();
+        }
+        return rest_ensure_response( Culture_Notifications::set_prefs( $user_id, $prefs ) );
     }
 
     /* ——————————————————————————————————————

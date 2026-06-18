@@ -768,14 +768,43 @@ FeedItem shape carries a numeric author ID. Web fetches the set via
 `${MOBILE_API}/follow/following` in `ConnectFeedScreen.tsx`. As with the
 other feed-recommendation changes, **keep both files in sync**.
 
-### Notification preferences — no global settings page yet
-There is currently no in-app "notification type" preferences page on either
-platform (`MemberSettingsScreen.tsx` Newsletters tab / web equivalent is
-email-only). The only per-notification-type control is the per-follow
-"notify me when they post" toggle described above — `new_follower` and
-`new_follower_post` notifications otherwise always fire and show up in the
-existing notification bell/list like any other type. A global notification
-preferences page would be new scope, not yet built.
+### Global notification preferences page (June 2026)
+Built on top of `Culture_Notifications` (`class-culture-notifications.php`).
+
+- `_culture_notification_prefs` usermeta — JSON-encoded `type => bool` map.
+  `Culture_Notifications::get_prefs( $user_id )` merges stored prefs over a
+  defaults map freshly derived from `TYPES` keys every call, so any new type
+  added to `TYPES` in the future is enabled by default with no migration.
+  `set_prefs( $user_id, $prefs )` writes it back; `is_enabled( $user_id,
+  $type )` is checked at the top of `add()` — a muted type silently no-ops
+  (`add()` returns `0`, no row inserted).
+- `ALWAYS_ON_TYPES = ['system']` — the `system` type can't be muted; both
+  `is_enabled()` and `set_prefs()` enforce this (the latter just ignores
+  attempts to change it), and it's deliberately excluded from both frontend
+  preference lists below.
+- REST endpoints (same shape as the Follow system): `GET`/`POST
+  /mobile/notifications/preferences` (JWT, `handle_get/set_notification_prefs`
+  in `class-culture-mobile-api.php`, no `user_id` param — taken from
+  `get_current_user_id()`) and `GET`/`POST /notifications/preferences` (API
+  key, explicit `user_id` param, same handler names in
+  `class-culture-rest-api.php`). `POST` body is `{ prefs: { type: bool, ... } }`.
+- Mobile: new "Notifications" tab in `MemberSettingsScreen.tsx` (between
+  Newsletters and Security) — `NotificationsTab()` component, toggle row per
+  type from a local `NOTIFICATION_TYPES` label array that mirrors
+  `Culture_Notifications::TYPES` (minus `system`) — **keep this array in
+  sync with the PHP const**, there's no shared source of truth across the
+  PHP/TS boundary here.
+- Web: new `/member/settings/notifications` sub-route, added to
+  `SettingsTabs.tsx`. `NotificationPreferences.tsx` (same toggle-row pattern
+  as `NewsletterPreferences.tsx`, reuses `mem-field-list`/`mem-toggle` CSS
+  classes) proxied through `app/api/notifications/preferences/route.ts`.
+- The per-follow "notify me when they post" toggle (`notify_posts` on
+  `wp_culture_follows`) is a separate, more granular control — it still
+  governs whether a given *followed user's* posts trigger `new_follower_post`
+  at all per-relationship; the new global toggle governs whether the
+  `new_follower_post` *type* is delivered at all, independent of which
+  follows have notify enabled. Both checks apply (notify_posts AND
+  is_enabled) for that type to actually fire.
 
 ---
 

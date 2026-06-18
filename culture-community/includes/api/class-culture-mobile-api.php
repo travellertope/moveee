@@ -379,6 +379,19 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        register_rest_route( 'culture/v1', '/mobile/notifications/preferences', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_notification_prefs' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_set_notification_prefs' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            ),
+        ) );
+
         // Analytics
         register_rest_route( 'culture/v1', '/mobile/analytics', array(
             'methods'             => 'GET',
@@ -2295,6 +2308,20 @@ class Culture_Mobile_API {
             Culture_Notifications::mark_all_read( $user_id );
         }
         return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_get_notification_prefs( $request ) {
+        $user_id = get_current_user_id();
+        return rest_ensure_response( Culture_Notifications::get_prefs( $user_id ) );
+    }
+
+    public static function handle_set_notification_prefs( $request ) {
+        $user_id = get_current_user_id();
+        $prefs   = $request->get_param( 'prefs' );
+        if ( ! is_array( $prefs ) ) {
+            $prefs = array();
+        }
+        return rest_ensure_response( Culture_Notifications::set_prefs( $user_id, $prefs ) );
     }
 
     public static function handle_analytics( $request ) {
