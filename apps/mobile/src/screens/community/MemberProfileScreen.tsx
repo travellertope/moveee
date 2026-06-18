@@ -291,7 +291,11 @@ export default function MemberProfileScreen() {
 
           <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
             <View style={styles.avatarInner}>
-              <Text style={styles.avatarInitials}>{initials(profile.displayName)}</Text>
+              {profile.avatarUrl ? (
+                <Image source={{ uri: profile.avatarUrl }} style={styles.avatarImage} />
+              ) : (
+                <Text style={styles.avatarInitials}>{initials(profile.displayName)}</Text>
+              )}
             </View>
           </View>
 
@@ -405,7 +409,10 @@ function createStyles(c: ColorPalette) {
     avatarRingCitizen: { borderColor: c.ghost },
     avatarInner: {
       flex: 1, borderRadius: 44, backgroundColor: c.paperDeep,
-      justifyContent: "center", alignItems: "center",
+      justifyContent: "center", alignItems: "center", overflow: "hidden",
+    },
+    avatarImage: {
+      width: "100%", height: "100%",
     },
     avatarInitials: { fontFamily: fonts.monoBold, fontSize: 18, color: c.inkSoft },
 
