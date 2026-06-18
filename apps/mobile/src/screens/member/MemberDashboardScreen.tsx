@@ -251,18 +251,16 @@ export default function MemberDashboardScreen() {
         {/* Card 1: Hero Profile */}
         <View style={styles.card}>
           <View style={styles.heroRow}>
-            <View style={isPro ? styles.avatarGlowWrap : undefined}>
-              {user.avatarUrl ? (
-                <Image
-                  source={{ uri: user.avatarUrl }}
-                  style={[styles.avatar, isPro ? styles.avatarPro : styles.avatarCitizen]}
-                />
-              ) : (
-                <View style={[styles.avatarFallback, isPro ? styles.avatarPro : styles.avatarCitizen]}>
-                  <Text style={styles.avatarFallbackText}>{initials(user.displayName)}</Text>
-                </View>
-              )}
-            </View>
+            {user.avatarUrl ? (
+              <Image
+                source={{ uri: user.avatarUrl }}
+                style={[styles.avatar, isPro ? styles.avatarPro : styles.avatarCitizen]}
+              />
+            ) : (
+              <View style={[styles.avatarFallback, isPro ? styles.avatarPro : styles.avatarCitizen]}>
+                <Text style={styles.avatarFallbackText}>{initials(user.displayName)}</Text>
+              </View>
+            )}
             <View style={styles.heroInfo}>
               <View style={styles.heroNameRow}>
                 <Text style={styles.heroName} numberOfLines={1}>{user.displayName}</Text>
@@ -474,18 +472,15 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     borderRadius: 48,
     backgroundColor: c.rule,
   },
-  avatarGlowWrap: {
-    borderRadius: 52,
+  avatarPro: {
+    borderWidth: 2.5,
+    borderColor: c.gold,
+    padding: 2,
     shadowColor: c.gold,
     shadowOpacity: 0.6,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 0 },
     elevation: 10,
-  },
-  avatarPro: {
-    borderWidth: 2.5,
-    borderColor: c.gold,
-    padding: 2,
   },
   avatarCitizen: {
     borderWidth: 2,

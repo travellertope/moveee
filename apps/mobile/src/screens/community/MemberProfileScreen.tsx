@@ -289,18 +289,16 @@ export default function MemberProfileScreen() {
             <Ionicons name="share-outline" size={18} color={c.ink} />
           </TouchableOpacity>
 
-          <View style={isPro ? styles.avatarGlowWrap : undefined}>
-            <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
-              <View style={styles.avatarInner}>
-                <Text style={styles.avatarInitials}>{initials(profile.displayName)}</Text>
-              </View>
+          <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
+            <View style={styles.avatarInner}>
+              <Text style={styles.avatarInitials}>{initials(profile.displayName)}</Text>
             </View>
           </View>
 
           <View style={styles.identity}>
             <View style={styles.profileNameRow}>
               <Text style={styles.profileName}>{profile.displayName}</Text>
-              {isPro && <Ionicons name="checkmark-circle" size={18} color="#B38238" style={styles.proCheck} />}
+              {isPro && <Ionicons name="checkmark-circle" size={18} color={c.gold} style={styles.proCheck} />}
             </View>
             {profile.username    ? <Text style={styles.profileHandle}>@{profile.username}</Text> : null}
             {profile.occupation  ? <Text style={styles.profileOccupation}>{profile.occupation}</Text> : null}
@@ -392,21 +390,19 @@ function createStyles(c: ColorPalette) {
       justifyContent: "center", alignItems: "center",
     },
 
-    avatarGlowWrap: {
-      borderRadius: 52,
+    avatarRing: {
+      width: 96, height: 96, borderRadius: 48, borderWidth: 3, padding: 3,
+      backgroundColor: c.paper, marginTop: -48,
+    },
+    avatarRingPro: {
+      borderColor: c.gold,
       shadowColor: c.gold,
       shadowOpacity: 0.6,
       shadowRadius: 14,
       shadowOffset: { width: 0, height: 0 },
       elevation: 10,
-      marginTop: -48,
     },
-    avatarRing: {
-      width: 96, height: 96, borderRadius: 48, borderWidth: 3, padding: 3,
-      backgroundColor: c.paper,
-    },
-    avatarRingPro:     { borderColor: c.gold },
-    avatarRingCitizen: { borderColor: c.ghost, marginTop: -48 },
+    avatarRingCitizen: { borderColor: c.ghost },
     avatarInner: {
       flex: 1, borderRadius: 44, backgroundColor: c.paperDeep,
       justifyContent: "center", alignItems: "center",
