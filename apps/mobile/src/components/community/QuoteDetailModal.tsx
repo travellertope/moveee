@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import {
-  View, Text, TouchableOpacity, StyleSheet, Share, Image,
+  View, Text, TouchableOpacity, StyleSheet, Image,
   TextInput, ActivityIndicator, ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,6 +14,8 @@ import { api, MOBILE_API, CULTURE_API } from "../../api/client";
 import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import type { FeedItem } from "../../types";
+import QuoteShareCard from "../quotes/QuoteShareCard";
+import { useScoreCardShare } from "../../features/games/useScoreCardShare";
 
 const PLACEHOLDER_AVATAR = "https://ui-avatars.com/api/?background=e8d3ba&color=14110d&bold=true&size=64";
 
@@ -116,18 +118,14 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
   const nav = useNav();
   const { user } = useAuthStore();
   const [bookmarked, setBookmarked] = useState(false);
+  const { cardRef, share: shareCard } = useScoreCardShare();
 
-  const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : undefined;
+  const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : "https://connect.themoveee.com/quotes";
   const sharingReason = item.quoteSharingReason || undefined;
   const posterName = item.communityAuthor ?? "Their";
 
   const handleShare = async () => {
-    try {
-      await Share.share({
-        message: `"${item.title}" — ${item.quoteAuthor ?? ""}${shareUrl ? `\n${shareUrl}` : ""}`,
-        url: shareUrl,
-      });
-    } catch { /* silent */ }
+    await shareCard();
   };
 
   const handleBookmark = async () => {
@@ -143,6 +141,15 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
+      <View style={{ position: "absolute", top: -9999, left: -9999 }}>
+        <QuoteShareCard
+          ref={cardRef}
+          quoteText={item.title}
+          quoteAuthor={item.quoteAuthor}
+          quoteSource={item.quoteSource}
+          qrValue={shareUrl}
+        />
+      </View>
       <View style={styles.body}>
         {/* Decorative open quote — contained so it doesn't clip */}
         <View style={styles.quoteBlock}>

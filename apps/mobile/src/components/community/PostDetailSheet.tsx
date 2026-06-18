@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   TextInput,
   Dimensions,
-  Share,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNav } from "../../hooks/useNav";
@@ -24,6 +23,8 @@ import { api, MOBILE_API } from "../../api/client";
 import type { ColorPalette } from "../../theme";
 import { radius, fonts } from "../../theme";
 import type { FeedItem, PollOption, ItineraryStop } from "../../types";
+import QuoteShareCard from "../quotes/QuoteShareCard";
+import { useScoreCardShare } from "../../features/games/useScoreCardShare";
 
 const SCREEN_W = Dimensions.get("window").width;
 
@@ -645,18 +646,23 @@ function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
 
 function TemplateQuote({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
   const sharerFirstName = item.communityAuthor?.split(" ")[0] ?? "Their";
-  const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : undefined;
+  const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : "https://connect.themoveee.com/quotes";
+  const { cardRef, share: shareCard } = useScoreCardShare();
 
   const handleShare = async () => {
-    try {
-      await Share.share({
-        message: `"${item.title}" — ${item.quoteAuthor ?? ""}${shareUrl ? `\n${shareUrl}` : ""}`,
-        url: shareUrl,
-      });
-    } catch { /* dismissed */ }
+    await shareCard();
   };
   return (
     <>
+      <View style={{ position: "absolute", top: -9999, left: -9999 }}>
+        <QuoteShareCard
+          ref={cardRef}
+          quoteText={item.title}
+          quoteAuthor={item.quoteAuthor}
+          quoteSource={item.quoteSource}
+          qrValue={shareUrl}
+        />
+      </View>
       <View style={styles.quoteBlock}>
         <Text style={styles.quoteMark}>"</Text>
         <Text style={styles.quoteText}>{item.title}</Text>
