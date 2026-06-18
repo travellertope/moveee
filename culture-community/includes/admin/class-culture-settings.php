@@ -88,6 +88,9 @@ class Culture_Settings {
         'culture_frontend_url'         => '',
         'culture_api_secret'           => '',
         'culture_cron_secret'          => '',
+        'culture_google_client_id_web'     => '',
+        'culture_google_client_id_ios'      => '',
+        'culture_google_client_id_android'  => '',
         'culture_analytics_limit_top_members' => 10,
         'culture_analytics_limit_events'      => 10,
 
@@ -344,6 +347,9 @@ class Culture_Settings {
         register_setting( 'culture_settings_general', 'culture_frontend_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
         register_setting( 'culture_settings_general', 'culture_api_secret', $text );
         register_setting( 'culture_settings_general', 'culture_cron_secret', $text );
+        register_setting( 'culture_settings_general', 'culture_google_client_id_web', $text );
+        register_setting( 'culture_settings_general', 'culture_google_client_id_ios', $text );
+        register_setting( 'culture_settings_general', 'culture_google_client_id_android', $text );
         register_setting( 'culture_settings_general', 'culture_analytics_limit_top_members', $int );
         register_setting( 'culture_settings_general', 'culture_analytics_limit_events', $int );
 
@@ -991,6 +997,38 @@ class Culture_Settings {
                     <input type="url" id="culture_registration_page" name="culture_registration_page"
                            value="<?php echo esc_attr( self::get( 'culture_registration_page' ) ); ?>" class="large-text" placeholder="<?php echo esc_attr( home_url( '/register/' ) ); ?>" />
                     <p class="description"><?php esc_html_e( 'The URL of your registration/sign-up page. Used in referral links and email CTAs.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Google Sign-In', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'OAuth Client IDs from Google Cloud Console, used to validate Google ID tokens on login. Leave a field blank to disable Google Sign-In for that surface.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_google_client_id_web"><?php esc_html_e( 'Web Client ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_google_client_id_web" name="culture_google_client_id_web"
+                           value="<?php echo esc_attr( self::get( 'culture_google_client_id_web' ) ); ?>" class="large-text"
+                           placeholder="xxxxxxxxxx.apps.googleusercontent.com" />
+                    <p class="description"><?php esc_html_e( 'Used by the Next.js (connect.themoveee.com) NextAuth Google provider. Must match the GOOGLE_CLIENT_ID environment variable on Vercel.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_google_client_id_ios"><?php esc_html_e( 'iOS Client ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_google_client_id_ios" name="culture_google_client_id_ios"
+                           value="<?php echo esc_attr( self::get( 'culture_google_client_id_ios' ) ); ?>" class="large-text"
+                           placeholder="xxxxxxxxxx.apps.googleusercontent.com" />
+                    <p class="description"><?php esc_html_e( 'Used by the mobile app on iOS via expo-auth-session.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_google_client_id_android"><?php esc_html_e( 'Android Client ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_google_client_id_android" name="culture_google_client_id_android"
+                           value="<?php echo esc_attr( self::get( 'culture_google_client_id_android' ) ); ?>" class="large-text"
+                           placeholder="xxxxxxxxxx.apps.googleusercontent.com" />
+                    <p class="description"><?php esc_html_e( 'Used by the mobile app on Android via expo-auth-session.', 'culture-community' ); ?></p>
                 </td>
             </tr>
         </table>

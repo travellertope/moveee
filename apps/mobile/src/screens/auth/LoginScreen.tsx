@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,13 +14,18 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNav } from "../../hooks/useNav";
 import Svg, { Path, Circle, Rect, Line } from "react-native-svg";
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import { GOOGLE_IOS_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from "../../config/google";
+
+WebBrowser.maybeCompleteAuthSession();
 // try/catch: real module in EAS builds, no-op stub in Expo Go (native binary not bundled)
 let Passkeys: { isSupported: () => boolean; create: (o: unknown) => Promise<unknown>; get: (o: unknown) => Promise<unknown> } = {
   isSupported: () => false, create: async () => null, get: async () => null,
 };
 try { Passkeys = require("react-native-passkeys"); } catch {}
 import { useAuthStore } from "../../auth/authStore";
-import { api } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import type { User } from "../../types";
 
@@ -111,6 +116,29 @@ function FingerprintIcon({ color = colors.ink }: { color?: string }) {
   );
 }
 
+function GoogleIcon() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24">
+      <Path
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"
+        fill="#4285F4"
+      />
+      <Path
+        d="M12 23c2.97 0 5.46-.98 7.29-2.65l-3.57-2.77c-.99.67-2.26 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A10.99 10.99 0 0012 23z"
+        fill="#34A853"
+      />
+      <Path
+        d="M5.84 14.11A6.6 6.6 0 015.5 12c0-.73.13-1.44.34-2.11V7.05H2.18A10.99 10.99 0 001 12c0 1.77.43 3.45 1.18 4.95l3.66-2.84z"
+        fill="#FBBC05"
+      />
+      <Path
+        d="M12 5.36c1.62 0 3.06.56 4.21 1.64l3.15-3.15A10.95 10.95 0 0012 1 10.99 10.99 0 002.18 7.05l3.66 2.84C6.71 7.29 9.14 5.36 12 5.36z"
+        fill="#EA4335"
+      />
+    </Svg>
+  );
+}
+
 const AUTH_ICON = require("../../../assets/logo.png");
 
 function Wordmark() {
@@ -134,8 +162,38 @@ export default function LoginScreen() {
   const [localError, setLocalError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const passwordRef = useRef<TextInput>(null);
+
+  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useIdTokenAuthRequest({
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+  });
+
+  useEffect(() => {
+    if (googleResponse?.type !== "success") return;
+    const idToken = googleResponse.params.id_token;
+    if (!idToken) return;
+
+    (async () => {
+      setLocalError("");
+      setGoogleLoading(true);
+      try {
+        const result = await api.post<{ token: string; user: User }>(
+          `${MOBILE_API}/login-google`,
+          { id_token: idToken },
+          false
+        );
+        await loginWithToken(result.token, result.user);
+      } catch (e: any) {
+        setLocalError(e?.message ?? "Google sign-in failed. Please try again.");
+      } finally {
+        setGoogleLoading(false);
+      }
+    })();
+  }, [googleResponse]);
 
   async function handleSubmit() {
     setLocalError("");
@@ -318,6 +376,26 @@ export default function LoginScreen() {
                   <>
                     <FingerprintIcon />
                     <Text style={styles.outlineLabel}>Continue with passkey</Text>
+                  </>
+                )}
+              </View>
+            )}
+          </Pressable>
+
+          {/* Google */}
+          <Pressable
+            style={[styles.outlineBtn, { marginTop: space[3] }, (googleLoading || !googleRequest) && { opacity: 0.6 }]}
+            onPress={() => promptGoogleAsync()}
+            disabled={googleLoading || !googleRequest}
+          >
+            {({ pressed }) => (
+              <View style={[styles.outlineBtnInner, pressed && { opacity: 0.7 }]}>
+                {googleLoading ? (
+                  <ActivityIndicator color={colors.ink} size="small" />
+                ) : (
+                  <>
+                    <GoogleIcon />
+                    <Text style={styles.outlineLabel}>Continue with Google</Text>
                   </>
                 )}
               </View>

@@ -197,6 +197,19 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Google Sign-In — verifies a Google ID token, finds/creates the WP user, returns profile.
+        register_rest_route( 'culture/v1', '/login-google', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_login_google' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'id_token' => array(
+                    'required' => true,
+                    'type'     => 'string',
+                ),
+            ),
+        ) );
+
         // Quote creation (logged-in users).
         register_rest_route( 'culture/v1', '/quotes', array(
             'methods'             => 'POST',
@@ -1996,6 +2009,28 @@ class Culture_REST_API {
                 __( 'Invalid username or password.', 'culture-community' ),
                 array( 'status' => 401 )
             );
+        }
+
+        return rest_ensure_response( self::user_profile( $user ) );
+    }
+
+    /**
+     * POST /culture/v1/login-google
+     * Verifies a Google ID token (via Culture_Google_Auth), finds or creates the
+     * matching WP user, and returns the same profile shape as handle_login().
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public static function handle_login_google( $request ) {
+        $claims = Culture_Google_Auth::verify_id_token( $request->get_param( 'id_token' ) );
+        if ( is_wp_error( $claims ) ) {
+            return $claims;
+        }
+
+        $user = Culture_Google_Auth::find_or_create_user( $claims );
+        if ( is_wp_error( $user ) ) {
+            return $user;
         }
 
         return rest_ensure_response( self::user_profile( $user ) );

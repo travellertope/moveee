@@ -163,6 +163,32 @@ function LoginForm() {
           {passkeyLoading ? "Waiting for device…" : "Sign in with Passkey"}
         </button>
 
+        <button
+          type="button"
+          onClick={() => signIn("google", { callbackUrl })}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            width: "100%",
+            padding: "11px 24px",
+            background: "transparent",
+            color: "#14110d",
+            border: "1px solid rgba(42,36,28,.25)",
+            borderRadius: 3,
+            fontSize: 13,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            marginTop: 10,
+          }}
+        >
+          <span style={{ fontSize: 16 }}>G</span>
+          Continue with Google
+        </button>
+
         <p style={{ ...styles.footer, marginTop: 16 }}>
           <Link href="/forgot-password" style={styles.link}>
             Forgot your password?

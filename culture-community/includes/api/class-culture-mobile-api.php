@@ -43,6 +43,15 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        register_rest_route( 'culture/v1', '/mobile/login-google', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_login_google' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'id_token' => array( 'required' => true, 'type' => 'string' ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/logout', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_logout' ),
@@ -806,6 +815,25 @@ class Culture_Mobile_API {
                 'Please verify your email address before logging in.',
                 array( 'status' => 403 )
             );
+        }
+
+        $token = self::issue_token( $user->ID );
+
+        return rest_ensure_response( array(
+            'token' => $token,
+            'user'  => self::full_profile( $user ),
+        ) );
+    }
+
+    public static function handle_login_google( $request ) {
+        $claims = Culture_Google_Auth::verify_id_token( $request->get_param( 'id_token' ) );
+        if ( is_wp_error( $claims ) ) {
+            return $claims;
+        }
+
+        $user = Culture_Google_Auth::find_or_create_user( $claims );
+        if ( is_wp_error( $user ) ) {
+            return $user;
         }
 
         $token = self::issue_token( $user->ID );

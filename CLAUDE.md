@@ -1227,6 +1227,101 @@ New flow: 3-field quick signup → email verification → 2 post-verification st
 
 ---
 
+## Google Sign-In (June 2026)
+
+Web (NextAuth) and mobile (Expo) both sign in through the same WordPress
+backend verification — there is no separate OAuth flow per surface, only a
+different REST entry point.
+
+### Server-side token verification
+`culture-community/includes/core/class-culture-google-auth.php`
+(`Culture_Google_Auth`) — no JWKS library, no new Composer dependency.
+Verifies a client-obtained Google ID token by calling Google's
+`https://oauth2.googleapis.com/tokeninfo?id_token=...` endpoint (Google
+itself rejects expired tokens; only `aud` and `email_verified` need
+checking here). `verify_id_token()` checks `aud` against the three
+configured client IDs (web/iOS/Android — any one matching is accepted) and
+requires `email_verified === "true"`. `find_or_create_user()` looks up by
+email; if no account exists, creates one with a random password, sets
+`_culture_membership_tier = citizen`, `_culture_email_verified = '1'`, and
+copies the Google profile photo into `_culture_avatar_url`. Required in
+`culture-community.php` alongside the other core includes.
+
+### Client ID storage
+Three Client IDs (Web/iOS/Android, from Google Cloud Console — public
+identifiers, not secrets) are stored as WP options
+(`culture_google_client_id_web/ios/android`), configurable in WP Admin →
+Culture Community → General → "Google Sign-In" section
+(`class-culture-settings.php`). Same pattern as `culture_api_secret` —
+**not** a `wp-config.php` constant.
+
+### REST endpoints
+| Route | Surface | Returns |
+|---|---|---|
+| `POST /culture/v1/login-google` | Web (public) | Full profile via `user_profile()` — same shape as `/login` |
+| `POST /culture/v1/mobile/login-google` | Mobile (public) | `{ token, user }` — same shape as `/mobile/login`, `token` from `issue_token()` |
+
+Both just call `Culture_Google_Auth::verify_id_token()` then
+`find_or_create_user()` — the only difference is the response shape,
+matching each surface's existing `/login` handler.
+
+### Web integration (NextAuth)
+`packages/shared/lib/auth.ts` — `GoogleProvider` added to `providers` only
+when `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` env vars are set. The `jwt`
+callback gained an `account` param; when `account?.provider === "google"`,
+it POSTs `account.id_token` to `/wp-json/culture/v1/login-google` and maps
+the response onto the token via a new `applyCultureProfile()` helper
+(mirrors the field set the Credentials-branch already produces — keep both
+in sync if profile fields change). `app/login/page.tsx` has a "Continue
+with Google" button calling `signIn("google", { callbackUrl })`.
+Env vars (`.env.example`): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (the
+Web Client ID/secret — must match the "Web Client ID" in WP Admin).
+
+### Mobile integration (Expo)
+Uses `expo-auth-session` + `expo-web-browser` (pure JS, Expo-Go
+compatible) — **not** `@react-native-google-signin/google-signin` (native
+SDK, would require a dev-client rebuild).
+- `src/config/google.ts` — the three placeholder Client ID constants
+  (public identifiers, safe to commit as literals once real values are
+  filled in from Google Cloud Console).
+- `screens/auth/LoginScreen.tsx` — `WebBrowser.maybeCompleteAuthSession()`
+  at module scope (required once per app for the redirect flow to
+  resolve), `Google.useIdTokenAuthRequest({ iosClientId, androidClientId,
+  webClientId })` hook, a `useEffect` on the response that POSTs
+  `id_token` to `${MOBILE_API}/login-google` and calls `loginWithToken()`,
+  and a "Continue with Google" button (`promptGoogleAsync()`, disabled
+  until `googleRequest` resolves).
+- `app.json` — added `scheme: "moveee"` (required for the auth-session
+  redirect) and `ios.bundleIdentifier` (`com.moveee.moveeeplatform`,
+  matching `android.package`).
+- After adding `expo-auth-session` to `package.json`, the lockfile was
+  regenerated via the standard out-of-tree process (see "Expo SDK
+  version — critical" below) — required for EAS Build's `npm ci`.
+
+### Google Cloud Console setup (one-time, by a human with console access)
+1. Create an OAuth 2.0 **Web application** client. Authorized redirect URI:
+   `https://connect.themoveee.com/api/auth/callback/google`. Use its
+   Client ID/Secret for `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (Vercel
+   env vars, Site B project) and its Client ID for the WP Admin "Web
+   Client ID" field.
+2. Create an OAuth 2.0 **iOS** client with bundle ID
+   `com.moveee.moveeeplatform`. Its Client ID goes in WP Admin "iOS Client
+   ID" and `GOOGLE_IOS_CLIENT_ID` in `src/config/google.ts`.
+3. Create an OAuth 2.0 **Android** client with package name
+   `com.moveee.moveeeplatform` and the app's SHA-1 signing cert
+   fingerprint. Its Client ID goes in WP Admin "Android Client ID" and
+   `GOOGLE_ANDROID_CLIENT_ID` in `src/config/google.ts`.
+4. `expo-auth-session`'s redirect URI for native (iOS/Android) is the
+   app scheme (`moveee://`) — no separate "Authorized redirect URI" entry
+   is needed for the iOS/Android OAuth clients themselves (Google's native
+   client flow doesn't use redirect URIs the way the web flow does); the
+   Web Client ID is what's passed as `webClientId` for Expo Go / dev-client
+   fallback and must have `https://auth.expo.io/@<account>/<slug>` (or the
+   appropriate Expo proxy redirect) added as an authorized redirect URI if
+   testing in Expo Go.
+
+---
+
 ## Community feed spam protection
 
 All checks run server-side in `lib/spam-protection.ts` before posts reach WordPress.
