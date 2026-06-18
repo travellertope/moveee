@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { WpComment } from "@/lib/pulse-wordpress";
 import CommentThread from "./CommentThread";
@@ -8,6 +9,55 @@ import HashtagText from "./HashtagText";
 import ReactionBar from "./ReactionBar";
 import SourcePreviewCard from "./SourcePreviewCard";
 import type { FeedItem } from "@/lib/unified-feed";
+
+function AuthorFollowToggle({ username }: { username: string }) {
+  const { data: session, status } = useSession();
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
+  const isSelf = (session?.user as any)?.username === username;
+
+  useEffect(() => {
+    if (status !== "authenticated" || isSelf) return;
+    fetch(`/api/connect/${encodeURIComponent(username)}/follow`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data) setIsFollowing(!!data.isFollowing); })
+      .finally(() => setReady(true));
+  }, [username, status, isSelf]);
+
+  if (status !== "authenticated" || isSelf) return null;
+
+  async function toggle() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/connect/${encodeURIComponent(username)}/follow`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: isFollowing ? "unfollow" : "follow" }),
+      });
+      if (res.ok) setIsFollowing(!isFollowing);
+    } catch {}
+    setBusy(false);
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      disabled={busy || !ready}
+      style={{
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: "0.62rem", letterSpacing: "0.08em", textTransform: "uppercase",
+        padding: "2px 9px", borderRadius: "999px", cursor: "pointer",
+        border: isFollowing ? "1px solid rgba(179,130,56,.4)" : "1px solid #d8d2c4",
+        background: isFollowing ? "rgba(179,130,56,.08)" : "transparent",
+        color: isFollowing ? "#b38238" : "#14110d",
+      }}
+    >
+      {isFollowing ? "Following" : "Follow"}
+    </button>
+  );
+}
 
 function PollDisplay({ postId, options, expiresAt }: { postId?: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
   const [voted, setVoted] = useState<number | null>(null);
@@ -199,6 +249,11 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                 {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
               </span>
             </div>
+            {item.communityAuthorUsername && (
+              <div style={{ marginLeft: "auto" }}>
+                <AuthorFollowToggle username={item.communityAuthorUsername} />
+              </div>
+            )}
           </div>
 
           {/* Template badge */}

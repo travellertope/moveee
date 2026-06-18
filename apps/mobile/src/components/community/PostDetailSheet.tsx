@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import HashtagText from "./HashtagText";
 import { useColors } from "../../hooks/useColors";
 import CommentSection from "./CommentSection";
 import { api, MOBILE_API } from "../../api/client";
+import { useAuthStore } from "../../auth/authStore";
 import type { ColorPalette } from "../../theme";
 import { radius, fonts } from "../../theme";
 import type { FeedItem, PollOption, ItineraryStop } from "../../types";
@@ -174,6 +175,37 @@ function StarRow({ rating, c }: { rating: number; c: ColorPalette }) {
 // ── Author row (shared across all templates) ────────────────────────────────────
 
 function AuthorRow({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const currentUser = useAuthStore((s) => s.user);
+  const authorId = item.communityAuthorId;
+  const isSelf = !!currentUser && !!authorId && String(currentUser.id) === String(authorId);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!authorId || isSelf) return;
+    api
+      .get<{ isFollowing: boolean }>(`${MOBILE_API}/follow/status?user_id=${authorId}`)
+      .then((res) => setIsFollowing(!!res.isFollowing))
+      .catch(() => {})
+      .finally(() => setReady(true));
+  }, [authorId, isSelf]);
+
+  const toggleFollow = async () => {
+    if (!authorId || busy) return;
+    setBusy(true);
+    try {
+      if (isFollowing) {
+        await api.post(`${MOBILE_API}/unfollow`, { user_id: Number(authorId) });
+        setIsFollowing(false);
+      } else {
+        await api.post(`${MOBILE_API}/follow`, { user_id: Number(authorId) });
+        setIsFollowing(true);
+      }
+    } catch {}
+    setBusy(false);
+  };
+
   return (
     <View style={styles.authorRow}>
       <Image
@@ -186,9 +218,17 @@ function AuthorRow({ item, c, styles }: { item: FeedItem; c: ColorPalette; style
           <Text style={styles.authorHandle}>@{item.communityAuthorUsername}</Text>
         ) : null}
       </View>
-      <TouchableOpacity style={styles.followBtn}>
-        <Text style={styles.followBtnText}>Follow</Text>
-      </TouchableOpacity>
+      {!isSelf && (
+        <TouchableOpacity
+          style={[styles.followBtn, isFollowing && styles.followBtnActive]}
+          onPress={toggleFollow}
+          disabled={busy || !ready}
+        >
+          <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
+            {isFollowing ? "Following" : "Follow"}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -870,10 +910,17 @@ function createStyles(c: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
     },
+    followBtnActive: {
+      borderColor: c.ochre,
+      backgroundColor: c.paperDeep,
+    },
     followBtnText: {
       fontSize: 12,
       fontWeight: "700",
       color: c.ink,
+    },
+    followBtnTextActive: {
+      color: c.ochre,
     },
 
     // Template body wrapper

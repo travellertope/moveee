@@ -131,6 +131,19 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   }, [userCountry]);
   const hasInterests = (userInterests?.length ?? 0) > 0;
 
+  const [followedUsernames, setFollowedUsernames] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!session?.user) return;
+    fetch("/api/connect/follow/following")
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.usernames) {
+          setFollowedUsernames(new Set(data.usernames.map((u: string) => u.toLowerCase())));
+        }
+      })
+      .catch(() => {});
+  }, [session?.user]);
+
   const filtered = useMemo(() => items.filter(item => {
     const typeMatch = activeType === "all" || item.type === activeType;
     const regionMatch = activeRegion === "All" || !item.region || item.region.toLowerCase() === activeRegion.toLowerCase();
@@ -153,9 +166,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   // When "For You" is active, rank by relevance score; otherwise newest-first.
   const sorted = useMemo(() => (
     forYou && hasInterests
-      ? rankFeed(filtered, interestTagSet, userCity, userRegion)
+      ? rankFeed(filtered, interestTagSet, userCity, userRegion, followedUsernames)
       : [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  ), [filtered, forYou, hasInterests, interestTagSet, userCity, userRegion]);
+  ), [filtered, forYou, hasInterests, interestTagSet, userCity, userRegion, followedUsernames]);
 
   // Trending items (shown in sidebar and For You mode)
   const trending = useMemo(() => getTrending(items), [items]);

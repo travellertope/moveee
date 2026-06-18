@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ProfileTabs from "./ProfileTabs";
 import ShareButton from "./ShareButton";
+import FollowButton from "./FollowButton";
 import BadgeShelf from "./BadgeShelf";
 import "./profile.css";
 
@@ -26,6 +27,7 @@ interface Profile {
   interests: string[];
   joined: string;
   post_count: number;
+  followers_count: number;
 }
 
 async function getProfile(username: string): Promise<Profile | null> {
@@ -157,6 +159,7 @@ export default async function PublicProfilePage(
               </div>
 
               <div className="prf-actions">
+                <FollowButton username={profile.username} initialFollowersCount={profile.followers_count} />
                 <ShareButton url={profileUrl} name={profile.display_name} />
                 <Link href="/connect/people" className="prf-share-btn" style={{ textDecoration: "none" }}>
                   ← Directory

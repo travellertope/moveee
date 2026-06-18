@@ -73,6 +73,9 @@ export interface Member {
   instagram: string;
   linkedin: string;
   website: string;
+  followersCount?: number;
+  followingCount?: number;
+  isFollowing?: boolean;
 }
 
 // ── Unified feed ────────────────────────────────────────────────────────────

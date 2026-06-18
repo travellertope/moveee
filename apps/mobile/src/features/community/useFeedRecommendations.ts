@@ -22,6 +22,7 @@ export function scoreItem(
   interestTagSet: Set<string>,
   userCity?: string,
   userRegion?: string,
+  followedUsernames?: Set<string>,
 ): number {
   let score = 0;
 
@@ -55,6 +56,12 @@ export function scoreItem(
   const HIGH_REP = new Set(['taste-maker', 'culture-authority', 'culture-icon']);
   if (item.authorRepTier && HIGH_REP.has(item.authorRepTier)) score += 10;
 
+  // Followed author boost (+15)
+  if (followedUsernames?.size && item.communityAuthorUsername &&
+      followedUsernames.has(item.communityAuthorUsername.toLowerCase())) {
+    score += 15;
+  }
+
   return Math.min(100, Math.max(0, score));
 }
 
@@ -63,10 +70,11 @@ export function rankFeed(
   interestTagSet: Set<string>,
   userCity?: string,
   userRegion?: string,
+  followedUsernames?: Set<string>,
 ): FeedItem[] {
   const scored = items.map((item) => ({
     item,
-    score: scoreItem(item, interestTagSet, userCity, userRegion),
+    score: scoreItem(item, interestTagSet, userCity, userRegion, followedUsernames),
   }));
   return scored
     .sort((a, b) => b.score !== a.score

@@ -699,6 +699,86 @@ comment."` (controlled-mode screens may override `emptyText`/`heading`/`signInPr
 
 ---
 
+## Follow system (June 2026)
+
+### Database table: `wp_culture_follows`
+```
+id, follower_id, followed_id, notify_posts, created_at
+```
+`UNIQUE KEY (follower_id, followed_id)` — re-following just updates the
+`notify_posts` flag rather than inserting a duplicate row.
+
+### PHP class: `class-culture-follows.php` (`Culture_Follows`)
+Single source of truth for both REST surfaces. Key methods: `follow()`,
+`unfollow()`, `set_notify()`, `is_following()`, `followers_count()`,
+`following_count()`, `get_following_usernames()` (joined against `wp_users`,
+used by the feed-ranking boost since `FeedItem` carries usernames not numeric
+author IDs), `get_post_notify_follower_ids()`, `notify_followers_of_post()`
+(called from `handle_submit_post()` in `class-culture-mobile-api.php` after
+a community post is created — notifies only followers who opted into
+`notify_posts`). Fires `do_action('culture_new_follower', $followed_id,
+$follower_id)` only on a genuine new follow (not on notify-flag-only
+updates), wired in `Culture_Notifications::on_new_follower()`.
+
+### Notification types added
+`new_follower` ("X started following you") and `new_follower_post`
+("X just posted") in `Culture_Notifications::TYPES`.
+
+### REST endpoints (both surfaces, same shape)
+| Mobile (JWT) | Web (API key) | Purpose |
+|---|---|---|
+| `POST /mobile/follow` | `POST /follow` | Follow (`user_id`/`target_id`, optional `notify_posts`) |
+| `POST /mobile/unfollow` | `POST /unfollow` | Unfollow |
+| `POST /mobile/follow/notify` | `POST /follow/notify` | Update `notify_posts` for an existing follow |
+| `GET /mobile/follow/status` | `GET /follow/status` | `{ isFollowing, followersCount, followingCount }` |
+| `GET /mobile/follow/following` | `GET /follow/following` | `{ usernames: string[] }` — used by feed ranking |
+
+`handle_get_member()` (mobile) and `handle_get_public_profile()` (web) both
+now include `followersCount`/`followers_count` and `followingCount`/
+`following_count`; mobile also includes viewer-relative `isFollowing`.
+
+### Frontend — mobile
+- `MemberProfileScreen.tsx` — Follow/Following button + followers count
+  below the tier chip, plus a "Notify me when they post" checkbox row shown
+  only while following. Hidden entirely when viewing your own profile
+  (`isSelf` check against `useAuthStore`).
+- `PostDetailSheet.tsx`'s `AuthorRow` — same Follow/Following toggle inline
+  next to the author name, status fetched via `/mobile/follow/status` on
+  mount, hidden for your own posts.
+
+### Frontend — web
+- `app/connect/[username]/FollowButton.tsx` — client component, mirrors the
+  mobile profile screen (Follow toggle, followers count, notify checkbox).
+  Proxies through `app/api/connect/[username]/follow/route.ts` (GET status,
+  POST follow/unfollow, PATCH notify) which resolves the username → numeric
+  ID via the public member endpoint, then calls the API-key REST surface.
+- `packages/shared/components/pulse/CommunityDetailModal.tsx` —
+  `AuthorFollowToggle` inline component in the post author row (community
+  feed item detail modal), using the same `/api/connect/[username]/follow`
+  proxy route.
+
+### Feed-ranking boost
+Followed authors get a +15 score boost, added as a 5th optional parameter
+(`followedUsernames?: Set<string>`) to `scoreItem()`/`rankFeed()` in both
+`packages/utils/feed-recommendations.ts` (web) and
+`apps/mobile/src/features/community/useFeedRecommendations.ts` (mobile) —
+matched against `item.communityAuthorUsername` (lowercased) since neither
+FeedItem shape carries a numeric author ID. Web fetches the set via
+`/api/connect/follow/following` in `PulseFeed.tsx`; mobile fetches via
+`${MOBILE_API}/follow/following` in `ConnectFeedScreen.tsx`. As with the
+other feed-recommendation changes, **keep both files in sync**.
+
+### Notification preferences — no global settings page yet
+There is currently no in-app "notification type" preferences page on either
+platform (`MemberSettingsScreen.tsx` Newsletters tab / web equivalent is
+email-only). The only per-notification-type control is the per-follow
+"notify me when they post" toggle described above — `new_follower` and
+`new_follower_post` notifications otherwise always fire and show up in the
+existing notification bell/list like any other type. A global notification
+preferences page would be new scope, not yet built.
+
+---
+
 ## Event system enhancements
 
 ### Organiser field

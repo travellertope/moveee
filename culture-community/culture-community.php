@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'CULTURE_VERSION', '2.2.0' );
+define( 'CULTURE_VERSION', '2.3.0' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CULTURE_PLUGIN_FILE', __FILE__ );
@@ -37,6 +37,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-perks.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-webauthn.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-notifications.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-follows.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cli.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-pulse.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community.php';
@@ -127,6 +128,7 @@ function culture_community_init() {
     Culture_Shop_Checkout::init();
     Culture_Tickets_Admin::init();
     Culture_Notifications::init();
+    Culture_Follows::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {

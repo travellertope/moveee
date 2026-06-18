@@ -22,6 +22,8 @@ class Culture_Notifications {
         'system'            => 'System',
         'referral_received' => 'Friend Joined',
         'mention'           => 'You were mentioned',
+        'new_follower'      => 'New Follower',
+        'new_follower_post' => 'New Post From Someone You Follow',
     );
 
     /* ——————————————————————————————————————
@@ -252,6 +254,20 @@ class Culture_Notifications {
             "You earned +{$points} points and +{$credits} credits. Keep sharing — Connector badge at 3 referrals.",
             '/member/referrals',
             array( 'new_user_id' => $new_user_id, 'points' => $points, 'credits' => $credits )
+        );
+    }
+
+    public static function on_new_follower( int $followed_id, int $follower_id ) : void {
+        $follower = get_userdata( $follower_id );
+        if ( ! $follower ) return;
+        $name = $follower->display_name ?: $follower->user_login;
+        self::add(
+            $followed_id,
+            'new_follower',
+            "{$name} started following you",
+            'Tap to view their profile.',
+            '/connect/' . $follower->user_login,
+            array( 'follower_id' => $follower_id )
         );
     }
 

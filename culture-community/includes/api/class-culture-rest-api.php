@@ -1133,6 +1133,54 @@ class Culture_REST_API {
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
 
+        // Follow system (web — API key, explicit user_id).
+        register_rest_route( 'culture/v1', '/follow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_follow_member' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'target_id'    => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'notify_posts' => array( 'default' => false ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/unfollow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_unfollow_member' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'   => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'target_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/follow/notify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_set_follow_notify' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'target_id'    => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'notify_posts' => array( 'default' => false ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/follow/status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_follow_status' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'   => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'target_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/follow/following', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_following_usernames' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Analytics
         register_rest_route( 'culture/v1', '/member/analytics', array(
             'methods'             => 'GET',
@@ -1290,6 +1338,76 @@ class Culture_REST_API {
             Culture_Notifications::mark_all_read( $user_id );
         }
         return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Follow handlers
+     * —————————————————————————————————————— */
+
+    public static function handle_follow_member( $request ) {
+        $user_id   = (int) $request->get_param( 'user_id' );
+        $target_id = (int) $request->get_param( 'target_id' );
+        $notify    = (bool) $request->get_param( 'notify_posts' );
+
+        if ( $target_id === $user_id ) {
+            return new WP_Error( 'invalid_target', 'You cannot follow yourself.', array( 'status' => 400 ) );
+        }
+        if ( ! get_userdata( $target_id ) ) {
+            return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
+        }
+
+        Culture_Follows::follow( $user_id, $target_id, $notify );
+
+        return rest_ensure_response( array(
+            'success'        => true,
+            'isFollowing'    => true,
+            'followersCount' => Culture_Follows::followers_count( $target_id ),
+        ) );
+    }
+
+    public static function handle_unfollow_member( $request ) {
+        $user_id   = (int) $request->get_param( 'user_id' );
+        $target_id = (int) $request->get_param( 'target_id' );
+
+        Culture_Follows::unfollow( $user_id, $target_id );
+
+        return rest_ensure_response( array(
+            'success'        => true,
+            'isFollowing'    => false,
+            'followersCount' => Culture_Follows::followers_count( $target_id ),
+        ) );
+    }
+
+    public static function handle_set_follow_notify( $request ) {
+        $user_id   = (int) $request->get_param( 'user_id' );
+        $target_id = (int) $request->get_param( 'target_id' );
+        $notify    = (bool) $request->get_param( 'notify_posts' );
+
+        if ( ! Culture_Follows::is_following( $user_id, $target_id ) ) {
+            return new WP_Error( 'not_following', 'You are not following this member.', array( 'status' => 400 ) );
+        }
+
+        Culture_Follows::set_notify( $user_id, $target_id, $notify );
+
+        return rest_ensure_response( array( 'success' => true, 'notifyPosts' => $notify ) );
+    }
+
+    public static function handle_follow_status( $request ) {
+        $user_id   = (int) $request->get_param( 'user_id' );
+        $target_id = (int) $request->get_param( 'target_id' );
+
+        return rest_ensure_response( array(
+            'isFollowing'    => Culture_Follows::is_following( $user_id, $target_id ),
+            'followersCount' => Culture_Follows::followers_count( $target_id ),
+            'followingCount' => Culture_Follows::following_count( $target_id ),
+        ) );
+    }
+
+    public static function handle_get_following_usernames( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        return rest_ensure_response( array(
+            'usernames' => Culture_Follows::get_following_usernames( $user_id ),
+        ) );
     }
 
     /* ——————————————————————————————————————
@@ -4095,6 +4213,8 @@ class Culture_REST_API {
             'interests'       => json_decode( get_user_meta( $uid, '_culture_interests', true ) ?: '[]', true ) ?: array(),
             'joined'          => date( 'Y-m-d', strtotime( $user->user_registered ) ),
             'post_count'      => (int) count_user_posts( $uid, 'culture_post' ),
+            'followers_count' => class_exists( 'Culture_Follows' ) ? Culture_Follows::followers_count( $uid ) : 0,
+            'following_count' => class_exists( 'Culture_Follows' ) ? Culture_Follows::following_count( $uid ) : 0,
         ) );
     }
 

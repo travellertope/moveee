@@ -240,6 +240,39 @@
   color: var(--ochre);
   border-color: rgba(179,130,56,.3);
 }
+.prf-follow-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.prf-follow-btn--active {
+  color: var(--ochre);
+  border-color: rgba(179,130,56,.4);
+  background: rgba(179,130,56,.06);
+}
+.prf-followers-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--mute);
+}
+.prf-followers-count strong {
+  color: var(--ink);
+}
+.prf-notify-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.prf-notify-toggle input {
+  cursor: pointer;
+}
 
 /* ── Tabs ── */
 .prf-tabs {

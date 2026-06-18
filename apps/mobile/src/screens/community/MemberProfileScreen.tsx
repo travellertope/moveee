@@ -15,6 +15,7 @@ import { useColors } from "../../hooks/useColors";
 import type { Member, FeedItem, TemplateType } from "../../types";
 import { BADGE_META, badgeTitleCase } from "../../constants/badges";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
+import { useAuthStore } from "../../auth/authStore";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -40,6 +41,9 @@ interface PublicProfile extends Member {
   registeredAt?: number;
   reputation?: number;
   reputationTier?: string;
+  followersCount?: number;
+  followingCount?: number;
+  isFollowing?: boolean;
 }
 
 interface CommunityPost {
@@ -297,6 +301,7 @@ export default function MemberProfileScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const currentUser = useAuthStore((s) => s.user);
 
   const [profile,   setProfile]   = useState<PublicProfile | null>(null);
   const [posts,     setPosts]     = useState<CommunityPost[]>([]);
@@ -305,12 +310,20 @@ export default function MemberProfileScreen() {
   const [postPage,  setPostPage]  = useState(1);
   const [activeTab, setActiveTab] = useState<"community" | "portfolio">("community");
   const [sheetItem, setSheetItem] = useState<FeedItem | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [notifyPosts, setNotifyPosts] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
 
   useEffect(() => {
     const uid = params.userId;
     if (!uid) { setLoading(false); return; }
     api.get<PublicProfile>(`${MOBILE_API}/member/${uid}`)
-      .then(setProfile).catch(() => {}).finally(() => setLoading(false));
+      .then((p) => {
+        setProfile(p);
+        setIsFollowing(!!p.isFollowing);
+        setFollowersCount(p.followersCount ?? 0);
+      }).catch(() => {}).finally(() => setLoading(false));
   }, [params.userId]);
 
   useEffect(() => {
@@ -327,6 +340,38 @@ export default function MemberProfileScreen() {
   }, [profile, activeTab]);
 
   const isPro = profile?.tier === "patron";
+  const isSelf = !!currentUser && !!profile && String(currentUser.id) === String(profile.id);
+
+  const toggleFollow = async () => {
+    if (!profile || followBusy) return;
+    setFollowBusy(true);
+    try {
+      if (isFollowing) {
+        const res = await api.post<{ isFollowing: boolean; followersCount: number }>(
+          `${MOBILE_API}/unfollow`, { user_id: profile.id }
+        );
+        setIsFollowing(res.isFollowing);
+        setFollowersCount(res.followersCount);
+        setNotifyPosts(false);
+      } else {
+        const res = await api.post<{ isFollowing: boolean; followersCount: number }>(
+          `${MOBILE_API}/follow`, { user_id: profile.id, notify_posts: notifyPosts }
+        );
+        setIsFollowing(res.isFollowing);
+        setFollowersCount(res.followersCount);
+      }
+    } catch { /* ignore */ }
+    setFollowBusy(false);
+  };
+
+  const toggleNotify = async () => {
+    if (!profile) return;
+    const next = !notifyPosts;
+    setNotifyPosts(next);
+    try {
+      await api.post(`${MOBILE_API}/follow/notify`, { user_id: profile.id, notify_posts: next });
+    } catch { /* ignore */ }
+  };
 
   const handleShare = async () => {
     if (!profile?.username) return;
@@ -398,6 +443,33 @@ export default function MemberProfileScreen() {
 
           {/* Reputation tier chip */}
           <TierChip reputation={rep} styles={styles} c={c} />
+
+          {!isSelf && (
+            <View style={styles.followRow}>
+              <TouchableOpacity
+                style={[styles.followBtn, isFollowing && styles.followBtnActive]}
+                onPress={toggleFollow}
+                disabled={followBusy}
+              >
+                <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
+                  {isFollowing ? "Following" : "Follow"}
+                </Text>
+              </TouchableOpacity>
+              <Text style={styles.followersCountText}>
+                <Text style={styles.followersCountStrong}>{followersCount.toLocaleString()}</Text> followers
+              </Text>
+            </View>
+          )}
+          {!isSelf && isFollowing && (
+            <TouchableOpacity style={styles.notifyToggleRow} onPress={toggleNotify}>
+              <Ionicons
+                name={notifyPosts ? "checkbox" : "square-outline"}
+                size={16}
+                color={notifyPosts ? c.ochre : c.ghost}
+              />
+              <Text style={styles.notifyToggleText}>Notify me when they post</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Badges — icon only, tap for name */}
           <BadgeRow badges={badges} styles={styles} c={c} />
@@ -532,6 +604,20 @@ function createStyles(c: ColorPalette) {
     },
     tierChipIcon:  { fontSize: 13, color: c.ochre },
     tierChipLabel: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ink, letterSpacing: 0.3 },
+
+    // Follow button + followers count
+    followRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14 },
+    followBtn: {
+      paddingHorizontal: 18, paddingVertical: 8, borderRadius: radius.full,
+      borderWidth: 1, borderColor: c.ghost, backgroundColor: c.paper,
+    },
+    followBtnActive: { borderColor: c.ochre, backgroundColor: c.paperDeep },
+    followBtnText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ink, letterSpacing: 0.3 },
+    followBtnTextActive: { color: c.ochre },
+    followersCountText: { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
+    followersCountStrong: { color: c.ink, fontFamily: fonts.monoBold },
+    notifyToggleRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
+    notifyToggleText: { fontFamily: fonts.sans, fontSize: 11, color: c.inkSoft },
 
     // Badge row — icon only
     badgeRowWrap: { marginTop: 16, width: "100%" },

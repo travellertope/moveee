@@ -40,6 +40,7 @@ export function scoreItem(
   interestTagSet: Set<string>,
   userCity?: string,
   userRegion?: string,
+  followedUsernames?: Set<string>,
 ): number {
   let score = 0;
 
@@ -69,6 +70,12 @@ export function scoreItem(
     score += 15;
   }
 
+  // ── Followed author (+15) ───────────────────────────────────────────────
+  if (followedUsernames?.size && item.communityAuthorUsername &&
+      followedUsernames.has(item.communityAuthorUsername.toLowerCase())) {
+    score += 15;
+  }
+
   return Math.min(100, Math.max(0, score));
 }
 
@@ -77,8 +84,9 @@ export function rankFeed(
   interestTagSet: Set<string>,
   userCity?: string,
   userRegion?: string,
+  followedUsernames?: Set<string>,
 ): FeedItem[] {
-  const scored = items.map(item => ({ item, score: scoreItem(item, interestTagSet, userCity, userRegion) }));
+  const scored = items.map(item => ({ item, score: scoreItem(item, interestTagSet, userCity, userRegion, followedUsernames) }));
   return scored
     .sort((a, b) => b.score !== a.score ? b.score - a.score : new Date(b.item.date).getTime() - new Date(a.item.date).getTime())
     .map(({ item }) => item);
