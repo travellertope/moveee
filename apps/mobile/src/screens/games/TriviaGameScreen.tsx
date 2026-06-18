@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { useNav } from "../../hooks/useNav";
 import { storage } from "../../store/storage";
-import { api } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
@@ -119,6 +119,11 @@ export default function TriviaGameScreen() {
       storage.set(countKey, String(prev + 1));
       storage.set(KEY_SCORE, String(finalScore));
       recordPlayedToday();
+      api.post(`${MOBILE_API}/games/complete`, {
+        game_type: "trivia",
+        score: finalScore,
+        max_score: questions.length,
+      }).catch(() => {});
       setPhase("done");
     }
   };

@@ -2607,6 +2607,93 @@ class Culture_REST_API {
         return rest_ensure_response( array( 'success' => true, 'date' => $date, 'slot' => $slot ) );
     }
 
+    /** Max credits awarded for a perfect score, per game type. */
+    const GAME_MAX_CREDITS = array(
+        'trivia'        => 50,
+        'who-said-it'   => 30,
+    );
+
+    /**
+     * POST /culture/v1/games/complete
+     * Records a completed game play and awards credits proportional to score.
+     * Expects user_id (set by caller from auth context), game_type, score, max_score.
+     */
+    public static function handle_games_complete( $request ) {
+        global $wpdb;
+
+        $user_id   = (int) $request->get_param( 'user_id' );
+        $game_type = sanitize_key( (string) $request->get_param( 'game_type' ) );
+        $score     = max( 0, (int) $request->get_param( 'score' ) );
+        $max_score = max( 1, (int) $request->get_param( 'max_score' ) );
+
+        if ( ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+        if ( ! isset( self::GAME_MAX_CREDITS[ $game_type ] ) ) {
+            return new WP_Error( 'invalid', 'Unknown game_type.', array( 'status' => 400 ) );
+        }
+
+        $score          = min( $score, $max_score );
+        $max_credits    = self::GAME_MAX_CREDITS[ $game_type ];
+        $credits_amount = (int) round( ( $score / $max_score ) * $max_credits );
+
+        $table = $wpdb->prefix . 'culture_game_history';
+        $wpdb->insert( $table, array(
+            'user_id'        => $user_id,
+            'game_type'      => $game_type,
+            'score'          => $score,
+            'max_score'      => $max_score,
+            'credits_earned' => 0, // filled in below once we know the actual awarded amount
+            'played_date'    => gmdate( 'Y-m-d' ),
+            'created_at'     => current_time( 'mysql' ),
+        ) );
+        $history_id = (int) $wpdb->insert_id;
+
+        $awarded = Culture_Gamification::award_credits( $user_id, $credits_amount, 'game_completed', $history_id );
+        $wpdb->update( $table, array( 'credits_earned' => $awarded ), array( 'id' => $history_id ) );
+
+        return rest_ensure_response( array(
+            'success'        => true,
+            'id'             => $history_id,
+            'credits_earned' => $awarded,
+        ) );
+    }
+
+    /**
+     * GET /culture/v1/games/history
+     * Paginated list of a user's past game plays, newest first.
+     */
+    public static function handle_games_history( $request ) {
+        global $wpdb;
+
+        $user_id  = (int) $request->get_param( 'user_id' );
+        $per_page = min( max( 1, (int) ( $request->get_param( 'per_page' ) ?: 20 ) ), 100 );
+        $page     = max( 1, (int) ( $request->get_param( 'page' ) ?: 1 ) );
+        $offset   = ( $page - 1 ) * $per_page;
+
+        if ( ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $table = $wpdb->prefix . 'culture_game_history';
+        $total = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE user_id = %d", $user_id
+        ) );
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT id, game_type, score, max_score, credits_earned, played_date, created_at
+             FROM {$table} WHERE user_id = %d ORDER BY id DESC LIMIT %d OFFSET %d",
+            $user_id, $per_page, $offset
+        ), ARRAY_A ) ?: array();
+
+        return rest_ensure_response( array(
+            'entries'  => $rows,
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $per_page,
+            'pages'    => (int) ceil( $total / max( 1, $per_page ) ),
+        ) );
+    }
+
     /**
      * GET /culture/v1/games/crossword-daily
      * Returns today's cached crossword puzzle, or 404 if not generated yet.

@@ -398,6 +398,23 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Games — completion recording + history
+        register_rest_route( 'culture/v1', '/mobile/games/complete', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_games_complete' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/games/history', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_games_history' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'page'     => array( 'default' => 1,  'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'default' => 20, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Perks & redemptions
         register_rest_route( 'culture/v1', '/mobile/perks', array(
             'methods'             => 'GET',
@@ -2168,6 +2185,18 @@ class Culture_Mobile_API {
         $user_id = get_current_user_id();
         $request->set_param( 'user_id', $user_id );
         return Culture_REST_API::handle_wallet_cashout( $request );
+    }
+
+    public static function handle_games_complete( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_games_complete( $request );
+    }
+
+    public static function handle_games_history( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_games_history( $request );
     }
 
     public static function handle_list_perks( $request ) {

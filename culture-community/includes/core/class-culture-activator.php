@@ -168,6 +168,22 @@ class Culture_Activator {
             KEY user_idx (user_id)
         ) {$charset_collate};" );
 
+        // Game history table — records every completed Trivia / Who Said It play.
+        $game_history_table = $wpdb->prefix . 'culture_game_history';
+        dbDelta( "CREATE TABLE {$game_history_table} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            game_type varchar(20) NOT NULL DEFAULT '',
+            score int(11) NOT NULL DEFAULT 0,
+            max_score int(11) NOT NULL DEFAULT 0,
+            credits_earned int(11) NOT NULL DEFAULT 0,
+            played_date date NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY user_created (user_id, created_at),
+            KEY user_game_date (user_id, game_type, played_date)
+        ) {$charset_collate};" );
+
         update_option( 'culture_db_version', CULTURE_VERSION );
 
         // ── Badge threshold migration (v2.0+) ────────────────────────────────

@@ -6,7 +6,7 @@ import {
 import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { storage } from "../../store/storage";
-import { api } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
@@ -95,6 +95,12 @@ export default function WhoSaidItGameScreen() {
       const prev = parseInt(storage.getString(countKey) ?? "0", 10);
       storage.set(countKey, String(prev + 1));
       recordPlayedToday();
+      const final = answers.filter((a, i) => a === questions[i]?.correct_author).length;
+      api.post(`${MOBILE_API}/games/complete`, {
+        game_type: "who-said-it",
+        score: final,
+        max_score: questions.length,
+      }).catch(() => {});
       setPhase("done");
     }
   };

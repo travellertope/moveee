@@ -44,6 +44,7 @@ import TriviaGameScreen from "../screens/games/TriviaGameScreen";
 import WhoSaidItGameScreen from "../screens/games/WhoSaidItGameScreen";
 import SudokuGameScreen from "../screens/games/SudokuGameScreen";
 import CrosswordGameScreen from "../screens/games/CrosswordGameScreen";
+import GameHistoryScreen from "../screens/games/GameHistoryScreen";
 import EventsScreen from "../screens/events/EventsScreen";
 import EventDetailScreen from "../screens/events/EventDetailScreen";
 import MyRSVPsScreen from "../screens/events/MyRSVPsScreen";
@@ -181,6 +182,7 @@ function GamesStack() {
       <Stack.Screen name="WhoSaidIt"   component={WhoSaidItGameScreen} />
       <Stack.Screen name="Sudoku"      component={SudokuGameScreen} />
       <Stack.Screen name="Crossword"   component={CrosswordGameScreen} />
+      <Stack.Screen name="GameHistory" component={GameHistoryScreen} />
     </Stack.Navigator>
   );
 }
