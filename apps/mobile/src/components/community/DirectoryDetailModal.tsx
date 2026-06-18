@@ -65,10 +65,12 @@ export default function DirectoryDetailModal({ visible, item, onClose }: Props) 
           </View>
         )}
 
-        {/* Vetted badge */}
-        <View style={styles.vettedBadge}>
-          <Text style={styles.vettedText}>✓ Vetted by Moveee</Text>
-        </View>
+        {/* Vetted badge — only shown for real partner entries */}
+        {item.isPartner ? (
+          <View style={styles.vettedBadge}>
+            <Text style={styles.vettedText}>✓ Vetted by Moveee</Text>
+          </View>
+        ) : null}
 
         {/* Excerpt */}
         {item.excerpt ? (
