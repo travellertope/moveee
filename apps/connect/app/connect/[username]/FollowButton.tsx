@@ -80,7 +80,7 @@ export default function FollowButton({ username, initialFollowersCount }: Props)
         disabled={loading || !ready}
         className={`prf-share-btn${isFollowing ? " prf-follow-btn--active" : ""}`}
       >
-        {isFollowing ? "Following" : "Follow"}
+        {isFollowing ? "✓ Following" : "Follow"}
       </button>
       <span className="prf-followers-count">
         <strong>{followersCount.toLocaleString()}</strong> followers
