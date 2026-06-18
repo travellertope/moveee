@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -14,11 +14,15 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNav } from "../../hooks/useNav";
 import Svg, { Path, Circle, Rect, Line } from "react-native-svg";
-import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
-import { GOOGLE_IOS_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from "../../config/google";
+import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
+import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from "../../config/google";
 
-WebBrowser.maybeCompleteAuthSession();
+GoogleSignin.configure({
+  iosClientId: GOOGLE_IOS_CLIENT_ID,
+  webClientId: GOOGLE_WEB_CLIENT_ID,
+  offlineAccess: false,
+});
+
 // try/catch: real module in EAS builds, no-op stub in Expo Go (native binary not bundled)
 let Passkeys: { isSupported: () => boolean; create: (o: unknown) => Promise<unknown>; get: (o: unknown) => Promise<unknown> } = {
   isSupported: () => false, create: async () => null, get: async () => null,
@@ -166,34 +170,32 @@ export default function LoginScreen() {
 
   const passwordRef = useRef<TextInput>(null);
 
-  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useIdTokenAuthRequest({
-    iosClientId: GOOGLE_IOS_CLIENT_ID,
-    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
-    webClientId: GOOGLE_WEB_CLIENT_ID,
-  });
-
-  useEffect(() => {
-    if (googleResponse?.type !== "success") return;
-    const idToken = googleResponse.params.id_token;
-    if (!idToken) return;
-
-    (async () => {
-      setLocalError("");
-      setGoogleLoading(true);
-      try {
-        const result = await api.post<{ token: string; user: User }>(
-          `${MOBILE_API}/login-google`,
-          { id_token: idToken },
-          false
-        );
-        await loginWithToken(result.token, result.user);
-      } catch (e: any) {
-        setLocalError(e?.message ?? "Google sign-in failed. Please try again.");
-      } finally {
+  async function handleGoogleSignIn() {
+    if (googleLoading) return;
+    setLocalError("");
+    setGoogleLoading(true);
+    try {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const response = await GoogleSignin.signIn();
+      const idToken = response.data?.idToken;
+      if (!idToken) {
         setGoogleLoading(false);
+        return;
       }
-    })();
-  }, [googleResponse]);
+      const result = await api.post<{ token: string; user: User }>(
+        `${MOBILE_API}/login-google`,
+        { id_token: idToken },
+        false
+      );
+      await loginWithToken(result.token, result.user);
+    } catch (e: any) {
+      if (e?.code !== statusCodes.SIGN_IN_CANCELLED) {
+        setLocalError(e?.message ?? "Google sign-in failed. Please try again.");
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
 
   async function handleSubmit() {
     setLocalError("");
@@ -384,9 +386,9 @@ export default function LoginScreen() {
 
           {/* Google */}
           <Pressable
-            style={[styles.outlineBtn, { marginTop: space[3] }, (googleLoading || !googleRequest) && { opacity: 0.6 }]}
-            onPress={() => promptGoogleAsync()}
-            disabled={googleLoading || !googleRequest}
+            style={[styles.outlineBtn, { marginTop: space[3] }, googleLoading && { opacity: 0.6 }]}
+            onPress={handleGoogleSignIn}
+            disabled={googleLoading}
           >
             {({ pressed }) => (
               <View style={[styles.outlineBtnInner, pressed && { opacity: 0.7 }]}>

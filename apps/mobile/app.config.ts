@@ -2,6 +2,11 @@
 // (where they cause fetch errors) but restores them for EAS production builds.
 const IS_EAS_BUILD = !!process.env.EAS_BUILD;
 
+// Reversed form of GOOGLE_IOS_CLIENT_ID (src/config/google.ts) — required by
+// @react-native-google-signin/google-signin's config plugin so iOS can register
+// the URL scheme Google redirects back to after the native sign-in sheet closes.
+const GOOGLE_IOS_URL_SCHEME = "com.googleusercontent.apps.818521894942-85rteetrkupjtch3027nld5q8pv8t2jc";
+
 export default {
   expo: {
     name: "Moveee",
@@ -45,6 +50,10 @@ export default {
       "@react-native-community/datetimepicker",
       "expo-asset",
       "expo-font",
+      [
+        "@react-native-google-signin/google-signin",
+        { iosUrlScheme: GOOGLE_IOS_URL_SCHEME },
+      ],
     ],
     extra: {
       eas: {

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import {
-  View, Text, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet, Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNav } from "../../hooks/useNav";
@@ -32,7 +32,12 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
 
   const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : "https://connect.themoveee.com/quotes";
   const sharingReason = item.quoteSharingReason || undefined;
-  const posterName = item.communityAuthor ?? "Their";
+
+  const handleAuthorPress = () => {
+    if (item.communityAuthorUsername) {
+      nav.navigate("MemberProfile", { username: item.communityAuthorUsername });
+    }
+  };
 
   const handleShare = async () => {
     await shareCard();
@@ -80,7 +85,25 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
 
         {sharingReason ? (
           <View style={styles.posterNote}>
-            <Text style={styles.posterNoteLabel}>💬 {posterName}'s note:</Text>
+            <TouchableOpacity
+              style={styles.posterNoteHeader}
+              onPress={handleAuthorPress}
+              disabled={!item.communityAuthorUsername}
+              activeOpacity={0.7}
+            >
+              {item.communityAuthorAvatar ? (
+                <Image source={{ uri: item.communityAuthorAvatar }} style={styles.posterAvatar} />
+              ) : (
+                <View style={[styles.posterAvatar, styles.posterAvatarFallback]}>
+                  <Text style={styles.posterAvatarInitial}>
+                    {(item.communityAuthor ?? "?")[0]?.toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <Text style={styles.posterNoteLabel}>
+                💬 {item.communityAuthor ?? "Someone"}'s note
+              </Text>
+            </TouchableOpacity>
             <Text style={styles.posterNoteText}>{sharingReason}</Text>
           </View>
         ) : null}
@@ -174,7 +197,11 @@ function createStyles(c: ColorPalette) {
       backgroundColor: c.paperDeep, borderRadius: radius.md, padding: space[3],
       borderLeftWidth: 2, borderLeftColor: c.ochre,
     },
-    posterNoteLabel: { fontFamily: fonts.sansBold, fontSize: 12, color: c.inkSoft, marginBottom: 4 },
+    posterNoteHeader: { flexDirection: "row", alignItems: "center", gap: space[2], marginBottom: 6 },
+    posterAvatar: { width: 22, height: 22, borderRadius: 11 },
+    posterAvatarFallback: { backgroundColor: c.paperWarm, alignItems: "center", justifyContent: "center" },
+    posterAvatarInitial: { fontFamily: fonts.sansBold, fontSize: 11, color: c.inkSoft },
+    posterNoteLabel: { fontFamily: fonts.sansBold, fontSize: 12, color: c.inkSoft },
     posterNoteText: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, lineHeight: 19 },
 
     sharePrompt: { alignItems: "center", gap: 2 },

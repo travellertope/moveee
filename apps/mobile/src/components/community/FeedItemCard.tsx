@@ -336,12 +336,6 @@ function createStyles(c: ColorPalette) {
       paddingBottom: 8,
     },
     // happening
-    happeningHeader: {
-      height: 160,
-      backgroundColor: "#7C3AED",
-      padding: 12,
-    },
-    happeningHero: { width: "100%" as any, height: 200 },
     happeningContent: {
       paddingHorizontal: 14,
       paddingTop: 12,
@@ -1207,45 +1201,46 @@ function HappeningCard({ item, onPress }: FeedCardProps) {
 
   return (
     <>
-      <View style={styles.card}>
-        {item.image ? (
-          <TouchableOpacity onPress={() => setLightboxOpen(true)} activeOpacity={0.92}>
-            <Image source={{ uri: item.image }} style={styles.happeningHero} resizeMode="cover" />
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.happeningHeader}>
-            <BadgePill label="Happening" bg={c.badgeHappeningBg} color={c.badgeHappeningText} styles={styles} />
-          </View>
-        )}
-        <TouchableOpacity onPress={() => setModalOpen(true)} activeOpacity={0.92}>
-          <View style={styles.happeningContent}>
+      <TouchableOpacity style={styles.card} onPress={() => setModalOpen(true)} activeOpacity={0.92}>
+        <View style={styles.happeningContent}>
+          <BadgePill label="Happening" bg={c.badgeHappeningBg} color={c.badgeHappeningText} styles={styles} />
+
+          {/* Compact thumbnail beside title/date/location, instead of a full-width hero */}
+          <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
             {item.image ? (
-              <BadgePill label="Happening" bg={c.badgeHappeningBg} color={c.badgeHappeningText} styles={styles} />
-            ) : null}
-            <Text style={[styles.happeningTitle, item.image ? { marginTop: 8 } : null]}>{item.title}</Text>
-            {item.eventDate ? (
-              <View style={styles.happeningMetaRow}>
-                <Ionicons name="calendar-outline" size={14} color={c.gold} />
-                <Text style={styles.happeningMetaText}>{item.eventDate}</Text>
-              </View>
-            ) : null}
-            {item.location || item.city ? (
-              <View style={[styles.happeningMetaRow, { marginTop: 4 }]}>
-                <Ionicons name="location-outline" size={14} color={c.gold} />
-                <Text style={styles.happeningMetaText} numberOfLines={1}>
-                  {[item.location, item.city].filter(Boolean).join(", ")}
-                </Text>
-              </View>
-            ) : null}
-            <View style={styles.happeningFooter}>
-              <Text style={styles.happeningAdmission}>{item.admission ?? "Free admission"}</Text>
-              <View style={styles.happeningRsvpBtn}>
-                <Text style={styles.happeningRsvpText}>See details</Text>
-              </View>
+              <TouchableOpacity onPress={() => setLightboxOpen(true)} activeOpacity={0.9}>
+                <ImgPlaceholder height={64} width={64} borderRadius={radius.lg} src={item.image} />
+              </TouchableOpacity>
+            ) : (
+              <ImgPlaceholder height={64} width={64} borderRadius={radius.lg} src={null} />
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.happeningTitle} numberOfLines={2}>{item.title}</Text>
+              {item.eventDate ? (
+                <View style={[styles.happeningMetaRow, { marginTop: 4 }]}>
+                  <Ionicons name="calendar-outline" size={14} color={c.gold} />
+                  <Text style={styles.happeningMetaText}>{item.eventDate}</Text>
+                </View>
+              ) : null}
+              {item.location || item.city ? (
+                <View style={[styles.happeningMetaRow, { marginTop: 4 }]}>
+                  <Ionicons name="location-outline" size={14} color={c.gold} />
+                  <Text style={styles.happeningMetaText} numberOfLines={1}>
+                    {[item.location, item.city].filter(Boolean).join(", ")}
+                  </Text>
+                </View>
+              ) : null}
             </View>
           </View>
-        </TouchableOpacity>
-      </View>
+
+          <View style={styles.happeningFooter}>
+            <Text style={styles.happeningAdmission}>{item.admission ?? "Free admission"}</Text>
+            <View style={styles.happeningRsvpBtn}>
+              <Text style={styles.happeningRsvpText}>See details</Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
       {item.image && (
         <ImageLightbox visible={lightboxOpen} images={[item.image]} onClose={() => setLightboxOpen(false)} />
       )}
@@ -1721,7 +1716,7 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
     if (rsvped || !item.wpId) return;
     setRsvped(true);
     try {
-      await api.post(`${MOBILE_API}/events/rsvp`, { event_id: item.wpId });
+      await api.post(`${MOBILE_API}/community/event/rsvp`, { post_id: item.wpId });
     } catch {
       setRsvped(false);
     }
@@ -1787,23 +1782,25 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
             </View>
           ) : null}
 
-          {/* RSVP button — only when no external ticket URL */}
-          {!item.ticketUrl ? (
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
-              <TouchableOpacity
-                style={[styles.eventRsvpBtn, rsvped ? styles.eventRsvpBtnDone : undefined]}
-                onPress={handleRsvp}
-                activeOpacity={0.8}
-                disabled={rsvped}
-              >
-                <Text style={styles.eventRsvpBtnText}>{rsvped ? "RSVPed ✓" : "RSVP Now"}</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
+          {/* RSVP button — only when the Pro organiser has explicitly enabled RSVP for this event */}
+          {item.ticketUrl ? (
             <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
               <Text style={styles.readMore}>Get Tickets →</Text>
             </View>
-          )}
+          ) : item.rsvpEnabled ? (
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
+              <TouchableOpacity
+                style={[styles.eventRsvpBtn, (rsvped || item.rsvpAvailable === false) ? styles.eventRsvpBtnDone : undefined]}
+                onPress={handleRsvp}
+                activeOpacity={0.8}
+                disabled={rsvped || item.rsvpAvailable === false}
+              >
+                <Text style={styles.eventRsvpBtnText}>
+                  {rsvped ? "RSVPed ✓" : item.rsvpAvailable === false ? "Fully Booked" : "RSVP Now"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
         </View>
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>
@@ -1968,7 +1965,7 @@ function CommunityQuoteCard({ item, onPress, onAuthorPress }: FeedCardProps) {
       {item.quoteSharingReason ? (
         <View style={styles.cqNote}>
           <Text style={styles.cqNoteLabel}>
-            💬 {(item.communityAuthor?.split(" ")[0] ?? "Their").toUpperCase()}'S NOTE:
+            💬 {item.communityAuthor ? `${item.communityAuthor.split(" ")[0].toUpperCase()}'S NOTE:` : "THEIR NOTE:"}
           </Text>
           <Text style={styles.cqNoteText}>{item.quoteSharingReason}</Text>
         </View>
