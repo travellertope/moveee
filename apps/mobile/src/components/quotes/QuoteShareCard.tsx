@@ -44,11 +44,13 @@ const QuoteShareCard = forwardRef<View, QuoteShareCardProps>(function QuoteShare
         )}
 
         <View style={styles.qrWrap}>
+          <View style={styles.qrBadge}>
+            <Text style={styles.qrBadgeText}>M</Text>
+          </View>
           <View style={styles.qrBox}>
             <QRCode value={qrValue} size={84} backgroundColor="#fff" color="#1a140d" />
           </View>
           <Text style={styles.qrLabel}>Scan to read on Moveee</Text>
-          <Text style={styles.urlLabel}>connect.themoveee.com</Text>
         </View>
       </LinearGradient>
     </View>
@@ -85,7 +87,12 @@ const styles = StyleSheet.create({
   source: { fontFamily: fonts.mono, fontSize: 11, color: "#9c8a70", letterSpacing: 0.5, marginTop: 4 },
 
   qrWrap: { alignItems: "center", marginTop: "auto" },
+  qrBadge: {
+    width: 28, height: 28, borderRadius: radius.full,
+    backgroundColor: "#b38238", alignItems: "center", justifyContent: "center",
+    marginBottom: space[2],
+  },
+  qrBadgeText: { fontFamily: fonts.serifBold, fontSize: 14, color: "#1a140d" },
   qrBox: { backgroundColor: "#fff", padding: 10, borderRadius: radius.md },
   qrLabel: { fontFamily: fonts.mono, fontSize: 10, color: "#9c8a70", letterSpacing: 0.5, marginTop: space[2] },
-  urlLabel: { fontFamily: fonts.mono, fontSize: 10, color: "#c9a878", letterSpacing: 0.5, marginTop: 2 },
 });
