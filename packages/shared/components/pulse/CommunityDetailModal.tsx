@@ -54,7 +54,7 @@ function AuthorFollowToggle({ username }: { username: string }) {
         color: isFollowing ? "#b38238" : "#14110d",
       }}
     >
-      {isFollowing ? "Following" : "Follow"}
+      {isFollowing ? "✓ Following" : "Follow"}
     </button>
   );
 }
