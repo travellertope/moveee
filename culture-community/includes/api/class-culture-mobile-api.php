@@ -1759,6 +1759,7 @@ class Culture_Mobile_API {
 
         return array_map( function( WP_Post $post ) {
             $thumb = get_the_post_thumbnail_url( $post->ID, 'large' );
+            $cat_terms = get_the_terms( $post->ID, 'pulse_category' );
             return array(
                 'id'            => 'pulse-' . $post->ID,
                 'type'          => 'pulse',
@@ -1769,6 +1770,7 @@ class Culture_Mobile_API {
                 'body'          => wpautop( $post->post_content ),
                 'image'         => $thumb ?: null,
                 'href'          => '/pulse/' . $post->post_name,
+                'category'      => ( $cat_terms && ! is_wp_error( $cat_terms ) && ! empty( $cat_terms ) ) ? $cat_terms[0]->name : '',
                 'arm'           => get_post_meta( $post->ID, 'pulse_arm_label', true ) ?: '',
                 'region'        => get_post_meta( $post->ID, 'pulse_region_label', true ) ?: '',
                 'source'        => get_post_meta( $post->ID, 'pulse_source', true ) ?: '',

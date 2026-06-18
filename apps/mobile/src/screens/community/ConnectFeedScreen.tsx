@@ -46,7 +46,6 @@ function feedItemToPostId(item: FeedItem): string {
 const FILTER_LABELS = [
   "✦ For You",
   "All",
-  "Quotes",
   "Music",
   "Film",
   "Art",
