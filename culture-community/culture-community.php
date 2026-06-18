@@ -87,6 +87,23 @@ function culture_community_activate() {
 register_activation_hook( __FILE__, 'culture_community_activate' );
 
 /**
+ * Auto-create/upgrade custom DB tables when the plugin version changes.
+ *
+ * This plugin is deployed via direct file sync rather than the WP plugin
+ * repo, so register_activation_hook() above only fires on a manual
+ * deactivate/reactivate in WP Admin — a code deploy alone does not run it.
+ * Without this check, any dbDelta table added after a site's initial
+ * activation (e.g. wp_culture_follows) silently never gets created in
+ * production, and writes/reads against it fail with no visible error.
+ */
+function culture_community_maybe_upgrade() {
+    if ( get_option( 'culture_db_version' ) !== CULTURE_VERSION ) {
+        Culture_Activator::create_tables();
+    }
+}
+add_action( 'plugins_loaded', 'culture_community_maybe_upgrade' );
+
+/**
  * Plugin deactivation hook.
  */
 function culture_community_deactivate() {

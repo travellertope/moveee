@@ -506,6 +506,30 @@ go into **`proxy.ts`** at the project root. The exported function is named
 
 ---
 
+## Plugin DB table auto-upgrade (critical — June 2026)
+
+`culture-community.php` deploys via direct file sync to the Lightsail server, not
+the WP plugin repo, so `register_activation_hook()` only fires on a manual
+deactivate/reactivate in WP Admin — a code deploy alone never runs it. Every
+`dbDelta` table lives in `Culture_Activator::create_tables()`, which was previously
+**only** called from that activation hook. Any table added after a site's initial
+activation (e.g. `wp_culture_follows`) would silently never get created in
+production — inserts/reads against the missing table fail with no visible error
+(`$wpdb` suppresses errors by default), so features looked like they "didn't save"
+(e.g. Follow button showing 0 followers and reverting after reload).
+
+**Fixed**: `culture_community_maybe_upgrade()` in `culture-community.php`, hooked
+on `plugins_loaded`, compares the `culture_db_version` option to `CULTURE_VERSION`
+and re-runs `Culture_Activator::create_tables()` on mismatch — `dbDelta` itself is
+idempotent, so this is safe to run on every version bump going forward. **Any new
+dbDelta table must still go through this same path** (just add it inside
+`create_tables()`) — no further wiring needed. If a feature backed by a custom
+table looks broken in production after a deploy, suspect this first: confirm the
+table actually exists (`SHOW TABLES LIKE 'wp_culture_%'`) before debugging the
+application logic.
+
+---
+
 ## VIP Club Upgrade — Phase Status
 
 All phases implemented. Phase docs live in `docs/phases/`.
