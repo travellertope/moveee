@@ -42,7 +42,7 @@ function createStyles(c: ColorPalette) {
       backgroundColor: c.paper,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
-      maxHeight: SHEET_MAX_H,
+      height: SHEET_MAX_H,
     },
     handle: {
       width: 36, height: 4, borderRadius: 2,
