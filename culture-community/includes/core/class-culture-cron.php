@@ -27,6 +27,7 @@ class Culture_Cron {
     const HOOK_REFRESH_PULSE    = 'culture_refresh_pulse';
     const HOOK_SEED_EVENTS      = 'culture_seed_events';
     const HOOK_SEED_QUOTES      = 'culture_seed_quotes';
+    const HOOK_TWEET_PULSE      = 'culture_tweet_pulse';
 
     /** Default grace period in days. */
     const GRACE_PERIOD_DAYS = 7;

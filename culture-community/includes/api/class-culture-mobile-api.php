@@ -2007,7 +2007,13 @@ class Culture_Mobile_API {
             // Directory profile fields
             'directoryOptIn'        => (bool) get_user_meta( $user->ID, '_culture_directory_opt_in', true ),
             'directoryBio'          => get_user_meta( $user->ID, '_culture_directory_bio', true ) ?: '',
-            'directoryDisciplines'  => json_decode( get_user_meta( $user->ID, '_culture_directory_disciplines', true ) ?: '[]', true ) ?: array(),
+            'directoryDisciplines'  => (function() use ( $user ) {
+                $raw = get_user_meta( $user->ID, '_culture_directory_disciplines', true );
+                if ( is_array( $raw ) ) {
+                    return $raw;
+                }
+                return $raw ? ( json_decode( $raw, true ) ?: explode( ',', $raw ) ) : array();
+            })(),
             'directoryInstagram'    => get_user_meta( $user->ID, '_culture_directory_instagram', true ) ?: '',
             'directoryLinkedIn'     => get_user_meta( $user->ID, '_culture_directory_linkedin', true ) ?: '',
             'directoryWebsite'      => get_user_meta( $user->ID, '_culture_directory_website', true ) ?: '',
@@ -3158,7 +3164,7 @@ class Culture_Mobile_API {
     public static function handle_points_config( $request ) {
         $point_values  = Culture_Gamification::get_point_values();
         $credit_bonuses = Culture_Gamification::CREDIT_BONUSES;
-        $daily_cap     = Culture_Gamification::get_daily_credit_cap();
+        $daily_cap     = Culture_Gamification::get_daily_cap();
 
         $action_labels = array(
             'event_rsvp'            => 'RSVP to an event',

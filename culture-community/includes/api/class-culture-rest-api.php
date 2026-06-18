@@ -664,7 +664,7 @@ class Culture_REST_API {
             'callback'            => array( 'Culture_Directory', 'handle_directory_events' ),
             'permission_callback' => '__return_true',
             'args'                => array(
-                'id' => array( 'required' => true, 'validate_callback' => 'is_numeric' ),
+                'id' => array( 'required' => true, 'validate_callback' => function( $v ) { return is_numeric( $v ); } ),
             ),
         ) );
 
