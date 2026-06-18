@@ -67,9 +67,10 @@ export default function EventDetailScreen() {
     setSubmitting(true);
     try {
       await api.post(`${PROXY}/events/rsvp`, {
-        event_id: event.id,
-        name:     name.trim(),
-        email:    email.trim(),
+        eventSlug:  event.slug,
+        eventTitle: event.title,
+        name:       name.trim(),
+        email:      email.trim(),
       });
       setRsvpDone(true);
     } catch {
