@@ -2384,6 +2384,43 @@ class Culture_Mobile_API {
 
     // ── Shop handlers ─────────────────────────────────────────────────────────
 
+    /**
+     * Resolves the display currency for shop pricing based on a client-supplied
+     * country string. WooCommerce store currency (GBP) stays the booking currency
+     * for the actual WC_Order; this only controls what price the shopper sees and,
+     * for Nigeria, what currency they pay in via Paystack.
+     *
+     * Shop browse/detail routes use '__return_true' permission callbacks (no
+     * mobile_permission() auth), so wp_get_current_user() is unreliable here —
+     * country must come from an explicit request param, not the session.
+     *
+     * @return array{code:string,symbol:string,rate:float}
+     */
+    public static function resolve_shop_currency( $request ) {
+        $country = strtolower( trim( (string) $request->get_param( 'country' ) ) );
+        $base_currency = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
+        $base_symbol   = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol( $base_currency ) ) : '£';
+
+        if ( 'nigeria' === $country ) {
+            $rate = (float) get_option( 'culture_shop_fx_ngn_per_gbp', 1900 );
+            return array( 'code' => 'NGN', 'symbol' => '₦', 'rate' => $rate > 0 ? $rate : 1900.0 );
+        }
+
+        return array( 'code' => $base_currency, 'symbol' => $base_symbol, 'rate' => 1.0 );
+    }
+
+    /**
+     * Converts a GBP price string/float to the resolved display currency.
+     * Returns '' for empty input (mirrors the existing ?: '' fallback pattern).
+     */
+    public static function convert_shop_price( $gbp_price, array $fx ) {
+        if ( '' === $gbp_price || null === $gbp_price || false === $gbp_price ) {
+            return '';
+        }
+        $converted = (float) $gbp_price * $fx['rate'];
+        return (string) round( $converted, $fx['rate'] > 1 ? 0 : 2 );
+    }
+
     public static function handle_shop_products( $request ) {
         global $wpdb;
 
@@ -2431,8 +2468,9 @@ class Culture_Mobile_API {
 
         $q        = new WP_Query( $query_args );
         $products = array();
-        $currency_symbol = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol() ) : '£';
-        $currency        = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
+        $fx              = self::resolve_shop_currency( $request );
+        $currency_symbol = $fx['symbol'];
+        $currency        = $fx['code'];
 
         foreach ( $q->posts as $post ) {
             $wc = wc_get_product( $post->ID );
@@ -2442,7 +2480,7 @@ class Culture_Mobile_API {
             $regular = $wc->get_regular_price();
             $sale    = $wc->get_sale_price();
 
-            $pro_price     = ( $is_pro && $price ) ? (string) round( (float) $price * 0.9, 2 ) : null;
+            $pro_price     = ( $is_pro && $price ) ? round( (float) $price * 0.9, 2 ) : null;
             $created_days  = ( time() - strtotime( $post->post_date ) ) / DAY_IN_SECONDS;
             $stock_qty     = $wc->get_stock_quantity();
             $pro_early     = get_post_meta( $post->ID, '_pro_early_access', true );
@@ -2463,10 +2501,10 @@ class Culture_Mobile_API {
                 'id'             => $post->ID,
                 'name'           => $post->post_title,
                 'slug'           => $post->post_name,
-                'price'          => $price ?: '',
-                'regularPrice'   => $regular ?: '',
-                'salePrice'      => $sale ?: '',
-                'proPrice'       => $pro_price,
+                'price'          => self::convert_shop_price( $price, $fx ),
+                'regularPrice'   => self::convert_shop_price( $regular, $fx ),
+                'salePrice'      => self::convert_shop_price( $sale, $fx ),
+                'proPrice'       => self::convert_shop_price( $pro_price, $fx ),
                 'currency'       => $currency,
                 'currencySymbol' => $currency_symbol,
                 'imageUrl'       => $image_url ?: null,
@@ -2501,13 +2539,14 @@ class Culture_Mobile_API {
         $user   = wp_get_current_user();
         $is_pro = $user->ID && in_array( 'patron', (array) $user->roles, true );
 
-        $currency_symbol = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol() ) : '£';
-        $currency        = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
+        $fx              = self::resolve_shop_currency( $request );
+        $currency_symbol = $fx['symbol'];
+        $currency        = $fx['code'];
 
         $price   = $wc->get_price();
         $regular = $wc->get_regular_price();
         $sale    = $wc->get_sale_price();
-        $pro_price = ( $is_pro && $price ) ? (string) round( (float) $price * 0.9, 2 ) : null;
+        $pro_price = ( $is_pro && $price ) ? round( (float) $price * 0.9, 2 ) : null;
 
         // Gallery images (main + gallery)
         $image_ids   = array_merge(
@@ -2538,13 +2577,21 @@ class Culture_Mobile_API {
         $categories = $cat_terms ? array_map( fn( $t ) => $t->slug, $cat_terms ) : array();
 
         // Colour variants (from pa_colour attribute if it exists)
-        $colours = array();
-        $sizes   = array();
+        $colours    = array();
+        $sizes      = array();
+        $variations = array();
         if ( $wc->is_type( 'variable' ) ) {
             /** @var WC_Product_Variable $wc */
             $available_variations = $wc->get_available_variations();
+
+            // Identify which attribute key (if any) is the colour-like attribute,
+            // since variations are matched on the combination of attributes.
+            $colour_attr_key = null;
             foreach ( $wc->get_variation_attributes() as $attr => $values ) {
                 $label = wc_attribute_label( $attr );
+                if ( strpos( strtolower( $label ), 'colour' ) !== false || strpos( strtolower( $label ), 'color' ) !== false ) {
+                    $colour_attr_key = 'attribute_' . $attr;
+                }
                 foreach ( $values as $val ) {
                     $in_stock = false;
                     foreach ( $available_variations as $var ) {
@@ -2559,6 +2606,26 @@ class Culture_Mobile_API {
                         $sizes[] = array( 'name' => $val, 'available' => $in_stock );
                     }
                 }
+            }
+
+            // Real WooCommerce variation IDs, keyed by their colour/size combination,
+            // so the app can resolve the exact variation the shopper selected.
+            foreach ( $available_variations as $var ) {
+                $entry = array(
+                    'id'      => (int) $var['variation_id'],
+                    'colour'  => null,
+                    'size'    => null,
+                    'inStock' => (bool) $var['is_in_stock'],
+                );
+                foreach ( $var['attributes'] as $attr_key => $val ) {
+                    if ( '' === $val ) continue;
+                    if ( $colour_attr_key && $attr_key === $colour_attr_key ) {
+                        $entry['colour'] = $val;
+                    } else {
+                        $entry['size'] = $val;
+                    }
+                }
+                $variations[] = $entry;
             }
         }
 
@@ -2604,9 +2671,9 @@ class Culture_Mobile_API {
                 'id'             => $rel_id,
                 'name'           => get_the_title( $rel_id ),
                 'slug'           => get_post_field( 'post_name', $rel_id ),
-                'price'          => $rel_wc->get_price() ?: '',
-                'regularPrice'   => $rel_wc->get_regular_price() ?: '',
-                'salePrice'      => $rel_wc->get_sale_price() ?: '',
+                'price'          => self::convert_shop_price( $rel_wc->get_price(), $fx ),
+                'regularPrice'   => self::convert_shop_price( $rel_wc->get_regular_price(), $fx ),
+                'salePrice'      => self::convert_shop_price( $rel_wc->get_sale_price(), $fx ),
                 'proPrice'       => null,
                 'currency'       => $currency,
                 'currencySymbol' => $currency_symbol,
@@ -2624,10 +2691,10 @@ class Culture_Mobile_API {
             'id'               => $id,
             'name'             => $post->post_title,
             'slug'             => $post->post_name,
-            'price'            => $price ?: '',
-            'regularPrice'     => $regular ?: '',
-            'salePrice'        => $sale ?: '',
-            'proPrice'         => $pro_price,
+            'price'            => self::convert_shop_price( $price, $fx ),
+            'regularPrice'     => self::convert_shop_price( $regular, $fx ),
+            'salePrice'        => self::convert_shop_price( $sale, $fx ),
+            'proPrice'         => self::convert_shop_price( $pro_price, $fx ),
             'currency'         => $currency,
             'currencySymbol'   => $currency_symbol,
             'imageUrl'         => $images[0] ?? null,
@@ -2647,6 +2714,7 @@ class Culture_Mobile_API {
             'shortDescription' => $wc->get_short_description(),
             'colours'          => $colours,
             'sizes'            => $sizes,
+            'variations'       => $variations,
             'howItsMade'       => $how_its_made,
             'asSeenIn'         => $as_seen_in,
             'relatedProducts'  => $related_products,
@@ -3242,8 +3310,9 @@ class Culture_Mobile_API {
             ) );
         }
 
-        $currency        = get_woocommerce_currency();
-        $currency_symbol = get_woocommerce_currency_symbol( $currency );
+        $fx              = self::resolve_shop_currency( $request );
+        $currency        = $fx['code'];
+        $currency_symbol = $fx['symbol'];
 
         $stories      = array();
         $all_products = array(); // keyed by product id to dedupe
@@ -3299,9 +3368,9 @@ class Culture_Mobile_API {
                     'title'          => $wc->get_name(),
                     'brand'          => get_post_meta( $pid, '_maker_name', true ) ?: '',
                     'city'           => get_post_meta( $pid, '_maker_city', true ) ?: '',
-                    'price'          => $reg_price,
-                    'proPrice'       => $reg_price > 0 ? round( $reg_price * 0.9, 2 ) : null,
-                    'originalPrice'  => $sale_price > 0 ? $reg_price : null,
+                    'price'          => (float) self::convert_shop_price( $reg_price, $fx ),
+                    'proPrice'       => $reg_price > 0 ? (float) self::convert_shop_price( round( $reg_price * 0.9, 2 ), $fx ) : null,
+                    'originalPrice'  => $sale_price > 0 ? (float) self::convert_shop_price( $reg_price, $fx ) : null,
                     'currency'       => $currency,
                     'currencySymbol' => $currency_symbol,
                     'image'          => $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : null,

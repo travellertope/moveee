@@ -259,12 +259,13 @@ export default function ShopListingScreen() {
   const [total, setTotal]       = useState(0);
 
   const fetchProducts = async (catSlug: string, pageNum = 1, append = false) => {
-    const catParam   = catSlug ? `&category=${catSlug}` : "";
-    const sortParam  = sort !== "featured" ? `&orderby=${sort}` : "";
-    const makerParam = makerFilter ? `&maker=${encodeURIComponent(makerFilter)}` : "";
+    const catParam     = catSlug ? `&category=${catSlug}` : "";
+    const sortParam    = sort !== "featured" ? `&orderby=${sort}` : "";
+    const makerParam   = makerFilter ? `&maker=${encodeURIComponent(makerFilter)}` : "";
+    const countryParam = user?.countryOfResidence ? `&country=${encodeURIComponent(user.countryOfResidence)}` : "";
     try {
       const res = await api.get<{ products: ShopProduct[]; pages: number; total: number }>(
-        `${MOBILE_API}/shop/products?per_page=20&page=${pageNum}${catParam}${sortParam}${makerParam}`,
+        `${MOBILE_API}/shop/products?per_page=20&page=${pageNum}${catParam}${sortParam}${makerParam}${countryParam}`,
         false
       );
       setProducts((prev) => append ? [...prev, ...res.products] : res.products);

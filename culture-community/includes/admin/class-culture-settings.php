@@ -35,6 +35,10 @@ class Culture_Settings {
         'culture_stripe_price_monthly_usd'     => '',
         'culture_stripe_price_yearly_usd'      => '',
 
+        // Shop.
+        'culture_shop_fx_ngn_per_gbp'          => 1900,
+        'culture_shop_flat_shipping_gbp'       => 4.99,
+
         // Gamification – point values.
         'culture_points_event_rsvp'          => 5,
         'culture_points_event_checkin'       => 15,
@@ -271,6 +275,10 @@ class Culture_Settings {
         register_setting( 'culture_settings_payment', 'culture_stripe_secret_key', $text );
         register_setting( 'culture_settings_payment', 'culture_stripe_price_monthly_usd', $text );
         register_setting( 'culture_settings_payment', 'culture_stripe_price_yearly_usd', $text );
+
+        // Shop (multi-currency + flat-rate fallback shipping).
+        register_setting( 'culture_settings_payment', 'culture_shop_fx_ngn_per_gbp', array( 'sanitize_callback' => 'floatval' ) );
+        register_setting( 'culture_settings_payment', 'culture_shop_flat_shipping_gbp', array( 'sanitize_callback' => 'floatval' ) );
 
         // Credits – per action bonuses.
         $credit_keys = array(
@@ -528,6 +536,28 @@ class Culture_Settings {
                     <input type="text" id="culture_stripe_price_yearly_usd" name="culture_stripe_price_yearly_usd"
                            value="<?php echo esc_attr( self::get( 'culture_stripe_price_yearly_usd' ) ); ?>" class="regular-text" />
                     <p class="description"><?php esc_html_e( 'The Stripe Price ID for the $40 subscription (price_...).', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <hr />
+        <h3><?php esc_html_e( 'Lifestyle Shop', 'culture-community' ); ?></h3>
+        <p class="description"><?php esc_html_e( 'Shop products are priced in GBP (the WooCommerce store currency). Nigerian shoppers are shown a converted NGN price and pay via Paystack at this rate; everyone else pays in GBP via Stripe. The underlying order is always recorded in GBP.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_shop_fx_ngn_per_gbp"><?php esc_html_e( 'NGN per GBP exchange rate', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" step="0.01" id="culture_shop_fx_ngn_per_gbp" name="culture_shop_fx_ngn_per_gbp"
+                           value="<?php echo esc_attr( self::get( 'culture_shop_fx_ngn_per_gbp' ) ); ?>" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Update periodically to track the market rate. Used to convert GBP shop prices to NGN for display and Paystack charges.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_shop_flat_shipping_gbp"><?php esc_html_e( 'Fallback flat shipping (GBP)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" step="0.01" id="culture_shop_flat_shipping_gbp" name="culture_shop_flat_shipping_gbp"
+                           value="<?php echo esc_attr( self::get( 'culture_shop_flat_shipping_gbp' ) ); ?>" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Used only for a package if no WooCommerce shipping zone matches the destination address.', 'culture-community' ); ?></p>
                 </td>
             </tr>
         </table>

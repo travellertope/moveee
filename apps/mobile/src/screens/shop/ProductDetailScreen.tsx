@@ -16,7 +16,7 @@ import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type {
   ShopProduct, ShopProductDetail,
-  ProductVariantColour, ProductVariantSize, HowItsMadeStep,
+  ProductVariantColour, ProductVariantSize, ProductVariation, HowItsMadeStep,
 } from "../../types";
 
 const { width: W } = Dimensions.get("window");
@@ -179,12 +179,15 @@ function createGalleryStyles(c: ColorPalette) {
 
 function ColourSelector({
   colours,
+  selected,
+  onSelect,
 }: {
   colours: ProductVariantColour[];
+  selected: number;
+  onSelect: (i: number) => void;
 }) {
   const c = useColors();
   const cS = useMemo(() => createColourStyles(c), [c]);
-  const [selected, setSelected] = useState(0);
   if (!colours.length) return null;
 
   return (
@@ -201,7 +204,7 @@ function ColourSelector({
             <TouchableOpacity
               key={i}
               style={[cS.swatchOuter, active && cS.swatchOuterActive]}
-              onPress={() => col.available && setSelected(i)}
+              onPress={() => col.available && onSelect(i)}
               disabled={!col.available}
             >
               <View style={[cS.swatchInner, { backgroundColor: hexColor }]} />
@@ -244,42 +247,48 @@ function createColourStyles(c: ColorPalette) {
 
 // ── Size Selector ─────────────────────────────────────────────────────────────
 
-function SizeSelector({ sizes }: { sizes: ProductVariantSize[] }) {
+function SizeSelector({
+  sizes,
+  selected,
+  onSelect,
+}: {
+  sizes: ProductVariantSize[];
+  selected: number | null;
+  onSelect: (i: number) => void;
+}) {
   const c = useColors();
   const szS = useMemo(() => createSizeStyles(c), [c]);
-  const [selected, setSelected] = useState<number | null>(null);
   if (!sizes.length) return null;
 
   const firstAvail = sizes.findIndex((s) => s.available);
-
-  const getActive = () => (selected !== null ? selected : firstAvail);
+  const active = selected !== null ? selected : firstAvail;
 
   return (
     <View style={szS.wrap}>
       <View style={szS.labelRow}>
         <Text style={szS.label}>Size</Text>
-        {getActive() >= 0 && (
-          <Text style={szS.labelValue}>{sizes[getActive()]?.name}</Text>
+        {active >= 0 && (
+          <Text style={szS.labelValue}>{sizes[active]?.name}</Text>
         )}
       </View>
       <View style={szS.chips}>
         {sizes.map((s, i) => {
-          const active = getActive() === i;
+          const isActive = active === i;
           return (
             <TouchableOpacity
               key={i}
               style={[
                 szS.chip,
-                active && szS.chipActive,
+                isActive && szS.chipActive,
                 !s.available && szS.chipDisabled,
               ]}
-              onPress={() => s.available && setSelected(i)}
+              onPress={() => s.available && onSelect(i)}
               disabled={!s.available}
             >
               <Text
                 style={[
                   szS.chipText,
-                  active && szS.chipTextActive,
+                  isActive && szS.chipTextActive,
                   !s.available && szS.chipTextDisabled,
                 ]}
               >
@@ -673,30 +682,48 @@ export default function ProductDetailScreen() {
   const [detail, setDetail] = useState<ShopProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
+  const [selectedColour, setSelectedColour] = useState(0);
+  const [selectedSize, setSelectedSize] = useState<number | null>(null);
 
   useEffect(() => {
     if (!seed?.id) return;
-    api.get<ShopProductDetail>(`${MOBILE_API}/shop/products/${seed.id}`, false)
+    const countryParam = user?.countryOfResidence ? `?country=${encodeURIComponent(user.countryOfResidence)}` : "";
+    api.get<ShopProductDetail>(`${MOBILE_API}/shop/products/${seed.id}${countryParam}`, false)
       .then(setDetail)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [seed?.id]);
+  }, [seed?.id, user?.countryOfResidence]);
 
   const product = detail ?? seed;
   const images = detail?.images ?? (seed?.imageUrl ? [seed.imageUrl] : []);
   const displayPrice = isPro && detail?.proPrice ? detail.proPrice : product?.price;
   const inStock = product?.stockStatus !== "outofstock";
 
+  const colourName = detail?.colours?.[selectedColour]?.name;
+  const sizeFallback = detail?.sizes?.length
+    ? selectedSize ?? detail.sizes.findIndex((s) => s.available)
+    : null;
+  const sizeName = sizeFallback !== null && sizeFallback >= 0 ? detail?.sizes?.[sizeFallback]?.name : undefined;
+
+  const selectedVariation = detail?.variations?.find((v) => {
+    const colourMatches = !detail.colours.length || v.colour === colourName;
+    const sizeMatches = !detail.sizes.length || v.size === sizeName;
+    return colourMatches && sizeMatches;
+  });
+
+  const variant = [colourName, sizeName].filter(Boolean).join(" / ") || undefined;
+
   const handleAddToBag = () => {
     if (!product) return;
     addItem({
-      id:        String(product.id) + (undefined ?? ""),
-      productId: product.id,
-      title:     product.name,
-      brand:     product.makerName,
-      variant:   undefined ?? undefined,
-      price:     parseFloat(displayPrice ?? product.price) || 0,
-      image:     (detail?.images?.[0] ?? product.imageUrl) ?? undefined,
+      id:          String(product.id) + (selectedVariation ? `-${selectedVariation.id}` : ""),
+      productId:   product.id,
+      title:       product.name,
+      brand:       product.makerName,
+      variant,
+      variationId: selectedVariation?.id,
+      price:       parseFloat(displayPrice ?? product.price) || 0,
+      image:       (detail?.images?.[0] ?? product.imageUrl) ?? undefined,
     });
     nav.navigate("Cart");
   };
@@ -811,11 +838,19 @@ export default function ProductDetailScreen() {
               </View>
 
               {detail?.colours.length ? (
-                <ColourSelector colours={detail.colours} />
+                <ColourSelector
+                  colours={detail.colours}
+                  selected={selectedColour}
+                  onSelect={setSelectedColour}
+                />
               ) : null}
 
               {detail?.sizes.length ? (
-                <SizeSelector sizes={detail.sizes} />
+                <SizeSelector
+                  sizes={detail.sizes}
+                  selected={selectedSize}
+                  onSelect={setSelectedSize}
+                />
               ) : null}
 
               <View style={s.addSection}>

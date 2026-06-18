@@ -71,6 +71,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-event-rsvp.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-stripe.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-ticket-payment.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-shop-checkout.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-tickets-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-memberships.php';
 
@@ -123,6 +124,7 @@ function culture_community_init() {
     Culture_RSVP_Admin::init();
     Culture_RSVP_Admin::init_post_handlers();
     Culture_Ticket_Payment::init();
+    Culture_Shop_Checkout::init();
     Culture_Tickets_Admin::init();
     Culture_Notifications::init();
 

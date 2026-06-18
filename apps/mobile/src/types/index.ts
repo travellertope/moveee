@@ -377,6 +377,13 @@ export interface ProductVariantSize {
   available: boolean;
 }
 
+export interface ProductVariation {
+  id: number;
+  colour: string | null;
+  size: string | null;
+  inStock: boolean;
+}
+
 export interface HowItsMadeStep {
   step: number;
   title: string;
@@ -390,6 +397,7 @@ export interface ShopProductDetail extends ShopProduct {
   shortDescription: string;
   colours: ProductVariantColour[];
   sizes: ProductVariantSize[];
+  variations: ProductVariation[];
   makerBio: string;
   makerSince: string;
   makerRating: number;
