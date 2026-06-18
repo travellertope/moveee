@@ -1965,7 +1965,7 @@ function CommunityQuoteCard({ item, onPress, onAuthorPress }: FeedCardProps) {
       {item.quoteSharingReason ? (
         <View style={styles.cqNote}>
           <Text style={styles.cqNoteLabel}>
-            💬 {(item.communityAuthor?.split(" ")[0] ?? "Their").toUpperCase()}'S NOTE:
+            💬 {item.communityAuthor ? `${item.communityAuthor.split(" ")[0].toUpperCase()}'S NOTE:` : "THEIR NOTE:"}
           </Text>
           <Text style={styles.cqNoteText}>{item.quoteSharingReason}</Text>
         </View>
