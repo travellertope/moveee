@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, Dimensions, Image,
-  Modal,
+  Modal, Share,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
@@ -260,6 +260,14 @@ export default function MemberProfileScreen() {
 
   const isPro = profile?.tier === "patron";
 
+  const handleShare = async () => {
+    if (!profile?.username) return;
+    const url = `https://connect.themoveee.com/${profile.username}`;
+    try {
+      await Share.share({ message: `Check out ${profile.displayName} on Moveee: ${url}`, url });
+    } catch { /* user cancelled */ }
+  };
+
   if (loading) return <SafeAreaView style={styles.container}><View style={styles.center}><ActivityIndicator color={c.gold} /></View></SafeAreaView>;
   if (!profile) return <SafeAreaView style={styles.container}><View style={styles.center}><Text style={styles.errorText}>Member not found.</Text></View></SafeAreaView>;
 
@@ -285,7 +293,7 @@ export default function MemberProfileScreen() {
         />
 
         <View style={styles.profileCard}>
-          <TouchableOpacity style={styles.shareBtn}>
+          <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
             <Ionicons name="share-outline" size={18} color={c.ink} />
           </TouchableOpacity>
 
