@@ -623,6 +623,41 @@ export default function ArticleScreen() {
     setShowStickyHeader(offsetY > HEADER_TRIGGER);
   }, []);
 
+  // Reactions — lifted here (not local to ReactionBar) so the top and bottom
+  // reaction bars on this screen stay in sync with each other.
+  type EmojiKey = "love" | "fire" | "clap";
+  const [reactionCounts, setReactionCounts] = useState({ love: 0, fire: 0, clap: 0 });
+  const [reactedKeys, setReactedKeys] = useState<Set<EmojiKey>>(new Set());
+  useEffect(() => {
+    if (!article) return;
+    setReactionCounts({
+      love: (article as any).reactions?.love ?? (article as any).reactions?.heart ?? 0,
+      fire: (article as any).reactions?.fire ?? 0,
+      clap: (article as any).reactions?.clap ?? 0,
+    });
+  }, [article?.id]);
+
+  const handleReact = useCallback(async (key: EmojiKey) => {
+    if (!article) return;
+    const already = reactedKeys.has(key);
+    setReactionCounts((prev) => ({ ...prev, [key]: prev[key] + (already ? -1 : 1) }));
+    setReactedKeys((prev) => {
+      const next = new Set(prev);
+      already ? next.delete(key) : next.add(key);
+      return next;
+    });
+    try {
+      await api.post(`${MOBILE_API}/community/react`, { post_id: Number(article.id), type: key });
+    } catch {
+      setReactionCounts((prev) => ({ ...prev, [key]: prev[key] + (already ? 1 : -1) }));
+      setReactedKeys((prev) => {
+        const next = new Set(prev);
+        already ? next.add(key) : next.delete(key);
+        return next;
+      });
+    }
+  }, [article, reactedKeys]);
+
   // Bookmark — fetch actual state from interactions endpoint once article loads
   const [bookmarked, setBookmarked] = useState(false);
   useEffect(() => {
@@ -831,11 +866,10 @@ export default function ArticleScreen() {
                 <View style={styles.actionsLeft}>
                   <ReactionBar
                     postId={article.id}
-                    initialCounts={{
-                      love: (article as any).reactions?.love ?? (article as any).reactions?.heart ?? 0,
-                      fire: (article as any).reactions?.fire ?? 0,
-                      clap: (article as any).reactions?.clap ?? 0,
-                    }}
+                    initialCounts={reactionCounts}
+                    counts={reactionCounts}
+                    reacted={reactedKeys}
+                    onReact={handleReact}
                     noBorder
                     commentCount={commentCount}
                     onCommentPress={scrollToComments}
@@ -900,11 +934,10 @@ export default function ArticleScreen() {
                   {/* ── Reaction row ── */}
                   <ReactionBar
                     postId={article.id}
-                    initialCounts={{
-                      love: (article as any).reactions?.love ?? (article as any).reactions?.heart ?? 0,
-                      fire: (article as any).reactions?.fire ?? 0,
-                      clap: (article as any).reactions?.clap ?? 0,
-                    }}
+                    initialCounts={reactionCounts}
+                    counts={reactionCounts}
+                    reacted={reactedKeys}
+                    onReact={handleReact}
                     shareUrl={`https://themoveee.com/magazine/${article.slug}`}
                     shareTitle={article.title}
                     noBorder={false}

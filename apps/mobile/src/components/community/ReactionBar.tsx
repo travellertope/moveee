@@ -7,18 +7,25 @@ import { fonts, fontSize, space } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { ReportSheet } from "../ui/Overlays";
 
+type EmojiKey = "love" | "fire" | "clap";
+type ReactionCounts = { love: number; fire: number; clap: number };
+
 interface Props {
   postId: string;
-  initialCounts: { love: number; fire: number; clap: number };
+  initialCounts: ReactionCounts;
   shareUrl?: string;
   shareTitle?: string;
   noBorder?: boolean;
   commentCount?: number;
   onCommentPress?: () => void;
   showReport?: boolean;
+  // Controlled mode — pass these when rendering more than one ReactionBar for the
+  // same postId (e.g. ArticleScreen's top + bottom bars) so they stay in sync.
+  // Omit them to keep the bar self-managed, as every other usage does.
+  counts?: ReactionCounts;
+  reacted?: Set<EmojiKey>;
+  onReact?: (key: EmojiKey) => void;
 }
-
-type EmojiKey = "love" | "fire" | "clap";
 
 const REACTIONS: Array<{
   key: EmojiKey;
@@ -33,13 +40,20 @@ const REACTIONS: Array<{
 
 export default function ReactionBar({
   postId, initialCounts, shareUrl, shareTitle, noBorder, commentCount, onCommentPress, showReport,
+  counts: controlledCounts, reacted: controlledReacted, onReact: controlledOnReact,
 }: Props) {
   const c = useColors();
   const styles = createStyles(c);
-  const [counts, setCounts]   = useState(initialCounts);
-  const [reacted, setReacted] = useState<Set<EmojiKey>>(new Set());
+  const [localCounts, setLocalCounts]   = useState(initialCounts);
+  const [localReacted, setLocalReacted] = useState<Set<EmojiKey>>(new Set());
   const [reportOpen, setReportOpen] = useState(false);
   const [reported, setReported] = useState(false);
+
+  const isControlled = controlledCounts !== undefined && controlledReacted !== undefined && controlledOnReact !== undefined;
+  const counts  = isControlled ? controlledCounts! : localCounts;
+  const reacted = isControlled ? controlledReacted! : localReacted;
+  const setCounts  = setLocalCounts;
+  const setReacted = setLocalReacted;
 
   const submitReport = async (reason: "spam" | "harassment" | "inappropriate") => {
     setReportOpen(false);
@@ -49,7 +63,7 @@ export default function ReactionBar({
     } catch { /* silent */ }
   };
 
-  const handleReact = async (key: EmojiKey) => {
+  const uncontrolledHandleReact = async (key: EmojiKey) => {
     const already = reacted.has(key);
     setCounts((prev) => ({ ...prev, [key]: prev[key] + (already ? -1 : 1) }));
     setReacted((prev) => {
@@ -69,6 +83,8 @@ export default function ReactionBar({
       });
     }
   };
+
+  const handleReact = controlledOnReact ?? uncontrolledHandleReact;
 
   const handleShare = () => {
     if (!shareUrl) return;
