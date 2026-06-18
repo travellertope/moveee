@@ -365,6 +365,20 @@ Endpoints that depend on WP logic and must stay on `WP_Query`/`get_user_meta`:
 - Any mutation endpoint (insert/update) — use `$wpdb->insert/update` if needed,
   but still fire the relevant `do_action()` hooks for notifications/credits
 
+### Gotcha: `meta_query` OR-branches with NOT EXISTS / DATE casts are slow
+`WP_Query`'s `meta_query` builds one `LEFT JOIN` against `wp_postmeta` per
+branch — `wp_postmeta.meta_value` has no index, so a query with 3+ OR
+branches (especially mixing `NOT EXISTS` with `'type' => 'DATE'` casts) can
+hang for 20s+ in production and cascade into client timeouts. This bit the
+`culture_event` REST endpoint via `exclude_expired_events()` in
+`class-culture-post-types.php` (`rest_culture_event_query` filter) — fixed by
+replacing the meta_query with a single raw-SQL lookup (2 LEFT JOINs) that
+resolves matching IDs and sets `$args['post__in']` instead. If you see a REST
+endpoint backed by a CPT with a `rest_<post_type>_query` filter timing out,
+check for this pattern first. Reminder: an **empty** `post__in` array is
+ignored by `WP_Query` (returns everything) — use `array(0)` to force zero
+results.
+
 ---
 
 ## Key conventions
@@ -557,7 +571,12 @@ Key static methods: `add()`, `get_for_user()`, `count_unread()`, `mark_read()`, 
 
 ### Library: `lib/feed-recommendations.ts`
 Pure TypeScript, no server dependency. Four exports:
-- `scoreItem(item, interestTagSet)` → 0–100 score: 50 pts interest match, 30 pts recency (3-day half-life), 20 pts engagement (log scale)
+- `scoreItem(item, interestTagSet)` → 0–100+ score: 50 pts interest match (25 for partial), 30 pts recency
+  (3-day half-life), 20 pts engagement (log scale) — **plus two boosts not part of the base 100**:
+  a location boost (city match +25, region match +15, via `detectRegion()` / `COUNTRY_TO_REGION`) and a
+  reputation boost (+10 when `authorRepTier` is taste-maker/culture-authority/culture-icon). The mobile
+  port in `apps/mobile/src/features/community/useFeedRecommendations.ts` must stay in sync with all of
+  this, not just the base three-factor score.
 - `rankFeed(items, interestTagSet)` → sorted by score descending; tiebreak: most recent
 - `getTrending(items, limit=5)` → highest engagement in last 7 days
 - `matchesInterests(item, interestTagSet)` → boolean (checks `category`, `communityTag`, `entryType`, `arm`)
@@ -616,6 +635,36 @@ All three are right-side slide-in drawer panels (`position: fixed, zIndex: 8000,
 | `components/pulse/QuoteDetailModal.tsx` | Click Quote card body | Large quote text, author, source, `ReactionBar` |
 
 FeedCard lazy-loads all three modals via `dynamic(() => import(...), { ssr: false })`.
+
+### RN unified comment system — `CommentSection.tsx` (June 2026)
+
+All comment UI in `apps/mobile` must use the shared `components/community/CommentSection.tsx`.
+Do not reimplement comment lists/composers per-screen — every surface (community posts, pulse
+items, quotes, magazine articles) previously had its own copy-pasted comment block with
+inconsistent avatar sizes, accent colors (`c.ochre` vs `c.gold`), empty-state copy, and composer
+styling. These have all been migrated onto the one component.
+
+**Two modes:**
+- **`postId` mode** (self-fetching) — pass `postId` and the component calls `useComments(postId)`
+  itself (custom `community/comments` + `community/comment` REST API). Used by
+  `PostDetailSheet.tsx`, `PulseDetailSheet.tsx`, `QuoteDetailModal.tsx`, `PostDetailScreen.tsx`,
+  `PulseDetailScreen.tsx`.
+- **Controlled mode** (`comments`/`loading`/`submitting`/`onSubmit` props, no `postId`) — for
+  screens with their own data source. Used by `ArticleScreen.tsx`'s `ArticleCommentsSection`,
+  which fetches WordPress-native `/wp-json/wp/v2/comments` directly (different shape, requires
+  HTML stripping) and does optimistic local insertion; it maps its `WpComment` shape into the
+  shared `NormalizedComment` shape before rendering.
+
+`useComments(postId, enabled = true)` (`src/features/community/useComments.ts`) takes an
+`enabled` flag so `CommentSection` doesn't fire a wasted fetch when used in controlled mode —
+always pass `!isControlled` as the second arg when calling it from inside a shared component.
+
+Standardized styling baked into `CommentSection`: `fonts.sansBold` heading, 32px avatars
+(`c.paperDeep` background), gap-based spacing (no per-row dividers), `truncateAt=3` default
+with a "View all N comments" expander, always-visible "Commenting as {name}" line, `radius.xl`
+pill composer (`c.paperWarm` bg, `borderWidth 1` / `c.ruleDark`), placeholder `"Add a comment…"`,
+`c.gold` accent color throughout, and empty-state copy `"No comments yet — be the first to
+comment."` (controlled-mode screens may override `emptyText`/`heading`/`signInPrompt`).
 
 ### RN FeedItemCard card designs (FeedItemCard.tsx)
 - **PulseCard**: full-bleed hero image (200px, tappable → ImageLightbox), serif bold title, arm/category/region eyebrow row with region pill, OG link preview (LinkPreview) only when no hero image, source attribution below hero if named. Upgraded from plain inline ImgPlaceholder.
@@ -1067,6 +1116,15 @@ Common mistake: `api.get(url, { auth: false })` — the object is truthy so it i
 
 ### useNotificationCount hook
 Returns `{ unread: number, refresh: () => void }`. The field is `unread`, not `unreadCount`. Destructure as `const { unread } = useNotificationCount()` or alias: `const { unread: unreadCount } = useNotificationCount()`.
+
+### ConnectFeedScreen category chip matching (substring + alias, June 2026)
+`matchesCategory()` in `ConnectFeedScreen.tsx` no longer requires an exact string match between
+a filter chip (e.g. "Food") and the backend taxonomy term name (e.g. "Food & Drink" from
+`culture_dir_type`, or freeform `pulse_category`/WP `category` terms). It now does substring
+containment in both directions plus a small `CATEGORY_ALIASES` lookup table for cases substring
+matching alone can't catch (e.g. `music` → `album`, `travel` → `place`, `design` → `architecture`).
+When adding a new filter chip, check whether it needs an alias entry — substring matching alone
+is enough for cases like "Food" ⊂ "Food & Drink".
 
 ### theme.ts — available keys
 - `shadows`: only `card`, `modal`, `fab` — no `sm`, `lg`, `xl` variants

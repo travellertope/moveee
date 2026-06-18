@@ -6,12 +6,14 @@ import {
 import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { storage } from "../../store/storage";
-import { api } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { colors, fonts, fontSize, space, radius } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
+import GameScoreCard from "../../components/games/GameScoreCard";
+import { useScoreCardShare } from "../../features/games/useScoreCardShare";
 
 const PROXY      = "https://themoveee.com/api";
 const KEY_DATE   = "wsi_last_played_date";
@@ -35,6 +37,7 @@ export default function WhoSaidItGameScreen() {
   const styles = useMemo(() => createStyles(c), [c]);
   const { user } = useAuthStore();
   const isPro = user?.tier === "patron";
+  const { cardRef, share: shareScoreCard, sharing } = useScoreCardShare();
 
   const [phase,     setPhase]     = useState<Phase>("loading");
   const [questions, setQuestions] = useState<WsiQuestion[]>([]);
@@ -42,6 +45,7 @@ export default function WhoSaidItGameScreen() {
   const [selected,  setSelected]  = useState<string | null>(null);
   const [answers,   setAnswers]   = useState<(string | null)[]>([]);
   const [score,     setScore]     = useState(0);
+  const [creditsEarned, setCreditsEarned] = useState<number | null>(null);
   const [errorMsg,  setErrorMsg]  = useState("");
 
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -86,7 +90,7 @@ export default function WhoSaidItGameScreen() {
     if (author === currentQ.correct_author) setScore((s) => s + 1);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (qIndex < questions.length - 1) {
       setSelected(null);
       setQIndex((i) => i + 1);
@@ -95,6 +99,17 @@ export default function WhoSaidItGameScreen() {
       const prev = parseInt(storage.getString(countKey) ?? "0", 10);
       storage.set(countKey, String(prev + 1));
       recordPlayedToday();
+      const final = answers.filter((a, i) => a === questions[i]?.correct_author).length;
+      try {
+        const result = await api.post<{ credits_earned: number }>(`${MOBILE_API}/games/complete`, {
+          game_type: "who-said-it",
+          score: final,
+          max_score: questions.length,
+        });
+        setCreditsEarned(result.credits_earned);
+      } catch {
+        setCreditsEarned(null);
+      }
       setPhase("done");
     }
   };
@@ -156,6 +171,7 @@ export default function WhoSaidItGameScreen() {
   // ── done ──────────────────────────────────────────────────────────────────────
   if (phase === "done") {
     const pct = Math.round((finalScore / questions.length) * 100);
+    const cr  = creditsEarned ?? Math.round((finalScore / questions.length) * 30);
     const msg = pct >= 80 ? "You know your quotes! 🎉" : pct >= 50 ? "Not bad! 👍" : "Better luck tomorrow! 💪";
     return (
       <SafeAreaView style={styles.container}>
@@ -164,6 +180,9 @@ export default function WhoSaidItGameScreen() {
           <Text style={styles.doneEmoji}>✍️</Text>
           <Text style={styles.doneTitle}>{msg}</Text>
           <Text style={styles.doneScore}>{finalScore} / {questions.length}</Text>
+          <View style={styles.crPill}>
+            <Text style={styles.crPillText}>+{cr} CR earned</Text>
+          </View>
           <Text style={styles.doneSub}>Come back tomorrow for new quotes.</Text>
           <View style={styles.reviewCard}>
             <Text style={styles.reviewTitle}>Review</Text>
@@ -185,10 +204,37 @@ export default function WhoSaidItGameScreen() {
               );
             })}
           </View>
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => nav.goBack()}>
+          <TouchableOpacity
+            style={styles.shareBtn}
+            onPress={shareScoreCard}
+            disabled={sharing}
+          >
+            {sharing ? (
+              <ActivityIndicator color={c.ink} />
+            ) : (
+              <Text style={styles.shareBtnText}>Share result</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.primaryBtn, { marginTop: space[2] }]} onPress={() => nav.goBack()}>
             <Text style={styles.primaryBtnText}>Back to Games</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        <View style={styles.offscreen} pointerEvents="none">
+          <GameScoreCard
+            ref={cardRef}
+            gameName="Who Said It?"
+            gameEmoji="💬"
+            score={finalScore}
+            maxScore={questions.length}
+            pct={pct}
+            displayName={user?.displayName ?? ""}
+            username={user?.username ?? "member"}
+            avatarUrl={user?.avatarUrl}
+            dateLabel={new Date().toLocaleDateString("en-GB", { month: "short", day: "numeric" })}
+            qrValue={`https://themoveee.com/games?ref=${encodeURIComponent(user?.username ?? "")}`}
+          />
+        </View>
       </SafeAreaView>
     );
   }
@@ -337,6 +383,12 @@ function createStyles(c: ColorPalette) {
     doneEmoji: { fontSize: 56 },
     doneTitle: { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.ink, textAlign: "center" },
     doneScore: { fontFamily: fonts.serifBold, fontSize: fontSize["3xl"], color: c.gold },
+    crPill: {
+      backgroundColor: c.gold, borderRadius: radius.full,
+      paddingHorizontal: space[4], paddingVertical: 8,
+      shadowColor: c.gold, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 2,
+    },
+    crPillText: { fontFamily: fonts.sansBold, fontSize: 14, color: c.paper },
     doneSub:   { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute, letterSpacing: 0.8, textAlign: "center" },
 
     reviewCard:      { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule, borderRadius: radius.lg, overflow: "hidden", width: "100%" },
@@ -353,5 +405,13 @@ function createStyles(c: ColorPalette) {
 
     primaryBtn:     { backgroundColor: c.ink, borderRadius: radius.md, paddingVertical: space[3], paddingHorizontal: space[6] },
     primaryBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.paper },
+
+    shareBtn: {
+      width: "100%", maxWidth: 200, height: 48,
+      borderWidth: 1.5, borderColor: c.ink, borderRadius: radius.full,
+      alignItems: "center", justifyContent: "center",
+    },
+    shareBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
+    offscreen: { position: "absolute", top: -9999, left: -9999 },
   });
 }

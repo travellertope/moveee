@@ -1,11 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
   Image,
-  TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   StyleSheet,
   Platform,
   Share,
@@ -15,15 +13,11 @@ import RenderHtml from "react-native-render-html";
 import { Ionicons } from "@expo/vector-icons";
 import { openInApp } from "../../utils/openInApp";
 import BottomSheet from "../ui/BottomSheet";
-import { useComments } from "../../features/community/useComments";
-import { useAuthStore } from "../../auth/authStore";
+import CommentSection from "./CommentSection";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, space, radius } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import type { FeedItem } from "../../types";
-
-const PLACEHOLDER_AVATAR =
-  "https://cms.themoveee.com/wp-content/uploads/placeholder-avatar.png";
 
 const SERIF = Platform.select({
   ios: "Georgia",
@@ -50,11 +44,7 @@ export default function PulseDetailSheet({ visible, item, onClose }: Props) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const { width } = useWindowDimensions();
-  const user = useAuthStore((s) => s.user);
   const postId = (item as any).wpId ?? "";
-  const { comments, loading, addComment } = useComments(postId);
-  const [text, setText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   const HTML_TAG_STYLES = {
     p: {
@@ -82,17 +72,6 @@ export default function PulseDetailSheet({ visible, item, onClose }: Props) {
 
   const handleSource = () => {
     if (item.sourceUrl) openInApp(item.sourceUrl);
-  };
-
-  const submit = async () => {
-    if (!text.trim()) return;
-    setSubmitting(true);
-    try {
-      await addComment(text.trim());
-      setText("");
-    } finally {
-      setSubmitting(false);
-    }
   };
 
   return (
@@ -184,63 +163,8 @@ export default function PulseDetailSheet({ visible, item, onClose }: Props) {
 
         <View style={styles.divider} />
 
-        {/* Comments section */}
-        <Text style={styles.commentsLabel}>Start the conversation</Text>
-
-        {loading ? (
-          <ActivityIndicator color={c.gold} style={{ marginBottom: space[4] }} />
-        ) : comments.length === 0 ? (
-          <Text style={styles.emptyComments}>
-            No comments yet — be the first to reply.
-          </Text>
-        ) : (
-          comments.map((cm) => (
-            <View key={cm.id} style={styles.comment}>
-              <Image
-                source={{ uri: cm.author.avatarUrl || PLACEHOLDER_AVATAR }}
-                style={styles.commentAvatar}
-              />
-              <View style={styles.commentBody}>
-                <Text style={styles.commentAuthor}>{cm.author.name}</Text>
-                <Text style={styles.commentContent}>{cm.content}</Text>
-              </View>
-            </View>
-          ))
-        )}
-
-        {/* Comment compose */}
-        <View style={styles.composerWrap}>
-          <Text style={styles.commentingAs}>
-            Commenting as{" "}
-            <Text style={styles.commentingAsName}>
-              {user?.displayName ?? "you"}
-            </Text>
-          </Text>
-          <View style={styles.inputRow}>
-            <TextInput
-              style={styles.input}
-              placeholder="Add a comment…"
-              placeholderTextColor={c.ghost}
-              value={text}
-              onChangeText={setText}
-              multiline
-            />
-            <TouchableOpacity
-              onPress={submit}
-              disabled={submitting || !text.trim()}
-            >
-              {submitting ? (
-                <ActivityIndicator size="small" color={c.gold} />
-              ) : (
-                <Ionicons
-                  name="send"
-                  size={22}
-                  color={text.trim() ? c.gold : c.ghost}
-                />
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
+        {/* Comments section — shared component, see CommentSection.tsx */}
+        <CommentSection postId={postId} />
       </View>
     </BottomSheet>
   );
@@ -374,72 +298,6 @@ function createStyles(c: ColorPalette) {
     divider: {
       height: 1,
       backgroundColor: c.rule,
-    },
-    commentsLabel: {
-      fontFamily: fonts.serifBold,
-      fontSize: fontSize.lg,
-      color: c.ink,
-    },
-    emptyComments: {
-      fontFamily: fonts.sans,
-      fontSize: fontSize.sm,
-      color: c.ghost,
-    },
-    comment: {
-      flexDirection: "row",
-      gap: 10,
-    },
-    commentAvatar: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: c.rule,
-    },
-    commentBody: {
-      flex: 1,
-    },
-    commentAuthor: {
-      fontFamily: fonts.sansBold,
-      fontSize: fontSize.sm,
-      color: c.ink,
-      marginBottom: 2,
-    },
-    commentContent: {
-      fontFamily: fonts.sans,
-      fontSize: fontSize.base,
-      color: c.inkSoft,
-      lineHeight: 20,
-    },
-    composerWrap: {
-      gap: space[2],
-      paddingTop: space[2],
-    },
-    commentingAs: {
-      fontFamily: fonts.sans,
-      fontSize: fontSize.xs,
-      color: c.ghost,
-    },
-    commentingAsName: {
-      fontFamily: fonts.sansBold,
-      color: c.gold,
-    },
-    inputRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
-      borderWidth: 1,
-      borderColor: c.rule,
-      borderRadius: radius.xl,
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-      backgroundColor: c.paperWarm,
-    },
-    input: {
-      flex: 1,
-      fontFamily: fonts.sans,
-      fontSize: fontSize.base,
-      color: c.ink,
-      maxHeight: 100,
     },
   });
 }

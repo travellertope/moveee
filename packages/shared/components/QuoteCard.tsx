@@ -20,6 +20,7 @@ interface QuoteCardProps {
     quoteSource?: string;
     quoteLikes?: number | string;
     quoteReports?: number | string;
+    quoteSharingReason?: string;
   };
   /** Pre-populate liked/bookmarked state (e.g. on the collection page). */
   initialLiked?: boolean;
@@ -158,6 +159,9 @@ export default function QuoteCard({ quote, initialLiked = false, initialBookmark
             )}
           </cite>
           {quote.quoteSource && <span className="source">{quote.quoteSource}</span>}
+          {quote.quoteSharingReason && (
+            <p className="quote-sharing-reason">💬 {quote.quoteSharingReason}</p>
+          )}
         </div>
 
         <div className="quote-actions">

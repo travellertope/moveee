@@ -46,7 +46,7 @@ export default async function ReferralsPage() {
             </div>
             <h1 className="mem-name">Refer a Friend</h1>
             <div className="mem-meta">
-              Earn credits &amp; reputation every time someone you invite joins Moveee.
+              Earn credits &amp; points every time someone you invite joins Moveee.
             </div>
           </div>
         </div>

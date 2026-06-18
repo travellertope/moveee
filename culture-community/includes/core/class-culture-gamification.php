@@ -268,21 +268,21 @@ class Culture_Gamification {
         // ── Reputation milestone badges ───────────────────────────────────
         'rising_star' => array(
             'name'        => 'Rising Star',
-            'description' => 'Earned 250 reputation.',
+            'description' => 'Earned 250 points.',
             'icon'        => 'dashicons-star-empty',
             'trigger'     => 'points',
             'threshold'   => 250,
         ),
         'culture_contributor_badge' => array(
             'name'        => 'Culture Contributor',
-            'description' => 'Earned 500 reputation — officially a Culture Contributor.',
+            'description' => 'Earned 500 points — officially a Culture Contributor.',
             'icon'        => 'dashicons-awards',
             'trigger'     => 'points',
             'threshold'   => 500,
         ),
         'taste_maker_badge' => array(
             'name'        => 'Taste Maker',
-            'description' => 'Earned 2,500 reputation — reached Taste Maker tier.',
+            'description' => 'Earned 2,500 points — reached Taste Maker tier.',
             'icon'        => 'dashicons-star-filled',
             'trigger'     => 'points',
             'threshold'   => 2500,

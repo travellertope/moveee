@@ -164,6 +164,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   // Quote specific
   const [quoteAuthor, setQuoteAuthor] = useState("");
   const [quoteSource, setQuoteSource] = useState("");
+  const [quoteSharingReason, setQuoteSharingReason] = useState("");
+  const [quoteType, setQuoteType] = useState("");
 
   // Event specific
   const [eventOrganiser, setEventOrganiser] = useState<{ id: number; title: string; slug: string; type: string; thumbnail: string | null } | null>(null);
@@ -253,7 +255,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     ]);
     setGalleryFiles([]); setGalleryPreviews([]); setVideoUrl("");
     setFoodDishName(""); setFoodTaste(0); setFoodValue(0); setFoodVibe(0);
-    setQuoteAuthor(""); setQuoteSource("");
+    setQuoteAuthor(""); setQuoteSource(""); setQuoteSharingReason(""); setQuoteType("");
     setEventTitle(""); setEventDate(""); setEventEndDate(""); setEventLocation("");
     setEventCity(""); setEventAdmission(""); setEventTicketUrl(""); setEventCategory("");
     setEventOrganiser(null);
@@ -399,7 +401,13 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         const res = await fetch("/api/quotes/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: text.trim(), author: quoteAuthor.trim(), source: quoteSource.trim() || undefined }),
+          body: JSON.stringify({
+            text: text.trim(),
+            author: quoteAuthor.trim(),
+            source: quoteSource.trim() || undefined,
+            sharing_reason: quoteSharingReason.trim() || undefined,
+            quote_type: quoteType || undefined,
+          }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to submit quote.");
@@ -706,6 +714,27 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                 <input
                   type="text" value={quoteSource} onChange={e => setQuoteSource(e.target.value.slice(0, 150))}
                   placeholder="Source (optional)" className="composer-input" style={{ flex: 1, minWidth: "120px" }}
+                />
+              </div>
+            )}
+
+            {/* Quote type + sharing reason */}
+            {template === "quote" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <select
+                  value={quoteType}
+                  onChange={e => setQuoteType(e.target.value)}
+                  className={`composer-tag-select${quoteType ? " composer-tag-select--selected" : ""}`}
+                >
+                  <option value="">Quote type (optional)</option>
+                  {["Person", "Book", "Film", "Speech", "Song"].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <textarea
+                  value={quoteSharingReason}
+                  onChange={e => setQuoteSharingReason(e.target.value.slice(0, 280))}
+                  placeholder="Why are you sharing this? (optional)"
+                  rows={2}
+                  className="composer-textarea"
                 />
               </div>
             )}

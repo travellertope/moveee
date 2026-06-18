@@ -79,7 +79,7 @@ export default function EventCheckinClient({
                 }}
               >
                 <div style={{ fontSize: 22, fontWeight: 700 }}>+{rep}</div>
-                <div style={{ fontSize: 12, opacity: 0.9 }}>Reputation</div>
+                <div style={{ fontSize: 12, opacity: 0.9 }}>Points</div>
               </div>
               <div
                 style={{

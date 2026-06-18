@@ -294,6 +294,16 @@ export interface LedgerEntry {
   created_at: string;
 }
 
+export interface GameHistoryEntry {
+  id: number;
+  game_type: "trivia" | "who-said-it";
+  score: number;
+  max_score: number;
+  credits_earned: number;
+  played_date: string;
+  created_at: string;
+}
+
 // ── Phase 7 — Passkeys ────────────────────────────────────────────────────────
 export interface Passkey {
   id: number;

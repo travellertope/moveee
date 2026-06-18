@@ -145,7 +145,7 @@ export default async function PublicProfilePage(
               {profile.bio && <p className="prf-bio">{profile.bio}</p>}
 
               <div className="prf-stats">
-                <span className="prf-stat"><strong>{profile.reputation.toLocaleString()}</strong> rep</span>
+                <span className="prf-stat"><strong>{profile.reputation.toLocaleString()}</strong> pts</span>
                 <span className="prf-stat"><strong>{profile.post_count}</strong> posts</span>
                 <span className="prf-stat">Joined <strong>{formatJoined(profile.joined)}</strong></span>
               </div>

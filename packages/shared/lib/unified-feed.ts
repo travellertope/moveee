@@ -44,6 +44,8 @@ export interface FeedItem {
   // quote-specific
   quoteSource?: string;
   quoteAuthor?: string;
+  quoteSharingReason?: string;
+  quoteType?: string;
   // editorial-specific
   category?: string;
   // community-specific
@@ -314,6 +316,8 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         wpId: String(quote.databaseId),
         quoteSource: quote.quoteSource ?? "",
         quoteAuthor: quote.quoteAuthors?.nodes?.[0]?.name ?? "",
+        quoteSharingReason: quote.quoteSharingReason ?? "",
+        quoteType: quote.quoteType ?? "",
       });
     }
   }

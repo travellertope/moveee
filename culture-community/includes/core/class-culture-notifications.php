@@ -249,7 +249,7 @@ class Culture_Notifications {
             $referrer_id,
             'referral_received',
             '🎉 ' . $display . ' joined via your link!',
-            "You earned +{$points} reputation and +{$credits} credits. Keep sharing — Connector badge at 3 referrals.",
+            "You earned +{$points} points and +{$credits} credits. Keep sharing — Connector badge at 3 referrals.",
             '/member/referrals',
             array( 'new_user_id' => $new_user_id, 'points' => $points, 'credits' => $credits )
         );

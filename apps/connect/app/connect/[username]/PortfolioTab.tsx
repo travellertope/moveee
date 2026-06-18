@@ -47,7 +47,7 @@ export default function PortfolioTab({ username, unlocked, reputationTier }: Pro
       <div className="prf-portfolio-gate">
         <p className="prf-portfolio-gate-title">Portfolio coming soon</p>
         <p className="prf-portfolio-gate-desc">
-          The portfolio tab unlocks at Taste Maker status (500 reputation).
+          The portfolio tab unlocks at Taste Maker status (500 points).
           This member is currently at <strong>{reputationTier}</strong> tier.
         </p>
       </div>

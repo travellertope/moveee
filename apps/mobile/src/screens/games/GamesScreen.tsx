@@ -5,6 +5,7 @@ import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
 import { useGameStreak } from "../../features/games/useGameStreak";
+import { Ionicons } from "@expo/vector-icons";
 
 // ── Crossword mini-grid illustration ─────────────────────────────────────────
 function CrosswordIllustration({ styles }: { styles: ReturnType<typeof createStyles> }) {
@@ -69,11 +70,20 @@ export default function GamesScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>Games</Text>
-          <Text style={styles.headerStar}>★</Text>
+        <View>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>Games</Text>
+            <Text style={styles.headerStar}>★</Text>
+          </View>
+          <Text style={styles.headerSub}>Daily challenges · Earn culture points</Text>
         </View>
-        <Text style={styles.headerSub}>Daily challenges · Earn culture points</Text>
+        <TouchableOpacity
+          style={styles.iconBtn}
+          onPress={() => nav.navigate("GameHistory")}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="time-outline" size={22} color={c.ink} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: 90 }}>
@@ -176,13 +186,14 @@ function createStyles(c: ColorPalette) {
     header: {
       flexDirection: "row", alignItems: "center", justifyContent: "space-between",
       backgroundColor: c.paper, paddingHorizontal: space[4],
-      height: 56,
+      paddingVertical: space[3],
       borderBottomWidth: 1, borderBottomColor: c.ghost,
     },
     headerLeft:  { flexDirection: "row", alignItems: "center", gap: 6 },
     headerTitle: { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink },
     headerStar:  { fontFamily: fonts.sans, fontSize: 14, color: c.gold, marginTop: 2 },
     headerSub:   { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
+    iconBtn:     { padding: 6 },
 
     // Streak banner
     streakBanner: {

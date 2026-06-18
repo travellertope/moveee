@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  ImageBackground,
   FlatList,
   ActivityIndicator,
 } from "react-native";
@@ -18,6 +19,8 @@ import { useAuthStore } from "../../auth/authStore";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { api, MOBILE_API } from "../../api/client";
+
+const EDIT_HERO_IMAGE = require("../../../assets/edit-hero.jpg");
 
 interface EditProduct {
   id?: string;
@@ -122,14 +125,9 @@ export default function TheEditScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero */}
-        <LinearGradient
-          colors={["#A66C52", "#C5491F", "#E2B19B"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
+        <ImageBackground source={EDIT_HERO_IMAGE} style={styles.hero} resizeMode="cover">
           <LinearGradient
-            colors={["rgba(20,17,13,0.85)", "rgba(20,17,13,0.3)", "transparent"]}
+            colors={["rgba(20,17,13,0.78)", "rgba(20,17,13,0.42)", "rgba(20,17,13,0.15)"]}
             style={styles.heroOverlay}
           >
             <Text style={styles.heroLabel}>THE MOVEEE EDIT</Text>
@@ -138,7 +136,7 @@ export default function TheEditScreen() {
               Curated pieces featured in The Moveee Magazine.
             </Text>
           </LinearGradient>
-        </LinearGradient>
+        </ImageBackground>
 
         {/* Loading / error state */}
         {loading && (

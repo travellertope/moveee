@@ -398,6 +398,23 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Games — completion recording + history
+        register_rest_route( 'culture/v1', '/mobile/games/complete', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_games_complete' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/games/history', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_games_history' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'page'     => array( 'default' => 1,  'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'default' => 20, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Perks & redemptions
         register_rest_route( 'culture/v1', '/mobile/perks', array(
             'methods'             => 'GET',
@@ -937,7 +954,7 @@ class Culture_Mobile_API {
             if ( 'patron' !== $tier ) {
                 $rep = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user_id ) : 0;
                 if ( $rep < 2500 ) {
-                    return new WP_Error( 'rep_required', 'Poll and itinerary posts require Connect Pro membership or Taste Maker status (2,500 reputation).', array( 'status' => 403 ) );
+                    return new WP_Error( 'rep_required', 'Poll and itinerary posts require Connect Pro membership or Taste Maker status (2,500 points).', array( 'status' => 403 ) );
                 }
             }
         }
@@ -1742,6 +1759,7 @@ class Culture_Mobile_API {
 
         return array_map( function( WP_Post $post ) {
             $thumb = get_the_post_thumbnail_url( $post->ID, 'large' );
+            $cat_terms = get_the_terms( $post->ID, 'pulse_category' );
             return array(
                 'id'            => 'pulse-' . $post->ID,
                 'type'          => 'pulse',
@@ -1752,6 +1770,7 @@ class Culture_Mobile_API {
                 'body'          => wpautop( $post->post_content ),
                 'image'         => $thumb ?: null,
                 'href'          => '/pulse/' . $post->post_name,
+                'category'      => ( $cat_terms && ! is_wp_error( $cat_terms ) && ! empty( $cat_terms ) ) ? $cat_terms[0]->name : '',
                 'arm'           => get_post_meta( $post->ID, 'pulse_arm_label', true ) ?: '',
                 'region'        => get_post_meta( $post->ID, 'pulse_region_label', true ) ?: '',
                 'source'        => get_post_meta( $post->ID, 'pulse_source', true ) ?: '',
@@ -2168,6 +2187,18 @@ class Culture_Mobile_API {
         $user_id = get_current_user_id();
         $request->set_param( 'user_id', $user_id );
         return Culture_REST_API::handle_wallet_cashout( $request );
+    }
+
+    public static function handle_games_complete( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_games_complete( $request );
+    }
+
+    public static function handle_games_history( $request ) {
+        $user_id = get_current_user_id();
+        $request->set_param( 'user_id', $user_id );
+        return Culture_REST_API::handle_games_history( $request );
     }
 
     public static function handle_list_perks( $request ) {

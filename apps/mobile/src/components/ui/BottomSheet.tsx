@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
+  KeyboardAvoidingView,
   Modal,
   PanResponder,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableWithoutFeedback,
@@ -216,16 +218,22 @@ export default function BottomSheet({
             </View>
           </TouchableWithoutFeedback>
         ) : (
-          // Full: scrollable
-          <ScrollView
+          // Full: scrollable, shifts up so the keyboard never covers a focused input
+          <KeyboardAvoidingView
             style={styles.scrollArea}
-            contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
-            showsVerticalScrollIndicator={false}
-            bounces
-            scrollEventThrottle={16}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
           >
-            {children}
-          </ScrollView>
+            <ScrollView
+              style={styles.scrollArea}
+              contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+              showsVerticalScrollIndicator={false}
+              bounces
+              scrollEventThrottle={16}
+              keyboardShouldPersistTaps="handled"
+            >
+              {children}
+            </ScrollView>
+          </KeyboardAvoidingView>
         )}
       </Animated.View>
     </Modal>

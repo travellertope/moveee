@@ -202,10 +202,12 @@ class Culture_Post_Types {
 
         // 1. Quotes
         $quote_fields = array(
-            'quoteSource'  => array( 'type' => 'String', 'meta_key' => '_quote_source' ),
-            'quoteLikes'   => array( 'type' => 'Int',    'meta_key' => '_quote_likes' ),
-            'quoteReports' => array( 'type' => 'Int',    'meta_key' => '_quote_reports' ),
-            'quoteUserId'  => array( 'type' => 'Int',    'meta_key' => '_quote_user_id' ),
+            'quoteSource'        => array( 'type' => 'String', 'meta_key' => '_quote_source' ),
+            'quoteLikes'         => array( 'type' => 'Int',    'meta_key' => '_quote_likes' ),
+            'quoteReports'       => array( 'type' => 'Int',    'meta_key' => '_quote_reports' ),
+            'quoteUserId'        => array( 'type' => 'Int',    'meta_key' => '_quote_user_id' ),
+            'quoteSharingReason' => array( 'type' => 'String', 'meta_key' => '_quote_sharing_reason' ),
+            'quoteType'          => array( 'type' => 'String', 'meta_key' => '_quote_type' ),
         );
 
         foreach ( $quote_fields as $field_name => $config ) {
@@ -1570,59 +1572,47 @@ class Culture_Post_Types {
      * Exclude expired culture_event posts from the WP REST API.
      * An event is expired when today is past its end_date, or past its
      * event_date if no end_date is set.
+     *
+     * Implemented as a single raw-SQL lookup (2 LEFT JOINs) rather than a
+     * WP_Query meta_query, which previously expanded into ~5 separate
+     * LEFT JOINs against the unindexed wp_postmeta.meta_value column
+     * (one OR-branch used NOT EXISTS, two used DATE-cast comparisons) and
+     * was timing out in production. See "Raw SQL REST endpoints" in
+     * CLAUDE.md for the established pattern this follows.
      */
     public static function exclude_expired_events( $args, $request ) {
+        global $wpdb;
         $today = gmdate( 'Y-m-d' );
 
-        $expiry_clause = array(
-            'relation' => 'OR',
-            // Has an end_date that is today or in the future
-            array(
-                'key'     => '_culture_event_end_date',
-                'value'   => $today,
-                'compare' => '>=',
-                'type'    => 'DATE',
-            ),
-            // No end_date set — fall back to event_date being today or future
-            array(
-                'relation' => 'AND',
-                array(
-                    'key'     => '_culture_event_end_date',
-                    'value'   => '',
-                    'compare' => 'IN',
-                ),
-                array(
-                    'key'     => '_culture_event_date',
-                    'value'   => $today,
-                    'compare' => '>=',
-                    'type'    => 'DATE',
-                ),
-            ),
-            // end_date meta doesn't exist at all — use event_date
-            array(
-                'relation' => 'AND',
-                array(
-                    'key'     => '_culture_event_end_date',
-                    'compare' => 'NOT EXISTS',
-                ),
-                array(
-                    'key'     => '_culture_event_date',
-                    'value'   => $today,
-                    'compare' => '>=',
-                    'type'    => 'DATE',
-                ),
-            ),
-        );
+        $ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT p.ID FROM {$wpdb->posts} p
+             LEFT JOIN {$wpdb->postmeta} end_meta ON end_meta.post_id = p.ID AND end_meta.meta_key = '_culture_event_end_date'
+             LEFT JOIN {$wpdb->postmeta} date_meta ON date_meta.post_id = p.ID AND date_meta.meta_key = '_culture_event_date'
+             WHERE p.post_type = 'culture_event'
+               AND (
+                 ( end_meta.meta_value IS NOT NULL AND end_meta.meta_value != '' AND CAST(end_meta.meta_value AS DATE) >= %s )
+                 OR
+                 ( ( end_meta.meta_value IS NULL OR end_meta.meta_value = '' ) AND CAST(date_meta.meta_value AS DATE) >= %s )
+               )",
+            $today,
+            $today
+        ) );
 
-        if ( empty( $args['meta_query'] ) ) {
-            $args['meta_query'] = array( $expiry_clause );
-        } else {
-            $args['meta_query'] = array(
-                'relation' => 'AND',
-                $args['meta_query'],
-                $expiry_clause,
-            );
+        $ids = array_map( 'intval', $ids );
+
+        if ( empty( $ids ) ) {
+            // No upcoming events — force an empty result set (an empty
+            // post__in array is ignored by WP_Query and would return
+            // everything instead of nothing).
+            $ids = array( 0 );
         }
+
+        if ( ! empty( $args['post__in'] ) ) {
+            $ids = array_values( array_intersect( $args['post__in'], $ids ) );
+            if ( empty( $ids ) ) $ids = array( 0 );
+        }
+
+        $args['post__in'] = $ids;
 
         return $args;
     }

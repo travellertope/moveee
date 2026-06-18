@@ -881,7 +881,7 @@ function AuthorRow({ item, forYouBadge, onAuthorPress }: {
           )}
           {isPro && (
             <View style={styles.proStar}>
-              <Ionicons name="ribbon" size={8} color={c.gold} />
+              <Ionicons name="checkmark-circle" size={14} color={c.gold} />
             </View>
           )}
         </View>

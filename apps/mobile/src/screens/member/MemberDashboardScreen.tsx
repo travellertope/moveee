@@ -48,7 +48,7 @@ function ReputationBar({ reputation, c, styles }: {
     <View style={styles.repBar}>
       <View style={styles.repBarRow}>
         <Text style={styles.repTierLabel}>{tier.label}</Text>
-        <Text style={styles.repScore}>{reputation} REP</Text>
+        <Text style={styles.repScore}>{reputation} PTS</Text>
       </View>
       <View style={styles.repTrack}>
         <Animated.View style={[styles.repFill, { width: anim.interpolate({ inputRange: [0,1], outputRange: ["0%","100%"] }) }]} />
@@ -251,18 +251,16 @@ export default function MemberDashboardScreen() {
         {/* Card 1: Hero Profile */}
         <View style={styles.card}>
           <View style={styles.heroRow}>
-            <View style={isPro ? styles.avatarGlowWrap : undefined}>
-              {user.avatarUrl ? (
-                <Image
-                  source={{ uri: user.avatarUrl }}
-                  style={[styles.avatar, isPro ? styles.avatarPro : styles.avatarCitizen]}
-                />
-              ) : (
-                <View style={[styles.avatarFallback, isPro ? styles.avatarPro : styles.avatarCitizen]}>
-                  <Text style={styles.avatarFallbackText}>{initials(user.displayName)}</Text>
-                </View>
-              )}
-            </View>
+            {user.avatarUrl ? (
+              <Image
+                source={{ uri: user.avatarUrl }}
+                style={[styles.avatar, isPro ? styles.avatarPro : styles.avatarCitizen]}
+              />
+            ) : (
+              <View style={[styles.avatarFallback, isPro ? styles.avatarPro : styles.avatarCitizen]}>
+                <Text style={styles.avatarFallbackText}>{initials(user.displayName)}</Text>
+              </View>
+            )}
             <View style={styles.heroInfo}>
               <View style={styles.heroNameRow}>
                 <Text style={styles.heroName} numberOfLines={1}>{user.displayName}</Text>
@@ -321,7 +319,7 @@ export default function MemberDashboardScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.statValue, { color: isPro ? c.gold : c.ink }]}>{user.reputation ?? 0}</Text>
-            <Text style={styles.statLabel}>Reputation <Text style={styles.infoIcon}>ⓘ</Text></Text>
+            <Text style={styles.statLabel}>Points <Text style={styles.infoIcon}>ⓘ</Text></Text>
           </TouchableOpacity>
 
           <View style={[styles.statItem, styles.statItemBorder]}>
@@ -474,18 +472,15 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     borderRadius: 48,
     backgroundColor: c.rule,
   },
-  avatarGlowWrap: {
-    borderRadius: 52,
+  avatarPro: {
+    borderWidth: 2.5,
+    borderColor: c.gold,
+    padding: 2,
     shadowColor: c.gold,
     shadowOpacity: 0.6,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 0 },
     elevation: 10,
-  },
-  avatarPro: {
-    borderWidth: 2.5,
-    borderColor: c.gold,
-    padding: 2,
   },
   avatarCitizen: {
     borderWidth: 2,

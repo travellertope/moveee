@@ -46,7 +46,6 @@ function feedItemToPostId(item: FeedItem): string {
 const FILTER_LABELS = [
   "✦ For You",
   "All",
-  "Quotes",
   "Music",
   "Film",
   "Art",
@@ -59,12 +58,39 @@ const FILTER_LABELS = [
   "Literature",
 ];
 
+// Chip label → extra backend term aliases that don't share the chip's exact
+// wording (e.g. the "Food" chip should also catch the culture_dir_type term
+// "Food & Drink", and directory entries tagged "Restaurant"/"Recipe").
+// Matching itself is substring-based (in either direction), so "Food" already
+// catches "Food & Drink" without an alias — this list is only for terms that
+// don't share a common word with the chip label at all.
+const CATEGORY_ALIASES: Record<string, string[]> = {
+  music: ["album"],
+  film: ["cinema", "movie"],
+  art: ["artwork", "visual art"],
+  food: ["restaurant", "recipe", "cuisine"],
+  tech: ["technology"],
+  sport: ["sports"],
+  travel: ["place"],
+  design: ["architecture"],
+  literature: ["book", "writing"],
+};
+
+function termMatchesChip(term: string, chip: string): boolean {
+  if (!term) return false;
+  const t = term.toLowerCase();
+  if (t === chip || t.includes(chip) || chip.includes(t)) return true;
+  return (CATEGORY_ALIASES[chip] ?? []).some(
+    (alias) => t.includes(alias) || alias.includes(t)
+  );
+}
+
 function matchesCategory(item: FeedItem, category: string): boolean {
-  const cat = category.toLowerCase();
+  const chip = category.toLowerCase();
   if (item.type === "pulse" || item.type === "editorial")
-    return (item.category ?? "").toLowerCase() === cat;
+    return termMatchesChip(item.category ?? "", chip);
   if (item.type === "directory")
-    return (item.entryType ?? "").toLowerCase() === cat;
+    return termMatchesChip(item.entryType ?? "", chip);
   return false;
 }
 

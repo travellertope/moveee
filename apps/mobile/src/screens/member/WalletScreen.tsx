@@ -290,11 +290,11 @@ export default function WalletScreen() {
             <TouchableOpacity
               onPress={() => setRewardsSheet({
                 visible: true, tab: "reputation",
-                intro: "Reputation is your permanent standing in the Moveee community — it never decreases. Quality contributions (posts, comments, directory entries) earn reputation. Higher tiers unlock exclusive privileges and perks.",
+                intro: "Points are your permanent standing in the Moveee community — they never decrease. Quality contributions (posts, comments, directory entries) earn points. Higher tiers unlock exclusive privileges and perks.",
               })}
               activeOpacity={0.7}
             >
-              <Text style={styles.statText}>{user?.reputation ?? 0} REP ⓘ</Text>
+              <Text style={styles.statText}>{user?.reputation ?? 0} PTS ⓘ</Text>
             </TouchableOpacity>
             <View style={styles.statDot} />
             <Text style={styles.statText}>{user?.dailyCreditsRemaining ?? 0} CR today</Text>
