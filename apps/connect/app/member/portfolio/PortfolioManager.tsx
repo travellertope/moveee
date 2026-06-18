@@ -104,8 +104,8 @@ export default function PortfolioManager({ reputation, username }: Props) {
       <section className="mem-card">
         <div className="mem-card-label">Creative Portfolio</div>
         <p style={{ fontSize: "0.83rem", color: "var(--mute)", lineHeight: 1.6 }}>
-          The public portfolio tab unlocks at <strong>Taste Maker</strong> status (500 reputation).
-          You currently have <strong>{reputation}</strong> reputation points.
+          The public portfolio tab unlocks at <strong>Taste Maker</strong> status (500 points).
+          You currently have <strong>{reputation}</strong> points.
           Keep contributing to the community to unlock it.
         </p>
         <p style={{ fontSize: "0.78rem", color: "var(--mute)", marginTop: "8px" }}>

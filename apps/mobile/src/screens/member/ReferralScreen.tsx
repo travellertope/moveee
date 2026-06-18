@@ -340,7 +340,7 @@ export default function ReferralScreen() {
           {[
             { n: "1", text: `Share your link via WhatsApp, Instagram DMs, or text.` },
             { n: "2", text: `Your friend signs up at connect.themoveee.com using your link.` },
-            { n: "3", text: `You earn +${repPerReferral} reputation and +${creditsPerReferral} credits — instantly.` },
+            { n: "3", text: `You earn +${repPerReferral} points and +${creditsPerReferral} credits — instantly.` },
             { n: "4", text: `Refer ${connectorThreshold} friends → Connector badge. Refer ${superConnectorThreshold} → Super Connector.` },
           ].map(({ n, text }) => (
             <View key={n} style={styles.howRow}>

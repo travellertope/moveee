@@ -261,7 +261,7 @@ export default function AnalyticsClient({ userId }: { userId: string }) {
       {/* ── Stat summary ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12, marginBottom: 32 }}>
         <StatCard label="Credit Balance" value={data.balance} sub="spendable credits" />
-        <StatCard label="Reputation" value={data.reputation} sub="all-time rep points" />
+        <StatCard label="Points" value={data.reputation} sub="all-time points" />
         <StatCard label="Posts" value={data.posts_published} sub={data.posts_pending ? `+${data.posts_pending} pending` : "published"} />
         <StatCard label="Badges" value={data.badge_count} sub="earned badges" />
         <StatCard label="Earned (30d)" value={Math.round(totalEarned)} sub="credits earned" />
@@ -283,11 +283,11 @@ export default function AnalyticsClient({ userId }: { userId: string }) {
         )}
       </section>
 
-      {/* ── Reputation chart ── */}
+      {/* ── Points chart ── */}
       <section className="mem-card" style={{ marginBottom: 24 }}>
-        <div className="mem-card-label">Reputation Earned — Last 6 Months</div>
+        <div className="mem-card-label">Points Earned — Last 6 Months</div>
         {data.rep_months.length === 0 ? (
-          <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: 0 }}>No reputation activity yet.</p>
+          <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: 0 }}>No points activity yet.</p>
         ) : (
           <LineChart data={data.rep_months} valueKey="rep_earned" color="#2a6496" />
         )}

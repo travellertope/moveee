@@ -146,7 +146,7 @@ function LineChart({ months, c }: { months: AnalyticsData["rep_months"]; c: Colo
                 <Rect x={p.x - 28} y={p.y - 22} width={56} height={20} rx={10} fill={c.gold} />
                 <SvgText x={p.x} y={p.y - 8} fontSize={9} fill="#FFFFFF"
                   textAnchor="middle" fontFamily={fonts.mono} fontWeight="bold">
-                  {p.m.rep_earned} REP
+                  {p.m.rep_earned} PTS
                 </SvgText>
               </>
             )}
@@ -214,7 +214,7 @@ export default function AnalyticsScreen() {
               <Text style={[styles.statValue, { color: c.gold }]}>
                 {data.reputation.toLocaleString()}
               </Text>
-              <Text style={styles.statLabel}>Reputation</Text>
+              <Text style={styles.statLabel}>Points</Text>
             </View>
             <View style={[styles.statCol, styles.statColBorder]}>
               <Text style={[styles.statValue, { color: c.ink }]}>
@@ -252,7 +252,7 @@ export default function AnalyticsScreen() {
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Reputation · Last 6 Months</Text>
+              <Text style={styles.sectionTitle}>Points · Last 6 Months</Text>
             </View>
             <View style={styles.chartCard}>
               {data.rep_months.length > 0 ? (

@@ -164,7 +164,7 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
             {(["credits", "reputation"] as Tab[]).map((t) => (
               <TouchableOpacity key={t} style={[styles.tab, tab === t && styles.tabActive]} onPress={() => setTab(t)}>
                 <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-                  {t === "credits" ? "Credits" : "Reputation"}
+                  {t === "credits" ? "Credits" : "Points"}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -209,24 +209,24 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
                   <View style={styles.capBanner}>
                     <Ionicons name="trending-up" size={16} color="#5b21b6" />
                     <Text style={styles.capText}>
-                      Reputation is <Text style={styles.capBold}>permanent</Text> — it never decreases and cannot be spent. It unlocks higher tiers and privileges.
+                      Points are <Text style={styles.capBold}>permanent</Text> — they never decrease and cannot be spent. They unlock higher tiers and privileges.
                     </Text>
                   </View>
-                  <Text style={styles.sectionTitle}>Earn Reputation</Text>
+                  <Text style={styles.sectionTitle}>Earn Points</Text>
                   {repActions.map((a) => (
                     <View key={a.action} style={styles.row}>
                       <Text style={styles.rowLabel}>{a.label}</Text>
                       <View style={[styles.badge, styles.badgeRep]}>
-                        <Text style={[styles.badgeText, styles.badgeRepText]}>+{a.rep} REP</Text>
+                        <Text style={[styles.badgeText, styles.badgeRepText]}>+{a.rep} PTS</Text>
                       </View>
                     </View>
                   ))}
-                  <Text style={[styles.sectionTitle, { marginTop: space[5] }]}>Reputation Tiers</Text>
+                  <Text style={[styles.sectionTitle, { marginTop: space[5] }]}>Points Tiers</Text>
                   {(config?.tiers ?? []).map((tier) => (
                     <View key={tier.slug} style={styles.tierCard}>
                       <View style={styles.tierHeader}>
                         <Text style={styles.tierName}>{tier.label}</Text>
-                        <Text style={styles.tierRep}>{tier.min_rep.toLocaleString()} REP</Text>
+                        <Text style={styles.tierRep}>{tier.min_rep.toLocaleString()} PTS</Text>
                       </View>
                       <Text style={styles.tierPerks}>{tier.perks}</Text>
                       {tier.nomination_only && (

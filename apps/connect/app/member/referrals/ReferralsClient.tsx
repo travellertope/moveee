@@ -113,7 +113,7 @@ export default function ReferralsClient({ initialData }: { initialData: Referral
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
         {[
           { label: "Friends referred", value: referralCount },
-          { label: "Reputation earned", value: `+${referralCount * repPerReferral}` },
+          { label: "Points earned", value: `+${referralCount * repPerReferral}` },
           { label: "Credits earned", value: `+${referralCount * creditsPerReferral}` },
         ].map(({ label, value }) => (
           <div key={label} className="mem-card" style={{ textAlign: "center", padding: "1.25rem 1rem" }}>

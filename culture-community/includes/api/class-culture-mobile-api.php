@@ -954,7 +954,7 @@ class Culture_Mobile_API {
             if ( 'patron' !== $tier ) {
                 $rep = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user_id ) : 0;
                 if ( $rep < 2500 ) {
-                    return new WP_Error( 'rep_required', 'Poll and itinerary posts require Connect Pro membership or Taste Maker status (2,500 reputation).', array( 'status' => 403 ) );
+                    return new WP_Error( 'rep_required', 'Poll and itinerary posts require Connect Pro membership or Taste Maker status (2,500 points).', array( 'status' => 403 ) );
                 }
             }
         }

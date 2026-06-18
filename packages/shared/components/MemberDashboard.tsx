@@ -83,15 +83,15 @@ export default function MemberDashboard({
       <div className="mem-stat mem-stat--reputation">
         <span className="mem-stat-value">{reputation}</span>
         <span className="mem-stat-label">
-          Reputation
+          Points
           <button
             className="mem-stat-info"
-            aria-label="About reputation"
+            aria-label="About points"
             onClick={() => setOpenTooltip(openTooltip === 'reputation' ? null : 'reputation')}
           >ⓘ</button>
           {openTooltip === 'reputation' && (
             <div className="mem-tooltip" role="tooltip">
-              <strong>Reputation</strong> is your permanent standing in the community — it never decreases. It unlocks status tiers: Culture Contributor (100), Taste Maker (500), Culture Authority (1,500). Unlike credits, reputation cannot be spent.
+              <strong>Points</strong> is your permanent standing in the community — it never decreases. It unlocks status tiers: Culture Contributor (100), Taste Maker (500), Culture Authority (1,500). Unlike credits, points cannot be spent.
             </div>
           )}
         </span>

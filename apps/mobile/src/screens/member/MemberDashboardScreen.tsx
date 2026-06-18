@@ -48,7 +48,7 @@ function ReputationBar({ reputation, c, styles }: {
     <View style={styles.repBar}>
       <View style={styles.repBarRow}>
         <Text style={styles.repTierLabel}>{tier.label}</Text>
-        <Text style={styles.repScore}>{reputation} REP</Text>
+        <Text style={styles.repScore}>{reputation} PTS</Text>
       </View>
       <View style={styles.repTrack}>
         <Animated.View style={[styles.repFill, { width: anim.interpolate({ inputRange: [0,1], outputRange: ["0%","100%"] }) }]} />
@@ -321,7 +321,7 @@ export default function MemberDashboardScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.statValue, { color: isPro ? c.gold : c.ink }]}>{user.reputation ?? 0}</Text>
-            <Text style={styles.statLabel}>Reputation <Text style={styles.infoIcon}>ⓘ</Text></Text>
+            <Text style={styles.statLabel}>Points <Text style={styles.infoIcon}>ⓘ</Text></Text>
           </TouchableOpacity>
 
           <View style={[styles.statItem, styles.statItemBorder]}>

@@ -101,10 +101,10 @@ export default async function MemberPage() {
             <section className="mem-card">
               <div className="mem-card-label">How to Earn</div>
               <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 12px", lineHeight: 1.5 }}>
-                Credits are spendable (capped at 50/day). Reputation is permanent and unlocks status.
+                Credits are spendable (capped at 50/day). Points are permanent and unlock status.
               </p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0 12px", fontSize: "0.75rem", fontWeight: 700, color: "var(--mute)", marginBottom: 6, paddingBottom: 6, borderBottom: "1px solid var(--rule)" }}>
-                <span>Action</span><span>Credits</span><span>Rep</span>
+                <span>Action</span><span>Credits</span><span>Points</span>
               </div>
               <div className="mem-points-list">
                 {[

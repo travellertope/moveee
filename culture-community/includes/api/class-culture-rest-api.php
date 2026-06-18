@@ -4538,7 +4538,7 @@ class Culture_REST_API {
 
         return rest_ensure_response( array(
             'success'        => true,
-            'message'        => 'Check-in successful! You earned 20 reputation and 3 credits.',
+            'message'        => 'Check-in successful! You earned 20 points and 3 credits.',
             'rep_earned'     => 20,
             'credits_earned' => 3,
         ) );

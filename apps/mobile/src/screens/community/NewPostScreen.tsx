@@ -195,6 +195,8 @@ export default function NewPostScreen() {
   const route = useRoute<any>();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const { user } = useAuthStore();
+  const userRegion = useMemo(() => detectRegion(user?.countryOfResidence) ?? undefined, [user?.countryOfResidence]);
 
   const [template, setTemplate] = useState<TemplateId>(route.params?.template ?? "post");
   const [pickerOpen, setPickerOpen] = useState(false);
