@@ -365,6 +365,20 @@ Endpoints that depend on WP logic and must stay on `WP_Query`/`get_user_meta`:
 - Any mutation endpoint (insert/update) — use `$wpdb->insert/update` if needed,
   but still fire the relevant `do_action()` hooks for notifications/credits
 
+### Gotcha: `meta_query` OR-branches with NOT EXISTS / DATE casts are slow
+`WP_Query`'s `meta_query` builds one `LEFT JOIN` against `wp_postmeta` per
+branch — `wp_postmeta.meta_value` has no index, so a query with 3+ OR
+branches (especially mixing `NOT EXISTS` with `'type' => 'DATE'` casts) can
+hang for 20s+ in production and cascade into client timeouts. This bit the
+`culture_event` REST endpoint via `exclude_expired_events()` in
+`class-culture-post-types.php` (`rest_culture_event_query` filter) — fixed by
+replacing the meta_query with a single raw-SQL lookup (2 LEFT JOINs) that
+resolves matching IDs and sets `$args['post__in']` instead. If you see a REST
+endpoint backed by a CPT with a `rest_<post_type>_query` filter timing out,
+check for this pattern first. Reminder: an **empty** `post__in` array is
+ignored by `WP_Query` (returns everything) — use `array(0)` to force zero
+results.
+
 ---
 
 ## Key conventions
