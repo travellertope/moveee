@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
     template_type, linked_directory_id, star_rating, location_name, location_lat, location_lng,
     poll_options, poll_expires_at, itinerary_stops, gallery_images, video_url,
     food_dish_name, food_rating_taste, food_rating_value, food_rating_vibe,
+    event_title, event_date, event_end_date, event_venue, event_city, event_address,
+    event_admission, ticket_url, event_category, organiser_directory_id,
+    rsvp_enabled, rsvp_capacity,
   } = body as {
     text?: string;
     imageUrl?: string;
@@ -53,13 +56,46 @@ export async function POST(req: NextRequest) {
     food_rating_taste?: number;
     food_rating_value?: number;
     food_rating_vibe?: number;
+    event_title?: string;
+    event_date?: string;
+    event_end_date?: string;
+    event_venue?: string;
+    event_city?: string;
+    event_address?: string;
+    event_admission?: string;
+    ticket_url?: string;
+    event_category?: string;
+    organiser_directory_id?: number;
+    rsvp_enabled?: boolean;
+    rsvp_capacity?: number;
   };
 
-  const ALLOWED_TEMPLATES = ["post", "hidden-gem", "cultural-take", "food-review", "creative-showcase", "poll", "itinerary"];
+  const ALLOWED_TEMPLATES = ["post", "hidden-gem", "cultural-take", "food-review", "creative-showcase", "poll", "itinerary", "event"];
   const templateType = ALLOWED_TEMPLATES.includes(template_type ?? "") ? template_type! : "post";
 
+  const user = session.user as any;
+  const userId: string = String(user?.id ?? user?.databaseId ?? "");
+  const sessionTier: string = user?.tier ?? "";
+  const isPro = sessionTier === "patron";
+
+  // Event creation requires Connect Pro or Culture Contributor (500 rep) — same floor
+  // enforced on the mobile event-template submit path (handle_submit_post()).
+  if (templateType === "event" && !isPro && (user?.reputation ?? 0) < 500) {
+    return NextResponse.json(
+      { error: "Creating events requires Connect Pro membership or Culture Contributor status (500 points)." },
+      { status: 403 }
+    );
+  }
+
   const content = (text ?? "").trim();
-  if (!content || content.length < 3) {
+  if (templateType === "event") {
+    if (!event_title?.trim()) {
+      return NextResponse.json({ error: "Event name is required." }, { status: 400 });
+    }
+    if (!event_date) {
+      return NextResponse.json({ error: "Event start date is required." }, { status: 400 });
+    }
+  } else if (!content || content.length < 3) {
     return NextResponse.json({ error: "Post must be at least 3 characters." }, { status: 400 });
   }
 
@@ -71,6 +107,7 @@ export async function POST(req: NextRequest) {
     "creative-showcase": 500,
     poll: 280,
     itinerary: 300,
+    event: 1000,
   };
   const maxChars = MAX_CHARS[templateType] ?? 3000;
   if (content.length > maxChars) {
@@ -94,10 +131,6 @@ export async function POST(req: NextRequest) {
       }
     }
   }
-
-  const user = session.user as any;
-  const userId: string = String(user?.id ?? user?.databaseId ?? "");
-  const sessionTier: string = user?.tier ?? "";
 
   const spamCheck = checkPostSpam(userId, content, sessionTier);
   if (!spamCheck.allowed) {
@@ -125,8 +158,14 @@ export async function POST(req: NextRequest) {
 
   const escHtml = (s: string) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  const title = content.slice(0, 80) + (content.length > 80 ? "…" : "");
-  const htmlContent = `<p>${escHtml(content).replace(/\n/g, "</p><p>")}</p>`;
+  const title = templateType === "event"
+    ? event_title!.trim().slice(0, 150)
+    : content.slice(0, 80) + (content.length > 80 ? "…" : "");
+  const htmlContent = content ? `<p>${escHtml(content).replace(/\n/g, "</p><p>")}</p>` : "";
+
+  // RSVP enabling/capacity is Connect Pro only — silently ignored for non-Pro posters
+  // rather than failing the whole submit, mirroring handle_submit_post() on mobile.
+  const rsvpEnabled = templateType === "event" && isPro && !!rsvp_enabled;
 
   const createRes = await fetch(`${BASE}/community-posts`, {
     method: "POST",
@@ -165,6 +204,19 @@ export async function POST(req: NextRequest) {
         ...(food_rating_taste != null                 && { _food_rating_taste: food_rating_taste }),
         ...(food_rating_value != null                 && { _food_rating_value: food_rating_value }),
         ...(food_rating_vibe != null                  && { _food_rating_vibe: food_rating_vibe }),
+        ...(templateType === "event" && {
+          _event_date:                event_date || "",
+          _event_end_date:            event_end_date?.trim() || "",
+          _event_venue:               event_venue?.trim() || "",
+          _event_city:                event_city?.trim() || "",
+          _event_address:             event_address?.trim() || "",
+          _event_admission:           event_admission?.trim() || "",
+          _event_ticket_url:          ticket_url?.trim() || "",
+          _event_category:            event_category || "",
+          ...(organiser_directory_id != null && { _culture_event_organiser_id: organiser_directory_id }),
+          _culture_rsvp_enabled:       rsvpEnabled,
+          _culture_rsvp_capacity:      rsvpEnabled ? Math.max(0, Number(rsvp_capacity) || 0) : 0,
+        }),
       },
     }),
     cache: "no-store",
