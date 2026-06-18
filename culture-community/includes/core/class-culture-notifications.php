@@ -22,6 +22,9 @@ class Culture_Notifications {
         'system'            => 'System',
         'referral_received' => 'Friend Joined',
         'mention'           => 'You were mentioned',
+        'new_follower'      => 'New Follower',
+        'new_follower_post' => 'New Post From Someone You Follow',
+        'event_rsvp'        => 'Event RSVP',
     );
 
     /* ——————————————————————————————————————
@@ -43,6 +46,46 @@ class Culture_Notifications {
     }
 
     /* ——————————————————————————————————————
+     *  Per-type preferences
+     * —————————————————————————————————————— */
+
+    // Always delivered regardless of preference — not shown in the prefs UI.
+    const ALWAYS_ON_TYPES = array( 'system' );
+
+    /**
+     * Returns a complete type => bool map, merging stored prefs over
+     * defaults (everything on) so newly-added types are enabled by default
+     * without needing a migration.
+     */
+    public static function get_prefs( int $user_id ) : array {
+        $defaults = array_fill_keys( array_keys( self::TYPES ), true );
+        $stored   = json_decode( (string) get_user_meta( $user_id, '_culture_notification_prefs', true ), true );
+        if ( ! is_array( $stored ) ) {
+            $stored = array();
+        }
+        return array_merge( $defaults, array_intersect_key( $stored, $defaults ) );
+    }
+
+    public static function set_prefs( int $user_id, array $prefs ) : array {
+        $current = self::get_prefs( $user_id );
+        foreach ( $prefs as $type => $enabled ) {
+            if ( array_key_exists( $type, $current ) && ! in_array( $type, self::ALWAYS_ON_TYPES, true ) ) {
+                $current[ $type ] = (bool) $enabled;
+            }
+        }
+        update_user_meta( $user_id, '_culture_notification_prefs', wp_json_encode( $current ) );
+        return $current;
+    }
+
+    public static function is_enabled( int $user_id, string $type ) : bool {
+        if ( in_array( $type, self::ALWAYS_ON_TYPES, true ) ) {
+            return true;
+        }
+        $prefs = self::get_prefs( $user_id );
+        return $prefs[ $type ] ?? true;
+    }
+
+    /* ——————————————————————————————————————
      *  Core write
      * —————————————————————————————————————— */
 
@@ -54,6 +97,9 @@ class Culture_Notifications {
         string $action_url = '',
         array  $meta       = []
     ) : int {
+        if ( ! self::is_enabled( $user_id, $type ) ) {
+            return 0;
+        }
         global $wpdb;
         $wpdb->insert(
             $wpdb->prefix . 'culture_notifications',
@@ -252,6 +298,20 @@ class Culture_Notifications {
             "You earned +{$points} points and +{$credits} credits. Keep sharing — Connector badge at 3 referrals.",
             '/member/referrals',
             array( 'new_user_id' => $new_user_id, 'points' => $points, 'credits' => $credits )
+        );
+    }
+
+    public static function on_new_follower( int $followed_id, int $follower_id ) : void {
+        $follower = get_userdata( $follower_id );
+        if ( ! $follower ) return;
+        $name = $follower->display_name ?: $follower->user_login;
+        self::add(
+            $followed_id,
+            'new_follower',
+            "{$name} started following you",
+            'Tap to view their profile.',
+            '/connect/' . $follower->user_login,
+            array( 'follower_id' => $follower_id )
         );
     }
 

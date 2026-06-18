@@ -10,6 +10,7 @@ import {
   Share,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { fonts, fontSize, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -815,6 +816,91 @@ function createStyles(c: ColorPalette) {
       marginTop: 2,
       marginBottom: 4,
     },
+
+    // ── DirectoryCard (C2) ────────────────────────────────────────────────────
+    dirBody: {
+      flexDirection: "row" as const,
+      gap: 16,
+      padding: 16,
+    },
+    dirInfo: {
+      flex: 1,
+      alignItems: "flex-start" as const,
+    },
+    dirTitleRow: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 8,
+      marginTop: 8,
+    },
+    dirTitle: {
+      fontFamily: fonts.serifBold,
+      fontSize: 16,
+      color: c.ink,
+    },
+    dirTypeBadge: {
+      fontFamily: fonts.mono,
+      fontSize: 9,
+      color: c.ghost,
+      borderWidth: 1,
+      borderColor: c.ghost,
+      borderRadius: radius.full,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      textTransform: "uppercase" as const,
+    },
+    dirLocation: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.xs,
+      color: c.mute,
+      marginTop: 4,
+    },
+    dirVettedBadge: {
+      backgroundColor: c.success,
+      borderRadius: radius.full,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      marginTop: 6,
+    },
+    dirVettedText: {
+      fontFamily: fonts.sansBold,
+      fontSize: 9,
+      color: "#fff",
+    },
+    dirThumb: {
+      width: 88,
+      height: 88,
+      borderRadius: 8,
+      overflow: "hidden" as const,
+    },
+    dirExcerpt: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.sm,
+      color: c.inkSoft,
+      lineHeight: 21,
+      paddingHorizontal: 16,
+    },
+    dirFooter: {
+      flexDirection: "row" as const,
+      justifyContent: "space-between" as const,
+      alignItems: "center" as const,
+      marginHorizontal: 16,
+      marginTop: 12,
+      paddingTop: 12,
+      paddingBottom: 16,
+      borderTopWidth: 1,
+      borderTopColor: c.ghost,
+    },
+    dirFooterLabel: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.xs,
+      color: c.ghost,
+    },
+    dirFooterCta: {
+      fontFamily: fonts.sansBold,
+      fontSize: fontSize.sm,
+      color: c.ochre,
+    },
   });
 }
 
@@ -1168,7 +1254,7 @@ function HappeningCard({ item, onPress }: FeedCardProps) {
   );
 }
 
-// DirectoryCard (A4)
+// DirectoryCard (C2)
 function DirectoryCard({ item }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
@@ -1184,24 +1270,35 @@ function DirectoryCard({ item }: FeedCardProps) {
 
   return (
     <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.92}>
-      {item.image ? (
-        <Image source={{ uri: item.image }} style={{ width: "100%", height: 140 }} resizeMode="cover" />
-      ) : null}
-      <View style={{ padding: 14 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+      <View style={styles.dirBody}>
+        <View style={styles.dirInfo}>
           <BadgePill label="Directory" bg={c.badgeDirectoryBg} color={c.badgeDirectoryText} styles={styles} />
-          {item.entryType ? (
-            <Text style={styles.eyebrow}>{item.entryType}{item.city ? ` · ${item.city}` : ""}</Text>
+          <View style={styles.dirTitleRow}>
+            <Text style={styles.dirTitle} numberOfLines={1}>{item.title}</Text>
+            {item.entryType ? <Text style={styles.dirTypeBadge}>{item.entryType}</Text> : null}
+          </View>
+          {item.city ? <Text style={styles.dirLocation}>📍 {item.city}</Text> : null}
+          {item.isPartner ? (
+            <View style={styles.dirVettedBadge}>
+              <Text style={styles.dirVettedText}>✓ Vetted</Text>
+            </View>
           ) : null}
-          <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
         </View>
-        <Text style={[styles.cardTitle, { marginTop: 10 }]}>{item.title}</Text>
-        {item.excerpt ? (
-          <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={4}>{item.excerpt}</Text>
-        ) : null}
-        <Text style={[styles.successLink, { marginTop: 8 }]}>View entry →</Text>
+        <View style={styles.dirThumb}>
+          {item.image ? (
+            <Image source={{ uri: item.image }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+          ) : (
+            <LinearGradient colors={["#E2B19B", "#C5491F"]} style={{ width: "100%", height: "100%" }} />
+          )}
+        </View>
       </View>
-      <FeedReactionBar item={item} />
+      {item.excerpt ? (
+        <Text style={styles.dirExcerpt} numberOfLines={2}>{item.excerpt}</Text>
+      ) : null}
+      <View style={styles.dirFooter}>
+        <Text style={styles.dirFooterLabel}>Added to directory</Text>
+        <Text style={styles.dirFooterCta}>View entry →</Text>
+      </View>
     </TouchableOpacity>
   );
 }

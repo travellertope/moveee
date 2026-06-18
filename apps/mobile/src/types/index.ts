@@ -8,6 +8,7 @@ export interface User {
   email: string;
   displayName: string;
   avatarUrl: string;
+  coverPhotoUrl: string;
   tier: Tier;
 
   // Contact
@@ -62,6 +63,7 @@ export interface Member {
   username: string;
   displayName: string;
   avatarUrl: string;
+  coverPhotoUrl: string;
   tier: Tier;
   occupation: string;
   city: string;
@@ -71,6 +73,9 @@ export interface Member {
   instagram: string;
   linkedin: string;
   website: string;
+  followersCount?: number;
+  followingCount?: number;
+  isFollowing?: boolean;
 }
 
 // ── Unified feed ────────────────────────────────────────────────────────────
@@ -110,8 +115,15 @@ export interface FeedItem {
   organiserSlug?: string;
   city?: string;          // used on happening + directory items
 
+  // Community event RSVP (culture_post CPT, templateType "event" only)
+  rsvpEnabled?: boolean;
+  rsvpCapacity?: number;
+  rsvpCount?: number;
+  rsvpAvailable?: boolean;
+
   // Directory
   entryType?: string;
+  isPartner?: boolean;
 
   // Quote
   quoteSource?: string;
@@ -377,6 +389,13 @@ export interface ProductVariantSize {
   available: boolean;
 }
 
+export interface ProductVariation {
+  id: number;
+  colour: string | null;
+  size: string | null;
+  inStock: boolean;
+}
+
 export interface HowItsMadeStep {
   step: number;
   title: string;
@@ -390,6 +409,7 @@ export interface ShopProductDetail extends ShopProduct {
   shortDescription: string;
   colours: ProductVariantColour[];
   sizes: ProductVariantSize[];
+  variations: ProductVariation[];
   makerBio: string;
   makerSince: string;
   makerRating: number;

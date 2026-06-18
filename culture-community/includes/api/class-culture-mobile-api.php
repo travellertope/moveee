@@ -43,6 +43,15 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        register_rest_route( 'culture/v1', '/mobile/login-google', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_login_google' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'id_token' => array( 'required' => true, 'type' => 'string' ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/logout', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_logout' ),
@@ -245,6 +254,50 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Community event RSVPs (culture_post CPT, _template_type = 'event').
+        // Distinct from /mobile/events/* above, which is the editorial culture_event RSVP system.
+        register_rest_route( 'culture/v1', '/mobile/community/event/rsvp', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_community_event_rsvp' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/community/event/rsvp-cancel', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_community_event_rsvp_cancel' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/community/event/rsvp-status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_community_event_rsvp_status' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/community/event/attendees', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_community_event_attendees' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/community/my-events', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_community_my_events' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Checkout auto-login: issues a one-time token the in-app browser redeems.
         register_rest_route( 'culture/v1', '/mobile/checkout-token', array(
             'methods'             => 'POST',
@@ -276,6 +329,17 @@ class Culture_Mobile_API {
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_my_rsvps' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/events/rsvp', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cancel_rsvp' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'event_slug' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'event_id'   => array( 'required' => false, 'type' => 'integer' ),
+                'status'     => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
         ) );
 
         register_rest_route( 'culture/v1', '/mobile/events/submit', array(
@@ -366,6 +430,19 @@ class Culture_Mobile_API {
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_notification_count' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/notifications/preferences', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_notification_prefs' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_set_notification_prefs' ),
+                'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            ),
         ) );
 
         // Analytics
@@ -473,6 +550,58 @@ class Culture_Mobile_API {
         register_rest_route( 'culture/v1', '/mobile/me/avatar-url', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_save_avatar_url' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Cover photo upload
+        register_rest_route( 'culture/v1', '/mobile/me/cover-photo', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_upload_cover_photo' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Follow system
+        register_rest_route( 'culture/v1', '/mobile/follow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_follow_member' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+                'notify_posts' => array( 'default' => false ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/unfollow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_unfollow_member' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/follow/notify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_set_follow_notify' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+                'notify_posts' => array( 'default' => false ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/follow/status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_follow_status' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/follow/following', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_following_usernames' ),
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
@@ -686,6 +815,25 @@ class Culture_Mobile_API {
                 'Please verify your email address before logging in.',
                 array( 'status' => 403 )
             );
+        }
+
+        $token = self::issue_token( $user->ID );
+
+        return rest_ensure_response( array(
+            'token' => $token,
+            'user'  => self::full_profile( $user ),
+        ) );
+    }
+
+    public static function handle_login_google( $request ) {
+        $claims = Culture_Google_Auth::verify_id_token( $request->get_param( 'id_token' ) );
+        if ( is_wp_error( $claims ) ) {
+            return $claims;
+        }
+
+        $user = Culture_Google_Auth::find_or_create_user( $claims );
+        if ( is_wp_error( $user ) ) {
+            return $user;
         }
 
         $token = self::issue_token( $user->ID );
@@ -958,7 +1106,16 @@ class Culture_Mobile_API {
                 }
             }
         }
-        // Event posts require Culture Contributor (500 rep) — handled by the event endpoint separately.
+        // Event posts require Culture Contributor (500 rep), same floor as the legacy editorial event endpoint.
+        if ( 'event' === $template_check ) {
+            $tier = get_user_meta( $user_id, '_culture_membership_tier', true );
+            if ( 'patron' !== $tier ) {
+                $rep = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user_id ) : 0;
+                if ( $rep < 500 ) {
+                    return new WP_Error( 'rep_required', 'Creating events requires Connect Pro membership or Culture Contributor status (500 points).', array( 'status' => 403 ) );
+                }
+            }
+        }
 
         $review_days = (int) get_option( 'culture_new_member_review_days', 7 );
         $user        = get_userdata( $user_id );
@@ -1174,6 +1331,16 @@ class Culture_Mobile_API {
             if ( $request->get_param( 'organiser_directory_id' ) ) {
                 update_post_meta( $post_id, '_culture_event_organiser_id', (int) $request->get_param( 'organiser_directory_id' ) );
             }
+
+            // RSVP toggle + capacity — Connect Pro (patron) privilege only.
+            if ( $request->get_param( 'rsvp_enabled' ) ) {
+                if ( Culture_Community_RSVP::is_pro( $user_id ) ) {
+                    update_post_meta( $post_id, '_culture_rsvp_enabled', 1 );
+                    update_post_meta( $post_id, '_culture_rsvp_capacity', max( 0, (int) $request->get_param( 'rsvp_capacity' ) ) );
+                }
+                // Silently ignored for non-Pro members rather than failing the whole
+                // post — the composer UI already gates the toggle behind a lock icon.
+            }
         }
 
         if ( class_exists( 'Culture_Gamification' ) ) {
@@ -1212,6 +1379,11 @@ class Culture_Mobile_API {
                     );
                 }
             }
+        }
+
+        // Notify followers who opted in to be told when this author posts.
+        if ( class_exists( 'Culture_Follows' ) ) {
+            Culture_Follows::notify_followers_of_post( $user_id, $post_id );
         }
 
         $post = get_post( $post_id );
@@ -1397,6 +1569,66 @@ class Culture_Mobile_API {
         return rest_ensure_response( array( 'options' => $options ) );
     }
 
+    /* ——————————————————————————————————————
+     *  Community event RSVPs
+     * —————————————————————————————————————— */
+
+    public static function handle_community_event_rsvp( $request ) {
+        $user_id = get_current_user_id();
+        $post_id = (int) $request->get_param( 'post_id' );
+        $result  = Culture_Community_RSVP::rsvp( $post_id, $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( Culture_Community_RSVP::get_status( $post_id, $user_id ) );
+    }
+
+    public static function handle_community_event_rsvp_cancel( $request ) {
+        $user_id = get_current_user_id();
+        $post_id = (int) $request->get_param( 'post_id' );
+        Culture_Community_RSVP::cancel( $post_id, $user_id );
+        return rest_ensure_response( Culture_Community_RSVP::get_status( $post_id, $user_id ) );
+    }
+
+    public static function handle_community_event_rsvp_status( $request ) {
+        $user_id = get_current_user_id();
+        $post_id = (int) $request->get_param( 'post_id' );
+        return rest_ensure_response( Culture_Community_RSVP::get_status( $post_id, $user_id ) );
+    }
+
+    public static function handle_community_event_attendees( $request ) {
+        $user_id = get_current_user_id();
+        $post_id = (int) $request->get_param( 'post_id' );
+
+        if ( ! Culture_Community_RSVP::is_pro( $user_id ) ) {
+            return new WP_Error( 'patron_required', 'Connect Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
+        }
+        if ( ! Culture_Community_RSVP::is_organiser( $post_id, $user_id ) ) {
+            return new WP_Error( 'forbidden', 'Only the event organiser can view attendees.', array( 'status' => 403 ) );
+        }
+
+        $attendees = array_map( function( $row ) {
+            return array(
+                'userId'      => (int) $row['user_id'],
+                'displayName' => $row['display_name'],
+                'email'       => $row['user_email'],
+                'rsvpAt'      => $row['created_at'],
+            );
+        }, Culture_Community_RSVP::get_attendees( $post_id ) );
+
+        return rest_ensure_response( array( 'attendees' => $attendees ) );
+    }
+
+    public static function handle_community_my_events( $request ) {
+        $user_id = get_current_user_id();
+
+        if ( ! Culture_Community_RSVP::is_pro( $user_id ) ) {
+            return new WP_Error( 'patron_required', 'Connect Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
+        }
+
+        return rest_ensure_response( array( 'events' => Culture_Community_RSVP::get_organiser_events( $user_id ) ) );
+    }
+
     const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote', 'post' );
 
     public static function handle_react( $request ) {
@@ -1487,7 +1719,80 @@ class Culture_Mobile_API {
             return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
         }
 
-        return rest_ensure_response( self::public_profile( $user ) );
+        $profile = self::public_profile( $user );
+        $profile['followersCount'] = Culture_Follows::followers_count( $user_id );
+        $profile['followingCount'] = Culture_Follows::following_count( $user_id );
+
+        $viewer_id = get_current_user_id();
+        $profile['isFollowing'] = $viewer_id ? Culture_Follows::is_following( $viewer_id, $user_id ) : false;
+
+        return rest_ensure_response( $profile );
+    }
+
+    public static function handle_follow_member( $request ) {
+        $follower_id = get_current_user_id();
+        $followed_id = (int) $request->get_param( 'user_id' );
+        $notify      = (bool) $request->get_param( 'notify_posts' );
+
+        if ( $followed_id === $follower_id ) {
+            return new WP_Error( 'invalid_target', 'You cannot follow yourself.', array( 'status' => 400 ) );
+        }
+        if ( ! get_userdata( $followed_id ) ) {
+            return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
+        }
+
+        Culture_Follows::follow( $follower_id, $followed_id, $notify );
+
+        return rest_ensure_response( array(
+            'success'         => true,
+            'isFollowing'     => true,
+            'followersCount'  => Culture_Follows::followers_count( $followed_id ),
+        ) );
+    }
+
+    public static function handle_unfollow_member( $request ) {
+        $follower_id = get_current_user_id();
+        $followed_id = (int) $request->get_param( 'user_id' );
+
+        Culture_Follows::unfollow( $follower_id, $followed_id );
+
+        return rest_ensure_response( array(
+            'success'        => true,
+            'isFollowing'    => false,
+            'followersCount' => Culture_Follows::followers_count( $followed_id ),
+        ) );
+    }
+
+    public static function handle_set_follow_notify( $request ) {
+        $follower_id = get_current_user_id();
+        $followed_id = (int) $request->get_param( 'user_id' );
+        $notify      = (bool) $request->get_param( 'notify_posts' );
+
+        if ( ! Culture_Follows::is_following( $follower_id, $followed_id ) ) {
+            return new WP_Error( 'not_following', 'You are not following this member.', array( 'status' => 400 ) );
+        }
+
+        Culture_Follows::set_notify( $follower_id, $followed_id, $notify );
+
+        return rest_ensure_response( array( 'success' => true, 'notifyPosts' => $notify ) );
+    }
+
+    public static function handle_follow_status( $request ) {
+        $viewer_id = get_current_user_id();
+        $target_id = (int) $request->get_param( 'user_id' );
+
+        return rest_ensure_response( array(
+            'isFollowing'    => Culture_Follows::is_following( $viewer_id, $target_id ),
+            'followersCount' => Culture_Follows::followers_count( $target_id ),
+            'followingCount' => Culture_Follows::following_count( $target_id ),
+        ) );
+    }
+
+    public static function handle_get_following_usernames( $request ) {
+        $user_id = get_current_user_id();
+        return rest_ensure_response( array(
+            'usernames' => Culture_Follows::get_following_usernames( $user_id ),
+        ) );
     }
 
     public static function handle_get_members( $request ) {
@@ -1672,6 +1977,7 @@ class Culture_Mobile_API {
             'email'                 => $user->user_email,
             'displayName'           => $user->display_name,
             'avatarUrl'             => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
+            'coverPhotoUrl'         => get_user_meta( $user->ID, '_culture_cover_photo_url', true ) ?: '',
             'tier'                  => $tier,
             'points'                => (int) get_user_meta( $user->ID, '_culture_points', true ),
             'credits'               => $credits,
@@ -1913,6 +2219,7 @@ class Culture_Mobile_API {
                 'entryType' => ( $terms && ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0]->name : '',
                 'city'      => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
                 'location'  => get_post_meta( $post->ID, '_culture_location', true ) ?: '',
+                'isPartner' => (bool) get_post_meta( $post->ID, '_is_partner', true ),
             );
         }, $query->posts );
     }
@@ -2089,6 +2396,13 @@ class Culture_Mobile_API {
                 'organiserSlug'           => isset( $organiser_map[ (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ] )
                     ? $organiser_map[ (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ]['slug']
                     : '',
+                'rsvpEnabled'             => $template === 'event' && (bool) get_post_meta( $post->ID, '_culture_rsvp_enabled', true ),
+                'rsvpCapacity'            => (int) get_post_meta( $post->ID, '_culture_rsvp_capacity', true ) ?: 0,
+                'rsvpCount'               => $template === 'event' ? Culture_Community_RSVP::get_count( $post->ID ) : 0,
+                'rsvpAvailable'           => $template === 'event' && (bool) get_post_meta( $post->ID, '_culture_rsvp_enabled', true )
+                    ? ( ( (int) get_post_meta( $post->ID, '_culture_rsvp_capacity', true ) === 0 )
+                        || Culture_Community_RSVP::get_count( $post->ID ) < (int) get_post_meta( $post->ID, '_culture_rsvp_capacity', true ) )
+                    : false,
             );
         }, $query->posts );
     }
@@ -2106,6 +2420,7 @@ class Culture_Mobile_API {
             'username'           => $user->user_login,
             'displayName'        => $user->display_name,
             'avatarUrl'          => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
+            'coverPhotoUrl'      => get_user_meta( $user->ID, '_culture_cover_photo_url', true ) ?: '',
             'tier'               => $tier,
             'city'               => get_user_meta( $user->ID, '_culture_city', true ) ?: '',
             'countryOfResidence' => get_user_meta( $user->ID, '_culture_country_of_residence', true ) ?: '',
@@ -2151,6 +2466,20 @@ class Culture_Mobile_API {
             Culture_Notifications::mark_all_read( $user_id );
         }
         return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_get_notification_prefs( $request ) {
+        $user_id = get_current_user_id();
+        return rest_ensure_response( Culture_Notifications::get_prefs( $user_id ) );
+    }
+
+    public static function handle_set_notification_prefs( $request ) {
+        $user_id = get_current_user_id();
+        $prefs   = $request->get_param( 'prefs' );
+        if ( ! is_array( $prefs ) ) {
+            $prefs = array();
+        }
+        return rest_ensure_response( Culture_Notifications::set_prefs( $user_id, $prefs ) );
     }
 
     public static function handle_analytics( $request ) {
@@ -2279,6 +2608,40 @@ class Culture_Mobile_API {
         return rest_ensure_response( array( 'url' => $url ) );
     }
 
+    public static function handle_upload_cover_photo( $request ) {
+        $user_id = get_current_user_id();
+        $files   = $request->get_file_params();
+        $file    = $files['file'] ?? null;
+
+        if ( empty( $file ) || empty( $file['tmp_name'] ) ) {
+            return new WP_Error( 'no_file', 'No file provided.', array( 'status' => 400 ) );
+        }
+
+        if ( ! in_array( $file['type'], self::UPLOAD_ALLOWED_TYPES, true ) ) {
+            return new WP_Error( 'invalid_type', 'Only JPEG, PNG, WebP, or GIF allowed.', array( 'status' => 400 ) );
+        }
+
+        if ( $file['size'] > self::UPLOAD_MAX_BYTES ) {
+            return new WP_Error( 'too_large', 'Image must be under 8 MB.', array( 'status' => 400 ) );
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+
+        $_FILES['file']['name'] = 'cover-' . $user_id . '-' . time() . '-' . sanitize_file_name( $file['name'] );
+        $attachment_id = media_handle_upload( 'file', 0, array(), array( 'test_form' => false ) );
+
+        if ( is_wp_error( $attachment_id ) ) {
+            return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), array( 'status' => 500 ) );
+        }
+
+        $url = wp_get_attachment_url( $attachment_id );
+        update_user_meta( $user_id, '_culture_cover_photo_url', $url );
+
+        return rest_ensure_response( array( 'url' => $url ) );
+    }
+
     public static function handle_get_portfolio( $request ) {
         $requested_user = (int) $request->get_param( 'user_id' );
         $user_id        = $requested_user ?: get_current_user_id();
@@ -2384,6 +2747,43 @@ class Culture_Mobile_API {
 
     // ── Shop handlers ─────────────────────────────────────────────────────────
 
+    /**
+     * Resolves the display currency for shop pricing based on a client-supplied
+     * country string. WooCommerce store currency (GBP) stays the booking currency
+     * for the actual WC_Order; this only controls what price the shopper sees and,
+     * for Nigeria, what currency they pay in via Paystack.
+     *
+     * Shop browse/detail routes use '__return_true' permission callbacks (no
+     * mobile_permission() auth), so wp_get_current_user() is unreliable here —
+     * country must come from an explicit request param, not the session.
+     *
+     * @return array{code:string,symbol:string,rate:float}
+     */
+    public static function resolve_shop_currency( $request ) {
+        $country = strtolower( trim( (string) $request->get_param( 'country' ) ) );
+        $base_currency = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
+        $base_symbol   = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol( $base_currency ) ) : '£';
+
+        if ( 'nigeria' === $country ) {
+            $rate = (float) get_option( 'culture_shop_fx_ngn_per_gbp', 1900 );
+            return array( 'code' => 'NGN', 'symbol' => '₦', 'rate' => $rate > 0 ? $rate : 1900.0 );
+        }
+
+        return array( 'code' => $base_currency, 'symbol' => $base_symbol, 'rate' => 1.0 );
+    }
+
+    /**
+     * Converts a GBP price string/float to the resolved display currency.
+     * Returns '' for empty input (mirrors the existing ?: '' fallback pattern).
+     */
+    public static function convert_shop_price( $gbp_price, array $fx ) {
+        if ( '' === $gbp_price || null === $gbp_price || false === $gbp_price ) {
+            return '';
+        }
+        $converted = (float) $gbp_price * $fx['rate'];
+        return (string) round( $converted, $fx['rate'] > 1 ? 0 : 2 );
+    }
+
     public static function handle_shop_products( $request ) {
         global $wpdb;
 
@@ -2431,8 +2831,9 @@ class Culture_Mobile_API {
 
         $q        = new WP_Query( $query_args );
         $products = array();
-        $currency_symbol = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol() ) : '£';
-        $currency        = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
+        $fx              = self::resolve_shop_currency( $request );
+        $currency_symbol = $fx['symbol'];
+        $currency        = $fx['code'];
 
         foreach ( $q->posts as $post ) {
             $wc = wc_get_product( $post->ID );
@@ -2442,7 +2843,7 @@ class Culture_Mobile_API {
             $regular = $wc->get_regular_price();
             $sale    = $wc->get_sale_price();
 
-            $pro_price     = ( $is_pro && $price ) ? (string) round( (float) $price * 0.9, 2 ) : null;
+            $pro_price     = ( $is_pro && $price ) ? round( (float) $price * 0.9, 2 ) : null;
             $created_days  = ( time() - strtotime( $post->post_date ) ) / DAY_IN_SECONDS;
             $stock_qty     = $wc->get_stock_quantity();
             $pro_early     = get_post_meta( $post->ID, '_pro_early_access', true );
@@ -2463,10 +2864,10 @@ class Culture_Mobile_API {
                 'id'             => $post->ID,
                 'name'           => $post->post_title,
                 'slug'           => $post->post_name,
-                'price'          => $price ?: '',
-                'regularPrice'   => $regular ?: '',
-                'salePrice'      => $sale ?: '',
-                'proPrice'       => $pro_price,
+                'price'          => self::convert_shop_price( $price, $fx ),
+                'regularPrice'   => self::convert_shop_price( $regular, $fx ),
+                'salePrice'      => self::convert_shop_price( $sale, $fx ),
+                'proPrice'       => self::convert_shop_price( $pro_price, $fx ),
                 'currency'       => $currency,
                 'currencySymbol' => $currency_symbol,
                 'imageUrl'       => $image_url ?: null,
@@ -2501,13 +2902,14 @@ class Culture_Mobile_API {
         $user   = wp_get_current_user();
         $is_pro = $user->ID && in_array( 'patron', (array) $user->roles, true );
 
-        $currency_symbol = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol() ) : '£';
-        $currency        = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'GBP';
+        $fx              = self::resolve_shop_currency( $request );
+        $currency_symbol = $fx['symbol'];
+        $currency        = $fx['code'];
 
         $price   = $wc->get_price();
         $regular = $wc->get_regular_price();
         $sale    = $wc->get_sale_price();
-        $pro_price = ( $is_pro && $price ) ? (string) round( (float) $price * 0.9, 2 ) : null;
+        $pro_price = ( $is_pro && $price ) ? round( (float) $price * 0.9, 2 ) : null;
 
         // Gallery images (main + gallery)
         $image_ids   = array_merge(
@@ -2538,13 +2940,21 @@ class Culture_Mobile_API {
         $categories = $cat_terms ? array_map( fn( $t ) => $t->slug, $cat_terms ) : array();
 
         // Colour variants (from pa_colour attribute if it exists)
-        $colours = array();
-        $sizes   = array();
+        $colours    = array();
+        $sizes      = array();
+        $variations = array();
         if ( $wc->is_type( 'variable' ) ) {
             /** @var WC_Product_Variable $wc */
             $available_variations = $wc->get_available_variations();
+
+            // Identify which attribute key (if any) is the colour-like attribute,
+            // since variations are matched on the combination of attributes.
+            $colour_attr_key = null;
             foreach ( $wc->get_variation_attributes() as $attr => $values ) {
                 $label = wc_attribute_label( $attr );
+                if ( strpos( strtolower( $label ), 'colour' ) !== false || strpos( strtolower( $label ), 'color' ) !== false ) {
+                    $colour_attr_key = 'attribute_' . $attr;
+                }
                 foreach ( $values as $val ) {
                     $in_stock = false;
                     foreach ( $available_variations as $var ) {
@@ -2559,6 +2969,26 @@ class Culture_Mobile_API {
                         $sizes[] = array( 'name' => $val, 'available' => $in_stock );
                     }
                 }
+            }
+
+            // Real WooCommerce variation IDs, keyed by their colour/size combination,
+            // so the app can resolve the exact variation the shopper selected.
+            foreach ( $available_variations as $var ) {
+                $entry = array(
+                    'id'      => (int) $var['variation_id'],
+                    'colour'  => null,
+                    'size'    => null,
+                    'inStock' => (bool) $var['is_in_stock'],
+                );
+                foreach ( $var['attributes'] as $attr_key => $val ) {
+                    if ( '' === $val ) continue;
+                    if ( $colour_attr_key && $attr_key === $colour_attr_key ) {
+                        $entry['colour'] = $val;
+                    } else {
+                        $entry['size'] = $val;
+                    }
+                }
+                $variations[] = $entry;
             }
         }
 
@@ -2604,9 +3034,9 @@ class Culture_Mobile_API {
                 'id'             => $rel_id,
                 'name'           => get_the_title( $rel_id ),
                 'slug'           => get_post_field( 'post_name', $rel_id ),
-                'price'          => $rel_wc->get_price() ?: '',
-                'regularPrice'   => $rel_wc->get_regular_price() ?: '',
-                'salePrice'      => $rel_wc->get_sale_price() ?: '',
+                'price'          => self::convert_shop_price( $rel_wc->get_price(), $fx ),
+                'regularPrice'   => self::convert_shop_price( $rel_wc->get_regular_price(), $fx ),
+                'salePrice'      => self::convert_shop_price( $rel_wc->get_sale_price(), $fx ),
                 'proPrice'       => null,
                 'currency'       => $currency,
                 'currencySymbol' => $currency_symbol,
@@ -2624,10 +3054,10 @@ class Culture_Mobile_API {
             'id'               => $id,
             'name'             => $post->post_title,
             'slug'             => $post->post_name,
-            'price'            => $price ?: '',
-            'regularPrice'     => $regular ?: '',
-            'salePrice'        => $sale ?: '',
-            'proPrice'         => $pro_price,
+            'price'            => self::convert_shop_price( $price, $fx ),
+            'regularPrice'     => self::convert_shop_price( $regular, $fx ),
+            'salePrice'        => self::convert_shop_price( $sale, $fx ),
+            'proPrice'         => self::convert_shop_price( $pro_price, $fx ),
             'currency'         => $currency,
             'currencySymbol'   => $currency_symbol,
             'imageUrl'         => $images[0] ?? null,
@@ -2647,6 +3077,7 @@ class Culture_Mobile_API {
             'shortDescription' => $wc->get_short_description(),
             'colours'          => $colours,
             'sizes'            => $sizes,
+            'variations'       => $variations,
             'howItsMade'       => $how_its_made,
             'asSeenIn'         => $as_seen_in,
             'relatedProducts'  => $related_products,
@@ -3126,31 +3557,32 @@ class Culture_Mobile_API {
             return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
         }
 
-        global $wpdb;
-        $table = $wpdb->prefix . 'culture_event_rsvps';
-
-        // Check if table exists
-        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) {
+        $user = get_userdata( $user_id );
+        if ( ! $user || ! $user->user_email ) {
             return rest_ensure_response( array( 'rsvps' => array() ) );
         }
 
+        global $wpdb;
+        $table = Culture_Event_RSVP::table();
+
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT r.event_id, r.status, r.created_at, p.post_title, p.post_name,
-                    pm_start.meta_value AS start_date, pm_loc.meta_value AS location
+            "SELECT r.id, r.event_slug, r.event_title, r.status, r.created_at,
+                    p.ID AS event_id,
+                    pm_date.meta_value AS start_date, pm_loc.meta_value AS location
              FROM {$table} r
-             INNER JOIN {$wpdb->posts} p ON p.ID = r.event_id AND p.post_status = 'publish'
-             LEFT JOIN {$wpdb->postmeta} pm_start ON pm_start.post_id = r.event_id AND pm_start.meta_key = '_culture_event_start_date'
-             LEFT JOIN {$wpdb->postmeta} pm_loc ON pm_loc.post_id = r.event_id AND pm_loc.meta_key = '_culture_event_location'
-             WHERE r.user_id = %d
-             ORDER BY pm_start.meta_value DESC",
-            $user_id
+             LEFT JOIN {$wpdb->posts} p ON p.post_name = r.event_slug AND p.post_type = 'culture_event' AND p.post_status = 'publish'
+             LEFT JOIN {$wpdb->postmeta} pm_date ON pm_date.post_id = p.ID AND pm_date.meta_key = '_culture_event_date'
+             LEFT JOIN {$wpdb->postmeta} pm_loc ON pm_loc.post_id = p.ID AND pm_loc.meta_key = '_culture_location'
+             WHERE r.email = %s
+             ORDER BY pm_date.meta_value DESC, r.created_at DESC",
+            $user->user_email
         ), ARRAY_A );
 
         $rsvps = array_map( function( $row ) {
             return array(
                 'eventId'   => (int) $row['event_id'],
-                'slug'      => $row['post_name'],
-                'title'     => $row['post_title'],
+                'slug'      => $row['event_slug'],
+                'title'     => $row['event_title'] ?: '',
                 'startDate' => $row['start_date'] ?: '',
                 'location'  => $row['location'] ?: '',
                 'status'    => $row['status'] ?: 'attending',
@@ -3159,6 +3591,47 @@ class Culture_Mobile_API {
         }, $rows ?: array() );
 
         return rest_ensure_response( array( 'rsvps' => $rsvps ) );
+    }
+
+    public static function handle_cancel_rsvp( WP_REST_Request $request ) {
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
+        }
+
+        $user = get_userdata( $user_id );
+        if ( ! $user || ! $user->user_email ) {
+            return new WP_Error( 'unauthorized', 'No email on account', array( 'status' => 400 ) );
+        }
+
+        $event_slug = sanitize_text_field( $request->get_param( 'event_slug' ) );
+        if ( ! $event_slug ) {
+            $event_id = (int) $request->get_param( 'event_id' );
+            if ( $event_id ) {
+                $post = get_post( $event_id );
+                $event_slug = $post ? $post->post_name : '';
+            }
+        }
+        if ( ! $event_slug ) {
+            return new WP_Error( 'missing_event', 'event_slug or event_id required', array( 'status' => 400 ) );
+        }
+
+        global $wpdb;
+        $table = Culture_Event_RSVP::table();
+
+        $updated = $wpdb->update(
+            $table,
+            array( 'status' => 'cancelled' ),
+            array( 'email' => $user->user_email, 'event_slug' => $event_slug ),
+            array( '%s' ),
+            array( '%s', '%s' )
+        );
+
+        if ( $updated === false ) {
+            return new WP_Error( 'db_error', 'Could not cancel RSVP', array( 'status' => 500 ) );
+        }
+
+        return rest_ensure_response( array( 'success' => true ) );
     }
 
     public static function handle_article_read_complete( WP_REST_Request $request ) {
@@ -3242,8 +3715,9 @@ class Culture_Mobile_API {
             ) );
         }
 
-        $currency        = get_woocommerce_currency();
-        $currency_symbol = get_woocommerce_currency_symbol( $currency );
+        $fx              = self::resolve_shop_currency( $request );
+        $currency        = $fx['code'];
+        $currency_symbol = $fx['symbol'];
 
         $stories      = array();
         $all_products = array(); // keyed by product id to dedupe
@@ -3299,9 +3773,9 @@ class Culture_Mobile_API {
                     'title'          => $wc->get_name(),
                     'brand'          => get_post_meta( $pid, '_maker_name', true ) ?: '',
                     'city'           => get_post_meta( $pid, '_maker_city', true ) ?: '',
-                    'price'          => $reg_price,
-                    'proPrice'       => $reg_price > 0 ? round( $reg_price * 0.9, 2 ) : null,
-                    'originalPrice'  => $sale_price > 0 ? $reg_price : null,
+                    'price'          => (float) self::convert_shop_price( $reg_price, $fx ),
+                    'proPrice'       => $reg_price > 0 ? (float) self::convert_shop_price( round( $reg_price * 0.9, 2 ), $fx ) : null,
+                    'originalPrice'  => $sale_price > 0 ? (float) self::convert_shop_price( $reg_price, $fx ) : null,
                     'currency'       => $currency,
                     'currencySymbol' => $currency_symbol,
                     'image'          => $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : null,

@@ -75,7 +75,8 @@ export default function TheEditScreen() {
     setLoading(true);
     setError(false);
     try {
-      const data = await api.get<TheEditResponse>(`${MOBILE_API}/shop/the-edit`, false);
+      const countryParam = user?.countryOfResidence ? `?country=${encodeURIComponent(user.countryOfResidence)}` : "";
+      const data = await api.get<TheEditResponse>(`${MOBILE_API}/shop/the-edit${countryParam}`, false);
       setHeroPick(data.hero);
       setSeasonPicks(data.season_picks ?? []);
       setGridPicks(data.grid ?? []);
@@ -85,7 +86,7 @@ export default function TheEditScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.countryOfResidence]);
 
   useEffect(() => { fetchEdit(); }, [fetchEdit]);
 

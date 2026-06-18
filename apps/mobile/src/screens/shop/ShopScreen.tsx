@@ -256,12 +256,14 @@ export default function ShopScreen() {
   const [hasMore, setHasMore]         = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  const countryParam = user?.countryOfResidence ? `&country=${encodeURIComponent(user.countryOfResidence)}` : "";
+
   useEffect(() => {
     setLoading(true);
     setPage(1);
     const catParam = activeCategory ? `&category=${activeCategory}` : "";
     Promise.all([
-      api.get<{ products: ShopProduct[]; pages: number }>(`${MOBILE_API}/shop/products?per_page=20${catParam}`, false),
+      api.get<{ products: ShopProduct[]; pages: number }>(`${MOBILE_API}/shop/products?per_page=20${catParam}${countryParam}`, false),
       api.get<ShopCategory[]>(`${MOBILE_API}/shop/categories`, false),
       api.get<ShopVendor[]>(`${MOBILE_API}/shop/vendors`, false),
     ]).then(([productRes, cats, vends]) => {
@@ -270,7 +272,7 @@ export default function ShopScreen() {
       setCategories(cats);
       setVendors(vends);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [activeCategory]);
+  }, [activeCategory, countryParam]);
 
   const loadMore = async () => {
     if (!hasMore || loadingMore) return;
@@ -279,7 +281,7 @@ export default function ShopScreen() {
     const catParam = activeCategory ? `&category=${activeCategory}` : "";
     try {
       const res = await api.get<{ products: ShopProduct[]; pages: number }>(
-        `${MOBILE_API}/shop/products?per_page=20&page=${nextPage}${catParam}`, false
+        `${MOBILE_API}/shop/products?per_page=20&page=${nextPage}${catParam}${countryParam}`, false
       );
       setProducts((prev) => [...prev, ...res.products]);
       setHasMore(nextPage < res.pages);

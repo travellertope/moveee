@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'CULTURE_VERSION', '2.2.0' );
+define( 'CULTURE_VERSION', '2.4.0' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CULTURE_PLUGIN_FILE', __FILE__ );
@@ -37,9 +37,12 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-perks.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-webauthn.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-notifications.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-follows.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community-rsvp.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-cli.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-pulse.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-google-auth.php';
 
 // API includes.
 require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-rest-api.php';
@@ -71,6 +74,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-event-rsvp.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-stripe.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-ticket-payment.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-shop-checkout.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-tickets-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-memberships.php';
 
@@ -123,8 +127,10 @@ function culture_community_init() {
     Culture_RSVP_Admin::init();
     Culture_RSVP_Admin::init_post_handlers();
     Culture_Ticket_Payment::init();
+    Culture_Shop_Checkout::init();
     Culture_Tickets_Admin::init();
     Culture_Notifications::init();
+    Culture_Follows::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {

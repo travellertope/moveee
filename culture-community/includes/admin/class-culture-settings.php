@@ -35,6 +35,10 @@ class Culture_Settings {
         'culture_stripe_price_monthly_usd'     => '',
         'culture_stripe_price_yearly_usd'      => '',
 
+        // Shop.
+        'culture_shop_fx_ngn_per_gbp'          => 1900,
+        'culture_shop_flat_shipping_gbp'       => 4.99,
+
         // Gamification – point values.
         'culture_points_event_rsvp'          => 5,
         'culture_points_event_checkin'       => 15,
@@ -84,6 +88,9 @@ class Culture_Settings {
         'culture_frontend_url'         => '',
         'culture_api_secret'           => '',
         'culture_cron_secret'          => '',
+        'culture_google_client_id_web'     => '',
+        'culture_google_client_id_ios'      => '',
+        'culture_google_client_id_android'  => '',
         'culture_analytics_limit_top_members' => 10,
         'culture_analytics_limit_events'      => 10,
 
@@ -272,6 +279,10 @@ class Culture_Settings {
         register_setting( 'culture_settings_payment', 'culture_stripe_price_monthly_usd', $text );
         register_setting( 'culture_settings_payment', 'culture_stripe_price_yearly_usd', $text );
 
+        // Shop (multi-currency + flat-rate fallback shipping).
+        register_setting( 'culture_settings_payment', 'culture_shop_fx_ngn_per_gbp', array( 'sanitize_callback' => 'floatval' ) );
+        register_setting( 'culture_settings_payment', 'culture_shop_flat_shipping_gbp', array( 'sanitize_callback' => 'floatval' ) );
+
         // Credits – per action bonuses.
         $credit_keys = array(
             'culture_credits_event_rsvp', 'culture_credits_event_checkin',
@@ -336,6 +347,9 @@ class Culture_Settings {
         register_setting( 'culture_settings_general', 'culture_frontend_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
         register_setting( 'culture_settings_general', 'culture_api_secret', $text );
         register_setting( 'culture_settings_general', 'culture_cron_secret', $text );
+        register_setting( 'culture_settings_general', 'culture_google_client_id_web', $text );
+        register_setting( 'culture_settings_general', 'culture_google_client_id_ios', $text );
+        register_setting( 'culture_settings_general', 'culture_google_client_id_android', $text );
         register_setting( 'culture_settings_general', 'culture_analytics_limit_top_members', $int );
         register_setting( 'culture_settings_general', 'culture_analytics_limit_events', $int );
 
@@ -528,6 +542,28 @@ class Culture_Settings {
                     <input type="text" id="culture_stripe_price_yearly_usd" name="culture_stripe_price_yearly_usd"
                            value="<?php echo esc_attr( self::get( 'culture_stripe_price_yearly_usd' ) ); ?>" class="regular-text" />
                     <p class="description"><?php esc_html_e( 'The Stripe Price ID for the $40 subscription (price_...).', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <hr />
+        <h3><?php esc_html_e( 'Lifestyle Shop', 'culture-community' ); ?></h3>
+        <p class="description"><?php esc_html_e( 'Shop products are priced in GBP (the WooCommerce store currency). Nigerian shoppers are shown a converted NGN price and pay via Paystack at this rate; everyone else pays in GBP via Stripe. The underlying order is always recorded in GBP.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_shop_fx_ngn_per_gbp"><?php esc_html_e( 'NGN per GBP exchange rate', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" step="0.01" id="culture_shop_fx_ngn_per_gbp" name="culture_shop_fx_ngn_per_gbp"
+                           value="<?php echo esc_attr( self::get( 'culture_shop_fx_ngn_per_gbp' ) ); ?>" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Update periodically to track the market rate. Used to convert GBP shop prices to NGN for display and Paystack charges.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_shop_flat_shipping_gbp"><?php esc_html_e( 'Fallback flat shipping (GBP)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" step="0.01" id="culture_shop_flat_shipping_gbp" name="culture_shop_flat_shipping_gbp"
+                           value="<?php echo esc_attr( self::get( 'culture_shop_flat_shipping_gbp' ) ); ?>" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Used only for a package if no WooCommerce shipping zone matches the destination address.', 'culture-community' ); ?></p>
                 </td>
             </tr>
         </table>
@@ -961,6 +997,38 @@ class Culture_Settings {
                     <input type="url" id="culture_registration_page" name="culture_registration_page"
                            value="<?php echo esc_attr( self::get( 'culture_registration_page' ) ); ?>" class="large-text" placeholder="<?php echo esc_attr( home_url( '/register/' ) ); ?>" />
                     <p class="description"><?php esc_html_e( 'The URL of your registration/sign-up page. Used in referral links and email CTAs.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e( 'Google Sign-In', 'culture-community' ); ?></h2>
+        <p class="description"><?php esc_html_e( 'OAuth Client IDs from Google Cloud Console, used to validate Google ID tokens on login. Leave a field blank to disable Google Sign-In for that surface.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_google_client_id_web"><?php esc_html_e( 'Web Client ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_google_client_id_web" name="culture_google_client_id_web"
+                           value="<?php echo esc_attr( self::get( 'culture_google_client_id_web' ) ); ?>" class="large-text"
+                           placeholder="xxxxxxxxxx.apps.googleusercontent.com" />
+                    <p class="description"><?php esc_html_e( 'Used by the Next.js (connect.themoveee.com) NextAuth Google provider. Must match the GOOGLE_CLIENT_ID environment variable on Vercel.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_google_client_id_ios"><?php esc_html_e( 'iOS Client ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_google_client_id_ios" name="culture_google_client_id_ios"
+                           value="<?php echo esc_attr( self::get( 'culture_google_client_id_ios' ) ); ?>" class="large-text"
+                           placeholder="xxxxxxxxxx.apps.googleusercontent.com" />
+                    <p class="description"><?php esc_html_e( 'Used by the mobile app on iOS via expo-auth-session.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_google_client_id_android"><?php esc_html_e( 'Android Client ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_google_client_id_android" name="culture_google_client_id_android"
+                           value="<?php echo esc_attr( self::get( 'culture_google_client_id_android' ) ); ?>" class="large-text"
+                           placeholder="xxxxxxxxxx.apps.googleusercontent.com" />
+                    <p class="description"><?php esc_html_e( 'Used by the mobile app on Android via expo-auth-session.', 'culture-community' ); ?></p>
                 </td>
             </tr>
         </table>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import HashtagText from "./HashtagText";
 import { useColors } from "../../hooks/useColors";
 import CommentSection from "./CommentSection";
 import { api, MOBILE_API } from "../../api/client";
+import { useAuthStore } from "../../auth/authStore";
 import type { ColorPalette } from "../../theme";
 import { radius, fonts } from "../../theme";
 import type { FeedItem, PollOption, ItineraryStop } from "../../types";
@@ -174,6 +175,37 @@ function StarRow({ rating, c }: { rating: number; c: ColorPalette }) {
 // ── Author row (shared across all templates) ────────────────────────────────────
 
 function AuthorRow({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const currentUser = useAuthStore((s) => s.user);
+  const authorId = item.communityAuthorId;
+  const isSelf = !!currentUser && !!authorId && String(currentUser.id) === String(authorId);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!authorId || isSelf) return;
+    api
+      .get<{ isFollowing: boolean }>(`${MOBILE_API}/follow/status?user_id=${authorId}`)
+      .then((res) => setIsFollowing(!!res.isFollowing))
+      .catch(() => {})
+      .finally(() => setReady(true));
+  }, [authorId, isSelf]);
+
+  const toggleFollow = async () => {
+    if (!authorId || busy) return;
+    setBusy(true);
+    try {
+      if (isFollowing) {
+        await api.post(`${MOBILE_API}/unfollow`, { user_id: Number(authorId) });
+        setIsFollowing(false);
+      } else {
+        await api.post(`${MOBILE_API}/follow`, { user_id: Number(authorId) });
+        setIsFollowing(true);
+      }
+    } catch {}
+    setBusy(false);
+  };
+
   return (
     <View style={styles.authorRow}>
       <Image
@@ -186,9 +218,17 @@ function AuthorRow({ item, c, styles }: { item: FeedItem; c: ColorPalette; style
           <Text style={styles.authorHandle}>@{item.communityAuthorUsername}</Text>
         ) : null}
       </View>
-      <TouchableOpacity style={styles.followBtn}>
-        <Text style={styles.followBtnText}>Follow</Text>
-      </TouchableOpacity>
+      {!isSelf && (
+        <TouchableOpacity
+          style={[styles.followBtn, isFollowing && styles.followBtnActive]}
+          onPress={toggleFollow}
+          disabled={busy || !ready}
+        >
+          <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
+            {isFollowing ? "Following" : "Follow"}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -565,12 +605,67 @@ function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
         <Text style={[styles.proPerkText, { color: c.gold, marginRight: 6 }]}>★</Text>
         <Text style={styles.proPerkText}>Pro Members: Early entry + priority access.</Text>
       </View>
-      <TouchableOpacity style={styles.rsvpBtn}>
-        <Text style={styles.rsvpBtnText}>RSVP Now →</Text>
-      </TouchableOpacity>
+      {item.rsvpEnabled ? (
+        <EventRsvpButton item={item} c={c} styles={styles} />
+      ) : null}
       <TouchableOpacity style={{ alignItems: "center", marginTop: 8 }}>
         <Text style={styles.calendarLink}>Add to calendar</Text>
       </TouchableOpacity>
+    </>
+  );
+}
+
+function EventRsvpButton({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+  const postId = item.wpId ?? item.id ?? "";
+  const [rsvped, setRsvped] = useState(false);
+  const [count, setCount] = useState(item.rsvpCount ?? 0);
+  const [busy, setBusy] = useState(false);
+  const capacity = item.rsvpCapacity ?? 0;
+  const isFull = capacity > 0 && count >= capacity && !rsvped;
+
+  useEffect(() => {
+    if (!postId) return;
+    api.get<{ rsvped: boolean; count: number }>(`${MOBILE_API}/community/event/rsvp-status?post_id=${postId}`)
+      .then((s) => { if (s) { setRsvped(s.rsvped); setCount(s.count); } })
+      .catch(() => {});
+  }, [postId]);
+
+  const toggle = async () => {
+    if (!postId || busy) return;
+    setBusy(true);
+    try {
+      if (rsvped) {
+        await api.post(`${MOBILE_API}/community/event/rsvp-cancel`, { post_id: postId });
+        setRsvped(false);
+        setCount((n) => Math.max(0, n - 1));
+      } else {
+        await api.post(`${MOBILE_API}/community/event/rsvp`, { post_id: postId });
+        setRsvped(true);
+        setCount((n) => n + 1);
+      }
+    } catch {
+      // silent — button state simply doesn't change on failure
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <TouchableOpacity
+        style={[styles.rsvpBtn, rsvped && { backgroundColor: c.success }, isFull && { backgroundColor: c.ghost }]}
+        onPress={toggle}
+        disabled={busy || isFull}
+      >
+        <Text style={styles.rsvpBtnText}>
+          {isFull ? "Fully booked" : rsvped ? "You're going ✓" : "RSVP Now →"}
+        </Text>
+      </TouchableOpacity>
+      {capacity > 0 && (
+        <Text style={[styles.calendarLink, { marginTop: 4 }]}>
+          {Math.max(0, capacity - count)} spot{capacity - count === 1 ? "" : "s"} left
+        </Text>
+      )}
     </>
   );
 }
@@ -870,10 +965,17 @@ function createStyles(c: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
     },
+    followBtnActive: {
+      borderColor: c.ochre,
+      backgroundColor: c.paperDeep,
+    },
     followBtnText: {
       fontSize: 12,
       fontWeight: "700",
       color: c.ink,
+    },
+    followBtnTextActive: {
+      color: c.ochre,
     },
 
     // Template body wrapper

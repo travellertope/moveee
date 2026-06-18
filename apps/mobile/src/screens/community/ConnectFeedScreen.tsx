@@ -30,6 +30,7 @@ import {
   matchesInterests,
 } from "../../features/community/useFeedRecommendations";
 import { useAuthStore } from "../../auth/authStore";
+import { api, MOBILE_API } from "../../api/client";
 import FeedCard from "../../components/community/FeedItemCard";
 import PostDetailSheet from "../../components/community/PostDetailSheet";
 import TemplatePickerSheet from "../../components/community/TemplatePickerSheet";
@@ -181,6 +182,15 @@ export default function ConnectFeedScreen() {
     return map[c] ?? undefined;
   }, [user?.countryOfResidence]);
 
+  const [followedUsernames, setFollowedUsernames] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user) return;
+    api
+      .get<{ usernames: string[] }>(`${MOBILE_API}/follow/following`)
+      .then((res) => setFollowedUsernames(new Set((res.usernames ?? []).map((u) => u.toLowerCase()))))
+      .catch(() => {});
+  }, [user?.id]);
+
   const REGION_LABELS = ["All", "Africa", "Diaspora UK", "Diaspora US", "Diaspora Europe"];
 
   const visibleItems = useMemo(() => {
@@ -197,11 +207,11 @@ export default function ConnectFeedScreen() {
     }
 
     if (forYou) {
-      filtered = rankFeed(filtered, interestTagSet, userCity, userRegion);
+      filtered = rankFeed(filtered, interestTagSet, userCity, userRegion, followedUsernames);
     }
 
     return filtered;
-  }, [items, activeCategory, activeRegion, forYou, filterQuotes, interestTagSet, userCity, userRegion]);
+  }, [items, activeCategory, activeRegion, forYou, filterQuotes, interestTagSet, userCity, userRegion, followedUsernames]);
 
   const trending = useMemo(() => getTrending(items, 3), [items]);
 

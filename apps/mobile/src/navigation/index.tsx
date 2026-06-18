@@ -54,6 +54,7 @@ import ShopScreen from "../screens/shop/ShopScreen";
 import ShopListingScreen from "../screens/shop/ShopListingScreen";
 import ProductDetailScreen from "../screens/shop/ProductDetailScreen";
 import CartScreen from "../screens/shop/CartScreen";
+import CheckoutScreen from "../screens/shop/CheckoutScreen";
 import TheEditScreen from "../screens/shop/TheEditScreen";
 import ShopSearchScreen from "../screens/shop/ShopSearchScreen";
 import MakerProfileScreen from "../screens/shop/MakerProfileScreen";
@@ -71,6 +72,7 @@ import NotificationsScreen from "../screens/member/NotificationsScreen";
 import AnalyticsScreen from "../screens/member/AnalyticsScreen";
 import SavedArticlesScreen from "../screens/member/SavedArticlesScreen";
 import ReferralScreen from "../screens/member/ReferralScreen";
+import MyEventsScreen from "../screens/member/MyEventsScreen";
 import { AppLoadingScreen } from "../components/ui/Skeleton";
 
 // ── Stack param types ──────────────────────────────────────────────────────────
@@ -99,6 +101,7 @@ type MemberStackParams = {
   Membership:      undefined;
   Analytics:       undefined;
   Referral:        undefined;
+  MyEvents:        undefined;
 };
 
 const Tab   = createBottomTabNavigator();
@@ -131,6 +134,7 @@ function ConnectStack() {
       <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
       <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
       <Stack.Screen name="Referral"        component={ReferralScreen} />
+      <Stack.Screen name="MyEvents"        component={MyEventsScreen} />
     </Stack.Navigator>
   );
 }
@@ -165,6 +169,7 @@ function ShopStack() {
       <Stack.Screen name="ShopListing"   component={ShopListingScreen} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="Cart"              component={CartScreen} />
+      <Stack.Screen name="Checkout"          component={CheckoutScreen} />
       <Stack.Screen name="TheEdit"           component={TheEditScreen} />
       <Stack.Screen name="ShopSearch"        component={ShopSearchScreen} />
       <Stack.Screen name="MakerProfile"      component={MakerProfileScreen} />
@@ -199,6 +204,7 @@ function MemberStack() {
       <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
       <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
       <Stack.Screen name="Referral"        component={ReferralScreen} />
+      <Stack.Screen name="MyEvents"        component={MyEventsScreen} />
     </Stack.Navigator>
   );
 }

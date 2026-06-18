@@ -180,6 +180,7 @@ export default async function MemberPage() {
               { label: "My Coupons",       href: "/member/coupons" },
               { label: "Notifications",    href: "/member/notifications" },
               { label: "My Analytics",     href: "/member/analytics" },
+              ...(isPatron ? [{ label: "My Events", href: "/member/events" }] : []),
               { label: "Refer a Friend",   href: "/member/referrals" },
               { label: "Browse Perks",     href: "/connect/perks" },
               { label: "My Collection",    href: "/member/collection" },

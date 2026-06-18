@@ -11,6 +11,7 @@ import { useThemeStore } from "../../store/themeStore";
 import RewardsInfoSheet from "../../components/member/RewardsInfoSheet";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import { BADGE_META, badgeTitleCase } from "../../constants/badges";
 
 const LOGO_LIGHT = require("../../../assets/logo-black.png");
 const LOGO_DARK  = require("../../../assets/logo-white.png");
@@ -62,53 +63,8 @@ function ReputationBar({ reputation, c, styles }: {
 
 // ── Badge icon-only with tooltip ─────────────────────────────────────────────
 
-const BADGE_META: Record<string, { emoji: string; name: string; bg: string; ring: string }> = {
-  // posting & content
-  first_post:           { emoji: "📝", name: "First Post",          bg: "#FEF9C3", ring: "#CA8A04" },
-  post_validated:       { emoji: "✅", name: "Validated Post",       bg: "#D1FAE5", ring: "#059669" },
-  hidden_gem:           { emoji: "💎", name: "Hidden Gem",           bg: "#EDE9FE", ring: "#7C3AED" },
-  food_critic:          { emoji: "🍽️", name: "Food Critic",          bg: "#FCE7F3", ring: "#BE185D" },
-  book_reviewer:        { emoji: "📚", name: "Book Reviewer",        bg: "#F0FDF4", ring: "#15803D" },
-  creative_showcase:    { emoji: "🎨", name: "Creative Showcase",    bg: "#F3E8FF", ring: "#9333EA" },
-  culture_maker:        { emoji: "🎨", name: "Culture Maker",        bg: "#F3E8FF", ring: "#7C3AED" },
-  quote_sharer:         { emoji: "💬", name: "Quote Sharer",         bg: "#FEF3C7", ring: "#D97706" },
-  itinerary_maker:      { emoji: "🗺️", name: "Itinerary Maker",      bg: "#D1FAE5", ring: "#065F46" },
-  // community & social
-  community_builder:    { emoji: "🏗️", name: "Community Builder",    bg: "#FEE2E2", ring: "#DC2626" },
-  connector:            { emoji: "🔗", name: "Connector",            bg: "#DBEAFE", ring: "#2563EB" },
-  referred_1:           { emoji: "🤝", name: "First Referral",       bg: "#D1FAE5", ring: "#16A34A" },
-  referred_3:           { emoji: "🤝", name: "Referrer",             bg: "#D1FAE5", ring: "#059669" },
-  referred_10:          { emoji: "🌟", name: "Super Referrer",       bg: "#FEF9C3", ring: "#CA8A04" },
-  // profile & account
-  verified:             { emoji: "✅", name: "Verified",             bg: "#D1FAE5", ring: "#059669" },
-  profile_complete:     { emoji: "🪪",  name: "Profile Complete",     bg: "#EDE9FE", ring: "#7C3AED" },
-  passkey_set:          { emoji: "🔐", name: "Passkey Set",          bg: "#DBEAFE", ring: "#1D4ED8" },
-  // tier & status
-  patron:               { emoji: "⭐", name: "Connect Pro",          bg: "#FEF9C3", ring: "#B45309" },
-  tastemaker:           { emoji: "✨", name: "Taste Maker",           bg: "#FEF3C7", ring: "#D97706" },
-  culture_contributor:  { emoji: "🏆", name: "Culture Contributor",  bg: "#FEE2E2", ring: "#B91C1C" },
-  culture_authority:    { emoji: "👑", name: "Culture Authority",    bg: "#FEF9C3", ring: "#92400E" },
-  culture_icon:         { emoji: "🦁", name: "Culture Icon",         bg: "#1C1917", ring: "#CA8A04" },
-  // participation
-  explorer:             { emoji: "🧭", name: "Explorer",             bg: "#E0F2FE", ring: "#0369A1" },
-  event_goer:           { emoji: "🎟️", name: "Event Goer",           bg: "#FCE7F3", ring: "#9D174D" },
-  event_checkin:        { emoji: "📍", name: "Checked In",           bg: "#FEE2E2", ring: "#DC2626" },
-  directory_contributor:{ emoji: "🗂️", name: "Directory Contributor",bg: "#E0F2FE", ring: "#075985" },
-  game_winner:          { emoji: "🎮", name: "Game Winner",          bg: "#D1FAE5", ring: "#065F46" },
-  streak_7:             { emoji: "🔥", name: "7-Day Streak",         bg: "#FEE2E2", ring: "#DC2626" },
-  streak_30:            { emoji: "💥", name: "30-Day Streak",        bg: "#FEF9C3", ring: "#B45309" },
-  // newsletter
-  newsletter_reader:    { emoji: "📰", name: "Newsletter Reader",    bg: "#F0FDF4", ring: "#15803D" },
-  newsletter_commenter: { emoji: "✍️", name: "Newsletter Commenter", bg: "#FEF3C7", ring: "#D97706" },
-};
-
-function slugToName(slug: string): string {
-  return slug
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-// Deterministic colour from slug for unknown badges
+// Deterministic colour from slug — canonical badge name/emoji/description
+// comes from ../../constants/badges (mirrors Culture_Gamification::BADGES).
 const FALLBACK_PALETTES: Array<{ bg: string; ring: string }> = [
   { bg: "#FEF3C7", ring: "#D97706" }, { bg: "#D1FAE5", ring: "#059669" },
   { bg: "#DBEAFE", ring: "#2563EB" }, { bg: "#FCE7F3", ring: "#BE185D" },
@@ -121,7 +77,7 @@ function fallbackPalette(slug: string): { bg: string; ring: string } {
 }
 
 function BadgeIcons({ badges, styles }: { badges: string[]; styles: ReturnType<typeof createStyles> }) {
-  const [tooltip, setTooltip] = useState<{ emoji: string; name: string; bg: string; ring: string } | null>(null);
+  const [tooltip, setTooltip] = useState<{ emoji: string; name: string; description: string; ring: string } | null>(null);
   if (!badges.length) return null;
   return (
     <>
@@ -132,16 +88,18 @@ function BadgeIcons({ badges, styles }: { badges: string[]; styles: ReturnType<t
       >
         {badges.map((slug) => {
           const known = BADGE_META[slug];
-          const { bg, ring } = known ?? fallbackPalette(slug);
-          const name  = known?.name  ?? slugToName(slug);
+          const { bg, ring } = fallbackPalette(slug);
+          const name        = known?.name ?? badgeTitleCase(slug);
+          const emoji       = known?.emoji ?? "🏅";
+          const description = known?.description ?? "";
           return (
             <TouchableOpacity
               key={slug}
               style={[styles.badgeIconBtn, { backgroundColor: bg, borderColor: ring }]}
-              onPress={() => setTooltip({ emoji: "ribbon", name, bg, ring })}
+              onPress={() => setTooltip({ emoji, name, description, ring })}
               activeOpacity={0.75}
             >
-              <Ionicons name="ribbon" size={24} color={ring} />
+              <Text style={styles.badgeIconEmoji}>{emoji}</Text>
             </TouchableOpacity>
           );
         })}
@@ -149,9 +107,9 @@ function BadgeIcons({ badges, styles }: { badges: string[]; styles: ReturnType<t
       <Modal visible={!!tooltip} transparent animationType="fade" onRequestClose={() => setTooltip(null)}>
         <TouchableOpacity style={styles.tooltipOverlay} activeOpacity={1} onPress={() => setTooltip(null)}>
           <View style={styles.tooltipBox}>
-            <Ionicons name="ribbon" size={48} color={tooltip?.ring ?? "#B38238"} />
+            <Text style={styles.tooltipEmoji}>{tooltip?.emoji}</Text>
             <Text style={styles.tooltipName}>{tooltip?.name}</Text>
-            <Text style={styles.tooltipHint}>Tap anywhere to close</Text>
+            {tooltip?.description ? <Text style={styles.tooltipDescription}>{tooltip.description}</Text> : null}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -183,6 +141,7 @@ const QUICK_LINKS = [
   { emoji: "🔖", label: "Saved",       screen: "SavedArticles" },
   { emoji: "📊", label: "Analytics",   screen: "Analytics" },
   { emoji: "🔗", label: "Refer a Friend", screen: "Referral" },
+  { emoji: "📋", label: "My Events",   screen: "MyEvents" },
   { emoji: "📖", label: "Magazine",    screen: "Magazine" },
   { emoji: "⚙️", label: "Settings",    screen: "MemberSettings" },
   { emoji: "📧", label: "Newsletters", screen: "MemberSettings", tab: "newsletters" },
@@ -706,9 +665,10 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
 
   /* ── Badge tooltip modal ── */
   tooltipOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center" },
-  tooltipBox:     { backgroundColor: c.paper, borderRadius: 18, paddingHorizontal: 32, paddingVertical: 24, alignItems: "center", gap: 8, minWidth: 180, ...shadows.modal },
+  tooltipBox:     { backgroundColor: c.paper, borderRadius: 18, paddingHorizontal: 32, paddingVertical: 24, alignItems: "center", gap: 8, minWidth: 180, maxWidth: 280, ...shadows.modal },
   tooltipEmoji:   { fontSize: 44 },
   tooltipName:    { fontFamily: fonts.sansBold, fontSize: 16, color: c.ink, textAlign: "center" },
+  tooltipDescription: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, textAlign: "center" },
   tooltipHint:    { fontFamily: fonts.mono, fontSize: 10, color: c.ghost, textAlign: "center" },
 
   /* ── Card 6: Referral ── */

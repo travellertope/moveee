@@ -184,6 +184,22 @@ class Culture_Activator {
             KEY user_game_date (user_id, game_type, played_date)
         ) {$charset_collate};" );
 
+        // Follows table.
+        $follows_table = $wpdb->prefix . 'culture_follows';
+        dbDelta( "CREATE TABLE {$follows_table} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            follower_id bigint(20) NOT NULL,
+            followed_id bigint(20) NOT NULL,
+            notify_posts tinyint(1) NOT NULL DEFAULT 0,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY follower_followed (follower_id, followed_id),
+            KEY followed_idx (followed_id)
+        ) {$charset_collate};" );
+
+        // Community event RSVPs table.
+        Culture_Community_RSVP::create_table();
+
         update_option( 'culture_db_version', CULTURE_VERSION );
 
         // ── Badge threshold migration (v2.0+) ────────────────────────────────

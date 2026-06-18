@@ -1,7 +1,38 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
+
+/** Maps a WP user-profile REST response (login / login-google / passkey exchange) onto the JWT. */
+function applyCultureProfile(token: any, data: any) {
+  token.id = String(data.id);
+  token.username = data.username;
+  token.registeredAt = data.registered_at ?? 0;
+  // KYC/contact PII intentionally omitted from JWT — fetched on-demand
+  // from the profile API on settings pages only.
+  token.city = data.city ?? "";
+  token.occupation = data.occupation ?? "";
+  token.tier = data.tier;
+  token.interests = data.interests ?? [];
+  token.credits = data.credits ?? 0;
+  token.reputation = data.reputation ?? data.points ?? 0;
+  token.reputationTier = data.reputation_tier ?? "member";
+  token.dailyCreditsRemaining = data.daily_credits_remaining ?? 50;
+  token.points = data.points ?? 0;
+  token.badges = data.badges ?? [];
+  token.referralCode = data.referral_code ?? "";
+  token.referralCount = data.referral_count ?? 0;
+  token.visualDownloadsToday = data.visual_downloads_today ?? 0;
+  token.isVendor = data.is_vendor ?? false;
+  token.vendorSlug = data.vendor_slug ?? "";
+  token.avatarUrl = data.avatar_url ?? "";
+  token.hasPasskey = data.has_passkey ?? false;
+  token.passkeyCount = data.passkey_count ?? 0;
+  token.creditsEscrowed = data.credits_escrowed ?? 0;
+  token.name = data.display_name ?? token.name;
+  token.email = data.email ?? token.email;
+}
 
 if (!process.env.NEXTAUTH_SECRET) {
   throw new Error("NEXTAUTH_SECRET environment variable is not set. Authentication cannot start.");
@@ -161,10 +192,37 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          }),
+        ]
+      : []),
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user, trigger, session: updatePayload }) {
+    async jwt({ token, user, account, trigger, session: updatePayload }) {
+      // Google Sign-In — exchange the Google ID token for a WP profile on first sign-in.
+      if (account?.provider === "google" && account.id_token) {
+        try {
+          const res = await fetch(`${WP_URL}/wp-json/culture/v1/login-google`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id_token: account.id_token }),
+            cache: "no-store",
+          });
+          if (res.ok) {
+            applyCultureProfile(token, await res.json());
+          }
+        } catch {
+          // Leave token as-is — session() will still see a token.id-less user, which
+          // downstream code treats as unauthenticated.
+        }
+        return token;
+      }
+
       // On initial sign-in — populate everything from the authorize response.
       if (user) {
         const u = user as any;

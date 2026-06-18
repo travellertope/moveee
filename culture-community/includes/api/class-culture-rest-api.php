@@ -197,6 +197,19 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Google Sign-In — verifies a Google ID token, finds/creates the WP user, returns profile.
+        register_rest_route( 'culture/v1', '/login-google', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_login_google' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'id_token' => array(
+                    'required' => true,
+                    'type'     => 'string',
+                ),
+            ),
+        ) );
+
         // Quote creation (logged-in users).
         register_rest_route( 'culture/v1', '/quotes', array(
             'methods'             => 'POST',
@@ -1132,6 +1145,119 @@ class Culture_REST_API {
             'callback'            => array( __CLASS__, 'handle_mark_notifications_read' ),
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
+        register_rest_route( 'culture/v1', '/notifications/preferences', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( __CLASS__, 'handle_get_notification_prefs' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+                'args'                => array(
+                    'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( __CLASS__, 'handle_set_notification_prefs' ),
+                'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+                'args'                => array(
+                    'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                ),
+            ),
+        ) );
+
+        // Follow system (web — API key, explicit user_id).
+        register_rest_route( 'culture/v1', '/follow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_follow_member' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'target_id'    => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'notify_posts' => array( 'default' => false ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/unfollow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_unfollow_member' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'   => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'target_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/follow/notify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_set_follow_notify' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'target_id'    => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'notify_posts' => array( 'default' => false ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/follow/status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_follow_status' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'   => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'target_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/follow/following', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_following_usernames' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Community event RSVPs (web — API key, explicit user_id param).
+        // Mirrors /mobile/community/event/* in class-culture-mobile-api.php.
+        register_rest_route( 'culture/v1', '/community/event/rsvp', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_community_event_rsvp' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/community/event/rsvp-cancel', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_community_event_rsvp_cancel' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/community/event/rsvp-status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_community_event_rsvp_status' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/community/event/attendees', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_community_event_attendees' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/community/my-events', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_community_my_events' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
 
         // Analytics
         register_rest_route( 'culture/v1', '/member/analytics', array(
@@ -1290,6 +1416,150 @@ class Culture_REST_API {
             Culture_Notifications::mark_all_read( $user_id );
         }
         return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_get_notification_prefs( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        return rest_ensure_response( Culture_Notifications::get_prefs( $user_id ) );
+    }
+
+    public static function handle_set_notification_prefs( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $prefs   = $request->get_param( 'prefs' );
+        if ( ! is_array( $prefs ) ) {
+            $prefs = array();
+        }
+        return rest_ensure_response( Culture_Notifications::set_prefs( $user_id, $prefs ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Follow handlers
+     * —————————————————————————————————————— */
+
+    public static function handle_follow_member( $request ) {
+        $user_id   = (int) $request->get_param( 'user_id' );
+        $target_id = (int) $request->get_param( 'target_id' );
+        $notify    = (bool) $request->get_param( 'notify_posts' );
+
+        if ( $target_id === $user_id ) {
+            return new WP_Error( 'invalid_target', 'You cannot follow yourself.', array( 'status' => 400 ) );
+        }
+        if ( ! get_userdata( $target_id ) ) {
+            return new WP_Error( 'not_found', 'Member not found.', array( 'status' => 404 ) );
+        }
+
+        Culture_Follows::follow( $user_id, $target_id, $notify );
+
+        return rest_ensure_response( array(
+            'success'        => true,
+            'isFollowing'    => true,
+            'followersCount' => Culture_Follows::followers_count( $target_id ),
+        ) );
+    }
+
+    public static function handle_unfollow_member( $request ) {
+        $user_id   = (int) $request->get_param( 'user_id' );
+        $target_id = (int) $request->get_param( 'target_id' );
+
+        Culture_Follows::unfollow( $user_id, $target_id );
+
+        return rest_ensure_response( array(
+            'success'        => true,
+            'isFollowing'    => false,
+            'followersCount' => Culture_Follows::followers_count( $target_id ),
+        ) );
+    }
+
+    public static function handle_set_follow_notify( $request ) {
+        $user_id   = (int) $request->get_param( 'user_id' );
+        $target_id = (int) $request->get_param( 'target_id' );
+        $notify    = (bool) $request->get_param( 'notify_posts' );
+
+        if ( ! Culture_Follows::is_following( $user_id, $target_id ) ) {
+            return new WP_Error( 'not_following', 'You are not following this member.', array( 'status' => 400 ) );
+        }
+
+        Culture_Follows::set_notify( $user_id, $target_id, $notify );
+
+        return rest_ensure_response( array( 'success' => true, 'notifyPosts' => $notify ) );
+    }
+
+    public static function handle_follow_status( $request ) {
+        $user_id   = (int) $request->get_param( 'user_id' );
+        $target_id = (int) $request->get_param( 'target_id' );
+
+        return rest_ensure_response( array(
+            'isFollowing'    => Culture_Follows::is_following( $user_id, $target_id ),
+            'followersCount' => Culture_Follows::followers_count( $target_id ),
+            'followingCount' => Culture_Follows::following_count( $target_id ),
+        ) );
+    }
+
+    public static function handle_get_following_usernames( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        return rest_ensure_response( array(
+            'usernames' => Culture_Follows::get_following_usernames( $user_id ),
+        ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Community event RSVPs (web — API key, explicit user_id)
+     * —————————————————————————————————————— */
+
+    public static function handle_community_event_rsvp( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+        $result  = Culture_Community_RSVP::rsvp( $post_id, $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( Culture_Community_RSVP::get_status( $post_id, $user_id ) );
+    }
+
+    public static function handle_community_event_rsvp_cancel( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+        Culture_Community_RSVP::cancel( $post_id, $user_id );
+        return rest_ensure_response( Culture_Community_RSVP::get_status( $post_id, $user_id ) );
+    }
+
+    public static function handle_community_event_rsvp_status( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+        return rest_ensure_response( Culture_Community_RSVP::get_status( $post_id, $user_id ) );
+    }
+
+    public static function handle_community_event_attendees( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+
+        if ( ! Culture_Community_RSVP::is_pro( $user_id ) ) {
+            return new WP_Error( 'patron_required', 'Connect Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
+        }
+        if ( ! Culture_Community_RSVP::is_organiser( $post_id, $user_id ) ) {
+            return new WP_Error( 'forbidden', 'Only the event organiser can view attendees.', array( 'status' => 403 ) );
+        }
+
+        $attendees = array_map( function( $row ) {
+            return array(
+                'userId'      => (int) $row['user_id'],
+                'displayName' => $row['display_name'],
+                'email'       => $row['user_email'],
+                'rsvpAt'      => $row['created_at'],
+            );
+        }, Culture_Community_RSVP::get_attendees( $post_id ) );
+
+        return rest_ensure_response( array( 'attendees' => $attendees ) );
+    }
+
+    public static function handle_community_my_events( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+
+        if ( ! Culture_Community_RSVP::is_pro( $user_id ) ) {
+            return new WP_Error( 'patron_required', 'Connect Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
+        }
+
+        return rest_ensure_response( array( 'events' => Culture_Community_RSVP::get_organiser_events( $user_id ) ) );
     }
 
     /* ——————————————————————————————————————
@@ -1739,6 +2009,28 @@ class Culture_REST_API {
                 __( 'Invalid username or password.', 'culture-community' ),
                 array( 'status' => 401 )
             );
+        }
+
+        return rest_ensure_response( self::user_profile( $user ) );
+    }
+
+    /**
+     * POST /culture/v1/login-google
+     * Verifies a Google ID token (via Culture_Google_Auth), finds or creates the
+     * matching WP user, and returns the same profile shape as handle_login().
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public static function handle_login_google( $request ) {
+        $claims = Culture_Google_Auth::verify_id_token( $request->get_param( 'id_token' ) );
+        if ( is_wp_error( $claims ) ) {
+            return $claims;
+        }
+
+        $user = Culture_Google_Auth::find_or_create_user( $claims );
+        if ( is_wp_error( $user ) ) {
+            return $user;
         }
 
         return rest_ensure_response( self::user_profile( $user ) );
@@ -4083,6 +4375,7 @@ class Culture_REST_API {
             'username'        => $user->user_login,
             'display_name'    => $user->display_name,
             'avatar_url'      => get_user_meta( $uid, '_culture_avatar_url', true ) ?: '',
+            'cover_photo_url' => get_user_meta( $uid, '_culture_cover_photo_url', true ) ?: '',
             'bio'             => get_user_meta( $uid, '_culture_directory_bio', true ) ?: '',
             'city'            => get_user_meta( $uid, '_culture_city', true ) ?: '',
             'country'         => get_user_meta( $uid, '_culture_country_of_residence', true ) ?: '',
@@ -4094,6 +4387,8 @@ class Culture_REST_API {
             'interests'       => json_decode( get_user_meta( $uid, '_culture_interests', true ) ?: '[]', true ) ?: array(),
             'joined'          => date( 'Y-m-d', strtotime( $user->user_registered ) ),
             'post_count'      => (int) count_user_posts( $uid, 'culture_post' ),
+            'followers_count' => class_exists( 'Culture_Follows' ) ? Culture_Follows::followers_count( $uid ) : 0,
+            'following_count' => class_exists( 'Culture_Follows' ) ? Culture_Follows::following_count( $uid ) : 0,
         ) );
     }
 

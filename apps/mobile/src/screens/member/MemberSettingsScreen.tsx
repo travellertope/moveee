@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { INTERESTS } from "@moveee/utils/interest-mappings";
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Pressable,
-  StyleSheet, SafeAreaView, Alert, ActivityIndicator, Platform,
+  StyleSheet, SafeAreaView, Alert, ActivityIndicator, Platform, Image,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRoute } from "@react-navigation/native";
@@ -26,15 +26,35 @@ import type { Passkey } from "../../types";
 
 
 
-type Tab = "profile" | "directory" | "interests" | "newsletters" | "security" | "appearance";
+type Tab = "profile" | "directory" | "interests" | "newsletters" | "notifications" | "security" | "appearance";
 
 const TAB_LABELS: { id: Tab; label: string }[] = [
-  { id: "profile",     label: "Profile" },
-  { id: "directory",   label: "Directory" },
-  { id: "interests",   label: "Interests" },
-  { id: "newsletters", label: "Newsletters" },
-  { id: "security",    label: "Security" },
-  { id: "appearance",  label: "Appearance" },
+  { id: "profile",       label: "Profile" },
+  { id: "directory",     label: "Directory" },
+  { id: "interests",     label: "Interests" },
+  { id: "newsletters",   label: "Newsletters" },
+  { id: "notifications", label: "Notifications" },
+  { id: "security",      label: "Security" },
+  { id: "appearance",    label: "Appearance" },
+];
+
+// Mirrors Culture_Notifications::TYPES in class-culture-notifications.php (minus
+// 'system', which is always-on and not shown here). Keep these in sync.
+const NOTIFICATION_TYPES: { id: string; label: string }[] = [
+  { id: "credit_earned",     label: "Credits Earned" },
+  { id: "badge_unlocked",    label: "Badge Unlocked" },
+  { id: "perk_expiring",     label: "Perk Expiring Soon" },
+  { id: "perk_redeemed",     label: "Perk Redeemed" },
+  { id: "cashout_approved",  label: "Cash Out Approved" },
+  { id: "cashout_rejected",  label: "Cash Out Rejected" },
+  { id: "escrow_released",   label: "Credits Released" },
+  { id: "comment_received",  label: "New Comment" },
+  { id: "post_validated",    label: "Post Reached Threshold" },
+  { id: "referral_received", label: "Friend Joined" },
+  { id: "mention",           label: "You Were Mentioned" },
+  { id: "new_follower",      label: "New Follower" },
+  { id: "new_follower_post", label: "New Post From Someone You Follow" },
+  { id: "event_rsvp",        label: "Event RSVP" },
 ];
 
 // Derived from canonical INTERESTS in packages/utils — single source of truth
@@ -194,18 +214,51 @@ function ProfileTab() {
     }
   };
 
+  const handleCoverPhotoPick = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    try {
+      await api.upload(`${PROXY}/mobile/me/cover-photo`, result.assets[0].uri, "file");
+      await refreshProfile();
+    } catch {
+      Alert.alert("Error", "Could not upload cover photo.");
+    }
+  };
+
   const GENDER_OPTIONS = ["Woman", "Man", "Non-binary", "Prefer not to say"];
 
   return (
     <View style={{ flex: 1, position: "relative" }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+        {/* Cover photo */}
+        <TouchableOpacity style={profileStyles.coverWrap} onPress={handleCoverPhotoPick}>
+          {user?.coverPhotoUrl ? (
+            <Image source={{ uri: user.coverPhotoUrl }} style={profileStyles.coverImage} resizeMode="cover" />
+          ) : (
+            <View style={profileStyles.coverPlaceholder} />
+          )}
+          <View style={profileStyles.coverEditBadge}>
+            <Ionicons name="camera-outline" size={13} color={c.ink} />
+            <Text style={profileStyles.coverEditText}>Edit cover</Text>
+          </View>
+        </TouchableOpacity>
+
         {/* Avatar */}
         <View style={profileStyles.avatarSection}>
           <View style={profileStyles.avatarRing}>
             <View style={profileStyles.avatarCircle}>
-              <Text style={profileStyles.avatarInitials}>
-                {(user?.displayName ?? user?.name ?? "?")[0]?.toUpperCase()}
-              </Text>
+              {user?.avatarUrl ? (
+                <Image source={{ uri: user.avatarUrl }} style={profileStyles.avatarImage} resizeMode="cover" />
+              ) : (
+                <Text style={profileStyles.avatarInitials}>
+                  {(user?.displayName ?? user?.name ?? "?")[0]?.toUpperCase()}
+                </Text>
+              )}
             </View>
             <TouchableOpacity style={profileStyles.cameraBtn} onPress={handleAvatarPick}>
               <Ionicons name="camera-outline" size={14} color={c.ink} />
@@ -396,6 +449,25 @@ function ProfileTab() {
 
 function createProfileStyles(c: ColorPalette) {
   return StyleSheet.create({
+    coverWrap: {
+      width: "100%", height: 120, borderRadius: radius.lg,
+      backgroundColor: c.paperDeep, overflow: "hidden",
+      marginBottom: -36, position: "relative",
+    },
+    coverImage: { width: "100%", height: "100%" },
+    coverPlaceholder: {
+      width: "100%", height: "100%",
+      backgroundColor: c.paperDeep,
+    },
+    coverEditBadge: {
+      position: "absolute", bottom: 8, right: 8,
+      flexDirection: "row", alignItems: "center", gap: 4,
+      backgroundColor: c.paper, borderRadius: radius.full,
+      paddingHorizontal: 10, paddingVertical: 5,
+      borderWidth: 1, borderColor: c.ghost + "4D",
+      shadowColor: "#000", shadowOpacity: 0.12, shadowRadius: 4, elevation: 2,
+    },
+    coverEditText: { fontFamily: fonts.sans, fontSize: 11, color: c.ink },
     avatarSection: { alignItems: "center", marginBottom: 24, marginTop: 8 },
     avatarRing: {
       width: 102, height: 102, borderRadius: 51,
@@ -407,7 +479,9 @@ function createProfileStyles(c: ColorPalette) {
       width: 90, height: 90, borderRadius: 45,
       backgroundColor: c.goldLight,
       justifyContent: "center", alignItems: "center",
+      overflow: "hidden",
     },
+    avatarImage: { width: "100%", height: "100%" },
     avatarInitials:    { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.gold },
     cameraBtn: {
       position: "absolute", bottom: 0, right: 0,
@@ -868,6 +942,46 @@ function createNlStyles(c: ColorPalette) {
   });
 }
 
+// ── Notifications Tab ─────────────────────────────────────────────────────────
+function NotificationsTab() {
+  const c = useColors();
+  const nlStyles = useMemo(() => createNlStyles(c), [c]);
+  const [prefs, setPrefs] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get<Record<string, boolean>>(`${MOBILE_API}/notifications/preferences`)
+      .then((data) => setPrefs(data || {}))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const toggle = async (id: string, val: boolean) => {
+    const next = { ...prefs, [id]: val };
+    setPrefs(next);
+    await api.post(`${MOBILE_API}/notifications/preferences`, { prefs: next }).catch(() => {});
+  };
+
+  if (loading) return <ActivityIndicator style={{ marginTop: 40 }} color={c.ochre} />;
+
+  return (
+    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <Text style={nlStyles.heading}>Notification Preferences</Text>
+      <Text style={nlStyles.sub}>Choose which in-app notifications you want to receive.</Text>
+
+      {NOTIFICATION_TYPES.map((t) => {
+        const isOn = prefs[t.id] ?? true;
+        return (
+          <View key={t.id} style={[nlStyles.card, shadows.card, { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}>
+            <Text style={[nlStyles.nlName, { marginBottom: 0, flex: 1, paddingRight: 12 }]}>{t.label}</Text>
+            <ToggleSwitch value={isOn} onChange={(v) => toggle(t.id, v)} />
+          </View>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
 // ── Appearance Tab ────────────────────────────────────────────────────────────
 const THEME_OPTIONS: { id: ThemeMode; label: string; desc: string }[] = [
   { id: "light",  label: "Light",          desc: "Always use the light theme." },
@@ -1244,8 +1358,9 @@ export default function MemberSettingsScreen() {
       {activeTab === "profile"     && <ProfileTab />}
       {activeTab === "directory"   && <DirectoryTab />}
       {activeTab === "interests"   && <InterestsTab />}
-      {activeTab === "newsletters" && <NewslettersTab />}
-      {activeTab === "security"    && <SecurityTab />}
+      {activeTab === "newsletters"   && <NewslettersTab />}
+      {activeTab === "notifications" && <NotificationsTab />}
+      {activeTab === "security"      && <SecurityTab />}
       {activeTab === "appearance"  && <AppearanceTab />}
     </SafeAreaView>
   );

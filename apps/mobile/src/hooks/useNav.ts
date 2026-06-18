@@ -44,10 +44,11 @@ export type AppParamList = {
   ShopListing: { category?: string } | undefined;
   ProductDetail: { productId: number; productSlug?: string };
   Cart: undefined;
+  Checkout: { couponCode?: string } | undefined;
   TheEdit: undefined;
   ShopSearch: undefined;
   MakerProfile: { makerSlug: string; makerName: string };
-  OrderConfirmation: { orderId?: number } | undefined;
+  OrderConfirmation: { orderId?: string; total?: string; itemCount?: number } | undefined;
   Wishlist: undefined;
   // Games
   GamesList: undefined;

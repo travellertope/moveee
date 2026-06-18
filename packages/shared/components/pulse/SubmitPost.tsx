@@ -177,8 +177,11 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
   const [eventAdmission, setEventAdmission] = useState("");
   const [eventTicketUrl, setEventTicketUrl] = useState("");
   const [eventCategory, setEventCategory] = useState("");
+  const [eventRsvpEnabled, setEventRsvpEnabled] = useState(false);
+  const [eventRsvpCapacity, setEventRsvpCapacity] = useState("");
 
   const user = session?.user as any;
+  const isPro = user?.tier === "patron";
   const loggedIn = status === "authenticated";
   const maxChars = MAX_CHARS[template] ?? 3000;
   const charCount = text.length;
@@ -259,6 +262,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
     setEventTitle(""); setEventDate(""); setEventEndDate(""); setEventLocation("");
     setEventCity(""); setEventAdmission(""); setEventTicketUrl(""); setEventCategory("");
     setEventOrganiser(null);
+    setEventRsvpEnabled(false); setEventRsvpCapacity("");
     setLinkPreview(null);
   }
 
@@ -338,8 +342,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       let imageUrl: string | undefined;
       const galleryUrls: string[] = [];
 
-      // Non-event templates use the community upload endpoint
-      if (imageFile && template !== "event") {
+      if (imageFile) {
         if (imageFile.size > 8 * 1024 * 1024) throw new Error("Image must be under 8 MB.");
         setUploading(true);
         imageUrl = await uploadImage(imageFile);
@@ -351,49 +354,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
         setUploading(true);
         galleryUrls.push(await uploadImage(f));
         setUploading(false);
-      }
-
-      // Event goes to separate endpoint (uses events upload endpoint to get WP attachment ID)
-      if (template === "event") {
-        let eventImageUrl: string | undefined;
-        let eventImageId = 0;
-        if (imageFile) {
-          if (imageFile.size > 8 * 1024 * 1024) throw new Error("Image must be under 8 MB.");
-          setUploading(true);
-          const fd = new FormData();
-          fd.append("file", imageFile);
-          const upRes = await fetch("/api/events/upload-image", { method: "POST", body: fd });
-          setUploading(false);
-          if (upRes.ok) {
-            const upData = await upRes.json();
-            eventImageUrl = upData.url || undefined;
-            eventImageId  = upData.id  || 0;
-          }
-        }
-        const res = await fetch("/api/events/member-submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: eventTitle.trim(),
-            description: text.trim() || undefined,
-            event_date: eventDate,
-            end_date: eventEndDate || undefined,
-            location: eventLocation.trim() || undefined,
-            city: eventCity.trim() || undefined,
-            admission: eventAdmission.trim() || undefined,
-            ticketing_url: eventTicketUrl.trim() || undefined,
-            image_url: eventImageUrl,
-            image_id: eventImageId || undefined,
-            category: eventCategory || undefined,
-            organiser_directory_id: eventOrganiser?.id || undefined,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to submit event.");
-        setSuccess("Event submitted — it will appear on the events calendar shortly.");
-        resetForm();
-        setTimeout(() => setSuccess(""), 5000);
-        return;
       }
 
       // Quote goes to separate endpoint
@@ -464,6 +424,22 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
       }
       if (template === "creative-showcase" && videoUrl.trim()) {
         payload.video_url = videoUrl.trim();
+      }
+      if (template === "event") {
+        payload.event_title = eventTitle.trim();
+        payload.event_date = eventDate;
+        payload.event_end_date = eventEndDate || undefined;
+        payload.event_venue = eventLocation.trim() || undefined;
+        payload.event_address = eventLocation.trim() || undefined;
+        payload.event_city = eventCity.trim() || undefined;
+        payload.event_admission = eventAdmission.trim() || undefined;
+        payload.ticket_url = eventTicketUrl.trim() || undefined;
+        payload.event_category = eventCategory || undefined;
+        payload.organiser_directory_id = eventOrganiser?.id || undefined;
+        if (isPro && eventRsvpEnabled) {
+          payload.rsvp_enabled = true;
+          payload.rsvp_capacity = parseInt(eventRsvpCapacity) || 0;
+        }
       }
 
       const res = await fetch("/api/community/submit", {
@@ -674,6 +650,33 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate }: Sub
                   onChange={setEventOrganiser}
                   placeholder="Search directory for organiser…"
                 />
+
+                {isPro ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.25rem" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={eventRsvpEnabled}
+                        onChange={e => setEventRsvpEnabled(e.target.checked)}
+                      />
+                      Enable RSVP for this event
+                    </label>
+                    {eventRsvpEnabled && (
+                      <input
+                        type="number"
+                        min={0}
+                        value={eventRsvpCapacity}
+                        onChange={e => setEventRsvpCapacity(e.target.value)}
+                        placeholder="Capacity (0 = unlimited)"
+                        className="composer-input"
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: "0.78rem", color: "var(--mute)", marginTop: "0.25rem" }}>
+                    Connect Pro members can enable RSVP for their events.
+                  </p>
+                )}
               </>
             )}
 

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, Dimensions, Image,
-  Modal,
+  Modal, Share,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
@@ -12,7 +12,10 @@ import { api, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
-import type { Member } from "../../types";
+import type { Member, FeedItem, TemplateType } from "../../types";
+import { BADGE_META, badgeTitleCase } from "../../constants/badges";
+import PostDetailSheet from "../../components/community/PostDetailSheet";
+import { useAuthStore } from "../../auth/authStore";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -38,6 +41,9 @@ interface PublicProfile extends Member {
   registeredAt?: number;
   reputation?: number;
   reputationTier?: string;
+  followersCount?: number;
+  followingCount?: number;
+  isFollowing?: boolean;
 }
 
 interface CommunityPost {
@@ -48,6 +54,70 @@ interface CommunityPost {
   likeCount: number;
   commentCount: number;
   template_type: string;
+  // Remaining template fields come through as snake_case from
+  // Culture_Mobile_API::format_community_post() — see that method for the full list.
+  [key: string]: any;
+}
+
+// Map the slim `member/{id}/posts` response (snake_case) onto the FeedItem
+// shape PostDetailSheet expects (camelCase) so a tap can open the same sheet
+// used by the main feed.
+function mapPostToFeedItem(post: CommunityPost, profile: PublicProfile): FeedItem {
+  return {
+    id: `community-${post.id}`,
+    wpId: post.id,
+    type: "community",
+    title: post.content,
+    slug: "",
+    date: post.publishedAt,
+    image: post.imageUrl ?? null,
+    href: "",
+    communityAuthorId: profile.id,
+    communityAuthor: profile.displayName,
+    communityAuthorUsername: profile.username,
+    communityAuthorAvatar: profile.avatarUrl,
+    commentCount: post.commentCount,
+    templateType: post.template_type as TemplateType,
+    linkedDirectoryId: post.linked_directory_id || undefined,
+    starRating: post.star_rating || undefined,
+    locationName: post.location_name || "",
+    pollOptions: post.poll_options || [],
+    pollExpiresAt: post.poll_expires_at || "",
+    pollDescription: post.poll_description || "",
+    galleryImages: post.gallery_images || [],
+    videoUrl: post.video_url || "",
+    itineraryStops: post.itinerary_stops || [],
+    itineraryTitle: post.itinerary_title || "",
+    itineraryCity: post.itinerary_city || "",
+    itineraryBudget: post.itinerary_budget || "",
+    itineraryDuration: post.itinerary_duration || "",
+    itineraryBestTime: post.itinerary_best_time || "",
+    foodDishName: post.food_dish_name || "",
+    foodRatingTaste: post.food_rating_taste || undefined,
+    foodRatingValue: post.food_rating_value || undefined,
+    foodRatingVibe: post.food_rating_vibe || undefined,
+    cuisineTag: post.cuisine_tag || "",
+    priceRange: post.price_range || "",
+    placeName: post.place_name || "",
+    placeLocation: post.place_location || "",
+    openingHours: post.opening_hours || "",
+    culturalTakeHeadline: post.cultural_take_headline || "",
+    showcaseTitle: post.showcase_title || "",
+    showcaseMedium: post.showcase_medium || "",
+    showcaseCollaborator: post.showcase_collaborator || "",
+    bookTitle: post.book_title || "",
+    bookAuthor: post.book_author || "",
+    bookStatus: post.book_status || "",
+    bookOverallRating: post.book_overall_rating || undefined,
+    bookRatingWriting: post.book_rating_writing || undefined,
+    bookRatingStory: post.book_rating_story || undefined,
+    bookRatingCharacters: post.book_rating_characters || undefined,
+    bookRatingPacing: post.book_rating_pacing || undefined,
+    bookFavQuote: post.book_fav_quote || "",
+    bookRecommend: !!post.book_recommend,
+    bookGenres: post.book_genres || [],
+    reactions: { love: 0, fire: 0, clap: 0 },
+  };
 }
 
 interface PortfolioItem {
@@ -124,11 +194,11 @@ function TierChip({
 function BadgeRow({
   badges, styles, c,
 }: {
-  badges: { slug: string; name: string; emoji: string }[];
+  badges: { slug: string; name: string; emoji: string; description: string }[];
   styles: ReturnType<typeof createStyles>;
   c: ColorPalette;
 }) {
-  const [tooltip, setTooltip] = useState<{ name: string; emoji: string } | null>(null);
+  const [tooltip, setTooltip] = useState<{ name: string; emoji: string; description: string } | null>(null);
   if (!badges.length) return null;
   return (
     <>
@@ -142,7 +212,7 @@ function BadgeRow({
           <TouchableOpacity
             key={b.slug ?? i}
             style={styles.badgeIcon}
-            onPress={() => setTooltip({ name: b.name, emoji: b.emoji })}
+            onPress={() => setTooltip({ name: b.name, emoji: b.emoji, description: b.description })}
             activeOpacity={0.7}
           >
             <Text style={styles.badgeEmoji}>{b.emoji}</Text>
@@ -164,6 +234,7 @@ function BadgeRow({
           <View style={styles.tooltipBox}>
             <Text style={styles.tooltipEmoji}>{tooltip?.emoji}</Text>
             <Text style={styles.tooltipName}>{tooltip?.name}</Text>
+            {tooltip?.description ? <Text style={styles.tooltipDescription}>{tooltip.description}</Text> : null}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -171,10 +242,10 @@ function BadgeRow({
   );
 }
 
-function MiniPostCard({ post, styles }: { post: CommunityPost; styles: ReturnType<typeof createStyles> }) {
+function MiniPostCard({ post, styles, onPress }: { post: CommunityPost; styles: ReturnType<typeof createStyles>; onPress: () => void }) {
   const meta = TEMPLATE_META[post.template_type] ?? { emoji: "📝", label: "Post" };
   return (
-    <View style={styles.postCard}>
+    <TouchableOpacity style={styles.postCard} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.postCardHeader}>
         <View style={styles.templateBadge}>
           <Text style={styles.templateBadgeText}>{meta.emoji} {meta.label}</Text>
@@ -186,7 +257,7 @@ function MiniPostCard({ post, styles }: { post: CommunityPost; styles: ReturnTyp
         <Text style={styles.postMeta}>❤️ {post.likeCount}</Text>
         <Text style={styles.postMeta}>💬 {post.commentCount}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -230,6 +301,7 @@ export default function MemberProfileScreen() {
   const nav = useNav();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const currentUser = useAuthStore((s) => s.user);
 
   const [profile,   setProfile]   = useState<PublicProfile | null>(null);
   const [posts,     setPosts]     = useState<CommunityPost[]>([]);
@@ -237,12 +309,21 @@ export default function MemberProfileScreen() {
   const [loading,   setLoading]   = useState(true);
   const [postPage,  setPostPage]  = useState(1);
   const [activeTab, setActiveTab] = useState<"community" | "portfolio">("community");
+  const [sheetItem, setSheetItem] = useState<FeedItem | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [notifyPosts, setNotifyPosts] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
 
   useEffect(() => {
     const uid = params.userId;
     if (!uid) { setLoading(false); return; }
     api.get<PublicProfile>(`${MOBILE_API}/member/${uid}`)
-      .then(setProfile).catch(() => {}).finally(() => setLoading(false));
+      .then((p) => {
+        setProfile(p);
+        setIsFollowing(!!p.isFollowing);
+        setFollowersCount(p.followersCount ?? 0);
+      }).catch(() => {}).finally(() => setLoading(false));
   }, [params.userId]);
 
   useEffect(() => {
@@ -259,15 +340,57 @@ export default function MemberProfileScreen() {
   }, [profile, activeTab]);
 
   const isPro = profile?.tier === "patron";
+  const isSelf = !!currentUser && !!profile && String(currentUser.id) === String(profile.id);
+
+  const toggleFollow = async () => {
+    if (!profile || followBusy) return;
+    setFollowBusy(true);
+    try {
+      if (isFollowing) {
+        const res = await api.post<{ isFollowing: boolean; followersCount: number }>(
+          `${MOBILE_API}/unfollow`, { user_id: profile.id }
+        );
+        setIsFollowing(res.isFollowing);
+        setFollowersCount(res.followersCount);
+        setNotifyPosts(false);
+      } else {
+        const res = await api.post<{ isFollowing: boolean; followersCount: number }>(
+          `${MOBILE_API}/follow`, { user_id: profile.id, notify_posts: notifyPosts }
+        );
+        setIsFollowing(res.isFollowing);
+        setFollowersCount(res.followersCount);
+      }
+    } catch { /* ignore */ }
+    setFollowBusy(false);
+  };
+
+  const toggleNotify = async () => {
+    if (!profile) return;
+    const next = !notifyPosts;
+    setNotifyPosts(next);
+    try {
+      await api.post(`${MOBILE_API}/follow/notify`, { user_id: profile.id, notify_posts: next });
+    } catch { /* ignore */ }
+  };
+
+  const handleShare = async () => {
+    if (!profile?.username) return;
+    const url = `https://connect.themoveee.com/${profile.username}`;
+    try {
+      await Share.share({ message: `Check out ${profile.displayName} on Moveee: ${url}`, url });
+    } catch { /* user cancelled */ }
+  };
 
   if (loading) return <SafeAreaView style={styles.container}><View style={styles.center}><ActivityIndicator color={c.gold} /></View></SafeAreaView>;
   if (!profile) return <SafeAreaView style={styles.container}><View style={styles.center}><Text style={styles.errorText}>Member not found.</Text></View></SafeAreaView>;
 
-  const badges = (profile.badges ?? []).map((b: any) =>
-    typeof b === "string"
-      ? { slug: b, name: b.replace(/-_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()), emoji: "🏅" }
-      : b
-  );
+  const badges = (profile.badges ?? []).map((b: any) => {
+    if (typeof b !== "string") return b;
+    const meta = BADGE_META[b];
+    return meta
+      ? { slug: b, name: meta.name, emoji: meta.emoji, description: meta.description }
+      : { slug: b, name: badgeTitleCase(b), emoji: "🏅", description: "" };
+  });
   const hasSocial = !!(profile.instagram || profile.linkedin || profile.website);
   const rep       = profile.reputation ?? 0;
 
@@ -278,20 +401,28 @@ export default function MemberProfileScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <LinearGradient
-          colors={["#F3ECE0", "#E8D3BA", "#C5491F"]}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        />
+        {profile.coverPhotoUrl ? (
+          <Image source={{ uri: profile.coverPhotoUrl }} style={styles.hero} resizeMode="cover" />
+        ) : (
+          <LinearGradient
+            colors={["#F3ECE0", "#E8D3BA", "#C5491F"]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={styles.hero}
+          />
+        )}
 
         <View style={styles.profileCard}>
-          <TouchableOpacity style={styles.shareBtn}>
+          <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
             <Ionicons name="share-outline" size={18} color={c.ink} />
           </TouchableOpacity>
 
           <View style={[styles.avatarRing, isPro ? styles.avatarRingPro : styles.avatarRingCitizen]}>
             <View style={styles.avatarInner}>
-              <Text style={styles.avatarInitials}>{initials(profile.displayName)}</Text>
+              {profile.avatarUrl ? (
+                <Image source={{ uri: profile.avatarUrl }} style={styles.avatarImage} />
+              ) : (
+                <Text style={styles.avatarInitials}>{initials(profile.displayName)}</Text>
+              )}
             </View>
           </View>
 
@@ -312,6 +443,33 @@ export default function MemberProfileScreen() {
 
           {/* Reputation tier chip */}
           <TierChip reputation={rep} styles={styles} c={c} />
+
+          {!isSelf && (
+            <View style={styles.followRow}>
+              <TouchableOpacity
+                style={[styles.followBtn, isFollowing && styles.followBtnActive]}
+                onPress={toggleFollow}
+                disabled={followBusy}
+              >
+                <Text style={[styles.followBtnText, isFollowing && styles.followBtnTextActive]}>
+                  {isFollowing ? "Following" : "Follow"}
+                </Text>
+              </TouchableOpacity>
+              <Text style={styles.followersCountText}>
+                <Text style={styles.followersCountStrong}>{followersCount.toLocaleString()}</Text> followers
+              </Text>
+            </View>
+          )}
+          {!isSelf && isFollowing && (
+            <TouchableOpacity style={styles.notifyToggleRow} onPress={toggleNotify}>
+              <Ionicons
+                name={notifyPosts ? "checkbox" : "square-outline"}
+                size={16}
+                color={notifyPosts ? c.ochre : c.ghost}
+              />
+              <Text style={styles.notifyToggleText}>Notify me when they post</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Badges — icon only, tap for name */}
           <BadgeRow badges={badges} styles={styles} c={c} />
@@ -337,7 +495,14 @@ export default function MemberProfileScreen() {
           <View style={styles.tabContent}>
             {activeTab === "community" ? (
               <>
-                {posts.map((p) => <MiniPostCard key={p.id} post={p} styles={styles} />)}
+                {posts.map((p) => (
+                  <MiniPostCard
+                    key={p.id}
+                    post={p}
+                    styles={styles}
+                    onPress={() => setSheetItem(mapPostToFeedItem(p, profile))}
+                  />
+                ))}
                 {posts.length > 0 && (
                   <TouchableOpacity style={styles.loadMore} onPress={() => setPostPage((n) => n + 1)}>
                     <Text style={styles.loadMoreText}>Load more posts</Text>
@@ -355,6 +520,8 @@ export default function MemberProfileScreen() {
       <TouchableOpacity style={styles.backBtn} onPress={() => nav.goBack()}>
         <Ionicons name="chevron-back" size={20} color={c.ink} />
       </TouchableOpacity>
+
+      <PostDetailSheet item={sheetItem} visible={sheetItem !== null} onClose={() => setSheetItem(null)} />
     </View>
   );
 }
@@ -405,7 +572,10 @@ function createStyles(c: ColorPalette) {
     avatarRingCitizen: { borderColor: c.ghost },
     avatarInner: {
       flex: 1, borderRadius: 44, backgroundColor: c.paperDeep,
-      justifyContent: "center", alignItems: "center",
+      justifyContent: "center", alignItems: "center", overflow: "hidden",
+    },
+    avatarImage: {
+      width: "100%", height: "100%",
     },
     avatarInitials: { fontFamily: fonts.monoBold, fontSize: 18, color: c.inkSoft },
 
@@ -435,6 +605,20 @@ function createStyles(c: ColorPalette) {
     tierChipIcon:  { fontSize: 13, color: c.ochre },
     tierChipLabel: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ink, letterSpacing: 0.3 },
 
+    // Follow button + followers count
+    followRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14 },
+    followBtn: {
+      paddingHorizontal: 18, paddingVertical: 8, borderRadius: radius.full,
+      borderWidth: 1, borderColor: c.ghost, backgroundColor: c.paper,
+    },
+    followBtnActive: { borderColor: c.ochre, backgroundColor: c.paperDeep },
+    followBtnText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ink, letterSpacing: 0.3 },
+    followBtnTextActive: { color: c.ochre },
+    followersCountText: { fontFamily: fonts.mono, fontSize: 11, color: c.mute },
+    followersCountStrong: { color: c.ink, fontFamily: fonts.monoBold },
+    notifyToggleRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
+    notifyToggleText: { fontFamily: fonts.sans, fontSize: 11, color: c.inkSoft },
+
     // Badge row — icon only
     badgeRowWrap: { marginTop: 16, width: "100%" },
     badgeRow:     { paddingHorizontal: 20, gap: 10 },
@@ -453,10 +637,11 @@ function createStyles(c: ColorPalette) {
     tooltipBox: {
       backgroundColor: c.ink, borderRadius: 14,
       paddingHorizontal: 28, paddingVertical: 20,
-      alignItems: "center", gap: 8, minWidth: 160,
+      alignItems: "center", gap: 8, minWidth: 160, maxWidth: 260,
     },
     tooltipEmoji: { fontSize: 36 },
     tooltipName:  { fontFamily: fonts.sansBold, fontSize: 15, color: c.paper, textAlign: "center" },
+    tooltipDescription: { fontFamily: fonts.sans, fontSize: 13, color: c.paper, opacity: 0.8, textAlign: "center" },
 
     socialRow: { flexDirection: "row", gap: 24, marginTop: 16 },
     socialBtn: {
