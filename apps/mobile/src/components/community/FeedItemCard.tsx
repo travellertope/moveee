@@ -569,11 +569,6 @@ function createStyles(c: ColorPalette) {
       color: c.inkSoft,
       lineHeight: 20,
     },
-    // event community
-    eventHero: {
-      width: "100%" as any,
-      height: 180,
-    },
     // quote
     quoteContainer: {
       padding: 20,
@@ -1054,29 +1049,15 @@ function PulseCard({ item }: FeedCardProps) {
   );
 }
 
-// EditorialCard (A1 with hero / A2 text-only)
+// EditorialCard (A1 — compact side-by-side thumbnail / A2 text-only)
 function EditorialCard({ item, onPress }: FeedCardProps) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const hasHero = !!item.image;
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
-      {/* A1 — hero image with category badge overlay bottom-left */}
-      {hasHero ? (
-        <View style={{ position: "relative", overflow: "hidden", borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
-          <Image source={{ uri: item.image! }} style={{ width: "100%", height: 180 }} resizeMode="cover" />
-          {item.category ? (
-            <View style={{ position: "absolute", bottom: 12, left: 12 }}>
-              <View style={styles.editorialCategoryChip}>
-                <Text style={styles.editorialCategoryChipText}>{item.category.toUpperCase()}</Text>
-              </View>
-            </View>
-          ) : null}
-        </View>
-      ) : null}
-
       <View style={{ padding: 14 }}>
-        {/* Badge row: Editorial label + section eyebrow + timestamp */}
+        {/* Badge row: Editorial label + timestamp */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <BadgePill label="Editorial" bg={c.ochre} color={c.paper} styles={styles} />
           <Text style={styles.timeRight}>{timeAgo(item.date)}</Text>
@@ -1089,10 +1070,27 @@ function EditorialCard({ item, onPress }: FeedCardProps) {
           </View>
         ) : null}
 
-        <Text style={[styles.cardTitleXl, { marginTop: 8 }]}>{item.title}</Text>
-        {item.excerpt ? (
-          <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={hasHero ? 2 : 3}>{item.excerpt}</Text>
-        ) : null}
+        {/* A1 — text column with a small thumbnail alongside, instead of a full-width hero */}
+        <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitleXl} numberOfLines={hasHero ? 3 : undefined}>{item.title}</Text>
+            {item.excerpt ? (
+              <Text style={[styles.cardBody, { marginTop: 6 }]} numberOfLines={hasHero ? 2 : 3}>{item.excerpt}</Text>
+            ) : null}
+          </View>
+          {hasHero ? (
+            <View style={{ width: 88, height: 88, borderRadius: radius.lg, overflow: "hidden", flexShrink: 0, position: "relative" }}>
+              <ImgPlaceholder height={88} width={88} src={item.image} />
+              {item.category ? (
+                <View style={{ position: "absolute", bottom: 4, left: 4 }}>
+                  <View style={styles.editorialCategoryChip}>
+                    <Text style={styles.editorialCategoryChipText}>{item.category.toUpperCase()}</Text>
+                  </View>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
 
         {/* Compact author row: 24px avatar fallback + name + reading time */}
         <View style={styles.editorialAuthorRow}>
@@ -1636,43 +1634,47 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
     <>
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
-        {item.image ? (
-          <TouchableOpacity onPress={() => setLightboxOpen(true)} activeOpacity={0.9}>
-            <Image source={{ uri: item.image }} style={styles.eventHero} resizeMode="cover" />
-          </TouchableOpacity>
-        ) : null}
-        <View style={{ paddingHorizontal: 14, paddingTop: item.image ? 12 : 0 }}>
+        <View style={{ paddingHorizontal: 14 }}>
           <BadgePill label="📅 EVENT" bg={c.templateEventBg} color={c.templateEventText} styles={styles} />
-          <Text style={[styles.cardTitle, { marginTop: 8 }]}>{item.title}</Text>
 
-          {item.eventDate ? (
-            <View style={[styles.happeningMetaRow, { marginTop: 8 }]}>
-              <Ionicons name="calendar-outline" size={14} color={c.gold} />
-              <Text style={styles.happeningMetaText}>{item.eventDate}</Text>
+          {/* Compact thumbnail beside title/date/location, instead of a full-width hero */}
+          <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
+            {item.image ? (
+              <TouchableOpacity onPress={() => setLightboxOpen(true)} activeOpacity={0.9}>
+                <ImgPlaceholder height={64} width={64} borderRadius={radius.lg} src={item.image} />
+              </TouchableOpacity>
+            ) : (
+              <ImgPlaceholder height={64} width={64} borderRadius={radius.lg} src={null} />
+            )}
+            <View style={{ flex: 1 }}>
+              <HashtagText
+                text={item.title}
+                style={styles.cardTitle}
+                numberOfLines={2}
+                onMentionPress={handleMentionPress}
+              />
+              {item.eventDate ? (
+                <View style={[styles.happeningMetaRow, { marginTop: 4 }]}>
+                  <Ionicons name="calendar-outline" size={14} color={c.gold} />
+                  <Text style={styles.happeningMetaText}>{item.eventDate}</Text>
+                </View>
+              ) : null}
+              {(item.location ?? item.city) ? (
+                <View style={[styles.happeningMetaRow, { marginTop: 4 }]}>
+                  <Ionicons name="location-outline" size={14} color={c.gold} />
+                  <Text style={styles.happeningMetaText} numberOfLines={1}>
+                    {[item.location, item.city].filter(Boolean).join(", ")}
+                  </Text>
+                </View>
+              ) : null}
             </View>
-          ) : null}
-          {(item.location ?? item.city) ? (
-            <View style={[styles.happeningMetaRow, { marginTop: 4 }]}>
-              <Ionicons name="location-outline" size={14} color={c.gold} />
-              <Text style={styles.happeningMetaText} numberOfLines={1}>
-                {[item.location, item.city].filter(Boolean).join(", ")}
-              </Text>
-            </View>
-          ) : null}
+          </View>
+
           {item.admission ? (
-            <View style={[styles.happeningMetaRow, { marginTop: 4 }]}>
+            <View style={[styles.happeningMetaRow, { marginTop: 8 }]}>
               <Ionicons name="ticket-outline" size={14} color={c.gold} />
               <Text style={styles.happeningMetaText}>{item.admission}</Text>
             </View>
-          ) : null}
-
-          {item.title ? (
-            <HashtagText
-              text={item.title}
-              style={[styles.cardBody, { marginTop: 10 }]}
-              numberOfLines={2}
-              onMentionPress={handleMentionPress}
-            />
           ) : null}
 
           {item.eventCategory ? (
