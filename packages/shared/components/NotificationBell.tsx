@@ -26,6 +26,10 @@ const TYPE_EMOJI: Record<string, string> = {
   comment_received: "💬",
   post_validated:   "🚀",
   system:           "📣",
+  referral_received: "🎉",
+  mention:           "📌",
+  new_follower:      "👤",
+  new_follower_post: "📰",
 };
 
 function timeAgo(iso: string): string {

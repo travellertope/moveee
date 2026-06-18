@@ -256,6 +256,17 @@ class Culture_Perks {
             $perk_id
         ) );
 
+        if ( class_exists( 'Culture_Notifications' ) ) {
+            Culture_Notifications::add(
+                $user_id,
+                'perk_redeemed',
+                'Perk Redeemed: ' . $perk['title'],
+                'Find your QR code in My Coupons. It expires ' . gmdate( 'M j, Y', strtotime( $expires_at ) ) . '.',
+                '/member/coupons',
+                array( 'redemption_id' => $redemption_id, 'perk_id' => $perk_id )
+            );
+        }
+
         return array(
             'success'       => true,
             'redemption_id' => $redemption_id,
@@ -602,6 +613,8 @@ class Culture_Perks {
             return new WP_Error( 'db_error', 'Could not update cashout status.', array( 'status' => 500 ) );
         }
 
+        do_action( 'culture_cashout_approved', (int) $row['user_id'], (int) $redemption_id );
+
         return array(
             'success'       => true,
             'redemption_id' => (int) $redemption_id,
@@ -661,6 +674,8 @@ class Culture_Perks {
                 sanitize_text_field( $reason )
             );
         }
+
+        do_action( 'culture_cashout_rejected', (int) $row['user_id'], (int) $redemption_id );
 
         return array(
             'success'          => true,

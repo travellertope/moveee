@@ -806,6 +806,31 @@ Built on top of `Culture_Notifications` (`class-culture-notifications.php`).
   follows have notify enabled. Both checks apply (notify_posts AND
   is_enabled) for that type to actually fire.
 
+### Notification touchpoint audit (June 2026) — dead hooks fixed
+A full-codebase audit confirmed every notification type ever created is
+already in `TYPES` (no missing registrations), but found two types that
+were fully wired into `Culture_Notifications` and the preference UIs yet
+**never actually fired** because nothing called their trigger:
+- `cashout_approved` / `cashout_rejected` — `Culture_Perks::approve_cashout()`
+  / `reject_cashout()` (`class-culture-perks.php`) updated the redemption row
+  but never called `do_action('culture_cashout_approved'/'_rejected', ...)`.
+  Fixed: both now fire the action (`$user_id`, `$redemption_id`) right after
+  the status update succeeds (and after the credit refund, for rejection).
+- `perk_redeemed` — `Culture_Perks::redeem_perk()` had no notification call
+  at all. Fixed: calls `Culture_Notifications::add()` directly (no
+  intermediate hook — this is a direct mutation flow, not an event pattern)
+  right after incrementing `redeemed_count`, linking to `/member/coupons`.
+
+Also found: the notification icon/emoji maps in
+`packages/shared/components/NotificationBell.tsx`,
+`apps/connect/app/member/notifications/NotificationsClient.tsx`, and
+`apps/mobile/src/screens/member/NotificationsScreen.tsx` were each missing
+entries for `referral_received`, `mention`, `new_follower`, and
+`new_follower_post` (silently fell back to a default icon). Filled in on
+all three — **if a new type is ever added to `Culture_Notifications::TYPES`,
+add an icon entry to all three of these files**, there is no shared
+source of truth for icons across the PHP/TS boundary.
+
 ---
 
 ## Event system enhancements
