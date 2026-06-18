@@ -1301,26 +1301,50 @@ with Google" button calling `signIn("google", { callbackUrl })`.
 Env vars (`.env.example`): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (the
 Web Client ID/secret — must match the "Web Client ID" in WP Admin).
 
-### Mobile integration (Expo)
-Uses `expo-auth-session` + `expo-web-browser` (pure JS, Expo-Go
-compatible) — **not** `@react-native-google-signin/google-signin` (native
-SDK, would require a dev-client rebuild).
-- `src/config/google.ts` — the three placeholder Client ID constants
-  (public identifiers, safe to commit as literals once real values are
-  filled in from Google Cloud Console).
-- `screens/auth/LoginScreen.tsx` — `WebBrowser.maybeCompleteAuthSession()`
-  at module scope (required once per app for the redirect flow to
-  resolve), `Google.useIdTokenAuthRequest({ iosClientId, androidClientId,
-  webClientId })` hook, a `useEffect` on the response that POSTs
-  `id_token` to `${MOBILE_API}/login-google` and calls `loginWithToken()`,
-  and a "Continue with Google" button (`promptGoogleAsync()`, disabled
-  until `googleRequest` resolves).
-- `app.json` — added `scheme: "moveee"` (required for the auth-session
-  redirect) and `ios.bundleIdentifier` (`com.moveee.moveeeplatform`,
-  matching `android.package`).
-- After adding `expo-auth-session` to `package.json`, the lockfile was
-  regenerated via the standard out-of-tree process (see "Expo SDK
-  version — critical" below) — required for EAS Build's `npm ci`.
+### Mobile integration (Expo) — native SDK, June 2026
+
+**The app no longer targets Expo Go for testing — do not design mobile auth
+flows around Expo Go compatibility.** Google Sign-In uses
+`@react-native-google-signin/google-signin` (native module, requires an EAS
+dev/preview/production build — `expo-auth-session` + `expo-web-browser`'s
+Custom Tab flow was the prior approach and has been fully removed for Google
+specifically; `expo-web-browser` itself is still used elsewhere, by
+`src/utils/openInApp.ts`, for opening Moveee links in an in-app browser).
+- `src/config/google.ts` — `GOOGLE_IOS_CLIENT_ID`, `GOOGLE_ANDROID_CLIENT_ID`
+  (registered against the app's package name + release/preview keystore
+  SHA-1 in Google Cloud Console — the native Android flow resolves the
+  client implicitly via Play Services, no client ID param needed in code),
+  `GOOGLE_WEB_CLIENT_ID` (passed as `webClientId` to `GoogleSignin.configure()`
+  — required on every platform because it's what actually issues the
+  `idToken`, the iOS/Android client IDs alone don't).
+- `app.config.ts` — `GOOGLE_IOS_URL_SCHEME` constant (reversed form of
+  `GOOGLE_IOS_CLIENT_ID`, e.g. `com.googleusercontent.apps.<id>`) passed to
+  the `@react-native-google-signin/google-signin` config plugin's
+  `iosUrlScheme` option — keep it in sync if `GOOGLE_IOS_CLIENT_ID` ever
+  changes. No `scheme`/`googleServicesFile` needed for the Android side;
+  Play Services resolves the registered OAuth client via package name + SHA-1
+  alone.
+- `screens/auth/LoginScreen.tsx` — `GoogleSignin.configure()` called once at
+  module scope, `handleGoogleSignIn()` calls `GoogleSignin.hasPlayServices()`
+  then `GoogleSignin.signIn()`, reads `response.data?.idToken`, POSTs it to
+  `${MOBILE_API}/login-google`, calls `loginWithToken()`. Cancellation is
+  detected via `e.code === statusCodes.SIGN_IN_CANCELLED` (silently no-ops,
+  no error banner) — the old Custom Tab flow used a string-match on
+  `e.message` for this, the native SDK gives a proper error code instead.
+- After swapping `expo-auth-session` for `@react-native-google-signin/google-signin`
+  in `package.json`, the lockfile was regenerated via the standard
+  out-of-tree process (see "Expo SDK version — critical" below) — required
+  for EAS Build's `npm ci`.
+- **Per-build-profile SHA-1 gotcha**: EAS preview builds (APK, `eas.json`
+  `preview` profile) and production builds (app-bundle) can be signed with
+  different keystores, each with its own SHA-1 fingerprint. The Android
+  OAuth client in Google Cloud Console must have **every** SHA-1 that will
+  ever sign a build you test Google Sign-In on added as an additional
+  fingerprint (Google allows multiple SHA-1s per package name — no need for
+  a second client ID). Run `eas credentials` → Android → select the profile
+  → view keystore to get the exact SHA-1 to add. A `redirect_uri_mismatch` /
+  "Access blocked" error on a build that worked fine on another profile is
+  the signature of this gotcha specifically.
 
 ### Google Cloud Console setup (one-time, by a human with console access)
 1. Create an OAuth 2.0 **Web application** client. Authorized redirect URI:
@@ -1332,17 +1356,19 @@ SDK, would require a dev-client rebuild).
    `com.moveee.moveeeplatform`. Its Client ID goes in WP Admin "iOS Client
    ID" and `GOOGLE_IOS_CLIENT_ID` in `src/config/google.ts`.
 3. Create an OAuth 2.0 **Android** client with package name
-   `com.moveee.moveeeplatform` and the app's SHA-1 signing cert
-   fingerprint. Its Client ID goes in WP Admin "Android Client ID" and
-   `GOOGLE_ANDROID_CLIENT_ID` in `src/config/google.ts`.
-4. `expo-auth-session`'s redirect URI for native (iOS/Android) is the
-   app scheme (`moveee://`) — no separate "Authorized redirect URI" entry
-   is needed for the iOS/Android OAuth clients themselves (Google's native
-   client flow doesn't use redirect URIs the way the web flow does); the
-   Web Client ID is what's passed as `webClientId` for Expo Go / dev-client
-   fallback and must have `https://auth.expo.io/@<account>/<slug>` (or the
-   appropriate Expo proxy redirect) added as an authorized redirect URI if
-   testing in Expo Go.
+   `com.moveee.connect` (the actual `android.package` in `app.config.ts` —
+   not `com.moveee.moveeeplatform`, which is stale/wrong if seen elsewhere)
+   and **every** SHA-1 signing cert fingerprint that will sign a build you
+   test Google Sign-In on (production keystore and the EAS `preview`
+   profile's keystore are typically different — see the per-build-profile
+   SHA-1 gotcha in "Mobile integration" above). Its Client ID goes in WP
+   Admin "Android Client ID" and `GOOGLE_ANDROID_CLIENT_ID` in
+   `src/config/google.ts`.
+4. No "Authorized redirect URI" entries are needed for the iOS/Android OAuth
+   clients — `@react-native-google-signin/google-signin` is a native module
+   (Play Services on Android, native Google SDK on iOS) and doesn't use a
+   redirect-URI-based flow the way the web client does. This requires an EAS
+   dev/preview/production build to test; it will not work in Expo Go.
 
 ---
 
