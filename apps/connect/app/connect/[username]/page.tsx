@@ -14,6 +14,7 @@ interface Profile {
   username: string;
   display_name: string;
   avatar_url: string;
+  cover_photo_url: string;
   bio: string;
   city: string;
   country: string;
@@ -99,6 +100,11 @@ export default async function PublicProfilePage(
   return (
     <div className="prf-page">
       <div className="prf-header">
+        {profile.cover_photo_url ? (
+          <div className="prf-cover">
+            <img src={profile.cover_photo_url} alt="" className="prf-cover-img" />
+          </div>
+        ) : null}
         <div className="prf-header-inner">
           <div className="prf-identity">
             <div className={`prf-avatar${isPatron ? " prf-avatar--patron" : ""}`}>

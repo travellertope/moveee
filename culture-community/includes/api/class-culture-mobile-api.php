@@ -487,6 +487,13 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Cover photo upload
+        register_rest_route( 'culture/v1', '/mobile/me/cover-photo', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_upload_cover_photo' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Portfolio
         register_rest_route( 'culture/v1', '/mobile/portfolio', array(
             'methods'             => 'GET',
@@ -1683,6 +1690,7 @@ class Culture_Mobile_API {
             'email'                 => $user->user_email,
             'displayName'           => $user->display_name,
             'avatarUrl'             => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
+            'coverPhotoUrl'         => get_user_meta( $user->ID, '_culture_cover_photo_url', true ) ?: '',
             'tier'                  => $tier,
             'points'                => (int) get_user_meta( $user->ID, '_culture_points', true ),
             'credits'               => $credits,
@@ -2118,6 +2126,7 @@ class Culture_Mobile_API {
             'username'           => $user->user_login,
             'displayName'        => $user->display_name,
             'avatarUrl'          => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
+            'coverPhotoUrl'      => get_user_meta( $user->ID, '_culture_cover_photo_url', true ) ?: '',
             'tier'               => $tier,
             'city'               => get_user_meta( $user->ID, '_culture_city', true ) ?: '',
             'countryOfResidence' => get_user_meta( $user->ID, '_culture_country_of_residence', true ) ?: '',
@@ -2288,6 +2297,40 @@ class Culture_Mobile_API {
         }
 
         update_user_meta( $user_id, '_culture_avatar_url', $url );
+        return rest_ensure_response( array( 'url' => $url ) );
+    }
+
+    public static function handle_upload_cover_photo( $request ) {
+        $user_id = get_current_user_id();
+        $files   = $request->get_file_params();
+        $file    = $files['file'] ?? null;
+
+        if ( empty( $file ) || empty( $file['tmp_name'] ) ) {
+            return new WP_Error( 'no_file', 'No file provided.', array( 'status' => 400 ) );
+        }
+
+        if ( ! in_array( $file['type'], self::UPLOAD_ALLOWED_TYPES, true ) ) {
+            return new WP_Error( 'invalid_type', 'Only JPEG, PNG, WebP, or GIF allowed.', array( 'status' => 400 ) );
+        }
+
+        if ( $file['size'] > self::UPLOAD_MAX_BYTES ) {
+            return new WP_Error( 'too_large', 'Image must be under 8 MB.', array( 'status' => 400 ) );
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+
+        $_FILES['file']['name'] = 'cover-' . $user_id . '-' . time() . '-' . sanitize_file_name( $file['name'] );
+        $attachment_id = media_handle_upload( 'file', 0, array(), array( 'test_form' => false ) );
+
+        if ( is_wp_error( $attachment_id ) ) {
+            return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), array( 'status' => 500 ) );
+        }
+
+        $url = wp_get_attachment_url( $attachment_id );
+        update_user_meta( $user_id, '_culture_cover_photo_url', $url );
+
         return rest_ensure_response( array( 'url' => $url ) );
     }
 

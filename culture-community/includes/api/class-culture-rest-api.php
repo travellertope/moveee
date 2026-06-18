@@ -4083,6 +4083,7 @@ class Culture_REST_API {
             'username'        => $user->user_login,
             'display_name'    => $user->display_name,
             'avatar_url'      => get_user_meta( $uid, '_culture_avatar_url', true ) ?: '',
+            'cover_photo_url' => get_user_meta( $uid, '_culture_cover_photo_url', true ) ?: '',
             'bio'             => get_user_meta( $uid, '_culture_directory_bio', true ) ?: '',
             'city'            => get_user_meta( $uid, '_culture_city', true ) ?: '',
             'country'         => get_user_meta( $uid, '_culture_country_of_residence', true ) ?: '',

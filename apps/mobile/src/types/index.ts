@@ -8,6 +8,7 @@ export interface User {
   email: string;
   displayName: string;
   avatarUrl: string;
+  coverPhotoUrl: string;
   tier: Tier;
 
   // Contact
@@ -62,6 +63,7 @@ export interface Member {
   username: string;
   displayName: string;
   avatarUrl: string;
+  coverPhotoUrl: string;
   tier: Tier;
   occupation: string;
   city: string;

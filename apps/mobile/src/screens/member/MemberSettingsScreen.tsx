@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { INTERESTS } from "@moveee/utils/interest-mappings";
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Pressable,
-  StyleSheet, SafeAreaView, Alert, ActivityIndicator, Platform,
+  StyleSheet, SafeAreaView, Alert, ActivityIndicator, Platform, Image,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRoute } from "@react-navigation/native";
@@ -194,18 +194,51 @@ function ProfileTab() {
     }
   };
 
+  const handleCoverPhotoPick = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    try {
+      await api.upload(`${PROXY}/mobile/me/cover-photo`, result.assets[0].uri, "file");
+      await refreshProfile();
+    } catch {
+      Alert.alert("Error", "Could not upload cover photo.");
+    }
+  };
+
   const GENDER_OPTIONS = ["Woman", "Man", "Non-binary", "Prefer not to say"];
 
   return (
     <View style={{ flex: 1, position: "relative" }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+        {/* Cover photo */}
+        <TouchableOpacity style={profileStyles.coverWrap} onPress={handleCoverPhotoPick}>
+          {user?.coverPhotoUrl ? (
+            <Image source={{ uri: user.coverPhotoUrl }} style={profileStyles.coverImage} resizeMode="cover" />
+          ) : (
+            <View style={profileStyles.coverPlaceholder} />
+          )}
+          <View style={profileStyles.coverEditBadge}>
+            <Ionicons name="camera-outline" size={13} color={c.ink} />
+            <Text style={profileStyles.coverEditText}>Edit cover</Text>
+          </View>
+        </TouchableOpacity>
+
         {/* Avatar */}
         <View style={profileStyles.avatarSection}>
           <View style={profileStyles.avatarRing}>
             <View style={profileStyles.avatarCircle}>
-              <Text style={profileStyles.avatarInitials}>
-                {(user?.displayName ?? user?.name ?? "?")[0]?.toUpperCase()}
-              </Text>
+              {user?.avatarUrl ? (
+                <Image source={{ uri: user.avatarUrl }} style={profileStyles.avatarImage} resizeMode="cover" />
+              ) : (
+                <Text style={profileStyles.avatarInitials}>
+                  {(user?.displayName ?? user?.name ?? "?")[0]?.toUpperCase()}
+                </Text>
+              )}
             </View>
             <TouchableOpacity style={profileStyles.cameraBtn} onPress={handleAvatarPick}>
               <Ionicons name="camera-outline" size={14} color={c.ink} />
@@ -396,6 +429,25 @@ function ProfileTab() {
 
 function createProfileStyles(c: ColorPalette) {
   return StyleSheet.create({
+    coverWrap: {
+      width: "100%", height: 120, borderRadius: radius.lg,
+      backgroundColor: c.paperDeep, overflow: "hidden",
+      marginBottom: -36, position: "relative",
+    },
+    coverImage: { width: "100%", height: "100%" },
+    coverPlaceholder: {
+      width: "100%", height: "100%",
+      backgroundColor: c.paperDeep,
+    },
+    coverEditBadge: {
+      position: "absolute", bottom: 8, right: 8,
+      flexDirection: "row", alignItems: "center", gap: 4,
+      backgroundColor: c.paper, borderRadius: radius.full,
+      paddingHorizontal: 10, paddingVertical: 5,
+      borderWidth: 1, borderColor: c.ghost + "4D",
+      shadowColor: "#000", shadowOpacity: 0.12, shadowRadius: 4, elevation: 2,
+    },
+    coverEditText: { fontFamily: fonts.sans, fontSize: 11, color: c.ink },
     avatarSection: { alignItems: "center", marginBottom: 24, marginTop: 8 },
     avatarRing: {
       width: 102, height: 102, borderRadius: 51,
@@ -407,7 +459,9 @@ function createProfileStyles(c: ColorPalette) {
       width: 90, height: 90, borderRadius: 45,
       backgroundColor: c.goldLight,
       justifyContent: "center", alignItems: "center",
+      overflow: "hidden",
     },
+    avatarImage: { width: "100%", height: "100%" },
     avatarInitials:    { fontFamily: fonts.serifBold, fontSize: fontSize.xl, color: c.gold },
     cameraBtn: {
       position: "absolute", bottom: 0, right: 0,

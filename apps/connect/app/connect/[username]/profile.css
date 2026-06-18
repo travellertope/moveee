@@ -16,6 +16,19 @@
   padding: 48px 48px 0;
 }
 
+.prf-cover {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  background: rgba(42,36,28,.06);
+}
+.prf-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .prf-identity {
   display: flex;
   gap: 28px;
@@ -536,4 +549,5 @@
   .prf-identity     { gap: 14px; }
   .prf-avatar       { width: 52px; height: 52px; font-size: 20px; }
   .prf-not-found    { padding: 60px 16px; }
+  .prf-cover        { height: 120px; }
 }

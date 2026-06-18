@@ -356,11 +356,15 @@ export default function MemberProfileScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <LinearGradient
-          colors={["#F3ECE0", "#E8D3BA", "#C5491F"]}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        />
+        {profile.coverPhotoUrl ? (
+          <Image source={{ uri: profile.coverPhotoUrl }} style={styles.hero} resizeMode="cover" />
+        ) : (
+          <LinearGradient
+            colors={["#F3ECE0", "#E8D3BA", "#C5491F"]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={styles.hero}
+          />
+        )}
 
         <View style={styles.profileCard}>
           <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
