@@ -5,6 +5,7 @@ import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
 import { useGameStreak } from "../../features/games/useGameStreak";
+import { Ionicons } from "@expo/vector-icons";
 
 // ── Crossword mini-grid illustration ─────────────────────────────────────────
 function CrosswordIllustration({ styles }: { styles: ReturnType<typeof createStyles> }) {
@@ -76,8 +77,12 @@ export default function GamesScreen() {
           </View>
           <Text style={styles.headerSub}>Daily challenges · Earn culture points</Text>
         </View>
-        <TouchableOpacity onPress={() => nav.navigate("GameHistory")}>
-          <Text style={styles.historyLink}>History →</Text>
+        <TouchableOpacity
+          style={styles.iconBtn}
+          onPress={() => nav.navigate("GameHistory")}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="time-outline" size={22} color={c.ink} />
         </TouchableOpacity>
       </View>
 
@@ -188,7 +193,7 @@ function createStyles(c: ColorPalette) {
     headerTitle: { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink },
     headerStar:  { fontFamily: fonts.sans, fontSize: 14, color: c.gold, marginTop: 2 },
     headerSub:   { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
-    historyLink: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre },
+    iconBtn:     { padding: 6 },
 
     // Streak banner
     streakBanner: {

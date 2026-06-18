@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
-  TouchableOpacity, ActivityIndicator, Share,
+  TouchableOpacity, ActivityIndicator,
 } from "react-native";
 import { useNav } from "../../hooks/useNav";
 import { storage } from "../../store/storage";
@@ -11,10 +11,13 @@ import { recordPlayedToday } from "../../features/games/useGameStreak";
 import { colors, fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
+import GameScoreCard from "../../components/games/GameScoreCard";
+import { useScoreCardShare } from "../../features/games/useScoreCardShare";
 
 const PROXY      = "https://themoveee.com/api";
 const KEY_DATE   = "trivia_last_played_date";
 const KEY_SCORE  = "trivia_last_score";
+const KEY_CR     = "trivia_last_credits";
 const KEY_COUNT  = "trivia_play_count";
 const PRO_LIMIT  = 5;
 const FREE_LIMIT = 1;
@@ -50,6 +53,7 @@ export default function TriviaGameScreen() {
   const styles = useMemo(() => createStyles(c), [c]);
   const { user } = useAuthStore();
   const isPro = user?.tier === "patron";
+  const { cardRef, share: shareScoreCard, sharing } = useScoreCardShare();
 
   const [phase,     setPhase]     = useState<Phase>("loading");
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
@@ -58,6 +62,8 @@ export default function TriviaGameScreen() {
   const [answers,   setAnswers]   = useState<(number | null)[]>([]);
   const [score,     setScore]     = useState(0);
   const [lastScore, setLastScore] = useState<number | null>(null);
+  const [creditsEarned, setCreditsEarned] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [errorMsg,  setErrorMsg]  = useState("");
 
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -70,7 +76,9 @@ export default function TriviaGameScreen() {
       const playedToday = parseInt(storage.getString(countKey) ?? "0", 10);
       if (playedToday >= limit) {
         const saved = storage.getString(KEY_SCORE);
+        const savedCr = storage.getString(KEY_CR);
         setLastScore(saved !== undefined ? parseInt(saved, 10) : null);
+        setCreditsEarned(savedCr !== undefined ? parseInt(savedCr, 10) : null);
         setPhase("played");
         return;
       }
@@ -105,7 +113,7 @@ export default function TriviaGameScreen() {
     if (idx === currentQ.correct) setScore((s) => s + 1);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (qIndex < questions.length - 1) {
       setSelected(null);
       setQIndex((i) => i + 1);
@@ -119,11 +127,20 @@ export default function TriviaGameScreen() {
       storage.set(countKey, String(prev + 1));
       storage.set(KEY_SCORE, String(finalScore));
       recordPlayedToday();
-      api.post(`${MOBILE_API}/games/complete`, {
-        game_type: "trivia",
-        score: finalScore,
-        max_score: questions.length,
-      }).catch(() => {});
+      setSubmitting(true);
+      try {
+        const result = await api.post<{ credits_earned: number }>(`${MOBILE_API}/games/complete`, {
+          game_type: "trivia",
+          score: finalScore,
+          max_score: questions.length,
+        });
+        setCreditsEarned(result.credits_earned);
+        storage.set(KEY_CR, String(result.credits_earned));
+      } catch {
+        setCreditsEarned(null);
+      } finally {
+        setSubmitting(false);
+      }
       setPhase("done");
     }
   };
@@ -160,7 +177,7 @@ export default function TriviaGameScreen() {
 
   // ── Already played ────────────────────────────────────────────────────────────
   if (phase === "played") {
-    const cr = lastScore !== null ? Math.round((lastScore / 10) * 50) : 0;
+    const cr = creditsEarned ?? 0;
     const countKey = `${KEY_COUNT}_${todayStr}`;
     const playsToday = parseInt(storage.getString(countKey) ?? "0", 10);
     const limit = isPro ? PRO_LIMIT : FREE_LIMIT;
@@ -197,7 +214,7 @@ export default function TriviaGameScreen() {
   if (phase === "done") {
     const final = calcFinalScore();
     const pct   = Math.round((final / questions.length) * 100);
-    const cr    = Math.round((final / questions.length) * 50);
+    const cr    = creditsEarned ?? Math.round((final / questions.length) * 50);
     const msg   = pct >= 80 ? "Excellent knowledge!" : pct >= 50 ? "Solid knowledge! Keep exploring." : "Keep learning and come back!";
 
     return (
@@ -227,14 +244,35 @@ export default function TriviaGameScreen() {
 
           <TouchableOpacity
             style={styles.shareBtn}
-            onPress={() => Share.share({ message: `I scored ${final}/${questions.length} on Moveee Daily Trivia! 🎉` }).catch(() => {})}
+            onPress={shareScoreCard}
+            disabled={sharing}
           >
-            <Text style={styles.shareBtnText}>Share result</Text>
+            {sharing ? (
+              <ActivityIndicator color={c.ink} />
+            ) : (
+              <Text style={styles.shareBtnText}>Share result</Text>
+            )}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => nav.goBack()} style={{ marginTop: space[2] }}>
             <Text style={styles.backGamesLink}>Back to Games</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        <View style={styles.offscreen} pointerEvents="none">
+          <GameScoreCard
+            ref={cardRef}
+            gameName="Daily Trivia"
+            gameEmoji="🧠"
+            score={final}
+            maxScore={questions.length}
+            pct={pct}
+            displayName={user?.displayName ?? ""}
+            username={user?.username ?? "member"}
+            avatarUrl={user?.avatarUrl}
+            dateLabel={new Date().toLocaleDateString("en-GB", { month: "short", day: "numeric" })}
+            qrValue={`https://themoveee.com/games?ref=${encodeURIComponent(user?.username ?? "")}`}
+          />
+        </View>
       </SafeAreaView>
     );
   }
@@ -337,12 +375,12 @@ export default function TriviaGameScreen() {
       {/* Footer button */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.nextBtn, selected === null && styles.nextBtnDisabled]}
+          style={[styles.nextBtn, (selected === null || submitting) && styles.nextBtnDisabled]}
           onPress={handleNext}
-          disabled={selected === null}
+          disabled={selected === null || submitting}
         >
           <Text style={styles.nextBtnText}>
-            {qIndex < questions.length - 1 ? "Next Question →" : "Finish →"}
+            {submitting ? "Submitting…" : qIndex < questions.length - 1 ? "Next Question →" : "Finish →"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -475,6 +513,7 @@ function createStyles(c: ColorPalette) {
     },
     shareBtnText:  { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
     backGamesLink: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ochre },
+    offscreen: { position: "absolute", top: -9999, left: -9999 },
 
     primaryBtn:     { backgroundColor: c.ink, borderRadius: radius.xl, paddingVertical: space[3], paddingHorizontal: space[6] },
     primaryBtnText: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.paper },
