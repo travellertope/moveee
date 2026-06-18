@@ -1,21 +1,19 @@
 import React, { useState, useMemo } from "react";
 import {
-  View, Text, Image, FlatList, TextInput, TouchableOpacity,
+  View, Text, Image, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
-  ActivityIndicator, Share,
+  Share,
 } from "react-native";
 import { openInApp } from "../../utils/openInApp";
 import { useRoute } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
-import { useComments } from "../../features/community/useComments";
-import { useAuthStore } from "../../auth/authStore";
 import { api, MOBILE_API } from "../../api/client";
 import type { FeedItem } from "../../types";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
+import CommentSection from "../../components/community/CommentSection";
 
-const PLACEHOLDER_AVATAR = "https://cms.themoveee.com/wp-content/uploads/placeholder-avatar.png";
 const SERIF = Platform.select({ ios: "Georgia", android: "serif", default: "serif" });
 
 function formatLongDate(dateStr: string): string {
@@ -113,23 +111,8 @@ export default function PostDetailScreen() {
   const nav = useNav();
   const item: FeedItem = params?.item;
   const postId = item?.wpId ?? params?.postId ?? "";
-  const user = useAuthStore((s) => s.user);
-  const { comments, loading, addComment } = useComments(postId);
-  const [text, setText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-
-  const submit = async () => {
-    if (!text.trim()) return;
-    setSubmitting(true);
-    try {
-      await addComment(text.trim());
-      setText("");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const goToAuthor = () => item?.communityAuthorId && nav.navigate("MemberProfile", { userId: item.communityAuthorId });
 
@@ -167,84 +150,41 @@ export default function PostDetailScreen() {
         </View>
       </View>
 
-      <FlatList
-        data={comments}
-        keyExtractor={(c) => c.id}
-        contentContainerStyle={styles.listContent}
-        ListHeaderComponent={
-          <View>
-            <TouchableOpacity style={styles.authorRow} onPress={goToAuthor} disabled={!item.communityAuthorId}>
-              {item.communityAuthorAvatar ? (
-                <Image source={{ uri: item.communityAuthorAvatar }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarFallback}>
-                  <Text style={styles.avatarFallbackText}>{initials(item.communityAuthor || "?")}</Text>
-                </View>
-              )}
-              <View>
-                <View style={styles.nameRow}>
-                  <Text style={styles.authorName}>{item.communityAuthor || "Community Member"}</Text>
-                  {item.communityTier === "patron" ? (
-                    <View style={styles.proBadge}>
-                      <Ionicons name="ribbon" size={9} color="#fff" />
-                    </View>
-                  ) : null}
-                </View>
-                <Text style={styles.metaDate}>{formatLongDate(item.date)}</Text>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={styles.listContent}>
+          <TouchableOpacity style={styles.authorRow} onPress={goToAuthor} disabled={!item.communityAuthorId}>
+            {item.communityAuthorAvatar ? (
+              <Image source={{ uri: item.communityAuthorAvatar }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarFallback}>
+                <Text style={styles.avatarFallbackText}>{initials(item.communityAuthor || "?")}</Text>
               </View>
-            </TouchableOpacity>
-
-            <Text style={styles.content}>{item.title}</Text>
-
-            {item.image ? (
-              <Image source={{ uri: item.image }} style={styles.postImage} resizeMode="cover" />
-            ) : (
-              <SourcePreview item={item} styles={styles} />
             )}
-
-            <ReactionRow item={item} styles={styles} c={c} />
-
-            <Text style={styles.commentsLabel}>
-              {comments.length > 0 ? `${comments.length} Comment${comments.length === 1 ? "" : "s"}` : "Start the conversation"}
-            </Text>
-          </View>
-        }
-        ListEmptyComponent={
-          loading ? null : <Text style={styles.emptyText}>No comments yet — be the first to reply.</Text>
-        }
-        renderItem={({ item: c }) => (
-          <View style={styles.comment}>
-            <Image source={{ uri: c.author.avatarUrl || PLACEHOLDER_AVATAR }} style={styles.commentAvatar} />
-            <View style={styles.commentBody}>
-              <Text style={styles.commentAuthor}>{c.author.name}</Text>
-              <Text style={styles.commentContent}>{c.content}</Text>
+            <View>
+              <View style={styles.nameRow}>
+                <Text style={styles.authorName}>{item.communityAuthor || "Community Member"}</Text>
+                {item.communityTier === "patron" ? (
+                  <View style={styles.proBadge}>
+                    <Ionicons name="ribbon" size={9} color="#fff" />
+                  </View>
+                ) : null}
+              </View>
+              <Text style={styles.metaDate}>{formatLongDate(item.date)}</Text>
             </View>
-          </View>
-        )}
-        ListFooterComponent={loading ? <ActivityIndicator style={{ marginTop: 12 }} color={c.gold} /> : null}
-      />
-
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <View style={styles.inputRow}>
-          <Text style={styles.commentingAs}>Commenting as <Text style={styles.commentingAsName}>{user?.displayName ?? "you"}</Text></Text>
-        </View>
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.input}
-            placeholder="Comment *"
-            placeholderTextColor={c.ghost}
-            value={text}
-            onChangeText={setText}
-            multiline
-          />
-          <TouchableOpacity onPress={submit} disabled={submitting || !text.trim()}>
-            {submitting ? (
-              <ActivityIndicator size="small" color={c.gold} />
-            ) : (
-              <Ionicons name="send" size={22} color={text.trim() ? c.gold : c.ghost} />
-            )}
           </TouchableOpacity>
-        </View>
+
+          <Text style={styles.content}>{item.title}</Text>
+
+          {item.image ? (
+            <Image source={{ uri: item.image }} style={styles.postImage} resizeMode="cover" />
+          ) : (
+            <SourcePreview item={item} styles={styles} />
+          )}
+
+          <ReactionRow item={item} styles={styles} c={c} />
+
+          <CommentSection postId={String(postId)} />
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -316,25 +256,5 @@ function createStyles(c: ColorPalette) {
     reactionCount: { fontSize: 12, color: c.mute },
     shareBtn: { padding: 4 },
 
-    commentsLabel: { fontSize: 17, fontWeight: "700", fontFamily: SERIF, color: c.ink, marginBottom: 14 },
-    emptyText: { color: c.ghost, fontSize: 13, marginBottom: 12 },
-
-    comment: { flexDirection: "row", gap: 10, marginBottom: 16 },
-    commentAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: c.paperDeep },
-    commentBody: { flex: 1 },
-    commentAuthor: { fontWeight: "600", fontSize: 13, color: c.ink, marginBottom: 2 },
-    commentContent: { fontSize: 14, color: c.inkSoft, lineHeight: 20 },
-
-    inputRow: {
-      flexDirection: "row", alignItems: "center", gap: 12,
-      paddingHorizontal: 16, paddingTop: 6, paddingBottom: 6,
-      borderTopWidth: 1, borderTopColor: c.ruleDark, backgroundColor: c.paper,
-    },
-    commentingAs: { fontSize: 12, color: c.ghost },
-    commentingAsName: { color: c.gold, fontWeight: "600" },
-    input: {
-      flex: 1, backgroundColor: c.paperWarm, borderRadius: 20, borderWidth: 1, borderColor: c.ruleDark,
-      paddingHorizontal: 14, paddingVertical: 8, fontSize: 14, maxHeight: 100,
-    },
   });
 }

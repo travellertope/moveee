@@ -31,6 +31,7 @@ import { ArticleSkeleton } from "../../components/ui/Skeleton";
 import { useAuthStore } from "../../auth/authStore";
 import BottomSheet from "../../components/ui/BottomSheet";
 import ReactionBar from "../../components/community/ReactionBar";
+import CommentSection, { type NormalizedComment } from "../../components/community/CommentSection";
 
 const HERO_HEIGHT = 280;
 const SHEET_OVERLAP = 32;
@@ -514,8 +515,6 @@ function KeepReading({ articleSlug, c, nav }: { articleSlug: string; c: ColorPal
 
 // ── Article Comments Section ──────────────────────────────────────────────────
 
-const PLACEHOLDER_AVATAR = "https://cms.themoveee.com/wp-content/uploads/placeholder-avatar.png";
-
 interface WpComment {
   id: number;
   content: { rendered: string };
@@ -524,25 +523,24 @@ interface WpComment {
   date: string;
 }
 
-function timeAgoComment(dateStr: string): string {
-  try {
-    const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
-    if (diff < 60) return "just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
-  } catch { return ""; }
-}
-
 function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#8220;|&#8221;/g, '"').trim();
 }
 
-function ArticleCommentsSection({ articleId, c, styles, onCountChange }: { articleId: string; c: ColorPalette; styles: any; onCountChange?: (n: number) => void }) {
+function toNormalized(cm: WpComment): NormalizedComment {
+  return {
+    id: String(cm.id),
+    authorName: cm.author_name,
+    avatarUrl: cm.author_avatar_urls?.["48"],
+    content: stripHtml(cm.content.rendered),
+    date: cm.date,
+  };
+}
+
+function ArticleCommentsSection({ articleId, onCountChange }: { articleId: string; onCountChange?: (n: number) => void }) {
   const user = useAuthStore((s) => s.user);
   const [comments, setComments] = useState<WpComment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -557,11 +555,8 @@ function ArticleCommentsSection({ articleId, c, styles, onCountChange }: { artic
     onCountChange?.(comments.length);
   }, [comments.length, onCountChange]);
 
-  const submitComment = async () => {
-    const body = text.trim();
-    if (!body || submitting) return;
+  const submitComment = async (body: string) => {
     setSubmitting(true);
-    // Optimistic — show comment immediately
     const optimistic: WpComment = {
       id: Date.now(),
       author_name: (user as any)?.displayName ?? user?.username ?? "You",
@@ -570,83 +565,28 @@ function ArticleCommentsSection({ articleId, c, styles, onCountChange }: { artic
       date: new Date().toISOString(),
     };
     setComments((prev) => [...prev, optimistic]);
-    setText("");
     try {
       await api.post(`${MOBILE_API}/community/comment`, { post_id: Number(articleId), content: body });
     } catch {
-      // Revert optimistic on failure
       setComments((prev) => prev.filter((c) => c.id !== optimistic.id));
-      setText(body);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <View style={styles.cm_section}>
-      <View style={styles.cm_header}>
-        <Text style={styles.cm_heading}>Discussion</Text>
-        <Text style={styles.cm_count}>{comments.length} comment{comments.length !== 1 ? "s" : ""}</Text>
-      </View>
-
-      {/* Comment list */}
-      {loading ? (
-        <ActivityIndicator color={c.gold} style={{ marginVertical: 16 }} />
-      ) : comments.length === 0 ? (
-        <Text style={styles.cm_empty}>Be the first to leave a comment.</Text>
-      ) : (
-        comments.map((cm) => {
-          const avatar = cm.author_avatar_urls?.["48"] ?? PLACEHOLDER_AVATAR;
-          return (
-            <View key={cm.id} style={styles.cm_row}>
-              <Image source={{ uri: avatar }} style={styles.cm_avatar} />
-              <View style={styles.cm_body}>
-                <View style={styles.cm_meta}>
-                  <Text style={styles.cm_author}>{cm.author_name}</Text>
-                  <Text style={styles.cm_time}>{timeAgoComment(cm.date)}</Text>
-                </View>
-                <Text style={styles.cm_text}>{stripHtml(cm.content.rendered)}</Text>
-              </View>
-            </View>
-          );
-        })
-      )}
-
-      {/* Compose */}
-      <View style={styles.cm_compose}>
-        {user?.avatarUrl ? (
-          <Image source={{ uri: user.avatarUrl }} style={styles.cm_composeAvatar} />
-        ) : (
-          <View style={[styles.cm_composeAvatar, styles.cm_composeAvatarFallback]}>
-            <Ionicons name="person" size={14} color={c.mute} />
-          </View>
-        )}
-        {user ? (
-          <>
-            <TextInput
-              style={styles.cm_input}
-              placeholder="Add a comment…"
-              placeholderTextColor={c.ghost}
-              value={text}
-              onChangeText={setText}
-              multiline
-              maxLength={600}
-            />
-            <TouchableOpacity onPress={submitComment} disabled={submitting || !text.trim()} activeOpacity={0.7}>
-              {submitting
-                ? <ActivityIndicator size="small" color={c.gold} />
-                : <Ionicons name="send" size={18} color={text.trim() ? c.gold : c.ghost} />
-              }
-            </TouchableOpacity>
-          </>
-        ) : (
-          <Text style={styles.cm_signIn}>Sign in to leave a comment</Text>
-        )}      </View>
-    </View>
+    <CommentSection
+      heading="Discussion"
+      comments={comments.map(toNormalized)}
+      loading={loading}
+      submitting={submitting}
+      onSubmit={submitComment}
+      signedIn={!!user}
+      signInPrompt="Sign in to leave a comment"
+      emptyText="Be the first to leave a comment."
+    />
   );
 }
-
-// acStyles is intentionally empty — comment styles now live in createStyles(c) as cm_* keys
 
 export default function ArticleScreen() {
   const nav   = useNav();
@@ -1068,7 +1008,7 @@ export default function ArticleScreen() {
 
                   {/* ── Comments section ── */}
                   <View onLayout={(e) => { commentsY.current = e.nativeEvent.layout.y + HERO_HEIGHT - SHEET_OVERLAP; }}>
-                    <ArticleCommentsSection articleId={article.id} c={c} styles={styles} onCountChange={setCommentCount} />
+                    <ArticleCommentsSection articleId={article.id} onCountChange={setCommentCount} />
                   </View>
                 </>
               )}
@@ -1467,32 +1407,4 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     fontSize: 13, color: c.inkSoft,
   },
 
-  // Comments section
-  cm_section: { marginTop: 24, paddingBottom: 32 },
-  cm_header: { flexDirection: "row", alignItems: "baseline", gap: 8, marginBottom: 16 },
-  cm_heading: { fontFamily: fonts.serifBold, fontSize: 20, color: c.ink },
-  cm_count: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.mute },
-  cm_empty: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ghost, textAlign: "center", paddingVertical: 24 },
-  cm_row: { flexDirection: "row", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.rule, gap: 10 },
-  cm_avatar: { width: 36, height: 36, borderRadius: 18, flexShrink: 0 },
-  cm_body: { flex: 1 },
-  cm_meta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
-  cm_author: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.ink },
-  cm_time: { fontFamily: fonts.mono, fontSize: fontSize.tiny, color: c.ghost },
-  cm_text: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.inkSoft, lineHeight: 20 },
-  cm_compose: {
-    flexDirection: "row", alignItems: "center", gap: 10, padding: 12,
-    borderTopWidth: 1, borderTopColor: c.rule,
-    borderRadius: radius.lg, marginTop: 16, backgroundColor: c.paperDeep,
-  },
-  cm_composeAvatar: { width: 32, height: 32, borderRadius: 16, flexShrink: 0 },
-  cm_composeAvatarFallback: { backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center" },
-  cm_input: {
-    flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base,
-    borderWidth: 1, borderColor: c.rule, borderRadius: radius.xl,
-    paddingHorizontal: 12, paddingVertical: 10, minHeight: 40, maxHeight: 120,
-    color: c.ink, backgroundColor: c.paper, textAlignVertical: "top",
-  },
-  cm_submittedNote: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, fontStyle: "italic", color: c.mute },
-  cm_signIn: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.mute },
 }); }

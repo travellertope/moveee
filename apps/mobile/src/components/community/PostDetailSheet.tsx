@@ -5,8 +5,6 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
-  TextInput,
   Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,8 +15,7 @@ import ReportPostSheet from "./ReportPostSheet";
 import ImageLightbox from "../ui/ImageLightbox";
 import HashtagText from "./HashtagText";
 import { useColors } from "../../hooks/useColors";
-import { useAuthStore } from "../../auth/authStore";
-import { useComments } from "../../features/community/useComments";
+import CommentSection from "./CommentSection";
 import { api, MOBILE_API } from "../../api/client";
 import type { ColorPalette } from "../../theme";
 import { radius, fonts } from "../../theme";
@@ -261,75 +258,9 @@ function ReactionsRow({
   );
 }
 
-// ── Comments section (shared) ───────────────────────────────────────────────────
-
-function CommentsSection({ postId, c, styles }: { postId: string; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
-  const { comments, loading, addComment } = useComments(postId);
-  const [text, setText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const user = useAuthStore((s) => s.user);
-  const [showAll, setShowAll] = useState(false);
-
-  const submit = async () => {
-    if (!text.trim()) return;
-    setSubmitting(true);
-    try { await addComment(text.trim()); setText(""); } finally { setSubmitting(false); }
-  };
-
-  const displayed = showAll ? comments : comments.slice(0, 2);
-
-  return (
-    <View>
-      <View style={styles.commentHeader}>
-        <Text style={styles.commentHeaderText}>Comments ({comments.length})</Text>
-        <TouchableOpacity>
-          <Text style={styles.addCommentBtn}>Add comment</Text>
-        </TouchableOpacity>
-      </View>
-
-      {loading && <ActivityIndicator color={c.gold} style={{ marginVertical: 12 }} />}
-
-      {displayed.map((cm) => (
-        <View key={cm.id} style={styles.commentRow}>
-          <Image source={{ uri: cm.author.avatarUrl || PLACEHOLDER_AVATAR }} style={styles.commentAvatar} />
-          <View style={styles.commentBody}>
-            <View style={styles.commentMeta}>
-              <Text style={styles.commentAuthor}>{cm.author.name}</Text>
-              <Text style={styles.commentTime}>{timeAgo(cm.publishedAt)}</Text>
-            </View>
-            <Text style={styles.commentContent}>{cm.content}</Text>
-          </View>
-        </View>
-      ))}
-
-      {comments.length > 2 && !showAll && (
-        <TouchableOpacity onPress={() => setShowAll(true)}>
-          <Text style={styles.viewAllComments}>View all {comments.length} comments</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Compose row */}
-      <View style={styles.composeRow}>
-        <Image source={{ uri: user?.avatarUrl || PLACEHOLDER_AVATAR }} style={styles.composeAvatar} />
-        <TextInput
-          style={[styles.composeInput, { color: c.ink }]}
-          placeholder="Add a comment…"
-          placeholderTextColor={c.ghost}
-          value={text}
-          onChangeText={setText}
-          multiline
-        />
-        <TouchableOpacity onPress={submit} disabled={submitting || !text.trim()}>
-          {submitting
-            ? <ActivityIndicator size="small" color={c.gold} />
-            : <Ionicons name="send" size={18} color={text.trim() ? c.gold : c.ghost} />
-          }
-        </TouchableOpacity>
-      </View>
-
-    </View>
-  );
-}
+// Comments now render via the shared <CommentSection postId={...} /> component
+// (see ../community/CommentSection.tsx) — kept consistent across all comment
+// surfaces in the app rather than reimplemented per-screen.
 
 // ── Template bodies ─────────────────────────────────────────────────────────────
 
@@ -860,7 +791,9 @@ export default function PostDetailSheet({ item, visible, onClose, onMentionPress
       <ReactionsRow item={item} c={c} styles={styles} onReport={() => setReportOpen(true)} />
 
       {/* Comments */}
-      <CommentsSection postId={postId} c={c} styles={styles} />
+      <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+        <CommentSection postId={postId} />
+      </View>
     </BottomSheet>
 
     {postId ? (
@@ -1383,88 +1316,6 @@ function createStyles(c: ColorPalette) {
       color: c.mute,
     },
 
-    // Comments
-    commentHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: 16,
-      marginBottom: 12,
-    },
-    commentHeaderText: {
-      fontSize: 13,
-      fontWeight: "700",
-      color: c.ink,
-    },
-    addCommentBtn: {
-      fontSize: 13,
-      color: c.gold,
-    },
-    commentRow: {
-      flexDirection: "row",
-      gap: 10,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderBottomWidth: 1,
-      borderBottomColor: c.ghost + "30",
-    },
-    commentAvatar: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: c.ruleDark,
-    },
-    commentBody: { flex: 1 },
-    commentMeta: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "baseline",
-    },
-    commentAuthor: {
-      fontSize: 13,
-      fontWeight: "700",
-      color: c.ink,
-    },
-    commentTime: {
-      fontSize: 10,
-      fontFamily: fonts.mono,
-      color: c.ghost,
-    },
-    commentContent: {
-      fontSize: 13,
-      color: c.mute,
-      marginTop: 2,
-    },
-    viewAllComments: {
-      fontSize: 13,
-      color: c.mute,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-    },
-    composeRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 10,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-    },
-    composeAvatar: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: c.ruleDark,
-    },
-    composeInput: {
-      flex: 1,
-      backgroundColor: c.paperWarm,
-      borderRadius: 20,
-      borderWidth: 1,
-      borderColor: c.ghost + "40",
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-      fontSize: 14,
-      maxHeight: 80,
-    },
     reportBtn: {
       fontSize: 12,
       color: c.ghost,
