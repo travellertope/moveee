@@ -87,6 +87,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Poll and itinerary creation requires Connect Pro or Taste Maker (2,500 rep) — same
+  // floor enforced on the mobile path (handle_submit_post()).
+  if ((templateType === "poll" || templateType === "itinerary") && !isPro && (user?.reputation ?? 0) < 2500) {
+    return NextResponse.json(
+      { error: "Poll and itinerary posts require Connect Pro membership or Taste Maker status (2,500 points)." },
+      { status: 403 }
+    );
+  }
+
   const content = (text ?? "").trim();
   if (templateType === "event") {
     if (!event_title?.trim()) {
