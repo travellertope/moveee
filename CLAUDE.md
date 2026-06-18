@@ -675,6 +675,30 @@ comment."` (controlled-mode screens may override `emptyText`/`heading`/`signInPr
 
 ---
 
+## Profile cover photo
+
+`_culture_cover_photo_url` usermeta mirrors `_culture_avatar_url` exactly.
+- Upload: `POST /mobile/me/cover-photo` (multipart, field `file`) →
+  `handle_upload_cover_photo()` in `class-culture-mobile-api.php`, same
+  `media_handle_upload()` pattern as `handle_upload_avatar()`.
+- Exposed as `coverPhotoUrl` (camelCase) in both `public_profile()` and the
+  own-user-profile builder in `class-culture-mobile-api.php`, and as
+  `cover_photo_url` (snake_case) in `handle_get_public_profile()` in
+  `class-culture-rest-api.php` — **any new profile field must be added to
+  all three of these** to be visible everywhere (mobile member view, mobile
+  own profile/auth store, web public profile).
+- Mobile: `MemberSettingsScreen.tsx` ProfileTab has the upload control
+  (`handleCoverPhotoPick`, 16:9 crop) above the avatar section; uses
+  `api.upload(url, uri, "file")`. `MemberProfileScreen.tsx` swaps its
+  hardcoded gradient hero for an `Image` when `profile.coverPhotoUrl` is set.
+- Web: `app/connect/[username]/page.tsx` renders a `.prf-cover` banner above
+  `.prf-header-inner` when `cover_photo_url` is present — there was
+  previously no cover banner on web at all, only on mobile (gradient).
+- `coverPhotoUrl: string` added to both `User` and `Member` in
+  `apps/mobile/src/types/index.ts` (required field, not optional).
+
+---
+
 ## Event system enhancements
 
 ### Organiser field
