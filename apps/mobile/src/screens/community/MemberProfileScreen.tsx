@@ -13,6 +13,7 @@ import { fonts, fontSize, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { Member } from "../../types";
+import { BADGE_META, badgeTitleCase } from "../../constants/badges";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -124,11 +125,11 @@ function TierChip({
 function BadgeRow({
   badges, styles, c,
 }: {
-  badges: { slug: string; name: string; emoji: string }[];
+  badges: { slug: string; name: string; emoji: string; description: string }[];
   styles: ReturnType<typeof createStyles>;
   c: ColorPalette;
 }) {
-  const [tooltip, setTooltip] = useState<{ name: string; emoji: string } | null>(null);
+  const [tooltip, setTooltip] = useState<{ name: string; emoji: string; description: string } | null>(null);
   if (!badges.length) return null;
   return (
     <>
@@ -142,7 +143,7 @@ function BadgeRow({
           <TouchableOpacity
             key={b.slug ?? i}
             style={styles.badgeIcon}
-            onPress={() => setTooltip({ name: b.name, emoji: b.emoji })}
+            onPress={() => setTooltip({ name: b.name, emoji: b.emoji, description: b.description })}
             activeOpacity={0.7}
           >
             <Text style={styles.badgeEmoji}>{b.emoji}</Text>
@@ -164,6 +165,7 @@ function BadgeRow({
           <View style={styles.tooltipBox}>
             <Text style={styles.tooltipEmoji}>{tooltip?.emoji}</Text>
             <Text style={styles.tooltipName}>{tooltip?.name}</Text>
+            {tooltip?.description ? <Text style={styles.tooltipDescription}>{tooltip.description}</Text> : null}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -271,11 +273,13 @@ export default function MemberProfileScreen() {
   if (loading) return <SafeAreaView style={styles.container}><View style={styles.center}><ActivityIndicator color={c.gold} /></View></SafeAreaView>;
   if (!profile) return <SafeAreaView style={styles.container}><View style={styles.center}><Text style={styles.errorText}>Member not found.</Text></View></SafeAreaView>;
 
-  const badges = (profile.badges ?? []).map((b: any) =>
-    typeof b === "string"
-      ? { slug: b, name: b.replace(/-_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()), emoji: "🏅" }
-      : b
-  );
+  const badges = (profile.badges ?? []).map((b: any) => {
+    if (typeof b !== "string") return b;
+    const meta = BADGE_META[b];
+    return meta
+      ? { slug: b, name: meta.name, emoji: meta.emoji, description: meta.description }
+      : { slug: b, name: badgeTitleCase(b), emoji: "🏅", description: "" };
+  });
   const hasSocial = !!(profile.instagram || profile.linkedin || profile.website);
   const rep       = profile.reputation ?? 0;
 
@@ -468,10 +472,11 @@ function createStyles(c: ColorPalette) {
     tooltipBox: {
       backgroundColor: c.ink, borderRadius: 14,
       paddingHorizontal: 28, paddingVertical: 20,
-      alignItems: "center", gap: 8, minWidth: 160,
+      alignItems: "center", gap: 8, minWidth: 160, maxWidth: 260,
     },
     tooltipEmoji: { fontSize: 36 },
     tooltipName:  { fontFamily: fonts.sansBold, fontSize: 15, color: c.paper, textAlign: "center" },
+    tooltipDescription: { fontFamily: fonts.sans, fontSize: 13, color: c.paper, opacity: 0.8, textAlign: "center" },
 
     socialRow: { flexDirection: "row", gap: 24, marginTop: 16 },
     socialBtn: {
