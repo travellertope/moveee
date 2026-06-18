@@ -944,10 +944,27 @@ Three new Next.js proxy routes (same auth/secret pattern as
 - `POST /api/community/event-rsvp-cancel` → `POST /community/event/rsvp-cancel`
 - `GET /api/community/event-rsvp-status?post_id=X` → `GET /community/event/rsvp-status`
 
-The web composer (`SubmitPost.tsx`) still only creates *editorial* `culture_event`
-posts via `/api/events/member-submit` — there is still no way to **create** an
-RSVP-enabled community event from the web UI (composer work was not requested), only
-to **view and RSVP to** ones created via the mobile app. That remains a known gap.
+**Web composer reroute (June 2026 — closes the gap above).** `SubmitPost.tsx`'s Event
+template used to submit to `/api/events/member-submit` (the separate, excluded
+editorial `culture_event` RSVP system), so there was no way to create an RSVP-enabled
+community event from the web UI. **Fixed**: it now submits through the same generic
+`/api/community/submit` path as every other template (`template_type: "event"`),
+matching the mobile reroute below. `apps/connect/app/api/community/submit/route.ts`
+accepts `event_title`, `event_date`, `event_end_date`, `event_venue`, `event_address`
+(web only has one combined venue/address input — both meta keys get the same value),
+`event_city`, `event_admission`, `ticket_url`, `event_category`,
+`organiser_directory_id`, `rsvp_enabled`, `rsvp_capacity`. **Critical: this route calls
+native WP REST (`wp/v2/community-posts`) directly via HTTP Basic Auth — it does NOT go
+through the custom PHP `culture/v1/community/submit` endpoint that `handle_submit_post()`
+handles for mobile.** That means none of the PHP-side gating in `handle_submit_post()`
+(rep/Pro floors, RSVP Pro-only) applies to web; it had to be reimplemented directly in
+this Next.js route using `session.user.reputation` / `session.user.tier`. Event
+creation requires `patron` tier OR 500+ reputation (403 otherwise, same floor as
+mobile); RSVP enabling is silently dropped (post still succeeds) for non-Pro posters.
+The event image uses the generic `/api/community/upload-image` (R2, returns a plain
+URL) since community posts store images via the `community_image_url` meta field, not
+a WP attachment ID — no need for the editorial flow's upload-image endpoint. The RSVP
+toggle + capacity input in the composer JSX is gated on `session.user.tier === "patron"`.
 
 ### Mobile composer reroute (important — June 2026)
 The mobile Event template in `NewPostScreen.tsx` used to submit to
