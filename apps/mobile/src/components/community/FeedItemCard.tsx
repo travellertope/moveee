@@ -1716,7 +1716,7 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
     if (rsvped || !item.wpId) return;
     setRsvped(true);
     try {
-      await api.post(`${MOBILE_API}/events/rsvp`, { event_id: item.wpId });
+      await api.post(`${MOBILE_API}/community/event/rsvp`, { post_id: item.wpId });
     } catch {
       setRsvped(false);
     }
@@ -1782,23 +1782,25 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
             </View>
           ) : null}
 
-          {/* RSVP button — only when no external ticket URL */}
-          {!item.ticketUrl ? (
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
-              <TouchableOpacity
-                style={[styles.eventRsvpBtn, rsvped ? styles.eventRsvpBtnDone : undefined]}
-                onPress={handleRsvp}
-                activeOpacity={0.8}
-                disabled={rsvped}
-              >
-                <Text style={styles.eventRsvpBtnText}>{rsvped ? "RSVPed ✓" : "RSVP Now"}</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
+          {/* RSVP button — only when the Pro organiser has explicitly enabled RSVP for this event */}
+          {item.ticketUrl ? (
             <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
               <Text style={styles.readMore}>Get Tickets →</Text>
             </View>
-          )}
+          ) : item.rsvpEnabled ? (
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
+              <TouchableOpacity
+                style={[styles.eventRsvpBtn, (rsvped || item.rsvpAvailable === false) ? styles.eventRsvpBtnDone : undefined]}
+                onPress={handleRsvp}
+                activeOpacity={0.8}
+                disabled={rsvped || item.rsvpAvailable === false}
+              >
+                <Text style={styles.eventRsvpBtnText}>
+                  {rsvped ? "RSVPed ✓" : item.rsvpAvailable === false ? "Fully Booked" : "RSVP Now"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
         </View>
         <FeedReactionBar item={item} marginTop={10} />
       </TouchableOpacity>

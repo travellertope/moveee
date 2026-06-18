@@ -1,22 +1,17 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   View, Text, ScrollView, Image, StyleSheet,
-  TouchableOpacity, Linking, Alert, ActivityIndicator,
-  TextInput, StatusBar,
+  TouchableOpacity, Linking, StatusBar,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRoute } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuthStore } from "../../auth/authStore";
-import { api } from "../../api/client";
 import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
 import type { EventItem } from "./EventsScreen";
-
-const PROXY = "https://themoveee.com/api";
 
 const EVENT_CHECKIN_REP = 20;
 const EVENT_CHECKIN_CREDITS = 3;
@@ -46,56 +41,12 @@ export default function EventDetailScreen() {
   const nav    = useNav();
   const route  = useRoute<any>();
   const { event } = route.params as { event: EventItem };
-  const { user }  = useAuthStore();
   const insets    = useSafeAreaInsets();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
 
-  const [name,       setName]       = useState(user?.displayName ?? "");
-  const [email,      setEmail]      = useState(user?.email ?? "");
-  const [submitting, setSubmitting] = useState(false);
-  const [rsvpDone,   setRsvpDone]   = useState(false);
-
   const isUpcoming = event.eventDate ? new Date(event.eventDate) >= new Date() : false;
   const isFree     = !event.admission || event.admission.toLowerCase().includes("free");
-
-  const handleRsvp = async () => {
-    if (!name.trim() || !email.trim()) {
-      Alert.alert("Missing info", "Please enter your name and email.");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await api.post(`${PROXY}/events/rsvp`, {
-        eventSlug:  event.slug,
-        eventTitle: event.title,
-        name:       name.trim(),
-        email:      email.trim(),
-      });
-      setRsvpDone(true);
-    } catch {
-      Alert.alert("Error", "Could not submit RSVP. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // ── RSVP success ─────────────────────────────────────────────────────────
-  if (rsvpDone) {
-    return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
-        <StatusBar barStyle="dark-content" />
-        <View style={styles.successCircle}>
-          <Ionicons name="checkmark" size={32} color={c.paper} />
-        </View>
-        <Text style={styles.successTitle}>You're on the list! 🎉</Text>
-        <Text style={styles.successSub}>A confirmation will be sent to{"\n"}{email}</Text>
-        <TouchableOpacity style={styles.successBtn} onPress={() => nav.goBack()}>
-          <Text style={styles.successBtnText}>Back to Events</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
   const dateLabel = fmtDateRange(event.eventDate, event.endDate);
   const timeLabel = fmtTime(event.eventDate);
@@ -278,48 +229,6 @@ export default function EventDetailScreen() {
               </View>
             );
           })()}
-
-          {/* RSVP section */}
-          <View style={styles.rsvpCard}>
-            <Text style={styles.rsvpTitle}>RSVP to secure your spot</Text>
-
-            <View style={styles.rsvpField}>
-              <Text style={styles.rsvpLabel}>Name</Text>
-              <TextInput
-                style={styles.rsvpInput}
-                value={name}
-                onChangeText={setName}
-                placeholder="Jane Doe"
-                placeholderTextColor={c.ghost}
-                returnKeyType="next"
-              />
-            </View>
-            <View style={styles.rsvpField}>
-              <Text style={styles.rsvpLabel}>Email</Text>
-              <TextInput
-                style={styles.rsvpInput}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="jane@example.com"
-                placeholderTextColor={c.ghost}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                returnKeyType="done"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.rsvpBtn, submitting && { opacity: 0.6 }]}
-              onPress={handleRsvp}
-              disabled={submitting}
-              activeOpacity={0.85}
-            >
-              {submitting
-                ? <ActivityIndicator color={c.paper} size="small" />
-                : <Text style={styles.rsvpBtnText}>Confirm RSVP</Text>
-              }
-            </TouchableOpacity>
-          </View>
 
         </View>
       </ScrollView>
@@ -508,75 +417,5 @@ function createStyles(c: ColorPalette) {
       fontFamily: fonts.sansBold, color: c.ochre,
     },
 
-    // RSVP section — light
-    rsvpCard: { gap: 14, paddingTop: 4 },
-    rsvpTitle: { fontFamily: fonts.sansBold, fontSize: 15, color: c.ink, marginBottom: 2 },
-    rsvpField: { gap: 4 },
-    rsvpLabel: {
-      fontFamily: fonts.sans,
-      fontSize: 12,
-      color: c.mute,
-    },
-    rsvpInput: {
-      height: 48,
-      borderWidth: 1,
-      borderColor: c.ghost,
-      borderRadius: radius.lg,
-      paddingHorizontal: 16,
-      fontFamily: fonts.sans,
-      fontSize: fontSize.base,
-      color: c.ink,
-      backgroundColor: c.paper,
-    },
-    rsvpBtn: {
-      height: 52,
-      backgroundColor: c.ochre,
-      borderRadius: radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      marginTop: 4,
-    },
-    rsvpBtnText: {
-      fontFamily: fonts.sansBold,
-      fontSize: 16,
-      color: c.paper,
-    },
-
-    // Success screen
-    successCircle: {
-      width: 72,
-      height: 72,
-      borderRadius: 36,
-      backgroundColor: c.success,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: 20,
-    },
-    successTitle: {
-      fontFamily: fonts.serifBold,
-      fontSize: 24,
-      color: c.ink,
-      textAlign: "center",
-      marginBottom: 8,
-    },
-    successSub: {
-      fontFamily: fonts.sans,
-      fontSize: 14,
-      color: c.mute,
-      textAlign: "center",
-      marginBottom: 32,
-      lineHeight: 20,
-    },
-    successBtn: {
-      backgroundColor: c.ink,
-      borderRadius: radius.full,
-      paddingHorizontal: 32,
-      paddingVertical: 14,
-    },
-    successBtnText: {
-      fontFamily: fonts.sansBold,
-      fontSize: fontSize.base,
-      color: c.paper,
-    },
   });
 }
