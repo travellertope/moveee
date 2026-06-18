@@ -12,8 +12,9 @@ import { api, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, radius, shadows } from "../../theme";
 import type { ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
-import type { Member } from "../../types";
+import type { Member, FeedItem, TemplateType } from "../../types";
 import { BADGE_META, badgeTitleCase } from "../../constants/badges";
+import PostDetailSheet from "../../components/community/PostDetailSheet";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -49,6 +50,70 @@ interface CommunityPost {
   likeCount: number;
   commentCount: number;
   template_type: string;
+  // Remaining template fields come through as snake_case from
+  // Culture_Mobile_API::format_community_post() — see that method for the full list.
+  [key: string]: any;
+}
+
+// Map the slim `member/{id}/posts` response (snake_case) onto the FeedItem
+// shape PostDetailSheet expects (camelCase) so a tap can open the same sheet
+// used by the main feed.
+function mapPostToFeedItem(post: CommunityPost, profile: PublicProfile): FeedItem {
+  return {
+    id: `community-${post.id}`,
+    wpId: post.id,
+    type: "community",
+    title: post.content,
+    slug: "",
+    date: post.publishedAt,
+    image: post.imageUrl ?? null,
+    href: "",
+    communityAuthorId: profile.id,
+    communityAuthor: profile.displayName,
+    communityAuthorUsername: profile.username,
+    communityAuthorAvatar: profile.avatarUrl,
+    commentCount: post.commentCount,
+    templateType: post.template_type as TemplateType,
+    linkedDirectoryId: post.linked_directory_id || undefined,
+    starRating: post.star_rating || undefined,
+    locationName: post.location_name || "",
+    pollOptions: post.poll_options || [],
+    pollExpiresAt: post.poll_expires_at || "",
+    pollDescription: post.poll_description || "",
+    galleryImages: post.gallery_images || [],
+    videoUrl: post.video_url || "",
+    itineraryStops: post.itinerary_stops || [],
+    itineraryTitle: post.itinerary_title || "",
+    itineraryCity: post.itinerary_city || "",
+    itineraryBudget: post.itinerary_budget || "",
+    itineraryDuration: post.itinerary_duration || "",
+    itineraryBestTime: post.itinerary_best_time || "",
+    foodDishName: post.food_dish_name || "",
+    foodRatingTaste: post.food_rating_taste || undefined,
+    foodRatingValue: post.food_rating_value || undefined,
+    foodRatingVibe: post.food_rating_vibe || undefined,
+    cuisineTag: post.cuisine_tag || "",
+    priceRange: post.price_range || "",
+    placeName: post.place_name || "",
+    placeLocation: post.place_location || "",
+    openingHours: post.opening_hours || "",
+    culturalTakeHeadline: post.cultural_take_headline || "",
+    showcaseTitle: post.showcase_title || "",
+    showcaseMedium: post.showcase_medium || "",
+    showcaseCollaborator: post.showcase_collaborator || "",
+    bookTitle: post.book_title || "",
+    bookAuthor: post.book_author || "",
+    bookStatus: post.book_status || "",
+    bookOverallRating: post.book_overall_rating || undefined,
+    bookRatingWriting: post.book_rating_writing || undefined,
+    bookRatingStory: post.book_rating_story || undefined,
+    bookRatingCharacters: post.book_rating_characters || undefined,
+    bookRatingPacing: post.book_rating_pacing || undefined,
+    bookFavQuote: post.book_fav_quote || "",
+    bookRecommend: !!post.book_recommend,
+    bookGenres: post.book_genres || [],
+    reactions: { love: 0, fire: 0, clap: 0 },
+  };
 }
 
 interface PortfolioItem {
@@ -173,10 +238,10 @@ function BadgeRow({
   );
 }
 
-function MiniPostCard({ post, styles }: { post: CommunityPost; styles: ReturnType<typeof createStyles> }) {
+function MiniPostCard({ post, styles, onPress }: { post: CommunityPost; styles: ReturnType<typeof createStyles>; onPress: () => void }) {
   const meta = TEMPLATE_META[post.template_type] ?? { emoji: "📝", label: "Post" };
   return (
-    <View style={styles.postCard}>
+    <TouchableOpacity style={styles.postCard} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.postCardHeader}>
         <View style={styles.templateBadge}>
           <Text style={styles.templateBadgeText}>{meta.emoji} {meta.label}</Text>
@@ -188,7 +253,7 @@ function MiniPostCard({ post, styles }: { post: CommunityPost; styles: ReturnTyp
         <Text style={styles.postMeta}>❤️ {post.likeCount}</Text>
         <Text style={styles.postMeta}>💬 {post.commentCount}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -239,6 +304,7 @@ export default function MemberProfileScreen() {
   const [loading,   setLoading]   = useState(true);
   const [postPage,  setPostPage]  = useState(1);
   const [activeTab, setActiveTab] = useState<"community" | "portfolio">("community");
+  const [sheetItem, setSheetItem] = useState<FeedItem | null>(null);
 
   useEffect(() => {
     const uid = params.userId;
@@ -353,7 +419,14 @@ export default function MemberProfileScreen() {
           <View style={styles.tabContent}>
             {activeTab === "community" ? (
               <>
-                {posts.map((p) => <MiniPostCard key={p.id} post={p} styles={styles} />)}
+                {posts.map((p) => (
+                  <MiniPostCard
+                    key={p.id}
+                    post={p}
+                    styles={styles}
+                    onPress={() => setSheetItem(mapPostToFeedItem(p, profile))}
+                  />
+                ))}
                 {posts.length > 0 && (
                   <TouchableOpacity style={styles.loadMore} onPress={() => setPostPage((n) => n + 1)}>
                     <Text style={styles.loadMoreText}>Load more posts</Text>
@@ -371,6 +444,8 @@ export default function MemberProfileScreen() {
       <TouchableOpacity style={styles.backBtn} onPress={() => nav.goBack()}>
         <Ionicons name="chevron-back" size={20} color={c.ink} />
       </TouchableOpacity>
+
+      <PostDetailSheet item={sheetItem} visible={sheetItem !== null} onClose={() => setSheetItem(null)} />
     </View>
   );
 }
