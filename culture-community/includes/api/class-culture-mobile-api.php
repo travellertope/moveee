@@ -1913,6 +1913,7 @@ class Culture_Mobile_API {
                 'entryType' => ( $terms && ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0]->name : '',
                 'city'      => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
                 'location'  => get_post_meta( $post->ID, '_culture_location', true ) ?: '',
+                'isPartner' => (bool) get_post_meta( $post->ID, '_is_partner', true ),
             );
         }, $query->posts );
     }

@@ -112,6 +112,7 @@ export interface FeedItem {
 
   // Directory
   entryType?: string;
+  isPartner?: boolean;
 
   // Quote
   quoteSource?: string;
