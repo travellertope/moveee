@@ -78,6 +78,82 @@ function PollDisplay({ postId, options, expiresAt }: { postId?: string; options:
     </div>
   );
 }
+
+function RsvpDisplay({
+  postId,
+  capacity,
+  initialCount,
+}: {
+  postId?: string;
+  capacity?: number;
+  initialCount?: number;
+}) {
+  const [status, setStatus] = useState<{ rsvped: boolean; count: number } | null>(
+    initialCount !== undefined ? { rsvped: false, count: initialCount } : null
+  );
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!postId) return;
+    fetch(`/api/community/event-rsvp-status?post_id=${postId}`, { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setStatus({ rsvped: !!data.rsvped, count: Number(data.count ?? initialCount ?? 0) });
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postId]);
+
+  const count = status?.count ?? initialCount ?? 0;
+  const isFull = !!capacity && capacity > 0 && count >= capacity;
+  const rsvped = !!status?.rsvped;
+
+  async function toggle() {
+    if (loading || !postId) return;
+    if (!rsvped && isFull) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/community/event-${rsvped ? "rsvp-cancel" : "rsvp"}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: Number(postId) }),
+      });
+      if (res.ok) {
+        setStatus((prev) => ({
+          rsvped: !rsvped,
+          count: Math.max(0, (prev?.count ?? count) + (rsvped ? -1 : 1)),
+        }));
+      }
+    } catch {}
+    setLoading(false);
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.6rem" }}>
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={loading || (!rsvped && isFull)}
+        style={{
+          background: rsvped ? "#fff" : "var(--ochre, #b38238)",
+          color: rsvped ? "#b38238" : "#fff",
+          border: "1px solid #b38238",
+          borderRadius: "4px",
+          padding: "7px 14px",
+          fontSize: "0.78rem",
+          fontWeight: 700,
+          cursor: !rsvped && isFull ? "not-allowed" : "pointer",
+          opacity: loading ? 0.6 : 1,
+        }}
+      >
+        {rsvped ? "Going ✓" : isFull ? "Full" : "RSVP"}
+      </button>
+      <span style={{ fontSize: "0.72rem", color: "#7a6f5c" }}>
+        {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
+      </span>
+    </div>
+  );
+}
 import InternalLinkCard from "./InternalLinkCard";
 
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
@@ -517,6 +593,11 @@ export default function FeedCard({
                       Weekend Route
                     </span>
                   )}
+                  {item.templateType === "event" && (
+                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#a8351f", background: "rgba(168,53,31,0.08)", padding: "2px 6px", borderRadius: "2px" }}>
+                      Event{item.eventCategory ? ` · ${item.eventCategory}` : ""}
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -549,6 +630,38 @@ export default function FeedCard({
             {/* Poll inline */}
             {item.templateType === "poll" && item.pollOptions && (
               <PollDisplay postId={item.wpId} options={item.pollOptions} expiresAt={item.pollExpiresAt} />
+            )}
+
+            {/* Event details + RSVP */}
+            {item.templateType === "event" && (
+              <div style={{ fontSize: "0.78rem", color: "#7a6f5c", marginBottom: "0.5rem", lineHeight: 1.5 }}>
+                {item.eventDate && (
+                  <div>
+                    📅 {new Date(item.eventDate).toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" })}
+                    {item.endDate && ` – ${new Date(item.endDate).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
+                  </div>
+                )}
+                {(item.location || item.city) && (
+                  <div>📍 {[item.location, item.city].filter(Boolean).join(", ")}</div>
+                )}
+                {item.admission && <div>🎟 {item.admission}</div>}
+                {item.organiserName && item.organiserSlug && (
+                  <div>
+                    Organised by{" "}
+                    <a href={`/directory/${item.organiserSlug}`} style={{ color: "#b38238" }}>
+                      {item.organiserName}
+                    </a>
+                  </div>
+                )}
+                {item.ticketUrl && (
+                  <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#b38238", display: "inline-block", marginTop: "4px" }}>
+                    Get tickets →
+                  </a>
+                )}
+              </div>
+            )}
+            {item.templateType === "event" && item.rsvpEnabled && (
+              <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} />
             )}
 
             {/* Gallery carousel — all image-capable templates */}

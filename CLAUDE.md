@@ -916,12 +916,38 @@ truth for these).
 ### FeedItem RSVP fields
 `rsvpEnabled`, `rsvpCapacity`, `rsvpCount`, `rsvpAvailable` added to `FeedItem` in
 `apps/mobile/src/types/index.ts`, populated in the mobile community-feed mapper in
-`class-culture-mobile-api.php`. **Not yet added** to the web `FeedItem` type in
-`packages/shared/lib/unified-feed.ts` or to `getCommunityPosts()` — the web composer
-(`SubmitPost.tsx`) still creates *editorial* `culture_event` posts via
-`/api/events/member-submit`, not community `culture_post` events, so there is
-currently no way to create an RSVP-enabled event from the web UI, and no web feed
-card renders RSVP state. This is a known gap, not yet requested to be closed.
+`class-culture-mobile-api.php`.
+
+**Web gap closed (June 2026).** The web `FeedItem` type in
+`packages/shared/lib/unified-feed.ts` now also carries `ticketUrl`, `rsvpEnabled`,
+`rsvpCapacity`, `rsvpCount` (event date/venue/admission/category/organiser reuse the
+pre-existing happening-specific fields: `eventDate`, `endDate`, `location`,
+`venueAddress`, `city`, `admission`, `eventCategory`, `organiserName`,
+`organiserSlug`). `getCommunityPosts()` requests the raw `_event_*` postmeta keys plus
+a new resolved `community_event_meta` REST field (registered in
+`class-culture-post-types.php`, mirroring the pre-existing `culture_event_meta`
+pattern for editorial events) that resolves the organiser directory entry's
+name/slug and a live RSVP count server-side, avoiding a second request per event.
+
+`FeedCard.tsx` and `CommunityDetailModal.tsx` both render an `event` template badge,
+an event-details block (date, venue/city, admission, organiser link, ticket link),
+and — when `rsvpEnabled` — a self-contained `RsvpDisplay` component (same pattern as
+`PollDisplay`: own `useState`/`useEffect`, fetches live status on mount, posts to the
+proxy routes below on toggle). Both files duplicate this component exactly like they
+already duplicate `PollDisplay` — there's no shared component module between the
+feed-card and detail-modal renderers in this codebase, so **keep both in sync** for
+any future template feature.
+
+Three new Next.js proxy routes (same auth/secret pattern as
+`app/api/community/poll-vote/route.ts`):
+- `POST /api/community/event-rsvp` → `POST /community/event/rsvp`
+- `POST /api/community/event-rsvp-cancel` → `POST /community/event/rsvp-cancel`
+- `GET /api/community/event-rsvp-status?post_id=X` → `GET /community/event/rsvp-status`
+
+The web composer (`SubmitPost.tsx`) still only creates *editorial* `culture_event`
+posts via `/api/events/member-submit` — there is still no way to **create** an
+RSVP-enabled community event from the web UI (composer work was not requested), only
+to **view and RSVP to** ones created via the mobile app. That remains a known gap.
 
 ### Mobile composer reroute (important — June 2026)
 The mobile Event template in `NewPostScreen.tsx` used to submit to
@@ -937,11 +963,13 @@ server-side), `content` for the event template is built as
 `eventTitle + "\n\n" + description` rather than just the description text. Image
 upload now goes through the shared `uploadImages()` → `/mobile/community/upload-image`
 flow (the old `/events/upload-image` endpoint is no longer called from this screen).
-**Note:** the old editorial event endpoint enforced a minimum reputation (Culture
-Contributor, 500 rep) to create an event; the community-post Event branch in
-`handle_submit_post()` has no such minimum — rerouting means there is currently no
-reputation floor on creating a community event (Pro-gating still applies to RSVP
-specifically, not to posting the event itself).
+**Reputation floor restored**: the old editorial event endpoint enforced a minimum
+reputation (Culture Contributor, 500 rep) to create an event. The reroute initially
+dropped this floor; it's since been restored in `handle_submit_post()` —
+`template_type === 'event'` now requires `patron` tier OR 500+ reputation (returns
+`rep_required` 403 otherwise), same gate as poll/itinerary (2,500 rep) right above
+it in the same function. Mobile-only check since web has no community-post event
+creation path yet.
 
 ### RSVP UI
 - **Mobile composer**: `EVENT_CATEGORIES`-style toggle row + capacity input in

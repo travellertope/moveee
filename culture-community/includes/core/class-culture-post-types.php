@@ -134,6 +134,18 @@ class Culture_Post_Types {
             '_food_rating_taste'   => 'integer',
             '_food_rating_value'   => 'integer',
             '_food_rating_vibe'    => 'integer',
+            // Community-organiser event template (separate from the culture_event CPT above)
+            '_event_date'              => 'string',
+            '_event_end_date'          => 'string',
+            '_event_venue'             => 'string',
+            '_event_city'              => 'string',
+            '_event_address'           => 'string',
+            '_event_admission'         => 'string',
+            '_event_ticket_url'        => 'string',
+            '_event_category'          => 'string',
+            '_culture_event_organiser_id' => 'integer',
+            '_culture_rsvp_enabled'    => 'boolean',
+            '_culture_rsvp_capacity'   => 'integer',
         );
         foreach ( $community_post_meta as $meta_key => $type ) {
             register_post_meta( 'culture_post', $meta_key, array(
@@ -143,6 +155,32 @@ class Culture_Post_Types {
                 'auth_callback' => '__return_true',
             ) );
         }
+
+        // Resolved organiser + RSVP fields for community-organiser events, mirroring
+        // culture_event_meta above. Kept as a single REST field (rather than raw meta)
+        // so the Next.js feed mapper doesn't need a second request per event to resolve
+        // the organiser directory entry or live RSVP count.
+        register_rest_field( 'culture_post', 'community_event_meta', array(
+            'get_callback' => function ( $post_arr ) {
+                $id = $post_arr['id'];
+                if ( get_post_meta( $id, '_template_type', true ) !== 'event' ) {
+                    return null;
+                }
+                $organiser_id = (int) get_post_meta( $id, '_culture_event_organiser_id', true );
+                $rsvp_enabled = (bool) get_post_meta( $id, '_culture_rsvp_enabled', true );
+                return array(
+                    'organiser_id'   => $organiser_id ?: null,
+                    'organiser_name' => $organiser_id ? get_the_title( $organiser_id ) : null,
+                    'organiser_slug' => $organiser_id ? get_post_field( 'post_name', $organiser_id ) : null,
+                    'rsvp_enabled'   => $rsvp_enabled,
+                    'rsvp_capacity'  => (int) get_post_meta( $id, '_culture_rsvp_capacity', true ),
+                    'rsvp_count'     => $rsvp_enabled && class_exists( 'Culture_Community_RSVP' )
+                        ? Culture_Community_RSVP::get_count( $id )
+                        : 0,
+                );
+            },
+            'schema' => null,
+        ) );
 
         // directory entry meta (Phase 3)
         $directory_meta = array(

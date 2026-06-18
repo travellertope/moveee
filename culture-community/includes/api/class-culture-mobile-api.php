@@ -1078,7 +1078,16 @@ class Culture_Mobile_API {
                 }
             }
         }
-        // Event posts require Culture Contributor (500 rep) — handled by the event endpoint separately.
+        // Event posts require Culture Contributor (500 rep), same floor as the legacy editorial event endpoint.
+        if ( 'event' === $template_check ) {
+            $tier = get_user_meta( $user_id, '_culture_membership_tier', true );
+            if ( 'patron' !== $tier ) {
+                $rep = class_exists( 'Culture_Gamification' ) ? Culture_Gamification::get_reputation( $user_id ) : 0;
+                if ( $rep < 500 ) {
+                    return new WP_Error( 'rep_required', 'Creating events requires Connect Pro membership or Culture Contributor status (500 points).', array( 'status' => 403 ) );
+                }
+            }
+        }
 
         $review_days = (int) get_option( 'culture_new_member_review_days', 7 );
         $user        = get_userdata( $user_id );
