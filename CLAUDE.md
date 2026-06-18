@@ -1103,7 +1103,8 @@ Daily credit cap: `DAILY_CREDIT_CAP = 50` credits per user per day.
 |---|---|---|
 | Feed boost (+10 score) | Taste Maker | `useFeedRecommendations.ts` scoreItem() — reads `authorRepTier` on FeedItem |
 | Skip new-member review queue | Taste Maker (2,500 rep) | `class-culture-mobile-api.php` handle_submit_post |
-| Poll + Itinerary templates | Taste Maker (2,500 rep) | PHP (403), mobile UI (🔒 chip + Alert) |
+| Event template (creation) | Culture Contributor (500 rep), Connect Pro bypasses | PHP `handle_submit_post()` (mobile) and the web submit route (added June 2026) |
+| Poll + Itinerary templates | Taste Maker (2,500 rep), Connect Pro bypasses | PHP `handle_submit_post()` (mobile, 403) and `apps/connect/app/api/community/submit/route.ts` (web, 403 — added June 2026, web previously had zero gating on these templates since this route bypasses PHP entirely) |
 | Gated partner perks | Configurable per perk | `class-culture-perks.php` redeem_perk() checks `min_rep_tier` column |
 | Nominate for Culture Icon | Culture Authority (10,000 rep) | `POST /culture/v1/nominate-icon` |
 
