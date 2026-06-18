@@ -85,9 +85,20 @@ async function upload<T>(url: string, uri: string, name: string, type: string): 
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
-    super(message);
+    super(sanitizeErrorMessage(message));
     this.name = "ApiError";
   }
+}
+
+// WordPress's fatal-error handler returns its message as HTML (e.g. "<p>There has
+// been a critical error on this website.</p><p><a href=...>Learn more...</a></p>")
+// even inside an otherwise well-formed REST error JSON body. Never show that markup
+// to the user — collapse it to a generic message instead.
+function sanitizeErrorMessage(message: string): string {
+  if (/<[a-z][\s\S]*>/i.test(message)) {
+    return "Something went wrong on our end. Please try again in a moment.";
+  }
+  return message;
 }
 
 export const api = {
