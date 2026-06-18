@@ -202,10 +202,12 @@ class Culture_Post_Types {
 
         // 1. Quotes
         $quote_fields = array(
-            'quoteSource'  => array( 'type' => 'String', 'meta_key' => '_quote_source' ),
-            'quoteLikes'   => array( 'type' => 'Int',    'meta_key' => '_quote_likes' ),
-            'quoteReports' => array( 'type' => 'Int',    'meta_key' => '_quote_reports' ),
-            'quoteUserId'  => array( 'type' => 'Int',    'meta_key' => '_quote_user_id' ),
+            'quoteSource'        => array( 'type' => 'String', 'meta_key' => '_quote_source' ),
+            'quoteLikes'         => array( 'type' => 'Int',    'meta_key' => '_quote_likes' ),
+            'quoteReports'       => array( 'type' => 'Int',    'meta_key' => '_quote_reports' ),
+            'quoteUserId'        => array( 'type' => 'Int',    'meta_key' => '_quote_user_id' ),
+            'quoteSharingReason' => array( 'type' => 'String', 'meta_key' => '_quote_sharing_reason' ),
+            'quoteType'          => array( 'type' => 'String', 'meta_key' => '_quote_type' ),
         );
 
         foreach ( $quote_fields as $field_name => $config ) {

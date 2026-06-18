@@ -538,7 +538,7 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#8220;|&#8221;/g, '"').trim();
 }
 
-function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c: ColorPalette; styles: any }) {
+function ArticleCommentsSection({ articleId, c, styles, onCountChange }: { articleId: string; c: ColorPalette; styles: any; onCountChange?: (n: number) => void }) {
   const user = useAuthStore((s) => s.user);
   const [comments, setComments] = useState<WpComment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -552,6 +552,10 @@ function ArticleCommentsSection({ articleId, c, styles }: { articleId: string; c
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [articleId]);
+
+  useEffect(() => {
+    onCountChange?.(comments.length);
+  }, [comments.length, onCountChange]);
 
   const submitComment = async () => {
     const body = text.trim();
@@ -740,6 +744,7 @@ export default function ArticleScreen() {
   // TOC
   const [tocOpen, setTocOpen] = useState(false);
   const [activeTocIdx, setActiveTocIdx] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const headings = useMemo(() => article ? extractHeadings(article.content ?? "") : [], [article]);
 
@@ -892,7 +897,7 @@ export default function ArticleScreen() {
                       clap: (article as any).reactions?.clap ?? 0,
                     }}
                     noBorder
-                    commentCount={comments.length}
+                    commentCount={commentCount}
                     onCommentPress={scrollToComments}
                   />
                 </View>
@@ -1063,7 +1068,7 @@ export default function ArticleScreen() {
 
                   {/* ── Comments section ── */}
                   <View onLayout={(e) => { commentsY.current = e.nativeEvent.layout.y + HERO_HEIGHT - SHEET_OVERLAP; }}>
-                    <ArticleCommentsSection articleId={article.id} c={c} styles={styles} />
+                    <ArticleCommentsSection articleId={article.id} c={c} styles={styles} onCountChange={setCommentCount} />
                   </View>
                 </>
               )}

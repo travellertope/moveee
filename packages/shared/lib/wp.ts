@@ -1601,6 +1601,8 @@ const QUOTE_FIELDS_FRAGMENT = `
     date
     quoteSource
     quoteLikes
+    quoteSharingReason
+    quoteType
     quoteAuthors {
       nodes {
         name
