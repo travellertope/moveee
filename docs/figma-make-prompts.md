@@ -1601,6 +1601,153 @@ Output 3 frames in a row. Label each.
 
 ---
 
+### PROMPT 6B — Events: Timeline + Calendar View, Filter Sheet (Redesign)
+
+```
+Senior mobile UX/UI designer — Moveee Connect events section redesign. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D, ghost #C8BFB0, mute #7A6F5C, success #2D6A4F.
+Typography: Fraunces (display), DM Sans (body/UI), JetBrains Mono (dates/meta/counts).
+Radius: sm=2px, md=4px, lg=6px, xl=12px, 2xl=20px, full=9999px.
+Shadow-card: 0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04).
+
+DESIGN PRINCIPLE: this is a list of facts, not a photo wall. No large hero images
+on the list — events are scanned by date, time and place. Photography is reserved
+for the detail screen once a user commits to opening an event. The list optimises
+for density and scan speed: date markers, time, venue, category colour, RSVP state.
+
+EVENT CATEGORY COLOUR SYSTEM (used as a 4px left-edge accent bar + small dot, never
+as a full-card fill — keeps the list calm):
+  Live Music → #C5491F (ochre)   Nightlife → #7B1FA2 (purple)
+  Food & Drink → #B38238 (gold)   Film → #1976D2 (blue)
+  Visual Art → #6B48A8 (violet)   Literature → #78350F (sepia)
+  Community → #2D6A4F (forest)   Performance → #00695C (teal)
+  Tech & Ideas → #3A342B (dark warm)
+
+---
+
+FRAME 1 — EVENTS: TIMELINE VIEW (default):
+
+HEADER (64px, white bg, shadow-card bottom):
+  "Events" Fraunces 20px bold ink, 16px left.
+  Right side (16px inset, 12px gap): 
+    FILTER BUTTON — 36px circle, ghost border, ⚙︎/sliders icon 16px ink. Small ochre dot badge (6px,
+      top-right of icon) shown when ≥1 filter active.
+    VIEW TOGGLE — segmented control, 2 segments, 32px height, radius-full, paper-deep bg track:
+      "☰ List" (active: white pill fill, shadow-card, DM Sans 12px bold ink) /
+      "▦ Calendar" (inactive: DM Sans 12px mute, no fill).
+
+ACTIVE FILTER CHIPS ROW (only shown when filters are applied, 40px, horizontal scroll, 16px
+  horizontal padding, 8px gap): e.g. "Live Music ✕" and "London ✕" — ochre fill white text,
+  radius-full, 28px height, DM Sans 12px bold. "Clear all" ghost text link at the end.
+
+TIMELINE (vertical scroll, 16px horizontal padding):
+  DATE GROUP HEADER (sticky-style, 32px, 12px top margin per new group):
+    Left: day-of-week + date, JetBrains Mono 11px bold mute uppercase, e.g. "FRI 13 JUN".
+    Right: thin ghost rule filling remaining width.
+
+  TIMELINE ROW (each event — 8px vertical gap between rows within a date group):
+    Structure: 56px TIME COLUMN (left) + connecting dot/line + EVENT CARD (right).
+    TIME COLUMN: "9:00" DM Sans 12px bold ink + "PM" JetBrains Mono 9px mute below, right-aligned,
+      8px right padding.
+    TIMELINE RAIL: 2px vertical ghost line running through all rows in the group, with a 8px
+      filled dot (category colour) at each event's time marker, centred on the rail.
+    EVENT CARD (white fill, radius-lg, shadow-card, 4px LEFT EDGE ACCENT BAR in category colour,
+      12px padding, no image):
+      Top row: category dot (6px, category colour) + category label DM Sans 10px bold mute
+        uppercase letter-spacing + RSVP STATUS chip right (only if relevant):
+          "✓ Going" — success green text, pale green bg, radius-full, 18px height, DM Sans 10px bold.
+      Title: "Amapiano Night at Jazz Cafe" DM Sans 15px bold ink, 1–2 lines, 4px top.
+      Meta row (4px top): "📍 Jazz Cafe, Camden" DM Sans 12px mute + "· London" mute.
+      Bottom row (8px top): price/admission "Free" or "£15" DM Sans 12px ink-soft left +
+        attendance "👥 47 going" DM Sans 11px mute right.
+      PRO-ONLY events: small gold ★ badge inline after title, no other change (no large overlay).
+      ONLINE events: 🔗 icon replaces 📍 in meta row, "Zoom Webinar" instead of venue.
+
+  Show 3 date groups: "FRI 13 JUN" (2 rows), "SAT 14 JUN" (2 rows), "SUN 15 JUN" (1 row) — 5
+  event rows total, mixing free/paid/online/pro examples used in Prompt 6.
+
+  Empty state (sketch separately, small inline note): centred icon + "No events match your
+  filters" DM Sans 14px mute + "Clear filters" ochre link.
+
+  Bottom nav: Events tab active.
+
+---
+
+FRAME 2 — EVENTS: CALENDAR VIEW:
+
+Same HEADER as Frame 1, but "▦ Calendar" segment active (white pill fill).
+Same ACTIVE FILTER CHIPS ROW state (show with "Live Music ✕" applied, for variety).
+
+MONTH STRIP (56px, white bg, shadow-card bottom, 16px horizontal padding):
+  "← June 2026 →" Fraunces 15px bold ink centred, ghost chevrons either side (32px tap targets).
+
+WEEK CALENDAR GRID (white bg, 16px padding, 8px bottom shadow-card):
+  7 day-of-week labels (Mon–Sun) JetBrains Mono 10px mute uppercase, centred, equal columns.
+  Date cells below (44×44px, centred, 4px gap): plain DM Sans 14px ink number.
+    TODAY: ghost border ring.
+    SELECTED DAY (13): ink fill circle, white bold number.
+    DAYS WITH EVENTS: 4px dot below the number, category colour (mix of colours across the
+      week to show variety) — multiple dots (max 3, then "+") if multiple categories that day.
+  Swipe affordance note: "Swipe to change week" JetBrains Mono 9px ghost, centred, 4px below grid.
+
+SELECTED DAY EVENTS (16px padding, 12px top):
+  "Friday 13 June" DM Sans 13px bold mute uppercase, 8px bottom, with "3 events" JetBrains Mono
+    11px ghost right-aligned on same row.
+  Same TIMELINE ROW card style as Frame 1 (time column + dot + no-image card with left accent bar),
+    but no date group headers needed since already scoped to one day. 8px gap between rows.
+  Show 3 rows: morning food event, afternoon talk, evening live music — vary category colours.
+
+  If selected day has zero events: centred "No events on this day" DM Sans 13px mute, 32px
+    vertical padding, small calendar-with-x icon above.
+
+  Bottom nav: Events tab active.
+
+---
+
+FRAME 3 — FILTER SHEET (bottom sheet, slides up from Filter button tap):
+
+SCRIM: ink @ 40% opacity behind sheet.
+SHEET (white bg, radius-2xl top corners, ~70% screen height, shadow-card):
+  DRAG HANDLE: 36×4px ghost pill, centred, 8px top margin.
+  HEADER ROW (16px padding): "Filter Events" Fraunces 18px bold ink left + "Reset" ochre
+    DM Sans 13px right.
+
+  SECTION — EVENT TYPE (16px padding, 12px bottom):
+    "Event Type" DM Sans 12px bold mute uppercase, 10px bottom.
+    Chip grid (wrap, 8px gap): "Live Music" (selected: ink fill white text) · "Nightlife" ·
+      "Food & Drink" · "Film" · "Visual Art" · "Literature" · "Community" · "Performance" ·
+      "Tech & Ideas" — ghost border pills when inactive, radius-full, DM Sans 12px bold, 32px height.
+
+  SECTION — CITY (16px padding, ghost top border, 12px bottom):
+    "City" DM Sans 12px bold mute uppercase, 10px bottom.
+    Search input (44px, ghost border, radius-lg): 🔍 + "Search city" placeholder.
+    Quick chips below (8px top, 8px gap): "London" (selected) · "Lagos" · "Accra" · "Toronto" ·
+      "New York" — same chip style as above.
+
+  SECTION — PRICE (16px padding, ghost top border, 12px bottom):
+    "Price" DM Sans 12px bold mute uppercase, 10px bottom.
+    3 chips: "Free" · "Paid" · "Any" (selected, ink fill) — same chip style.
+
+  SECTION — WHEN (16px padding, ghost top border, 12px bottom):
+    "When" DM Sans 12px bold mute uppercase, 10px bottom.
+    4 chips: "Today" · "This Weekend" (selected) · "This Month" · "Custom range…" — same style.
+
+  SECTION — ACCESS (16px padding, ghost top border):
+    "Access" DM Sans 12px bold mute uppercase, 10px bottom.
+    2 chips: "All Members" (selected) · "⭐ Pro Only" (gold border when inactive, gold fill when active).
+
+  FOOTER (sticky bottom, white bg, shadow-card top, 16px padding):
+    "Show 12 events" primary ochre button, full width, radius-full, 52px height, DM Sans 15px bold white.
+
+---
+
+Output 3 frames side by side: Timeline View, Calendar View, Filter Sheet.
+Reuse Prompt 6's Frame 2 (Event Detail) and Frame 3 (RSVP Success) unchanged — this prompt
+replaces only Prompt 6's Frame 1 (Events List) with the timeline/calendar system above.
+```
+
+---
+
 ## 7. GAMES SCREENS
 
 ---
