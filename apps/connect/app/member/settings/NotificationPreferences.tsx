@@ -18,6 +18,7 @@ const NOTIFICATION_TYPES = [
   { id: "mention",           name: "You Were Mentioned" },
   { id: "new_follower",      name: "New Follower" },
   { id: "new_follower_post", name: "New Post From Someone You Follow" },
+  { id: "event_rsvp",        name: "Event RSVP" },
 ];
 
 export default function NotificationPreferences() {

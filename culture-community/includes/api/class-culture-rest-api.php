@@ -1199,6 +1199,53 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Community event RSVPs (web — API key, explicit user_id param).
+        // Mirrors /mobile/community/event/* in class-culture-mobile-api.php.
+        register_rest_route( 'culture/v1', '/community/event/rsvp', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_community_event_rsvp' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/community/event/rsvp-cancel', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_community_event_rsvp_cancel' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/community/event/rsvp-status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_community_event_rsvp_status' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/community/event/attendees', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_community_event_attendees' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/community/my-events', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_community_my_events' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Analytics
         register_rest_route( 'culture/v1', '/member/analytics', array(
             'methods'             => 'GET',
@@ -1440,6 +1487,66 @@ class Culture_REST_API {
         return rest_ensure_response( array(
             'usernames' => Culture_Follows::get_following_usernames( $user_id ),
         ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Community event RSVPs (web — API key, explicit user_id)
+     * —————————————————————————————————————— */
+
+    public static function handle_community_event_rsvp( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+        $result  = Culture_Community_RSVP::rsvp( $post_id, $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( Culture_Community_RSVP::get_status( $post_id, $user_id ) );
+    }
+
+    public static function handle_community_event_rsvp_cancel( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+        Culture_Community_RSVP::cancel( $post_id, $user_id );
+        return rest_ensure_response( Culture_Community_RSVP::get_status( $post_id, $user_id ) );
+    }
+
+    public static function handle_community_event_rsvp_status( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+        return rest_ensure_response( Culture_Community_RSVP::get_status( $post_id, $user_id ) );
+    }
+
+    public static function handle_community_event_attendees( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $post_id = (int) $request->get_param( 'post_id' );
+
+        if ( ! Culture_Community_RSVP::is_pro( $user_id ) ) {
+            return new WP_Error( 'patron_required', 'Connect Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
+        }
+        if ( ! Culture_Community_RSVP::is_organiser( $post_id, $user_id ) ) {
+            return new WP_Error( 'forbidden', 'Only the event organiser can view attendees.', array( 'status' => 403 ) );
+        }
+
+        $attendees = array_map( function( $row ) {
+            return array(
+                'userId'      => (int) $row['user_id'],
+                'displayName' => $row['display_name'],
+                'email'       => $row['user_email'],
+                'rsvpAt'      => $row['created_at'],
+            );
+        }, Culture_Community_RSVP::get_attendees( $post_id ) );
+
+        return rest_ensure_response( array( 'attendees' => $attendees ) );
+    }
+
+    public static function handle_community_my_events( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+
+        if ( ! Culture_Community_RSVP::is_pro( $user_id ) ) {
+            return new WP_Error( 'patron_required', 'Connect Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
+        }
+
+        return rest_ensure_response( array( 'events' => Culture_Community_RSVP::get_organiser_events( $user_id ) ) );
     }
 
     /* ——————————————————————————————————————

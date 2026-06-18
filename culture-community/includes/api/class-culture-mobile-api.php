@@ -245,6 +245,50 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Community event RSVPs (culture_post CPT, _template_type = 'event').
+        // Distinct from /mobile/events/* above, which is the editorial culture_event RSVP system.
+        register_rest_route( 'culture/v1', '/mobile/community/event/rsvp', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_community_event_rsvp' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/community/event/rsvp-cancel', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_community_event_rsvp_cancel' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/community/event/rsvp-status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_community_event_rsvp_status' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/community/event/attendees', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_community_event_attendees' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/mobile/community/my-events', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_community_my_events' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         // Checkout auto-login: issues a one-time token the in-app browser redeems.
         register_rest_route( 'culture/v1', '/mobile/checkout-token', array(
             'methods'             => 'POST',
@@ -1250,6 +1294,16 @@ class Culture_Mobile_API {
             if ( $request->get_param( 'organiser_directory_id' ) ) {
                 update_post_meta( $post_id, '_culture_event_organiser_id', (int) $request->get_param( 'organiser_directory_id' ) );
             }
+
+            // RSVP toggle + capacity — Connect Pro (patron) privilege only.
+            if ( $request->get_param( 'rsvp_enabled' ) ) {
+                if ( Culture_Community_RSVP::is_pro( $user_id ) ) {
+                    update_post_meta( $post_id, '_culture_rsvp_enabled', 1 );
+                    update_post_meta( $post_id, '_culture_rsvp_capacity', max( 0, (int) $request->get_param( 'rsvp_capacity' ) ) );
+                }
+                // Silently ignored for non-Pro members rather than failing the whole
+                // post — the composer UI already gates the toggle behind a lock icon.
+            }
         }
 
         if ( class_exists( 'Culture_Gamification' ) ) {
@@ -1476,6 +1530,66 @@ class Culture_Mobile_API {
         update_post_meta( $post_id, '_poll_voters',  wp_json_encode( $voters ) );
 
         return rest_ensure_response( array( 'options' => $options ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Community event RSVPs
+     * —————————————————————————————————————— */
+
+    public static function handle_community_event_rsvp( $request ) {
+        $user_id = get_current_user_id();
+        $post_id = (int) $request->get_param( 'post_id' );
+        $result  = Culture_Community_RSVP::rsvp( $post_id, $user_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( Culture_Community_RSVP::get_status( $post_id, $user_id ) );
+    }
+
+    public static function handle_community_event_rsvp_cancel( $request ) {
+        $user_id = get_current_user_id();
+        $post_id = (int) $request->get_param( 'post_id' );
+        Culture_Community_RSVP::cancel( $post_id, $user_id );
+        return rest_ensure_response( Culture_Community_RSVP::get_status( $post_id, $user_id ) );
+    }
+
+    public static function handle_community_event_rsvp_status( $request ) {
+        $user_id = get_current_user_id();
+        $post_id = (int) $request->get_param( 'post_id' );
+        return rest_ensure_response( Culture_Community_RSVP::get_status( $post_id, $user_id ) );
+    }
+
+    public static function handle_community_event_attendees( $request ) {
+        $user_id = get_current_user_id();
+        $post_id = (int) $request->get_param( 'post_id' );
+
+        if ( ! Culture_Community_RSVP::is_pro( $user_id ) ) {
+            return new WP_Error( 'patron_required', 'Connect Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
+        }
+        if ( ! Culture_Community_RSVP::is_organiser( $post_id, $user_id ) ) {
+            return new WP_Error( 'forbidden', 'Only the event organiser can view attendees.', array( 'status' => 403 ) );
+        }
+
+        $attendees = array_map( function( $row ) {
+            return array(
+                'userId'      => (int) $row['user_id'],
+                'displayName' => $row['display_name'],
+                'email'       => $row['user_email'],
+                'rsvpAt'      => $row['created_at'],
+            );
+        }, Culture_Community_RSVP::get_attendees( $post_id ) );
+
+        return rest_ensure_response( array( 'attendees' => $attendees ) );
+    }
+
+    public static function handle_community_my_events( $request ) {
+        $user_id = get_current_user_id();
+
+        if ( ! Culture_Community_RSVP::is_pro( $user_id ) ) {
+            return new WP_Error( 'patron_required', 'Connect Pro membership required to manage event RSVPs.', array( 'status' => 403 ) );
+        }
+
+        return rest_ensure_response( array( 'events' => Culture_Community_RSVP::get_organiser_events( $user_id ) ) );
     }
 
     const REACTABLE_POST_TYPES = array( 'culture_post', 'pulse_story', 'culture_quote', 'post' );
@@ -2245,6 +2359,13 @@ class Culture_Mobile_API {
                 'organiserSlug'           => isset( $organiser_map[ (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ] )
                     ? $organiser_map[ (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ]['slug']
                     : '',
+                'rsvpEnabled'             => $template === 'event' && (bool) get_post_meta( $post->ID, '_culture_rsvp_enabled', true ),
+                'rsvpCapacity'            => (int) get_post_meta( $post->ID, '_culture_rsvp_capacity', true ) ?: 0,
+                'rsvpCount'               => $template === 'event' ? Culture_Community_RSVP::get_count( $post->ID ) : 0,
+                'rsvpAvailable'           => $template === 'event' && (bool) get_post_meta( $post->ID, '_culture_rsvp_enabled', true )
+                    ? ( ( (int) get_post_meta( $post->ID, '_culture_rsvp_capacity', true ) === 0 )
+                        || Culture_Community_RSVP::get_count( $post->ID ) < (int) get_post_meta( $post->ID, '_culture_rsvp_capacity', true ) )
+                    : false,
             );
         }, $query->posts );
     }

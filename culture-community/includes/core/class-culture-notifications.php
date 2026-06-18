@@ -24,6 +24,7 @@ class Culture_Notifications {
         'mention'           => 'You were mentioned',
         'new_follower'      => 'New Follower',
         'new_follower_post' => 'New Post From Someone You Follow',
+        'event_rsvp'        => 'Event RSVP',
     );
 
     /* ——————————————————————————————————————

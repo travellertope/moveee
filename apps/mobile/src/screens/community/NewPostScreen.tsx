@@ -271,6 +271,8 @@ export default function NewPostScreen() {
   const [eventTicketUrl, setEventTicketUrl] = useState("");
   const [eventCategory, setEventCategory] = useState("");
   const [eventOrganiser, setEventOrganiser] = useState<DirectoryEntry | null>(null);
+  const [rsvpEnabled, setRsvpEnabled] = useState(false);
+  const [rsvpCapacity, setRsvpCapacity] = useState("");
 
   // Date/time picker state
   const [showPicker, setShowPicker] = useState(false);
@@ -422,36 +424,6 @@ const uploadImages = async (): Promise<string[]> => {
 
     setSubmitting(true);
     try {
-      if (template === "event") {
-        let imageUrl: string | undefined;
-        if (images.length > 0) {
-          const uri = images[0];
-          const fileName = uri.split("/").pop() ?? "event.jpg";
-          const fileType = fileName.endsWith(".png") ? "image/png" : "image/jpeg";
-          try {
-            const res = await api.upload<{ url: string }>(`${PROXY}/events/upload-image`, uri, fileName, fileType);
-            imageUrl = res.url;
-          } catch { /* skip */ }
-        }
-        await api.post(`${PROXY}/events/member-submit`, {
-          title:        eventTitle.trim(),
-          description:  text.trim() || undefined,
-          start_date:   eventDate!.toISOString(),
-          end_date:     eventEndDate?.toISOString() || undefined,
-          venue:        eventVenue.trim() || undefined,
-          venue_address: eventAddress.trim() || undefined,
-          city:         eventCity.trim() || undefined,
-          category:     eventCategory || undefined,
-          admission:    eventAdmission.trim() || undefined,
-          ticket_url:   eventTicketUrl.trim() || undefined,
-          organiser_id: eventOrganiser?.id || undefined,
-          image_url:    imageUrl,
-        } as Record<string, unknown>);
-        Alert.alert("Event submitted", "Your event will appear on the events calendar shortly.");
-        nav.goBack();
-        return;
-      }
-
       if (template === "quote") {
         await api.post(`${MOBILE_API}/community/quote`, {
           text, author: quoteAuthor, source: quoteSource || undefined,
@@ -485,7 +457,7 @@ const uploadImages = async (): Promise<string[]> => {
       const uploadedUrls = await uploadImages();
 
       const body: Record<string, unknown> = {
-        content:          text,
+        content:          template === "event" ? (eventTitle.trim() + (text.trim() ? "\n\n" + text.trim() : "")) : text,
         tag:              template === "food-review" ? "Food" : sectionTag,
         template_type:    template,
         gallery_images:   uploadedUrls.length > 1 ? uploadedUrls : undefined,
@@ -535,6 +507,19 @@ const uploadImages = async (): Promise<string[]> => {
         body.itinerary_budget    = itineraryBudget || undefined;
         body.itinerary_duration  = itineraryDuration.trim() || undefined;
         body.itinerary_best_time = itineraryBestTime.trim() || undefined;
+      }
+      if (template === "event") {
+        body.event_date             = eventDate!.toISOString();
+        body.event_end_date         = eventEndDate?.toISOString() || undefined;
+        body.event_venue            = eventVenue.trim() || undefined;
+        body.event_city             = eventCity.trim() || undefined;
+        body.event_address          = eventAddress.trim() || undefined;
+        body.event_admission        = eventAdmission.trim() || undefined;
+        body.ticket_url             = eventTicketUrl.trim() || undefined;
+        body.event_category         = eventCategory || undefined;
+        body.organiser_directory_id = eventOrganiser?.id || undefined;
+        body.rsvp_enabled           = rsvpEnabled || undefined;
+        body.rsvp_capacity          = rsvpEnabled ? (parseInt(rsvpCapacity, 10) || 0) : undefined;
       }
 
       await api.post(`${MOBILE_API}/community/submit`, body);
@@ -1377,6 +1362,45 @@ const uploadImages = async (): Promise<string[]> => {
         <DirectorySearch selected={eventOrganiser} onSelect={setEventOrganiser} label="Organiser (optional)" typeFilter="person" />
       </View>
 
+      {renderDivider()}
+
+      {/* RSVP — Connect Pro only */}
+      <View style={styles.fieldGroup}>
+        <TouchableOpacity
+          style={styles.rsvpToggleRow}
+          onPress={() => {
+            if (user?.tier !== "patron") {
+              Alert.alert(
+                "Connect Pro feature",
+                "RSVP management is available to Connect Pro members. Upgrade to enable RSVP for your events."
+              );
+              return;
+            }
+            setRsvpEnabled((v) => !v);
+          }}
+        >
+          <Text style={styles.fieldLabel}>
+            {user?.tier !== "patron" ? "🔒 " : ""}Enable RSVP
+          </Text>
+          <View style={[styles.rsvpToggleTrack, rsvpEnabled && styles.rsvpToggleTrackActive]}>
+            <View style={[styles.rsvpToggleThumb, rsvpEnabled && styles.rsvpToggleThumbActive]} />
+          </View>
+        </TouchableOpacity>
+        {rsvpEnabled && (
+          <View style={[styles.prefixedInputWrap, { marginTop: 8 }]}>
+            <Text style={styles.prefixIcon}>🎟</Text>
+            <TextInput
+              style={styles.prefixedInput}
+              value={rsvpCapacity}
+              onChangeText={(v) => setRsvpCapacity(v.replace(/[^0-9]/g, ""))}
+              placeholder="Capacity (0 = unlimited)"
+              placeholderTextColor={c.ghost}
+              keyboardType="number-pad"
+            />
+          </View>
+        )}
+      </View>
+
       {/* Inline photos */}
       <InlinePhotosSection
         images={images}
@@ -1763,6 +1787,19 @@ function createStyles(c: ColorPalette) {
 
     // Common fields
     fieldGroup: { marginTop: space[3], gap: 6 },
+    rsvpToggleRow: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    },
+    rsvpToggleTrack: {
+      width: 44, height: 26, borderRadius: 13, backgroundColor: c.rule,
+      padding: 2, justifyContent: "center",
+    },
+    rsvpToggleTrackActive: { backgroundColor: c.gold },
+    rsvpToggleThumb: {
+      width: 22, height: 22, borderRadius: 11, backgroundColor: c.paper,
+      alignSelf: "flex-start",
+    },
+    rsvpToggleThumbActive: { alignSelf: "flex-end" },
     fieldLabel: {
       fontFamily: fonts.mono, fontSize: 11, color: c.mute,
       letterSpacing: 0.8, textTransform: "uppercase",

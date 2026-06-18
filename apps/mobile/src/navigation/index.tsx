@@ -72,6 +72,7 @@ import NotificationsScreen from "../screens/member/NotificationsScreen";
 import AnalyticsScreen from "../screens/member/AnalyticsScreen";
 import SavedArticlesScreen from "../screens/member/SavedArticlesScreen";
 import ReferralScreen from "../screens/member/ReferralScreen";
+import MyEventsScreen from "../screens/member/MyEventsScreen";
 import { AppLoadingScreen } from "../components/ui/Skeleton";
 
 // ── Stack param types ──────────────────────────────────────────────────────────
@@ -100,6 +101,7 @@ type MemberStackParams = {
   Membership:      undefined;
   Analytics:       undefined;
   Referral:        undefined;
+  MyEvents:        undefined;
 };
 
 const Tab   = createBottomTabNavigator();
@@ -132,6 +134,7 @@ function ConnectStack() {
       <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
       <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
       <Stack.Screen name="Referral"        component={ReferralScreen} />
+      <Stack.Screen name="MyEvents"        component={MyEventsScreen} />
     </Stack.Navigator>
   );
 }
@@ -201,6 +204,7 @@ function MemberStack() {
       <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
       <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
       <Stack.Screen name="Referral"        component={ReferralScreen} />
+      <Stack.Screen name="MyEvents"        component={MyEventsScreen} />
     </Stack.Navigator>
   );
 }

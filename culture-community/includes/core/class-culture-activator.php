@@ -197,6 +197,9 @@ class Culture_Activator {
             KEY followed_idx (followed_id)
         ) {$charset_collate};" );
 
+        // Community event RSVPs table.
+        Culture_Community_RSVP::create_table();
+
         update_option( 'culture_db_version', CULTURE_VERSION );
 
         // ── Badge threshold migration (v2.0+) ────────────────────────────────

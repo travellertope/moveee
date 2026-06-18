@@ -29,6 +29,7 @@ function getTypeMeta(c: ColorPalette) {
     mention:           { emoji: "📌", accent: c.ochre,    border: false },
     new_follower:      { emoji: "👤", accent: c.gold,     border: false },
     new_follower_post: { emoji: "📰", accent: c.gold,     border: false },
+    event_rsvp:        { emoji: "🎫", accent: c.ochre,    border: false },
   } as Record<string, { emoji: string; accent: string; border: boolean }>;
 }
 

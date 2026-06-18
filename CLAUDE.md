@@ -853,6 +853,117 @@ Community event posts (`_template_type = 'event'`) now support an organiser dire
 
 ---
 
+## Community event RSVP (free, capacity-limited — June 2026)
+
+Targets community-organiser events: `culture_post` CPT, `_template_type = 'event'`.
+**Deliberately separate** from the pre-existing, unrelated `Culture_Event_RSVP` system
+(editorial `culture_event` CPT, table `wp_culture_event_rsvp`, public RSVP, admin-only
+attendee list) — the two systems must never share a table or be merged. This is RSVP
+only (free signups + capacity + attendee list + check-in tracking), not paid ticketing.
+
+### Database table: `wp_culture_community_rsvp`
+```
+id, post_id, user_id, status ('confirmed'|'cancelled'), created_at
+UNIQUE KEY (post_id, user_id) — re-RSVPing after cancel just flips status back
+KEY (post_id, status)
+```
+Created via `Culture_Community_RSVP::create_table()`, called from
+`Culture_Activator::create_tables()`, gated by `CULTURE_VERSION` bump to `2.4.0`.
+
+### PHP class: `class-culture-community-rsvp.php` (`Culture_Community_RSVP`)
+Single source of truth for both REST surfaces. Key methods: `is_pro()` (admin override
+OR `_culture_membership_tier === 'patron'`), `is_rsvp_enabled()`, `get_capacity()`,
+`get_count()`, `is_organiser()`, `get_status()` (returns `{enabled, rsvped, count,
+capacity, spotsLeft, isFull, isOrganiser}`), `rsvp()` (validates event type, RSVP
+enabled, not own event, capacity not exceeded; fires `Culture_Notifications::add()`
+directly to the organiser, type `event_rsvp`, no intermediate hook), `cancel()`,
+`get_attendees()` (joined against `wp_users`), `get_organiser_events()` (all of a
+user's organised events with live RSVP counts).
+
+### Post meta keys
+`_culture_rsvp_enabled` (bool), `_culture_rsvp_capacity` (int, 0 = unlimited).
+
+### Pro-gating (hard requirement)
+**Both RSVP creation (enabling the toggle when posting an event) and RSVP management
+(attendee list/export) are restricted to Connect Pro (`patron`) members only** —
+enforced server-side via `Culture_Community_RSVP::is_pro()`, not just hidden in the UI:
+- Creation: `handle_submit_post()` Event branch in `class-culture-mobile-api.php` —
+  if `rsvp_enabled` is passed but the poster isn't Pro, the toggle is **silently
+  ignored** (post still succeeds, just without RSVP) rather than failing the submit.
+- Management: `handle_community_event_attendees()` / `handle_community_my_events()` in
+  both `class-culture-mobile-api.php` and `class-culture-rest-api.php` return 403
+  `patron_required` if the requester isn't Pro, and `handle_community_event_attendees()`
+  additionally 403s `forbidden` if the requester isn't the post's organiser.
+
+### REST endpoints (mirrored, mobile JWT + web API-key)
+| Mobile (`/mobile/community/...`, JWT, `get_current_user_id()`) | Web (`/community/...`, API key, explicit `user_id` param) | Purpose |
+|---|---|---|
+| `POST event/rsvp` | `POST event/rsvp` | RSVP to an event |
+| `POST event/rsvp-cancel` | `POST event/rsvp-cancel` | Cancel RSVP |
+| `GET event/rsvp-status` | `GET event/rsvp-status` | `get_status()` for the current/given user |
+| `GET event/attendees` | `GET event/attendees` | Attendee list — Pro + organiser only |
+| `GET my-events` | `GET my-events` | Organiser's events with RSVP counts — Pro only |
+
+Handlers live in `class-culture-mobile-api.php` and `class-culture-rest-api.php`
+respectively; both just call into `Culture_Community_RSVP` static methods.
+
+### Notification type
+`event_rsvp` added to `Culture_Notifications::TYPES` — fires when someone RSVPs,
+notifying the organiser. Icon (`🎫`) added to the 3 frontend icon maps (see the
+"Notification touchpoint audit" section above for why there's no shared source of
+truth for these).
+
+### FeedItem RSVP fields
+`rsvpEnabled`, `rsvpCapacity`, `rsvpCount`, `rsvpAvailable` added to `FeedItem` in
+`apps/mobile/src/types/index.ts`, populated in the mobile community-feed mapper in
+`class-culture-mobile-api.php`. **Not yet added** to the web `FeedItem` type in
+`packages/shared/lib/unified-feed.ts` or to `getCommunityPosts()` — the web composer
+(`SubmitPost.tsx`) still creates *editorial* `culture_event` posts via
+`/api/events/member-submit`, not community `culture_post` events, so there is
+currently no way to create an RSVP-enabled event from the web UI, and no web feed
+card renders RSVP state. This is a known gap, not yet requested to be closed.
+
+### Mobile composer reroute (important — June 2026)
+The mobile Event template in `NewPostScreen.tsx` used to submit to
+`${PROXY}/events/member-submit` (creating an editorial `culture_event` post via the
+*pre-existing, excluded* RSVP system) — which made this whole feature unreachable
+from the UI. **Fixed**: the Event template now submits through the same generic
+`${MOBILE_API}/community/submit` path as every other template, creating a `culture_post`
+with `_template_type = 'event'`. Body fields added: `event_date`, `event_end_date`,
+`event_venue`, `event_city`, `event_address`, `event_admission`, `ticket_url`,
+`event_category`, `organiser_directory_id`, `rsvp_enabled`, `rsvp_capacity`. Since this
+path derives `post_title` from `wp_trim_words(content, 10)` (no separate title field
+server-side), `content` for the event template is built as
+`eventTitle + "\n\n" + description` rather than just the description text. Image
+upload now goes through the shared `uploadImages()` → `/mobile/community/upload-image`
+flow (the old `/events/upload-image` endpoint is no longer called from this screen).
+**Note:** the old editorial event endpoint enforced a minimum reputation (Culture
+Contributor, 500 rep) to create an event; the community-post Event branch in
+`handle_submit_post()` has no such minimum — rerouting means there is currently no
+reputation floor on creating a community event (Pro-gating still applies to RSVP
+specifically, not to posting the event itself).
+
+### RSVP UI
+- **Mobile composer**: `EVENT_CATEGORIES`-style toggle row + capacity input in
+  `renderEvent()` in `NewPostScreen.tsx`, gated by `user?.tier === "patron"` — tapping
+  while not Pro shows an `Alert` rather than enabling the toggle.
+- **Mobile post detail**: `EventRsvpButton` component in `PostDetailSheet.tsx`'s
+  `TemplateEvent`, self-contained (own `useState`/`useEffect`, calls
+  `event/rsvp-status` on mount, then `event/rsvp` / `event/rsvp-cancel` on toggle).
+- **Mobile organiser management**: `MyEventsScreen.tsx` (`screens/member/`), registered
+  in both `ConnectStack` and `MemberStack` as `"MyEvents"`, linked from
+  `MemberDashboardScreen.tsx`'s `QUICK_LINKS`. Non-Pro users see a lock card with an
+  upgrade CTA instead of the event list (`isPro` check against `useAuthStore()`).
+- **Web organiser management**: `/member/events` (`app/member/events/page.tsx` +
+  `EventsClient.tsx`), proxied through `app/api/member/events/route.ts` (list) and
+  `app/api/member/events/[postId]/attendees/route.ts` (attendee list). Non-Pro users
+  get a server-rendered upgrade prompt instead of the page content (checked via
+  `session.user.tier` before any data fetch — the page never calls the Pro-gated WP
+  endpoints for non-Pro members). CSV export is client-side (`Blob` + anchor download,
+  no server round-trip). Linked from `/member` quick links only when `isPatron`.
+
+---
+
 ## NewPostScreen composer — template field reference (v2, June 2026)
 
 Source of truth: `apps/mobile/src/screens/community/NewPostScreen.tsx`

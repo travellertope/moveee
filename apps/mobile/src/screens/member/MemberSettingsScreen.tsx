@@ -54,6 +54,7 @@ const NOTIFICATION_TYPES: { id: string; label: string }[] = [
   { id: "mention",           label: "You Were Mentioned" },
   { id: "new_follower",      label: "New Follower" },
   { id: "new_follower_post", label: "New Post From Someone You Follow" },
+  { id: "event_rsvp",        label: "Event RSVP" },
 ];
 
 // Derived from canonical INTERESTS in packages/utils — single source of truth

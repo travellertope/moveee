@@ -30,6 +30,7 @@ const TYPE_EMOJI: Record<string, string> = {
   mention:           "📌",
   new_follower:      "👤",
   new_follower_post: "📰",
+  event_rsvp:        "🎫",
 };
 
 function timeAgo(iso: string): string {

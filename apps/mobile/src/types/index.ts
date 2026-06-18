@@ -115,6 +115,12 @@ export interface FeedItem {
   organiserSlug?: string;
   city?: string;          // used on happening + directory items
 
+  // Community event RSVP (culture_post CPT, templateType "event" only)
+  rsvpEnabled?: boolean;
+  rsvpCapacity?: number;
+  rsvpCount?: number;
+  rsvpAvailable?: boolean;
+
   // Directory
   entryType?: string;
   isPartner?: boolean;
