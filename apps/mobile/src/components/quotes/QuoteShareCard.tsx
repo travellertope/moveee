@@ -1,11 +1,16 @@
 import React, { forwardRef } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { LinearGradient } from "expo-linear-gradient";
 import { fonts, fontSize, space, radius } from "../../theme";
 
 const CARD_WIDTH = 360;
 const CARD_HEIGHT = 600;
+
+const LOGO_WHITE = require("../../../assets/logo-white.png");
+// Logo natural size: 717×107
+const LOGO_H = 22;
+const LOGO_W = Math.round((717 / 107) * LOGO_H);
 
 export interface QuoteShareCardProps {
   quoteText: string;
@@ -27,7 +32,7 @@ const QuoteShareCard = forwardRef<View, QuoteShareCardProps>(function QuoteShare
         style={styles.card}
       >
         <View style={styles.brandRow}>
-          <Text style={styles.brandName}>MOVEEE</Text>
+          <Image source={LOGO_WHITE} style={{ width: LOGO_W, height: LOGO_H }} resizeMode="contain" />
           <Text style={styles.brandTag}>Connect to Culture</Text>
         </View>
 
@@ -44,9 +49,6 @@ const QuoteShareCard = forwardRef<View, QuoteShareCardProps>(function QuoteShare
         )}
 
         <View style={styles.qrWrap}>
-          <View style={styles.qrBadge}>
-            <Text style={styles.qrBadgeText}>M</Text>
-          </View>
           <View style={styles.qrBox}>
             <QRCode value={qrValue} size={84} backgroundColor="#fff" color="#1a140d" />
           </View>
@@ -68,7 +70,6 @@ const styles = StyleSheet.create({
   },
 
   brandRow: { alignItems: "center", marginBottom: space[4] },
-  brandName: { fontFamily: fonts.serifBold, fontSize: 22, color: "#f3ece0", letterSpacing: 2 },
   brandTag:  { fontFamily: fonts.mono, fontSize: 10, color: "#c9a878", letterSpacing: 1, marginTop: 2 },
 
   divider: { width: 48, height: 2, backgroundColor: "#b38238", marginBottom: space[8] },
@@ -87,12 +88,6 @@ const styles = StyleSheet.create({
   source: { fontFamily: fonts.mono, fontSize: 11, color: "#9c8a70", letterSpacing: 0.5, marginTop: 4 },
 
   qrWrap: { alignItems: "center", marginTop: "auto" },
-  qrBadge: {
-    width: 28, height: 28, borderRadius: radius.full,
-    backgroundColor: "#b38238", alignItems: "center", justifyContent: "center",
-    marginBottom: space[2],
-  },
-  qrBadgeText: { fontFamily: fonts.serifBold, fontSize: 14, color: "#1a140d" },
   qrBox: { backgroundColor: "#fff", padding: 10, borderRadius: radius.md },
   qrLabel: { fontFamily: fonts.mono, fontSize: 10, color: "#9c8a70", letterSpacing: 0.5, marginTop: space[2] },
 });
