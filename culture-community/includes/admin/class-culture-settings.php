@@ -94,14 +94,6 @@ class Culture_Settings {
         'culture_analytics_limit_top_members' => 10,
         'culture_analytics_limit_events'      => 10,
 
-        // Automation — Twitter / X.
-        'culture_twitter_enabled'             => '0',
-        'culture_twitter_api_key'             => '',
-        'culture_twitter_api_secret'          => '',
-        'culture_twitter_access_token'        => '',
-        'culture_twitter_access_token_secret' => '',
-        'culture_twitter_interval'            => 'thirtyminutes',
-
         // Advertising — Google Ads / AdSense.
         'culture_ads_enabled'                    => '0',
         'culture_ads_publisher_id'               => '',
@@ -158,64 +150,6 @@ class Culture_Settings {
         add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 9 );
         add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
         add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
-        add_action( 'wp_ajax_culture_test_tweet', array( __CLASS__, 'ajax_test_tweet' ) );
-    }
-
-    /**
-     * AJAX: test Twitter credentials by posting a test tweet.
-     */
-    public static function ajax_test_tweet() {
-        check_ajax_referer( 'culture_test_tweet' );
-        if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( 'Unauthorised.' );
-        }
-
-        if ( ! class_exists( 'Culture_Twitter' ) ) {
-            wp_send_json_error( 'Culture_Twitter class not loaded.' );
-        }
-
-        // Build a test tweet with a timestamp so it never duplicates.
-        $test_text = '[Test] Moveee auto-poster connection check — ' . gmdate( 'Y-m-d H:i:s' ) . ' UTC';
-
-        // Temporarily capture the raw response for diagnostics.
-        $body     = wp_json_encode( array( 'text' => $test_text ) );
-        $auth     = Culture_Twitter::build_oauth_header_public( 'POST', 'https://api.twitter.com/2/tweets' );
-
-        $response = wp_remote_post( 'https://api.twitter.com/2/tweets', array(
-            'timeout' => 20,
-            'headers' => array(
-                'Content-Type'  => 'application/json',
-                'Authorization' => $auth,
-            ),
-            'body' => $body,
-        ) );
-
-        if ( is_wp_error( $response ) ) {
-            wp_send_json_error( 'WP_Error: ' . $response->get_error_message() );
-        }
-
-        $code     = wp_remote_retrieve_response_code( $response );
-        $resp_body = wp_remote_retrieve_body( $response );
-
-        if ( $code >= 200 && $code < 300 ) {
-            wp_send_json_success( 'Tweet posted successfully (HTTP ' . $code . ').' );
-        } else {
-            // Decode and surface the Twitter error message.
-            $decoded = json_decode( $resp_body, true );
-            $msg     = isset( $decoded['detail'] ) ? $decoded['detail']
-                     : ( isset( $decoded['errors'][0]['message'] ) ? $decoded['errors'][0]['message']
-                     : $resp_body );
-            wp_send_json_error( 'HTTP ' . $code . ': ' . $msg );
-        }
-    }
-
-    /** Check if Twitter credentials are fully configured. */
-    private static function is_twitter_configured() {
-        return '1' === self::get( 'culture_twitter_enabled' )
-            && '' !== self::get( 'culture_twitter_api_key' )
-            && '' !== self::get( 'culture_twitter_api_secret' )
-            && '' !== self::get( 'culture_twitter_access_token' )
-            && '' !== self::get( 'culture_twitter_access_token_secret' );
     }
 
     /**
