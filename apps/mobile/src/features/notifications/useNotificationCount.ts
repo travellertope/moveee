@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { api } from "../../api/client";
+import { api, MOBILE_API } from "../../api/client";
 
-const PROXY = "https://themoveee.com/api";
 const POLL_INTERVAL_MS = 30_000;
 
 export function useNotificationCount() {
@@ -9,7 +8,7 @@ export function useNotificationCount() {
 
   const fetchCount = useCallback(async () => {
     try {
-      const data = await api.get<{ unread: number }>(`${PROXY}/notifications/count`);
+      const data = await api.get<{ unread: number }>(`${MOBILE_API}/notifications/count`);
       setUnread(data.unread ?? 0);
     } catch {
       // silent — badge stays stale rather than crashing

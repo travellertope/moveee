@@ -28,6 +28,7 @@ export type AppParamList = {
   Analytics: undefined;
   SavedArticles: undefined;
   Referral: undefined;
+  MyEvents: undefined;
   // Auth
   Onboarding: undefined;
   Login: undefined;

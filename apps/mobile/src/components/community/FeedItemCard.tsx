@@ -573,8 +573,7 @@ function createStyles(c: ColorPalette) {
       marginBottom: -4,
     },
     quoteText: {
-      fontFamily: fonts.serif,
-      fontStyle: "italic" as const,
+      fontFamily: fonts.serifItalic,
       fontSize: fontSize.xl,
       color: c.ink,
       lineHeight: 30,
