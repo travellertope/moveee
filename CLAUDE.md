@@ -1185,11 +1185,33 @@ Defined in `Culture_Gamification::REPUTATION_TIERS` (Option A+B+C redesign):
 `culture-icon` is a nomination-only tier. Even with 25,000+ rep, the user must have
 `_culture_icon_nominated = 1` set by an admin. `get_reputation_tier($rep, $user_id)` enforces this.
 
-**Reputation is earned only from quality signals (Option B).** Passive actions
-(`magazine_read`, `magazine_share`, `game_completed`, `poll_vote`, `newsletter_reaction`,
-`community_like`, `quote_like`) give 0 reputation — they still earn credits.
-Quality signals: event check-in, referral, community post/comment, directory entry,
-quote submission, newsletter comment, profile completed, email verified.
+**Every action awards both credits and reputation (no rep-only or credit-only
+actions, June 2026).** Previously some "passive" actions (`magazine_read`,
+`magazine_share`, `game_completed`, `poll_vote`, `newsletter_reaction`,
+`community_like`, `quote_like`) gave 0 reputation by design (Option B) — this
+was changed so the mobile "How Rewards Work" breakdown table never shows a
+dash in either column. All 19 actions now have nonzero entries in both
+`Culture_Gamification::POINTS` and `::CREDIT_BONUSES`.
+
+Admin-configurable per-action overrides for **both** credits and reputation
+live under the same `culture_points_{action}` / `culture_credits_{action}`
+option-key prefixes (`class-culture-settings.php` → Credits/Reputation
+settings tabs). **Do not reintroduce a `culture_rep_{action}` prefix** — that
+prefix used to exist for the reputation tab but was never read by any runtime
+code (`get_reputation_value()` had zero callers); it was retired in favor of
+`culture_points_{action}`, which is what `get_point_value()` (the live path
+used by `award_points()`) actually reads. `get_point_values()` (plural, feeds
+the mobile rewards table via `handle_points_config()`) delegates to
+`get_point_value()` (singular) rather than `Culture_Settings::get_points()`
+directly, so the table stays in sync with what's actually awarded at runtime.
+
+A few award call sites bypass the `award_points()` bridge and call
+`award_credits()`/`award_reputation()` directly (`poll_vote` in
+`class-culture-rest-api.php`, `game_completed` in `class-culture-rest-api.php`,
+`magazine_read` in both `class-culture-rest-api.php` and
+`class-culture-mobile-api.php`) — if you add a new standalone award call site,
+make sure it awards both, using `Culture_Gamification::get_point_value()` /
+`get_credit_bonus()` rather than hardcoded literals.
 
 Daily credit cap: `DAILY_CREDIT_CAP = 50` credits per user per day.
 

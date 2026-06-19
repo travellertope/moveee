@@ -34,6 +34,11 @@ interface PointsConfig {
 
 type Tab = "credits" | "reputation";
 
+const TAB_INTRO: Record<Tab, string> = {
+  credits: "Moveee Credits are your spendable currency — earn them by posting, engaging, and participating in the community. Redeem them for partner perks, or cash out to real money (Connect Pro only, 40% fee). Credits reset daily up to the cap below.",
+  reputation: "Points are your permanent standing in the Moveee community — they never decrease and can't be spent. Quality contributions earn points, which unlock higher tiers and exclusive privileges.",
+};
+
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({
     overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
@@ -150,11 +155,10 @@ function createStyles(c: ColorPalette) {
 interface Props {
   visible: boolean;
   initialTab?: Tab;
-  intro?: string;
   onClose: () => void;
 }
 
-export default function RewardsInfoSheet({ visible, initialTab = "credits", intro, onClose }: Props) {
+export default function RewardsInfoSheet({ visible, initialTab = "credits", onClose }: Props) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -219,7 +223,7 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
             <View style={styles.loader}><ActivityIndicator color={c.ochre} /></View>
           ) : (
             <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-              {intro ? <Text style={styles.intro}>{intro}</Text> : null}
+              <Text style={styles.intro}>{TAB_INTRO[tab]}</Text>
               {loadError && (
                 <View style={styles.errorBox}>
                   <Text style={styles.errorText}>Couldn't load the rewards breakdown right now.</Text>
@@ -238,7 +242,16 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
                       {" "}— resets at midnight UTC.
                     </Text>
                   </View>
-                  <Text style={styles.sectionTitle}>Earn Credits &amp; Points</Text>
+                  <Text style={styles.sectionTitle}>Spend Credits</Text>
+                  {[
+                    "Redeem partner perks in the Perks tab",
+                    "Cash out to GBP/USD/NGN (Connect Pro only)",
+                  ].map((item) => (
+                    <View key={item} style={styles.row}>
+                      <Text style={styles.rowLabel}>{item}</Text>
+                    </View>
+                  ))}
+                  <Text style={[styles.sectionTitle, { marginTop: space[5] }]}>Earn Credits &amp; Points</Text>
                   <View style={styles.table}>
                     <View style={styles.tableHeaderRow}>
                       <Text style={[styles.tableHeaderCell, { flex: 1 }]}>Activity</Text>
@@ -257,15 +270,6 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
                       </View>
                     ))}
                   </View>
-                  <Text style={[styles.sectionTitle, { marginTop: space[5] }]}>Spend Credits</Text>
-                  {[
-                    "Redeem partner perks in the Perks tab",
-                    "Cash out to GBP/USD/NGN (Connect Pro only)",
-                  ].map((item) => (
-                    <View key={item} style={styles.row}>
-                      <Text style={styles.rowLabel}>{item}</Text>
-                    </View>
-                  ))}
                 </>
               ) : (
                 <>
@@ -275,26 +279,7 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
                       Points are <Text style={styles.capBold}>permanent</Text> — they never decrease and cannot be spent. They unlock higher tiers and privileges.
                     </Text>
                   </View>
-                  <Text style={styles.sectionTitle}>Earn Credits &amp; Points</Text>
-                  <View style={styles.table}>
-                    <View style={styles.tableHeaderRow}>
-                      <Text style={[styles.tableHeaderCell, { flex: 1 }]}>Activity</Text>
-                      <Text style={[styles.tableHeaderCell, styles.tableNumCell]}>Credits</Text>
-                      <Text style={[styles.tableHeaderCell, styles.tableNumCell]}>Points</Text>
-                    </View>
-                    {breakdownRows.map((a) => (
-                      <View key={a.action} style={styles.tableRow}>
-                        <Text style={styles.tableActivityCell}>{a.label}</Text>
-                        <Text style={[styles.tableNumCell, styles.tableCreditNum, !a.credits && styles.tableDash]}>
-                          {a.credits > 0 ? `+${a.credits}` : "—"}
-                        </Text>
-                        <Text style={[styles.tableNumCell, styles.tableRepNum, !a.rep && styles.tableDash]}>
-                          {a.rep > 0 ? `+${a.rep}` : "—"}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                  <Text style={[styles.sectionTitle, { marginTop: space[5] }]}>Points Tiers</Text>
+                  <Text style={styles.sectionTitle}>Points Tiers</Text>
                   {(config?.tiers ?? []).map((tier) => (
                     <View key={tier.slug} style={styles.tierCard}>
                       <View style={styles.tierHeader}>
@@ -309,6 +294,25 @@ export default function RewardsInfoSheet({ visible, initialTab = "credits", intr
                       )}
                     </View>
                   ))}
+                  <Text style={[styles.sectionTitle, { marginTop: space[5] }]}>Earn Credits &amp; Points</Text>
+                  <View style={styles.table}>
+                    <View style={styles.tableHeaderRow}>
+                      <Text style={[styles.tableHeaderCell, { flex: 1 }]}>Activity</Text>
+                      <Text style={[styles.tableHeaderCell, styles.tableNumCell]}>Credits</Text>
+                      <Text style={[styles.tableHeaderCell, styles.tableNumCell]}>Points</Text>
+                    </View>
+                    {breakdownRows.map((a) => (
+                      <View key={a.action} style={styles.tableRow}>
+                        <Text style={styles.tableActivityCell}>{a.label}</Text>
+                        <Text style={[styles.tableNumCell, styles.tableCreditNum, !a.credits && styles.tableDash]}>
+                          {a.credits > 0 ? `+${a.credits}` : "—"}
+                        </Text>
+                        <Text style={[styles.tableNumCell, styles.tableRepNum, !a.rep && styles.tableDash]}>
+                          {a.rep > 0 ? `+${a.rep}` : "—"}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
                 </>
               )}
               <SafeAreaView edges={["bottom"]} />

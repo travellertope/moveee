@@ -2959,6 +2959,9 @@ class Culture_REST_API {
 
         $awarded = Culture_Gamification::award_credits( $user_id, $credits_amount, 'game_completed', $history_id );
         $wpdb->update( $table, array( 'credits_earned' => $awarded ), array( 'id' => $history_id ) );
+        if ( $awarded > 0 ) {
+            Culture_Gamification::award_reputation( $user_id, Culture_Gamification::get_point_value( 'game_completed' ), 'game_completed', $history_id );
+        }
 
         return rest_ensure_response( array(
             'success'        => true,
@@ -3500,6 +3503,7 @@ class Culture_REST_API {
 
         $amount  = max( 1, (int) Culture_Gamification::get_credit_bonus( 'magazine_read' ) );
         $credits = Culture_Gamification::award_credits( $user_id, $amount, 'magazine_read', $post_id );
+        Culture_Gamification::award_reputation( $user_id, Culture_Gamification::get_point_value( 'magazine_read' ), 'magazine_read', $post_id );
         update_user_meta( $user_id, $meta_key, '1' );
 
         return rest_ensure_response( array( 'success' => true, 'credits_earned' => max( 0, intval( $credits ) ) ) );
@@ -4360,9 +4364,10 @@ class Culture_REST_API {
         $voters[] = $user_id;
         update_post_meta( $post_id, '_poll_voters', wp_json_encode( $voters ) );
 
-        // Award reputation for participation.
+        // Award reputation + credits for participation.
         if ( class_exists( 'Culture_Gamification' ) ) {
-            Culture_Gamification::award_reputation( $user_id, 2, 'poll_vote', $post_id );
+            Culture_Gamification::award_reputation( $user_id, Culture_Gamification::get_point_value( 'poll_vote' ), 'poll_vote', $post_id );
+            Culture_Gamification::award_credits( $user_id, Culture_Gamification::get_credit_bonus( 'poll_vote' ), 'poll_vote', $post_id );
         }
 
         return rest_ensure_response( array(

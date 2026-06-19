@@ -3186,7 +3186,6 @@ class Culture_Mobile_API {
 
     public static function handle_points_config( $request ) {
         $point_values  = Culture_Gamification::get_point_values();
-        $credit_bonuses = Culture_Gamification::CREDIT_BONUSES;
         $daily_cap     = Culture_Gamification::get_daily_cap();
 
         $action_labels = array(
@@ -3214,7 +3213,7 @@ class Culture_Mobile_API {
         $actions = array();
         foreach ( $action_labels as $key => $label ) {
             $rep     = isset( $point_values[ $key ] ) ? (int) $point_values[ $key ] : 0;
-            $credits = isset( $credit_bonuses[ $key ] ) ? (int) $credit_bonuses[ $key ] : 0;
+            $credits = Culture_Gamification::get_credit_bonus( $key );
             if ( $rep === 0 && $credits === 0 ) continue;
             $actions[] = array(
                 'action'  => $key,
@@ -3691,6 +3690,7 @@ class Culture_Mobile_API {
         // Look up the configured credit amount for magazine_read (default 1).
         $amount  = max( 1, (int) Culture_Gamification::get_credit_bonus( 'magazine_read' ) );
         $credits = Culture_Gamification::award_credits( $user_id, $amount, 'magazine_read', $post_id );
+        Culture_Gamification::award_reputation( $user_id, Culture_Gamification::get_point_value( 'magazine_read' ), 'magazine_read', $post_id );
         update_user_meta( $user_id, $meta_key, '1' );
 
         return rest_ensure_response( array( 'credits_earned' => max( 0, intval( $credits ) ) ) );
