@@ -4,8 +4,12 @@
  */
 class Culture_Follows {
 
+    /** Max followers notified synchronously within the submit-post request itself. */
+    const SYNC_NOTIFY_BATCH = 200;
+
     public static function init() {
         add_action( 'culture_new_follower', array( 'Culture_Notifications', 'on_new_follower' ), 10, 2 );
+        add_action( 'culture_notify_followers_batch', array( __CLASS__, 'process_notify_batch' ), 10, 3 );
     }
 
     /* ——————————————————————————————————————
@@ -154,10 +158,27 @@ class Culture_Follows {
         $follower_ids = self::get_post_notify_follower_ids( $author_id );
         if ( empty( $follower_ids ) ) return;
 
-        $author   = get_userdata( $author_id );
-        $name     = $author ? $author->display_name : 'Someone you follow';
-        $post     = get_post( $post_id );
-        $excerpt  = $post ? wp_trim_words( $post->post_title ?: $post->post_content, 8, '…' ) : '';
+        // Authors with a large following can otherwise turn this into an
+        // unbounded synchronous insert loop on the submit-post request
+        // itself. Notify the first batch inline (typical case, no delay)
+        // and offload any remainder to a one-shot WP-Cron event so the
+        // request thread isn't blocked.
+        $sync_ids = array_slice( $follower_ids, 0, self::SYNC_NOTIFY_BATCH );
+        self::process_notify_batch( $author_id, $post_id, $sync_ids );
+
+        $remaining = array_slice( $follower_ids, self::SYNC_NOTIFY_BATCH );
+        if ( ! empty( $remaining ) ) {
+            wp_schedule_single_event( time(), 'culture_notify_followers_batch', array( $author_id, $post_id, $remaining ) );
+        }
+    }
+
+    public static function process_notify_batch( int $author_id, int $post_id, array $follower_ids ) : void {
+        if ( empty( $follower_ids ) ) return;
+
+        $author  = get_userdata( $author_id );
+        $name    = $author ? $author->display_name : 'Someone you follow';
+        $post    = get_post( $post_id );
+        $excerpt = $post ? wp_trim_words( $post->post_title ?: $post->post_content, 8, '…' ) : '';
 
         foreach ( $follower_ids as $follower_id ) {
             Culture_Notifications::add(

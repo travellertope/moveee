@@ -46,9 +46,17 @@ export const storage = {
 
 const CACHE_META_KEY = "__cache_meta__";
 
+function safeParse<T>(raw: string | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 function getMeta(): Record<string, number> {
-  const raw = storage.getString(CACHE_META_KEY);
-  return raw ? JSON.parse(raw) : {};
+  return safeParse(storage.getString(CACHE_META_KEY), {});
 }
 
 function setMeta(meta: Record<string, number>) {
@@ -67,8 +75,7 @@ export const cache = {
     const meta = getMeta();
     const expiry = meta[key];
     if (!expiry || Date.now() > expiry) return null;
-    const raw = storage.getString(key);
-    return raw ? (JSON.parse(raw) as T) : null;
+    return safeParse<T | null>(storage.getString(key), null);
   },
 
   invalidate(key: string) {
