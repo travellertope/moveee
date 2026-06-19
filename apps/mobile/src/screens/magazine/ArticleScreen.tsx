@@ -89,7 +89,15 @@ function HtmlTable({ html, c }: { html: string; c: ColorPalette }) {
   const rows = parseTable(html);
   if (!rows.length) return null;
   const colCount = Math.max(...rows.map((r) => r.length));
-  const colWidth = Math.max(100, Math.floor(320 / colCount));
+  // The first column is often a short label (e.g. "Day", a number) — give it a
+  // narrow fixed width instead of splitting evenly, so longer prose columns
+  // (e.g. "Meal 1", "Meal 2") get the room they actually need.
+  const firstColShort = (rows[0]?.[0]?.length ?? 0) <= 6;
+  const firstColWidth = firstColShort ? 48 : Math.max(100, Math.floor(320 / colCount));
+  const otherColWidth = colCount > 1
+    ? Math.max(160, Math.floor((firstColShort ? 320 : 320 - firstColWidth) / (colCount - (firstColShort ? 0 : 1))))
+    : 320;
+  const colWidth = (ci: number) => (ci === 0 && firstColShort) ? firstColWidth : otherColWidth;
   return (
     <ScrollView
       horizontal
@@ -111,7 +119,7 @@ function HtmlTable({ html, c }: { html: string; c: ColorPalette }) {
               <Text
                 key={ci}
                 style={{
-                  width: colWidth,
+                  width: colWidth(ci),
                   padding: 8,
                   fontFamily: ri === 0 ? "DMSans_700Bold" : "DMSans_400Regular",
                   fontSize: 13,
@@ -623,6 +631,41 @@ export default function ArticleScreen() {
     setShowStickyHeader(offsetY > HEADER_TRIGGER);
   }, []);
 
+  // Reactions — lifted here (not local to ReactionBar) so the top and bottom
+  // reaction bars on this screen stay in sync with each other.
+  type EmojiKey = "love" | "fire" | "clap";
+  const [reactionCounts, setReactionCounts] = useState({ love: 0, fire: 0, clap: 0 });
+  const [reactedKeys, setReactedKeys] = useState<Set<EmojiKey>>(new Set());
+  useEffect(() => {
+    if (!article) return;
+    setReactionCounts({
+      love: (article as any).reactions?.love ?? (article as any).reactions?.heart ?? 0,
+      fire: (article as any).reactions?.fire ?? 0,
+      clap: (article as any).reactions?.clap ?? 0,
+    });
+  }, [article?.id]);
+
+  const handleReact = useCallback(async (key: EmojiKey) => {
+    if (!article) return;
+    const already = reactedKeys.has(key);
+    setReactionCounts((prev) => ({ ...prev, [key]: prev[key] + (already ? -1 : 1) }));
+    setReactedKeys((prev) => {
+      const next = new Set(prev);
+      already ? next.delete(key) : next.add(key);
+      return next;
+    });
+    try {
+      await api.post(`${MOBILE_API}/community/react`, { post_id: Number(article.id), type: key });
+    } catch {
+      setReactionCounts((prev) => ({ ...prev, [key]: prev[key] + (already ? 1 : -1) }));
+      setReactedKeys((prev) => {
+        const next = new Set(prev);
+        already ? next.add(key) : next.delete(key);
+        return next;
+      });
+    }
+  }, [article, reactedKeys]);
+
   // Bookmark — fetch actual state from interactions endpoint once article loads
   const [bookmarked, setBookmarked] = useState(false);
   useEffect(() => {
@@ -826,28 +869,20 @@ export default function ArticleScreen() {
                 ) : null}
               </View>
 
-              {/* Actions bar — reactions (live) + comment + bookmark + share */}
+              {/* Actions bar — reactions (live) + comment. Bookmark/share live in the
+                  fixed header bar above, so they aren't duplicated here. */}
               <View style={styles.actionsBar}>
                 <View style={styles.actionsLeft}>
                   <ReactionBar
                     postId={article.id}
-                    initialCounts={{
-                      love: (article as any).reactions?.love ?? (article as any).reactions?.heart ?? 0,
-                      fire: (article as any).reactions?.fire ?? 0,
-                      clap: (article as any).reactions?.clap ?? 0,
-                    }}
+                    initialCounts={reactionCounts}
+                    counts={reactionCounts}
+                    reacted={reactedKeys}
+                    onReact={handleReact}
                     noBorder
                     commentCount={commentCount}
                     onCommentPress={scrollToComments}
                   />
-                </View>
-                <View style={styles.actionsRight}>
-                  <TouchableOpacity style={styles.actionIconBtn} onPress={handleBookmark}>
-                    <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={18} color={bookmarked ? c.gold : c.ink} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionIconBtn} onPress={handleShare}>
-                    <Ionicons name="share-outline" size={18} color={c.ink} />
-                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -900,11 +935,10 @@ export default function ArticleScreen() {
                   {/* ── Reaction row ── */}
                   <ReactionBar
                     postId={article.id}
-                    initialCounts={{
-                      love: (article as any).reactions?.love ?? (article as any).reactions?.heart ?? 0,
-                      fire: (article as any).reactions?.fire ?? 0,
-                      clap: (article as any).reactions?.clap ?? 0,
-                    }}
+                    initialCounts={reactionCounts}
+                    counts={reactionCounts}
+                    reacted={reactedKeys}
+                    onReact={handleReact}
                     shareUrl={`https://themoveee.com/magazine/${article.slug}`}
                     shareTitle={article.title}
                     noBorder={false}
@@ -1207,11 +1241,9 @@ function createStyles(c: ColorPalette) { return StyleSheet.create({
     marginTop: 20, marginBottom: 24, paddingHorizontal: 4,
   },
   actionsLeft: { flexDirection: "row", gap: 16, alignItems: "center" },
-  actionsRight: { flexDirection: "row", gap: 8, alignItems: "center" },
   actionItem: { flexDirection: "row", alignItems: "center", gap: 5 },
   actionEmoji: { fontSize: 16 },
   actionCount: { fontFamily: fonts.sansBold, fontSize: fontSize.sm, color: c.inkSoft },
-  actionIconBtn: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
 
   // Pull quote
   pullQuote: {
