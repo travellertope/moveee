@@ -1160,7 +1160,7 @@ class Culture_Mobile_API {
         }
 
         if ( $image ) {
-            update_post_meta( $post_id, '_community_image_url', $image );
+            update_post_meta( $post_id, 'community_image_url', $image );
         }
 
         if ( $tag ) {
@@ -2374,7 +2374,7 @@ class Culture_Mobile_API {
                 'title'                   => $body_text ?: get_the_title( $post ),
                 'slug'                    => $post->post_name,
                 'date'                    => $post->post_date_gmt,
-                'image'                   => get_post_meta( $post->ID, '_community_image_url', true ) ?: null,
+                'image'                   => get_post_meta( $post->ID, 'community_image_url', true ) ?: ( get_post_meta( $post->ID, '_community_image_url', true ) ?: null ),
                 'href'                    => '/community/' . $post->post_name,
                 'communityAuthorId'       => get_post_meta( $post->ID, 'community_author_id', true ) ?: (string) $author_id,
                 'communityAuthor'         => get_post_meta( $post->ID, 'community_author_name', true ) ?: ( $author ? $author->display_name : '' ),
@@ -2755,7 +2755,7 @@ class Culture_Mobile_API {
         return array(
             'id'           => (string) $post->ID,
             'content'      => wp_strip_all_tags( $post->post_content ),
-            'imageUrl'     => get_post_meta( $post->ID, '_community_image_url', true ) ?: null,
+            'imageUrl'     => get_post_meta( $post->ID, 'community_image_url', true ) ?: ( get_post_meta( $post->ID, '_community_image_url', true ) ?: null ),
             'publishedAt'  => get_date_from_gmt( $post->post_date_gmt, 'c' ),
             'likeCount'    => (int) get_post_meta( $post->ID, '_culture_like_count', true ),
             'commentCount' => (int) get_comments_number( $post->ID ),
