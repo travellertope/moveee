@@ -622,7 +622,8 @@ Content: "Finally found the dopest vinyl shop in South London. If you know you k
 Star rating: 4 ochre stars + 1 empty + "4/5" JetBrains Mono 11px gold
 Reaction bar + "12 💬"
 
-CARD 3 (Happening): same full-width separator style:
+CARD 3 (Happening) — superseded by Prompt 3B's spotlight carousel; kept here for
+historical reference only. Same full-width separator style:
 Badge "HAPPENING" (bg #EDE9FE text #4C1D95) + "· Tonight"
 Event image 16:9, top-right overlay: "⭐ PRO" gold small badge
 "Amapiano Night at Jazz Cafe" DM Sans 16px bold ink
@@ -656,6 +657,118 @@ Community card gains a small "✦ For You" badge: ochre bg, white DM Sans 9px bo
 
 Add PULL TO REFRESH STATE annotation on Frame 1:
 Show ochre spinner at top of feed area + "Refreshing..." JetBrains Mono 10px mute below.
+```
+
+---
+
+### PROMPT 3B — Happenings Spotlight Carousel (replaces inline Happening cards)
+
+```
+Senior mobile UX/UI designer — Moveee Connect feed. iOS, 390×844px.
+Brand: paper-warm #F3ECE0, white cards, ochre #C5491F, gold #B38238, ink #14110D,
+ghost #C8BFB0, mute #7A6F5C, success #2D6A4F. DM Sans + Fraunces + JetBrains Mono.
+
+CONTEXT FOR THE DESIGNER: Today, "Happening" (event) items appear as regular inline
+cards mixed in with posts/articles/quotes (see Prompt 3, Card 3). They get lost in the
+scroll. This prompt replaces that inline treatment with a single horizontal spotlight
+module — "Upcoming Near You" — inserted once into the feed, after the 4th–5th item, never
+repeated again on the same feed load. Plain Happening cards are removed from the normal
+inline stream entirely; this carousel is now the only place events surface in-feed (the
+full Events tab is unaffected and keeps its own list/calendar views — see Prompt 6B).
+
+The carousel pools events from TWO sources and ranks them together as one list — it does
+NOT separate "official" vs "community" rails, and it does NOT treat AI-seeded official
+events as inherently more trustworthy than community-submitted ones (our Happenings are
+AI-seeded, not editorially curated, so they get no automatic trust bonus). Both sources
+are scored by the same signals: a manual "featured" flag, listing completeness (image +
+venue + date + price all present), RSVP/attendee count, and — for community submissions
+only — whether the organiser is linked to a verified Directory entry rather than free text.
+Events missing 2+ of: image, venue, price get filtered out of the carousel entirely (they
+can still exist on the full Events tab, just not spotlighted).
+
+⚠️ DEV ANNOTATION REQUIREMENT — IMPORTANT FOR HANDOFF:
+This screen wires up data from two different post types and a ranking formula that does
+not fully exist in the API yet. When generating the code, add inline HTML/JSX comments
+at the exact points listed below so the engineer wiring this up doesn't have to guess.
+Use this format for each: <!-- DEV: <note> --> in HTML, or {/* DEV: <note> */} in JSX.
+Place these comments directly above the relevant component/element — do not put them all
+in one block at the top of the file.
+
+  1. Above the carousel container:
+     "DEV: Source = merge of culture_event CPT (getEventsWithFallback) + community posts
+     where templateType==='event' (getCommunityPosts). These are two separate fetch calls
+     today — merge client-side until a unified backend endpoint exists."
+  2. Above the ranking/sort logic (even if mocked with static order in this prototype):
+     "DEV: Rank by score = isFeatured(40) + completeness(0-30) + rsvpCount(0-20, log scale)
+     + organiserIsDirectoryLinked(10). isFeatured (_culture_is_featured) and rsvpCount are
+     NOT currently exposed on FeedItem — backend gap, see unified-feed.ts. Until wired,
+     fall back to soonest-upcoming-first sort."
+  3. Above the filter that drops incomplete listings:
+     "DEV: Hide any event missing 2+ of {image, venue, price/admission} — compute from
+     existing FeedItem fields (venueAddress/location, admission), no backend change needed
+     for this part."
+  4. Above the insertion-point logic in the parent feed list:
+     "DEV: Insert this module once, after the 5th feed item, on initial load only — do not
+     re-insert on pagination/infinite scroll. Track via a boolean ref, not state, to avoid
+     re-render loops."
+  5. Above the "See all events" CTA:
+     "DEV: Routes to the Events tab (Prompt 6B Timeline View), not a new screen."
+  6. Above each event mini-card:
+     "DEV: Tapping opens the existing Event Detail screen/sheet — no new detail UI needed
+     here, reuse what Prompt 6/6B Frame 2 already defines."
+
+---
+
+FRAME 1 — FEED WITH SPOTLIGHT CAROUSEL INSERTED:
+
+Show a vertical slice of the feed: 2 ordinary cards (editorial + community post, condensed/
+greyed slightly to indicate "context only, not the focus of this frame") — then the
+SPOTLIGHT MODULE — then 1 more ordinary card below it.
+
+SPOTLIGHT MODULE (full-bleed width, paper-deep bg #F5F0E6 — a half-step darker than the
+page bg so it visually separates from the feed without using a hard border, 16px vertical
+padding):
+
+  HEADER ROW (16px horizontal padding, 12px bottom):
+    Left: "📅 Upcoming Near You" DM Sans 14px bold ink.
+    Right: "See all →" DM Sans 12px bold ochre.
+
+  HORIZONTAL SCROLL ROW (16px left padding, 12px gap between cards, last card partially
+  visible to hint scrollability):
+
+    SPOTLIGHT EVENT CARD (236px wide, white fill, radius-xl, shadow-card, no image at this
+    size — text-forward, matches the "no large images until opened" principle used in
+    Prompt 6B):
+      Top row (12px padding, 12px horizontal): category dot (6px, category colour per
+        Prompt 6B's colour table) + category label DM Sans 10px bold mute uppercase +
+        FEATURED star (★, gold, only if isFeatured) right-aligned.
+      DATE BADGE (inline, 8px top): "FRI 13 JUN" JetBrains Mono 11px bold ochre uppercase +
+        "9:00 PM" DM Sans 11px mute, same row.
+      Title: "Amapiano Night at Jazz Cafe" DM Sans 15px bold ink, 2 lines max, 6px top.
+      Venue: "📍 Jazz Cafe, Camden" DM Sans 12px mute, 4px top.
+      Bottom row (10px top, ghost top border, 8px top padding):
+        Price "Free" or "£15" DM Sans 12px ink-soft left.
+        Attendance "👥 47 going" DM Sans 11px mute right (omit this element entirely if
+          rsvpCount is unavailable — do not show a fake/zero count).
+      COMMUNITY-SUBMITTED badge (only on community-sourced cards, small, bottom-left under
+        the price row): "🌱 Community" DM Sans 9px bold #2D6A4F, pale green bg, radius-full,
+        16px height — signals provenance without implying lower quality.
+
+    Show 4 spotlight cards: 2 unbadged (pooled/ranked normally), 1 with the FEATURED star,
+    1 with the "🌱 Community" badge — to demonstrate all states in one frame.
+
+  EMPTY/FALLBACK STATE (annotate separately, small inset note below the frame): "If fewer
+  than 2 qualifying events exist, hide the entire module for that feed load — do not show
+  a single lonely card or an empty carousel."
+
+---
+
+FRAME 2 — SPOTLIGHT EVENT CARD STATES (component sheet, isolated):
+Show the same 236px card 4 times side by side, labelled below each:
+  "Default" · "Featured (★ + gold top border accent, 2px)" · "Community-sourced (🌱 badge)" ·
+  "Free vs Paid price styling (ink-soft vs ochre-bold for paid)"
+
+Output 2 frames stacked vertically: Frame 1 (in-feed context), Frame 2 (component states).
 ```
 
 ---
