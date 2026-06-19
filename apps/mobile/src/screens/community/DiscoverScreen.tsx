@@ -16,6 +16,7 @@ import { useRoute, RouteProp } from "@react-navigation/native";
 import type { ColorPalette } from "../../theme";
 import { fonts, fontSize, space, radius } from "../../theme";
 import { api, CULTURE_API } from "../../api/client";
+import { decodeHtml } from "../../utils/decodeHtml";
 import DiscoverCard, { DiscoverEntry, TYPE_BADGE } from "../../components/community/DiscoverCard";
 import DiscoverFilterSheet, { SortOption } from "../../components/community/DiscoverFilterSheet";
 
@@ -26,6 +27,21 @@ interface BrowseResponse {
   total: number;
   page: number;
   perPage: number;
+}
+
+// WordPress taxonomy term names (e.g. "subtype") and post titles/excerpts
+// come back with HTML entities escaped (e.g. "Literature &amp; Poetry").
+function decodeEntry(entry: DiscoverEntry): DiscoverEntry {
+  return {
+    ...entry,
+    title:   decodeHtml(entry.title),
+    subtype: decodeHtml(entry.subtype),
+    excerpt: decodeHtml(entry.excerpt),
+    city:    decodeHtml(entry.city),
+  };
+}
+function decodeEntries(entries: DiscoverEntry[]): DiscoverEntry[] {
+  return entries.map(decodeEntry);
 }
 
 export default function DiscoverScreen() {
@@ -71,7 +87,7 @@ export default function DiscoverScreen() {
           `${CULTURE_API}/directory/browse?${params.toString()}`,
           false
         );
-        if (!cancelled) setRecent(data?.entries ?? []);
+        if (!cancelled) setRecent(decodeEntries(data?.entries ?? []));
       } catch {
         if (!cancelled) setRecent([]);
       }
@@ -95,7 +111,7 @@ export default function DiscoverScreen() {
           `${CULTURE_API}/directory/browse?${params.toString()}`,
           false
         );
-        if (!cancelled) setTrending(data?.entries ?? []);
+        if (!cancelled) setTrending(decodeEntries(data?.entries ?? []));
       } catch {
         if (!cancelled) setTrending([]);
       }
@@ -128,7 +144,8 @@ export default function DiscoverScreen() {
           false
         );
         if (requestId !== requestIdRef.current) return;
-        setEntries((prev) => (replace ? data?.entries ?? [] : [...prev, ...(data?.entries ?? [])]));
+        const decoded = decodeEntries(data?.entries ?? []);
+        setEntries((prev) => (replace ? decoded : [...prev, ...decoded]));
         setTotal(data?.total ?? 0);
         setPage(pageNum);
       } catch {

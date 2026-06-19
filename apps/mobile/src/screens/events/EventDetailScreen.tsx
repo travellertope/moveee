@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import {
   View, Text, ScrollView, Image, StyleSheet,
-  TouchableOpacity, Linking, StatusBar,
+  TouchableOpacity, StatusBar,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRoute } from "@react-navigation/native";
@@ -12,6 +12,7 @@ import { fonts, fontSize, space, radius, shadows } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
 import type { EventItem } from "./EventsScreen";
+import { openInApp } from "../../utils/openInApp";
 
 const EVENT_CHECKIN_REP = 20;
 const EVENT_CHECKIN_CREDITS = 3;
@@ -199,7 +200,7 @@ export default function EventDetailScreen() {
           {event.ticketUrl ? (
             <TouchableOpacity
               style={styles.ctaBtn}
-              onPress={() => Linking.openURL(event.ticketUrl!).catch(() => {})}
+              onPress={() => openInApp(event.ticketUrl!)}
               activeOpacity={0.85}
             >
               <Ionicons name="ticket-outline" size={18} color={c.paper} />
