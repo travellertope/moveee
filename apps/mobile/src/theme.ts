@@ -150,8 +150,9 @@ export const darkColors = {
 export type ColorPalette = typeof lightColors;
 
 export const fonts = {
-  serif:      'Fraunces_400Regular',
-  serifBold:  'Fraunces_700Bold',
+  serif:       'Fraunces_400Regular',
+  serifBold:   'Fraunces_700Bold',
+  serifItalic: 'Fraunces_400Regular_Italic',
   sans:       'DMSans_400Regular',
   sansMedium: 'DMSans_500Medium',
   sansBold:   'DMSans_700Bold',

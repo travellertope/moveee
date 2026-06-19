@@ -1816,4 +1816,4 @@ is enough for cases like "Food" ⊂ "Food & Drink".
 - `shadows`: only `card`, `modal`, `fab` — no `sm`, `lg`, `xl` variants
 - `radius`: `sm`(2), `md`(4), `lg`(6), `xl`(12), `"2xl"`(20), `full`(9999) — use bracket notation for `"2xl"`
 - `fontSize`: includes `eyebrow`(9) for uppercase labels
-- `fonts`: `sans`, `sansBold`, `serif`, `serifBold`, `mono`, `monoBold` — no `sansItalic`/`serifItalic` (use `fontStyle: "italic"` instead)
+- `fonts`: `sans`, `sansBold`, `serif`, `serifBold`, `serifItalic`, `mono`, `monoBold`. **`fontStyle: "italic"` synthesis is unreliable for custom/embedded TTF fonts on iOS** — applying it on top of a non-italic `fontFamily` (e.g. `Fraunces_400Regular`) can silently fall back to the system font's italic face instead of rendering the custom font at all. Always reference the real italic font file by name instead (`fonts.serifItalic` → `Fraunces_400Regular_Italic`, already loaded in `App.tsx`'s `useFonts()` call). No `sansItalic` key exists yet — add one (`DMSans_400Regular_Italic`) the same way if a sans italic is ever needed.
