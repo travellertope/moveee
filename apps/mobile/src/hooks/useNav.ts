@@ -9,7 +9,7 @@ export type AppParamList = {
   PulseDetail: { item: FeedItem };
   NewPost: undefined;
   DirectorySubmit: undefined;
-  MemberProfile: { userId: string; username: string };
+  MemberProfile: { userId?: string; username?: string };
   MemberDirectory: undefined;
   Notifications: undefined;
   DirectoryDetail: { id?: number; slug?: string; title?: string; entryType?: string };

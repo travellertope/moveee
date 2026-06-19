@@ -82,7 +82,13 @@ export interface FeedItem {
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, "").trim();
+  // Preserve paragraph breaks before stripping tags — otherwise multi-paragraph
+  // excerpts collapse into one continuous line on feed cards.
+  return html
+    .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .trim();
 }
 
 /** Parse community attribution from a WP post. Prefers proper meta fields;

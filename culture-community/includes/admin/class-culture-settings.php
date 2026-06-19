@@ -39,16 +39,28 @@ class Culture_Settings {
         'culture_shop_fx_ngn_per_gbp'          => 1900,
         'culture_shop_flat_shipping_gbp'       => 4.99,
 
-        // Gamification – point values.
-        'culture_points_event_rsvp'          => 5,
-        'culture_points_event_checkin'       => 15,
-        'culture_points_newsletter_comment'  => 10,
-        'culture_points_newsletter_reaction' => 2,
-        'culture_points_referral'            => 25,
-        'culture_points_quote_submission'    => 10,
-        'culture_points_quote_like'          => 1,
-        'culture_points_magazine_read'       => 5,
-        'culture_points_magazine_share'      => 5,
+        // Gamification – point values. Every action awards both points and
+        // credits — keep these in sync with Culture_Gamification::POINTS.
+        'culture_points_event_rsvp'             => 5,
+        'culture_points_event_checkin'          => 20,
+        'culture_points_magazine_comment'       => 5,
+        'culture_points_newsletter_comment'     => 10,
+        'culture_points_newsletter_reaction'    => 1,
+        'culture_points_referral'               => 30,
+        'culture_points_quote_submission'       => 10,
+        'culture_points_quote_like'             => 1,
+        'culture_points_magazine_read'          => 1,
+        'culture_points_magazine_share'         => 2,
+        'culture_points_community_comment'      => 8,
+        'culture_points_community_like'         => 1,
+        'culture_points_directory_entry'        => 20,
+        'culture_points_game_completed'         => 1,
+        'culture_points_community_post'         => 10,
+        'culture_points_profile_completed'      => 15,
+        'culture_points_email_verified'         => 5,
+        'culture_points_directory_opt_in'       => 10,
+        'culture_points_newsletter_subscribed'  => 5,
+        'culture_points_poll_vote'              => 1,
 
         // Gamification – badge thresholds.
         'culture_badge_first_steps'              => 1,
@@ -217,15 +229,20 @@ class Culture_Settings {
         register_setting( 'culture_settings_payment', 'culture_shop_fx_ngn_per_gbp', array( 'sanitize_callback' => 'floatval' ) );
         register_setting( 'culture_settings_payment', 'culture_shop_flat_shipping_gbp', array( 'sanitize_callback' => 'floatval' ) );
 
-        // Credits – per action bonuses.
+        // Credits – per action bonuses. Every action awards both credits and
+        // reputation, so this list mirrors the Reputation tab's action list.
         $credit_keys = array(
             'culture_credits_event_rsvp', 'culture_credits_event_checkin',
             'culture_credits_referral', 'culture_credits_newsletter_comment',
-            'culture_credits_quote_submission', 'culture_credits_magazine_read',
+            'culture_credits_newsletter_reaction',
+            'culture_credits_quote_submission', 'culture_credits_quote_like',
+            'culture_credits_magazine_read',
             'culture_credits_magazine_share', 'culture_credits_directory_entry',
+            'culture_credits_community_comment', 'culture_credits_community_like',
             'culture_credits_game_completed', 'culture_credits_community_post',
             'culture_credits_profile_completed', 'culture_credits_email_verified',
             'culture_credits_directory_opt_in', 'culture_credits_newsletter_subscribed',
+            'culture_credits_poll_vote',
         );
         foreach ( $credit_keys as $key ) {
             register_setting( 'culture_settings_credits', $key, $int );
@@ -237,17 +254,21 @@ class Culture_Settings {
         register_setting( 'culture_settings_credits', 'culture_credits_post_validated_standard', $int );
         register_setting( 'culture_settings_credits', 'culture_credits_post_validated_special', $int );
 
-        // Reputation – per action.
+        // Reputation – per action. Uses the culture_points_* option prefix —
+        // this is the prefix actually read at award time by
+        // Culture_Gamification::get_point_value()/award_points(). (The legacy
+        // culture_rep_* per-action keys were never read anywhere and have been
+        // retired; culture_rep_tier_* below is unrelated and still live.)
         $rep_keys = array(
-            'culture_rep_event_rsvp', 'culture_rep_event_checkin',
-            'culture_rep_newsletter_comment', 'culture_rep_newsletter_reaction',
-            'culture_rep_referral', 'culture_rep_quote_submission', 'culture_rep_quote_like',
-            'culture_rep_magazine_read', 'culture_rep_magazine_share',
-            'culture_rep_community_comment', 'culture_rep_community_like',
-            'culture_rep_directory_entry', 'culture_rep_game_completed',
-            'culture_rep_community_post', 'culture_rep_profile_completed',
-            'culture_rep_email_verified', 'culture_rep_directory_opt_in',
-            'culture_rep_newsletter_subscribed', 'culture_rep_poll_vote',
+            'culture_points_event_rsvp', 'culture_points_event_checkin',
+            'culture_points_newsletter_comment', 'culture_points_newsletter_reaction',
+            'culture_points_referral', 'culture_points_quote_submission', 'culture_points_quote_like',
+            'culture_points_magazine_read', 'culture_points_magazine_share',
+            'culture_points_community_comment', 'culture_points_community_like',
+            'culture_points_directory_entry', 'culture_points_game_completed',
+            'culture_points_community_post', 'culture_points_profile_completed',
+            'culture_points_email_verified', 'culture_points_directory_opt_in',
+            'culture_points_newsletter_subscribed', 'culture_points_poll_vote',
         );
         foreach ( $rep_keys as $key ) {
             register_setting( 'culture_settings_reputation', $key, $int );
@@ -570,16 +591,21 @@ class Culture_Settings {
             'event_checkin'          => __( 'Event Check-in', 'culture-community' ),
             'referral'               => __( 'Successful Referral', 'culture-community' ),
             'newsletter_comment'     => __( 'Newsletter Comment', 'culture-community' ),
+            'newsletter_reaction'    => __( 'Newsletter Reaction', 'culture-community' ),
             'quote_submission'       => __( 'Quote Submitted', 'culture-community' ),
+            'quote_like'             => __( 'Quote Liked by Others', 'culture-community' ),
             'magazine_read'          => __( 'Magazine Article Read', 'culture-community' ),
             'magazine_share'         => __( 'Magazine Article Shared', 'culture-community' ),
             'directory_entry'        => __( 'Directory Entry Submitted', 'culture-community' ),
+            'community_comment'      => __( 'Community Comment', 'culture-community' ),
+            'community_like'         => __( 'Community Reaction', 'culture-community' ),
             'game_completed'         => __( 'Game Completed', 'culture-community' ),
             'community_post'         => __( 'Community Post Submitted', 'culture-community' ),
             'profile_completed'      => __( 'Profile Completed', 'culture-community' ),
             'email_verified'         => __( 'Email Verified', 'culture-community' ),
             'directory_opt_in'       => __( 'Opted into Member Directory', 'culture-community' ),
             'newsletter_subscribed'  => __( 'Newsletter Subscribed', 'culture-community' ),
+            'poll_vote'              => __( 'Poll Vote', 'culture-community' ),
         );
         ?>
         <h2><?php esc_html_e( 'Credit Bonuses per Action', 'culture-community' ); ?></h2>
@@ -692,20 +718,17 @@ class Culture_Settings {
             'poll_vote'              => __( 'Poll Vote', 'culture-community' ),
         );
 
-        // Rep-only actions (no credit equivalent) — shown with a note in the description column.
-        $rep_only = array( 'newsletter_reaction', 'quote_like', 'community_like', 'poll_vote' );
         ?>
         <h2><?php esc_html_e( 'Reputation per Action', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Reputation is permanent — it never decreases and cannot be spent. Actions marked (rep only) do not award credits.', 'culture-community' ); ?></p>
+        <p class="description"><?php esc_html_e( 'Reputation is permanent — it never decreases and cannot be spent. Every action awards both reputation and credits (see the Credits tab).', 'culture-community' ); ?></p>
         <table class="form-table">
             <?php foreach ( $rep_actions as $action => $label ) :
-                $key     = 'culture_rep_' . $action;
+                $key     = 'culture_points_' . $action;
                 $default = isset( $rep_defaults[ $action ] ) ? $rep_defaults[ $action ] : 0;
                 $value   = get_option( $key, $default );
-                $note    = in_array( $action, $rep_only, true ) ? ' <em>(' . esc_html__( 'rep only', 'culture-community' ) . ')</em>' : '';
             ?>
                 <tr>
-                    <th scope="row"><label for="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?><?php echo wp_kses_post( $note ); ?></label></th>
+                    <th scope="row"><label for="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label></th>
                     <td>
                         <input type="number" id="<?php echo esc_attr( $key ); ?>" name="<?php echo esc_attr( $key ); ?>"
                                value="<?php echo esc_attr( $value ); ?>" min="0" step="1" class="small-text" />

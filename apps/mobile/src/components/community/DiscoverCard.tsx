@@ -9,6 +9,7 @@ export interface DiscoverEntry {
   slug: string;
   type: string;
   subtype?: string;
+  excerpt?: string;
   thumbnail: string | null;
   city: string;
   averageRating: number | null;
@@ -69,6 +70,9 @@ export default function DiscoverCard({ entry, c, compact, onPress }: Props) {
           {badge.emoji} {badge.label}
         </Text>
         <Text style={styles.title} numberOfLines={2}>{entry.title}</Text>
+        {!compact && entry.excerpt ? (
+          <Text style={styles.excerpt} numberOfLines={3}>{entry.excerpt}</Text>
+        ) : null}
       </View>
       <View>
         {entry.city ? <Text style={styles.city}>📍 {entry.city}</Text> : null}
@@ -124,6 +128,13 @@ const createStyles = (c: ColorPalette) =>
       fontSize: fontSize.sm,
       color: c.ink,
       lineHeight: 17,
+    },
+    excerpt: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.xs,
+      color: c.inkSoft,
+      lineHeight: 16,
+      marginTop: 6,
     },
     city: {
       fontFamily: fonts.sans,

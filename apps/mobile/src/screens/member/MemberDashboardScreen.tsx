@@ -164,7 +164,7 @@ export default function MemberDashboardScreen() {
   const nav = useNav();
   const { user, logout } = useAuthStore();
   const [signOutVisible, setSignOutVisible] = useState(false);
-  const [rewardsSheet, setRewardsSheet] = useState<{ visible: boolean; tab: "credits" | "reputation"; intro?: string }>({ visible: false, tab: "credits" });
+  const [rewardsSheet, setRewardsSheet] = useState<{ visible: boolean; tab: "credits" | "reputation" }>({ visible: false, tab: "credits" });
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const { mode } = useThemeStore();
@@ -264,11 +264,7 @@ export default function MemberDashboardScreen() {
           {/* Credits — with info tooltip */}
           <TouchableOpacity
             style={styles.statItem}
-            onPress={() => setRewardsSheet({
-              visible: true,
-              tab: "credits",
-              intro: "Moveee Credits are your spendable currency — earn them by posting, engaging, and participating in the community. Redeem them for partner perks, or cash out to real money (Connect Pro only, 40% fee). Credits reset daily up to the cap below.",
-            })}
+            onPress={() => setRewardsSheet({ visible: true, tab: "credits" })}
             activeOpacity={0.7}
           >
             <Text style={[styles.statValue, { color: isPro ? c.ochre : c.ink }]}>{user.credits ?? 0}</Text>
@@ -278,11 +274,7 @@ export default function MemberDashboardScreen() {
           {/* Reputation — with info sheet */}
           <TouchableOpacity
             style={[styles.statItem, styles.statItemBorder]}
-            onPress={() => setRewardsSheet({
-              visible: true,
-              tab: "reputation",
-              intro: "Points are your permanent standing in the Moveee community — they never decrease and can't be spent. Quality contributions (posts, comments, directory entries, event check-ins) earn points, which unlock higher tiers and exclusive privileges.",
-            })}
+            onPress={() => setRewardsSheet({ visible: true, tab: "reputation" })}
             activeOpacity={0.7}
           >
             <Text style={[styles.statValue, { color: isPro ? c.gold : c.ink }]}>{user.reputation ?? 0}</Text>
@@ -383,7 +375,6 @@ export default function MemberDashboardScreen() {
       <RewardsInfoSheet
         visible={rewardsSheet.visible}
         initialTab={rewardsSheet.tab}
-        intro={rewardsSheet.intro}
         onClose={() => setRewardsSheet((s) => ({ ...s, visible: false }))}
       />
     </SafeAreaView>

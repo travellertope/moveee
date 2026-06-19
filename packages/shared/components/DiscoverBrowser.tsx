@@ -10,6 +10,7 @@ export interface DiscoverEntry {
   slug: string;
   type: string;
   subtype?: string;
+  excerpt?: string;
   thumbnail: string | null;
   city: string;
   averageRating: number | null;
@@ -71,6 +72,7 @@ function DiscoverCard({ entry, rail }: { entry: DiscoverEntry; rail?: boolean })
           {badge.emoji} {badge.label}
         </div>
         <div className="disc-card-title">{entry.title}</div>
+        {!rail && entry.excerpt && <div className="disc-card-excerpt">{entry.excerpt}</div>}
       </div>
       <div>
         {entry.city && <div className="disc-card-city">📍 {entry.city}</div>}
@@ -114,14 +116,19 @@ export default function DiscoverBrowser({
   const [draftCount, setDraftCount] = useState<number | null>(null);
 
   const [recent, setRecent] = useState<DiscoverEntry[]>([]);
+  const [trending, setTrending] = useState<DiscoverEntry[]>([]);
   const [entries, setEntries] = useState<DiscoverEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-  const countDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+  // Stable per-visit random seed so "Load more" pagination doesn't reshuffle
+  // already-seen entries — regenerated only on a fresh page load.
+  const seedRef = useRef(Math.floor(Math.random() * 1_000_000_000) + 1);
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const countDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Recently Added rail
   useEffect(() => {
@@ -136,12 +143,29 @@ export default function DiscoverBrowser({
       .catch(() => setRecent([]));
   }, [type, region]);
 
+  // Trending in Community rail — entries most referenced by community posts
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (type) params.set("type", type);
+    if (region) params.set("region", region);
+    params.set("sort", "trending");
+    params.set("per_page", "10");
+    fetch(`/api/directory/browse?${params.toString()}`)
+      .then((r) => r.json())
+      .then((d: BrowseResponse) => setTrending(d?.entries ?? []))
+      .catch(() => setTrending([]));
+  }, [type, region]);
+
   async function fetchPage(pageNum: number, replace: boolean) {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
     if (type) params.set("type", type);
     if (region) params.set("region", region);
-    params.set("sort", sort);
+    // Default browsing (no search, no explicit sort choice) shows a fresh
+    // random mix every visit rather than the same "most relevant" order.
+    const effectiveSort = sort === "relevant" && !query ? "random" : sort;
+    params.set("sort", effectiveSort);
+    if (effectiveSort === "random") params.set("seed", String(seedRef.current));
     params.set("page", String(pageNum));
     params.set("per_page", String(PER_PAGE));
     const res = await fetch(`/api/directory/browse?${params.toString()}`);
@@ -271,9 +295,21 @@ export default function DiscoverBrowser({
               <DiscoverCard key={`recent-${e.id}`} entry={e} rail />
             ))}
           </div>
-          <div className="disc-grid-heading">Browse All</div>
         </>
       )}
+
+      {trending.length > 0 && (
+        <>
+          <div className="disc-rail-heading">Trending in Community</div>
+          <div className="disc-rail">
+            {trending.map((e) => (
+              <DiscoverCard key={`trending-${e.id}`} entry={e} rail />
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="disc-grid-heading">Explore More</div>
 
       {loading ? (
         <div className="disc-loading">Loading…</div>

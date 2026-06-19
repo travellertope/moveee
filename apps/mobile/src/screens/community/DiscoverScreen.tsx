@@ -43,11 +43,16 @@ export default function DiscoverScreen() {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
   const [recent, setRecent] = useState<DiscoverEntry[]>([]);
+  const [trending, setTrending] = useState<DiscoverEntry[]>([]);
   const [entries, setEntries] = useState<DiscoverEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Stable per-visit random seed so "Load more" pagination doesn't reshuffle
+  // already-seen entries — regenerated only when the screen is remounted.
+  const seedRef = useRef(Math.floor(Math.random() * 1_000_000_000) + 1);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -71,6 +76,26 @@ export default function DiscoverScreen() {
     })();
   }, [type, region]);
 
+  // "Trending in Community" rail — entries most referenced by community posts
+  useEffect(() => {
+    (async () => {
+      try {
+        const params = new URLSearchParams();
+        if (type) params.set("type", type);
+        if (region) params.set("region", region);
+        params.set("sort", "trending");
+        params.set("per_page", "10");
+        const data = await api.get<BrowseResponse>(
+          `${CULTURE_API}/directory/browse?${params.toString()}`,
+          false
+        );
+        setTrending(data?.entries ?? []);
+      } catch {
+        setTrending([]);
+      }
+    })();
+  }, [type, region]);
+
   const fetchPage = useCallback(
     async (pageNum: number, replace: boolean) => {
       try {
@@ -78,7 +103,11 @@ export default function DiscoverScreen() {
         if (query) params.set("q", query);
         if (type) params.set("type", type);
         if (region) params.set("region", region);
-        params.set("sort", sort);
+        // Default browsing (no search, no explicit sort choice) shows a fresh
+        // random mix every visit rather than the same "most relevant" order.
+        const effectiveSort = sort === "relevant" && !query ? "random" : sort;
+        params.set("sort", effectiveSort);
+        if (effectiveSort === "random") params.set("seed", String(seedRef.current));
         params.set("page", String(pageNum));
         params.set("per_page", String(PER_PAGE));
         const data = await api.get<BrowseResponse>(
@@ -202,22 +231,41 @@ export default function DiscoverScreen() {
         onEndReachedThreshold={0.4}
         onEndReached={loadMore}
         ListHeaderComponent={
-          recent.length > 0 ? (
-            <View style={styles.railSection}>
-              <Text style={styles.railHeading}>Recently Added</Text>
-              <FlatList
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                data={recent}
-                keyExtractor={(item) => `recent-${item.id}`}
-                contentContainerStyle={styles.railContent}
-                renderItem={({ item }) => (
-                  <DiscoverCard entry={item} c={c} compact onPress={openEntry} />
-                )}
-              />
-              <Text style={styles.gridHeading}>Browse All</Text>
-            </View>
-          ) : null
+          <View style={styles.railSection}>
+            {recent.length > 0 && (
+              <>
+                <Text style={styles.railHeading}>Recently Added</Text>
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={recent}
+                  keyExtractor={(item) => `recent-${item.id}`}
+                  contentContainerStyle={styles.railContent}
+                  renderItem={({ item }) => (
+                    <DiscoverCard entry={item} c={c} compact onPress={openEntry} />
+                  )}
+                />
+              </>
+            )}
+            {trending.length > 0 && (
+              <>
+                <Text style={[styles.railHeading, recent.length > 0 && { marginTop: space[4] }]}>
+                  Trending in Community
+                </Text>
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={trending}
+                  keyExtractor={(item) => `trending-${item.id}`}
+                  contentContainerStyle={styles.railContent}
+                  renderItem={({ item }) => (
+                    <DiscoverCard entry={item} c={c} compact onPress={openEntry} />
+                  )}
+                />
+              </>
+            )}
+            <Text style={styles.gridHeading}>Explore More</Text>
+          </View>
         }
         renderItem={({ item }) => (
           <View style={styles.gridItem}>
