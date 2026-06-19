@@ -4,7 +4,7 @@ import type { FeedItem } from "../types";
 
 export type AppParamList = {
   // Connect / Feed
-  ConnectFeed: undefined;
+  ConnectFeed: { justPosted?: number } | undefined;
   PostDetail: { item: FeedItem };
   PulseDetail: { item: FeedItem };
   NewPost: undefined;
@@ -28,6 +28,7 @@ export type AppParamList = {
   Analytics: undefined;
   SavedArticles: undefined;
   Referral: undefined;
+  MyEvents: undefined;
   // Auth
   Onboarding: undefined;
   Login: undefined;

@@ -339,7 +339,8 @@ export type NotificationType =
   | 'credit_earned' | 'badge_unlocked' | 'perk_expiring' | 'perk_redeemed'
   | 'cashout_approved' | 'cashout_rejected' | 'escrow_released'
   | 'comment_received' | 'post_validated' | 'system'
-  | 'referral_received' | 'mention';
+  | 'referral_received' | 'mention'
+  | 'new_follower' | 'new_follower_post' | 'event_rsvp';
 
 export interface Notification {
   id: number;

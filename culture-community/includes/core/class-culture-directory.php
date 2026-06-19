@@ -605,12 +605,51 @@ class Culture_Directory {
             $args['order']   = 'ASC';
         }
 
+        $args['update_post_term_cache'] = true;
+        $args['update_post_meta_cache'] = true;
+
         $query = new WP_Query( $args );
         if ( $title_filter ) {
             remove_filter( 'posts_where', $title_filter );
         }
         if ( $random_filter ) {
             remove_filter( 'posts_orderby', $random_filter );
+        }
+
+        $post_ids = wp_list_pluck( $query->posts, 'ID' );
+
+        // Batch-prime the meta cache for all posts in one query instead of
+        // 3 × get_post_meta() per post (N+1). WP_Query's built-in
+        // update_post_meta_cache only fires for the main query object —
+        // calling update_meta_cache explicitly ensures it for REST contexts.
+        if ( $post_ids ) {
+            update_meta_cache( 'post', $post_ids );
+        }
+
+        // Batch-load thumbnail attachment URLs (avoids N per-post queries for
+        // _thumbnail_id → attachment URL resolution).
+        $thumb_map = array();
+        if ( $post_ids ) {
+            $thumb_ids_raw = array();
+            foreach ( $post_ids as $pid ) {
+                $tid = get_post_meta( $pid, '_thumbnail_id', true );
+                if ( $tid ) {
+                    $thumb_ids_raw[ $pid ] = (int) $tid;
+                }
+            }
+            if ( $thumb_ids_raw ) {
+                $att_ids     = array_unique( array_values( $thumb_ids_raw ) );
+                $placeholder = implode( ',', array_fill( 0, count( $att_ids ), '%d' ) );
+                $att_rows    = $wpdb->get_results( $wpdb->prepare(
+                    "SELECT ID, guid FROM {$wpdb->posts} WHERE ID IN ($placeholder)",
+                    $att_ids
+                ), OBJECT_K );
+                foreach ( $thumb_ids_raw as $pid => $att_id ) {
+                    if ( isset( $att_rows[ $att_id ] ) ) {
+                        $thumb_map[ $pid ] = $att_rows[ $att_id ]->guid;
+                    }
+                }
+            }
         }
 
         $today = current_time( 'Y-m-d' );
@@ -633,7 +672,7 @@ class Culture_Directory {
                 'type'          => $type_slug,
                 'subtype'       => $subtype,
                 'excerpt'       => $excerpt,
-                'thumbnail'     => get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ?: null,
+                'thumbnail'     => isset( $thumb_map[ $post->ID ] ) ? $thumb_map[ $post->ID ] : null,
                 'city'          => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
                 'averageRating' => (float) get_post_meta( $post->ID, '_average_rating', true ) ?: null,
                 'reviewCount'   => (int) get_post_meta( $post->ID, '_community_review_count', true ),

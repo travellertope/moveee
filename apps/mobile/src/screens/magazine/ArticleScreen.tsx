@@ -102,7 +102,14 @@ function HtmlTable({ html, c }: { html: string; c: ColorPalette }) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator
-      style={{ marginVertical: 16, borderWidth: 1, borderColor: c.rule, borderRadius: 6 }}
+      style={{
+        marginVertical: 16,
+        borderWidth: 1,
+        borderColor: c.rule,
+        borderRadius: 6,
+        alignSelf: "flex-start",
+        maxWidth: "100%",
+      }}
     >
       <View>
         {rows.map((row, ri) => (

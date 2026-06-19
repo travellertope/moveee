@@ -234,26 +234,6 @@ export default function MemberDirectoryScreen() {
               )}
             </View>
 
-            {/* Discipline dropdown */}
-            {discOpen && (
-              <View style={styles.dropdown}>
-                {DISCIPLINES.map((d) => (
-                  <TouchableOpacity key={d} style={styles.dropdownItem} onPress={() => { setDiscipline(d); setDiscOpen(false); }}>
-                    <Text style={[styles.dropdownItemText, discipline === d && { color: c.ochre, fontFamily: fonts.sansBold }]}>{d}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-            {/* Location dropdown */}
-            {locOpen && (
-              <View style={styles.dropdown}>
-                {LOCATIONS.map((l) => (
-                  <TouchableOpacity key={l} style={styles.dropdownItem} onPress={() => { setLocation(l); setLocOpen(false); }}>
-                    <Text style={[styles.dropdownItemText, location === l && { color: c.ochre, fontFamily: fonts.sansBold }]}>{l}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
           </>
         )}
       </View>
@@ -301,9 +281,6 @@ export default function MemberDirectoryScreen() {
           numColumns={2}
           contentContainerStyle={styles.grid}
           columnWrapperStyle={styles.row}
-          ListHeaderComponent={
-            <Text style={styles.countText}>{filtered.length} members</Text>
-          }
           ListEmptyComponent={
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>No members found</Text>
@@ -322,6 +299,26 @@ export default function MemberDirectoryScreen() {
           )}
           showsVerticalScrollIndicator={false}
         />
+      )}
+
+      {/* Dropdown overlays — rendered last so they paint above the city strip / grid on Android */}
+      {filtersOpen && discOpen && (
+        <View style={styles.dropdown}>
+          {DISCIPLINES.map((d) => (
+            <TouchableOpacity key={d} style={styles.dropdownItem} onPress={() => { setDiscipline(d); setDiscOpen(false); }}>
+              <Text style={[styles.dropdownItemText, discipline === d && { color: c.ochre, fontFamily: fonts.sansBold }]}>{d}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+      {filtersOpen && locOpen && (
+        <View style={styles.dropdown}>
+          {LOCATIONS.map((l) => (
+            <TouchableOpacity key={l} style={styles.dropdownItem} onPress={() => { setLocation(l); setLocOpen(false); }}>
+              <Text style={[styles.dropdownItemText, location === l && { color: c.ochre, fontFamily: fonts.sansBold }]}>{l}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       )}
     </SafeAreaView>
   );
@@ -371,18 +368,14 @@ function createStyles(c: ColorPalette) {
     filterChipText:       { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft },
     filterChipTextActive: { color: c.paper, fontFamily: fonts.sansBold },
     dropdown: {
-      position: "absolute", top: 52, left: 16, right: 16, zIndex: 100,
-      backgroundColor: c.paper, borderRadius: 8, ...shadows.card,
+      position: "absolute", top: 108, left: 16, right: 16, zIndex: 100,
+      backgroundColor: c.paper, borderRadius: 8, ...shadows.card, elevation: 20,
       borderWidth: 1, borderColor: c.ghost,
     },
     dropdownItem:     { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.ghost + "50" },
     dropdownItemText: { fontFamily: fonts.sans, fontSize: 14, color: c.ink },
 
-    countText: {
-      fontFamily: fonts.mono, fontSize: 10, color: c.mute,
-      paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12,
-    },
-    grid: { paddingHorizontal: 16, paddingBottom: 40 },
+    grid: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 40 },
     row:  { gap: 12, marginBottom: 12 },
 
     card: {

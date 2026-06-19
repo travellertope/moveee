@@ -3,13 +3,71 @@ import {
   View, Text, SectionList, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, RefreshControl,
 } from "react-native";
-import { useNav } from "../../hooks/useNav";
+import { useNav, type AppNavProp } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { api, MOBILE_API } from "../../api/client";
 import { fonts, fontSize, space, radius } from "../../theme";
 import { useColors } from "../../hooks/useColors";
 import type { ColorPalette } from "../../theme";
-import type { Notification } from "../../types";
+import type { FeedItem, Notification } from "../../types";
+
+/**
+ * Maps a notification to where tapping it should go. Most types route to a
+ * fixed in-app destination (wallet, coupons, referrals, etc.) derived purely
+ * from `type`. The three types tied to a specific community post (mention,
+ * comment_received, new_follower_post) need the actual post fetched first
+ * since PostDetail requires a full FeedItem, not just an id — see
+ * `handle_get_community_post` (PHP) / `/mobile/community/post`.
+ */
+async function openNotification(item: Notification, nav: AppNavProp) {
+  const meta = item.meta ?? {};
+  const postId = meta.post_id;
+
+  switch (item.type) {
+    case "mention":
+    case "comment_received":
+    case "new_follower_post": {
+      if (!postId) break;
+      try {
+        const { item: post } = await api.get<{ item: FeedItem }>(
+          `${MOBILE_API}/community/post?post_id=${postId}`
+        );
+        nav.navigate("PostDetail", { item: post });
+      } catch {
+        // Post may have been deleted/unpublished since the notification fired — no-op.
+      }
+      break;
+    }
+    case "new_follower": {
+      const followerId = meta.follower_id;
+      if (followerId) nav.navigate("MemberProfile", { userId: String(followerId) });
+      break;
+    }
+    case "badge_unlocked":
+      nav.navigate("MemberDashboard");
+      break;
+    case "credit_earned":
+    case "cashout_approved":
+    case "cashout_rejected":
+    case "escrow_released":
+    case "post_validated":
+      nav.navigate("Wallet");
+      break;
+    case "perk_redeemed":
+    case "perk_expiring":
+      nav.navigate("Coupons");
+      break;
+    case "referral_received":
+      nav.navigate("Referral");
+      break;
+    case "event_rsvp":
+      nav.navigate("MyEvents");
+      break;
+    case "system":
+    default:
+      break;
+  }
+}
 
 const PAGE_SIZE = 20;
 
@@ -64,10 +122,11 @@ function groupNotifications(notifications: Notification[]) {
 }
 
 function NotifRow({
-  item, onPress, styles, c,
+  item, onPress, navigating, styles, c,
 }: {
   item: Notification;
   onPress: () => void;
+  navigating: boolean;
   styles: ReturnType<typeof createStyles>;
   c: ColorPalette;
 }) {
@@ -80,6 +139,7 @@ function NotifRow({
     <TouchableOpacity
       style={[styles.row, isOld && styles.rowOld]}
       onPress={onPress}
+      disabled={navigating}
       activeOpacity={0.7}
     >
       {meta.border && (
@@ -92,7 +152,9 @@ function NotifRow({
           ? { backgroundColor: c.ghost + "40" }
           : { backgroundColor: meta.accent },
       ]}>
-        <Text style={styles.iconEmoji}>{meta.emoji}</Text>
+        {navigating
+          ? <ActivityIndicator size="small" color={c.ink} />
+          : <Text style={styles.iconEmoji}>{meta.emoji}</Text>}
       </View>
 
       <View style={styles.rowBody}>
@@ -124,6 +186,7 @@ export default function NotificationsScreen() {
   const [offset,       setOffset]       = useState(0);
   const [hasMore,      setHasMore]      = useState(true);
   const [loadingMore,  setLoadingMore]  = useState(false);
+  const [navigatingId, setNavigatingId] = useState<number | null>(null);
 
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
@@ -164,6 +227,16 @@ export default function NotificationsScreen() {
         prev.map((n) => n.id === id ? { ...n, read_at: new Date().toISOString() } : n)
       );
     } catch { /* silent */ }
+  };
+
+  const handlePress = async (item: Notification) => {
+    if (!item.read_at) markRead(item.id);
+    setNavigatingId(item.id);
+    try {
+      await openNotification(item, nav);
+    } finally {
+      setNavigatingId(null);
+    }
   };
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
@@ -216,7 +289,8 @@ export default function NotificationsScreen() {
           renderItem={({ item }) => (
             <NotifRow
               item={item}
-              onPress={() => !item.read_at && markRead(item.id)}
+              onPress={() => handlePress(item)}
+              navigating={navigatingId === item.id}
               styles={styles}
               c={c}
             />

@@ -9,7 +9,6 @@ import {
   Share,
   ActivityIndicator,
   Dimensions,
-  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, RouteProp } from "@react-navigation/native";
@@ -17,6 +16,7 @@ import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { api, MOBILE_API } from "../../api/client";
+import { openInApp } from "../../utils/openInApp";
 import { useCartStore } from "../../store/cartStore";
 import { fonts, fontSize, space, radius, shadows, type ColorPalette } from "../../theme";
 import { useColors } from "../../hooks/useColors";
@@ -466,7 +466,7 @@ export default function MakerProfileScreen() {
           {maker.website && (
             <TouchableOpacity
               style={s.linkRow}
-              onPress={() => Linking.openURL(maker.website!)}
+              onPress={() => openInApp(maker.website!)}
             >
               <Ionicons name="globe-outline" size={16} color={c.ochre} style={{ marginRight: 8 }} />
               <Text style={s.linkText} numberOfLines={1}>

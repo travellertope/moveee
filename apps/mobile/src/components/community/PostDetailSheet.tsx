@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -9,13 +9,13 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNav } from "../../hooks/useNav";
-import BottomSheet from "../ui/BottomSheet";
+import BottomSheet, { type BottomSheetHandle } from "../ui/BottomSheet";
 import SheetErrorState from "../ui/SheetErrorState";
 import ReportPostSheet from "./ReportPostSheet";
 import ImageLightbox from "../ui/ImageLightbox";
 import HashtagText from "./HashtagText";
 import { useColors } from "../../hooks/useColors";
-import CommentSection from "./CommentSection";
+import CommentSection, { type CommentSectionHandle } from "./CommentSection";
 import { api, MOBILE_API } from "../../api/client";
 import { useAuthStore } from "../../auth/authStore";
 import type { ColorPalette } from "../../theme";
@@ -381,15 +381,15 @@ function TemplateHiddenGem({ item, c, styles }: { item: FeedItem; c: ColorPalett
   );
 }
 
-function TemplateCulturalTake({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
+function TemplateCulturalTake({ item, c, styles, onAgree }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles>; onAgree: () => void }) {
   return (
     <>
       <View style={styles.takeHeadlineBlock}>
         <Text style={styles.takeHeadline}>{item.culturalTakeHeadline ?? item.title}</Text>
       </View>
       {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
-      <TouchableOpacity style={styles.agreeChip}>
-        <Text style={styles.agreeChipText}>Do you agree? →</Text>
+      <TouchableOpacity style={styles.agreeChip} onPress={onAgree}>
+        <Text style={styles.agreeChipText}>Do you agree? Reply with your take →</Text>
       </TouchableOpacity>
       {item.communityTag ? <Text style={styles.hashtags}>{item.communityTag}</Text> : null}
       {item.image ? <TappableHero uri={item.image} /> : null}
@@ -907,6 +907,15 @@ export default function PostDetailSheet({ item, visible, onClose, onMentionPress
   const [reportOpen, setReportOpen] = useState(false);
   const nav = useNav();
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
+  const sheetRef = useRef<BottomSheetHandle>(null);
+  const commentRef = useRef<CommentSectionHandle>(null);
+
+  const focusComments = () => {
+    sheetRef.current?.scrollToEnd();
+    // Give the scroll-to-end animation time to land before focusing the
+    // input — focusing mid-scroll can fight the ScrollView's own offset.
+    setTimeout(() => commentRef.current?.focus(), 350);
+  };
 
   if (!item) {
     return (
@@ -924,7 +933,7 @@ export default function PostDetailSheet({ item, visible, onClose, onMentionPress
   const renderTemplateBody = () => {
     switch (item.templateType) {
       case "hidden-gem":        return <TemplateHiddenGem item={item} c={c} styles={styles} />;
-      case "cultural-take":     return <TemplateCulturalTake item={item} c={c} styles={styles} />;
+      case "cultural-take":     return <TemplateCulturalTake item={item} c={c} styles={styles} onAgree={focusComments} />;
       case "food-review":       return <TemplateFoodReview item={item} c={c} styles={styles} />;
       case "creative-showcase": return <TemplateCreativeShowcase item={item} c={c} styles={styles} />;
       case "poll":              return <TemplatePoll item={item} c={c} styles={styles} />;
@@ -938,7 +947,7 @@ export default function PostDetailSheet({ item, visible, onClose, onMentionPress
 
   return (
     <>
-    <BottomSheet visible={visible} onClose={onClose} initialState="full">
+    <BottomSheet ref={sheetRef} visible={visible} onClose={onClose} initialState="full">
       {/* Type badge + time */}
       <View style={styles.topRow}>
         <View style={[styles.typeBadge, { backgroundColor: badge.bg }]}>
@@ -962,7 +971,7 @@ export default function PostDetailSheet({ item, visible, onClose, onMentionPress
 
       {/* Comments */}
       <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
-        <CommentSection postId={postId} />
+        <CommentSection ref={commentRef} postId={postId} />
       </View>
     </BottomSheet>
 

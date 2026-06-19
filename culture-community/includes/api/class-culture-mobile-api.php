@@ -162,6 +162,19 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        register_rest_route( 'culture/v1', '/mobile/community/post', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_community_post' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'post_id' => array(
+                    'required'          => true,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/community/comments', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_get_comments' ),
@@ -2453,6 +2466,41 @@ class Culture_Mobile_API {
         }
 
         return array_map( function( WP_Post $post ) use ( $liked_ids, $reactions_map, $organiser_map ) {
+            return self::format_community_feed_item( $post, $liked_ids, $reactions_map, $organiser_map );
+        }, $query->posts );
+    }
+
+    /**
+     * Single-post lookup used by deep links (e.g. notification taps for
+     * mentions, comments, and followed-author posts) — reuses the exact
+     * same field mapping as the unified/community feed so PostDetailScreen
+     * receives an identically-shaped FeedItem regardless of entry point.
+     */
+    public static function handle_get_community_post( $request ) {
+        $post_id = (int) $request->get_param( 'post_id' );
+        $post    = get_post( $post_id );
+        if ( ! $post || $post->post_type !== 'culture_post' || $post->post_status !== 'publish' ) {
+            return new WP_Error( 'not_found', 'Post not found', array( 'status' => 404 ) );
+        }
+
+        $user_id       = get_current_user_id();
+        $liked_ids     = (array) get_user_meta( $user_id, '_culture_liked_posts', true );
+        $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
+        $reactions_map = is_array( $reactions_map ) ? $reactions_map : array();
+
+        $organiser_map = array();
+        $organiser_id  = (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true );
+        if ( $organiser_id ) {
+            $organiser_post = get_post( $organiser_id );
+            if ( $organiser_post ) {
+                $organiser_map[ $organiser_id ] = array( 'name' => $organiser_post->post_title, 'slug' => $organiser_post->post_name );
+            }
+        }
+
+        return rest_ensure_response( array( 'item' => self::format_community_feed_item( $post, $liked_ids, $reactions_map, $organiser_map ) ) );
+    }
+
+    private static function format_community_feed_item( WP_Post $post, array $liked_ids, array $reactions_map, array $organiser_map ): array {
             $author_id   = (int) $post->post_author;
             $author      = get_userdata( $author_id );
             $raw         = wpautop( $post->post_content );
@@ -2575,7 +2623,6 @@ class Culture_Mobile_API {
                 'isFeatured'              => (bool) get_post_meta( $post->ID, '_culture_is_featured', true ),
                 'organiserDirectoryId'    => (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ?: null,
             );
-        }, $query->posts );
     }
 
     private static function public_profile( WP_User $user ): array {

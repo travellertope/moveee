@@ -183,78 +183,100 @@ class Culture_Perks {
         $redemptions_table = $wpdb->prefix . 'culture_redemptions';
         $perks_table       = $wpdb->prefix . 'culture_partner_perks';
 
-        // Per-user cap check.
-        if ( (int) $perk['max_per_user'] > 0 ) {
-            $user_count = (int) $wpdb->get_var( $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$redemptions_table}
-                 WHERE user_id = %d AND perk_id = %d AND type = 'perk'",
-                $user_id,
+        // Per-perk advisory mutex — without it, two concurrent redemptions for
+        // the same perk can both pass the per-user/global cap checks below
+        // before either insert lands, letting max_per_user/max_total be
+        // exceeded (TOCTOU). Scoped to perk_id, not user_id, since the global
+        // cap is shared across all users.
+        $lock_name = 'culture_perk_redeem_' . $perk_id;
+        $locked    = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock_name ) );
+        if ( ! $locked ) {
+            return new WP_Error( 'redeem_busy', 'This perk is being redeemed right now. Please try again.', array( 'status' => 409 ) );
+        }
+
+        try {
+            // Per-user cap check.
+            if ( (int) $perk['max_per_user'] > 0 ) {
+                $user_count = (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$redemptions_table}
+                     WHERE user_id = %d AND perk_id = %d AND type = 'perk'",
+                    $user_id,
+                    $perk_id
+                ) );
+                if ( $user_count >= (int) $perk['max_per_user'] ) {
+                    return new WP_Error( 'per_user_limit', 'You have already redeemed this perk the maximum number of times.', array( 'status' => 409 ) );
+                }
+            }
+
+            // Global cap check — re-read live redeemed_count rather than the
+            // value captured in $perk before we acquired the lock.
+            if ( (int) $perk['max_total'] > 0 ) {
+                $live_redeemed_count = (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT redeemed_count FROM {$perks_table} WHERE id = %d",
+                    $perk_id
+                ) );
+                if ( $live_redeemed_count >= (int) $perk['max_total'] ) {
+                    return new WP_Error( 'perk_exhausted', 'This perk has reached its redemption limit.', array( 'status' => 409 ) );
+                }
+            }
+
+            // Deduct credits.
+            $new_balance = Culture_Gamification::deduct_credits( $user_id, $cost, 'perk_redeem', $perk_id );
+            if ( false === $new_balance ) {
+                // Race condition — balance dropped between our check and the deduction.
+                return new WP_Error( 'insufficient_credits', 'Credit balance changed. Please try again.', array( 'status' => 402 ) );
+            }
+
+            // Build expiry datetime.
+            $expiry_days = max( 1, (int) $perk['expiry_days'] );
+            $expires_at  = gmdate( 'Y-m-d H:i:s', strtotime( "+{$expiry_days} days" ) );
+
+            // Insert redemption with an empty QR token placeholder; we need the row ID first.
+            $inserted = $wpdb->insert(
+                $redemptions_table,
+                array(
+                    'user_id'       => $user_id,
+                    'perk_id'       => $perk_id,
+                    'type'          => 'perk',
+                    'credits_spent' => $cost,
+                    'fee_credits'   => 0,
+                    'qr_token'      => '',
+                    'qr_scanned'    => 0,
+                    'status'        => 'active',
+                    'expires_at'    => $expires_at,
+                    'created_at'    => current_time( 'mysql', true ),
+                ),
+                array( '%d', '%d', '%s', '%d', '%d', '%s', '%d', '%s', '%s', '%s' )
+            );
+
+            if ( ! $inserted ) {
+                // Roll back credit deduction.
+                Culture_Gamification::award_credits( $user_id, $cost, 'perk_redeem_rollback', $perk_id );
+                return new WP_Error( 'db_error', 'Could not record redemption. Please try again.', array( 'status' => 500 ) );
+            }
+
+            $redemption_id = (int) $wpdb->insert_id;
+
+            // Generate HMAC token now that we have the ID.
+            $qr_token = self::generate_qr_token( $redemption_id, $user_id, $perk_id, $expires_at );
+
+            // Write the token back to the row.
+            $wpdb->update(
+                $redemptions_table,
+                array( 'qr_token' => $qr_token ),
+                array( 'id' => $redemption_id ),
+                array( '%s' ),
+                array( '%d' )
+            );
+
+            // Increment global redeemed_count.
+            $wpdb->query( $wpdb->prepare(
+                "UPDATE {$perks_table} SET redeemed_count = redeemed_count + 1 WHERE id = %d",
                 $perk_id
             ) );
-            if ( $user_count >= (int) $perk['max_per_user'] ) {
-                return new WP_Error( 'per_user_limit', 'You have already redeemed this perk the maximum number of times.', array( 'status' => 409 ) );
-            }
+        } finally {
+            $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
         }
-
-        // Global cap check.
-        if ( (int) $perk['max_total'] > 0 && (int) $perk['redeemed_count'] >= (int) $perk['max_total'] ) {
-            return new WP_Error( 'perk_exhausted', 'This perk has reached its redemption limit.', array( 'status' => 409 ) );
-        }
-
-        // Deduct credits.
-        $new_balance = Culture_Gamification::deduct_credits( $user_id, $cost, 'perk_redeem', $perk_id );
-        if ( false === $new_balance ) {
-            // Race condition — balance dropped between our check and the deduction.
-            return new WP_Error( 'insufficient_credits', 'Credit balance changed. Please try again.', array( 'status' => 402 ) );
-        }
-
-        // Build expiry datetime.
-        $expiry_days = max( 1, (int) $perk['expiry_days'] );
-        $expires_at  = gmdate( 'Y-m-d H:i:s', strtotime( "+{$expiry_days} days" ) );
-
-        // Insert redemption with an empty QR token placeholder; we need the row ID first.
-        $inserted = $wpdb->insert(
-            $redemptions_table,
-            array(
-                'user_id'       => $user_id,
-                'perk_id'       => $perk_id,
-                'type'          => 'perk',
-                'credits_spent' => $cost,
-                'fee_credits'   => 0,
-                'qr_token'      => '',
-                'qr_scanned'    => 0,
-                'status'        => 'active',
-                'expires_at'    => $expires_at,
-                'created_at'    => current_time( 'mysql', true ),
-            ),
-            array( '%d', '%d', '%s', '%d', '%d', '%s', '%d', '%s', '%s', '%s' )
-        );
-
-        if ( ! $inserted ) {
-            // Roll back credit deduction.
-            Culture_Gamification::award_credits( $user_id, $cost, 'perk_redeem_rollback', $perk_id );
-            return new WP_Error( 'db_error', 'Could not record redemption. Please try again.', array( 'status' => 500 ) );
-        }
-
-        $redemption_id = (int) $wpdb->insert_id;
-
-        // Generate HMAC token now that we have the ID.
-        $qr_token = self::generate_qr_token( $redemption_id, $user_id, $perk_id, $expires_at );
-
-        // Write the token back to the row.
-        $wpdb->update(
-            $redemptions_table,
-            array( 'qr_token' => $qr_token ),
-            array( 'id' => $redemption_id ),
-            array( '%s' ),
-            array( '%d' )
-        );
-
-        // Increment global redeemed_count.
-        $wpdb->query( $wpdb->prepare(
-            "UPDATE {$perks_table} SET redeemed_count = redeemed_count + 1 WHERE id = %d",
-            $perk_id
-        ) );
 
         if ( class_exists( 'Culture_Notifications' ) ) {
             Culture_Notifications::add(
@@ -430,8 +452,17 @@ class Culture_Perks {
         $fee_credits = (int) round( $credits * $fee_pct / 100 );
         $net_credits = $credits - $fee_credits;
 
+        // Reject unsupported currencies up front — otherwise cashout_amount
+        // below is silently computed at the GBP rate while cashout_currency
+        // is stored as whatever string was passed, misleading manual payout
+        // processing (admin sees e.g. "XYZ 50.00" calculated as if GBP).
+        $currency = strtoupper( trim( $currency ) );
+        if ( ! in_array( $currency, array( 'GBP', 'USD', 'NGN' ), true ) ) {
+            return new WP_Error( 'invalid_currency', 'Unsupported cashout currency.', array( 'status' => 400 ) );
+        }
+
         // Determine credits-per-unit based on requested currency.
-        switch ( strtoupper( $currency ) ) {
+        switch ( $currency ) {
             case 'USD':
                 $rate = (int) get_option( 'culture_credits_per_usd', self::DEFAULT_CREDITS_PER_USD );
                 if ( $rate <= 0 ) $rate = self::DEFAULT_CREDITS_PER_USD;
@@ -474,7 +505,7 @@ class Culture_Perks {
                 'expires_at'           => null,
                 'created_at'           => current_time( 'mysql', true ),
                 'cashout_amount'       => $cashout_amount,
-                'cashout_currency'     => strtoupper( substr( sanitize_text_field( $currency ), 0, 3 ) ),
+                'cashout_currency'     => $currency,
                 'cashout_method'       => sanitize_text_field( $method ),
                 'cashout_account_name' => sanitize_text_field( $account_name ),
                 'cashout_account_ref'  => sanitize_text_field( $account_ref ),
@@ -697,9 +728,23 @@ class Culture_Perks {
     private static function _refund_credits( $user_id, $amount, $source_id ) {
         if ( $amount <= 0 ) return;
 
-        $current   = Culture_Gamification::get_credits( $user_id );
-        $new_total = $current + $amount;
-        update_user_meta( $user_id, '_culture_credits', $new_total );
+        global $wpdb;
+
+        // Same advisory-mutex pattern as award_credits()/deduct_credits() in
+        // Culture_Gamification — without it, a refund racing a concurrent
+        // redeem/cashout for the same user can read a stale balance and
+        // clobber the other write (lost update).
+        $lock_name = 'culture_credits_' . (int) $user_id;
+        $locked    = $wpdb->get_var( $wpdb->prepare( "SELECT GET_LOCK(%s, 3)", $lock_name ) );
+        if ( ! $locked ) return;
+
+        try {
+            $current   = Culture_Gamification::get_credits( $user_id );
+            $new_total = $current + $amount;
+            update_user_meta( $user_id, '_culture_credits', $new_total );
+        } finally {
+            $wpdb->get_var( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
+        }
 
         Culture_Gamification::ledger_add( $user_id, 'credit', $amount, 'cashout_refund', $source_id );
 

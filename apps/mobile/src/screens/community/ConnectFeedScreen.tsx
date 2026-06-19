@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import {
   View,
   FlatList,
@@ -11,7 +11,7 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
 import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useUnifiedFeed } from "../../features/community/useUnifiedFeed";
@@ -152,19 +152,19 @@ export default function ConnectFeedScreen() {
     return () => unsubscribe?.();
   }, [nav, refresh]);
 
-  // Refresh and scroll to top whenever the screen comes back into focus
-  // (e.g. returning from NewPost after submitting)
-  const isFirstFocus = useRef(true);
-  useFocusEffect(
-    useCallback(() => {
-      if (isFirstFocus.current) {
-        isFirstFocus.current = false;
-        return;
-      }
+  // Refresh and scroll to top only when NewPostScreen hands back a fresh
+  // `justPosted` signal — NOT on every focus. Returning here via the back
+  // button (e.g. from a directory entry) should leave scroll position and
+  // feed contents exactly as the user left them.
+  const lastJustPosted = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    const justPosted = route?.params?.justPosted;
+    if (justPosted && justPosted !== lastJustPosted.current) {
+      lastJustPosted.current = justPosted;
       refresh();
       flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-    }, [refresh])
-  );
+    }
+  }, [route?.params?.justPosted, refresh]);
 
   const interestTagSet = useMemo(
     () => new Set((user?.interests ?? []).map((s) => s.toLowerCase())),

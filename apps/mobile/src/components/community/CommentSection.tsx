@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -49,7 +49,12 @@ interface CommentSectionProps {
   signInPrompt?: string;
 }
 
-export default function CommentSection({
+export interface CommentSectionHandle {
+  /** Focuses the comment composer's text input. */
+  focus: () => void;
+}
+
+const CommentSection = forwardRef<CommentSectionHandle, CommentSectionProps>(function CommentSection({
   postId,
   comments: controlledComments,
   loading: controlledLoading,
@@ -60,12 +65,17 @@ export default function CommentSection({
   truncateAt = 3,
   signedIn = true,
   signInPrompt = "Sign in to leave a comment.",
-}: CommentSectionProps) {
+}, ref) {
   const c = useColors();
   const styles = createStyles(c);
   const user = useAuthStore((s) => s.user);
   const isControlled = postId === undefined;
   const hookResult = useComments(postId ?? "__controlled__", !isControlled);
+  const inputRef = useRef<TextInput>(null);
+
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+  }), []);
 
   const comments: NormalizedComment[] = isControlled
     ? controlledComments ?? []
@@ -153,6 +163,7 @@ export default function CommentSection({
               style={styles.avatar}
             />
             <TextInput
+              ref={inputRef}
               style={styles.composeInput}
               placeholder="Add a comment…"
               placeholderTextColor={c.ghost}
@@ -180,7 +191,9 @@ export default function CommentSection({
       )}
     </View>
   );
-}
+});
+
+export default CommentSection;
 
 function timeAgo(dateStr: string): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
